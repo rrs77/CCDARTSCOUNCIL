@@ -1,0 +1,14 @@
+uploads = []
+outputs = []
+
+[[generated]]
+id = "2WFAefMTp4O0PyO_FQZQz"
+uri = "file://artifacts/ccd-pitch/public/classroom-hero.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "HE81SV2xPb85pT0r0HT-Z"
+uri = "file://artifacts/ccd-pitch/public/planner-illustration.png"
+type = "image"
+title = "generated_image"

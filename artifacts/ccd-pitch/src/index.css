@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@theme inline {
+  --color-primary: var(--slide-primary);
+  --color-primary-dark: var(--slide-primary-dark);
+  --color-accent: var(--slide-accent);
+  --color-accent-dark: var(--slide-accent-dark);
+  --color-bg: var(--slide-bg);
+  --color-surface: var(--slide-surface);
+  --color-text: var(--slide-text);
+  --color-muted: var(--slide-muted);
+  --font-display: var(--font-display-family);
+  --font-body: var(--font-body-family);
+}
+
+:root {
+  /* CCD brand palette */
+  --slide-primary: #14b8a6;
+  --slide-primary-dark: #008272;
+  --slide-accent: #ff6b6b;
+  --slide-accent-dark: #ff5252;
+  --slide-bg: #fffaf7;
+  --slide-surface: #ffffff;
+  --slide-text: #0f2a2e;
+  --slide-muted: #6b7d80;
+  --font-display-family: "Inter", system-ui, sans-serif;
+  --font-body-family: "Inter", system-ui, sans-serif;
+  color-scheme: light;
+}
+
+html,
+body,
+#root {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+}
+
+body {
+  background: var(--slide-bg);
+  color: var(--slide-text);
+  font-family: var(--font-body-family);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.slide {
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+}
+
+.slide-viewer {
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}

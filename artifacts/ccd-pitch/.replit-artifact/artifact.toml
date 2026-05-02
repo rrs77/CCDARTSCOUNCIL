@@ -1,0 +1,31 @@
+kind = "slides"
+previewPath = "/ccd-pitch/"
+title = "CCD Pitch Deck"
+version = "1.0.0"
+id = "artifacts/ccd-pitch"
+router = "path"
+
+[[integratedSkills]]
+name = "slides"
+version = "1.0.0"
+
+[[services]]
+name = "web"
+paths = [ "/ccd-pitch/" ]
+localPort = 21025
+
+[services.development]
+run = "pnpm --filter @workspace/ccd-pitch run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/ccd-pitch", "run", "build" ]
+publicDir = "artifacts/ccd-pitch/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "21025"
+BASE_PATH = "/ccd-pitch/"

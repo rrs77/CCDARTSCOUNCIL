@@ -1,0 +1,74 @@
+[
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
+    "position": 1,
+    "filepath": "src/pages/slides/Title.tsx",
+    "title": "Plan a year of lessons in an afternoon",
+    "description": "Title slide introducing Creative Curriculum Designer with hero image and tagline.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000002",
+    "position": 2,
+    "filepath": "src/pages/slides/Problem.tsx",
+    "title": "The problem: lesson planning is fragmented",
+    "description": "Three reasons primary teachers lose time planning today.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000003",
+    "position": 3,
+    "filepath": "src/pages/slides/Solution.tsx",
+    "title": "The solution: one calm space",
+    "description": "Half-term planner, lesson library, and activity stacks in one workspace.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
+    "position": 4,
+    "filepath": "src/pages/slides/WhoItsFor.tsx",
+    "title": "Who it's for: EYFS, KS1 and KS2 teachers",
+    "description": "Audience overview across Reception, Key Stage 1, and Key Stage 2.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000005",
+    "position": 5,
+    "filepath": "src/pages/slides/HalfTermPlanner.tsx",
+    "title": "Feature: Half-term planner",
+    "description": "Visual overview of six half-terms with lesson counts and progress.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000006",
+    "position": 6,
+    "filepath": "src/pages/slides/LessonLibrary.tsx",
+    "title": "Feature: Lesson library",
+    "description": "Searchable, taggable library of lessons your whole team can build on.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000007",
+    "position": 7,
+    "filepath": "src/pages/slides/ActivityStacks.tsx",
+    "title": "Feature: Activity stacks",
+    "description": "Reusable groups of warm-ups, mains, and plenaries that drop into any lesson.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000008",
+    "position": 8,
+    "filepath": "src/pages/slides/HowItWorks.tsx",
+    "title": "How it works",
+    "description": "The four-step flow from empty term to ready-to-teach.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
+    "position": 9,
+    "filepath": "src/pages/slides/CallToAction.tsx",
+    "title": "Try CCD with your school",
+    "description": "Closing call to action with contact and trial details.",
+    "speakerNotes": ""
+  }
+]
