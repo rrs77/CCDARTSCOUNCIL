@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import toast from 'react-hot-toast';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { 
   Search, 
   Filter, 
@@ -1506,7 +1504,6 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
             {/* Activities List - Editable with Drag & Drop */}
             <div className="flex-1 overflow-hidden">
               <div className="p-6 max-h-[55vh] overflow-y-auto">
-                <DndProvider backend={HTML5Backend}>
                   <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
                     {editingLessonActivities.map((activity: any, activityIndex: number) => (
                       <MinimizableActivityCard
@@ -1522,7 +1519,6 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                       />
                     ))}
                   </div>
-                </DndProvider>
                 
                 {editingLessonActivities.length === 0 && (
                   <div className="text-center py-12 text-gray-500">

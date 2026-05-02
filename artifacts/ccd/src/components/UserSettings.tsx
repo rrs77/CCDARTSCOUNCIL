@@ -11,8 +11,7 @@ import { AuthGuard } from './Auth/AuthGuard';
 import { UserManagement } from './Admin/UserManagement';
 import { customCategoriesApi, activityPacksApi } from '../config/api';
 import type { ActivityPack } from '../config/api';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 import toast from 'react-hot-toast';
 import {
   normalizeSectionYearGroupIdList,
@@ -2073,7 +2072,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     </div>
                   )}
                   
-                  <DndProvider backend={HTML5Backend}>
                   <div className="space-y-2 max-h-[400px] overflow-y-auto pr-6">
                     {tempCategories.map((category, index) => {
                       // Use index as stable identifier for editing state (not name, which changes)
@@ -2418,7 +2416,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       );
                     })}
                   </div>
-                  </DndProvider>
                 </div>
               </div>
 

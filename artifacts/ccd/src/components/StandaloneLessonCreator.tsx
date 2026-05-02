@@ -1,6 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 import { X, Plus, Trash2, Eye, BookOpen, Target, Link2, Clock, Search, GripVertical, ChevronDown, ChevronUp, List, Layers, Upload, Save, HelpCircle } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ActivityCard } from './ActivityCard';
@@ -925,7 +924,6 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   </button>
                 </div>
                 
-                <DndProvider backend={HTML5Backend}>
                   {selectedActivities.length === 0 ? (
                     <div className="bg-white rounded-lg border border-gray-200 p-6 text-center">
                       <p className="text-sm text-gray-500">
@@ -945,7 +943,6 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       ))}
                     </div>
                   )}
-                </DndProvider>
               </div>
 
               {/* Plenary Card */}

@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/Tabs";
 import { UnitViewer } from "./UnitViewer";
 import { LessonPlanBuilder } from "./LessonPlanBuilder";
@@ -270,7 +268,6 @@ export function Dashboard() {
 
 
   return (
-    <DndProvider backend={HTML5Backend}>
       <div className="min-h-screen" style={{ backgroundColor: '#F9FAFB', paddingTop: '56px' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
@@ -370,6 +367,5 @@ export function Dashboard() {
           </Tabs>
         </div>
       </div>
-    </DndProvider>
   );
 }

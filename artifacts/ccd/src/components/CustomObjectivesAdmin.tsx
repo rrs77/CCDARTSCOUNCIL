@@ -18,8 +18,7 @@ import {
   Link2,
   Check
 } from 'lucide-react';
-import { DndProvider, useDrag, useDrop } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import { seedReceptionDramaObjectives } from '../utils/seedReceptionDrama';
 import { setupSecondaryDramaObjectives } from '../utils/setupSecondaryDramaObjectives';
@@ -781,7 +780,6 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                 <div className="text-center py-8 text-gray-500">Loading...</div>
               ) : (
                 // Drag-and-drop subject areas (same in modal and embedded)
-                <DndProvider backend={HTML5Backend}>
                 <div className="space-y-3">
                   {groupedYearGroups.map((section) => (
                     <div key={section.id} className="space-y-2">
@@ -943,7 +941,6 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                     </div>
                   ))}
                 </div>
-                </DndProvider>
               )}
             </div>
           </div>

@@ -5,6 +5,7 @@ import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
+import { DndRoot } from './components/dnd';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
 import { LoginForm } from './components/LoginForm';
@@ -121,7 +122,9 @@ function App() {
       <AuthProvider>
         <SettingsProviderNew>
           <DataProvider>
-            <AppContent />
+            <DndRoot>
+              <AppContent />
+            </DndRoot>
           </DataProvider>
         </SettingsProviderNew>
       </AuthProvider>

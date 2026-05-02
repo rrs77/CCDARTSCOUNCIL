@@ -1,8 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Save, Trash2, Clock, MapPin, GripVertical, Edit3, Users, BookOpen, Settings, Calendar, ChevronDown, ChevronRight, Copy, CopyPlus } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
-import { useDrop, useDrag, DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
+import { useDrop, useDrag } from 'react-dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 
 interface TimetableClass {
@@ -428,7 +427,6 @@ export function TimetableBuilder({
   if (!isOpen) return null;
 
   return (
-    <DndProvider backend={HTML5Backend}>
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
         <div className="bg-white rounded-2xl shadow-xl max-w-[95vw] w-full max-h-[95vh] flex flex-col overflow-hidden">
         {/* Header */}
@@ -784,7 +782,6 @@ export function TimetableBuilder({
         )}
         </div>
       </div>
-    </DndProvider>
   );
 }
 

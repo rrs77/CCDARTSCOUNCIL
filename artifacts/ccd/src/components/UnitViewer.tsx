@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { DndProvider } from 'react-dnd';
-import { HTML5Backend } from 'react-dnd-html5-backend';
 import { 
   FolderOpen, 
   Search, 
@@ -950,7 +948,6 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               {/* Activities List - Editable with Drag & Drop */}
               <div className="flex-1 overflow-hidden">
                 <div className="p-6 max-h-[55vh] overflow-y-auto">
-                  <DndProvider backend={HTML5Backend}>
                     <div className="space-y-3">
                       {editingLessonActivities.map((activity: any, activityIndex: number) => (
                         <MinimizableActivityCard
@@ -966,7 +963,6 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                         />
                       ))}
                     </div>
-                  </DndProvider>
                   
                   {editingLessonActivities.length === 0 && (
                     <div className="text-center py-12 text-gray-500">
@@ -997,7 +993,6 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
 
   // Default view - half-term cards
   return (
-    <DndProvider backend={HTML5Backend}>
       <div key={refreshKey} className="min-h-screen" style={{ backgroundColor: '#F9FAFB' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Clean White Header Card */}
@@ -1420,6 +1415,5 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
           currentYear={currentAcademicYear}
         />
       </div>
-    </DndProvider>
   );
 }
