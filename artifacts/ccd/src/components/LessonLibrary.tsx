@@ -33,6 +33,7 @@ import { LessonStackBuilder } from './LessonStackBuilder';
 import { MinimizableActivityCard } from './MinimizableActivityCard';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
+import { sectionContainsCanonicalId } from '../utils/yearGroupSectionOrder';
 import { useAuth } from '../hooks/useAuth';
 import { activityPacksApi } from '../config/api';
 import { useLessonStacks, type StackedLesson } from '../hooks/useLessonStacks';
@@ -214,7 +215,9 @@ export function LessonLibrary({
   }, [userPacks]);
 
   // Show "Add unit" only for packs whose year_group_sections include the current class (same for all packs: bought or assigned).
-  const currentSectionId = yearGroupSections.find(s => s.yearGroupIds.includes(currentSheetInfo.sheet))?.id ?? null;
+  const currentSectionId = yearGroupSections.find(
+    s => sectionContainsCanonicalId(s.yearGroupIds, currentSheetInfo.sheet, customYearGroups)
+  )?.id ?? null;
   const packsVisibleForSection = packsWithStacks.filter(
     p => !p.year_group_sections?.length || (currentSectionId != null && p.year_group_sections.includes(currentSectionId))
   );

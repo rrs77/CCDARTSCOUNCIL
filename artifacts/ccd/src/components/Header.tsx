@@ -30,9 +30,7 @@ export function Header() {
     const currentInList = yearGroupsForSelector.some(g => g.id === currentSheetInfo.sheet || g.name === currentSheetInfo.display);
     if (!currentInList) {
       const first = yearGroupsForSelector[0];
-      const newSheetInfo = { sheet: first.id, display: first.name, eyfs: `${first.id} Statements` };
-      setCurrentSheetInfo(newSheetInfo);
-      localStorage.setItem('currentSheetInfo', JSON.stringify(newSheetInfo));
+      setCurrentSheetInfo({ sheet: first.id, display: first.name, eyfs: `${first.id} Statements` });
     }
   }, [yearGroupsForSelector, currentSheetInfo.sheet, currentSheetInfo.display, setCurrentSheetInfo]);
 
@@ -139,26 +137,24 @@ export function Header() {
   };
 
   const selectYearGroup = (group: { id: string; name: string }) => {
-    const newSheetInfo = { sheet: group.id, display: group.name, eyfs: `${group.id} Statements` };
-    setCurrentSheetInfo(newSheetInfo);
-    localStorage.setItem('currentSheetInfo', JSON.stringify(newSheetInfo));
+    setCurrentSheetInfo({ sheet: group.id, display: group.name, eyfs: `${group.id} Statements` });
     setYearGroupDropdownOpen(false);
   };
 
   // Keep header label in sync when a class is renamed in Settings.
+  // Depend on stable primitives (sheet id + current display) so this effect doesn't
+  // re-run on every unrelated currentSheetInfo identity change.
   useEffect(() => {
     const matchById = yearGroupsForSelector.find(g => g.id === currentSheetInfo.sheet);
     if (!matchById) return;
     if (currentSheetInfo.display !== matchById.name) {
-      const synced = {
-        ...currentSheetInfo,
+      setCurrentSheetInfo({
+        sheet: matchById.id,
         display: matchById.name,
         eyfs: `${matchById.id} Statements`,
-      };
-      setCurrentSheetInfo(synced);
-      localStorage.setItem('currentSheetInfo', JSON.stringify(synced));
+      });
     }
-  }, [yearGroupsForSelector, currentSheetInfo, setCurrentSheetInfo]);
+  }, [yearGroupsForSelector, currentSheetInfo.sheet, currentSheetInfo.display, setCurrentSheetInfo]);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {

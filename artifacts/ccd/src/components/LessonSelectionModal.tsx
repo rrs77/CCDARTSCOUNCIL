@@ -31,7 +31,7 @@ export function LessonSelectionModal({
   onSave
 }: LessonSelectionModalProps) {
   // FIXED: Added halfTerms to the destructuring to check lesson assignments
-  const { lessonNumbers, allLessonsData, currentSheetInfo, halfTerms, getTermSpecificLessonNumber, updateHalfTerm } = useData();
+  const { lessonNumbers, allLessonsData, currentSheetInfo, currentAcademicYear, halfTerms, getTermSpecificLessonNumber, updateHalfTerm } = useData();
   const { getThemeForClass } = useSettings();
   const { stacks } = useLessonStacks();
   
@@ -108,7 +108,7 @@ export function LessonSelectionModal({
 
   // Load completion status from localStorage
   React.useEffect(() => {
-    const savedHalfTerms = localStorage.getItem(`half-terms-${currentSheetInfo.sheet}`);
+    const savedHalfTerms = localStorage.getItem(`half-terms-${currentSheetInfo.sheet}-${currentAcademicYear}`);
     if (savedHalfTerms) {
       try {
         const parsedHalfTerms = JSON.parse(savedHalfTerms);
@@ -120,7 +120,7 @@ export function LessonSelectionModal({
         console.error('Error parsing saved half-terms:', error);
       }
     }
-  }, [halfTermId, currentSheetInfo.sheet]);
+  }, [halfTermId, currentSheetInfo.sheet, currentAcademicYear]);
 
   if (!isOpen) return null;
 

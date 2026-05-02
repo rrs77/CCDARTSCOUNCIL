@@ -441,6 +441,16 @@ export function DataProvider({ children }: DataProviderProps) {
   };
   
   const [currentSheetInfo, setCurrentSheetInfo] = useState<SheetInfo>(getInitialSheetInfo());
+
+  // Persist currentSheetInfo whenever it changes so it stays in sync across reloads
+  // and any caller that updates it (Header dropdown, allowed-list auto-switch, rename sync).
+  useEffect(() => {
+    try {
+      localStorage.setItem('currentSheetInfo', JSON.stringify(currentSheetInfo));
+    } catch (error) {
+      console.error('Failed to persist currentSheetInfo:', error);
+    }
+  }, [currentSheetInfo]);
   
   const [lessonNumbers, setLessonNumbers] = useState<string[]>([]);
   const [teachingUnits, setTeachingUnits] = useState<string[]>([]);
