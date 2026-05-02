@@ -1,0 +1,1643 @@
+import React, { useState, useMemo, useEffect } from 'react';
+import toast from 'react-hot-toast';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { 
+  Search, 
+  Filter, 
+  Grid, 
+  List, 
+  Plus, 
+  BookOpen, 
+  Clock, 
+  Tag,
+  ArrowUpDown,
+  ArrowDownUp,
+  Eye,
+  Edit3,
+  Download,
+  Calendar,
+  ChevronUp,
+  ChevronDown,
+  X,
+  Check,
+  Layers,
+  Copy,
+  FileText,
+  Trash2,
+  RotateCcw
+} from 'lucide-react';
+import { LessonLibraryCard } from './LessonLibraryCard';
+import { StackedLessonCard } from './StackedLessonCard';
+import { LessonStackBuilder } from './LessonStackBuilder';
+import { MinimizableActivityCard } from './MinimizableActivityCard';
+import { useData } from '../contexts/DataContext';
+import { useSettings } from '../contexts/SettingsContextNew';
+import { useAuth } from '../hooks/useAuth';
+import { activityPacksApi } from '../config/api';
+import { useLessonStacks, type StackedLesson } from '../hooks/useLessonStacks';
+import { LessonExporter } from './LessonExporter';
+import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
+import { LessonDetailsModal } from './LessonDetailsModal';
+import { AssignToHalfTermModal } from './AssignToHalfTermModal';
+import { ClassCopyModal } from './ClassCopyModal';
+import { StandaloneLessonCreator } from './StandaloneLessonCreator';
+import { IndexCard } from './IndexCard';
+import { LessonPrintModal } from './LessonPrintModal';
+
+// Helper function to safely render HTML content
+const renderHtmlContent = (htmlContent) => {
+  if (!htmlContent) return { __html: '' };
+  return { __html: htmlContent };
+};
+
+// Helper function to get plain text from HTML (for search purposes)
+const getPlainTextFromHtml = (html) => {
+  if (!html) return '';
+  
+  const temp = document.createElement('div');
+  temp.innerHTML = html;
+  let text = temp.textContent || temp.innerText || '';
+  text = text.replace(/\s+/g, ' ').trim();
+  
+  return text;
+};
+
+interface LessonLibraryProps {
+  onLessonSelect?: (lessonNumber: string) => void;
+  onLessonEdit?: (lessonNumber: string) => void;
+  className?: string;
+  onAssignToUnit?: (lessonNumber: string, halfTermId: string) => void;
+  onNavigateToBuilder?: () => void; // Callback to navigate to Lesson Builder tab
+}
+
+// Define half-term periods
+const HALF_TERMS = [
+  { id: 'A1', name: 'Autumn 1', months: 'Sep-Oct' },
+  { id: 'A2', name: 'Autumn 2', months: 'Nov-Dec' },
+  { id: 'SP1', name: 'Spring 1', months: 'Jan-Feb' },
+  { id: 'SP2', name: 'Spring 2', months: 'Mar-Apr' },
+  { id: 'SM1', name: 'Summer 1', months: 'Apr-May' },
+  { id: 'SM2', name: 'Summer 2', months: 'Jun-Jul' },
+];
+
+export function LessonLibrary({ 
+  onLessonSelect, 
+  onLessonEdit,
+  className = '', 
+  onAssignToUnit,
+  onNavigateToBuilder
+}: LessonLibraryProps) {
+  const { 
+    lessonNumbers, 
+    allLessonsData, 
+    currentSheetInfo, 
+    currentAcademicYear,
+    halfTerms, 
+    getLessonsForHalfTerm,
+    updateLessonData,
+    addOrUpdateUserLessonPlan,
+    allActivities,
+    loading,
+    updateHalfTerm,
+    copyLessonsToClass,
+    trashLessons,
+    restoreLesson,
+    permanentDeleteFromTrash,
+    refreshData,
+    loadExampleLessonsFromUrl,
+    loadStackIntoSheet
+  } = useData();
+  const { getThemeForClass, categories, customYearGroups, settings, yearGroupSections } = useSettings();
+  const { user, profile } = useAuth();
+  const [userPacks, setUserPacks] = useState<string[]>([]);
+  const [packsWithStacks, setPacksWithStacks] = useState<{ pack_id: string; name: string; stack_ids: string[]; year_group_sections?: string[] }[]>([]);
+  const [loadingExample, setLoadingExample] = useState(false);
+  const [addingStackId, setAddingStackId] = useState<string | null>(null);
+  const showButtonHelp = settings.showButtonHelp !== false;
+  const {
+    stacks,
+    createStack,
+    updateStack,
+    deleteStack,
+    getAvailableLessons
+  } = useLessonStacks();
+  
+  const [refreshing, setRefreshing] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedHalfTerm, setSelectedHalfTerm] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'number' | 'title' | 'activities' | 'time'>('number');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+  const [selectedLessonForExport, setSelectedLessonForExport] = useState<string | null>(null);
+  const [selectedLessonForDetails, setSelectedLessonForDetails] = useState<string | null>(null);
+  const [showTrash, setShowTrash] = useState(false); // Toggle between library and trash view
+  
+  // New editing states
+  const [editingLessonNumber, setEditingLessonNumber] = useState<string | null>(null);
+  const [editingLessonActivities, setEditingLessonActivities] = useState<any[]>([]);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [showHeaderFooterEdit, setShowHeaderFooterEdit] = useState(false);
+  const [customHeader, setCustomHeader] = useState<string>('');
+  const [customFooter, setCustomFooter] = useState<string>('');
+  
+  // Add Activity Modal State
+  const [showActivityPicker, setShowActivityPicker] = useState(false);
+  const [activitySearchQuery, setActivitySearchQuery] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  
+  // Stack Management State
+  const [showStackBuilder, setShowStackBuilder] = useState(false);
+  const [editingStack, setEditingStack] = useState<StackedLesson | null>(null);
+  const [showStacksSection, setShowStacksSection] = useState(false); // Collapsed by default; open to show stacks
+  const [expandedStacks, setExpandedStacks] = useState<Set<string>>(new Set());
+  const [showIndexCardsSection, setShowIndexCardsSection] = useState(false); // Collapsed by default
+  const [showAssignToTermModal, setShowAssignToTermModal] = useState(false);
+  const [selectedStackForAssignment, setSelectedStackForAssignment] = useState<StackedLesson | null>(null);
+  const [printStackId, setPrintStackId] = useState<string | null>(null);
+  
+  // Class Copy State
+  const [showClassCopyModal, setShowClassCopyModal] = useState(false);
+  const [classCopyInitialLessons, setClassCopyInitialLessons] = useState<string[]>([]);
+  
+  // Standalone Lesson Creator State
+  const [showStandaloneLessonCreator, setShowStandaloneLessonCreator] = useState(false);
+  const [editingLessonForCreator, setEditingLessonForCreator] = useState<{ lessonNumber: string; lessonData: any } | null>(null);
+  
+  // All lesson packs the user has (bought or assigned via Admin → Assign packs) are treated the same.
+  // Merged list is used for: pack stacks in Lesson Library ("Add unit"), Resource Shop "you have this", etc.
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (!user?.email) {
+        setUserPacks(profile?.admin_preset_activity_pack_ids ?? []);
+        return;
+      }
+      try {
+        const purchased = await activityPacksApi.getUserPurchases(user.email);
+        const preset = profile?.admin_preset_activity_pack_ids ?? [];
+        if (!cancelled) setUserPacks([...new Set([...purchased, ...preset])]);
+      } catch {
+        if (!cancelled) setUserPacks(profile?.admin_preset_activity_pack_ids ?? []);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [user?.email, profile?.admin_preset_activity_pack_ids]);
+
+  // Packs that have linked lesson stacks: show "Add unit" in Lesson Library (for all packs user has, bought or assigned).
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      if (userPacks.length === 0) {
+        setPacksWithStacks([]);
+        return;
+      }
+      try {
+        const all = await activityPacksApi.getAllPacks();
+        const withStacks = all.filter(
+          (p: { pack_id: string; stack_ids?: string[] }) =>
+            userPacks.includes(p.pack_id) && p.stack_ids && p.stack_ids.length > 0
+        );
+        if (!cancelled) setPacksWithStacks(withStacks.map((p: { pack_id: string; name: string; stack_ids?: string[]; year_group_sections?: string[] }) => ({
+          pack_id: p.pack_id,
+          name: p.name,
+          stack_ids: p.stack_ids || [],
+          year_group_sections: p.year_group_sections
+        })));
+      } catch {
+        if (!cancelled) setPacksWithStacks([]);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, [userPacks]);
+
+  // Show "Add unit" only for packs whose year_group_sections include the current class (same for all packs: bought or assigned).
+  const currentSectionId = yearGroupSections.find(s => s.yearGroupIds.includes(currentSheetInfo.sheet))?.id ?? null;
+  const packsVisibleForSection = packsWithStacks.filter(
+    p => !p.year_group_sections?.length || (currentSectionId != null && p.year_group_sections.includes(currentSectionId))
+  );
+  const packStackIds = packsVisibleForSection.flatMap(p => p.stack_ids);
+  const stacksFromPacks = stacks.filter(s => packStackIds.includes(s.id));
+
+  const handleAddUnitFromPack = async (stack: StackedLesson) => {
+    setAddingStackId(stack.id);
+    try {
+      await loadStackIntoSheet(stack.lessons || []);
+      await refreshData();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to add unit');
+    } finally {
+      setAddingStackId(null);
+    }
+  };
+
+  const hasCommediaPack = userPacks.includes('COMMEDIA_KS3_DRAMA');
+  const showLoadCommediaButton = currentSheetInfo.sheet === 'Year8Drama' && hasCommediaPack;
+
+  const handleLoadCommediaLessons = async () => {
+    setLoadingExample(true);
+    try {
+      await loadExampleLessonsFromUrl('/commedia-year8-drama-lessons.json');
+      await refreshData();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Failed to load example lessons');
+    } finally {
+      setLoadingExample(false);
+    }
+  };
+
+  // Lesson stacks section starts collapsed by default - user can expand it manually
+  
+  // Debug: Log expanded stacks state (removed to reduce console spam)
+  
+  // Get theme colors for current class
+  const theme = getThemeForClass(className);
+
+  // Get which half-term a lesson is assigned to (using dynamic data)
+  const getLessonHalfTerm = (lessonNumber: string): string | null => {
+    for (const halfTerm of halfTerms) {
+      if (halfTerm.lessons.includes(lessonNumber)) {
+        return halfTerm.id;
+      }
+    }
+    return null; // Lesson not assigned to any half-term
+  };
+
+  // Start editing a lesson - opens full lesson creator
+  const handleStartEditing = (lessonNumber: string) => {
+    const lessonData = allLessonsData[lessonNumber];
+    if (lessonData) {
+      console.log('📖 Opening lesson for editing:', {
+        lessonNumber,
+        title: lessonData.title,
+        hasLearningOutcome: !!lessonData.learningOutcome,
+        hasMainActivity: !!lessonData.mainActivity
+      });
+      
+      // Open the full lesson creator with editing data
+      setEditingLessonForCreator({
+        lessonNumber,
+        lessonData
+      });
+      setShowStandaloneLessonCreator(true);
+    }
+  };
+
+  // Save edited lesson
+  const handleSaveEditing = async () => {
+    console.log('💾 SAVE BUTTON CLICKED - Current state:', {
+      lessonNumber: editingLessonNumber,
+      activitiesCount: editingLessonActivities.length,
+      currentOrder: editingLessonActivities.map((a, i) => `${i + 1}. ${a.activity} (${a.category})`)
+    });
+    
+    if (editingLessonNumber && editingLessonActivities.length >= 0) {
+      // Clean activities by removing temporary edit IDs
+      const cleanedActivities = editingLessonActivities.map(activity => {
+        const { _editId, ...cleanActivity } = activity;
+        return cleanActivity;
+      });
+
+      // Group activities back by category while preserving order
+      const grouped: Record<string, any[]> = {};
+      const categoryOrder: string[] = [];
+      
+      cleanedActivities.forEach(activity => {
+        const category = activity.category || 'Other';
+        if (!grouped[category]) {
+          grouped[category] = [];
+          categoryOrder.push(category);
+        }
+        grouped[category].push(activity);
+      });
+
+      // Update lesson data - IMPORTANT: Save orderedActivities to preserve exact order
+      const updatedLessonData = {
+        ...allLessonsData[editingLessonNumber],
+        grouped,
+        categoryOrder,
+        orderedActivities: cleanedActivities, // NEW: Store flat ordered array
+        totalTime: cleanedActivities.reduce((sum: number, act: any) => sum + (act.time || 0), 0),
+        customHeader: customHeader || undefined, // Only save if not empty
+        customFooter: customFooter || undefined  // Only save if not empty
+      };
+
+      console.log('💾 Saving lesson with order:', {
+        lessonNumber: editingLessonNumber,
+        categoryOrder,
+        activityCount: cleanedActivities.length,
+        categories: Object.keys(grouped).map(cat => `${cat}: ${grouped[cat].length} activities`),
+        orderedActivities: cleanedActivities.map((a, i) => `${i + 1}. ${a.activity} (${a.category})`),
+        customHeader: customHeader || '(using default)',
+        customFooter: customFooter || '(using default)'
+      });
+
+      // Update in context and wait for it to complete
+      if (updateLessonData) {
+        await updateLessonData(editingLessonNumber, updatedLessonData);
+        console.log('✅ Lesson save complete');
+      }
+      
+      cancelEditing();
+    }
+  };
+
+  // Cancel editing
+  const cancelEditing = () => {
+    setEditingLessonNumber(null);
+    setEditingLessonActivities([]);
+    setShowEditModal(false);
+    setShowActivityPicker(false);
+    setActivitySearchQuery('');
+    setSelectedCategory('all');
+    setShowHeaderFooterEdit(false);
+    setCustomHeader('');
+    setCustomFooter('');
+  };
+
+  // Delete activity
+  const handleDeleteActivity = (activityIndex: number) => {
+    setEditingLessonActivities(prev => prev.filter((_, index) => index !== activityIndex));
+  };
+
+  // Reorder activities
+  const handleReorderActivity = (fromIndex: number, toIndex: number) => {
+    console.log(`🔄 Reordering activity: from index ${fromIndex} to ${toIndex}`);
+    setEditingLessonActivities(prev => {
+      const newActivities = [...prev];
+      const [movedActivity] = newActivities.splice(fromIndex, 1);
+      newActivities.splice(toIndex, 0, movedActivity);
+      console.log('📝 New activity order:', newActivities.map((a, i) => `${i + 1}. ${a.activity}`));
+      return newActivities;
+    });
+  };
+
+  // Add activity to editing lesson
+  const handleAddActivity = (activity: any) => {
+    const newActivity = {
+      ...activity,
+      _editId: `new-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`
+    };
+    setEditingLessonActivities(prev => [...prev, newActivity]);
+    setShowActivityPicker(false);
+    setActivitySearchQuery('');
+    setSelectedCategory('all');
+  };
+
+  // Filter activities for the picker
+  const filteredActivities = useMemo(() => {
+    if (!allActivities) return [];
+    
+    return allActivities.filter((activity: any) => {
+      const matchesSearch = !activitySearchQuery || 
+        activity.activity.toLowerCase().includes(activitySearchQuery.toLowerCase()) ||
+        getPlainTextFromHtml(activity.description).toLowerCase().includes(activitySearchQuery.toLowerCase());
+      const matchesCategory = selectedCategory === 'all' || activity.category === selectedCategory;
+      return matchesSearch && matchesCategory;
+    });
+  }, [allActivities, activitySearchQuery, selectedCategory]);
+
+  // Stack management functions
+  const handleCreateStack = () => {
+    setEditingStack(null);
+    setShowStackBuilder(true);
+  };
+
+  const handleEditStack = (stack: StackedLesson) => {
+    setEditingStack(stack);
+    setShowStackBuilder(true);
+  };
+
+  const handleSaveStack = (stackData: Omit<StackedLesson, 'id' | 'created_at'>) => {
+    if (editingStack) {
+      updateStack(editingStack.id, stackData);
+    } else {
+      createStack(stackData);
+    }
+    setShowStackBuilder(false);
+    setEditingStack(null);
+  };
+
+  const handleDeleteStack = (stackId: string) => {
+    if (confirm('Are you sure you want to delete this lesson stack? This action cannot be undone.')) {
+      deleteStack(stackId);
+    }
+  };
+
+  const handleRenameStack = (stackId: string, newName: string) => {
+    updateStack(stackId, { name: newName });
+  };
+
+  const handleAssignStackToTerm = (stackId: string) => {
+    const stack = stacks.find(s => s.id === stackId);
+    if (stack) {
+      setSelectedStackForAssignment(stack);
+      setShowAssignToTermModal(true);
+    }
+  };
+
+  const handleStackAssignment = async (termId: string) => {
+    if (!selectedStackForAssignment) {
+      console.error('❌ STACK ASSIGNMENT - No stack selected for assignment');
+      return;
+    }
+
+    const stackId = selectedStackForAssignment.id;
+    console.log('🔄 STACK ASSIGNMENT - Starting assignment:', {
+      stackId,
+      stackName: selectedStackForAssignment.name,
+      termId,
+      stackLessons: selectedStackForAssignment.lessons
+    });
+    
+    try {
+      const stack = stacks.find(s => s.id === stackId);
+      if (!stack) {
+        console.error('❌ STACK ASSIGNMENT - Stack not found:', stackId);
+        return;
+      }
+
+      // Get the current half-term data
+      // termId might be a fallback ID like "SP1" or "A1", so we need to match by name too
+      const termNameMap: Record<string, string> = {
+        'A1': 'Autumn 1',
+        'A2': 'Autumn 2',
+        'SP1': 'Spring 1',
+        'SP2': 'Spring 2',
+        'SM1': 'Summer 1',
+        'SM2': 'Summer 2'
+      };
+      
+      const currentHalfTerm = halfTerms.find(term => 
+        term.id === termId || term.name === termNameMap[termId]
+      );
+      
+      if (!currentHalfTerm) {
+        console.error('❌ STACK ASSIGNMENT - Half-term not found:', {
+          termId,
+          availableTerms: halfTerms.map(t => ({ id: t.id, name: t.name }))
+        });
+        return;
+      }
+      
+      console.log('✅ STACK ASSIGNMENT - Found half-term:', {
+        id: currentHalfTerm.id,
+        name: currentHalfTerm.name,
+        currentStacks: currentHalfTerm.stacks,
+        currentLessons: currentHalfTerm.lessons
+      });
+
+      // Get current stacks assigned to this half-term
+      const currentStacks = currentHalfTerm.stacks || [];
+      
+      // Add stack to the half-term (avoid duplicates)
+      const newStacks = [...new Set([...currentStacks, stackId])];
+      
+      console.log('🔄 STACK ASSIGNMENT - Updating half-term:', {
+        termId,
+        termName: currentHalfTerm.name,
+        oldStacks: currentStacks,
+        newStacks,
+        wasAlreadyAssigned: currentStacks.includes(stackId)
+      });
+
+      // Update the half-term with the new stack assignment
+      await updateHalfTerm(termId, currentHalfTerm.lessons, currentHalfTerm.isComplete, newStacks);
+      
+      console.log('✅ STACK ASSIGNMENT - Successfully called updateHalfTerm');
+      console.log('📋 STACK ASSIGNMENT - Half-term should now have stacks:', newStacks);
+      
+      setShowAssignToTermModal(false);
+      setSelectedStackForAssignment(null);
+      
+      alert(`✅ Stack "${stack.name}" has been assigned to ${termNameMap[termId] || termId}!`);
+      console.log('✅ STACK ASSIGNMENT - Assignment completed successfully');
+    } catch (error) {
+      console.error('❌ STACK ASSIGNMENT - Failed to assign stack to term:', error);
+      alert(`❌ Failed to assign stack: ${error.message}`);
+    }
+  };
+
+  const handleStackClick = (stack: StackedLesson) => {
+    // You could implement stack viewing functionality here
+    console.log('Stack clicked:', stack);
+  };
+
+  const handleToggleStackExpansion = (stackId: string) => {
+    setExpandedStacks(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(stackId)) {
+        newSet.delete(stackId);
+      } else {
+        newSet.add(stackId);
+      }
+      return newSet;
+    });
+  };
+
+  // Copy lessons to another class
+  const handleCopyLessonsToClass = async (lessonNumbers: string[], targetClassId: string) => {
+    try {
+      await copyLessonsToClass(lessonNumbers, targetClassId);
+      const targetClassName = customYearGroups.find(g => g.id === targetClassId)?.name || targetClassId;
+      alert(`✅ Successfully copied ${lessonNumbers.length} ${lessonNumbers.length === 1 ? 'lesson' : 'lessons'} to ${targetClassName}!`);
+    } catch (error) {
+      console.error('Failed to copy lessons:', error);
+      alert(`❌ Failed to copy lessons: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
+  };
+
+  // Save standalone lesson
+  const handleSaveStandaloneLesson = async (lessonData: any) => {
+    // Show loading toast
+    const loadingToast = toast.loading('Saving lesson...');
+    
+    try {
+      console.log('💾 Saving standalone lesson:', lessonData);
+      
+      // Generate next lesson number
+      const maxLessonNumber = Math.max(
+        0,
+        ...Object.keys(allLessonsData).map(num => {
+          const numStr = num.replace('lesson', '');
+          return parseInt(numStr) || 0;
+        })
+      );
+      const newLessonNumber = `lesson${maxLessonNumber + 1}`;
+      
+      console.log('📝 Generated lesson number:', newLessonNumber);
+      
+      // Mark as user-created lesson and ensure academic year is set (must match currentAcademicYear for load filter)
+      const lessonDataWithFlag = {
+        ...lessonData,
+        isUserCreated: true,
+        academicYear: currentAcademicYear
+      };
+      
+      // Use updateLessonData for proper Supabase and localStorage sync
+      if (!updateLessonData) {
+        throw new Error('Save function not available');
+      }
+      
+      // Save to both localStorage and Supabase
+      await updateLessonData(newLessonNumber, lessonDataWithFlag);
+      console.log('✅ Lesson saved via updateLessonData');
+      
+      // Wait a moment for state to update
+      await new Promise(resolve => setTimeout(resolve, 300));
+      
+      // Close modal
+      setShowStandaloneLessonCreator(false);
+      
+      // Show success toast
+      toast.success(`Lesson "${lessonData.title || newLessonNumber}" created successfully!`, {
+        id: loadingToast,
+        duration: 3000,
+      });
+      
+      // The lesson should now appear automatically due to state updates
+      // No page reload needed - React will re-render with the new lesson
+      
+    } catch (error) {
+      console.error('❌ Failed to create standalone lesson:', error);
+      
+      // Show error toast
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create lesson. Please try again.',
+        { id: loadingToast, duration: 5000 }
+      );
+      
+      setShowStandaloneLessonCreator(false);
+    }
+  };
+
+  // Duplicate lesson functionality
+  const handleDuplicateLesson = (lessonNumber: string) => {
+    console.log('🔄 handleDuplicateLesson called for:', lessonNumber);
+    console.log('🔍 Available lesson numbers:', Object.keys(allLessonsData));
+    console.log('🔍 All lessons data:', allLessonsData);
+    
+    const originalLesson = allLessonsData[lessonNumber];
+    if (!originalLesson) {
+      console.error('❌ Original lesson not found:', lessonNumber);
+      console.error('❌ Available lessons:', Object.keys(allLessonsData));
+      return;
+    }
+
+    console.log('📋 Original lesson data:', originalLesson);
+    console.log('📋 Original lesson grouped activities:', originalLesson.grouped);
+    console.log('📋 Original lesson categoryOrder:', originalLesson.categoryOrder);
+
+    // Find the next available lesson number
+    let newLessonNumber = lessonNumber;
+    let counter = 1;
+    while (allLessonsData[`${newLessonNumber}-copy-${counter}`]) {
+      counter++;
+    }
+    newLessonNumber = `${lessonNumber}-copy-${counter}`;
+
+    console.log('🆕 New lesson number will be:', newLessonNumber);
+
+    // Create duplicated lesson data with "dupe" indicator and preserve original name
+    const duplicatedLesson = {
+      ...originalLesson,
+      title: `${originalLesson.title || `Lesson ${lessonNumber}`} (Copy)`,
+      // Ensure all activities are preserved - explicitly copy grouped activities
+      grouped: originalLesson.grouped ? { ...originalLesson.grouped } : {},
+      categoryOrder: originalLesson.categoryOrder ? [...originalLesson.categoryOrder] : [],
+      standards: originalLesson.standards ? [...originalLesson.standards] : [],
+      // Keep all other properties the same (totalTime, etc.)
+    };
+
+    console.log('📝 Duplicated lesson data:', duplicatedLesson);
+
+    // Update the lesson data in the context
+    if (updateLessonData) {
+      console.log('💾 Calling updateLessonData...');
+      console.log('💾 New lesson number:', newLessonNumber);
+      console.log('💾 Duplicated lesson data:', duplicatedLesson);
+      
+      updateLessonData(newLessonNumber, duplicatedLesson)
+        .then(() => {
+          console.log('✅ updateLessonData completed successfully');
+        })
+        .catch((error) => {
+          console.error('❌ updateLessonData failed:', error);
+        });
+    } else {
+      console.error('❌ updateLessonData function not available');
+    }
+
+    // Also create a lesson plan entry for the duplicated lesson
+    if (addOrUpdateUserLessonPlan) {
+      const duplicatedLessonPlan = {
+        id: `lesson-${newLessonNumber}`,
+        lessonNumber: newLessonNumber,
+        title: duplicatedLesson.title,
+        activities: [], // Will be populated from the lesson data
+        duration: duplicatedLesson.totalTime || 0,
+        standards: duplicatedLesson.standards || [],
+        notes: `Duplicated from ${originalLesson.title || `Lesson ${lessonNumber}`}`,
+        created_at: new Date().toISOString(),
+        updated_at: new Date().toISOString()
+      };
+      
+      console.log('💾 Creating lesson plan for duplicated lesson...');
+      addOrUpdateUserLessonPlan(duplicatedLessonPlan);
+      console.log('✅ Lesson plan created for duplicated lesson');
+    }
+
+    console.log(`✅ Duplicated lesson ${lessonNumber} as ${newLessonNumber}`);
+  };
+
+  // Filter and sort lessons
+  const filteredAndSortedLessons = useMemo(() => {
+    try {
+      if (!allLessonsData || typeof allLessonsData !== 'object') {
+        console.warn('LessonLibrary: allLessonsData is not an object:', allLessonsData);
+        return [];
+      }
+      
+      // Safety check: Include all lessons from allLessonsData, even if not in lessonNumbers
+      // This ensures no lessons are missed due to sync issues
+      const allAvailableLessons = new Set<string>();
+      
+      // Add lessons from lessonNumbers array
+      if (lessonNumbers && Array.isArray(lessonNumbers)) {
+        lessonNumbers.forEach(num => allAvailableLessons.add(num));
+      }
+      
+      // Add any lessons that exist in allLessonsData but might be missing from lessonNumbers
+      Object.keys(allLessonsData).forEach(lessonNum => {
+        if (allLessonsData[lessonNum]) {
+          allAvailableLessons.add(lessonNum);
+        }
+      });
+      
+      // Convert to array and filter
+      let filtered = Array.from(allAvailableLessons).filter(lessonNum => {
+        const lessonData = allLessonsData[lessonNum];
+        if (!lessonData) return false;
+      
+      // Filter by search query
+      if (searchQuery) {
+        const matchesSearch = 
+          lessonNum.includes(searchQuery) || 
+          (lessonData.title && lessonData.title.toLowerCase().includes(searchQuery.toLowerCase())) ||
+          Object.values(lessonData.grouped).some((activities: any) => 
+            activities.some((activity: any) => 
+              activity.activity.toLowerCase().includes(searchQuery.toLowerCase()) ||
+              getPlainTextFromHtml(activity.description).toLowerCase().includes(searchQuery.toLowerCase())
+            )
+          );
+        
+        if (!matchesSearch) return false;
+      }
+      
+      // Filter by half-term using dynamic data instead of static mapping
+      if (selectedHalfTerm !== 'all') {
+        const lessonHalfTerm = getLessonHalfTerm(lessonNum);
+        // When filtering by a specific term, only show lessons assigned to that term
+        if (lessonHalfTerm !== selectedHalfTerm) return false;
+      }
+      // When showing "all", show ALL lessons regardless of term assignment
+      // The Lesson Library is a permanent library - lessons remain visible even when assigned to terms
+      
+      return true;
+    });
+
+    // Sort lessons
+    filtered.sort((a, b) => {
+      const lessonA = allLessonsData[a];
+      const lessonB = allLessonsData[b];
+      
+      if (!lessonA || !lessonB) return 0;
+      
+      let comparison = 0;
+      
+      switch (sortBy) {
+        case 'number':
+          // Handle both "1" and "lesson1" formats
+          const numA = parseInt(a.replace('lesson', '')) || 0;
+          const numB = parseInt(b.replace('lesson', '')) || 0;
+          comparison = numA - numB;
+          break;
+        case 'title':
+          comparison = (lessonA.title || `Lesson ${a}`).localeCompare(lessonB.title || `Lesson ${b}`);
+          break;
+        case 'activities':
+          const activitiesA = Object.values(lessonA.grouped).reduce((sum: number, acts: any) => sum + acts.length, 0);
+          const activitiesB = Object.values(lessonB.grouped).reduce((sum: number, acts: any) => sum + acts.length, 0);
+          comparison = activitiesA - activitiesB;
+          break;
+        case 'time':
+          comparison = lessonA.totalTime - lessonB.totalTime;
+          break;
+      }
+      
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
+
+    return filtered;
+    } catch (error) {
+      console.error('LessonLibrary: Error filtering lessons:', error);
+      return [];
+    }
+  }, [lessonNumbers, allLessonsData, searchQuery, selectedHalfTerm, sortBy, sortOrder, halfTerms]);
+
+  const toggleSort = (field: 'number' | 'title' | 'activities' | 'time') => {
+    if (sortBy === field) {
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
+    } else {
+      setSortBy(field);
+      setSortOrder('asc');
+    }
+  };
+
+  const handleLessonClick = (lessonNumber: string) => {
+    if (onLessonSelect) {
+      onLessonSelect(lessonNumber);
+    } else {
+      setSelectedLessonForDetails(lessonNumber);
+    }
+  };
+
+  const handleAssignToHalfTerm = (lessonNumber: string, halfTermId: string) => {
+    console.log('LessonLibrary: Assigning lesson', lessonNumber, 'to half-term', halfTermId);
+    if (onAssignToUnit) {
+      onAssignToUnit(lessonNumber, halfTermId);
+    }
+  };
+
+  // Show loading state
+  if (loading) {
+    return (
+      <div className={`bg-white rounded-xl shadow-lg  overflow-hidden ${className}`}>
+        <div className="p-6 border-b border-gray-200 text-white"
+style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+          <div className="flex items-center space-x-3">
+            <BookOpen className="h-6 w-6" />
+            <h2 className="text-xl font-bold">Lesson Library</h2>
+          </div>
+        </div>
+        <div className="p-8 text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading lessons...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Show error state if no data (but only after loading is complete)
+  if (!loading && (!lessonNumbers || lessonNumbers.length === 0 || !allLessonsData || Object.keys(allLessonsData).length === 0)) {
+    return (
+      <div className={`bg-white rounded-xl shadow-lg  overflow-hidden ${className}`}>
+        <div className="p-6 border-b border-gray-200 text-white"
+style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <BookOpen className="h-6 w-6" />
+              <h2 className="text-xl font-bold">Lesson Library</h2>
+            </div>
+            <div className="flex items-center gap-2">
+            {/* Create Lesson Button in Header */}
+            <button
+              onClick={() => {
+                setEditingLessonForCreator(null);
+                setShowStandaloneLessonCreator(true);
+              }}
+              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              title="Create a new lesson"
+            >
+              <Plus className="h-5 w-5" />
+              <span className="text-sm font-semibold">Create Lesson</span>
+            </button>
+            {showLoadCommediaButton && (
+              <button
+                onClick={handleLoadCommediaLessons}
+                disabled={loadingExample}
+                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                title="Load Commedia dell'arte example lessons (8 lessons)"
+              >
+                <span className="text-lg" aria-hidden>🎭</span>
+                <span className="text-sm font-semibold">{loadingExample ? 'Loading…' : 'Load Commedia pack'}</span>
+              </button>
+            )}
+            {stacksFromPacks.map(stack => (
+              <button
+                key={stack.id}
+                onClick={() => handleAddUnitFromPack(stack)}
+                disabled={addingStackId === stack.id}
+                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                title={`Add unit: ${stack.name} (${stack.lessons?.length || 0} lessons)`}
+              >
+                <Layers className="h-5 w-5" />
+                <span className="text-sm font-semibold">{addingStackId === stack.id ? 'Adding…' : `Add unit: ${stack.name}`}</span>
+              </button>
+            ))}
+            </div>
+          </div>
+        </div>
+        <div className="p-8 text-center">
+          <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+          <p className="text-gray-600 mb-2">No lessons found for {currentSheetInfo.display}.</p>
+          <p className="text-sm text-gray-500 mb-4">Use the "Create Lesson" button above to get started, or refresh to load from the server.</p>
+          <button
+            onClick={async () => {
+              setRefreshing(true);
+              try {
+                await refreshData();
+                toast.success('Refreshed');
+              } catch {
+                toast.error('Refresh failed. Try again.');
+              } finally {
+                setRefreshing(false);
+              }
+            }}
+            disabled={refreshing}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-60"
+          >
+            <RotateCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+            {refreshing ? 'Loading…' : 'Refresh'}
+          </button>
+        </div>
+      {/* Standalone Lesson Creator Modal */}
+      {showStandaloneLessonCreator && (
+        <StandaloneLessonCreator
+          onClose={() => {
+            setShowStandaloneLessonCreator(false);
+            setEditingLessonForCreator(null);
+          }}
+          onSave={handleSaveStandaloneLesson}
+          editingLesson={editingLessonForCreator || undefined}
+          yearGroup={currentSheetInfo.sheet}
+        />
+      )}
+    </div>
+  );
+}
+
+  return (
+    <div className={`bg-white rounded-xl shadow-lg  overflow-hidden ${className}`}>
+      {/* Header */}
+      <div className="p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center space-x-3">
+            {showTrash ? <Trash2 className="h-6 w-6" /> : <BookOpen className="h-6 w-6" />}
+            <div>
+              <h2 className="text-xl font-bold">{showTrash ? 'Trash' : 'Lesson Library'}</h2>
+              <p className="text-teal-100 text-sm">
+                {showTrash 
+                  ? `${Object.keys(trashLessons || {}).length} deleted lesson${Object.keys(trashLessons || {}).length !== 1 ? 's' : ''}`
+                  : `${filteredAndSortedLessons.length} of ${lessonNumbers.length} lessons`
+                }
+              </p>
+            </div>
+          </div>
+          
+          <div className="flex items-center space-x-3">
+            {/* Toggle between Library and Trash */}
+            <button
+              onClick={() => setShowTrash(!showTrash)}
+              title={showButtonHelp ? (showTrash ? 'Back to Lesson Library' : 'View deleted lessons (Trash)') : undefined}
+              className={`px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
+                showTrash 
+                  ? 'bg-white bg-opacity-20 hover:bg-opacity-30' 
+                  : 'hover:bg-white hover:bg-opacity-10'
+              }`}
+            >
+              {showTrash ? (
+                <>
+                  <BookOpen className="h-4 w-4" />
+                  <span className="text-sm">Library</span>
+                </>
+              ) : (
+                <>
+                  <Trash2 className="h-4 w-4" />
+                  <span className="text-sm">Trash ({Object.keys(trashLessons || {}).length})</span>
+                </>
+              )}
+            </button>
+            
+            {!showTrash && (
+              <>
+            {/* View Mode Toggle */}
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={() => setViewMode('grid')}
+                title={showButtonHelp ? 'Grid view: large cards with full lesson info' : undefined}
+                className={`p-2 rounded-lg transition-colors duration-200 ${
+                  viewMode === 'grid' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
+                }`}
+              >
+                <Grid className="h-5 w-5" />
+              </button>
+              <button
+                onClick={() => setViewMode('list')}
+                title={showButtonHelp ? 'List view: one lesson per row with details' : undefined}
+                className={`p-2 rounded-lg transition-colors duration-200 ${
+                  viewMode === 'list' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
+                }`}
+              >
+                <List className="h-5 w-5" />
+              </button>
+            </div>
+            {/* Refresh lessons from Supabase */}
+            <button
+              onClick={async () => {
+                setRefreshing(true);
+                try {
+                  await refreshData();
+                  toast.success('Lesson library refreshed');
+                } catch (e) {
+                  toast.error('Refresh failed. Try again.');
+                } finally {
+                  setRefreshing(false);
+                }
+              }}
+              disabled={refreshing}
+              title="Reload lessons from server"
+              className="p-2 rounded-lg transition-colors duration-200 hover:bg-white hover:bg-opacity-10 disabled:opacity-60"
+            >
+              <RotateCcw className={`h-5 w-5 ${refreshing ? 'animate-spin' : ''}`} />
+            </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+
+
+      <div className="p-8">
+        {/* Lesson Stacks (collapsible unit) – assign to term; add to calendar splits over timetable days */}
+        {!showTrash && (
+          <div className="mb-6 border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">
+            <button
+              type="button"
+              onClick={() => setShowStacksSection(prev => !prev)}
+              className="w-full flex items-center justify-between px-5 py-4 text-left hover:bg-gray-100 transition-colors"
+              aria-expanded={showStacksSection}
+            >
+              <div className="flex items-center gap-3">
+                <Layers className="h-5 w-5 text-teal-600" />
+                <span className="font-semibold text-gray-900">Lesson Stacks / Units</span>
+                <span className="text-sm text-gray-600">({stacks.length})</span>
+              </div>
+              <span className="text-gray-500">
+                {showStacksSection ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+              </span>
+            </button>
+            {showStacksSection && (
+              <div className="px-5 pb-5 pt-0 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-sm text-gray-600">
+                    Stacks are units of lessons. Assign a stack to a term, then add it to the calendar from a start date—it will split over the days you have this class.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={handleCreateStack}
+                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create Stack
+                  </button>
+                </div>
+                {stacks.length === 0 ? (
+                  <p className="text-sm text-gray-500 py-4">No stacks yet. Create a stack to group lessons and assign them to a term.</p>
+                ) : (
+                  <div className="space-y-3">
+                    {stacks.map((stack) => (
+                      <StackedLessonCard
+                        key={stack.id}
+                        stack={stack}
+                        allLessonsData={allLessonsData}
+                        theme={getThemeForClass(currentSheetInfo.sheet)}
+                        onClick={() => handleStackClick(stack)}
+                        onEdit={() => handleEditStack(stack)}
+                        onDelete={() => handleDeleteStack(stack.id)}
+                        onRename={(newName) => handleRenameStack(stack.id, newName)}
+                        onAssignToTerm={() => handleAssignStackToTerm(stack.id)}
+                        onPrint={(s) => setPrintStackId(s.id)}
+                        viewMode="list"
+                        isExpanded={expandedStacks.has(stack.id)}
+                        onToggleExpansion={() => handleToggleStackExpansion(stack.id)}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Search and Filters */}
+        <div className="flex flex-col md:flex-row gap-4 items-stretch md:items-center mb-6">
+          <div className="relative flex-1 max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <input
+              type="text"
+              placeholder="Search lessons..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full h-10 pl-10 pr-4 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-teal-500 focus:outline-none"
+              dir="ltr"
+            />
+          </div>
+          
+          <select
+            value={selectedHalfTerm}
+            onChange={(e) => setSelectedHalfTerm(e.target.value)}
+            className="h-10 px-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none w-48"
+            dir="ltr"
+          >
+            <option value="all" className="text-gray-900">All Half-Terms</option>
+            {HALF_TERMS.map(term => (
+              <option key={term.id} value={term.id} className="text-gray-900">
+                {term.name} ({term.months})
+              </option>
+            ))}
+          </select>
+          
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => toggleSort('number')}
+              title={showButtonHelp ? 'Sort by lesson number' : undefined}
+              className={`flex items-center justify-center space-x-1 h-10 px-3 rounded-lg transition-colors duration-200 ${
+                sortBy === 'number' ? 'bg-teal-600 text-white border border-teal-600' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
+              }`}
+            >
+              <span className="text-sm">#</span>
+              {sortBy === 'number' && (sortOrder === 'asc' ? <ArrowUpDown className="h-4 w-4" /> : <ArrowDownUp className="h-4 w-4" />)}
+            </button>
+            <button
+              onClick={() => toggleSort('time')}
+              title={showButtonHelp ? 'Sort by duration (time)' : undefined}
+              className={`flex items-center justify-center space-x-1 h-10 px-3 rounded-lg transition-colors duration-200 ${
+                sortBy === 'time' ? 'bg-teal-600 text-white border border-teal-600' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
+              }`}
+            >
+              <Clock className="h-4 w-4" />
+              {sortBy === 'time' && (sortOrder === 'asc' ? <ArrowUpDown className="h-4 w-4" /> : <ArrowDownUp className="h-4 w-4" />)}
+            </button>
+            <button
+              onClick={() => toggleSort('activities')}
+              title={showButtonHelp ? 'Sort by number of activities' : undefined}
+              className={`flex items-center justify-center space-x-1 h-10 px-3 rounded-lg transition-colors duration-200 ${
+                sortBy === 'activities' ? 'bg-teal-600 text-white border border-teal-600' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
+              }`}
+            >
+              <Tag className="h-4 w-4" />
+              {sortBy === 'activities' && (sortOrder === 'asc' ? <ArrowUpDown className="h-4 w-4" /> : <ArrowDownUp className="h-4 w-4" />)}
+            </button>
+            
+            {/* Create Lesson Button */}
+            <button
+              onClick={() => {
+                setEditingLessonForCreator(null);
+                setShowStandaloneLessonCreator(true);
+              }}
+              className="flex items-center justify-center space-x-2 h-10 px-5 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
+              title={showButtonHelp ? 'Create a new lesson from scratch' : undefined}
+            >
+              <FileText className="h-4 w-4" />
+              <span>Create Lesson</span>
+            </button>
+
+            {showLoadCommediaButton && (
+              <button
+                onClick={handleLoadCommediaLessons}
+                disabled={loadingExample}
+                className="flex items-center justify-center space-x-2 h-10 px-5 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
+                title="Load Commedia dell'arte – KS3 Drama example lessons (8 lessons)"
+              >
+                <span aria-hidden>🎭</span>
+                <span>{loadingExample ? 'Loading…' : 'Load Commedia pack'}</span>
+              </button>
+            )}
+
+            {stacksFromPacks.map(stack => (
+              <button
+                key={stack.id}
+                onClick={() => handleAddUnitFromPack(stack)}
+                disabled={addingStackId === stack.id}
+                className="flex items-center justify-center space-x-2 h-10 px-5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
+                title={`Add unit: ${stack.name} (${stack.lessons?.length || 0} lessons)`}
+              >
+                <Layers className="h-4 w-4" />
+                <span>{addingStackId === stack.id ? 'Adding…' : `Add unit: ${stack.name}`}</span>
+              </button>
+            ))}
+
+            {/* Copy Lesson Button */}
+            <button
+              onClick={() => {
+                setClassCopyInitialLessons([]);
+                setShowClassCopyModal(true);
+              }}
+              className="flex items-center justify-center space-x-2 h-10 px-5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
+              title={showButtonHelp ? 'Copy lessons to another year group' : undefined}
+            >
+              <Copy className="h-4 w-4" />
+              <span>Copy Lesson</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Trash View */}
+      {showTrash ? (
+        <div className="p-6">
+          {Object.keys(trashLessons || {}).length === 0 ? (
+            <div className="text-center py-12">
+              <Trash2 className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">Trash is empty</h3>
+              <p className="text-gray-600">Deleted lessons will appear here</p>
+            </div>
+          ) : (
+            <div className={`
+              ${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8' : 'space-y-4 sm:space-y-6'}
+            `}>
+              {Object.entries(trashLessons || {}).map(([lessonNum, lessonData], index) => {
+                const trashedAt = (lessonData as any)._trashedAt;
+                const trashedDate = trashedAt ? new Date(trashedAt).toLocaleDateString() : '';
+                
+                return (
+                  <div
+                    key={lessonNum}
+                    className={`bg-white rounded-lg shadow-md border-2 border-gray-300 p-4 ${
+                      viewMode === 'list' ? 'flex items-center justify-between' : ''
+                    }`}
+                  >
+                    <div className={viewMode === 'list' ? 'flex-1' : ''}>
+                      <div className="flex items-center justify-between mb-2">
+                        <h4 className="font-semibold text-gray-900">{lessonData.title || `Lesson ${lessonNum}`}</h4>
+                        {trashedDate && (
+                          <span className="text-xs text-gray-500">Deleted {trashedDate}</span>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 mb-2">
+                        {Object.values(lessonData.grouped || {}).reduce((sum: number, acts: any) => sum + (Array.isArray(acts) ? acts.length : 0), 0)} activities
+                      </p>
+                    </div>
+                    <div className={`flex items-center space-x-2 ${viewMode === 'list' ? 'ml-4' : 'mt-3'}`}>
+                      <button
+                        onClick={() => {
+                          restoreLesson(lessonNum);
+                          toast.success('Lesson restored', { duration: 3000 });
+                        }}
+                        className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded-lg text-sm flex items-center space-x-1 transition-colors"
+                        title="Restore lesson"
+                      >
+                        <RotateCcw className="h-4 w-4" />
+                        <span className="hidden sm:inline">Restore</span>
+                      </button>
+                      <button
+                        onClick={() => {
+                          if (confirm(`Are you sure you want to permanently delete "${lessonData.title || `Lesson ${lessonNum}`}"? This cannot be undone.`)) {
+                            permanentDeleteFromTrash(lessonNum);
+                            toast.success('Lesson permanently deleted', { duration: 3000 });
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm flex items-center space-x-1 transition-colors"
+                        title="Permanently delete"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        <span className="hidden sm:inline">Delete</span>
+                      </button>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+      {/* Regular Lessons Section */}
+      <div className="p-6">
+        {filteredAndSortedLessons.length === 0 ? (
+            <div className="text-center py-12">
+              <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
+              <h3 className="text-lg font-medium text-gray-900 mb-2">No lessons found</h3>
+              <p className="text-gray-600 mb-6">
+                {searchQuery || selectedHalfTerm !== 'all'
+                  ? 'Try adjusting your search or filters'
+                  : 'Create your first lesson to get started'
+                }
+              </p>
+              <div className="flex items-center justify-center gap-3">
+                {searchQuery || selectedHalfTerm !== 'all' ? (
+                  <button 
+                    onClick={() => {
+                      setSearchQuery('');
+                      setSelectedHalfTerm('all');
+                    }}
+                    className="px-4 py-2 btn-primary text-white rounded-lg text-sm"
+                  >
+                    Clear Filters
+                  </button>
+                ) : (
+                  <>
+                  </>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className={`
+              ${viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8' : 'space-y-4 sm:space-y-6'}
+            `}>
+              {filteredAndSortedLessons.map((lessonNum, index) => {
+                const lessonData = allLessonsData[lessonNum];
+                
+                // Debug logging removed (was logging for every lesson on every render)
+                // Uncomment if you need to debug a specific lesson issue:
+                // console.log(`Lesson ${lessonNum}:`, lessonData?.title);
+                
+                if (!lessonData) {
+                  console.warn(`❌ Missing lesson data for lesson ${lessonNum}`);
+                  return null;
+                }
+                
+                return (
+                  <LessonLibraryCard
+                    key={lessonNum}
+                    lessonNumber={lessonNum}
+                    displayNumber={index + 1}
+                    lessonData={lessonData}
+                    viewMode={viewMode}
+                    onClick={() => handleLessonClick(lessonNum)}
+                    theme={theme}
+                    onAssignToUnit={handleAssignToHalfTerm}
+                    halfTerms={halfTerms}
+                    onEdit={() => handleStartEditing(lessonNum)}
+                    onDuplicate={() => handleDuplicateLesson(lessonNum)}
+                    onCopyToYear={() => {
+                      setClassCopyInitialLessons([lessonNum]);
+                      setShowClassCopyModal(true);
+                    }}
+                    onShare={() => {}} // Share functionality handled internally in card
+                  />
+                );
+              })}
+            </div>
+        )}
+      </div>
+        </>
+      )}
+
+      {/* Activity Picker Modal */}
+      {showActivityPicker && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
+            <div className="p-4 border-b border-gray-200 text-white"
+style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Add Activity to Lesson</h3>
+                <button
+                  onClick={() => setShowActivityPicker(false)}
+                  className="p-1 hover:bg-white hover:bg-opacity-20 rounded"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              
+              {/* Search and Filter */}
+              <div className="flex space-x-3 mt-3">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Search activities..."
+                    value={activitySearchQuery}
+                    onChange={(e) => setActivitySearchQuery(e.target.value)}
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
+                <div className="relative" style={{ minWidth: '250px' }}>
+                  <SimpleNestedCategoryDropdown
+                    selectedCategory={selectedCategory === 'all' ? '' : selectedCategory}
+                    onCategoryChange={(category) => setSelectedCategory(category || 'all')}
+                    placeholder="All Categories"
+                    className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 max-h-96 overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {filteredActivities.map((activity: any, index: number) => (
+                  <button
+                    key={`${activity.id || index}-${activity.activity}`}
+                    onClick={() => handleAddActivity(activity)}
+                    className="text-left p-4 bg-gray-50 hover:bg-blue-50 rounded-lg  hover:border-blue-300 transition-all duration-200"
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <h4 className="font-medium text-gray-900 text-sm mb-1">
+                          {activity.activity}
+                        </h4>
+                        <div className="flex items-center space-x-2 mb-2">
+                          <span className="text-xs px-2 py-1 bg-gray-200 rounded-full text-gray-600">
+                            {activity.category}
+                          </span>
+                          {activity.time > 0 && (
+                            <span className="text-xs text-gray-500 flex items-center">
+                              <Clock className="h-3 w-3 mr-1" />
+                              {activity.time}m
+                            </span>
+                          )}
+                        </div>
+                        <div 
+                          className="text-xs text-gray-600 line-clamp-2 prose prose-xs max-w-none"
+                          dangerouslySetInnerHTML={renderHtmlContent(activity.description)}
+                        />
+                      </div>
+                      <Plus className="h-5 w-5 text-blue-600 ml-2 flex-shrink-0" />
+                    </div>
+                  </button>
+                ))}
+              </div>
+              
+              {filteredActivities.length === 0 && (
+                <div className="text-center py-8 text-gray-500">
+                  <p>No activities found</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lesson Edit Modal */}
+      {showEditModal && editingLessonNumber && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
+            {/* Edit Header */}
+            <div className="p-4 border-b border-gray-200 text-white"
+style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+              <div className="flex items-center justify-between">
+                <div className="flex items-center space-x-2">
+                  <Edit3 className="h-5 w-5" />
+                  <h3 className="text-lg font-semibold">
+                    Editing: {allLessonsData[editingLessonNumber]?.title || `Lesson ${editingLessonNumber}`}
+                  </h3>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={handleSaveEditing}
+                    className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg flex items-center space-x-2 transition-colors"
+                  >
+                    <Check className="h-4 w-4" />
+                    <span>Save Changes</span>
+                  </button>
+                  <button
+                    onClick={cancelEditing}
+                    className="px-4 py-2 bg-transparent hover:bg-white hover:bg-opacity-10 text-white font-medium rounded-lg flex items-center space-x-2 transition-colors"
+                  >
+                    <X className="h-4 w-4" />
+                    <span>Cancel</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Header/Footer Toggle */}
+            <div className="border-b border-gray-200 bg-gray-50 px-6 py-3">
+              <label className="flex items-center space-x-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={showHeaderFooterEdit}
+                  onChange={(e) => setShowHeaderFooterEdit(e.target.checked)}
+                  className="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                />
+                <span className="text-sm font-medium text-gray-700">
+                  Edit header and footer text
+                </span>
+              </label>
+            </div>
+
+            {/* Header/Footer Edit Section - Collapsible */}
+            {showHeaderFooterEdit && (
+              <div className="border-b border-gray-200 bg-blue-50 px-6 py-4">
+                <div className="space-y-4">
+                  {/* Header Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Custom Header
+                    </label>
+                    <input
+                      type="text"
+                      value={customHeader}
+                      onChange={(e) => setCustomHeader(e.target.value)}
+                      placeholder={`Leave blank for default: "Lesson ${editingLessonNumber}"`}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Default: Lesson {editingLessonNumber}
+                    </p>
+                  </div>
+
+                  {/* Footer Input */}
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Custom Footer
+                    </label>
+                    <input
+                      type="text"
+                      value={customFooter}
+                      onChange={(e) => setCustomFooter(e.target.value)}
+                      placeholder="Leave blank for default footer"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      Default: {settings?.branding?.loginTitle || 'Creative Curriculum Designer'} • Lesson {editingLessonNumber} • {currentSheetInfo.display} • © {settings?.branding?.footerCompanyName || 'Rhythmstix'} {settings?.branding?.footerCopyrightYear || new Date().getFullYear()}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Activities List - Editable with Drag & Drop */}
+            <div className="flex-1 overflow-hidden">
+              <div className="p-6 max-h-[55vh] overflow-y-auto">
+                <DndProvider backend={HTML5Backend}>
+                  <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    {editingLessonActivities.map((activity: any, activityIndex: number) => (
+                      <MinimizableActivityCard
+                        key={activity._editId || `activity-${activityIndex}`}
+                        activity={activity}
+                        index={activityIndex}
+                        onRemove={handleDeleteActivity}
+                        onReorder={handleReorderActivity}
+                        onActivityClick={(activity) => {
+                          // Optional: Could open activity details modal here
+                          console.log('Activity clicked:', activity.activity);
+                        }}
+                      />
+                    ))}
+                  </div>
+                </DndProvider>
+                
+                {editingLessonActivities.length === 0 && (
+                  <div className="text-center py-12 text-gray-500">
+                    <BookOpen className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                    <p className="text-lg">No activities in this lesson</p>
+                    <p className="text-sm">Add activities to build your lesson</p>
+                  </div>
+                )}
+              </div>
+
+              {/* Add Activity Button */}
+              <div className="border-t border-gray-200 p-4 bg-gray-50">
+                <button
+                  onClick={() => setShowActivityPicker(true)}
+                  className="w-full px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                >
+                  <Plus className="h-5 w-5" />
+                  <span>Add Activity to Lesson</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lesson Exporter */}
+      {selectedLessonForExport && (
+        <LessonExporter
+          lessonNumber={selectedLessonForExport}
+          onClose={() => setSelectedLessonForExport(null)}
+        />
+      )}
+
+      {/* Lesson Details Modal */}
+      {selectedLessonForDetails && (
+        <LessonDetailsModal
+          lessonNumber={selectedLessonForDetails}
+          onClose={() => setSelectedLessonForDetails(null)}
+          theme={theme}
+          onExport={() => {
+            setSelectedLessonForExport(selectedLessonForDetails);
+            setSelectedLessonForDetails(null);
+          }}
+          onEdit={() => handleStartEditing(selectedLessonForDetails)}
+        />
+      )}
+
+      {/* Stack Builder Modal */}
+      {showStackBuilder && (
+        <LessonStackBuilder
+          isOpen={showStackBuilder}
+          onClose={() => {
+            setShowStackBuilder(false);
+            setEditingStack(null);
+          }}
+          onSave={handleSaveStack}
+          editingStack={editingStack}
+          allLessonsData={allLessonsData}
+          lessonNumbers={lessonNumbers}
+          existingStacks={stacks}
+        />
+      )}
+
+      {/* Print Stack as Unit Modal */}
+      {printStackId && (() => {
+        const stackToPrint = stacks.find(s => s.id === printStackId);
+        const lessonNums = stackToPrint?.lessons?.filter((l): l is string => typeof l === 'string') ?? [];
+        return (
+          <LessonPrintModal
+            lessonNumbers={lessonNums}
+            unitName={stackToPrint?.name ?? 'Stack'}
+            isUnitPrint={true}
+            onClose={() => setPrintStackId(null)}
+          />
+        );
+      })()}
+
+      {/* Assign Stack to Term Modal */}
+      {selectedStackForAssignment && (
+        <AssignToHalfTermModal
+          isOpen={showAssignToTermModal}
+          onClose={() => {
+            setShowAssignToTermModal(false);
+            setSelectedStackForAssignment(null);
+          }}
+          lessonNumber={selectedStackForAssignment.name}
+          halfTerms={halfTerms}
+          onAssign={handleStackAssignment}
+        />
+      )}
+
+      {/* Class Copy Modal */}
+      <ClassCopyModal
+        isOpen={showClassCopyModal}
+        onClose={() => {
+          setShowClassCopyModal(false);
+          setClassCopyInitialLessons([]);
+        }}
+        onCopy={handleCopyLessonsToClass}
+        availableClasses={customYearGroups}
+        currentClass={currentSheetInfo.sheet}
+        allLessonsData={allLessonsData}
+        initialSelectedLessons={classCopyInitialLessons}
+      />
+
+      {/* Standalone Lesson Creator Modal */}
+      {showStandaloneLessonCreator && (
+        <StandaloneLessonCreator
+          onClose={() => {
+            setShowStandaloneLessonCreator(false);
+            setEditingLessonForCreator(null);
+          }}
+          onSave={handleSaveStandaloneLesson}
+          editingLesson={editingLessonForCreator || undefined}
+          yearGroup={currentSheetInfo.sheet}
+        />
+      )}
+
+    </div>
+  );
+}

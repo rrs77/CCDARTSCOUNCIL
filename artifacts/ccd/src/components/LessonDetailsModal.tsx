@@ -1,0 +1,713 @@
+import React, { useState, useRef, useEffect } from 'react';
+import { X, Download, Edit3, Save, Check, Tag, Clock, Users, ExternalLink, FileText, Trash2, Share2, Target, Link, Loader2 } from 'lucide-react';
+import { useData } from '../contexts/DataContext';
+import { useSettings } from '../contexts/SettingsContextNew';
+import { ActivityDetails } from './ActivityDetails';
+import { EditableText } from './EditableText';
+import { NestedStandardsBrowser } from './NestedStandardsBrowser';
+import { LessonPrintModal } from './LessonPrintModal';
+import { ResourceViewer } from './ResourceViewer';
+import { useShareLesson } from '../hooks/useShareLesson';
+import toast from 'react-hot-toast';
+import type { Activity, LessonData } from '../contexts/DataContext';
+
+interface LessonDetailsModalProps {
+  lessonNumber: string;
+  displayNumber?: number;
+  onClose: () => void;
+  theme: {
+    primary: string;
+    secondary: string;
+    accent: string;
+    gradient: string;
+  };
+  onExport?: () => void;
+  onEdit?: () => void;
+  unitId?: string;
+  unitName?: string;
+  halfTermId?: string;
+  halfTermName?: string;
+}
+
+export function LessonDetailsModal({ 
+  lessonNumber,
+  displayNumber,
+  onClose, 
+  theme,
+  onExport,
+  onEdit,
+  unitId,
+  unitName,
+  halfTermId,
+  halfTermName
+}: LessonDetailsModalProps) {
+  const { allLessonsData, updateLessonTitle, lessonStandards, deleteLesson, updateHalfTerm, getLessonsForHalfTerm } = useData();
+  const { getCategoryColor } = useSettings();
+  const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
+  const [initialResource, setInitialResource] = useState<{url: string, title: string, type: string} | null>(null);
+  const [selectedResource, setSelectedResource] = useState<{url: string, title: string, type: string} | null>(null);
+  const [showEyfsSelector, setShowEyfsSelector] = useState(false);
+  const [editingLessonTitle, setEditingLessonTitle] = useState(false);
+  const [lessonTitleValue, setLessonTitleValue] = useState('');
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [showPrintModal, setShowPrintModal] = useState(false);
+  const { shareLesson, isSharing: isSharingLink } = useShareLesson();
+
+  const handleCopyLink = async () => {
+    try {
+      const url = await shareLesson(lessonNumber);
+      if (url) {
+        toast.success('Link copied to clipboard', { duration: 3000, icon: '🔗' });
+      }
+    } catch (err: any) {
+      const msg = err?.message || 'Failed to copy link';
+      toast.error(msg, { duration: 8000 });
+    }
+  };
+
+  const lessonData = allLessonsData[lessonNumber];
+
+  // Handle resource clicks - open in ResourceViewer modal
+  const handleResourceClick = (url: string, title: string, type: string) => {
+    setSelectedResource({ url, title, type });
+  };
+
+  // Initialize lesson title when component mounts
+  useEffect(() => {
+    if (lessonData?.title) {
+      setLessonTitleValue(lessonData.title);
+    } else {
+      setLessonTitleValue(`Lesson ${lessonNumber}`);
+    }
+  }, [lessonData, lessonNumber]);
+
+  if (!lessonData) {
+    return (
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+        <div className="bg-white rounded-card shadow-soft p-6 max-w-md w-full">
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Error</h2>
+          <p className="text-gray-600 mb-6">Lesson data not found for lesson {lessonNumber}.</p>
+          <div className="flex justify-end">
+            <button
+              onClick={onClose}
+              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg"
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  const handleSaveLessonTitle = () => {
+    if (lessonTitleValue.trim()) {
+      updateLessonTitle(lessonNumber, lessonTitleValue.trim());
+      setEditingLessonTitle(false);
+    }
+  };
+
+  const handleDeleteLesson = () => {
+    setShowDeleteConfirm(true);
+  };
+
+  const confirmDelete = () => {
+    // If opened from UnitViewer (has halfTermId), only remove from term, don't delete permanently
+    if (halfTermId) {
+      try {
+        const lessons = getLessonsForHalfTerm ? getLessonsForHalfTerm(halfTermId) : [];
+        const newLessons = lessons.filter(num => num !== lessonNumber);
+        
+        if (updateHalfTerm) {
+          updateHalfTerm(halfTermId, newLessons, false);
+        }
+        
+        toast.success('Lesson removed from term', {
+          duration: 3000,
+          icon: '✅',
+        });
+      } catch (error) {
+        console.error('Failed to remove lesson from term:', error);
+        toast.error('Failed to remove lesson from term', {
+          duration: 3000,
+        });
+      }
+    } else {
+      // Permanently delete lesson (only from Lesson Library)
+      deleteLesson(lessonNumber);
+    }
+    onClose();
+  };
+
+  // Calculate total activities
+  const totalActivities = React.useMemo(() => {
+    try {
+      if (!lessonData || !lessonData.grouped) return 0;
+      return Object.values(lessonData.grouped).reduce(
+        (sum, activities) => sum + (Array.isArray(activities) ? activities.length : 0),
+        0
+      );
+    } catch (error) {
+      console.error('Error calculating total activities:', error);
+      return 0;
+    }
+  }, [lessonData]);
+
+  // Get standards count
+  const standardsCount = (lessonStandards[lessonNumber] || []).length;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-2 sm:p-4 z-[60] animate-fade-in">
+      <div className="bg-white rounded-card shadow-soft w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[98vh] sm:max-h-[95vh] overflow-hidden flex flex-col animate-scale-in">
+        {/* Header */}
+        <div 
+          className="p-4 text-white relative"
+          style={{ 
+            background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)'
+          }}
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              {editingLessonTitle ? (
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="text"
+                    value={lessonTitleValue}
+                    onChange={(e) => setLessonTitleValue(e.target.value)}
+                    className="text-xl font-bold bg-white bg-opacity-20 text-white border border-white border-opacity-30 rounded px-2 py-1 focus:outline-none focus:ring-2 focus:ring-white focus:ring-opacity-50"
+                    autoFocus
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') handleSaveLessonTitle();
+                      if (e.key === 'Escape') setEditingLessonTitle(false);
+                    }}
+                  />
+                  <button
+                    onClick={handleSaveLessonTitle}
+                    className="p-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-white"
+                  >
+                    <Check className="h-5 w-5" />
+                  </button>
+                  <button
+                    onClick={() => setEditingLessonTitle(false)}
+                    className="p-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-white"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                </div>
+              ) : (
+                <h1 className="text-xl font-bold mb-1 flex items-center space-x-2">
+                  <span>{lessonData.title || `Lesson ${lessonNumber}`}</span>
+                  <button
+                    onClick={() => setEditingLessonTitle(true)}
+                    className="p-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-white"
+                    title="Edit lesson title"
+                  >
+                    <Edit3 className="h-4 w-4" />
+                  </button>
+                </h1>
+              )}
+              <p className="text-white text-opacity-90 text-sm">
+                {lessonData.totalTime} minutes • {lessonData.categoryOrder.length} categories
+              </p>
+            </div>
+            <div className="flex items-center space-x-2">
+              {onEdit && (
+                <button
+                  onClick={() => {
+                    onEdit();
+                    onClose();
+                  }}
+                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2"
+                  title="Edit Lesson"
+                >
+                  <Edit3 className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+                  <span className="text-sm font-medium">Edit</span>
+                </button>
+              )}
+              <button
+                onClick={handleDeleteLesson}
+                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2"
+                title="Delete Lesson"
+              >
+                <Trash2 className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-sm font-medium">Delete</span>
+              </button>
+              <button
+                onClick={() => setShowEyfsSelector(!showEyfsSelector)}
+                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2"
+                title="Manage Standards"
+              >
+                <Tag className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-sm font-medium">Standards</span>
+              </button>
+              
+              {/* Export PDF Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setShowPrintModal(true);
+                }}
+                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2"
+                title="Export PDF"
+              >
+                <Download className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+                <span className="text-sm font-medium">Export PDF</span>
+              </button>
+              {/* Copy Link Button */}
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleCopyLink();
+                }}
+                disabled={isSharingLink}
+                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2 disabled:opacity-60"
+                title="Copy link to lesson PDF"
+              >
+                {isSharingLink ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin flex-shrink-0" aria-hidden="true" />
+                    <span className="text-sm font-medium">Creating link…</span>
+                  </>
+                ) : (
+                  <>
+                    <Link className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+                    <span className="text-sm font-medium">Copy Link</span>
+                  </>
+                )}
+              </button>
+              <button
+                onClick={onClose}
+                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group"
+                title="Close lesson view"
+              >
+                <X className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
+              </button>
+            </div>
+          </div>
+        </div>
+
+        {/* Content - Scrollable */}
+        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+          {/* Standards Selector (conditionally shown) */}
+          {showEyfsSelector && (
+            <div className="mb-6">
+              <NestedStandardsBrowser lessonNumber={lessonNumber} />
+            </div>
+          )}
+
+          {/* Lesson Plan Details Section - Match Full Lesson Preview Styling */}
+          {(lessonData.learningOutcome || lessonData.successCriteria || lessonData.introduction || 
+            lessonData.mainActivity || lessonData.plenary || lessonData.vocabulary || 
+            lessonData.keyQuestions || lessonData.resources || lessonData.differentiation || 
+            lessonData.assessment) && (
+            <div className="mb-8 space-y-6">
+              {/* Learning Outcome */}
+              {lessonData.learningOutcome && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                    <Target className="h-5 w-5 text-teal-600" />
+                    <span>Learning Outcome</span>
+                  </h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
+                    style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
+                    dangerouslySetInnerHTML={{ __html: lessonData.learningOutcome }}
+                  />
+                </div>
+              )}
+
+              {/* Success Criteria */}
+              {lessonData.successCriteria && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                    <Target className="h-5 w-5 text-teal-600" />
+                    <span>Success Criteria</span>
+                  </h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
+                    style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
+                    dangerouslySetInnerHTML={{ __html: lessonData.successCriteria }}
+                  />
+                </div>
+              )}
+
+              {/* Introduction */}
+              {lessonData.introduction && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Introduction</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.introduction }}
+                  />
+                </div>
+              )}
+
+              {/* Main Activity */}
+              {lessonData.mainActivity && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Main Activity</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.mainActivity }}
+                  />
+                </div>
+              )}
+
+              {/* Plenary */}
+              {lessonData.plenary && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Plenary</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.plenary }}
+                  />
+                </div>
+              )}
+
+              {/* Vocabulary */}
+              {lessonData.vocabulary && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Vocabulary</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.vocabulary }}
+                  />
+                </div>
+              )}
+
+              {/* Key Questions */}
+              {lessonData.keyQuestions && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Key Questions</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.keyQuestions }}
+                  />
+                </div>
+              )}
+
+              {/* Resources */}
+              {lessonData.resources && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Resources</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.resources }}
+                  />
+                </div>
+              )}
+
+              {/* Differentiation */}
+              {lessonData.differentiation && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Differentiation</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.differentiation }}
+                  />
+                </div>
+              )}
+
+              {/* Assessment */}
+              {lessonData.assessment && (
+                <div className="space-y-2">
+                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Assessment</h4>
+                  <div 
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    dangerouslySetInnerHTML={{ __html: lessonData.assessment }}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Categories and Activities */}
+          <div className="space-y-8">
+            {lessonData.categoryOrder.map((category) => {
+              const activities = lessonData.grouped[category] || [];
+              
+              return (
+                <div key={category} className="bg-white rounded-card shadow-soft border border-gray-200 overflow-hidden">
+                  {/* Category Header */}
+                  <div 
+                    className="p-4 border-b border-gray-200"
+                    style={{ 
+                      background: `linear-gradient(to right, ${getCategoryColor(category)}20, ${getCategoryColor(category)}05)`,
+                      borderLeft: `4px solid ${getCategoryColor(category)}`
+                    }}
+                  >
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl font-bold text-gray-900">{category}</h3>
+                      <span className="bg-white px-3 py-1 rounded-full text-sm font-medium shadow-sm" style={{ color: getCategoryColor(category) }}>
+                        {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
+                      </span>
+                    </div>
+                  </div>
+                  
+                  {/* Activities */}
+                  <div className="p-4 space-y-6">
+                    {activities.map((activity, index) => (
+                      <div
+                        key={`${category}-${index}`}
+                        onClick={() => setSelectedActivity(activity)}
+                        className="w-full text-left bg-gray-50 hover:bg-blue-50 rounded-card border border-gray-200 hover:border-blue-300 transition-all duration-200 shadow-soft hover:shadow-hover overflow-hidden cursor-pointer"
+                      >
+                        {/* Activity Header */}
+                        <div className="p-4 border-b border-gray-200 bg-white">
+                          <div className="flex items-start justify-between mb-2">
+                            <h4 className="font-bold text-gray-900 text-base leading-tight">
+                              {activity.activity || 'Untitled Activity'}
+                            </h4>
+                            {/* Time Badge - Simple and Clean */}
+                            {activity.time > 0 && (
+                              <span className="text-xs font-medium text-blue-800 bg-blue-100 px-2 py-1 rounded-full ml-3 flex-shrink-0">
+                                {activity.time}m
+                              </span>
+                            )}
+                          </div>
+                          
+                          {/* Level Badge */}
+                          {activity.level && (
+                            <span 
+                              className="inline-block px-3 py-1 text-white text-xs font-medium rounded-full mb-2"
+                              style={{ backgroundColor: theme.primary }}
+                            >
+                              {activity.level}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Activity Content */}
+                        <div className="p-4">
+                          {/* Activity Text (if available) */}
+                          {activity.activityText && (
+                            <div 
+                              className="mb-3 prose prose-sm max-w-none"
+                              dangerouslySetInnerHTML={{ __html: activity.activityText }}
+                            />
+                          )}
+                          
+                          {/* Full Description - No line clamps or truncation */}
+                          <div 
+                            className="text-sm text-gray-700 leading-relaxed mb-3 prose prose-sm max-w-none"
+                            dangerouslySetInnerHTML={{ __html: activity.description.includes('<') ? 
+                              activity.description : 
+                              activity.description.replace(/\n/g, '<br>') 
+                            }}
+                          />
+
+                          {/* Unit Name */}
+                          {activity.unitName && (
+                            <div className="mb-3">
+                              <span className="text-xs font-medium text-gray-500 uppercase tracking-wide">Unit:</span>
+                              <p className="text-sm text-gray-700 font-medium">{activity.unitName}</p>
+                            </div>
+                          )}
+
+                          {/* Web Links Section - Now using modal buttons instead of direct links */}
+                          {(activity.videoLink || activity.musicLink || activity.backingLink || 
+                            activity.resourceLink || activity.link || activity.vocalsLink || 
+                            activity.imageLink) && (
+                            <div className="mt-4 p-4 bg-blue-50 rounded-lg border border-blue-100">
+                              <h5 className="text-base font-semibold text-blue-800 mb-3 flex items-center">
+                                <FileText className="h-5 w-5 mr-2" />
+                                Web Resources
+                              </h5>
+                              <div className="grid grid-cols-2 gap-3">
+                                {activity.videoLink && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResourceClick(activity.videoLink, `${activity.activity} - Video`, 'video');
+                                    }}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
+                                  >
+                                    <span className="w-3 h-3 bg-red-500 rounded-full mr-2 flex-shrink-0"></span>
+                                    Video Link
+                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                  </button>
+                                )}
+                                {activity.musicLink && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResourceClick(activity.musicLink, `${activity.activity} - Music`, 'music');
+                                    }}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
+                                  >
+                                    <span className="w-3 h-3 bg-green-500 rounded-full mr-2 flex-shrink-0"></span>
+                                    Music Link
+                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                  </button>
+                                )}
+                                {activity.backingLink && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResourceClick(activity.backingLink, `${activity.activity} - Backing Track`, 'backing');
+                                    }}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
+                                  >
+                                    <span className="w-3 h-3 bg-blue-500 rounded-full mr-2 flex-shrink-0"></span>
+                                    Backing Track
+                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                  </button>
+                                )}
+                                {activity.resourceLink && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResourceClick(activity.resourceLink, `${activity.activity} - Resource`, 'resource');
+                                    }}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
+                                  >
+                                    <span className="w-3 h-3 bg-purple-500 rounded-full mr-2 flex-shrink-0"></span>
+                                    Resource
+                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                  </button>
+                                )}
+                                {activity.link && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResourceClick(activity.link, `${activity.activity} - Additional Link`, 'link');
+                                    }}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
+                                  >
+                                    <span className="w-3 h-3 bg-gray-500 rounded-full mr-2 flex-shrink-0"></span>
+                                    Additional Link
+                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                  </button>
+                                )}
+                                {activity.vocalsLink && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResourceClick(activity.vocalsLink, `${activity.activity} - Vocals`, 'vocals');
+                                    }}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
+                                  >
+                                    <span className="w-3 h-3 bg-orange-500 rounded-full mr-2 flex-shrink-0"></span>
+                                    Vocals
+                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                  </button>
+                                )}
+                                {activity.imageLink && (
+                                  <button 
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleResourceClick(activity.imageLink, `${activity.activity} - Image`, 'image');
+                                    }}
+                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
+                                  >
+                                    <span className="w-3 h-3 bg-pink-500 rounded-full mr-2 flex-shrink-0"></span>
+                                    Image
+                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                  </button>
+                                )}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Click to view resources message */}
+                          <div className="text-xs text-blue-600 italic mt-2">
+                            Click to view all details and resources
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
+          >
+            Close
+          </button>
+        </div>
+      </div>
+
+      {/* Activity Details Modal - SIMPLIFIED: Read-only mode */}
+      {selectedActivity && (
+        <ActivityDetails
+          activity={selectedActivity}
+          onClose={() => {
+            setSelectedActivity(null);
+            setInitialResource(null);
+          }}
+          initialResource={initialResource}
+        />
+      )}
+
+      {/* ResourceViewer Modal */}
+      {selectedResource && (
+        <ResourceViewer
+          url={selectedResource.url}
+          title={selectedResource.title}
+          type={selectedResource.type}
+          onClose={() => setSelectedResource(null)}
+        />
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
+          <div className="bg-white rounded-card shadow-soft max-w-md w-full p-6">
+            <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Lesson</h3>
+            <p className="text-gray-700 mb-6">
+              {halfTermId ? (
+                <>
+                  Are you sure you want to remove Lesson {displayNumber || lessonNumber} from {halfTermName || 'this term'}? 
+                  The lesson will remain in the Lesson Library and can be added back later.
+                </>
+              ) : (
+                <>
+                  Are you sure you want to delete Lesson {displayNumber || lessonNumber}? This action cannot be undone and will remove the lesson from all units.
+                </>
+              )}
+            </p>
+            <div className="flex justify-end space-x-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-lg transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors flex items-center space-x-2"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span>{halfTermId ? 'Remove from Term' : 'Delete Lesson'}</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Print Modal - pdfDownloadOnly: PDFBolt export (PDF with working hyperlinks), no modal UI */}
+      {showPrintModal && (
+        <LessonPrintModal
+          lessonNumber={lessonNumber}
+          onClose={() => setShowPrintModal(false)}
+          unitId={unitId}
+          unitName={unitName}
+          halfTermId={halfTermId}
+          halfTermName={halfTermName}
+          pdfDownloadOnly
+        />
+      )}
+    </div>
+  );
+}
