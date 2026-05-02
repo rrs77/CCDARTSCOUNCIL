@@ -6,6 +6,7 @@ import { customObjectivesApi } from '../config/customObjectivesApi';
 import { activityStacksApi } from '../config/activityStacksApi';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 import toast from 'react-hot-toast';
+import { isDemoModeActive } from '../utils/demoMode';
 
 export interface Activity {
   id?: string;
@@ -702,12 +703,16 @@ SELECT id, 'Goodbye Songs', 'Closing circle time songs', '#3b82f6', 3 FROM subje
       console.log('🔄 Loading subjects...');
       setSubjectsLoading(true);
       
-      if (!isSupabaseConfigured()) {
-        console.warn('⚠️ Supabase is not configured. Using mock data.');
+      if (!isSupabaseConfigured() || isDemoModeActive()) {
+        if (isDemoModeActive()) {
+          console.log('🎬 Demo mode: using built-in performing-arts subjects.');
+        } else {
+          console.warn('⚠️ Supabase is not configured. Using mock data.');
+        }
         setSubjects([
-          { id: 'mock-1', name: 'Music', description: 'Music education activities and lessons', color: '#3b82f6', is_active: true },
-          { id: 'mock-2', name: 'Drama', description: 'Drama and performance activities', color: '#ef4444', is_active: true },
-          { id: 'mock-3', name: 'EYFS', description: 'Early Years Foundation Stage activities', color: '#10b981', is_active: true }
+          { id: 'demo-subj-drama', name: 'Drama', description: 'Drama and performance activities', color: '#7C3AED', is_active: true },
+          { id: 'demo-subj-music', name: 'Music', description: 'Music education activities and lessons', color: '#0EA5E9', is_active: true },
+          { id: 'demo-subj-dance', name: 'Dance', description: 'Dance and movement activities', color: '#F59E0B', is_active: true },
         ]);
         return;
       }
@@ -1496,7 +1501,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
     };
 
     // Stale-while-revalidate: show cached data immediately if we have any (fresh or stale), then revalidate
-    if (isSupabaseConfigured() && !skipCache) {
+    if (isSupabaseConfigured() && !isDemoModeActive() && !skipCache) {
       try {
         const cached = localStorage.getItem(ACTIVITIES_CACHE_KEY);
         if (cached) {
@@ -1521,6 +1526,25 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
 
     try {
       setLoading(true);
+
+      // Demo / Preview mode: read curated activities seeded into
+      // localStorage by SchoolHomepage; skip Supabase entirely.
+      if (isDemoModeActive()) {
+        const seeded = localStorage.getItem('library-activities');
+        if (seeded) {
+          try {
+            const parsed = JSON.parse(seeded);
+            if (Array.isArray(parsed)) {
+              applyActivities(parsed);
+              setLoading(false);
+              return;
+            }
+          } catch (_) {}
+        }
+        applyActivities([]);
+        setLoading(false);
+        return;
+      }
 
       if (isSupabaseConfigured()) {
         try {
@@ -2638,7 +2662,9 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
       
       // Try to load from Supabase if connected (with timeout so app never hangs)
       const SUPABASE_LOAD_TIMEOUT_MS = 6000;
-      if (isSupabaseConfigured()) {
+      // In demo / preview mode, fall straight through to the localStorage path
+      // below — the seed data lives there and Supabase has no demo user.
+      if (isSupabaseConfigured() && !isDemoModeActive()) {
         try {
           if (import.meta.env.DEV) console.log('📡 Loading from Supabase:', currentSheetInfo.sheet, currentAcademicYear);
           const lessonData = await Promise.race([

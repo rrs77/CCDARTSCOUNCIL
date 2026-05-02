@@ -8,6 +8,8 @@ import {
   isSupabaseAuthEnabled,
   setSessionOnlyCookie,
 } from '../../config/supabase';
+import { activateDemoMode } from '../../utils/demoMode';
+import { seedDemoLocalStorage } from '../../utils/demoSampleData';
 
 interface SchoolHomepageProps {
   school: SchoolHomepageConfig;
@@ -58,14 +60,11 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   };
 
   const handleStartDemo = () => {
-    try {
-      sessionStorage.setItem('ccd-demo-mode', '1');
-      sessionStorage.setItem('ccd-demo-from-school', school.slug);
-    } catch {
-      /* ignore – sessionStorage may be blocked */
-    }
-    // Navigate to the main app entry; AuthContext will detect the demo flag
-    // and provide a read-only demo user without requiring login.
+    // Activate demo mode and seed curated drama / music / dance content into
+    // localStorage *before* navigating, so DataContext picks it up on its
+    // first load and the visitor sees real sample data immediately.
+    activateDemoMode(school.slug);
+    seedDemoLocalStorage();
     window.location.assign('/?demo=1');
   };
 

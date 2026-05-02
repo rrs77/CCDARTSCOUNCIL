@@ -14,8 +14,10 @@ import { Footer } from './components/Footer';
 import { useAuth } from './hooks/useAuth';
 import { HelpGuide } from './components/HelpGuide';
 import { SchoolHomepage } from './components/SchoolHomepage';
+import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
+import { isDemoModeActive } from './utils/demoMode';
 import './utils/setupKS1Maths'; // Make setupKS1MathsExample available in browser console
 import './utils/setupDanceObjectives'; // Make setupDanceObjectives available in browser console
 import './utils/setupSecondaryDramaObjectives'; // Make setupSecondaryDramaObjectives available in browser console
@@ -88,6 +90,8 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     setShowHelpGuide(true);
   };
 
+  const inPreview = isDemoModeActive();
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       <Toaster 
@@ -113,6 +117,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
           },
         }}
       />
+      {inPreview && <PreviewBanner />}
       <Header />
       <main className="flex-1 pt-14 sm:pt-16 pb-20">
         <Dashboard />

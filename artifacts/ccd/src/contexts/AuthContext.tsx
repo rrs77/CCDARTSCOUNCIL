@@ -2,6 +2,11 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { wordpressAPI } from '../config/api';
 import { supabase, isSupabaseAuthEnabled } from '../config/supabase';
 import type { AppUser, Profile } from '../types/auth';
+import {
+  isDemoModeActive,
+  clearDemoMode,
+  getDemoOriginSchool,
+} from '../utils/demoMode';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -26,30 +31,13 @@ function useAuth() {
  * Demo / Preview mode.
  *
  * When a visitor clicks "Preview" on a school homepage, the SchoolHomepage
- * component sets `sessionStorage["ccd-demo-mode"]="1"`. AuthContext detects
- * this on init and injects a synthetic, read-only `viewer` user so the rest
- * of the app renders without requiring real credentials. The flag lives in
- * sessionStorage so it goes away when the tab closes; logout also clears it.
+ * component sets the demo flag and seeds curated sample content into
+ * localStorage (see src/utils/demoMode.ts and src/utils/demoSampleData.ts).
+ * AuthContext detects the flag on init and injects a synthetic, read-only
+ * `viewer` user so the rest of the app renders without real credentials.
+ * Logout clears the flag, the seeded data, and redirects back to the
+ * originating school homepage.
  */
-const DEMO_MODE_KEY = 'ccd-demo-mode';
-
-function isDemoModeActive(): boolean {
-  try {
-    return typeof window !== 'undefined' && sessionStorage.getItem(DEMO_MODE_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-
-function clearDemoMode() {
-  try {
-    sessionStorage.removeItem(DEMO_MODE_KEY);
-    sessionStorage.removeItem('ccd-demo-from-school');
-  } catch {
-    /* noop */
-  }
-}
-
 const DEMO_USER: AppUser = {
   id: 'demo-viewer',
   email: 'demo@ccd.preview',
@@ -525,14 +513,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // sign out of — just clear the flag so the next visit returns to the
     // login form (or school homepage) rather than auto-resuming the demo.
     const wasDemo = isDemoModeActive();
-    let demoFromSchool: string | null = null;
-    if (wasDemo) {
-      try {
-        demoFromSchool = sessionStorage.getItem('ccd-demo-from-school');
-      } catch {
-        /* noop */
-      }
-    }
+    const demoFromSchool = wasDemo ? getDemoOriginSchool() : null;
     clearDemoMode();
     if (!wasDemo && isSupabaseAuthEnabled()) {
       await supabase.auth.signOut();
