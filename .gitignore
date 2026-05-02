@@ -1,57 +1,49 @@
-# Dependencies
-node_modules/
-.npm
-package-lock.json
-yarn.lock
+# See https://docs.github.com/en/get-started/getting-started-with-git/ignoring-files for more about ignoring files.
 
-# Build outputs
-dist/
-build/
-out/
-.next/
-.turbo/
+# compiled output
+dist
+tmp
+out-tsc
+*.tsbuildinfo
+.expo
+.expo-shared
 
-# Backups & Archives
-*.tar.gz
-*.tar
-*.zip
-*.tgz
-*backup*
-*.bak
+# dependencies
+node_modules
 
-# Environment
-.env.local
-.env*.local
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
 
-# Cache & Logs
-.cache/
-*.log
-npm-debug.log*
-.eslintcache
-.prettierignore
+# IDE - VSCode
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
 
-# OS
+# misc
+/.sass-cache
+/connect.lock
+/coverage
+/libpeerconnection.log
+npm-debug.log
+yarn-error.log
+testem.log
+/typings
+
+# System Files
 .DS_Store
 Thumbs.db
 
-# IDE
-.vscode/
-.idea/
-*.swp
-*.swo
+.cursor/rules/nx-rules.mdc
+.github/instructions/nx.instructions.md
 
-# Coverage
-coverage/
-
-# Temp files
-tmp/
-.temp/
-
-# Reference clone (cursorchanges) - do not commit
-_cursorchanges_ref/
-.env
-
-# Netlify (deploy via GitHub → Vercel only)
-.netlify/
-netlify/
-.vercel
+# Replit
+.cache/
+.local/
