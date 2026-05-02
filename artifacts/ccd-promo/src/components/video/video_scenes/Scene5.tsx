@@ -10,75 +10,138 @@ export function Scene5() {
     const timers = [
       setTimeout(() => setPhase(1), 500),
       setTimeout(() => setPhase(2), 1200),
-      setTimeout(() => setPhase(3), 2000),
-      setTimeout(() => setPhase(4), 3000), // exit
+      setTimeout(() => setPhase(3), 1800),
+      setTimeout(() => setPhase(4), 2400),
+      setTimeout(() => setPhase(5), 7000), // exit
     ];
     return () => timers.forEach(t => clearTimeout(t));
   }, []);
 
   return (
     <motion.div 
-      className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-primary-dark"
+      className="absolute inset-0 w-screen h-screen overflow-hidden bg-[#008272]"
       {...sceneTransitions.clipCircle}
     >
-      <div className="absolute inset-0 opacity-10 bg-[url('data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSI0MCIgaGVpZ2h0PSI0MCI+PGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMiIgZmlsbD0iI2ZmZiIvPjwvc3ZnPg==')] bg-[length:40px_40px]" />
-
-      <motion.div 
-        className="absolute w-full h-full bg-gradient-to-t from-primary-dark via-primary to-primary-light opacity-50 mix-blend-overlay"
+      {/* Background gradients matching CallToAction.tsx */}
+      <motion.div
+        className="absolute -bottom-[30vh] -right-[20vw] rounded-full"
+        style={{
+          width: "70vw",
+          height: "70vw",
+          background: "radial-gradient(circle at center, rgba(255,107,107,0.45), transparent 65%)",
+          filter: "blur(4vw)",
+        }}
+        animate={{ scale: [1, 1.1, 1], opacity: [0.8, 1, 0.8] }}
+        transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+      />
+      <motion.div
+        className="absolute -top-[20vh] -left-[15vw] rounded-full"
+        style={{
+          width: "55vw",
+          height: "55vw",
+          background: "radial-gradient(circle at center, rgba(20,184,166,0.35), transparent 65%)",
+          filter: "blur(4vw)",
+        }}
+        animate={{ scale: [1, 1.2, 1], opacity: [0.7, 0.9, 0.7] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10 flex flex-col items-center justify-center">
-        <motion.div
-          initial={{ scale: 0, opacity: 0, rotate: -180 }}
-          animate={phase >= 1 ? { scale: 1, opacity: 1, rotate: 0 } : { scale: 0, opacity: 0, rotate: -180 }}
-          transition={springs.bouncy}
-          className="mb-8"
-        >
-          <img src={logoUrl} alt="CCD Logo" className="w-32 h-32 drop-shadow-2xl" />
-        </motion.div>
-
-        <motion.h1
-          className="text-[5vw] font-black text-white leading-none tracking-tight mb-4 text-center"
-          initial={{ opacity: 0, y: 30 }}
-          animate={phase >= 2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[7vw] py-[7vh]">
+        
+        {/* Header */}
+        <motion.div 
+          className="flex items-center gap-[1.2vw]"
+          initial={{ opacity: 0, y: -20 }}
+          animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
           transition={springs.snappy}
         >
-          Creative Curriculum Designer
-        </motion.h1>
+          <img
+            src={logoUrl}
+            alt="CCD logo"
+            className="w-[3.6vw] h-[3.6vw]"
+          />
+          <span className="text-white font-display font-semibold tracking-tight text-[1.6vw]">
+            Creative Curriculum Designer
+          </span>
+        </motion.div>
 
-        <motion.p
-          className="text-[2vw] text-white/80 font-medium"
-          initial={{ opacity: 0, y: 20 }}
-          animate={phase >= 3 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={{ duration: 0.6, ease: "easeOut" }}
-        >
-          Planning shouldn't take all weekend.
-        </motion.p>
+        {/* Main Content */}
+        <div className="max-w-[75vw]">
+          <motion.span 
+            className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh]"
+            initial={{ opacity: 0, scale: 0.8 }}
+            animate={phase >= 2 ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
+            transition={springs.bouncy}
+          >
+            Try it with your school
+          </motion.span>
+          
+          <h1
+            className="font-display font-black text-white tracking-tighter leading-[0.95]"
+            style={{ fontSize: "6.5vw", textWrap: "balance" }}
+          >
+            <motion.span 
+              className="block"
+              initial={{ opacity: 0, y: 40 }}
+              animate={phase >= 3 ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+              transition={springs.snappy}
+            >
+              Give your team back
+            </motion.span>
+            <motion.span 
+              className="block text-[#ff6b6b]"
+              initial={{ opacity: 0, y: 40 }}
+              animate={phase >= 3 ? { opacity: 1, y: 0 } : { opacity: 0, y: 40 }}
+              transition={{ ...springs.snappy, delay: 0.1 }}
+            >
+              their planning hours.
+            </motion.span>
+          </h1>
+          
+          <motion.p
+            className="mt-[3vh] text-white/85 font-body font-medium max-w-[55vw] leading-snug"
+            style={{ fontSize: "1.6vw", textWrap: "pretty" }}
+            initial={{ opacity: 0 }}
+            animate={phase >= 4 ? { opacity: 1 } : { opacity: 0 }}
+            transition={{ duration: 0.8 }}
+          >
+            Bring CCD into your school for a half-term trial. We'll set up your year groups, import your existing units, and walk your team through it.
+          </motion.p>
+        </div>
+
+        {/* Footer Cards */}
+        <div className="grid grid-cols-3 gap-[2vw]">
+          <motion.div 
+            className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.4vh_1.6vw]"
+            initial={{ opacity: 0, y: 30 }}
+            animate={phase >= 4 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ ...springs.snappy, delay: 0.2 }}
+          >
+            <div className="font-display font-semibold text-[#ff6b6b] text-[1vw] uppercase tracking-wide mb-[1vh]">Visit</div>
+            <div className="font-display font-bold text-white text-[1.4vw] leading-tight">creativecurriculumdesigner.com</div>
+          </motion.div>
+          
+          <motion.div 
+            className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.4vh_1.6vw]"
+            initial={{ opacity: 0, y: 30 }}
+            animate={phase >= 4 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ ...springs.snappy, delay: 0.3 }}
+          >
+            <div className="font-display font-semibold text-[#ff6b6b] text-[1vw] uppercase tracking-wide mb-[1vh]">Email</div>
+            <div className="font-display font-bold text-white text-[1.4vw] leading-tight">hello@creativecurriculumdesigner.com</div>
+          </motion.div>
+          
+          <motion.div 
+            className="rounded-[1.5rem] bg-[#ff6b6b] text-white p-[2.4vh_1.6vw]"
+            initial={{ opacity: 0, y: 30 }}
+            animate={phase >= 4 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
+            transition={{ ...springs.snappy, delay: 0.4 }}
+          >
+            <div className="font-display font-semibold text-white/90 text-[1vw] uppercase tracking-wide mb-[1vh]">Book a demo</div>
+            <div className="font-display font-bold text-white text-[1.4vw] leading-tight">30-minute walk-through with your year leads</div>
+          </motion.div>
+        </div>
       </div>
-
-      {/* Decorative circles */}
-      {phase >= 1 && (
-        <>
-          <motion.div 
-            className="absolute top-1/4 left-1/4 w-4 h-4 rounded-full bg-accent/60"
-            initial={{ scale: 0 }}
-            animate={{ scale: [0, 1.5, 1], y: [0, -20, -10] }}
-            transition={{ duration: 2, ease: "easeOut" }}
-          />
-          <motion.div 
-            className="absolute bottom-1/3 right-1/4 w-6 h-6 rounded-full bg-warning/60"
-            initial={{ scale: 0 }}
-            animate={{ scale: [0, 1.2, 1], y: [0, -30, -15] }}
-            transition={{ duration: 2.5, ease: "easeOut", delay: 0.2 }}
-          />
-          <motion.div 
-            className="absolute top-1/3 right-1/3 w-3 h-3 rounded-full bg-white/60"
-            initial={{ scale: 0 }}
-            animate={{ scale: [0, 1.8, 1], y: [0, -15, -5] }}
-            transition={{ duration: 1.8, ease: "easeOut", delay: 0.4 }}
-          />
-        </>
-      )}
     </motion.div>
   );
 }

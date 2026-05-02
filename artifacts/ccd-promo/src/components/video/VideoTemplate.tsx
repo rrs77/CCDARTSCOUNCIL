@@ -8,18 +8,18 @@ import { Scene4 } from './video_scenes/Scene4';
 import { Scene5 } from './video_scenes/Scene5';
 
 export const SCENE_DURATIONS = {
-  intro: 6000,
-  plan: 7000,
-  library: 7000,
-  stacks: 7000,
-  outro: 6000,
+  problem: 6000,
+  dashboard: 7000,
+  library: 6500,
+  lessons: 6500,
+  outro: 8000,
 };
 
 const SCENE_COMPONENTS: Record<string, React.ComponentType> = {
-  intro: Scene1,
-  plan: Scene2,
+  problem: Scene1,
+  dashboard: Scene2,
   library: Scene3,
-  stacks: Scene4,
+  lessons: Scene4,
   outro: Scene5,
 };
 
@@ -78,24 +78,7 @@ export default function VideoTemplate({
         />
       </div>
 
-      {/* Persistent UI Elements */}
-      <motion.div
-        className="absolute top-[4vh] left-[4vw] z-50"
-        animate={{
-          opacity: sceneIndex === 0 ? 0 : sceneIndex === 4 ? 0 : 1,
-          y: sceneIndex === 0 ? -20 : sceneIndex === 4 ? -20 : 0,
-        }}
-        transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
-      >
-        <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white font-bold text-sm shadow-soft">
-            CCD
-          </div>
-          <span className="font-bold text-text-primary tracking-tight">Creative Curriculum Designer</span>
-        </div>
-      </motion.div>
-
-      <AnimatePresence initial={false} mode="wait">
+      <AnimatePresence initial={false} mode="popLayout">
         {SceneComponent && <SceneComponent key={currentSceneKey} />}
       </AnimatePresence>
     </div>

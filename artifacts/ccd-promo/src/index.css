@@ -3,19 +3,19 @@
 :root {
   --color-primary: #14B8A6;
   --color-primary-light: #5EEAD4;
-  --color-primary-dark: #0F766E;
+  --color-primary-dark: #008272;
   --color-accent: #FF6B6B;
   --color-accent-light: #FFA6A6;
-  --color-accent-dark: #E63946;
+  --color-accent-dark: #FF5252;
 
-  --color-bg-light: #F8FAFC;
-  --color-bg-dark: #0F172A;
-  --color-bg-muted: #F1F5F9;
+  --color-bg-light: #fffaf7;
+  --color-bg-dark: #0f2a2e;
+  --color-bg-muted: #f4f6f8;
 
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #475569;
-  --color-text-muted: #94A3B8;
-  --color-text-inverse: #FFFFFF;
+  --color-text-primary: #0f2a2e;
+  --color-text-secondary: #6b7d80;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
 
   --color-success: #10B981;
   --color-warning: #F59E0B;
@@ -25,8 +25,8 @@
   --color-ks1: #38BDF8;
   --color-ks2: #A855F7;
 
-  --font-display: 'Inter', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  --font-display: 'Inter', system-ui, sans-serif;
+  --font-body: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 

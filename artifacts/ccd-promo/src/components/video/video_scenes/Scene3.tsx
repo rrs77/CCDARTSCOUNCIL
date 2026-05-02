@@ -9,109 +9,66 @@ export function Scene3() {
     const timers = [
       setTimeout(() => setPhase(1), 500),
       setTimeout(() => setPhase(2), 1200),
-      setTimeout(() => setPhase(3), 2000),
-      setTimeout(() => setPhase(4), 2800),
-      setTimeout(() => setPhase(5), 3500),
-      setTimeout(() => setPhase(6), 6000), // exit
+      setTimeout(() => setPhase(3), 5500), // exit
     ];
     return () => timers.forEach(t => clearTimeout(t));
   }, []);
 
-  const cards = [
-    { title: 'Phonics Phase 2', category: 'EYFS', color: 'bg-pink-400' },
-    { title: 'Great Fire of London', category: 'KS1 History', color: 'bg-sky-400' },
-    { title: 'Fractions & Decimals', category: 'KS2 Maths', color: 'bg-purple-500' },
-    { title: 'Volcanoes', category: 'KS2 Geography', color: 'bg-orange-400' },
-  ];
-
   return (
     <motion.div 
-      className="absolute inset-0 flex items-center justify-center overflow-hidden bg-bg-light"
-      {...sceneTransitions.slideLeft}
+      className="absolute inset-0 flex flex-col items-center justify-center overflow-hidden bg-bg-light"
+      {...sceneTransitions.clipPolygon}
     >
-      {/* Background Image */}
-      <motion.div 
-        className="absolute inset-0"
-        initial={{ scale: 1.1, x: 20 }}
-        animate={{ scale: 1, x: 0 }}
-        transition={{ duration: 8, ease: 'easeOut' }}
-      >
-        <img 
-          src={`${import.meta.env.BASE_URL}images/kids-learning.jpg`} 
-          alt="Kids learning" 
-          className="w-full h-full object-cover opacity-10"
-        />
-      </motion.div>
-
-      <div className="relative z-10 w-full px-16 flex flex-col items-center">
-        
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={springs.snappy}
-          className="mb-6 inline-block px-4 py-2 rounded-full bg-primary/10 text-primary-dark font-bold tracking-wide text-sm uppercase"
-        >
-          RICH LESSON LIBRARY
-        </motion.div>
-        
-        <motion.h2 
-          className="text-[4vw] font-black text-text-primary leading-[1.1] tracking-tight mb-12 text-center"
-          initial={{ opacity: 0, y: 20 }}
-          animate={phase >= 2 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
-          transition={springs.snappy}
-        >
-          Browse hundreds of ready-to-teach lessons.
-        </motion.h2>
-
-        {/* Cards Grid */}
-        <div className="grid grid-cols-4 gap-6 w-full max-w-5xl">
-          {cards.map((card, i) => (
-            <motion.div
-              key={i}
-              className="bg-white rounded-2xl shadow-hover overflow-hidden border border-gray-100 flex flex-col h-64"
-              initial={{ opacity: 0, y: 40, rotate: i % 2 === 0 ? -5 : 5, scale: 0.8 }}
-              animate={phase >= 3 ? { opacity: 1, y: 0, rotate: 0, scale: 1 } : { opacity: 0, y: 40, rotate: i % 2 === 0 ? -5 : 5, scale: 0.8 }}
-              transition={{ ...springs.bouncy, delay: phase >= 3 ? i * 0.15 : 0 }}
-              whileHover={{ y: -10 }}
-            >
-              <div className={`h-24 ${card.color} w-full flex items-center justify-center relative overflow-hidden`}>
-                {/* Abstract pattern */}
-                <div className="absolute inset-0 opacity-20" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '16px 16px' }} />
-              </div>
-              <div className="p-5 flex-1 flex flex-col">
-                <div className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">{card.category}</div>
-                <div className="font-bold text-text-primary text-lg leading-tight flex-1">{card.title}</div>
-                
-                {/* Fake skeleton lines */}
-                <motion.div 
-                  className="w-full h-2 bg-gray-100 rounded-full mb-2"
-                  initial={{ width: 0 }}
-                  animate={phase >= 4 ? { width: "100%" } : { width: 0 }}
-                  transition={{ duration: 0.5, delay: phase >= 4 ? i * 0.1 + 0.2 : 0 }}
-                />
-                <motion.div 
-                  className="w-2/3 h-2 bg-gray-100 rounded-full"
-                  initial={{ width: 0 }}
-                  animate={phase >= 4 ? { width: "66%" } : { width: 0 }}
-                  transition={{ duration: 0.5, delay: phase >= 4 ? i * 0.1 + 0.3 : 0 }}
-                />
-              </div>
-            </motion.div>
-          ))}
+      <div className="relative z-10 w-full h-full flex flex-col pt-[8vh]">
+        <div className="px-[8vw] text-center flex flex-col items-center mb-[4vh]">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={springs.snappy}
+            className="mb-4 inline-block px-5 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary-dark font-bold tracking-wide text-[1.2vw] uppercase"
+          >
+            RICH LESSON LIBRARY
+          </motion.div>
+          
+          <motion.h2 
+            className="text-[4.5vw] font-black text-text-primary leading-[1.1] tracking-tight text-center max-w-[70vw]"
+            initial={{ opacity: 0, y: 20 }}
+            animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
+            transition={{ ...springs.snappy, delay: 0.1 }}
+          >
+            Hundreds of ready-to-teach lessons.
+          </motion.h2>
         </div>
 
-        {/* Floating elements */}
-        {phase >= 5 && (
+        <motion.div 
+          className="flex-1 w-full px-[6vw] relative perspective-[1200px]"
+          initial={{ opacity: 0, y: 100, rotateX: 10 }}
+          animate={phase >= 2 ? { opacity: 1, y: 0, rotateX: 0 } : { opacity: 0, y: 100, rotateX: 10 }}
+          transition={springs.smooth}
+        >
+          <div className="w-full h-full rounded-t-2xl shadow-2xl overflow-hidden border-t-4 border-x-4 border-white/80 bg-white relative">
+             <img 
+              src={`${import.meta.env.BASE_URL}screens/library.jpg`} 
+              alt="CCD Library" 
+              className="w-full h-full object-cover object-top"
+            />
+            {/* Soft gradient fade at bottom */}
+            <div className="absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-white to-transparent" />
+          </div>
+        </motion.div>
+
+        {/* Decorative elements */}
+        {phase >= 2 && (
           <>
             <motion.div 
-              className="absolute top-[20%] left-[10%] w-16 h-16 bg-ks1/20 rounded-full blur-xl"
-              animate={{ scale: [1, 1.5, 1], opacity: [0.5, 0.8, 0.5] }}
-              transition={{ duration: 4, repeat: Infinity }}
+              className="absolute top-[20%] left-[5%] w-32 h-32 bg-primary/20 rounded-full blur-3xl pointer-events-none"
+              animate={{ scale: [1, 1.5, 1], opacity: [0.3, 0.6, 0.3] }}
+              transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
             />
             <motion.div 
-              className="absolute bottom-[20%] right-[10%] w-24 h-24 bg-ks2/20 rounded-full blur-xl"
-              animate={{ scale: [1, 1.2, 1], opacity: [0.3, 0.6, 0.3] }}
-              transition={{ duration: 5, repeat: Infinity }}
+              className="absolute top-[30%] right-[5%] w-40 h-40 bg-accent/20 rounded-full blur-3xl pointer-events-none"
+              animate={{ scale: [1, 1.2, 1], opacity: [0.2, 0.5, 0.2] }}
+              transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}
             />
           </>
         )}
