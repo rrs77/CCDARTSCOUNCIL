@@ -12,6 +12,7 @@ import { UserManagement } from './Admin/UserManagement';
 import { customCategoriesApi, activityPacksApi } from '../config/api';
 import type { ActivityPack } from '../config/api';
 import { useDrag, useDrop } from 'react-dnd';
+import { useDropZoneStyle, useDropFlash } from './dnd';
 import toast from 'react-hot-toast';
 import {
   normalizeSectionYearGroupIdList,
@@ -30,11 +31,16 @@ interface DraggableCategoryProps {
 
 function DraggableCategory({ category, index, onReorder, onDragEnd, children }: DraggableCategoryProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const { flashClass, triggerFlash } = useDropFlash();
 
-  const [{ handlerId }, drop] = useDrop({
+  const [{ handlerId, isOver, canDrop }, drop] = useDrop({
     accept: 'category',
     collect(monitor) {
-      return { handlerId: monitor.getHandlerId() };
+      return {
+        handlerId: monitor.getHandlerId(),
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      };
     },
     hover(item: { index: number }, monitor) {
       if (!ref.current) return;
@@ -53,6 +59,9 @@ function DraggableCategory({ category, index, onReorder, onDragEnd, children }: 
       onReorder(dragIndex, hoverIndex);
       item.index = hoverIndex;
     },
+    drop() {
+      triggerFlash();
+    },
   });
 
   const [{ isDragging }, drag] = useDrag({
@@ -66,12 +75,14 @@ function DraggableCategory({ category, index, onReorder, onDragEnd, children }: 
 
   drag(drop(ref));
 
+  const dropZoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'inline' });
+
   return (
     <div
       ref={ref}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       data-handler-id={handlerId}
-      className={`transition-all ${isDragging ? 'ring-2 ring-teal-400 rounded-lg shadow-lg' : ''}`}
+      className={`rounded-lg transition-all ${isDragging ? 'ring-2 ring-teal-400 shadow-lg' : ''} ${dropZoneClass} ${flashClass}`}
     >
       {children}
     </div>

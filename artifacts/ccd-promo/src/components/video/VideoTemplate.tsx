@@ -45,11 +45,19 @@ export default function VideoTemplate({
   const SceneComponent = SCENE_COMPONENTS[baseSceneKey];
 
   return (
-    <div className="relative w-full h-screen overflow-hidden bg-white font-body">
+    <div className="w-full h-screen bg-black flex items-center justify-center overflow-hidden">
+      <div
+        className="relative bg-white font-body overflow-hidden"
+        style={{
+          width: 'min(100cqw, calc(100cqh * 16 / 9))',
+          height: 'min(100cqh, calc(100cqw * 9 / 16))',
+          containerType: 'size',
+        }}
+      >
       {/* Persistent Background Layer */}
       <div className="absolute inset-0 pointer-events-none">
         <motion.div
-          className="absolute w-[80vw] h-[80vw] rounded-full blur-[100px] opacity-30 mix-blend-multiply"
+          className="absolute w-[80cqw] h-[80cqw] rounded-full blur-[100px] opacity-30 mix-blend-multiply"
           style={{ background: 'var(--color-primary-light)' }}
           animate={{
             x: ['-20%', '10%', '-10%'],
@@ -59,7 +67,7 @@ export default function VideoTemplate({
           transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
-          className="absolute w-[60vw] h-[60vw] right-0 bottom-0 rounded-full blur-[100px] opacity-20 mix-blend-multiply"
+          className="absolute w-[60cqw] h-[60cqw] right-0 bottom-0 rounded-full blur-[100px] opacity-20 mix-blend-multiply"
           style={{ background: 'var(--color-accent-light)' }}
           animate={{
             x: ['10%', '-20%', '5%'],
@@ -81,6 +89,7 @@ export default function VideoTemplate({
       <AnimatePresence initial={false} mode="popLayout">
         {SceneComponent && <SceneComponent key={currentSceneKey} />}
       </AnimatePresence>
+      </div>
     </div>
   );
 }
