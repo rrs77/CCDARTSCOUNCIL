@@ -13,6 +13,8 @@ import { LoadingSpinner } from './components/LoadingSpinner';
 import { Footer } from './components/Footer';
 import { useAuth } from './hooks/useAuth';
 import { HelpGuide } from './components/HelpGuide';
+import { SchoolHomepage } from './components/SchoolHomepage';
+import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
 import './utils/setupKS1Maths'; // Make setupKS1MathsExample available in browser console
 import './utils/setupDanceObjectives'; // Make setupDanceObjectives available in browser console
@@ -20,7 +22,7 @@ import './utils/setupSecondaryDramaObjectives'; // Make setupSecondaryDramaObjec
 import './utils/addForParentsToLKG'; // Make addForParentsToLKG available in browser console
 import './utils/addLKGActivitiesToAllYearGroups'; // Make addLKGActivitiesToAllYearGroups available in browser console
 
-function AppContent() {
+function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<
@@ -59,6 +61,9 @@ function AppContent() {
   }
 
   if (!user) {
+    if (schoolHomepage) {
+      return <SchoolHomepage school={schoolHomepage} />;
+    }
     return <LoginForm />;
   }
 
@@ -117,13 +122,21 @@ function App() {
     );
   }
 
+  // Detect a school-specific public homepage at `/<slug>`. The component is
+  // only shown to logged-out visitors so authenticated users always land in
+  // the main app regardless of which URL they originally arrived through.
+  const schoolHomepage =
+    typeof window !== 'undefined'
+      ? getSchoolForPath(window.location.pathname)
+      : null;
+
   return (
     <ErrorBoundary>
       <AuthProvider>
         <SettingsProviderNew>
           <DataProvider>
             <DndRoot>
-              <AppContent />
+              <AppContent schoolHomepage={schoolHomepage} />
             </DndRoot>
           </DataProvider>
         </SettingsProviderNew>

@@ -22,6 +22,41 @@ function useAuth() {
   return context;
 }
 
+/**
+ * Demo / Preview mode.
+ *
+ * When a visitor clicks "Preview" on a school homepage, the SchoolHomepage
+ * component sets `sessionStorage["ccd-demo-mode"]="1"`. AuthContext detects
+ * this on init and injects a synthetic, read-only `viewer` user so the rest
+ * of the app renders without requiring real credentials. The flag lives in
+ * sessionStorage so it goes away when the tab closes; logout also clears it.
+ */
+const DEMO_MODE_KEY = 'ccd-demo-mode';
+
+function isDemoModeActive(): boolean {
+  try {
+    return typeof window !== 'undefined' && sessionStorage.getItem(DEMO_MODE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function clearDemoMode() {
+  try {
+    sessionStorage.removeItem(DEMO_MODE_KEY);
+    sessionStorage.removeItem('ccd-demo-from-school');
+  } catch {
+    /* noop */
+  }
+}
+
+const DEMO_USER: AppUser = {
+  id: 'demo-viewer',
+  email: 'demo@ccd.preview',
+  name: 'Demo Visitor',
+  role: 'viewer',
+};
+
 // Local user database - you can add more users here
 const localUsers = [
   {
@@ -272,6 +307,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, AUTH_CHECK_TIMEOUT_MS);
 
     try {
+      // Demo / Preview mode short-circuits all auth backends so school
+      // homepage visitors can explore the app without real credentials.
+      if (isDemoModeActive()) {
+        resolvedRef.current = true;
+        setUser(DEMO_USER);
+        setProfile(null);
+        syncUserIdToStorage(DEMO_USER.id);
+        setLoading(false);
+        return;
+      }
+
       if (isSupabaseAuthEnabled()) {
         // Cap getSession so we never hang on a slow Supabase auth response
         const sessionPromise = supabase.auth.getSession();
@@ -475,7 +521,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const logout = async () => {
-    if (isSupabaseAuthEnabled()) {
+    // If we were in demo/preview mode there's no real Supabase session to
+    // sign out of — just clear the flag so the next visit returns to the
+    // login form (or school homepage) rather than auto-resuming the demo.
+    const wasDemo = isDemoModeActive();
+    clearDemoMode();
+    if (!wasDemo && isSupabaseAuthEnabled()) {
       await supabase.auth.signOut();
     }
     localStorage.removeItem('rhythmstix_auth_token');
