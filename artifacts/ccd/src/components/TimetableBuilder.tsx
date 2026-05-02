@@ -818,17 +818,15 @@ function TimetableSlotRow({
     })
   }), [slotTime, onDropYearGroup]);
 
+  const slotZoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'cell' });
+
   return (
     <div
       ref={drop}
       data-slot-row
       className={`border-b border-gray-200 flex items-center justify-center transition-colors cursor-pointer ${
-        isOver
-          ? 'bg-teal-100 border-teal-300'
-          : canDrop
-            ? 'bg-teal-50/40 hover:bg-teal-50'
-            : 'bg-white hover:bg-gray-50'
-      } ${flashClass}`}
+        isOver ? 'border-teal-300' : 'hover:bg-gray-50'
+      } ${slotZoneClass} ${flashClass}`}
       style={{ height: Math.max(heightPx, MIN_SLOT_HEIGHT_PX) }}
       onClick={(e) => { e.stopPropagation(); onSelectSlot(); }}
     >
