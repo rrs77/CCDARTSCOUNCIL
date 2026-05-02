@@ -525,6 +525,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // sign out of — just clear the flag so the next visit returns to the
     // login form (or school homepage) rather than auto-resuming the demo.
     const wasDemo = isDemoModeActive();
+    let demoFromSchool: string | null = null;
+    if (wasDemo) {
+      try {
+        demoFromSchool = sessionStorage.getItem('ccd-demo-from-school');
+      } catch {
+        /* noop */
+      }
+    }
     clearDemoMode();
     if (!wasDemo && isSupabaseAuthEnabled()) {
       await supabase.auth.signOut();
@@ -535,6 +543,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
     lastHandledUserIdRef.current = null;
     setUser(null);
     setProfile(null);
+    // After exiting demo mode, send the visitor back to where they started
+    // (the school homepage if known, otherwise the root) and drop the
+    // `?demo=1` query param so the URL reflects the new state.
+    if (wasDemo && typeof window !== 'undefined') {
+      const target = demoFromSchool ? `/${demoFromSchool}` : '/';
+      window.location.assign(target);
+    }
   };
 
   const value = {

@@ -24,6 +24,20 @@ import './utils/addLKGActivitiesToAllYearGroups'; // Make addLKGActivitiesToAllY
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
+
+  // If an authenticated user lands on a school homepage URL (e.g. came back
+  // via a bookmarked `/coopersalehall`), clean the URL back to `/` so a hard
+  // refresh doesn't briefly flash the public homepage before resolving auth.
+  useEffect(() => {
+    if (
+      user &&
+      schoolHomepage &&
+      typeof window !== 'undefined' &&
+      window.location.pathname !== '/'
+    ) {
+      window.history.replaceState({}, '', '/');
+    }
+  }, [user, schoolHomepage]);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<
     'activity' | 'lesson' | 'unit' | 'assign' | undefined

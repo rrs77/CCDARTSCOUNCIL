@@ -51,12 +51,31 @@ export const SCHOOL_HOMEPAGES: SchoolHomepageConfig[] = [
   },
 ];
 
-/** Reserved top-level paths that must never be treated as a school slug. */
+/**
+ * Reserved top-level paths that must never be treated as a school slug.
+ * Includes app routes and well-known static asset names that can appear
+ * as a single path segment.
+ */
 const RESERVED_SLUGS = new Set<string>([
   'reset-password',
   'api',
   'auth',
   'admin',
+  'login',
+  'logout',
+  'signup',
+  'register',
+  'manifest.json',
+  'manifest.webmanifest',
+  'favicon.ico',
+  'robots.txt',
+  'sitemap.xml',
+  'service-worker.js',
+  'sw.js',
+  'index.html',
+  'assets',
+  'static',
+  'public',
 ]);
 
 /**
