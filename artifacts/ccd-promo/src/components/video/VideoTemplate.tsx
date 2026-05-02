@@ -45,12 +45,10 @@ export default function VideoTemplate({
   const SceneComponent = SCENE_COMPONENTS[baseSceneKey];
 
   return (
-    <div className="w-full h-screen bg-black flex items-center justify-center overflow-hidden">
+    <div className="w-full h-screen overflow-hidden">
       <div
-        className="relative bg-white font-body overflow-hidden"
+        className="relative bg-white font-body overflow-hidden w-full h-full"
         style={{
-          width: 'min(100cqw, calc(100cqh * 16 / 9))',
-          height: 'min(100cqh, calc(100cqw * 9 / 16))',
           containerType: 'size',
         }}
       >

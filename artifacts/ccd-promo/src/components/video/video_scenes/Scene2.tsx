@@ -54,7 +54,7 @@ export function Scene2() {
             animate={phase >= 3 ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.8 }}
           >
-            A powerful curriculum planner that gives you your weekends back.
+            A powerful curriculum planner for EYFS through KS4 — gives you your weekends back.
           </motion.p>
         </div>
 

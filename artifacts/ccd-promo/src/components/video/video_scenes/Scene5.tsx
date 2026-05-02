@@ -73,7 +73,7 @@ export function Scene5() {
             animate={phase >= 2 ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
             transition={springs.bouncy}
           >
-            Try it with your school
+            EYFS → KS4 · Try it with your school
           </motion.span>
           
           <h1
