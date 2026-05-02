@@ -973,10 +973,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-[60]">
-      <div className="bg-white rounded-xl sm:rounded-2xl shadow-xl w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[98vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center sm:p-4 z-[60]">
+      <div className="bg-white rounded-none sm:rounded-2xl shadow-xl w-full h-full sm:h-auto sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl sm:max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-3 sm:p-6 border-b border-gray-200 bg-white">
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3 sm:py-5 border-b border-gray-200 bg-white">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
             <Settings className="h-5 w-5 sm:h-6 sm:w-6 text-teal-600 flex-shrink-0" />
             <h2 
@@ -994,9 +994,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           </button>
         </div>
 
-        {/* Tabs - Wrap so all items visible; scroll horizontally on very small screens */}
+        {/* Tabs - Wrap so all items visible; scroll horizontally on very small screens. Sticky outside scrollable body. */}
         <div 
-          className="flex flex-wrap gap-1 sm:gap-3 px-3 sm:px-4 py-2 bg-gray-100 overflow-x-auto relative z-10 border-b border-gray-200 shadow-sm" 
+          className="flex flex-wrap gap-1 sm:gap-2 px-2 sm:px-4 py-2 bg-gray-50 overflow-x-auto relative z-10 border-b border-gray-200 shadow-[0_2px_4px_-2px_rgba(0,0,0,0.06)] flex-shrink-0" 
           style={{ 
             WebkitOverflowScrolling: 'touch',
             scrollbarWidth: 'thin',

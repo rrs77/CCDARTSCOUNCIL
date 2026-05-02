@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Save, Trash2, Clock, MapPin, GripVertical, Edit3, Users, BookOpen, Settings, Calendar, ChevronDown, ChevronRight, Copy, CopyPlus } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useDrop, useDrag } from 'react-dnd';
+import { useDropZoneStyle, useDropFlash } from './dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 
 interface TimetableClass {
@@ -804,10 +805,17 @@ function TimetableSlotRow({
   onDropYearGroup: (yearGroup: any) => void;
   onSelectSlot: () => void;
 }) {
-  const [{ isOver }, drop] = useDrop(() => ({
+  const { flashClass, triggerFlash } = useDropFlash();
+  const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: 'year-group',
-    drop: (item: any) => onDropYearGroup(item.yearGroup),
-    collect: (monitor) => ({ isOver: monitor.isOver() })
+    drop: (item: any) => {
+      onDropYearGroup(item.yearGroup);
+      triggerFlash();
+    },
+    collect: (monitor) => ({
+      isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
+    })
   }), [slotTime, onDropYearGroup]);
 
   return (
@@ -815,13 +823,19 @@ function TimetableSlotRow({
       ref={drop}
       data-slot-row
       className={`border-b border-gray-200 flex items-center justify-center transition-colors cursor-pointer ${
-        isOver ? 'bg-teal-100 border-teal-300' : 'bg-white hover:bg-gray-50'
-      }`}
+        isOver
+          ? 'bg-teal-100 border-teal-300'
+          : canDrop
+            ? 'bg-teal-50/40 hover:bg-teal-50'
+            : 'bg-white hover:bg-gray-50'
+      } ${flashClass}`}
       style={{ height: Math.max(heightPx, MIN_SLOT_HEIGHT_PX) }}
       onClick={(e) => { e.stopPropagation(); onSelectSlot(); }}
     >
       {isOver ? (
         <span className="text-xs font-medium text-teal-700">Drop here</span>
+      ) : canDrop ? (
+        <span className="text-[10px] font-medium text-teal-600/70" aria-hidden>Drop year group here</span>
       ) : (
         <span className="text-xs text-gray-300 opacity-0 hover:opacity-100" aria-hidden>+</span>
       )}

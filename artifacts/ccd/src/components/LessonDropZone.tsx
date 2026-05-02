@@ -1,5 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { useDrop, useDrag } from 'react-dnd';
+import { useDropZoneStyle, useDropFlash } from './dnd';
 import { 
   Plus, 
   Clock, 
@@ -228,7 +229,8 @@ export function LessonDropZone({
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [initialResource, setInitialResource] = useState<{url: string, title: string, type: string} | null>(null);
 
-  const [{ isOver }, drop] = useDrop(() => ({
+  const { flashClass, triggerFlash } = useDropFlash();
+  const [{ isOver, canDrop }, drop] = useDrop(() => ({
     accept: ['activity', 'activity-stack'],
     drop: (item: { activity: Activity } | { stack: any }) => {
       if ('activity' in item) {
@@ -240,11 +242,14 @@ export function LessonDropZone({
           onActivityAdd(activity);
         });
       }
+      triggerFlash();
     },
     collect: (monitor) => ({
       isOver: monitor.isOver(),
+      canDrop: monitor.canDrop(),
     }),
   }));
+  const dropZoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'panel' });
 
   // NEW: Handle activity click to open modal
   const handleViewActivityDetails = (activity: Activity, initialResource?: {url: string, title: string, type: string}) => {
@@ -397,9 +402,7 @@ export function LessonDropZone({
           {/* Drop Zone */}
           <div
             ref={drop}
-            className={`transition-colors duration-200 ${
-              isOver ? 'bg-gray-50' : ''
-            }`}
+            className={`transition-colors duration-200 rounded-md ${dropZoneClass} ${flashClass}`}
           >
             {lessonPlan.activities.length === 0 ? (
               <div className="text-center py-12 px-6">
