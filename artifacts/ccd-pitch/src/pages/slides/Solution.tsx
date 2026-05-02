@@ -29,13 +29,13 @@ export default function Solution() {
             className="font-display font-black text-white tracking-tight leading-[1.02]"
             style={{ fontSize: "5.2vw", textWrap: "balance" }}
           >
-            One calm space for the whole curriculum.
+            One calm space for drama, music and dance.
           </h2>
           <p
             className="mt-[2.5vh] text-white/75 font-body max-w-[60vw] leading-snug"
             style={{ fontSize: "1.6vw", textWrap: "pretty" }}
           >
-            Creative Curriculum Designer brings planning, teaching and reusable resources into one connected workspace built for primary classrooms.
+            Creative Curriculum Designer brings planning, teaching and reusable resources into one workspace — purpose-built for the performing arts in primary classrooms.
           </p>
         </div>
 

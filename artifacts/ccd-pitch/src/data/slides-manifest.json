@@ -3,8 +3,8 @@
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
     "position": 1,
     "filepath": "src/pages/slides/Title.tsx",
-    "title": "Plan a year of lessons in an afternoon",
-    "description": "Title slide introducing Creative Curriculum Designer with hero image and tagline.",
+    "title": "Plan a year of performing arts in an afternoon",
+    "description": "Title slide introducing Creative Curriculum Designer with hero image and performing-arts tagline.",
     "speakerNotes": ""
   },
   {
@@ -20,12 +20,20 @@
     "position": 3,
     "filepath": "src/pages/slides/Solution.tsx",
     "title": "The solution: one calm space",
-    "description": "Half-term planner, lesson library, and activity stacks in one workspace.",
+    "description": "Half-term planner, lesson library, and activity stacks in one workspace built for performing arts.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000010",
+    "position": 4,
+    "filepath": "src/pages/slides/PerformingArtsCoverage.tsx",
+    "title": "Drama, Music & Dance — one workspace",
+    "description": "Subject coverage breakdown with example units for each performing-arts discipline.",
     "speakerNotes": ""
   },
   {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
-    "position": 4,
+    "position": 5,
     "filepath": "src/pages/slides/WhoItsFor.tsx",
     "title": "Who it's for: EYFS, KS1 and KS2 teachers",
     "description": "Audience overview across Reception, Key Stage 1, and Key Stage 2.",
@@ -33,31 +41,79 @@
   },
   {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000005",
-    "position": 5,
+    "position": 6,
     "filepath": "src/pages/slides/HalfTermPlanner.tsx",
     "title": "Feature: Half-term planner",
     "description": "Visual overview of six half-terms with lesson counts and progress.",
     "speakerNotes": ""
   },
   {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000011",
+    "position": 7,
+    "filepath": "src/pages/slides/LessonPlannerCalendar.tsx",
+    "title": "Feature: Lesson planner calendar",
+    "description": "Weekly timetable view with drag-and-drop lesson slots across drama, music and dance.",
+    "speakerNotes": ""
+  },
+  {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000006",
-    "position": 6,
+    "position": 8,
     "filepath": "src/pages/slides/LessonLibrary.tsx",
     "title": "Feature: Lesson library",
-    "description": "Searchable, taggable library of lessons your whole team can build on.",
+    "description": "Searchable, taggable library of drama, music and dance lessons.",
     "speakerNotes": ""
   },
   {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000007",
-    "position": 7,
+    "position": 9,
     "filepath": "src/pages/slides/ActivityStacks.tsx",
     "title": "Feature: Activity stacks",
-    "description": "Reusable groups of warm-ups, mains, and plenaries that drop into any lesson.",
+    "description": "Reusable groups of warm-ups, mains, and plenaries for drama and music.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000012",
+    "position": 10,
+    "filepath": "src/pages/slides/ActivityCardsWithLinks.tsx",
+    "title": "Feature: Activity cards with web links",
+    "description": "Activity cards carry video, music, backing, vocal and web-link resources for one-tap access in the classroom.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000013",
+    "position": 11,
+    "filepath": "src/pages/slides/ActivityCreation.tsx",
+    "title": "Feature: Activity creation flow",
+    "description": "The new-activity form, with dedicated fields for video, web link, backing track and resources.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000014",
+    "position": 12,
+    "filepath": "src/pages/slides/LessonPDFExport.tsx",
+    "title": "Feature: Print-ready lesson PDFs",
+    "description": "Sample lesson PDF export with school header, learning objective, and activity sequence.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000015",
+    "position": 13,
+    "filepath": "src/pages/slides/SettingsHub.tsx",
+    "title": "Feature: Settings",
+    "description": "Settings panel showing year groups, categories, branding, and data tabs.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000016",
+    "position": 14,
+    "filepath": "src/pages/slides/SchoolHomepageAndPreview.tsx",
+    "title": "Feature: School homepages & preview mode",
+    "description": "Public school landing pages and the one-click read-only preview experience.",
     "speakerNotes": ""
   },
   {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000008",
-    "position": 8,
+    "position": 15,
     "filepath": "src/pages/slides/HowItWorks.tsx",
     "title": "How it works",
     "description": "The four-step flow from empty term to ready-to-teach.",
@@ -65,7 +121,7 @@
   },
   {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
-    "position": 9,
+    "position": 16,
     "filepath": "src/pages/slides/CallToAction.tsx",
     "title": "Try CCD with your school",
     "description": "Closing call to action with contact and trial details.",

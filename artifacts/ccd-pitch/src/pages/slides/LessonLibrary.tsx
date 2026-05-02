@@ -27,38 +27,38 @@ export default function LessonLibrary() {
             <div className="grid grid-cols-2 gap-[1.2vw]">
               <div className="rounded-[1rem] border border-text/10 p-[1.8vh_1.2vw] bg-white">
                 <div className="flex items-center justify-between mb-[1vh]">
-                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-primary/15 text-primary-dark font-display font-semibold text-[0.85vw]">Year 4</span>
+                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#FFE5D6] text-[#A24A1A] font-display font-semibold text-[0.85vw]">Drama &middot; Y4</span>
                   <span className="font-body text-muted text-[0.85vw]">45 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.25vw] leading-tight">Mime &amp; the silent story</h4>
-                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Building physical storytelling without words.</p>
+                <h4 className="font-display font-bold text-text text-[1.25vw] leading-tight">Freeze-frame storytelling</h4>
+                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Three still images that retell a fable using levels, gesture and gaze.</p>
               </div>
 
               <div className="rounded-[1rem] border border-text/10 p-[1.8vh_1.2vw] bg-white">
                 <div className="flex items-center justify-between mb-[1vh]">
-                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-accent/15 text-accent-dark font-display font-semibold text-[0.85vw]">Year 2</span>
-                  <span className="font-body text-muted text-[0.85vw]">30 min</span>
+                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#D6E8F2] text-[#0A4A66] font-display font-semibold text-[0.85vw]">Music &middot; Y3</span>
+                  <span className="font-body text-muted text-[0.85vw]">40 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.25vw] leading-tight">Hot-seating fairy tale heroes</h4>
-                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Asking characters questions in role.</p>
+                <h4 className="font-display font-bold text-text text-[1.25vw] leading-tight">Rhythms of West Africa</h4>
+                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Active listening, body percussion, then a class call-and-response.</p>
               </div>
 
               <div className="rounded-[1rem] border border-text/10 p-[1.8vh_1.2vw] bg-white">
                 <div className="flex items-center justify-between mb-[1vh]">
-                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-primary/15 text-primary-dark font-display font-semibold text-[0.85vw]">Year 5</span>
-                  <span className="font-body text-muted text-[0.85vw]">60 min</span>
+                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#E8E2F2] text-[#3D2F7A] font-display font-semibold text-[0.85vw]">Dance &middot; Y5</span>
+                  <span className="font-body text-muted text-[0.85vw]">50 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.25vw] leading-tight">Choral speaking with rhythm</h4>
-                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Group voice work using poetry.</p>
+                <h4 className="font-display font-bold text-text text-[1.25vw] leading-tight">Storm motif &amp; canon</h4>
+                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Build a 16-count motif, then layer it as a four-group canon.</p>
               </div>
 
               <div className="rounded-[1rem] border border-text/10 p-[1.8vh_1.2vw] bg-white">
                 <div className="flex items-center justify-between mb-[1vh]">
-                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-accent/15 text-accent-dark font-display font-semibold text-[0.85vw]">Reception</span>
+                  <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#FFE5D6] text-[#A24A1A] font-display font-semibold text-[0.85vw]">Drama &middot; EYFS</span>
                   <span className="font-body text-muted text-[0.85vw]">20 min</span>
                 </div>
                 <h4 className="font-display font-bold text-text text-[1.25vw] leading-tight">Animal walks circle game</h4>
-                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Movement and observation in pairs.</p>
+                <p className="text-muted font-body text-[0.95vw] leading-snug mt-[0.6vh]">Pretend movement and partner observation in a circle.</p>
               </div>
             </div>
           </div>

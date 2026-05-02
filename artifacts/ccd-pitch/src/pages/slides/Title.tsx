@@ -35,19 +35,19 @@ export default function Title() {
 
         <div className="max-w-[70vw]">
           <span className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh]">
-            For EYFS, KS1 &amp; KS2 teachers
+            Drama · Music · Dance for primary schools
           </span>
           <h1
             className="font-display font-black text-white tracking-tighter leading-[0.95]"
             style={{ fontSize: "7vw", textWrap: "balance" }}
           >
-            Plan a year of lessons in an afternoon.
+            Plan a year of performing arts in an afternoon.
           </h1>
           <p
             className="mt-[3vh] text-white/90 font-body font-medium max-w-[55vw] leading-snug"
             style={{ fontSize: "1.7vw", textWrap: "pretty" }}
           >
-            One calm space to map your half-terms, build lessons from a shared library, and stack the activities you actually use.
+            One calm space to map your half-terms, build lessons from a shared library, and stack the warm-ups, songs and routines you actually use.
           </p>
         </div>
 

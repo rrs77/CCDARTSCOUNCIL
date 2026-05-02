@@ -39,45 +39,45 @@ export default function ActivityStacks() {
           <div className="w-full grid grid-cols-2 gap-[1.5vw]">
             <div className="rounded-[1.5rem] bg-surface shadow-[0_12px_40px_rgba(0,76,69,0.1)] p-[2.5vh_1.6vw] border border-text/5">
               <div className="flex items-center justify-between mb-[1.5vh]">
-                <span className="font-display font-bold text-text text-[1.3vw]">Warm-up stack</span>
-                <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-primary/15 text-primary-dark font-display font-semibold text-[0.85vw]">5 items</span>
+                <span className="font-display font-bold text-text text-[1.3vw]">Drama &middot; Storytelling</span>
+                <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#FFE5D6] text-[#A24A1A] font-display font-semibold text-[0.85vw]">5 items</span>
               </div>
               <div className="flex flex-col gap-[1vh]">
-                <div className="rounded-[0.8rem] bg-primary/10 border border-primary/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Walk &amp; freeze
+                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Mirror game warm-up
                 </div>
-                <div className="rounded-[0.8rem] bg-primary/10 border border-primary/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Pass the clap
+                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Story circle &amp; offers
                 </div>
-                <div className="rounded-[0.8rem] bg-primary/10 border border-primary/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Mirror partners
+                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Character hot-seating
                 </div>
-                <div className="rounded-[0.8rem] bg-primary/10 border border-primary/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Zip zap boing
+                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Freeze-frame moments
                 </div>
-                <div className="rounded-[0.8rem] bg-primary/10 border border-primary/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Status walks
+                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Audience feedback circle
                 </div>
               </div>
             </div>
 
             <div className="rounded-[1.5rem] bg-surface shadow-[0_12px_40px_rgba(0,76,69,0.1)] p-[2.5vh_1.6vw] border border-text/5">
               <div className="flex items-center justify-between mb-[1.5vh]">
-                <span className="font-display font-bold text-text text-[1.3vw]">Storytelling stack</span>
-                <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-accent/15 text-accent-dark font-display font-semibold text-[0.85vw]">4 items</span>
+                <span className="font-display font-bold text-text text-[1.3vw]">Music &middot; Rhythm &amp; voice</span>
+                <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#D6E8F2] text-[#0A4A66] font-display font-semibold text-[0.85vw]">4 items</span>
               </div>
               <div className="flex flex-col gap-[1vh]">
-                <div className="rounded-[0.8rem] bg-accent/10 border border-accent/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Story circle
+                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Body-percussion warm-up
                 </div>
-                <div className="rounded-[0.8rem] bg-accent/10 border border-accent/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Character hot-seating
+                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Active listening: West Africa
                 </div>
-                <div className="rounded-[0.8rem] bg-accent/10 border border-accent/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Freeze-frame moments
+                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Call-and-response clapping
                 </div>
-                <div className="rounded-[0.8rem] bg-accent/10 border border-accent/20 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
-                  Reflective sharing
+                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                  Sing &amp; sign reflection
                 </div>
                 <div className="rounded-[0.8rem] border-2 border-dashed border-text/20 p-[1vh_0.9vw] font-body text-muted text-[1.05vw] text-center">
                   Drop activity here

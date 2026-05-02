@@ -47,7 +47,7 @@ export default function HalfTermPlanner() {
         <div className="col-span-7 flex items-center">
           <div className="w-full rounded-[1.5rem] bg-surface shadow-[0_20px_60px_rgba(0,76,69,0.12)] p-[2.5vw] border border-text/5">
             <div className="flex items-center justify-between mb-[2vh]">
-              <span className="font-display font-bold text-text text-[1.4vw]">Year 4 &middot; Drama</span>
+              <span className="font-display font-bold text-text text-[1.4vw]">Year 4 &middot; Music</span>
               <span className="font-body text-muted text-[1vw]">2025–26 academic year</span>
             </div>
 
