@@ -64,11 +64,75 @@ function syncUserIdToStorage(userId: string | null) {
   }
 }
 
+/**
+ * Profile cache – avoids a blocking Supabase round-trip on every page load.
+ * Keyed by user id so a different user never sees stale data.
+ * 24-hour TTL bounds drift; profile changes still propagate via background revalidation.
+ */
+const PROFILE_CACHE_KEY = 'rhythmstix_profile_cache';
+const PROFILE_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+
+interface ProfileCacheEntry {
+  userId: string;
+  profile: Profile | null;
+  ts: number;
+}
+
+function readProfileCache(userId: string): Profile | null {
+  try {
+    const raw = localStorage.getItem(PROFILE_CACHE_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as ProfileCacheEntry;
+    if (parsed.userId !== userId) return null;
+    if (Date.now() - parsed.ts > PROFILE_CACHE_TTL_MS) return null;
+    return parsed.profile;
+  } catch {
+    return null;
+  }
+}
+
+function writeProfileCache(userId: string, profile: Profile | null) {
+  try {
+    const entry: ProfileCacheEntry = { userId, profile, ts: Date.now() };
+    localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(entry));
+  } catch {
+    /* quota or privacy mode – cache is best-effort */
+  }
+}
+
+function clearProfileCache() {
+  try {
+    localStorage.removeItem(PROFILE_CACHE_KEY);
+  } catch {
+    /* noop */
+  }
+}
+
+function buildAppUserFromSession(
+  sessionUser: { id: string; email?: string | null },
+  cachedProfile: Profile | null,
+): AppUser {
+  return {
+    id: sessionUser.id,
+    email: sessionUser.email ?? '',
+    name: cachedProfile?.display_name ?? sessionUser.email ?? '',
+    role: cachedProfile?.role ?? 'teacher',
+    profile: cachedProfile ?? undefined,
+  };
+}
+
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<AppUser | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
   const resolvedRef = useRef(false);
+  /**
+   * Tracks the user id we have already hydrated state for. Used to short-circuit the
+   * onAuthStateChange handler so it never re-fetches the profile when login() or
+   * checkAuthStatus() already did the work for that user. This eliminates the
+   * duplicate Supabase request on every successful sign-in.
+   */
+  const lastHandledUserIdRef = useRef<string | null>(null);
 
   const fetchSupabaseProfile = useCallback(async (authUserId: string): Promise<Profile | null> => {
     const { data, error } = await supabase
@@ -98,37 +162,102 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, [fetchSupabaseProfile]);
 
+  /**
+   * Profile fetch that distinguishes "row missing" from "network/timeout failure".
+   * - kind: 'ok'    → profile is fresh data (may be null if the row was deleted)
+   * - kind: 'error' → request failed; do NOT mutate cache or state (keep cached profile)
+   *
+   * Conflating those two outcomes was an authorization risk: a demoted/deleted user
+   * could keep their cached elevated role indefinitely while the network was flaky.
+   */
+  const fetchProfileSafe = useCallback(async (
+    authUserId: string,
+    timeoutMs: number,
+  ): Promise<{ kind: 'ok'; profile: Profile | null } | { kind: 'error' }> => {
+    try {
+      const queryPromise = supabase
+        .from('profiles')
+        .select('*')
+        .eq('id', authUserId)
+        .maybeSingle();
+      const timeoutPromise = new Promise<never>((_, reject) =>
+        setTimeout(() => reject(new Error('Profile fetch timeout')), timeoutMs),
+      );
+      const result = await Promise.race([queryPromise, timeoutPromise]);
+      if ((result as { error?: unknown }).error) {
+        if (import.meta.env.DEV) console.warn('Profile fetch error:', (result as { error: unknown }).error);
+        return { kind: 'error' };
+      }
+      return { kind: 'ok', profile: (result as { data: Profile | null }).data };
+    } catch (e) {
+      if (import.meta.env.DEV) console.warn('Profile fetch failed or timed out:', e);
+      return { kind: 'error' };
+    }
+  }, []);
+
+  /**
+   * Background profile revalidation: refreshes profile, updates cache + state, never blocks UI.
+   * On a transient network failure we keep the cached profile (avoids logging users out of UI affordances).
+   * On a confirmed null (row deleted/RLS denied), we clear the cache and downgrade to a safe default
+   * so a removed/demoted account cannot keep elevated permissions across sessions.
+   */
+  const revalidateProfile = useCallback(async (sessionUserId: string) => {
+    const result = await fetchProfileSafe(sessionUserId, 8000);
+    if (result.kind === 'error') return; // Keep cached/optimistic data – do not blow it away on transient failure
+    const fresh = result.profile;
+    if (fresh === null) {
+      // Profile row is genuinely gone – purge cache and reset to a safe non-privileged baseline.
+      clearProfileCache();
+    } else {
+      writeProfileCache(sessionUserId, fresh);
+    }
+    setProfile(fresh);
+    setUser((prev) =>
+      prev && prev.id === sessionUserId
+        ? {
+            ...prev,
+            name: fresh?.display_name ?? prev.email ?? prev.name,
+            role: fresh?.role ?? 'teacher',
+            profile: fresh ?? undefined,
+          }
+        : prev,
+    );
+  }, [fetchProfileSafe]);
+
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
-  // Supabase auth state: when session changes, refresh profile
+  // Supabase auth state subscription. Handles token refresh and cross-tab sign-in/out.
+  // Skips re-hydrating the same user that login()/checkAuthStatus() already handled
+  // so we don't fire a redundant profile fetch on every successful sign-in.
   useEffect(() => {
     if (!isSupabaseAuthEnabled()) return;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
-        resolvedRef.current = true; // Prevent timeout from overwriting; we explicitly signed out
+        resolvedRef.current = true;
+        lastHandledUserIdRef.current = null;
+        clearProfileCache();
         setUser(null);
         setProfile(null);
         syncUserIdToStorage(null);
         localStorage.removeItem('rhythmstix_auth_token');
-      } else if (session?.user) {
-        resolvedRef.current = true; // Valid session – prevent timeout from clearing it
-        const p = await fetchProfileWithTimeout(session.user.id, 4000);
-        const appUser: AppUser = {
-          id: session.user.id,
-          email: session.user.email ?? '',
-          name: p?.display_name ?? session.user.email ?? '',
-          role: p?.role ?? 'teacher',
-          profile: p ?? undefined
-        };
-        setUser(appUser);
-        setProfile(p ?? null);
-        syncUserIdToStorage(session.user.id);
+        return;
       }
+      if (!session?.user) return;
+      // Already handled this user – nothing to do (avoids the duplicate profile fetch).
+      if (lastHandledUserIdRef.current === session.user.id) return;
+      lastHandledUserIdRef.current = session.user.id;
+      resolvedRef.current = true;
+      const cached = readProfileCache(session.user.id);
+      setUser(buildAppUserFromSession(session.user, cached));
+      setProfile(cached);
+      syncUserIdToStorage(session.user.id);
+      // Revalidate in background; never blocks UI.
+      void revalidateProfile(session.user.id);
     });
     return () => subscription.unsubscribe();
-  }, [fetchProfileWithTimeout]);
+  }, [revalidateProfile]);
 
   const AUTH_CHECK_TIMEOUT_MS = 2500; // Max time to show spinner; then show login or app
   const GET_SESSION_TIMEOUT_MS = 2000; // Don't wait forever for getSession (Supabase can be slow)
@@ -152,18 +281,15 @@ export function AuthProvider({ children }: AuthProviderProps) {
         const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
         if (session?.user) {
           resolvedRef.current = true;
-          const p = await fetchSupabaseProfile(session.user.id);
-          const appUser: AppUser = {
-            id: session.user.id,
-            email: session.user.email ?? '',
-            name: p?.display_name ?? session.user.email ?? '',
-            role: p?.role ?? 'teacher',
-            profile: p ?? undefined
-          };
-          setUser(appUser);
-          setProfile(p ?? null);
+          lastHandledUserIdRef.current = session.user.id;
+          // Hydrate from cache so the app renders immediately – no spinner waiting on the profile query.
+          const cached = readProfileCache(session.user.id);
+          setUser(buildAppUserFromSession(session.user, cached));
+          setProfile(cached);
           syncUserIdToStorage(session.user.id);
           setLoading(false);
+          // Revalidate profile in the background (catches role/display_name changes since last visit).
+          void revalidateProfile(session.user.id);
           return;
         }
         resolvedRef.current = true;
@@ -257,6 +383,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const refreshProfile = useCallback(async () => {
     if (!isSupabaseAuthEnabled() || !user?.id) return;
     const p = await fetchSupabaseProfile(user.id);
+    writeProfileCache(user.id, p);
     setProfile(p);
     setUser(prev => prev ? { ...prev, profile: p ?? undefined } : null);
   }, [user?.id, fetchSupabaseProfile]);
@@ -277,19 +404,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
           throw new Error(isWrongPassword ? 'Email or password incorrect. Try again or use Forgot password.' : (error.message || 'Sign-in failed'));
         }
         if (!data.session?.user) throw new Error('No session after sign in');
-        // Timeout so we never hang on slow profiles table – use session data if profile times out
-        const PROFILE_TIMEOUT_MS = 4000;
-        const p = await fetchProfileWithTimeout(data.session.user.id, PROFILE_TIMEOUT_MS);
-        const appUser: AppUser = {
-          id: data.session.user.id,
-          email: data.session.user.email ?? '',
-          name: p?.display_name ?? data.session.user.email ?? '',
-          role: p?.role ?? 'teacher',
-          profile: p ?? undefined
-        };
-        setUser(appUser);
-        setProfile(p ?? null);
-        syncUserIdToStorage(data.session.user.id);
+        const sessionUser = data.session.user;
+        // Mark this user as handled so the onAuthStateChange SIGNED_IN event doesn't fire a duplicate fetch.
+        lastHandledUserIdRef.current = sessionUser.id;
+        resolvedRef.current = true;
+        // Resolve login immediately using cached profile (or session-only fallback) so the
+        // user is redirected into the app without waiting on a second network round trip.
+        const cached = readProfileCache(sessionUser.id);
+        setUser(buildAppUserFromSession(sessionUser, cached));
+        setProfile(cached);
+        syncUserIdToStorage(sessionUser.id);
+        // Revalidate profile in background – updates name/role/profile object when fresh data arrives.
+        void revalidateProfile(sessionUser.id);
         return;
       }
 
@@ -354,6 +480,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
     localStorage.removeItem('rhythmstix_auth_token');
     syncUserIdToStorage(null);
+    clearProfileCache();
+    lastHandledUserIdRef.current = null;
     setUser(null);
     setProfile(null);
   };

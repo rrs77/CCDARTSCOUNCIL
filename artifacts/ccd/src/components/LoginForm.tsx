@@ -78,7 +78,9 @@ export function LoginForm() {
         setAuthStatus('fail');
         setAuthError('Check failed');
       });
-    supabase.auth.getSession().catch(() => {});
+    // (Removed redundant supabase.auth.getSession() warm-up: AuthProvider already
+    // calls getSession on mount, so firing it again here was a wasted round trip
+    // that delayed login on slow networks.)
   }, []);
 
   // Show install prompt after a short delay if available
