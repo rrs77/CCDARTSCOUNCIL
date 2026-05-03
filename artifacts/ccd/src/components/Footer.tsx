@@ -1,5 +1,5 @@
 import React from 'react';
-import { Youtube, Linkedin, Facebook, Twitter, Instagram, Music, Globe } from 'lucide-react';
+import { Youtube, Linkedin, Facebook, Twitter, Instagram, Music, Globe, Mail } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 
 const SOCIAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
@@ -37,13 +37,16 @@ export function Footer() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           
-          {/* Left side - Contact */}
+          {/* Left side - Contact. Replaced ✉️ emoji with the lucide Mail icon
+              for design-language consistency with the social icons and the
+              rest of the app. */}
           <div className="flex items-center space-x-4 text-base order-2 md:order-1">
-            <a 
+            <a
               href={`mailto:${contactEmail}`}
-              className="text-white hover:text-blue-200 transition-colors duration-200 font-medium"
+              className="inline-flex items-center gap-2 text-white hover:text-blue-200 transition-colors duration-200 font-medium"
             >
-              ✉️ Contact Us
+              <Mail className="h-5 w-5" aria-hidden="true" />
+              <span>Contact Us</span>
             </a>
           </div>
 
