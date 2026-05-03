@@ -158,3 +158,21 @@ overrides:
   # drizzle-kit uses esbuild internally on an older version that's vulnerable, this overrides it
   "@esbuild-kit/esm-loader": "npm:tsx@^4.21.0"
   esbuild: "0.27.3"
+  # Security patches for transitive dependencies (audit, May 2026)
+  # NOTE: picomatch and path-to-regexp are global overrides because every
+  # consumer in this workspace already resolves to the 4.x / 8.x major lines
+  # (express 5 + router 2 use path-to-regexp 8.x; tailwind/chokidar/sucrase
+  # all picked up picomatch 4.x cleanly). If a future dep introduces an
+  # express-4 or chokidar/anymatch chain that still pins picomatch ^2 /
+  # path-to-regexp 0.1.x, scope these overrides per-chain instead of globally
+  # to avoid forcing major-version jumps on unrelated consumers.
+  # picomatch: ReDoS via extglob quantifiers + POSIX class method injection
+  picomatch: "^4.0.4"
+  # path-to-regexp: ReDoS via sequential optional groups / multiple wildcards (express transitive)
+  path-to-regexp: "^8.4.2"
+  # lodash: code injection via _.template + prototype pollution via _.unset/_.omit (recharts transitive)
+  lodash: "^4.18.1"
+  # brace-expansion: zero-step sequence DoS (orval transitive)
+  brace-expansion: "^2.1.0"
+  # yaml: stack overflow via deeply nested collections (postcss-load-config transitive)
+  yaml: "^2.8.3"
