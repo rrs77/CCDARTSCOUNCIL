@@ -325,11 +325,16 @@ export function Dashboard() {
             </TabsList>
 
 
-            <TabsContent value="unit-viewer" className="mt-6">
+            {/* `key={activeTab}` on each TabsContent forces a fresh mount when
+                the tab changes, which re-triggers the `ccd-fade-in-up` entrance
+                so panel switches feel intentional rather than abrupt. The
+                underlying components manage their own state via context, so
+                remounting the wrapper is purely a visual concern. */}
+            <TabsContent value="unit-viewer" className="mt-6 ccd-fade-in-up" key={`uv-${activeTab}`}>
               <UnitViewer />
             </TabsContent>
 
-            <TabsContent value="lesson-library" className="mt-6">
+            <TabsContent value="lesson-library" className="mt-6 ccd-fade-in-up" key={`ll-${activeTab}`}>
               <LessonLibrary 
                 className={currentSheetInfo.sheet}
                 onAssignToUnit={handleAssignLessonToHalfTerm}
@@ -337,13 +342,13 @@ export function Dashboard() {
               />
             </TabsContent>
 
-            <TabsContent value="lesson-builder" className="mt-6">
+            <TabsContent value="lesson-builder" className="mt-6 ccd-fade-in-up" key={`lb-${activeTab}`}>
               <LessonPlanBuilder 
                 onUnsavedChangesChange={setLessonBuilderHasUnsavedChanges}
               />
             </TabsContent>
 
-            <TabsContent value="activity-library" className="mt-6">
+            <TabsContent value="activity-library" className="mt-6 ccd-fade-in-up" key={`al-${activeTab}`}>
               <ActivityLibrary
                 onActivitySelect={handleActivityAdd}
                 selectedActivities={[]}
@@ -353,7 +358,7 @@ export function Dashboard() {
               />
             </TabsContent>
 
-            <TabsContent value="calendar" className="mt-6">
+            <TabsContent value="calendar" className="mt-6 ccd-fade-in-up" key={`cal-${activeTab}`}>
               <LessonPlannerCalendar
                 onDateSelect={handleDateSelect}
                 selectedDate={selectedDate}

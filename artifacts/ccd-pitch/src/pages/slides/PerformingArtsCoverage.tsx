@@ -11,7 +11,7 @@ export default function PerformingArtsCoverage() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[7vw] py-[7vh]">
+      <div className="relative z-10 h-full w-full flex flex-col px-[7vw] py-[7vh] slide-auto-enter">
         <div className="max-w-[70vw] mb-[5vh]">
           <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[1vw] mb-[2.5vh]">
             What it covers

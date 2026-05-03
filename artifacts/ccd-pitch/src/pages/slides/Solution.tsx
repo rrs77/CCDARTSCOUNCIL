@@ -20,7 +20,7 @@ export default function Solution() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-center px-[7vw] py-[7vh]">
+      <div className="relative z-10 h-full w-full flex flex-col justify-center px-[7vw] py-[7vh] slide-auto-enter">
         <div className="max-w-[80vw]">
           <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[1vw] mb-[3vh]">
             The solution

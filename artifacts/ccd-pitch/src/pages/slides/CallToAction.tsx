@@ -22,7 +22,7 @@ export default function CallToAction() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[7vw] py-[7vh]">
+      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[7vw] py-[7vh] slide-auto-enter">
         <div className="flex items-center gap-[1.2vw]">
           <img
             src={`${base}cd-logo.svg`}

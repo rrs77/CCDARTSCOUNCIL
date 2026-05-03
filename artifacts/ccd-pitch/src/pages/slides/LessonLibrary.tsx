@@ -11,7 +11,7 @@ export default function LessonLibrary() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.5vw] px-[7vw] py-[7vh]">
+      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.5vw] px-[7vw] py-[7vh] slide-auto-enter">
         <div className="col-span-7 flex items-center">
           <div className="w-full rounded-[1.5rem] bg-surface shadow-[0_20px_60px_rgba(0,76,69,0.12)] p-[2.2vw] border border-text/5">
             <div className="flex items-center justify-between mb-[2vh]">

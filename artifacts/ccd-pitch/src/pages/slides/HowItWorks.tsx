@@ -11,7 +11,7 @@ export default function HowItWorks() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[7vw] py-[7vh]">
+      <div className="relative z-10 h-full w-full flex flex-col px-[7vw] py-[7vh] slide-auto-enter">
         <div className="max-w-[60vw] mb-[6vh]">
           <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[1vw] mb-[2.5vh]">
             How it works

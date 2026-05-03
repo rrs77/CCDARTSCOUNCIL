@@ -11,7 +11,7 @@ export default function SchoolHomepageAndPreview() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[7vw] py-[5vh]">
+      <div className="relative z-10 h-full w-full flex flex-col px-[7vw] py-[5vh] slide-auto-enter">
         <div className="max-w-[70vw] mb-[3vh]">
           <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[1vw] mb-[2vh]">
             Feature 08
