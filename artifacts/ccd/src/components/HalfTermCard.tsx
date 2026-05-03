@@ -36,110 +36,81 @@ export function HalfTermCard({
   onLessonEdit,
   halfTerms = []
 }: HalfTermCardProps) {
-  // Determine progress state and colors
-  const getProgressState = () => {
-    if (lessonCount === 0) {
-      return {
-        bgColor: '#D6F2EE', // Light teal background for card footers
-        textColor: '#004C45', // Darker teal text for better contrast
-        status: 'Empty'
-      };
-    } else if (isComplete) {
-      return {
-        bgColor: '#008272', // Primary brand teal for complete
-        textColor: '#FFFFFF',
-        status: 'Complete'
-      };
-    } else {
-      return {
-        bgColor: '#007366', // Teal hover for in progress
-        textColor: '#FFFFFF',
-        status: 'In Progress'
-      };
-    }
-  };
+  // Three visual variants:
+  //   empty       — light, dashed-feeling band, "Add lessons" affordance
+  //   in-progress — teal-deep band with lesson count
+  //   complete    — primary teal band with check icon
+  const variant: 'empty' | 'in-progress' | 'complete' =
+    lessonCount === 0 ? 'empty' : isComplete ? 'complete' : 'in-progress';
 
-  const progressState = getProgressState();
+  const bandStyle =
+    variant === 'empty'
+      ? { backgroundColor: '#F1FAF8', color: '#0D6E63', borderTop: '1px dashed #CDEAE3' }
+      : variant === 'complete'
+        ? { backgroundColor: '#008272', color: '#FFFFFF', borderTop: '1px solid transparent' }
+        : { backgroundColor: '#0D9488', color: '#FFFFFF', borderTop: '1px solid transparent' };
 
   return (
-    <div 
-      className="bg-white rounded-card shadow-soft transition-all duration-300 cursor-pointer group hover:-translate-y-0.5 hover:shadow-hover overflow-hidden"
+    <div
+      className="bg-white rounded-card shadow-soft ccd-card-lift cursor-pointer group overflow-hidden border border-gray-100 hover:border-teal-200"
       onClick={onClick}
     >
-      {/* TOP SECTION - White Background */}
-      <div 
-        className="relative"
-        style={{ 
-          padding: '20px 16px',
-          background: 'white'
-        }}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <h3 
-            style={{
-              fontSize: '18px',
-              fontWeight: 600,
-              color: '#6B7280',
-              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-              margin: 0
-            }}
-          >
-            {name}
-          </h3>
-          <ChevronRight 
-            className="h-5 w-5 transition-all duration-300 text-gray-400 group-hover:translate-x-1" 
-            style={{ color: '#6B7280' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#008272'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#6B7280'}
+      {/* TOP SECTION — title, months chip, chevron */}
+      <div className="relative px-4 sm:px-5 pt-5 pb-4">
+        <div className="flex items-start justify-between gap-3 mb-2">
+          <div className="min-w-0 flex-1">
+            <h3
+              className="text-[17px] sm:text-[18px] font-semibold text-gray-900 leading-tight tracking-tight"
+              style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+            >
+              {name}
+            </h3>
+            <p
+              className="mt-1 inline-block text-[12px] font-medium text-gray-500 tracking-wide uppercase"
+              style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+            >
+              {months}
+            </p>
+          </div>
+          <ChevronRight
+            className="h-5 w-5 flex-shrink-0 text-gray-300 transition-all duration-200 group-hover:translate-x-1 group-hover:text-teal-600"
           />
         </div>
-        
-        <p 
-          style={{
-            fontSize: '14px',
-            color: '#4B5563',
-            fontWeight: 400,
-            fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-            margin: 0
-          }}
-        >
-          {months}
-        </p>
       </div>
 
-      {/* BOTTOM SECTION - Teal Progress Band */}
-      <div 
-        className="relative flex items-center justify-between"
-        style={{ 
-          padding: '16px',
-          backgroundColor: progressState.bgColor,
-          transition: 'all 250ms ease'
-        }}
+      {/* BOTTOM BAND — status */}
+      <div
+        className="relative flex items-center justify-between px-4 sm:px-5 py-3"
+        style={{ ...bandStyle, transition: 'background-color 250ms var(--ccd-ease-out)' }}
       >
-        <div className="flex items-center gap-2">
-          <BookOpen 
-            className="h-5 w-5" 
-            style={{ color: progressState.textColor }}
-          />
-          <span 
-            style={{
-              fontSize: '15px',
-              fontWeight: 500,
-              color: progressState.textColor,
-              fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif'
-            }}
+        <div className="flex items-center gap-2 min-w-0">
+          {variant === 'complete' ? (
+            <CheckCircle className="h-[18px] w-[18px] flex-shrink-0" />
+          ) : variant === 'in-progress' ? (
+            <BookOpen className="h-[18px] w-[18px] flex-shrink-0" />
+          ) : (
+            <Plus className="h-[18px] w-[18px] flex-shrink-0 opacity-70" />
+          )}
+          <span
+            className="text-[14px] font-medium truncate"
+            style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
           >
-            {lessonCount > 0 ? `${lessonCount} lesson${lessonCount !== 1 ? 's' : ''}` : 'No lessons assigned'}
-            {stackCount > 0 && (
-              <span style={{ marginLeft: '0.5rem' }}>
-                {stackCount} stack{stackCount !== 1 ? 's' : ''}
+            {variant === 'empty'
+              ? 'Add lessons'
+              : `${lessonCount} lesson${lessonCount !== 1 ? 's' : ''}`}
+            {stackCount > 0 && variant !== 'empty' && (
+              <span className="ml-2 opacity-90">
+                · {stackCount} stack{stackCount !== 1 ? 's' : ''}
               </span>
             )}
           </span>
         </div>
-
+        {variant === 'complete' && (
+          <span className="text-[11px] font-semibold tracking-wide uppercase opacity-90">
+            Complete
+          </span>
+        )}
       </div>
-
     </div>
   );
 }

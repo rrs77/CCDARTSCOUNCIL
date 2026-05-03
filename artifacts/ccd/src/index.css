@@ -2,24 +2,51 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Global teal focus states */
+/* ===========================================================================
+ * Design tokens / motion system
+ * Centralised so timing & easing stay consistent across the app.
+ * ======================================================================== */
+:root {
+  --ccd-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ccd-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ccd-duration-fast: 140ms;
+  --ccd-duration-base: 220ms;
+  --ccd-duration-slow: 360ms;
+  --ccd-teal: #14B8A6;
+  --ccd-teal-deep: #0D9488;
+}
+
+/* Smoother body rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------------------------------------------------------------------------
+ * Focus styles — visible only via keyboard navigation. The previous global
+ * `*:focus { outline: 2px !important }` painted a teal box around every
+ * clickable thing on every mouse click, which felt aggressive and broke
+ * card/tab visual designs. `:focus-visible` keeps full keyboard a11y while
+ * letting mouse interactions stay clean.
+ * ------------------------------------------------------------------------ */
 *:focus {
-  outline: 2px solid #17a2b8 !important;
-  outline-offset: 2px !important;
+  outline: none;
 }
 
 *:focus-visible {
-  outline: 2px solid #17a2b8 !important;
-  outline-offset: 2px !important;
+  outline: 2px solid var(--ccd-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
 }
 
-/* Teal focus for form elements */
-input:focus,
-select:focus,
-textarea:focus,
-button:focus {
-  border-color: #17a2b8 !important;
-  box-shadow: 0 0 0 3px rgba(23, 162, 184, 0.1) !important;
+/* Form-element focus: subtle teal ring (no !important — let components override
+ * when they have their own focus treatment, e.g. the search bar). */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--ccd-teal);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
 }
 
 /* Teal ring for focus states */
@@ -113,11 +140,101 @@ button:focus {
 }
 
 .animate-fade-in {
-  animation: fade-in 0.2s ease-out;
+  animation: fade-in 0.2s var(--ccd-ease-out);
 }
 
 .animate-scale-in {
-  animation: scale-in 0.3s ease-out;
+  animation: scale-in 0.3s var(--ccd-ease-out);
+}
+
+/* ---------------------------------------------------------------------------
+ * Reusable motion utilities
+ * ------------------------------------------------------------------------ */
+
+/* Page-section entrance — fade up gently. Use on dashboard sections, modal
+ * bodies, list items that mount after data loads. */
+@keyframes ccd-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ccd-fade-in-up {
+  animation: ccd-fade-in-up var(--ccd-duration-slow) var(--ccd-ease-out) both;
+}
+
+/* Card-lift utility — apply to any clickable card. Lifts ~2px on hover with a
+ * deeper shadow. Cheaper than per-component re-styling. */
+.ccd-card-lift {
+  transition:
+    transform var(--ccd-duration-base) var(--ccd-ease-out),
+    box-shadow var(--ccd-duration-base) var(--ccd-ease-out),
+    border-color var(--ccd-duration-base) var(--ccd-ease-out);
+  will-change: transform;
+}
+.ccd-card-lift:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -10px rgba(15, 42, 46, 0.18),
+              0 4px 10px -4px rgba(15, 42, 46, 0.08);
+}
+
+/* Skeleton shimmer for loading states. */
+@keyframes ccd-shimmer {
+  0%   { background-position: -1200px 0; }
+  100% { background-position: 1200px 0; }
+}
+.ccd-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+  background-size: 1200px 100%;
+  animation: ccd-shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+/* Subtle hover-grow used on small icon buttons. */
+.ccd-icon-button {
+  transition:
+    background-color var(--ccd-duration-fast) var(--ccd-ease-out),
+    color var(--ccd-duration-fast) var(--ccd-ease-out),
+    transform var(--ccd-duration-fast) var(--ccd-ease-out);
+}
+.ccd-icon-button:active {
+  transform: scale(0.94);
+}
+
+/* Custom scrollbar for the main app — slim, brand-tinted, falls back to the
+ * native bar on Firefox via scrollbar-color. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 184, 166, 0.35) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(15, 42, 46, 0.16);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(20, 184, 166, 0.55);
+  background-clip: content-box;
+}
+
+/* Respect users who prefer reduced motion — disables all the entrance,
+ * shimmer, drop-flash, scale-in animations app-wide. Iframes/modals still
+ * function, just no movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Walkthrough guide highlight pulse effect */
@@ -306,15 +423,16 @@ input[type="checkbox"].rounded-full:focus {
   box-shadow: none !important;
 }
 
-/* Remove all focus outlines and borders from tabs throughout the app */
+/* Remove focus outlines/borders from TAB buttons only — they have their own
+ * active-state styling. Previously this selector also matched plain
+ * `button:focus-visible`, which silenced keyboard focus rings across the
+ * entire app. Keep it scoped to tabs so the global :focus-visible teal
+ * outline (defined at the top of this file) still applies elsewhere. */
 button[role="tab"],
 button.nav-tab-button,
 .nav-tab-button:focus,
 .nav-tab-button:focus-visible,
-.nav-tab-button:active,
-button:focus,
-button:focus-visible,
-button:active {
+.nav-tab-button:active {
   outline: none !important;
   border: none !important;
   box-shadow: none !important;
