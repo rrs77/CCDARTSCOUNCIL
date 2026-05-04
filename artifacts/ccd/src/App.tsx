@@ -15,6 +15,7 @@ import { useAuth } from './hooks/useAuth';
 import { HelpGuide } from './components/HelpGuide';
 import { SchoolHomepage } from './components/SchoolHomepage';
 import { PreviewBanner } from './components/PreviewBanner';
+import { DemoWatermark } from './components/DemoWatermark';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
 import { isDemoModeActive } from './utils/demoMode';
@@ -118,8 +119,9 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
         }}
       />
       {inPreview && <PreviewBanner />}
+      {inPreview && <DemoWatermark />}
       <Header />
-      <main className="flex-1 pt-14 sm:pt-16 pb-20">
+      <main className={`flex-1 pb-20 ${inPreview ? 'pt-[calc(3.5rem+41px)] sm:pt-[calc(4rem+41px)]' : 'pt-14 sm:pt-16'}`}>
         <Dashboard />
       </main>
       <Footer />

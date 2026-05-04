@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { Download, X, Check, Tag, Copy, Link2 } from 'lucide-react';
+import { Download, X, Check, Tag, Copy, Link2, Lock } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { LessonPrintModal } from './LessonPrintModal';
 import { useShareLesson } from '../hooks/useShareLesson';
+import { useDemoMode } from '../hooks/useDemoMode';
 
 interface LessonExporterProps {
   lessonNumber: string;
@@ -12,6 +13,7 @@ interface LessonExporterProps {
 export function LessonExporter({ lessonNumber, onClose }: LessonExporterProps) {
   const { allLessonsData, currentSheetInfo, lessonStandards } = useData();
   const { shareLesson, isSharing } = useShareLesson();
+  const { isDemo, showUpgradePrompt } = useDemoMode();
   const [showStandards, setShowStandards] = useState(true);
   const [shareUrl, setShareUrl] = useState<string | null>(null);
   const [shareSuccess, setShareSuccess] = useState(false);
@@ -56,16 +58,22 @@ export function LessonExporter({ lessonNumber, onClose }: LessonExporterProps) {
     groupedEyfs[area].push(detail);
   });
 
-  // Download PDF via external service (PDFBolt) – no in-app preview
   const handleDownloadPdf = () => {
+    if (isDemo) {
+      showUpgradePrompt('PDF export');
+      return;
+    }
     setShowPrintModal(true);
   };
 
-  // Copy Link uses external PDF service via useShareLesson (Vercel generate-pdf + upload)
   const handleShare = async (e?: React.MouseEvent<HTMLButtonElement>) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
+    }
+    if (isDemo) {
+      showUpgradePrompt('Lesson sharing');
+      return;
     }
     const url = await shareLesson(lessonNumber);
     if (url) {
@@ -134,8 +142,9 @@ export function LessonExporter({ lessonNumber, onClose }: LessonExporterProps) {
                 onClick={handleDownloadPdf}
                 disabled={isSharing}
                 className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2 disabled:bg-blue-400"
+                title={isDemo ? 'Download PDF (sign up to unlock)' : 'Download PDF'}
               >
-                <Download className="h-4 w-4" />
+                {isDemo ? <Lock className="h-4 w-4" /> : <Download className="h-4 w-4" />}
                 <span>Download PDF</span>
               </button>
               <button
@@ -147,7 +156,7 @@ export function LessonExporter({ lessonNumber, onClose }: LessonExporterProps) {
                   }
                 }}
                 disabled={isSharing}
-                aria-label="Copy share link to clipboard"
+                aria-label={isDemo ? 'Copy link (sign up to unlock)' : 'Copy share link to clipboard'}
                 className={`px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
                   isSharing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
@@ -164,7 +173,7 @@ export function LessonExporter({ lessonNumber, onClose }: LessonExporterProps) {
                   </>
                 ) : (
                   <>
-                    <Link2 className="h-4 w-4" />
+                    {isDemo ? <Lock className="h-4 w-4" /> : <Link2 className="h-4 w-4" />}
                     <span>Copy Link</span>
                   </>
                 )}

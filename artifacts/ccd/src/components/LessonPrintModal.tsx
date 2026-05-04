@@ -8,6 +8,7 @@ import type { CustomObjective, CustomObjectiveArea, CustomObjectiveYearGroup } f
 import { supabase } from '../config/supabase';
 import { getPdfApiUrl } from '../utils/pdfApi';
 import { useShareLesson } from '../hooks/useShareLesson';
+import { isDemoModeActive } from '../utils/demoMode';
 import toast from 'react-hot-toast';
 
 // A4 dimensions and PDFBolt margin settings
@@ -1629,19 +1630,41 @@ export function LessonPrintModal({
     return false;
   };
 
-  // When autoDownload is true, run export once then close (no preview)
+  const demoActive = isDemoModeActive();
+  useEffect(() => {
+    if (demoActive) {
+      toast(
+        'PDF export is available with a full account. Sign up free to unlock exporting, printing, and sharing.',
+        {
+          duration: 5000,
+          style: {
+            background: '#312e81',
+            color: '#e0e7ff',
+            borderRadius: '12px',
+            padding: '14px 18px',
+            fontSize: '14px',
+            maxWidth: '420px',
+            border: '1px solid #4338ca',
+          },
+        }
+      );
+      onClose();
+    }
+  }, [demoActive]);
+
   const autoDownloadDone = useRef(false);
   useEffect(() => {
+    if (demoActive) return;
     if (!autoDownload || lessonsToRender.length === 0 || isExporting || autoDownloadDone.current) return;
     autoDownloadDone.current = true;
     handleExport()
       .then(() => onClose())
       .catch(() => { autoDownloadDone.current = false; });
-  }, [autoDownload, lessonsToRender.length, isExporting]);
+  }, [autoDownload, lessonsToRender.length, isExporting, demoActive]);
 
-  // When systemPrintOnly is true, open system print dialog immediately (no modal UI)
   const systemPrintDone = useRef(false);
   useEffect(() => {
+    if (demoActive) return;
     if (!systemPrintOnly || lessonsToRender.length === 0 || systemPrintDone.current) return;
     systemPrintDone.current = true;
     const run = async () => {
@@ -1671,9 +1694,9 @@ export function LessonPrintModal({
     return () => clearTimeout(t);
   }, [systemPrintOnly, lessonsToRender.length]);
 
-  // When pdfDownloadOnly is true, run PDFBolt export (PDF with working hyperlinks) and download, no modal UI
   const pdfDownloadDone = useRef(false);
   useEffect(() => {
+    if (demoActive) return;
     if (!pdfDownloadOnly || lessonsToRender.length === 0 || pdfDownloadDone.current) return;
     pdfDownloadDone.current = true;
     handleExport()
@@ -1681,7 +1704,7 @@ export function LessonPrintModal({
       .catch(() => { pdfDownloadDone.current = false; });
   }, [pdfDownloadOnly, lessonsToRender.length]);
 
-  if (systemPrintOnly || pdfDownloadOnly) {
+  if (demoActive || systemPrintOnly || pdfDownloadOnly) {
     return null;
   }
 

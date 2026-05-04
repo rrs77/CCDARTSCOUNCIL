@@ -9,6 +9,7 @@ import { WalkthroughGuide } from './WalkthroughGuide';
 import { HelpGuide } from './HelpGuide';
 import { LogoSVG } from './Logo';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { isDemoModeActive } from '../utils/demoMode';
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -180,7 +181,7 @@ export function Header() {
 
   return (
     <>
-      <header className="bg-white fixed top-0 left-0 right-0 z-50" style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
+      <header className={`bg-white fixed left-0 right-0 z-50 ${isDemoModeActive() ? 'top-[41px]' : 'top-0'}`} style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo and Title */}

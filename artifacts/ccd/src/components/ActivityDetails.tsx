@@ -9,6 +9,7 @@ import type { Activity } from '../contexts/DataContext';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
+import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
 
 interface ActivityDetailsProps {
@@ -61,6 +62,7 @@ export function ActivityDetails({
   
   const { nestedStandards, lessonStandards, addStandardToLesson, removeStandardFromLesson, updateActivity: updateActivityGlobal } = useData();
   const { customYearGroups, mapActivityLevelToYearGroup } = useSettings();
+  const { isDemo, truncateForDemo } = useDemoMode();
   const [selectedResource, setSelectedResource] = useState<{ url: string; title: string; type: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [showStandardsSelector, setShowStandardsSelector] = useState(false);
@@ -233,19 +235,31 @@ export function ActivityDetails({
         />
       );
     }
+
+    const wrapWithDemoProtection = (content: React.ReactNode) => {
+      if (!isDemo) return content;
+      return (
+        <div className="relative select-none">
+          {content}
+          <div className="absolute inset-x-0 bottom-0 h-16 bg-gradient-to-t from-white to-transparent" />
+          <p className="mt-1 text-xs text-indigo-500 italic">
+            Sign up for a free account to view full activity details.
+          </p>
+        </div>
+      );
+    };
     
     if (activity.htmlDescription) {
-      // Render HTML description with basic formatting
-      return (
+      const descText = isDemo ? truncateForDemo(activity.htmlDescription.replace(/<[^>]*>/g, ''), 120) : activity.htmlDescription;
+      return wrapWithDemoProtection(
         <div
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: activity.htmlDescription }}
+          dangerouslySetInnerHTML={{ __html: isDemo ? descText : activity.htmlDescription }}
           dir="ltr"
         />
       );
     }
     
-    // Safety check - ensure description exists
     if (!activity.description) {
       return (
         <div className="text-gray-500 italic">
@@ -253,26 +267,27 @@ export function ActivityDetails({
         </div>
       );
     }
+
+    const rawDesc = isDemo ? truncateForDemo(activity.description, 120) : activity.description;
     
-    // Render plain text with markdown-style formatting or HTML
     if (activity.description.includes('<')) {
-      return (
+      const descText = isDemo ? truncateForDemo(activity.description.replace(/<[^>]*>/g, ''), 120) : activity.description;
+      return wrapWithDemoProtection(
         <div
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: activity.description }}
+          dangerouslySetInnerHTML={{ __html: isDemo ? descText : activity.description }}
           dir="ltr"
         />
       );
     }
     
-    // Format plain text with line breaks and basic markdown
-    const formattedDescription = activity.description
+    const formattedDescription = rawDesc
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
       .replace(/_(.*?)_/g, '<u>$1</u>')
       .replace(/\n/g, '<br>');
     
-    return (
+    return wrapWithDemoProtection(
       <div
         className="prose prose-sm max-w-none"
         dangerouslySetInnerHTML={{ __html: formattedDescription }}

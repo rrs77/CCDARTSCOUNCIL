@@ -39,6 +39,18 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - Responsive content padding (p-4 sm:p-6 lg:p-8)
 - Tabs: Year Groups, Categories, Objectives, Resource Shop, Admin dropdown
 
+## Demo / Preview Mode
+
+- Activated from the login page "Preview Full App" button or school homepage "Start Demo"
+- `activateDemoMode()` sets `sessionStorage["ccd-demo-mode"]="1"`, `seedDemoLocalStorage()` populates sample Performing Arts content (Drama, Music, Dance)
+- `useDemoMode` hook (`src/hooks/useDemoMode.ts`) provides `isDemo`, `showUpgradePrompt`, `gateFeature`, `truncateForDemo`
+- `PreviewBanner` (indigo/violet gradient) shows at top with "Preview" badge, sign-up CTA, and Exit button
+- `DemoWatermark` renders subtle repeating "PREVIEW" text overlay (pointer-events: none, ~3.5% opacity)
+- Export/print/share gated: LessonExporter, LessonPrintModal, LessonDetailsModal, TimetableModal all block with upgrade toast in demo mode
+- Activity descriptions truncated (~90-120 chars) with fade-out gradient and sign-up prompt in demo mode
+- Lock icons replace Download/Link icons on export/share buttons in demo mode
+- `AuthContext` injects synthetic `viewer` role user; `useIsViewOnly` hides save/delete/edit controls
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages
