@@ -3,6 +3,14 @@
   "outputDirectory": "artifacts/ccd/dist/public",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,
+  "headers": [
+    {
+      "source": "/service-worker.js",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+      ]
+    }
+  ],
   "rewrites": [
     { "source": "/(.*)", "destination": "/index.html" }
   ]
