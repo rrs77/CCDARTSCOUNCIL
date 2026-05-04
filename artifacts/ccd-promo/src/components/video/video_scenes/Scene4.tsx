@@ -30,7 +30,7 @@ export function Scene4() {
             transition={springs.snappy}
             className="mb-6 inline-block px-5 py-2 rounded-full bg-accent/10 border border-accent/20 text-accent-dark font-bold tracking-wide text-[1.2cqw] uppercase"
           >
-            ACTIVITY STACKS
+            BUILT OVER YEARS, USED IN SECONDS
           </motion.div>
           <motion.h2 
             className="text-[4.5cqw] font-black text-text-primary leading-[1.05] tracking-tight mb-6"
@@ -38,7 +38,9 @@ export function Scene4() {
             animate={phase >= 2 ? { opacity: 1, x: 0 } : { opacity: 0, x: 40 }}
             transition={springs.snappy}
           >
-            Sequence activities like building blocks.
+            Your teaching history,
+            <br />
+            always at hand.
           </motion.h2>
           
           <motion.p
@@ -47,7 +49,7 @@ export function Scene4() {
             animate={phase >= 2 ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
           >
-            Build lesson plans instantly with drag-and-drop activity blocks mapped to your standards.
+            Capture every lesson, activity and resource across your career. Build on what worked, year after year.
           </motion.p>
         </div>
 
@@ -61,8 +63,7 @@ export function Scene4() {
             <img 
               src={`${import.meta.env.BASE_URL}screens/dashboard.jpg`} 
               alt="CCD lesson plan builder" 
-              className="w-full h-full object-cover"
-              style={{ objectPosition: '70% 80%', transform: 'scale(1.35)' }}
+              className="w-full h-full object-cover object-left-top"
             />
           </motion.div>
         </div>

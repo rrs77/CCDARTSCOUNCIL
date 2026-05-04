@@ -27,7 +27,7 @@ export function Scene3() {
             transition={springs.snappy}
             className="mb-4 inline-block px-5 py-2 rounded-full bg-primary/10 border border-primary/20 text-primary-dark font-bold tracking-wide text-[1.2cqw] uppercase"
           >
-            RICH LESSON LIBRARY
+            YOUR TEACHING TREASURE TROVE
           </motion.div>
           
           <motion.h2 
@@ -36,7 +36,7 @@ export function Scene3() {
             animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: 20 }}
             transition={{ ...springs.snappy, delay: 0.1 }}
           >
-            Hundreds of ready-to-teach lessons.
+            Every idea you've ever had, in one place.
           </motion.h2>
         </div>
 
