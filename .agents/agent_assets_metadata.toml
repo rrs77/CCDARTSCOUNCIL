@@ -23,3 +23,9 @@ id = "4mtuiWtgzEF93Q0_H3i2z"
 uri = "file://artifacts/ccd-promo/public/images/kids-learning.jpg"
 type = "image"
 title = "uk primary school children learning in classroom happy"
+
+[[outputs]]
+id = "FMTiyz7wvf_fmOg4uFVMR"
+uri = "file://.local/outputs/CCD-Pitch-Deck.pptx"
+type = "slides"
+title = "CCD Pitch Deck (PPTX)"
