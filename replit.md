@@ -45,7 +45,7 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - `activateDemoMode()` sets `sessionStorage["ccd-demo-mode"]="1"`, `seedDemoLocalStorage()` populates sample Performing Arts content (Drama, Music, Dance)
 - `useDemoMode` hook (`src/hooks/useDemoMode.ts`) provides `isDemo`, `showUpgradePrompt`, `gateFeature`, `truncateForDemo`
 - `PreviewBanner` (indigo/violet gradient) shows at top with "Preview" badge, sign-up CTA, and Exit button
-- `DemoWatermark` renders subtle repeating "PREVIEW" text overlay (pointer-events: none, ~3.5% opacity)
+- DemoWatermark was removed (too distracting)
 - Export/print/share gated: LessonExporter, LessonPrintModal, LessonDetailsModal, TimetableModal all block with upgrade toast in demo mode
 - Activity descriptions truncated (~90-120 chars) with fade-out gradient and sign-up prompt in demo mode
 - Lock icons replace Download/Link icons on export/share buttons in demo mode

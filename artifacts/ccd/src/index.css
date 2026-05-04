@@ -68,7 +68,7 @@ textarea:focus-visible {
   }
   100% {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
   }
 }
 
@@ -110,7 +110,7 @@ textarea:focus-visible {
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: none;
   }
 }
 
@@ -135,7 +135,7 @@ textarea:focus-visible {
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: none;
   }
 }
 
@@ -155,7 +155,7 @@ textarea:focus-visible {
  * bodies, list items that mount after data loads. */
 @keyframes ccd-fade-in-up {
   from { opacity: 0; transform: translateY(8px); }
-  to   { opacity: 1; transform: translateY(0); }
+  to   { opacity: 1; transform: none; }
 }
 .ccd-fade-in-up {
   animation: ccd-fade-in-up var(--ccd-duration-slow) var(--ccd-ease-out) both;
@@ -270,7 +270,7 @@ textarea:focus-visible {
     opacity: 0;
   }
   to {
-    transform: translateY(0);
+    transform: none;
     opacity: 1;
   }
 }
