@@ -185,7 +185,7 @@ export function LoginForm() {
             </button>
           )}
           <a
-            href="/ccd-promo/"
+            href={`${window.location.origin}/ccd-promo/`}
             target="_blank"
             rel="noopener noreferrer"
             className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
