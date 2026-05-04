@@ -16,6 +16,22 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
 - **API codegen**: Orval (from OpenAPI spec)
 - **Build**: esbuild (CJS bundle)
 
+## Drag-and-Drop Architecture
+
+- **Single root provider**: `DndRoot` (in `src/components/dnd/DndRoot.tsx`) wraps the entire app with `react-dnd-multi-backend` (HTML5 + Touch backends). No per-component `<DndProvider>` blocks.
+- **Custom drag layer**: `CustomDragLayer` renders ghost previews for all drag types (activity, lesson, pack, objective, year-group).
+- **Drop-zone feedback hooks** (in `src/components/dnd/dropFeedback.ts`):
+  - `useDropZoneStyle({ isOver, canDrop, variant })` — consistent ring/background highlight on hover
+  - `useDropFlash()` — brief green flash on successful drop
+- Both hooks are applied to all drop zones: LessonDropZone, TimetableBuilder, CustomObjectivesAdmin, MinimizableActivityCard, StandaloneLessonCreator, and LessonPlannerCalendar (3 zones: month cell, day slot, week slot).
+
+## Settings Modal (UserSettings.tsx)
+
+- Backdrop blur overlay, mobile bottom-sheet layout (h-[95vh], rounded-t-2xl)
+- Pill-style tab navigation (rounded-lg, bg-teal-600 active state)
+- Responsive content padding (p-4 sm:p-6 lg:p-8)
+- Tabs: Year Groups, Categories, Objectives, Resource Shop, Admin dropdown
+
 ## Key Commands
 
 - `pnpm run typecheck` — full typecheck across all packages

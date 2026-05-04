@@ -55,6 +55,7 @@ import {
   isToday
 } from 'date-fns';
 import { useDrop, useDrag } from 'react-dnd';
+import { useDropZoneStyle, useDropFlash } from './dnd';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { TimetableModal } from './TimetableModal';
@@ -970,13 +971,12 @@ export function LessonPlannerCalendar({
     // Check if there are plans for this date
     const hasPlans = plansForDate.length > 0;
     const hasMultiplePlans = plansForDate.length > 1;
+    const { flashClass: calFlash, triggerFlash: triggerCalFlash } = useDropFlash();
 
-    // Set up drop target for activities and units
-    const [{ isOver }, drop] = useDrop(() => ({
+    const [{ isOver, canDrop }, drop] = useDrop(() => ({
       accept: ['activity', 'unit'],
       drop: (item: any) => {
         if (item.activity) {
-          // Create a new lesson plan with this activity
           const weekNumber = getWeekNumber(date);
           
           const newPlan = {
@@ -993,20 +993,20 @@ export function LessonPlannerCalendar({
           };
           
           onUpdateLessonPlan(newPlan);
+          triggerCalFlash();
         } else if (item.unit) {
-          // Handle dropped unit - schedule all lessons in the unit
           console.log('Unit dropped:', item.unit);
-          
-          // This would be implemented in the parent component
-          // For now, we'll just log it
+          triggerCalFlash();
         }
       },
       collect: (monitor) => ({
-        isOver: monitor.isOver()
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
       })
     }), [date.toISOString(), onUpdateLessonPlan, className, getWeekNumber]);
 
-    // Determine cell background color based on events
+    const calDropClass = useDropZoneStyle({ isOver, canDrop, variant: 'cell' });
+
     let cellBgColor = isCurrentMonth ? 'bg-white' : 'bg-gray-50 opacity-60';
     if (isHolidayDate) cellBgColor = 'bg-red-50';
     if (isInsetDayDate) cellBgColor = 'bg-purple-50';
@@ -1020,9 +1020,9 @@ export function LessonPlannerCalendar({
           ${isSelected ? 'bg-blue-100 border-blue-300' : cellBgColor}
           ${isTodayDate ? 'ring-2 ring-blue-400' : ''}
           ${hasPlans ? 'bg-green-50' : ''}
-          ${isOver ? 'bg-blue-100 border-blue-300' : ''}
           ${isSelectedWithPlans && isLessonSummaryOpen ? 'bg-blue-100 border-blue-300 ring-2 ring-blue-500' : ''}
           ${isHolidayDate || isInsetDayDate ? 'cursor-default' : 'cursor-pointer'}
+          ${calDropClass} ${calFlash}
         `}
       >
         <div className="flex flex-col h-full">
@@ -1187,12 +1187,12 @@ export function LessonPlannerCalendar({
       }
     });
     
-    // Set up drop target for activities and units
-    const [{ isOver }, drop] = useDrop(() => ({
+    const { flashClass: slot2Flash, triggerFlash: triggerSlot2Flash } = useDropFlash();
+
+    const [{ isOver: isOverSlot2, canDrop: canDropSlot2 }, drop] = useDrop(() => ({
       accept: ['activity', 'unit'],
       drop: (item: any) => {
         if (item.activity) {
-          // Create a new lesson plan with this activity at this time
           const weekNumber = getWeekNumber(date);
           
           const newPlan = {
@@ -1204,31 +1204,32 @@ export function LessonPlannerCalendar({
             duration: item.activity.time || 0,
             notes: '',
             status: 'planned',
-            time: `${hour}:00`, // Set the time to this hour
+            time: `${hour}:00`,
             createdAt: new Date(),
             updatedAt: new Date()
           };
           
           onUpdateLessonPlan(newPlan);
+          triggerSlot2Flash();
         } else if (item.unit) {
-          // Handle dropped unit - schedule all lessons in the unit
           console.log('Unit dropped:', item.unit);
-          
-          // This would be implemented in the parent component
-          // For now, we'll just log it
+          triggerSlot2Flash();
         }
       },
       collect: (monitor) => ({
-        isOver: monitor.isOver()
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
       })
     }), [date, hour, className, getWeekNumber, onUpdateLessonPlan, dayOfWeek, timetableClasses, units, theme, setSelectedDateWithPlans, setIsLessonSummaryOpen]);
+
+    const slot2DropClass = useDropZoneStyle({ isOver: isOverSlot2, canDrop: canDropSlot2, variant: 'cell' });
 
     return (
       <div 
         ref={drop}
         className={`border border-gray-200 p-2 min-h-[100px] ${
-          isOver ? 'bg-blue-100' : 'bg-white'
-        } ${isHolidayDate || isInsetDayDate ? 'bg-gray-100' : ''}`}
+          isHolidayDate || isInsetDayDate ? 'bg-gray-100' : 'bg-white'
+        } ${slot2DropClass} ${slot2Flash}`}
         onClick={() => !isHolidayDate && !isInsetDayDate && handleTimeSlotClick(dayOfWeek, date, hour)}
       >
         <div className="flex justify-between items-start mb-2">
@@ -1360,12 +1361,12 @@ export function LessonPlannerCalendar({
       return hour >= classStartHour && hour < classEndHour;
     });
     
-    // Set up drop target for activities and units
-    const [{ isOver }, drop] = useDrop(() => ({
+    const { flashClass: slot3Flash, triggerFlash: triggerSlot3Flash } = useDropFlash();
+
+    const [{ isOver: isOverSlot3, canDrop: canDropSlot3 }, drop] = useDrop(() => ({
       accept: ['activity', 'unit'],
       drop: (item: any) => {
         if (item.activity) {
-          // Create a new lesson plan with this activity at this time
           const weekNumber = getWeekNumber(date);
           
           const newPlan = {
@@ -1377,26 +1378,26 @@ export function LessonPlannerCalendar({
             duration: item.activity.time || 0,
             notes: '',
             status: 'planned',
-            time: `${hour}:00`, // Set the time to this hour
+            time: `${hour}:00`,
             createdAt: new Date(),
             updatedAt: new Date()
           };
           
           onUpdateLessonPlan(newPlan);
+          triggerSlot3Flash();
         } else if (item.unit) {
-          // Handle dropped unit - schedule all lessons in the unit
           console.log('Unit dropped:', item.unit);
-          
-          // This would be implemented in the parent component
-          // For now, we'll just log it
+          triggerSlot3Flash();
         }
       },
       collect: (monitor) => ({
-        isOver: monitor.isOver()
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
       })
     }), [date, hour, className, getWeekNumber, onUpdateLessonPlan, handleTimeSlotClick, timetableClasses, units, theme, setSelectedDateWithPlans, setIsLessonSummaryOpen]);
 
-    // Determine cell background color based on events
+    const slot3DropClass = useDropZoneStyle({ isOver: isOverSlot3, canDrop: canDropSlot3, variant: 'cell' });
+
     let cellBgColor = 'bg-white';
     if (isHolidayDate) cellBgColor = 'bg-red-50';
     if (isInsetDayDate) cellBgColor = 'bg-purple-50';
@@ -1407,8 +1408,9 @@ export function LessonPlannerCalendar({
         onClick={() => !isHolidayDate && !isInsetDayDate && handleTimeSlotClick(dayOfWeek, date, hour)}
         className={`
           relative border border-gray-200 p-1 h-16 transition-colors duration-200
-          ${isOver ? 'bg-blue-100' : cellBgColor}
+          ${cellBgColor}
           ${isHolidayDate || isInsetDayDate ? 'cursor-default' : 'cursor-pointer hover:bg-blue-50'}
+          ${slot3DropClass} ${slot3Flash}
         `}
       >
         {/* Time indicator */}

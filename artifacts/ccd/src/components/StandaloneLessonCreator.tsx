@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { useDropZoneStyle, useDropFlash } from './dnd';
 import { X, Plus, Trash2, Eye, BookOpen, Target, Link2, Clock, Search, GripVertical, ChevronDown, ChevronUp, List, Layers, Upload, Save, HelpCircle } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ActivityCard } from './ActivityCard';
@@ -81,10 +82,16 @@ function CompactDraggableActivity({ activity, index, onRemove, onReorder }: Comp
   const ref = useRef<HTMLDivElement>(null);
   const categoryColor = getCategoryColor(activity.category);
 
-  const [{ handlerId }, drop] = useDrop({
+  const { flashClass, triggerFlash } = useDropFlash();
+
+  const [{ handlerId, isOver, canDrop }, drop] = useDrop({
     accept: 'compact-activity',
     collect(monitor) {
-      return { handlerId: monitor.getHandlerId() };
+      return {
+        handlerId: monitor.getHandlerId(),
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      };
     },
     hover(item: { index: number }, monitor) {
       if (!ref.current) return;
@@ -103,6 +110,9 @@ function CompactDraggableActivity({ activity, index, onRemove, onReorder }: Comp
       onReorder(dragIndex, hoverIndex);
       item.index = hoverIndex;
     },
+    drop() {
+      triggerFlash();
+    },
   });
 
   const [{ isDragging }, drag] = useDrag({
@@ -113,17 +123,18 @@ function CompactDraggableActivity({ activity, index, onRemove, onReorder }: Comp
 
   const opacity = isDragging ? 0.4 : 1;
   drag(drop(ref));
+  const dropZoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'inline' });
 
   return (
     <div
       ref={ref}
       style={{ opacity }}
       data-handler-id={handlerId}
-      className={`flex items-center py-2.5 px-3 group cursor-grab active:cursor-grabbing transition-all ${
+      className={`flex items-center py-2.5 px-3 group cursor-grab active:cursor-grabbing transition-all rounded-lg ${
         isDragging 
-          ? 'bg-teal-50 shadow-lg ring-2 ring-teal-400 rounded-lg' 
+          ? 'bg-teal-50 shadow-lg ring-2 ring-teal-400' 
           : 'hover:bg-gray-50'
-      }`}
+      } ${dropZoneClass} ${flashClass}`}
     >
       <div className="p-1 mr-2 rounded hover:bg-gray-200 transition-colors">
         <GripVertical className="h-4 w-4 text-gray-400" />

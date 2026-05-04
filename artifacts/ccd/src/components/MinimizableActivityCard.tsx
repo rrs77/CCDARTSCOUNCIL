@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
+import { useDropZoneStyle, useDropFlash } from './dnd';
 import { X, ChevronRight, ChevronDown, GripVertical, Clock } from 'lucide-react';
 import { Activity } from '../types';
 import { useSettings } from '../contexts/SettingsContextNew';
@@ -23,41 +24,36 @@ export function MinimizableActivityCard({
   const ref = useRef<HTMLDivElement>(null);
   const [isDragStarted, setIsDragStarted] = useState(false);
   const { getCategoryColor } = useSettings();
+  const { flashClass, triggerFlash } = useDropFlash();
 
-  // Set up drag and drop
-  const [{ handlerId }, drop] = useDrop({
+  const [{ handlerId, isOver, canDrop }, drop] = useDrop({
     accept: 'editable-activity',
     collect(monitor) {
       return {
         handlerId: monitor.getHandlerId(),
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
       };
     },
     hover(item: { index: number }, monitor) {
-      if (!ref.current) {
-        return;
-      }
+      if (!ref.current) return;
       const dragIndex = item.index;
       const hoverIndex = index;
+      if (dragIndex === hoverIndex) return;
 
-      if (dragIndex === hoverIndex) {
-        return;
-      }
-
-      const hoverBoundingRect = ref.current?.getBoundingClientRect();
+      const hoverBoundingRect = ref.current.getBoundingClientRect();
       const hoverMiddleY = (hoverBoundingRect.bottom - hoverBoundingRect.top) / 2;
       const clientOffset = monitor.getClientOffset();
       const hoverClientY = clientOffset!.y - hoverBoundingRect.top;
 
-      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) {
-        return;
-      }
-
-      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) {
-        return;
-      }
+      if (dragIndex < hoverIndex && hoverClientY < hoverMiddleY) return;
+      if (dragIndex > hoverIndex && hoverClientY > hoverMiddleY) return;
 
       onReorder(dragIndex, hoverIndex);
       item.index = hoverIndex;
+    },
+    drop() {
+      triggerFlash();
     },
   });
 
@@ -68,7 +64,6 @@ export function MinimizableActivityCard({
       return { index };
     },
     end: () => {
-      // Reset drag state after a delay to prevent click from firing
       setTimeout(() => setIsDragStarted(false), 100);
     },
     collect: (monitor) => ({
@@ -78,6 +73,7 @@ export function MinimizableActivityCard({
 
   const opacity = isDragging ? 0.4 : 1;
   drag(drop(ref));
+  const dropZoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'inline' });
 
   // Handle activity click with drag prevention
   const handleActivityClick = (e: React.MouseEvent) => {
@@ -115,7 +111,7 @@ export function MinimizableActivityCard({
       ref={ref}
       className={`relative bg-white border-b border-gray-200 transition-all duration-200 hover:bg-gray-50 ${
         isDragging ? 'opacity-50' : ''
-      }`}
+      } ${dropZoneClass} ${flashClass}`}
       style={{ opacity }}
     >
       {/* Colored left border */}

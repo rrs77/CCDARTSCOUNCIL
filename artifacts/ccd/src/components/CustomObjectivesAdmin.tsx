@@ -19,6 +19,7 @@ import {
   Check
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
+import { useDropZoneStyle, useDropFlash } from './dnd';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import { seedReceptionDramaObjectives } from '../utils/seedReceptionDrama';
 import { setupSecondaryDramaObjectives } from '../utils/setupSecondaryDramaObjectives';
@@ -45,11 +46,16 @@ interface DraggableYearGroupProps {
 
 function DraggableYearGroup({ yearGroup, index, isSelected, onSelect, onReorder, onDragEnd, children }: DraggableYearGroupProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const { flashClass, triggerFlash } = useDropFlash();
 
-  const [{ handlerId }, drop] = useDrop({
+  const [{ handlerId, isOver, canDrop }, drop] = useDrop({
     accept: 'yearGroup',
     collect(monitor) {
-      return { handlerId: monitor.getHandlerId() };
+      return {
+        handlerId: monitor.getHandlerId(),
+        isOver: monitor.isOver(),
+        canDrop: monitor.canDrop(),
+      };
     },
     hover(item: { index: number }, monitor) {
       if (!ref.current) return;
@@ -68,6 +74,9 @@ function DraggableYearGroup({ yearGroup, index, isSelected, onSelect, onReorder,
       onReorder(dragIndex, hoverIndex);
       item.index = hoverIndex;
     },
+    drop() {
+      triggerFlash();
+    },
   });
 
   const [{ isDragging }, drag] = useDrag({
@@ -79,12 +88,14 @@ function DraggableYearGroup({ yearGroup, index, isSelected, onSelect, onReorder,
 
   drag(drop(ref));
 
+  const dropZoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'inline' });
+
   return (
     <div
       ref={ref}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       data-handler-id={handlerId}
-      className={`transition-all ${isDragging ? 'ring-2 ring-teal-400 rounded-lg shadow-lg' : ''}`}
+      className={`transition-all rounded-lg ${isDragging ? 'ring-2 ring-teal-400 shadow-lg' : ''} ${dropZoneClass} ${flashClass}`}
     >
       {children}
     </div>
