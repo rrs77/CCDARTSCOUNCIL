@@ -1004,7 +1004,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                     className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1"
                     style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
                   >
-                    Half-Term Planner
+                    Half-Term Designer
                   </h2>
                   <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                     <span className="text-xs sm:text-sm font-normal text-gray-600">

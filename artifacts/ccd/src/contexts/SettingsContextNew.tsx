@@ -784,6 +784,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       const savedSettings = localStorage.getItem('lesson-viewer-settings');
       if (savedSettings) {
         const parsed = JSON.parse(savedSettings);
+        if (parsed.branding?.loginTitle && /Planner/i.test(parsed.branding.loginTitle)) {
+          parsed.branding.loginTitle = parsed.branding.loginTitle.replace(/Planner/gi, 'Designer');
+        }
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       }
       
@@ -1136,6 +1139,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           try {
             const supabaseBranding = await brandingApi.get();
             if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
+              if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
+                supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
+              }
               setSettings(prev => ({
                 ...prev,
                 branding: { ...DEFAULT_BRANDING, ...(prev.branding || {}), ...supabaseBranding }
@@ -2313,6 +2319,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       try {
         const supabaseBranding = await brandingApi.get();
         if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
+          if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
+            supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
+          }
           setSettings(prev => ({
             ...prev,
             branding: { ...DEFAULT_BRANDING, ...(prev.branding || {}), ...supabaseBranding }

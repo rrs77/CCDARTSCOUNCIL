@@ -279,7 +279,7 @@ export function TimeSlotLessonModal({
         <div className="p-4 border-t border-gray-200 bg-gray-50">
           <div className="flex items-center justify-between">
             <p className="text-xs text-gray-500">
-              Click on a lesson to add it to the daily planner
+              Click on a lesson to add it to the daily designer
             </p>
             <button
               onClick={onClose}

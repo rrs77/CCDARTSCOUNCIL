@@ -25,6 +25,13 @@ pnpm workspace monorepo using TypeScript. Each package manages its own dependenc
   - `useDropFlash()` — brief green flash on successful drop
 - Both hooks are applied to all drop zones: LessonDropZone, TimetableBuilder, CustomObjectivesAdmin, MinimizableActivityCard, StandaloneLessonCreator, and LessonPlannerCalendar (3 zones: month cell, day slot, week slot).
 
+## Branding
+
+- Product name is "Creative Curriculum Designer" (never "Planner")
+- Settings normalization auto-replaces "Planner" with "Designer" in saved branding on load (localStorage, Supabase, and refresh paths in SettingsContextNew.tsx)
+- Login page: split-screen layout — dark navy/purple gradient left panel, white right panel with form
+- Login colors: purple/violet accent (#a78bfa, #7c3aed) for Sign In button, title italic, and links
+
 ## Settings Modal (UserSettings.tsx)
 
 - Backdrop blur overlay, mobile bottom-sheet layout (h-[95vh], rounded-t-2xl)

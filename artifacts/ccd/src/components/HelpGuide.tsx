@@ -462,7 +462,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           <p>Print individual lesson plans or half-term overviews:</p>
           <ul className="list-disc pl-5 space-y-2">
             <li>Open a lesson from the Lesson Library or Calendar and use the print option</li>
-            <li>From the Unit Planner you can export a half-term or unit plan</li>
+            <li>From the Unit Designer you can export a half-term or unit plan</li>
             <li>Printed plans include activities, notes, and curriculum objectives</li>
           </ul>
         </div>
@@ -732,7 +732,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                 >
                   <div className="flex items-center space-x-1.5 text-indigo-600">
                     <FolderOpen className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Unit Planner & Stacks</h4>
+                    <h4 className="font-semibold text-xs">Unit Designer & Stacks</h4>
                   </div>
                 </button>
                 <button
