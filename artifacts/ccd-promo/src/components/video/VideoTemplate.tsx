@@ -45,11 +45,14 @@ export default function VideoTemplate({
   const SceneComponent = SCENE_COMPONENTS[baseSceneKey];
 
   return (
-    <div className="w-full h-screen overflow-hidden">
+    <div className="w-full h-[100dvh] overflow-hidden bg-black flex items-center justify-center">
       <div
-        className="relative bg-white font-body overflow-hidden w-full h-full"
+        className="relative bg-white font-body overflow-hidden"
         style={{
           containerType: 'size',
+          aspectRatio: '16 / 9',
+          width: 'min(100vw, calc(100dvh * 16 / 9))',
+          height: 'min(100dvh, calc(100vw * 9 / 16))',
         }}
       >
       {/* Persistent Background Layer */}
