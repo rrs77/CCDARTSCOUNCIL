@@ -60,7 +60,7 @@ export function Scene2() {
 
         <div className="w-full landscape:w-[55%] h-[40%] landscape:h-[70cqh] relative perspective-[1200px]">
           <motion.div
-            className="absolute inset-0 rounded-2xl shadow-2xl overflow-hidden border-4 border-white/20"
+            className="absolute inset-0 rounded-2xl shadow-2xl overflow-hidden border-4 border-white/20 bg-white"
             initial={{ opacity: 0, rotateY: 15, x: 100, scale: 0.9 }}
             animate={phase >= 2 ? { opacity: 1, rotateY: -5, x: 0, scale: 1 } : { opacity: 0, rotateY: 15, x: 100, scale: 0.9 }}
             transition={springs.smooth}
@@ -68,7 +68,7 @@ export function Scene2() {
             <img 
               src={`${import.meta.env.BASE_URL}screens/dashboard.jpg`} 
               alt="CCD Dashboard" 
-              className="w-full h-full object-cover object-left-top"
+              className="w-full h-full object-contain object-center"
             />
           </motion.div>
         </div>
