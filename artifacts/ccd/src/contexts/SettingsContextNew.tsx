@@ -1004,8 +1004,21 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             setYearGroupBands(bandsToUse);
             setYearGroupSectionsState(prev => {
               const loadedIds = deduplicated.map((g: any) => g.id);
-              const hasMatchingIds = prev.length > 0 && prev.some(s => s.yearGroupIds.some((id: string) => loadedIds.includes(id)));
-              const next = hasMatchingIds
+              // Distinguish "user has actually customised sections" from "we initialised
+              // state with built-in defaults". Without this check, prev.length > 0 is
+              // always true (defaults populate it), so a new user whose Supabase year
+              // groups have UUID ids would merge against legacy default tokens (LKG,
+              // Year1, …) that don't resolve — dumping every loaded year group into
+              // "Other".
+              let userSaved = false;
+              try {
+                const stored = localStorage.getItem(YEAR_GROUP_SECTIONS_STORAGE_KEY);
+                if (stored) {
+                  const parsed = JSON.parse(stored);
+                  userSaved = Array.isArray(parsed) && parsed.length > 0;
+                }
+              } catch (_) {}
+              const next = userSaved
                 ? mergeSectionsWithYearGroups(prev, loadedIds, deduplicated)
                 : buildDefaultYearGroupSections(deduplicated);
               try {
