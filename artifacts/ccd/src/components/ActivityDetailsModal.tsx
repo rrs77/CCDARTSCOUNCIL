@@ -15,17 +15,8 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
   const [selectedResource, setSelectedResource] = useState<{ url: string; title: string; type: string } | null>(null);
   
   if (!isOpen || !activity) {
-    console.log('ActivityDetailsModal: Not rendering', { isOpen, hasActivity: !!activity });
     return null;
   }
-  
-  console.log('ActivityDetailsModal: Rendering', { 
-    activityName: activity.activity, 
-    category: activity.category,
-    hasDescription: !!activity.description,
-    hasActivityText: !!activity.activityText,
-    hasResources: !!(activity.videoLink || activity.musicLink || activity.backingLink || activity.resourceLink || activity.link || activity.imageLink || activity.canvaLink)
-  });
 
   // Format description with line breaks
   const formatDescription = (text: string) => {
