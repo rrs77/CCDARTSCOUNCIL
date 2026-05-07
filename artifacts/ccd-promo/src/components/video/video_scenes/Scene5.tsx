@@ -46,11 +46,11 @@ export function Scene5() {
         transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[7cqw] py-[7cqh]">
+      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[5cqmin] py-[5cqmin] gap-[3cqmin]">
         
         {/* Header */}
         <motion.div 
-          className="flex items-center gap-[1.2cqw]"
+          className="flex items-center gap-[1.5cqmin]"
           initial={{ opacity: 0, y: -20 }}
           animate={phase >= 1 ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
           transition={springs.snappy}
@@ -58,17 +58,17 @@ export function Scene5() {
           <img
             src={logoUrl}
             alt="CCD logo"
-            className="w-[3.6cqw] h-[3.6cqw]"
+            className="w-[clamp(28px,4.5cqmax,64px)] h-[clamp(28px,4.5cqmax,64px)]"
           />
-          <span className="text-white font-display font-semibold tracking-tight text-[1.6cqw]">
+          <span className="text-white font-display font-semibold tracking-tight text-[clamp(14px,2cqmax,28px)]">
             Creative Curriculum Designer
           </span>
         </motion.div>
 
         {/* Main Content */}
-        <div className="max-w-[75cqw]">
+        <div className="max-w-full">
           <motion.span 
-            className="inline-block px-[1.2cqw] py-[0.7cqh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05cqw] tracking-wide uppercase mb-[3cqh]"
+            className="inline-block px-[2cqmin] py-[1cqmin] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[clamp(10px,1.4cqmax,18px)] tracking-wide uppercase mb-[2cqmin]"
             initial={{ opacity: 0, scale: 0.8 }}
             animate={phase >= 2 ? { opacity: 1, scale: 1 } : { opacity: 0, scale: 0.8 }}
             transition={springs.bouncy}
@@ -78,7 +78,7 @@ export function Scene5() {
           
           <h1
             className="font-display font-black text-white tracking-tighter leading-[0.95]"
-            style={{ fontSize: "6.5cqw", textWrap: "balance" }}
+            style={{ fontSize: "clamp(32px, 7.5cqmax, 120px)", textWrap: "balance" }}
           >
             <motion.span 
               className="block"
@@ -99,8 +99,8 @@ export function Scene5() {
           </h1>
           
           <motion.p
-            className="mt-[3cqh] text-white/85 font-body font-medium max-w-[55cqw] leading-snug"
-            style={{ fontSize: "1.6cqw", textWrap: "pretty" }}
+            className="mt-[2cqmin] text-white/85 font-body font-medium max-w-full leading-snug"
+            style={{ fontSize: "clamp(13px, 2.2cqmax, 32px)", textWrap: "pretty" }}
             initial={{ opacity: 0 }}
             animate={phase >= 4 ? { opacity: 1 } : { opacity: 0 }}
             transition={{ duration: 0.8 }}
@@ -110,35 +110,35 @@ export function Scene5() {
         </div>
 
         {/* Footer Cards */}
-        <div className="grid grid-cols-3 gap-[2cqw]">
+        <div className="grid grid-cols-1 landscape:grid-cols-3 gap-[2cqmin]">
           <motion.div 
-            className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.4cqh_1.6cqw]"
+            className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2cqmin]"
             initial={{ opacity: 0, y: 30 }}
             animate={phase >= 4 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ ...springs.snappy, delay: 0.2 }}
           >
-            <div className="font-display font-semibold text-[#ff6b6b] text-[1cqw] uppercase tracking-wide mb-[1cqh]">Visit</div>
-            <div className="font-display font-bold text-white text-[1.4cqw] leading-tight">creativecurriculumdesigner.com</div>
+            <div className="font-display font-semibold text-[#ff6b6b] text-[clamp(9px,1.3cqmax,16px)] uppercase tracking-wide mb-[1cqmin]">Visit</div>
+            <div className="font-display font-bold text-white text-[clamp(12px,1.8cqmax,24px)] leading-tight break-words">creativecurriculumdesigner.com</div>
           </motion.div>
           
           <motion.div 
-            className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.4cqh_1.6cqw]"
+            className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2cqmin]"
             initial={{ opacity: 0, y: 30 }}
             animate={phase >= 4 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ ...springs.snappy, delay: 0.3 }}
           >
-            <div className="font-display font-semibold text-[#ff6b6b] text-[1cqw] uppercase tracking-wide mb-[1cqh]">Email</div>
-            <div className="font-display font-bold text-white text-[1.4cqw] leading-tight">hello@creativecurriculumdesigner.com</div>
+            <div className="font-display font-semibold text-[#ff6b6b] text-[clamp(9px,1.3cqmax,16px)] uppercase tracking-wide mb-[1cqmin]">Email</div>
+            <div className="font-display font-bold text-white text-[clamp(12px,1.8cqmax,24px)] leading-tight break-words">hello@creativecurriculumdesigner.com</div>
           </motion.div>
           
           <motion.div 
-            className="rounded-[1.5rem] bg-[#ff6b6b] text-white p-[2.4cqh_1.6cqw]"
+            className="rounded-[1.5rem] bg-[#ff6b6b] text-white p-[2cqmin]"
             initial={{ opacity: 0, y: 30 }}
             animate={phase >= 4 ? { opacity: 1, y: 0 } : { opacity: 0, y: 30 }}
             transition={{ ...springs.snappy, delay: 0.4 }}
           >
-            <div className="font-display font-semibold text-white/90 text-[1cqw] uppercase tracking-wide mb-[1cqh]">Book a demo</div>
-            <div className="font-display font-bold text-white text-[1.4cqw] leading-tight">30-minute walk-through with your year leads</div>
+            <div className="font-display font-semibold text-white/90 text-[clamp(9px,1.3cqmax,16px)] uppercase tracking-wide mb-[1cqmin]">Book a demo</div>
+            <div className="font-display font-bold text-white text-[clamp(12px,1.8cqmax,24px)] leading-tight">30-minute walk-through with your year leads</div>
           </motion.div>
         </div>
       </div>
