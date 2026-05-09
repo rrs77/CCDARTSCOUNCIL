@@ -41,3 +41,9 @@ id = "sq9coXuti1rcKeY6Z-Ocy"
 uri = "file://ccd-promo-dreamhost.zip"
 type = "unspecified"
 title = "CCD Promo — DreamHost embed (zip)"
+
+[[outputs]]
+id = "0tv3aKRBSc6FIEtpgd4IE"
+uri = "file://artifacts/ccd-promo/dreamhost-embed/index.html.txt"
+type = "text"
+title = "index.html (rename to .html after saving)"
