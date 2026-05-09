@@ -34,11 +34,17 @@ STEP 2 — Edit ONE line of index.html
 STEP 3 — Upload to DreamHost
   Using the DreamHost file manager (Websites → Files → File Manager)
   or any FTP/SFTP client (Cyberduck, FileZilla, Transmit), upload
-  index.html into the folder you want to serve it from. For example:
+  BOTH files — index.html AND poster.jpg — into the folder you want
+  to serve from. For example:
 
       yoursite.com/promo/index.html
+      yoursite.com/promo/poster.jpg
 
-  Visit that URL in a browser and the promo will play.
+  Keep them in the same folder. The poster.jpg shows instantly as a
+  thumbnail while the promo loads, and is also used as the social
+  preview image when the page is shared on Facebook, LinkedIn, etc.
+
+  Visit the URL in a browser and the promo will play.
 
 
 UPDATING THE PROMO LATER

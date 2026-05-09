@@ -53,7 +53,7 @@ export default function Title() {
             className="mt-[3vh] text-white/90 font-body font-medium max-w-[55vw] leading-snug slide-fade-up"
             style={{ fontSize: "1.7vw", textWrap: "pretty", ['--slide-stagger' as string]: '380ms' }}
           >
-            One calm space to plan a year of performing arts, grow a long-term archive of creative practice, and connect with the educators, theatres, orchestras and arts partners shaping it alongside you.
+            One calm space where great teaching ideas live, evolve and grow — for every child, every classroom, every season of the year. Built with educators, theatres, orchestras and arts partners shaping it alongside you.
           </p>
         </div>
 

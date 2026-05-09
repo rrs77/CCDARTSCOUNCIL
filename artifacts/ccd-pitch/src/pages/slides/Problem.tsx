@@ -73,7 +73,7 @@ export default function Problem() {
             <div>
               <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight">Creative practice gets lost</h3>
               <p className="mt-[0.8vh] text-muted font-body text-[1.2vw] leading-snug">
-                The warm-up that worked, the rehearsal that landed, the unit a colleague nailed — gone by July, learned again the hard way next September.
+                Teaching is creative work — but the warm-up that worked, the rehearsal that landed, the unit a colleague nailed disappear into forgotten documents by July, learned again the hard way next September.
               </p>
             </div>
           </div>
