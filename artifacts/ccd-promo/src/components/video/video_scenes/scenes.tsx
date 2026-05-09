@@ -493,40 +493,108 @@ export function Scene06_Planning() {
  * ------------------------------------------------------------------ */
 export function Scene07_ArtsFocus() {
   const arts = [
-    { label: 'Drama', color: '#FB7185', subtitle: 'Improvise. Embody. Reflect.' },
-    { label: 'Dance', color: '#C084FC', subtitle: 'Move. Phrase. Choreograph.' },
-    { label: 'Music', color: '#5EEAD4', subtitle: 'Listen. Compose. Perform.' },
+    {
+      label: 'Drama',
+      color: '#FB7185',
+      subtitle: 'Improvise. Embody. Reflect.',
+      tags: ['Hot-seating', 'Tableaux', 'Devising', 'Status work'],
+      sample: 'Build empathy through role',
+    },
+    {
+      label: 'Dance',
+      color: '#C084FC',
+      subtitle: 'Move. Phrase. Choreograph.',
+      tags: ['Motif', 'Contact', 'Phrasing', 'Choreography'],
+      sample: 'Develop 8-counts into a phrase',
+    },
+    {
+      label: 'Music',
+      color: '#5EEAD4',
+      subtitle: 'Listen. Compose. Perform.',
+      tags: ['Rhythm', 'Pitch', 'Composition', 'Ensemble'],
+      sample: 'Body percussion to graphic score',
+    },
   ];
   return (
     <Backdrop tint="rose">
       <SceneChip index={7} total={TOTAL} />
-      <div className="absolute inset-0 flex flex-col justify-center px-[6cqmin] gap-[3cqmin]">
-        <div className="flex flex-col gap-[1.5cqmin]">
+      <div className="absolute inset-0 flex flex-col justify-center px-[5cqmin] gap-[2.5cqmin]">
+        <div className="flex flex-col gap-[1cqmin]">
           <Eyebrow tint="rose">Built for the arts</Eyebrow>
-          <Cinematic size="2xl">
+          <Cinematic size="xl">
             <span>Drama. Dance.</span>
             <span style={{ color: '#FB7185' }}>Music.</span>
           </Cinematic>
+          <Sub delay={0.85}>
+            Designed by performing-arts teachers, for the rituals, vocabularies and rehearsal practices of every discipline.
+          </Sub>
         </div>
-        <div className="grid grid-cols-1 landscape:grid-cols-3 gap-[1.5cqmin] mt-[1cqmin]">
+        <div className="grid grid-cols-1 landscape:grid-cols-3 gap-[1.5cqmin]">
           {arts.map((a, i) => (
             <motion.div
               key={a.label}
               initial={{ opacity: 0, y: 30 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ ...springs.gentle, delay: 1.0 + i * 0.15 }}
+              className="relative rounded-[1.4cqmin] overflow-hidden"
+              style={{
+                background: `linear-gradient(160deg, ${a.color}22, rgba(255,255,255,0.04) 60%)`,
+                border: `1px solid ${a.color}55`,
+                padding: '2cqmin',
+                boxShadow: `0 20px 50px -20px ${a.color}55, inset 0 0 0 1px rgba(255,255,255,0.04)`,
+              }}
             >
-              <GlassPanel className="px-[2.5cqmin] py-[2cqmin]">
-                <div
-                  className="font-display font-black"
-                  style={{ color: a.color, fontSize: 'clamp(20px,3.5cqmax,52px)' }}
-                >
-                  {a.label}
-                </div>
-                <div className="text-white/55 mt-[0.4cqmin]" style={{ fontSize: 'clamp(11px,1.4cqmax,18px)' }}>
-                  {a.subtitle}
-                </div>
-              </GlassPanel>
+              {/* coloured glow blob */}
+              <div
+                className="absolute -top-[6cqmin] -right-[6cqmin] rounded-full pointer-events-none"
+                style={{
+                  width: '14cqmin',
+                  height: '14cqmin',
+                  background: `radial-gradient(circle, ${a.color}66, transparent 70%)`,
+                  filter: 'blur(2cqmin)',
+                }}
+              />
+              <div
+                className="font-display font-black leading-[0.95]"
+                style={{ color: a.color, fontSize: 'clamp(22px,3.6cqmax,48px)' }}
+              >
+                {a.label}
+              </div>
+              <div
+                className="text-white/65 mt-[0.4cqmin]"
+                style={{ fontSize: 'clamp(10px,1.25cqmax,16px)' }}
+              >
+                {a.subtitle}
+              </div>
+              <div className="flex flex-wrap gap-[0.5cqmin] mt-[1.2cqmin]">
+                {a.tags.map((t, ti) => (
+                  <motion.span
+                    key={t}
+                    className="px-[1cqmin] py-[0.35cqmin] rounded-full"
+                    style={{
+                      background: `${a.color}20`,
+                      border: `1px solid ${a.color}55`,
+                      color: 'rgba(255,255,255,0.85)',
+                      fontSize: 'clamp(8px,0.95cqmax,12px)',
+                    }}
+                    initial={{ opacity: 0, y: 6 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 1.4 + i * 0.15 + ti * 0.06 }}
+                  >
+                    {t}
+                  </motion.span>
+                ))}
+              </div>
+              <div
+                className="mt-[1.2cqmin] flex items-center gap-[0.8cqmin] text-white/55"
+                style={{ fontSize: 'clamp(9px,1.05cqmax,13px)' }}
+              >
+                <span
+                  className="inline-block rounded-full"
+                  style={{ width: '0.7cqmin', height: '0.7cqmin', background: a.color }}
+                />
+                <span className="italic">e.g. {a.sample}</span>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -561,55 +629,129 @@ export function Scene08_Creative() {
  * 09 — AI AS CREATIVE PARTNER
  * ------------------------------------------------------------------ */
 export function Scene09_AI() {
-  const ringNodes = [0, 60, 120, 180, 240, 300];
+  // Show AI as a real conversation: teacher asks, AI suggests practical options.
+  const messages: Array<{ from: 'you' | 'ai'; text: string; tag?: string; delay: number }> = [
+    { from: 'you', text: '15-min KS2 warmup that builds focus?', delay: 0.4 },
+    { from: 'ai',  text: 'Try "Zip-zap-boing" → "1-2-3 mirror" → silent count-up to 20.', tag: 'Three options', delay: 1.2 },
+    { from: 'you', text: 'Make one SEND-friendly, one stretch.', delay: 2.4 },
+    { from: 'ai',  text: 'SEND: visual cue cards + paired calls. Stretch: pupils lead the round.', tag: 'Adapted', delay: 3.2 },
+  ];
   return (
     <Backdrop tint="indigo">
       <SceneChip index={9} total={TOTAL} />
       <SceneLayout layout="right-text" visual={
-        <div className="relative w-full h-[60cqh] flex items-center justify-center">
-          <motion.div
-            className="absolute rounded-full border border-white/10"
-            style={{ width: '50cqmin', height: '50cqmin' }}
-            animate={{ rotate: 360 }}
-            transition={{ duration: 40, repeat: Infinity, ease: 'linear' }}
-          />
-          <motion.div
-            className="absolute rounded-full border border-white/10"
-            style={{ width: '36cqmin', height: '36cqmin' }}
-            animate={{ rotate: -360 }}
-            transition={{ duration: 30, repeat: Infinity, ease: 'linear' }}
-          />
-          {ringNodes.map((deg, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-white/10 backdrop-blur-md border border-white/20"
-              style={{
-                width: 'clamp(12px,1.8cqmax,28px)',
-                height: 'clamp(12px,1.8cqmax,28px)',
-                left: '50%',
-                top: '50%',
-                transform: `translate(-50%,-50%) rotate(${deg}deg) translateY(-25cqmin)`,
-                boxShadow: '0 0 20px rgba(165,180,252,0.5)',
-              }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ ...springs.gentle, delay: 0.4 + i * 0.08 }}
-            />
-          ))}
-          <motion.div
-            className="relative rounded-full flex items-center justify-center font-display font-black text-white/90"
+        <div className="relative w-full h-[62cqh] flex items-center justify-center">
+          {/* Soft halo behind the panel */}
+          <div
+            className="absolute rounded-full pointer-events-none"
             style={{
-              width: 'clamp(80px,16cqmax,220px)',
-              height: 'clamp(80px,16cqmax,220px)',
-              background: 'radial-gradient(circle, rgba(99,102,241,0.5), rgba(56,189,248,0.2))',
-              boxShadow: '0 0 80px rgba(99,102,241,0.6), inset 0 0 40px rgba(255,255,255,0.1)',
-              fontSize: 'clamp(18px,3cqmax,44px)',
+              width: '60cqmin', height: '60cqmin',
+              background: 'radial-gradient(closest-side, rgba(99,102,241,0.35), transparent 70%)',
+              filter: 'blur(2cqmin)',
             }}
-            initial={{ opacity: 0, scale: 0.6 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ ...springs.bouncy, delay: 0.2 }}
+          />
+          <motion.div
+            initial={{ opacity: 0, y: 24, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            transition={{ ...springs.gentle, delay: 0.2 }}
+            className="relative w-[88%] max-w-[58cqmin] rounded-[1.4cqmin] backdrop-blur-md"
+            style={{
+              background: 'linear-gradient(160deg, rgba(30,27,75,0.85), rgba(15,23,42,0.85))',
+              border: '1px solid rgba(165,180,252,0.25)',
+              boxShadow: '0 30px 80px -20px rgba(99,102,241,0.5), inset 0 0 0 1px rgba(255,255,255,0.04)',
+              padding: '1.6cqmin',
+            }}
           >
-            AI
+            {/* header */}
+            <div className="flex items-center gap-[0.8cqmin] pb-[1cqmin] border-b border-white/10 mb-[1.2cqmin]">
+              <div
+                className="rounded-full flex items-center justify-center font-display font-black"
+                style={{
+                  width: 'clamp(20px,2.6cqmax,36px)',
+                  height: 'clamp(20px,2.6cqmax,36px)',
+                  background: 'radial-gradient(circle, #6366F1, #38BDF8)',
+                  color: 'white',
+                  fontSize: 'clamp(9px,1.1cqmax,14px)',
+                  boxShadow: '0 0 20px rgba(99,102,241,0.6)',
+                }}
+              >AI</div>
+              <div>
+                <div className="text-white/90 font-semibold leading-tight" style={{ fontSize: 'clamp(10px,1.2cqmax,15px)' }}>
+                  Creative thinking partner
+                </div>
+                <div className="text-white/40" style={{ fontSize: 'clamp(8px,0.9cqmax,11px)' }}>
+                  Suggests · never replaces
+                </div>
+              </div>
+              <div className="ml-auto flex items-center gap-[0.4cqmin]">
+                <span className="rounded-full bg-emerald-400" style={{ width: '0.6cqmin', height: '0.6cqmin' }} />
+                <span className="text-emerald-300/80" style={{ fontSize: 'clamp(8px,0.9cqmax,11px)' }}>live</span>
+              </div>
+            </div>
+
+            <div className="flex flex-col gap-[1cqmin]">
+              {messages.map((m, i) => {
+                const isAi = m.from === 'ai';
+                return (
+                  <motion.div
+                    key={i}
+                    initial={{ opacity: 0, y: 8 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ ...springs.gentle, delay: m.delay }}
+                    className={`flex ${isAi ? 'justify-start' : 'justify-end'}`}
+                  >
+                    <div
+                      className="max-w-[88%] rounded-[1cqmin] px-[1.2cqmin] py-[0.8cqmin]"
+                      style={{
+                        background: isAi
+                          ? 'linear-gradient(135deg, rgba(99,102,241,0.30), rgba(56,189,248,0.18))'
+                          : 'rgba(255,255,255,0.06)',
+                        border: isAi ? '1px solid rgba(165,180,252,0.45)' : '1px solid rgba(255,255,255,0.10)',
+                        color: 'rgba(255,255,255,0.92)',
+                        fontSize: 'clamp(9px,1.15cqmax,14px)',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {m.tag && (
+                        <div
+                          className="font-display tracking-[0.15em] uppercase mb-[0.3cqmin]"
+                          style={{ fontSize: 'clamp(7px,0.8cqmax,10px)', color: '#A5B4FC' }}
+                        >
+                          {m.tag}
+                        </div>
+                      )}
+                      {m.text}
+                    </div>
+                  </motion.div>
+                );
+              })}
+
+              {/* typing indicator */}
+              <motion.div
+                className="flex justify-start"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: [0, 1, 1, 0] }}
+                transition={{ duration: 4, delay: 4.2, times: [0, 0.1, 0.85, 1] }}
+              >
+                <div
+                  className="rounded-full px-[1cqmin] py-[0.6cqmin] flex items-center gap-[0.4cqmin]"
+                  style={{
+                    background: 'rgba(99,102,241,0.18)',
+                    border: '1px solid rgba(165,180,252,0.35)',
+                  }}
+                >
+                  {[0, 1, 2].map((d) => (
+                    <motion.span
+                      key={d}
+                      className="rounded-full bg-white/80"
+                      style={{ width: '0.6cqmin', height: '0.6cqmin' }}
+                      animate={{ opacity: [0.3, 1, 0.3] }}
+                      transition={{ duration: 1.2, repeat: Infinity, delay: 4.2 + d * 0.15 }}
+                    />
+                  ))}
+                </div>
+              </motion.div>
+            </div>
           </motion.div>
         </div>
       }>
@@ -632,47 +774,80 @@ export function Scene09_AI() {
  * ------------------------------------------------------------------ */
 export function Scene10_Adaptive() {
   const variants = [
-    { label: 'Core lesson', tone: '#5EEAD4' },
-    { label: 'Stretch & challenge', tone: '#FBBF24' },
-    { label: 'SEND adaptation', tone: '#C084FC' },
-    { label: 'EAL scaffolds', tone: '#7DD3FC' },
+    { label: 'Core lesson',         tone: '#5EEAD4', detail: 'Tableaux to explore character motivations',                      meta: 'KS3 · 50 min' },
+    { label: 'Stretch & challenge', tone: '#FBBF24', detail: '+ Subtext layering, role-on-the-wall extension',                  meta: 'GCSE-ready · 65 min' },
+    { label: 'SEND adaptation',     tone: '#C084FC', detail: 'Visual cue cards · paired support · sensory-friendly pacing',     meta: 'Inclusion · 45 min' },
+    { label: 'EAL scaffolds',       tone: '#7DD3FC', detail: 'Picture vocab bank · sentence stems · mother-tongue option',      meta: 'EAL · 50 min' },
   ];
   return (
     <Backdrop tint="teal">
       <SceneChip index={10} total={TOTAL} />
       <SceneLayout layout="left-text" visual={
-        <div className="relative w-full flex flex-col gap-[1.2cqmin]">
+        <div className="relative w-full flex flex-col gap-[1cqmin]">
+          {/* connecting spine on the left so they read as branches off one source */}
+          <div
+            className="absolute left-[1.4cqmin] top-[2cqmin] bottom-[2cqmin] w-px"
+            style={{ background: 'linear-gradient(to bottom, transparent, rgba(94,234,212,0.5), transparent)' }}
+            aria-hidden
+          />
           {variants.map((v, i) => (
             <motion.div
               key={v.label}
               initial={{ opacity: 0, x: 50 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ ...springs.gentle, delay: 0.4 + i * 0.18 }}
+              className="relative pl-[3.2cqmin]"
             >
-              <GlassPanel className="flex items-center gap-[1.5cqmin] px-[2cqmin] py-[1.6cqmin]">
-                <div
-                  className="rounded-full"
-                  style={{
-                    width: 'clamp(8px,1.2cqmax,18px)',
-                    height: 'clamp(8px,1.2cqmax,18px)',
-                    background: v.tone,
-                    boxShadow: `0 0 16px ${v.tone}`,
-                  }}
-                />
-                <div
-                  className="text-white/85 font-semibold"
-                  style={{ fontSize: 'clamp(13px,1.8cqmax,24px)' }}
-                >
-                  {v.label}
+              {/* branch line into the card */}
+              <div
+                className="absolute left-[1.4cqmin] top-1/2 h-px"
+                style={{ width: '1.6cqmin', background: `${v.tone}88` }}
+                aria-hidden
+              />
+              <div
+                className="rounded-[1.2cqmin] px-[1.6cqmin] py-[1.2cqmin] backdrop-blur-md"
+                style={{
+                  background: `linear-gradient(135deg, ${v.tone}1A, rgba(255,255,255,0.04))`,
+                  border: `1px solid ${v.tone}55`,
+                  boxShadow: `0 12px 30px -14px ${v.tone}55`,
+                }}
+              >
+                <div className="flex items-center gap-[1cqmin]">
+                  <div
+                    className="rounded-full shrink-0"
+                    style={{
+                      width: 'clamp(8px,1.1cqmax,16px)',
+                      height: 'clamp(8px,1.1cqmax,16px)',
+                      background: v.tone,
+                      boxShadow: `0 0 14px ${v.tone}`,
+                    }}
+                  />
+                  <div
+                    className="font-semibold"
+                    style={{ color: v.tone, fontSize: 'clamp(12px,1.55cqmax,20px)' }}
+                  >
+                    {v.label}
+                  </div>
+                  <div className="flex-1" />
+                  <div
+                    className="font-mono px-[0.8cqmin] py-[0.2cqmin] rounded-full"
+                    style={{
+                      fontSize: 'clamp(8px,0.9cqmax,11px)',
+                      color: v.tone,
+                      background: `${v.tone}15`,
+                      border: `1px solid ${v.tone}40`,
+                    }}
+                  >
+                    {v.meta}
+                  </div>
                 </div>
-                <div className="flex-1 h-px bg-white/10" />
                 <div
-                  className="text-white/40 font-mono"
+                  className="text-white/75 mt-[0.5cqmin] leading-snug"
                   style={{ fontSize: 'clamp(9px,1.1cqmax,14px)' }}
                 >
-                  ready
+                  {v.detail}
                 </div>
-              </GlassPanel>
+              </div>
             </motion.div>
           ))}
         </div>
@@ -987,67 +1162,116 @@ export function Scene16_Sequencing() {
  * 17 — INSPIRATION THAT GROWS WITH YOU
  * ------------------------------------------------------------------ */
 export function Scene17_Inspiration() {
+  // A real "remix" diagram: ONE old idea grows up into branches that become
+  // labelled new lessons and units. Card-style nodes so the meaning is concrete.
+  type N = { x: number; y: number; tag: 'old' | 'mid' | 'new'; title: string; meta?: string };
+  const nodes: N[] = [
+    { x: 50, y: 86, tag: 'old', title: 'Tableaux to explore character', meta: 'KS3 · Drama · 2024' },
+    { x: 28, y: 58, tag: 'mid', title: 'Add subtext layering',           meta: 'remix' },
+    { x: 72, y: 58, tag: 'mid', title: 'Move to physical theatre',       meta: 'remix' },
+    { x: 14, y: 28, tag: 'new', title: 'GCSE devising warm-up',          meta: 'New lesson' },
+    { x: 38, y: 16, tag: 'new', title: 'Subtext mini-unit',              meta: 'New unit · 3 lessons' },
+    { x: 64, y: 16, tag: 'new', title: 'KS2 movement story',             meta: 'New lesson' },
+    { x: 86, y: 28, tag: 'new', title: 'Tudor masque',                   meta: 'New unit · cross-curric.' },
+  ];
+  const edges: Array<[number, number, number]> = [
+    [0, 1, 0.0], [0, 2, 0.0],
+    [1, 3, 0.25], [1, 4, 0.25],
+    [2, 5, 0.4],  [2, 6, 0.4],
+  ];
+  const styleFor = (tag: N['tag']) => ({
+    bg:      tag === 'old' ? 'rgba(251,146,60,0.18)' : tag === 'mid' ? 'rgba(251,191,36,0.14)' : 'rgba(253,224,71,0.18)',
+    border:  tag === 'old' ? '#FB923C'                 : tag === 'mid' ? '#FBBF24'                 : '#FDE68A',
+    label:   tag === 'old' ? '#FED7AA'                 : tag === 'mid' ? '#FDE68A'                 : '#FFFFFF',
+    halo:    tag === 'old' ? 'rgba(251,146,60,0.55)'   : tag === 'mid' ? 'rgba(251,191,36,0.45)'   : 'rgba(253,224,71,0.55)',
+  });
   return (
     <Backdrop tint="amber">
       <SceneChip index={17} total={TOTAL} />
       <SceneLayout layout="left-text" visual={
-        <div className="relative w-full h-[60cqh]">
-          <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
-            {[
-              ['M50,90 L50,55', 0],
-              ['M50,55 L25,30', 0.2],
-              ['M50,55 L75,30', 0.2],
-              ['M25,30 L12,12', 0.4],
-              ['M25,30 L30,8', 0.4],
-              ['M75,30 L70,8', 0.4],
-              ['M75,30 L88,12', 0.4],
-            ].map(([d, delay], i) => (
-              <motion.path
-                key={i}
-                d={d as string}
-                stroke="#FBBF24"
-                strokeWidth="0.5"
-                strokeOpacity="0.6"
-                fill="none"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.9, ease: 'circOut', delay: 0.4 + (delay as number) }}
-              />
-            ))}
+        <div className="relative w-full h-[64cqh]">
+          {/* Branches drawn first (under the cards) */}
+          <svg viewBox="0 0 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="none">
+            <defs>
+              <linearGradient id="branchGlow" x1="0" y1="100%" x2="0" y2="0%">
+                <stop offset="0%" stopColor="#FB923C" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#FDE68A" stopOpacity="0.85" />
+              </linearGradient>
+            </defs>
+            {edges.map(([a, b, dly], i) => {
+              const A = nodes[a], B = nodes[b];
+              // gentle curve via control point pulled toward the source
+              const cx = (A.x + B.x) / 2;
+              const cy = (A.y + B.y) / 2 + 6;
+              return (
+                <motion.path
+                  key={i}
+                  d={`M${A.x},${A.y} Q${cx},${cy} ${B.x},${B.y}`}
+                  stroke="url(#branchGlow)"
+                  strokeWidth="0.7"
+                  fill="none"
+                  initial={{ pathLength: 0, opacity: 0 }}
+                  animate={{ pathLength: 1, opacity: 1 }}
+                  transition={{ duration: 1.0, ease: 'circOut', delay: 0.5 + dly }}
+                />
+              );
+            })}
           </svg>
-          {[
-            { x: 50, y: 90, size: 16, label: 'Old idea' },
-            { x: 50, y: 55, size: 12 },
-            { x: 25, y: 30, size: 10 },
-            { x: 75, y: 30, size: 10 },
-            { x: 12, y: 12, size: 8, label: 'New lesson' },
-            { x: 30, y: 8, size: 8 },
-            { x: 70, y: 8, size: 8 },
-            { x: 88, y: 12, size: 8, label: 'New unit' },
-          ].map((n, i) => (
-            <motion.div
-              key={i}
-              className="absolute rounded-full bg-[#FBBF24]/30 backdrop-blur-sm border border-[#FBBF24]/50 flex items-center justify-center text-white/95 font-medium whitespace-nowrap"
-              style={{
-                left: `${n.x}%`,
-                top: `${n.y}%`,
-                transform: 'translate(-50%,-50%)',
-                width: `${n.size}cqmin`,
-                height: `${n.size}cqmin`,
-                fontSize: 'clamp(8px,1cqmax,12px)',
-                boxShadow: '0 0 20px rgba(251,191,36,0.5)',
-              }}
-              initial={{ opacity: 0, scale: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ ...springs.gentle, delay: 0.3 + i * 0.13 }}
-            >
-              {n.label && (
-                <span className="absolute" style={{ top: '110%', whiteSpace: 'nowrap' }}>
-                  {n.label}
-                </span>
-              )}
-            </motion.div>
-          ))}
+
+          {nodes.map((n, i) => {
+            const s = styleFor(n.tag);
+            const widthCq = n.tag === 'old' ? 22 : n.tag === 'new' ? 18 : 18;
+            return (
+              <motion.div
+                key={i}
+                className="absolute rounded-[1cqmin] backdrop-blur-md"
+                style={{
+                  left: `${n.x}%`,
+                  top: `${n.y}%`,
+                  transform: 'translate(-50%,-50%)',
+                  width: `${widthCq}cqmin`,
+                  background: s.bg,
+                  border: `1px solid ${s.border}`,
+                  boxShadow: `0 0 22px ${s.halo}, 0 12px 28px -12px rgba(0,0,0,0.4)`,
+                  padding: '0.8cqmin 1cqmin',
+                }}
+                initial={{ opacity: 0, scale: 0.7, y: 10 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                transition={{ ...springs.gentle, delay: 0.3 + i * 0.18 }}
+              >
+                <div
+                  className="font-display tracking-[0.18em] uppercase"
+                  style={{ fontSize: 'clamp(6px,0.75cqmax,9px)', color: s.label, opacity: 0.85 }}
+                >
+                  {n.meta}
+                </div>
+                <div
+                  className="text-white/95 font-medium leading-[1.15] mt-[0.2cqmin]"
+                  style={{ fontSize: 'clamp(8px,1.0cqmax,12px)' }}
+                >
+                  {n.title}
+                </div>
+              </motion.div>
+            );
+          })}
+
+          {/* travelling spark along one of the branches to imply ideas flowing upward */}
+          <motion.div
+            className="absolute rounded-full pointer-events-none"
+            style={{
+              width: '1.2cqmin', height: '1.2cqmin',
+              background: 'radial-gradient(circle, #FFFFFF, #FDE68A 60%, transparent 75%)',
+              boxShadow: '0 0 12px #FDE68A',
+              left: '50%',
+              top: '86%',
+            }}
+            animate={{
+              left:  ['50%', '28%', '14%'],
+              top:   ['86%', '58%', '28%'],
+              opacity: [0, 1, 0],
+            }}
+            transition={{ duration: 2.4, repeat: Infinity, delay: 2.0, ease: 'easeInOut' }}
+          />
         </div>
       }>
         <Eyebrow tint="amber">Remix, don't restart</Eyebrow>
@@ -1069,50 +1293,159 @@ export function Scene17_Inspiration() {
  * ------------------------------------------------------------------ */
 export function Scene18_Community() {
   const orgs = [
-    { label: 'Theatre companies', color: '#FB7185' },
-    { label: 'Orchestras', color: '#5EEAD4' },
-    { label: 'Dance companies', color: '#C084FC' },
-    { label: 'Universities', color: '#FBBF24' },
-    { label: 'Outreach teams', color: '#7DD3FC' },
+    { label: 'Theatre companies', color: '#FB7185', count: '142', kind: 'sharing rehearsal toolkits' },
+    { label: 'Orchestras',        color: '#5EEAD4', count: '38',  kind: 'composition + listening' },
+    { label: 'Dance companies',   color: '#C084FC', count: '67',  kind: 'choreographic warm-ups' },
+    { label: 'Universities',      color: '#FBBF24', count: '24',  kind: 'PGCE + research' },
+    { label: 'Outreach teams',    color: '#7DD3FC', count: '91',  kind: 'community workshops' },
   ];
   return (
     <Backdrop tint="plum">
       <SceneChip index={18} total={TOTAL} />
       <SceneLayout layout="right-text" visual={
-        <div className="relative w-full h-[60cqh] flex items-center justify-center">
+        <div className="relative w-full h-[64cqh] flex items-center justify-center">
+          {/* orbit ring */}
           <motion.div
-            className="absolute rounded-full"
+            className="absolute rounded-full border"
             style={{
-              width: 'clamp(60px,12cqmax,160px)',
-              height: 'clamp(60px,12cqmax,160px)',
-              background: 'radial-gradient(circle, rgba(192,132,252,0.6), transparent 70%)',
-              boxShadow: '0 0 80px rgba(192,132,252,0.5)',
+              width: '54cqmin', height: '54cqmin',
+              borderColor: 'rgba(192,132,252,0.25)',
+              borderStyle: 'dashed',
             }}
-            animate={{ scale: [1, 1.08, 1] }}
-            transition={{ duration: 4, repeat: Infinity, ease: 'easeInOut' }}
+            animate={{ rotate: 360 }}
+            transition={{ duration: 60, ease: 'linear', repeat: Infinity }}
           />
+          <motion.div
+            className="absolute rounded-full border border-white/5"
+            style={{ width: '40cqmin', height: '40cqmin' }}
+            animate={{ rotate: -360 }}
+            transition={{ duration: 80, ease: 'linear', repeat: Infinity }}
+          />
+
+          {/* Connecting lines from centre to each org */}
+          <svg viewBox="-50 -50 100 100" className="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
+            {orgs.map((o, i) => {
+              const angle = (i / orgs.length) * 360 - 90;
+              const rad = (angle * Math.PI) / 180;
+              const r = 27;
+              return (
+                <motion.line
+                  key={o.label}
+                  x1={0} y1={0}
+                  x2={Math.cos(rad) * r}
+                  y2={Math.sin(rad) * r}
+                  stroke={o.color}
+                  strokeOpacity="0.5"
+                  strokeWidth="0.3"
+                  initial={{ pathLength: 0 }}
+                  animate={{ pathLength: 1 }}
+                  transition={{ duration: 0.9, ease: 'circOut', delay: 0.4 + i * 0.1 }}
+                />
+              );
+            })}
+          </svg>
+
+          {/* Pulse rings flowing INTO the centre to show contributions */}
           {orgs.map((o, i) => {
             const angle = (i / orgs.length) * 360 - 90;
             const rad = (angle * Math.PI) / 180;
-            const r = 26;
+            const r = 27;
+            return (
+              <motion.div
+                key={`pulse-${o.label}`}
+                className="absolute rounded-full pointer-events-none"
+                style={{
+                  width: '1.2cqmin', height: '1.2cqmin',
+                  background: o.color,
+                  boxShadow: `0 0 14px ${o.color}`,
+                  left: '50%', top: '50%',
+                }}
+                initial={{ x: Math.cos(rad) * r * 4, y: Math.sin(rad) * r * 4, opacity: 0 }}
+                animate={{
+                  x: [Math.cos(rad) * r * 4, 0],
+                  y: [Math.sin(rad) * r * 4, 0],
+                  opacity: [0, 1, 0],
+                  scale: [1, 0.4],
+                }}
+                transition={{ duration: 2.2, repeat: Infinity, delay: 1.5 + i * 0.4, ease: 'easeIn' }}
+              />
+            );
+          })}
+
+          {/* Centre: CC mark logo as the heart of the ecosystem */}
+          <motion.div
+            className="absolute rounded-full flex items-center justify-center overflow-hidden"
+            style={{
+              width: 'clamp(96px,18cqmax,220px)',
+              height: 'clamp(96px,18cqmax,220px)',
+              background: 'radial-gradient(circle, rgba(196,176,255,0.40), rgba(124,58,237,0.12) 55%, transparent 75%)',
+              boxShadow: '0 0 80px rgba(168,139,250,0.55)',
+            }}
+            initial={{ scale: 0.7, opacity: 0 }}
+            animate={{ scale: [0.7, 1, 1.04, 1], opacity: 1 }}
+            transition={{ duration: 1.4, ease: 'easeOut', delay: 0.2 }}
+          >
+            <img
+              src={`${import.meta.env.BASE_URL}ccdesigner-logo-light.png`}
+              alt="CCDesigner"
+              crossOrigin="anonymous"
+              className="block"
+              style={{
+                width: '72%',
+                height: 'auto',
+                objectFit: 'contain',
+                filter: 'drop-shadow(0 4px 16px rgba(168,139,250,0.6))',
+              }}
+            />
+          </motion.div>
+
+          {/* Org cards orbiting */}
+          {orgs.map((o, i) => {
+            const angle = (i / orgs.length) * 360 - 90;
+            const rad = (angle * Math.PI) / 180;
+            const r = 27;
             return (
               <motion.div
                 key={o.label}
-                className="absolute rounded-[1cqmin] backdrop-blur-md border border-white/15 px-[1.4cqmin] py-[0.8cqmin] text-white/90 font-medium whitespace-nowrap text-center"
+                className="absolute rounded-[1cqmin] backdrop-blur-md text-center"
                 style={{
                   left: `calc(50% + ${Math.cos(rad) * r}cqmin)`,
                   top: `calc(50% + ${Math.sin(rad) * r}cqmin)`,
                   transform: 'translate(-50%,-50%)',
-                  background: `${o.color}15`,
-                  borderColor: `${o.color}55`,
-                  fontSize: 'clamp(9px,1.2cqmax,16px)',
-                  boxShadow: `0 0 24px ${o.color}33`,
+                  background: `linear-gradient(135deg, ${o.color}28, rgba(255,255,255,0.04))`,
+                  border: `1px solid ${o.color}66`,
+                  boxShadow: `0 0 24px ${o.color}33, 0 14px 30px -12px rgba(0,0,0,0.45)`,
+                  padding: '1cqmin 1.2cqmin',
+                  minWidth: '14cqmin',
                 }}
                 initial={{ opacity: 0, scale: 0.6 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ ...springs.gentle, delay: 0.6 + i * 0.13 }}
               >
-                {o.label}
+                <div className="flex items-center justify-center gap-[0.5cqmin]">
+                  <span
+                    className="rounded-full inline-block"
+                    style={{ width: '0.7cqmin', height: '0.7cqmin', background: o.color }}
+                  />
+                  <span
+                    className="font-mono"
+                    style={{ color: o.color, fontSize: 'clamp(9px,1.1cqmax,14px)' }}
+                  >
+                    {o.count}
+                  </span>
+                </div>
+                <div
+                  className="text-white/95 font-semibold leading-tight mt-[0.2cqmin]"
+                  style={{ fontSize: 'clamp(9px,1.15cqmax,15px)' }}
+                >
+                  {o.label}
+                </div>
+                <div
+                  className="text-white/55 italic leading-tight mt-[0.1cqmin]"
+                  style={{ fontSize: 'clamp(7px,0.85cqmax,11px)' }}
+                >
+                  {o.kind}
+                </div>
               </motion.div>
             );
           })}

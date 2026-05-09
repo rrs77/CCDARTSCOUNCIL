@@ -1,54 +1,120 @@
-const base = import.meta.env.BASE_URL;
-
 export default function Title() {
   return (
-    <div className="relative w-screen h-screen overflow-hidden bg-bg">
-      <img
-        src={`${base}classroom-hero.png`}
-        crossOrigin="anonymous"
-        alt="Primary school classroom"
-        className="absolute inset-0 w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-br from-[#008272]/85 via-[#0f9d8d]/70 to-[#FF6B6B]/55" />
+    <div
+      className="relative w-screen h-screen overflow-hidden"
+      style={{
+        background:
+          "radial-gradient(ellipse 90% 70% at 50% 40%, #FBF7F1 0%, #F4ECDF 55%, #E9DCC4 100%)",
+      }}
+    >
+      {/* A single, very soft warm wash — the only ambient element on the page */}
       <div
-        className="absolute -top-[20vh] -right-[10vw] rounded-full"
+        className="absolute inset-0 pointer-events-none"
         style={{
-          width: "55vw",
-          height: "55vw",
-          background: "radial-gradient(circle at center, rgba(255,107,107,0.35), transparent 65%)",
-          filter: "blur(4vw)",
+          background:
+            "radial-gradient(ellipse 55% 40% at 50% 38%, rgba(255,193,141,0.22), transparent 70%)",
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-end px-[7vw] py-[6vh]">
-        <div className="max-w-[70vw]">
-          <span
-            className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh] slide-fade-up"
-            style={{ ['--slide-stagger' as string]: '120ms' }}
+      {/* Editorial title block — left-aligned, generous whitespace.
+          The brand mark is added by <BrandStamp/> in App.tsx, so we leave the
+          top-left clear and rely on negative space to carry the elegance. */}
+      <div className="relative z-10 h-full w-full flex flex-col justify-center px-[10vw]">
+        <div className="max-w-[72vw]">
+          <div
+            className="font-body uppercase tracking-[0.32em] text-[#7A5A3A] slide-fade-up"
+            style={{ fontSize: "0.95vw", ["--slide-stagger" as string]: "120ms" }}
           >
-            Live · Tested in classrooms · Drama · Dance · Music — EYFS through KS5
-          </span>
+            A proposal to the Arts Council
+          </div>
+
           <h1
-            className="font-display font-black text-white tracking-tighter leading-[0.95] slide-fade-up"
-            style={{ fontSize: "7vw", textWrap: "balance", ['--slide-stagger' as string]: '220ms' }}
+            className="font-display font-medium text-[#1F1A14] tracking-[-0.015em] leading-[1.02] mt-[3.2vh] slide-fade-up"
+            style={{
+              fontSize: "5.4vw",
+              textWrap: "balance",
+              ["--slide-stagger" as string]: "240ms",
+            }}
           >
-            A living home for creative teaching.
+            Bringing the arts
+            <br />
+            <span style={{ color: "#B86F3A", fontStyle: "italic", fontWeight: 400 }}>
+              together
+            </span>{" "}
+            <span className="text-[#1F1A14]/85">— for every child.</span>
           </h1>
+
           <p
-            className="mt-[3vh] text-white/90 font-body font-medium max-w-[55vw] leading-snug slide-fade-up"
-            style={{ fontSize: "1.7vw", textWrap: "pretty", ['--slide-stagger' as string]: '380ms' }}
+            className="mt-[4vh] text-[#2A2218] font-body leading-[1.5] max-w-[46vw] slide-fade-up"
+            style={{
+              fontSize: "1.35vw",
+              textWrap: "pretty",
+              ["--slide-stagger" as string]: "360ms",
+            }}
           >
-            One calm space where great teaching ideas live, evolve and grow — for every child, every classroom, every season of the year. Built with educators, theatres, orchestras and arts partners shaping it alongside you.
+            One connected home for schools, arts organisations and practitioners —
+            so exceptional creative opportunities reach the children who need them.
           </p>
         </div>
+      </div>
 
-        <div
-          className="flex items-end justify-between text-white/85 slide-fade-up"
-          style={{ ['--slide-stagger' as string]: '520ms' }}
+      {/* A single hairline ecosystem cue — four soft dots joined by a thin line.
+          Quietly suggests "unity" without ornament. */}
+      <div
+        className="absolute bottom-[18vh] left-[10vw] flex items-center slide-fade-up"
+        style={{
+          ["--slide-stagger" as string]: "480ms",
+        }}
+      >
+        {["Schools", "Arts orgs", "Practitioners", "Children"].map((label, i, arr) => (
+          <div key={label} className="flex items-center">
+            <div className="flex flex-col items-center">
+              <span
+                className="rounded-full"
+                style={{
+                  width: "0.7vw",
+                  height: "0.7vw",
+                  background: "#B86F3A",
+                  boxShadow: "0 0 0 4px rgba(184,111,58,0.10)",
+                }}
+              />
+              <span
+                className="font-body text-[#5C4530] mt-[1.1vh] tracking-[0.12em] uppercase whitespace-nowrap"
+                style={{ fontSize: "0.78vw" }}
+              >
+                {label}
+              </span>
+            </div>
+            {i < arr.length - 1 && (
+              <span
+                className="block mx-[1.4vw]"
+                style={{
+                  width: "5.5vw",
+                  height: "1px",
+                  background:
+                    "linear-gradient(to right, #B86F3A55, #B86F3A88, #B86F3A55)",
+                  marginBottom: "2.4vh",
+                }}
+              />
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Footer — minimal attribution */}
+      <div
+        className="absolute bottom-[5vh] left-[10vw] right-[10vw] flex items-baseline justify-between text-[#5C4530] slide-fade-up"
+        style={{ ["--slide-stagger" as string]: "600ms" }}
+      >
+        <span
+          className="font-body uppercase tracking-[0.28em]"
+          style={{ fontSize: "0.8vw" }}
         >
-          <span className="font-body text-[1.05vw] tracking-wide uppercase">A pitch for schools, arts organisations &amp; universities</span>
-          <span className="font-body text-[1.05vw] tracking-wide">creativecurriculumdesigner.com</span>
-        </div>
+          Creative Curriculum Designer
+        </span>
+        <span className="font-body" style={{ fontSize: "0.8vw" }}>
+          creativecurriculumdesigner.com
+        </span>
       </div>
     </div>
   );
