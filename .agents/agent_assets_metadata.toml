@@ -47,3 +47,9 @@ id = "0tv3aKRBSc6FIEtpgd4IE"
 uri = "file://artifacts/ccd-promo/dreamhost-embed/index.html.txt"
 type = "text"
 title = "index.html (rename to .html after saving)"
+
+[[outputs]]
+id = "ByysGSE8Fn8A_X6P2YgUK"
+uri = "file://.local/outputs/CCDesigner-Pitch-Deck.pptx"
+type = "slides"
+title = "CCDesigner Pitch Deck (PPTX)"
