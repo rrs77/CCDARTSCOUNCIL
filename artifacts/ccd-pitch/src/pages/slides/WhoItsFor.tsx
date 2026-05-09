@@ -20,7 +20,7 @@ export default function WhoItsFor() {
             className="font-display font-black text-text tracking-tight leading-[1.02]"
             style={{ fontSize: "4.6vw", textWrap: "balance" }}
           >
-            Built with arts educators — across every stage.
+            Built with arts educators — every key stage, EYFS to KS5.
           </h2>
         </div>
 
@@ -59,14 +59,14 @@ export default function WhoItsFor() {
 
           <div className="rounded-[1.5rem] bg-surface shadow-[0_8px_32px_rgba(0,76,69,0.08)] p-[3vh_2vw] flex flex-col">
             <div className="flex items-baseline gap-[0.6vw] mb-[2vh]">
-              <span className="font-display font-black text-primary-dark text-[2.6vw] leading-none">Arts Partners &amp; HE</span>
+              <span className="font-display font-black text-primary-dark text-[2.6vw] leading-none">Arts Sector Partners</span>
             </div>
             <div className="font-body text-muted text-[1vw] mb-[1.5vh]">Theatres · Orchestras · Dance companies · Universities</div>
             <h3 className="font-display font-bold text-text text-[1.5vw] leading-tight mb-[1.5vh]">
-              Outreach teams, practitioners, training providers and HE arts faculties
+              Outreach teams, practitioners, training providers and university arts faculties
             </h3>
             <p className="text-muted font-body text-[1.15vw] leading-snug">
-              Contribute outreach resources, rehearsal techniques, research-informed frameworks and training pathways to a shared, evolving creative ecosystem — directly into the schools you partner with.
+              Contribute outreach resources, rehearsal techniques, research-informed frameworks and training pathways into the schools you partner with — strengthening creative practice from EYFS to KS5.
             </p>
             <div className="mt-auto pt-[2vh] border-t border-text/10 font-body text-text/80 text-[1.05vw]">
               Outreach &middot; training &middot; sector-wide collaboration

@@ -41,7 +41,7 @@ export default function Title() {
             className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh] slide-fade-up"
             style={{ ['--slide-stagger' as string]: '120ms' }}
           >
-            Drama · Dance · Music · Performing Arts — EYFS to higher education
+            Drama · Dance · Music · Performing Arts — EYFS through KS5
           </span>
           <h1
             className="font-display font-black text-white tracking-tighter leading-[0.95] slide-fade-up"

@@ -4,7 +4,7 @@
     "position": 1,
     "filepath": "src/pages/slides/Title.tsx",
     "title": "A living home for creative teaching",
-    "description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music — from EYFS to higher education.",
+    "description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music — across every key stage from EYFS to KS5.",
     "speakerNotes": ""
   },
   {
@@ -20,7 +20,7 @@
     "position": 3,
     "filepath": "src/pages/slides/Solution.tsx",
     "title": "The solution: one living home",
-    "description": "Half-term planner, lesson library, and activity stacks in one workspace — purpose-built for performing arts education from EYFS to higher education.",
+    "description": "Half-term planner, lesson library, and activity stacks in one workspace — purpose-built for performing arts education across every key stage from EYFS to KS5.",
     "speakerNotes": ""
   },
   {
@@ -35,8 +35,8 @@
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
     "position": 5,
     "filepath": "src/pages/slides/WhoItsFor.tsx",
-    "title": "Who it's for: arts educators across every stage",
-    "description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form, and Arts Partners & Higher Education.",
+    "title": "Who it's for: arts educators across every key stage",
+    "description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form (EYFS to KS5), and the arts sector partners contributing alongside them.",
     "speakerNotes": ""
   },
   {

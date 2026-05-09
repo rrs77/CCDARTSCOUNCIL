@@ -64,7 +64,7 @@ export default function HowItWorks() {
               CD
             </div>
             <div>
-              <div className="font-display font-bold text-white text-[1.5vw] leading-tight">Built for performing arts education at every stage.</div>
+              <div className="font-display font-bold text-white text-[1.5vw] leading-tight">Built for performing arts teaching from EYFS to KS5.</div>
               <div className="font-body text-white/70 text-[1.1vw] leading-snug">Works on a laptop, a smartboard, a studio tablet, or a phone in the rehearsal room.</div>
             </div>
           </div>

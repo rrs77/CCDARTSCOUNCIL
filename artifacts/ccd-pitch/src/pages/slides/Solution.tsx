@@ -35,7 +35,7 @@ export default function Solution() {
             className="mt-[2.5vh] text-white/75 font-body max-w-[60vw] leading-snug"
             style={{ fontSize: "1.6vw", textWrap: "pretty" }}
           >
-            Creative Curriculum Designer brings planning, teaching and reusable creative practice into one workspace — purpose-built for performing arts education from early years through to higher education, and shared with the wider arts sector.
+            Creative Curriculum Designer brings planning, teaching and reusable creative practice into one workspace — purpose-built for performing arts education from EYFS through to KS5, and shared with the wider arts sector.
           </p>
         </div>
 
