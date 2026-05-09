@@ -146,6 +146,21 @@ export default function VideoWithControls() {
     toggleLock,
   } = useSceneControls(SCENE_DURATIONS);
 
+  // Deep-link support: ?scene=N (1-indexed) jumps to that scene on first mount.
+  const appliedDeepLink = useRef(false);
+  useEffect(() => {
+    if (appliedDeepLink.current) return;
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    const raw = params.get('scene');
+    if (!raw) return;
+    const n = parseInt(raw, 10);
+    if (Number.isFinite(n) && n >= 1 && n <= sceneKeys.length) {
+      appliedDeepLink.current = true;
+      jumpTo(n - 1);
+    }
+  }, [sceneKeys.length, jumpTo]);
+
   const sensorRef = useRef<HTMLDivElement | null>(null);
   const [collapsed, setCollapsed] = useState(false);
   const [hovering, setHovering] = useState(false);
@@ -187,8 +202,9 @@ export default function VideoWithControls() {
 
   const barVisible = !collapsed || hovering || tapPinned;
 
-  if (!isIframed) return <VideoTemplate />;
-
+  // In both iframed and standalone modes we run useSceneControls so the
+  // ?scene=N deep-link works everywhere. The interactive control bar is only
+  // rendered when iframed — standalone playback stays cinematic and clean.
   return (
     <div className="relative w-full h-[100dvh]">
       <VideoTemplate
@@ -197,28 +213,30 @@ export default function VideoWithControls() {
         loop
         onSceneChange={onSceneChange}
       />
-      <div
-        ref={sensorRef}
-        className="absolute bottom-0 left-0 right-0 z-50 flex flex-col justify-end"
-        style={{ height: '25%' }}
-        onPointerEnter={handlePointerEnter}
-        onPointerLeave={handlePointerLeave}
-        onPointerDown={handlePointerDown}
-      >
-        <div className="flex-1 w-full" aria-hidden="true" />
-        <ControlBar
-          visible={barVisible}
-          collapsed={collapsed}
-          locked={locked}
-          sceneKeys={sceneKeys}
-          activeIndex={activeIndex}
-          activeDuration={activeDuration}
-          tick={tick}
-          onToggleLock={toggleLock}
-          onJumpTo={jumpTo}
-          onToggleCollapsed={handleToggleCollapsed}
-        />
-      </div>
+      {isIframed && (
+        <div
+          ref={sensorRef}
+          className="absolute bottom-0 left-0 right-0 z-50 flex flex-col justify-end"
+          style={{ height: '25%' }}
+          onPointerEnter={handlePointerEnter}
+          onPointerLeave={handlePointerLeave}
+          onPointerDown={handlePointerDown}
+        >
+          <div className="flex-1 w-full" aria-hidden="true" />
+          <ControlBar
+            visible={barVisible}
+            collapsed={collapsed}
+            locked={locked}
+            sceneKeys={sceneKeys}
+            activeIndex={activeIndex}
+            activeDuration={activeDuration}
+            tick={tick}
+            onToggleLock={toggleLock}
+            onJumpTo={jumpTo}
+            onToggleCollapsed={handleToggleCollapsed}
+          />
+        </div>
+      )}
     </div>
   );
 }

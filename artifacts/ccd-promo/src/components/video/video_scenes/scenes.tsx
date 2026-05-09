@@ -29,7 +29,7 @@ export function Scene01_Welcome() {
       <CornerBrand />
       <SceneChip index={1} total={TOTAL} />
       <SceneLayout layout="centered">
-        <Eyebrow tint="teal">A Creative Studio for Educators</Eyebrow>
+        <Eyebrow tint="teal" align="center">A Creative Studio for Educators</Eyebrow>
         <Cinematic size="2xl" align="center">
           <span>Design learning</span>
           <span style={{ color: '#5EEAD4' }}>that inspires.</span>
@@ -78,37 +78,37 @@ export function Scene02_TeacherCreativity() {
  * 03 — NEVER LOSE A BRILLIANT IDEA
  * ------------------------------------------------------------------ */
 export function Scene03_NeverLose() {
+  // Headline anchored top; cards float in lower portion so they never collide.
+  // Positions are CENTER points (we translate -50% so each card stays anchored
+  // around its anchor, preventing right-edge overflow on narrow viewports).
   const cards = [
-    { tag: 'WARMUP', title: 'Mirror games to build ensemble focus', meta: 'Year 5 · Drama', color: '#5EEAD4', x: '-30cqw', y: '-18cqh', rot: -6 },
-    { tag: 'REHEARSAL', title: 'Echo-and-respond rhythm circle', meta: 'KS2 · Music', color: '#FB7185', x: '20cqw', y: '-22cqh', rot: 5 },
-    { tag: 'IDEA', title: 'Tableaux to explore character motivation', meta: 'Year 7 · Drama', color: '#C084FC', x: '-26cqw', y: '12cqh', rot: 4 },
-    { tag: 'ADAPTATION', title: 'Movement phrases without spoken cues', meta: 'SEND-friendly', color: '#FBBF24', x: '24cqw', y: '8cqh', rot: -5 },
-    { tag: 'REFLECTION', title: 'What worked in today\'s improvisation?', meta: 'Captured 12:42', color: '#7DD3FC', x: '0cqw', y: '20cqh', rot: 0 },
+    { tag: 'WARMUP', title: 'Mirror games to build ensemble focus', meta: 'Year 5 · Drama', color: '#5EEAD4', left: '16%', top: '52%', rot: -5 },
+    { tag: 'REHEARSAL', title: 'Echo-and-respond rhythm circle', meta: 'KS2 · Music', color: '#FB7185', left: '82%', top: '48%', rot: 5 },
+    { tag: 'IDEA', title: 'Tableaux to explore character motivation', meta: 'Year 7 · Drama', color: '#C084FC', left: '28%', top: '78%', rot: 3 },
+    { tag: 'ADAPTATION', title: 'Movement phrases without spoken cues', meta: 'SEND-friendly', color: '#FBBF24', left: '70%', top: '80%', rot: -4 },
+    { tag: 'REFLECTION', title: "What worked in today's improvisation?", meta: 'Captured 12:42', color: '#7DD3FC', left: '50%', top: '62%', rot: 0 },
   ];
   return (
     <Backdrop tint="indigo">
       <SceneChip index={3} total={TOTAL} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[2cqmin]">
-        <Eyebrow tint="indigo">Your ideas, captured forever</Eyebrow>
-        <Cinematic size="xl" align="center">
-          <span>Never lose a</span>
-          <span style={{ color: '#A5B4FC' }}>brilliant idea.</span>
+      <div className="absolute inset-x-0 top-[8cqmin] flex flex-col items-center text-center px-[6cqmin] gap-[1.5cqmin]">
+        <Eyebrow tint="indigo" align="center">Your ideas, captured forever</Eyebrow>
+        <Cinematic size="lg" align="center">
+          <span>Never lose a brilliant idea.</span>
         </Cinematic>
       </div>
       {cards.map((c, i) => (
         <motion.div
           key={i}
-          className="absolute left-1/2 top-1/2"
-          style={{ width: 'clamp(150px,22cqmax,340px)' }}
-          initial={{ opacity: 0, x: '-50%', y: '-50%', scale: 0.4, rotate: 0 }}
-          animate={{
-            opacity: 1,
-            x: `calc(-50% + ${c.x})`,
-            y: `calc(-50% + ${c.y})`,
-            scale: 1,
-            rotate: c.rot,
+          className="absolute"
+          style={{
+            left: c.left,
+            top: c.top,
+            width: 'min(clamp(130px,18cqmax,280px), 38vw)',
           }}
-          transition={{ ...springs.gentle, delay: 1.2 + i * 0.15 }}
+          initial={{ opacity: 0, scale: 0.5, rotate: 0, x: '-50%', y: 'calc(-50% + 30px)' }}
+          animate={{ opacity: 1, scale: 1, rotate: c.rot, x: '-50%', y: '-50%' }}
+          transition={{ ...springs.gentle, delay: 1.0 + i * 0.15 }}
         >
           <IdeaCard tag={c.tag} title={c.title} meta={c.meta} color={c.color} />
         </motion.div>
@@ -345,7 +345,7 @@ export function Scene08_Creative() {
     <Backdrop tint="amber">
       <SceneChip index={8} total={TOTAL} />
       <SceneLayout layout="centered">
-        <Eyebrow tint="amber">Curiosity, by design</Eyebrow>
+        <Eyebrow tint="amber" align="center">Curiosity, by design</Eyebrow>
         <Cinematic size="2xl" align="center">
           <span>Encourage</span>
           <span style={{ color: '#FBBF24' }}>curiosity</span>
@@ -501,7 +501,7 @@ export function Scene11_SEND() {
     <Backdrop tint="rose">
       <SceneChip index={11} total={TOTAL} />
       <SceneLayout layout="centered">
-        <Eyebrow tint="rose">Inclusion at the centre</Eyebrow>
+        <Eyebrow tint="rose" align="center">Inclusion at the centre</Eyebrow>
         <Cinematic size="2xl" align="center">
           <span>Support every child</span>
           <span style={{ color: '#FB7185' }}>meaningfully.</span>
@@ -635,14 +635,14 @@ export function Scene14_Reflect() {
           {steps.map((s, i) => {
             const angle = (i / steps.length) * 360 - 90;
             const rad = (angle * Math.PI) / 180;
-            const r = 35;
+            const r = 22;
             return (
               <motion.div
                 key={s}
                 className="absolute rounded-full bg-white/[0.08] backdrop-blur-md border border-white/15 flex items-center justify-center text-white/90 font-semibold"
                 style={{
-                  width: 'clamp(50px,9cqmax,120px)',
-                  height: 'clamp(50px,9cqmax,120px)',
+                  width: 'clamp(44px,7.5cqmax,100px)',
+                  height: 'clamp(44px,7.5cqmax,100px)',
                   left: `calc(50% + ${Math.cos(rad) * r}cqmin)`,
                   top: `calc(50% + ${Math.sin(rad) * r}cqmin)`,
                   transform: 'translate(-50%,-50%)',
@@ -1080,7 +1080,7 @@ export function Scene22_Future() {
       <CornerBrand />
       <SceneChip index={22} total={TOTAL} />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[2.5cqmin]">
-        <Eyebrow tint="teal">The future of curriculum design</Eyebrow>
+        <Eyebrow tint="teal" align="center">The future of curriculum design</Eyebrow>
         <Cinematic size="2xl" align="center">
           <span>Where creative</span>
           <span>teaching ideas</span>

@@ -113,16 +113,19 @@ interface EyebrowProps {
   children: React.ReactNode;
   tint?: Tint;
   delay?: number;
+  align?: 'left' | 'center';
 }
 
-export function Eyebrow({ children, tint = 'teal', delay = 0.1 }: EyebrowProps) {
+export function Eyebrow({ children, tint = 'teal', delay = 0.1, align = 'left' }: EyebrowProps) {
   const t = TINTS[tint];
   return (
     <motion.div
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ ...springs.gentle, delay }}
-      className="inline-flex items-center gap-[1cqmin] px-[2cqmin] py-[1cqmin] rounded-full font-semibold tracking-[0.18em] uppercase backdrop-blur-sm"
+      className={`${
+        align === 'center' ? 'self-center' : 'self-start'
+      } inline-flex items-center gap-[1cqmin] px-[2cqmin] py-[1cqmin] rounded-full font-semibold tracking-[0.18em] uppercase backdrop-blur-sm`}
       style={{
         background: t.eyebrow,
         border: `1px solid ${t.accent}40`,
