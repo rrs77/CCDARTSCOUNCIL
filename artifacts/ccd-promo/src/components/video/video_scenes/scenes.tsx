@@ -23,29 +23,109 @@ const learnersImg = `${import.meta.env.BASE_URL}images/kids-learning.jpg`;
  * 01 — WELCOME / HERO
  * ------------------------------------------------------------------ */
 export function Scene01_Welcome() {
+  const tagWords = ['A', 'Creative', 'Studio', 'for', 'Educators'];
   return (
-    <div className="absolute inset-0 bg-black overflow-hidden">
+    <div className="absolute inset-0 bg-white overflow-hidden">
       <SceneChip index={1} total={TOTAL} />
+
+      {/* Soft ambient lavender wash that breathes — gives the white scene depth */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.9, 0.75, 0.9] }}
+        transition={{ duration: 6, ease: 'easeInOut', times: [0, 0.3, 0.65, 1], repeat: Infinity }}
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(167,139,250,0.18), rgba(124,58,237,0.06) 50%, transparent 75%)',
+        }}
+      />
+
+      {/* Drifting violet motes for ambient motion */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {Array.from({ length: 18 }).map((_, i) => {
+          const left = (i * 53 + 7) % 100;
+          const delay = (i % 9) * 0.55;
+          const size = 0.35 + ((i * 17) % 10) / 14;
+          const drift = ((i * 23) % 6) - 3;
+          return (
+            <motion.div
+              key={`m-${i}`}
+              className="absolute rounded-full"
+              style={{
+                left: `${left}%`,
+                bottom: '-3cqmin',
+                width: `${size}cqmin`,
+                height: `${size}cqmin`,
+                background: 'rgba(124,58,237,0.45)',
+                filter: 'blur(0.4cqmin)',
+              }}
+              initial={{ y: 0, x: 0, opacity: 0 }}
+              animate={{ y: '-115cqh', x: [`${drift}cqmin`, `${-drift}cqmin`, `${drift}cqmin`], opacity: [0, 0.7, 0] }}
+              transition={{ duration: 9 + (i % 5), ease: 'linear', delay, repeat: Infinity }}
+            />
+          );
+        })}
+      </div>
+
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[4cqmin]">
-        <motion.img
-          src={`${import.meta.env.BASE_URL}ccdesigner-logo-light.png`}
-          alt="CCDesigner"
-          crossOrigin="anonymous"
-          className="block w-auto"
-          style={{ height: 'clamp(120px, 22cqmax, 280px)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.6, ease: 'easeOut', delay: 0.3 }}
-        />
+        {/* Expanding rings behind the logo on entrance */}
+        <div className="relative flex items-center justify-center">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={`ring-${i}`}
+              className="absolute rounded-full border"
+              style={{
+                width: '36cqmin',
+                height: '36cqmin',
+                borderColor: 'rgba(124,58,237,0.35)',
+              }}
+              initial={{ scale: 0.4, opacity: 0 }}
+              animate={{ scale: [0.4, 1.6], opacity: [0, 0.55, 0] }}
+              transition={{ duration: 2.6, ease: 'easeOut', delay: 0.15 + i * 0.45, repeat: Infinity, repeatDelay: 1.4 }}
+            />
+          ))}
+
+          <motion.img
+            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+            alt="CCDesigner"
+            crossOrigin="anonymous"
+            className="relative block w-auto"
+            style={{ height: 'clamp(120px, 22cqmax, 280px)' }}
+            initial={{ opacity: 0, scale: 0.84, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
+          />
+        </div>
+
+        {/* Word-by-word stagger reveal */}
         <motion.div
-          className="text-white/55 font-body tracking-[0.32em] uppercase"
+          className="flex flex-wrap items-baseline justify-center gap-x-[0.55em] gap-y-[0.2em] font-body tracking-[0.32em] uppercase text-[#1a1033]"
           style={{ fontSize: 'clamp(10px, 1.3cqmax, 18px)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, ease: 'easeOut', delay: 1.4 }}
+          initial="hidden"
+          animate="show"
+          variants={{ show: { transition: { staggerChildren: 0.13, delayChildren: 1.2 } } }}
         >
-          A Creative Studio for Educators
+          {tagWords.map((w, i) => (
+            <motion.span
+              key={i}
+              variants={{
+                hidden: { opacity: 0, y: 8, filter: 'blur(4px)' },
+                show: { opacity: 1, y: 0, filter: 'blur(0px)', transition: { duration: 0.55, ease: [0.16, 1, 0.3, 1] } },
+              }}
+            >
+              {w}
+            </motion.span>
+          ))}
         </motion.div>
+
+        {/* Underline grow */}
+        <motion.div
+          className="rounded-full"
+          style={{ height: '2px', background: 'linear-gradient(90deg, transparent, #7C3AED, transparent)' }}
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: '14cqmin', opacity: 1 }}
+          transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 1.9 }}
+        />
       </div>
     </div>
   );
@@ -1549,29 +1629,109 @@ export function Scene21_Mobile() {
  * 22 — FUTURE / OUTRO + CTA
  * ------------------------------------------------------------------ */
 export function Scene22_Future() {
+  const url = 'creativecurriculumdesigner.com';
   return (
-    <div className="absolute inset-0 bg-black overflow-hidden">
+    <div className="absolute inset-0 bg-white overflow-hidden">
       <SceneChip index={22} total={TOTAL} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[4cqmin]">
-        <motion.img
-          src={`${import.meta.env.BASE_URL}ccdesigner-logo-light.png`}
-          alt="CCDesigner"
-          crossOrigin="anonymous"
-          className="block w-auto"
-          style={{ height: 'clamp(120px, 22cqmax, 280px)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.6, ease: 'easeOut', delay: 0.3 }}
-        />
+
+      {/* Ambient breathing wash */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.95, 0.78, 0.95] }}
+        transition={{ duration: 6.5, ease: 'easeInOut', times: [0, 0.3, 0.65, 1], repeat: Infinity }}
+        style={{
+          background:
+            'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(167,139,250,0.22), rgba(124,58,237,0.07) 50%, transparent 78%)',
+        }}
+      />
+
+      {/* Falling violet motes */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {Array.from({ length: 22 }).map((_, i) => {
+          const left = (i * 47 + 13) % 100;
+          const delay = (i % 11) * 0.45;
+          const size = 0.35 + ((i * 19) % 10) / 14;
+          return (
+            <motion.div
+              key={`f-${i}`}
+              className="absolute rounded-full"
+              style={{
+                left: `${left}%`,
+                top: '-3cqmin',
+                width: `${size}cqmin`,
+                height: `${size}cqmin`,
+                background: 'rgba(124,58,237,0.42)',
+                filter: 'blur(0.4cqmin)',
+              }}
+              initial={{ y: 0, opacity: 0 }}
+              animate={{ y: '115cqh', opacity: [0, 0.7, 0] }}
+              transition={{ duration: 8 + (i % 6), ease: 'linear', delay, repeat: Infinity }}
+            />
+          );
+        })}
+      </div>
+
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[3.5cqmin]">
+        {/* Logo with sweeping rings */}
+        <div className="relative flex items-center justify-center">
+          {[0, 1, 2].map((i) => (
+            <motion.div
+              key={`ring-${i}`}
+              className="absolute rounded-full border"
+              style={{
+                width: '36cqmin',
+                height: '36cqmin',
+                borderColor: 'rgba(124,58,237,0.35)',
+              }}
+              initial={{ scale: 1.6, opacity: 0 }}
+              animate={{ scale: [1.6, 0.4], opacity: [0, 0.55, 0] }}
+              transition={{ duration: 2.8, ease: 'easeOut', delay: 0.2 + i * 0.5, repeat: Infinity, repeatDelay: 1.4 }}
+            />
+          ))}
+
+          <motion.img
+            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+            alt="CCDesigner"
+            crossOrigin="anonymous"
+            className="relative block w-auto"
+            style={{ height: 'clamp(120px, 22cqmax, 280px)' }}
+            initial={{ opacity: 0, scale: 0.84, filter: 'blur(10px)' }}
+            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+          />
+        </div>
+
+        {/* URL letter-by-letter reveal */}
         <motion.div
-          className="text-white/55 font-body tracking-[0.32em] uppercase"
+          className="flex font-body tracking-[0.22em] uppercase text-[#1a1033]"
           style={{ fontSize: 'clamp(10px, 1.3cqmax, 18px)' }}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1.2, ease: 'easeOut', delay: 1.4 }}
+          initial="hidden"
+          animate="show"
+          variants={{ show: { transition: { staggerChildren: 0.035, delayChildren: 1.4 } } }}
         >
-          creativecurriculumdesigner.com
+          {url.split('').map((c, i) => (
+            <motion.span
+              key={i}
+              variants={{
+                hidden: { opacity: 0, y: 6 },
+                show: { opacity: 1, y: 0, transition: { duration: 0.4, ease: [0.16, 1, 0.3, 1] } },
+              }}
+              style={{ display: 'inline-block', whiteSpace: 'pre' }}
+            >
+              {c}
+            </motion.span>
+          ))}
         </motion.div>
+
+        {/* Underline grow */}
+        <motion.div
+          className="rounded-full"
+          style={{ height: '2px', background: 'linear-gradient(90deg, transparent, #7C3AED, transparent)' }}
+          initial={{ width: 0, opacity: 0 }}
+          animate={{ width: '20cqmin', opacity: 1 }}
+          transition={{ duration: 1.2, ease: [0.16, 1, 0.3, 1], delay: 2.6 }}
+        />
       </div>
     </div>
   );
