@@ -1,26 +1,33 @@
 import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVideoPlayer } from '@/lib/video';
-import { Scene1 } from './video_scenes/Scene1';
-import { Scene2 } from './video_scenes/Scene2';
-import { Scene3 } from './video_scenes/Scene3';
-import { Scene4 } from './video_scenes/Scene4';
-import { Scene5 } from './video_scenes/Scene5';
+import { SCENES } from './video_scenes/scenes';
 
-export const SCENE_DURATIONS = {
-  problem: 6000,
-  dashboard: 7000,
-  library: 6500,
-  lessons: 6500,
-  outro: 8000,
-};
-
-const SCENE_COMPONENTS: Record<string, React.ComponentType> = {
-  problem: Scene1,
-  dashboard: Scene2,
-  library: Scene3,
-  lessons: Scene4,
-  outro: Scene5,
+// Per-scene durations tuned for cinematic pacing (~2 minutes total, 22 scenes).
+// Hero / outro get a little more breathing room; mid-tour scenes are tighter.
+export const SCENE_DURATIONS: Record<keyof typeof SCENES, number> = {
+  s01_welcome: 7000,
+  s02_creativeWork: 6500,
+  s03_neverLose: 7000,
+  s04_archive: 6500,
+  s05_mapping: 6500,
+  s06_planning: 6500,
+  s07_arts: 6500,
+  s08_creative: 5500,
+  s09_ai: 6500,
+  s10_adaptive: 6500,
+  s11_send: 5500,
+  s12_stretch: 6000,
+  s13_crossCurric: 6500,
+  s14_reflect: 6500,
+  s15_progression: 6500,
+  s16_sequencing: 6500,
+  s17_inspiration: 6500,
+  s18_community: 6500,
+  s19_visualMap: 6500,
+  s20_export: 6500,
+  s21_mobile: 6000,
+  s22_future: 8500,
 };
 
 interface VideoTemplateProps {
@@ -40,53 +47,22 @@ export default function VideoTemplate({
     onSceneChange?.(currentSceneKey);
   }, [currentSceneKey, onSceneChange]);
 
-  const baseSceneKey = currentSceneKey.replace(/_r[12]$/, '') as keyof typeof SCENE_DURATIONS;
-  const sceneIndex = Object.keys(SCENE_DURATIONS).indexOf(baseSceneKey);
-  const SceneComponent = SCENE_COMPONENTS[baseSceneKey];
+  const baseSceneKey = currentSceneKey.replace(/_r[12]$/, '') as keyof typeof SCENES;
+  const SceneComponent = SCENES[baseSceneKey];
 
   return (
-    <div className="w-full h-[100dvh] overflow-hidden">
+    <div className="w-full h-[100dvh] overflow-hidden bg-black">
       <div
-        className="relative bg-white font-body overflow-hidden w-full h-full"
-        style={{
-          containerType: 'size',
-        }}
+        className="relative font-body overflow-hidden w-full h-full"
+        style={{ containerType: 'size' }}
       >
-      {/* Persistent Background Layer */}
-      <div className="absolute inset-0 pointer-events-none">
-        <motion.div
-          className="absolute w-[80cqw] h-[80cqw] rounded-full blur-[100px] opacity-30 mix-blend-multiply"
-          style={{ background: 'var(--color-primary-light)' }}
-          animate={{
-            x: ['-20%', '10%', '-10%'],
-            y: ['-20%', '20%', '-10%'],
-            scale: [1, 1.2, 0.9],
-          }}
-          transition={{ duration: 15, repeat: Infinity, ease: 'easeInOut' }}
-        />
-        <motion.div
-          className="absolute w-[60cqw] h-[60cqw] right-0 bottom-0 rounded-full blur-[100px] opacity-20 mix-blend-multiply"
-          style={{ background: 'var(--color-accent-light)' }}
-          animate={{
-            x: ['10%', '-20%', '5%'],
-            y: ['10%', '-30%', '0%'],
-            scale: [0.8, 1.1, 1],
-          }}
-          transition={{ duration: 18, repeat: Infinity, ease: 'easeInOut' }}
-        />
-
-        {/* Subtle noise texture */}
-        <div
-          className="absolute inset-0 opacity-[0.03]"
-          style={{
-            backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E")`,
-          }}
-        />
-      </div>
-
-      <AnimatePresence initial={false} mode="popLayout">
-        {SceneComponent && <SceneComponent key={currentSceneKey} />}
-      </AnimatePresence>
+        <AnimatePresence initial={false} mode="popLayout">
+          {SceneComponent && (
+            <motion.div key={baseSceneKey} className="absolute inset-0">
+              <SceneComponent />
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </div>
   );
