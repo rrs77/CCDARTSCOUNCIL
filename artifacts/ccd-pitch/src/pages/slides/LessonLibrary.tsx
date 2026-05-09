@@ -78,7 +78,7 @@ export default function LessonLibrary() {
             className="mt-[3vh] text-muted font-body leading-relaxed"
             style={{ fontSize: "1.4vw", textWrap: "pretty" }}
           >
-            A searchable library of lessons your team builds together — and built to grow beyond your team, with room for contributions from outreach teams, training providers and arts partners across the sector. Tag by year group, unit and objective. Open the right one when you need it.
+            A searchable library of lessons your team builds together — and that grows beyond your team, with contributions from outreach teams, training providers and arts partners across the sector. Tag by year group, unit and objective. Open the right one when you need it.
           </p>
 
           <div className="mt-[4vh] grid grid-cols-2 gap-[1vw]">

@@ -50,7 +50,7 @@ export default function CallToAction() {
             className="mt-[3vh] text-white/85 font-body font-medium max-w-[55vw] leading-snug"
             style={{ fontSize: "1.6vw", textWrap: "pretty" }}
           >
-            Built with educators. Powered by your creativity. Shared with theatres, orchestras, dance companies, universities and outreach teams — together, building the creative archive your sector deserves. Bring CCD into your school, department or arts organisation for a half-term trial and we'll walk your team through it.
+            Built with educators and tested in real classrooms. Powered by your creativity. Shared with theatres, orchestras, dance companies, universities and outreach teams — together, building the creative archive your sector deserves. Bring CCD into your school, department or arts organisation for a half-term trial and we'll walk your team through it.
           </p>
         </div>
 

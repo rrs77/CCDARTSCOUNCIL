@@ -26,7 +26,7 @@ export default function SettingsHub() {
             className="mt-[3vh] text-muted font-body leading-relaxed"
             style={{ fontSize: "1.35vw", textWrap: "pretty" }}
           >
-            One panel for the things that change school by school — year groups, activity categories, your branding on every print-out, and where your data lives. Built to avoid lock-in, so your practice can belong to you and the wider sector — not a platform.
+            One panel for the things that change school by school — year groups, activity categories, your branding on every print-out, and where your data lives. Free to use, no resource lock-in: your practice belongs to you and the wider sector — not a platform.
           </p>
 
           <div className="mt-[3vh] flex flex-col gap-[1vh]">
