@@ -927,7 +927,7 @@ export function Scene18_Community() {
           <span>communities.</span>
         </Cinematic>
         <Sub delay={0.95}>
-          Planning ideas, frameworks, and creative resources from arts organisations and educators — many of them free.
+          Planning ideas, frameworks, and creative resources from arts organisations and educators — all free to use.
         </Sub>
       </SceneLayout>
     </Backdrop>
