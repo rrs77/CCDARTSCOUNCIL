@@ -29,6 +29,7 @@ export function useSceneControls(baseDurations: Record<string, number>) {
 
   const [activeIndex, setActiveIndex] = useState(0);
   const [locked, setLocked] = useState(false);
+  const [paused, setPaused] = useState(false);
   const [mountKey, setMountKey] = useState(0);
   const [tick, setTick] = useState(0);
 
@@ -62,10 +63,16 @@ export function useSceneControls(baseDurations: Record<string, number>) {
     setTick((t) => t + 1);
   }, []);
 
+  const togglePause = useCallback(() => {
+    setPaused((prev) => !prev);
+    // No mountKey bump: pause must freeze in place, not restart the scene.
+  }, []);
+
   return {
     sceneKeys,
     activeIndex,
     locked,
+    paused,
     mountKey,
     tick,
     durations,
@@ -73,5 +80,6 @@ export function useSceneControls(baseDurations: Record<string, number>) {
     onSceneChange,
     jumpTo,
     toggleLock,
+    togglePause,
   };
 }

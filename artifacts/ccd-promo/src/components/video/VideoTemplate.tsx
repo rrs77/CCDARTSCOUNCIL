@@ -33,15 +33,42 @@ export const SCENE_DURATIONS: Record<keyof typeof SCENES, number> = {
 interface VideoTemplateProps {
   durations?: Record<string, number>;
   loop?: boolean;
+  paused?: boolean;
   onSceneChange?: (sceneKey: string) => void;
 }
+
+export const SCENE_LABELS: Record<keyof typeof SCENES, string> = {
+  s01_welcome: 'Welcome',
+  s02_creativeWork: 'Creative Work',
+  s03_neverLose: 'Never Lose Ideas',
+  s04_archive: 'Living Archive',
+  s05_mapping: 'Curriculum Mapping',
+  s06_planning: 'Lesson Planning',
+  s07_arts: 'Performing Arts',
+  s08_creative: 'Creative Process',
+  s09_ai: 'Smart Suggestions',
+  s10_adaptive: 'Adaptive',
+  s11_send: 'SEND',
+  s12_stretch: 'Stretch & Extend',
+  s13_crossCurric: 'Cross-Curricular',
+  s14_reflect: 'Reflection',
+  s15_progression: 'Progression',
+  s16_sequencing: 'Sequencing',
+  s17_inspiration: 'Inspiration',
+  s18_community: 'Community',
+  s19_visualMap: 'Visual Map',
+  s20_export: 'Export & Share',
+  s21_mobile: 'On Any Device',
+  s22_future: 'What\u2019s Next',
+};
 
 export default function VideoTemplate({
   durations = SCENE_DURATIONS,
   loop = true,
+  paused = false,
   onSceneChange,
 }: VideoTemplateProps = {}) {
-  const { currentSceneKey } = useVideoPlayer({ durations, loop });
+  const { currentSceneKey } = useVideoPlayer({ durations, loop, paused });
 
   useEffect(() => {
     onSceneChange?.(currentSceneKey);

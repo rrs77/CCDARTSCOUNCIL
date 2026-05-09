@@ -17,6 +17,7 @@ export interface UseVideoPlayerOptions {
   durations: SceneDurations;
   onVideoEnd?: () => void;
   loop?: boolean;
+  paused?: boolean;
 }
 
 export interface UseVideoPlayerReturn {
@@ -27,7 +28,7 @@ export interface UseVideoPlayerReturn {
 }
 
 export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerReturn {
-  const { durations, onVideoEnd, loop = true } = options;
+  const { durations, onVideoEnd, loop = true, paused = false } = options;
 
   // Captured once on mount -- durations must be a static object
   const sceneKeys = useRef(Object.keys(durations)).current;
@@ -37,18 +38,38 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
   const [currentScene, setCurrentScene] = useState(0);
   const [hasEnded, setHasEnded] = useState(false);
 
+  // Pause/resume bookkeeping: track elapsed across pause toggles within a scene
+  const sceneAnchorRef = useRef<number>(performance.now());
+  const elapsedBeforePauseRef = useRef<number>(0);
+
   // Start recording on mount
   useEffect(() => {
     window.startRecording?.();
   }, []);
 
-  // Scene advancement -- loops independently of recording
+  // Reset elapsed when scene changes
+  useEffect(() => {
+    sceneAnchorRef.current = performance.now();
+    elapsedBeforePauseRef.current = 0;
+  }, [currentScene]);
+
+  // Scene advancement -- loops independently of recording, and respects pause
   useEffect(() => {
     if (hasEnded && !loop) return;
 
+    if (paused) {
+      // Accumulate elapsed time at the moment of pausing; do not schedule.
+      elapsedBeforePauseRef.current += performance.now() - sceneAnchorRef.current;
+      return;
+    }
+
+    // (Re)anchor for the running segment
+    sceneAnchorRef.current = performance.now();
     const currentDuration = durationsArray[currentScene];
+    const remaining = Math.max(0, currentDuration - elapsedBeforePauseRef.current);
 
     const timer = setTimeout(() => {
+      elapsedBeforePauseRef.current = 0;
       // Last scene just finished playing
       if (currentScene >= totalScenes - 1) {
         if (!hasEnded) {
@@ -62,10 +83,10 @@ export function useVideoPlayer(options: UseVideoPlayerOptions): UseVideoPlayerRe
       } else {
         setCurrentScene(prev => prev + 1);
       }
-    }, currentDuration);
+    }, remaining);
 
     return () => clearTimeout(timer);
-  }, [currentScene, totalScenes, durationsArray, hasEnded, loop, onVideoEnd]);
+  }, [currentScene, totalScenes, durationsArray, hasEnded, loop, paused, onVideoEnd]);
 
   return {
     currentScene,
