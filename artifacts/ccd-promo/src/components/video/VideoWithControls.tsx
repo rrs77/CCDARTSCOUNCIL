@@ -1,23 +1,19 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Pause, Play, Repeat } from 'lucide-react';
-import VideoTemplate, { SCENE_DURATIONS, SCENE_LABELS } from './VideoTemplate';
+import {
+  ChevronLeft,
+  ChevronRight,
+  Maximize2,
+  Minimize2,
+  Pause,
+  Play,
+  Repeat,
+} from 'lucide-react';
+import VideoTemplate, { SCENE_DURATIONS } from './VideoTemplate';
 import { useSceneControls } from '@/hooks/useSceneControls';
 
-const PROGRESS_TICK_MS = 60;
-const IDLE_HIDE_MS = 8000;
-
-interface ControlBarProps {
-  visible: boolean;
-  locked: boolean;
-  paused: boolean;
-  sceneKeys: string[];
-  activeIndex: number;
-  activeDuration: number;
-  tick: number;
-  onToggleLock: () => void;
-  onTogglePause: () => void;
-  onJumpTo: (index: number) => void;
-}
+const PROGRESS_TICK_MS = 80;
+const IDLE_HIDE_MS = 2500;
+const SWIPE_THRESHOLD_PX = 40;
 
 function ProgressSegments({
   sceneKeys,
@@ -38,14 +34,12 @@ function ProgressSegments({
   const accumRef = useRef(0);
   const lastTsRef = useRef<number | null>(null);
 
-  // Reset on scene change / jump
   useEffect(() => {
     accumRef.current = 0;
     lastTsRef.current = null;
     setElapsed(0);
   }, [tick]);
 
-  // Tick that respects pause (does not accumulate while paused)
   useEffect(() => {
     if (paused) {
       lastTsRef.current = null;
@@ -68,20 +62,21 @@ function ProgressSegments({
   const progress = activeDuration > 0 ? Math.min(1, elapsed / activeDuration) : 0;
 
   return (
-    <div className="flex-1 flex items-center gap-1">
+    <div className="flex-1 flex items-center gap-[3px]">
       {sceneKeys.map((key, i) => {
         const isActive = i === activeIndex;
-        const fill = isActive ? progress * 100 : 0;
+        const isPast = i < activeIndex;
+        const fill = isActive ? progress * 100 : isPast ? 100 : 0;
         return (
           <button
             key={key}
             onClick={() => onJumpTo(i)}
-            className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer hover:bg-white/30 transition-colors relative"
+            className="flex-1 h-1 bg-white/15 rounded-full overflow-hidden cursor-pointer hover:bg-white/30 transition-colors relative"
             aria-label={`Jump to scene ${i + 1}`}
             aria-current={isActive ? 'true' : undefined}
           >
             <div
-              className="absolute inset-y-0 left-0 bg-white/90 rounded-full transition-[width] duration-100"
+              className="absolute inset-y-0 left-0 bg-white rounded-full transition-[width] duration-100"
               style={{ width: `${fill}%` }}
             />
           </button>
@@ -91,112 +86,65 @@ function ProgressSegments({
   );
 }
 
-function ThumbnailStrip({
-  sceneKeys,
-  activeIndex,
-  visible,
-  onJumpTo,
-}: {
+interface ControlBarProps {
+  visible: boolean;
+  locked: boolean;
+  paused: boolean;
+  isFullscreen: boolean;
   sceneKeys: string[];
   activeIndex: number;
-  visible: boolean;
+  activeDuration: number;
+  tick: number;
+  onToggleLock: () => void;
+  onTogglePause: () => void;
+  onToggleFullscreen: () => void;
   onJumpTo: (index: number) => void;
-}) {
-  const scrollerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    if (!visible) return;
-    const scroller = scrollerRef.current;
-    if (!scroller) return;
-    const active = scroller.querySelector<HTMLElement>(`[data-thumb-index="${activeIndex}"]`);
-    if (active) {
-      active.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
-    }
-  }, [activeIndex, visible]);
-
-  return (
-    <div
-      className={`bg-black/50 backdrop-blur-sm transition-all duration-200 ease-out ${
-        visible
-          ? 'translate-y-0 opacity-100 pointer-events-auto'
-          : 'translate-y-2 opacity-0 pointer-events-none'
-      }`}
-      aria-hidden={!visible}
-    >
-      <div ref={scrollerRef} className="hidden sm:flex gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-thin">
-        {sceneKeys.map((key, i) => {
-          const isActive = i === activeIndex;
-          const label = SCENE_LABELS[key as keyof typeof SCENE_LABELS] ?? key;
-          return (
-            <button
-              key={key}
-              data-thumb-index={i}
-              onClick={() => onJumpTo(i)}
-              className={`shrink-0 px-2 py-1 rounded text-[11px] font-medium tabular-nums transition-colors whitespace-nowrap ${
-                isActive
-                  ? 'bg-white text-black'
-                  : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
-              }`}
-              aria-label={`Jump to scene ${i + 1}: ${label}`}
-              aria-current={isActive ? 'true' : undefined}
-              title={`${i + 1}. ${label}`}
-            >
-              <span className="opacity-60 mr-1">{String(i + 1).padStart(2, '0')}</span>
-              {label}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
 }
 
 function ControlBar({
   visible,
   locked,
   paused,
+  isFullscreen,
   sceneKeys,
   activeIndex,
   activeDuration,
   tick,
   onToggleLock,
   onTogglePause,
+  onToggleFullscreen,
   onJumpTo,
 }: ControlBarProps) {
   return (
     <div
-      className={`flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-2 transition-all duration-200 ease-out ${
+      className={`absolute bottom-0 left-0 right-0 z-50 flex items-center gap-2 px-3 sm:px-4 py-2 sm:py-2.5 bg-gradient-to-t from-black/55 via-black/30 to-transparent transition-all duration-300 ease-out ${
         visible
           ? 'translate-y-0 opacity-100 pointer-events-auto'
-          : 'translate-y-full opacity-0 pointer-events-none'
+          : 'translate-y-2 opacity-0 pointer-events-none'
       }`}
       aria-hidden={!visible}
     >
       <button
         onClick={onTogglePause}
-        className="w-9 h-9 flex items-center justify-center text-white bg-white/15 hover:bg-white/25 transition-colors rounded-md shrink-0"
+        className="w-9 h-9 flex items-center justify-center text-white/90 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors rounded-full shrink-0"
         title={paused ? 'Play' : 'Pause'}
         aria-label={paused ? 'Play' : 'Pause'}
         aria-pressed={paused}
       >
-        {paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
+        {paused ? <Play className="w-5 h-5" /> : <Pause className="w-5 h-5" />}
       </button>
 
       <button
         onClick={onToggleLock}
-        className={`w-9 h-9 flex items-center justify-center transition-colors rounded-md shrink-0 ${
-          locked
-            ? 'text-white bg-white/15 hover:bg-white/25'
-            : 'text-white/60 hover:text-white hover:bg-white/10'
+        className={`hidden sm:flex w-9 h-9 items-center justify-center transition-colors rounded-full shrink-0 hover:bg-white/10 ${
+          locked ? 'text-white' : 'text-white/55 hover:text-white'
         }`}
-        title={locked ? 'Loop current scene: on' : 'Loop current scene: off'}
-        aria-label={locked ? 'Loop current scene: on' : 'Loop current scene: off'}
+        title={locked ? 'Loop scene: on' : 'Loop scene: off'}
+        aria-label={locked ? 'Loop scene: on' : 'Loop scene: off'}
         aria-pressed={locked}
       >
         <Repeat className="w-4 h-4" />
       </button>
-
-      <div className="w-px h-5 bg-white/15 mx-1" aria-hidden="true" />
 
       <ProgressSegments
         sceneKeys={sceneKeys}
@@ -207,10 +155,48 @@ function ControlBar({
         onJumpTo={onJumpTo}
       />
 
-      <div className="text-[11px] text-white/60 font-mono tabular-nums shrink-0">
-        {activeIndex + 1}/{sceneKeys.length}
+      <div className="text-[11px] text-white/65 font-mono tabular-nums shrink-0 px-1">
+        {String(activeIndex + 1).padStart(2, '0')}
+        <span className="text-white/30"> / {String(sceneKeys.length).padStart(2, '0')}</span>
       </div>
+
+      <button
+        onClick={onToggleFullscreen}
+        className="w-9 h-9 flex items-center justify-center text-white/80 hover:text-white hover:bg-white/10 active:bg-white/20 transition-colors rounded-full shrink-0"
+        title={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+        aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+      >
+        {isFullscreen ? <Minimize2 className="w-4 h-4" /> : <Maximize2 className="w-4 h-4" />}
+      </button>
     </div>
+  );
+}
+
+interface EdgeArrowProps {
+  direction: 'left' | 'right';
+  visible: boolean;
+  disabled: boolean;
+  onClick: () => void;
+}
+
+function EdgeArrow({ direction, visible, disabled, onClick }: EdgeArrowProps) {
+  const isLeft = direction === 'left';
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`absolute top-1/2 -translate-y-1/2 z-40 w-11 h-11 sm:w-12 sm:h-12 flex items-center justify-center rounded-full bg-black/30 backdrop-blur-sm text-white/90 hover:bg-black/50 hover:text-white active:scale-95 transition-all duration-200 ${
+        isLeft ? 'left-2 sm:left-4' : 'right-2 sm:right-4'
+      } ${
+        visible && !disabled
+          ? 'opacity-100 pointer-events-auto'
+          : 'opacity-0 pointer-events-none'
+      } disabled:opacity-0`}
+      title={isLeft ? 'Previous scene' : 'Next scene'}
+      aria-label={isLeft ? 'Previous scene' : 'Next scene'}
+    >
+      {isLeft ? <ChevronLeft className="w-6 h-6" /> : <ChevronRight className="w-6 h-6" />}
+    </button>
   );
 }
 
@@ -247,7 +233,8 @@ export default function VideoWithControls() {
 
   const containerRef = useRef<HTMLDivElement | null>(null);
   const idleTimerRef = useRef<number | null>(null);
-  const [active, setActive] = useState(true); // controls visible if true (mouse moved recently)
+  const [active, setActive] = useState(true);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
   const bumpActive = useCallback(() => {
     setActive(true);
@@ -257,7 +244,6 @@ export default function VideoWithControls() {
     }, IDLE_HIDE_MS);
   }, []);
 
-  // Show on mount briefly, then auto-hide.
   useEffect(() => {
     bumpActive();
     return () => {
@@ -265,16 +251,96 @@ export default function VideoWithControls() {
     };
   }, [bumpActive]);
 
+  // Track fullscreen changes (user can exit via Esc).
+  useEffect(() => {
+    const onFsChange = () => setIsFullscreen(!!document.fullscreenElement);
+    document.addEventListener('fullscreenchange', onFsChange);
+    return () => document.removeEventListener('fullscreenchange', onFsChange);
+  }, []);
+
+  const goPrev = useCallback(() => {
+    if (activeIndex > 0) jumpTo(activeIndex - 1);
+    bumpActive();
+  }, [activeIndex, jumpTo, bumpActive]);
+
+  const goNext = useCallback(() => {
+    if (activeIndex < sceneKeys.length - 1) jumpTo(activeIndex + 1);
+    bumpActive();
+  }, [activeIndex, sceneKeys.length, jumpTo, bumpActive]);
+
+  const toggleFullscreen = useCallback(() => {
+    bumpActive();
+    if (!document.fullscreenElement) {
+      containerRef.current?.requestFullscreen?.().catch(() => undefined);
+    } else {
+      document.exitFullscreen?.().catch(() => undefined);
+    }
+  }, [bumpActive]);
+
+  // Keyboard navigation.
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (e.target instanceof HTMLElement) {
+        const tag = e.target.tagName;
+        if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+      }
+      if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        goPrev();
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        goNext();
+      } else if (e.key === ' ') {
+        e.preventDefault();
+        togglePause();
+        bumpActive();
+      } else if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        toggleFullscreen();
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [goPrev, goNext, togglePause, toggleFullscreen, bumpActive]);
+
+  // Touch / swipe.
+  const touchStartRef = useRef<{ x: number; y: number; t: number } | null>(null);
+  const onTouchStart = useCallback(
+    (e: React.TouchEvent) => {
+      bumpActive();
+      const t = e.touches[0];
+      touchStartRef.current = { x: t.clientX, y: t.clientY, t: performance.now() };
+    },
+    [bumpActive],
+  );
+  const onTouchEnd = useCallback(
+    (e: React.TouchEvent) => {
+      const start = touchStartRef.current;
+      touchStartRef.current = null;
+      if (!start) return;
+      const t = e.changedTouches[0];
+      const dx = t.clientX - start.x;
+      const dy = t.clientY - start.y;
+      // Horizontal swipe wins
+      if (Math.abs(dx) > SWIPE_THRESHOLD_PX && Math.abs(dx) > Math.abs(dy)) {
+        if (dx < 0) goNext();
+        else goPrev();
+      }
+    },
+    [goNext, goPrev],
+  );
+
   // Keep controls visible while paused so the user can read / navigate.
   const visible = active || paused;
 
   return (
     <div
       ref={containerRef}
-      className="relative w-full h-[100dvh]"
+      className="relative w-full h-[100dvh] overflow-hidden bg-black select-none touch-pan-y"
       onPointerMove={bumpActive}
       onPointerDown={bumpActive}
-      onTouchStart={bumpActive}
+      onTouchStart={onTouchStart}
+      onTouchEnd={onTouchEnd}
     >
       <VideoTemplate
         key={mountKey}
@@ -283,38 +349,43 @@ export default function VideoWithControls() {
         paused={paused}
         onSceneChange={onSceneChange}
       />
-      <div className="absolute bottom-0 left-0 right-0 z-50 flex flex-col">
-        <ThumbnailStrip
-          sceneKeys={sceneKeys}
-          activeIndex={activeIndex}
-          visible={visible}
-          onJumpTo={(i) => {
-            jumpTo(i);
-            bumpActive();
-          }}
-        />
-        <ControlBar
-          visible={visible}
-          locked={locked}
-          paused={paused}
-          sceneKeys={sceneKeys}
-          activeIndex={activeIndex}
-          activeDuration={activeDuration}
-          tick={tick}
-          onToggleLock={() => {
-            toggleLock();
-            bumpActive();
-          }}
-          onTogglePause={() => {
-            togglePause();
-            bumpActive();
-          }}
-          onJumpTo={(i) => {
-            jumpTo(i);
-            bumpActive();
-          }}
-        />
-      </div>
+
+      <EdgeArrow
+        direction="left"
+        visible={visible}
+        disabled={activeIndex === 0}
+        onClick={goPrev}
+      />
+      <EdgeArrow
+        direction="right"
+        visible={visible}
+        disabled={activeIndex === sceneKeys.length - 1}
+        onClick={goNext}
+      />
+
+      <ControlBar
+        visible={visible}
+        locked={locked}
+        paused={paused}
+        isFullscreen={isFullscreen}
+        sceneKeys={sceneKeys}
+        activeIndex={activeIndex}
+        activeDuration={activeDuration}
+        tick={tick}
+        onToggleLock={() => {
+          toggleLock();
+          bumpActive();
+        }}
+        onTogglePause={() => {
+          togglePause();
+          bumpActive();
+        }}
+        onToggleFullscreen={toggleFullscreen}
+        onJumpTo={(i) => {
+          jumpTo(i);
+          bumpActive();
+        }}
+      />
     </div>
   );
 }
