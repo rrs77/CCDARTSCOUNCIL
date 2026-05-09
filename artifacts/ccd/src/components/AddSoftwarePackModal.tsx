@@ -34,7 +34,7 @@ export function AddSoftwarePackModal({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [introduction, setIntroduction] = useState('');
-  const [price, setPrice] = useState(19.99);
+  const [price] = useState(0);
   const [icon, setIcon] = useState('📦');
   const [categoryIds, setCategoryIds] = useState<string[]>([]);
   const [stackIds, setStackIds] = useState<string[]>([]);
@@ -63,7 +63,6 @@ export function AddSoftwarePackModal({
       setName(editingPack.name ?? '');
       setDescription(editingPack.description ?? '');
       setIntroduction(editingPack.introduction ?? '');
-      setPrice(editingPack.price ?? 19.99);
       setIcon(editingPack.icon ?? '📦');
       setCategoryIds(editingPack.category_ids ?? []);
       setStackIds(editingPack.stack_ids ?? []);
@@ -74,7 +73,6 @@ export function AddSoftwarePackModal({
       setName('');
       setDescription('');
       setIntroduction('');
-      setPrice(19.99);
       setIcon('📦');
       setCategoryIds([]);
       setStackIds([]);
@@ -133,7 +131,7 @@ export function AddSoftwarePackModal({
         name: trimmedName,
         description: description.trim() || undefined,
         introduction: introduction.trim() || undefined,
-        price: Number(price) || 0,
+        price: 0,
         icon: icon || '📦',
         category_ids: categoryIds,
         stack_ids: stackIds.length > 0 ? stackIds : undefined,
@@ -141,7 +139,7 @@ export function AddSoftwarePackModal({
         is_active: isActive,
         ...(!isEditing && creatorEmail && { creator_email: creatorEmail })
       });
-      toast.success(isEditing ? 'Pack updated.' : 'Resource pack added. It can now be purchased in the app.');
+      toast.success(isEditing ? 'Pack updated.' : 'Resource pack added. It is now available in the library.');
       onSave?.();
       onClose();
     } catch (err) {
@@ -169,7 +167,7 @@ export function AddSoftwarePackModal({
               {isEditing ? 'Edit resource pack' : 'Add resource pack'}
             </h2>
             <p className="text-sm text-gray-600 mt-0.5">
-              Add content (lesson stacks from the database) and an optional introduction. Packs can be purchased or assigned to users.
+              Add content (lesson stacks from the database) and an optional introduction. Packs can be assigned to users.
             </p>
           </div>
           <button
@@ -252,32 +250,21 @@ export function AddSoftwarePackModal({
               <textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
-                placeholder="Describe what's included so buyers know what they're getting..."
+                placeholder="Describe what's included so users know what they're getting..."
                 rows={3}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
               />
             </div>
 
             <div className="flex items-center gap-6">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Price (£)</label>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0"
-                  value={price}
-                  onChange={(e) => setPrice(parseFloat(e.target.value) || 0)}
-                  className="w-28 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                />
-              </div>
-              <label className="flex items-center gap-2 pt-7">
+              <label className="flex items-center gap-2">
                 <input
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
                   className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
                 />
-                <span className="text-sm text-gray-700">Available for purchase</span>
+                <span className="text-sm text-gray-700">Available in library</span>
               </label>
             </div>
 
@@ -348,7 +335,7 @@ export function AddSoftwarePackModal({
                     Lessons from the database (lesson stacks)
                   </p>
                   <p className="text-xs text-gray-600 mb-2">
-                    Add lesson stacks so buyers can add these units to their calendar in one click.
+                    Add lesson stacks so users can add these units to their calendar in one click.
                   </p>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
                     {stacks.map((stack) => {
@@ -394,7 +381,7 @@ export function AddSoftwarePackModal({
                 {categoriesExpanded && (
                   <>
                     <p className="text-xs text-gray-600 mt-2 mb-2">
-                      Categories linked to this pack can be restricted to buyers only.
+                      Categories linked to this pack can be restricted to users with access.
                     </p>
                     <div className="space-y-2 max-h-40 overflow-y-auto">
                       {Object.entries(groupedCategories).map(([groupName, groupCats]) => (

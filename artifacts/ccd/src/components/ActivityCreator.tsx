@@ -434,15 +434,15 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors duration-200 text-sm font-medium bg-white"
                   >
-                    <option value="">Free (No pack required)</option>
+                    <option value="">No pack required</option>
                     {availablePacks.filter(p => p.is_active).map((pack) => (
                       <option key={pack.pack_id} value={pack.pack_id}>
-                        {pack.icon} {pack.name} - £{pack.price.toFixed(2)}
+                        {pack.icon} {pack.name}
                       </option>
                     ))}
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
-                    If selected, only users who purchase this pack will see this activity
+                    If selected, only users with access to this pack will see this activity
                   </p>
                 </div>
               )}

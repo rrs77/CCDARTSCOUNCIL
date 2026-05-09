@@ -164,7 +164,7 @@ export function LessonLibrary({
   const [editingLessonForCreator, setEditingLessonForCreator] = useState<{ lessonNumber: string; lessonData: any } | null>(null);
   
   // All lesson packs the user has (bought or assigned via Admin → Assign packs) are treated the same.
-  // Merged list is used for: pack stacks in Lesson Library ("Add unit"), Resource Shop "you have this", etc.
+  // Merged list is used for: pack stacks in Lesson Library ("Add unit"), Resource Library "you have this", etc.
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
