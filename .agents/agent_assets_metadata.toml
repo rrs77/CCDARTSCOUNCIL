@@ -53,3 +53,9 @@ id = "ByysGSE8Fn8A_X6P2YgUK"
 uri = "file://.local/outputs/CCDesigner-Pitch-Deck.pptx"
 type = "slides"
 title = "CCDesigner Pitch Deck (PPTX) — 21 slides"
+
+[[outputs]]
+id = "79diPR_4BrCNKYG-FeDWx"
+uri = "file://artifacts/ccd-pitch/public/downloads/CCDesigner-Pitch-Deck.pptx"
+type = "slides"
+title = "CCDesigner Pitch Deck (PPTX) — 21 slides"
