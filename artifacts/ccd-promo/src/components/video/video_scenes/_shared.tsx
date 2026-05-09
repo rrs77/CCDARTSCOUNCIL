@@ -309,7 +309,68 @@ export function MockupFrame({
   );
 }
 
-/** A persistent corner brand stamp for cinematic scenes. */
+/**
+ * Composite wordmark: transparent purple CC mark + DESIGNER text.
+ * `variant="light"` => white DESIGNER text (use on dark backgrounds).
+ * `variant="dark"`  => deep-plum DESIGNER text (use on light backgrounds).
+ * Sized by `height` (any CSS length); the wordmark hugs its content with no padding.
+ */
+export function Wordmark({
+  variant = 'light',
+  height = 'clamp(36px,5.5cqmax,70px)',
+  shadow = true,
+  className = '',
+  style,
+}: {
+  variant?: 'light' | 'dark';
+  height?: string;
+  shadow?: boolean;
+  className?: string;
+  style?: React.CSSProperties;
+}) {
+  const textColor = variant === 'light' ? '#FFFFFF' : '#1a1033';
+  const dropShadow = shadow
+    ? variant === 'light'
+      ? 'drop-shadow(0 2px 10px rgba(0,0,0,0.45))'
+      : 'drop-shadow(0 2px 10px rgba(26,16,51,0.18))'
+    : 'none';
+  return (
+    <div
+      className={`inline-flex items-center ${className}`}
+      style={{
+        height,
+        fontSize: height,
+        gap: '0.18em',
+        lineHeight: 1,
+        filter: dropShadow,
+        ...style,
+      }}
+    >
+      <img
+        src={`${import.meta.env.BASE_URL}cc-mark.png`}
+        alt=""
+        aria-hidden
+        crossOrigin="anonymous"
+        style={{ height: '100%', width: 'auto', display: 'block' }}
+      />
+      <span
+        style={{
+          color: textColor,
+          fontFamily: 'Inter, ui-sans-serif, system-ui, sans-serif',
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          fontSize: '0.4em',
+          textTransform: 'uppercase',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Designer
+      </span>
+    </div>
+  );
+}
+
+/** A persistent corner brand stamp for cinematic (dark) scenes. */
 export function CornerBrand({ delay = 0 }: { delay?: number }) {
   return (
     <motion.div
@@ -318,17 +379,7 @@ export function CornerBrand({ delay = 0 }: { delay?: number }) {
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, ease: 'circOut', delay }}
     >
-      <img
-        src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
-        alt="CCDesigner"
-        crossOrigin="anonymous"
-        style={{
-          height: 'clamp(36px,5.5cqmax,70px)',
-          width: 'auto',
-          display: 'block',
-          filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.35))',
-        }}
-      />
+      <Wordmark variant="light" height="clamp(32px,5cqmax,64px)" />
     </motion.div>
   );
 }

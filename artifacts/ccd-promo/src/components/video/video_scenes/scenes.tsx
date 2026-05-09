@@ -11,6 +11,7 @@ import {
   SceneChip,
   SceneLayout,
   Sub,
+  Wordmark,
 } from './_shared';
 
 const TOTAL = 22;
@@ -85,22 +86,24 @@ export function Scene01_Welcome() {
             />
           ))}
 
-          <motion.img
-            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
-            alt="CCDesigner"
-            crossOrigin="anonymous"
-            className="relative block w-auto"
-            style={{ height: 'clamp(120px, 22cqmax, 280px)' }}
+          <motion.div
+            className="relative"
             initial={{ opacity: 0, scale: 0.84, filter: 'blur(10px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.25 }}
-          />
+          >
+            <Wordmark
+              variant="dark"
+              height="clamp(48px, min(18cqw, 22cqh), 160px)"
+              shadow={false}
+            />
+          </motion.div>
         </div>
 
         {/* Word-by-word stagger reveal */}
         <motion.div
           className="flex flex-wrap items-baseline justify-center gap-x-[0.55em] gap-y-[0.2em] font-body tracking-[0.32em] uppercase text-[#1a1033]"
-          style={{ fontSize: 'clamp(10px, 1.3cqmax, 18px)' }}
+          style={{ fontSize: 'clamp(11px, min(2.4cqw, 1.6cqh), 18px)' }}
           initial="hidden"
           animate="show"
           variants={{ show: { transition: { staggerChildren: 0.13, delayChildren: 1.2 } } }}
@@ -123,7 +126,7 @@ export function Scene01_Welcome() {
           className="rounded-full"
           style={{ height: '2px', background: 'linear-gradient(90deg, transparent, #7C3AED, transparent)' }}
           initial={{ width: 0, opacity: 0 }}
-          animate={{ width: '14cqmin', opacity: 1 }}
+          animate={{ width: 'min(22cqw, 18cqh)', opacity: 1 }}
           transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 1.9 }}
         />
       </div>
@@ -1408,18 +1411,13 @@ export function Scene18_Community() {
             animate={{ scale: [0.7, 1, 1.04, 1], opacity: 1 }}
             transition={{ duration: 1.4, ease: 'easeOut', delay: 0.2 }}
           >
-            <img
-              src={`${import.meta.env.BASE_URL}ccdesigner-logo-light.png`}
-              alt="CCDesigner"
-              crossOrigin="anonymous"
-              className="block"
-              style={{
-                width: '72%',
-                height: 'auto',
-                objectFit: 'contain',
-                filter: 'drop-shadow(0 4px 16px rgba(168,139,250,0.6))',
-              }}
-            />
+            <div style={{ filter: 'drop-shadow(0 4px 16px rgba(168,139,250,0.6))' }}>
+              <Wordmark
+                variant="light"
+                height="clamp(36px, 9cqmax, 110px)"
+                shadow={false}
+              />
+            </div>
           </motion.div>
 
           {/* Org cards orbiting */}
@@ -1690,16 +1688,18 @@ export function Scene22_Future() {
             />
           ))}
 
-          <motion.img
-            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
-            alt="CCDesigner"
-            crossOrigin="anonymous"
-            className="relative block w-auto"
-            style={{ height: 'clamp(120px, 22cqmax, 280px)' }}
+          <motion.div
+            className="relative"
             initial={{ opacity: 0, scale: 0.84, filter: 'blur(10px)' }}
             animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
             transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
-          />
+          >
+            <Wordmark
+              variant="dark"
+              height="clamp(48px, min(18cqw, 22cqh), 160px)"
+              shadow={false}
+            />
+          </motion.div>
         </div>
 
         {/* URL letter-by-letter reveal */}
