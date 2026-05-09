@@ -68,7 +68,7 @@ function ProgressSegments({
   const progress = activeDuration > 0 ? Math.min(1, elapsed / activeDuration) : 0;
 
   return (
-    <div className="flex-1 flex items-center gap-1.5">
+    <div className="flex-1 flex items-center gap-1">
       {sceneKeys.map((key, i) => {
         const isActive = i === activeIndex;
         const fill = isActive ? progress * 100 : 0;
@@ -76,7 +76,7 @@ function ProgressSegments({
           <button
             key={key}
             onClick={() => onJumpTo(i)}
-            className="flex-1 h-3 bg-white/20 rounded-full overflow-hidden cursor-pointer hover:h-4 hover:bg-white/25 transition-all relative min-h-[12px]"
+            className="flex-1 h-1.5 bg-white/20 rounded-full overflow-hidden cursor-pointer hover:bg-white/30 transition-colors relative"
             aria-label={`Jump to scene ${i + 1}`}
             aria-current={isActive ? 'true' : undefined}
           >
@@ -123,7 +123,7 @@ function ThumbnailStrip({
       }`}
       aria-hidden={!visible}
     >
-      <div ref={scrollerRef} className="flex gap-2 px-5 py-3 overflow-x-auto scrollbar-thin">
+      <div ref={scrollerRef} className="hidden sm:flex gap-1.5 px-3 py-1.5 overflow-x-auto scrollbar-thin">
         {sceneKeys.map((key, i) => {
           const isActive = i === activeIndex;
           const label = SCENE_LABELS[key as keyof typeof SCENE_LABELS] ?? key;
@@ -132,32 +132,17 @@ function ThumbnailStrip({
               key={key}
               data-thumb-index={i}
               onClick={() => onJumpTo(i)}
-              className={`shrink-0 w-32 rounded-lg overflow-hidden border transition-all text-left ${
+              className={`shrink-0 px-2 py-1 rounded text-[11px] font-medium tabular-nums transition-colors whitespace-nowrap ${
                 isActive
-                  ? 'border-white/80 ring-2 ring-white/50 scale-[1.02]'
-                  : 'border-white/15 hover:border-white/40'
+                  ? 'bg-white text-black'
+                  : 'bg-white/10 text-white/70 hover:bg-white/20 hover:text-white'
               }`}
               aria-label={`Jump to scene ${i + 1}: ${label}`}
               aria-current={isActive ? 'true' : undefined}
               title={`${i + 1}. ${label}`}
             >
-              <div className="aspect-video relative bg-gradient-to-br from-slate-800 to-slate-900">
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="font-display font-black text-white/70 text-3xl tabular-nums">
-                    {String(i + 1).padStart(2, '0')}
-                  </span>
-                </div>
-                {isActive && (
-                  <div className="absolute inset-0 bg-white/10 ring-1 ring-white/30 ring-inset" />
-                )}
-              </div>
-              <div
-                className={`px-2 py-1.5 text-xs font-medium truncate ${
-                  isActive ? 'bg-white text-black' : 'bg-black/60 text-white/80'
-                }`}
-              >
-                {label}
-              </div>
+              <span className="opacity-60 mr-1">{String(i + 1).padStart(2, '0')}</span>
+              {label}
             </button>
           );
         })}
@@ -180,7 +165,7 @@ function ControlBar({
 }: ControlBarProps) {
   return (
     <div
-      className={`flex items-center gap-3 bg-black/50 backdrop-blur-sm px-5 py-4 transition-all duration-200 ease-out ${
+      className={`flex items-center gap-2 bg-black/50 backdrop-blur-sm px-3 py-2 transition-all duration-200 ease-out ${
         visible
           ? 'translate-y-0 opacity-100 pointer-events-auto'
           : 'translate-y-full opacity-0 pointer-events-none'
@@ -189,17 +174,17 @@ function ControlBar({
     >
       <button
         onClick={onTogglePause}
-        className="w-14 h-14 flex items-center justify-center text-white bg-white/15 hover:bg-white/25 transition-colors rounded-lg shrink-0"
+        className="w-9 h-9 flex items-center justify-center text-white bg-white/15 hover:bg-white/25 transition-colors rounded-md shrink-0"
         title={paused ? 'Play' : 'Pause'}
         aria-label={paused ? 'Play' : 'Pause'}
         aria-pressed={paused}
       >
-        {paused ? <Play className="w-8 h-8" /> : <Pause className="w-8 h-8" />}
+        {paused ? <Play className="w-4 h-4" /> : <Pause className="w-4 h-4" />}
       </button>
 
       <button
         onClick={onToggleLock}
-        className={`w-14 h-14 flex items-center justify-center transition-colors rounded-lg shrink-0 ${
+        className={`w-9 h-9 flex items-center justify-center transition-colors rounded-md shrink-0 ${
           locked
             ? 'text-white bg-white/15 hover:bg-white/25'
             : 'text-white/60 hover:text-white hover:bg-white/10'
@@ -208,10 +193,10 @@ function ControlBar({
         aria-label={locked ? 'Loop current scene: on' : 'Loop current scene: off'}
         aria-pressed={locked}
       >
-        <Repeat className="w-8 h-8" />
+        <Repeat className="w-4 h-4" />
       </button>
 
-      <div className="w-px self-stretch bg-white/15" aria-hidden="true" />
+      <div className="w-px h-5 bg-white/15 mx-1" aria-hidden="true" />
 
       <ProgressSegments
         sceneKeys={sceneKeys}
@@ -222,7 +207,7 @@ function ControlBar({
         onJumpTo={onJumpTo}
       />
 
-      <div className="text-xl text-white/60 font-mono tabular-nums shrink-0">
+      <div className="text-[11px] text-white/60 font-mono tabular-nums shrink-0">
         {activeIndex + 1}/{sceneKeys.length}
       </div>
     </div>
