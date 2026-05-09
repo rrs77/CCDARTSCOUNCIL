@@ -50,10 +50,10 @@ export default function WhoItsFor() {
               Drama, dance and music subject leads &amp; departments
             </h3>
             <p className="text-white/75 font-body text-[1.15vw] leading-snug">
-              Sequence units across years and key stages. Build a shared department library of rehearsal techniques, schemes of work and reflective practice — so a great unit is taught well by every teacher.
+              Sequence units across years, key stages and qualifications — GCSE, A-Level, BTEC and beyond. Build a shared department library of rehearsal techniques, schemes of work and reflective practice, so a great unit is taught well by every teacher.
             </p>
             <div className="mt-auto pt-[2vh] border-t border-white/15 font-body text-white/85 text-[1.05vw]">
-              GCSE &amp; A-Level frameworks &middot; departmental sharing
+              GCSE, A-Level &amp; BTEC frameworks &middot; departmental sharing
             </div>
           </div>
 
