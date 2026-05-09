@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
 import { slides } from "@/slideLoader";
+import BrandStamp from "@/components/BrandStamp";
 
 function getSlideIndex(pathname: string): number {
   const match = pathname.match(/^\/slide(\d+)$/);
@@ -129,9 +130,11 @@ function SlideEditor() {
       {slides.map((slide, index) => (
         <div
           key={slide.id}
+          className="relative"
           style={{ display: index === currentIndex ? "block" : "none" }}
         >
           <slide.Component />
+          <BrandStamp />
         </div>
       ))}
     </div>
@@ -154,6 +157,7 @@ function AllSlides() {
           <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
             <slide.Component />
           </div>
+          <BrandStamp />
         </div>
       ))}
     </div>

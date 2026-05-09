@@ -2,6 +2,7 @@ import { useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useVideoPlayer } from '@/lib/video';
 import { SCENES } from './video_scenes/scenes';
+import { CornerBrand } from './video_scenes/_shared';
 
 // Per-scene durations tuned for cinematic pacing (~2 minutes total, 22 scenes).
 // Hero / outro get a little more breathing room; mid-tour scenes are tighter.
@@ -90,6 +91,7 @@ export default function VideoTemplate({
             </motion.div>
           )}
         </AnimatePresence>
+        <CornerBrand />
       </div>
     </div>
   );

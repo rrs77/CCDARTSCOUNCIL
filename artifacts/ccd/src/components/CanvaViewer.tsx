@@ -158,14 +158,11 @@ export function CanvaViewer({ url, title, onClose }: CanvaViewerProps) {
             title="Return to CC Designer"
           >
             <div className="p-2 flex items-center space-x-2">
-              <img 
-                src="/cd-logo.svg" 
-                alt="CC Designer Logo" 
-                className="h-8 w-8"
+              <img
+                src="/ccdesigner-logo.png"
+                alt="CCDesigner"
+                className="h-8 w-auto"
               />
-              <span className="text-sm font-semibold text-gray-700 group-hover:text-teal-600 transition-colors hidden sm:inline">
-                CC Designer
-              </span>
             </div>
           </div>
         </div>

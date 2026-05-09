@@ -336,7 +336,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
 // Default settings
 const DEFAULT_SETTINGS: UserSettings = {
   schoolName: 'Curriculum Designer',
-  schoolLogo: '/cd-logo.svg',
+  schoolLogo: '/ccdesigner-logo.png',
   primaryColor: '#3B82F6',
   secondaryColor: '#2563EB',
   accentColor: '#60A5FA',

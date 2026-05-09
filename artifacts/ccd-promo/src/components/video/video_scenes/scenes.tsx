@@ -4,7 +4,6 @@ import { springs } from '@/lib/video/animations';
 import {
   Backdrop,
   Cinematic,
-  CornerBrand,
   Eyebrow,
   GlassPanel,
   IdeaCard,
@@ -26,7 +25,6 @@ const learnersImg = `${import.meta.env.BASE_URL}images/kids-learning.jpg`;
 export function Scene01_Welcome() {
   return (
     <Backdrop tint="teal">
-      <CornerBrand />
       <SceneChip index={1} total={TOTAL} />
       <SceneLayout layout="centered">
         <Eyebrow tint="teal" align="center">A Creative Studio for Educators</Eyebrow>
@@ -1141,7 +1139,6 @@ export function Scene21_Mobile() {
 export function Scene22_Future() {
   return (
     <Backdrop tint="teal">
-      <CornerBrand />
       <SceneChip index={22} total={TOTAL} />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[2.5cqmin]">
         <Eyebrow tint="teal" align="center">The future of curriculum design</Eyebrow>

@@ -1,5 +1,3 @@
-const base = import.meta.env.BASE_URL;
-
 export default function CallToAction() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-primary-dark">
@@ -22,19 +20,7 @@ export default function CallToAction() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[7vw] py-[7vh] slide-auto-enter">
-        <div className="flex items-center gap-[1.2vw]">
-          <img
-            src={`${base}cd-logo.svg`}
-            crossOrigin="anonymous"
-            alt="CCD logo"
-            className="w-[3.6vw] h-[3.6vw]"
-          />
-          <span className="text-white font-display font-semibold tracking-tight text-[1.6vw]">
-            Creative Curriculum Designer
-          </span>
-        </div>
-
+      <div className="relative z-10 h-full w-full flex flex-col justify-center px-[7vw] py-[7vh] slide-auto-enter">
         <div className="max-w-[75vw]">
           <span className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh]">
             Try it with your school, department or arts organisation

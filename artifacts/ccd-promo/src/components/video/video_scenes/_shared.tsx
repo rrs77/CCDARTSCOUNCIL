@@ -313,26 +313,17 @@ export function MockupFrame({
 export function CornerBrand({ delay = 0 }: { delay?: number }) {
   return (
     <motion.div
-      className="absolute top-[3cqmin] left-[4cqmin] flex items-center gap-[1cqmin] z-20"
+      className="absolute top-[3cqmin] left-[4cqmin] z-20 rounded-[1cqmin] bg-white/85 backdrop-blur-sm px-[1.4cqmin] py-[0.7cqmin] shadow-[0_4px_20px_rgba(0,0,0,0.18)]"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, ease: 'circOut', delay }}
     >
-      <div
-        className="rounded-[0.6cqmin] flex items-center justify-center font-black text-[#0f2a2e]"
-        style={{
-          width: 'clamp(20px,2.4cqmax,38px)',
-          height: 'clamp(20px,2.4cqmax,38px)',
-          background: 'linear-gradient(135deg,#5EEAD4,#14B8A6)',
-          fontSize: 'clamp(11px,1.4cqmax,20px)',
-          boxShadow: '0 0 20px rgba(94,234,212,0.4)',
-        }}
-      >
-        c
-      </div>
-      <span className="text-white/70 font-semibold tracking-tight" style={{ fontSize: 'clamp(10px,1.3cqmax,18px)' }}>
-        Creative Curriculum Designer
-      </span>
+      <img
+        src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+        alt="CCDesigner"
+        crossOrigin="anonymous"
+        style={{ height: 'clamp(18px,2.4cqmax,34px)', width: 'auto', display: 'block' }}
+      />
     </motion.div>
   );
 }

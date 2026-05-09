@@ -20,22 +20,7 @@ export default function Title() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-between px-[7vw] py-[6vh]">
-        <div
-          className="flex items-center gap-[1.2vw] slide-fade-up"
-          style={{ ['--slide-stagger' as string]: '0ms' }}
-        >
-          <img
-            src={`${base}cd-logo.svg`}
-            crossOrigin="anonymous"
-            alt="CCD logo"
-            className="w-[3.6vw] h-[3.6vw]"
-          />
-          <span className="text-white font-display font-semibold tracking-tight text-[1.6vw]">
-            Creative Curriculum Designer
-          </span>
-        </div>
-
+      <div className="relative z-10 h-full w-full flex flex-col justify-end px-[7vw] py-[6vh]">
         <div className="max-w-[70vw]">
           <span
             className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh] slide-fade-up"

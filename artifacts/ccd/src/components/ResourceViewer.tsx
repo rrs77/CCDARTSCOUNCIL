@@ -200,14 +200,11 @@ export function ResourceViewer({ url, title, type, onClose }: ResourceViewerProp
             title="Return to CC Designer"
           >
             <div className="p-1.5 flex items-center space-x-1.5">
-              <img 
-                src="/cd-logo.svg" 
-                alt="CC Designer Logo" 
-                className="h-5 w-5"
+              <img
+                src="/ccdesigner-logo.png"
+                alt="CCDesigner"
+                className="h-5 w-auto"
               />
-              <span className="text-xs font-semibold text-gray-700 group-hover:text-teal-600 transition-colors hidden sm:inline">
-                CC Designer
-              </span>
             </div>
           </div>
         </div>
