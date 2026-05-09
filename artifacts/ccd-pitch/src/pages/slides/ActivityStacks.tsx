@@ -16,7 +16,7 @@ export default function ActivityStacks() {
             className="mt-[3vh] text-muted font-body leading-relaxed"
             style={{ fontSize: "1.4vw", textWrap: "pretty" }}
           >
-            Group your favourite warm-ups, mains and plenaries into reusable stacks. Drop a whole stack into any lesson and adapt as you go.
+            Group your favourite warm-ups, mains and plenaries into reusable stacks. Drop a whole stack into any lesson and adapt as you go — so brilliant practice survives the end of a project, a funding cycle, or a school year.
           </p>
 
           <div className="mt-[4vh] flex flex-col gap-[1.5vh]">

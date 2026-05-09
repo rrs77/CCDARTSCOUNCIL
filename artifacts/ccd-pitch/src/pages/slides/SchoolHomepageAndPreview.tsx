@@ -26,7 +26,7 @@ export default function SchoolHomepageAndPreview() {
             className="mt-[1.5vh] text-muted font-body leading-snug max-w-[55vw]"
             style={{ fontSize: "1.25vw", textWrap: "pretty" }}
           >
-            Each school gets a public landing page with their branding, plus a one-click preview that drops a visitor into a curated, read-only walkthrough — no sign-up.
+            Each school gets a public landing page with their branding, plus a one-click preview that drops parents, partner organisations, outreach teams or visiting practitioners into a curated, read-only walkthrough — no sign-up.
           </p>
         </div>
 

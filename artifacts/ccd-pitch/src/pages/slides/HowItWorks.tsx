@@ -51,9 +51,9 @@ export default function HowItWorks() {
 
           <div className="flex flex-col">
             <div className="font-display font-black text-accent/30 text-[5vw] leading-none">04</div>
-            <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight mt-[1vh]">Teach &amp; refine</h3>
+            <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight mt-[1vh]">Teach, refine &amp; share</h3>
             <p className="text-muted font-body text-[1.1vw] leading-snug mt-[1.2vh]">
-              Print, project or share with the team. Edit on the fly and the library improves with every term.
+              Print, project, or share with the team — and, in time, contribute back to a wider creative archive the whole sector can draw on.
             </p>
           </div>
         </div>
@@ -64,7 +64,7 @@ export default function HowItWorks() {
               CD
             </div>
             <div>
-              <div className="font-display font-bold text-white text-[1.5vw] leading-tight">Built for performing arts teaching from EYFS to KS5.</div>
+              <div className="font-display font-bold text-white text-[1.5vw] leading-tight">Built for performing arts teaching from EYFS to KS5 — designed to stay free for educators.</div>
               <div className="font-body text-white/70 text-[1.1vw] leading-snug">Works on a laptop, a smartboard, a studio tablet, or a phone in the rehearsal room.</div>
             </div>
           </div>

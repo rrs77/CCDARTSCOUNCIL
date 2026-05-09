@@ -35,7 +35,7 @@ export default function LessonPDFExport() {
             className="mt-[3vh] text-white/75 font-body leading-relaxed"
             style={{ fontSize: "1.35vw", textWrap: "pretty" }}
           >
-            Every lesson exports to a clean PDF — your school's header, the objective, the run of activities with timings, and clickable resource links carried through. Print for cover, hand to a TA, or send a parent the takeaway.
+            Every lesson exports to a clean PDF — your school's header, the objective, the run of activities with timings, and clickable resource links carried through. Print for cover, hand to a TA or non-specialist colleague stepping in, or send a partner organisation the takeaway from a workshop.
           </p>
 
           <div className="mt-[3.5vh] grid grid-cols-2 gap-[1vw]">

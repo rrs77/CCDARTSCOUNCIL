@@ -26,7 +26,7 @@ export default function PerformingArtsCoverage() {
             className="mt-[2vh] text-muted font-body leading-snug max-w-[55vw]"
             style={{ fontSize: "1.4vw", textWrap: "pretty" }}
           >
-            Three disciplines that share the same rhythm of teaching — warm-up, main, plenary — modelled end-to-end with starter content across every key stage from EYFS to KS5.
+            Three disciplines that share the same rhythm of teaching — warm-up, main, plenary — modelled end-to-end with starter content across every key stage from EYFS to KS5. Designed so a non-specialist can step in confidently, and a specialist can build on top.
           </p>
         </div>
 

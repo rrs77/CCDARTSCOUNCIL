@@ -78,37 +78,101 @@ export function Scene02_TeacherCreativity() {
  * 03 — NEVER LOSE A BRILLIANT IDEA
  * ------------------------------------------------------------------ */
 export function Scene03_NeverLose() {
-  // Headline anchored top; cards float in lower portion so they never collide.
-  // Positions are CENTER points (we translate -50% so each card stays anchored
-  // around its anchor, preventing right-edge overflow on narrow viewports).
-  const cards = [
-    { tag: 'WARMUP', title: 'Mirror games to build ensemble focus', meta: 'Year 5 · Drama', color: '#5EEAD4', left: '16%', top: '52%', rot: -5 },
-    { tag: 'REHEARSAL', title: 'Echo-and-respond rhythm circle', meta: 'KS2 · Music', color: '#FB7185', left: '82%', top: '48%', rot: 5 },
-    { tag: 'IDEA', title: 'Tableaux to explore character motivation', meta: 'Year 7 · Drama', color: '#C084FC', left: '28%', top: '78%', rot: 3 },
-    { tag: 'ADAPTATION', title: 'Movement phrases without spoken cues', meta: 'SEND-friendly', color: '#FBBF24', left: '70%', top: '80%', rot: -4 },
-    { tag: 'REFLECTION', title: "What worked in today's improvisation?", meta: 'Captured 12:42', color: '#7DD3FC', left: '50%', top: '62%', rot: 0 },
+  // A storm of ideas falls from above, settling into a dense backdrop.
+  // The "hero" cards — one per age range, EYFS through KS5 — emerge on top
+  // to show the breadth of practice the archive holds.
+  const tagPalette = ['#5EEAD4', '#FB7185', '#C084FC', '#FBBF24', '#7DD3FC', '#A5B4FC', '#F472B6', '#86EFAC'];
+
+  // Deterministic pseudo-random so positions are stable across renders / recording
+  const rand = (seed: number) => {
+    const x = Math.sin(seed * 9301 + 49297) * 233280;
+    return x - Math.floor(x);
+  };
+
+  // ~100 background "ghost" cards that fall and settle into a dense bed of practice
+  const ghosts = Array.from({ length: 100 }).map((_, i) => {
+    const left = rand(i + 1) * 96 + 2;
+    const top = 28 + rand(i + 17) * 70;
+    const rot = (rand(i + 31) - 0.5) * 24;
+    const color = tagPalette[Math.floor(rand(i + 53) * tagPalette.length)];
+    const w = 8 + rand(i + 71) * 6; // % width
+    const fallDelay = rand(i + 91) * 1.8;
+    return { left, top, rot, color, w, fallDelay, key: i };
+  });
+
+  // Hero cards — one per age range (EYFS through KS5) so the breadth is undeniable
+  const heroes = [
+    { tag: 'WARMUP',     title: 'Action songs to anchor circle time',  meta: 'EYFS · Music & Drama', color: '#5EEAD4', left: '14%', top: '46%', rot: -6 },
+    { tag: 'IDEA',       title: 'Animal movement stories',             meta: 'KS1 · Dance',          color: '#86EFAC', left: '38%', top: '74%', rot: 4 },
+    { tag: 'REHEARSAL',  title: 'Echo-and-respond rhythm circle',      meta: 'KS2 · Music',          color: '#FB7185', left: '64%', top: '44%', rot: 5 },
+    { tag: 'IDEA',       title: 'Tableaux to explore character',       meta: 'KS3 · Drama',          color: '#C084FC', left: '86%', top: '70%', rot: -4 },
+    { tag: 'DEVISING',   title: 'Devising from a stimulus image',      meta: 'GCSE Drama',           color: '#FBBF24', left: '24%', top: '82%', rot: 3 },
+    { tag: 'COMPOSITION',title: 'Cunningham-style chance choreography',meta: 'A-Level · BTEC Dance', color: '#A5B4FC', left: '52%', top: '58%', rot: 0 },
   ];
+
   return (
     <Backdrop tint="indigo">
       <SceneChip index={3} total={TOTAL} />
-      <div className="absolute inset-x-0 top-[8cqmin] flex flex-col items-center text-center px-[6cqmin] gap-[1.5cqmin]">
+      <div className="absolute inset-x-0 top-[8cqmin] flex flex-col items-center text-center px-[6cqmin] gap-[1.5cqmin] z-20">
         <Eyebrow tint="indigo" align="center">Your ideas, captured forever</Eyebrow>
         <Cinematic size="lg" align="center">
           <span>Never lose a brilliant idea.</span>
         </Cinematic>
       </div>
-      {cards.map((c, i) => (
+
+      {/* The storm: ~100 ideas falling from above, settling into a dense bed */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none">
+        {ghosts.map((g) => (
+          <motion.div
+            key={`g-${g.key}`}
+            className="absolute rounded-[0.8cqmin] border"
+            style={{
+              left: `${g.left}%`,
+              top: `${g.top}%`,
+              width: `${g.w}cqmin`,
+              height: `${g.w * 0.65}cqmin`,
+              background: `linear-gradient(135deg, ${g.color}22, ${g.color}08)`,
+              borderColor: `${g.color}33`,
+              boxShadow: `0 6px 14px -4px rgba(0,0,0,0.4)`,
+              transform: 'translate(-50%, -50%)',
+            }}
+            initial={{ opacity: 0, y: '-120cqh', rotate: g.rot * 0.4 }}
+            animate={{
+              opacity: [0, 0.85, 0.18],
+              y: ['-120cqh', '0cqh', '0cqh'],
+              rotate: [g.rot * 0.4, g.rot, g.rot],
+            }}
+            transition={{
+              duration: 2.4,
+              times: [0, 0.55, 1],
+              ease: ['circIn', 'circOut', 'linear'],
+              delay: g.fallDelay,
+            }}
+          >
+            {/* tiny tag dot + bar to imply real card content without text noise */}
+            <div className="absolute top-[10%] left-[8%] right-[8%] flex items-center gap-[0.4cqmin]">
+              <div className="rounded-full" style={{ width: '0.9cqmin', height: '0.9cqmin', background: g.color }} />
+              <div className="rounded-full" style={{ height: '0.5cqmin', width: '60%', background: `${g.color}66` }} />
+            </div>
+            <div className="absolute bottom-[18%] left-[8%] right-[18%] rounded-full" style={{ height: '0.5cqmin', background: 'rgba(255,255,255,0.18)' }} />
+            <div className="absolute bottom-[8%] left-[8%] right-[40%] rounded-full" style={{ height: '0.4cqmin', background: 'rgba(255,255,255,0.10)' }} />
+          </motion.div>
+        ))}
+      </div>
+
+      {/* Hero cards — one per age range, EYFS → KS5. Land last, sit on top, full opacity */}
+      {heroes.map((c, i) => (
         <motion.div
-          key={i}
-          className="absolute"
+          key={`h-${i}`}
+          className="absolute z-10"
           style={{
             left: c.left,
             top: c.top,
-            width: 'min(clamp(130px,18cqmax,280px), 38vw)',
+            width: 'min(clamp(140px,19cqmax,300px), 38vw)',
           }}
-          initial={{ opacity: 0, scale: 0.5, rotate: 0, x: '-50%', y: 'calc(-50% + 30px)' }}
+          initial={{ opacity: 0, scale: 0.6, rotate: c.rot * 0.3, x: '-50%', y: 'calc(-50% - 80cqh)' }}
           animate={{ opacity: 1, scale: 1, rotate: c.rot, x: '-50%', y: '-50%' }}
-          transition={{ ...springs.gentle, delay: 1.0 + i * 0.15 }}
+          transition={{ ...springs.gentle, delay: 2.6 + i * 0.18 }}
         >
           <IdeaCard tag={c.tag} title={c.title} meta={c.meta} color={c.color} />
         </motion.div>
