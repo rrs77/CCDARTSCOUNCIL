@@ -230,8 +230,6 @@ function ControlBar({
 }
 
 export default function VideoWithControls() {
-  const isIframed = typeof window !== 'undefined' && window.self !== window.top;
-
   const {
     sceneKeys,
     activeIndex,
@@ -300,40 +298,38 @@ export default function VideoWithControls() {
         paused={paused}
         onSceneChange={onSceneChange}
       />
-      {isIframed && (
-        <div className="absolute bottom-0 left-0 right-0 z-50 flex flex-col">
-          <ThumbnailStrip
-            sceneKeys={sceneKeys}
-            activeIndex={activeIndex}
-            visible={visible}
-            onJumpTo={(i) => {
-              jumpTo(i);
-              bumpActive();
-            }}
-          />
-          <ControlBar
-            visible={visible}
-            locked={locked}
-            paused={paused}
-            sceneKeys={sceneKeys}
-            activeIndex={activeIndex}
-            activeDuration={activeDuration}
-            tick={tick}
-            onToggleLock={() => {
-              toggleLock();
-              bumpActive();
-            }}
-            onTogglePause={() => {
-              togglePause();
-              bumpActive();
-            }}
-            onJumpTo={(i) => {
-              jumpTo(i);
-              bumpActive();
-            }}
-          />
-        </div>
-      )}
+      <div className="absolute bottom-0 left-0 right-0 z-50 flex flex-col">
+        <ThumbnailStrip
+          sceneKeys={sceneKeys}
+          activeIndex={activeIndex}
+          visible={visible}
+          onJumpTo={(i) => {
+            jumpTo(i);
+            bumpActive();
+          }}
+        />
+        <ControlBar
+          visible={visible}
+          locked={locked}
+          paused={paused}
+          sceneKeys={sceneKeys}
+          activeIndex={activeIndex}
+          activeDuration={activeDuration}
+          tick={tick}
+          onToggleLock={() => {
+            toggleLock();
+            bumpActive();
+          }}
+          onTogglePause={() => {
+            togglePause();
+            bumpActive();
+          }}
+          onJumpTo={(i) => {
+            jumpTo(i);
+            bumpActive();
+          }}
+        />
+      </div>
     </div>
   );
 }
