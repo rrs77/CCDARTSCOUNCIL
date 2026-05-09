@@ -26,16 +26,30 @@ export function Scene01_Welcome() {
   return (
     <Backdrop tint="teal">
       <SceneChip index={1} total={TOTAL} />
-      <SceneLayout layout="centered">
-        <Eyebrow tint="teal" align="center">A Creative Studio for Educators</Eyebrow>
-        <Cinematic size="2xl" align="center">
-          <span>Design learning</span>
-          <span style={{ color: '#5EEAD4' }}>that inspires.</span>
-        </Cinematic>
-        <Sub align="center" delay={0.9}>
-          A living workspace where great teaching ideas live, evolve, and grow — for every child, every classroom, every season of the year.
-        </Sub>
-      </SceneLayout>
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[3cqmin]">
+        <motion.img
+          src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+          alt="CCDesigner"
+          crossOrigin="anonymous"
+          className="block w-auto"
+          style={{
+            height: 'clamp(120px, 22cqmax, 280px)',
+            filter: 'drop-shadow(0 8px 40px rgba(168,139,250,0.45))',
+          }}
+          initial={{ opacity: 0, scale: 0.85, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: 1.1, ease: 'circOut' }}
+        />
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: 'circOut', delay: 0.7 }}
+          className="text-white/75 font-body tracking-[0.3em] uppercase"
+          style={{ fontSize: 'clamp(11px, 1.5cqmax, 22px)' }}
+        >
+          A Creative Studio for Educators
+        </motion.div>
+      </div>
     </Backdrop>
   );
 }

@@ -91,7 +91,7 @@ export default function VideoTemplate({
             </motion.div>
           )}
         </AnimatePresence>
-        <CornerBrand />
+        {baseSceneKey !== 's01_welcome' && <CornerBrand />}
       </div>
     </div>
   );
