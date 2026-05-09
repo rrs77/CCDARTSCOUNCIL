@@ -313,7 +313,7 @@ export function MockupFrame({
 export function CornerBrand({ delay = 0 }: { delay?: number }) {
   return (
     <motion.div
-      className="absolute top-[3cqmin] left-[4cqmin] z-20 rounded-[1cqmin] bg-white/85 backdrop-blur-sm px-[1.4cqmin] py-[0.7cqmin] shadow-[0_4px_20px_rgba(0,0,0,0.18)]"
+      className="absolute top-[3.5cqmin] left-[4cqmin] z-20"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, ease: 'circOut', delay }}
@@ -322,7 +322,12 @@ export function CornerBrand({ delay = 0 }: { delay?: number }) {
         src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
         alt="CCDesigner"
         crossOrigin="anonymous"
-        style={{ height: 'clamp(18px,2.4cqmax,34px)', width: 'auto', display: 'block' }}
+        style={{
+          height: 'clamp(36px,5.5cqmax,70px)',
+          width: 'auto',
+          display: 'block',
+          filter: 'drop-shadow(0 2px 10px rgba(0,0,0,0.35))',
+        }}
       />
     </motion.div>
   );
