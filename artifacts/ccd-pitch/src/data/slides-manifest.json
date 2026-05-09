@@ -120,8 +120,48 @@
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000020",
     "position": 16,
+    "filepath": "src/pages/slides/WhyNow.tsx",
+    "title": "Why now: the arts in higher education are at a tipping point",
+    "description": "The case for the arts — university course closures, falling GCSE entries, the pipeline that feeds the creative industries.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000021",
+    "position": 17,
+    "filepath": "src/pages/slides/MeltingPot.tsx",
+    "title": "A melting pot of knowledge",
+    "description": "Schools, universities, arts organisations, practitioners and communities pouring their best into one living archive for children.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000022",
+    "position": 18,
+    "filepath": "src/pages/slides/CelebrateArts.tsx",
+    "title": "Celebrating learning in the arts",
+    "description": "Surfacing the daily craft of arts teaching — to parents, leaders, partner organisations and the wider sector.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000023",
+    "position": 19,
+    "filepath": "src/pages/slides/LifeChanging.tsx",
+    "title": "Inspiring, life-changing arts education",
+    "description": "Why one teacher, one moment, one lesson can change a life — and why CCD is built so those lessons multiply.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000024",
+    "position": 20,
+    "filepath": "src/pages/slides/ProtectThePipeline.tsx",
+    "title": "Protecting the pipeline — from EYFS to the conservatoire stage",
+    "description": "One continuous arc from a Reception assembly to a university stage, and why every stage of the journey depends on the last.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
+    "position": 21,
     "filepath": "src/pages/slides/CallToAction.tsx",
     "title": "Grow your creative practice — together",
     "description": "Closing call to action inviting schools, departments and arts organisations to join the creative ecosystem.",
