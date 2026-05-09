@@ -872,10 +872,10 @@ export function Scene17_Inspiration() {
 export function Scene18_Community() {
   const orgs = [
     { label: 'Theatre companies', color: '#FB7185' },
-    { label: 'Music educators', color: '#5EEAD4' },
-    { label: 'Dance partners', color: '#C084FC' },
-    { label: 'Curriculum specialists', color: '#FBBF24' },
-    { label: 'Arts charities', color: '#7DD3FC' },
+    { label: 'Orchestras', color: '#5EEAD4' },
+    { label: 'Dance companies', color: '#C084FC' },
+    { label: 'Universities', color: '#FBBF24' },
+    { label: 'Outreach teams', color: '#7DD3FC' },
   ];
   return (
     <Backdrop tint="plum">
@@ -927,7 +927,7 @@ export function Scene18_Community() {
           <span>communities.</span>
         </Cinematic>
         <Sub delay={0.95}>
-          Planning ideas, frameworks, and creative resources from arts organisations and educators — all free to use.
+          Theatres, orchestras, dance companies, universities and outreach teams — all contributing to a shared, evolving ecosystem of creative practice. Free to use, made together.
         </Sub>
       </SceneLayout>
     </Backdrop>
@@ -1087,7 +1087,7 @@ export function Scene22_Future() {
           <span style={{ color: '#5EEAD4' }}>live, evolve, and grow.</span>
         </Cinematic>
         <Sub align="center" delay={1.0}>
-          Built for educators. Powered by your creativity. Open to a growing community of arts and curriculum partners.
+          Built with educators. Powered by your creativity. Shared with theatres, orchestras, dance companies, universities and outreach teams — together, building the creative archive your sector deserves.
         </Sub>
         <motion.div
           className="mt-[1cqmin] inline-flex items-center gap-[1.5cqmin] px-[3cqmin] py-[1.4cqmin] rounded-full text-[#0f2a2e] font-bold"
@@ -1100,7 +1100,7 @@ export function Scene22_Future() {
           animate={{ opacity: 1, y: 0, scale: 1 }}
           transition={{ ...springs.bouncy, delay: 1.4 }}
         >
-          Try it with your school
+          Join the creative ecosystem
           <span style={{ fontSize: '1.1em' }}>→</span>
         </motion.div>
       </div>

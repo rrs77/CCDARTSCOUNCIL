@@ -3,24 +3,24 @@
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
     "position": 1,
     "filepath": "src/pages/slides/Title.tsx",
-    "title": "Plan a year of performing arts in an afternoon",
-    "description": "Title slide introducing Creative Curriculum Designer with hero image and performing-arts tagline.",
+    "title": "A living home for creative teaching",
+    "description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music — from EYFS to higher education.",
     "speakerNotes": ""
   },
   {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000002",
     "position": 2,
     "filepath": "src/pages/slides/Problem.tsx",
-    "title": "The problem: lesson planning is fragmented",
-    "description": "Three reasons primary teachers lose time planning today.",
+    "title": "The problem: arts teachers are working alone",
+    "description": "Why drama, dance and music teachers — and the non-specialists supporting them — are losing creative practice today.",
     "speakerNotes": ""
   },
   {
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000003",
     "position": 3,
     "filepath": "src/pages/slides/Solution.tsx",
-    "title": "The solution: one calm space",
-    "description": "Half-term planner, lesson library, and activity stacks in one workspace built for performing arts.",
+    "title": "The solution: one living home",
+    "description": "Half-term planner, lesson library, and activity stacks in one workspace — purpose-built for performing arts education from EYFS to higher education.",
     "speakerNotes": ""
   },
   {
@@ -35,8 +35,8 @@
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
     "position": 5,
     "filepath": "src/pages/slides/WhoItsFor.tsx",
-    "title": "Who it's for: EYFS, KS1 and KS2 teachers",
-    "description": "Audience overview across Reception, Key Stage 1, and Key Stage 2.",
+    "title": "Who it's for: arts educators across every stage",
+    "description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form, and Arts Partners & Higher Education.",
     "speakerNotes": ""
   },
   {
@@ -123,8 +123,8 @@
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
     "position": 16,
     "filepath": "src/pages/slides/CallToAction.tsx",
-    "title": "Try CCD with your school",
-    "description": "Closing call to action with contact and trial details.",
+    "title": "Grow your creative practice — together",
+    "description": "Closing call to action inviting schools, departments and arts organisations to join the creative ecosystem.",
     "speakerNotes": ""
   }
 ]

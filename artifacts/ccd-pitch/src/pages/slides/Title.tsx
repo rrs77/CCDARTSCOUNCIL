@@ -41,19 +41,19 @@ export default function Title() {
             className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh] slide-fade-up"
             style={{ ['--slide-stagger' as string]: '120ms' }}
           >
-            Drama · Music · Dance for primary schools
+            Drama · Dance · Music · Performing Arts — EYFS to higher education
           </span>
           <h1
             className="font-display font-black text-white tracking-tighter leading-[0.95] slide-fade-up"
             style={{ fontSize: "7vw", textWrap: "balance", ['--slide-stagger' as string]: '220ms' }}
           >
-            Plan a year of performing arts in an afternoon.
+            A living home for creative teaching.
           </h1>
           <p
             className="mt-[3vh] text-white/90 font-body font-medium max-w-[55vw] leading-snug slide-fade-up"
             style={{ fontSize: "1.7vw", textWrap: "pretty", ['--slide-stagger' as string]: '380ms' }}
           >
-            One calm space to map your half-terms, build lessons from a shared library, and stack the warm-ups, songs and routines you actually use.
+            One calm space to plan a year of performing arts, grow a long-term archive of creative practice, and connect with the educators, theatres, orchestras and arts partners shaping it alongside you.
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function Title() {
           className="flex items-end justify-between text-white/85 slide-fade-up"
           style={{ ['--slide-stagger' as string]: '520ms' }}
         >
-          <span className="font-body text-[1.05vw] tracking-wide uppercase">A pitch for schools &amp; partners</span>
+          <span className="font-body text-[1.05vw] tracking-wide uppercase">A pitch for schools, arts organisations &amp; universities</span>
           <span className="font-body text-[1.05vw] tracking-wide">creativecurriculumdesigner.com</span>
         </div>
       </div>

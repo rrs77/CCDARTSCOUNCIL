@@ -1,0 +1,71 @@
+IMPORTANT MESSAGE REFINEMENT
+
+The current design and visual direction already look strong. Do NOT redesign the platform. Instead, refine the messaging and walkthrough so the purpose of CCDesigner is clearer and more emotionally connected to the future of arts education.
+
+CCDesigner is a creative curriculum and lesson design platform built specifically for drama, dance, music and performing arts education.
+
+The platform should clearly communicate what it can actively do for the arts sector, teachers and learners.
+
+CCDesigner helps educators:
+- create and evolve creative curriculum ideas over time
+- save rehearsal techniques, activities and teaching approaches permanently
+- build long-term archives of creative practice
+- adapt lessons quickly for different learners and contexts
+- connect ideas across drama, dance, music and cross-curricular learning
+- reflect on and improve teaching approaches
+- reduce the feeling of isolation many arts teachers experience
+- support non-specialist teachers with inspiration and confidence
+- access and contribute shared creative ideas collaboratively
+
+The platform should feel like a living creative ecosystem rather than a static planning tool.
+
+A major focus should be on collaboration across the arts sector.
+
+CCDesigner is intended to help connect:
+- schools
+- arts organisations
+- theatres
+- orchestras
+- dance companies
+- outreach teams
+- universities
+- curriculum specialists
+- practitioners
+- training providers
+
+The messaging should strongly communicate that creative education becomes more powerful when ideas, approaches and practice are shared openly rather than isolated inside separate projects or forgotten planning documents.
+
+The platform should support long-term arts inclusion by helping schools and teachers access:
+- inspiring creative approaches
+- adaptable arts activities
+- rehearsal ideas
+- curriculum frameworks
+- reflective teaching practice
+- outreach-supported learning experiences
+
+Emphasise that CCDesigner is intended to support creative learning from:
+EYFS through to KS5, higher education and university arts practice.
+
+The overall emotional tone should feel:
+- hopeful
+- collaborative
+- artistic
+- thoughtful
+- human
+- ambitious
+- supportive
+
+Avoid:
+- corporate EdTech language
+- overly sales-focused messaging
+- “AI replaces teachers” narratives
+- generic productivity terminology
+
+AI should feel like:
+- a creative assistant
+- a reflective planning partner
+- a support tool for teachers
+
+The walkthrough and promotional messaging should ultimately communicate:
+
+CCDesigner exists to help creative teaching ideas grow, connect and continue evolving while supporting greater collaboration and access across arts education.

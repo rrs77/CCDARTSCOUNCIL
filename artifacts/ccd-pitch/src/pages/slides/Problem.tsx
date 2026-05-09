@@ -21,13 +21,13 @@ export default function Problem() {
               className="font-display font-black text-text tracking-tight leading-[1.02]"
               style={{ fontSize: "4.6vw", textWrap: "balance" }}
             >
-              Lesson planning is fragmented.
+              Arts teachers are working alone.
             </h2>
             <p
               className="mt-[3vh] text-muted font-body leading-relaxed"
               style={{ fontSize: "1.5vw", textWrap: "pretty" }}
             >
-              Teachers stitch a year together from PDFs, shared drives, photocopied schemes and last year's tabs. The plan lives everywhere except where they need it.
+              Drama, dance and music teachers stitch a year together from PDFs, shared drives, photocopied schemes and last year's tabs — often as the only specialist in the building. Great practice gets lost; non-specialists are left guessing.
             </p>
           </div>
 
@@ -36,7 +36,7 @@ export default function Problem() {
               5+
             </div>
             <span className="text-muted font-body text-[1.2vw] leading-snug max-w-[14vw]">
-              hours a week the average primary teacher spends planning outside of class.
+              hours a week the average teacher spends planning outside of class — most of it reinventing what someone, somewhere has already made.
             </span>
           </div>
         </div>
@@ -47,9 +47,9 @@ export default function Problem() {
               01
             </div>
             <div>
-              <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight">Plans live in too many places</h3>
+              <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight">Practice lives in too many places</h3>
               <p className="mt-[0.8vh] text-muted font-body text-[1.2vw] leading-snug">
-                Schemes of work in folders, slides in shared drives, activities in printouts. Nothing connects.
+                Schemes in folders, rehearsal notes on a phone, warm-ups in a notebook. Nothing connects, nothing carries forward.
               </p>
             </div>
           </div>
@@ -59,9 +59,9 @@ export default function Problem() {
               02
             </div>
             <div>
-              <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight">Half-term overview is invisible</h3>
+              <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight">The bigger arc is invisible</h3>
               <p className="mt-[0.8vh] text-muted font-body text-[1.2vw] leading-snug">
-                It's hard to see the whole arc of a term, let alone tweak it without rebuilding from scratch.
+                It's hard to see how a term, a key stage, or a whole creative journey fits together — let alone shape it without starting over.
               </p>
             </div>
           </div>
@@ -71,9 +71,9 @@ export default function Problem() {
               03
             </div>
             <div>
-              <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight">Good activities get lost</h3>
+              <h3 className="font-display font-bold text-text text-[1.6vw] leading-tight">Creative practice gets lost</h3>
               <p className="mt-[0.8vh] text-muted font-body text-[1.2vw] leading-snug">
-                The warm-up that worked, the role-play that landed — they vanish into a notebook by July.
+                The warm-up that worked, the rehearsal that landed, the unit a colleague nailed — gone by July, learned again the hard way next September.
               </p>
             </div>
           </div>
