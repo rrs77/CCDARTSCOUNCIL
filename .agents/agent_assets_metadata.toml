@@ -29,3 +29,9 @@ id = "FMTiyz7wvf_fmOg4uFVMR"
 uri = "file://.local/outputs/CCD-Pitch-Deck.pptx"
 type = "slides"
 title = "CCD Pitch Deck (PPTX)"
+
+[[outputs]]
+id = "hDVFwYc9QPwbRu3Lhw1mQ"
+uri = "file://ccd-promo-dreamhost.tar.gz"
+type = "unspecified"
+title = "CCD Promo — DreamHost embed (index.html + README)"

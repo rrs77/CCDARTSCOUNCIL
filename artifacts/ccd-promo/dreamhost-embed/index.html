@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>Creative Curriculum Designer — Promo</title>
+  <meta name="description" content="A short film about Creative Curriculum Designer — a living home for performing arts teaching, EYFS through KS5." />
+
+  <meta property="og:type" content="video.other" />
+  <meta property="og:title" content="Creative Curriculum Designer — Promo" />
+  <meta property="og:description" content="A living home for performing arts teaching, EYFS through KS5." />
+
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23008272'/%3E%3Ctext x='50%25' y='56%25' text-anchor='middle' font-family='Inter,Arial,sans-serif' font-weight='800' font-size='26' fill='white'%3ECCD%3C/text%3E%3C/svg%3E" />
+
+  <style>
+    /* === The ONLY thing you should ever need to change === */
+    /*    Replace the URL inside the iframe src below with your published promo URL */
+    /* ====================================================== */
+
+    :root { color-scheme: light dark; }
+    html, body {
+      margin: 0;
+      padding: 0;
+      height: 100%;
+      background: #0f2a2e;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+      color: #ffffff;
+      overflow: hidden;
+    }
+
+    .stage {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: #0f2a2e;
+    }
+
+    /* Lock the iframe to a perfect 16:9 box that always fits the screen */
+    .frame {
+      position: relative;
+      width: 100vw;
+      height: 56.25vw;          /* 16:9 of width */
+      max-height: 100vh;
+      max-width: 177.7777vh;    /* 16:9 of height */
+      background: #000;
+      box-shadow: 0 30px 80px rgba(0,0,0,0.45);
+    }
+
+    .frame iframe {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      border: 0;
+      display: block;
+    }
+
+    .fallback {
+      position: absolute;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      padding: 2rem;
+      background: linear-gradient(135deg, #0f2a2e, #1d4d4a);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.4s ease;
+    }
+    .fallback.show { opacity: 1; pointer-events: auto; }
+    .fallback a {
+      color: #14b8a6;
+      font-weight: 600;
+      text-decoration: none;
+      border-bottom: 1px solid rgba(20,184,166,0.4);
+    }
+  </style>
+</head>
+<body>
+  <main class="stage" aria-label="Creative Curriculum Designer promo">
+    <div class="frame">
+      <!--
+        ▼▼▼ EDIT THIS ONE LINE ONLY ▼▼▼
+        Replace the URL below with the public promo URL you get after pressing Publish in Replit
+        (it will look something like:  https://ccd-promo.replit.app/  )
+      -->
+      <iframe
+        id="promo"
+        src="https://YOUR-PROMO-URL.replit.app/"
+        title="Creative Curriculum Designer — Promo"
+        loading="eager"
+        allow="autoplay; fullscreen; encrypted-media; picture-in-picture"
+        allowfullscreen
+        referrerpolicy="no-referrer-when-downgrade"
+      ></iframe>
+      <!-- ▲▲▲ EDIT THIS ONE LINE ONLY ▲▲▲ -->
+
+      <noscript>
+        <div class="fallback show">
+          <p>This promo needs JavaScript enabled to play.</p>
+        </div>
+      </noscript>
+      <div id="fallback" class="fallback" role="alert">
+        <div>
+          <p style="margin:0 0 0.5rem; font-size:1.1rem;">The promo couldn't load.</p>
+          <p style="margin:0; opacity:0.8;">
+            Open it directly:
+            <a id="fallback-link" href="#" target="_blank" rel="noopener">view the promo</a>
+          </p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    // If the iframe fails to load within 8 seconds, show a friendly fallback link
+    (function () {
+      var iframe = document.getElementById('promo');
+      var fallback = document.getElementById('fallback');
+      var link = document.getElementById('fallback-link');
+      var loaded = false;
+
+      iframe.addEventListener('load', function () { loaded = true; });
+      link.href = iframe.src;
+
+      setTimeout(function () {
+        if (!loaded) fallback.classList.add('show');
+      }, 8000);
+    })();
+  </script>
+</body>
+</html>
