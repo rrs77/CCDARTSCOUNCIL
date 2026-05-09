@@ -252,31 +252,99 @@ export function Scene03_NeverLose() {
  * ------------------------------------------------------------------ */
 export function Scene04_Archive() {
   const tags = ['Drama', 'Music', 'Dance', 'Cross-curricular', 'EYFS', 'KS1', 'KS2', 'KS3', 'Improvisation', 'Composition', 'Choreography', 'Voice', 'Movement', 'Reflection', 'Warmup', 'Plenary'];
+
+  // 24 real activity cards — feels like a working creative archive, not empty boxes.
+  type Card = { tag: string; title: string; meta: string; color: string };
+  const cards: Card[] = [
+    { tag: 'WARMUP',      title: 'Action songs to anchor circle time',  meta: 'EYFS · Music',           color: '#5EEAD4' },
+    { tag: 'IDEA',        title: 'Animal movement stories',             meta: 'KS1 · Dance',            color: '#86EFAC' },
+    { tag: 'VOICE',       title: 'Call-and-response rhythm circle',     meta: 'KS2 · Music',            color: '#FB7185' },
+    { tag: 'DRAMA',       title: 'Tableaux to explore character',       meta: 'KS3 · Drama',            color: '#C084FC' },
+    { tag: 'DEVISING',    title: 'Devising from a stimulus image',      meta: 'GCSE · Drama',           color: '#FBBF24' },
+    { tag: 'COMPOSITION', title: 'Cunningham chance choreography',      meta: 'A-Level · Dance',        color: '#A5B4FC' },
+    { tag: 'PLENARY',     title: 'Two stars and a wish reflection',     meta: 'KS2 · All',              color: '#7DD3FC' },
+    { tag: 'WARMUP',      title: 'Pass the clap rhythm game',           meta: 'KS1 · Music',            color: '#F472B6' },
+    { tag: 'IDEA',        title: 'Mirror partner movement',             meta: 'EYFS · Dance',           color: '#86EFAC' },
+    { tag: 'REHEARSAL',   title: 'Status work — high & low',            meta: 'KS3 · Drama',            color: '#FB7185' },
+    { tag: 'VOICE',       title: 'Body percussion warm-up sequence',    meta: 'KS2 · Music',            color: '#FBBF24' },
+    { tag: 'CHOREO',      title: 'Motif development from 8 counts',     meta: 'KS3 · Dance',            color: '#A5B4FC' },
+    { tag: 'IMPROV',      title: 'Yes-and storytelling circle',         meta: 'KS2 · Drama',            color: '#C084FC' },
+    { tag: 'COMPOSITION', title: 'Graphic score listening task',        meta: 'KS3 · Music',            color: '#5EEAD4' },
+    { tag: 'WARMUP',      title: 'Jelly-fish to skyscraper stretch',    meta: 'KS1 · Dance',            color: '#7DD3FC' },
+    { tag: 'IDEA',        title: 'Soundscape for a setting',            meta: 'KS2 · Cross-curric.',    color: '#FBBF24' },
+    { tag: 'REFLECTION',  title: 'Silent gallery walk + sticky notes',  meta: 'All · Plenary',          color: '#F472B6' },
+    { tag: 'DRAMA',       title: 'Hot-seating in role',                 meta: 'KS2 · Literacy link',    color: '#C084FC' },
+    { tag: 'DEVISING',    title: 'Verbatim from interview transcripts', meta: 'GCSE · Drama',           color: '#FB7185' },
+    { tag: 'CHOREO',      title: 'Contact improvisation duet',          meta: 'A-Level · Dance',        color: '#86EFAC' },
+    { tag: 'VOICE',       title: 'Diaphragm breathing & sirens',        meta: 'KS3 · Music',            color: '#5EEAD4' },
+    { tag: 'IDEA',        title: 'Cross-curric: Tudor court masque',    meta: 'KS3 · History+Drama',    color: '#FBBF24' },
+    { tag: 'WARMUP',      title: 'Zip-zap-boing focus game',            meta: 'KS2 · Drama',            color: '#A5B4FC' },
+    { tag: 'PLENARY',     title: 'One word reflection passport',        meta: 'All · Plenary',          color: '#7DD3FC' },
+  ];
+
   return (
     <Backdrop tint="plum">
       <SceneChip index={4} total={TOTAL} />
       <SceneLayout layout="left-text" visual={
         <div className="relative w-full h-[70cqh]">
-          {Array.from({ length: 24 }).map((_, i) => {
+          {cards.map((c, i) => {
             const col = i % 4;
             const row = Math.floor(i / 4);
+            const tilt = ((i * 37) % 7) - 3; // -3 to +3 deg
             return (
               <motion.div
                 key={i}
-                className="absolute rounded-[1cqmin]"
+                className="absolute rounded-[1cqmin] overflow-hidden flex flex-col justify-between"
                 style={{
                   left: `${col * 25}%`,
                   top: `${row * 17}%`,
-                  width: '22%',
-                  height: '14%',
-                  background: `linear-gradient(135deg, rgba(192,132,252,${0.10 + (i % 5) * 0.04}), rgba(244,114,182,${0.05 + (i % 3) * 0.05}))`,
-                  border: '1px solid rgba(255,255,255,0.08)',
-                  boxShadow: '0 10px 30px -10px rgba(0,0,0,0.5)',
+                  width: '22.5%',
+                  height: '15%',
+                  padding: '1cqmin 1.1cqmin',
+                  background: `linear-gradient(135deg, rgba(255,255,255,0.07), rgba(255,255,255,0.02))`,
+                  border: `1px solid ${c.color}30`,
+                  boxShadow: `0 10px 26px -12px rgba(0,0,0,0.55), inset 0 0 0 1px rgba(255,255,255,0.04)`,
+                  transform: `rotate(${tilt * 0.25}deg)`,
                 }}
-                initial={{ opacity: 0, y: 30, scale: 0.9 }}
+                initial={{ opacity: 0, y: 26, scale: 0.92 }}
                 animate={{ opacity: 1, y: 0, scale: 1 }}
-                transition={{ ...springs.gentle, delay: 0.4 + i * 0.04 }}
-              />
+                transition={{ ...springs.gentle, delay: 0.35 + i * 0.045 }}
+              >
+                {/* color rail */}
+                <div
+                  className="absolute left-0 top-0 bottom-0"
+                  style={{ width: '0.4cqmin', background: c.color, opacity: 0.85 }}
+                />
+                <div className="flex items-center gap-[0.5cqmin]">
+                  <span
+                    className="font-display font-black tracking-[0.15em] uppercase"
+                    style={{
+                      fontSize: 'clamp(7px,0.85cqmax,11px)',
+                      color: c.color,
+                    }}
+                  >
+                    {c.tag}
+                  </span>
+                </div>
+                <div
+                  className="text-white/90 font-medium leading-[1.15]"
+                  style={{
+                    fontSize: 'clamp(8px,1.0cqmax,13px)',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}
+                >
+                  {c.title}
+                </div>
+                <div
+                  className="text-white/45"
+                  style={{ fontSize: 'clamp(6px,0.75cqmax,10px)' }}
+                >
+                  {c.meta}
+                </div>
+              </motion.div>
             );
           })}
         </div>
