@@ -26,28 +26,82 @@ export function Scene01_Welcome() {
   return (
     <Backdrop tint="teal">
       <SceneChip index={1} total={TOTAL} />
+
+      {/* Soft purple aurora wash so the dark "DESIGNER" text reads on the dark scene */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.55, 0.7] }}
+        transition={{ duration: 2.4, times: [0, 0.4, 1], ease: 'easeOut' }}
+        style={{
+          background:
+            'radial-gradient(ellipse 60% 45% at 50% 52%, rgba(196,176,255,0.55), rgba(124,58,237,0.18) 45%, transparent 70%)',
+        }}
+      />
+
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[3cqmin]">
-        <motion.img
-          src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
-          alt="CCDesigner"
-          crossOrigin="anonymous"
-          className="block w-auto"
-          style={{
-            height: 'clamp(120px, 22cqmax, 280px)',
-            filter: 'drop-shadow(0 8px 40px rgba(168,139,250,0.45))',
-          }}
-          initial={{ opacity: 0, scale: 0.85, y: 20 }}
-          animate={{ opacity: 1, scale: 1, y: 0 }}
-          transition={{ duration: 1.1, ease: 'circOut' }}
-        />
+        {/* Hero logo: enters from soft blur + scale, then a gentle breathing glow loop */}
         <motion.div
-          initial={{ opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.9, ease: 'circOut', delay: 0.7 }}
-          className="text-white/75 font-body tracking-[0.3em] uppercase"
-          style={{ fontSize: 'clamp(11px, 1.5cqmax, 22px)' }}
+          className="relative"
+          initial={{ opacity: 0, scale: 0.78, y: 18, filter: 'blur(14px)' }}
+          animate={{ opacity: 1, scale: 1, y: 0, filter: 'blur(0px)' }}
+          transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1] }}
         >
-          A Creative Studio for Educators
+          {/* Pulsing halo behind the wordmark */}
+          <motion.div
+            className="absolute inset-0 -m-[6cqmin] rounded-full pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(closest-side, rgba(196,176,255,0.55), rgba(168,139,250,0.18) 55%, transparent 75%)',
+              filter: 'blur(2cqmin)',
+            }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: [0, 0.9, 0.7, 0.9], scale: [0.85, 1.04, 1, 1.04] }}
+            transition={{ duration: 5.2, ease: 'easeInOut', times: [0, 0.25, 0.6, 1], delay: 0.3 }}
+          />
+
+          <motion.img
+            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+            alt="CCDesigner"
+            crossOrigin="anonymous"
+            className="relative block w-auto"
+            style={{
+              height: 'clamp(140px, 26cqmax, 320px)',
+              filter: 'drop-shadow(0 10px 40px rgba(168,139,250,0.55))',
+            }}
+            animate={{ y: [0, -3, 0] }}
+            transition={{ duration: 5, ease: 'easeInOut', repeat: Infinity, delay: 1.4 }}
+          />
+
+          {/* Light sweep across the wordmark */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none mix-blend-overlay"
+            style={{
+              background:
+                'linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%)',
+            }}
+            initial={{ x: '-110%', opacity: 0 }}
+            animate={{ x: ['-110%', '110%'], opacity: [0, 0.9, 0] }}
+            transition={{ duration: 1.6, ease: 'easeInOut', delay: 1.5, times: [0, 0.5, 1] }}
+          />
+        </motion.div>
+
+        {/* Tagline reveal */}
+        <motion.div
+          className="overflow-hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 1.2, duration: 0.4 }}
+        >
+          <motion.div
+            className="text-white/80 font-body tracking-[0.32em] uppercase"
+            style={{ fontSize: 'clamp(11px, 1.5cqmax, 22px)' }}
+            initial={{ y: '110%' }}
+            animate={{ y: '0%' }}
+            transition={{ duration: 0.9, ease: [0.16, 1, 0.3, 1], delay: 1.25 }}
+          >
+            A Creative Studio for Educators
+          </motion.div>
         </motion.div>
       </div>
     </Backdrop>
@@ -1154,26 +1208,122 @@ export function Scene22_Future() {
   return (
     <Backdrop tint="teal">
       <SceneChip index={22} total={TOTAL} />
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[2.5cqmin]">
-        <Eyebrow tint="teal" align="center">The future of curriculum design</Eyebrow>
-        <Cinematic size="2xl" align="center">
-          <span>Where creative</span>
-          <span>teaching ideas</span>
-          <span style={{ color: '#5EEAD4' }}>live, evolve, and grow.</span>
-        </Cinematic>
-        <Sub align="center" delay={1.0}>
-          Built with educators. Powered by your creativity. Shared with theatres, orchestras, dance companies, universities and outreach teams — together, building the creative archive your sector deserves.
-        </Sub>
+
+      {/* Aurora wash so the wordmark reads on the dark teal backdrop */}
+      <motion.div
+        className="absolute inset-0 pointer-events-none"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: [0, 0.55, 0.75] }}
+        transition={{ duration: 2.6, times: [0, 0.4, 1], ease: 'easeOut' }}
+        style={{
+          background:
+            'radial-gradient(ellipse 65% 45% at 50% 48%, rgba(196,176,255,0.55), rgba(124,58,237,0.18) 45%, transparent 72%)',
+        }}
+      />
+
+      {/* Soft floating particles to give the outro motion */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {Array.from({ length: 14 }).map((_, i) => {
+          const left = (i * 73) % 100;
+          const delay = (i % 7) * 0.4;
+          const size = 0.4 + ((i * 31) % 10) / 10;
+          return (
+            <motion.div
+              key={`p-${i}`}
+              className="absolute rounded-full bg-white/60"
+              style={{
+                left: `${left}%`,
+                bottom: '-2cqmin',
+                width: `${size}cqmin`,
+                height: `${size}cqmin`,
+                filter: 'blur(0.4cqmin)',
+              }}
+              initial={{ y: 0, opacity: 0 }}
+              animate={{ y: '-110cqh', opacity: [0, 0.8, 0] }}
+              transition={{ duration: 7 + (i % 4), ease: 'linear', delay, repeat: Infinity }}
+            />
+          );
+        })}
+      </div>
+
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[3cqmin]">
         <motion.div
-          className="mt-[1cqmin] inline-flex items-center gap-[1.5cqmin] px-[3cqmin] py-[1.4cqmin] rounded-full text-[#0f2a2e] font-bold"
+          initial={{ opacity: 0, y: -8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: 'circOut', delay: 0.2 }}
+          className="text-white/65 font-body tracking-[0.32em] uppercase"
+          style={{ fontSize: 'clamp(10px, 1.3cqmax, 18px)' }}
+        >
+          The future of curriculum design
+        </motion.div>
+
+        {/* Hero outro logo */}
+        <motion.div
+          className="relative"
+          initial={{ opacity: 0, scale: 0.82, filter: 'blur(12px)' }}
+          animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+          transition={{ duration: 1.3, ease: [0.16, 1, 0.3, 1], delay: 0.4 }}
+        >
+          {/* Halo */}
+          <motion.div
+            className="absolute inset-0 -m-[6cqmin] rounded-full pointer-events-none"
+            style={{
+              background:
+                'radial-gradient(closest-side, rgba(196,176,255,0.6), rgba(168,139,250,0.18) 55%, transparent 75%)',
+              filter: 'blur(2cqmin)',
+            }}
+            initial={{ opacity: 0, scale: 0.85 }}
+            animate={{ opacity: [0, 0.9, 0.65, 0.9], scale: [0.85, 1.05, 1, 1.05] }}
+            transition={{ duration: 5.5, ease: 'easeInOut', times: [0, 0.25, 0.6, 1], delay: 0.6 }}
+          />
+
+          <motion.img
+            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+            alt="CCDesigner"
+            crossOrigin="anonymous"
+            className="relative block w-auto"
+            style={{
+              height: 'clamp(130px, 24cqmax, 300px)',
+              filter: 'drop-shadow(0 10px 40px rgba(168,139,250,0.55))',
+            }}
+            animate={{ y: [0, -3, 0] }}
+            transition={{ duration: 5, ease: 'easeInOut', repeat: Infinity, delay: 1.6 }}
+          />
+
+          {/* Light sweep */}
+          <motion.div
+            className="absolute inset-0 pointer-events-none mix-blend-overlay"
+            style={{
+              background:
+                'linear-gradient(115deg, transparent 35%, rgba(255,255,255,0.55) 50%, transparent 65%)',
+            }}
+            initial={{ x: '-110%', opacity: 0 }}
+            animate={{ x: ['-110%', '110%'], opacity: [0, 0.9, 0] }}
+            transition={{ duration: 1.8, ease: 'easeInOut', delay: 1.7, times: [0, 0.5, 1] }}
+          />
+        </motion.div>
+
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.9, ease: 'circOut', delay: 1.6 }}
+          className="text-white/80 font-body max-w-[60cqw]"
+          style={{ fontSize: 'clamp(12px, 1.5cqmax, 22px)', lineHeight: 1.5 }}
+        >
+          Built with educators. Powered by your creativity.<br />
+          Where creative teaching ideas <span style={{ color: '#C4B0FF' }}>live, evolve and grow.</span>
+        </motion.div>
+
+        <motion.div
+          className="inline-flex items-center gap-[1.5cqmin] px-[3cqmin] py-[1.4cqmin] rounded-full text-white font-bold"
           style={{
-            background: 'linear-gradient(135deg,#5EEAD4,#14B8A6)',
-            boxShadow: '0 0 60px rgba(94,234,212,0.45), 0 20px 40px -10px rgba(0,0,0,0.5)',
-            fontSize: 'clamp(13px,1.8cqmax,24px)',
+            background: 'linear-gradient(135deg,#A78BFA,#7C3AED)',
+            boxShadow: '0 0 60px rgba(168,139,250,0.5), 0 20px 40px -10px rgba(0,0,0,0.5)',
+            fontSize: 'clamp(13px,1.7cqmax,22px)',
           }}
-          initial={{ opacity: 0, y: 24, scale: 0.92 }}
+          initial={{ opacity: 0, y: 20, scale: 0.92 }}
           animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ ...springs.bouncy, delay: 1.4 }}
+          transition={{ ...springs.bouncy, delay: 2.2 }}
         >
           Join the creative ecosystem
           <span style={{ fontSize: '1.1em' }}>→</span>
