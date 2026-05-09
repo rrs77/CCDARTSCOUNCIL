@@ -61,7 +61,7 @@ export function Scene01_Welcome() {
           />
 
           <motion.img
-            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+            src={`${import.meta.env.BASE_URL}ccdesigner-logo-light.png`}
             alt="CCDesigner"
             crossOrigin="anonymous"
             className="relative block w-auto"
@@ -1278,7 +1278,7 @@ export function Scene22_Future() {
           />
 
           <motion.img
-            src={`${import.meta.env.BASE_URL}ccdesigner-logo.png`}
+            src={`${import.meta.env.BASE_URL}ccdesigner-logo-light.png`}
             alt="CCDesigner"
             crossOrigin="anonymous"
             className="relative block w-auto"

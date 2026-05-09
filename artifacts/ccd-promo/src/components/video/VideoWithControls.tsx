@@ -4,7 +4,7 @@ import VideoTemplate, { SCENE_DURATIONS, SCENE_LABELS } from './VideoTemplate';
 import { useSceneControls } from '@/hooks/useSceneControls';
 
 const PROGRESS_TICK_MS = 60;
-const IDLE_HIDE_MS = 2500;
+const IDLE_HIDE_MS = 8000;
 
 interface ControlBarProps {
   visible: boolean;
