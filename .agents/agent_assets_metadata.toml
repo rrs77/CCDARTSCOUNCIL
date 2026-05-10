@@ -59,3 +59,9 @@ id = "79diPR_4BrCNKYG-FeDWx"
 uri = "file://artifacts/ccd-pitch/public/downloads/CCDesigner-Pitch-Deck.pptx"
 type = "slides"
 title = "CCDesigner Pitch Deck (PPTX) — 21 slides"
+
+[[outputs]]
+id = "ARD9iYIGqhmaycaTR5_DX"
+uri = "file://artifacts/ccd-promo/public/downloads/CCDesigner-Promo.pptx"
+type = "slides"
+title = "CCDesigner Promo — Editable PowerPoint (22 slides)"
