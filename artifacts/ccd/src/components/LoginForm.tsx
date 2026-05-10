@@ -199,7 +199,7 @@ export function LoginForm() {
               <img
                 src={`${import.meta.env.BASE_URL}ccdesigner-wordmark.png`}
                 alt={loginTitle}
-                className="h-9 w-auto sm:h-10"
+                className="h-28 w-auto sm:h-32"
                 draggable={false}
               />
             </div>
