@@ -135,7 +135,7 @@ export function LoginForm() {
   return (
     <div className="min-h-screen flex flex-col lg:flex-row bg-white">
       <div
-        className="relative flex flex-col items-center justify-center px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14 overflow-hidden"
+        className="relative hidden lg:flex flex-col items-center justify-center px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14 overflow-hidden"
         style={{
           background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 35%, #312e81 65%, #1e1b4b 100%)',
           color: '#fff',
@@ -195,14 +195,13 @@ export function LoginForm() {
 
         <div className="flex flex-1 items-center justify-center px-6 py-8 lg:px-10">
           <div className="w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <LogoSVG size="sm" showText={false} letters={logoLetters} />
-              <span
-                className="text-lg font-semibold text-gray-900"
-                style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-              >
-                {loginTitle}
-              </span>
+            <div className="mb-6 flex items-center">
+              <img
+                src={`${import.meta.env.BASE_URL}ccdesigner-wordmark.png`}
+                alt={loginTitle}
+                className="h-9 w-auto sm:h-10"
+                draggable={false}
+              />
             </div>
 
             <div className="mb-8">
