@@ -137,24 +137,24 @@ export function LoginForm() {
       <div
         className="relative hidden lg:flex flex-col items-center justify-center px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14 overflow-hidden"
         style={{
-          background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 35%, #312e81 65%, #1e1b4b 100%)',
+          background: 'linear-gradient(160deg, #04201f 0%, #042f2e 35%, #0f3a3a 65%, #042f2e 100%)',
           color: '#fff',
         }}
       >
         <div
           aria-hidden
           className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full opacity-20 blur-3xl"
-          style={{ backgroundColor: '#7c3aed', animation: 'loginFloat 8s ease-in-out infinite' }}
+          style={{ backgroundColor: '#0d9488', animation: 'loginFloat 8s ease-in-out infinite' }}
         />
         <div
           aria-hidden
           className="pointer-events-none absolute top-1/3 -left-40 h-80 w-80 rounded-full opacity-15 blur-3xl"
-          style={{ backgroundColor: '#6366f1', animation: 'loginFloat 10s ease-in-out infinite reverse' }}
+          style={{ backgroundColor: '#14b8a6', animation: 'loginFloat 10s ease-in-out infinite reverse' }}
         />
         <div
           aria-hidden
           className="pointer-events-none absolute -bottom-40 right-1/4 h-96 w-96 rounded-full opacity-10 blur-3xl"
-          style={{ backgroundColor: '#a78bfa', animation: 'loginFloat 12s ease-in-out infinite 2s' }}
+          style={{ backgroundColor: '#5eead4', animation: 'loginFloat 12s ease-in-out infinite 2s' }}
         />
 
         <div className="relative flex flex-col items-center text-center">
@@ -164,8 +164,8 @@ export function LoginForm() {
           >
             <span className="text-white">Creative</span>
             <br />
-            <span className="italic" style={{ color: '#a78bfa' }}>Curriculum</span>
-            <span className="italic" style={{ color: '#a78bfa' }}>Designer</span>
+            <span className="italic" style={{ color: '#5eead4' }}>Curriculum</span>
+            <span className="italic" style={{ color: '#5eead4' }}>Designer</span>
           </h1>
           <p className="mt-6 max-w-sm text-base opacity-75 sm:text-lg leading-relaxed">
             Design, deliver, and review your curriculum — made easy
@@ -245,7 +245,7 @@ export function LoginForm() {
                       disabled={forgotSubmitting}
                       className="w-full text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200"
                       style={{
-                        background: forgotSubmitting ? '#9CA3AF' : 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                        background: forgotSubmitting ? '#9CA3AF' : 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)',
                       }}
                     >
                       {forgotSubmitting ? 'Sending...' : 'Send reset link'}
@@ -365,7 +365,7 @@ export function LoginForm() {
                   disabled={isSubmitting}
                   className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
                   style={{
-                    background: isSubmitting ? '#6B7280' : 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                    background: isSubmitting ? '#6B7280' : 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)',
                   }}
                 >
                   {isSubmitting ? (
@@ -462,7 +462,7 @@ export function LoginForm() {
                 <button
                   onClick={handleInstall}
                   className="flex-1 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)' }}
+                  style={{ background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)' }}
                 >
                   <Download className="h-5 w-5" />
                   <span>Install Now</span>

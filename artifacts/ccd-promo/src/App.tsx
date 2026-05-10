@@ -40,7 +40,9 @@ export default function App() {
       <a
         href={PPTX_URL}
         download="CCDesigner-Promo.pptx"
-        className="absolute top-3 right-3 z-50 inline-flex items-center gap-1.5 rounded-full bg-white/10 px-3 py-1.5 text-xs font-medium text-white backdrop-blur-md ring-1 ring-white/20 transition hover:bg-white/20 hover:ring-white/40 active:scale-95"
+        target="_blank"
+        rel="noopener noreferrer"
+        className="absolute top-4 right-4 z-50 inline-flex items-center gap-2 rounded-full bg-teal-600 px-4 py-2 text-sm font-semibold text-white shadow-lg ring-1 ring-white/20 transition hover:bg-teal-500 hover:shadow-xl active:scale-95"
         title="Download editable PowerPoint"
       >
         <svg
@@ -51,14 +53,14 @@ export default function App() {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
-          className="h-3.5 w-3.5"
+          className="h-4 w-4"
           aria-hidden
         >
           <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
           <polyline points="7 10 12 15 17 10" />
           <line x1="12" y1="15" x2="12" y2="3" />
         </svg>
-        <span>PPTX</span>
+        <span>Download PPTX</span>
       </a>
     </div>
   );
