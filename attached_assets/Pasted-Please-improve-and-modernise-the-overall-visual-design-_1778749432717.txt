@@ -1,0 +1,50 @@
+Please improve and modernise the overall visual design of the app while keeping the interface clean, bright, and highly usable.
+
+The current interface feels too plain, flat, and lacking inspiration. The app should remain primarily white/light in the background, but it needs a more premium, polished, creative feel with stronger visual identity and subtle modern motion.
+
+Use the attached reference image as inspiration for the updated design direction.
+
+Design Requirements:
+
+* Keep the overall app background light/white
+* Retain the existing teal accent colour because it works well
+* Add TWO additional accent colours inspired by the reference image:
+
+  * Rich modern purple tones inspired by the top-left logo
+  * Deep blue/teal gradient tones inspired by the dark background glow
+* Build a cohesive modern colour palette across the app
+* Use gradients subtly and professionally, not excessively
+* Ensure colours remain accessible and readable
+
+Visual Improvements:
+
+* Add subtle modern animations throughout the app to improve perceived quality
+* Include tasteful micro-interactions:
+
+  * Soft hover transitions
+  * Gentle card elevation
+  * Smooth fades
+  * Subtle scaling effects
+  * Animated highlights/glows where appropriate
+* Ensure animations are lightweight and not distracting
+* Improve spacing, typography hierarchy, shadows, borders, and card styling
+* Make the UI feel more dynamic, polished, and premium
+* Add more visual depth while keeping the interface uncluttered
+
+Feature Walkthrough Fixes:
+
+* Remove the “Download PPTX” label/button from the Feature Walkthrough interface
+* Ensure the walkthrough UI looks polished and visually integrated with the rest of the app
+* Improve the walkthrough styling using the updated colour palette
+* Ensure walkthrough overlays, highlights, and tooltips feel modern and visually engaging
+
+Please:
+
+* Create a refined colour system for the app
+* Apply the new palette consistently across components
+* Improve the overall visual design quality
+* Introduce subtle modern animations
+* Keep performance smooth and responsive
+* Maintain a professional educational/creative SaaS aesthetic
+
+The final result should feel modern, inspiring, polished, creative, and premium while still remaining clean, bright, and easy to use.

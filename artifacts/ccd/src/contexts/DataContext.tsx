@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { activitiesApi, lessonsApi, eyfsApi } from '../config/api';
 import { halfTermsApi } from '../config/api';
 import { customObjectivesApi } from '../config/customObjectivesApi';
