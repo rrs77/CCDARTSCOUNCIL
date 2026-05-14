@@ -1911,7 +1911,7 @@ export function Scene21_Mobile() {
       <SceneLayout
         layout="right-text"
         visual={
-          <div className="relative w-full h-[65cqh] flex items-center justify-center overflow-visible">
+          <div className="relative w-full h-[65cqh] overflow-visible">
             {/* Soft ambient halo behind the cards for depth. */}
             <motion.div
               aria-hidden
@@ -1946,34 +1946,36 @@ export function Scene21_Mobile() {
               transition={{ duration: 1.4, ease: 'easeOut', delay: 0.35 }}
             />
 
-            {/* Back card — EYFS Kod\u00E1ly. Sits behind, slightly rotated
-                left, fades + slides up first so the front card lands on
-                top of an already-settled background plate. */}
+            {/* Both cards are anchored to the visual container's centre
+                via absolute positioning + percentage offsets so the
+                stack reads consistently regardless of slide aspect.
+                The back card (EYFS) lands first and sits up-and-to-
+                the-left; the front card (KS3) drops in second slightly
+                down-and-to-the-right, leaving both partially visible. */}
+
+            {/* Back card — EYFS Kod\u00E1ly. */}
             <motion.div
               className="absolute"
               style={{
                 transformOrigin: 'center center',
-                left: '6%',
-                top: '8%',
+                left: '4%',
+                top: '2%',
                 zIndex: 1,
               }}
               initial={{ opacity: 0, y: 60, x: -10, rotate: -10 }}
-              animate={{ opacity: 1, y: 0, x: 0, rotate: -7 }}
+              animate={{ opacity: 1, y: 0, x: 0, rotate: -6 }}
               transition={{ duration: 1.05, ease: [0.16, 1, 0.3, 1], delay: 0.45 }}
             >
               <PlanPreview {...eyfsKodaly} />
             </motion.div>
 
-            {/* Front card — KS3 Drama Commedia. Larger feel, slight
-                rightward offset and gentle clockwise tilt so the two
-                cards form a clear "stack" with both still partially
-                visible. */}
+            {/* Front card — KS3 Drama Commedia. */}
             <motion.div
               className="absolute"
               style={{
                 transformOrigin: 'center center',
-                right: '4%',
-                bottom: '4%',
+                left: '24%',
+                top: '22%',
                 zIndex: 2,
               }}
               initial={{ opacity: 0, y: 80, x: 20, rotate: 8 }}
