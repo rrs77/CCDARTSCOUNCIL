@@ -177,8 +177,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
   const { categories, customYearGroups } = useSettings();
   const { user } = useAuth();
   
-  // Check if user is admin
-  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' || user?.role === 'administrator';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
   
   const [activeTab, setActiveTab] = useState<'main' | 'extended'>('main');
   const [showPreview, setShowPreview] = useState(false);

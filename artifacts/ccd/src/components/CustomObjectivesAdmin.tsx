@@ -111,7 +111,7 @@ interface CustomObjectivesAdminProps {
 export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: CustomObjectivesAdminProps) {
   const { user } = useAuth();
   const { customYearGroups, yearGroupSections } = useSettings();
-  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' || user?.role === 'administrator';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
   
   // Get available year group names for linking
   const availableYearGroups = (customYearGroups || []).map(yg => yg.name);

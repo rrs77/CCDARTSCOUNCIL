@@ -19,9 +19,7 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   const [backupStatus, setBackupStatus] = useState<'idle' | 'backing-up' | 'success' | 'error'>('idle');
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'restoring' | 'success' | 'error'>('idle');
 
-  // Check if user is admin - specifically Rob's email
-  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' || 
-                  user?.role === 'administrator';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
 
   // Move all function declarations to the top before any conditional returns
   const checkServerStatus = async () => {

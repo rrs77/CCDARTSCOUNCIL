@@ -45,35 +45,6 @@ const DEMO_USER: AppUser = {
   role: 'viewer',
 };
 
-// Local user database - you can add more users here
-const localUsers = [
-  {
-    id: '1',
-    email: 'rob.reichstorer@gmail.com',
-    password: 'mubqaZ-piske5-xecdur',
-    name: 'Rob Reichstorer',
-    avatar: 'https://images.pexels.com/photos/1407322/pexels-photo-1407322.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
-    role: 'administrator'
-  },
-  // Add more users here as needed
-  // {
-  //   id: '2',
-  //   email: 'teacher@rhythmstix.co.uk',
-  //   password: 'teacher123',
-  //   name: 'Sarah Teacher',
-  //   avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
-  //   role: 'teacher'
-  // },
-  // Example view-only user:
-  // {
-  //   id: '3',
-  //   email: 'viewer@rhythmstix.co.uk',
-  //   password: 'viewer123',
-  //   name: 'View Only User',
-  //   avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
-  //   role: 'viewer'
-  // }
-];
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -334,46 +305,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // ----- Legacy: local + WordPress -----
-      // DEV MODE: Auto-login for local development
-      if (import.meta.env.DEV && !localStorage.getItem('rhythmstix_auth_token')) {
-        const devUser = localUsers[0];
-        if (devUser) {
-          console.log('🔧 DEV MODE: Auto-logging in as', devUser.email);
-          localStorage.setItem('rhythmstix_auth_token', `rhythmstix_local_${devUser.id}`);
-          const userData: AppUser = {
-            id: devUser.id,
-            email: devUser.email,
-            name: devUser.name,
-            avatar: devUser.avatar,
-            role: devUser.role
-          };
-          setUser(userData);
-          syncUserIdToStorage(devUser.id);
-          setLoading(false);
-          return;
-        }
-      }
-
+      // ----- Legacy: WordPress -----
       const token = localStorage.getItem('rhythmstix_auth_token');
       if (token) {
+        // Reject any stale local-only tokens from the removed legacy auth path
         if (token.startsWith('rhythmstix_local_')) {
-          const userId = token.replace('rhythmstix_local_', '');
-          const localUser = localUsers.find(u => u.id === userId);
-          if (localUser) {
-            resolvedRef.current = true;
-            const userData: AppUser = {
-              id: localUser.id,
-              email: localUser.email,
-              name: localUser.name,
-              avatar: localUser.avatar,
-              role: localUser.role
-            };
-            setUser(userData);
-            syncUserIdToStorage(localUser.id);
-          } else {
-            localStorage.removeItem('rhythmstix_auth_token');
-          }
+          localStorage.removeItem('rhythmstix_auth_token');
         } else {
           const wordpressUrl = import.meta.env.VITE_WORDPRESS_URL;
           if (wordpressUrl && wordpressUrl !== 'https://your-wordpress-site.com') {
@@ -450,29 +387,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         syncUserIdToStorage(sessionUser.id);
         // Revalidate profile in background – updates name/role/profile object when fresh data arrives.
         void revalidateProfile(sessionUser.id);
-        return;
-      }
-
-      // ----- Legacy: local users (only when Supabase Auth is disabled) -----
-      const localUser = localUsers.find(u => {
-        if (u.email === username) {
-          return password === '' || u.password === password;
-        }
-        return false;
-      });
-
-      if (localUser) {
-        resolvedRef.current = true;
-        const userData: AppUser = {
-          id: localUser.id,
-          email: localUser.email,
-          name: localUser.name,
-          avatar: localUser.avatar,
-          role: localUser.role
-        };
-        localStorage.setItem('rhythmstix_auth_token', `rhythmstix_local_${localUser.id}`);
-        setUser(userData);
-        syncUserIdToStorage(localUser.id);
         return;
       }
 

@@ -29,8 +29,7 @@ export function AuthGuard({
   }
 
   if (requireCanManageUsers) {
-    const isSuperAdmin = user?.email === 'rob.reichstorer@gmail.com' || user?.role === 'administrator';
-    const canManage = isSuperAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.can_manage_users === true;
+    const canManage = profile?.role === 'admin' || profile?.role === 'superuser' || profile?.can_manage_users === true;
     if (!canManage) return <>{fallback}</>;
   }
 

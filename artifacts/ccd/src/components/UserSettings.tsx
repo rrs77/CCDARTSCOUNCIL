@@ -187,9 +187,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const applyingSectionHistoryRef = useRef(false);
   const [shopPacks, setShopPacks] = useState<ActivityPack[]>([]);
 
-  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' ||
-                  user?.role === 'administrator' ||
-                  user?.role === 'admin' ||
+  const isAdmin = user?.role === 'admin' ||
                   user?.role === 'superuser' ||
                   profile?.role === 'admin' ||
                   profile?.role === 'superuser';

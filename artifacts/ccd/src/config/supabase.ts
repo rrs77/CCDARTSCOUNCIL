@@ -8,8 +8,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel (or use defaults).');
 }
 
-// Use Supabase Auth (email/password, RLS): set VITE_USE_SUPABASE_AUTH=true
-const useSupabaseAuth = import.meta.env.VITE_USE_SUPABASE_AUTH === 'true';
+// Supabase Auth is enabled by default (fail-closed).
+// Set VITE_USE_SUPABASE_AUTH=false only to explicitly disable it (e.g. during local dev without a Supabase project).
+const useSupabaseAuth = import.meta.env.VITE_USE_SUPABASE_AUTH !== 'false';
 
 /** Session cookie set when user chooses "Require password each time". When set, we use sessionStorage so session ends when browser closes. */
 const SESSION_ONLY_COOKIE = 'ccd_session_only';
