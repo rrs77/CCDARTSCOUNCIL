@@ -1575,48 +1575,423 @@ export function Scene20_Export() {
 
 /* ------------------------------------------------------------------ *
  * 21 — MOBILE WORKFLOW
+ * Visual side shows two layered, realistic lesson-plan previews
+ * (KS3 Drama — Commedia dell'Arte; EYFS — Kodály music) sliding into
+ * view behind the headline. Cards remain partially overlapped and
+ * slightly rotated so the slide reads as "the planning surface" rather
+ * than a single placeholder document. Palette intentionally bridges
+ * indigo / violet (KS3) and teal (EYFS) to match the app's brand
+ * spectrum.
  * ------------------------------------------------------------------ */
+
+/** A small "row" inside a plan preview — a coloured marker bullet,
+ *  a bold lead label, and a wrapped descriptor. Kept compact so two
+ *  cards layered together still read clearly at slide scale. */
+function PlanRow({
+  marker,
+  label,
+  detail,
+  accent,
+}: {
+  marker: string;
+  label: string;
+  detail: string;
+  accent: string;
+}) {
+  return (
+    <div className="flex items-start gap-[0.9cqmin] mb-[0.7cqmin]">
+      <span
+        className="flex-shrink-0 inline-flex items-center justify-center rounded-[0.5cqmin] font-bold text-[#0a1014]"
+        style={{
+          width: 'clamp(14px,2.1cqmax,22px)',
+          height: 'clamp(14px,2.1cqmax,22px)',
+          background: accent,
+          fontSize: 'clamp(8px,1.05cqmax,12px)',
+          boxShadow: `0 4px 12px -4px ${accent}80`,
+        }}
+      >
+        {marker}
+      </span>
+      <div className="min-w-0 flex-1">
+        <div
+          className="font-semibold text-white/90 leading-tight"
+          style={{ fontSize: 'clamp(8.5px,1.15cqmax,13px)' }}
+        >
+          {label}
+        </div>
+        <div
+          className="text-white/55 leading-snug mt-[0.15cqmin]"
+          style={{ fontSize: 'clamp(7.5px,1cqmax,11.5px)' }}
+        >
+          {detail}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/** A pill chip — used for resource links and meta tags. */
+function PlanChip({
+  children,
+  accent,
+}: {
+  children: React.ReactNode;
+  accent: string;
+}) {
+  return (
+    <span
+      className="inline-flex items-center gap-[0.4cqmin] rounded-full px-[0.9cqmin] py-[0.25cqmin] font-medium"
+      style={{
+        background: `${accent}1f`,
+        color: accent,
+        border: `1px solid ${accent}33`,
+        fontSize: 'clamp(7px,0.95cqmax,11px)',
+      }}
+    >
+      <span className="rounded-full" style={{ width: '0.4em', height: '0.4em', background: accent }} />
+      {children}
+    </span>
+  );
+}
+
+interface PlanPreviewProps {
+  yearGroupLabel: string;
+  unit: string;
+  lessonMeta: string;
+  title: string;
+  subtitle: string;
+  accent: string;
+  accentSoft: string;
+  objectives: string[];
+  flow: { marker: string; label: string; detail: string }[];
+  resources: string[];
+  /** Background gradient for the card body — drives the overall hue. */
+  cardBg: string;
+  cardBorder: string;
+}
+
+/** A single layered planning preview card. Header → objectives strip
+ *  → numbered lesson flow → resource chips. Sized in container query
+ *  units so it remains legible at any slide scale. */
+function PlanPreview({
+  yearGroupLabel,
+  unit,
+  lessonMeta,
+  title,
+  subtitle,
+  accent,
+  accentSoft,
+  objectives,
+  flow,
+  resources,
+  cardBg,
+  cardBorder,
+}: PlanPreviewProps) {
+  return (
+    <div
+      className="rounded-[1.4cqmin] overflow-hidden"
+      style={{
+        width: 'clamp(220px,32cqmax,420px)',
+        background: cardBg,
+        border: `1px solid ${cardBorder}`,
+        boxShadow:
+          '0 50px 110px -25px rgba(0,0,0,0.75), 0 12px 28px -8px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.06)',
+      }}
+    >
+      {/* App-style window chrome to read as a screenshot of the planner. */}
+      <div
+        className="flex items-center gap-[0.6cqmin] px-[1.2cqmin] py-[0.7cqmin] border-b"
+        style={{ borderColor: cardBorder, background: 'rgba(255,255,255,0.03)' }}
+      >
+        <span className="rounded-full bg-[#FF5F57]" style={{ width: 'clamp(5px,0.7cqmax,9px)', height: 'clamp(5px,0.7cqmax,9px)' }} />
+        <span className="rounded-full bg-[#FEBC2E]" style={{ width: 'clamp(5px,0.7cqmax,9px)', height: 'clamp(5px,0.7cqmax,9px)' }} />
+        <span className="rounded-full bg-[#28C840]" style={{ width: 'clamp(5px,0.7cqmax,9px)', height: 'clamp(5px,0.7cqmax,9px)' }} />
+        <div
+          className="flex-1 text-center text-white/35 font-mono tracking-wide truncate"
+          style={{ fontSize: 'clamp(7px,0.9cqmax,11px)' }}
+        >
+          {unit}
+        </div>
+      </div>
+
+      <div className="p-[1.4cqmin]">
+        {/* Title strip */}
+        <div className="flex items-center justify-between gap-[1cqmin] mb-[0.9cqmin]">
+          <div className="min-w-0">
+            <div className="flex items-center gap-[0.6cqmin] mb-[0.4cqmin]">
+              <span
+                className="rounded-full px-[0.8cqmin] py-[0.2cqmin] font-semibold uppercase tracking-wider"
+                style={{
+                  background: accent,
+                  color: '#0a1014',
+                  fontSize: 'clamp(7px,0.9cqmax,11px)',
+                  letterSpacing: '0.1em',
+                }}
+              >
+                {yearGroupLabel}
+              </span>
+              <span
+                className="text-white/45 font-medium"
+                style={{ fontSize: 'clamp(7px,0.9cqmax,11px)' }}
+              >
+                {lessonMeta}
+              </span>
+            </div>
+            <div
+              className="font-bold text-white leading-tight truncate"
+              style={{ fontSize: 'clamp(11px,1.55cqmax,18px)' }}
+            >
+              {title}
+            </div>
+            <div
+              className="text-white/55 leading-snug mt-[0.2cqmin]"
+              style={{ fontSize: 'clamp(8px,1.05cqmax,12px)' }}
+            >
+              {subtitle}
+            </div>
+          </div>
+        </div>
+
+        {/* Objectives band */}
+        <div
+          className="rounded-[0.7cqmin] px-[1cqmin] py-[0.7cqmin] mb-[0.9cqmin]"
+          style={{
+            background: `linear-gradient(135deg, ${accent}1a, ${accentSoft}10)`,
+            border: `1px solid ${accent}33`,
+          }}
+        >
+          <div
+            className="font-semibold uppercase tracking-wider mb-[0.3cqmin]"
+            style={{ color: accent, fontSize: 'clamp(7px,0.85cqmax,10px)', letterSpacing: '0.14em' }}
+          >
+            Curriculum Objectives
+          </div>
+          {objectives.map((o, i) => (
+            <div
+              key={i}
+              className="text-white/80 leading-snug"
+              style={{ fontSize: 'clamp(8px,1.05cqmax,12px)' }}
+            >
+              {o}
+            </div>
+          ))}
+        </div>
+
+        {/* Lesson flow */}
+        <div
+          className="font-semibold uppercase tracking-wider mb-[0.5cqmin] text-white/45"
+          style={{ fontSize: 'clamp(7px,0.85cqmax,10px)', letterSpacing: '0.14em' }}
+        >
+          Lesson Flow
+        </div>
+        {flow.map((row, i) => (
+          <PlanRow key={i} marker={row.marker} label={row.label} detail={row.detail} accent={accent} />
+        ))}
+
+        {/* Resources */}
+        <div className="mt-[0.9cqmin] pt-[0.8cqmin] border-t" style={{ borderColor: cardBorder }}>
+          <div
+            className="font-semibold uppercase tracking-wider mb-[0.4cqmin] text-white/45"
+            style={{ fontSize: 'clamp(7px,0.85cqmax,10px)', letterSpacing: '0.14em' }}
+          >
+            Resources
+          </div>
+          <div className="flex flex-wrap gap-[0.5cqmin]">
+            {resources.map((r, i) => (
+              <PlanChip key={i} accent={accentSoft}>
+                {r}
+              </PlanChip>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function Scene21_Mobile() {
+  // Two realistic plans authored to feel native to the app:
+  //   • KS3 Drama — Commedia dell'Arte (Year 8 / KS3, lesson 3 of 6)
+  //   • EYFS — Kodály music (Reception, scarf + rhythm-stick session)
+  // Content mirrors the structure used by lessons in the platform —
+  // objectives, warm-up, main task, plenary, assessment, resources —
+  // and uses Kodály-authentic activities (so-mi singing, scarves for
+  // melodic contour, ta / ti-ti rhythm sticks, singing game).
+  const ks3Drama: PlanPreviewProps = {
+    yearGroupLabel: 'KS3 — Year 8',
+    unit: 'Drama › Commedia dell\u2019Arte › Lesson 3 of 6',
+    lessonMeta: 'Wk 4 • 60 min',
+    title: 'Stock Characters & Lazzi',
+    subtitle: 'Devising a 90-second piazza scene from a Commedia scenario',
+    accent: '#A5B4FC',
+    accentSoft: '#C4B5FD',
+    cardBg:
+      'linear-gradient(155deg, #1a1746 0%, #1f1a52 45%, #2a1f5e 100%)',
+    cardBorder: 'rgba(165,180,252,0.18)',
+    objectives: [
+      'Embody status, mask logic and physicality of three Commedia stock characters (Arlecchino, Pantalone, Il Capitano).',
+    ],
+    flow: [
+      {
+        marker: '1',
+        label: 'Warm-up — Status walks (8 min)',
+        detail: 'Levels 1\u201310 across the room; freeze on clap to find a Commedia silhouette.',
+      },
+      {
+        marker: '2',
+        label: 'Stimulus — Mask & scenario reveal (10 min)',
+        detail: 'Watch lazzo clip, distribute character cards and a one-line piazza scenario.',
+      },
+      {
+        marker: '3',
+        label: 'Devising — Piazza scene in trios (25 min)',
+        detail: 'Build a beginning / lazzo / resolution with one triple-take and one chase.',
+      },
+      {
+        marker: '4',
+        label: 'Performance & peer feedback (12 min)',
+        detail: 'Two stars + one wish anchored to status, physicality and audience contact.',
+      },
+      {
+        marker: '5',
+        label: 'Plenary — Reflection ticket (5 min)',
+        detail: 'Exit slip: which Commedia choice landed loudest and why?',
+      },
+    ],
+    resources: ['Character cards.pdf', 'Piazza scenarios.pdf', 'Lazzi clip', 'Assessment grid'],
+  };
+
+  const eyfsKodaly: PlanPreviewProps = {
+    yearGroupLabel: 'EYFS — Reception',
+    unit: 'Music › Kod\u00E1ly Foundations › Week 6',
+    lessonMeta: 'Carpet • 25 min',
+    title: 'Bee Bee Bumblebee',
+    subtitle: 'Hearing so\u2013mi, feeling ta / ti-ti, moving with scarves',
+    accent: '#5EEAD4',
+    accentSoft: '#7DD3FC',
+    cardBg:
+      'linear-gradient(155deg, #062023 0%, #082c2f 45%, #0d3a44 100%)',
+    cardBorder: 'rgba(94,234,212,0.18)',
+    objectives: [
+      'EYFS EAD: Sing a range of well-known nursery rhymes; perform with others, trying to move in time with music.',
+    ],
+    flow: [
+      {
+        marker: '1',
+        label: 'Warm-up — Hello song (3 min)',
+        detail: '\u201CHello, hello, can you clap your hands?\u201D on so\u2013mi; children echo back.',
+      },
+      {
+        marker: '2',
+        label: 'Scarf activity — Floating melody (5 min)',
+        detail: 'Children draw the so\u2013mi contour with scarves; high above, low to the lap.',
+      },
+      {
+        marker: '3',
+        label: 'Rhythm sticks — Ta & ti-ti (6 min)',
+        detail: 'Tap heartbeat on knees, then sticks on \u201CBee bee bum-ble-bee\u201D — ta ta ti-ti ta.',
+      },
+      {
+        marker: '4',
+        label: 'Singing game — Pass the bee (8 min)',
+        detail: 'Circle game: child holding the bee chooses high or low, group sings back.',
+      },
+      {
+        marker: '5',
+        label: 'Plenary — Goodbye song (3 min)',
+        detail: 'Whispered so\u2013mi farewell; thumbs-up if they heard a high note today.',
+      },
+    ],
+    resources: ['Bee Bee Bumblebee song sheet', 'Scarves x 30', 'Rhythm sticks x 30', 'Solfa hand-signs poster'],
+  };
+
   return (
     <Backdrop tint="indigo">
       <SceneChip index={21} total={TOTAL} />
-      <SceneLayout layout="right-text" visual={
-        <div className="relative w-full h-[65cqh] flex items-center justify-center">
-          <motion.div
-            className="rounded-[3cqmin] bg-[#0a1014] border border-white/10 overflow-hidden"
-            style={{
-              width: 'clamp(140px,22cqmax,300px)',
-              aspectRatio: '9/19',
-              boxShadow: '0 50px 100px -20px rgba(0,0,0,0.7), 0 0 60px rgba(99,102,241,0.3)',
-            }}
-            initial={{ opacity: 0, y: 40, rotate: -4 }}
-            animate={{ opacity: 1, y: 0, rotate: -2 }}
-            transition={{ duration: 1, ease: 'circOut', delay: 0.4 }}
-          >
-            <div className="p-[1.5cqmin]">
-              <div className="h-[1.4cqmin] w-[40%] bg-white/30 rounded-full mb-[1cqmin]" />
-              <div className="h-[1cqmin] w-[70%] bg-white/15 rounded-full mb-[2cqmin]" />
-              {[0, 1, 2, 3].map((i) => (
-                <div
-                  key={i}
-                  className="h-[3cqmin] rounded-[0.6cqmin] mb-[0.8cqmin]"
-                  style={{
-                    background: `linear-gradient(90deg, rgba(165,180,252,${0.20 - i * 0.04}), rgba(165,180,252,0.05))`,
-                    border: '1px solid rgba(255,255,255,0.06)',
-                  }}
-                />
-              ))}
-            </div>
-          </motion.div>
-        </div>
-      }>
+      <SceneLayout
+        layout="right-text"
+        visual={
+          <div className="relative w-full h-[65cqh] flex items-center justify-center overflow-visible">
+            {/* Soft ambient halo behind the cards for depth. */}
+            <motion.div
+              aria-hidden
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: '60cqmin',
+                height: '60cqmin',
+                background:
+                  'radial-gradient(closest-side, rgba(94,234,212,0.18), rgba(94,234,212,0) 70%)',
+                filter: 'blur(2cqmin)',
+                left: '8%',
+                top: '20%',
+              }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.4, ease: 'easeOut', delay: 0.2 }}
+            />
+            <motion.div
+              aria-hidden
+              className="absolute rounded-full pointer-events-none"
+              style={{
+                width: '50cqmin',
+                height: '50cqmin',
+                background:
+                  'radial-gradient(closest-side, rgba(165,180,252,0.22), rgba(165,180,252,0) 70%)',
+                filter: 'blur(2cqmin)',
+                right: '4%',
+                bottom: '6%',
+              }}
+              initial={{ opacity: 0, scale: 0.8 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 1.4, ease: 'easeOut', delay: 0.35 }}
+            />
+
+            {/* Back card — EYFS Kod\u00E1ly. Sits behind, slightly rotated
+                left, fades + slides up first so the front card lands on
+                top of an already-settled background plate. */}
+            <motion.div
+              className="absolute"
+              style={{
+                transformOrigin: 'center center',
+                left: '6%',
+                top: '8%',
+                zIndex: 1,
+              }}
+              initial={{ opacity: 0, y: 60, x: -10, rotate: -10 }}
+              animate={{ opacity: 1, y: 0, x: 0, rotate: -7 }}
+              transition={{ duration: 1.05, ease: [0.16, 1, 0.3, 1], delay: 0.45 }}
+            >
+              <PlanPreview {...eyfsKodaly} />
+            </motion.div>
+
+            {/* Front card — KS3 Drama Commedia. Larger feel, slight
+                rightward offset and gentle clockwise tilt so the two
+                cards form a clear "stack" with both still partially
+                visible. */}
+            <motion.div
+              className="absolute"
+              style={{
+                transformOrigin: 'center center',
+                right: '4%',
+                bottom: '4%',
+                zIndex: 2,
+              }}
+              initial={{ opacity: 0, y: 80, x: 20, rotate: 8 }}
+              animate={{ opacity: 1, y: 0, x: 0, rotate: 4 }}
+              transition={{ duration: 1.1, ease: [0.16, 1, 0.3, 1], delay: 0.85 }}
+            >
+              <PlanPreview {...ks3Drama} />
+            </motion.div>
+          </div>
+        }
+      >
         <Eyebrow tint="indigo">Plan from the rehearsal room</Eyebrow>
         <Cinematic size="xl">
           <span>Plan</span>
           <span style={{ color: '#A5B4FC' }}>anywhere.</span>
         </Cinematic>
         <Sub delay={0.85}>
-          Fully responsive on phone, tablet, and laptop — capture an idea the moment it lands.
+          From a KS3 Drama studio to an EYFS carpet session — author the lesson once, on whatever device is in your hand.
         </Sub>
       </SceneLayout>
     </Backdrop>
