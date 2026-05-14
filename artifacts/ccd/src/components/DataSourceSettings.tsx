@@ -19,7 +19,10 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   const [backupStatus, setBackupStatus] = useState<'idle' | 'backing-up' | 'success' | 'error'>('idle');
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'restoring' | 'success' | 'error'>('idle');
 
-  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
+  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' ||
+                  user?.role === 'administrator' ||
+                  user?.role === 'admin' ||
+                  user?.role === 'superuser';
 
   // Move all function declarations to the top before any conditional returns
   const checkServerStatus = async () => {
@@ -176,6 +179,10 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   };
 
   const handleBackupDatabase = async () => {
+    if (!isAdmin) {
+      console.error('Unauthorized: backup requires administrator role');
+      return;
+    }
     try {
       setBackupStatus('backing-up');
       console.log('🔄 Starting database backup...');
@@ -217,6 +224,11 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   };
 
   const handleRestoreDatabase = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    if (!isAdmin) {
+      console.error('Unauthorized: restore requires administrator role');
+      event.target.value = '';
+      return;
+    }
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -268,8 +280,6 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
       checkServerStatus();
     }
   }, [isOpen]);
-
-  // Allow all users to access backup/restore functionality
 
   // If embedded in another component, don't show the floating button
   if (embedded && !isOpen) {

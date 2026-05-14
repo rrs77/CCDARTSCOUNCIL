@@ -203,6 +203,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
+    if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
     // general, resource-links, data are under Admin for all users – no redirect
   }, [isOpen, activeTab, showUserManagement, isAdmin, isCreator]);
 
@@ -1104,15 +1105,19 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <LinkIcon className="h-4 w-4" />
                   Resource Links
                 </button>
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  type="button"
-                  onClick={() => { setActiveTab('data'); setAdminMenuOpen(false); }}
-                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'data' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-                >
-                  <Database className="h-4 w-4" />
-                  Data & Backup
-                </button>
+                {isAdmin && (
+                  <>
+                    <div className="border-t border-gray-100 my-1" />
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('data'); setAdminMenuOpen(false); }}
+                      className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'data' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      <Database className="h-4 w-4" />
+                      Data & Backup
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -2575,7 +2580,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             </div>
           )}
 
-          {activeTab === 'data' && (
+          {activeTab === 'data' && isAdmin && (
             <div className="space-y-6">
               <DataSourceSettings embedded={true} />
             </div>
