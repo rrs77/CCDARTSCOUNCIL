@@ -184,13 +184,32 @@ export function LoginForm() {
               <span className="hidden sm:inline">Install App</span>
             </button>
           )}
-          <a
-            href={`${window.location.origin}/ccd-promo/`}
+          <button
+            type="button"
+            onClick={() => {
+              // Launch the in-app walkthrough overlay. We:
+              //   1. flip on Demo mode + seed sample data so AuthContext
+              //      injects a synthetic viewer and the app is interactive
+              //      without sign-in;
+              //   2. set a one-shot session flag that Header.tsx picks up
+              //      on mount to immediately open <WalkthroughGuide />;
+              //   3. navigate to '/' (NOT /ccd-promo/, which left the app
+              //      entirely and on this Replit deployment 404s back to
+              //      home — that was the original "returns to home" bug).
+              try {
+                activateDemoMode('default');
+                seedDemoLocalStorage();
+                sessionStorage.setItem('ccd-start-walkthrough', '1');
+              } catch {
+                /* sessionStorage may be blocked – continue anyway */
+              }
+              window.location.assign('/');
+            }}
             className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
           >
             <PlayCircle className="h-4 w-4" />
             Feature Walkthrough
-          </a>
+          </button>
         </div>
 
         <div className="flex flex-1 items-center justify-center px-6 py-8 lg:px-10">

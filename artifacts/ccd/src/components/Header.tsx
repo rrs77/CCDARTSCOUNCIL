@@ -42,6 +42,34 @@ export function Header() {
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<'activity' | 'lesson' | 'unit' | 'assign' | undefined>(undefined);
 
+  // Auto-open the walkthrough when the user arrived via the login page's
+  // "Feature Walkthrough" button (which sets a one-shot session flag and
+  // reloads to '/'), and when any other component dispatches the
+  // 'ccd:start-walkthrough' window event. The flag is consumed so a normal
+  // refresh later in the session does not re-trigger the tour.
+  useEffect(() => {
+    let shouldOpen = false;
+    try {
+      if (sessionStorage.getItem('ccd-start-walkthrough') === '1') {
+        sessionStorage.removeItem('ccd-start-walkthrough');
+        shouldOpen = true;
+      }
+    } catch {
+      /* sessionStorage may be blocked – noop */
+    }
+    if (!shouldOpen) return undefined;
+    // Defer one frame so the Dashboard tabs have mounted and their
+    // [data-tab="..."] targets are queryable.
+    const t = window.setTimeout(() => setShowWalkthrough(true), 250);
+    return () => window.clearTimeout(t);
+  }, []);
+
+  useEffect(() => {
+    const handler = () => setShowWalkthrough(true);
+    window.addEventListener('ccd:start-walkthrough', handler);
+    return () => window.removeEventListener('ccd:start-walkthrough', handler);
+  }, []);
+
   // Sections that have at least one year group the user can access.
   // Resolve section tokens by id OR name so renamed classes still map correctly.
   const normalizeToken = (value: string | undefined | null) => (value || '').trim().toLowerCase();
@@ -204,7 +232,7 @@ export function Header() {
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1 lg:space-x-2 flex-shrink-0">
               {/* Year Group Selector – collapsible key stages (only sections with resources) */}
-              <div className="relative min-w-0" ref={yearGroupDropdownRef}>
+              <div className="relative min-w-0" ref={yearGroupDropdownRef} data-walkthrough="year-group-selector">
                 <button
                   type="button"
                   onClick={() => setYearGroupDropdownOpen(prev => !prev)}
@@ -270,11 +298,15 @@ export function Header() {
                 </button>
               )}
 
-              {/* Help Button */}
+              {/* Help / Tour Button — primary action is to (re)launch the
+                  Feature Walkthrough. The static HelpGuide stays reachable
+                  via App.tsx's handleOpenGuide hooks (e.g. from
+                  LessonExporter, Print modal, etc). */}
               <button
-                onClick={() => setShowHelpGuide(true)}
+                onClick={() => setShowWalkthrough(true)}
                 className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="Help Guide"
+                title="Take a tour"
+                aria-label="Take a tour of the app"
                 data-help-button
               >
                 <HelpCircle className="h-4 w-4 lg:h-5 lg:w-5" />
@@ -285,6 +317,7 @@ export function Header() {
                 onClick={() => setSettingsOpen(true)}
                 className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
                 title="User Settings"
+                data-walkthrough="settings"
               >
                 <Settings className="h-4 w-4 lg:h-5 lg:w-5" />
               </button>
