@@ -1,3 +1,4 @@
+import { sanitizeHtml } from '../utils/sanitize';
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { 
   Clock, 
@@ -140,7 +141,7 @@ export function ActivityCard({
     }
     
     if (text.includes('<')) {
-      return text;
+      return sanitizeHtml(text);
     }
     
     return text.replace(/\n/g, '<br>');
@@ -440,7 +441,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
           {activity.description && (
             <div 
               className={`text-sm text-gray-600 leading-relaxed flex-grow overflow-y-auto max-h-16 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 ${demoActive ? 'select-none' : ''}`}
-              dangerouslySetInnerHTML={{ __html: demoActive ? formatDescription(activity.description) : activity.description }}
+              dangerouslySetInnerHTML={{ __html: demoActive ? formatDescription(activity.description) : sanitizeHtml(activity.description) }}
               style={{ cursor: 'pointer' }}
             />
           )}

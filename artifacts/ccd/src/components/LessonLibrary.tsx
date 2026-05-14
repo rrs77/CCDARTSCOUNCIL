@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import toast from 'react-hot-toast';
 import { 
   Search, 
@@ -47,7 +48,7 @@ import { LessonPrintModal } from './LessonPrintModal';
 // Helper function to safely render HTML content
 const renderHtmlContent = (htmlContent) => {
   if (!htmlContent) return { __html: '' };
-  return { __html: htmlContent };
+  return { __html: sanitizeHtml(htmlContent) };
 };
 
 // Helper function to get plain text from HTML (for search purposes)

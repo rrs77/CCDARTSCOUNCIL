@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import toast from 'react-hot-toast';
 import { 
   Tag, 
@@ -288,8 +289,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
       const newActivity = {
         ...activity,
         activity: sanitizeText(activity.activity).trim(),
-        description: sanitizeText(activity.description),
-        activityText: sanitizeText(activity.activityText),
+        description: sanitizeHtml(sanitizeText(activity.description)),
+        activityText: sanitizeHtml(sanitizeText(activity.activityText)),
         category: sanitizeText(activity.category).trim(),
         unitName: sanitizeText(activity.unitName).trim(),
         lessonNumber: sanitizeText(activity.lessonNumber).trim(),

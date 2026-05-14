@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import { createPortal } from 'react-dom';
 import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Tag, Users, ExternalLink, Edit3, Palette } from 'lucide-react';
 import type { Activity } from '../contexts/DataContext';
@@ -22,9 +23,9 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
   const formatDescription = (text: string) => {
     if (!text) return '';
     
-    // If already HTML, return as is
+    // If already HTML, sanitize and return
     if (text.includes('<')) {
-      return text;
+      return sanitizeHtml(text);
     }
     
     // Replace newlines with <br> tags

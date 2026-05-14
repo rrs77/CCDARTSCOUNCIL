@@ -3,6 +3,7 @@ import { Upload, FileText, CheckCircle, AlertCircle, X, Download, RefreshCw } fr
 import * as XLSX from '@e965/xlsx';
 import { activitiesApi } from '../config/api';
 import type { Activity } from '../contexts/DataContext';
+import { sanitizeHtml } from '../utils/sanitize';
 import {
   isVocalWarmupSubcategory,
   VOCAL_WARMUP_CANONICAL_CATEGORY,
@@ -197,6 +198,7 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
       if (description && !description.includes('<')) {
         description = description.replace(/\n/g, '<br>');
       }
+      description = sanitizeHtml(description);
 
       const rawCategory = String(row[categoryIdx] || '').trim();
       let resolvedCategory = rawCategory;

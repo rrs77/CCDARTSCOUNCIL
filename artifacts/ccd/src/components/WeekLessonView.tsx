@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import { ChevronDown, ChevronUp, Edit3, Plus, Link as LinkIcon } from 'lucide-react';
 import { format, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, addWeeks, subWeeks } from 'date-fns';
 import type { LessonPlan } from '../contexts/DataContext';
@@ -419,7 +420,7 @@ export function WeekLessonView({
                                     {plan.activities.map((activity, actIdx) => (
                                       activity.description && (
                                         <div key={actIdx} className="text-sm text-gray-700">
-                                          <div dangerouslySetInnerHTML={{ __html: activity.description }} />
+                                          <div dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.description) }} />
                                         </div>
                                       )
                                     ))}

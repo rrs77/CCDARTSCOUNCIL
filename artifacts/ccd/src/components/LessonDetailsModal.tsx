@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import { X, Download, Edit3, Save, Check, Tag, Clock, Users, ExternalLink, FileText, Trash2, Share2, Target, Link, Loader2, Lock } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
@@ -333,7 +334,7 @@ export function LessonDetailsModal({
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
                     style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
-                    dangerouslySetInnerHTML={{ __html: lessonData.learningOutcome }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.learningOutcome) }}
                   />
                 </div>
               )}
@@ -348,7 +349,7 @@ export function LessonDetailsModal({
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
                     style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
-                    dangerouslySetInnerHTML={{ __html: lessonData.successCriteria }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.successCriteria) }}
                   />
                 </div>
               )}
@@ -359,7 +360,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Introduction</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.introduction }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.introduction) }}
                   />
                 </div>
               )}
@@ -370,7 +371,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Main Activity</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.mainActivity }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.mainActivity) }}
                   />
                 </div>
               )}
@@ -381,7 +382,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Plenary</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.plenary }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.plenary) }}
                   />
                 </div>
               )}
@@ -392,7 +393,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Vocabulary</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.vocabulary }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.vocabulary) }}
                   />
                 </div>
               )}
@@ -403,7 +404,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Key Questions</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.keyQuestions }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.keyQuestions) }}
                   />
                 </div>
               )}
@@ -414,7 +415,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Resources</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.resources }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.resources) }}
                   />
                 </div>
               )}
@@ -425,7 +426,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Differentiation</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.differentiation }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.differentiation) }}
                   />
                 </div>
               )}
@@ -436,7 +437,7 @@ export function LessonDetailsModal({
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Assessment</h4>
                   <div 
                     className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
-                    dangerouslySetInnerHTML={{ __html: lessonData.assessment }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.assessment) }}
                   />
                 </div>
               )}
@@ -505,7 +506,7 @@ export function LessonDetailsModal({
                           {activity.activityText && (
                             <div 
                               className="mb-3 prose prose-sm max-w-none"
-                              dangerouslySetInnerHTML={{ __html: activity.activityText }}
+                              dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.activityText) }}
                             />
                           )}
                           
@@ -534,7 +535,7 @@ export function LessonDetailsModal({
                             return (
                               <div 
                                 className="text-sm text-gray-700 leading-relaxed mb-3 prose prose-sm max-w-none"
-                                dangerouslySetInnerHTML={{ __html: raw.includes('<') ? raw : raw.replace(/\n/g, '<br>') }}
+                                dangerouslySetInnerHTML={{ __html: sanitizeHtml(raw.includes('<') ? raw : raw.replace(/\n/g, '<br>')) }}
                               />
                             );
                           })()}

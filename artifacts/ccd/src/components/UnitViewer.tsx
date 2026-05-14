@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import { 
   FolderOpen, 
   Search, 
@@ -592,7 +593,7 @@ export function UnitViewer() {
               <h2 className="text-lg font-semibold text-gray-900 mb-3">Unit Description</h2>
               <div 
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedUnit.description }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedUnit.description) }}
               />
             </div>
           )}
@@ -837,7 +838,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                           </div>
                           <div 
                             className="text-xs text-gray-600 line-clamp-2"
-                            dangerouslySetInnerHTML={{ __html: activity.description || '' }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.description || '') }}
                           />
                         </div>
                         <Plus className="h-5 w-5 text-blue-600 ml-2 flex-shrink-0" />
