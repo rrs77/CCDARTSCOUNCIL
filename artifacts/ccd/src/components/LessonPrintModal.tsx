@@ -7,7 +7,7 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjective, CustomObjectiveArea, CustomObjectiveYearGroup } from '../types/customObjectives';
 import { supabase } from '../config/supabase';
-import { getPdfApiUrl } from '../utils/pdfApi';
+import { generatePdfViaProxy } from '../utils/pdfApi';
 import { useShareLesson } from '../hooks/useShareLesson';
 import { isDemoModeActive } from '../utils/demoMode';
 import toast from 'react-hot-toast';
@@ -212,10 +212,6 @@ export function LessonPrintModal({
     }
     return lessonCustomObjectives;
   };
-
-  // PDFBolt API configuration (used for unit/half-term Copy Link in this modal; single-lesson Export uses PDF service)
-  const PDFBOLT_API_KEY = import.meta.env.VITE_PDFBOLT_API_KEY || '146bdd01-146f-43f8-92aa-26201c38aa11';
-  const PDFBOLT_API_URL = 'https://api.pdfbolt.com/v1/direct';
 
   // Get the title for the print
   const printTitle = React.useMemo(() => {
@@ -1207,13 +1203,11 @@ export function LessonPrintModal({
     return n || num;
   };
 
-  // Export PDF: use PDFBolt when key is set, otherwise Vercel API (returnPdfBlob) for download
+  // Export PDF via the server-side PDF proxy (keeps PDFBolt API key out of the browser)
   const handleExport = async () => {
     const downloadFileName = exportMode === 'single' && lessonNumber
       ? `${currentSheetInfo.sheet}_Lesson_${getLessonDisplayNumber(lessonNumber)}.pdf`
       : `${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
-
-    const useApiFallback = !PDFBOLT_API_KEY || PDFBOLT_API_KEY === 'd089165b-e1da-43bb-a7dc-625ce514ed1b';
 
     setIsExporting(true);
     try {
@@ -1222,53 +1216,17 @@ export function LessonPrintModal({
       const footerContent = encodeUnicodeBase64(footerRaw);
       const headerContent = encodeUnicodeBase64(headerRaw);
 
-      let pdfBlob: Blob;
-
-      if (useApiFallback) {
-        const apiUrl = getPdfApiUrl();
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            html: htmlContent,
-            footerTemplate: footerContent,
-            headerTemplate: headerContent,
-            returnPdfBlob: true,
-            fileName: `downloads/${downloadFileName}`,
-          }),
-        });
-        if (!res.ok) {
-          const errText = await res.text();
-          let msg = errText;
-          try {
-            const data = JSON.parse(errText || '{}');
-            if (data.error) msg = data.error;
-          } catch (_) {}
-          throw new Error(msg || `Export failed: ${res.status}`);
-        }
-        pdfBlob = await res.blob();
-      } else {
-        const response = await fetch(PDFBOLT_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'API_KEY': PDFBOLT_API_KEY },
-          body: JSON.stringify({
-            html: htmlContent,
-            printBackground: true,
-            waitUntil: 'networkidle',
-            format: 'A4',
-            margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
-            displayHeaderFooter: true,
-            footerTemplate: footerContent,
-            headerTemplate: headerContent,
-            emulateMediaType: 'screen',
-          }),
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`PDFBolt: ${response.status} - ${errorText}`);
-        }
-        pdfBlob = await response.blob();
-      }
+      const pdfBlob = await generatePdfViaProxy({
+        html: htmlContent,
+        printBackground: true,
+        waitUntil: 'networkidle',
+        format: 'A4',
+        margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+        displayHeaderFooter: true,
+        footerTemplate: footerContent,
+        headerTemplate: headerContent,
+        emulateMediaType: 'screen',
+      });
 
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -1437,13 +1395,6 @@ export function LessonPrintModal({
     }
 
     // For unit/half-term sharing, use custom implementation
-    if (!PDFBOLT_API_KEY || PDFBOLT_API_KEY === 'd089165b-e1da-43bb-a7dc-625ce514ed1b') {
-      toast.error('Please set your PDFBolt API key in the environment variables (VITE_PDFBOLT_API_KEY)', {
-        duration: 5000,
-      });
-      return;
-    }
-
     setIsSharing(true);
     setShareUrl(null);
     setShareSuccess(false);
@@ -1463,43 +1414,24 @@ export function LessonPrintModal({
         throw new Error('Storage bucket not configured');
       }
 
-      // Generate PDF using PDFBolt API (same as export)
+      // Generate PDF via server-side proxy (PDFBolt API key is never sent to the browser)
       const [htmlRaw, footerRaw, headerRaw] = await generateHTMLContent();
       const htmlContent = encodeUnicodeBase64(htmlRaw);
       const footerContent = encodeUnicodeBase64(footerRaw);
       const headerContent = encodeUnicodeBase64(headerRaw);
 
-      const response = await fetch(PDFBOLT_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'API_KEY': PDFBOLT_API_KEY
-        },
-        body: JSON.stringify({
-          html: htmlContent,
-          printBackground: true,
-          waitUntil: "networkidle",
-          format: "A4",
-          margin: {
-            "top": "15px",
-            "right": "20px",
-            "left": "20px",
-            "bottom": "55px"
-          },
-          displayHeaderFooter: true,
-          footerTemplate: footerContent,
-          headerTemplate: headerContent,
-          emulateMediaType: 'screen'
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`PDFBolt API Error: ${response.status} - ${errorText}`);
-      }
-
       // Get the PDF as a blob
-      const pdfBlob = await response.blob();
+      const pdfBlob = await generatePdfViaProxy({
+        html: htmlContent,
+        printBackground: true,
+        waitUntil: "networkidle",
+        format: "A4",
+        margin: { top: "15px", right: "20px", left: "20px", bottom: "55px" },
+        displayHeaderFooter: true,
+        footerTemplate: footerContent,
+        headerTemplate: headerContent,
+        emulateMediaType: 'screen',
+      });
 
       // Generate filename
       const getLessonDisplayNumber = (num: string): string => {
