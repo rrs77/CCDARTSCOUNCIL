@@ -307,22 +307,37 @@ export const lessonsApi = {
         }
       }
       
-      // Query for all relevant academic years
+      // Fail closed: refuse to execute unscoped cross-tenant reads for non-auth sessions
+      const userId = getCurrentUserId();
+      const userIsAuthenticated = isAuthUserId(userId);
+      if (!userIsAuthenticated) {
+        console.warn('⚠️ lessonsApi.getBySheet: unauthenticated session — refusing unscoped read (fail closed)');
+        return null;
+      }
+
       const queries = academicYearsToQuery.length > 0
-        ? academicYearsToQuery.map(year => 
-            supabase
+        ? academicYearsToQuery.map(year => {
+            let q = supabase
               .from(TABLES.LESSONS)
               .select('*')
               .eq('sheet_name', sheet)
-              .eq('academic_year', year)
-              .maybeSingle()
-          )
+              .eq('academic_year', year);
+            if (userIsAuthenticated) {
+              q = q.eq('user_id', userId);
+            }
+            return q.maybeSingle();
+          })
         : [
-            supabase
-              .from(TABLES.LESSONS)
-              .select('*')
-              .eq('sheet_name', sheet)
-              .maybeSingle()
+            (() => {
+              let q = supabase
+                .from(TABLES.LESSONS)
+                .select('*')
+                .eq('sheet_name', sheet);
+              if (userIsAuthenticated) {
+                q = q.eq('user_id', userId);
+              }
+              return q.maybeSingle();
+            })()
           ];
       
       const results = await Promise.all(queries);
@@ -387,21 +402,31 @@ export const lessonsApi = {
     try {
       const year = academicYear || '2025-2026';
       
-      // First, check if a record exists for this sheet and academic year
-      // Note: lessons table doesn't have an 'id' column, it uses sheet_name + academic_year as composite key
-      const { data: existingRecord, error: checkError } = await supabase
+      // Fail closed: refuse to execute unscoped cross-tenant writes for non-auth sessions
+      const userId = getCurrentUserId();
+      const userIsAuth = isAuthUserId(userId);
+      if (!userIsAuth) {
+        console.warn('⚠️ lessonsApi.updateSheet: unauthenticated session — refusing unscoped write (fail closed)');
+        throw new Error('Unauthenticated: cannot save lessons without a scoped user ID');
+      }
+
+      // First, check if a record exists for this sheet and academic year, scoped to
+      // the current authenticated user so tenants cannot overwrite each other's rows.
+      let checkQuery = supabase
         .from(TABLES.LESSONS)
         .select('sheet_name, academic_year')
         .eq('sheet_name', sheet)
-        .eq('academic_year', year)
-        .maybeSingle();
+        .eq('academic_year', year);
+      if (userIsAuth) {
+        checkQuery = checkQuery.eq('user_id', userId);
+      }
+      const { data: existingRecord, error: checkError } = await checkQuery.maybeSingle();
       
       if (checkError) {
         console.warn('Error checking for existing lessons record:', checkError);
         throw checkError;
       }
       
-      const userId = getCurrentUserId();
       const lessonData: Record<string, unknown> = {
         sheet_name: sheet,
         academic_year: year,
@@ -410,17 +435,21 @@ export const lessonsApi = {
         teaching_units: data.teachingUnits ?? [],
         notes: data.notes ?? ''
       };
-      if (isAuthUserId(userId)) {
+      if (userIsAuth) {
         lessonData.user_id = userId;
       }
 
       if (existingRecord) {
-        // Update existing record
-        const { error: updateError } = await supabase
+        // Update existing record, always scoped by user_id to prevent cross-tenant overwrites
+        let updateQuery = supabase
           .from(TABLES.LESSONS)
           .update(lessonData)
           .eq('sheet_name', sheet)
           .eq('academic_year', year);
+        if (userIsAuth) {
+          updateQuery = updateQuery.eq('user_id', userId);
+        }
+        const { error: updateError } = await updateQuery;
         
         if (updateError) throw updateError;
         console.log(`✅ Updated lessons for ${sheet} (${year})`);
@@ -443,12 +472,24 @@ export const lessonsApi = {
   
   updateLessonNotes: async (sheet: string, lessonNumber: string, notes: string) => {
     try {
-      // Get current lesson data
-      const { data: currentData, error: fetchError } = await supabase
+      const userId = getCurrentUserId();
+      const userIsAuth = isAuthUserId(userId);
+
+      // Fail closed: refuse to operate on unscoped rows for non-auth sessions
+      if (!userIsAuth) {
+        console.warn('⚠️ lessonsApi.updateLessonNotes: unauthenticated session — refusing unscoped operation (fail closed)');
+        throw new Error('Unauthenticated: cannot update lesson notes without a scoped user ID');
+      }
+
+      // Scope the fetch to the authenticated user to avoid reading another tenant's row
+      let fetchQuery = supabase
         .from(TABLES.LESSONS)
         .select('data')
-        .eq('sheet_name', sheet)
-        .single();
+        .eq('sheet_name', sheet);
+      if (userIsAuth) {
+        fetchQuery = fetchQuery.eq('user_id', userId);
+      }
+      const { data: currentData, error: fetchError } = await fetchQuery.single();
       
       if (fetchError) throw fetchError;
       
@@ -461,14 +502,18 @@ export const lessonsApi = {
         }
       };
       
-      // Save back to Supabase
-      const { error } = await supabase
+      // Save back to Supabase, scoped to the current user to avoid overwriting another tenant
+      let updateQuery = supabase
         .from(TABLES.LESSONS)
         .update({
           data: updatedData,
           updated_at: new Date().toISOString()
         })
         .eq('sheet_name', sheet);
+      if (userIsAuth) {
+        updateQuery = updateQuery.eq('user_id', userId);
+      }
+      const { error } = await updateQuery;
       
       if (error) throw error;
       return { success: true };
@@ -718,14 +763,27 @@ export const halfTermsApi = {
     try {
       if (import.meta.env.DEV) console.log(`🔍 Fetching half-terms for ${sheet} (${academicYear || 'default'}) from Supabase...`);
       
-      const query = supabase
+      // Fail closed: refuse to execute unscoped cross-tenant reads for non-auth sessions
+      const userId = getCurrentUserId();
+      const userIsAuthenticated = isAuthUserId(userId);
+      if (!userIsAuthenticated) {
+        console.warn('⚠️ halfTermsApi.getBySheet: unauthenticated session — refusing unscoped read (fail closed)');
+        return [];
+      }
+
+      // Scope reads to the authenticated user so tenants cannot read each other's half-term data
+      let query = supabase
         .from('half_terms')
         .select('*')
         .eq('sheet_name', sheet);
       
       // Filter by academic year if provided
       if (academicYear) {
-        query.eq('academic_year', academicYear);
+        query = query.eq('academic_year', academicYear);
+      }
+
+      if (userIsAuthenticated) {
+        query = query.eq('user_id', userId);
       }
       
       const { data, error } = await query;
@@ -786,6 +844,14 @@ export const halfTermsApi = {
           updated_at: new Date().toISOString()
       };
       
+      // Fail closed: refuse to execute unscoped cross-tenant writes for non-auth sessions
+      const htUserId = getCurrentUserId();
+      if (!isAuthUserId(htUserId)) {
+        console.warn('⚠️ halfTermsApi.updateHalfTerm: unauthenticated session — refusing unscoped write (fail closed)');
+        throw new Error('Unauthenticated: cannot update half-term without a scoped user ID');
+      }
+      upsertData.user_id = htUserId;
+      
       // Add stacks if provided
       if (stacks !== undefined) {
         upsertData.stacks = stacks;
@@ -795,14 +861,18 @@ export const halfTermsApi = {
       
       // Use upsert with onConflict to handle the unique constraint properly
       // The unique constraint is on (sheet_name, term_id), so we need to specify that
-      // First try to update existing record using the unique constraint fields
-      const updateResult = await supabase
+      // First try to update existing record using the unique constraint fields,
+      // scoped by user_id so we never overwrite another tenant's rows
+      let updateQuery = supabase
           .from(TABLES.HALF_TERMS)
           .update(upsertData)
           .eq('sheet_name', sheet)
           .eq('academic_year', year)
-          .eq('term_id', halfTermId)
-          .select();
+          .eq('term_id', halfTermId);
+      if (isAuthUserId(htUserId)) {
+        updateQuery = updateQuery.eq('user_id', htUserId);
+      }
+      const updateResult = await updateQuery.select();
       
       let data, error;
       
@@ -827,28 +897,38 @@ export const halfTermsApi = {
         error = insertResult.error;
         
         if (error) {
-          // If insert fails with duplicate key, record exists but update didn't find it
-          // This can happen if the record has a different academic_year
-          // Since unique constraint is on (sheet_name, term_id), update using those fields only
+          // If insert fails with duplicate key, a conflicting row exists.
+          // Only retry as an update if the conflicting row is owned by the current
+          // user (user_id matches). If it belongs to a different tenant, fail closed
+          // rather than overwriting another tenant's data.
           if (error.code === '23505' || error.message?.includes('duplicate key')) {
-            console.log('⚠️ Insert failed with duplicate key, retrying update (unique constraint is on sheet_name + term_id)...');
-            const retryResult = await supabase
+            if (!isAuthUserId(htUserId)) {
+              // Non-authenticated caller: cannot safely scope the retry; fail closed
+              throw new Error(`Half-term ${halfTermId} conflict: unauthenticated caller cannot safely resolve duplicate key`);
+            }
+            console.log('⚠️ Insert failed with duplicate key, retrying scoped update (user_id + sheet_name + academic_year + term_id)...');
+            // Retry the update with user_id in the predicate to ensure we only touch
+            // a row that belongs to this tenant. If the conflicting row belongs to
+            // another tenant, this will match nothing and we will fail closed.
+            let retryQuery = supabase
               .from(TABLES.HALF_TERMS)
               .update(upsertData)
               .eq('sheet_name', sheet)
+              .eq('academic_year', year)
               .eq('term_id', halfTermId)
-              .select();
+              .eq('user_id', htUserId);
+            const retryResult = await retryQuery.select();
             
             if (retryResult.error) {
               throw retryResult.error;
             }
             if (retryResult.data && retryResult.data.length > 0) {
               data = retryResult.data[0];
-              console.log(`✅ Updated half-term ${halfTermId} for ${sheet} (matched by sheet_name and term_id, updated academic_year to ${year})`);
+              console.log(`✅ Updated half-term ${halfTermId} for ${sheet} (scoped retry matched by user_id + sheet_name + academic_year + term_id)`);
             } else {
-              // Still no record found - this shouldn't happen if duplicate key error occurred
-              console.warn(`⚠️ No record found for half-term ${halfTermId} after retry - this is unexpected`);
-              throw new Error(`Failed to update half-term ${halfTermId} - record not found despite duplicate key error`);
+              // No user-owned row matched: the conflict belongs to another tenant.
+              // Fail closed — do not touch the other tenant's row.
+              throw new Error(`Half-term ${halfTermId} conflict: duplicate key belongs to another tenant; refusing unsafe cross-tenant update`);
             }
           } else {
             throw error;
@@ -895,15 +975,28 @@ export const halfTermsApi = {
       ];
       
       const year = academicYear || '2025-2026';
-      const halfTermsToInsert = defaultHalfTerms.map(term => ({
-        id: term.id,
-        sheet_name: sheet,
-        academic_year: year,
-        name: term.name,
-        lessons: [],
-        is_complete: false,
-        term_id: term.id // Add the missing term_id field
-      }));
+      // Fail closed: refuse to execute unscoped cross-tenant writes for non-auth sessions
+      const initUserId = getCurrentUserId();
+      const initUserIsAuth = isAuthUserId(initUserId);
+      if (!initUserIsAuth) {
+        console.warn('⚠️ halfTermsApi.initializeHalfTerms: unauthenticated session — refusing unscoped write (fail closed)');
+        return [];
+      }
+      const halfTermsToInsert = defaultHalfTerms.map(term => {
+        const row: Record<string, unknown> = {
+          id: term.id,
+          sheet_name: sheet,
+          academic_year: year,
+          name: term.name,
+          lessons: [],
+          is_complete: false,
+          term_id: term.id
+        };
+        if (initUserIsAuth) {
+          row.user_id = initUserId;
+        }
+        return row;
+      });
       
       // For initialization, we'll use insert with ignoreDuplicates to avoid conflicts
       const { data, error } = await supabase
@@ -931,7 +1024,31 @@ export const halfTermsApi = {
 };
 
 // API endpoints for year groups
+// TENANT-ISOLATION GUARD: year_groups, custom_categories, and category_groups have no
+// per-tenant/school column. Any read returns ALL tenants' data; any write silently
+// overwrites ALL tenants' configuration. Every method below is a no-op that returns
+// a safe empty value until a schema migration adds a tenant key and matching RLS.
 export const yearGroupsApi = {
+  getAll: async () => {
+    console.warn('⚠️ yearGroupsApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
+    return [];
+  },
+  upsert: async (_yearGroups: any[]) => {
+    console.warn('⚠️ yearGroupsApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
+    return [];
+  },
+  replaceAll: async (_yearGroups: any[]) => {
+    console.warn('⚠️ yearGroupsApi.replaceAll disabled — table has no tenant key (cross-tenant tampering)');
+    return [];
+  },
+  delete: async (_id: string) => {
+    console.warn('⚠️ yearGroupsApi.delete disabled — table has no tenant key (cross-tenant tampering)');
+    return { success: true };
+  }
+};
+
+// (Original yearGroupsApi implementation retained below for reference only — not exported)
+const _yearGroupsApiImpl = {
   getAll: async () => {
     try {
       console.log('🔍 Fetching year groups from Supabase table:', TABLES.YEAR_GROUPS);
@@ -1103,9 +1220,24 @@ function normaliseYearGroups(raw: any): Record<string, boolean> {
   return {};
 }
 
-// API endpoints for categories (uses public.custom_categories - same table as ~2 weeks ago when year group persistence worked)
-// Supabase/Postgres use snake_case (year_groups); app uses camelCase (yearGroups)
+// TENANT-ISOLATION GUARD — see comment above yearGroupsApi.
 export const customCategoriesApi = {
+  getAll: async () => {
+    console.warn('⚠️ customCategoriesApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
+    return [];
+  },
+  upsert: async (_categories: any[]) => {
+    console.warn('⚠️ customCategoriesApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
+    return [];
+  },
+  delete: async (_name: string) => {
+    console.warn('⚠️ customCategoriesApi.delete disabled — table has no tenant key (cross-tenant tampering)');
+    return { success: true };
+  }
+};
+
+// (Original customCategoriesApi implementation retained below for reference only — not exported)
+const _customCategoriesApiImpl = {
   getAll: async () => {
     try {
       const { data, error } = await supabase
@@ -1318,8 +1450,24 @@ export const customCategoriesApi = {
   }
 };
 
-// API endpoints for category groups
+// TENANT-ISOLATION GUARD — see comment above yearGroupsApi.
 export const categoryGroupsApi = {
+  getAll: async () => {
+    console.warn('⚠️ categoryGroupsApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
+    return [];
+  },
+  upsert: async (_groups: string[]) => {
+    console.warn('⚠️ categoryGroupsApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
+    return [];
+  },
+  delete: async (_name: string) => {
+    console.warn('⚠️ categoryGroupsApi.delete disabled — table has no tenant key (cross-tenant tampering)');
+    return { success: true };
+  }
+};
+
+// (Original categoryGroupsApi implementation retained below for reference only — not exported)
+const _categoryGroupsApiImpl = {
   getAll: async () => {
     try {
       const { data, error } = await supabase
@@ -1338,44 +1486,31 @@ export const categoryGroupsApi = {
   upsert: async (groups: string[]) => {
     try {
       console.log('🔄 Upserting category groups to Supabase:', groups);
-      
-      // Clear existing groups first
-      const { error: deleteError } = await supabase
-        .from(TABLES.CATEGORY_GROUPS)
-        .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000'); // Delete all rows
-      
-      if (deleteError) {
-        console.warn('⚠️ Failed to clear category groups table (continuing anyway):', deleteError);
-      } else {
-        console.log('🗑️ Cleared existing category groups from Supabase');
-      }
-      
-      // Insert new groups
+
+      // Use a true upsert (conflict on name) rather than delete-all + insert.
+      // The previous delete-all approach wiped every tenant's category groups
+      // whenever any one tenant saved their settings, causing cross-tenant data loss.
       const formattedGroups = groups.map((group, index) => ({
-        id: crypto.randomUUID(),
         name: group,
         sort_order: index
       }));
-      
-      console.log('🔄 Inserting new category groups:', formattedGroups);
-      
+
+      console.log('🔄 Upserting category groups (on conflict name):', formattedGroups);
+
       const { data, error } = await supabase
         .from(TABLES.CATEGORY_GROUPS)
-        .insert(formattedGroups)
+        .upsert(formattedGroups, { onConflict: 'name' })
         .select();
-      
+
       if (error) {
-        console.error('❌ Category groups insert error:', error);
+        console.error('❌ Category groups upsert error:', error);
         throw error;
       }
-      
-      console.log('✅ Category groups inserted successfully:', data);
-      console.log('✅ Inserted count:', data?.length || 0);
+
+      console.log('✅ Category groups upserted successfully:', data);
       return data;
     } catch (error) {
       console.error('❌ Failed to upsert category groups to Supabase:', error);
-      console.error('❌ Full error object:', error);
       throw error;
     }
   },
@@ -1397,15 +1532,36 @@ export const categoryGroupsApi = {
 };
 
 // API for branding settings (footer, login page - persists across devices)
+// Branding is scoped per-user: authenticated users get their own record keyed
+// by `user:{uuid}`. Non-auth sessions and unauthenticated reads/writes are
+// rejected (fail closed) to prevent cross-tenant disclosure or tampering.
+// The legacy shared 'default' key is intentionally not used: it is a global
+// mutable row and any tenant could overwrite it, violating tenant isolation.
+const getBrandingKey = (): string | null => {
+  const uid = localStorage.getItem('rhythmstix_user_id');
+  if (uid && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uid)) {
+    return `user:${uid}`;
+  }
+  return null; // No authenticated user — caller must not proceed with Supabase
+};
+
 export const brandingApi = {
   get: async (): Promise<Record<string, unknown> | null> => {
     try {
+      const key = getBrandingKey();
+      if (!key) {
+        // Fail closed: non-auth sessions have no scoped key; do not read from
+        // shared 'default' row (globally mutable, cross-tenant disclosure risk).
+        if (import.meta.env.DEV) console.warn('⚠️ brandingApi.get: unauthenticated session — skipping Supabase read (fail closed)');
+        return null;
+      }
       const { data, error } = await supabase
         .from(TABLES.BRANDING_SETTINGS)
         .select('data')
-        .eq('key', 'default')
+        .eq('key', key)
         .maybeSingle();
       if (error) throw error;
+      // Return own scoped record only; no fallback to shared 'default' row.
       return (data?.data as Record<string, unknown>) ?? null;
     } catch (error) {
       if (import.meta.env.DEV) console.warn('Failed to load branding from Supabase:', error);
@@ -1415,10 +1571,16 @@ export const brandingApi = {
 
   upsert: async (branding: Record<string, unknown>): Promise<boolean> => {
     try {
+      const key = getBrandingKey();
+      if (!key) {
+        // Fail closed: refuse to write to any shared/global row for non-auth sessions.
+        console.warn('⚠️ brandingApi.upsert: unauthenticated session — skipping Supabase write (fail closed)');
+        return false;
+      }
       const { error } = await supabase
         .from(TABLES.BRANDING_SETTINGS)
         .upsert(
-          { key: 'default', data: branding, updated_at: new Date().toISOString() },
+          { key, data: branding, updated_at: new Date().toISOString() },
           { onConflict: 'key' }
         );
       if (error) throw error;
