@@ -370,16 +370,19 @@ export function Wordmark({
   );
 }
 
-/** A persistent corner brand stamp for cinematic (dark) scenes. */
+/** A persistent corner brand stamp for cinematic (dark) scenes.
+ *  Sized with `cqmin` so it scales gracefully on portrait phones — using
+ *  `cqmax` made the wordmark balloon vertically and overlap the scene
+ *  eyebrow on tall narrow viewports. */
 export function CornerBrand({ delay = 0 }: { delay?: number }) {
   return (
     <motion.div
-      className="absolute top-[3.5cqmin] left-[4cqmin] z-20"
+      className="absolute top-[3cqmin] left-[3.5cqmin] z-20"
       initial={{ opacity: 0, x: -20 }}
       animate={{ opacity: 1, x: 0 }}
       transition={{ duration: 0.6, ease: 'circOut', delay }}
     >
-      <Wordmark variant="light" height="clamp(32px,5cqmax,64px)" />
+      <Wordmark variant="light" height="clamp(22px,4.2cqmin,52px)" />
     </motion.div>
   );
 }
@@ -425,8 +428,12 @@ export function SceneLayout({
     );
   }
   return (
+    // Portrait phones get extra top + bottom padding so the absolutely
+    // positioned CornerBrand (top-left) and SceneChip (top-right) never
+    // sit on top of the eyebrow / headline. On landscape we keep the
+    // tighter cinematic padding so the composition doesn't feel hollow.
     <div
-      className={`absolute inset-0 grid items-center gap-[3cqmin] px-[5cqmin] py-[8cqmin] ${
+      className={`absolute inset-0 grid items-center gap-[3cqmin] px-[5cqmin] pt-[14cqmin] pb-[10cqmin] landscape:py-[8cqmin] ${
         layout === 'right-text' ? 'landscape:grid-cols-[1.1fr_1fr]' : 'landscape:grid-cols-[1fr_1.1fr]'
       } grid-cols-1`}
     >
