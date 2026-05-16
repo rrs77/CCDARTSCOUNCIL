@@ -266,7 +266,15 @@ export function ActivityLibrary({
   const [localSelectedCategory, setLocalSelectedCategory] = useState(selectedCategory);
   const [sortBy, setSortBy] = useState<'name' | 'category' | 'time' | 'level'>('category');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc');
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
+  // Default to the lightweight list view on small screens. The grid view renders
+  // each ActivityCard with rich-text (dangerouslySetInnerHTML) descriptions, and on
+  // iOS Safari rendering hundreds of those at once exceeds the per-page memory
+  // budget and triggers the "A problem repeatedly occurred" crash. List view keeps
+  // each card to ~3 elements (title + time + buttons), which mobile handles cleanly.
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>(() => {
+    if (typeof window === 'undefined') return 'grid';
+    return window.matchMedia('(max-width: 640px)').matches ? 'list' : 'grid';
+  });
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [selectedActivityDetails, setSelectedActivityDetails] = useState<Activity | null>(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
