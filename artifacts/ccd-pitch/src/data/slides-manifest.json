@@ -1,170 +1,162 @@
 [
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
-    "position": 1,
-    "filepath": "src/pages/slides/Title.tsx",
-    "title": "A living home for creative teaching",
-    "description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music — across every key stage from EYFS to KS5.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000002",
-    "position": 2,
-    "filepath": "src/pages/slides/Problem.tsx",
-    "title": "The problem: arts teachers are working alone",
-    "description": "Why drama, dance and music teachers — and the non-specialists supporting them — are losing creative practice today.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000003",
-    "position": 3,
-    "filepath": "src/pages/slides/Solution.tsx",
-    "title": "The solution: one living home",
-    "description": "Half-term planner, lesson library, and activity stacks in one workspace — purpose-built for performing arts education across every key stage from EYFS to KS5.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000010",
-    "position": 4,
-    "filepath": "src/pages/slides/PerformingArtsCoverage.tsx",
-    "title": "Drama, Music & Dance — one workspace",
-    "description": "Subject coverage breakdown with example units for each performing-arts discipline.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
-    "position": 5,
-    "filepath": "src/pages/slides/WhoItsFor.tsx",
-    "title": "Who it's for: arts educators across every key stage",
-    "description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form (EYFS to KS5), and the arts sector partners contributing alongside them.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000005",
-    "position": 6,
-    "filepath": "src/pages/slides/HalfTermPlanner.tsx",
-    "title": "Feature: Half-term planner",
-    "description": "Visual overview of six half-terms with lesson counts and progress.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000011",
-    "position": 7,
-    "filepath": "src/pages/slides/LessonPlannerCalendar.tsx",
-    "title": "Feature: Lesson planner calendar",
-    "description": "Weekly timetable view with drag-and-drop lesson slots across drama, music and dance.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000006",
-    "position": 8,
-    "filepath": "src/pages/slides/LessonLibrary.tsx",
-    "title": "Feature: Lesson library",
-    "description": "Searchable, taggable library of drama, music and dance lessons.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000007",
-    "position": 9,
-    "filepath": "src/pages/slides/ActivityStacks.tsx",
-    "title": "Feature: Activity stacks",
-    "description": "Reusable groups of warm-ups, mains, and plenaries for drama and music.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000012",
-    "position": 10,
-    "filepath": "src/pages/slides/ActivityCardsWithLinks.tsx",
-    "title": "Feature: Activity cards with web links",
-    "description": "Activity cards carry video, music, backing, vocal and web-link resources for one-tap access in the classroom.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000013",
-    "position": 11,
-    "filepath": "src/pages/slides/ActivityCreation.tsx",
-    "title": "Feature: Activity creation flow",
-    "description": "The new-activity form, with dedicated fields for video, web link, backing track and resources.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000014",
-    "position": 12,
-    "filepath": "src/pages/slides/LessonPDFExport.tsx",
-    "title": "Feature: Print-ready lesson PDFs",
-    "description": "Sample lesson PDF export with school header, learning objective, and activity sequence.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000015",
-    "position": 13,
-    "filepath": "src/pages/slides/SettingsHub.tsx",
-    "title": "Feature: Settings",
-    "description": "Settings panel showing year groups, categories, branding, and data tabs.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000016",
-    "position": 14,
-    "filepath": "src/pages/slides/SchoolHomepageAndPreview.tsx",
-    "title": "Feature: School homepages & preview mode",
-    "description": "Public school landing pages and the one-click read-only preview experience.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000008",
-    "position": 15,
-    "filepath": "src/pages/slides/HowItWorks.tsx",
-    "title": "How it works",
-    "description": "The four-step flow from empty term to ready-to-teach.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000020",
-    "position": 16,
-    "filepath": "src/pages/slides/WhyNow.tsx",
-    "title": "Why now: the arts in higher education are at a tipping point",
-    "description": "The case for the arts — university course closures, falling GCSE entries, the pipeline that feeds the creative industries.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000021",
-    "position": 17,
-    "filepath": "src/pages/slides/MeltingPot.tsx",
-    "title": "A melting pot of knowledge",
-    "description": "Schools, universities, arts organisations, practitioners and communities pouring their best into one living archive for children.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000022",
-    "position": 18,
-    "filepath": "src/pages/slides/CelebrateArts.tsx",
-    "title": "Celebrating learning in the arts",
-    "description": "Surfacing the daily craft of arts teaching — to parents, leaders, partner organisations and the wider sector.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000023",
-    "position": 19,
-    "filepath": "src/pages/slides/LifeChanging.tsx",
-    "title": "Inspiring, life-changing arts education",
-    "description": "Why one teacher, one moment, one lesson can change a life — and why CCD is built so those lessons multiply.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000024",
-    "position": 20,
-    "filepath": "src/pages/slides/ProtectThePipeline.tsx",
-    "title": "Protecting the pipeline — from EYFS to the conservatoire stage",
-    "description": "One continuous arc from a Reception assembly to a university stage, and why every stage of the journey depends on the last.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
-    "position": 21,
-    "filepath": "src/pages/slides/CallToAction.tsx",
-    "title": "Grow your creative practice — together",
-    "description": "Closing call to action inviting schools, departments and arts organisations to join the creative ecosystem.",
-    "speakerNotes": ""
-  }
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
+		"position": 1,
+		"filepath": "src/pages/slides/Title.tsx",
+		"title": "A living home for creative teaching",
+		"description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music — across every key stage from EYFS to KS5.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000002",
+		"position": 2,
+		"filepath": "src/pages/slides/Problem.tsx",
+		"title": "The problem: arts teachers are working alone",
+		"description": "Why drama, dance and music teachers — and the non-specialists supporting them — are losing creative practice today.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000003",
+		"position": 3,
+		"filepath": "src/pages/slides/Solution.tsx",
+		"title": "The solution: one living home",
+		"description": "Half-term planner, lesson library, and activity stacks in one workspace — purpose-built for performing arts education across every key stage from EYFS to KS5.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000010",
+		"position": 4,
+		"filepath": "src/pages/slides/PerformingArtsCoverage.tsx",
+		"title": "Drama, Music & Dance — one workspace",
+		"description": "Subject coverage breakdown with example units for each performing-arts discipline.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
+		"position": 5,
+		"filepath": "src/pages/slides/WhoItsFor.tsx",
+		"title": "Who it's for: arts educators across every key stage",
+		"description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form (EYFS to KS5), and the arts sector partners contributing alongside them.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000011",
+		"position": 6,
+		"filepath": "src/pages/slides/LessonPlannerCalendar.tsx",
+		"title": "Feature: Lesson planner calendar",
+		"description": "Weekly timetable view with drag-and-drop lesson slots across drama, music and dance.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000006",
+		"position": 7,
+		"filepath": "src/pages/slides/LessonLibrary.tsx",
+		"title": "Feature: Lesson library",
+		"description": "Searchable, taggable library of drama, music and dance lessons.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000007",
+		"position": 8,
+		"filepath": "src/pages/slides/ActivityStacks.tsx",
+		"title": "Feature: Activity stacks",
+		"description": "Reusable groups of warm-ups, mains, and plenaries for drama and music.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000012",
+		"position": 9,
+		"filepath": "src/pages/slides/ActivityCardsWithLinks.tsx",
+		"title": "Feature: Activity cards with web links",
+		"description": "Activity cards carry video, music, backing, vocal and web-link resources for one-tap access in the classroom.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000013",
+		"position": 10,
+		"filepath": "src/pages/slides/ActivityCreation.tsx",
+		"title": "Feature: Activity creation flow",
+		"description": "The new-activity form, with dedicated fields for video, web link, backing track and resources.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000014",
+		"position": 11,
+		"filepath": "src/pages/slides/LessonPDFExport.tsx",
+		"title": "Feature: Print-ready lesson PDFs",
+		"description": "Sample lesson PDF export with school header, learning objective, and activity sequence.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000015",
+		"position": 12,
+		"filepath": "src/pages/slides/SettingsHub.tsx",
+		"title": "Feature: Settings",
+		"description": "Settings panel showing year groups, categories, branding, and data tabs.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000016",
+		"position": 13,
+		"filepath": "src/pages/slides/SchoolHomepageAndPreview.tsx",
+		"title": "Feature: School homepages & preview mode",
+		"description": "Public school landing pages and the one-click read-only preview experience.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000008",
+		"position": 14,
+		"filepath": "src/pages/slides/HowItWorks.tsx",
+		"title": "How it works",
+		"description": "The four-step flow from empty term to ready-to-teach.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000020",
+		"position": 15,
+		"filepath": "src/pages/slides/WhyNow.tsx",
+		"title": "Why now: the arts in higher education are at a tipping point",
+		"description": "The case for the arts — university course closures, falling GCSE entries, the pipeline that feeds the creative industries.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000021",
+		"position": 16,
+		"filepath": "src/pages/slides/MeltingPot.tsx",
+		"title": "A melting pot of knowledge",
+		"description": "Schools, universities, arts organisations, practitioners and communities pouring their best into one living archive for children.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000022",
+		"position": 17,
+		"filepath": "src/pages/slides/CelebrateArts.tsx",
+		"title": "Celebrating learning in the arts",
+		"description": "Surfacing the daily craft of arts teaching — to parents, leaders, partner organisations and the wider sector.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000023",
+		"position": 18,
+		"filepath": "src/pages/slides/LifeChanging.tsx",
+		"title": "Inspiring, life-changing arts education",
+		"description": "Why one teacher, one moment, one lesson can change a life — and why CCD is built so those lessons multiply.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000024",
+		"position": 19,
+		"filepath": "src/pages/slides/ProtectThePipeline.tsx",
+		"title": "Protecting the pipeline — from EYFS to the conservatoire stage",
+		"description": "One continuous arc from a Reception assembly to a university stage, and why every stage of the journey depends on the last.",
+		"speakerNotes": ""
+	},
+	{
+		"id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
+		"position": 20,
+		"filepath": "src/pages/slides/CallToAction.tsx",
+		"title": "Grow your creative practice — together",
+		"description": "Closing call to action inviting schools, departments and arts organisations to join the creative ecosystem.",
+		"speakerNotes": ""
+	}
 ]
