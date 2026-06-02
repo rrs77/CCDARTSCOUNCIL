@@ -889,7 +889,10 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                       )}
                                     </div>
                                   </div>
-                                  <div className="flex space-x-1 flex-shrink-0">
+                                  {/* Fixed-width actions column so rows with fewer buttons
+                                      (e.g. locked rows hiding Edit/Delete) don't shift the
+                                      name/grip column left or right. */}
+                                  <div className="flex flex-shrink-0 items-center justify-end space-x-1 w-[7.5rem]">
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
