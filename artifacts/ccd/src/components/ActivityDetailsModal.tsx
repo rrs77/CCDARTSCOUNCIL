@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Tag, Users, ExternalLink, Edit3, Palette } from 'lucide-react';
 import type { Activity } from '../contexts/DataContext';
 import { ResourceViewer } from './ResourceViewer';
@@ -14,17 +15,8 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
   const [selectedResource, setSelectedResource] = useState<{ url: string; title: string; type: string } | null>(null);
   
   if (!isOpen || !activity) {
-    console.log('ActivityDetailsModal: Not rendering', { isOpen, hasActivity: !!activity });
     return null;
   }
-  
-  console.log('ActivityDetailsModal: Rendering', { 
-    activityName: activity.activity, 
-    category: activity.category,
-    hasDescription: !!activity.description,
-    hasActivityText: !!activity.activityText,
-    hasResources: !!(activity.videoLink || activity.musicLink || activity.backingLink || activity.resourceLink || activity.link || activity.imageLink || activity.canvaLink)
-  });
 
   // Format description with line breaks
   const formatDescription = (text: string) => {
@@ -51,7 +43,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
     { label: 'Canva', url: activity.canvaLink, icon: Palette, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', type: 'canva' },
   ].filter(resource => resource.url && resource.url.trim());
 
-  return (
+  return createPortal(
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
       <div className="bg-white rounded-card shadow-soft w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
@@ -230,6 +222,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
           onClose={() => setSelectedResource(null)}
         />
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

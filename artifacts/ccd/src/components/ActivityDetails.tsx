@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Upload, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette } from 'lucide-react';
 import { EditableText } from './EditableText';
 import { RichTextEditor } from './RichTextEditor';
@@ -43,8 +44,7 @@ export function ActivityDetails({
 }: ActivityDetailsProps) {
   // Safety check - ensure activity exists and has required fields
   if (!activity || !activity.activity) {
-    console.error('ActivityDetails: Invalid activity data', activity);
-    return (
+    return createPortal(
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
         <div className="bg-white rounded-2xl shadow-xl max-w-md w-full p-6">
           <h2 className="text-xl font-bold text-gray-900 mb-4">Error</h2>
@@ -56,7 +56,8 @@ export function ActivityDetails({
             Close
           </button>
         </div>
-      </div>
+      </div>,
+      document.body
     );
   }
   
@@ -424,7 +425,7 @@ export function ActivityDetails({
     });
   };
 
-  return (
+  return createPortal(
     <>
       <div 
         className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]"
@@ -1125,6 +1126,7 @@ export function ActivityDetails({
           </div>
         </div>
       )}
-    </>
+    </>,
+    document.body
   );
 }
