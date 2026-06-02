@@ -14,6 +14,8 @@
   --ccd-duration-slow: 360ms;
   --ccd-teal: #14B8A6;
   --ccd-teal-deep: #0D9488;
+  --promo-primary-light: #5EEAD4;
+  --promo-accent-light: #FFA6A6;
 }
 
 /* Smoother body rendering */

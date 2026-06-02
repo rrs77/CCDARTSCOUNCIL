@@ -9,6 +9,7 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { supabase, isSupabaseAuthEnabled, isSupabaseConfigured, checkSupabaseAuthHealth, setSessionOnlyCookie } from '../config/supabase';
 import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoLocalStorage } from '../utils/demoSampleData';
+import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -28,6 +29,7 @@ export function LoginForm() {
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState('');
+  const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
 
   const branding = settings.branding || {};
   const loginButtonColor = branding.loginButtonColor || '#008272';
@@ -184,15 +186,14 @@ export function LoginForm() {
               <span className="hidden sm:inline">Install App</span>
             </button>
           )}
-          <a
-            href={`${window.location.origin}/ccd-promo/`}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={() => setShowFeatureWalkthrough(true)}
             className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
           >
             <PlayCircle className="h-4 w-4" />
             Feature Walkthrough
-          </a>
+          </button>
         </div>
 
         <div className="flex flex-1 items-center justify-center px-6 py-8 lg:px-10">
@@ -478,6 +479,11 @@ export function LoginForm() {
           </div>
         </div>
       )}
+
+      <FeatureWalkthroughModal
+        isOpen={showFeatureWalkthrough}
+        onClose={() => setShowFeatureWalkthrough(false)}
+      />
 
       <style>{`
         @keyframes loginFloat {
