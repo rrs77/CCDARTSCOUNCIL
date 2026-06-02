@@ -1,3 +1,16 @@
+const base = import.meta.env.BASE_URL;
+
+const PITCH_PARTNER_LOGOS: { file: string; name: string }[] = [
+  { file: 'arts-council-england.svg', name: 'Arts Council England' },
+  { file: 'royal-opera-house.svg', name: 'Royal Opera House' },
+  { file: 'lso.svg', name: 'London Symphony Orchestra' },
+  { file: 'national-theatre.svg', name: 'National Theatre' },
+  { file: 'bbc-ten-pieces.svg', name: 'BBC Ten Pieces' },
+  { file: 'tate.svg', name: 'Tate' },
+  { file: 'national-gallery.svg', name: 'The National Gallery' },
+  { file: 'sadlers-wells.svg', name: "Sadler's Wells" },
+];
+
 export default function PartnerAndMarketplace() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-bg">
@@ -45,7 +58,11 @@ export default function PartnerAndMarketplace() {
             <div className="grid grid-cols-2 gap-[1.2vw] flex-1">
               <div className="rounded-[1.2rem] border border-text/10 bg-white p-[2vh_1.2vw] flex flex-col shadow-[0_8px_28px_rgba(0,76,69,0.06)]">
                 <div className="flex items-center justify-between mb-[1.2vh]">
-                  <span className="px-[0.7vw] py-[0.25vh] rounded-full bg-[#1a1a2e] text-white font-display font-bold text-[0.8vw] tracking-wide">ROH</span>
+                  <img
+                    src={`${base}partners/royal-opera-house.svg`}
+                    alt="Royal Opera House"
+                    className="h-[2vw] w-auto max-w-[10vw] brightness-0 opacity-80"
+                  />
                   <span className="font-body text-muted text-[0.85vw]">Included</span>
                 </div>
                 <h3 className="font-display font-bold text-text text-[1.2vw] leading-tight">Royal Opera House</h3>
@@ -59,7 +76,11 @@ export default function PartnerAndMarketplace() {
 
               <div className="rounded-[1.2rem] border border-text/10 bg-white p-[2vh_1.2vw] flex flex-col shadow-[0_8px_28px_rgba(0,76,69,0.06)]">
                 <div className="flex items-center justify-between mb-[1.2vh]">
-                  <span className="px-[0.7vw] py-[0.25vh] rounded-full bg-[#0A4A66] text-white font-display font-bold text-[0.8vw]">NT Learning</span>
+                  <img
+                    src={`${base}partners/national-theatre.svg`}
+                    alt="National Theatre"
+                    className="h-[1.8vw] w-auto max-w-[10vw] brightness-0 opacity-80"
+                  />
                   <span className="font-body text-muted text-[0.85vw]">Included</span>
                 </div>
                 <h3 className="font-display font-bold text-text text-[1.2vw] leading-tight">National Theatre</h3>
@@ -71,7 +92,7 @@ export default function PartnerAndMarketplace() {
                 </div>
               </div>
 
-              <div className="rounded-[1.2rem] border border-dashed border-primary/35 bg-primary/5 p-[2vh_1.2vw] flex flex-col justify-center col-span-2">
+              <div className="rounded-[1.2rem] border border-dashed border-primary/35 bg-primary/5 p-[2vh_1.2vw] flex flex-col justify-center col-span-2 gap-[1.2vh]">
                 <div className="flex items-center justify-between gap-[1vw]">
                   <div>
                     <div className="font-display font-semibold text-primary-dark text-[1.05vw]">More partners joining</div>
@@ -82,6 +103,16 @@ export default function PartnerAndMarketplace() {
                   <span className="shrink-0 px-[1vw] py-[0.5vh] rounded-full bg-white border border-primary/20 font-display font-semibold text-primary-dark text-[0.95vw]">
                     Growing library
                   </span>
+                </div>
+                <div className="flex flex-wrap items-center gap-[1vw] pt-[0.5vh] border-t border-primary/15">
+                  {PITCH_PARTNER_LOGOS.map((partner) => (
+                    <img
+                      key={partner.file}
+                      src={`${base}partners/${partner.file}`}
+                      alt={partner.name}
+                      className="h-[1.6vw] w-auto max-w-[8vw] brightness-0 opacity-60"
+                    />
+                  ))}
                 </div>
               </div>
             </div>

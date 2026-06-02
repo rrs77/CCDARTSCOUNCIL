@@ -1,15 +1,5 @@
 import { LogoSVG } from '../Logo';
-
-const PARTNERS = [
-  'Arts Council England',
-  'Royal Opera House',
-  'LSO',
-  'National Theatre',
-  'BBC Ten Pieces',
-  'Tate',
-  'National Gallery',
-  "Sadler's Wells",
-];
+import { PartnerLogoStrip } from './PartnerLogoStrip';
 
 interface LoginHeroPanelProps {
   logoLetters?: string;
@@ -65,27 +55,7 @@ export function LoginHeroPanel({ logoLetters = 'CCD', compact = false }: LoginHe
           </div>
         </div>
 
-        <div className={compact ? '' : 'mt-auto'}>
-          <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-white/45">
-            Supported by
-          </p>
-          <div
-            className={`flex gap-2 ${
-              compact
-                ? 'flex-wrap'
-                : 'flex-wrap lg:gap-x-5 lg:gap-y-3'
-            }`}
-          >
-            {PARTNERS.map((name) => (
-              <span
-                key={name}
-                className="rounded-md border border-white/10 bg-white/[0.06] px-2.5 py-1 text-[0.62rem] font-semibold uppercase tracking-wide text-white/70 sm:text-[0.68rem]"
-              >
-                {name}
-              </span>
-            ))}
-          </div>
-        </div>
+        <PartnerLogoStrip compact={compact} />
       </div>
     </div>
   );

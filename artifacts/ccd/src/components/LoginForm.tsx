@@ -29,7 +29,6 @@ import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoLocalStorage } from '../utils/demoSampleData';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
-import { LoginBottomNav } from './login/LoginBottomNav';
 import { LogoSVG } from './Logo';
 
 const LOGIN_GREEN = '#002D24';
@@ -206,7 +205,7 @@ export function LoginForm() {
               </button>
             </div>
 
-            <div className="flex flex-1 items-center justify-center px-5 py-6 pb-24 sm:px-8 sm:py-8 md:pb-8 lg:px-10 lg:py-10">
+            <div className="flex flex-1 items-center justify-center px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
               <div className="w-full max-w-[380px]">
                 <LogoSVG size="sm" showText={false} letters={logoLetters} className="!space-x-0" />
 
@@ -402,12 +401,6 @@ export function LoginForm() {
             </div>
           </div>
         </div>
-
-        <LoginBottomNav
-          onPartnersClick={() => setShowFeatureWalkthrough(true)}
-          onSupportClick={() => setShowFeatureWalkthrough(true)}
-          onPreviewClick={handleStartPreview}
-        />
       </div>
 
       {showInstallPrompt && canInstall && !isInstalled && (
