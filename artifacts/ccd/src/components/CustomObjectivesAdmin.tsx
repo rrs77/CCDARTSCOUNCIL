@@ -16,7 +16,9 @@ import {
   Unlock,
   GripVertical,
   Link2,
-  Check
+  Check,
+  Folder,
+  FolderOpen
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
@@ -25,13 +27,21 @@ import { seedReceptionDramaObjectives } from '../utils/seedReceptionDrama';
 import { setupSecondaryDramaObjectives } from '../utils/setupSecondaryDramaObjectives';
 import { setupDanceObjectives } from '../utils/setupDanceObjectives';
 import type { 
+  CustomObjective,
   CustomObjectiveYearGroupWithAreas, 
   CustomObjectiveFormData,
   CustomObjectiveCSVRow 
 } from '../types/customObjectives';
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../contexts/SettingsContextNew';
-import { normalizeYearGroupToken, resolveYearGroupFromToken } from '../utils/yearGroupSectionOrder';
+import {
+  UNASSIGNED_POOL_AREA_NAME,
+  UNASSIGNED_POOL_YEAR_GROUP_NAME,
+  groupAreasByLinkedSubfolders,
+  isFolderYearGroup,
+  isSystemUnassignedPool,
+  sortBySortOrder,
+} from '../utils/objectivesFolderUtils';
 
 // Draggable Year Group Item
 interface DraggableYearGroupProps {
@@ -110,7 +120,7 @@ interface CustomObjectivesAdminProps {
 
 export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: CustomObjectivesAdminProps) {
   const { user } = useAuth();
-  const { customYearGroups, yearGroupSections } = useSettings();
+  const { customYearGroups } = useSettings();
   const isAdmin = user?.email === 'rob.reichstorer@gmail.com' || user?.role === 'administrator';
   
   // Get available year group names for linking
@@ -130,72 +140,78 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [cloneData, setCloneData] = useState({ sourceId: '', targetName: '', targetColor: '#3B82F6' });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  const [collapsedSectionIds, setCollapsedSectionIds] = useState<Set<string>>(new Set());
+  const [unassignedPoolAreaId, setUnassignedPoolAreaId] = useState<string | null>(null);
+  const [unassignedSectionCollapsed, setUnassignedSectionCollapsed] = useState(false);
+  const [expandedSubfolders, setExpandedSubfolders] = useState<Set<string>>(new Set());
 
-  const yearGroupIndexById = React.useMemo(() => {
+  const UNASSIGNED_POOL_VIEW_ID = '__unassigned_pool_view__';
+
+  const displayYearGroups = React.useMemo(
+    () => yearGroups.filter((yg) => !isSystemUnassignedPool(yg)),
+    [yearGroups]
+  );
+
+  const folderYearGroups = React.useMemo(
+    () => sortBySortOrder(displayYearGroups.filter(isFolderYearGroup)),
+    [displayYearGroups]
+  );
+
+  const legacyUnassignedYearGroups = React.useMemo(
+    () => sortBySortOrder(displayYearGroups.filter((yg) => !isFolderYearGroup(yg))),
+    [displayYearGroups]
+  );
+
+  const poolObjectives = React.useMemo(() => {
+    const pool = yearGroups.find(isSystemUnassignedPool);
+    if (!pool?.areas?.length) return [];
+    const area =
+      pool.areas.find((a) => a.name === UNASSIGNED_POOL_AREA_NAME) || pool.areas[0];
+    return area?.objectives || [];
+  }, [yearGroups]);
+
+  const folderYearGroupIndexById = React.useMemo(() => {
     const map = new Map<string, number>();
-    yearGroups.forEach((group, index) => {
+    folderYearGroups.forEach((group, index) => {
       map.set(group.id, index);
     });
     return map;
-  }, [yearGroups]);
+  }, [folderYearGroups]);
 
-  const sectionOrder = React.useMemo(() => {
-    const source =
-      yearGroupSections && yearGroupSections.length > 0
-        ? yearGroupSections
-        : [{ id: 'other', label: 'Other', sortOrder: 999, yearGroupIds: [] }];
-    return [...source].sort((a, b) => a.sortOrder - b.sortOrder);
-  }, [yearGroupSections]);
-
-  const sectionLabelByCustomYearGroupName = React.useMemo(() => {
-    const labelByCanonicalId = new Map<string, string>();
-    sectionOrder.forEach((section) => {
-      (section.yearGroupIds || []).forEach((token) => {
-        const resolved = resolveYearGroupFromToken(customYearGroups || [], token);
-        if (resolved && !labelByCanonicalId.has(resolved.id)) {
-          labelByCanonicalId.set(resolved.id, section.label);
-        }
+  const ensureUnassignedPool = async (
+    data: CustomObjectiveYearGroupWithAreas[]
+  ): Promise<{ areaId: string; needsReload: boolean }> => {
+    let pool = data.find(isSystemUnassignedPool);
+    if (!pool) {
+      const newYg = await customObjectivesApi.yearGroups.create({
+        name: UNASSIGNED_POOL_YEAR_GROUP_NAME,
+        description: 'System pool for objectives not assigned to a folder',
+        color: '#94A3B8',
+        sort_order: -9999,
+        linked_year_groups: [],
       });
-    });
-
-    const byLinkedName = new Map<string, string>();
-    (customYearGroups || []).forEach((group) => {
-      const label = labelByCanonicalId.get(group.id);
-      if (!label) return;
-      byLinkedName.set(normalizeYearGroupToken(group.name), label);
-      byLinkedName.set(normalizeYearGroupToken(group.id), label);
-    });
-    return byLinkedName;
-  }, [sectionOrder, customYearGroups]);
-
-  const groupedYearGroups = React.useMemo(() => {
-    const sectionMap = new Map<string, { id: string; label: string; items: CustomObjectiveYearGroupWithAreas[] }>();
-    sectionOrder.forEach((section) => {
-      sectionMap.set(section.label, { id: section.id, label: section.label, items: [] });
-    });
-    if (!sectionMap.has('Other')) {
-      sectionMap.set('Other', { id: 'other', label: 'Other', items: [] });
+      const newArea = await customObjectivesApi.areas.create({
+        year_group_id: newYg.id,
+        section: '',
+        name: UNASSIGNED_POOL_AREA_NAME,
+        description: '',
+        sort_order: 0,
+      });
+      return { areaId: newArea.id, needsReload: true };
     }
 
-    yearGroups.forEach((group) => {
-      const linked = group.linked_year_groups || [];
-      const counts = new Map<string, number>();
-      linked.forEach((name) => {
-        const label = sectionLabelByCustomYearGroupName.get(normalizeYearGroupToken(name));
-        if (label) counts.set(label, (counts.get(label) || 0) + 1);
+    let area = pool.areas?.find((a) => a.name === UNASSIGNED_POOL_AREA_NAME);
+    if (!area) {
+      const newArea = await customObjectivesApi.areas.create({
+        year_group_id: pool.id,
+        section: '',
+        name: UNASSIGNED_POOL_AREA_NAME,
+        description: '',
+        sort_order: 0,
       });
-
-      const bestLabel =
-        counts.size > 0
-          ? [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0]
-          : 'Other';
-      const target = sectionMap.get(bestLabel) || sectionMap.get('Other');
-      target?.items.push(group);
-    });
-
-    return [...sectionMap.values()].filter((section) => section.items.length > 0);
-  }, [yearGroups, sectionOrder, sectionLabelByCustomYearGroupName]);
+      return { areaId: newArea.id, needsReload: true };
+    }
+    return { areaId: area.id, needsReload: false };
+  };
 
   // Helper function to auto-resize textarea
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
@@ -260,29 +276,45 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     }
   }, [isOpen, embedded]);
 
-  // Auto-expand all areas when a year group is selected
+  // Auto-expand areas / subfolders when selection changes
   useEffect(() => {
-    if (selectedYearGroup) {
-      const yearGroup = yearGroups.find(yg => yg.id === selectedYearGroup);
-      if (yearGroup && Array.isArray(yearGroup.areas)) {
-        const allAreaIds = new Set((yearGroup.areas as { id: string }[]).map(area => area.id));
-        setExpandedAreas(allAreaIds);
-      }
+    if (!selectedYearGroup) return;
+
+    if (selectedYearGroup === UNASSIGNED_POOL_VIEW_ID) {
+      setExpandedAreas(new Set());
+      return;
     }
+
+    const yearGroup = yearGroups.find((yg) => yg.id === selectedYearGroup);
+    if (!yearGroup || !Array.isArray(yearGroup.areas)) return;
+
+    if (isFolderYearGroup(yearGroup)) {
+      const subfolders = groupAreasByLinkedSubfolders(yearGroup);
+      setExpandedSubfolders(new Set(subfolders.map((g) => g.subfolder)));
+    }
+
+    const allAreaIds = new Set((yearGroup.areas as { id: string }[]).map((area) => area.id));
+    setExpandedAreas(allAreaIds);
   }, [selectedYearGroup, yearGroups]);
 
   const loadData = async () => {
     setLoading(true);
     try {
-      const data = await customObjectivesApi.getCompleteStructure();
+      let data = await customObjectivesApi.getCompleteStructure();
+      const pool = await ensureUnassignedPool(data);
+      setUnassignedPoolAreaId(pool.areaId);
+      if (pool.needsReload) {
+        data = await customObjectivesApi.getCompleteStructure();
+      }
       setYearGroups(data);
-      
-      // Expand first year group by default (guard missing areas)
-      if (data.length > 0 && !selectedYearGroup) {
-        const first = data[0];
-        setSelectedYearGroup(first.id);
-        const areas = Array.isArray(first.areas) ? first.areas : [];
-        setExpandedAreas(new Set(areas.map((area: { id: string }) => area.id)));
+
+      const visible = data.filter((yg) => !isSystemUnassignedPool(yg));
+      if (!selectedYearGroup) {
+        const firstFolder = sortBySortOrder(visible.filter(isFolderYearGroup))[0];
+        const first = firstFolder || visible[0];
+        if (first) {
+          setSelectedYearGroup(first.id);
+        }
       }
     } catch (error) {
       console.error('Failed to load custom objectives:', error);
@@ -290,6 +322,187 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleRemoveFromFolder = async (objective: CustomObjective) => {
+    if (!unassignedPoolAreaId) {
+      setMessage({ type: 'error', text: 'Unassigned pool is not ready. Refresh and try again.' });
+      return;
+    }
+    try {
+      await customObjectivesApi.objectives.update(objective.id, {
+        area_id: unassignedPoolAreaId,
+      });
+      setMessage({ type: 'success', text: 'Objective moved to Unassigned Objectives' });
+      await loadData();
+      setSelectedYearGroup(UNASSIGNED_POOL_VIEW_ID);
+    } catch (error) {
+      console.error('Failed to remove objective from folder:', error);
+      setMessage({ type: 'error', text: 'Failed to remove objective from folder' });
+    }
+  };
+
+  const reorderFolderYearGroups = (dragIndex: number, hoverIndex: number) => {
+    const folders = [...folderYearGroups];
+    const [removed] = folders.splice(dragIndex, 1);
+    folders.splice(hoverIndex, 0, removed);
+    folders.forEach((yg, i) => {
+      yg.sort_order = i;
+    });
+    const pool = yearGroups.filter(isSystemUnassignedPool);
+    const legacy = yearGroups.filter(
+      (yg) => !isSystemUnassignedPool(yg) && !isFolderYearGroup(yg)
+    );
+    setYearGroups([...pool, ...folders, ...legacy]);
+    (async () => {
+      try {
+        for (let i = 0; i < folders.length; i++) {
+          await customObjectivesApi.yearGroups.update(folders[i].id, { sort_order: i });
+        }
+        setMessage({ type: 'success', text: 'Folders reordered successfully' });
+      } catch (error) {
+        console.error('Failed to save folder order:', error);
+        setMessage({ type: 'error', text: 'Failed to save new folder order' });
+        await loadData();
+      }
+    })();
+  };
+
+  const renderYearGroupSidebarRow = (
+    yearGroup: CustomObjectiveYearGroupWithAreas,
+    dragIndex?: number
+  ) => {
+    const isFolder = isFolderYearGroup(yearGroup);
+    const row = (
+      <div
+        className={`p-3 rounded-lg border cursor-pointer transition-colors duration-200 ${
+          selectedYearGroup === yearGroup.id
+            ? 'border-teal-500 bg-teal-50'
+            : 'border-gray-200 bg-white hover:border-gray-300'
+        } ${typeof dragIndex === 'number' ? 'cursor-grab active:cursor-grabbing' : ''}`}
+        onClick={() => setSelectedYearGroup(yearGroup.id)}
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center space-x-2 flex-1 min-w-0">
+            {typeof dragIndex === 'number' && (
+              <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            )}
+            {isFolder ? (
+              selectedYearGroup === yearGroup.id ? (
+                <FolderOpen className="h-4 w-4 text-teal-600 flex-shrink-0" />
+              ) : (
+                <Folder className="h-4 w-4 text-gray-500 flex-shrink-0" />
+              )
+            ) : (
+              <div
+                className="w-3 h-3 rounded-full flex-shrink-0"
+                style={{ backgroundColor: yearGroup.color }}
+              />
+            )}
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h4 className="font-medium text-gray-900 truncate">{yearGroup.name}</h4>
+                {yearGroup.is_locked && (
+                  <Lock className="h-3 w-3 text-amber-500 flex-shrink-0" title="Locked - Read Only" />
+                )}
+                {isFolder && yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
+                  <Link2
+                    className="h-3 w-3 text-teal-500 flex-shrink-0"
+                    title={`Linked to: ${yearGroup.linked_year_groups.join(', ')}`}
+                  />
+                )}
+              </div>
+              <p className="text-xs text-gray-500">
+                {yearGroup.areas.length} areas,{' '}
+                {yearGroup.areas.reduce((sum, area) => sum + area.objectives.length, 0)} objectives
+              </p>
+              {isFolder && yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
+                <p
+                  className="text-xs text-teal-600 truncate"
+                  title={yearGroup.linked_year_groups.join(', ')}
+                >
+                  → {yearGroup.linked_year_groups.slice(0, 3).join(', ')}
+                  {yearGroup.linked_year_groups.length > 3
+                    ? ` +${yearGroup.linked_year_groups.length - 3}`
+                    : ''}
+                </p>
+              )}
+            </div>
+          </div>
+          <div className="flex flex-shrink-0 items-center justify-end space-x-1 w-[7.5rem]">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                setCloneData({
+                  sourceId: yearGroup.id,
+                  targetName: `${yearGroup.name} Copy`,
+                  targetColor: yearGroup.color,
+                });
+                setShowCloneDialog(true);
+              }}
+              className="p-1 text-gray-400 hover:text-gray-600"
+              title="Clone"
+            >
+              <Copy className="h-3 w-3" />
+            </button>
+            {isAdmin && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleLock(yearGroup.id);
+                }}
+                className={`p-1 ${yearGroup.is_locked ? 'text-amber-500 hover:text-amber-600' : 'text-gray-400 hover:text-gray-600'}`}
+                title={yearGroup.is_locked ? 'Unlock (Admin only)' : 'Lock (Admin only)'}
+              >
+                {yearGroup.is_locked ? <Lock className="h-3 w-3" /> : <Unlock className="h-3 w-3" />}
+              </button>
+            )}
+            {!yearGroup.is_locked && (
+              <>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleEditYearGroup(yearGroup);
+                  }}
+                  className="p-1 text-gray-400 hover:text-gray-600"
+                  title="Edit"
+                >
+                  <Edit2 className="h-3 w-3" />
+                </button>
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteYearGroup(yearGroup.id);
+                  }}
+                  className="p-1 text-gray-400 hover:text-red-600"
+                  title="Delete"
+                >
+                  <Trash2 className="h-3 w-3" />
+                </button>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+
+    if (typeof dragIndex !== 'number') {
+      return <div key={yearGroup.id}>{row}</div>;
+    }
+
+    return (
+      <DraggableYearGroup
+        key={yearGroup.id}
+        yearGroup={yearGroup}
+        index={dragIndex}
+        isSelected={selectedYearGroup === yearGroup.id}
+        onSelect={() => setSelectedYearGroup(yearGroup.id)}
+        onReorder={reorderFolderYearGroups}
+        onDragEnd={() => {}}
+      >
+        {row}
+      </DraggableYearGroup>
+    );
   };
 
   const handleCreateYearGroup = () => {
@@ -425,13 +638,24 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
         }, 3000);
         // Keep form open so user can see the success message
       } else {
-        // Create new year group
+        // Create new year group (folders sort to top)
+        const creatingFolder = (formData.year_group.linked_year_groups?.length ?? 0) > 0;
+        if (creatingFolder) {
+          const existingFolders = yearGroups.filter(
+            (yg) => !isSystemUnassignedPool(yg) && isFolderYearGroup(yg)
+          );
+          for (const yg of existingFolders) {
+            await customObjectivesApi.yearGroups.update(yg.id, {
+              sort_order: yg.sort_order + 1,
+            });
+          }
+        }
         const newYearGroup = await customObjectivesApi.yearGroups.create({
           name: formData.year_group.name,
           description: formData.year_group.description,
           color: formData.year_group.color,
-          sort_order: yearGroups.length,
-          linked_year_groups: formData.year_group.linked_year_groups || []
+          sort_order: creatingFolder ? 0 : yearGroups.filter((yg) => !isSystemUnassignedPool(yg)).length,
+          linked_year_groups: formData.year_group.linked_year_groups || [],
         });
 
         // Create areas and objectives
@@ -488,8 +712,12 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
   };
 
   const handleDeleteYearGroup = async (id: string) => {
-    // Check if year group is locked
     const yearGroup = yearGroups.find(yg => yg.id === id);
+    if (yearGroup && isSystemUnassignedPool(yearGroup)) {
+      setMessage({ type: 'error', text: 'The unassigned objectives pool cannot be deleted.' });
+      return;
+    }
+    // Check if year group is locked
     if (yearGroup?.is_locked) {
       setMessage({ type: 'error', text: 'Cannot delete locked year group. Only admins can unlock it first.' });
       return;
@@ -698,12 +926,12 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
           <div className="w-1/3 border-r border-gray-200 bg-gray-50 overflow-y-auto">
             <div className="p-4">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Subject Areas</h3>
+                <h3 className="text-lg font-semibold text-gray-900">Objectives</h3>
                 <div className="flex space-x-2">
                   <button
                     onClick={handleCreateYearGroup}
                     className="p-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors duration-200"
-                    title="Create New Subject Area"
+                    title="Create New Folder"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
@@ -790,170 +1018,66 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
               {loading ? (
                 <div className="text-center py-8 text-gray-500">Loading...</div>
               ) : (
-                // Drag-and-drop subject areas (same in modal and embedded)
                 <div className="space-y-3">
-                  {groupedYearGroups.map((section) => (
-                    <div key={section.id} className="space-y-2">
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setCollapsedSectionIds((prev) => {
-                            const next = new Set(prev);
-                            if (next.has(section.id)) {
-                              next.delete(section.id);
-                            } else {
-                              next.add(section.id);
-                            }
-                            return next;
-                          })
-                        }
-                        className="w-full flex items-center justify-between px-2 py-1.5 rounded-md bg-white border border-gray-200 hover:border-gray-300 text-left"
-                      >
-                        <div className="flex items-center gap-2">
-                          {collapsedSectionIds.has(section.id) ? (
-                            <ChevronRight className="h-4 w-4 text-gray-500" />
-                          ) : (
-                            <ChevronDown className="h-4 w-4 text-gray-500" />
-                          )}
-                          <span className="text-sm font-semibold text-gray-800">{section.label}</span>
-                        </div>
-                        <span className="text-xs font-medium text-gray-500">({section.items.length})</span>
-                      </button>
+                  {/* Unassigned Objectives (pool + legacy headings without folder links) */}
+                  <div className="space-y-2">
+                    <button
+                      type="button"
+                      onClick={() => setUnassignedSectionCollapsed((c) => !c)}
+                      className="w-full flex items-center justify-between px-2 py-1.5 rounded-md bg-white border border-gray-200 hover:border-gray-300 text-left"
+                    >
+                      <div className="flex items-center gap-2">
+                        {unassignedSectionCollapsed ? (
+                          <ChevronRight className="h-4 w-4 text-gray-500" />
+                        ) : (
+                          <ChevronDown className="h-4 w-4 text-gray-500" />
+                        )}
+                        <span className="text-sm font-semibold text-gray-800">Unassigned Objectives</span>
+                      </div>
+                      <span className="text-xs font-medium text-gray-500">
+                        ({poolObjectives.length + legacyUnassignedYearGroups.reduce(
+                          (sum, yg) =>
+                            sum + yg.areas.reduce((a, area) => a + area.objectives.length, 0),
+                          0
+                        )})
+                      </span>
+                    </button>
 
-                      {!collapsedSectionIds.has(section.id) && (
-                        <div className="space-y-2 pl-1">
-                          {section.items.map((yearGroup) => {
-                            const index = yearGroupIndexById.get(yearGroup.id);
-                            if (typeof index !== 'number') return null;
-                            return (
-                              <DraggableYearGroup
-                                key={yearGroup.id}
-                                yearGroup={yearGroup}
-                                index={index}
-                                isSelected={selectedYearGroup === yearGroup.id}
-                                onSelect={() => setSelectedYearGroup(yearGroup.id)}
-                                onReorder={(dragIndex, hoverIndex) => {
-                                  const newYearGroups = [...yearGroups];
-                                  const [removed] = newYearGroups.splice(dragIndex, 1);
-                                  newYearGroups.splice(hoverIndex, 0, removed);
-                                  newYearGroups.forEach((yg, i) => {
-                                    yg.sort_order = i;
-                                  });
-                                  setYearGroups(newYearGroups);
-                                  (async () => {
-                                    try {
-                                      for (const yg of newYearGroups) {
-                                        await customObjectivesApi.yearGroups.update(yg.id, { sort_order: yg.sort_order });
-                                      }
-                                      setMessage({ type: 'success', text: 'Subject areas reordered successfully' });
-                                    } catch (error) {
-                                      console.error('Failed to save order:', error);
-                                      setMessage({ type: 'error', text: 'Failed to save new order' });
-                                    }
-                                  })();
-                                }}
-                                onDragEnd={() => {}}
-                              >
-                              <div
-                                className={`p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-colors duration-200 ${
-                                  selectedYearGroup === yearGroup.id
-                                    ? 'border-teal-500 bg-teal-50'
-                                    : 'border-gray-200 bg-white hover:border-gray-300'
-                                }`}
-                                onClick={() => setSelectedYearGroup(yearGroup.id)}
-                              >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2 flex-1">
-                                    <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
-                                    <div
-                                      className="w-3 h-3 rounded-full flex-shrink-0"
-                                      style={{ backgroundColor: yearGroup.color }}
-                                    />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-1.5">
-                                        <h4 className="font-medium text-gray-900 truncate">{yearGroup.name}</h4>
-                                        {yearGroup.is_locked && (
-                                          <Lock className="h-3 w-3 text-amber-500 flex-shrink-0" title="Locked - Read Only" />
-                                        )}
-                                        {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
-                                          <Link2 className="h-3 w-3 text-teal-500 flex-shrink-0" title={`Linked to: ${yearGroup.linked_year_groups.join(', ')}`} />
-                                        )}
-                                      </div>
-                                      <p className="text-xs text-gray-500">
-                                        {yearGroup.areas.length} areas, {yearGroup.areas.reduce((sum, area) => sum + area.objectives.length, 0)} objectives
-                                      </p>
-                                      {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
-                                        <p className="text-xs text-teal-600 truncate" title={yearGroup.linked_year_groups.join(', ')}>
-                                          → {yearGroup.linked_year_groups.slice(0, 3).join(', ')}{yearGroup.linked_year_groups.length > 3 ? ` +${yearGroup.linked_year_groups.length - 3}` : ''}
-                                        </p>
-                                      )}
-                                    </div>
-                                  </div>
-                                  {/* Fixed-width actions column so rows with fewer buttons
-                                      (e.g. locked rows hiding Edit/Delete) don't shift the
-                                      name/grip column left or right. */}
-                                  <div className="flex flex-shrink-0 items-center justify-end space-x-1 w-[7.5rem]">
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        setCloneData({ sourceId: yearGroup.id, targetName: `${yearGroup.name} Copy`, targetColor: yearGroup.color });
-                                        setShowCloneDialog(true);
-                                      }}
-                                      className="p-1 text-gray-400 hover:text-gray-600"
-                                      title="Clone"
-                                    >
-                                      <Copy className="h-3 w-3" />
-                                    </button>
-                                    {isAdmin && (
-                                      <button
-                                        onClick={(e) => {
-                                          e.stopPropagation();
-                                          handleToggleLock(yearGroup.id);
-                                        }}
-                                        className={`p-1 ${yearGroup.is_locked ? 'text-amber-500 hover:text-amber-600' : 'text-gray-400 hover:text-gray-600'}`}
-                                        title={yearGroup.is_locked ? 'Unlock (Admin only)' : 'Lock (Admin only)'}
-                                      >
-                                        {yearGroup.is_locked ? (
-                                          <Lock className="h-3 w-3" />
-                                        ) : (
-                                          <Unlock className="h-3 w-3" />
-                                        )}
-                                      </button>
-                                    )}
-                                    {!yearGroup.is_locked && (
-                                      <>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleEditYearGroup(yearGroup);
-                                          }}
-                                          className="p-1 text-gray-400 hover:text-gray-600"
-                                          title="Edit"
-                                        >
-                                          <Edit2 className="h-3 w-3" />
-                                        </button>
-                                        <button
-                                          onClick={(e) => {
-                                            e.stopPropagation();
-                                            handleDeleteYearGroup(yearGroup.id);
-                                          }}
-                                          className="p-1 text-gray-400 hover:text-red-600"
-                                          title="Delete"
-                                        >
-                                          <Trash2 className="h-3 w-3" />
-                                        </button>
-                                      </>
-                                    )}
-                                  </div>
-                                </div>
-                              </div>
-                              </DraggableYearGroup>
-                            );
-                          })}
-                        </div>
-                      )}
+                    {!unassignedSectionCollapsed && (
+                      <div className="space-y-2 pl-1">
+                        {poolObjectives.length > 0 && (
+                          <div
+                            className={`p-3 rounded-lg border cursor-pointer transition-colors duration-200 ${
+                              selectedYearGroup === UNASSIGNED_POOL_VIEW_ID
+                                ? 'border-teal-500 bg-teal-50'
+                                : 'border-gray-200 bg-white hover:border-gray-300'
+                            }`}
+                            onClick={() => setSelectedYearGroup(UNASSIGNED_POOL_VIEW_ID)}
+                          >
+                            <p className="font-medium text-gray-900 text-sm">Loose objectives</p>
+                            <p className="text-xs text-gray-500">{poolObjectives.length} not in a folder</p>
+                          </div>
+                        )}
+                        {legacyUnassignedYearGroups.map((yearGroup) =>
+                          renderYearGroupSidebarRow(yearGroup)
+                        )}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Folders (linked year groups) — drag to reorder */}
+                  {folderYearGroups.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide px-1">
+                        Folders
+                      </p>
+                      {folderYearGroups.map((yearGroup) => {
+                        const index = folderYearGroupIndexById.get(yearGroup.id);
+                        if (typeof index !== 'number') return null;
+                        return renderYearGroupSidebarRow(yearGroup, index);
+                      })}
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
             </div>
@@ -964,20 +1088,130 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
             {selectedYearGroup ? (
               <div className="p-6">
                 {(() => {
-                  const yearGroup = yearGroups.find(yg => yg.id === selectedYearGroup);
-                  if (!yearGroup) return null;
+                  if (selectedYearGroup === UNASSIGNED_POOL_VIEW_ID) {
+                    return (
+                      <div>
+                        <div className="mb-6">
+                          <h3 className="text-lg font-semibold text-gray-900">Unassigned Objectives</h3>
+                          <p className="text-xs text-gray-600 mt-1">
+                            Objectives removed from folders or not yet assigned to one.
+                          </p>
+                        </div>
+                        <div className="space-y-2">
+                          {poolObjectives.length === 0 ? (
+                            <p className="text-sm text-gray-500">No loose objectives.</p>
+                          ) : (
+                            poolObjectives.map((objective, idx) => (
+                              <div
+                                key={objective.id}
+                                className="flex items-start space-x-3 p-3 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg border border-teal-100"
+                              >
+                                <div className="flex-shrink-0 w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                  {idx + 1}
+                                </div>
+                                <div className="flex-1">
+                                  <p className="text-sm text-gray-900 leading-relaxed">
+                                    {objective.objective_text}
+                                  </p>
+                                  {objective.description && (
+                                    <p className="text-xs text-gray-600 mt-1">{objective.description}</p>
+                                  )}
+                                </div>
+                              </div>
+                            ))
+                          )}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  const yearGroup = yearGroups.find((yg) => yg.id === selectedYearGroup);
+                  if (!yearGroup || isSystemUnassignedPool(yearGroup)) return null;
+
+                  const showRemoveFromFolder = isFolderYearGroup(yearGroup);
+
+                  const renderObjectiveRow = (
+                    objective: CustomObjective,
+                    idx: number
+                  ) => (
+                    <div
+                      key={objective.id}
+                      className="flex items-start space-x-3 p-3 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg border border-teal-100"
+                    >
+                      <div className="flex-shrink-0 w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                        {idx + 1}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm text-gray-900 leading-relaxed">{objective.objective_text}</p>
+                        {objective.description && (
+                          <p className="text-xs text-gray-600 mt-1">{objective.description}</p>
+                        )}
+                      </div>
+                      {showRemoveFromFolder && !yearGroup.is_locked && (
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveFromFolder(objective)}
+                          className="flex-shrink-0 px-2 py-1 text-xs font-medium text-amber-800 bg-amber-50 border border-amber-200 rounded hover:bg-amber-100"
+                          title="Move back to Unassigned Objectives"
+                        >
+                          Remove from Folder
+                        </button>
+                      )}
+                    </div>
+                  );
+
+                  const renderAreaBlock = (area: (typeof yearGroup.areas)[0]) => (
+                    <div
+                      key={area.id}
+                      className="border border-gray-200 rounded-lg overflow-hidden hover:border-teal-300 transition-colors"
+                    >
+                      <div
+                        className="p-4 bg-gradient-to-r from-gray-50 to-white cursor-pointer flex items-center justify-between hover:from-teal-50 hover:to-blue-50 transition-colors"
+                        onClick={() => toggleAreaExpansion(area.id)}
+                      >
+                        <div>
+                          <h4 className="font-semibold text-gray-900 text-base">{area.name}</h4>
+                          {area.description && (
+                            <p className="text-sm text-gray-600 mt-1">{area.description}</p>
+                          )}
+                          <p className="text-xs text-teal-600 font-medium mt-1">
+                            {area.objectives.length} objectives
+                          </p>
+                        </div>
+                        {expandedAreas.has(area.id) ? (
+                          <ChevronDown className="h-5 w-5 text-teal-600" />
+                        ) : (
+                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                        )}
+                      </div>
+                      {expandedAreas.has(area.id) && (
+                        <div className="p-4 bg-white border-t border-gray-100">
+                          <div className="space-y-2">
+                            {area.objectives.map((objective, idx) =>
+                              renderObjectiveRow(objective, idx)
+                            )}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  );
 
                   return (
                     <div>
                       <div className="mb-6">
-                        {/* Title and Buttons Row */}
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center space-x-2">
-                            <div
-                              className="w-3 h-3 rounded-full flex-shrink-0"
-                              style={{ backgroundColor: yearGroup.color }}
-                            />
-                            <h3 className="text-lg font-semibold text-gray-900 truncate">{yearGroup.name}</h3>
+                            {isFolderYearGroup(yearGroup) ? (
+                              <FolderOpen className="h-5 w-5 text-teal-600 flex-shrink-0" />
+                            ) : (
+                              <div
+                                className="w-3 h-3 rounded-full flex-shrink-0"
+                                style={{ backgroundColor: yearGroup.color }}
+                              />
+                            )}
+                            <h3 className="text-lg font-semibold text-gray-900 truncate">
+                              {yearGroup.name}
+                            </h3>
                           </div>
                           <div className="flex space-x-2 flex-shrink-0">
                             <button
@@ -988,88 +1222,85 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                               <Download className="h-3 w-3" />
                               <span className="hidden sm:inline">Export CSV</span>
                             </button>
-                            <button
-                              onClick={() => handleEditYearGroup(yearGroup)}
-                              className="px-2 py-1 bg-teal-600 text-white text-xs rounded-md hover:bg-teal-700 transition-colors duration-200 flex items-center space-x-1"
-                              title="Edit"
-                            >
-                              <Edit2 className="h-3 w-3" />
-                              <span className="hidden sm:inline">Edit</span>
-                            </button>
+                            {!yearGroup.is_locked && (
+                              <button
+                                onClick={() => handleEditYearGroup(yearGroup)}
+                                className="px-2 py-1 bg-teal-600 text-white text-xs rounded-md hover:bg-teal-700 transition-colors duration-200 flex items-center space-x-1"
+                                title="Edit"
+                              >
+                                <Edit2 className="h-3 w-3" />
+                                <span className="hidden sm:inline">Edit</span>
+                              </button>
+                            )}
                           </div>
                         </div>
-                        {/* Description Row */}
                         {yearGroup.description && (
                           <p className="text-xs text-gray-600 italic">{yearGroup.description}</p>
+                        )}
+                        {isFolderYearGroup(yearGroup) && yearGroup.linked_year_groups && (
+                          <p className="text-xs text-teal-600 mt-1">
+                            Subfolders: {yearGroup.linked_year_groups.join(' → ')}
+                          </p>
                         )}
                       </div>
 
                       <div className="space-y-6">
-                        {(() => {
-                          // Group areas by section
-                          const groupedBySection: Record<string, typeof yearGroup.areas> = {};
-                          yearGroup.areas.forEach(area => {
-                            const section = area.section || 'Other';
-                            if (!groupedBySection[section]) {
-                              groupedBySection[section] = [];
-                            }
-                            groupedBySection[section].push(area);
-                          });
-
-                          return Object.entries(groupedBySection).map(([section, areas]) => (
-                            <div key={section} className="space-y-3">
-                              {/* Section Header */}
-                              {section !== 'Other' && (
-                                <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-l-4 border-teal-500 px-4 py-3 rounded-lg">
-                                  <h3 className="text-lg font-bold text-teal-900">{section}</h3>
-                                </div>
-                              )}
-                              
-                              {/* Areas within this section */}
-                              {areas.map((area) => (
-                                <div key={area.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-teal-300 transition-colors">
-                                  <div
-                                    className="p-4 bg-gradient-to-r from-gray-50 to-white cursor-pointer flex items-center justify-between hover:from-teal-50 hover:to-blue-50 transition-colors"
-                                    onClick={() => toggleAreaExpansion(area.id)}
-                                  >
-                                    <div>
-                                      <h4 className="font-semibold text-gray-900 text-base">{area.name}</h4>
-                                      {area.description && (
-                                        <p className="text-sm text-gray-600 mt-1">{area.description}</p>
-                                      )}
-                                      <p className="text-xs text-teal-600 font-medium mt-1">{area.objectives.length} objectives</p>
-                                    </div>
-                                    {expandedAreas.has(area.id) ? (
-                                      <ChevronDown className="h-5 w-5 text-teal-600" />
+                        {isFolderYearGroup(yearGroup)
+                          ? groupAreasByLinkedSubfolders(yearGroup).map(({ subfolder, areas }) => (
+                              <div key={subfolder} className="space-y-3">
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setExpandedSubfolders((prev) => {
+                                      const next = new Set(prev);
+                                      if (next.has(subfolder)) next.delete(subfolder);
+                                      else next.add(subfolder);
+                                      return next;
+                                    })
+                                  }
+                                  className="w-full flex items-center justify-between bg-gradient-to-r from-teal-50 to-blue-50 border-l-4 border-teal-500 px-4 py-3 rounded-lg text-left"
+                                >
+                                  <div className="flex items-center gap-2">
+                                    {expandedSubfolders.has(subfolder) ? (
+                                      <ChevronDown className="h-4 w-4 text-teal-700" />
                                     ) : (
-                                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                                      <ChevronRight className="h-4 w-4 text-teal-700" />
+                                    )}
+                                    <h3 className="text-lg font-bold text-teal-900">{subfolder}</h3>
+                                  </div>
+                                  <span className="text-xs text-teal-700">
+                                    {areas.reduce((n, a) => n + a.objectives.length, 0)} objectives
+                                  </span>
+                                </button>
+                                {expandedSubfolders.has(subfolder) && (
+                                  <div className="space-y-3 pl-2">
+                                    {areas.length === 0 ? (
+                                      <p className="text-sm text-gray-500 italic">No areas in this subfolder yet.</p>
+                                    ) : (
+                                      areas.map((area) => renderAreaBlock(area))
                                     )}
                                   </div>
-                                  
-                                  {expandedAreas.has(area.id) && (
-                                    <div className="p-4 bg-white border-t border-gray-100">
-                                      <div className="space-y-2">
-                                        {area.objectives.map((objective, idx) => (
-                                          <div key={objective.id} className="flex items-start space-x-3 p-3 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg border border-teal-100">
-                                            <div className="flex-shrink-0 w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
-                                              {idx + 1}
-                                            </div>
-                                            <div className="flex-1">
-                                              <p className="text-sm text-gray-900 leading-relaxed">{objective.objective_text}</p>
-                                              {objective.description && (
-                                                <p className="text-xs text-gray-600 mt-1">{objective.description}</p>
-                                              )}
-                                            </div>
-                                          </div>
-                                        ))}
-                                      </div>
+                                )}
+                              </div>
+                            ))
+                          : (() => {
+                              const groupedBySection: Record<string, typeof yearGroup.areas> = {};
+                              yearGroup.areas.forEach((area) => {
+                                const section = area.section || 'Other';
+                                if (!groupedBySection[section]) groupedBySection[section] = [];
+                                groupedBySection[section].push(area);
+                              });
+                              return Object.entries(groupedBySection).map(([section, areas]) => (
+                                <div key={section} className="space-y-3">
+                                  {section !== 'Other' && (
+                                    <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-l-4 border-teal-500 px-4 py-3 rounded-lg">
+                                      <h3 className="text-lg font-bold text-teal-900">{section}</h3>
                                     </div>
                                   )}
+                                  {areas.map((area) => renderAreaBlock(area))}
                                 </div>
-                              ))}
-                            </div>
-                          ));
-                        })()}
+                              ));
+                            })()}
                       </div>
                     </div>
                   );
@@ -1077,7 +1308,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
               </div>
             ) : (
               <div className="flex items-center justify-center h-full text-gray-500">
-                Select a year group to view its objectives
+                Select a folder or unassigned item to view objectives
               </div>
             )}
           </div>
