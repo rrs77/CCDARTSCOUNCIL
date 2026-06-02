@@ -52,6 +52,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           </div>
         </div>
       ),
+      image: "/manual/activity-library.png",
       highlightSelector: '[data-tab="activity-library"]'
     },
     {
@@ -136,6 +137,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           </div>
         </div>
       ),
+      image: "/manual/lesson-builder.png",
       highlightSelector: '[data-tab="lesson-builder"]'
     },
     {
@@ -235,6 +237,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           </div>
         </div>
       ),
+      image: "/manual/unit-viewer.png",
       highlightSelector: '[data-tab="unit-builder"]'
     },
     {
@@ -319,6 +322,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           </div>
         </div>
       ),
+      image: "/manual/calendar.png",
       highlightSelector: '[data-tab="calendar"]'
     },
     {
@@ -436,6 +440,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           </div>
         </div>
       ),
+      image: "/manual/export-print.png",
       highlightSelector: '[data-tab="calendar"]'
     },
     {
@@ -480,7 +485,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <p className="text-sm text-teal-900"><strong>How it works:</strong> In the <strong>Lesson Library</strong>, each lesson card has a <strong>Copy Link</strong> (or link) button. Click it to generate a unique URL that opens a read-only view of that lesson plan.</p>
           </div>
         </div>
-      )
+      ),
+      image: "/manual/share.png"
     },
     {
       title: "Creating & Using Share Links",
@@ -878,13 +884,17 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                 {currentSteps[currentStep].content}
               </div>
               
-              {/* Step Image (if available) */}
+              {/* Step Image (if available) — hide on load failure to avoid broken-image icons. */}
               {currentSteps[currentStep].image && (
                 <div className="mt-4 border border-gray-200 rounded-lg overflow-hidden">
-                  <img 
-                    src={currentSteps[currentStep].image} 
+                  <img
+                    src={currentSteps[currentStep].image}
                     alt={currentSteps[currentStep].title}
                     className="w-full object-cover"
+                    onError={(e) => {
+                      const wrapper = e.currentTarget.parentElement;
+                      if (wrapper) wrapper.style.display = 'none';
+                    }}
                   />
                 </div>
               )}

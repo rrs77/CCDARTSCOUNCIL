@@ -9,7 +9,6 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { supabase, isSupabaseAuthEnabled, isSupabaseConfigured, checkSupabaseAuthHealth, setSessionOnlyCookie } from '../config/supabase';
 import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoLocalStorage } from '../utils/demoSampleData';
-import { UserManualModal } from './UserManualModal';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -29,7 +28,6 @@ export function LoginForm() {
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState('');
-  const [showUserManual, setShowUserManual] = useState(false);
 
   const branding = settings.branding || {};
   const loginButtonColor = branding.loginButtonColor || '#008272';
@@ -407,14 +405,9 @@ export function LoginForm() {
                 </a>
               </p>
               <p>
-                Need help?{' '}
-                <button
-                  type="button"
-                  onClick={() => setShowUserManual(true)}
-                  className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
-                >
-                  Read the user manual
-                </button>
+                Need help? Sign in and click the{' '}
+                <span className="font-medium text-indigo-600">help</span> icon in the header for a
+                step-by-step guide.
               </p>
             </div>
 
@@ -425,8 +418,6 @@ export function LoginForm() {
           </div>
         </div>
       </div>
-
-      <UserManualModal isOpen={showUserManual} onClose={() => setShowUserManual(false)} />
 
       {showInstallPrompt && canInstall && !isInstalled && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
