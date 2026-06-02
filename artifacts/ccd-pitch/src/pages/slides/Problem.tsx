@@ -36,7 +36,7 @@ export default function Problem() {
               5+
             </div>
             <span className="text-muted font-body text-[1.2vw] leading-snug max-w-[14vw]">
-              hours a week the average primary teacher spends planning outside of class.
+              hours a week the average teacher spends planning outside of class.
             </span>
           </div>
         </div>

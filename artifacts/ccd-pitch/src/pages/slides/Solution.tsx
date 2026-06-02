@@ -35,7 +35,7 @@ export default function Solution() {
             className="mt-[2.5vh] text-white/75 font-body max-w-[60vw] leading-snug"
             style={{ fontSize: "1.6vw", textWrap: "pretty" }}
           >
-            Creative Curriculum Designer brings planning, teaching and reusable resources into one workspace — purpose-built for the performing arts in primary classrooms.
+            Creative Curriculum Designer brings planning, teaching and reusable resources into one workspace — purpose-built for performing arts from EYFS to A-level.
           </p>
         </div>
 
@@ -56,7 +56,7 @@ export default function Solution() {
             </div>
             <h3 className="font-display font-bold text-white text-[1.7vw] leading-tight">Lesson library</h3>
             <p className="mt-[1vh] text-white/70 font-body text-[1.15vw] leading-snug">
-              Build, reuse and share lessons. Tag by year group and unit. Find the right one in seconds.
+              Build, reuse and share lessons. Browse partner packs and sell your own activity packs to other teachers.
             </p>
           </div>
 

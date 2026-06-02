@@ -64,7 +64,7 @@ export default function HowItWorks() {
               CD
             </div>
             <div>
-              <div className="font-display font-bold text-white text-[1.5vw] leading-tight">Built for primary classrooms.</div>
+              <div className="font-display font-bold text-white text-[1.5vw] leading-tight">Built for every phase — EYFS to A-level.</div>
               <div className="font-body text-white/70 text-[1.1vw] leading-snug">Works on a laptop, a smartboard, or a tablet during break.</div>
             </div>
           </div>

@@ -20,7 +20,7 @@ export default function WhoItsFor() {
             className="font-display font-black text-text tracking-tight leading-[1.02]"
             style={{ fontSize: "4.6vw", textWrap: "balance" }}
           >
-            Built with primary teachers, for primary teachers.
+            Built for teachers from EYFS to A-level.
           </h2>
         </div>
 
@@ -43,33 +43,33 @@ export default function WhoItsFor() {
 
           <div className="rounded-[1.5rem] bg-primary-dark text-white shadow-[0_12px_40px_rgba(0,76,69,0.2)] p-[3vh_2vw] flex flex-col">
             <div className="flex items-baseline gap-[0.6vw] mb-[2vh]">
-              <span className="font-display font-black text-white text-[3.2vw] leading-none">KS1</span>
-              <span className="font-body text-white/70 text-[1vw]">Ages 5–7</span>
+              <span className="font-display font-black text-white text-[3.2vw] leading-none">KS1–KS3</span>
+              <span className="font-body text-white/70 text-[1vw]">Ages 5–14</span>
             </div>
             <h3 className="font-display font-bold text-white text-[1.5vw] leading-tight mb-[1.5vh]">
-              Year 1 &amp; 2 teachers building strong foundations
+              Primary and lower-secondary teachers
             </h3>
             <p className="text-white/75 font-body text-[1.15vw] leading-snug">
-              Map National Curriculum objectives across the year. Mix new activities with proven warm-ups so every lesson starts confident.
+              Map objectives from Year 1 through Year 9. Mix starter content with your own activities and reuse stacks as pupils progress through the key stages.
             </p>
             <div className="mt-auto pt-[2vh] border-t border-white/15 font-body text-white/85 text-[1.05vw]">
-              NC objectives &middot; phonics-friendly stacks
+              NC objectives &middot; unit planning &middot; team sharing
             </div>
           </div>
 
           <div className="rounded-[1.5rem] bg-surface shadow-[0_8px_32px_rgba(0,76,69,0.08)] p-[3vh_2vw] flex flex-col">
             <div className="flex items-baseline gap-[0.6vw] mb-[2vh]">
-              <span className="font-display font-black text-primary-dark text-[3.2vw] leading-none">KS2</span>
-              <span className="font-body text-muted text-[1vw]">Ages 7–11</span>
+              <span className="font-display font-black text-primary-dark text-[3.2vw] leading-none">KS4–A-level</span>
+              <span className="font-body text-muted text-[1vw]">Ages 14–18</span>
             </div>
             <h3 className="font-display font-bold text-text text-[1.5vw] leading-tight mb-[1.5vh]">
-              Year 3–6 teachers and subject leads
+              GCSE, BTEC and A-level teachers
             </h3>
             <p className="text-muted font-body text-[1.15vw] leading-snug">
-              Sequence units across terms. Share lesson packs across the team so a great Year 5 history unit is never planned twice.
+              Plan examined units, coursework blocks and practical assessments. Share schemes across the department so every cohort builds on last year's best work.
             </p>
             <div className="mt-auto pt-[2vh] border-t border-text/10 font-body text-text/80 text-[1.05vw]">
-              Unit planning &middot; team sharing
+              Exam specs &middot; performance rehearsals
             </div>
           </div>
         </div>

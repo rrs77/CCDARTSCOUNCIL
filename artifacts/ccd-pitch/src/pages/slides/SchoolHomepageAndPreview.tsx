@@ -33,17 +33,17 @@ export default function SchoolHomepageAndPreview() {
         <div className="grid grid-cols-2 gap-[2vw] flex-1">
           <div className="rounded-[1.5rem] bg-surface shadow-[0_12px_40px_rgba(0,76,69,0.1)] border border-text/5 overflow-hidden flex flex-col">
             <div className="px-[1.4vw] py-[1vh] border-b border-text/10 bg-bg flex items-center justify-between">
-              <span className="font-display font-semibold text-muted text-[0.85vw]">creativecurriculumdesigner.com/coopersalehall</span>
+              <span className="font-display font-semibold text-muted text-[0.85vw]">creativecurriculumdesigner.com/oakhill</span>
               <span className="font-body text-muted text-[0.75vw]">Public homepage</span>
             </div>
             <div className="grid grid-cols-2 flex-1">
               <div className="bg-primary-dark p-[2vh_1.4vw] flex flex-col justify-between">
                 <div className="flex items-center gap-[0.5vw]">
-                  <div className="w-[1.6vw] h-[1.6vw] rounded-md bg-white flex items-center justify-center font-display font-black text-primary-dark text-[1vw]">C</div>
-                  <span className="font-display font-bold text-white text-[0.95vw]">Coopersale Hall</span>
+                  <div className="w-[1.6vw] h-[1.6vw] rounded-md bg-white flex items-center justify-center font-display font-black text-primary-dark text-[1vw]">O</div>
+                  <span className="font-display font-bold text-white text-[0.95vw]">Oakhill School</span>
                 </div>
                 <div>
-                  <div className="font-display font-black text-white leading-[1] text-[2.2vw]">Performing Arts at Coopersale Hall</div>
+                  <div className="font-display font-black text-white leading-[1] text-[2.2vw]">Performing Arts at Oakhill School</div>
                   <div className="font-body text-white/75 text-[0.85vw] mt-[0.8vh] leading-snug">A year of drama, music and dance — built by our teachers, for our pupils.</div>
                 </div>
                 <div className="flex flex-col gap-[0.6vh]">

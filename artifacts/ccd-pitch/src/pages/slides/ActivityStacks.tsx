@@ -1,8 +1,8 @@
 export default function ActivityStacks() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-bg">
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.5vw] px-[7vw] py-[7vh] slide-auto-enter">
-        <div className="col-span-5 flex flex-col justify-center">
+      <div className="relative z-10 grid h-full w-full grid-cols-12 gap-[2.5vw] px-[7vw] py-[7vh]">
+        <div className="col-span-5 flex flex-col justify-center slide-auto-enter">
           <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[1vw] mb-[2vh]">
             Feature 03
           </span>
@@ -36,50 +36,80 @@ export default function ActivityStacks() {
         </div>
 
         <div className="col-span-7 flex items-center">
-          <div className="w-full grid grid-cols-2 gap-[1.5vw]">
-            <div className="rounded-[1.5rem] bg-surface shadow-[0_12px_40px_rgba(0,76,69,0.1)] p-[2.5vh_1.6vw] border border-text/5">
-              <div className="flex items-center justify-between mb-[1.5vh]">
+          <div className="grid w-full grid-cols-2 gap-[1.5vw]">
+            <div className="stack-panel-drop rounded-[1.5rem] bg-surface shadow-[0_12px_40px_rgba(0,76,69,0.1)] p-[2.5vh_1.6vw] border border-text/5">
+              <div className="mb-[1.5vh] flex items-center justify-between">
                 <span className="font-display font-bold text-text text-[1.3vw]">Drama &middot; Storytelling</span>
                 <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#FFE5D6] text-[#A24A1A] font-display font-semibold text-[0.85vw]">5 items</span>
               </div>
-              <div className="flex flex-col gap-[1vh]">
-                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+              <div className="stack-drop-column flex flex-col gap-[1vh]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "280ms" }}
+                >
                   Mirror game warm-up
                 </div>
-                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "430ms" }}
+                >
                   Story circle &amp; offers
                 </div>
-                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "580ms" }}
+                >
                   Character hot-seating
                 </div>
-                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "730ms" }}
+                >
                   Freeze-frame moments
                 </div>
-                <div className="rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#FFE5D6]/60 border border-[#FFB07A]/40 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "880ms" }}
+                >
                   Audience feedback circle
                 </div>
               </div>
             </div>
 
-            <div className="rounded-[1.5rem] bg-surface shadow-[0_12px_40px_rgba(0,76,69,0.1)] p-[2.5vh_1.6vw] border border-text/5">
-              <div className="flex items-center justify-between mb-[1.5vh]">
+            <div className="stack-panel-drop rounded-[1.5rem] bg-surface shadow-[0_12px_40px_rgba(0,76,69,0.1)] p-[2.5vh_1.6vw] border border-text/5">
+              <div className="mb-[1.5vh] flex items-center justify-between">
                 <span className="font-display font-bold text-text text-[1.3vw]">Music &middot; Rhythm &amp; voice</span>
                 <span className="px-[0.6vw] py-[0.2vh] rounded-full bg-[#D6E8F2] text-[#0A4A66] font-display font-semibold text-[0.85vw]">4 items</span>
               </div>
-              <div className="flex flex-col gap-[1vh]">
-                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+              <div className="stack-drop-column flex flex-col gap-[1vh]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "380ms" }}
+                >
                   Body-percussion warm-up
                 </div>
-                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "530ms" }}
+                >
                   Active listening: West Africa
                 </div>
-                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "680ms" }}
+                >
                   Call-and-response clapping
                 </div>
-                <div className="rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] bg-[#D6E8F2]/60 border border-[#0EA4D4]/30 p-[1vh_0.9vw] font-body text-text text-[1.05vw]"
+                  style={{ ["--stack-drop-delay" as string]: "830ms" }}
+                >
                   Sing &amp; sign reflection
                 </div>
-                <div className="rounded-[0.8rem] border-2 border-dashed border-text/20 p-[1vh_0.9vw] font-body text-muted text-[1.05vw] text-center">
+                <div
+                  className="stack-item-drop rounded-[0.8rem] border-2 border-dashed border-text/20 p-[1vh_0.9vw] font-body text-muted text-[1.05vw] text-center"
+                  style={{ ["--stack-drop-delay" as string]: "980ms" }}
+                >
                   Drop activity here
                 </div>
               </div>

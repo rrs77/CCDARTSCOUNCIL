@@ -1,6 +1,6 @@
 kind = "slides"
 previewPath = "/ccd-pitch/"
-title = "CCD Pitch Deck"
+title = "CCD Feature Promo"
 version = "1.0.0"
 id = "artifacts/ccd-pitch"
 router = "path"

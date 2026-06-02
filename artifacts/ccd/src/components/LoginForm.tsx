@@ -1,15 +1,38 @@
 import React, { useState, useEffect } from 'react';
-import { Mail, Lock, Eye, EyeOff, AlertCircle, Download, X, RefreshCw, ArrowRight, PlayCircle, Shield } from 'lucide-react';
+import {
+  Mail,
+  Lock,
+  Eye,
+  EyeOff,
+  AlertCircle,
+  Download,
+  X,
+  RefreshCw,
+  ArrowRight,
+  PlayCircle,
+  Shield,
+  ExternalLink,
+} from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getAppBaseUrl } from '../utils/apiUrl';
 import { LoadingSpinner } from './LoadingSpinner';
-import { LogoSVG } from './Logo';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useSettings } from '../contexts/SettingsContextNew';
-import { supabase, isSupabaseAuthEnabled, isSupabaseConfigured, checkSupabaseAuthHealth, setSessionOnlyCookie } from '../config/supabase';
+import {
+  supabase,
+  isSupabaseAuthEnabled,
+  isSupabaseConfigured,
+  checkSupabaseAuthHealth,
+  setSessionOnlyCookie,
+} from '../config/supabase';
 import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoLocalStorage } from '../utils/demoSampleData';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
+import { LoginHeroPanel } from './login/LoginHeroPanel';
+import { LoginBottomNav } from './login/LoginBottomNav';
+import { LogoSVG } from './Logo';
+
+const LOGIN_GREEN = '#002D24';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -32,10 +55,7 @@ export function LoginForm() {
   const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
 
   const branding = settings.branding || {};
-  const loginButtonColor = branding.loginButtonColor || '#008272';
   const logoLetters = branding.logoLetters || 'CCD';
-  const loginTitle = branding.loginTitle || 'Creative Curriculum Designer';
-  const loginSubtitle = branding.loginSubtitle || 'From Rhythmstix';
   const loginSubtitleUrl = branding.loginSubtitleUrl || 'https://www.rhythmstix.co.uk';
 
   const handleSubmit = async (e?: React.FormEvent) => {
@@ -50,7 +70,15 @@ export function LoginForm() {
       await Promise.race([
         login(username, password),
         new Promise<never>((_, reject) =>
-          setTimeout(() => reject(new Error('Connection timed out. The server may be waking up – please try again in a moment.')), LOGIN_TIMEOUT_MS)
+          setTimeout(
+            () =>
+              reject(
+                new Error(
+                  'Connection timed out. The server may be waking up – please try again in a moment.',
+                ),
+              ),
+            LOGIN_TIMEOUT_MS,
+          ),
         ),
       ]);
     } catch (err) {
@@ -78,7 +106,7 @@ export function LoginForm() {
       });
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (canInstall && !isInstalled) {
       const timer = setTimeout(() => {
         const dismissed = localStorage.getItem('pwa-install-dismissed');
@@ -104,16 +132,18 @@ export function LoginForm() {
     setForgotSubmitting(true);
     try {
       const baseUrl = getAppBaseUrl();
-      const redirectTo = baseUrl ? `${baseUrl}/reset-password` : `${window.location.origin}/reset-password`;
-      const { error } = await supabase.auth.resetPasswordForEmail(emailTrimmed, {
+      const redirectTo = baseUrl
+        ? `${baseUrl}/reset-password`
+        : `${window.location.origin}/reset-password`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(emailTrimmed, {
         redirectTo,
       });
-      if (error) {
-        const msg = error.message || '';
+      if (resetError) {
+        const msg = resetError.message || '';
         if (msg.toLowerCase().includes('rate limit')) {
           throw new Error('Too many reset requests. Please wait about an hour and try again.');
         }
-        throw new Error(error.message);
+        throw new Error(resetError.message);
       }
       setForgotSent(true);
     } catch (err) {
@@ -134,363 +164,395 @@ export function LoginForm() {
     window.location.assign('/?demo=1');
   };
 
+  const inputClassName =
+    'w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20';
+
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
-      <div
-        className="relative flex flex-col items-center justify-center px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14 overflow-hidden"
-        style={{
-          background: 'linear-gradient(160deg, #0f172a 0%, #1e1b4b 35%, #312e81 65%, #1e1b4b 100%)',
-          color: '#fff',
-        }}
-      >
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full opacity-20 blur-3xl"
-          style={{ backgroundColor: '#7c3aed', animation: 'loginFloat 8s ease-in-out infinite' }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute top-1/3 -left-40 h-80 w-80 rounded-full opacity-15 blur-3xl"
-          style={{ backgroundColor: '#6366f1', animation: 'loginFloat 10s ease-in-out infinite reverse' }}
-        />
-        <div
-          aria-hidden
-          className="pointer-events-none absolute -bottom-40 right-1/4 h-96 w-96 rounded-full opacity-10 blur-3xl"
-          style={{ backgroundColor: '#a78bfa', animation: 'loginFloat 12s ease-in-out infinite 2s' }}
-        />
+    <div className="min-h-screen bg-[#eef1ef] p-0 sm:p-4 lg:p-6">
+      <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3rem)]">
+        <div className="flex flex-1 flex-col lg:flex-row">
+          {/* Mobile hero — compact */}
+          <div className="lg:hidden">
+            <LoginHeroPanel logoLetters={logoLetters} compact />
+          </div>
 
-        <div className="relative flex flex-col items-center text-center">
-          <h1
-            className="text-4xl font-bold leading-tight sm:text-5xl lg:text-6xl"
-            style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-          >
-            <span className="text-white">Creative</span>
-            <br />
-            <span className="italic" style={{ color: '#a78bfa' }}>Curriculum</span>
-            <span className="italic" style={{ color: '#a78bfa' }}>Designer</span>
-          </h1>
-          <p className="mt-6 max-w-sm text-base opacity-75 sm:text-lg leading-relaxed">
-            Design, deliver, and review your curriculum — made easy
-          </p>
-        </div>
-      </div>
+          {/* Desktop hero */}
+          <div className="hidden lg:flex lg:w-[58%]">
+            <LoginHeroPanel logoLetters={logoLetters} />
+          </div>
 
-      <div className="flex flex-1 flex-col bg-white lg:w-1/2 lg:min-h-screen relative">
-        <div className="flex items-center justify-end gap-3 px-6 pt-4 lg:px-10">
-          {canInstall && !isInstalled && (
-            <button
-              onClick={async () => { await install(); }}
-              className="flex items-center gap-2 text-gray-500 hover:text-gray-700 px-3 py-2 rounded-lg text-sm font-medium transition-colors"
-            >
-              <Download className="h-4 w-4" />
-              <span className="hidden sm:inline">Install App</span>
-            </button>
-          )}
-          <button
-            type="button"
-            onClick={() => setShowFeatureWalkthrough(true)}
-            className="flex items-center gap-1.5 text-sm font-medium text-gray-500 hover:text-gray-700 transition-colors"
-          >
-            <PlayCircle className="h-4 w-4" />
-            Feature Walkthrough
-          </button>
-        </div>
-
-        <div className="flex flex-1 items-center justify-center px-6 py-8 lg:px-10">
-          <div className="w-full max-w-sm">
-            <div className="flex items-center gap-3 mb-6">
-              <LogoSVG size="sm" showText={false} letters={logoLetters} />
-              <span
-                className="text-lg font-semibold text-gray-900"
-                style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-              >
-                {loginTitle}
-              </span>
-            </div>
-
-            <div className="mb-8">
-              <h2
-                className="text-2xl font-bold text-gray-900 sm:text-3xl"
-                style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-              >
-                Welcome back
-              </h2>
-              <p className="mt-1 text-sm text-gray-500">
-                Please sign in to your account.
-              </p>
-            </div>
-
-            {showForgotPassword ? (
-              <div className="space-y-6">
-                <h3 className="text-lg font-semibold text-gray-900">Forgot password?</h3>
-                {!isSupabaseAuthEnabled() ? (
-                  <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 p-4 rounded-lg">
-                    Password reset is not available because email sign-in is disabled for this site. Contact your administrator or enable Supabase Auth to use reset.
-                  </p>
-                ) : forgotSent ? (
-                  <p className="text-sm text-green-700 bg-green-50 p-4 rounded-lg">Check your email. We sent a link to reset your password.</p>
-                ) : (
-                  <form onSubmit={handleForgotPassword} className="space-y-4">
-                    <div>
-                      <label htmlFor="forgot-email" className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                      <input
-                        id="forgot-email"
-                        type="email"
-                        value={forgotEmail}
-                        onChange={(e) => setForgotEmail(e.target.value)}
-                        required
-                        className="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-indigo-500 focus:border-transparent text-gray-900 bg-gray-50"
-                        placeholder="Enter your email"
-                      />
-                    </div>
-                    {forgotError && <p className="text-sm text-red-600">{forgotError}</p>}
-                    <button
-                      type="submit"
-                      disabled={forgotSubmitting}
-                      className="w-full text-white font-semibold py-3 px-4 rounded-xl transition-all duration-200"
-                      style={{
-                        background: forgotSubmitting ? '#9CA3AF' : 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
-                      }}
-                    >
-                      {forgotSubmitting ? 'Sending...' : 'Send reset link'}
-                    </button>
-                  </form>
-                )}
+          {/* Sign-in panel */}
+          <div className="flex flex-1 flex-col bg-white lg:w-[42%]">
+            <div className="flex items-center justify-end gap-2 px-5 pt-4 sm:px-8 lg:px-10">
+              {canInstall && !isInstalled && (
                 <button
                   type="button"
-                  onClick={() => { setShowForgotPassword(false); setForgotSent(false); setForgotError(''); }}
-                  className="w-full text-sm text-gray-600 hover:text-gray-900"
-                >
-                  Back to sign in
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={handleSubmit} className="space-y-5" noValidate>
-                <div>
-                  <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-gray-700">
-                    Email address
-                  </label>
-                  <input
-                    id="login-email"
-                    type="email"
-                    autoComplete="email"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
-                    required
-                    className="w-full rounded-xl border border-gray-300 bg-gray-50 py-3 px-4 text-sm text-gray-900 placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                    placeholder="you@school.org"
-                  />
-                </div>
-
-                <div>
-                  <div className="mb-1.5 flex items-center justify-between">
-                    <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
-                      Password
-                    </label>
-                    {isSupabaseConfigured() && (
-                      <button
-                        type="button"
-                        onClick={() => setShowForgotPassword(true)}
-                        className="text-sm font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
-                      >
-                        Forgot password?
-                      </button>
-                    )}
-                  </div>
-                  <div className="relative">
-                    <input
-                      id="login-password"
-                      type={showPassword ? 'text' : 'password'}
-                      autoComplete="current-password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                      className="w-full rounded-xl border border-gray-300 bg-gray-50 py-3 px-4 pr-10 text-sm text-gray-900 placeholder-gray-400 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-indigo-500"
-                      placeholder="Enter your password"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"
-                      aria-label={showPassword ? 'Hide password' : 'Show password'}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                </div>
-
-                {isSupabaseAuthEnabled() && (
-                  <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                    <input
-                      type="checkbox"
-                      checked={staySignedIn}
-                      onChange={(e) => setStaySignedIn(e.target.checked)}
-                      className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
-                    />
-                    Remember me
-                  </label>
-                )}
-
-                {error && (
-                  <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                    <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <div className="flex-1">
-                      <span>{error}</span>
-                      {error.includes('timed out') && (
-                        <button
-                          type="button"
-                          onClick={() => handleSubmit()}
-                          disabled={isSubmitting || !username.trim()}
-                          className="flex items-center gap-1 mt-1 text-sm font-medium text-indigo-700 hover:text-indigo-800"
-                        >
-                          <RefreshCw className="h-3.5 w-3.5" />
-                          Try again
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                )}
-
-                {isSupabaseConfigured() && !isSupabaseAuthEnabled() && (
-                  <p className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-                    Email/password sign-in is off. Set VITE_USE_SUPABASE_AUTH=true in your environment and redeploy to sign in and use password reset.
-                  </p>
-                )}
-
-                {isSupabaseAuthEnabled() && authStatus && authStatus !== 'ok' && (
-                  <div className={`p-2 rounded-lg text-xs ${authStatus === 'fail' ? 'bg-amber-50 text-amber-800' : 'bg-gray-50 text-gray-600'}`}>
-                    {authStatus === 'checking' && 'Checking Supabase...'}
-                    {authStatus === 'fail' && `Supabase Auth: ${authError || 'Not reachable'}. Check Supabase Dashboard.`}
-                  </div>
-                )}
-
-                <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl px-4 py-3.5 text-sm font-semibold text-white shadow-lg transition-all duration-200 hover:shadow-xl hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                  style={{
-                    background: isSubmitting ? '#6B7280' : 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)',
+                  onClick={async () => {
+                    await install();
                   }}
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
                 >
-                  {isSubmitting ? (
-                    <>
-                      <LoadingSpinner size="sm" />
-                      <span>Signing in...</span>
-                    </>
-                  ) : (
-                    <span>Sign in</span>
-                  )}
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Install</span>
                 </button>
-              </form>
-            )}
-
-            <button
-              type="button"
-              onClick={handleStartPreview}
-              className="mt-4 flex w-full items-center justify-center gap-2 rounded-xl border border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 shadow-sm transition-all duration-200 hover:bg-gray-50 hover:shadow-md"
-            >
-              <PlayCircle className="h-4 w-4" />
-              Preview Full App
-            </button>
-
-            <div className="mt-6 space-y-1.5 text-center text-sm text-gray-500">
-              <p>
-                Don't have an account?{' '}
-                <a
-                  href={loginSubtitleUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="font-medium text-indigo-600 hover:text-indigo-700 hover:underline"
-                >
-                  Create one free
-                </a>
-              </p>
-              <p>
-                Need help? Sign in and click the{' '}
-                <span className="font-medium text-indigo-600">help</span> icon in the header for a
-                step-by-step guide.
-              </p>
-            </div>
-
-            <div className="mt-6 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-              <Shield className="h-3.5 w-3.5" />
-              <span>AES-256 encrypted &amp; secure</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {showInstallPrompt && canInstall && !isInstalled && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl shadow-2xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center space-x-3">
-                <div className="p-2 bg-indigo-100 rounded-lg">
-                  <Download className="h-6 w-6 text-indigo-600" />
-                </div>
-                <div>
-                  <h3 className="text-xl font-bold text-gray-900">Install App</h3>
-                  <p className="text-sm text-gray-600">Get quick access and work offline</p>
-                </div>
-              </div>
+              )}
               <button
-                onClick={() => {
-                  setShowInstallPrompt(false);
-                  localStorage.setItem('pwa-install-dismissed', Date.now().toString());
-                }}
-                className="p-1 text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Close"
+                type="button"
+                onClick={() => setShowFeatureWalkthrough(true)}
+                className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
               >
-                <X className="h-5 w-5" />
+                <PlayCircle className="h-4 w-4" />
+                <span className="hidden sm:inline">Feature walkthrough</span>
               </button>
             </div>
 
-            <div className="space-y-4">
-              <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4">
-                <p className="text-sm text-indigo-900 font-medium mb-2">Benefits of installing:</p>
-                <ul className="text-sm text-indigo-800 space-y-1 list-disc list-inside">
-                  <li>Quick access from your desktop or home screen</li>
-                  <li>Works offline with cached data</li>
-                  <li>Faster loading times</li>
-                  <li>No browser tabs needed</li>
-                </ul>
-              </div>
+            <div className="flex flex-1 items-center justify-center px-5 py-6 pb-24 sm:px-8 sm:py-8 md:pb-8 lg:px-10 lg:py-10">
+              <div className="w-full max-w-[380px]">
+                <LogoSVG size="sm" showText={false} letters={logoLetters} className="!space-x-0" />
 
-              <div className="flex space-x-3">
-                <button
-                  onClick={handleInstall}
-                  className="flex-1 text-white px-6 py-3 rounded-lg font-semibold transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
-                  style={{ background: 'linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%)' }}
-                >
-                  <Download className="h-5 w-5" />
-                  <span>Install Now</span>
-                </button>
-                <button
-                  onClick={() => {
-                    setShowInstallPrompt(false);
-                    localStorage.setItem('pwa-install-dismissed', Date.now().toString());
-                  }}
-                  className="px-6 py-3 text-gray-600 hover:text-gray-800 font-medium transition-colors"
-                >
-                  Later
-                </button>
+                <div className="mb-7 mt-5">
+                  <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-[1.65rem]">
+                    Welcome back
+                  </h2>
+                  <p className="mt-1 text-sm text-gray-500">Sign in to continue to your account.</p>
+                </div>
+
+                {showForgotPassword ? (
+                  <ForgotPasswordPanel
+                    forgotEmail={forgotEmail}
+                    setForgotEmail={setForgotEmail}
+                    forgotSent={forgotSent}
+                    forgotError={forgotError}
+                    forgotSubmitting={forgotSubmitting}
+                    onSubmit={handleForgotPassword}
+                    onBack={() => {
+                      setShowForgotPassword(false);
+                      setForgotSent(false);
+                      setForgotError('');
+                    }}
+                    inputClassName={inputClassName}
+                  />
+                ) : (
+                  <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                    <div>
+                      <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-gray-700">
+                        Email address
+                      </label>
+                      <div className="relative">
+                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          id="login-email"
+                          type="email"
+                          autoComplete="email"
+                          value={username}
+                          onChange={(e) => setUsername(e.target.value)}
+                          required
+                          className={inputClassName}
+                          placeholder="you@school.org"
+                        />
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="mb-1.5 flex items-center justify-between">
+                        <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
+                          Password
+                        </label>
+                        {isSupabaseConfigured() && (
+                          <button
+                            type="button"
+                            onClick={() => setShowForgotPassword(true)}
+                            className="text-sm font-medium text-[#002D24] hover:underline"
+                          >
+                            Forgot password?
+                          </button>
+                        )}
+                      </div>
+                      <div className="relative">
+                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                        <input
+                          id="login-password"
+                          type={showPassword ? 'text' : 'password'}
+                          autoComplete="current-password"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          required
+                          className={`${inputClassName} pr-10`}
+                          placeholder="Enter your password"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"
+                          aria-label={showPassword ? 'Hide password' : 'Show password'}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    </div>
+
+                    {isSupabaseAuthEnabled() && (
+                      <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                        <input
+                          type="checkbox"
+                          checked={staySignedIn}
+                          onChange={(e) => setStaySignedIn(e.target.checked)}
+                          className="h-4 w-4 rounded border-gray-300 text-[#002D24] focus:ring-[#002D24]"
+                        />
+                        Remember me
+                      </label>
+                    )}
+
+                    {error && (
+                      <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                        <div className="flex-1">
+                          <span>{error}</span>
+                          {error.includes('timed out') && (
+                            <button
+                              type="button"
+                              onClick={() => handleSubmit()}
+                              disabled={isSubmitting || !username.trim()}
+                              className="mt-1 flex items-center gap-1 text-sm font-medium text-[#002D24] hover:underline"
+                            >
+                              <RefreshCw className="h-3.5 w-3.5" />
+                              Try again
+                            </button>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    {isSupabaseConfigured() && !isSupabaseAuthEnabled() && (
+                      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                        Email/password sign-in is off. Set VITE_USE_SUPABASE_AUTH=true in your environment
+                        and redeploy to sign in and use password reset.
+                      </p>
+                    )}
+
+                    {isSupabaseAuthEnabled() && authStatus && authStatus !== 'ok' && (
+                      <div
+                        className={`rounded-lg p-2 text-xs ${
+                          authStatus === 'fail' ? 'bg-amber-50 text-amber-800' : 'bg-gray-50 text-gray-600'
+                        }`}
+                      >
+                        {authStatus === 'checking' && 'Checking Supabase...'}
+                        {authStatus === 'fail' &&
+                          `Supabase Auth: ${authError || 'Not reachable'}. Check Supabase Dashboard.`}
+                      </div>
+                    )}
+
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                      style={{ backgroundColor: isSubmitting ? '#6B7280' : LOGIN_GREEN }}
+                    >
+                      {isSubmitting ? (
+                        <>
+                          <LoadingSpinner size="sm" />
+                          <span>Signing in...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>Sign in</span>
+                          <ArrowRight className="h-4 w-4" />
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
+
+                {!showForgotPassword && (
+                  <>
+                    <div className="my-5 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-gray-200" />
+                      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">or</span>
+                      <div className="h-px flex-1 bg-gray-200" />
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={handleStartPreview}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      Preview the app
+                      <ExternalLink className="h-4 w-4" />
+                    </button>
+
+                    <p className="mt-6 text-center text-sm text-gray-500">
+                      Don&apos;t have an account?{' '}
+                      <a
+                        href={loginSubtitleUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="font-semibold text-[#002D24] hover:underline"
+                      >
+                        Create one
+                      </a>
+                    </p>
+
+                    <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-gray-400">
+                      <Shield className="h-3.5 w-3.5" />
+                      <span>AES-256 encrypted &amp; secure</span>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
           </div>
         </div>
+
+        <LoginBottomNav
+          onPartnersClick={() => setShowFeatureWalkthrough(true)}
+          onSupportClick={() => setShowFeatureWalkthrough(true)}
+          onPreviewClick={handleStartPreview}
+        />
+      </div>
+
+      {showInstallPrompt && canInstall && !isInstalled && (
+        <InstallPromptModal
+          onInstall={handleInstall}
+          onDismiss={() => {
+            setShowInstallPrompt(false);
+            localStorage.setItem('pwa-install-dismissed', Date.now().toString());
+          }}
+        />
       )}
 
       <FeatureWalkthroughModal
         isOpen={showFeatureWalkthrough}
         onClose={() => setShowFeatureWalkthrough(false)}
       />
+    </div>
+  );
+}
 
-      <style>{`
-        @keyframes loginFloat {
-          0%, 100% { transform: translate(0, 0) scale(1); }
-          50% { transform: translate(15px, -20px) scale(1.05); }
-        }
-      `}</style>
+function ForgotPasswordPanel({
+  forgotEmail,
+  setForgotEmail,
+  forgotSent,
+  forgotError,
+  forgotSubmitting,
+  onSubmit,
+  onBack,
+  inputClassName,
+}: {
+  forgotEmail: string;
+  setForgotEmail: (v: string) => void;
+  forgotSent: boolean;
+  forgotError: string;
+  forgotSubmitting: boolean;
+  onSubmit: (e: React.FormEvent) => void;
+  onBack: () => void;
+  inputClassName: string;
+}) {
+  return (
+    <div className="space-y-5">
+      <h3 className="text-lg font-semibold text-gray-900">Forgot password?</h3>
+      {!isSupabaseAuthEnabled() ? (
+        <p className="rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-700">
+          Password reset is not available because email sign-in is disabled for this site. Contact your
+          administrator or enable Supabase Auth to use reset.
+        </p>
+      ) : forgotSent ? (
+        <p className="rounded-lg bg-green-50 p-4 text-sm text-green-700">
+          Check your email. We sent a link to reset your password.
+        </p>
+      ) : (
+        <form onSubmit={onSubmit} className="space-y-4">
+          <div>
+            <label htmlFor="forgot-email" className="mb-1.5 block text-sm font-medium text-gray-700">
+              Email
+            </label>
+            <input
+              id="forgot-email"
+              type="email"
+              value={forgotEmail}
+              onChange={(e) => setForgotEmail(e.target.value)}
+              required
+              className={inputClassName.replace('pl-10', 'pl-3')}
+              placeholder="Enter your email"
+            />
+          </div>
+          {forgotError && <p className="text-sm text-red-600">{forgotError}</p>}
+          <button
+            type="submit"
+            disabled={forgotSubmitting}
+            className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity disabled:opacity-60"
+            style={{ backgroundColor: forgotSubmitting ? '#9CA3AF' : LOGIN_GREEN }}
+          >
+            {forgotSubmitting ? 'Sending...' : 'Send reset link'}
+          </button>
+        </form>
+      )}
+      <button type="button" onClick={onBack} className="w-full text-sm text-gray-600 hover:text-gray-900">
+        Back to sign in
+      </button>
+    </div>
+  );
+}
+
+function InstallPromptModal({
+  onInstall,
+  onDismiss,
+}: {
+  onInstall: () => void;
+  onDismiss: () => void;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+        <div className="mb-4 flex items-center justify-between">
+          <div className="flex items-center space-x-3">
+            <div className="rounded-lg bg-[#002D24]/10 p-2">
+              <Download className="h-6 w-6 text-[#002D24]" />
+            </div>
+            <div>
+              <h3 className="text-xl font-bold text-gray-900">Install App</h3>
+              <p className="text-sm text-gray-600">Get quick access and work offline</p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onDismiss}
+            className="p-1 text-gray-400 transition-colors hover:text-gray-600"
+            aria-label="Close"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="space-y-4">
+          <div className="rounded-lg border border-[#002D24]/15 bg-[#002D24]/5 p-4">
+            <p className="mb-2 text-sm font-medium text-[#002D24]">Benefits of installing:</p>
+            <ul className="list-inside list-disc space-y-1 text-sm text-gray-700">
+              <li>Quick access from your desktop or home screen</li>
+              <li>Works offline with cached data</li>
+              <li>Faster loading times</li>
+            </ul>
+          </div>
+
+          <div className="flex space-x-3">
+            <button
+              type="button"
+              onClick={onInstall}
+              className="flex flex-1 items-center justify-center space-x-2 rounded-lg px-6 py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg"
+              style={{ backgroundColor: LOGIN_GREEN }}
+            >
+              <Download className="h-5 w-5" />
+              <span>Install Now</span>
+            </button>
+            <button
+              type="button"
+              onClick={onDismiss}
+              className="px-6 py-3 font-medium text-gray-600 transition-colors hover:text-gray-800"
+            >
+              Later
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -32,7 +32,7 @@ export default function SettingsHub() {
           <div className="mt-[3vh] flex flex-col gap-[1vh]">
             <div className="flex items-center gap-[0.8vw] font-body text-text text-[1.05vw]">
               <span className="w-[0.6vw] h-[0.6vw] rounded-full bg-primary" />
-              Year groups, EYFS through Year 6
+              Year groups, EYFS through A-level
             </div>
             <div className="flex items-center gap-[0.8vw] font-body text-text text-[1.05vw]">
               <span className="w-[0.6vw] h-[0.6vw] rounded-full bg-accent" />
@@ -53,7 +53,7 @@ export default function SettingsHub() {
           <div className="w-full rounded-[1.5rem] bg-surface shadow-[0_20px_60px_rgba(0,76,69,0.12)] border border-text/5 overflow-hidden">
             <div className="flex items-center justify-between px-[1.5vw] py-[1.4vh] border-b border-text/10 bg-bg">
               <span className="font-display font-bold text-text text-[1.2vw]">Settings</span>
-              <span className="font-body text-muted text-[0.9vw]">Coopersale Hall School</span>
+              <span className="font-body text-muted text-[0.9vw]">Oakhill School</span>
             </div>
 
             <div className="flex border-b border-text/10 px-[0.6vw] bg-bg/40">
@@ -91,7 +91,15 @@ export default function SettingsHub() {
                     <span className="font-body text-muted text-[0.75vw]">↕</span>
                   </div>
                   <div className="flex items-center justify-between rounded-[0.5rem] border border-text/10 bg-white p-[0.7vh_0.7vw]">
-                    <span className="font-body text-text text-[0.9vw]">Year 5 &amp; 6</span>
+                    <span className="font-body text-text text-[0.9vw]">Year 5</span>
+                    <span className="font-body text-muted text-[0.75vw]">↕</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-[0.5rem] border border-text/10 bg-white p-[0.7vh_0.7vw]">
+                    <span className="font-body text-text text-[0.9vw]">Year 11 &middot; GCSE</span>
+                    <span className="font-body text-muted text-[0.75vw]">↕</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-[0.5rem] border border-text/10 bg-white p-[0.7vh_0.7vw]">
+                    <span className="font-body text-text text-[0.9vw]">Year 13 &middot; A-level</span>
                     <span className="font-body text-muted text-[0.75vw]">↕</span>
                   </div>
                 </div>
@@ -104,7 +112,7 @@ export default function SettingsHub() {
                     <div className="flex items-center gap-[0.5vw]">
                       <div className="w-[1.4vw] h-[1.4vw] rounded-md bg-primary-dark flex items-center justify-center font-display font-black text-white text-[0.8vw]">C</div>
                       <div>
-                        <div className="font-display font-bold text-text text-[0.85vw] leading-tight">Coopersale Hall School</div>
+                        <div className="font-display font-bold text-text text-[0.85vw] leading-tight">Oakhill School</div>
                         <div className="font-body text-muted text-[0.7vw]">Performing Arts Curriculum</div>
                       </div>
                     </div>

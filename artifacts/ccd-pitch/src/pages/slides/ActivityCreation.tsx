@@ -93,10 +93,10 @@ export default function ActivityCreation() {
               <div>
                 <div className="font-display font-semibold text-text text-[0.9vw] mb-[0.4vh]">Year groups</div>
                 <div className="flex flex-wrap gap-[0.4vw]">
-                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-primary text-white font-body text-[0.9vw]">Year 3</span>
-                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-primary text-white font-body text-[0.9vw]">Year 4</span>
-                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-bg border border-text/15 text-muted font-body text-[0.9vw]">Year 5</span>
-                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-bg border border-text/15 text-muted font-body text-[0.9vw]">Year 6</span>
+                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-primary text-white font-body text-[0.9vw]">Year 9</span>
+                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-primary text-white font-body text-[0.9vw]">Year 11</span>
+                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-bg border border-text/15 text-muted font-body text-[0.9vw]">Year 12</span>
+                  <span className="px-[0.7vw] py-[0.3vh] rounded-full bg-bg border border-text/15 text-muted font-body text-[0.9vw]">Year 13</span>
                 </div>
               </div>
 

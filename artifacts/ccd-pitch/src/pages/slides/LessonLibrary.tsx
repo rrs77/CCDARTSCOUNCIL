@@ -78,7 +78,7 @@ export default function LessonLibrary() {
             className="mt-[3vh] text-muted font-body leading-relaxed"
             style={{ fontSize: "1.4vw", textWrap: "pretty" }}
           >
-            A searchable library of lessons your team builds together. Tag by year group, unit and objective. Open the right one when you need it.
+            A searchable library of lessons your team builds together — plus partner packs from ROH and other specialists. Tag by year group, unit and objective. Share your own packs free, or sell them to other schools.
           </p>
 
           <div className="mt-[4vh] grid grid-cols-2 gap-[1vw]">
@@ -87,8 +87,8 @@ export default function LessonLibrary() {
               <div className="text-muted font-body text-[1vw] mt-[0.5vh]">starter lessons included</div>
             </div>
             <div className="rounded-[1rem] bg-surface border border-text/10 p-[1.8vh_1.2vw]">
-              <div className="font-display font-black text-accent text-[2.4vw] leading-none">1-click</div>
-              <div className="text-muted font-body text-[1vw] mt-[0.5vh]">duplicate, edit, share</div>
+              <div className="font-display font-black text-accent text-[2.4vw] leading-none">Share &amp; sell</div>
+              <div className="text-muted font-body text-[1vw] mt-[0.5vh]">activity packs you create</div>
             </div>
           </div>
         </div>

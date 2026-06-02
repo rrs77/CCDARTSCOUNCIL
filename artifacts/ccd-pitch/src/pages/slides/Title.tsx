@@ -6,7 +6,7 @@ export default function Title() {
       <img
         src={`${base}classroom-hero.png`}
         crossOrigin="anonymous"
-        alt="Primary school classroom"
+        alt="School classroom"
         className="absolute inset-0 w-full h-full object-cover"
       />
       <div className="absolute inset-0 bg-gradient-to-br from-[#008272]/85 via-[#0f9d8d]/70 to-[#FF6B6B]/55" />
@@ -41,7 +41,7 @@ export default function Title() {
             className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh] slide-fade-up"
             style={{ ['--slide-stagger' as string]: '120ms' }}
           >
-            Drama · Music · Dance for primary schools
+            Drama · Music · Dance · EYFS to A-level
           </span>
           <h1
             className="font-display font-black text-white tracking-tighter leading-[0.95] slide-fade-up"
@@ -53,7 +53,7 @@ export default function Title() {
             className="mt-[3vh] text-white/90 font-body font-medium max-w-[55vw] leading-snug slide-fade-up"
             style={{ fontSize: "1.7vw", textWrap: "pretty", ['--slide-stagger' as string]: '380ms' }}
           >
-            One calm space to map your half-terms, build lessons from a shared library, and stack the warm-ups, songs and routines you actually use.
+            One calm space to map your half-terms, build lessons from a shared library, stack the warm-ups you actually use — and tap into partner expertise from ROH and more.
           </p>
         </div>
 
@@ -61,7 +61,7 @@ export default function Title() {
           className="flex items-end justify-between text-white/85 slide-fade-up"
           style={{ ['--slide-stagger' as string]: '520ms' }}
         >
-          <span className="font-body text-[1.05vw] tracking-wide uppercase">A pitch for schools &amp; partners</span>
+          <span className="font-body text-[1.05vw] tracking-wide uppercase">For schools &amp; teachers · EYFS to A-level</span>
           <span className="font-body text-[1.05vw] tracking-wide">creativecurriculumdesigner.com</span>
         </div>
       </div>

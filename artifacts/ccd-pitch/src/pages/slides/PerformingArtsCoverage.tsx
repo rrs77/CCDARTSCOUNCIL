@@ -34,7 +34,7 @@ export default function PerformingArtsCoverage() {
           <div className="rounded-[1.5rem] bg-[#FFE5D6] border border-[#FFB07A]/40 p-[3vh_1.8vw] flex flex-col">
             <div className="flex items-center justify-between mb-[2vh]">
               <span className="font-display font-black text-[#A24A1A] text-[2.2vw] leading-none">Drama</span>
-              <span className="font-body text-[#A24A1A]/80 text-[0.95vw]">EYFS &middot; KS1 &middot; KS2</span>
+              <span className="font-body text-[#A24A1A]/80 text-[0.95vw]">EYFS to A-level</span>
             </div>
             <div className="font-body text-[#A24A1A]/85 text-[1.05vw] leading-snug mb-[2vh]">
               Storytelling, voice, character &amp; physical theatre — built around ensemble work and clear performance moments.
@@ -50,7 +50,7 @@ export default function PerformingArtsCoverage() {
           <div className="rounded-[1.5rem] bg-[#D6E8F2] border border-[#0EA4D4]/30 p-[3vh_1.8vw] flex flex-col">
             <div className="flex items-center justify-between mb-[2vh]">
               <span className="font-display font-black text-[#0A4A66] text-[2.2vw] leading-none">Music</span>
-              <span className="font-body text-[#0A4A66]/80 text-[0.95vw]">EYFS &middot; KS1 &middot; KS2</span>
+              <span className="font-body text-[#0A4A66]/80 text-[0.95vw]">EYFS to A-level</span>
             </div>
             <div className="font-body text-[#0A4A66]/85 text-[1.05vw] leading-snug mb-[2vh]">
               Rhythm, pitch, listening and singing — with backing tracks, vocal guides and resource links attached to every activity.
@@ -66,7 +66,7 @@ export default function PerformingArtsCoverage() {
           <div className="rounded-[1.5rem] bg-[#E8E2F2] border border-[#7C6BF0]/30 p-[3vh_1.8vw] flex flex-col">
             <div className="flex items-center justify-between mb-[2vh]">
               <span className="font-display font-black text-[#3D2F7A] text-[2.2vw] leading-none">Dance</span>
-              <span className="font-body text-[#3D2F7A]/80 text-[0.95vw]">EYFS &middot; KS1 &middot; KS2</span>
+              <span className="font-body text-[#3D2F7A]/80 text-[0.95vw]">EYFS to A-level</span>
             </div>
             <div className="font-body text-[#3D2F7A]/85 text-[1.05vw] leading-snug mb-[2vh]">
               Motif, canon, contact and choreography — sequenced so a class can build a performance piece across a half-term.

@@ -91,9 +91,51 @@ body {
 .slide-auto-enter > *:nth-child(7) { animation-delay: 620ms; }
 .slide-auto-enter > *:nth-child(n + 8) { animation-delay: 700ms; }
 
+/* Activity stack cards — drop in from above the stack column, staggered. */
+@keyframes stack-drop-in {
+  from {
+    opacity: 0;
+    transform: translateY(-140%);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes stack-panel-in {
+  from {
+    opacity: 0;
+    transform: translateY(-6vh);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.stack-panel-drop {
+  animation: stack-panel-in 760ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: 120ms;
+}
+
+.stack-drop-column {
+  overflow: hidden;
+}
+
+.stack-item-drop {
+  animation: stack-drop-in 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+  animation-delay: var(--stack-drop-delay, 0ms);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .slide-fade-up,
   .slide-auto-enter > * {
+    animation: none;
+  }
+
+  .stack-panel-drop,
+  .stack-item-drop {
     animation: none;
   }
 }

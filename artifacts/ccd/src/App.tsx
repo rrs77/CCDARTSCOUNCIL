@@ -28,7 +28,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   const { user, loading } = useAuth();
 
   // If an authenticated user lands on a school homepage URL (e.g. came back
-  // via a bookmarked `/coopersalehall`), clean the URL back to `/` so a hard
+  // via a bookmarked `/oakhill`), clean the URL back to `/` so a hard
   // refresh doesn't briefly flash the public homepage before resolving auth.
   useEffect(() => {
     if (

@@ -37,7 +37,7 @@ export default function CallToAction() {
 
         <div className="max-w-[75vw]">
           <span className="inline-block px-[1.2vw] py-[0.7vh] rounded-full bg-white/15 backdrop-blur-sm border border-white/30 text-white font-medium text-[1.05vw] tracking-wide uppercase mb-[3vh]">
-            Try it with your school
+            EYFS to A-level · Try it with your school
           </span>
           <h1
             className="font-display font-black text-white tracking-tighter leading-[0.95]"

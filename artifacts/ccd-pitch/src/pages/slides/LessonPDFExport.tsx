@@ -54,7 +54,7 @@ export default function LessonPDFExport() {
           <div className="w-[42vw] rounded-[0.6rem] bg-white shadow-[0_30px_70px_rgba(0,0,0,0.45)] p-[2.6vh_2.4vw]" style={{ aspectRatio: "1 / 1.2" }}>
             <div className="flex items-center justify-between pb-[1.2vh] border-b-2 border-[#008272]">
               <div>
-                <div className="font-display font-bold text-[#008272] text-[0.95vw] uppercase tracking-wide">Coopersale Hall School</div>
+                <div className="font-display font-bold text-[#008272] text-[0.95vw] uppercase tracking-wide">Oakhill School</div>
                 <div className="font-display font-black text-[#0f2a2e] text-[1.5vw] leading-tight mt-[0.3vh]">Freeze-Frame Storytelling</div>
                 <div className="font-body text-[#6b7d80] text-[0.8vw] mt-[0.2vh]">Year 4 &middot; Drama &middot; Storytelling Through Drama &middot; Lesson 1 of 6</div>
               </div>
