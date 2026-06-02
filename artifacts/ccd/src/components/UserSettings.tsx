@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2 } from 'lucide-react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2 } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -142,6 +142,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const isViewOnly = useIsViewOnly();
   const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, addMissingDefaultYearGroups, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [yearGroupsExpanded, setYearGroupsExpanded] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
   const [tempCategories, setTempCategories] = useState(categories);
   const [tempYearGroups, setTempYearGroups] = useState(customYearGroups);
@@ -1268,11 +1269,43 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   </div>
                 )}
 
-                {/* Year Groups List */}
-                <div className="bg-white rounded-lg border border-teal-200 p-4">
+                {/* Backdrop for expanded view */}
+                {yearGroupsExpanded && (
+                  <div
+                    className="fixed inset-0 z-[69] bg-black/50"
+                    onClick={() => setYearGroupsExpanded(false)}
+                    aria-hidden="true"
+                  />
+                )}
+                {/* Year Groups List — toggles between inline panel and expanded modal overlay */}
+                <div
+                  className={
+                    yearGroupsExpanded
+                      ? 'fixed inset-4 md:inset-8 z-[70] bg-white rounded-lg border border-teal-200 p-4 shadow-2xl flex flex-col overflow-hidden'
+                      : 'bg-white rounded-lg border border-teal-200 p-4'
+                  }
+                >
                   <div className="flex justify-between items-center mb-3">
                     <h4 className="font-medium text-gray-900">Manage Year Groups</h4>
                     <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setYearGroupsExpanded((v) => !v)}
+                        className="flex items-center gap-2 px-3 py-1 text-sm rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
+                        title={yearGroupsExpanded ? 'Minimise' : 'Expand to full screen'}
+                      >
+                        {yearGroupsExpanded ? (
+                          <>
+                            <Minimize2 className="h-4 w-4" />
+                            Minimise
+                          </>
+                        ) : (
+                          <>
+                            <Maximize2 className="h-4 w-4" />
+                            Expand
+                          </>
+                        )}
+                      </button>
                       <button
                         onClick={async () => {
                           if (isRefreshing) return; // Prevent multiple clicks
@@ -1303,6 +1336,17 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         <RotateCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
                         {isRefreshing ? 'Refreshing...' : 'Refresh'}
                       </button>
+                      {yearGroupsExpanded && (
+                        <button
+                          type="button"
+                          onClick={() => setYearGroupsExpanded(false)}
+                          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
+                          title="Close expanded view"
+                          aria-label="Close expanded view"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">
@@ -1357,7 +1401,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       <Plus className="h-4 w-4" /> Add section
                     </button>
                   </div>
-                  <div className="space-y-2 max-h-[480px] overflow-y-auto">
+                  <div
+                    className={
+                      yearGroupsExpanded
+                        ? 'space-y-2 flex-1 min-h-0 overflow-y-auto'
+                        : 'space-y-2 max-h-[480px] overflow-y-auto'
+                    }
+                  >
                     {[...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder).map((section) => {
                       const yearGroupsInSection = section.yearGroupIds
                         .map(token => resolveYearGroupFromToken(tempYearGroups, token))
