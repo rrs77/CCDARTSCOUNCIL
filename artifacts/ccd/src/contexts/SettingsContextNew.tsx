@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
-import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi } from '../config/api';
+import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
 import {
   getOrderedYearGroupsFromSections,
@@ -528,6 +528,22 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     } catch (_) {}
     return buildDefaultYearGroupSections(DEFAULT_YEAR_GROUPS);
   });
+
+  // Debounced Supabase persistence for year-group sections. Without this, section
+  // assignments are only saved in localStorage and "aren't remembered" across
+  // devices, incognito sessions, or cache clears.
+  const sectionsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queueSectionsSupabaseSave = React.useCallback((sections: YearGroupSection[]) => {
+    if (sectionsSaveTimerRef.current) clearTimeout(sectionsSaveTimerRef.current);
+    sectionsSaveTimerRef.current = setTimeout(() => {
+      void yearGroupSectionsApi.upsert(sections).then((ok) => {
+        if (import.meta.env.DEV) {
+          console.log(ok ? '✅ Sections saved to Supabase' : '⚠️ Sections save returned false');
+        }
+      });
+    }, 600);
+  }, []);
+
   const updateYearGroupSections: (
     sections: YearGroupSection[] | ((prev: YearGroupSection[]) => YearGroupSection[]),
     yearGroupsOverride?: YearGroup[]
@@ -554,13 +570,15 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       try {
         localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
       } catch (_) {}
+      // Fire-and-forget Supabase persistence so the change is remembered across devices.
+      queueSectionsSupabaseSave(next);
       setYearGroupBands((currentBands) => {
         const candidate = flatToBands(getOrderedYearGroupsFromSections(next, groupsBasis));
         return JSON.stringify(currentBands) === JSON.stringify(candidate) ? currentBands : candidate;
       });
       return next;
     });
-  }, [customYearGroups]);
+  }, [customYearGroups, queueSectionsSupabaseSave]);
 
   const getOrderedYearGroups = React.useCallback((sectionsOverride?: YearGroupSection[]) => {
     const sec = sectionsOverride ?? yearGroupSections;
@@ -1002,12 +1020,24 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               bandsToUse = flatToBands(deduplicated);
             }
             setYearGroupBands(bandsToUse);
+            // Try the persisted sections from Supabase first — they are the source of truth
+            // for the user's section grouping across devices.
+            const remoteSections = (await yearGroupSectionsApi.get()) as YearGroupSection[] | null;
             setYearGroupSectionsState(prev => {
               const loadedIds = deduplicated.map((g: any) => g.id);
-              const hasMatchingIds = prev.length > 0 && prev.some(s => s.yearGroupIds.some((id: string) => loadedIds.includes(id)));
-              const next = hasMatchingIds
-                ? mergeSectionsWithYearGroups(prev, loadedIds, deduplicated)
-                : buildDefaultYearGroupSections(deduplicated);
+              let next: YearGroupSection[];
+              if (Array.isArray(remoteSections) && remoteSections.length > 0) {
+                // Merge any year groups that aren't yet referenced into Other.
+                next = mergeSectionsWithYearGroups(remoteSections, loadedIds, deduplicated);
+                console.log('📦 Loaded year-group sections from Supabase');
+              } else {
+                const hasMatchingIds = prev.length > 0 && prev.some(s => s.yearGroupIds.some((id: string) => loadedIds.includes(id)));
+                next = hasMatchingIds
+                  ? mergeSectionsWithYearGroups(prev, loadedIds, deduplicated)
+                  : buildDefaultYearGroupSections(deduplicated);
+                // No remote sections yet — seed Supabase so future loads have a source of truth.
+                queueSectionsSupabaseSave(next);
+              }
               try {
                 localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
               } catch (_) {}
