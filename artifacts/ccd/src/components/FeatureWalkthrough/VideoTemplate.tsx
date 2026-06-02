@@ -54,7 +54,7 @@ export default function VideoTemplate({
         <div className="pointer-events-none absolute inset-0">
           <motion.div
             className="absolute h-[80cqw] w-[80cqw] rounded-full opacity-30 mix-blend-multiply blur-[100px]"
-            style={{ background: 'var(--promo-primary-light)' }}
+            style={{ background: 'var(--color-primary-light)' }}
             animate={{
               x: ['-20%', '10%', '-10%'],
               y: ['-20%', '20%', '-10%'],
@@ -64,7 +64,7 @@ export default function VideoTemplate({
           />
           <motion.div
             className="absolute bottom-0 right-0 h-[60cqw] w-[60cqw] rounded-full opacity-20 mix-blend-multiply blur-[100px]"
-            style={{ background: 'var(--promo-accent-light)' }}
+            style={{ background: 'var(--color-accent-light)' }}
             animate={{
               x: ['10%', '-20%', '5%'],
               y: ['10%', '-30%', '0%'],

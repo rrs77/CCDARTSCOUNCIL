@@ -16,6 +16,7 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
 import { slides } from "@/slideLoader";
+import { PitchAutoplayViewer } from "./PitchAutoplayViewer";
 
 function getSlideIndex(pathname: string): number {
   const match = pathname.match(/^\/slide(\d+)$/);
@@ -245,7 +246,13 @@ export default function App() {
     return () => window.removeEventListener("message", onMessage);
   }, [navigate]);
 
-  if (location === "/") return <SlideViewer />;
+  if (location === "/") {
+    const autoplay =
+      typeof window !== "undefined" &&
+      new URLSearchParams(window.location.search).get("autoplay") === "1";
+    if (autoplay) return <PitchAutoplayViewer />;
+    return <SlideViewer />;
+  }
   if (location === "/allslides") return <AllSlides />;
   return <SlideEditor />;
 }
