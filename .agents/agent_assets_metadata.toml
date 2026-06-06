@@ -65,3 +65,9 @@ id = "ARD9iYIGqhmaycaTR5_DX"
 uri = "file://artifacts/ccd-promo/public/downloads/CCDesigner-Promo.pptx"
 type = "slides"
 title = "CCDesigner Promo — Editable PowerPoint (22 slides)"
+
+[[outputs]]
+id = "M6VlXV4t4Dfp4LZZZ6_hY"
+uri = "file://exports/CCDesigner-Podcast-Notes.pdf"
+type = "pdf"
+title = "CCDesigner — Podcast Cue Cards"
