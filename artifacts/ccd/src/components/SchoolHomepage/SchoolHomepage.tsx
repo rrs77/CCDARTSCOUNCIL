@@ -10,6 +10,7 @@ import {
 } from '../../config/supabase';
 import { activateDemoMode } from '../../utils/demoMode';
 import { seedDemoLocalStorage } from '../../utils/demoSampleData';
+import { FabricExampleBanner } from '../FabricExampleBanner';
 
 interface SchoolHomepageProps {
   school: SchoolHomepageConfig;
@@ -69,7 +70,8 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   };
 
   return (
-    <div className="min-h-screen flex flex-col lg:flex-row bg-white">
+    <div className="relative min-h-screen overflow-hidden flex flex-col lg:flex-row bg-white">
+      <FabricExampleBanner />
       {/* LEFT: branded panel */}
       <div
         className="relative flex flex-col justify-between px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14"
