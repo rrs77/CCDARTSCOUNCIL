@@ -229,13 +229,13 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
-            <TabsList className="w-full h-auto flex overflow-x-auto gap-1 p-1 lg:grid lg:grid-cols-5 lg:overflow-visible [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+            <TabsList className="w-full h-auto grid grid-cols-3 sm:grid-cols-5 gap-1">
               <TabsTrigger 
                 value="unit-viewer"
                 data-tab="unit-viewer"
-                className="flex flex-col lg:flex-row items-center justify-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm min-h-[44px] min-w-[4.5rem] flex-shrink-0 snap-start lg:min-w-0"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <BookOpen className="h-5 w-5 lg:h-6 lg:w-6" />
+                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Unit Viewer</span>
                 <span className="sm:hidden">Units</span>
               </TabsTrigger>
@@ -243,9 +243,9 @@ export function Dashboard() {
               <TabsTrigger 
                 value="lesson-library"
                 data-tab="lesson-library"
-                className="flex flex-col lg:flex-row items-center justify-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm min-h-[44px] min-w-[4.5rem] flex-shrink-0 snap-start lg:min-w-0"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <FolderOpen className="h-5 w-5 lg:h-6 lg:w-6" />
+                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Library</span>
                 <span className="sm:hidden">Lessons</span>
               </TabsTrigger>
@@ -253,9 +253,9 @@ export function Dashboard() {
               <TabsTrigger 
                 value="lesson-builder"
                 data-tab="lesson-builder"
-                className="flex flex-col lg:flex-row items-center justify-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm min-h-[44px] min-w-[4.5rem] flex-shrink-0 snap-start lg:min-w-0"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <Edit3 className="h-5 w-5 lg:h-6 lg:w-6" />
+                <Edit3 className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Builder</span>
                 <span className="sm:hidden">Builder</span>
               </TabsTrigger>
@@ -263,9 +263,9 @@ export function Dashboard() {
               <TabsTrigger 
                 value="activity-library"
                 data-tab="activity-library"
-                className="flex flex-col lg:flex-row items-center justify-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm min-h-[44px] min-w-[4.5rem] flex-shrink-0 snap-start lg:min-w-0"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <Tag className="h-5 w-5 lg:h-6 lg:w-6" />
+                <Tag className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Activity Library</span>
                 <span className="sm:hidden">Activities</span>
               </TabsTrigger>
@@ -273,9 +273,9 @@ export function Dashboard() {
               <TabsTrigger 
                 value="calendar"
                 data-tab="calendar"
-                className="flex flex-col lg:flex-row items-center justify-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm min-h-[44px] min-w-[4.5rem] flex-shrink-0 snap-start lg:min-w-0"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <Calendar className="h-5 w-5 lg:h-6 lg:w-6" />
+                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Calendar</span>
                 <span className="sm:hidden">Calendar</span>
               </TabsTrigger>
