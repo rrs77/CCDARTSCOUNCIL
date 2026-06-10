@@ -998,8 +998,8 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
           {/* Clean White Header Card */}
           <div className="bg-white rounded-card shadow-soft border border-gray-200 mb-6 sm:mb-8 p-4 sm:p-6 md:p-7">
             <div className="text-gray-900">
-              <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div className="flex-shrink-0">
+              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                <div className="flex-shrink-0 min-w-0">
                   <h2 
                     className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1"
                     style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
@@ -1025,9 +1025,9 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                   </div>
                 </div>
                 
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 sm:gap-3 flex-1 lg:flex-initial lg:max-w-md">
+                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch xl:items-center xl:flex-initial xl:max-w-none">
                   {/* Year Navigation Arrows */}
-                  <div className="flex items-center space-x-2 flex-shrink-0">
+                  <div className="flex items-center gap-2 flex-shrink-0">
                     <button
                       onClick={() => {
                         const currentIndex = getAvailableYears().indexOf(currentAcademicYear);

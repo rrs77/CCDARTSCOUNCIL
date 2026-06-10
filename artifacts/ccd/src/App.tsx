@@ -119,7 +119,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       />
       {inPreview && <PreviewBanner />}
       <Header />
-      <main className={`flex-1 pb-20 ${inPreview ? 'pt-[calc(3.5rem+41px)] sm:pt-[calc(4rem+41px)]' : 'pt-14 sm:pt-16'}`}>
+      <main className={`flex-1 pb-20 ${inPreview ? 'pt-[calc(3.5rem+var(--preview-banner-height,0px))] sm:pt-[calc(4rem+var(--preview-banner-height,0px))]' : 'pt-14 sm:pt-16'}`}>
         <Dashboard />
       </main>
       <Footer />

@@ -1013,9 +1013,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
         {/* Tabs */}
         <div 
-          className="flex items-center gap-1 px-3 sm:px-5 py-2 bg-gray-50/80 overflow-x-auto flex-shrink-0 border-b border-gray-100" 
-          style={{ WebkitOverflowScrolling: 'touch', scrollbarWidth: 'none' }}
+          className="flex flex-wrap items-center gap-1.5 px-3 sm:px-5 py-2.5 bg-gray-50/80 flex-shrink-0 border-b border-gray-100" 
         >
+          <div className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
           {[
             { id: 'yeargroups', label: 'Year Groups', icon: null },
             { id: 'categories', label: 'Categories', icon: null },
@@ -1025,7 +1025,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1 min-h-[36px] ${
                 activeTab === tab.id
                   ? 'text-white bg-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white'
@@ -1038,7 +1038,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {showUserManagement && (
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
                 activeTab === 'users'
                   ? 'text-white bg-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white'
@@ -1048,13 +1048,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               <span>Users</span>
             </button>
           )}
+          </div>
 
-          <div className="relative flex-shrink-0 ml-auto" ref={adminMenuRef}>
+          <div className="relative flex-shrink-0" ref={adminMenuRef}>
             <button
               ref={adminTriggerRef}
               type="button"
               onClick={() => setAdminMenuOpen(prev => !prev)}
-              className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 transition-all duration-150 focus:outline-none ${
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 transition-all duration-150 focus:outline-none min-h-[36px] ${
                 (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding')
                   ? 'text-white bg-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white'
@@ -1136,10 +1137,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {activeTab === 'yeargroups' && (
             <div className="space-y-4">
               {/* Class Management */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <Users className="h-6 w-6 text-teal-600" />
+              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 sm:p-6">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                  <div className="flex items-center space-x-3 min-w-0">
+                    <Users className="h-6 w-6 text-teal-600 shrink-0" />
                     <h3 
                       className="text-lg font-semibold text-gray-900"
                       style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
@@ -1149,10 +1150,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   </div>
                   <button
                     onClick={handleResetYearGroups}
-                    className="px-3 py-1.5 bg-teal-100 hover:bg-teal-200 text-teal-700 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                    className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 bg-teal-100 hover:bg-teal-200 text-teal-700 text-sm font-medium rounded-lg transition-colors duration-200"
                     title="⚠️ DANGER: This will delete all custom year groups and reset to the 3 defaults!"
                   >
-                    <RotateCcw className="h-4 w-4" />
+                    <RotateCcw className="h-4 w-4 shrink-0" />
                     <span>Reset to Default</span>
                   </button>
                 </div>
@@ -1165,9 +1166,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   >
                     Add New Year Group
                   </h4>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                     <div>
-                      <label htmlFor="newYearGroupId" className="block text-xs font-medium text-gray-500 mb-1">
+                      <label htmlFor="newYearGroupId" className="block text-xs font-medium text-gray-600 mb-1.5">
                         ID (used in system)
                       </label>
                       <input
@@ -1183,7 +1184,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       />
                     </div>
                     <div>
-                      <label htmlFor="newYearGroupName" className="block text-xs font-medium text-gray-500 mb-1">
+                      <label htmlFor="newYearGroupName" className="block text-xs font-medium text-gray-600 mb-1.5">
                         Display Name
                       </label>
                       <input
@@ -1198,25 +1199,25 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       />
                     </div>
                     <div>
-                      <label htmlFor="newYearGroupColor" className="block text-xs font-medium text-gray-500 mb-1">
+                      <label htmlFor="newYearGroupColor" className="block text-xs font-medium text-gray-600 mb-1.5">
                         Color
                       </label>
-                      <div className="flex items-center space-x-2">
+                      <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <input
                           id="newYearGroupColor"
                           name="newYearGroupColor"
                           type="color"
                           value={newYearGroupColor}
                           onChange={(e) => setNewYearGroupColor(e.target.value)}
-                          className="w-10 h-10 rounded-lg border border-gray-300 cursor-pointer"
+                          className="h-11 w-full max-w-[4.5rem] rounded-lg border border-gray-300 cursor-pointer"
                         />
                         <button
                           onClick={handleAddYearGroup}
                           disabled={!newYearGroupId.trim() || !newYearGroupName.trim()}
-                          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                          className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg transition-colors duration-200"
                           style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
                         >
-                          <Plus className="h-4 w-4" />
+                          <Plus className="h-4 w-4 shrink-0" />
                           <span>Add</span>
                         </button>
                       </div>
@@ -1285,13 +1286,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       : 'bg-white rounded-lg border border-teal-200 p-4'
                   }
                 >
-                  <div className="flex justify-between items-center mb-3">
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
                     <h4 className="font-medium text-gray-900">Manage Year Groups</h4>
-                    <div className="flex gap-2">
+                    <div className="flex flex-wrap gap-2">
                       <button
                         type="button"
                         onClick={() => setYearGroupsExpanded((v) => !v)}
-                        className="flex items-center gap-2 px-3 py-1 text-sm rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
+                        className="inline-flex min-h-[36px] items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
                         title={yearGroupsExpanded ? 'Minimise' : 'Expand to full screen'}
                       >
                         {yearGroupsExpanded ? (
@@ -1326,7 +1327,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                           }
                         }}
                         disabled={isRefreshing}
-                        className={`flex items-center gap-2 px-3 py-1 text-sm rounded-md transition-colors ${
+                        className={`inline-flex min-h-[36px] items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors ${
                           isRefreshing 
                             ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
                             : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
@@ -1352,12 +1353,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <p className="text-sm text-gray-600 mb-4">
                     Group year groups into collapsible sections (e.g. EYFS, KS1, KS2). Drag to reorder within a section. Sections are customisable.
                   </p>
-                  <div className="mb-3 flex flex-wrap items-center justify-end gap-2">
+                  <div className="mb-3 flex flex-wrap items-center justify-start gap-2">
                     <button
                       type="button"
                       onClick={handleUndoSections}
                       disabled={sectionUndoStack.length === 0}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      className={`inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                         sectionUndoStack.length === 0
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1370,7 +1371,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       type="button"
                       onClick={handleRedoSections}
                       disabled={sectionRedoStack.length === 0}
-                      className={`flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium rounded-lg transition-colors ${
+                      className={`inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
                         sectionRedoStack.length === 0
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -1384,7 +1385,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       onClick={async () => {
                         await addMissingDefaultYearGroups();
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                      className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
                       title="Add any default year groups that are missing (e.g. Reception)"
                     >
                       Add back missing defaults
@@ -1396,7 +1397,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         const maxOrder = sorted.length ? Math.max(...sorted.map(s => s.sortOrder)) : -1;
                         updateYearGroupSections(prev => [...prev, { id: `section-${Date.now()}`, label: 'New section', sortOrder: maxOrder + 1, collapsed: false, yearGroupIds: [] }]);
                       }}
-                      className="flex items-center gap-1.5 px-2.5 py-1.5 text-sm font-medium text-teal-700 bg-teal-100 hover:bg-teal-200 rounded-lg transition-colors"
+                      className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-100 hover:bg-teal-200 rounded-lg transition-colors"
                     >
                       <Plus className="h-4 w-4" /> Add section
                     </button>
@@ -3119,16 +3120,16 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
         </div>
 
         {/* Footer */}
-        <div className="flex justify-between p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex flex-col-reverse gap-3 p-4 sm:flex-row sm:justify-between sm:p-6 border-t border-gray-200 bg-gray-50">
           <button
             onClick={handleCancel}
-            className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="w-full sm:w-auto min-h-[44px] px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="w-full sm:w-auto min-h-[44px] px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
           >
             Save Settings
           </button>

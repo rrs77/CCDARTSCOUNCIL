@@ -281,30 +281,31 @@ export function LessonSelectionModal({
       <div className="bg-white rounded-card shadow-soft w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
         <div 
-          className="p-6 text-white relative"
+          className="p-4 sm:p-6 text-white relative"
           style={{ 
             background: `linear-gradient(135deg, ${halfTermColor} 0%, ${halfTermColor}99 100%)` 
           }}
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-1">{halfTermName} - {halfTermMonths}</h2>
-              <p className="text-white text-opacity-90">
+          <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+            <div className="min-w-0 flex-1">
+              <h2 className="text-xl sm:text-2xl font-bold mb-1 leading-tight">{halfTermName} - {halfTermMonths}</h2>
+              <p className="text-sm sm:text-base text-white/90 leading-relaxed">
                 {showHalfTermView 
                   ? `${orderedVisibleLessons.length} lessons in this half-term` 
                   : 'Manage lessons assigned to this half-term'}
               </p>
             </div>
-            <div className="flex items-center space-x-3">
+            <div className="flex flex-wrap items-center gap-2 sm:gap-3 shrink-0">
               {/* Mark Complete Checkbox */}
-              <div className="flex items-center space-x-2 bg-white bg-opacity-20 px-3 py-2 rounded-lg">
-                <span className="text-sm font-medium">Mark Complete</span>
+              <div className="flex items-center gap-2 bg-white/20 px-3 py-2.5 rounded-lg min-h-[44px]">
+                <span className="text-sm font-medium whitespace-nowrap">Mark Complete</span>
                 <button
                   onClick={toggleComplete}
-                  className={`w-6 h-6 rounded-md flex items-center justify-center transition-colors ${
+                  aria-label={isComplete ? 'Mark half-term incomplete' : 'Mark half-term complete'}
+                  className={`w-7 h-7 shrink-0 rounded-md flex items-center justify-center transition-colors ${
                     isComplete 
                       ? 'bg-green-500 text-white' 
-                      : 'bg-white bg-opacity-50 text-transparent'
+                      : 'bg-white/50 text-transparent'
                   }`}
                 >
                   {isComplete && <CheckCircle className="h-4 w-4" />}
@@ -315,11 +316,11 @@ export function LessonSelectionModal({
               {showHalfTermView && orderedLessons.length > 0 && (
                 <button
                   onClick={handleExportPDF}
-                  className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                  className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
                   title="Export PDF"
                 >
-                  <Download className="h-4 w-4" />
-                  <span className="text-sm font-medium">Export PDF</span>
+                  <Download className="h-4 w-4 shrink-0" />
+                  <span className="text-sm font-medium whitespace-nowrap">Export PDF</span>
                 </button>
               )}
               
@@ -332,23 +333,24 @@ export function LessonSelectionModal({
                     setOrderedLessons([...localSelectedLessons]);
                   }
                 }}
-                className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
               >
                 {showHalfTermView ? (
                   <>
-                    <Eye className="h-4 w-4" />
-                    <span>View All Lessons</span>
+                    <Eye className="h-4 w-4 shrink-0" />
+                    <span className="text-sm font-medium whitespace-nowrap">View All Lessons</span>
                   </>
                 ) : (
                   <>
-                    <Calendar className="h-4 w-4" />
-                    <span>Half-Term View</span>
+                    <Calendar className="h-4 w-4 shrink-0" />
+                    <span className="text-sm font-medium whitespace-nowrap">Half-Term View</span>
                   </>
                 )}
               </button>
               <button
                 onClick={onClose}
-                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
+                aria-label="Close"
+                className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2.5 bg-white/20 hover:bg-white/30 rounded-lg transition-colors duration-200"
               >
                 <X className="h-5 w-5" />
               </button>
