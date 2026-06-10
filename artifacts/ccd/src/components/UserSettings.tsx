@@ -14,6 +14,8 @@ import type { ActivityPack } from '../config/api';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import toast from 'react-hot-toast';
+import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
+import { CategoryFoldersPanel } from './CategoryFoldersPanel';
 import {
   normalizeSectionYearGroupIdList,
   normalizeYearGroupToken,
@@ -66,7 +68,7 @@ function DraggableCategory({ category, index, onReorder, onDragEnd, children }: 
 
   const [{ isDragging }, drag] = useDrag({
     type: 'category',
-    item: () => ({ index }),
+    item: () => ({ index, categoryName: category.name }),
     collect: (monitor) => ({ isDragging: monitor.isDragging() }),
     end: () => {
       if (onDragEnd) onDragEnd();
@@ -1203,12 +1205,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         Color
                       </label>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                        <input
+                        <ColorPickerWithFavorites
                           id="newYearGroupColor"
-                          name="newYearGroupColor"
-                          type="color"
                           value={newYearGroupColor}
-                          onChange={(e) => setNewYearGroupColor(e.target.value)}
+                          onChange={setNewYearGroupColor}
                           className="h-11 w-full max-w-[4.5rem] rounded-lg border border-gray-300 cursor-pointer"
                         />
                         <button
@@ -1534,7 +1534,11 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                           <div className="flex-1 grid grid-cols-3 gap-3">
                                             <input type="text" value={editingYearGroupDraft?.id ?? yearGroup.id} onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, id: e.target.value } : null)} className="w-full px-2 py-1 border border-gray-300 rounded text-sm" dir="ltr" />
                                             <input type="text" value={editingYearGroupDraft?.name ?? yearGroup.name} onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, name: e.target.value } : null)} className="w-full px-2 py-1 border border-gray-300 rounded text-sm" />
-                                            <input type="color" value={editingYearGroupDraft?.color ?? yearGroup.color} onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, color: e.target.value } : null)} className="w-10 h-8 rounded border border-gray-300 cursor-pointer" />
+                                            <ColorPickerWithFavorites
+                                              value={editingYearGroupDraft?.color ?? yearGroup.color}
+                                              onChange={(color) => setEditingYearGroupDraft(prev => prev ? { ...prev, color } : null)}
+                                              className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
+                                            />
                                           </div>
                                             <button
                                               type="button"
@@ -1684,12 +1688,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     </div>
                     <div className="w-24">
                       <label htmlFor="newCategoryColor" className="sr-only">Category color</label>
-                      <input
+                      <ColorPickerWithFavorites
                         id="newCategoryColor"
-                        name="newCategoryColor"
-                        type="color"
                         value={newCategoryColor}
-                        onChange={(e) => setNewCategoryColor(e.target.value)}
+                        onChange={setNewCategoryColor}
                         className="w-full h-10 rounded-lg border border-gray-300 cursor-pointer"
                       />
                     </div>
@@ -1836,7 +1838,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">
-                    Drag and drop to reorder categories. Changes will affect how categories are displayed throughout the application.
+                    Drag categories to reorder, or drop them onto a folder to organise. Changes affect how categories appear throughout the application.
                   </p>
 
                   {/* Bulk Year Group Assignment Section */}
@@ -2079,9 +2081,28 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     </div>
                   )}
                   
-                  <div className="space-y-2 max-h-[400px] overflow-y-auto pr-6">
-                    {tempCategories.map((category, index) => {
-                      // Use index as stable identifier for editing state (not name, which changes)
+                  <CategoryFoldersPanel
+                    getCategoryCount={(folderName) =>
+                      tempCategories.filter((c) =>
+                        folderName ? c.group === folderName : !c.group
+                      ).length
+                    }
+                    onAssignCategory={(categoryName, folderName) => {
+                      const updated = tempCategories.map((c) =>
+                        c.name === categoryName
+                          ? { ...c, group: folderName || undefined, groups: undefined }
+                          : c
+                      );
+                      setTempCategories(updated);
+                      updateCategories(updated);
+                    }}
+                    renderFolderCategories={(folderName) =>
+                      tempCategories
+                        .map((category, index) => ({ category, index }))
+                        .filter(({ category }) =>
+                          folderName ? category.group === folderName : !category.group
+                        )
+                        .map(({ category, index }) => {
                       const isEditing = editingCategory === `category-index-${index}`;
                       
                       return (
@@ -2099,7 +2120,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                           setTempCategories(newCategories);
                         }}
                         onDragEnd={() => {
-                          // Save the new order when drag ends
                           updateCategories(tempCategories);
                         }}
                       >
@@ -2154,14 +2174,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                   className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
                                 dir="ltr"
                               />
-                              <input
+                              <ColorPickerWithFavorites
                                 id={`editCategoryColor-${index}`}
-                                name={`editCategoryColor-${index}`}
-                                type="color"
-                                  value={tempCategories[index]?.color || category.color}
-                                onChange={(e) => {
+                                value={tempCategories[index]?.color || category.color}
+                                onChange={(color) => {
                                   const updatedCategories = [...tempCategories];
-                                  updatedCategories[index] = { ...updatedCategories[index], color: e.target.value };
+                                  updatedCategories[index] = { ...updatedCategories[index], color };
                                   setTempCategories(updatedCategories);
                                   updateCategories(updatedCategories);
                                 }}
@@ -2421,8 +2439,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       </div>
                       </DraggableCategory>
                       );
-                    })}
-                  </div>
+                    })
+                    }
+                  />
                 </div>
               </div>
 

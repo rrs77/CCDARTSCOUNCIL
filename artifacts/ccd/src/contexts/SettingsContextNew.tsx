@@ -141,6 +141,17 @@ interface CategoryGroups {
   groups: string[];
 }
 
+/** Folder for organising categories in Settings → Categories */
+export interface CategoryFolder {
+  id: string;
+  name: string;
+  color: string;
+  position: number;
+}
+
+const CATEGORY_FOLDERS_STORAGE_KEY = 'category-folders';
+const FAVORITE_COLORS_STORAGE_KEY = 'favorite-colors';
+
 interface SettingsContextType {
   getThemeForClass: (className: string) => Theme;
   getThemeForSubject: (subjectId: string) => Theme;
@@ -195,6 +206,18 @@ interface SettingsContextType {
   addCategoryGroup: (groupName: string) => void;
   removeCategoryGroup: (groupName: string) => void;
   updateCategoryGroup: (oldName: string, newName: string) => void;
+  // Category folders (organise categories in settings)
+  categoryFolders: CategoryFolder[];
+  addCategoryFolder: (name: string, color?: string) => void;
+  removeCategoryFolder: (id: string) => void;
+  renameCategoryFolder: (id: string, newName: string) => void;
+  updateCategoryFolderColor: (id: string, color: string) => void;
+  reorderCategoryFolders: (dragIndex: number, hoverIndex: number) => void;
+  assignCategoryToFolder: (categoryName: string, folderName: string | null) => void;
+  // Favourite colours (shared across colour pickers)
+  favoriteColors: string[];
+  addFavoriteColor: (color: string) => void;
+  removeFavoriteColor: (color: string) => void;
   // User change management
   startUserChange: () => void;
   endUserChange: () => void;
@@ -491,6 +514,16 @@ export const useSettings = () => {
       addCategoryGroup: () => {},
       removeCategoryGroup: () => {},
       updateCategoryGroup: () => {},
+      categoryFolders: [],
+      addCategoryFolder: () => {},
+      removeCategoryFolder: () => {},
+      renameCategoryFolder: () => {},
+      updateCategoryFolderColor: () => {},
+      reorderCategoryFolders: () => {},
+      assignCategoryToFolder: () => {},
+      favoriteColors: [],
+      addFavoriteColor: () => {},
+      removeFavoriteColor: () => {},
       startUserChange: () => {},
       endUserChange: () => {},
       resourceLinks: DEFAULT_RESOURCE_LINKS,
@@ -734,6 +767,8 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     }, 1000); // 1 second debounce for better batching
   };
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroups>(DEFAULT_CATEGORY_GROUPS);
+  const [categoryFolders, setCategoryFolders] = useState<CategoryFolder[]>([]);
+  const [favoriteColors, setFavoriteColors] = useState<string[]>([]);
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(0);
   const [isUserMakingChanges, setIsUserMakingChanges] = useState<boolean>(false);
   const [realTimePaused, setRealTimePaused] = useState<boolean>(false);
@@ -779,6 +814,44 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           console.warn('Failed to migrate old nested categories config:', error);
         }
       }
+    }
+
+    // Load category folders (migrate from category-groups if needed)
+    try {
+      const savedFolders = localStorage.getItem(CATEGORY_FOLDERS_STORAGE_KEY);
+      if (savedFolders) {
+        const parsed = JSON.parse(savedFolders) as CategoryFolder[];
+        if (Array.isArray(parsed)) {
+          setCategoryFolders(parsed);
+        }
+      } else {
+        const legacyGroups = localStorage.getItem('category-groups');
+        if (legacyGroups) {
+          const { groups } = JSON.parse(legacyGroups) as CategoryGroups;
+          if (groups?.length) {
+            const migrated = groups.map((name, i) => ({
+              id: crypto.randomUUID(),
+              name,
+              color: '#14B8A6',
+              position: i,
+            }));
+            setCategoryFolders(migrated);
+            localStorage.setItem(CATEGORY_FOLDERS_STORAGE_KEY, JSON.stringify(migrated));
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load category folders:', error);
+    }
+
+    try {
+      const savedFavorites = localStorage.getItem(FAVORITE_COLORS_STORAGE_KEY);
+      if (savedFavorites) {
+        const parsed = JSON.parse(savedFavorites) as string[];
+        if (Array.isArray(parsed)) setFavoriteColors(parsed);
+      }
+    } catch (error) {
+      console.warn('Failed to load favourite colours:', error);
     }
 
     const adminStatus = localStorage.getItem('isAdmin') === 'true';
@@ -2717,6 +2790,103 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     updateCategories(updatedCategories);
   };
 
+  const persistCategoryFolders = async (folders: CategoryFolder[]) => {
+    setCategoryFolders(folders);
+    localStorage.setItem(CATEGORY_FOLDERS_STORAGE_KEY, JSON.stringify(folders));
+    const groupNames = [...folders].sort((a, b) => a.position - b.position).map((f) => f.name);
+    const updatedGroups = { groups: groupNames };
+    setCategoryGroups(updatedGroups);
+    localStorage.setItem('category-groups', JSON.stringify(updatedGroups));
+    if (isSupabaseConfigured()) {
+      try {
+        await categoryGroupsApi.upsert(groupNames);
+      } catch (error) {
+        console.warn('Failed to sync category folders to Supabase:', error);
+      }
+    }
+  };
+
+  const addCategoryFolder = (name: string, color = '#14B8A6') => {
+    const trimmed = name.trim();
+    if (!trimmed || categoryFolders.some((f) => f.name.toLowerCase() === trimmed.toLowerCase())) return;
+    const next: CategoryFolder[] = [
+      ...categoryFolders,
+      { id: crypto.randomUUID(), name: trimmed, color, position: categoryFolders.length },
+    ];
+    void persistCategoryFolders(next);
+  };
+
+  const removeCategoryFolder = (id: string) => {
+    const folder = categoryFolders.find((f) => f.id === id);
+    if (!folder) return;
+    const next = categoryFolders.filter((f) => f.id !== id).map((f, i) => ({ ...f, position: i }));
+    void persistCategoryFolders(next);
+    const updatedCategories = categories.map((cat) => {
+      if (cat.group === folder.name) {
+        return { ...cat, group: undefined };
+      }
+      if (cat.groups?.includes(folder.name)) {
+        const newGroups = cat.groups.filter((g) => g !== folder.name);
+        return { ...cat, groups: newGroups.length ? newGroups : undefined };
+      }
+      return cat;
+    });
+    updateCategories(updatedCategories);
+  };
+
+  const renameCategoryFolder = (id: string, newName: string) => {
+    const trimmed = newName.trim();
+    const folder = categoryFolders.find((f) => f.id === id);
+    if (!folder || !trimmed || trimmed === folder.name) return;
+    if (categoryFolders.some((f) => f.id !== id && f.name.toLowerCase() === trimmed.toLowerCase())) return;
+    const next = categoryFolders.map((f) => (f.id === id ? { ...f, name: trimmed } : f));
+    void persistCategoryFolders(next);
+    void updateCategoryGroup(folder.name, trimmed);
+  };
+
+  const updateCategoryFolderColor = (id: string, color: string) => {
+    const next = categoryFolders.map((f) => (f.id === id ? { ...f, color } : f));
+    void persistCategoryFolders(next);
+  };
+
+  const reorderCategoryFolders = (dragIndex: number, hoverIndex: number) => {
+    const sorted = [...categoryFolders].sort((a, b) => a.position - b.position);
+    const [removed] = sorted.splice(dragIndex, 1);
+    sorted.splice(hoverIndex, 0, removed);
+    const next = sorted.map((f, i) => ({ ...f, position: i }));
+    void persistCategoryFolders(next);
+  };
+
+  const assignCategoryToFolder = (categoryName: string, folderName: string | null) => {
+    const updatedCategories = categories.map((cat) => {
+      if (cat.name !== categoryName) return cat;
+      if (!folderName) {
+        return { ...cat, group: undefined, groups: undefined };
+      }
+      return { ...cat, group: folderName, groups: undefined };
+    });
+    updateCategories(updatedCategories);
+  };
+
+  const addFavoriteColor = (color: string) => {
+    const normalized = color.toUpperCase();
+    setFavoriteColors((prev) => {
+      if (prev.some((c) => c.toUpperCase() === normalized)) return prev;
+      const next = [...prev, normalized].slice(0, 24);
+      localStorage.setItem(FAVORITE_COLORS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeFavoriteColor = (color: string) => {
+    const normalized = color.toUpperCase();
+    setFavoriteColors((prev) => {
+      const next = prev.filter((c) => c.toUpperCase() !== normalized);
+      localStorage.setItem(FAVORITE_COLORS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const contextValue: SettingsContextType = {
     getThemeForClass,
     getThemeForSubject,
@@ -2760,6 +2930,16 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     addCategoryGroup,
     removeCategoryGroup,
     updateCategoryGroup,
+    categoryFolders,
+    addCategoryFolder,
+    removeCategoryFolder,
+    renameCategoryFolder,
+    updateCategoryFolderColor,
+    reorderCategoryFolders,
+    assignCategoryToFolder,
+    favoriteColors,
+    addFavoriteColor,
+    removeFavoriteColor,
     // User change management
     startUserChange,
     endUserChange,
