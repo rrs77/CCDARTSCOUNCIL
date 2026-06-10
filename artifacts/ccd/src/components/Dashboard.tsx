@@ -272,7 +272,7 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
-            <TabsList className="w-full grid grid-cols-2 lg:grid-cols-4 gap-1 lg:gap-0">
+            <TabsList className="w-full h-auto grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-1">
               <TabsTrigger 
                 value="unit-viewer"
                 data-tab="unit-viewer"
@@ -315,8 +315,8 @@ export function Dashboard() {
               
               <TabsTrigger 
                 value="calendar"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white rounded-lg px-4 py-2 transition-all duration-200 flex flex-col lg:flex-row items-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm"
                 data-tab="calendar"
+                className="flex flex-col lg:flex-row items-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm"
               >
                 <Calendar className="h-5 w-5 lg:h-6 lg:w-6" />
                 <span className="hidden sm:inline">Calendar</span>
