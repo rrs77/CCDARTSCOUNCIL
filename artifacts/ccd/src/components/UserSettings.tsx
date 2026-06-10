@@ -142,7 +142,7 @@ interface UserSettingsProps {
 export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const { user, profile } = useAuth();
   const isViewOnly = useIsViewOnly();
-  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, addMissingDefaultYearGroups, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
+  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, addMissingDefaultYearGroups, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [yearGroupsExpanded, setYearGroupsExpanded] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
@@ -342,6 +342,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       });
       return () => cancelAnimationFrame(t);
     }
+    return undefined;
   }, [activeTab]);
 
   // Load activity packs for Resource Shop when viewing purchases tab
@@ -1535,7 +1536,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                             <input type="text" value={editingYearGroupDraft?.id ?? yearGroup.id} onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, id: e.target.value } : null)} className="w-full px-2 py-1 border border-gray-300 rounded text-sm" dir="ltr" />
                                             <input type="text" value={editingYearGroupDraft?.name ?? yearGroup.name} onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, name: e.target.value } : null)} className="w-full px-2 py-1 border border-gray-300 rounded text-sm" />
                                             <ColorPickerWithFavorites
-                                              value={editingYearGroupDraft?.color ?? yearGroup.color}
+                                              value={editingYearGroupDraft?.color ?? yearGroup.color ?? '#14B8A6'}
                                               onChange={(color) => setEditingYearGroupDraft(prev => prev ? { ...prev, color } : null)}
                                               className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
                                             />
@@ -2198,6 +2199,29 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               </div>
                             </div>
                             
+                            <div className="ml-8 pl-2 border-l-2 border-gray-200">
+                              <label htmlFor={`editCategoryFolder-${index}`} className="block text-xs font-medium text-gray-700 mb-1">
+                                Folder
+                              </label>
+                              <select
+                                id={`editCategoryFolder-${index}`}
+                                value={tempCategories[index]?.group || ''}
+                                onChange={(e) => {
+                                  const group = e.target.value || undefined;
+                                  const updatedCategories = [...tempCategories];
+                                  updatedCategories[index] = { ...updatedCategories[index], group, groups: undefined };
+                                  setTempCategories(updatedCategories);
+                                  updateCategories(updatedCategories);
+                                }}
+                                className="w-full max-w-xs px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                              >
+                                <option value="">Uncategorised</option>
+                                {[...categoryFolders].sort((a, b) => a.position - b.position).map((folder) => (
+                                  <option key={folder.id} value={folder.name}>{folder.name}</option>
+                                ))}
+                              </select>
+                            </div>
+
                             {/* Year Groups Editing Section */}
                             <div className="ml-8 pl-2 border-l-2 border-gray-200">
                               <label className="block text-xs font-medium text-gray-700 mb-2">

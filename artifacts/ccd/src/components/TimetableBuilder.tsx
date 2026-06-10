@@ -4,6 +4,7 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { useDrop, useDrag } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
+import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
 
 interface TimetableClass {
   id: string;
@@ -1354,10 +1355,9 @@ function EditTimetableClassModal({
           
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Color</label>
-            <input
-              type="color"
+            <ColorPickerWithFavorites
               value={editedClass.color}
-              onChange={(e) => setEditedClass({ ...editedClass, color: e.target.value })}
+              onChange={(color) => setEditedClass({ ...editedClass, color })}
               className="w-full h-10 rounded border border-gray-300"
             />
           </div>

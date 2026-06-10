@@ -7,6 +7,8 @@ import { useDropZoneStyle, useDropFlash } from './dnd';
 
 const COLLAPSED_KEY = 'category-folders-collapsed';
 
+type CategoryDropItem = { categoryName?: string; index?: number };
+
 function loadCollapsed(): Set<string> {
   try {
     const raw = localStorage.getItem(COLLAPSED_KEY);
@@ -51,14 +53,19 @@ function DraggableFolderRow({
   const [draftName, setDraftName] = useState(folder.name);
   const { flashClass, triggerFlash } = useDropFlash();
 
-  const [{ isOver, canDrop }, drop] = useDrop({
-    accept: 'category',
+  const [{ isOver, canDrop }, drop] = useDrop<
+    CategoryDropItem,
+    void,
+    { isOver: boolean; canDrop: boolean }
+  >({
+    accept: ['category', 'category-folder'],
     collect: (monitor) => ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
-    hover(item: { index: number }, monitor) {
+    hover(item, monitor) {
       if (monitor.getItemType() !== 'category-folder') return;
+      if (item.index === undefined) return;
       if (!ref.current) return;
       const dragIndex = item.index;
       const hoverIndex = index;
@@ -73,7 +80,7 @@ function DraggableFolderRow({
       onReorder(dragIndex, hoverIndex);
       item.index = hoverIndex;
     },
-    drop: (item: { categoryName?: string }) => {
+    drop: (item) => {
       triggerFlash();
       if (item.categoryName) {
         onAssignCategory(item.categoryName, folder.name);
@@ -180,13 +187,17 @@ function UncategorisedDropZone({
   const ref = useRef<HTMLDivElement>(null);
   const { flashClass, triggerFlash } = useDropFlash();
 
-  const [{ isOver, canDrop }, drop] = useDrop({
+  const [{ isOver, canDrop }, drop] = useDrop<
+    CategoryDropItem,
+    void,
+    { isOver: boolean; canDrop: boolean }
+  >({
     accept: 'category',
     collect: (monitor) => ({
       isOver: monitor.isOver(),
       canDrop: monitor.canDrop(),
     }),
-    drop: (item: { categoryName?: string }) => {
+    drop: (item) => {
       triggerFlash();
       if (item.categoryName) {
         onAssignCategory(item.categoryName, null);

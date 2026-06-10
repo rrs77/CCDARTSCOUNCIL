@@ -1282,7 +1282,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         } catch (error: any) {
           // Silently handle Supabase errors - fallback to localStorage
           // This prevents 500 errors from showing in console as failures
-          if (isDevelopment) {
+          if (import.meta.env.DEV) {
             console.warn('⚠️ Supabase load failed (using localStorage fallback):', error?.message || error);
             console.warn('⚠️ Error details:', {
               message: error?.message,
@@ -1292,7 +1292,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           }
           
           // Enhanced fallback for Safari compatibility
-          if (isDevelopment) {
+          if (import.meta.env.DEV) {
             console.log('📦 Supabase failed, falling back to localStorage with Safari-safe approach...');
           }
           
@@ -1888,6 +1888,26 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
 
   const updateYearGroupBands = React.useCallback((bands: YearGroupBand[]) => {
     setYearGroupBands(bands);
+  }, []);
+
+  const deleteYearGroupClass = React.useCallback((bandIndex: number, classIndex: number) => {
+    setYearGroupBands((prev) =>
+      prev
+        .map((band, i) =>
+          i === bandIndex
+            ? { ...band, classes: band.classes.filter((_, ci) => ci !== classIndex) }
+            : band
+        )
+        .filter((band) => band.classes.length > 0)
+    );
+  }, []);
+
+  const addClassToBand = React.useCallback((bandIndex: number, classId: string, className: string) => {
+    setYearGroupBands((prev) =>
+      prev.map((band, i) =>
+        i === bandIndex ? { ...band, classes: [...band.classes, { id: classId, name: className }] } : band
+      )
+    );
   }, []);
 
   // Manual sync function to force refresh from Supabase
@@ -2911,6 +2931,8 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     updateYearGroupSections,
     getOrderedYearGroups,
     updateYearGroupBands,
+    deleteYearGroupClass,
+    addClassToBand,
     deleteYearGroup,
     forceSyncYearGroups,
     cleanupDuplicates,
