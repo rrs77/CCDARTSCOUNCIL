@@ -950,14 +950,14 @@ export function LessonPlanBuilder({
   return (
     <>
       <div className="min-h-screen" style={{ backgroundColor: '#F9FAFB' }}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
           {/* Main Content */}
           
           {/* Editing Mode Header */}
           {currentLessonPlan.isEditingExisting && (
             <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center space-x-3 flex-1">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
                   <Edit3 className="h-5 w-5 text-blue-600" />
                   <div className="flex-1">
                     <div className="flex items-center space-x-2">
@@ -976,16 +976,16 @@ export function LessonPlanBuilder({
                   </div>
                 </div>
                 
-                <div className="flex space-x-2 ml-4">
+                <div className="flex flex-col sm:flex-row gap-2 sm:ml-4">
                   <button
                     onClick={handleSaveLessonPlan}
-                    className="px-4 py-2 btn-primary text-white font-medium rounded-lg transition-colors duration-200"
+                    className="w-full sm:w-auto min-h-[44px] px-4 py-2 btn-primary text-white font-medium rounded-lg transition-colors duration-200"
                   >
                     Save Changes
                   </button>
                   <button
                     onClick={onEditComplete}
-                    className="px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium rounded-lg transition-colors duration-200"
+                    className="w-full sm:w-auto min-h-[44px] px-4 py-2 bg-gray-300 hover:bg-gray-400 text-gray-700 font-medium rounded-lg transition-colors duration-200"
                   >
                     Cancel
                   </button>
@@ -997,15 +997,15 @@ export function LessonPlanBuilder({
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
             {/* Activity Library Panel */}
             <div className="lg:col-span-1 flex flex-col">
-              <div className="bg-white rounded-card shadow-soft overflow-hidden sticky top-8 flex flex-col max-h-[calc(100vh-4rem)]">
+              <div className="bg-white rounded-card shadow-soft overflow-hidden lg:sticky lg:top-8 flex flex-col max-h-none lg:max-h-[calc(100vh-4rem)]">
                 {/* Library Header */}
-                <div className="p-6 border-b border-gray-200 text-white h-[180px] flex flex-col justify-between" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
-                  <div className="mb-4">
-                    <h3 className="text-lg font-semibold">Activity Library - Build Your Lesson</h3>
+                <div className="p-4 sm:p-6 border-b border-gray-200 text-white flex flex-col gap-4" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-semibold">Activity Library - Build Your Lesson</h3>
                   </div>
                   
-                  {/* Search and Category Filter - On one line */}
-                  <div className="flex space-x-2">
+                  {/* Search and Category Filter */}
+                  <div className="flex flex-col sm:flex-row gap-2">
                     {/* Search */}
                     <div className="relative flex-1">
                       <Search 
