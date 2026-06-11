@@ -146,20 +146,21 @@ export function CalendarLessonAssignmentModal({
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70] animate-fade-in">
-      <div className="bg-white rounded-card shadow-soft w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden">
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-0 sm:p-4 z-[70] animate-fade-in">
+      <div className="bg-white rounded-t-card sm:rounded-card shadow-soft w-full max-w-3xl max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
-          <div className="flex items-center justify-between">
-            <div>
-              <h2 className="text-2xl font-bold">Add to Calendar</h2>
+        <div className="p-4 sm:p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <h2 className="text-xl sm:text-2xl font-bold">Add to Calendar</h2>
               <p className="text-white/90 text-sm mt-1">
                 {format(selectedDate, 'EEEE, MMMM d, yyyy')}
               </p>
             </div>
             <button
               onClick={handleClose}
-              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-button transition-colors"
+              aria-label="Close"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-button transition-colors"
             >
               <X className="h-6 w-6" />
             </button>
@@ -174,15 +175,15 @@ export function CalendarLessonAssignmentModal({
               setSelectedLesson(null);
               setSelectedStack(null);
             }}
-            className={`flex-1 px-6 py-4 font-medium transition-colors ${
+            className={`flex-1 min-h-[48px] px-3 sm:px-6 py-3 sm:py-4 font-medium transition-colors ${
               activeTab === 'lesson'
                 ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
-            <div className="flex items-center justify-center space-x-2">
-              <BookOpen className="h-5 w-5" />
-              <span>Lesson from Library</span>
+            <div className="flex items-center justify-center gap-2">
+              <BookOpen className="h-5 w-5 shrink-0" />
+              <span className="text-sm sm:text-base">Lesson from Library</span>
             </div>
           </button>
           <button
@@ -191,7 +192,7 @@ export function CalendarLessonAssignmentModal({
               setSelectedLesson(null);
               setSelectedStack(null);
             }}
-            className={`flex-1 px-6 py-4 font-medium transition-colors ${
+            className={`flex-1 min-h-[48px] px-3 sm:px-6 py-3 sm:py-4 font-medium transition-colors ${
               activeTab === 'stack'
                 ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
@@ -205,7 +206,7 @@ export function CalendarLessonAssignmentModal({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {/* Search */}
           <div className="mb-6">
             <div className="relative">

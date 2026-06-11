@@ -10,7 +10,7 @@ import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
-import type { Activity } from '../contexts/DataContext';
+import type { Activity, LessonPlan } from '../contexts/DataContext';
 
 interface Unit {
   id: string;
@@ -42,12 +42,14 @@ export function Dashboard() {
     updateHalfTerm, 
     getLessonsForHalfTerm,
     getTermSpecificLessonNumber,
-    getLessonDisplayTitle
+    getLessonDisplayTitle,
+    userCreatedLessonPlans,
+    addOrUpdateUserLessonPlan,
+    deleteUserLessonPlan,
   } = useData();
   const { getThemeForClass } = useSettings();
   const [activeTab, setActiveTab] = useState('unit-viewer');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
-  const [lessonPlans, setLessonPlans] = useState<any[]>([]);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [units, setUnits] = useState<Unit[]>([]);
   
@@ -71,20 +73,8 @@ export function Dashboard() {
     return sortedLessons.indexOf(lessonNumber) + 1;
   };
 
-  // Load lesson plans from localStorage
+  // Load units from localStorage
   React.useEffect(() => {
-    const savedPlans = localStorage.getItem('lesson-plans');
-    if (savedPlans) {
-      const plans = JSON.parse(savedPlans).map((plan: any) => ({
-        ...plan,
-        date: new Date(plan.date),
-        createdAt: new Date(plan.createdAt),
-        updatedAt: new Date(plan.updatedAt),
-      }));
-      setLessonPlans(plans);
-    }
-
-    // Load units from localStorage
     const savedUnits = localStorage.getItem('units');
     if (savedUnits) {
       try {
@@ -137,12 +127,6 @@ export function Dashboard() {
     }
   }, []);
 
-  // Save lesson plans to localStorage
-  const saveLessonPlans = (plans: any[]) => {
-    localStorage.setItem('lesson-plans', JSON.stringify(plans));
-    setLessonPlans(plans);
-  };
-
   // Save units to localStorage
   const saveUnits = (updatedUnits: Unit[]) => {
     localStorage.setItem('units', JSON.stringify(updatedUnits));
@@ -160,7 +144,7 @@ export function Dashboard() {
       (7 * 24 * 60 * 60 * 1000)
     );
 
-    const newPlan = {
+    const newPlan: LessonPlan = {
       id: crypto.randomUUID(),
       date,
       week: weekNumber,
@@ -173,8 +157,7 @@ export function Dashboard() {
       updatedAt: new Date(),
     };
 
-    const updatedPlans = [...lessonPlans, newPlan];
-    saveLessonPlans(updatedPlans);
+    void addOrUpdateUserLessonPlan(newPlan);
     setActiveTab('lesson-builder');
   };
 
@@ -183,46 +166,20 @@ export function Dashboard() {
       alert('View-only mode: Changes cannot be saved.');
       return;
     }
-    const updatedPlans = lessonPlans.filter((plan) => plan.id !== planId);
-    saveLessonPlans(updatedPlans);
-    // Optionally call API to remove from backend if you have a delete endpoint
+    void deleteUserLessonPlan(planId);
   };
 
-  const handleUpdateLessonPlan = async (updatedPlan: any) => {
+  const handleUpdateLessonPlan = async (updatedPlan: LessonPlan) => {
     if (isViewOnly) {
       alert('View-only mode: Changes cannot be saved.');
       return;
     }
-    
-    const planWithTimestamp = { ...updatedPlan, updatedAt: new Date() };
-    
-    const updatedPlans = lessonPlans.map(plan => 
-      plan.id === updatedPlan.id ? planWithTimestamp : plan
-    );
-    
-    if (!lessonPlans.find(plan => plan.id === updatedPlan.id)) {
-      updatedPlans.push(planWithTimestamp);
-    }
-    
-    // Save to localStorage
-    saveLessonPlans(updatedPlans);
-    setLessonPlans(updatedPlans);
-    
-    // Save to Supabase
-    try {
-      const { lessonPlansApi } = await import('../config/api');
-      if (updatedPlan.id && updatedPlan.id.startsWith('plan-')) {
-        // New plan - create it
-        await lessonPlansApi.create(planWithTimestamp);
-      } else if (updatedPlan.id) {
-        // Existing plan - update it
-        await lessonPlansApi.update(updatedPlan.id, planWithTimestamp);
-      }
-      console.log('✅ Lesson plan saved to Supabase');
-    } catch (error) {
-      console.error('❌ Failed to save lesson plan to Supabase:', error);
-      // Don't throw - keep local changes
-    }
+
+    await addOrUpdateUserLessonPlan({
+      ...updatedPlan,
+      className: updatedPlan.className || currentSheetInfo.sheet,
+      updatedAt: new Date(),
+    });
   };
 
   const handleActivityAdd = (activity: Activity) => {
@@ -272,13 +229,14 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
-            <TabsList className="w-full grid grid-cols-2 lg:grid-cols-4 gap-1 lg:gap-0">
+            {/* 5 tabs — must use grid-cols-5 on sm+ (not 4) or Calendar wraps to a clipped second row */}
+            <TabsList className="w-full h-auto grid grid-cols-3 sm:grid-cols-5 gap-1 auto-rows-auto">
               <TabsTrigger 
                 value="unit-viewer"
                 data-tab="unit-viewer"
-                className="flex flex-col lg:flex-row items-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <BookOpen className="h-5 w-5 lg:h-6 lg:w-6" />
+                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Unit Viewer</span>
                 <span className="sm:hidden">Units</span>
               </TabsTrigger>
@@ -286,9 +244,9 @@ export function Dashboard() {
               <TabsTrigger 
                 value="lesson-library"
                 data-tab="lesson-library"
-                className="flex flex-col lg:flex-row items-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <FolderOpen className="h-5 w-5 lg:h-6 lg:w-6" />
+                <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Library</span>
                 <span className="sm:hidden">Lessons</span>
               </TabsTrigger>
@@ -296,9 +254,9 @@ export function Dashboard() {
               <TabsTrigger 
                 value="lesson-builder"
                 data-tab="lesson-builder"
-                className="flex flex-col lg:flex-row items-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <Edit3 className="h-5 w-5 lg:h-6 lg:w-6" />
+                <Edit3 className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Builder</span>
                 <span className="sm:hidden">Builder</span>
               </TabsTrigger>
@@ -306,19 +264,19 @@ export function Dashboard() {
               <TabsTrigger 
                 value="activity-library"
                 data-tab="activity-library"
-                className="flex flex-col lg:flex-row items-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <Tag className="h-5 w-5 lg:h-6 lg:w-6" />
+                <Tag className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Activity Library</span>
                 <span className="sm:hidden">Activities</span>
               </TabsTrigger>
               
               <TabsTrigger 
                 value="calendar"
-                className="data-[state=active]:bg-gradient-to-r data-[state=active]:from-teal-500 data-[state=active]:to-cyan-600 data-[state=active]:text-white rounded-lg px-4 py-2 transition-all duration-200 flex flex-col lg:flex-row items-center space-y-1 lg:space-y-0 lg:space-x-2 p-2 lg:p-4 text-xs lg:text-sm"
                 data-tab="calendar"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
               >
-                <Calendar className="h-5 w-5 lg:h-6 lg:w-6" />
+                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Calendar</span>
                 <span className="sm:hidden">Calendar</span>
               </TabsTrigger>
@@ -362,7 +320,7 @@ export function Dashboard() {
               <LessonPlannerCalendar
                 onDateSelect={handleDateSelect}
                 selectedDate={selectedDate}
-                lessonPlans={lessonPlans}
+                lessonPlans={userCreatedLessonPlans}
                 onUpdateLessonPlan={handleUpdateLessonPlan}
                 onDeleteLessonPlan={handleDeleteLessonPlan}
                 onCreateLessonPlan={handleCreateLessonPlan}

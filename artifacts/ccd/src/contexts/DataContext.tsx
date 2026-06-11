@@ -1972,7 +1972,15 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
         return;
       }
       
-      const savedPlans = localStorage.getItem('user-created-lesson-plans');
+      let savedPlans = localStorage.getItem('user-created-lesson-plans');
+      if (!savedPlans) {
+        const legacyPlans = localStorage.getItem('lesson-plans');
+        if (legacyPlans) {
+          localStorage.setItem('user-created-lesson-plans', legacyPlans);
+          localStorage.removeItem('lesson-plans');
+          savedPlans = legacyPlans;
+        }
+      }
       if (savedPlans) {
         const plans = JSON.parse(savedPlans).map((plan: any) => ({
           ...plan,

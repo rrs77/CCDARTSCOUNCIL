@@ -26,6 +26,7 @@ import { customObjectivesApi } from '../config/customObjectivesApi';
 import { seedReceptionDramaObjectives } from '../utils/seedReceptionDrama';
 import { setupSecondaryDramaObjectives } from '../utils/setupSecondaryDramaObjectives';
 import { setupDanceObjectives } from '../utils/setupDanceObjectives';
+import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
 import type { 
   CustomObjective,
   CustomObjectiveYearGroupWithAreas, 
@@ -1335,10 +1336,9 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     Color
                   </label>
-                  <input
-                    type="color"
+                  <ColorPickerWithFavorites
                     value={cloneData.targetColor}
-                    onChange={(e) => setCloneData(prev => ({ ...prev, targetColor: e.target.value }))}
+                    onChange={(targetColor) => setCloneData(prev => ({ ...prev, targetColor }))}
                     className="w-full h-10 border border-gray-300 rounded-md"
                   />
                 </div>
@@ -1442,12 +1442,11 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Color
                     </label>
-                    <input
-                      type="color"
+                    <ColorPickerWithFavorites
                       value={formData.year_group.color}
-                      onChange={(e) => setFormData(prev => ({
+                      onChange={(color) => setFormData(prev => ({
                         ...prev,
-                        year_group: { ...prev.year_group, color: e.target.value }
+                        year_group: { ...prev.year_group, color }
                       }))}
                       className="w-full h-10 border border-gray-300 rounded-md"
                     />
