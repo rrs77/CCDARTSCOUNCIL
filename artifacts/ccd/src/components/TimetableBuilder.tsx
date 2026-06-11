@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { X, Plus, Save, Trash2, Clock, MapPin, GripVertical, Edit3, Users, BookOpen, Settings, Calendar, ChevronDown, ChevronRight, Copy, CopyPlus } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useDrop, useDrag } from 'react-dnd';
+import { getEmptyImage } from 'react-dnd-html5-backend';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
@@ -76,6 +77,19 @@ function generateSlotStartTimes(dayStart: string, dayEnd: string, intervalMinute
 
 function snapMinutesToInterval(totalMinutes: number, intervalMinutes: number): number {
   return Math.round(totalMinutes / intervalMinutes) * intervalMinutes;
+}
+
+/** Map a viewport Y coordinate to the slot start time for that grid row. */
+function dropClientYToSlotTime(
+  dropClientY: number,
+  columnEl: HTMLElement,
+  slotHeightPx: number,
+  slotStartTimes: string[],
+): string {
+  const y = dropClientY - columnEl.getBoundingClientRect().top;
+  const slotIndex = Math.floor(y / slotHeightPx);
+  const clampedIndex = Math.max(0, Math.min(slotStartTimes.length - 1, slotIndex));
+  return slotStartTimes[clampedIndex];
 }
 
 function applyResizeEndTime(
@@ -419,12 +433,24 @@ export function TimetableBuilder({
     const cls = timetableClasses.find(c => c.id === classId);
     if (!cls) return;
     const durationMin = timeToMinutes(cls.endTime) - timeToMinutes(cls.startTime);
-    const newStartMin = timeToMinutes(newStartTime);
-    const newEndMin = Math.min(dayEndMinutes, newStartMin + Math.max(5, durationMin));
+    const snappedStartMin = snapMinutesToInterval(timeToMinutes(newStartTime), slotInterval);
+    const clampedStartMin = Math.max(
+      dayStartMinutes,
+      Math.min(dayEndMinutes - slotInterval, snappedStartMin)
+    );
+    const newEndMin = Math.min(
+      dayEndMinutes,
+      clampedStartMin + Math.max(slotInterval, durationMin)
+    );
+    const snappedStartTime = minutesToTime(clampedStartMin);
     const newEndTime = minutesToTime(newEndMin);
-    saveTimetable(timetableClasses.map(c =>
-      c.id === classId ? { ...c, day: newDay, startTime: newStartTime, endTime: newEndTime } : c
-    ));
+    const updated = timetableClasses.map(c =>
+      c.id === classId
+        ? { ...c, day: newDay, startTime: snappedStartTime, endTime: newEndTime }
+        : c
+    );
+    setTimetableClasses(updated);
+    void saveTimetable(updated);
   };
 
   // Get all unique classes with their scheduled days
@@ -917,17 +943,17 @@ function TimetableDayColumn({
     accept: [DRAG_TYPE_TIMETABLE_BLOCK],
     drop: (item: any, monitor) => {
       if (item.type !== DRAG_TYPE_TIMETABLE_BLOCK || !item.class || !columnRef.current) return;
-      const offset = monitor.getSourceClientOffset();
       const clientOffset = monitor.getClientOffset();
-      const dropY = (clientOffset?.y ?? offset?.y) ?? 0;
-      const rect = columnRef.current.getBoundingClientRect();
-      const scrollEl = columnRef.current.closest('.overflow-auto') as HTMLElement | null;
-      const scrollTop = scrollEl?.scrollTop ?? 0;
-      const y = dropY - rect.top + scrollTop;
-      const minutes = dayStartMinutes + y / pxPerMinute;
-      const snapped = snapMinutesToInterval(minutes, slotDurationMinutes);
-      const clamped = Math.max(dayStartMinutes, Math.min(dayEndMinutes - slotDurationMinutes, snapped));
-      onMoveClass(item.class.id, day, minutesToTime(clamped));
+      const sourceOffset = monitor.getSourceClientOffset();
+      const dropY = clientOffset?.y ?? sourceOffset?.y;
+      if (dropY == null) return;
+      const slotTime = dropClientYToSlotTime(
+        dropY,
+        columnRef.current,
+        slotHeightPx,
+        slotStartTimes
+      );
+      onMoveClass(item.class.id, day, slotTime);
     },
     collect: (monitor) => {
       const item = monitor.getItem() as any;
@@ -936,18 +962,19 @@ function TimetableDayColumn({
         isDraggingBlock: item?.type === DRAG_TYPE_TIMETABLE_BLOCK
       };
     }
-  }), [day, onMoveClass, pxPerMinute, slotDurationMinutes, dayStartMinutes, dayEndMinutes]);
+  }), [day, onMoveClass, slotHeightPx, slotStartTimes]);
 
   const showDropHint = isOver && isDraggingBlock;
 
   const handleColumnClick = (e: React.MouseEvent) => {
     if (!columnRef.current || (e.target as HTMLElement).closest('[data-class-block]') || (e.target as HTMLElement).closest('[data-slot-row]')) return;
-    const rect = columnRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top;
-    const minutes = dayStartMinutes + y / pxPerMinute;
-    const snapped = snapMinutesToInterval(minutes, slotDurationMinutes);
-    const clamped = Math.max(dayStartMinutes, Math.min(dayEndMinutes - slotDurationMinutes, snapped));
-    onSelectSlot(minutesToTime(clamped));
+    const slotTime = dropClientYToSlotTime(
+      e.clientY,
+      columnRef.current,
+      slotHeightPx,
+      slotStartTimes
+    );
+    onSelectSlot(slotTime);
   };
 
   return (
@@ -1051,19 +1078,21 @@ function TimetableClassBlock({
   const lastEndTimeRef = React.useRef(cls.endTime);
   const startMin = timeToMinutes(cls.startTime);
 
-  const [{ isDragging }, drag] = useDrag(() => ({
+  const [{ isDragging }, drag, dragPreview] = useDrag(() => ({
     type: DRAG_TYPE_TIMETABLE_BLOCK,
     item: () => ({ type: DRAG_TYPE_TIMETABLE_BLOCK, class: cls }),
     canDrag: () => !resizing,
     collect: (monitor) => ({ isDragging: monitor.isDragging() })
   }), [cls, resizing]);
 
+  React.useEffect(() => {
+    dragPreview(getEmptyImage(), { captureDraggingState: true });
+  }, [dragPreview]);
+
   const yToEndTime = (clientY: number) => {
     const parentEl = blockRef.current?.parentElement;
     if (!parentEl) return null;
-    const scrollEl = parentEl.closest('.overflow-auto') as HTMLElement | null;
-    const scrollTop = scrollEl?.scrollTop ?? 0;
-    const y = clientY - parentEl.getBoundingClientRect().top + scrollTop;
+    const y = clientY - parentEl.getBoundingClientRect().top;
     const minutes = dayStartMinutes + y / pxPerMinute;
     const snapped = snapMinutesToInterval(minutes, slotDurationMinutes);
     const clamped = Math.max(startMin + slotDurationMinutes, Math.min(dayEndMinutes, snapped));
@@ -1105,13 +1134,14 @@ function TimetableClassBlock({
       data-class-block
       ref={blockRef}
       className={`absolute left-0.5 right-0.5 rounded px-2 py-1 text-xs font-medium text-white flex flex-col z-10 ${
-        isDragging ? 'opacity-50 shadow-lg' : resizing ? 'ring-2 ring-white/60' : 'hover:opacity-95 transition-opacity'
+        isDragging ? 'opacity-0 pointer-events-none' : resizing ? 'ring-2 ring-white/60' : 'hover:opacity-95 transition-opacity'
       }`}
       style={{
         backgroundColor: cls.color,
         top: `${topPx}px`,
         height: `${heightPx}px`,
-        minHeight: 20
+        minHeight: 20,
+        transform: 'none'
       }}
       onClick={handleBlockClick}
       title={`${cls.className} (${cls.startTime} - ${cls.endTime}). Drag to move; drag bottom edge to resize.`}
