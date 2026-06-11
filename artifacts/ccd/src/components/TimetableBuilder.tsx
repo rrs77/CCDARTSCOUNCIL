@@ -138,13 +138,16 @@ export function TimetableBuilder({
 
   const dayStartMinutes = parseTimeToMinutes(dayStart);
   const dayEndMinutes = parseTimeToMinutes(dayEnd);
-  const totalMinutes = Math.max(0, dayEndMinutes - dayStartMinutes);
-  const gridHeightPx = totalMinutes * PX_PER_MINUTE;
   const slotStartTimes = useMemo(
     () => generateSlotStartTimes(dayStart, dayEnd, slotInterval),
     [dayStart, dayEnd, slotInterval]
   );
   const slotDurationMinutes = slotInterval;
+  // Slot rows enforce a minimum height, so event top/height must use the same
+  // effective px-per-minute as the grid — not the nominal PX_PER_MINUTE constant.
+  const slotHeightPx = Math.max(slotDurationMinutes * PX_PER_MINUTE, MIN_SLOT_HEIGHT_PX);
+  const effectivePxPerMinute = slotHeightPx / slotDurationMinutes;
+  const gridHeightPx = slotStartTimes.length * slotHeightPx;
 
   const [isGlobalTimetable, setIsGlobalTimetable] = useState<boolean>(() => {
     try {
@@ -734,9 +737,7 @@ export function TimetableBuilder({
                   <div
                     key={slotTime}
                     className="flex items-center justify-end pr-2 border-b border-gray-200 flex-shrink-0"
-                    style={{
-                      height: Math.max(slotDurationMinutes * PX_PER_MINUTE, MIN_SLOT_HEIGHT_PX)
-                    }}
+                    style={{ height: slotHeightPx }}
                   >
                     <span className="text-xs text-gray-600 font-medium">{slotTime}</span>
                   </div>
@@ -751,7 +752,8 @@ export function TimetableBuilder({
                 classes={getClassesForDay(dayIndex)}
                 dayStartMinutes={dayStartMinutes}
                 dayEndMinutes={dayEndMinutes}
-                pxPerMinute={PX_PER_MINUTE}
+                pxPerMinute={effectivePxPerMinute}
+                slotHeightPx={slotHeightPx}
                 gridHeightPx={gridHeightPx}
                 slotStartTimes={slotStartTimes}
                 slotDurationMinutes={slotDurationMinutes}
@@ -828,7 +830,7 @@ function TimetableSlotRow({
       className={`border-b border-gray-200 flex items-center justify-center transition-colors cursor-pointer ${
         isOver ? 'border-teal-300' : 'hover:bg-gray-50'
       } ${slotZoneClass} ${flashClass}`}
-      style={{ height: Math.max(heightPx, MIN_SLOT_HEIGHT_PX) }}
+      style={{ height: heightPx }}
       onClick={(e) => { e.stopPropagation(); onSelectSlot(); }}
     >
       {isOver ? (
@@ -850,6 +852,7 @@ function TimetableDayColumn({
   dayStartMinutes,
   dayEndMinutes,
   pxPerMinute,
+  slotHeightPx,
   gridHeightPx,
   slotStartTimes,
   slotDurationMinutes,
@@ -869,6 +872,7 @@ function TimetableDayColumn({
   dayStartMinutes: number;
   dayEndMinutes: number;
   pxPerMinute: number;
+  slotHeightPx: number;
   gridHeightPx: number;
   slotStartTimes: string[];
   slotDurationMinutes: number;
@@ -884,8 +888,6 @@ function TimetableDayColumn({
 }) {
   const [resizingId, setResizingId] = useState<string | null>(null);
   const columnRef = React.useRef<HTMLDivElement>(null);
-
-  const slotHeightPx = slotDurationMinutes * pxPerMinute;
 
   const [{ isOver, isDraggingBlock }, drop] = useDrop(() => ({
     accept: [DRAG_TYPE_TIMETABLE_BLOCK],
