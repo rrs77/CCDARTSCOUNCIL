@@ -49,8 +49,8 @@ const DRAG_TYPE_TIMETABLE_BLOCK = 'timetable-block';
 const PX_PER_MINUTE = 1.5;
 const MIN_SLOT_HEIGHT_PX = 48;
 
-const DEFAULT_DAY_START = '7:00';
-const DEFAULT_DAY_END = '18:00';
+const DEFAULT_DAY_START = '7:30';
+const DEFAULT_DAY_END = '17:00';
 const DEFAULT_SLOT_INTERVAL = 15; // minutes; 5, 15, 30, 60 supported
 
 function parseTimeToMinutes(time: string): number {
@@ -72,6 +72,28 @@ function generateSlotStartTimes(dayStart: string, dayEnd: string, intervalMinute
     out.push(formatMinutesToTime(m));
   }
   return out;
+}
+
+function snapMinutesToInterval(totalMinutes: number, intervalMinutes: number): number {
+  return Math.round(totalMinutes / intervalMinutes) * intervalMinutes;
+}
+
+function applyResizeEndTime(
+  classes: TimetableClass[],
+  classId: string,
+  newEndTime: string,
+  slotInterval: number,
+  dayEndMinutes: number,
+  timeToMinutesFn: (time: string) => number
+): TimetableClass[] | null {
+  const cls = classes.find(c => c.id === classId);
+  if (!cls) return null;
+  const startMin = timeToMinutesFn(cls.startTime);
+  let endMin = snapMinutesToInterval(timeToMinutesFn(newEndTime), slotInterval);
+  endMin = Math.max(startMin + slotInterval, Math.min(dayEndMinutes, endMin));
+  if (endMin <= startMin) return null;
+  const endTime = formatMinutesToTime(endMin);
+  return classes.map(c => (c.id === classId ? { ...c, endTime } : c));
 }
 
 export function TimetableBuilder({
@@ -380,14 +402,16 @@ export function TimetableBuilder({
     return (h || 0) * 60 + (m || 0);
   };
 
-  // Update class end time (for resize handle)
-  const handleResizeClass = (classId: string, newEndTime: string) => {
-    const cls = timetableClasses.find(c => c.id === classId);
-    if (!cls) return;
-    const startMin = timeToMinutes(cls.startTime);
-    const endMin = timeToMinutes(newEndTime);
-    if (endMin <= startMin) return; // at least 1 min duration
-    saveTimetable(timetableClasses.map(c => c.id === classId ? { ...c, endTime: newEndTime } : c));
+  // Update class end time while dragging (preview) or on release (persist)
+  const handleResizeClass = (classId: string, newEndTime: string, commit = false) => {
+    setTimetableClasses(prev => {
+      const updated = applyResizeEndTime(prev, classId, newEndTime, slotInterval, dayEndMinutes, timeToMinutes);
+      if (!updated) return prev;
+      if (commit) {
+        void saveTimetable(updated);
+      }
+      return updated;
+    });
   };
 
   // Move a class to a new day and/or new start time (drag-and-drop)
@@ -880,7 +904,7 @@ function TimetableDayColumn({
   onAddNonCurriculum: (timeSlot: string) => () => void;
   onEdit: (cls: TimetableClass) => void;
   onDelete: (id: string) => void;
-  onResize: (classId: string, newEndTime: string) => void;
+  onResize: (classId: string, newEndTime: string, commit?: boolean) => void;
   onMoveClass: (classId: string, newDay: number, newStartTime: string) => void;
   onSelectSlot: (timeSlot: string) => void;
   timeToMinutes: (time: string) => number;
@@ -900,8 +924,9 @@ function TimetableDayColumn({
       const scrollEl = columnRef.current.closest('.overflow-auto') as HTMLElement | null;
       const scrollTop = scrollEl?.scrollTop ?? 0;
       const y = dropY - rect.top + scrollTop;
-      const minutes = dayStartMinutes + Math.round(y / pxPerMinute);
-      const clamped = Math.max(dayStartMinutes, Math.min(dayEndMinutes - 5, minutes));
+      const minutes = dayStartMinutes + y / pxPerMinute;
+      const snapped = snapMinutesToInterval(minutes, slotDurationMinutes);
+      const clamped = Math.max(dayStartMinutes, Math.min(dayEndMinutes - slotDurationMinutes, snapped));
       onMoveClass(item.class.id, day, minutesToTime(clamped));
     },
     collect: (monitor) => {
@@ -911,16 +936,17 @@ function TimetableDayColumn({
         isDraggingBlock: item?.type === DRAG_TYPE_TIMETABLE_BLOCK
       };
     }
-  }), [day, onMoveClass, pxPerMinute, dayStartMinutes, dayEndMinutes]);
+  }), [day, onMoveClass, pxPerMinute, slotDurationMinutes, dayStartMinutes, dayEndMinutes]);
 
   const showDropHint = isOver && isDraggingBlock;
 
   const handleColumnClick = (e: React.MouseEvent) => {
     if (!columnRef.current || (e.target as HTMLElement).closest('[data-class-block]') || (e.target as HTMLElement).closest('[data-slot-row]')) return;
     const rect = columnRef.current.getBoundingClientRect();
-    const y = e.clientY - rect.top - 40;
-    const minutes = dayStartMinutes + Math.round(y / pxPerMinute);
-    const clamped = Math.max(dayStartMinutes, Math.min(dayEndMinutes - 30, minutes));
+    const y = e.clientY - rect.top;
+    const minutes = dayStartMinutes + y / pxPerMinute;
+    const snapped = snapMinutesToInterval(minutes, slotDurationMinutes);
+    const clamped = Math.max(dayStartMinutes, Math.min(dayEndMinutes - slotDurationMinutes, snapped));
     onSelectSlot(minutesToTime(clamped));
   };
 
@@ -966,11 +992,12 @@ function TimetableDayColumn({
               heightPx={Math.max(heightPx, minHeight)}
               onEdit={() => onEdit(cls)}
               onDelete={() => onDelete(cls.id)}
-              onResize={(newEndTime) => onResize(cls.id, newEndTime)}
+              onResize={(newEndTime, commit) => onResize(cls.id, newEndTime, commit)}
               resizing={resizingId === cls.id}
               onResizeStart={() => setResizingId(cls.id)}
               onResizeEnd={() => setResizingId(null)}
               pxPerMinute={pxPerMinute}
+              slotDurationMinutes={slotDurationMinutes}
               dayStartMinutes={dayStartMinutes}
               dayEndMinutes={dayEndMinutes}
               timeToMinutes={timeToMinutes}
@@ -996,6 +1023,7 @@ function TimetableClassBlock({
   onResizeStart,
   onResizeEnd,
   pxPerMinute,
+  slotDurationMinutes,
   dayStartMinutes,
   dayEndMinutes,
   timeToMinutes,
@@ -1007,19 +1035,21 @@ function TimetableClassBlock({
   heightPx: number;
   onEdit: () => void;
   onDelete: () => void;
-  onResize: (newEndTime: string) => void;
+  onResize: (newEndTime: string, commit?: boolean) => void;
   resizing: boolean;
   onResizeStart: () => void;
   onResizeEnd: () => void;
   pxPerMinute: number;
+  slotDurationMinutes: number;
   dayStartMinutes: number;
   dayEndMinutes: number;
   timeToMinutes: (time: string) => number;
   minutesToTime: (min: number) => string;
 }) {
   const blockRef = React.useRef<HTMLDivElement>(null);
+  const suppressClickRef = React.useRef(false);
+  const lastEndTimeRef = React.useRef(cls.endTime);
   const startMin = timeToMinutes(cls.startTime);
-  const endMin = timeToMinutes(cls.endTime);
 
   const [{ isDragging }, drag] = useDrag(() => ({
     type: DRAG_TYPE_TIMETABLE_BLOCK,
@@ -1028,22 +1058,31 @@ function TimetableClassBlock({
     collect: (monitor) => ({ isDragging: monitor.isDragging() })
   }), [cls, resizing]);
 
+  const yToEndTime = (clientY: number) => {
+    const parentEl = blockRef.current?.parentElement;
+    if (!parentEl) return null;
+    const scrollEl = parentEl.closest('.overflow-auto') as HTMLElement | null;
+    const scrollTop = scrollEl?.scrollTop ?? 0;
+    const y = clientY - parentEl.getBoundingClientRect().top + scrollTop;
+    const minutes = dayStartMinutes + y / pxPerMinute;
+    const snapped = snapMinutesToInterval(minutes, slotDurationMinutes);
+    const clamped = Math.max(startMin + slotDurationMinutes, Math.min(dayEndMinutes, snapped));
+    return minutesToTime(clamped);
+  };
+
   const handleResizeMouseDown = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
     onResizeStart();
     const move = (ev: MouseEvent) => {
-      const parentEl = blockRef.current?.parentElement;
-      const scrollEl = parentEl?.closest('.overflow-auto') as HTMLElement | null;
-      if (!parentEl) return;
-      const parent = parentEl.getBoundingClientRect();
-      const scrollTop = scrollEl?.scrollTop ?? 0;
-      const y = ev.clientY - parent.top + scrollTop;
-      const minutes = dayStartMinutes + y / pxPerMinute;
-      const newEnd = Math.max(startMin + 5, Math.min(dayEndMinutes, Math.round(minutes)));
-      onResize(minutesToTime(newEnd));
+      const endTime = yToEndTime(ev.clientY);
+      if (!endTime) return;
+      lastEndTimeRef.current = endTime;
+      onResize(endTime, false);
     };
     const up = () => {
+      onResize(lastEndTimeRef.current, true);
+      suppressClickRef.current = true;
       onResizeEnd();
       document.removeEventListener('mousemove', move);
       document.removeEventListener('mouseup', up);
@@ -1052,12 +1091,21 @@ function TimetableClassBlock({
     document.addEventListener('mouseup', up);
   };
 
+  const handleBlockClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    onEdit();
+  };
+
   return (
     <div
       data-class-block
       ref={blockRef}
       className={`absolute left-0.5 right-0.5 rounded px-2 py-1 text-xs font-medium text-white flex flex-col z-10 ${
-        isDragging ? 'opacity-50 shadow-lg' : 'hover:opacity-95 transition-opacity'
+        isDragging ? 'opacity-50 shadow-lg' : resizing ? 'ring-2 ring-white/60' : 'hover:opacity-95 transition-opacity'
       }`}
       style={{
         backgroundColor: cls.color,
@@ -1065,16 +1113,19 @@ function TimetableClassBlock({
         height: `${heightPx}px`,
         minHeight: 20
       }}
-      onClick={(e) => { e.stopPropagation(); onEdit(); }}
+      onClick={handleBlockClick}
       title={`${cls.className} (${cls.startTime} - ${cls.endTime}). Drag to move; drag bottom edge to resize.`}
     >
       <div
         ref={drag}
-        className={`flex items-center justify-between flex-1 min-h-0 cursor-grab active:cursor-grabbing ${isDragging ? 'cursor-grabbing' : ''}`}
+        className={`flex items-center justify-between flex-1 min-h-0 min-w-0 pb-3 cursor-grab active:cursor-grabbing ${isDragging ? 'cursor-grabbing' : ''}`}
       >
-        <div className="truncate flex-1">
+        <div className="truncate flex-1 min-w-0">
           <span className="font-semibold text-white/90">{cls.startTime}</span>
           <span className="ml-1 truncate">{cls.className}</span>
+          {resizing && (
+            <span className="ml-1 text-white/80">→ {cls.endTime}</span>
+          )}
         </div>
         <button
           onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -1084,12 +1135,12 @@ function TimetableClassBlock({
         </button>
       </div>
       <div
-        className="absolute bottom-0 left-0 right-0 h-2 cursor-ns-resize flex items-center justify-center group"
+        className="absolute bottom-0 left-0 right-0 z-20 h-4 cursor-ns-resize flex items-end justify-center group touch-none"
         onMouseDown={handleResizeMouseDown}
         title="Drag to change duration"
       >
         {resizing && <div className="absolute inset-0 bg-white/30 rounded-b" />}
-        <div className="w-8 h-0.5 bg-white/60 group-hover:bg-white rounded" />
+        <div className="w-10 h-1 mb-0.5 bg-white/70 group-hover:bg-white rounded-full" />
       </div>
     </div>
   );
