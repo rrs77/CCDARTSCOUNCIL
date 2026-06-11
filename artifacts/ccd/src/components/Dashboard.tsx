@@ -229,11 +229,11 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
-            <TabsList className="w-full h-auto grid grid-cols-3 sm:grid-cols-5 gap-1">
+            <TabsList className="w-full h-auto flex flex-wrap gap-1">
               <TabsTrigger 
                 value="unit-viewer"
                 data-tab="unit-viewer"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] flex-[1_1_30%] sm:flex-1 min-w-[4.5rem] sm:min-w-0 text-center leading-tight whitespace-normal"
               >
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Unit Viewer</span>
@@ -243,7 +243,7 @@ export function Dashboard() {
               <TabsTrigger 
                 value="lesson-library"
                 data-tab="lesson-library"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] flex-[1_1_30%] sm:flex-1 min-w-[4.5rem] sm:min-w-0 text-center leading-tight whitespace-normal"
               >
                 <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Library</span>
@@ -253,7 +253,7 @@ export function Dashboard() {
               <TabsTrigger 
                 value="lesson-builder"
                 data-tab="lesson-builder"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] flex-[1_1_30%] sm:flex-1 min-w-[4.5rem] sm:min-w-0 text-center leading-tight whitespace-normal"
               >
                 <Edit3 className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Builder</span>
@@ -263,7 +263,7 @@ export function Dashboard() {
               <TabsTrigger 
                 value="activity-library"
                 data-tab="activity-library"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] flex-[1_1_30%] sm:flex-1 min-w-[4.5rem] sm:min-w-0 text-center leading-tight whitespace-normal"
               >
                 <Tag className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Activity Library</span>
@@ -273,7 +273,7 @@ export function Dashboard() {
               <TabsTrigger 
                 value="calendar"
                 data-tab="calendar"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] flex-[1_1_30%] sm:flex-1 min-w-[4.5rem] sm:min-w-0 text-center leading-tight whitespace-normal"
               >
                 <Calendar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Calendar</span>
