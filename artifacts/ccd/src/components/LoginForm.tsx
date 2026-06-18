@@ -170,7 +170,7 @@ export function LoginForm() {
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#eef1ef] p-0 sm:p-4 lg:p-6">
       {!showFeatureWalkthrough && <FabricExampleBanner />}
-      <div className="mx-auto flex min-h-screen max-w-[1440px] flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3rem)]">
+      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1440px] flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3rem)]">
         <div className="flex flex-1 flex-col lg:flex-row">
           {/* Mobile hero — compact */}
           <div className="lg:hidden">

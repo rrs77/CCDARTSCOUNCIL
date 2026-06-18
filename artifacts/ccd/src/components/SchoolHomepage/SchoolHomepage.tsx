@@ -74,7 +74,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
       <FabricExampleBanner />
       {/* LEFT: branded panel */}
       <div
-        className="relative flex flex-col justify-between px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14"
+        className="relative z-10 flex flex-col justify-between px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14"
         style={{
           background: `linear-gradient(140deg, ${school.primaryColor} 0%, ${school.primaryColor} 60%, ${school.accentColor}33 100%)`,
           color: '#fff',
@@ -140,7 +140,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
       </div>
 
       {/* RIGHT: login + demo */}
-      <div className="flex flex-1 items-center justify-center bg-gray-50 px-6 py-12 lg:w-1/2 lg:px-12">
+      <div className="relative z-10 flex flex-1 items-center justify-center bg-gray-50 px-6 py-12 lg:w-1/2 lg:px-12">
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h2

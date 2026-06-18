@@ -7,7 +7,7 @@ import React from 'react';
 export function FabricExampleBanner() {
   return (
     <div
-      className="pointer-events-none absolute inset-0 z-20 overflow-hidden"
+      className="pointer-events-none absolute inset-0 z-0 overflow-hidden"
       role="status"
       aria-label="Arts Council Example - working site"
     >
