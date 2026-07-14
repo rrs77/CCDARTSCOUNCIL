@@ -197,8 +197,6 @@ interface SettingsContextType {
   resetToDefaults: () => void;
   resetCategoriesToDefaults: () => void;
   resetYearGroupsToDefaults: () => void;
-  /** Add any default year groups (e.g. Reception) that are missing from the current list. */
-  addMissingDefaultYearGroups: () => Promise<void>;
   /** Put any year group that exists in the list but is not in any section into Other (recovers e.g. renamed year groups that disappeared). */
   ensureYearGroupsInSections: () => void;
   // Simple Category Groups
@@ -508,7 +506,6 @@ export const useSettings = () => {
       resetToDefaults: () => {},
       resetCategoriesToDefaults: () => {},
       resetYearGroupsToDefaults: () => {},
-      addMissingDefaultYearGroups: async () => {},
       ensureYearGroupsInSections: () => {},
       categoryGroups: { groups: [] },
       addCategoryGroup: () => {},
@@ -2061,27 +2058,6 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     } catch (_) {}
   };
 
-  const addMissingDefaultYearGroups = async () => {
-    const current = customYearGroups;
-    const existingIds = new Set(current.map(g => g.id));
-    const toAdd = DEFAULT_YEAR_GROUPS.filter(g => !existingIds.has(g.id));
-    if (toAdd.length === 0) return;
-    const merged = [...current, ...toAdd];
-    setCustomYearGroups(merged);
-    setYearGroupSectionsState(prev => {
-      return prev.map(s => {
-        const toAppend = toAdd.filter(g => (getDefaultSectionIdForYearGroup(g.id, g.name) === s.id)).map(g => g.id);
-        if (toAppend.length === 0) return s;
-        return { ...s, yearGroupIds: [...(s.yearGroupIds || []), ...toAppend] };
-      });
-    });
-    try {
-      await yearGroupsApi.upsert(merged);
-    } catch (e) {
-      console.warn('Supabase sync for added default year groups failed:', e);
-    }
-  };
-
   const ensureYearGroupsInSections = React.useCallback(() => {
     const ids = customYearGroups.map((g) => g.id);
     updateYearGroupSections(
@@ -2945,7 +2921,6 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     resetToDefaults,
     resetCategoriesToDefaults,
     resetYearGroupsToDefaults,
-    addMissingDefaultYearGroups,
     ensureYearGroupsInSections,
     // Simple Category Groups
     categoryGroups,

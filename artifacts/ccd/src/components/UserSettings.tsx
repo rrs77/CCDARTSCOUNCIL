@@ -142,7 +142,7 @@ interface UserSettingsProps {
 export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const { user, profile } = useAuth();
   const isViewOnly = useIsViewOnly();
-  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, addMissingDefaultYearGroups, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
+  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [yearGroupsExpanded, setYearGroupsExpanded] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
@@ -1181,7 +1181,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         value={newYearGroupId}
                         onChange={(e) => setNewYearGroupId(e.target.value)}
                         placeholder="e.g., Year1"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
+                        className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
                         style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
                         dir="ltr"
                       />
@@ -1197,7 +1197,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         value={newYearGroupName}
                         onChange={(e) => setNewYearGroupName(e.target.value)}
                         placeholder="e.g., Year 1"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
+                        className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
                         style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
                       />
                     </div>
@@ -1210,12 +1210,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                           id="newYearGroupColor"
                           value={newYearGroupColor}
                           onChange={setNewYearGroupColor}
-                          className="h-11 w-full max-w-[4.5rem] rounded-lg border border-gray-300 cursor-pointer"
+                          className="h-10 w-12 shrink-0 rounded-lg border border-gray-300 cursor-pointer"
                         />
                         <button
                           onClick={handleAddYearGroup}
                           disabled={!newYearGroupId.trim() || !newYearGroupName.trim()}
-                          className="inline-flex min-h-[44px] w-full sm:w-auto items-center justify-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg transition-colors duration-200"
+                          className="inline-flex h-10 w-full sm:w-auto items-center justify-center gap-2 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg transition-colors duration-200"
                           style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
                         >
                           <Plus className="h-4 w-4 shrink-0" />
@@ -1380,16 +1380,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       title="Redo section changes"
                     >
                       <Redo2 className="h-4 w-4" /> Redo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={async () => {
-                        await addMissingDefaultYearGroups();
-                      }}
-                      className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
-                      title="Add any default year groups that are missing (e.g. Reception)"
-                    >
-                      Add back missing defaults
                     </button>
                     <button
                       type="button"
@@ -1572,43 +1562,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                           <div className="flex-shrink-0 cursor-move"><GripVertical className="h-5 w-5 text-gray-400" /></div>
                                           <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: yearGroup.color }} />
                                           <div className="flex-1 min-w-0 font-medium text-gray-900 truncate">{yearGroup.name}</div>
-                                          <select
-                                            value={section.id}
-                                            onChange={(e) => {
-                                              const nextSectionId = e.target.value;
-                                              if (!nextSectionId || nextSectionId === section.id) return;
-                                              const targetExists = yearGroupSections.some((s) => s.id === nextSectionId);
-                                              if (!targetExists) return;
-                                              // Atomic move: remove the year group from every section, then add it
-                                              // to the target. This avoids any source-resolution edge cases and
-                                              // guarantees the dropdown reflects the new section on the next render.
-                                              updateYearGroupSections((prev) => prev.map((s) => {
-                                                const cleaned = normalizeSectionYearGroupIdList(
-                                                  (s.yearGroupIds || []).filter(
-                                                    (t) => resolveYearGroupFromToken(tempYearGroups, t)?.id !== yearGroup.id
-                                                  ),
-                                                  tempYearGroups
-                                                );
-                                                if (s.id === nextSectionId) {
-                                                  return { ...s, yearGroupIds: [...cleaned, yearGroup.id], collapsed: false };
-                                                }
-                                                return { ...s, yearGroupIds: cleaned };
-                                              }));
-                                            }}
-                                            onClick={(e) => e.stopPropagation()}
-                                            onMouseDown={(e) => e.stopPropagation()}
-                                            onDragStart={(e) => { e.preventDefault(); e.stopPropagation(); }}
-                                            draggable={false}
-                                            className="flex-shrink-0 w-40 max-w-[10rem] px-2 py-1 text-sm border border-gray-300 rounded bg-white text-gray-700 hover:border-teal-400 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
-                                            title="Assign to section"
-                                          >
-                                            <option value="" disabled>Select section</option>
-                                            {[...yearGroupSections]
-                                              .sort((a, b) => a.sortOrder - b.sortOrder)
-                                              .map((s) => (
-                                                <option key={s.id} value={s.id}>{s.label}</option>
-                                              ))}
-                                          </select>
                                           <div className="flex items-center gap-1">
                                             <button type="button" onClick={() => { setEditingYearGroup(yearGroup.id); setEditingYearGroupDraft({ id: yearGroup.id, name: yearGroup.name, color: yearGroup.color || '#14B8A6' }); }} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"><Edit3 className="h-4 w-4" /></button>
                                             <button

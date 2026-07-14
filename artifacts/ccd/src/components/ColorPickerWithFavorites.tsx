@@ -14,7 +14,7 @@ export function ColorPickerWithFavorites({
   value,
   onChange,
   id,
-  className = 'w-10 h-10 rounded-lg border border-gray-300 cursor-pointer',
+  className = 'h-10 w-10 rounded-lg border border-gray-300 cursor-pointer',
   swatchClassName = 'w-7 h-7 rounded-md border border-gray-200 cursor-pointer transition-transform hover:scale-105',
 }: ColorPickerWithFavoritesProps) {
   const { favoriteColors, addFavoriteColor, removeFavoriteColor } = useSettings();
@@ -65,17 +65,25 @@ export function ColorPickerWithFavorites({
         </div>
       )}
       <div className="flex items-center gap-2">
-        <input
-          id={id}
-          type="color"
-          value={value}
-          onChange={(e) => onChange(e.target.value)}
-          className={className}
-        />
+        <label
+          htmlFor={id}
+          className={`relative inline-block shrink-0 overflow-hidden ${className}`}
+          style={{ backgroundColor: value }}
+          title={value}
+        >
+          <input
+            id={id}
+            type="color"
+            value={value}
+            onChange={(e) => onChange(e.target.value)}
+            className="absolute inset-0 h-full w-full cursor-pointer opacity-0"
+            aria-label="Pick colour"
+          />
+        </label>
         <button
           type="button"
           onClick={handleFavoriteToggle}
-          className={`inline-flex items-center gap-1 px-2 py-1 text-xs rounded-md border transition-colors ${
+          className={`inline-flex h-10 items-center gap-1 px-3 text-xs rounded-lg border transition-colors ${
             isFavorite
               ? 'border-amber-300 bg-amber-50 text-amber-800'
               : 'border-gray-200 bg-gray-50 text-gray-600 hover:bg-gray-100'
