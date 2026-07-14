@@ -76,7 +76,7 @@ export default function Title() {
           style={{ ['--slide-stagger' as string]: '520ms' }}
         >
           <span className="font-body text-[0.86vw] uppercase tracking-wide">
-            For schools &amp; teachers · EYFS to A-level
+            EYFS to A-level
           </span>
           <span className="font-body text-[0.86vw] tracking-wide">creativecurriculumdesigner.com</span>
         </div>
