@@ -20,25 +20,25 @@ export default function Title() {
         }}
       />
 
-      <div className="relative z-10 flex h-full w-full flex-col justify-between px-[7vw] py-[6vh]">
+      <div className="relative z-10 flex h-full w-full flex-col justify-between px-[5.74vw] py-[5.3vh]">
         <div
-          className="flex items-center gap-[1.2vw] slide-fade-up"
+          className="flex items-center gap-[0.98vw] slide-fade-up"
           style={{ ['--slide-stagger' as string]: '0ms' }}
         >
           <img
             src={`${base}cd-logo.svg`}
             crossOrigin="anonymous"
             alt="CCD logo"
-            className="h-[4.2vw] w-[4.2vw]"
+            className="h-[3.44vw] w-[3.44vw]"
           />
-          <span className="font-display text-[1.6vw] font-semibold tracking-tight text-white">
+          <span className="font-display text-[1.31vw] font-semibold tracking-tight text-white">
             Creative Curriculum Designer
           </span>
         </div>
 
-        <div className="max-w-[72vw]">
+        <div className="max-w-[48.41vw]">
           <span
-            className="mb-[3vh] inline-block rounded-full border border-white/30 bg-white/15 px-[1.2vw] py-[0.7vh] text-[1.05vw] font-medium uppercase tracking-wide text-white backdrop-blur-sm slide-fade-up"
+            className="mb-[2.6vh] inline-block rounded-full border border-white/30 bg-white/15 px-[0.98vw] py-[0.6vh] text-[0.86vw] font-medium uppercase tracking-wide text-white backdrop-blur-sm slide-fade-up"
             style={{ ['--slide-stagger' as string]: '120ms' }}
           >
             Drama · Music · Dance · EYFS to A-level
@@ -47,7 +47,7 @@ export default function Title() {
           <h1
             className="slide-fade-up font-semibold leading-[1.08] tracking-tight text-white"
             style={{
-              fontSize: '5.4vw',
+              fontSize: "4.43vw",
               textWrap: 'balance',
               fontFamily: 'Inter, system-ui, sans-serif',
               ['--slide-stagger' as string]: '220ms',
@@ -63,7 +63,7 @@ export default function Title() {
           </h1>
 
           <p
-            className="mt-[3vh] max-w-[54vw] font-body text-[1.65vw] font-medium leading-snug text-white/90 slide-fade-up"
+            className="mt-[2.6vh] max-w-[36.31vw] font-body text-[1.35vw] font-medium leading-snug text-white/90 slide-fade-up"
             style={{ textWrap: 'pretty', ['--slide-stagger' as string]: '380ms' }}
           >
             A living repository of lessons and activities — and a quick way for children to capture
@@ -75,10 +75,10 @@ export default function Title() {
           className="flex items-end justify-between text-white/85 slide-fade-up"
           style={{ ['--slide-stagger' as string]: '520ms' }}
         >
-          <span className="font-body text-[1.05vw] uppercase tracking-wide">
+          <span className="font-body text-[0.86vw] uppercase tracking-wide">
             For schools &amp; teachers · EYFS to A-level
           </span>
-          <span className="font-body text-[1.05vw] tracking-wide">creativecurriculumdesigner.com</span>
+          <span className="font-body text-[0.86vw] tracking-wide">creativecurriculumdesigner.com</span>
         </div>
       </div>
     </div>

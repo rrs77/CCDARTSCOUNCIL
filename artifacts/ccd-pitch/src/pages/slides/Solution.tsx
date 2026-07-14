@@ -20,52 +20,52 @@ export default function Solution() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col justify-center px-[7vw] py-[7vh] slide-auto-enter">
-        <div className="max-w-[80vw]">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[1vw] mb-[3vh]">
+      <div className="relative z-10 h-full w-full flex flex-col justify-center px-[5.74vw] py-[6.2vh] slide-auto-enter">
+        <div className="max-w-[53.79vw]">
+          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[2.6vh]">
             The solution
           </span>
           <h2
             className="font-display font-black text-white tracking-tight leading-[1.02]"
-            style={{ fontSize: "5.2vw", textWrap: "balance" }}
+            style={{ fontSize: "4.26vw", textWrap: "balance" }}
           >
             One calm space for drama, music and dance.
           </h2>
           <p
-            className="mt-[2.5vh] text-white/75 font-body max-w-[60vw] leading-snug"
-            style={{ fontSize: "1.6vw", textWrap: "pretty" }}
+            className="mt-[2.2vh] text-white/75 font-body max-w-[40.34vw] leading-snug"
+            style={{ fontSize: "1.31vw", textWrap: "pretty" }}
           >
             Creative Curriculum Designer brings planning, teaching and reusable resources into one workspace — purpose-built for performing arts from EYFS to A-level.
           </p>
         </div>
 
-        <div className="grid grid-cols-3 gap-[2vw] mt-[6vh]">
-          <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.8vh_2vw]">
-            <div className="w-[3.5vw] h-[3.5vw] rounded-2xl bg-accent flex items-center justify-center mb-[2vh]">
-              <span className="font-display font-black text-white text-[1.8vw]">1</span>
+        <div className="grid grid-cols-3 gap-[1.64vw] mt-[5.3vh]">
+          <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.5vh_1.64vw]">
+            <div className="w-[2.87vw] h-[2.87vw] rounded-2xl bg-accent flex items-center justify-center mb-[1.8vh]">
+              <span className="font-display font-black text-white text-[1.48vw]">1</span>
             </div>
-            <h3 className="font-display font-bold text-white text-[1.7vw] leading-tight">Half-term planner</h3>
-            <p className="mt-[1vh] text-white/70 font-body text-[1.15vw] leading-snug">
+            <h3 className="font-display font-bold text-white text-[1.39vw] leading-tight">Half-term planner</h3>
+            <p className="mt-[0.9vh] text-white/70 font-body text-[0.94vw] leading-snug">
               See six half-terms at a glance. Drag, reorder, and shape the year before the year begins.
             </p>
           </div>
 
-          <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.8vh_2vw]">
-            <div className="w-[3.5vw] h-[3.5vw] rounded-2xl bg-primary flex items-center justify-center mb-[2vh]">
-              <span className="font-display font-black text-white text-[1.8vw]">2</span>
+          <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.5vh_1.64vw]">
+            <div className="w-[2.87vw] h-[2.87vw] rounded-2xl bg-primary flex items-center justify-center mb-[1.8vh]">
+              <span className="font-display font-black text-white text-[1.48vw]">2</span>
             </div>
-            <h3 className="font-display font-bold text-white text-[1.7vw] leading-tight">Lesson library</h3>
-            <p className="mt-[1vh] text-white/70 font-body text-[1.15vw] leading-snug">
+            <h3 className="font-display font-bold text-white text-[1.39vw] leading-tight">Lesson library</h3>
+            <p className="mt-[0.9vh] text-white/70 font-body text-[0.94vw] leading-snug">
               Build, reuse and share lessons. Browse partner packs and sell your own activity packs to other teachers.
             </p>
           </div>
 
-          <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.8vh_2vw]">
-            <div className="w-[3.5vw] h-[3.5vw] rounded-2xl bg-accent flex items-center justify-center mb-[2vh]">
-              <span className="font-display font-black text-white text-[1.8vw]">3</span>
+          <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.5vh_1.64vw]">
+            <div className="w-[2.87vw] h-[2.87vw] rounded-2xl bg-accent flex items-center justify-center mb-[1.8vh]">
+              <span className="font-display font-black text-white text-[1.48vw]">3</span>
             </div>
-            <h3 className="font-display font-bold text-white text-[1.7vw] leading-tight">Activity stacks</h3>
-            <p className="mt-[1vh] text-white/70 font-body text-[1.15vw] leading-snug">
+            <h3 className="font-display font-bold text-white text-[1.39vw] leading-tight">Activity stacks</h3>
+            <p className="mt-[0.9vh] text-white/70 font-body text-[0.94vw] leading-snug">
               Group warm-ups, mains and plenaries into reusable stacks. Drop them straight into any lesson.
             </p>
           </div>

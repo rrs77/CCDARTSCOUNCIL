@@ -59,8 +59,8 @@
     "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000011",
     "position": 8,
     "filepath": "src/pages/slides/LessonPlannerCalendar.tsx",
-    "title": "Feature: Lesson planner calendar",
-    "description": "Weekly timetable view with drag-and-drop lesson slots across drama, music and dance.",
+    "title": "Key feature: School calendar & timetable",
+    "description": "Term dates matched to your school year. Drag lessons or stacks from the library straight into your teaching timetable — Month, Week and Timetable views.",
     "speakerNotes": ""
   },
   {
