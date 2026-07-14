@@ -1,8 +1,6 @@
 export const PROTOTYPE_NOTICE =
   'CCDesigner Prototype v0.1 — Early-stage interactive demonstration for Arts Council England funding discussions and arts-sector consultation.';
 
-export const PARTNER_STRIP_HEADING = 'Example organisations shown for demonstration';
-
 export const PARTNER_DISCLAIMER =
   'Organisations shown are examples for demonstration only. Their inclusion does not imply endorsement, funding or partnership. All trademarks remain the property of their respective owners.';
 

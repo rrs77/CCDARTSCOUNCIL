@@ -1,5 +1,5 @@
 import { PARTNER_LOGOS } from '../../config/partnerLogos';
-import { PARTNER_DISCLAIMER, PARTNER_STRIP_HEADING } from './prototypeCopy';
+import { PARTNER_DISCLAIMER } from './prototypeCopy';
 
 interface PartnerLogoStripProps {
   compact?: boolean;
@@ -8,9 +8,6 @@ interface PartnerLogoStripProps {
 export function PartnerLogoStrip({ compact = false }: PartnerLogoStripProps) {
   return (
     <div className={compact ? '' : 'mt-auto'}>
-      <p className="mb-3 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-white/40">
-        {PARTNER_STRIP_HEADING}
-      </p>
       <ul
         className={`m-0 flex list-none flex-wrap items-center p-0 ${
           compact ? 'gap-x-4 gap-y-3' : 'gap-x-5 gap-y-3 lg:gap-x-6 lg:gap-y-4'
