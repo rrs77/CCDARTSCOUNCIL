@@ -1,4 +1,5 @@
 import { PARTNER_LOGOS } from '../../config/partnerLogos';
+import { PARTNER_DISCLAIMER, PARTNER_STRIP_HEADING } from './prototypeCopy';
 
 interface PartnerLogoStripProps {
   compact?: boolean;
@@ -7,21 +8,21 @@ interface PartnerLogoStripProps {
 export function PartnerLogoStrip({ compact = false }: PartnerLogoStripProps) {
   return (
     <div className={compact ? '' : 'mt-auto'}>
-      <p className="mb-3 text-[0.65rem] font-semibold uppercase tracking-[0.22em] text-white/45">
-        Supported by
+      <p className="mb-3 text-[0.65rem] font-medium uppercase tracking-[0.18em] text-white/40">
+        {PARTNER_STRIP_HEADING}
       </p>
       <ul
         className={`m-0 flex list-none flex-wrap items-center p-0 ${
-          compact ? 'gap-x-5 gap-y-4' : 'gap-x-6 gap-y-4 lg:gap-x-8 lg:gap-y-5'
+          compact ? 'gap-x-4 gap-y-3' : 'gap-x-5 gap-y-3 lg:gap-x-6 lg:gap-y-4'
         }`}
-        aria-label="Partner organisations"
+        aria-label="Example organisations for demonstration"
       >
         {PARTNER_LOGOS.map((partner) => (
           <li key={partner.id} className="flex shrink-0 items-center">
             <img
               src={partner.src}
               alt={partner.name}
-              className={`${partner.heightClass} w-auto max-w-[9.5rem] object-contain object-left opacity-85 transition-opacity hover:opacity-100 sm:max-w-[11rem] ${
+              className={`${partner.heightClass} w-auto max-w-[6.5rem] object-contain object-left opacity-50 transition-opacity hover:opacity-70 sm:max-w-[7.5rem] ${
                 partner.invert ? 'brightness-0 invert' : ''
               }`}
               loading="lazy"
@@ -30,6 +31,9 @@ export function PartnerLogoStrip({ compact = false }: PartnerLogoStripProps) {
           </li>
         ))}
       </ul>
+      <p className="mt-4 max-w-xl text-[0.65rem] leading-relaxed text-white/35 sm:text-[0.7rem] lg:max-w-2xl">
+        {PARTNER_DISCLAIMER}
+      </p>
     </div>
   );
 }

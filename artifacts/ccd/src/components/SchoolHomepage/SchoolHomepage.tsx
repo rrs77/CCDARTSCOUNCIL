@@ -10,7 +10,9 @@ import {
 } from '../../config/supabase';
 import { activateDemoMode } from '../../utils/demoMode';
 import { seedDemoLocalStorage } from '../../utils/demoSampleData';
-import { FabricExampleBanner } from '../FabricExampleBanner';
+import { AboutPrototypeModal } from '../login/AboutPrototypeModal';
+import { PrototypeNoticeBar } from '../login/PrototypeNoticeBar';
+import { PrototypePreviewBadge } from '../login/PrototypePreviewBadge';
 
 interface SchoolHomepageProps {
   school: SchoolHomepageConfig;
@@ -28,6 +30,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   const [staySignedIn, setStaySignedIn] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showAboutPrototype, setShowAboutPrototype] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -70,8 +73,9 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden flex flex-col lg:flex-row bg-white">
-      <FabricExampleBanner />
+    <div className="flex min-h-screen flex-col overflow-hidden">
+      <PrototypeNoticeBar />
+      <div className="relative flex flex-1 flex-col overflow-hidden bg-white lg:flex-row">
       {/* LEFT: branded panel */}
       <div
         className="relative z-10 flex flex-col justify-between px-8 py-10 lg:w-1/2 lg:min-h-screen lg:px-16 lg:py-14"
@@ -140,7 +144,11 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
       </div>
 
       {/* RIGHT: login + demo */}
-      <div className="relative z-10 flex flex-1 items-center justify-center bg-gray-50 px-6 py-12 lg:w-1/2 lg:px-12">
+      <div className="relative z-10 flex flex-1 flex-col bg-gray-50 lg:w-1/2">
+        <div className="flex justify-end px-6 pt-6 lg:px-12">
+          <PrototypePreviewBadge />
+        </div>
+        <div className="flex flex-1 items-center justify-center px-6 pb-12 lg:px-12 lg:pb-12">
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h2
@@ -268,10 +276,10 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
               </div>
               <div>
                 <div className="text-sm font-semibold text-gray-900">
-                  Preview Creative Curriculum Designer
+                  Explore the working prototype
                 </div>
                 <div className="text-xs text-gray-500">
-                  Explore a demo with sample content — no sign-in required
+                  Sample content — no sign-in required
                 </div>
               </div>
             </div>
@@ -280,12 +288,27 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
             />
           </button>
 
+          <button
+            type="button"
+            onClick={() => setShowAboutPrototype(true)}
+            className="mt-2 w-full text-center text-sm text-gray-500 transition-colors hover:text-gray-700"
+          >
+            About this prototype
+          </button>
+
           {/* Sub-foot */}
           <p className="mt-8 text-center text-xs text-gray-400">
             Trouble signing in? Contact your school administrator.
           </p>
         </div>
+        </div>
       </div>
+      </div>
+
+      <AboutPrototypeModal
+        isOpen={showAboutPrototype}
+        onClose={() => setShowAboutPrototype(false)}
+      />
     </div>
   );
 }

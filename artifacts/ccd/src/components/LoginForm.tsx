@@ -28,9 +28,11 @@ import {
 import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoLocalStorage } from '../utils/demoSampleData';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
+import { AboutPrototypeModal } from './login/AboutPrototypeModal';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
+import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
+import { PrototypePreviewBadge } from './login/PrototypePreviewBadge';
 import { LogoSVG } from './Logo';
-import { FabricExampleBanner } from './FabricExampleBanner';
 
 const LOGIN_GREEN = '#002D24';
 
@@ -53,6 +55,7 @@ export function LoginForm() {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState('');
   const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
+  const [showAboutPrototype, setShowAboutPrototype] = useState(false);
 
   const branding = settings.branding || {};
   const logoLetters = branding.logoLetters || 'CCD';
@@ -122,6 +125,7 @@ export function LoginForm() {
       }, 2000);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [canInstall, isInstalled]);
 
   const handleForgotPassword = async (e: React.FormEvent) => {
@@ -168,9 +172,10 @@ export function LoginForm() {
     'w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20';
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-[#eef1ef] p-0 sm:p-4 lg:p-6">
-      {!showFeatureWalkthrough && <FabricExampleBanner />}
-      <div className="relative z-10 mx-auto flex min-h-screen max-w-[1440px] flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3rem)]">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#eef1ef]">
+      <PrototypeNoticeBar />
+      <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-4 lg:p-6">
+        <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3.5rem)]">
         <div className="flex flex-1 flex-col lg:flex-row">
           {/* Mobile hero — compact */}
           <div className="lg:hidden">
@@ -184,27 +189,30 @@ export function LoginForm() {
 
           {/* Sign-in panel */}
           <div className="flex flex-1 flex-col bg-white lg:w-[42%]">
-            <div className="flex items-center justify-end gap-2 px-5 pt-4 sm:px-8 lg:px-10">
-              {canInstall && !isInstalled && (
+            <div className="flex items-start justify-between gap-3 px-5 pt-4 sm:px-8 lg:px-10">
+              <PrototypePreviewBadge />
+              <div className="flex shrink-0 items-center gap-1 sm:gap-2">
+                {canInstall && !isInstalled && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await install();
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Install</span>
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={async () => {
-                    await install();
-                  }}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                  onClick={() => setShowFeatureWalkthrough(true)}
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
                 >
-                  <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">Install</span>
+                  <PlayCircle className="h-4 w-4 shrink-0" />
+                  <span>Feature walkthrough</span>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowFeatureWalkthrough(true)}
-                className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
-              >
-                <PlayCircle className="h-4 w-4" />
-                <span className="hidden sm:inline">Feature walkthrough</span>
-              </button>
+              </div>
             </div>
 
             <div className="flex flex-1 items-center justify-center px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
@@ -377,8 +385,16 @@ export function LoginForm() {
                       onClick={handleStartPreview}
                       className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
                     >
-                      Preview the app
+                      Explore the working prototype
                       <ExternalLink className="h-4 w-4" />
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setShowAboutPrototype(true)}
+                      className="mt-2 w-full text-center text-sm text-gray-500 transition-colors hover:text-[#002D24]"
+                    >
+                      About this prototype
                     </button>
 
                     <p className="mt-6 text-center text-sm text-gray-500">
@@ -403,6 +419,7 @@ export function LoginForm() {
             </div>
           </div>
         </div>
+        </div>
       </div>
 
       {showInstallPrompt && canInstall && !isInstalled && (
@@ -418,6 +435,11 @@ export function LoginForm() {
       <FeatureWalkthroughModal
         isOpen={showFeatureWalkthrough}
         onClose={() => setShowFeatureWalkthrough(false)}
+      />
+
+      <AboutPrototypeModal
+        isOpen={showAboutPrototype}
+        onClose={() => setShowAboutPrototype(false)}
       />
     </div>
   );

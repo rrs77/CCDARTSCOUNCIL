@@ -12,51 +12,45 @@ export interface PartnerLogo {
 
 export const PARTNER_LOGOS: PartnerLogo[] = [
   {
-    id: 'arts-council-england',
-    name: 'Arts Council England',
-    src: '/partners/arts-council-england.svg',
-    heightClass: 'h-7 sm:h-8',
-  },
-  {
     id: 'royal-opera-house',
     name: 'Royal Opera House',
     src: '/partners/royal-opera-house.svg',
-    heightClass: 'h-7 sm:h-8',
+    heightClass: 'h-5 sm:h-6',
   },
   {
     id: 'lso',
     name: 'London Symphony Orchestra',
     src: '/partners/lso.svg',
-    heightClass: 'h-8 sm:h-9',
+    heightClass: 'h-6 sm:h-7',
   },
   {
     id: 'national-theatre',
     name: 'National Theatre',
     src: '/partners/national-theatre.svg',
-    heightClass: 'h-6 sm:h-7',
+    heightClass: 'h-5 sm:h-6',
   },
   {
     id: 'bbc-ten-pieces',
     name: 'BBC Ten Pieces',
     src: '/partners/bbc-ten-pieces.svg',
-    heightClass: 'h-7 sm:h-8',
+    heightClass: 'h-5 sm:h-6',
   },
   {
     id: 'tate',
     name: 'Tate',
     src: '/partners/tate.svg',
-    heightClass: 'h-6 sm:h-7',
+    heightClass: 'h-5 sm:h-6',
   },
   {
     id: 'national-gallery',
     name: 'The National Gallery',
     src: '/partners/national-gallery.svg',
-    heightClass: 'h-8 sm:h-9',
+    heightClass: 'h-6 sm:h-7',
   },
   {
     id: 'sadlers-wells',
     name: "Sadler's Wells",
     src: '/partners/sadlers-wells.svg',
-    heightClass: 'h-7 sm:h-8',
+    heightClass: 'h-5 sm:h-6',
   },
 ];
