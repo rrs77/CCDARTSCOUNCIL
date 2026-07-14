@@ -172,10 +172,10 @@ export function LoginForm() {
     'w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20';
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#eef1ef]">
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#002D24]">
       <PrototypeNoticeBar />
       <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-4 lg:p-6">
-        <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3.5rem)]">
+        <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,0,0,0.35)] lg:min-h-[calc(100vh-3.5rem)]">
         <div className="flex flex-1 flex-col lg:flex-row">
           {/* Mobile hero — compact */}
           <div className="lg:hidden">
