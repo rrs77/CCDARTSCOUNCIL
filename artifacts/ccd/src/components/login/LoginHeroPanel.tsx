@@ -40,7 +40,7 @@ export function LoginHeroPanel({ logoLetters = 'CCD', compact = false }: LoginHe
                 className="italic font-normal"
                 style={{ color: '#B6FF7E', fontFamily: '"Playfair Display", Georgia, serif' }}
               >
-                connection.
+                connection
               </span>
             </h1>
 
