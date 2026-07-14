@@ -31,9 +31,9 @@ import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthrough
 import { AboutPrototypeModal } from './login/AboutPrototypeModal';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
-import { LogoSVG } from './Logo';
+import { LogoSVG, LOGO_BG, LOGO_RING } from './Logo';
 
-const LOGIN_GREEN = '#002D24';
+const LOGIN_GREEN = LOGO_BG;
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -213,9 +213,14 @@ export function LoginForm() {
               <button
                 type="button"
                 onClick={() => setShowFeatureWalkthrough(true)}
-                className="flex items-center gap-2 rounded-lg border border-[#002D24]/18 bg-[#f4f7f5] px-3 py-2 text-sm font-semibold text-[#002D24] shadow-sm transition-colors hover:border-[#002D24]/30 hover:bg-[#e8efe9]"
+                className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm font-semibold text-black transition-[filter,box-shadow] hover:brightness-[1.04]"
+                style={{
+                  borderColor: LOGO_RING,
+                  background: `radial-gradient(ellipse at 50% 38%, #f2ffd9 0%, ${LOGO_RING} 34%, #3d6b52 78%, ${LOGO_BG} 100%)`,
+                  boxShadow: `0 0 0 1px rgba(182,255,126,0.35), 0 0 16px rgba(182,255,126,0.32), inset 0 1px 0 rgba(255,255,255,0.35)`,
+                }}
               >
-                <PlayCircle className="h-5 w-5 shrink-0" />
+                <PlayCircle className="h-5 w-5 shrink-0 text-black" />
                 <span>Feature walkthrough</span>
               </button>
             </div>
