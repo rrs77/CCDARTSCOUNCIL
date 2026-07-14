@@ -12,7 +12,6 @@ import { activateDemoMode } from '../../utils/demoMode';
 import { seedDemoLocalStorage } from '../../utils/demoSampleData';
 import { AboutPrototypeModal } from '../login/AboutPrototypeModal';
 import { PrototypeNoticeBar } from '../login/PrototypeNoticeBar';
-import { PrototypePreviewBadge } from '../login/PrototypePreviewBadge';
 
 interface SchoolHomepageProps {
   school: SchoolHomepageConfig;
@@ -145,10 +144,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
 
       {/* RIGHT: login + demo */}
       <div className="relative z-10 flex flex-1 flex-col bg-gray-50 lg:w-1/2">
-        <div className="flex justify-end px-6 pt-6 lg:px-12">
-          <PrototypePreviewBadge />
-        </div>
-        <div className="flex flex-1 items-center justify-center px-6 pb-12 lg:px-12 lg:pb-12">
+        <div className="flex flex-1 items-center justify-center px-6 py-12 lg:px-12">
         <div className="w-full max-w-md">
           <div className="mb-8">
             <h2

@@ -31,7 +31,6 @@ import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthrough
 import { AboutPrototypeModal } from './login/AboutPrototypeModal';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
-import { PrototypePreviewBadge } from './login/PrototypePreviewBadge';
 import { LogoSVG } from './Logo';
 
 const LOGIN_GREEN = '#002D24';
@@ -172,10 +171,17 @@ export function LoginForm() {
     'w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20';
 
   return (
-    <div className="relative flex min-h-screen flex-col overflow-hidden bg-[#002D24]">
+    <div
+      className="relative flex min-h-screen flex-col overflow-hidden"
+      style={{
+        backgroundColor: '#e4e4e1',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.45'/%3E%3C/svg%3E")`,
+        backgroundBlendMode: 'multiply',
+      }}
+    >
       <PrototypeNoticeBar />
       <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-4 lg:p-6">
-        <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,0,0,0.35)] lg:min-h-[calc(100vh-3.5rem)]">
+        <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3.5rem)]">
         <div className="flex flex-1 flex-col lg:flex-row">
           {/* Mobile hero — compact */}
           <div className="lg:hidden">
@@ -189,30 +195,27 @@ export function LoginForm() {
 
           {/* Sign-in panel */}
           <div className="flex flex-1 flex-col bg-white lg:w-[42%]">
-            <div className="flex items-start justify-between gap-3 px-5 pt-4 sm:px-8 lg:px-10">
-              <PrototypePreviewBadge />
-              <div className="flex shrink-0 items-center gap-1 sm:gap-2">
-                {canInstall && !isInstalled && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await install();
-                    }}
-                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Install</span>
-                  </button>
-                )}
+            <div className="flex items-center justify-end gap-2 px-5 pt-4 sm:px-8 lg:px-10">
+              {canInstall && !isInstalled && (
                 <button
                   type="button"
-                  onClick={() => setShowFeatureWalkthrough(true)}
-                  className="flex items-center gap-2 rounded-lg border border-[#002D24]/18 bg-[#f4f7f5] px-3 py-2 text-sm font-semibold text-[#002D24] shadow-sm transition-colors hover:border-[#002D24]/30 hover:bg-[#e8efe9]"
+                  onClick={async () => {
+                    await install();
+                  }}
+                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
                 >
-                  <PlayCircle className="h-5 w-5 shrink-0" />
-                  <span>Feature walkthrough</span>
+                  <Download className="h-4 w-4" />
+                  <span className="hidden sm:inline">Install</span>
                 </button>
-              </div>
+              )}
+              <button
+                type="button"
+                onClick={() => setShowFeatureWalkthrough(true)}
+                className="flex items-center gap-2 rounded-lg border border-[#002D24]/18 bg-[#f4f7f5] px-3 py-2 text-sm font-semibold text-[#002D24] shadow-sm transition-colors hover:border-[#002D24]/30 hover:bg-[#e8efe9]"
+              >
+                <PlayCircle className="h-5 w-5 shrink-0" />
+                <span>Feature walkthrough</span>
+              </button>
             </div>
 
             <div className="flex flex-1 items-center justify-center px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
