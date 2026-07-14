@@ -207,9 +207,9 @@ export function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowFeatureWalkthrough(true)}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-600 transition-colors hover:bg-gray-50 hover:text-gray-900"
+                  className="flex items-center gap-2 rounded-lg border border-[#002D24]/18 bg-[#f4f7f5] px-3 py-2 text-sm font-semibold text-[#002D24] shadow-sm transition-colors hover:border-[#002D24]/30 hover:bg-[#e8efe9]"
                 >
-                  <PlayCircle className="h-4 w-4 shrink-0" />
+                  <PlayCircle className="h-5 w-5 shrink-0" />
                   <span>Feature walkthrough</span>
                 </button>
               </div>
