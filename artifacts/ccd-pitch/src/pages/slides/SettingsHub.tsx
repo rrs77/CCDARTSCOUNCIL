@@ -11,21 +11,17 @@ export default function SettingsHub() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] px-[5.74vw] py-[5.3vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] pitch-slide-pad slide-auto-enter">
         <div className="col-span-5 flex flex-col justify-center">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 07
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Settings that fit your school.
           </h2>
           <p
-            className="mt-[2.6vh] text-muted font-body leading-relaxed"
-            style={{ fontSize: "1.11vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[2.6vh] text-muted font-body leading-relaxed" style={{textWrap: "pretty"}}>
             One panel for the things that change school by school — year groups, activity categories, your branding on every print-out, and where your data lives.
           </p>
 
@@ -112,7 +108,7 @@ export default function SettingsHub() {
                     <div className="flex items-center gap-[0.41vw]">
                       <div className="w-[1.15vw] h-[1.15vw] rounded-md bg-primary-dark flex items-center justify-center font-display font-black text-white text-[0.66vw]">C</div>
                       <div>
-                        <div className="font-display font-bold text-text text-[0.70vw] leading-tight">Oakhill School</div>
+                        <div className="pitch-h3 font-display font-bold text-text leading-tight">Oakhill School</div>
                         <div className="font-body text-muted text-[0.57vw]">Performing Arts Curriculum</div>
                       </div>
                     </div>

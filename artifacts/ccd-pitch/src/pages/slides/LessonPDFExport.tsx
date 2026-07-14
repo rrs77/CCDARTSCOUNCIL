@@ -20,21 +20,17 @@ export default function LessonPDFExport() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] px-[5.74vw] py-[5.3vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] pitch-slide-pad slide-auto-enter">
         <div className="col-span-5 flex flex-col justify-center">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 06
           </span>
           <h2
-            className="font-display font-black text-white tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-white tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Print, project, share — pretty as paper.
           </h2>
           <p
-            className="mt-[2.6vh] text-white/75 font-body leading-relaxed"
-            style={{ fontSize: "1.11vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[2.6vh] text-white/75 font-body leading-relaxed" style={{textWrap: "pretty"}}>
             Every lesson exports to a clean PDF — your school's header, the objective, the run of activities with timings, and clickable resource links carried through. Print for cover, hand to a TA, or send a parent the takeaway.
           </p>
 

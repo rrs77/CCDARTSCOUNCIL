@@ -11,21 +11,17 @@ export default function PerformingArtsCoverage() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[5.74vw] py-[6.2vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full flex flex-col pitch-slide-pad slide-auto-enter">
         <div className="max-w-[47.07vw] mb-[4.4vh]">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[2.2vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[2.2vh]">
             What it covers
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.77vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Drama. Music. Dance. One workspace.
           </h2>
           <p
-            className="mt-[1.8vh] text-muted font-body leading-snug max-w-[36.98vw]"
-            style={{ fontSize: "1.15vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[1.8vh] text-muted font-body leading-snug max-w-[36.98vw]" style={{textWrap: "pretty"}}>
             Three subjects that share the same rhythm of teaching — warm-up, main, plenary — modelled end-to-end with starter content for every year group.
           </p>
         </div>

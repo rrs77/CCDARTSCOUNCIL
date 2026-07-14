@@ -11,7 +11,7 @@ export default function LessonLibrary() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] px-[5.74vw] py-[6.2vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] pitch-slide-pad slide-auto-enter">
         <div className="col-span-7 flex items-center">
           <div className="w-full rounded-[1.5rem] bg-surface shadow-[0_20px_60px_rgba(0,76,69,0.12)] p-[2.2vw] border border-text/5">
             <div className="flex items-center justify-between mb-[1.8vh]">
@@ -30,8 +30,8 @@ export default function LessonLibrary() {
                   <span className="px-[0.49vw] py-[0.2vh] rounded-full bg-[#FFE5D6] text-[#A24A1A] font-display font-semibold text-[0.70vw]">Drama &middot; Y4</span>
                   <span className="font-body text-muted text-[0.70vw]">45 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.02vw] leading-tight">Freeze-frame storytelling</h4>
-                <p className="text-muted font-body text-[0.78vw] leading-snug mt-[0.5vh]">Three still images that retell a fable using levels, gesture and gaze.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Freeze-frame storytelling</h4>
+                <p className="pitch-body text-muted font-body leading-snug mt-[0.5vh]">Three still images that retell a fable using levels, gesture and gaze.</p>
               </div>
 
               <div className="rounded-[1rem] border border-text/10 p-[1.6vh_0.98vw] bg-white">
@@ -39,8 +39,8 @@ export default function LessonLibrary() {
                   <span className="px-[0.49vw] py-[0.2vh] rounded-full bg-[#D6E8F2] text-[#0A4A66] font-display font-semibold text-[0.70vw]">Music &middot; Y3</span>
                   <span className="font-body text-muted text-[0.70vw]">40 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.02vw] leading-tight">Rhythms of West Africa</h4>
-                <p className="text-muted font-body text-[0.78vw] leading-snug mt-[0.5vh]">Active listening, body percussion, then a class call-and-response.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Rhythms of West Africa</h4>
+                <p className="pitch-body text-muted font-body leading-snug mt-[0.5vh]">Active listening, body percussion, then a class call-and-response.</p>
               </div>
 
               <div className="rounded-[1rem] border border-text/10 p-[1.6vh_0.98vw] bg-white">
@@ -48,8 +48,8 @@ export default function LessonLibrary() {
                   <span className="px-[0.49vw] py-[0.2vh] rounded-full bg-[#E8E2F2] text-[#3D2F7A] font-display font-semibold text-[0.70vw]">Dance &middot; Y5</span>
                   <span className="font-body text-muted text-[0.70vw]">50 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.02vw] leading-tight">Storm motif &amp; canon</h4>
-                <p className="text-muted font-body text-[0.78vw] leading-snug mt-[0.5vh]">Build a 16-count motif, then layer it as a four-group canon.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Storm motif &amp; canon</h4>
+                <p className="pitch-body text-muted font-body leading-snug mt-[0.5vh]">Build a 16-count motif, then layer it as a four-group canon.</p>
               </div>
 
               <div className="rounded-[1rem] border border-text/10 p-[1.6vh_0.98vw] bg-white">
@@ -57,27 +57,23 @@ export default function LessonLibrary() {
                   <span className="px-[0.49vw] py-[0.2vh] rounded-full bg-[#FFE5D6] text-[#A24A1A] font-display font-semibold text-[0.70vw]">Drama &middot; EYFS</span>
                   <span className="font-body text-muted text-[0.70vw]">20 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.02vw] leading-tight">Animal walks circle game</h4>
-                <p className="text-muted font-body text-[0.78vw] leading-snug mt-[0.5vh]">Pretend movement and partner observation in a circle.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Animal walks circle game</h4>
+                <p className="pitch-body text-muted font-body leading-snug mt-[0.5vh]">Pretend movement and partner observation in a circle.</p>
               </div>
             </div>
           </div>
         </div>
 
         <div className="col-span-5 flex flex-col justify-center">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 02
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Every good lesson, kept.
           </h2>
           <p
-            className="mt-[2.6vh] text-muted font-body leading-relaxed"
-            style={{ fontSize: "1.15vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[2.6vh] text-muted font-body leading-relaxed" style={{textWrap: "pretty"}}>
             A searchable library of lessons your team builds together — plus partner packs from ROH and other specialists. Tag by year group, unit and objective. Share your own packs free, or sell them to other schools.
           </p>
 

@@ -7,6 +7,7 @@ interface FeatureWalkthroughModalProps {
 }
 
 const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/?autoplay=1`;
+const SITE_URL = 'https://www.ccdesigner.co.uk';
 
 export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughModalProps) {
   useEffect(() => {
@@ -19,6 +20,11 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
   }, [isOpen]);
 
   if (!isOpen) return null;
+
+  const handleClose = () => {
+    onClose();
+    window.location.href = SITE_URL;
+  };
 
   return (
     <div
@@ -35,11 +41,12 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
       />
       <button
         type="button"
-        onClick={onClose}
-        className="absolute right-4 top-4 z-[110] rounded-full bg-black/40 p-2.5 text-white/80 backdrop-blur-sm transition-colors hover:bg-black/60 hover:text-white"
+        onClick={handleClose}
+        className="absolute right-4 top-4 z-[110] rounded-full bg-[#002D24]/70 p-2 text-white/80 backdrop-blur-sm transition-colors hover:bg-[#002D24]/90 hover:text-[#B6FF7E]"
         aria-label="Close walkthrough"
+        title="Close and return to ccdesigner.co.uk"
       >
-        <X className="h-5 w-5" />
+        <X className="h-4 w-4" />
       </button>
     </div>
   );

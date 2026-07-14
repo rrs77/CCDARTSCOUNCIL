@@ -11,21 +11,17 @@ export default function ActivityCreation() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] px-[5.74vw] py-[5.3vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] pitch-slide-pad slide-auto-enter">
         <div className="col-span-5 flex flex-col justify-center">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 05
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Build an activity in two minutes.
           </h2>
           <p
-            className="mt-[2.6vh] text-muted font-body leading-relaxed"
-            style={{ fontSize: "1.11vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[2.6vh] text-muted font-body leading-relaxed" style={{textWrap: "pretty"}}>
             A focused form for the things that matter — name, year groups, time, instructions — with dedicated fields for the YouTube clip, the backing track, the worksheet and the web link you'd otherwise lose in a folder.
           </p>
 
@@ -33,22 +29,22 @@ export default function ActivityCreation() {
             <div className="flex items-start gap-[0.82vw]">
               <div className="w-[0.33vw] h-[1.97vw] rounded-full bg-accent shrink-0 mt-[0.4vh]" />
               <div>
-                <h4 className="font-display font-bold text-text text-[0.98vw] leading-tight">Tag once, find forever</h4>
-                <p className="text-muted font-body text-[0.82vw] leading-snug">Subject, year groups and category attach instantly.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Tag once, find forever</h4>
+                <p className="pitch-body text-muted font-body leading-snug">Subject, year groups and category attach instantly.</p>
               </div>
             </div>
             <div className="flex items-start gap-[0.82vw]">
               <div className="w-[0.33vw] h-[1.97vw] rounded-full bg-primary shrink-0 mt-[0.4vh]" />
               <div>
-                <h4 className="font-display font-bold text-text text-[0.98vw] leading-tight">Web links built in</h4>
-                <p className="text-muted font-body text-[0.82vw] leading-snug">Six labelled link slots — video, music, backing, vocals, worksheet, web.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Web links built in</h4>
+                <p className="pitch-body text-muted font-body leading-snug">Six labelled link slots — video, music, backing, vocals, worksheet, web.</p>
               </div>
             </div>
             <div className="flex items-start gap-[0.82vw]">
               <div className="w-[0.33vw] h-[1.97vw] rounded-full bg-accent shrink-0 mt-[0.4vh]" />
               <div>
-                <h4 className="font-display font-bold text-text text-[0.98vw] leading-tight">Drag straight in</h4>
-                <p className="text-muted font-body text-[0.82vw] leading-snug">New activity drops into the lesson you're building.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Drag straight in</h4>
+                <p className="pitch-body text-muted font-body leading-snug">New activity drops into the lesson you're building.</p>
               </div>
             </div>
           </div>

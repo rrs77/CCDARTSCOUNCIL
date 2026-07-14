@@ -11,48 +11,46 @@ export default function HowItWorks() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[5.74vw] py-[6.2vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full flex flex-col pitch-slide-pad slide-auto-enter">
         <div className="max-w-[40.34vw] mb-[5.3vh]">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[2.2vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[2.2vh]">
             How it works
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.77vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             From empty term to ready-to-teach.
           </h2>
         </div>
 
         <div className="grid grid-cols-4 gap-[1.23vw] flex-1">
           <div className="flex flex-col">
-            <div className="font-display font-black text-accent/30 text-[4.1vw] leading-none">01</div>
-            <h3 className="font-display font-bold text-text text-[1.31vw] leading-tight mt-[0.9vh]">Map the year</h3>
-            <p className="text-muted font-body text-[0.90vw] leading-snug mt-[1.1vh]">
+            <div className="pitch-stat font-display font-black text-accent/30 leading-none">01</div>
+            <h3 className="pitch-h3 font-display font-bold text-text leading-tight mt-[0.9vh]">Map the year</h3>
+            <p className="pitch-body text-muted font-body leading-snug mt-[1.1vh]">
               Open the half-term planner and sketch the arc of your year. Themes, units and topic windows.
             </p>
           </div>
 
           <div className="flex flex-col">
-            <div className="font-display font-black text-accent/30 text-[4.1vw] leading-none">02</div>
-            <h3 className="font-display font-bold text-text text-[1.31vw] leading-tight mt-[0.9vh]">Pull from the library</h3>
-            <p className="text-muted font-body text-[0.90vw] leading-snug mt-[1.1vh]">
+            <div className="pitch-stat font-display font-black text-accent/30 leading-none">02</div>
+            <h3 className="pitch-h3 font-display font-bold text-text leading-tight mt-[0.9vh]">Pull from the library</h3>
+            <p className="pitch-body text-muted font-body leading-snug mt-[1.1vh]">
               Drop existing lessons into each half-term or duplicate one and tweak it for a new year group.
             </p>
           </div>
 
           <div className="flex flex-col">
-            <div className="font-display font-black text-accent/30 text-[4.1vw] leading-none">03</div>
-            <h3 className="font-display font-bold text-text text-[1.31vw] leading-tight mt-[0.9vh]">Stack the activities</h3>
-            <p className="text-muted font-body text-[0.90vw] leading-snug mt-[1.1vh]">
+            <div className="pitch-stat font-display font-black text-accent/30 leading-none">03</div>
+            <h3 className="pitch-h3 font-display font-bold text-text leading-tight mt-[0.9vh]">Stack the activities</h3>
+            <p className="pitch-body text-muted font-body leading-snug mt-[1.1vh]">
               Add warm-ups, mains and plenaries. Save winning combinations as reusable stacks.
             </p>
           </div>
 
           <div className="flex flex-col">
-            <div className="font-display font-black text-accent/30 text-[4.1vw] leading-none">04</div>
-            <h3 className="font-display font-bold text-text text-[1.31vw] leading-tight mt-[0.9vh]">Teach &amp; refine</h3>
-            <p className="text-muted font-body text-[0.90vw] leading-snug mt-[1.1vh]">
+            <div className="pitch-stat font-display font-black text-accent/30 leading-none">04</div>
+            <h3 className="pitch-h3 font-display font-bold text-text leading-tight mt-[0.9vh]">Teach &amp; refine</h3>
+            <p className="pitch-body text-muted font-body leading-snug mt-[1.1vh]">
               Print, project or share with the team. Edit on the fly and the library improves with every term.
             </p>
           </div>
@@ -64,7 +62,7 @@ export default function HowItWorks() {
               CD
             </div>
             <div>
-              <div className="font-display font-bold text-white text-[1.23vw] leading-tight">Built for every phase — EYFS to A-level.</div>
+              <div className="pitch-h3 font-display font-bold text-white leading-tight">Built for every phase — EYFS to A-level.</div>
               <div className="font-body text-white/70 text-[0.90vw] leading-snug">Works on a laptop, a smartboard, or a tablet during break.</div>
             </div>
           </div>

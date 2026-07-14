@@ -33,21 +33,17 @@ export default function PartnerAndMarketplace() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[5.74vw] py-[6.2vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full flex flex-col pitch-slide-pad slide-auto-enter">
         <div className="max-w-[48.41vw] mb-[3.5vh]">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[2.2vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[2.2vh]">
             Partner &amp; teacher resources
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.77vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Expert content from partners — and a place for yours.
           </h2>
           <p
-            className="mt-[1.8vh] text-muted font-body leading-snug max-w-[39vw]"
-            style={{ fontSize: "1.15vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[1.8vh] text-muted font-body leading-snug max-w-[39vw]" style={{textWrap: "pretty"}}>
             Curated packs from leading arts organisations sit alongside your school library. Teachers can share packs with colleagues — or sell their own lesson plans to others.
           </p>
         </div>
@@ -65,8 +61,8 @@ export default function PartnerAndMarketplace() {
                   />
                   <span className="font-body text-muted text-[0.70vw]">Included</span>
                 </div>
-                <h3 className="font-display font-bold text-text text-[0.98vw] leading-tight">Royal Opera House</h3>
-                <p className="text-muted font-body text-[0.78vw] leading-snug mt-[0.7vh] flex-1">
+                <h3 className="pitch-h3 font-display font-bold text-text leading-tight">Royal Opera House</h3>
+                <p className="pitch-body text-muted font-body leading-snug mt-[0.7vh] flex-1">
                   Opera, ballet and vocal warm-ups — specialist expertise ready to drop into your timetable.
                 </p>
                 <div className="mt-[1.1vh] pt-[0.9vh] border-t border-text/10 font-body text-text/75 text-[0.74vw]">
@@ -83,8 +79,8 @@ export default function PartnerAndMarketplace() {
                   />
                   <span className="font-body text-muted text-[0.70vw]">Included</span>
                 </div>
-                <h3 className="font-display font-bold text-text text-[0.98vw] leading-tight">National Theatre</h3>
-                <p className="text-muted font-body text-[0.78vw] leading-snug mt-[0.7vh] flex-1">
+                <h3 className="pitch-h3 font-display font-bold text-text leading-tight">National Theatre</h3>
+                <p className="pitch-body text-muted font-body leading-snug mt-[0.7vh] flex-1">
                   Devising, text work and ensemble drama — classroom-ready units from NT Learning.
                 </p>
                 <div className="mt-[1.1vh] pt-[0.9vh] border-t border-text/10 font-body text-text/75 text-[0.74vw]">
@@ -123,10 +119,10 @@ export default function PartnerAndMarketplace() {
               <div className="font-display font-semibold text-accent text-[0.82vw] uppercase tracking-wide mb-[1.3vh]">
                 Teacher marketplace
               </div>
-              <h3 className="font-display font-bold text-white text-[1.48vw] leading-tight mb-[1.3vh]">
+              <h3 className="pitch-h3 font-display font-bold text-white leading-tight mb-[1.3vh]">
                 Share free. Sell what you&apos;ve built.
               </h3>
-              <p className="text-white/75 font-body text-[0.90vw] leading-snug mb-[2.2vh]">
+              <p className="pitch-body text-white/75 font-body leading-snug mb-[2.2vh]">
                 Package your lesson stacks into activity packs. Assign them to your department, share with partner schools, or list them for purchase.
               </p>
 

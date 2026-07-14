@@ -13,72 +13,70 @@ export default function Title() {
       <div
         className="absolute -top-[18vh] -left-[8vw] rounded-full"
         style={{
-          width: '48vw',
-          height: '48vw',
-          background: 'radial-gradient(circle at center, rgba(182,255,126,0.14), transparent 68%)',
-          filter: 'blur(3vw)',
+          width: "48vw",
+          height: "48vw",
+          background: "radial-gradient(circle at center, rgba(182,255,126,0.14), transparent 68%)",
+          filter: "blur(3vw)",
         }}
       />
 
-      <div className="relative z-10 flex h-full w-full flex-col justify-between px-[5.74vw] py-[5.3vh]">
+      <div className="relative z-10 flex h-full w-full flex-col justify-between pitch-slide-pad">
         <div
-          className="flex items-center gap-[0.98vw] slide-fade-up"
-          style={{ ['--slide-stagger' as string]: '0ms' }}
+          className="flex items-center gap-[0.85vw] slide-fade-up"
+          style={{ ["--slide-stagger" as string]: "0ms" }}
         >
           <img
             src={`${base}cd-logo.svg`}
             crossOrigin="anonymous"
             alt="CCD logo"
-            className="h-[3.44vw] w-[3.44vw]"
+            className="h-[2.6vw] w-[2.6vw] min-h-[2rem] min-w-[2rem] max-h-[2.75rem] max-w-[2.75rem]"
           />
-          <span className="font-display text-[1.31vw] font-semibold tracking-tight text-white">
+          <span className="font-display text-[clamp(0.85rem,1.05vw,1.05rem)] font-semibold tracking-tight text-white">
             Creative Curriculum Designer
           </span>
         </div>
 
-        <div className="max-w-[48.41vw]">
+        <div className="max-w-[min(42rem,52vw)]">
           <span
-            className="mb-[2.6vh] inline-block rounded-full border border-white/30 bg-white/15 px-[0.98vw] py-[0.6vh] text-[0.86vw] font-medium uppercase tracking-wide text-white backdrop-blur-sm slide-fade-up"
-            style={{ ['--slide-stagger' as string]: '120ms' }}
+            className="pitch-eyebrow mb-[2vh] inline-block rounded-full border border-white/30 bg-white/15 px-[0.9vw] py-[0.5vh] font-medium uppercase text-white backdrop-blur-sm slide-fade-up"
+            style={{ ["--slide-stagger" as string]: "120ms" }}
           >
             Drama · Music · Dance · EYFS to A-level
           </span>
 
           <h1
-            className="slide-fade-up font-semibold leading-[1.08] tracking-tight text-white"
+            className="pitch-h1 slide-fade-up font-semibold leading-[1.08] tracking-tight text-white"
             style={{
-              fontSize: "4.43vw",
-              textWrap: 'balance',
-              fontFamily: 'Inter, system-ui, sans-serif',
-              ['--slide-stagger' as string]: '220ms',
+              textWrap: "balance",
+              fontFamily: "Inter, system-ui, sans-serif",
+              ["--slide-stagger" as string]: "220ms",
             }}
           >
-            Exceptional lessons start with{' '}
+            Exceptional lessons start with{" "}
             <span
               className="italic font-normal"
-              style={{ color: '#B6FF7E', fontFamily: '"Playfair Display", Georgia, serif' }}
+              style={{ color: "#B6FF7E", fontFamily: '"Playfair Display", Georgia, serif' }}
             >
               connection
             </span>
           </h1>
 
           <p
-            className="mt-[2.6vh] max-w-[36.31vw] font-body text-[1.35vw] font-medium leading-snug text-white/90 slide-fade-up"
-            style={{ textWrap: 'pretty', ['--slide-stagger' as string]: '380ms' }}
+            className="pitch-body-lg mt-[2vh] max-w-[min(34rem,40vw)] font-body font-medium leading-snug text-white/90 slide-fade-up"
+            style={{ textWrap: "pretty", ["--slide-stagger" as string]: "380ms" }}
           >
-            A living repository of lessons and activities — and a quick way for children to capture
-            the hidden gems that spark the next great idea.
+            One calm space to map your half-terms, build lessons from a shared library, stack the warm-ups you actually use — and tap into partner expertise from ROH and more.
           </p>
         </div>
 
         <div
           className="flex items-end justify-between text-white/85 slide-fade-up"
-          style={{ ['--slide-stagger' as string]: '520ms' }}
+          style={{ ["--slide-stagger" as string]: "520ms" }}
         >
-          <span className="font-body text-[0.86vw] uppercase tracking-wide">
+          <span className="pitch-caption font-body uppercase tracking-wide">
             EYFS to A-level
           </span>
-          <span className="font-body text-[0.86vw] tracking-wide">creativecurriculumdesigner.com</span>
+          <span className="pitch-caption font-body tracking-wide">creativecurriculumdesigner.com</span>
         </div>
       </div>
     </div>

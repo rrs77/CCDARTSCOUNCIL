@@ -11,15 +11,13 @@ export default function WhoItsFor() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[3.69vw] py-[4.4vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full flex flex-col pitch-slide-pad slide-auto-enter">
         <div className="w-full mb-[3.1vh]">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.6vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.6vh]">
             Who it's for
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02] max-w-[92%]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02] max-w-[92%]" style={{textWrap: "balance"}}>
             Built for teachers from EYFS to A-level.
           </h2>
         </div>
@@ -30,10 +28,10 @@ export default function WhoItsFor() {
               <span className="font-display font-black text-primary-dark text-[2.46vw] leading-none">EYFS</span>
               <span className="font-body text-muted text-[0.82vw]">Ages 3–5</span>
             </div>
-            <h3 className="font-display font-bold text-text text-[1.19vw] leading-tight mb-[1.3vh]">
+            <h3 className="pitch-h3 font-display font-bold text-text leading-tight mb-[1.3vh]">
               Reception leads shaping play-based learning
             </h3>
-            <p className="text-muted font-body text-[0.94vw] leading-snug flex-1">
+            <p className="pitch-body text-muted font-body leading-snug flex-1">
               Plan around continuous provision and adult-led inputs. Capture the activities that spark a child's curiosity, then reuse them next year.
             </p>
             <div className="mt-auto pt-[2.2vh] border-t border-text/10 font-body text-text/80 text-[0.86vw]">
@@ -46,10 +44,10 @@ export default function WhoItsFor() {
               <span className="font-display font-black text-white text-[2.46vw] leading-none">KS1–KS3</span>
               <span className="font-body text-white/70 text-[0.82vw]">Ages 5–14</span>
             </div>
-            <h3 className="font-display font-bold text-white text-[1.19vw] leading-tight mb-[1.3vh]">
+            <h3 className="pitch-h3 font-display font-bold text-white leading-tight mb-[1.3vh]">
               Primary and lower-secondary teachers
             </h3>
-            <p className="text-white/75 font-body text-[0.94vw] leading-snug flex-1">
+            <p className="pitch-body text-white/75 font-body leading-snug flex-1">
               Map objectives from Year 1 through Year 9. Mix starter content with your own activities and reuse stacks as pupils progress through the key stages.
             </p>
             <div className="mt-auto pt-[2.2vh] border-t border-white/15 font-body text-white/85 text-[0.86vw]">
@@ -62,10 +60,10 @@ export default function WhoItsFor() {
               <span className="font-display font-black text-primary-dark text-[2.46vw] leading-none">KS4–A-level</span>
               <span className="font-body text-muted text-[0.82vw]">Ages 14–18</span>
             </div>
-            <h3 className="font-display font-bold text-text text-[1.19vw] leading-tight mb-[1.3vh]">
+            <h3 className="pitch-h3 font-display font-bold text-text leading-tight mb-[1.3vh]">
               GCSE, BTEC and A-level teachers
             </h3>
-            <p className="text-muted font-body text-[0.94vw] leading-snug flex-1">
+            <p className="pitch-body text-muted font-body leading-snug flex-1">
               Plan examined units, coursework blocks and practical assessments. Share schemes across the department so every cohort builds on last year's best work.
             </p>
             <div className="mt-auto pt-[2.2vh] border-t border-text/10 font-body text-text/80 text-[0.86vw]">

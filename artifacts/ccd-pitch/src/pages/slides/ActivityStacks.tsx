@@ -1,21 +1,17 @@
 export default function ActivityStacks() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-bg">
-      <div className="relative z-10 grid h-full w-full grid-cols-12 gap-[2.05vw] px-[5.74vw] py-[6.2vh]">
+      <div className="relative z-10 grid h-full w-full grid-cols-12 gap-[2.05vw] pitch-slide-pad">
         <div className="col-span-5 flex flex-col justify-center slide-auto-enter">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 03
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Stack activities like Lego.
           </h2>
           <p
-            className="mt-[2.6vh] text-muted font-body leading-relaxed"
-            style={{ fontSize: "1.15vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[2.6vh] text-muted font-body leading-relaxed" style={{textWrap: "pretty"}}>
             Group your favourite warm-ups, mains and plenaries into reusable stacks. Drop a whole stack into any lesson and adapt as you go.
           </p>
 

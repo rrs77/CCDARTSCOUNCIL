@@ -11,21 +11,17 @@ export default function ActivityCardsWithLinks() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] px-[5.74vw] py-[5.3vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] pitch-slide-pad slide-auto-enter">
         <div className="col-span-5 flex flex-col justify-center">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 04
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Every resource, one tap away.
           </h2>
           <p
-            className="mt-[2.6vh] text-muted font-body leading-relaxed"
-            style={{ fontSize: "1.11vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[2.6vh] text-muted font-body leading-relaxed" style={{textWrap: "pretty"}}>
             Activity cards carry the things you actually need in the room: a video demo, a backing track, a vocal guide, a worksheet, a web link. Pupils can see them on the smartboard. Teachers click straight through.
           </p>
 
@@ -57,7 +53,7 @@ export default function ActivityCardsWithLinks() {
                   <span className="px-[0.41vw] py-[0.1vh] rounded-full bg-[#FFE5D6] text-[#A24A1A] font-display font-semibold text-[0.70vw]">Drama</span>
                   <span className="px-[0.41vw] py-[0.1vh] rounded-full bg-bg border border-text/10 text-muted font-body text-[0.70vw]">Y4 &middot; 20 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.15vw] leading-tight">Freeze-Frame Storytelling</h4>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Freeze-Frame Storytelling</h4>
               </div>
               <span className="text-muted font-body text-[0.78vw] mt-[0.4vh]">Main activity</span>
             </div>
@@ -81,7 +77,7 @@ export default function ActivityCardsWithLinks() {
                   <span className="px-[0.41vw] py-[0.1vh] rounded-full bg-[#D6E8F2] text-[#0A4A66] font-display font-semibold text-[0.70vw]">Music</span>
                   <span className="px-[0.41vw] py-[0.1vh] rounded-full bg-bg border border-text/10 text-muted font-body text-[0.70vw]">Y3 &middot; 15 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.15vw] leading-tight">Active Listening: Rhythms of West Africa</h4>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Active Listening: Rhythms of West Africa</h4>
               </div>
               <span className="text-muted font-body text-[0.78vw] mt-[0.4vh]">Warm-up</span>
             </div>
@@ -108,7 +104,7 @@ export default function ActivityCardsWithLinks() {
                   <span className="px-[0.41vw] py-[0.1vh] rounded-full bg-[#E8E2F2] text-[#3D2F7A] font-display font-semibold text-[0.70vw]">Dance</span>
                   <span className="px-[0.41vw] py-[0.1vh] rounded-full bg-bg border border-text/10 text-muted font-body text-[0.70vw]">Y5 &middot; 25 min</span>
                 </div>
-                <h4 className="font-display font-bold text-text text-[1.15vw] leading-tight">Storm Motif &amp; Canon</h4>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Storm Motif &amp; Canon</h4>
               </div>
               <span className="text-muted font-body text-[0.78vw] mt-[0.4vh]">Main activity</span>
             </div>

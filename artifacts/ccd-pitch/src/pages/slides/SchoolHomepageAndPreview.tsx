@@ -11,21 +11,17 @@ export default function SchoolHomepageAndPreview() {
         }}
       />
 
-      <div className="relative z-10 h-full w-full flex flex-col px-[5.74vw] py-[4.4vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full flex flex-col pitch-slide-pad slide-auto-enter">
         <div className="max-w-[47.07vw] mb-[2.6vh]">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 08
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.28vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             Your school's homepage. A real preview.
           </h2>
           <p
-            className="mt-[1.3vh] text-muted font-body leading-snug max-w-[36.98vw]"
-            style={{ fontSize: "1.02vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[1.3vh] text-muted font-body leading-snug max-w-[36.98vw]" style={{textWrap: "pretty"}}>
             Each school gets a public landing page with their branding, plus a one-click preview that drops a visitor into a curated, read-only walkthrough — no sign-up.
           </p>
         </div>

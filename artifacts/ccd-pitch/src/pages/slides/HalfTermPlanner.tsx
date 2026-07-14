@@ -1,21 +1,17 @@
 export default function HalfTermPlanner() {
   return (
     <div className="relative w-screen h-screen overflow-hidden bg-bg">
-      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] px-[5.74vw] py-[6.2vh] slide-auto-enter">
+      <div className="relative z-10 h-full w-full grid grid-cols-12 gap-[2.05vw] pitch-slide-pad slide-auto-enter">
         <div className="col-span-5 flex flex-col justify-center">
-          <span className="inline-block text-accent font-display font-semibold uppercase tracking-[0.18em] text-[0.82vw] mb-[1.8vh]">
+          <span className="pitch-eyebrow inline-block text-accent font-display font-semibold uppercase mb-[1.8vh]">
             Feature 01
           </span>
           <h2
-            className="font-display font-black text-text tracking-tight leading-[1.02]"
-            style={{ fontSize: "3.44vw", textWrap: "balance" }}
-          >
+            className="pitch-h2 font-display font-black text-text tracking-tight leading-[1.02]" style={{textWrap: "balance"}}>
             See your year in six half-terms.
           </h2>
           <p
-            className="mt-[2.6vh] text-muted font-body leading-relaxed"
-            style={{ fontSize: "1.15vw", textWrap: "pretty" }}
-          >
+            className="pitch-body-lg mt-[2.6vh] text-muted font-body leading-relaxed" style={{textWrap: "pretty"}}>
             A clean overview of the whole academic year. Track progress, spot gaps, and reshape a half-term in a click.
           </p>
 
@@ -23,22 +19,22 @@ export default function HalfTermPlanner() {
             <div className="flex items-start gap-[0.82vw]">
               <div className="w-[0.33vw] h-[1.97vw] rounded-full bg-accent shrink-0 mt-[0.4vh]" />
               <div>
-                <h4 className="font-display font-bold text-text text-[1.07vw] leading-tight">Six color-coded terms</h4>
-                <p className="text-muted font-body text-[0.86vw] leading-snug">Autumn 1 through Summer 2 in one view.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Six color-coded terms</h4>
+                <p className="pitch-body text-muted font-body leading-snug">Autumn 1 through Summer 2 in one view.</p>
               </div>
             </div>
             <div className="flex items-start gap-[0.82vw]">
               <div className="w-[0.33vw] h-[1.97vw] rounded-full bg-primary shrink-0 mt-[0.4vh]" />
               <div>
-                <h4 className="font-display font-bold text-text text-[1.07vw] leading-tight">Live lesson counts</h4>
-                <p className="text-muted font-body text-[0.86vw] leading-snug">Know what's planned and what's empty at a glance.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Live lesson counts</h4>
+                <p className="pitch-body text-muted font-body leading-snug">Know what's planned and what's empty at a glance.</p>
               </div>
             </div>
             <div className="flex items-start gap-[0.82vw]">
               <div className="w-[0.33vw] h-[1.97vw] rounded-full bg-accent shrink-0 mt-[0.4vh]" />
               <div>
-                <h4 className="font-display font-bold text-text text-[1.07vw] leading-tight">Drag to reorder</h4>
-                <p className="text-muted font-body text-[0.86vw] leading-snug">Move a unit, copy a term, adjust the arc.</p>
+                <h4 className="pitch-h3 font-display font-bold text-text leading-tight">Drag to reorder</h4>
+                <p className="pitch-body text-muted font-body leading-snug">Move a unit, copy a term, adjust the arc.</p>
               </div>
             </div>
           </div>
