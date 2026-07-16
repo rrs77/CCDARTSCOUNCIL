@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
-import { PrototypeGate } from './components/PrototypeGate';
+import { PrototypePasswordPrompt, isPrototypeUnlocked } from './components/PrototypeGate';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
@@ -137,9 +137,7 @@ function App() {
   if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
     return (
       <ErrorBoundary>
-        <PrototypeGate>
-          <ResetPasswordPage />
-        </PrototypeGate>
+        <ResetPasswordPage />
       </ErrorBoundary>
     );
   }
@@ -152,19 +150,31 @@ function App() {
       ? getSchoolForPath(window.location.pathname)
       : null;
 
+  // Direct links into the prototype (e.g. `/?demo=1`) still require the
+  // access password. The login page and school homepages stay public.
+  if (
+    typeof window !== 'undefined' &&
+    isDemoModeActive() &&
+    !isPrototypeUnlocked()
+  ) {
+    return (
+      <ErrorBoundary>
+        <PrototypePasswordPrompt onUnlocked={() => window.location.reload()} />
+      </ErrorBoundary>
+    );
+  }
+
   return (
     <ErrorBoundary>
-      <PrototypeGate>
-        <AuthProvider>
-          <SettingsProviderNew>
-            <DataProvider>
-              <DndRoot>
-                <AppContent schoolHomepage={schoolHomepage} />
-              </DndRoot>
-            </DataProvider>
-          </SettingsProviderNew>
-        </AuthProvider>
-      </PrototypeGate>
+      <AuthProvider>
+        <SettingsProviderNew>
+          <DataProvider>
+            <DndRoot>
+              <AppContent schoolHomepage={schoolHomepage} />
+            </DndRoot>
+          </DataProvider>
+        </SettingsProviderNew>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

@@ -11,6 +11,7 @@ import {
 import { activateDemoMode } from '../../utils/demoMode';
 import { seedDemoData } from '../../utils/demoSeed';
 import { AboutPrototypeModal } from '../login/AboutPrototypeModal';
+import { PrototypePasswordPrompt, isPrototypeUnlocked } from '../PrototypeGate';
 import { PrototypeNoticeBar } from '../login/PrototypeNoticeBar';
 
 interface SchoolHomepageProps {
@@ -30,6 +31,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showAboutPrototype, setShowAboutPrototype] = useState(false);
+  const [showPrototypePassword, setShowPrototypePassword] = useState(false);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -63,6 +65,14 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   };
 
   const handleStartDemo = async () => {
+    if (!isPrototypeUnlocked()) {
+      setShowPrototypePassword(true);
+      return;
+    }
+    await enterPrototype();
+  };
+
+  const enterPrototype = async () => {
     // Activate demo mode and seed the full account-snapshot content into
     // localStorage *before* navigating, so DataContext picks it up on its
     // first load and the visitor sees the fully populated prototype.
@@ -300,6 +310,16 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
         </div>
       </div>
       </div>
+
+      {showPrototypePassword && (
+        <PrototypePasswordPrompt
+          onUnlocked={() => {
+            setShowPrototypePassword(false);
+            void enterPrototype();
+          }}
+          onCancel={() => setShowPrototypePassword(false)}
+        />
+      )}
 
       <AboutPrototypeModal
         isOpen={showAboutPrototype}

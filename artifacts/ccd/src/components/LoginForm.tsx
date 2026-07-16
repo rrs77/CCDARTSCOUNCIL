@@ -28,6 +28,7 @@ import {
 import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoData } from '../utils/demoSeed';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
+import { PrototypePasswordPrompt, isPrototypeUnlocked } from './PrototypeGate';
 import { AboutPrototypeModal } from './login/AboutPrototypeModal';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
@@ -55,6 +56,7 @@ export function LoginForm() {
   const [forgotError, setForgotError] = useState('');
   const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
   const [showAboutPrototype, setShowAboutPrototype] = useState(false);
+  const [showPrototypePassword, setShowPrototypePassword] = useState(false);
 
   const branding = settings.branding || {};
   const logoLetters = branding.logoLetters || 'CCD';
@@ -162,6 +164,14 @@ export function LoginForm() {
   };
 
   const handleStartPreview = async () => {
+    if (!isPrototypeUnlocked()) {
+      setShowPrototypePassword(true);
+      return;
+    }
+    await enterPrototype();
+  };
+
+  const enterPrototype = async () => {
     activateDemoMode('default');
     await seedDemoData();
     window.location.assign('/?demo=1');
@@ -441,6 +451,16 @@ export function LoginForm() {
         isOpen={showFeatureWalkthrough}
         onClose={() => setShowFeatureWalkthrough(false)}
       />
+
+      {showPrototypePassword && (
+        <PrototypePasswordPrompt
+          onUnlocked={() => {
+            setShowPrototypePassword(false);
+            void enterPrototype();
+          }}
+          onCancel={() => setShowPrototypePassword(false)}
+        />
+      )}
 
       <AboutPrototypeModal
         isOpen={showAboutPrototype}
