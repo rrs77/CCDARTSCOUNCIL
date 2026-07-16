@@ -2004,72 +2004,19 @@ export function Scene21_Mobile() {
  * 22 — FUTURE / OUTRO + CTA
  * ------------------------------------------------------------------ */
 export function Scene22_Future() {
-  const url = 'creativecurriculumdesigner.com';
+  const url = 'www.ccdesigner.co.uk';
   return (
     <div className="absolute inset-0 bg-white overflow-hidden">
       <SceneChip index={22} total={TOTAL} />
 
-      {/* Ambient breathing wash */}
-      <motion.div
-        className="absolute inset-0 pointer-events-none"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: [0, 0.95, 0.78, 0.95] }}
-        transition={{ duration: 6.5, ease: 'easeInOut', times: [0, 0.3, 0.65, 1], repeat: Infinity }}
-        style={{
-          background:
-            'radial-gradient(ellipse 70% 55% at 50% 50%, rgba(167,139,250,0.22), rgba(124,58,237,0.07) 50%, transparent 78%)',
-        }}
-      />
-
-      {/* Falling violet motes */}
-      <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {Array.from({ length: 22 }).map((_, i) => {
-          const left = (i * 47 + 13) % 100;
-          const delay = (i % 11) * 0.45;
-          const size = 0.35 + ((i * 19) % 10) / 14;
-          return (
-            <motion.div
-              key={`f-${i}`}
-              className="absolute rounded-full"
-              style={{
-                left: `${left}%`,
-                top: '-3cqmin',
-                width: `${size}cqmin`,
-                height: `${size}cqmin`,
-                background: 'rgba(124,58,237,0.42)',
-                filter: 'blur(0.4cqmin)',
-              }}
-              initial={{ y: 0, opacity: 0 }}
-              animate={{ y: '115cqh', opacity: [0, 0.7, 0] }}
-              transition={{ duration: 8 + (i % 6), ease: 'linear', delay, repeat: Infinity }}
-            />
-          );
-        })}
-      </div>
-
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-[6cqmin] gap-[3.5cqmin]">
-        {/* Logo with sweeping rings */}
+        {/* Logo fade-in */}
         <div className="relative flex items-center justify-center">
-          {[0, 1, 2].map((i) => (
-            <motion.div
-              key={`ring-${i}`}
-              className="absolute rounded-full border"
-              style={{
-                width: '36cqmin',
-                height: '36cqmin',
-                borderColor: 'rgba(124,58,237,0.35)',
-              }}
-              initial={{ scale: 1.6, opacity: 0 }}
-              animate={{ scale: [1.6, 0.4], opacity: [0, 0.55, 0] }}
-              transition={{ duration: 2.8, ease: 'easeOut', delay: 0.2 + i * 0.5, repeat: Infinity, repeatDelay: 1.4 }}
-            />
-          ))}
-
           <motion.div
             className="relative"
-            initial={{ opacity: 0, scale: 0.84, filter: 'blur(10px)' }}
-            animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
-            transition={{ duration: 1.4, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 1.6, ease: 'easeOut', delay: 0.3 }}
           >
             <Wordmark
               variant="dark"

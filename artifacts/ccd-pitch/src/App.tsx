@@ -20,7 +20,7 @@ import BrandStamp from "@/components/BrandStamp";
 import { PitchAutoplayViewer } from "@/PitchAutoplayViewer";
 
 // Slides that already present a full-size logo get no corner stamp.
-const NO_BRAND_SLIDES = new Set(["MeltingPotIntro.tsx", "PromoWelcome.tsx"]);
+const NO_BRAND_SLIDES = new Set(["MeltingPotIntro.tsx", "PromoWelcome.tsx", "PromoFuture.tsx"]);
 function showBrand(filepath: string): boolean {
   return !NO_BRAND_SLIDES.has(filepath.split("/").pop() ?? "");
 }
