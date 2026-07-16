@@ -19,6 +19,20 @@ import { slides } from "@/slideLoader";
 import BrandStamp from "@/components/BrandStamp";
 import { PitchAutoplayViewer } from "@/PitchAutoplayViewer";
 
+// Slides with dark backgrounds get the light (white-text) logo variant.
+function brandVariant(filepath: string): "light" | "dark" {
+  const filename = filepath.split("/").pop() ?? "";
+  const darkSlides = new Set([
+    "Solution.tsx",
+    "LessonPDFExport.tsx",
+    "LifeChanging.tsx",
+    "CallToAction.tsx",
+  ]);
+  return filename.startsWith("Promo") || darkSlides.has(filename)
+    ? "light"
+    : "dark";
+}
+
 function getSlideIndex(pathname: string): number {
   const match = pathname.match(/^\/slide(\d+)$/);
   if (!match) return -1;
@@ -135,7 +149,7 @@ function SlideEditor() {
           style={{ display: index === currentIndex ? "block" : "none" }}
         >
           <slide.Component />
-          <BrandStamp />
+          <BrandStamp variant={brandVariant(slide.filepath)} />
         </div>
       ))}
     </div>
@@ -158,7 +172,7 @@ function AllSlides() {
           <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
             <slide.Component />
           </div>
-          <BrandStamp />
+          <BrandStamp variant={brandVariant(slide.filepath)} />
         </div>
       ))}
     </div>
