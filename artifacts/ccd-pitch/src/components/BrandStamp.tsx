@@ -1,20 +1,11 @@
 const base = import.meta.env.BASE_URL;
 
 /**
- * Deck-wide corner logo: purple CC mark + "DESIGNER" text.
- * `variant="dark"`  => dark text (default, for light slide backgrounds).
- * `variant="light"` => white text (for dark slide backgrounds).
+ * Deck-wide corner logo: purple CC mark + "DESIGNER" text on a subtle
+ * translucent pill so it stays legible on any slide background,
+ * light or dark.
  */
-export default function BrandStamp({
-  variant = "dark",
-}: {
-  variant?: "light" | "dark";
-}) {
-  const textColor = variant === "light" ? "#FFFFFF" : "#1a1033";
-  const dropShadow =
-    variant === "light"
-      ? "drop-shadow(0 2px 10px rgba(0,0,0,0.45))"
-      : "drop-shadow(0 2px 8px rgba(26,16,51,0.18))";
+export default function BrandStamp() {
   return (
     <div
       className="absolute top-[3vh] left-[2.5vw] z-[60] pointer-events-none"
@@ -27,7 +18,12 @@ export default function BrandStamp({
           fontSize: "5vh",
           gap: "0.18em",
           lineHeight: 1,
-          filter: dropShadow,
+          padding: "0.9vh 1.4vh",
+          borderRadius: "999px",
+          background: "rgba(255,255,255,0.88)",
+          boxShadow: "0 2px 10px rgba(26,16,51,0.18)",
+          backdropFilter: "blur(4px)",
+          WebkitBackdropFilter: "blur(4px)",
         }}
       >
         <img
@@ -39,7 +35,7 @@ export default function BrandStamp({
         />
         <span
           style={{
-            color: textColor,
+            color: "#1a1033",
             fontFamily: "Inter, ui-sans-serif, system-ui, sans-serif",
             fontWeight: 700,
             letterSpacing: "0.06em",
