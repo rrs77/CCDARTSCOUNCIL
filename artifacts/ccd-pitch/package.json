@@ -26,6 +26,7 @@
     "tsx": "catalog:",
     "vite": "catalog:",
     "wouter": "catalog:",
-    "zod": "catalog:"
+    "zod": "catalog:",
+    "framer-motion": "catalog:"
   }
 }

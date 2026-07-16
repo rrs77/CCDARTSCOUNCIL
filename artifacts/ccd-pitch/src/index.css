@@ -11,6 +11,7 @@
   --color-muted: var(--slide-muted);
   --font-display: var(--font-display-family);
   --font-body: var(--font-body-family);
+  --font-mono: var(--font-mono-family);
 }
 
 :root {
@@ -26,6 +27,7 @@
   --slide-lime: #b6ff7e;
   --font-display-family: "Inter", system-ui, sans-serif;
   --font-body-family: "Inter", system-ui, sans-serif;
+  --font-mono-family: "JetBrains Mono", monospace;
   color-scheme: light;
 }
 
