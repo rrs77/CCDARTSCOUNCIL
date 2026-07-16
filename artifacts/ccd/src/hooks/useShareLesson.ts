@@ -90,7 +90,7 @@ export function useShareLesson() {
     };
     
     const lessonDisplayNumber = getLessonDisplayNumber(lessonNumber);
-    const lessonTitle = getLessonDisplayTitle(lessonNumber) || lessonData.title || `Lesson ${lessonDisplayNumber}`;
+    const lessonTitle = getLessonDisplayTitle(lessonNumber, undefined as any) || lessonData.title || `Lesson ${lessonDisplayNumber}`;
     
     // Get half-term info if available
     const halfTerm = halfTerms.find(ht => 
@@ -324,11 +324,11 @@ export function useShareLesson() {
     }
 
     // Add notes if available
-    if (lessonData.notes) {
+    if ((lessonData as any).notes) {
       htmlContent += `
         <div style="margin-top: 12px; padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; border-left: 4px solid #9ca3af;">
           <div style="font-size: 11px; font-weight: 600; color: #374151; margin-bottom: 6px;">Teacher Notes</div>
-          <div style="font-size: 10px; color: #1f2937; line-height: 1.5;">${lessonData.notes}</div>
+          <div style="font-size: 10px; color: #1f2937; line-height: 1.5;">${(lessonData as any).notes}</div>
         </div>
       `;
     }

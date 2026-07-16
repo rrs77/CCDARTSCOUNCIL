@@ -58,6 +58,7 @@ import { useDrop, useDrag } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
+import { generatePdfViaProxy } from '../utils/pdfApi';
 import { TimetableModal } from './TimetableModal';
 import { TimetableBuilder } from './TimetableBuilder';
 import { EventModal } from './EventModal';
@@ -559,13 +560,6 @@ export function LessonPlannerCalendar({
 
   // Handle Calendar PDF Export - generates well-designed PDF with branding
   const handlePrintCalendar = async () => {
-    const PDFBOLT_API_KEY = import.meta.env.VITE_PDFBOLT_API_KEY || '146bdd01-146f-43f8-92aa-26201c38aa11';
-    const PDFBOLT_API_URL = 'https://api.pdfbolt.com/v1/direct';
-    if (!PDFBOLT_API_KEY || PDFBOLT_API_KEY === 'd089165b-e1da-43bb-a7dc-625ce514ed1b') {
-      toast.error('PDF export requires VITE_PDFBOLT_API_KEY in environment.');
-      return;
-    }
-
     const escape = (s: string) => (s || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
     const escapeUrl = (u: string) => (u || '').replace(/&/g, '&amp;').replace(/"/g, '&quot;');
     const RESOURCE_KEYS: { key: keyof Activity; label: string }[] = [
@@ -851,28 +845,17 @@ export function LessonPlannerCalendar({
 
     setIsExportingPdf(true);
     try {
-      const response = await fetch(PDFBOLT_API_URL, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'API_KEY': PDFBOLT_API_KEY },
-        body: JSON.stringify({
-          html: encodeUnicodeBase64(fullHtml),
-          printBackground: true,
-          waitUntil: 'networkidle',
-          format: 'A4',
-          margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
-          displayHeaderFooter: true,
-          footerTemplate: encodeUnicodeBase64(footerContent),
-          headerTemplate: encodeUnicodeBase64('<div></div>'),
-          emulateMediaType: 'screen'
-        })
+      const pdfBlob = await generatePdfViaProxy({
+        html: encodeUnicodeBase64(fullHtml),
+        printBackground: true,
+        waitUntil: 'networkidle',
+        format: 'A4',
+        margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+        displayHeaderFooter: true,
+        footerTemplate: encodeUnicodeBase64(footerContent),
+        headerTemplate: encodeUnicodeBase64('<div></div>'),
+        emulateMediaType: 'screen',
       });
-
-      if (!response.ok) {
-        const errText = await response.text();
-        throw new Error(`PDF export failed: ${response.status} - ${errText}`);
-      }
-
-      const pdfBlob = await response.blob();
       const fileName = `Calendar_${className.replace(/\s+/g, '_')}_${viewLabel.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -1027,7 +1010,7 @@ export function LessonPlannerCalendar({
     
     return (
       <div
-        ref={drop}
+        ref={drop as unknown as React.Ref<HTMLDivElement>}
         onClick={() => !isHolidayDate && !isInsetDayDate && handleDateClick(date)}
         className={`
           relative w-full h-24 p-1 border border-gray-200 hover:bg-blue-50 transition-colors duration-200
@@ -1223,7 +1206,7 @@ export function LessonPlannerCalendar({
             updatedAt: new Date()
           };
           
-          onUpdateLessonPlan(newPlan);
+          onUpdateLessonPlan(newPlan as any);
           triggerSlot2Flash();
         } else if (item.unit) {
           console.log('Unit dropped:', item.unit);
@@ -1240,7 +1223,7 @@ export function LessonPlannerCalendar({
 
     return (
       <div 
-        ref={drop}
+        ref={drop as unknown as React.Ref<HTMLDivElement>}
         className={`border border-gray-200 p-2 min-h-[100px] ${
           isHolidayDate || isInsetDayDate ? 'bg-gray-100' : 'bg-white'
         } ${slot2DropClass} ${slot2Flash}`}
@@ -1397,7 +1380,7 @@ export function LessonPlannerCalendar({
             updatedAt: new Date()
           };
           
-          onUpdateLessonPlan(newPlan);
+          onUpdateLessonPlan(newPlan as any);
           triggerSlot3Flash();
         } else if (item.unit) {
           console.log('Unit dropped:', item.unit);
@@ -1418,7 +1401,7 @@ export function LessonPlannerCalendar({
     
     return (
       <div
-        ref={drop}
+        ref={drop as unknown as React.Ref<HTMLDivElement>}
         onClick={() => !isHolidayDate && !isInsetDayDate && handleTimeSlotClick(dayOfWeek, date, hour)}
         className={`
           relative border border-gray-200 p-1 h-16 transition-colors duration-200
@@ -2538,7 +2521,7 @@ export function LessonPlannerCalendar({
         <LessonDetailsModal
           lessonNumber={selectedLessonForDetails}
           onClose={() => setSelectedLessonForDetails(null)}
-          theme={theme}
+          theme={theme as any}
           onEdit={() => {
             // Open lesson builder for editing
             setSelectedLessonForDetails(null);
@@ -2602,7 +2585,7 @@ export function LessonPlannerCalendar({
           onTimetableUpdate={(classes) => {
             saveTimetableClasses(classes);
           }}
-          initialEditClass={editingTimetableClass}
+          initialEditClass={editingTimetableClass as any}
         />
       )}
     </div>

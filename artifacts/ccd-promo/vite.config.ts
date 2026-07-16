@@ -12,21 +12,22 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    ...(isReplit
+    // NOTE: We intentionally skip @replit/vite-plugin-runtime-error-modal here.
+    // The promo is an animation-heavy page; ResizeObserver / framer-motion can
+    // emit benign "(unknown runtime error)" events with empty stacks during
+    // scene transitions, and the modal escalates them into a full-screen
+    // overlay that blocks the dev preview on mobile. The plugin is dev-only
+    // anyway — production builds are unaffected.
+    ...(isReplit && process.env.NODE_ENV !== "production"
       ? [
-          (await import("@replit/vite-plugin-runtime-error-modal")).default(),
-          ...(process.env.NODE_ENV !== "production"
-            ? [
-                await import("@replit/vite-plugin-cartographer").then((m) =>
-                  m.cartographer({
-                    root: path.resolve(import.meta.dirname, ".."),
-                  }),
-                ),
-                await import("@replit/vite-plugin-dev-banner").then((m) =>
-                  m.devBanner(),
-                ),
-              ]
-            : []),
+          await import("@replit/vite-plugin-cartographer").then((m) =>
+            m.cartographer({
+              root: path.resolve(import.meta.dirname, ".."),
+            }),
+          ),
+          await import("@replit/vite-plugin-dev-banner").then((m) =>
+            m.devBanner(),
+          ),
         ]
       : []),
   ],

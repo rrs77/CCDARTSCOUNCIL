@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import toast from 'react-hot-toast';
 import { 
   Search, 
@@ -45,13 +46,13 @@ import { IndexCard } from './IndexCard';
 import { LessonPrintModal } from './LessonPrintModal';
 
 // Helper function to safely render HTML content
-const renderHtmlContent = (htmlContent) => {
+const renderHtmlContent = (htmlContent: any) => {
   if (!htmlContent) return { __html: '' };
-  return { __html: htmlContent };
+  return { __html: sanitizeHtml(htmlContent) };
 };
 
 // Helper function to get plain text from HTML (for search purposes)
-const getPlainTextFromHtml = (html) => {
+const getPlainTextFromHtml = (html: any) => {
   if (!html) return '';
   
   const temp = document.createElement('div');
@@ -164,7 +165,7 @@ export function LessonLibrary({
   const [editingLessonForCreator, setEditingLessonForCreator] = useState<{ lessonNumber: string; lessonData: any } | null>(null);
   
   // All lesson packs the user has (bought or assigned via Admin → Assign packs) are treated the same.
-  // Merged list is used for: pack stacks in Lesson Library ("Add unit"), Resource Shop "you have this", etc.
+  // Merged list is used for: pack stacks in Lesson Library ("Add unit"), Resource Library "you have this", etc.
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
@@ -517,7 +518,7 @@ export function LessonLibrary({
       console.log('✅ STACK ASSIGNMENT - Assignment completed successfully');
     } catch (error) {
       console.error('❌ STACK ASSIGNMENT - Failed to assign stack to term:', error);
-      alert(`❌ Failed to assign stack: ${error.message}`);
+      alert(`❌ Failed to assign stack: ${(error as any)?.message}`);
     }
   };
 
@@ -686,7 +687,7 @@ export function LessonLibrary({
       };
       
       console.log('💾 Creating lesson plan for duplicated lesson...');
-      addOrUpdateUserLessonPlan(duplicatedLessonPlan);
+      addOrUpdateUserLessonPlan(duplicatedLessonPlan as any);
       console.log('✅ Lesson plan created for duplicated lesson');
     }
 
@@ -1054,7 +1055,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                         key={stack.id}
                         stack={stack}
                         allLessonsData={allLessonsData}
-                        theme={getThemeForClass(currentSheetInfo.sheet)}
+                        theme={getThemeForClass(currentSheetInfo.sheet) as any}
                         onClick={() => handleStackClick(stack)}
                         onEdit={() => handleEditStack(stack)}
                         onDelete={() => handleDeleteStack(stack.id)}
@@ -1309,7 +1310,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                     lessonData={lessonData}
                     viewMode={viewMode}
                     onClick={() => handleLessonClick(lessonNum)}
-                    theme={theme}
+                    theme={theme as any}
                     onAssignToUnit={handleAssignToHalfTerm}
                     halfTerms={halfTerms}
                     onEdit={() => handleStartEditing(lessonNum)}
@@ -1557,7 +1558,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
         <LessonDetailsModal
           lessonNumber={selectedLessonForDetails}
           onClose={() => setSelectedLessonForDetails(null)}
-          theme={theme}
+          theme={theme as any}
           onExport={() => {
             setSelectedLessonForExport(selectedLessonForDetails);
             setSelectedLessonForDetails(null);

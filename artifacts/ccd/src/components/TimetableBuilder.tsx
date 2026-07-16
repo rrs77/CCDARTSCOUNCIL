@@ -875,7 +875,7 @@ function TimetableSlotRow({
 
   return (
     <div
-      ref={drop}
+      ref={drop as unknown as React.Ref<HTMLDivElement>}
       data-slot-row
       className={`border-b border-gray-200 flex items-center justify-center transition-colors cursor-pointer ${
         isOver ? 'border-teal-300' : 'hover:bg-gray-50'
@@ -979,7 +979,7 @@ function TimetableDayColumn({
 
   return (
     <div
-      ref={drop}
+      ref={drop as unknown as React.Ref<HTMLDivElement>}
       data-day-column
       className={`min-w-0 border-r border-gray-200 relative transition-colors last:border-r-0 ${
         showDropHint ? 'bg-teal-100 ring-2 ring-teal-400 ring-inset' : 'bg-white'
@@ -1147,7 +1147,7 @@ function TimetableClassBlock({
       title={`${cls.className} (${cls.startTime} - ${cls.endTime}). Drag to move; drag bottom edge to resize.`}
     >
       <div
-        ref={drag}
+        ref={drag as unknown as React.Ref<HTMLDivElement>}
         className={`flex items-center justify-between flex-1 min-h-0 min-w-0 pb-3 cursor-grab active:cursor-grabbing ${isDragging ? 'cursor-grabbing' : ''}`}
       >
         <div className="truncate flex-1 min-w-0">
@@ -1188,7 +1188,7 @@ function DraggableYearGroup({ yearGroup }: { yearGroup: any }) {
 
   return (
     <div
-      ref={drag}
+      ref={drag as unknown as React.Ref<HTMLDivElement>}
       className={`p-2 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-shadow flex items-center space-x-2 text-sm ${
         isDragging ? 'opacity-50' : ''
       }`}
@@ -1243,7 +1243,7 @@ function TimetableGridCell({
 
   return (
     <td
-      ref={drop}
+      ref={drop as unknown as React.Ref<HTMLTableDataCellElement>}
       className={`border-r border-gray-200 relative min-h-[60px] ${
         isOver ? 'bg-teal-50 border-2 border-teal-300' : 'bg-white hover:bg-gray-50'
       } transition-colors cursor-pointer`}

@@ -357,7 +357,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
 // Default settings
 const DEFAULT_SETTINGS: UserSettings = {
   schoolName: 'Curriculum Designer',
-  schoolLogo: '/cd-logo.svg',
+  schoolLogo: '/ccdesigner-logo.png',
   primaryColor: '#3B82F6',
   secondaryColor: '#2563EB',
   accentColor: '#60A5FA',
@@ -684,40 +684,19 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         
         switch (item.type) {
           case 'yearGroups':
-            // Deduplicate year groups by name to prevent constraint violations
-            const uniqueYearGroups = item.data.reduce((acc: any[], yearGroup: any) => {
-              const existing = acc.find(yg => yg.name === yearGroup.name);
-              if (!existing) {
-                acc.push(yearGroup);
-              }
-              return acc;
-            }, []);
-            await yearGroupsApi.upsert(uniqueYearGroups);
-            console.log('✅ Year groups saved from queue');
+            // year_groups has no per-tenant column: any write would overwrite every
+            // other tenant's configuration. Writes are disabled until a schema migration
+            // adds a tenant/school identifier to this table and its unique constraints.
+            console.warn('⚠️ Skipping year_groups Supabase write — table has no tenant key; writes would cross-contaminate all tenants');
             break;
           case 'categories':
-            // Deduplicate categories by name to prevent constraint violations
-            const uniqueCategories = item.data.reduce((acc: any[], category: any) => {
-              const existing = acc.find(c => c.name === category.name);
-              if (!existing) {
-                acc.push(category);
-              }
-              return acc;
-            }, []);
-            await customCategoriesApi.upsert(uniqueCategories);
-            console.log('✅ Categories saved from queue');
+            // custom_categories has no per-tenant column: same cross-tenant risk as
+            // year_groups. Persist only to localStorage until schema is migrated.
+            console.warn('⚠️ Skipping custom_categories Supabase write — table has no tenant key; writes would cross-contaminate all tenants');
             break;
           case 'categoryGroups':
-            // Deduplicate category groups by name to prevent constraint violations
-            const uniqueCategoryGroups = item.data.reduce((acc: any[], group: any) => {
-              const existing = acc.find(g => g.name === group.name);
-              if (!existing) {
-                acc.push(group);
-              }
-              return acc;
-            }, []);
-            await categoryGroupsApi.upsert(uniqueCategoryGroups);
-            console.log('✅ Category groups saved from queue');
+            // category_groups has no per-tenant column: same cross-tenant risk.
+            console.warn('⚠️ Skipping category_groups Supabase write — table has no tenant key; writes would cross-contaminate all tenants');
             break;
           default:
             console.warn('⚠️ Unknown save queue item type:', item.type);
@@ -1057,7 +1036,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           console.log('📦 Raw year groups from Supabase:', supabaseYearGroups);
           
           if (supabaseYearGroups && supabaseYearGroups.length > 0) {
-            const formattedYearGroups = supabaseYearGroups.map(group => ({
+            const formattedYearGroups = supabaseYearGroups.map((group: any) => ({
               id: group.id,
               name: group.name,
               color: group.color
@@ -1147,33 +1126,23 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                   });
                   console.log('📦 Loaded year groups from localStorage:', deduplicatedGroups.length, '(deduplicated from', filteredGroups.length, ', filtered from', localGroups.length, ')');
                   localStorage.setItem('year-group-bands', JSON.stringify(bands));
-                  // Sync to Supabase (use deduplicated groups)
-                  yearGroupsApi.upsert(deduplicatedGroups)
-                    .then(() => console.log('✅ Synced filtered year groups to Supabase'))
-                    .catch(error => console.warn('Failed to sync year groups to Supabase:', error));
+                  // Do NOT auto-sync to Supabase here: year_groups is a shared table with
+                  // no per-tenant column, so pushing local data on startup would overwrite
+                  // every other tenant's year groups (cross-tenant tampering).
                 } else {
                   // localStorage data is empty or invalid, use defaults
                   console.log('📦 localStorage data is empty/invalid, using defaults');
                   setCustomYearGroups(DEFAULT_YEAR_GROUPS);
-                  yearGroupsApi.upsert(DEFAULT_YEAR_GROUPS)
-                    .then(() => console.log('✅ Synced default year groups to Supabase'))
-                    .catch(error => console.warn('Failed to sync default year groups to Supabase:', error));
                 }
               } catch (error) {
                 console.warn('Failed to parse localStorage year groups:', error);
                 console.log('📦 Using default year groups due to localStorage parse error');
                 setCustomYearGroups(DEFAULT_YEAR_GROUPS);
-                yearGroupsApi.upsert(DEFAULT_YEAR_GROUPS)
-                  .then(() => console.log('✅ Synced default year groups to Supabase'))
-                  .catch(error => console.warn('Failed to sync default year groups to Supabase:', error));
               }
             } else {
-              // No data anywhere, use defaults and sync to Supabase
+              // No data anywhere, use defaults
               console.log('📦 No data anywhere, using defaults');
               setCustomYearGroups(DEFAULT_YEAR_GROUPS);
-              yearGroupsApi.upsert(DEFAULT_YEAR_GROUPS)
-                .then(() => console.log('✅ Synced default year groups to Supabase'))
-                .catch(error => console.warn('Failed to sync default year groups to Supabase:', error));
             }
           }
 
@@ -1183,14 +1152,16 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           console.log('📦 Raw category groups from Supabase:', supabaseCategoryGroups);
           
           if (supabaseCategoryGroups && supabaseCategoryGroups.length > 0) {
-            const groupNames = supabaseCategoryGroups.map(group => group.name);
+            const groupNames = supabaseCategoryGroups.map((group: any) => group.name);
             setCategoryGroups({ groups: groupNames });
             console.log('📦 Loaded category groups from Supabase:', groupNames);
             
             // Update localStorage to match Supabase data
             localStorage.setItem('category-groups', JSON.stringify({ groups: groupNames }));
           } else {
-            // No category groups in Supabase, check localStorage and sync to Supabase
+            // No category groups in Supabase — load from localStorage only.
+            // Do NOT auto-sync to Supabase: category_groups has no per-tenant column,
+            // so a startup write would overwrite every other tenant's groups.
             console.log('📦 No category groups in Supabase, checking localStorage...');
             const localStorageCategoryGroups = localStorage.getItem('category-groups');
             if (localStorageCategoryGroups) {
@@ -1199,45 +1170,23 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                 if (localGroups.groups && Array.isArray(localGroups.groups) && localGroups.groups.length > 0) {
                   setCategoryGroups(localGroups);
                   console.log('📦 Loaded category groups from localStorage:', localGroups.groups);
-                  
-                  // Sync to Supabase
-                  try {
-                    await categoryGroupsApi.upsert(localGroups.groups);
-                    console.log('✅ Synced category groups from localStorage to Supabase');
-                  } catch (error) {
-                    console.warn('Failed to sync category groups to Supabase:', error);
-                  }
                 } else {
-                  // Use defaults and sync to Supabase
                   setCategoryGroups(DEFAULT_CATEGORY_GROUPS);
                   console.log('📦 Using default category groups');
-                  try {
-                    await categoryGroupsApi.upsert(DEFAULT_CATEGORY_GROUPS.groups);
-                    console.log('✅ Synced default category groups to Supabase');
-                  } catch (error) {
-                    console.warn('Failed to sync default category groups to Supabase:', error);
-                  }
                 }
               } catch (error) {
                 console.warn('Failed to parse localStorage category groups:', error);
                 setCategoryGroups(DEFAULT_CATEGORY_GROUPS);
               }
             } else {
-              // No data anywhere, use defaults and sync to Supabase
               setCategoryGroups(DEFAULT_CATEGORY_GROUPS);
               console.log('📦 No category groups anywhere, using defaults');
-              try {
-                await categoryGroupsApi.upsert(DEFAULT_CATEGORY_GROUPS.groups);
-                console.log('✅ Synced default category groups to Supabase');
-              } catch (error) {
-                console.warn('Failed to sync default category groups to Supabase:', error);
-              }
             }
           }
 
           // Load branding from Supabase (footer, login page - persists across devices)
           try {
-            const supabaseBranding = await brandingApi.get();
+            const supabaseBranding: any = await brandingApi.get();
             if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
               if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
                 supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
@@ -1252,30 +1201,11 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             if (import.meta.env.DEV) console.warn('Failed to load branding from Supabase:', e);
           }
 
-          // If we had no categories from Supabase, sync custom categories from localStorage to Supabase
-          if (!supabaseCategories || supabaseCategories.length === 0) {
-            const localStorageCategories = localStorage.getItem('saved-categories');
-            if (localStorageCategories) {
-              try {
-                const localCategories = JSON.parse(localStorageCategories);
-                const customCategories = localCategories.filter((cat: any) =>
-                  !FIXED_CATEGORIES.some((fixed: any) => fixed.name === cat.name)
-                );
-                if (customCategories.length > 0) {
-                  const categoriesForSupabase = customCategories.map((cat: any) => ({
-                    id: cat.id,
-                    name: cat.name,
-                    color: cat.color,
-                    position: cat.position || 0,
-                    group: cat.group,
-                    groups: cat.groups || (cat.group ? [cat.group] : []),
-                    yearGroups: cat.yearGroups || {}
-                  }));
-                  await customCategoriesApi.upsert(categoriesForSupabase).catch(() => {});
-                }
-              } catch (_) {}
-            }
-          }
+          // Do NOT auto-sync custom categories from localStorage to Supabase.
+          // custom_categories is a shared table with no per-tenant column; pushing
+          // a user's local categories on startup would overwrite every other tenant's
+          // category configuration (cross-tenant tampering). Categories are only
+          // written to Supabase when the user explicitly saves from the admin UI.
         } catch (error: any) {
           // Silently handle Supabase errors - fallback to localStorage
           // This prevents 500 errors from showing in console as failures
@@ -1326,7 +1256,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               if (deduplicatedGroups.length > 0) {
                 setCustomYearGroups(deduplicatedGroups);
                 console.log('📦 Fallback: Loaded year groups from localStorage:', deduplicatedGroups.length, 'groups');
-                console.log('📦 Fallback: Year group names:', deduplicatedGroups.map(g => g.name));
+                console.log('📦 Fallback: Year group names:', deduplicatedGroups.map((g: any) => g.name));
               } else {
                 setCustomYearGroups(DEFAULT_YEAR_GROUPS);
                 console.log('📦 Fallback: No valid groups in localStorage, using defaults');
@@ -1458,7 +1388,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         try {
           console.log(`🔄 Syncing year groups from ${source}...`);
           const newYearGroups = await yearGroupsApi.getAll();
-          const formattedYearGroups = newYearGroups.map(group => ({
+          const formattedYearGroups = newYearGroups.map((group: any) => ({
             id: group.id,
             name: group.name,
             color: group.color
@@ -1674,20 +1604,16 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         try {
           const supabaseCategories = await customCategoriesApi.getAll();
           const categoriesToDelete = supabaseCategories
-            .filter(supabaseCat => {
+            .filter((supabaseCat: any) => {
               const isFixed = FIXED_CATEGORIES.some(fixed => fixed.name === supabaseCat.name);
               return !isFixed && !currentCategoryNames.has(supabaseCat.name);
             })
-            .map(cat => cat.name);
+            .map((cat: any) => cat.name);
           if (categoriesToDelete.length > 0) {
-            console.log('🗑️ Deleting categories from Supabase no longer in list:', categoriesToDelete);
-            for (const name of categoriesToDelete) {
-              try {
-                await customCategoriesApi.delete(name);
-              } catch (e) {
-                console.warn('Failed to delete category from Supabase:', name, e);
-              }
-            }
+            // custom_categories has no per-tenant column: deleting by name here would remove
+            // that category for every other tenant sharing the table. Writes are disabled
+            // until a schema migration adds a tenant/school identifier.
+            console.warn('⚠️ Skipping Supabase category cleanup — custom_categories table has no tenant key; deletes would be cross-tenant:', categoriesToDelete);
           }
         } catch (e) {
           console.warn('Error during category cleanup:', e);
@@ -1770,7 +1696,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               // Reload year groups
               const yearGroups = await yearGroupsApi.getAll();
               if (yearGroups && yearGroups.length > 0) {
-                const formatted = yearGroups.map(group => ({
+                const formatted = yearGroups.map((group: any) => ({
                   id: group.id,
                   name: group.name,
                   color: group.color
@@ -1787,7 +1713,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                   // Merge with existing categories
                   setCategories(prev => {
                     const merged = [...prev];
-                    categories.forEach(supabaseCat => {
+                    categories.forEach((supabaseCat: any) => {
                       const existingIndex = merged.findIndex(cat => cat.name === supabaseCat.name);
                       if (existingIndex >= 0) {
                         // Update existing category with ALL Supabase data (including yearGroups!)
@@ -1832,7 +1758,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       const next = { ...prev, ...newSettings };
       // Persist branding to Supabase when it changes (survives cache clears, different devices)
       if (newSettings.branding && isSupabaseConfigured()) {
-        brandingApi.upsert(newSettings.branding).catch(() => {});
+        brandingApi.upsert(newSettings.branding as unknown as Record<string, unknown>).catch(() => {});
       }
       return next;
     });
@@ -1913,7 +1839,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       try {
         console.log('🔄 Manual sync: Fetching year groups from Supabase...');
         const supabaseYearGroups = await yearGroupsApi.getAll();
-        const formattedYearGroups = supabaseYearGroups.map(group => ({
+        const formattedYearGroups = supabaseYearGroups.map((group: any) => ({
           id: group.id,
           name: group.name,
           color: group.color
@@ -2056,6 +1982,24 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     try {
       localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(buildDefaultYearGroupSections(DEFAULT_YEAR_GROUPS)));
     } catch (_) {}
+  };
+
+  const addMissingDefaultYearGroups = async () => {
+    const current = customYearGroups;
+    const existingIds = new Set(current.map(g => g.id));
+    const toAdd = DEFAULT_YEAR_GROUPS.filter(g => !existingIds.has(g.id));
+    if (toAdd.length === 0) return;
+    const merged = [...current, ...toAdd];
+    setCustomYearGroups(merged);
+    setYearGroupSectionsState(prev => {
+      return prev.map(s => {
+        const toAppend = toAdd.filter(g => (getDefaultSectionIdForYearGroup(g.id, g.name) === s.id)).map(g => g.id);
+        if (toAppend.length === 0) return s;
+        return { ...s, yearGroupIds: [...(s.yearGroupIds || []), ...toAppend] };
+      });
+    });
+    // year_groups has no per-tenant column: writes are disabled until schema migration.
+    console.warn('⚠️ Skipping Supabase sync for added default year groups — table has no tenant key');
   };
 
   const ensureYearGroupsInSections = React.useCallback(() => {
@@ -2219,84 +2163,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       const yearGroupsToSync = override?.yearGroups ?? customYearGroups;
       console.log('🔄 Force syncing settings to Supabase...', { categoriesCount: categoriesToSync.length, yearGroupsCount: yearGroupsToSync.length });
       
-      const yearGroupsSuccess = await yearGroupsApi.upsert(yearGroupsToSync)
-        .then(() => {
-          console.log('✅ Year groups synced to Supabase');
-          return true;
-        })
-        .catch(error => {
-          console.error('❌ Failed to sync year groups:', error);
-          return false;
-        });
-
-      // Same filter as categories useEffect: save custom OR with group assignments OR with year group assignments (including fixed categories like Welcome, Kodaly Songs)
-      const categoriesToSave = categoriesToSync.filter(cat => {
-        const isCustom = !FIXED_CATEGORIES.some(fixed => fixed.name === cat.name);
-        const hasGroupAssignments = (cat.groups && cat.groups.length > 0) || cat.group;
-        const hasYearGroupAssignments = cat.yearGroups && Object.keys(cat.yearGroups).length > 0 && 
-          Object.values(cat.yearGroups).some(v => v === true);
-        return isCustom || hasGroupAssignments || hasYearGroupAssignments;
-      });
-      
-      let categoriesSuccess = true;
-      if (categoriesToSave.length > 0) {
-        const categoriesForSupabase = categoriesToSave.map(cat => {
-          // Ensure all required fields are present and valid
-          const categoryData: any = {
-            id: cat.id,  // Preserve Supabase PK for round-trip upserts
-            name: cat.name || '',
-            color: cat.color || '#6B7280',
-            position: typeof cat.position === 'number' ? cat.position : (cat.position ? parseInt(cat.position, 10) : 0),
-            group: cat.group || null,
-            groups: Array.isArray(cat.groups) ? cat.groups : (cat.group ? [cat.group] : []),
-            yearGroups: typeof cat.yearGroups === 'object' && cat.yearGroups !== null && !Array.isArray(cat.yearGroups) ? cat.yearGroups : {}
-          };
-          
-          // Validate required fields
-          if (!categoryData.name) {
-            console.warn(`⚠️ Skipping category with missing name:`, cat);
-            return null;
-          }
-          
-          return categoryData;
-        }).filter(cat => cat !== null); // Remove any invalid categories
-        
-        if (categoriesForSupabase.length === 0) {
-          console.warn('⚠️ No valid categories to sync after validation');
-          categoriesSuccess = true; // Not an error, just nothing to sync
-        } else {
-          const withYearGroups = categoriesForSupabase.filter(c => c.yearGroups && Object.keys(c.yearGroups).length > 0 && Object.values(c.yearGroups).some(v => v === true));
-          if (override?.categories && withYearGroups.length > 0) {
-            console.log('📤 Syncing categories with year group assignments:', withYearGroups.length, withYearGroups.map(c => ({ name: c.name, yearGroups: c.yearGroups })));
-          }
-          
-          console.log('📤 Preparing to upsert categories:', {
-            total: categoriesForSupabase.length,
-            withYearGroups: withYearGroups.length,
-            sample: categoriesForSupabase[0]
-          });
-          
-          categoriesSuccess = await customCategoriesApi.upsert(categoriesForSupabase)
-            .then(() => {
-              console.log('✅ Categories synced to Supabase', categoriesForSupabase.length);
-              return true;
-            })
-            .catch(error => {
-              console.error('❌ Failed to sync categories:', error);
-              console.error('❌ Categories that failed:', categoriesForSupabase.slice(0, 3));
-              return false;
-            });
-        }
-      }
-
-      const allSuccess = yearGroupsSuccess && categoriesSuccess;
-      if (allSuccess) {
-        console.log('✅ All settings synced to Supabase successfully');
-      } else {
-        console.warn('⚠️ Some settings failed to sync to Supabase');
-      }
-      
-      return allSuccess;
+      // year_groups and custom_categories have no per-tenant column: any write would
+      // overwrite every other tenant's configuration. Writes are disabled until a schema
+      // migration adds a tenant/school identifier to these tables and their constraints.
+      // Settings continue to persist in localStorage as the authoritative local store.
+      console.warn('⚠️ forceSyncToSupabase: writes to year_groups and custom_categories are disabled — tables have no tenant key');
+      return false;
     } catch (error) {
       console.error('❌ Failed to force sync to Supabase:', error);
       return false;
@@ -2350,7 +2222,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         }
       }
       if (supabaseYearGroups && supabaseYearGroups.length > 0) {
-        const formattedYearGroups = supabaseYearGroups.map(group => ({
+        const formattedYearGroups = supabaseYearGroups.map((group: any) => ({
           id: group.id,
           name: group.name,
           color: group.color
@@ -2408,7 +2280,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       // Refresh category groups
       const supabaseCategoryGroups = await categoryGroupsApi.getAll();
       if (supabaseCategoryGroups && supabaseCategoryGroups.length > 0) {
-        const groupNames = supabaseCategoryGroups.map(group => group.name);
+        const groupNames = supabaseCategoryGroups.map((group: any) => group.name);
         setCategoryGroups({ groups: groupNames });
         localStorage.setItem('category-groups', JSON.stringify({ groups: groupNames }));
         console.log('✅ Category groups refreshed from Supabase:', groupNames);
@@ -2416,7 +2288,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
 
       // Refresh branding from Supabase
       try {
-        const supabaseBranding = await brandingApi.get();
+        const supabaseBranding: any = await brandingApi.get();
         if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
           if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
             supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
@@ -2452,14 +2324,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       console.log('🔄 Force syncing current year groups to Supabase...');
       console.log('📦 Current year groups to sync:', customYearGroups);
       
-      if (customYearGroups && customYearGroups.length > 0) {
-        await yearGroupsApi.upsert(customYearGroups);
-        console.log('✅ Successfully synced current year groups to Supabase');
-        return true;
-      } else {
-        console.log('⚠️ No year groups to sync');
-        return false;
-      }
+      // year_groups has no per-tenant column: writes are disabled until schema migration.
+      console.warn('⚠️ forceSyncCurrentYearGroups: writes to year_groups are disabled — table has no tenant key');
+      return false;
     } catch (error) {
       console.error('❌ Failed to sync current year groups to Supabase:', error);
       return false;
@@ -2563,18 +2430,10 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         return acc;
       }, []);
       
+      // year_groups has no per-tenant column: delete-all + re-insert would destroy
+      // every other tenant's year groups. Writes are disabled until schema migration.
       if (uniqueGroups.length !== allGroups.length) {
-        console.log(`🧹 Found ${allGroups.length - uniqueGroups.length} duplicates, cleaning up...`);
-        
-        // Delete all existing year groups
-        await supabase.from('year_groups').delete().neq('id', '');
-        
-        // Re-insert only unique groups
-        if (uniqueGroups.length > 0) {
-          await yearGroupsApi.upsert(uniqueGroups);
-        }
-        
-        console.log('✅ Database cleanup completed');
+        console.warn(`⚠️ cleanupDuplicates: found ${allGroups.length - uniqueGroups.length} duplicates but database write is disabled — year_groups table has no tenant key`);
       } else {
         console.log('✅ No duplicates found in database');
       }
@@ -2697,14 +2556,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       setCategoryGroups(updatedGroups);
       localStorage.setItem('category-groups', JSON.stringify(updatedGroups));
       
-      // Also save to Supabase if configured
+      // category_groups has no per-tenant column: writes are disabled until schema migration.
       if (isSupabaseConfigured()) {
-        try {
-          await categoryGroupsApi.upsert(updatedGroups.groups);
-          console.log('✅ Category group added and saved to Supabase:', groupName);
-        } catch (error) {
-          console.error('❌ Failed to save category group to Supabase:', error);
-        }
+        console.warn('⚠️ Skipping Supabase write for addCategoryGroup — category_groups table has no tenant key');
       }
     }
   };
@@ -2717,14 +2571,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     setCategoryGroups(updatedGroups);
     localStorage.setItem('category-groups', JSON.stringify(updatedGroups));
     
-    // Also save to Supabase if configured
+    // category_groups has no per-tenant column: writes are disabled until schema migration.
     if (isSupabaseConfigured()) {
-      try {
-        await categoryGroupsApi.upsert(updatedGroups.groups);
-        console.log('✅ Category group removed and saved to Supabase:', groupName);
-      } catch (error) {
-        console.error('❌ Failed to save category group removal to Supabase:', error);
-      }
+      console.warn('⚠️ Skipping Supabase write for removeCategoryGroup — category_groups table has no tenant key');
     }
     
     // Remove group from all categories that have it (both single group and multiple groups)
@@ -2756,14 +2605,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     setCategoryGroups(updatedGroups);
     localStorage.setItem('category-groups', JSON.stringify(updatedGroups));
     
-    // Also save to Supabase if configured
+    // category_groups has no per-tenant column: writes are disabled until schema migration.
     if (isSupabaseConfigured()) {
-      try {
-        await categoryGroupsApi.upsert(updatedGroups.groups);
-        console.log('✅ Category group updated and saved to Supabase:', oldName, '->', newName);
-      } catch (error) {
-        console.error('❌ Failed to save category group update to Supabase:', error);
-      }
+      console.warn('⚠️ Skipping Supabase write for updateCategoryGroup — category_groups table has no tenant key');
     }
     
     // Update group name in all categories that have it (both single group and multiple groups)

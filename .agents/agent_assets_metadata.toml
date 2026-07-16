@@ -29,3 +29,45 @@ id = "FMTiyz7wvf_fmOg4uFVMR"
 uri = "file://.local/outputs/CCD-Pitch-Deck.pptx"
 type = "slides"
 title = "CCD Pitch Deck (PPTX)"
+
+[[outputs]]
+id = "hDVFwYc9QPwbRu3Lhw1mQ"
+uri = "file://ccd-promo-dreamhost.tar.gz"
+type = "unspecified"
+title = "CCD Promo — DreamHost embed (now with thumbnail)"
+
+[[outputs]]
+id = "sq9coXuti1rcKeY6Z-Ocy"
+uri = "file://ccd-promo-dreamhost.zip"
+type = "unspecified"
+title = "CCD Promo — DreamHost embed (zip)"
+
+[[outputs]]
+id = "0tv3aKRBSc6FIEtpgd4IE"
+uri = "file://artifacts/ccd-promo/dreamhost-embed/index.html.txt"
+type = "text"
+title = "index.html (rename to .html after saving)"
+
+[[outputs]]
+id = "ByysGSE8Fn8A_X6P2YgUK"
+uri = "file://.local/outputs/CCDesigner-Pitch-Deck.pptx"
+type = "slides"
+title = "CCDesigner Pitch Deck (PPTX) — 21 slides"
+
+[[outputs]]
+id = "79diPR_4BrCNKYG-FeDWx"
+uri = "file://artifacts/ccd-pitch/public/downloads/CCDesigner-Pitch-Deck.pptx"
+type = "slides"
+title = "CCDesigner Pitch Deck (PPTX) — 21 slides"
+
+[[outputs]]
+id = "ARD9iYIGqhmaycaTR5_DX"
+uri = "file://artifacts/ccd-promo/public/downloads/CCDesigner-Promo.pptx"
+type = "slides"
+title = "CCDesigner Promo — Editable PowerPoint (22 slides)"
+
+[[outputs]]
+id = "M6VlXV4t4Dfp4LZZZ6_hY"
+uri = "file://exports/CCDesigner-Podcast-Notes.pdf"
+type = "pdf"
+title = "CCDesigner — Podcast Cue Cards"

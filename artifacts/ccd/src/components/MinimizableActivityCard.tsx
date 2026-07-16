@@ -1,8 +1,9 @@
+import { sanitizeHtml } from '../utils/sanitize';
 import React, { useState, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { X, ChevronRight, ChevronDown, GripVertical, Clock } from 'lucide-react';
-import { Activity } from '../types';
+import type { Activity } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 
 interface MinimizableActivityCardProps {
@@ -99,8 +100,8 @@ export function MinimizableActivityCard({
 
   // Render HTML content safely
   const renderHtmlContent = (htmlString: string) => {
-    if (!htmlString) return '';
-    return { __html: htmlString };
+    if (!htmlString) return { __html: '' };
+    return { __html: sanitizeHtml(htmlString) };
   };
 
   // Get category color from settings

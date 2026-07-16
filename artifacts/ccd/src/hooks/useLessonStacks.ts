@@ -93,6 +93,7 @@ export function useLessonStacks() {
         localStorage.setItem('lesson-stacks', JSON.stringify(updated));
         return updated;
       });
+      return undefined;
     }
   };
 

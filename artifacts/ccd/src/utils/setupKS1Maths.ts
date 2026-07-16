@@ -311,7 +311,7 @@ export async function setupKS1MathsExample() {
 
     // Step 2: Create year group
     console.log('\n👥 Step 2: Creating "Example KS1 Maths" year group...');
-    const existingYearGroups = await yearGroupsApi.getAll();
+    const existingYearGroups: any[] = await yearGroupsApi.getAll();
     const yearGroupExists = existingYearGroups.some(g => g.name === 'Example KS1 Maths');
     
     if (!yearGroupExists) {

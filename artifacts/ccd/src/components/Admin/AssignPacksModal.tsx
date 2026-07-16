@@ -62,7 +62,7 @@ export function AssignPacksModal({ user, onSave, onClose }: AssignPacksModalProp
         </div>
         <div className="p-4">
           <p className="text-sm text-gray-600 mb-4">
-            Grant access to activity packs for <strong>{user.display_name || user.email || user.id}</strong>. They will see these packs without purchasing.
+            Grant access to activity packs for <strong>{user.display_name || user.email || user.id}</strong>.
           </p>
           {packs.length === 0 ? (
             <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
@@ -84,7 +84,6 @@ export function AssignPacksModal({ user, onSave, onClose }: AssignPacksModalProp
                   <span className="text-2xl" aria-hidden>{pack.icon || '📦'}</span>
                   <div className="flex-1 min-w-0">
                     <span className="font-medium text-gray-900 block truncate">{pack.name}</span>
-                    <span className="text-xs text-gray-500">£{pack.price?.toFixed(2) ?? '0.00'}</span>
                   </div>
                 </label>
               ))}

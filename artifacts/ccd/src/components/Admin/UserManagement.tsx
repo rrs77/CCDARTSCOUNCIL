@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, Edit2, Loader2, Mail, Plus, X, MoreVertical, ShoppingBag, UserX, Send, Package } from 'lucide-react';
+import { Users, Edit2, Loader2, Mail, Plus, X, MoreVertical, UserX, Send, Package } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 import { getVercelApiUrl } from '../../utils/apiUrl';
 import { activityPacksApi } from '../../config/api';
@@ -8,7 +8,6 @@ import { useSettings } from '../../contexts/SettingsContextNew';
 import { useAuth } from '../../hooks/useAuth';
 import type { Profile, ProfileRole, ProfileStatus } from '../../types/auth';
 import { EditUserModal } from './EditUserModal';
-import { ViewPurchasesModal } from './ViewPurchasesModal';
 import { AssignPacksModal } from './AssignPacksModal';
 import toast from 'react-hot-toast';
 
@@ -84,7 +83,6 @@ export function UserManagement() {
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
-  const [viewPurchasesUser, setViewPurchasesUser] = useState<Profile | null>(null);
   const [assignPacksUser, setAssignPacksUser] = useState<Profile | null>(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<Profile | null>(null);
   const [menuOpenForId, setMenuOpenForId] = useState<string | null>(null);
@@ -390,7 +388,7 @@ export function UserManagement() {
         </button>
       </div>
       <p className="text-sm text-gray-600">
-        Manage users: edit name and role (including Admin or Superuser), change status (Active / Suspended), view purchases, send password reset or resend invite, suspend or delete. Use the <strong>⋮ Actions</strong> menu on a row → <strong>Edit</strong> to assign activity packs (e.g. Commedia) or change role. Use Edit → Role to assign Superuser.
+        Manage users: edit name and role (including Admin or Superuser), change status (Active / Suspended), send password reset or resend invite, suspend or delete. Use the <strong>⋮ Actions</strong> menu on a row → <strong>Edit</strong> to assign activity packs (e.g. Commedia) or change role. Use Edit → Role to assign Superuser.
       </p>
       <div className="border border-gray-200 rounded-lg overflow-x-auto">
         <table className="w-full text-left min-w-[700px]">
@@ -459,9 +457,6 @@ export function UserManagement() {
             <button type="button" onClick={() => { setEditingUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
               <Edit2 className="h-4 w-4" /> Edit User
             </button>
-            <button type="button" onClick={() => { setViewPurchasesUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
-              <ShoppingBag className="h-4 w-4" /> View Purchases
-            </button>
             <button type="button" onClick={() => { setAssignPacksUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
               <Package className="h-4 w-4" /> Assign packs
             </button>
@@ -487,10 +482,6 @@ export function UserManagement() {
       {editingUser && (
         <EditUserModal user={editingUser} yearGroupNames={yearGroupNames} categoryNames={categoryNames} onSave={handleSave} onClose={() => setEditingUser(null)} />
       )}
-      {viewPurchasesUser && (
-        <ViewPurchasesModal user={viewPurchasesUser} onClose={() => setViewPurchasesUser(null)} />
-      )}
-
       {assignPacksUser && (
         <AssignPacksModal
           user={assignPacksUser}
@@ -600,8 +591,8 @@ export function UserManagement() {
               )}
               {createPacks.length > 0 && (
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign purchased resources (optional)</label>
-                  <p className="text-xs text-gray-500 mb-1">Grant access to activity packs without purchasing.</p>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Assign resource packs (optional)</label>
+                  <p className="text-xs text-gray-500 mb-1">Grant access to activity packs.</p>
                   <div className="flex flex-wrap gap-1.5 max-h-20 overflow-y-auto">
                     {createPacks.map(p => (
                       <label key={p.pack_id} className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-gray-50">

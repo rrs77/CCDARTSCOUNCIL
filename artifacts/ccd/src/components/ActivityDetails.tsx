@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { sanitizeHtml } from '../utils/sanitize';
 import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Upload, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette } from 'lucide-react';
 import { EditableText } from './EditableText';
 import { RichTextEditor } from './RichTextEditor';
@@ -151,7 +152,10 @@ export function ActivityDetails({
     
     const updatedActivity = {
       ...editedActivity,
-      standards: selectedStandards
+      standards: selectedStandards,
+      description: sanitizeHtml(editedActivity.description || ''),
+      activityText: sanitizeHtml(editedActivity.activityText || ''),
+      htmlDescription: editedActivity.htmlDescription ? sanitizeHtml(editedActivity.htmlDescription) : editedActivity.htmlDescription,
     };
     
     // Log year groups before saving
@@ -255,7 +259,7 @@ export function ActivityDetails({
       return wrapWithDemoProtection(
         <div
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: isDemo ? descText : activity.htmlDescription }}
+          dangerouslySetInnerHTML={{ __html: isDemo ? descText : sanitizeHtml(activity.htmlDescription) }}
           dir="ltr"
         />
       );
@@ -276,7 +280,7 @@ export function ActivityDetails({
       return wrapWithDemoProtection(
         <div
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: isDemo ? descText : activity.description }}
+          dangerouslySetInnerHTML={{ __html: isDemo ? descText : sanitizeHtml(activity.description) }}
           dir="ltr"
         />
       );
@@ -291,7 +295,7 @@ export function ActivityDetails({
     return wrapWithDemoProtection(
       <div
         className="prose prose-sm max-w-none"
-        dangerouslySetInnerHTML={{ __html: formattedDescription }}
+        dangerouslySetInnerHTML={{ __html: sanitizeHtml(formattedDescription) }}
         dir="ltr"
       />
     );
@@ -314,7 +318,7 @@ export function ActivityDetails({
       return (
         <div
           className="prose prose-sm max-w-none"
-          dangerouslySetInnerHTML={{ __html: activity.activityText }}
+          dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.activityText) }}
           dir="ltr"
         />
       );
@@ -482,7 +486,7 @@ export function ActivityDetails({
                     if (validYearGroups.length === 0) return null;
                     
                     // Create abbreviation function
-                    const abbreviate = (label: string) => {
+                    const abbreviate = (label: string): string => {
                       if (!label) return label;
                       
                       // Handle comma-separated values (e.g., "EYFS U, Reception")

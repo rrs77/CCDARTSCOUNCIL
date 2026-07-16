@@ -1,4 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { isDemoModeActive } from '../utils/demoMode';
+import { createDemoSupabaseClient } from '../utils/demoDb';
 
 // Use env vars in Vercel (or any host); fallback to current Supabase project
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wiudrzdkbpyziaodqoog.supabase.co';
@@ -8,8 +10,9 @@ if (!supabaseUrl || !supabaseAnonKey) {
   console.error('Missing Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel (or use defaults).');
 }
 
-// Use Supabase Auth (email/password, RLS): set VITE_USE_SUPABASE_AUTH=true
-const useSupabaseAuth = import.meta.env.VITE_USE_SUPABASE_AUTH === 'true';
+// Supabase Auth is enabled by default (fail-closed).
+// Set VITE_USE_SUPABASE_AUTH=false only to explicitly disable it (e.g. during local dev without a Supabase project).
+const useSupabaseAuth = import.meta.env.VITE_USE_SUPABASE_AUTH !== 'false';
 
 /** Session cookie set when user chooses "Require password each time". When set, we use sessionStorage so session ends when browser closes. */
 const SESSION_ONLY_COOKIE = 'ccd_session_only';
@@ -34,23 +37,29 @@ export function setSessionOnlyCookie() {
 }
 
 // Create Supabase client. When using Supabase Auth, session is persisted (localStorage or sessionStorage when "require password each time").
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey,
-  {
-    auth: {
-      persistSession: useSupabaseAuth,
-      autoRefreshToken: useSupabaseAuth,
-      detectSessionInUrl: useSupabaseAuth,
-      ...(useSupabaseAuth && { storage: customAuthStorage }),
-    },
-    global: {
-      headers: {
-        'apikey': supabaseAnonKey
+//
+// SAFETY: in Preview / Demo mode the exported client is a localStorage-backed
+// mock (see utils/demoDb.ts). No real Supabase client is even constructed, so
+// no read or write from a demo visitor can ever reach the live database.
+export const supabase: SupabaseClient = isDemoModeActive()
+  ? (createDemoSupabaseClient() as SupabaseClient)
+  : createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        auth: {
+          persistSession: useSupabaseAuth,
+          autoRefreshToken: useSupabaseAuth,
+          detectSessionInUrl: useSupabaseAuth,
+          ...(useSupabaseAuth && { storage: customAuthStorage }),
+        },
+        global: {
+          headers: {
+            'apikey': supabaseAnonKey
+          }
+        }
       }
-    }
-  }
-);
+    );
 
 export const isSupabaseAuthEnabled = () => useSupabaseAuth;
 

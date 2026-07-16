@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import toast from 'react-hot-toast';
 import { 
   Tag, 
@@ -288,8 +289,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
       const newActivity = {
         ...activity,
         activity: sanitizeText(activity.activity).trim(),
-        description: sanitizeText(activity.description),
-        activityText: sanitizeText(activity.activityText),
+        description: sanitizeHtml(sanitizeText(activity.description)),
+        activityText: sanitizeHtml(sanitizeText(activity.activityText)),
         category: sanitizeText(activity.category).trim(),
         unitName: sanitizeText(activity.unitName).trim(),
         lessonNumber: sanitizeText(activity.lessonNumber).trim(),
@@ -434,15 +435,15 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                     onChange={handleChange}
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors duration-200 text-sm font-medium bg-white"
                   >
-                    <option value="">Free (No pack required)</option>
+                    <option value="">No pack required</option>
                     {availablePacks.filter(p => p.is_active).map((pack) => (
                       <option key={pack.pack_id} value={pack.pack_id}>
-                        {pack.icon} {pack.name} - £{pack.price.toFixed(2)}
+                        {pack.icon} {pack.name}
                       </option>
                     ))}
                   </select>
                   <p className="mt-1 text-xs text-gray-500">
-                    If selected, only users who purchase this pack will see this activity
+                    If selected, only users with access to this pack will see this activity
                   </p>
                 </div>
               )}
@@ -670,8 +671,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                       onClick={() => imageInputRef.current?.click()}
                       className="px-3 py-2 text-white text-sm font-medium rounded-lg flex items-center space-x-1"
                       style={{ backgroundColor: '#0BA596' }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = '#0A9688'}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = '#0BA596'}
+                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0A9688'}
+                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0BA596'}
                     >
                       <Upload className="h-4 w-4" />
                       <span>Upload</span>
@@ -774,8 +775,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
               onClick={handleSubmit}
               className="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
               style={{ backgroundColor: '#0BA596' }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#0A9688'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#0BA596'}
+              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0A9688'}
+              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0BA596'}
             >
               <Save className="h-5 w-5" />
               <span>Create Activity</span>

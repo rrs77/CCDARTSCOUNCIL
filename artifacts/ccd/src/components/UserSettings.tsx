@@ -190,9 +190,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const applyingSectionHistoryRef = useRef(false);
   const [shopPacks, setShopPacks] = useState<ActivityPack[]>([]);
 
-  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' ||
-                  user?.role === 'administrator' ||
-                  user?.role === 'admin' ||
+  const isAdmin = user?.role === 'admin' ||
                   user?.role === 'superuser' ||
                   profile?.role === 'admin' ||
                   profile?.role === 'superuser';
@@ -208,6 +206,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
+    if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
     // general, resource-links, data are under Admin for all users – no redirect
   }, [isOpen, activeTab, showUserManagement, isAdmin, isCreator]);
 
@@ -345,7 +344,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     return undefined;
   }, [activeTab]);
 
-  // Load activity packs for Resource Shop when viewing purchases tab
+  // Load activity packs for Resource Library when viewing the tab
   React.useEffect(() => {
     if (activeTab !== 'purchases') return;
     activityPacksApi.getAllPacks().then(setShopPacks).catch(() => setShopPacks([]));
@@ -1023,7 +1022,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             { id: 'yeargroups', label: 'Year Groups', icon: null },
             { id: 'categories', label: 'Categories', icon: null },
             { id: 'admin', label: 'Objectives', icon: null },
-            { id: 'purchases', label: 'Resource Shop', icon: null },
+            { id: 'purchases', label: 'Resource Library', icon: null },
           ].map(tab => (
             <button
               key={tab.id}
@@ -1111,15 +1110,19 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <LinkIcon className="h-4 w-4" />
                   Resource Links
                 </button>
-                <div className="border-t border-gray-100 my-1" />
-                <button
-                  type="button"
-                  onClick={() => { setActiveTab('data'); setAdminMenuOpen(false); }}
-                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'data' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-                >
-                  <Database className="h-4 w-4" />
-                  Data & Backup
-                </button>
+                {isAdmin && (
+                  <>
+                    <div className="border-t border-gray-100 my-1" />
+                    <button
+                      type="button"
+                      onClick={() => { setActiveTab('data'); setAdminMenuOpen(false); }}
+                      className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'data' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      <Database className="h-4 w-4" />
+                      Data & Backup
+                    </button>
+                  </>
+                )}
               </div>
             )}
           </div>
@@ -2427,17 +2430,17 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'purchases' && (
             <div className="space-y-6">
-              {/* Resource Shop Header */}
+              {/* Resource Library Header */}
               <div className="rounded-lg p-6 bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200">
                 <div className="flex items-center space-x-3 mb-4">
-                  <span className="text-3xl">🛒</span>
-                  <h3 className="text-xl font-bold text-gray-900">Resource Shop</h3>
+                  <span className="text-3xl">📚</span>
+                  <h3 className="text-xl font-bold text-gray-900">Resource Library</h3>
                 </div>
                 <p className="text-sm text-gray-700 mb-2">
-                  Expand your curriculum with specialised activity card sets. Each set includes professionally designed activities tailored to specific subjects and age groups.
+                  Browse our collection of activity card sets and lesson packs. Every resource here is free to use.
                 </p>
                 <p className="text-xs text-gray-600">
-                  Connected account: <span className="font-semibold">{user?.email || 'Not signed in'}</span>
+                  Signed in as: <span className="font-semibold">{user?.email || 'Not signed in'}</span>
                 </p>
               </div>
 
@@ -2445,50 +2448,30 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               <div className="space-y-4">
                 <h4 className="text-lg font-semibold text-gray-900">Available Card Sets</h4>
 
-                {/* Packs from database (e.g. Comedia) – visible for purchase and allocation */}
+                {/* Packs from database */}
                 {shopPacks.length > 0 && (
                   <div className="space-y-4">
-                    {shopPacks.map((pack) => {
-                      const paypalReturn = typeof window !== 'undefined' ? window.location.origin : '';
-                      const paypalLink = `https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=rob.reichstorer@gmail.com&amount=${pack.price}&currency_code=GBP&item_name=${encodeURIComponent(pack.name)}&return=${encodeURIComponent(paypalReturn)}`;
-                      return (
-                        <div key={pack.pack_id} className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <div className="flex items-center space-x-3 mb-3">
-                                <span className="text-4xl" aria-hidden>{pack.icon || '📦'}</span>
-                                <div>
-                                  <h5 className="text-xl font-bold text-gray-900">{pack.name}</h5>
-                                  <p className="text-sm text-teal-600 font-medium">
-                                    {pack.stack_ids?.length ? 'Full lesson pack' : 'Activity pack'}
-                                  </p>
-                                </div>
-                              </div>
-                              {pack.description && (
-                                <p className="text-sm text-gray-700 mb-4">{pack.description}</p>
-                              )}
-                              <div className="flex items-center space-x-4 mb-4">
-                                <span className="text-3xl font-bold text-teal-600">£{Number(pack.price || 0).toFixed(2)}</span>
+                    {shopPacks.map((pack) => (
+                      <div key={pack.pack_id} className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center space-x-3 mb-3">
+                              <span className="text-4xl" aria-hidden>{pack.icon || '📦'}</span>
+                              <div>
+                                <h5 className="text-xl font-bold text-gray-900">{pack.name}</h5>
+                                <p className="text-sm text-teal-600 font-medium">
+                                  {pack.stack_ids?.length ? 'Full lesson pack' : 'Activity pack'}
+                                </p>
                               </div>
                             </div>
+                            {pack.description && (
+                              <p className="text-sm text-gray-700 mb-2">{pack.description}</p>
+                            )}
+                            <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">FREE</span>
                           </div>
-                          <div className="flex items-center space-x-3">
-                            <a
-                              href={paypalLink}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg text-center flex items-center justify-center space-x-2"
-                            >
-                              <span>💳</span>
-                              <span>Purchase via PayPal or card</span>
-                            </a>
-                          </div>
-                          <p className="text-xs text-gray-500 mt-3 text-center">
-                            After purchase, the pack will be added to your account (or contact support with your order details).
-                          </p>
                         </div>
-                      );
-                    })}
+                      </div>
+                    ))}
                   </div>
                 )}
 
@@ -2500,10 +2483,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         <span className="text-4xl">🎭</span>
                         <div>
                           <h5 className="text-xl font-bold text-gray-900">Drama Games Activity Pack</h5>
-                          <p className="text-sm text-teal-600 font-medium">Unlock 50+ Drama Activities</p>
+                          <p className="text-sm text-teal-600 font-medium">50+ Drama Activities</p>
                         </div>
                       </div>
-                      
                       <div className="space-y-2 mb-4">
                         <p className="text-sm text-gray-700">
                           Transform your drama lessons with this comprehensive collection of engaging drama games and activities suitable for KS1 and KS2.
@@ -2517,30 +2499,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                           <li>• Curriculum-Aligned Objectives</li>
                         </ul>
                       </div>
-
-                      <div className="flex items-center space-x-4 mb-4">
-                        <span className="text-3xl font-bold text-teal-600">£24.99</span>
-                        <span className="text-sm text-gray-500 line-through">£39.99</span>
-                        <span className="px-3 py-1 bg-red-100 text-red-700 text-xs font-bold rounded-full">SAVE 38%</span>
-                      </div>
+                      <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">FREE</span>
                     </div>
                   </div>
-
-                  <div className="flex items-center space-x-3">
-                    <a
-                      href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=rob.reichstorer@gmail.com&amount=24.99&currency_code=GBP&item_name=Drama%20Games%20Activity%20Pack&return=http://localhost:5173"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg text-center flex items-center justify-center space-x-2"
-                    >
-                      <span>💳</span>
-                      <span>Purchase Now via PayPal or debit and credit card</span>
-                    </a>
-                  </div>
-                  
-                  <p className="text-xs text-gray-500 mt-3 text-center">
-                    After purchase, the activities will automatically appear in your Activity Library within 24 hours.
-                  </p>
                 </div>
 
                 {/* Commedia dell'arte for KS3 */}
@@ -2557,21 +2518,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       <p className="text-sm text-gray-700 mb-4">
                         Complete lesson packs on Commedia dell'arte for KS3. Just download the pack and add the lessons straight into your built-in teaching calendar—no extra setup.
                       </p>
-                      <div className="flex items-center space-x-4 mb-4">
-                        <span className="text-3xl font-bold text-teal-600">£24.99</span>
-                      </div>
+                      <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">FREE</span>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <a
-                      href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=rob.reichstorer@gmail.com&amount=24.99&currency_code=GBP&item_name=Commedia%20dell%27arte%20KS3%20Lesson%20Pack&return=http://localhost:5173"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg text-center flex items-center justify-center space-x-2"
-                    >
-                      <span>💳</span>
-                      <span>Purchase via PayPal or card</span>
-                    </a>
                   </div>
                 </div>
 
@@ -2589,21 +2537,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       <p className="text-sm text-gray-700 mb-4">
                         A full lesson pack focused on improvisation for KS3 drama. Download and add the sessions directly to your teaching calendar.
                       </p>
-                      <div className="flex items-center space-x-4 mb-4">
-                        <span className="text-3xl font-bold text-teal-600">£24.99</span>
-                      </div>
+                      <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">FREE</span>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <a
-                      href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=rob.reichstorer@gmail.com&amount=24.99&currency_code=GBP&item_name=Improvisation%20KS3%20Lesson%20Pack&return=http://localhost:5173"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg text-center flex items-center justify-center space-x-2"
-                    >
-                      <span>💳</span>
-                      <span>Purchase via PayPal or card</span>
-                    </a>
                   </div>
                 </div>
 
@@ -2621,21 +2556,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       <p className="text-sm text-gray-700 mb-4">
                         Explore the Kneehigh style and devising techniques with this KS3 drama practitioner pack. Download the lessons and add them to your built-in calendar.
                       </p>
-                      <div className="flex items-center space-x-4 mb-4">
-                        <span className="text-3xl font-bold text-teal-600">£24.99</span>
-                      </div>
+                      <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">FREE</span>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <a
-                      href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=rob.reichstorer@gmail.com&amount=24.99&currency_code=GBP&item_name=Kneehigh%20Theatre%20KS3%20Lesson%20Pack&return=http://localhost:5173"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg text-center flex items-center justify-center space-x-2"
-                    >
-                      <span>💳</span>
-                      <span>Purchase via PayPal or card</span>
-                    </a>
                   </div>
                 </div>
 
@@ -2653,21 +2575,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       <p className="text-sm text-gray-700 mb-4">
                         Full lesson packs on Brecht for KS3 drama. Download and slot the sessions into your teaching calendar—no extra setup.
                       </p>
-                      <div className="flex items-center space-x-4 mb-4">
-                        <span className="text-3xl font-bold text-teal-600">£24.99</span>
-                      </div>
+                      <span className="inline-block px-3 py-1 bg-emerald-100 text-emerald-700 text-xs font-bold rounded-full">FREE</span>
                     </div>
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <a
-                      href="https://www.paypal.com/cgi-bin/webscr?cmd=_xclick&business=rob.reichstorer@gmail.com&amount=24.99&currency_code=GBP&item_name=Brecht%20KS3%20Lesson%20Pack&return=http://localhost:5173"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex-1 bg-gradient-to-r from-blue-600 to-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:from-blue-700 hover:to-blue-800 transition-all shadow-md hover:shadow-lg text-center flex items-center justify-center space-x-2"
-                    >
-                      <span>💳</span>
-                      <span>Purchase via PayPal or card</span>
-                    </a>
                   </div>
                 </div>
 
@@ -2706,11 +2615,11 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <div className="flex-1">
                     <h6 className="font-semibold text-gray-900 mb-1">Need Help?</h6>
                     <p className="text-sm text-gray-700">
-                      If you've purchased a pack but it hasn't appeared in your library, please contact support at{' '}
+                      If a pack hasn't appeared in your library, please contact support at{' '}
                       <a href="mailto:support@rhythmstiix.co.uk" className="text-teal-600 hover:text-teal-700 font-medium">
                         support@rhythmstiix.co.uk
                       </a>
-                      {' '}with your order number.
+                      .
                     </p>
                   </div>
                 </div>
@@ -2718,7 +2627,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             </div>
           )}
 
-          {activeTab === 'data' && (
+          {activeTab === 'data' && isAdmin && (
             <div className="space-y-6">
               <DataSourceSettings embedded={true} />
             </div>
@@ -2733,7 +2642,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <h3 className="text-lg font-semibold text-gray-900">Activity Packs Management</h3>
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
-                  Create and manage activity packs for purchase. Link categories to packs, set prices, and track purchases.
+                  Create and manage activity packs. Link categories to packs and assign access to users — every pack is free.
                 </p>
                 
                 <ActivityPacksAdmin userEmail={user?.email || ''} isCreator={isCreator} isAdmin={isAdmin} />

@@ -1,5 +1,5 @@
 {
-  "buildCommand": "pnpm --filter @workspace/ccd run build",
+  "buildCommand": "if [ \"$VITE_USE_SUPABASE_AUTH\" = 'false' ]; then echo 'ERROR: VITE_USE_SUPABASE_AUTH=false is not permitted in production builds' && exit 1; fi && pnpm --filter @workspace/ccd run build",
   "outputDirectory": "artifacts/ccd/dist/public",
   "installCommand": "pnpm install --frozen-lockfile",
   "framework": null,

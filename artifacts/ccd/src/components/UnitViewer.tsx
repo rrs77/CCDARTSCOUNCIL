@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import { 
   FolderOpen, 
   Search, 
@@ -592,7 +593,7 @@ export function UnitViewer() {
               <h2 className="text-lg font-semibold text-gray-900 mb-3">Unit Description</h2>
               <div 
                 className="prose prose-sm max-w-none"
-                dangerouslySetInnerHTML={{ __html: selectedUnit.description }}
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(selectedUnit.description) }}
               />
             </div>
           )}
@@ -628,7 +629,7 @@ export function UnitViewer() {
                       viewMode="grid"
                       onClick={() => handleViewLessonDetails(lessonNumber)}
                       onEdit={() => handleEditLesson(lessonNumber)}
-                      theme={theme}
+                      theme={theme as any}
                       halfTerms={halfTerms}
                       onShare={() => {}} // Share functionality handled internally in card
                     />
@@ -723,7 +724,7 @@ export function UnitViewer() {
                 setSelectedLessonForDetails(null);
                 setSelectedHalfTerm(null);
               }}
-              theme={theme}
+              theme={theme as any}
               onExport={() => {
                 setSelectedLessonForExport(selectedLessonForDetails);
                 setSelectedLessonForDetails(null);
@@ -837,7 +838,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                           </div>
                           <div 
                             className="text-xs text-gray-600 line-clamp-2"
-                            dangerouslySetInnerHTML={{ __html: activity.description || '' }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.description || '') }}
                           />
                         </div>
                         <Plus className="h-5 w-5 text-blue-600 ml-2 flex-shrink-0" />
@@ -1279,7 +1280,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                       stackCount={validStacks.length}
                       onClick={() => handleHalfTermClick(halfTerm.id)}
                       isComplete={isComplete}
-                      theme={theme}
+                      theme={theme as any}
                       onLessonClick={handleViewLessonDetails}
                       onLessonEdit={handleEditLesson}
                       halfTerms={halfTerms}
@@ -1333,7 +1334,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                 // Preserve existing stacks when updating half-term
                 const existingHalfTerm = halfTerms.find(term => term.id === selectedHalfTerm);
                 const existingStacks = existingHalfTerm?.stacks || [];
-                updateHalfTerm(selectedHalfTerm, lessons, isComplete, existingStacks);
+                updateHalfTerm(selectedHalfTerm, lessons, isComplete ?? false, existingStacks);
                 setShowLessonSelectionModal(false);
                 setSelectedHalfTerm(null);
               }}
@@ -1355,7 +1356,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                 setSelectedLessonForDetails(null);
                 setSelectedHalfTerm(null);
               }}
-              theme={theme}
+              theme={theme as any}
               onExport={() => {
                 setSelectedLessonForExport(selectedLessonForDetails);
                 setSelectedLessonForDetails(null);

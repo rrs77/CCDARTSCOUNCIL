@@ -31,10 +31,10 @@ export function useDemoMode() {
     callback();
   };
 
-  const truncateForDemo = (text: string, limit = 90): string => {
-    if (!isDemo || !text || text.length <= limit) return text;
-    return text.substring(0, limit) + '...';
-  };
+  // The prototype now carries a full snapshot of real account content and
+  // supports the complete editing workflow, so descriptions are no longer
+  // truncated for demo visitors.
+  const truncateForDemo = (text: string, _limit = 90): string => text;
 
   return { isDemo, showUpgradePrompt, gateFeature, truncateForDemo };
 }

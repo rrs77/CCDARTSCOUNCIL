@@ -1,0 +1,53 @@
+While PeriFeedback could operate as a standalone platform — and may appear to overlap with some existing peripatetic management or feedback systems — the long-term vision is for it to become an integrated, optional add-on within a wider platform I have been developing over the past year called Creative Curriculum Designer (CCDesigner).
+
+Rather than competing directly with existing management systems, PeriFeedback is intended to focus specifically on creative learning, rehearsal feedback, reflective practice, arts-specific assessment, and the wider educational ecosystem surrounding arts provision.
+
+The more exciting proposition, however, is Creative Curriculum Designer (CCDesigner) itself. PeriFeedback was originally intended to exist as a separate application, but I now want it to become a bolt-on tool within the wider CCDesigner ecosystem. The aim is to create a true “melting pot” for arts education planning — a shared creative space where teachers, arts organisations, and practitioners can build, adapt, archive, and share curriculum content collaboratively.
+
+I’ve spent the last year developing CCDesigner as a free, arts-focused curriculum planning and resource platform designed to make high-quality arts education accessible to every teacher, not just those who have attended specialist training, courses, or funded programmes.
+
+I am currently preparing an application to Arts Council England to support the next stage of development and help establish partnerships with arts and cultural organisations across the UK.
+
+The vision is to create a national digital hub for arts education planning across Drama, Music, Dance, and Art, allowing organisations such as the London Symphony Orchestra, National Theatre, Royal Opera House, and Tricycle Theatre (Kiln Theatre) to preserve, organise, and share their educational resources, workshops, and teaching archives with teachers nationally.
+
+At present, many outstanding arts education resources only reach teachers who have attended specific training programmes, workshops, or regional projects. CCDesigner aims to remove those barriers and democratise access to high-quality creative teaching materials by creating a shared platform where arts organisations, schools, and practitioners can contribute and access curriculum content freely.
+
+The platform is built around a modular “LEGO-style” approach to curriculum design. Teachers can:
+
+* Create and store individual teaching activities
+* Build complete lessons from reusable learning blocks
+* Drag and drop activities into new lesson sequences
+* Save and adapt curriculum materials over time
+* Access historic teaching collections from leading arts organisations
+* Embed videos, web resources, and supporting media directly into planning
+
+Teachers will also have the option to share their own planning and curriculum materials within the platform, helping to build a growing collaborative archive of arts education practice. Following funding, this community-sharing element would be managed and developed through Rhythmstix.
+
+The long-term goal is not simply to create another lesson planner, but to build lasting infrastructure for arts education — preserving valuable institutional knowledge while reducing teacher workload and improving access to specialist pedagogy.
+
+One of the most important aspects of the platform is its ability to archive and preserve educational practice. Organisations such as the London Symphony Orchestra could use the system to host years of workshop materials, CPD content, teacher training resources, and classroom activities in a structured and searchable format, ensuring that valuable educational work is not lost over time.
+
+CCDesigner already includes:
+
+* Preset and configurable curriculum objectives
+* Curriculum and lesson calendar planning tools
+* Interactive printable PDF lesson plans
+* Embedded links to videos, online resources, and teaching media
+* Rich media integration
+* Cross-subject arts curriculum support
+
+Printable lesson plans remain interactive, allowing teachers to access supporting videos, websites, and online resources directly from within the PDF planning documents.
+
+Alongside the free planning platform, I am also developing specialist companion tools including:
+
+* PeriFeedback — rehearsal and performance feedback tools
+* Assessify — arts assessment and progress tracking
+
+Together, the platforms aim to create a connected creative learning environment specifically designed for the needs of arts organisations, schools, teachers, and peripatetic practitioners.
+
+This integrated model creates a sustainable pathway for growth: keeping the core planning platform free and accessible to teachers, while optional specialist tools support long-term development and organisational use.
+
+Over the summer, I’m hoping to meet with arts organisations and cultural partners to build interest, explore collaborations, and shape the long-term vision ahead of the Arts Council funding application.
+
+Promo video:
+Creative Curriculum Designer Preview￼

@@ -54,23 +54,51 @@ export function clearDemoMode() {
   clearDemoLocalStorage();
 }
 
-/** localStorage keys we own when seeding the demo. */
+/** Exact localStorage keys we own when seeding the demo. */
 const DEMO_OWNED_KEYS = [
   'currentSheetInfo',
   'library-activities',
-  'lesson-data-DEMO',
-  'units-DEMO',
-  'half-terms-DEMO-2025-2026',
-  'half-terms-DEMO-2026-2027',
-  'trash-lessons-DEMO',
   'user-created-lesson-plans',
+  'activity-stacks',
+  'custom-year-groups',
+  'saved-categories',
+  'category-groups',
+  'year-group-bands',
+  'rhythmstix_user_id',
 ];
 
-function clearDemoLocalStorage() {
+/**
+ * Prefixes for per-sheet keys seeded from the account snapshot and the
+ * `demo-db-*` tables behind the mock Supabase client. Everything matching
+ * these prefixes is wiped on demo exit/reset so the next session starts from
+ * the pristine snapshot again.
+ */
+const DEMO_OWNED_PREFIXES = [
+  'demo-db-',
+  'lesson-data-',
+  'units-',
+  'half-terms-',
+  'trash-lessons-',
+];
+
+/**
+ * Wipe all demo-owned localStorage. Called on demo exit and again right
+ * before reseeding, so a new session always starts from the pristine
+ * snapshot even if the previous demo session ended without logout.
+ */
+export function clearDemoLocalStorage() {
   try {
     for (const k of DEMO_OWNED_KEYS) {
       localStorage.removeItem(k);
     }
+    const doomed: string[] = [];
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && DEMO_OWNED_PREFIXES.some((p) => key.startsWith(p))) {
+        doomed.push(key);
+      }
+    }
+    doomed.forEach((k) => localStorage.removeItem(k));
   } catch {
     /* noop */
   }

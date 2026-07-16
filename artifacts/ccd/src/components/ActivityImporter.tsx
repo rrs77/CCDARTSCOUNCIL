@@ -1,8 +1,9 @@
 import React, { useState, useRef } from 'react';
 import { Upload, FileText, CheckCircle, AlertCircle, X, Download, RefreshCw } from 'lucide-react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { activitiesApi } from '../config/api';
 import type { Activity } from '../contexts/DataContext';
+import { sanitizeHtml } from '../utils/sanitize';
 import {
   isVocalWarmupSubcategory,
   VOCAL_WARMUP_CANONICAL_CATEGORY,
@@ -112,7 +113,7 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
     // Check if required headers exist
     const requiredHeaders = ['Category', 'Activity Name'];
     const missingHeaders = requiredHeaders.filter(header => 
-      !headers.some(h => h.toLowerCase() === header.toLowerCase())
+      !headers.some((h: string) => h.toLowerCase() === header.toLowerCase())
     );
     
     if (missingHeaders.length > 0) {
@@ -122,12 +123,12 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
     // Find column indices (exact header match first so "Category" does not match "Library Category")
     const getColumnIndex = (name: string) => {
       const lower = name.toLowerCase();
-      const exact = headers.findIndex((h) => String(h).toLowerCase() === lower);
+      const exact = headers.findIndex((h: string) => String(h).toLowerCase() === lower);
       if (exact >= 0) return exact;
-      return headers.findIndex((h) => String(h).toLowerCase().includes(lower));
+      return headers.findIndex((h: string) => String(h).toLowerCase().includes(lower));
     };
 
-    const libraryCategoryIdx = headers.findIndex((h) => {
+    const libraryCategoryIdx = headers.findIndex((h: string) => {
       const x = String(h).toLowerCase().trim();
       return (
         x === 'library category' ||
@@ -197,6 +198,7 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
       if (description && !description.includes('<')) {
         description = description.replace(/\n/g, '<br>');
       }
+      description = sanitizeHtml(description);
 
       const rawCategory = String(row[categoryIdx] || '').trim();
       let resolvedCategory = rawCategory;

@@ -1,35 +1,66 @@
+import { getVercelApiUrl } from './apiUrl';
+import { supabase } from '../config/supabase';
+
 /**
- * PDF generation API URL for Vercel.
- * Uses same-origin /api/generate-pdf endpoint in production.
- * In development, can use VITE_VERCEL_URL if set, otherwise uses relative path.
+ * Returns the URL of the server-side PDF generation proxy.
+ * The proxy holds the PDFBolt API key in the server environment — the key
+ * is never sent to the browser.
  */
-
-const VERCEL_PDF_PATH = '/api/generate-pdf';
+export function getPdfBoltProxyUrl(): string {
+  return getVercelApiUrl('/api/pdf/generate');
+}
 
 /**
- * Returns the URL to call for PDF generation (generate PDF + upload to storage).
- * Use this in useShareLesson when generating share links.
- * 
- * In production: Uses relative path /api/generate-pdf (handled by Vercel)
- * In development: 
- *   - If VITE_VERCEL_URL is set, uses that (points to deployed Vercel app)
- *   - Otherwise uses relative path (will fail unless proxy is configured)
+ * Calls the server-side PDF proxy and returns the resulting PDF as a Blob.
+ * Attaches the current Supabase access token so the proxy can verify the
+ * caller is an authenticated user (guards against open-proxy quota abuse).
+ * Throws an Error with a descriptive message on any failure.
+ */
+export async function generatePdfViaProxy(
+  body: Record<string, unknown>,
+): Promise<Blob> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      headers['Authorization'] = `Bearer ${data.session.access_token}`;
+    }
+  } catch {
+    // Session lookup failed — no token will be sent; the server will reject
+    // the request with 401. PDF exports require an authenticated session.
+  }
+
+  const response = await fetch(getPdfBoltProxyUrl(), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify(body),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    let msg = errText;
+    try {
+      const d = JSON.parse(errText || '{}') as { error?: string };
+      if (d.error) msg = d.error;
+    } catch (_) {}
+    throw new Error(msg || `PDF generation failed: ${response.status}`);
+  }
+
+  return response.blob();
+}
+
+/**
+ * @deprecated Use generatePdfViaProxy() for all new PDF generation calls.
+ * Kept for any callers that still reference the old Vercel generate-pdf route.
  */
 export function getPdfApiUrl(): string {
-  // In development, check if VITE_VERCEL_URL is set to use deployed Vercel app
   if (import.meta.env.DEV) {
     const vercelUrl = import.meta.env.VITE_VERCEL_URL;
     if (vercelUrl) {
-      // Remove trailing slash if present, then append API path
       const baseUrl = vercelUrl.replace(/\/$/, '');
-      const fullUrl = `${baseUrl}${VERCEL_PDF_PATH}`;
-      console.log('[pdfApi] Using deployed Vercel URL for development:', fullUrl);
-      return fullUrl;
+      return `${baseUrl}/api/generate-pdf`;
     }
-    console.warn('[pdfApi] Development mode: VITE_VERCEL_URL not set. API route will only work when deployed to Vercel.');
   }
-  
-  // Production, or dev without VITE_VERCEL_URL: relative path.
-  // In dev this hits the Vite server; proxy only works when VITE_VERCEL_URL is in .env, so Create Link may 404 until then.
-  return VERCEL_PDF_PATH;
+  return '/api/generate-pdf';
 }

@@ -1,12 +1,33 @@
-import React, { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronLeft, HelpCircle, Info, BookOpen, Calendar, Edit3, FolderOpen, Tag, Search, Filter, Download, Plus, Save } from 'lucide-react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  X,
+  ChevronRight,
+  ChevronLeft,
+  HelpCircle,
+  Info,
+  BookOpen,
+  Calendar,
+  Edit3,
+  FolderOpen,
+  Tag,
+  Settings as SettingsIcon,
+  Layers,
+  Sparkles,
+} from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
+
+type Position = 'top' | 'bottom' | 'left' | 'right' | 'center';
 
 interface WalkthroughStep {
   title: string;
   description: string;
+  /**
+   * CSS selector for the element to highlight. May be a comma-separated list
+   * of fallback selectors — the first one that resolves to a visible element
+   * wins. Use 'body' or omit (`'#__none__'`) for a centered modal step.
+   */
   target: string;
-  position: 'top' | 'bottom' | 'left' | 'right';
+  position: Position;
   icon: React.ReactNode;
 }
 
@@ -15,263 +36,425 @@ interface WalkthroughGuideProps {
   onClose: () => void;
 }
 
+const TOOLTIP_WIDTH = 400;
+const TOOLTIP_HEIGHT_ESTIMATE = 240;
+const HIGHLIGHT_PADDING = 8;
+
+/**
+ * Resolve a (possibly comma-separated) selector list to the first element
+ * that is actually present and laid out in the DOM. Returns null if nothing
+ * matches — the caller is responsible for skipping or centering the step.
+ */
+function resolveTarget(selectorList: string): HTMLElement | null {
+  const selectors = selectorList.split(',').map((s) => s.trim()).filter(Boolean);
+  for (const sel of selectors) {
+    try {
+      const el = document.querySelector(sel) as HTMLElement | null;
+      if (!el) continue;
+      const rect = el.getBoundingClientRect();
+      // Skip elements with zero size — they're hidden / not rendered.
+      if (rect.width === 0 && rect.height === 0) continue;
+      return el;
+    } catch {
+      // Bad selector — try the next.
+    }
+  }
+  return null;
+}
+
 export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
   const { settings } = useSettings();
   const productName = settings?.branding?.loginTitle || 'Creative Curriculum Designer';
+
   const [currentStep, setCurrentStep] = useState(0);
-  const [targetElement, setTargetElement] = useState<HTMLElement | null>(null);
-  const [tooltipPosition, setTooltipPosition] = useState({ top: 0, left: 0 });
-  const [tooltipArrowPosition, setTooltipArrowPosition] = useState('top');
+  const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });
+  const [arrowSide, setArrowSide] = useState<'top' | 'bottom' | 'left' | 'right' | 'none'>('none');
+  const [highlightRect, setHighlightRect] = useState<DOMRect | null>(null);
+  const tooltipRef = useRef<HTMLDivElement | null>(null);
 
-  // Define the walkthrough steps
-  const steps: WalkthroughStep[] = [
-    {
-      title: `Welcome to ${productName}`,
-      description: 'This guide will walk you through the key features of the application. Let\'s get started!',
-      target: 'body',
-      position: 'top',
-      icon: <Info className="h-8 w-8 text-blue-500" />
-    },
-    {
-      title: 'Activity Library',
-      description: 'Browse through all available activities. Use the search and filters to find specific activities by name, category, or level.',
-      target: '[data-tab="activity-library"]',
-      position: 'bottom',
-      icon: <Tag className="h-8 w-8 text-pink-500" />
-    },
-    {
-      title: 'Category Filters',
-      description: 'Filter activities by category to quickly find what you need. Each category is color-coded for easy identification.',
-      target: '.bg-white.bg-opacity-20.border.border-white.border-opacity-30.rounded-lg:first-of-type',
-      position: 'bottom',
-      icon: <Filter className="h-8 w-8 text-indigo-500" />
-    },
-    {
-      title: 'Search Activities',
-      description: 'Search for specific activities by name, description, or content. This helps you quickly find what you need.',
-      target: '.pl-10.pr-4.py-2.bg-white.bg-opacity-20',
-      position: 'bottom',
-      icon: <Search className="h-8 w-8 text-blue-500" />
-    },
-    {
-      title: 'Lesson Builder',
-      description: 'Create and edit lesson plans by adding activities. Drag activities from the library into your lesson plan.',
-      target: '[data-tab="lesson-builder"]',
-      position: 'bottom',
-      icon: <Edit3 className="h-8 w-8" style={{color: '#0BA596'}} />
-    },
-    {
-      title: 'Unit Builder',
-      description: 'Group lessons into units for better organization. Drag lessons to create comprehensive teaching units.',
-      target: '[data-tab="unit-builder"]',
-      position: 'bottom',
-      icon: <FolderOpen className="h-8 w-8 text-indigo-500" />
-    },
-    {
-      title: 'Calendar View',
-      description: 'Plan your lessons across the academic year. Add units or individual lessons to specific dates.',
-      target: '[data-tab="calendar"]',
-      position: 'bottom',
-      icon: <Calendar className="h-8 w-8 text-purple-500" />
-    },
-    {
-      title: 'Export Options',
-      description: 'Export your lesson plans as PDF or Excel documents to share with colleagues or for offline use.',
-      target: '.bg-gradient-to-br.from-green-500.to-teal-600',
-      position: 'bottom',
-      icon: <Download className="h-8 w-8" style={{color: '#0BA596'}} />
-    },
-    {
-      title: 'Create New Content',
-      description: 'Add new activities, lessons, or units using the create buttons throughout the application.',
-      target: '.bg-purple-600.hover\\:bg-purple-700',
-      position: 'left',
-      icon: <Plus className="h-8 w-8 text-purple-500" />
-    },
-    {
-      title: 'Save Your Work',
-      description: 'Remember to save your work regularly. Look for save buttons like this throughout the application.',
-      target: '.bg-green-600.hover\\:bg-green-700',
-      position: 'left',
-      icon: <Save className="h-8 w-8" style={{color: '#0BA596'}} />
-    },
-    {
-      title: 'Help Button',
-      description: 'Click this button anytime to restart this walkthrough guide.',
-      target: '[data-help-button]',
-      position: 'left',
-      icon: <HelpCircle className="h-8 w-8 text-blue-500" />
-    }
-  ];
+  // Steps are intentionally tied to stable selectors that exist in the DOM:
+  //   - tab triggers (`[data-tab="..."]`) live in Dashboard.tsx
+  //   - header controls have explicit `[data-walkthrough="..."]` markers
+  //   - `[data-help-button]` is the existing help/tour button
+  // Any step whose target can't be resolved is skipped automatically rather
+  // than silently breaking the flow.
+  const steps: WalkthroughStep[] = useMemo(
+    () => [
+      {
+        title: `Welcome to ${productName}`,
+        description:
+          "Let's take a quick tour of the app. We'll point out the key features so you can hit the ground running. Use Next / Back to move through the steps, or Skip to exit at any time.",
+        target: 'body',
+        position: 'center',
+        icon: <Sparkles className="h-7 w-7 text-teal-500" />,
+      },
+      {
+        title: 'Pick a Class',
+        description:
+          'Use this selector to switch between your year groups. The whole app — activities, lessons, units, and the calendar — updates to show the content for the selected class.',
+        target: '[data-walkthrough="year-group-selector"]',
+        position: 'bottom',
+        icon: <Tag className="h-7 w-7 text-pink-500" />,
+      },
+      {
+        title: 'Unit Viewer',
+        description:
+          'Browse units of work for the selected class. Open a unit to see its lessons, objectives, and how it sits across the school year.',
+        target: '[data-tab="unit-viewer"]',
+        position: 'bottom',
+        icon: <BookOpen className="h-7 w-7 text-indigo-500" />,
+      },
+      {
+        title: 'Lesson Library',
+        description:
+          'Every lesson you or your team has built lives here. Reuse, duplicate, edit, or assign lessons to the calendar.',
+        target: '[data-tab="lesson-library"]',
+        position: 'bottom',
+        icon: <FolderOpen className="h-7 w-7 text-amber-500" />,
+      },
+      {
+        title: 'Lesson Builder',
+        description:
+          'Build a new lesson by dragging activities in from the library. Re-order, edit, and save — your lesson then shows up in the Lesson Library and on the Calendar.',
+        target: '[data-tab="lesson-builder"]',
+        position: 'bottom',
+        icon: <Edit3 className="h-7 w-7 text-teal-500" />,
+      },
+      {
+        title: 'Activity Library',
+        description:
+          'All teaching activities for the selected class, grouped by category. Search, filter, drag activities into a lesson, or open one to see full details and resources.',
+        target: '[data-tab="activity-library"]',
+        position: 'bottom',
+        icon: <Layers className="h-7 w-7 text-purple-500" />,
+      },
+      {
+        title: 'Calendar',
+        description:
+          'Plan the year by dropping units or individual lessons onto specific dates. Switch between month, week, and day views to map out your teaching at a glance.',
+        target: '[data-tab="calendar"]',
+        position: 'bottom',
+        icon: <Calendar className="h-7 w-7 text-cyan-500" />,
+      },
+      {
+        title: 'Settings',
+        description:
+          'Manage year groups, categories, objectives, and branding from Settings. This is also where you tweak which categories appear for each class.',
+        target: '[data-walkthrough="settings"]',
+        position: 'left',
+        icon: <SettingsIcon className="h-7 w-7 text-slate-500" />,
+      },
+      {
+        title: 'Help & Restart Tour',
+        description:
+          'Click this button at any time to bring up help. You can also restart this tour from the same place whenever you need a refresher.',
+        target: '[data-help-button]',
+        position: 'left',
+        icon: <HelpCircle className="h-7 w-7 text-blue-500" />,
+      },
+      {
+        title: "You're all set",
+        description:
+          "That's the whirlwind tour. Pick a class, open the Activity Library or Calendar, and start designing — you can reopen this tour any time from the Help button.",
+        target: 'body',
+        position: 'center',
+        icon: <Sparkles className="h-7 w-7 text-teal-500" />,
+      },
+    ],
+    [productName]
+  );
 
-  // Find and position the tooltip relative to the target element
+  // Reset to the first step every time the walkthrough is (re)opened so that
+  // restarting from the help button always begins at step 1, not where the
+  // user previously closed.
+  useEffect(() => {
+    if (isOpen) setCurrentStep(0);
+  }, [isOpen]);
+
+  // Body scroll lock while the walkthrough is active so the tooltip stays
+  // pinned over its target.
+  useEffect(() => {
+    if (!isOpen) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, [isOpen]);
+
+  /**
+   * Compute tooltip + highlight position for the current step. If the target
+   * can't be found we transparently advance to the next step (or close on the
+   * last step) so the user never sees a blank/dead overlay.
+   */
+  const positionForStep = useCallback(
+    (stepIndex: number) => {
+      const step = steps[stepIndex];
+      if (!step) return;
+
+      // Centered "modal" step.
+      if (step.position === 'center' || step.target === 'body') {
+        setHighlightRect(null);
+        setArrowSide('none');
+        setTooltipPos({
+          left: Math.max(10, window.innerWidth / 2 - TOOLTIP_WIDTH / 2),
+          top: Math.max(10, window.innerHeight / 2 - TOOLTIP_HEIGHT_ESTIMATE / 2),
+        });
+        return;
+      }
+
+      const el = resolveTarget(step.target);
+      if (!el) {
+        // Auto-skip missing targets so the tour keeps flowing.
+        if (stepIndex < steps.length - 1) {
+          setCurrentStep(stepIndex + 1);
+        } else {
+          onClose();
+        }
+        return;
+      }
+
+      // Bring the target into view first so its rect is meaningful.
+      try {
+        el.scrollIntoView({ behavior: 'smooth', block: 'center', inline: 'center' });
+      } catch {
+        /* older browsers */
+      }
+
+      // Re-measure on the next frame so any scroll has settled.
+      requestAnimationFrame(() => {
+        const rect = el.getBoundingClientRect();
+        setHighlightRect(rect);
+
+        let top = 0;
+        let left = 0;
+        let arrow: 'top' | 'bottom' | 'left' | 'right' | 'none' = 'none';
+
+        switch (step.position) {
+          case 'top':
+            top = rect.top - TOOLTIP_HEIGHT_ESTIMATE - 16;
+            left = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2;
+            arrow = 'bottom';
+            break;
+          case 'bottom':
+            top = rect.bottom + 20;
+            left = rect.left + rect.width / 2 - TOOLTIP_WIDTH / 2;
+            arrow = 'top';
+            break;
+          case 'left':
+            top = rect.top + rect.height / 2 - TOOLTIP_HEIGHT_ESTIMATE / 2;
+            left = rect.left - TOOLTIP_WIDTH - 20;
+            arrow = 'right';
+            break;
+          case 'right':
+            top = rect.top + rect.height / 2 - TOOLTIP_HEIGHT_ESTIMATE / 2;
+            left = rect.right + 20;
+            arrow = 'left';
+            break;
+        }
+
+        // If the chosen side spills off-screen, flip it.
+        if (left < 10) {
+          left = rect.right + 20;
+          arrow = 'left';
+        }
+        if (left + TOOLTIP_WIDTH > window.innerWidth - 10) {
+          left = rect.left - TOOLTIP_WIDTH - 20;
+          arrow = 'right';
+        }
+        if (top < 10) {
+          top = rect.bottom + 20;
+          arrow = 'top';
+        }
+        if (top + TOOLTIP_HEIGHT_ESTIMATE > window.innerHeight - 10) {
+          top = rect.top - TOOLTIP_HEIGHT_ESTIMATE - 20;
+          arrow = 'bottom';
+        }
+
+        // Final clamp so we always stay in viewport even if both flips fail.
+        left = Math.max(10, Math.min(left, window.innerWidth - TOOLTIP_WIDTH - 10));
+        top = Math.max(10, Math.min(top, window.innerHeight - TOOLTIP_HEIGHT_ESTIMATE - 10));
+
+        setTooltipPos({ top, left });
+        setArrowSide(arrow);
+      });
+    },
+    [steps, onClose]
+  );
+
+  // Recompute on step change, open, resize, and scroll. We poll briefly on
+  // step change because the target tab/menu may not be in the DOM yet on the
+  // very first tick (e.g. a panel that mounts lazily).
   useEffect(() => {
     if (!isOpen) return;
 
-    const findTargetElement = () => {
-      const selector = steps[currentStep].target;
-      if (selector === 'body') {
-        // Center in the viewport for the welcome step
-        const viewportWidth = window.innerWidth;
-        const viewportHeight = window.innerHeight;
-        
-        setTooltipPosition({
-          left: viewportWidth / 2 - 200,
-          top: viewportHeight / 2 - 150
-        });
-        setTooltipArrowPosition('none');
-        setTargetElement(document.body);
+    let attempts = 0;
+    const tryPosition = () => {
+      attempts += 1;
+      const step = steps[currentStep];
+      if (!step) return;
+      if (step.position === 'center' || step.target === 'body') {
+        positionForStep(currentStep);
         return;
       }
-      
-      const element = document.querySelector(selector) as HTMLElement;
-      if (!element) {
-        console.warn(`Target element not found: ${selector}`);
-        return;
+      const el = resolveTarget(step.target);
+      if (el || attempts >= 6) {
+        positionForStep(currentStep);
+      } else {
+        setTimeout(tryPosition, 80);
       }
-
-      setTargetElement(element);
-      
-      // Calculate position
-      const rect = element.getBoundingClientRect();
-      const position = steps[currentStep].position;
-      
-      let top = 0;
-      let left = 0;
-      
-      switch (position) {
-        case 'top':
-          top = rect.top - 220;
-          left = rect.left + rect.width / 2 - 200;
-          setTooltipArrowPosition('bottom');
-          break;
-        case 'bottom':
-          top = rect.bottom + 20;
-          left = rect.left + rect.width / 2 - 200;
-          setTooltipArrowPosition('top');
-          break;
-        case 'left':
-          top = rect.top + rect.height / 2 - 110;
-          left = rect.left - 420;
-          setTooltipArrowPosition('right');
-          break;
-        case 'right':
-          top = rect.top + rect.height / 2 - 110;
-          left = rect.right + 20;
-          setTooltipArrowPosition('left');
-          break;
-      }
-      
-      // Ensure tooltip stays within viewport
-      if (top < 10) top = 10;
-      if (left < 10) left = 10;
-      if (left + 400 > window.innerWidth) left = window.innerWidth - 410;
-      
-      setTooltipPosition({ top, left });
     };
+    tryPosition();
 
-    // Find target element on step change
-    findTargetElement();
-    
-    // Add resize listener
-    window.addEventListener('resize', findTargetElement);
-    
-    // Cleanup
+    const onResize = () => positionForStep(currentStep);
+    const onScroll = () => positionForStep(currentStep);
+    window.addEventListener('resize', onResize);
+    window.addEventListener('scroll', onScroll, true);
     return () => {
-      window.removeEventListener('resize', findTargetElement);
+      window.removeEventListener('resize', onResize);
+      window.removeEventListener('scroll', onScroll, true);
     };
-  }, [isOpen, currentStep, steps]);
+  }, [isOpen, currentStep, steps, positionForStep]);
+
+  // Esc to close.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+      if (e.key === 'ArrowRight') setCurrentStep((s) => Math.min(s + 1, steps.length - 1));
+      if (e.key === 'ArrowLeft') setCurrentStep((s) => Math.max(s - 1, 0));
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [isOpen, steps.length, onClose]);
 
   if (!isOpen) return null;
 
+  const isLast = currentStep >= steps.length - 1;
+  const step = steps[currentStep];
+
   const handleNext = () => {
-    if (currentStep < steps.length - 1) {
-      setCurrentStep(currentStep + 1);
+    if (isLast) {
+      onClose();
     } else {
-      handleClose();
+      setCurrentStep(currentStep + 1);
     }
   };
-
   const handlePrevious = () => {
-    if (currentStep > 0) {
-      setCurrentStep(currentStep - 1);
-    }
+    if (currentStep > 0) setCurrentStep(currentStep - 1);
   };
+  const handleSkip = () => onClose();
 
-  const handleClose = () => {
-    onClose();
-  };
-
-  // Render the tooltip
   return (
-    <div className="fixed inset-0 z-50 pointer-events-none">
+    // Highest in-app stack: above modals (z-50), below browser-native overlays.
+    <div className="fixed inset-0" style={{ zIndex: 9998 }} aria-live="polite" role="dialog" aria-modal="true">
+      {/* Dim backdrop. Clicks on the backdrop close the tour. */}
+      <div
+        className="absolute inset-0 bg-black/50 transition-opacity"
+        onClick={handleSkip}
+      />
+
+      {/* Highlight ring around the active target. Pointer-events: none so the
+          user can still see the element underneath; clicks fall through to
+          the backdrop and close the tour. */}
+      {highlightRect && (
+        <div
+          className="pointer-events-none absolute rounded-xl ring-4 ring-teal-400 ring-offset-2 ring-offset-transparent transition-all duration-200"
+          style={{
+            top: highlightRect.top - HIGHLIGHT_PADDING,
+            left: highlightRect.left - HIGHLIGHT_PADDING,
+            width: highlightRect.width + HIGHLIGHT_PADDING * 2,
+            height: highlightRect.height + HIGHLIGHT_PADDING * 2,
+            boxShadow: '0 0 0 9999px rgba(0,0,0,0.45)',
+            zIndex: 9999,
+          }}
+        />
+      )}
+
       {/* Tooltip */}
-      <div 
-        className="absolute bg-white rounded-xl shadow-xl w-[400px] p-6 pointer-events-auto transition-all duration-300 animate-bounce-in"
-        style={{ 
-          top: tooltipPosition.top, 
-          left: tooltipPosition.left,
+      <div
+        ref={tooltipRef}
+        className="absolute bg-white rounded-2xl shadow-2xl pointer-events-auto transition-all duration-200"
+        style={{
+          top: tooltipPos.top,
+          left: tooltipPos.left,
+          width: TOOLTIP_WIDTH,
+          zIndex: 10000,
         }}
+        onClick={(e) => e.stopPropagation()}
       >
-        {/* Step indicator */}
-        <div className="absolute top-3 right-3 bg-blue-100 text-blue-800 text-xs font-medium px-2.5 py-1 rounded-full">
-          Step {currentStep + 1} of {steps.length}
-        </div>
-        
-        {/* Close button */}
-        <button 
-          onClick={handleClose}
-          className="absolute top-3 left-3 text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100"
-        >
-          <X className="h-5 w-5" />
-        </button>
-        
-        {/* Tooltip content */}
-        <div className="mt-6 mb-6 flex items-start space-x-4">
-          <div className="flex-shrink-0 bg-blue-100 p-3 rounded-full">
-            {steps[currentStep].icon}
-          </div>
-          <div>
-            <h3 className="font-bold text-gray-900 text-xl mb-2">{steps[currentStep].title}</h3>
-            <p className="text-gray-600">{steps[currentStep].description}</p>
-          </div>
-        </div>
-        
-        {/* Navigation buttons */}
-        <div className="flex justify-between items-center mt-4 pt-4 border-t border-gray-200">
-          {currentStep > 0 ? (
+        <div className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <span className="bg-teal-50 text-teal-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+              Step {currentStep + 1} of {steps.length}
+            </span>
             <button
-              onClick={handlePrevious}
-              className="px-4 py-2 text-sm font-medium text-gray-600 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors flex items-center space-x-1"
+              onClick={handleSkip}
+              className="text-gray-400 hover:text-gray-700 p-1 rounded-full hover:bg-gray-100"
+              aria-label="Close walkthrough"
+              title="Skip tour"
             >
-              <ChevronLeft className="h-5 w-5" />
-              <span>Previous</span>
+              <X className="h-4 w-4" />
             </button>
-          ) : (
-            <div></div> // Empty div to maintain layout
-          )}
-          
-          <button
-            onClick={handleNext}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors flex items-center space-x-1"
-          >
-            <span>{currentStep < steps.length - 1 ? 'Next' : 'Finish'}</span>
-            <ChevronRight className="h-5 w-5" />
-          </button>
+          </div>
+
+          <div className="flex items-start gap-4 mb-5">
+            <div className="flex-shrink-0 bg-gray-50 p-3 rounded-xl">{step.icon}</div>
+            <div className="min-w-0">
+              <h3 className="font-bold text-gray-900 text-lg leading-tight mb-1">{step.title}</h3>
+              <p className="text-gray-600 text-sm leading-relaxed">{step.description}</p>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+            <button
+              onClick={handleSkip}
+              className="text-xs font-medium text-gray-500 hover:text-gray-700"
+            >
+              Skip tour
+            </button>
+
+            <div className="flex items-center gap-2">
+              {currentStep > 0 && (
+                <button
+                  onClick={handlePrevious}
+                  className="px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 rounded-lg flex items-center gap-1"
+                >
+                  <ChevronLeft className="h-4 w-4" />
+                  Back
+                </button>
+              )}
+              <button
+                onClick={handleNext}
+                className="px-4 py-2 text-sm font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg flex items-center gap-1 shadow-sm"
+              >
+                {isLast ? 'Finish' : 'Next'}
+                {!isLast && <ChevronRight className="h-4 w-4" />}
+              </button>
+            </div>
+          </div>
         </div>
-        
-        {/* Tooltip arrow */}
-        {tooltipArrowPosition !== 'none' && (
-          <div 
-            className={`absolute w-6 h-6 bg-white transform rotate-45 ${
-              tooltipArrowPosition === 'top' ? 'top-[-12px]' : 
-              tooltipArrowPosition === 'bottom' ? 'bottom-[-12px]' : 
-              tooltipArrowPosition === 'left' ? 'left-[-12px]' : 
-              'right-[-12px]'
-            }`}
+
+        {arrowSide !== 'none' && (
+          <div
+            className="absolute w-3 h-3 bg-white rotate-45"
             style={{
-              left: tooltipArrowPosition === 'top' || tooltipArrowPosition === 'bottom' ? 'calc(50% - 12px)' : undefined,
-              top: tooltipArrowPosition === 'left' || tooltipArrowPosition === 'right' ? 'calc(50% - 12px)' : undefined
+              top: arrowSide === 'top' ? -6 : arrowSide === 'bottom' ? 'auto' : '50%',
+              bottom: arrowSide === 'bottom' ? -6 : 'auto',
+              left: arrowSide === 'left' ? -6 : arrowSide === 'right' ? 'auto' : '50%',
+              right: arrowSide === 'right' ? -6 : 'auto',
+              transform:
+                arrowSide === 'top' || arrowSide === 'bottom'
+                  ? 'translateX(-50%) rotate(45deg)'
+                  : 'translateY(-50%) rotate(45deg)',
+              boxShadow:
+                arrowSide === 'top'
+                  ? '-1px -1px 1px rgba(0,0,0,0.04)'
+                  : arrowSide === 'bottom'
+                  ? '1px 1px 1px rgba(0,0,0,0.04)'
+                  : arrowSide === 'left'
+                  ? '-1px 1px 1px rgba(0,0,0,0.04)'
+                  : '1px -1px 1px rgba(0,0,0,0.04)',
             }}
           />
         )}

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
+import { sanitizeHtml, escapeHtmlText, sanitizeUrl } from '../utils/sanitize';
 import { Download, X, Check, Tag, ChevronDown, Share2, Copy, Link2, Target, Loader2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import type { Activity } from '../contexts/DataContext';
@@ -6,7 +7,7 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjective, CustomObjectiveArea, CustomObjectiveYearGroup } from '../types/customObjectives';
 import { supabase } from '../config/supabase';
-import { getPdfApiUrl } from '../utils/pdfApi';
+import { generatePdfViaProxy } from '../utils/pdfApi';
 import { useShareLesson } from '../hooks/useShareLesson';
 import { isDemoModeActive } from '../utils/demoMode';
 import toast from 'react-hot-toast';
@@ -211,10 +212,6 @@ export function LessonPrintModal({
     }
     return lessonCustomObjectives;
   };
-
-  // PDFBolt API configuration (used for unit/half-term Copy Link in this modal; single-lesson Export uses PDF service)
-  const PDFBOLT_API_KEY = import.meta.env.VITE_PDFBOLT_API_KEY || '146bdd01-146f-43f8-92aa-26201c38aa11';
-  const PDFBOLT_API_URL = 'https://api.pdfbolt.com/v1/direct';
 
   // Get the title for the print
   const printTitle = React.useMemo(() => {
@@ -672,8 +669,8 @@ export function LessonPrintModal({
       htmlContent += `
           <!-- Lesson Header -->
           <div class="lesson-header">
-            <h1>${(exportUseCustomHeaderFooter && exportCustomHeader) ? exportCustomHeader : (lessonData.customHeader || lessonTitle)}</h1>
-            <div class="subtitle">${lessonSubtitle}</div>
+            <h1>${escapeHtmlText((exportUseCustomHeaderFooter && exportCustomHeader) ? exportCustomHeader : (lessonData.customHeader || lessonTitle))}</h1>
+            <div class="subtitle">${escapeHtmlText(lessonSubtitle)}</div>
             <div class="meta">
               <span class="meta-item">📚 ${currentSheetInfo.display}</span>
               <span class="meta-item">⏱ ${lessonData.totalTime || 45} mins</span>
@@ -853,7 +850,7 @@ export function LessonPrintModal({
                 Lesson Outcomes
               </h4>
               <div class="learning-outcome-content" style="font-size: 11px; color: #1f2937; line-height: 1.5; overflow: hidden; box-sizing: border-box;">
-                ${removeBulletPoints(lessonData.learningOutcome)}
+                ${removeBulletPoints(sanitizeHtml(lessonData.learningOutcome))}
               </div>
             </div>
           `;
@@ -866,7 +863,7 @@ export function LessonPrintModal({
                 Success Criteria
               </h4>
               <div class="success-criteria-content" style="font-size: 11px; color: #1f2937; line-height: 1.5; overflow: hidden; box-sizing: border-box;">
-                ${removeBulletPoints(lessonData.successCriteria)}
+                ${removeBulletPoints(sanitizeHtml(lessonData.successCriteria))}
               </div>
             </div>
           `;
@@ -892,7 +889,7 @@ export function LessonPrintModal({
           const standardText = standard.includes(':') ? standard.split(':').slice(1).join(':').trim() : standard;
           htmlContent += `
             <span style="display: inline-block; padding: 4px 10px; background: white; border: 1px solid #0f766e; border-radius: 50px; font-size: 10px; color: #0f766e; font-weight: 500;">
-              ${standardText.length > 50 ? standardText.substring(0, 47) + '...' : standardText}
+              ${escapeHtmlText(standardText.length > 50 ? standardText.substring(0, 47) + '...' : standardText)}
             </span>
           `;
         });
@@ -935,47 +932,47 @@ export function LessonPrintModal({
         // Assessment Objectives (if any)
         if (lessonData.assessmentObjectives && lessonData.assessmentObjectives.length > 0) {
           const objectivesList = lessonData.assessmentObjectives.map((obj: string, i: number) => 
-            `<div style="margin-bottom: 6px;"><strong style="color: #7c3aed;">${i + 1}.</strong> ${obj}</div>`
+            `<div style="margin-bottom: 6px;"><strong style="color: #7c3aed;">${i + 1}.</strong> ${escapeHtmlText(obj)}</div>`
           ).join('');
           htmlContent += renderCleanSection('Assessment Objectives', objectivesList);
         }
 
         // Introduction
         if (lessonData.introduction) {
-          htmlContent += renderCleanSection('Introduction', lessonData.introduction);
+          htmlContent += renderCleanSection('Introduction', sanitizeHtml(lessonData.introduction));
         }
 
         // Main Activity
         if (lessonData.mainActivity) {
-          htmlContent += renderCleanSection('Main Activity', lessonData.mainActivity);
+          htmlContent += renderCleanSection('Main Activity', sanitizeHtml(lessonData.mainActivity));
         }
 
         // Plenary
         if (lessonData.plenary) {
-          htmlContent += renderCleanSection('Plenary', lessonData.plenary);
+          htmlContent += renderCleanSection('Plenary', sanitizeHtml(lessonData.plenary));
         }
 
         // Vocabulary
         if (lessonData.vocabulary) {
           // Format vocabulary with bold terms
-          const formattedVocab = lessonData.vocabulary.replace(/^([^-:]+)(\s*[-:]\s*)/gm, '<strong>$1</strong>$2');
+          const formattedVocab = sanitizeHtml(lessonData.vocabulary).replace(/^([^-:]+)(\s*[-:]\s*)/gm, '<strong>$1</strong>$2');
           htmlContent += renderCleanSection('Vocabulary', formattedVocab);
         }
 
         // Key Questions
         if (lessonData.keyQuestions) {
-          htmlContent += renderCleanSection('Key Questions', lessonData.keyQuestions);
+          htmlContent += renderCleanSection('Key Questions', sanitizeHtml(lessonData.keyQuestions));
         }
 
         // Resources
         if (lessonData.resources) {
-          htmlContent += renderCleanSection('Resources', lessonData.resources);
+          htmlContent += renderCleanSection('Resources', sanitizeHtml(lessonData.resources));
         }
 
         // Differentiation
         if (lessonData.differentiation) {
           // Format with bold Support/Challenge labels
-          const formattedDiff = lessonData.differentiation
+          const formattedDiff = sanitizeHtml(lessonData.differentiation)
             .replace(/Support:/gi, '<strong>Support:</strong>')
             .replace(/Challenge:/gi, '<strong>Challenge:</strong>');
           htmlContent += renderCleanSection('Differentiation', formattedDiff);
@@ -983,7 +980,7 @@ export function LessonPrintModal({
 
         // Assessment
         if (lessonData.assessment) {
-          htmlContent += renderCleanSection('Assessment', lessonData.assessment);
+          htmlContent += renderCleanSection('Assessment', sanitizeHtml(lessonData.assessment));
         }
       }
 
@@ -1045,12 +1042,12 @@ export function LessonPrintModal({
             htmlContent += `
               <div class="activity-card" style="border-left: 3px solid ${categoryColor};">
                 <div class="activity-header">
-                  <span class="activity-title">${firstActivity.activity}</span>
+                  <span class="activity-title">${escapeHtmlText(firstActivity.activity)}</span>
                   ${firstActivity.time > 0 ? `<span class="activity-time">${firstActivity.time} min</span>` : ''}
                 </div>
                 <div class="activity-body">
-                  ${firstActivity.activityText ? `<p style="font-weight: 500; margin-bottom: 6px;">${firstActivity.activityText}</p>` : ''}
-                  <div>${firstActivity.description.includes('<') ? firstActivity.description : firstActivity.description.replace(/\n/g, '<br>')}</div>
+                  ${firstActivity.activityText ? `<p style="font-weight: 500; margin-bottom: 6px;">${sanitizeHtml(firstActivity.activityText)}</p>` : ''}
+                  <div>${sanitizeHtml(firstActivity.description.includes('<') ? firstActivity.description : firstActivity.description.replace(/\n/g, '<br>'))}</div>
             `;
 
             // Resources for first activity
@@ -1067,7 +1064,7 @@ export function LessonPrintModal({
             if (firstResources.length > 0) {
               htmlContent += `<div class="activity-resources">`;
               firstResources.forEach(r => {
-                htmlContent += `<a href="${r.url}" target="_blank" rel="noopener noreferrer" class="resource-tag ${r.class}">${r.label}</a>`;
+                htmlContent += `<a href="${sanitizeUrl(r.url)}" target="_blank" rel="noopener noreferrer" class="resource-tag ${r.class}">${escapeHtmlText(r.label)}</a>`;
               });
               htmlContent += `</div>`;
             }
@@ -1084,12 +1081,12 @@ export function LessonPrintModal({
               htmlContent += `
                 <div class="activity-card" style="border-left: 3px solid ${categoryColor};">
                   <div class="activity-header">
-                    <span class="activity-title">${activity.activity}</span>
+                    <span class="activity-title">${escapeHtmlText(activity.activity)}</span>
                     ${activity.time > 0 ? `<span class="activity-time">${activity.time} min</span>` : ''}
                   </div>
                   <div class="activity-body">
-                    ${activity.activityText ? `<p style="font-weight: 500; margin-bottom: 6px;">${activity.activityText}</p>` : ''}
-                    <div>${activity.description.includes('<') ? activity.description : activity.description.replace(/\n/g, '<br>')}</div>
+                    ${activity.activityText ? `<p style="font-weight: 500; margin-bottom: 6px;">${sanitizeHtml(activity.activityText)}</p>` : ''}
+                    <div>${sanitizeHtml(activity.description.includes('<') ? activity.description : activity.description.replace(/\n/g, '<br>'))}</div>
               `;
 
               // Resources - clickable shortcuts at bottom of each activity (original export style)
@@ -1106,7 +1103,7 @@ export function LessonPrintModal({
               if (resources.length > 0) {
                 htmlContent += `<div class="activity-resources">`;
                 resources.forEach(r => {
-                  htmlContent += `<a href="${r.url}" target="_blank" rel="noopener noreferrer" class="resource-tag ${r.class}">${r.label}</a>`;
+                  htmlContent += `<a href="${sanitizeUrl(r.url)}" target="_blank" rel="noopener noreferrer" class="resource-tag ${r.class}">${escapeHtmlText(r.label)}</a>`;
                 });
                 htmlContent += `</div>`;
               }
@@ -1126,7 +1123,7 @@ export function LessonPrintModal({
             <div class="section-header" style="background: #f3f4f6; color: #374151; border-left: 4px solid #9ca3af;">
               Teacher Notes
             </div>
-            <div class="section-content">${lessonData.notes}</div>
+            <div class="section-content">${sanitizeHtml(lessonData.notes)}</div>
           </div>
         `;
       }
@@ -1206,13 +1203,11 @@ export function LessonPrintModal({
     return n || num;
   };
 
-  // Export PDF: use PDFBolt when key is set, otherwise Vercel API (returnPdfBlob) for download
+  // Export PDF via the server-side PDF proxy (keeps PDFBolt API key out of the browser)
   const handleExport = async () => {
     const downloadFileName = exportMode === 'single' && lessonNumber
       ? `${currentSheetInfo.sheet}_Lesson_${getLessonDisplayNumber(lessonNumber)}.pdf`
       : `${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
-
-    const useApiFallback = !PDFBOLT_API_KEY || PDFBOLT_API_KEY === 'd089165b-e1da-43bb-a7dc-625ce514ed1b';
 
     setIsExporting(true);
     try {
@@ -1221,53 +1216,17 @@ export function LessonPrintModal({
       const footerContent = encodeUnicodeBase64(footerRaw);
       const headerContent = encodeUnicodeBase64(headerRaw);
 
-      let pdfBlob: Blob;
-
-      if (useApiFallback) {
-        const apiUrl = getPdfApiUrl();
-        const res = await fetch(apiUrl, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            html: htmlContent,
-            footerTemplate: footerContent,
-            headerTemplate: headerContent,
-            returnPdfBlob: true,
-            fileName: `downloads/${downloadFileName}`,
-          }),
-        });
-        if (!res.ok) {
-          const errText = await res.text();
-          let msg = errText;
-          try {
-            const data = JSON.parse(errText || '{}');
-            if (data.error) msg = data.error;
-          } catch (_) {}
-          throw new Error(msg || `Export failed: ${res.status}`);
-        }
-        pdfBlob = await res.blob();
-      } else {
-        const response = await fetch(PDFBOLT_API_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'API_KEY': PDFBOLT_API_KEY },
-          body: JSON.stringify({
-            html: htmlContent,
-            printBackground: true,
-            waitUntil: 'networkidle',
-            format: 'A4',
-            margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
-            displayHeaderFooter: true,
-            footerTemplate: footerContent,
-            headerTemplate: headerContent,
-            emulateMediaType: 'screen',
-          }),
-        });
-        if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`PDFBolt: ${response.status} - ${errorText}`);
-        }
-        pdfBlob = await response.blob();
-      }
+      const pdfBlob = await generatePdfViaProxy({
+        html: htmlContent,
+        printBackground: true,
+        waitUntil: 'networkidle',
+        format: 'A4',
+        margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+        displayHeaderFooter: true,
+        footerTemplate: footerContent,
+        headerTemplate: headerContent,
+        emulateMediaType: 'screen',
+      });
 
       const url = window.URL.createObjectURL(pdfBlob);
       const link = document.createElement('a');
@@ -1436,13 +1395,6 @@ export function LessonPrintModal({
     }
 
     // For unit/half-term sharing, use custom implementation
-    if (!PDFBOLT_API_KEY || PDFBOLT_API_KEY === 'd089165b-e1da-43bb-a7dc-625ce514ed1b') {
-      toast.error('Please set your PDFBolt API key in the environment variables (VITE_PDFBOLT_API_KEY)', {
-        duration: 5000,
-      });
-      return;
-    }
-
     setIsSharing(true);
     setShareUrl(null);
     setShareSuccess(false);
@@ -1462,43 +1414,24 @@ export function LessonPrintModal({
         throw new Error('Storage bucket not configured');
       }
 
-      // Generate PDF using PDFBolt API (same as export)
+      // Generate PDF via server-side proxy (PDFBolt API key is never sent to the browser)
       const [htmlRaw, footerRaw, headerRaw] = await generateHTMLContent();
       const htmlContent = encodeUnicodeBase64(htmlRaw);
       const footerContent = encodeUnicodeBase64(footerRaw);
       const headerContent = encodeUnicodeBase64(headerRaw);
 
-      const response = await fetch(PDFBOLT_API_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'API_KEY': PDFBOLT_API_KEY
-        },
-        body: JSON.stringify({
-          html: htmlContent,
-          printBackground: true,
-          waitUntil: "networkidle",
-          format: "A4",
-          margin: {
-            "top": "15px",
-            "right": "20px",
-            "left": "20px",
-            "bottom": "55px"
-          },
-          displayHeaderFooter: true,
-          footerTemplate: footerContent,
-          headerTemplate: headerContent,
-          emulateMediaType: 'screen'
-        })
-      });
-
-      if (!response.ok) {
-        const errorText = await response.text();
-        throw new Error(`PDFBolt API Error: ${response.status} - ${errorText}`);
-      }
-
       // Get the PDF as a blob
-      const pdfBlob = await response.blob();
+      const pdfBlob = await generatePdfViaProxy({
+        html: htmlContent,
+        printBackground: true,
+        waitUntil: "networkidle",
+        format: "A4",
+        margin: { top: "15px", right: "20px", left: "20px", bottom: "55px" },
+        displayHeaderFooter: true,
+        footerTemplate: footerContent,
+        headerTemplate: headerContent,
+        emulateMediaType: 'screen',
+      });
 
       // Generate filename
       const getLessonDisplayNumber = (num: string): string => {

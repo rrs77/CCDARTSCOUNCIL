@@ -477,7 +477,7 @@ export function LessonPlanBuilder({
     }
     try {
       // Validate that the plan has a title
-      if (!updatedPlan.title.trim()) {
+      if (!updatedPlan.title?.trim()) {
         alert('Please provide a lesson title');
         setSaveStatus('error');
         setTimeout(() => setSaveStatus('idle'), 3000);
@@ -1104,14 +1104,14 @@ export function LessonPlanBuilder({
 
                 {/* Activity List - Grouped by Category */}
                 <div className="p-3 pt-6 flex-1 overflow-y-auto min-h-0">
-                  {groupedActivitiesByCategory.sortedCategories.length === 0 ? (
+                  {(groupedActivitiesByCategory.sortedCategories?.length ?? 0) === 0 ? (
                     <div className="text-center py-8">
                       <p className="text-gray-500">No matching activities found</p>
                     </div>
                   ) : (
                     <div className="space-y-3">
-                      {groupedActivitiesByCategory.sortedCategories.map((categoryName) => {
-                        const categoryActivities = groupedActivitiesByCategory.grouped[categoryName] || [];
+                      {groupedActivitiesByCategory.sortedCategories?.map((categoryName) => {
+                        const categoryActivities = groupedActivitiesByCategory.grouped?.[categoryName] || [];
                         const categoryInfo = categories.find(cat => cat.name === categoryName);
                         const categoryColor = categoryInfo?.color || '#6B7280';
                         const isExpanded = expandedCategories.has(categoryName);
@@ -1186,13 +1186,13 @@ export function LessonPlanBuilder({
             <div className="lg:col-span-1 flex flex-col">
               <div className="flex-1">
                 <LessonDropZone
-                  lessonPlan={currentLessonPlan}
+                  lessonPlan={currentLessonPlan as any}
                   onActivityAdd={handleActivityAdd}
                   onActivityRemove={handleActivityRemove}
                   onActivityReorder={handleActivityReorder}
                   onLessonPlanFieldUpdate={handleLessonPlanFieldUpdate}
                   isEditing={true}
-                  onActivityClick={(activity) => setSelectedActivity(activity)}
+                  onActivityClick={(activity: Activity) => setSelectedActivity(activity)}
                   onSave={handleSaveLessonPlan}
                   onRefresh={handleRefresh}
                 />

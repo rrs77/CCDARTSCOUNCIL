@@ -60,8 +60,8 @@ function SubjectManagement() {
   // Modal states
   const [showSubjectModal, setShowSubjectModal] = useState(false);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
-  const [editingSubject, setEditingSubject] = useState(null);
-  const [editingCategory, setEditingCategory] = useState(null);
+  const [editingSubject, setEditingSubject] = useState<any>(null);
+  const [editingCategory, setEditingCategory] = useState<any>(null);
 
   // Form states
   const [subjectForm, setSubjectForm] = useState({
@@ -110,13 +110,13 @@ function SubjectManagement() {
       resetSubjectForm();
     } catch (error) {
       console.error('Error saving subject:', error);
-      alert('Error saving subject: ' + error.message);
+      alert('Error saving subject: ' + (error as any)?.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteSubject = async (subject) => {
+  const handleDeleteSubject = async (subject: any) => {
     if (!confirm(`Are you sure you want to delete "${subject.name}"? This will also delete all associated categories.`)) {
       return;
     }
@@ -126,7 +126,7 @@ function SubjectManagement() {
       await loadSubjects();
     } catch (error) {
       console.error('Error deleting subject:', error);
-      alert('Error deleting subject: ' + error.message);
+      alert('Error deleting subject: ' + (error as any)?.message);
     }
   };
 
@@ -164,13 +164,13 @@ function SubjectManagement() {
       resetCategoryForm();
     } catch (error) {
       console.error('Error saving category:', error);
-      alert('Error saving category: ' + error.message);
+      alert('Error saving category: ' + (error as any)?.message);
     } finally {
       setSaving(false);
     }
   };
 
-  const handleDeleteCategory = async (category) => {
+  const handleDeleteCategory = async (category: any) => {
     if (!confirm(`Are you sure you want to delete "${category.name}"?`)) {
       return;
     }
@@ -182,11 +182,11 @@ function SubjectManagement() {
       }
     } catch (error) {
       console.error('Error deleting category:', error);
-      alert('Error deleting category: ' + error.message);
+      alert('Error deleting category: ' + (error as any)?.message);
     }
   };
 
-  const handleReorderCategory = async (fromIndex, toIndex) => {
+  const handleReorderCategory = async (fromIndex: number, toIndex: number) => {
     if (!currentSubject) return;
 
     const reorderedCategories = [...safeSubjectCategories];
@@ -213,7 +213,7 @@ function SubjectManagement() {
     setEditingCategory(null);
   };
 
-  const openEditSubject = (subject) => {
+  const openEditSubject = (subject: any) => {
     setEditingSubject(subject);
     setSubjectForm({
       name: subject.name,
@@ -223,7 +223,7 @@ function SubjectManagement() {
     setShowSubjectModal(true);
   };
 
-  const openEditCategory = (category) => {
+  const openEditCategory = (category: any) => {
     setEditingCategory(category);
     setCategoryForm({
       name: category.name,
@@ -383,7 +383,9 @@ function SubjectManagement() {
                               <div className="flex items-center space-x-2">
                                 <h4 className="font-medium text-gray-900">{category.name}</h4>
                                 {category.is_locked && (
-                                  <Lock className="h-4 w-4 text-amber-600" title="Locked category" />
+                                  <span title="Locked category">
+                                    <Lock className="h-4 w-4 text-amber-600" />
+                                  </span>
                                 )}
                               </div>
                               {category.description && (

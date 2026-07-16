@@ -14,9 +14,9 @@
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/cd-logo.svg",
+      "src": "/ccdesigner-logo.png",
       "sizes": "any",
-      "type": "image/svg+xml",
+      "type": "image/png",
       "purpose": "any"
     },
     {
@@ -52,14 +52,14 @@
       "short_name": "Builder",
       "description": "Create a new lesson",
       "url": "/?tab=lesson-builder",
-      "icons": [{ "src": "/cd-logo.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/ccdesigner-logo.png", "sizes": "96x96" }]
     },
     {
       "name": "Activity Library",
       "short_name": "Activities",
       "description": "Browse activities",
       "url": "/?tab=activity-library",
-      "icons": [{ "src": "/cd-logo.svg", "sizes": "96x96" }]
+      "icons": [{ "src": "/ccdesigner-logo.png", "sizes": "96x96" }]
     }
   ]
 }

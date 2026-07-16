@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import * as XLSX from 'xlsx';
+import * as XLSX from '@e965/xlsx';
 import { activitiesApi, lessonsApi, eyfsApi } from '../config/api';
 import { halfTermsApi } from '../config/api';
 import { customObjectivesApi } from '../config/customObjectivesApi';
@@ -15,6 +15,9 @@ export interface Activity {
   description: string;
   activityText?: string; // New field for activity text
   htmlDescription?: string;
+  descriptionHeading?: string;
+  activityHeading?: string;
+  linkHeading?: string;
   time: number;
   videoLink: string;
   musicLink: string;
@@ -78,6 +81,11 @@ export interface LessonData {
   resourceLink?: string;
   imageLink?: string;
   additionalLinks?: string;
+  notes?: string;
+  standards?: any[];
+  assessmentObjectives?: string[];
+  _trashedStandards?: string[];
+  _trashedAt?: string;
 }
 
 interface SheetInfo {
@@ -102,6 +110,7 @@ export interface LessonPlan {
   term?: string;
   time?: string; // Added time field for scheduled lessons
   stackId?: string; // Added for stack assignments
+  isEditingExisting?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -124,6 +133,8 @@ interface HalfTerm {
   lessons: string[]; // Array of lesson numbers in display order
   stacks?: string[]; // Array of stack IDs assigned to this half-term
   isComplete: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // ADD: Subject and SubjectCategory interfaces
@@ -187,6 +198,8 @@ interface DataContextType {
   resetStandardsToDefaults: () => Promise<void>;
   updateNestedStandards: (standards: Record<string, Record<string, string[]>>) => void;
   updateLessonTitle: (lessonNumber: string, title: string) => void;
+  getTermSpecificLessonNumber: (lessonNumber: string, halfTermId: string) => number;
+  getLessonDisplayTitle: (lessonNumber: string, halfTermId: string) => string;
   updateLessonNotes: (lessonNumber: string, notes: string) => Promise<void>;
   userCreatedLessonPlans: LessonPlan[]; // New property for user-created lesson plans
   addOrUpdateUserLessonPlan: (plan: LessonPlan) => void; // New function to add/update user lesson plans
@@ -1138,7 +1151,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
             stacks: term.stacks || [] // Ensure stacks field exists
           }));
           
-          if (import.meta.env.DEV) console.log('🔍 Setting half-terms state with data:', formattedHalfTerms.map(ht => ({ id: ht.id, name: ht.name, lessonsCount: ht.lessons?.length || 0, stacksCount: ht.stacks?.length || 0 })));
+          if (import.meta.env.DEV) console.log('🔍 Setting half-terms state with data:', formattedHalfTerms.map((ht: any) => ({ id: ht.id, name: ht.name, lessonsCount: ht.lessons?.length || 0, stacksCount: ht.stacks?.length || 0 })));
           setHalfTerms(formattedHalfTerms);
           // Also update the year-specific state
           setHalfTermsByYear(prev => ({
@@ -1895,10 +1908,20 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
       if (isSupabaseConfigured()) {
         const academicYear = currentAcademicYear || `${new Date().getFullYear()}-${new Date().getFullYear() + 1}`;
         
+        // Fail closed: only load from Supabase for authenticated users to prevent
+        // cross-tenant disclosure when two schools share the same class name (e.g. "LKG")
+        const lpUserId = localStorage.getItem('rhythmstix_user_id');
+        const lpUserIsAuth = !!lpUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(lpUserId);
+        if (!lpUserIsAuth) {
+          console.warn('⚠️ loadUserCreatedLessonPlans: unauthenticated session — skipping Supabase read (fail closed)');
+          loadUserCreatedLessonPlansFromLocalStorage();
+          return;
+        }
         supabase
           .from(TABLES.LESSON_PLANS)
           .select('*')
           .eq('class_name', currentSheetInfo.sheet)
+          .eq('user_id', lpUserId)
           .then(({ data, error }) => {
             if (error) {
               console.warn('Failed to load lesson plans from Supabase:', error);
@@ -2001,26 +2024,39 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
       // Save to localStorage first (this is guaranteed to work)
       localStorage.setItem('user-created-lesson-plans', JSON.stringify(plans));
       
-      // Then try to save to Supabase if connected (attempt even without session - RLS may allow anon)
+      // Then try to save to Supabase if connected, fail closed for unauthenticated sessions
       if (isSupabaseConfigured()) {
         try {
-          // Convert plans to the format expected by Supabase
-          const supabasePlans = plans.map(plan => ({
-            id: plan.id,
-            date: plan.date instanceof Date ? plan.date.toISOString() : (typeof plan.date === 'string' ? plan.date : new Date().toISOString()),
-            week: plan.week,
-            class_name: plan.className,
-            activities: plan.activities,
-            duration: plan.duration,
-            notes: plan.notes,
-            status: plan.status,
-            unit_id: plan.unitId,
-            unit_name: plan.unitName,
-            lesson_number: plan.lessonNumber,
-            title: plan.title,
-            term: plan.term,
-            time: plan.time
-          }));
+          // Fail closed: only write to Supabase for authenticated users to prevent
+          // unscoped cross-tenant writes when two schools share the same class name.
+          const saveLpUserId = localStorage.getItem('rhythmstix_user_id');
+          const saveLpUserIsAuth = !!saveLpUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(saveLpUserId);
+          if (!saveLpUserIsAuth) {
+            console.warn('⚠️ saveUserCreatedLessonPlans: unauthenticated session — skipping Supabase write (fail closed)');
+            return;
+          }
+          const supabasePlans = plans.map(plan => {
+            const row: Record<string, unknown> = {
+              id: plan.id,
+              date: plan.date instanceof Date ? plan.date.toISOString() : (typeof plan.date === 'string' ? plan.date : new Date().toISOString()),
+              week: plan.week,
+              class_name: plan.className,
+              activities: plan.activities,
+              duration: plan.duration,
+              notes: plan.notes,
+              status: plan.status,
+              unit_id: plan.unitId,
+              unit_name: plan.unitName,
+              lesson_number: plan.lessonNumber,
+              title: plan.title,
+              term: plan.term,
+              time: plan.time
+            };
+            if (saveLpUserIsAuth) {
+              row.user_id = saveLpUserId;
+            }
+            return row;
+          });
           
           // Use upsert to handle both inserts and updates
           const { error } = await supabase
@@ -2302,15 +2338,22 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
         return updatedPlans;
       });
       
-      // Try to delete from Supabase if connected
+      // Fail closed: only delete from Supabase for authenticated users; unauthenticated
+      // sessions cannot provide a valid user_id scope so we skip the network call.
       if (isSupabaseConfigured()) {
-        const { error } = await supabase
-          .from(TABLES.LESSON_PLANS)
-          .delete()
-          .eq('id', planId);
-        
-        if (error) {
-          console.warn('Failed to delete lesson plan from Supabase:', error);
+        const delUserId = localStorage.getItem('rhythmstix_user_id');
+        const delUserIsAuth = !!delUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(delUserId);
+        if (!delUserIsAuth) {
+          console.warn('⚠️ deleteUserLessonPlan: unauthenticated session — skipping Supabase delete (fail closed)');
+        } else {
+          const { error } = await supabase
+            .from(TABLES.LESSON_PLANS)
+            .delete()
+            .eq('id', planId)
+            .eq('user_id', delUserId);
+          if (error) {
+            console.warn('Failed to delete lesson plan from Supabase:', error);
+          }
         }
       }
       
@@ -3224,7 +3267,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
       allLessonsData: newAllLessonsData,
       lessonNumbers: newLessonNumbers,
       teachingUnits,
-      lessonStandards: lessonStandardsData
+      lessonStandards
     };
     localStorage.setItem(`lesson-data-${currentSheetInfo.sheet}`, JSON.stringify(dataToSave));
     if (isSupabaseConfigured()) {
@@ -3321,7 +3364,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
         allLessonsData, 
         lessonNumbers, 
         teachingUnits, 
-        updatedStatements
+        updatedStandards
       );
       
       // Try to save to Supabase if connected
@@ -3330,21 +3373,21 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
           allLessonsData, 
           lessonNumbers, 
           teachingUnits, 
-          updatedStatements
+          updatedStandards
         ).catch(error => console.warn('Failed to save EYFS statements to Supabase:', error));
       }
       
-      return updatedStatements;
+      return updatedStandards;
     });
 
     setAllLessonsData(prev => {
       const updatedLessonsData = { ...prev };
       if (updatedLessonsData[lessonNumber]) {
         const currentStatements = updatedLessonsData[lessonNumber].lessonStandards || [];
-        if (!currentStatements.includes(eyfsStatement)) {
+        if (!currentStatements.includes(standard)) {
           updatedLessonsData[lessonNumber] = {
             ...updatedLessonsData[lessonNumber],
-            lessonStandards: [...currentStatements, eyfsStatement]
+            lessonStandards: [...currentStatements, standard]
           };
         }
       }
@@ -3367,7 +3410,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
         allLessonsData, 
         lessonNumbers, 
         teachingUnits, 
-        updatedStatements
+        updatedStandards
       );
       
       // Try to save to Supabase if connected
@@ -3376,11 +3419,11 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
           allLessonsData, 
           lessonNumbers, 
           teachingUnits, 
-          updatedStatements
+          updatedStandards
         ).catch(error => console.warn('Failed to save EYFS statements to Supabase:', error));
       }
       
-      return updatedStatements;
+      return updatedStandards;
     });
 
     setAllLessonsData(prev => {
@@ -3389,7 +3432,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
         updatedLessonsData[lessonNumber] = {
           ...updatedLessonsData[lessonNumber],
           lessonStandards: updatedLessonsData[lessonNumber].lessonStandards!.filter(
-            statement => statement !== eyfsStatement
+            statement => statement !== standard
           )
         };
       }
@@ -3853,7 +3896,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
       const targetData = localStorage.getItem(targetLocalStorageKey);
       let targetLessonsData: Record<string, LessonData> = {};
       let targetLessonNumbers: string[] = [];
-      let targetTeachingUnits: TeachingUnit[] = [];
+      let targetTeachingUnits: string[] = [];
       let targetLessonStandards: Record<string, string[]> = {};
       
       if (targetData) {

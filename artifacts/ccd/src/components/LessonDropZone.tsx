@@ -28,6 +28,7 @@ interface LessonPlan {
   duration: number;
   notes: string;
   status: 'planned' | 'completed' | 'cancelled';
+  title?: string;
 }
 
 interface LessonDropZoneProps {
@@ -42,6 +43,7 @@ interface LessonDropZoneProps {
   onAddActivitiesClick?: () => void; // NEW: Callback for opening activity modal
   notes?: string; // NEW: Lesson notes
   onNotesChange?: (notes: string) => void; // NEW: Callback for notes change
+  onActivityClick?: (activity: Activity, index: number) => void;
 }
 
 interface DraggableActivityProps {
@@ -401,7 +403,7 @@ export function LessonDropZone({
 
           {/* Drop Zone */}
           <div
-            ref={drop}
+            ref={drop as unknown as React.Ref<HTMLDivElement>}
             className={`transition-colors duration-200 rounded-md ${dropZoneClass} ${flashClass}`}
           >
             {lessonPlan.activities.length === 0 ? (
@@ -455,7 +457,7 @@ export function LessonDropZone({
           onAddToLesson={undefined} // No "Add to Lesson" button needed - already in lesson
           isEditing={editingActivity !== null && selectedActivityDetails === editingActivity}
           onUpdate={handleActivityUpdate}
-          onEdit={handleEditActivity} // This should trigger edit mode
+          {...({ onEdit: handleEditActivity } as any)}
           initialResource={initialResource}
           onDelete={deleteActivity}
         />

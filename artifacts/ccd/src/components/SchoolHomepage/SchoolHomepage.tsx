@@ -9,7 +9,7 @@ import {
   setSessionOnlyCookie,
 } from '../../config/supabase';
 import { activateDemoMode } from '../../utils/demoMode';
-import { seedDemoLocalStorage } from '../../utils/demoSampleData';
+import { seedDemoData } from '../../utils/demoSeed';
 import { AboutPrototypeModal } from '../login/AboutPrototypeModal';
 import { PrototypeNoticeBar } from '../login/PrototypeNoticeBar';
 
@@ -62,12 +62,12 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
     }
   };
 
-  const handleStartDemo = () => {
-    // Activate demo mode and seed curated drama / music / dance content into
+  const handleStartDemo = async () => {
+    // Activate demo mode and seed the full account-snapshot content into
     // localStorage *before* navigating, so DataContext picks it up on its
-    // first load and the visitor sees real sample data immediately.
+    // first load and the visitor sees the fully populated prototype.
     activateDemoMode(school.slug);
-    seedDemoLocalStorage();
+    await seedDemoData();
     window.location.assign('/?demo=1');
   };
 

@@ -16,7 +16,8 @@ import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 
 import { slides } from "@/slideLoader";
-import { PitchAutoplayViewer } from "./PitchAutoplayViewer";
+import BrandStamp from "@/components/BrandStamp";
+import { PitchAutoplayViewer } from "@/PitchAutoplayViewer";
 
 function getSlideIndex(pathname: string): number {
   const match = pathname.match(/^\/slide(\d+)$/);
@@ -130,9 +131,11 @@ function SlideEditor() {
       {slides.map((slide, index) => (
         <div
           key={slide.id}
+          className="relative"
           style={{ display: index === currentIndex ? "block" : "none" }}
         >
           <slide.Component />
+          <BrandStamp />
         </div>
       ))}
     </div>
@@ -155,6 +158,7 @@ function AllSlides() {
           <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
             <slide.Component />
           </div>
+          <BrandStamp />
         </div>
       ))}
     </div>
@@ -247,10 +251,8 @@ export default function App() {
   }, [navigate]);
 
   if (location === "/") {
-    const autoplay =
-      typeof window !== "undefined" &&
-      new URLSearchParams(window.location.search).get("autoplay") === "1";
-    if (autoplay) return <PitchAutoplayViewer />;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("autoplay") === "1") return <PitchAutoplayViewer />;
     return <SlideViewer />;
   }
   if (location === "/allslides") return <AllSlides />;

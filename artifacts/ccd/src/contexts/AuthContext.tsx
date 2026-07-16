@@ -31,49 +31,24 @@ function useAuth() {
  * Demo / Preview mode.
  *
  * When a visitor clicks "Preview" on a school homepage, the SchoolHomepage
- * component sets the demo flag and seeds curated sample content into
- * localStorage (see src/utils/demoMode.ts and src/utils/demoSampleData.ts).
- * AuthContext detects the flag on init and injects a synthetic, read-only
- * `viewer` user so the rest of the app renders without real credentials.
+ * component sets the demo flag and seeds a snapshot of the owner's account
+ * content into localStorage (see src/utils/demoMode.ts and src/utils/demoSeed.ts).
+ * AuthContext detects the flag on init and injects a synthetic demo teacher
+ * so the rest of the app renders without real credentials.
  * Logout clears the flag, the seeded data, and redirects back to the
  * originating school homepage.
  */
+// The demo visitor gets a full `teacher` role so every create / edit /
+// duplicate workflow works in the prototype. All of their changes stay in
+// browser storage (mock Supabase client + seeded localStorage) and are wiped
+// when the session ends, so nothing can reach the live account.
 const DEMO_USER: AppUser = {
-  id: 'demo-viewer',
+  id: 'demo-visitor',
   email: 'demo@ccd.preview',
   name: 'Demo Visitor',
-  role: 'viewer',
+  role: 'teacher',
 };
 
-// Local user database - you can add more users here
-const localUsers = [
-  {
-    id: '1',
-    email: 'rob.reichstorer@gmail.com',
-    password: 'mubqaZ-piske5-xecdur',
-    name: 'Rob Reichstorer',
-    avatar: 'https://images.pexels.com/photos/1407322/pexels-photo-1407322.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
-    role: 'administrator'
-  },
-  // Add more users here as needed
-  // {
-  //   id: '2',
-  //   email: 'teacher@rhythmstix.co.uk',
-  //   password: 'teacher123',
-  //   name: 'Sarah Teacher',
-  //   avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
-  //   role: 'teacher'
-  // },
-  // Example view-only user:
-  // {
-  //   id: '3',
-  //   email: 'viewer@rhythmstix.co.uk',
-  //   password: 'viewer123',
-  //   name: 'View Only User',
-  //   avatar: 'https://images.pexels.com/photos/415829/pexels-photo-415829.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&dpr=2',
-  //   role: 'viewer'
-  // }
-];
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -334,46 +309,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // ----- Legacy: local + WordPress -----
-      // DEV MODE: Auto-login for local development
-      if (import.meta.env.DEV && !localStorage.getItem('rhythmstix_auth_token')) {
-        const devUser = localUsers[0];
-        if (devUser) {
-          console.log('🔧 DEV MODE: Auto-logging in as', devUser.email);
-          localStorage.setItem('rhythmstix_auth_token', `rhythmstix_local_${devUser.id}`);
-          const userData: AppUser = {
-            id: devUser.id,
-            email: devUser.email,
-            name: devUser.name,
-            avatar: devUser.avatar,
-            role: devUser.role
-          };
-          setUser(userData);
-          syncUserIdToStorage(devUser.id);
-          setLoading(false);
-          return;
-        }
-      }
-
+      // ----- Legacy: WordPress -----
       const token = localStorage.getItem('rhythmstix_auth_token');
       if (token) {
+        // Reject any stale local-only tokens from the removed legacy auth path
         if (token.startsWith('rhythmstix_local_')) {
-          const userId = token.replace('rhythmstix_local_', '');
-          const localUser = localUsers.find(u => u.id === userId);
-          if (localUser) {
-            resolvedRef.current = true;
-            const userData: AppUser = {
-              id: localUser.id,
-              email: localUser.email,
-              name: localUser.name,
-              avatar: localUser.avatar,
-              role: localUser.role
-            };
-            setUser(userData);
-            syncUserIdToStorage(localUser.id);
-          } else {
-            localStorage.removeItem('rhythmstix_auth_token');
-          }
+          localStorage.removeItem('rhythmstix_auth_token');
         } else {
           const wordpressUrl = import.meta.env.VITE_WORDPRESS_URL;
           if (wordpressUrl && wordpressUrl !== 'https://your-wordpress-site.com') {
@@ -453,29 +394,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
 
-      // ----- Legacy: local users (only when Supabase Auth is disabled) -----
-      const localUser = localUsers.find(u => {
-        if (u.email === username) {
-          return password === '' || u.password === password;
-        }
-        return false;
-      });
-
-      if (localUser) {
-        resolvedRef.current = true;
-        const userData: AppUser = {
-          id: localUser.id,
-          email: localUser.email,
-          name: localUser.name,
-          avatar: localUser.avatar,
-          role: localUser.role
-        };
-        localStorage.setItem('rhythmstix_auth_token', `rhythmstix_local_${localUser.id}`);
-        setUser(userData);
-        syncUserIdToStorage(localUser.id);
-        return;
-      }
-
       // ----- WordPress -----
       const wordpressUrl = import.meta.env.VITE_WORDPRESS_URL;
       if (wordpressUrl && wordpressUrl !== 'https://your-wordpress-site.com') {
@@ -514,7 +432,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // login form (or school homepage) rather than auto-resuming the demo.
     const wasDemo = isDemoModeActive();
     const demoFromSchool = wasDemo ? getDemoOriginSchool() : null;
-    clearDemoMode();
+    // Only wipe demo-owned storage when we actually were in demo mode —
+    // clearDemoMode() now removes seeded keys (categories, year groups, …)
+    // that a real signed-in user also relies on locally.
+    if (wasDemo) {
+      clearDemoMode();
+    }
     if (!wasDemo && isSupabaseAuthEnabled()) {
       await supabase.auth.signOut();
     }

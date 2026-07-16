@@ -46,6 +46,7 @@
     "@replit/vite-plugin-runtime-error-modal": "catalog:",
     "@tailwindcss/typography": "^0.5.15",
     "@tanstack/react-query": "catalog:",
+    "@types/dompurify": "^3.2.0",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
@@ -79,15 +80,25 @@
     "zod": "catalog:"
   },
   "dependencies": {
+    "@e965/xlsx": "^0.20.3",
     "@supabase/supabase-js": "^2.105.1",
+    "@tiptap/extension-blockquote": "^3.23.2",
+    "@tiptap/extension-link": "^3.23.2",
+    "@tiptap/extension-placeholder": "^3.23.2",
+    "@tiptap/extension-strike": "^3.23.2",
+    "@tiptap/extension-task-item": "^3.23.2",
+    "@tiptap/extension-task-list": "^3.23.2",
+    "@tiptap/extension-underline": "^3.23.2",
+    "@tiptap/pm": "^3.23.2",
+    "@tiptap/react": "^3.23.2",
+    "@tiptap/starter-kit": "^3.23.2",
     "deleted": "^1.0.5",
+    "dompurify": "^3.4.2",
     "jspdf": "^4.2.1",
     "react-dnd": "^16.0.1",
     "react-dnd-html5-backend": "^16.0.1",
     "react-dnd-multi-backend": "^9.0.0",
     "react-dnd-touch-backend": "^16.0.1",
-    "react-hot-toast": "^2.6.0",
-    "react-quill": "^2.0.0",
-    "xlsx": "^0.18.5"
+    "react-hot-toast": "^2.6.0"
   }
 }

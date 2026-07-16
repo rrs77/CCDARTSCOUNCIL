@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useRef } from 'react';
+import { sanitizeHtml } from '../utils/sanitize';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { X, Plus, Trash2, Eye, BookOpen, Target, Link2, Clock, Search, GripVertical, ChevronDown, ChevronUp, List, Layers, Upload, Save, HelpCircle } from 'lucide-react';
@@ -177,8 +178,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
   const { categories, customYearGroups } = useSettings();
   const { user } = useAuth();
   
-  // Check if user is admin
-  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' || user?.role === 'administrator';
+  const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
   
   const [activeTab, setActiveTab] = useState<'main' | 'extended'>('main');
   const [showPreview, setShowPreview] = useState(false);
@@ -250,8 +250,8 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
       } else if (lessonData.grouped) {
         const categoryOrder = lessonData.categoryOrder || Object.keys(lessonData.grouped);
         activities = categoryOrder
-          .filter(category => lessonData.grouped[category])
-          .flatMap(category => lessonData.grouped[category] || [])
+          .filter((category: any) => lessonData.grouped[category])
+          .flatMap((category: any) => lessonData.grouped[category] || [])
           .map((activity: Activity) => ({
             ...activity,
             _uniqueId: Date.now() + Math.random().toString(36).substring(2, 9)
@@ -330,14 +330,14 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
   const handleRemoveLink = (index: number) => {
     setLesson((prev) => ({
       ...prev,
-      additionalLinks: prev.additionalLinks.filter((_, i) => i !== index),
+      additionalLinks: prev.additionalLinks.filter((_: any, i: number) => i !== index),
     }));
   };
 
   const handleLinkChange = (index: number, field: 'url' | 'label', value: string) => {
     setLesson((prev) => ({
       ...prev,
-      additionalLinks: prev.additionalLinks.map((link, i) =>
+      additionalLinks: prev.additionalLinks.map((link: any, i: number) =>
         i === index ? { ...link, [field]: value } : link
       ),
     }));
@@ -484,16 +484,16 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
         createdAt: editingLesson?.lessonData?.createdAt || new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         assessmentObjectives: lesson.assessmentObjectives,
-        learningOutcome: lesson.learningOutcome,
-        successCriteria: lesson.successCriteria,
-        introduction: lesson.introduction,
-        mainActivity: lesson.mainActivity,
-        plenary: lesson.plenary,
-        vocabulary: lesson.vocabulary,
-        keyQuestions: lesson.keyQuestions,
-        resources: lesson.resources,
-        differentiation: lesson.differentiation,
-        assessment: lesson.assessment,
+        learningOutcome: sanitizeHtml(lesson.learningOutcome || ''),
+        successCriteria: sanitizeHtml(lesson.successCriteria || ''),
+        introduction: sanitizeHtml(lesson.introduction || ''),
+        mainActivity: sanitizeHtml(lesson.mainActivity || ''),
+        plenary: sanitizeHtml(lesson.plenary || ''),
+        vocabulary: sanitizeHtml(lesson.vocabulary || ''),
+        keyQuestions: sanitizeHtml(lesson.keyQuestions || ''),
+        resources: sanitizeHtml(lesson.resources || ''),
+        differentiation: sanitizeHtml(lesson.differentiation || ''),
+        assessment: sanitizeHtml(lesson.assessment || ''),
         videoLink: lesson.videoLink,
         resourceLink: lesson.resourceLink,
         imageLink: lesson.imageLink,
@@ -763,7 +763,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                 </p>
                 {lesson.assessmentObjectives.length > 0 ? (
                   <div className="space-y-2">
-                    {lesson.assessmentObjectives.map((objective, index) => (
+                    {lesson.assessmentObjectives.map((objective: string, index: number) => (
                       <div 
                         key={index}
                         className="flex items-start space-x-2 bg-white rounded-lg p-3 border border-teal-100"
@@ -777,7 +777,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                           onClick={() => {
                             setLesson(prev => ({
                               ...prev,
-                              assessmentObjectives: prev.assessmentObjectives.filter((_, i) => i !== index)
+                              assessmentObjectives: prev.assessmentObjectives.filter((_: any, i: number) => i !== index)
                             }));
                           }}
                           className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
@@ -1191,7 +1191,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                 {/* Additional Links */}
                 {lesson.additionalLinks.length > 0 && (
                   <div className="space-y-2 mb-3">
-                    {lesson.additionalLinks.map((link, index) => (
+                    {lesson.additionalLinks.map((link: any, index: number) => (
                       <div key={index} className="grid grid-cols-[1fr_auto_auto] gap-2">
                         <input
                           type="url"
@@ -1315,7 +1315,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   </h4>
                   <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
                     <ul className="space-y-2">
-                      {lesson.assessmentObjectives.map((objective, index) => (
+                      {lesson.assessmentObjectives.map((objective: string, index: number) => (
                         <li key={index} className="flex items-start space-x-2 text-sm text-gray-700">
                           <span className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-xs font-medium text-purple-700">
                             {index + 1}
@@ -1338,7 +1338,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200 overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
                     style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
-                    dangerouslySetInnerHTML={{ __html: lesson.learningOutcome }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.learningOutcome) }}
                   />
                 </div>
               )}
@@ -1353,7 +1353,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200 overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
                     style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
-                    dangerouslySetInnerHTML={{ __html: lesson.successCriteria }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.successCriteria) }}
                   />
                 </div>
               )}
@@ -1364,7 +1364,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Introduction</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.introduction }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.introduction) }}
                   />
                 </div>
               )}
@@ -1375,7 +1375,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Main Activity</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.mainActivity }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.mainActivity) }}
                   />
                 </div>
               )}
@@ -1386,7 +1386,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Plenary</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.plenary }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.plenary) }}
                   />
                 </div>
               )}
@@ -1397,7 +1397,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Vocabulary</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.vocabulary }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.vocabulary) }}
                   />
                 </div>
               )}
@@ -1408,7 +1408,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Key Questions</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.keyQuestions }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.keyQuestions) }}
                   />
                 </div>
               )}
@@ -1419,7 +1419,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Resources</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.resources }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.resources) }}
                   />
                 </div>
               )}
@@ -1430,7 +1430,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Differentiation</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.differentiation }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.differentiation) }}
                   />
                 </div>
               )}
@@ -1441,7 +1441,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Assessment</h4>
                   <div 
                     className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: lesson.assessment }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.assessment) }}
                   />
                 </div>
               )}
@@ -1478,7 +1478,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                         </a>
                       </div>
                     )}
-                    {lesson.additionalLinks && lesson.additionalLinks.length > 0 && lesson.additionalLinks.map((link, index) => (
+                    {lesson.additionalLinks && lesson.additionalLinks.length > 0 && lesson.additionalLinks.map((link: any, index: number) => (
                       link.url && (
                         <div key={index} className="flex items-center space-x-2">
                           <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />

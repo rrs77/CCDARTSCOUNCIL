@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { X, Upload, FileText, Wand2, Check, AlertTriangle } from 'lucide-react';
+import { sanitizeHtml } from '../utils/sanitize';
 
 interface LessonImportModalProps {
   isOpen: boolean;
@@ -101,7 +102,7 @@ export function LessonImportModal({ isOpen, onClose, onImport }: LessonImportMod
       formatted = paragraphs.map(p => `<p>${p.replace(/\n/g, formatOptions.preserveLineBreaks ? '<br/>' : ' ')}</p>`).join('');
     }
     
-    return formatted;
+    return sanitizeHtml(formatted);
   };
 
   const parseText = () => {
@@ -142,7 +143,7 @@ export function LessonImportModal({ isOpen, onClose, onImport }: LessonImportMod
       const content = rawText.substring(startPos, endPos).trim();
       
       if (content) {
-        result[section.key] = formatText(content);
+        (result as any)[section.key] = formatText(content);
       }
     });
 
