@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
+import { isDemoModeActive } from './utils/demoMode';
+import { seedDemoData } from './utils/demoSeed';
 
 // In development, unregister any service workers that may have been installed
 // from a previous Vercel/PWA deploy so HMR is not intercepted by stale caches.
@@ -22,12 +24,24 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 // Re-enable periodically to check for side effects.
 const ENABLE_STRICT_MODE = false; // Set to true to enable double-mounting checks
 
-createRoot(document.getElementById('root')!).render(
-  ENABLE_STRICT_MODE ? (
-    <StrictMode>
+async function boot() {
+  // In Preview/Demo mode, make sure the snapshot content is seeded into
+  // browser storage before the app (and its contexts) mount. Seeding is
+  // idempotent per session, so this is a no-op when the login/homepage
+  // button already seeded before navigating.
+  if (isDemoModeActive()) {
+    await seedDemoData();
+  }
+
+  createRoot(document.getElementById('root')!).render(
+    ENABLE_STRICT_MODE ? (
+      <StrictMode>
+        <App />
+      </StrictMode>
+    ) : (
       <App />
-    </StrictMode>
-  ) : (
-    <App />
-  )
-);
+    )
+  );
+}
+
+void boot();

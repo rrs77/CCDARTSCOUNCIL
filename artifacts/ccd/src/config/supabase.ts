@@ -1,4 +1,6 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { isDemoModeActive } from '../utils/demoMode';
+import { createDemoSupabaseClient } from '../utils/demoDb';
 
 // Use env vars in Vercel (or any host); fallback to current Supabase project
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wiudrzdkbpyziaodqoog.supabase.co';
@@ -35,23 +37,29 @@ export function setSessionOnlyCookie() {
 }
 
 // Create Supabase client. When using Supabase Auth, session is persisted (localStorage or sessionStorage when "require password each time").
-export const supabase = createClient(
-  supabaseUrl,
-  supabaseAnonKey,
-  {
-    auth: {
-      persistSession: useSupabaseAuth,
-      autoRefreshToken: useSupabaseAuth,
-      detectSessionInUrl: useSupabaseAuth,
-      ...(useSupabaseAuth && { storage: customAuthStorage }),
-    },
-    global: {
-      headers: {
-        'apikey': supabaseAnonKey
+//
+// SAFETY: in Preview / Demo mode the exported client is a localStorage-backed
+// mock (see utils/demoDb.ts). No real Supabase client is even constructed, so
+// no read or write from a demo visitor can ever reach the live database.
+export const supabase: SupabaseClient = isDemoModeActive()
+  ? (createDemoSupabaseClient() as SupabaseClient)
+  : createClient(
+      supabaseUrl,
+      supabaseAnonKey,
+      {
+        auth: {
+          persistSession: useSupabaseAuth,
+          autoRefreshToken: useSupabaseAuth,
+          detectSessionInUrl: useSupabaseAuth,
+          ...(useSupabaseAuth && { storage: customAuthStorage }),
+        },
+        global: {
+          headers: {
+            'apikey': supabaseAnonKey
+          }
+        }
       }
-    }
-  }
-);
+    );
 
 export const isSupabaseAuthEnabled = () => useSupabaseAuth;
 

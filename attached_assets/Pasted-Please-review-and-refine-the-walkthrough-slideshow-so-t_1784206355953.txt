@@ -1,0 +1,34 @@
+Please review and refine the walkthrough slideshow so that it feels polished, coherent and professionally paced.
+
+Key changes required:
+
+Fix the slide order
+Reorder the slides so that they follow a clear, logical and sensible journey through CCDesigner.
+The sequence should help the user understand the platform naturally, with each slide leading properly into the next.
+Restore and include all original animations
+Make sure all of the original animation slides and effects are copied across and working properly.
+Do not remove, simplify or skip any of the existing animation ideas that were previously part of the walkthrough.
+Bring back the activity-card animation
+Restore the slide/animation where the activity cards drop individually from the top of the screen and settle into place.
+This was one of the strongest parts of the original walkthrough and should be recreated as closely as possible.
+The effect should include:
+individual cards falling in from above
+cards settling into different positions, angles and depths
+smaller faded cards in the background
+a layered, atmospheric look similar to the earlier version
+Fix the duplicated logo issue
+The CCDesigner logo is currently appearing twice in the slideshow, causing it to double up visually.
+Please fix this so the logo appears only once on each slide and is rendered cleanly and correctly.
+Correct the thumbnail / slide navigation labels
+The thumbnail titles / slide labels currently appear random and do not match the actual slides.
+Please rename and align them so that each one:
+clearly relates to the slide it represents
+accurately reflects the slide content
+helps the user understand where they are in the walkthrough
+follows the logical sequence of the presentation
+is concise, clean and professional
+Overall quality
+Ensure the full walkthrough feels smooth, intentional and high-quality.
+Transitions should be clean, the pacing should feel professional, and there should be no duplicated or mismatched visual elements.
+
+In short: reorder the walkthrough properly, restore all original animations, bring back the falling activity-card animation, fix the duplicated logo, and make sure all thumbnail labels accurately match the relevant slides.

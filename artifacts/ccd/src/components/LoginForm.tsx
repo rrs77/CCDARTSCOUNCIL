@@ -26,7 +26,7 @@ import {
   setSessionOnlyCookie,
 } from '../config/supabase';
 import { activateDemoMode } from '../utils/demoMode';
-import { seedDemoLocalStorage } from '../utils/demoSampleData';
+import { seedDemoData } from '../utils/demoSeed';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
 import { AboutPrototypeModal } from './login/AboutPrototypeModal';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
@@ -161,9 +161,9 @@ export function LoginForm() {
     setShowInstallPrompt(false);
   };
 
-  const handleStartPreview = () => {
+  const handleStartPreview = async () => {
     activateDemoMode('default');
-    seedDemoLocalStorage();
+    await seedDemoData();
     window.location.assign('/?demo=1');
   };
 

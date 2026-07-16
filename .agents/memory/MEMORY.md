@@ -1,1 +1,2 @@
 - [Walkthrough viewer architecture](walkthrough-viewer-architecture.md) — pitch slides use vw/vh, so render in a letterboxed 16:9 iframe with postMessage nav; rebuild embedded bundle via build:pitch.
+- [CCD demo mode architecture](ccd-demo-mode.md) — demo isolation swaps in a mock Supabase client at module init; the sessionStorage flag must be set before any bundle code runs.

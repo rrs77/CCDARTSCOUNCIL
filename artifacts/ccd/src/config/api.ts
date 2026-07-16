@@ -1,9 +1,17 @@
 import { supabase, TABLES, isSupabaseConfigured } from './supabase';
+import { isDemoModeActive } from '../utils/demoMode';
 import type { Activity, LessonData, LessonPlan } from '../contexts/DataContext';
+
+// Synthetic, UUID-shaped user id for Preview/Demo sessions. It satisfies the
+// fail-closed `isAuthUserId` guards below, and every query it scopes runs
+// against the localStorage-backed mock client (utils/demoDb.ts) — the real
+// Supabase client is never constructed in demo mode.
+const DEMO_USER_ID = '00000000-0000-4000-8000-000000000d10';
 
 // API endpoints for activities
 // Helper function to get current user ID
 const getCurrentUserId = () => {
+  if (isDemoModeActive()) return DEMO_USER_ID;
   let userId = localStorage.getItem('rhythmstix_user_id');
   if (!userId) {
     userId = '1';

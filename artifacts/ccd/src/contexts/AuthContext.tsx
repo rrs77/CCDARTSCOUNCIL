@@ -31,18 +31,22 @@ function useAuth() {
  * Demo / Preview mode.
  *
  * When a visitor clicks "Preview" on a school homepage, the SchoolHomepage
- * component sets the demo flag and seeds curated sample content into
- * localStorage (see src/utils/demoMode.ts and src/utils/demoSampleData.ts).
- * AuthContext detects the flag on init and injects a synthetic, read-only
- * `viewer` user so the rest of the app renders without real credentials.
+ * component sets the demo flag and seeds a snapshot of the owner's account
+ * content into localStorage (see src/utils/demoMode.ts and src/utils/demoSeed.ts).
+ * AuthContext detects the flag on init and injects a synthetic demo teacher
+ * so the rest of the app renders without real credentials.
  * Logout clears the flag, the seeded data, and redirects back to the
  * originating school homepage.
  */
+// The demo visitor gets a full `teacher` role so every create / edit /
+// duplicate workflow works in the prototype. All of their changes stay in
+// browser storage (mock Supabase client + seeded localStorage) and are wiped
+// when the session ends, so nothing can reach the live account.
 const DEMO_USER: AppUser = {
-  id: 'demo-viewer',
+  id: 'demo-visitor',
   email: 'demo@ccd.preview',
   name: 'Demo Visitor',
-  role: 'viewer',
+  role: 'teacher',
 };
 
 
@@ -428,7 +432,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // login form (or school homepage) rather than auto-resuming the demo.
     const wasDemo = isDemoModeActive();
     const demoFromSchool = wasDemo ? getDemoOriginSchool() : null;
-    clearDemoMode();
+    // Only wipe demo-owned storage when we actually were in demo mode —
+    // clearDemoMode() now removes seeded keys (categories, year groups, …)
+    // that a real signed-in user also relies on locally.
+    if (wasDemo) {
+      clearDemoMode();
+    }
     if (!wasDemo && isSupabaseAuthEnabled()) {
       await supabase.auth.signOut();
     }
