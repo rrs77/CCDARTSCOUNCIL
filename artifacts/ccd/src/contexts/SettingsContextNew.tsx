@@ -1036,7 +1036,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           console.log('📦 Raw year groups from Supabase:', supabaseYearGroups);
           
           if (supabaseYearGroups && supabaseYearGroups.length > 0) {
-            const formattedYearGroups = supabaseYearGroups.map(group => ({
+            const formattedYearGroups = supabaseYearGroups.map((group: any) => ({
               id: group.id,
               name: group.name,
               color: group.color
@@ -1152,7 +1152,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           console.log('📦 Raw category groups from Supabase:', supabaseCategoryGroups);
           
           if (supabaseCategoryGroups && supabaseCategoryGroups.length > 0) {
-            const groupNames = supabaseCategoryGroups.map(group => group.name);
+            const groupNames = supabaseCategoryGroups.map((group: any) => group.name);
             setCategoryGroups({ groups: groupNames });
             console.log('📦 Loaded category groups from Supabase:', groupNames);
             
@@ -1186,7 +1186,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
 
           // Load branding from Supabase (footer, login page - persists across devices)
           try {
-            const supabaseBranding = await brandingApi.get();
+            const supabaseBranding: any = await brandingApi.get();
             if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
               if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
                 supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
@@ -1256,7 +1256,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               if (deduplicatedGroups.length > 0) {
                 setCustomYearGroups(deduplicatedGroups);
                 console.log('📦 Fallback: Loaded year groups from localStorage:', deduplicatedGroups.length, 'groups');
-                console.log('📦 Fallback: Year group names:', deduplicatedGroups.map(g => g.name));
+                console.log('📦 Fallback: Year group names:', deduplicatedGroups.map((g: any) => g.name));
               } else {
                 setCustomYearGroups(DEFAULT_YEAR_GROUPS);
                 console.log('📦 Fallback: No valid groups in localStorage, using defaults');
@@ -1388,7 +1388,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         try {
           console.log(`🔄 Syncing year groups from ${source}...`);
           const newYearGroups = await yearGroupsApi.getAll();
-          const formattedYearGroups = newYearGroups.map(group => ({
+          const formattedYearGroups = newYearGroups.map((group: any) => ({
             id: group.id,
             name: group.name,
             color: group.color
@@ -1604,11 +1604,11 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         try {
           const supabaseCategories = await customCategoriesApi.getAll();
           const categoriesToDelete = supabaseCategories
-            .filter(supabaseCat => {
+            .filter((supabaseCat: any) => {
               const isFixed = FIXED_CATEGORIES.some(fixed => fixed.name === supabaseCat.name);
               return !isFixed && !currentCategoryNames.has(supabaseCat.name);
             })
-            .map(cat => cat.name);
+            .map((cat: any) => cat.name);
           if (categoriesToDelete.length > 0) {
             // custom_categories has no per-tenant column: deleting by name here would remove
             // that category for every other tenant sharing the table. Writes are disabled
@@ -1696,7 +1696,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               // Reload year groups
               const yearGroups = await yearGroupsApi.getAll();
               if (yearGroups && yearGroups.length > 0) {
-                const formatted = yearGroups.map(group => ({
+                const formatted = yearGroups.map((group: any) => ({
                   id: group.id,
                   name: group.name,
                   color: group.color
@@ -1713,7 +1713,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                   // Merge with existing categories
                   setCategories(prev => {
                     const merged = [...prev];
-                    categories.forEach(supabaseCat => {
+                    categories.forEach((supabaseCat: any) => {
                       const existingIndex = merged.findIndex(cat => cat.name === supabaseCat.name);
                       if (existingIndex >= 0) {
                         // Update existing category with ALL Supabase data (including yearGroups!)
@@ -1758,7 +1758,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       const next = { ...prev, ...newSettings };
       // Persist branding to Supabase when it changes (survives cache clears, different devices)
       if (newSettings.branding && isSupabaseConfigured()) {
-        brandingApi.upsert(newSettings.branding).catch(() => {});
+        brandingApi.upsert(newSettings.branding as unknown as Record<string, unknown>).catch(() => {});
       }
       return next;
     });
@@ -1839,7 +1839,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       try {
         console.log('🔄 Manual sync: Fetching year groups from Supabase...');
         const supabaseYearGroups = await yearGroupsApi.getAll();
-        const formattedYearGroups = supabaseYearGroups.map(group => ({
+        const formattedYearGroups = supabaseYearGroups.map((group: any) => ({
           id: group.id,
           name: group.name,
           color: group.color
@@ -2222,7 +2222,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         }
       }
       if (supabaseYearGroups && supabaseYearGroups.length > 0) {
-        const formattedYearGroups = supabaseYearGroups.map(group => ({
+        const formattedYearGroups = supabaseYearGroups.map((group: any) => ({
           id: group.id,
           name: group.name,
           color: group.color
@@ -2280,7 +2280,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       // Refresh category groups
       const supabaseCategoryGroups = await categoryGroupsApi.getAll();
       if (supabaseCategoryGroups && supabaseCategoryGroups.length > 0) {
-        const groupNames = supabaseCategoryGroups.map(group => group.name);
+        const groupNames = supabaseCategoryGroups.map((group: any) => group.name);
         setCategoryGroups({ groups: groupNames });
         localStorage.setItem('category-groups', JSON.stringify({ groups: groupNames }));
         console.log('✅ Category groups refreshed from Supabase:', groupNames);
@@ -2288,7 +2288,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
 
       // Refresh branding from Supabase
       try {
-        const supabaseBranding = await brandingApi.get();
+        const supabaseBranding: any = await brandingApi.get();
         if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
           if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
             supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');

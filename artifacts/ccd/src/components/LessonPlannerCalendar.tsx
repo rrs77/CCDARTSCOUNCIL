@@ -1010,7 +1010,7 @@ export function LessonPlannerCalendar({
     
     return (
       <div
-        ref={drop}
+        ref={drop as unknown as React.Ref<HTMLDivElement>}
         onClick={() => !isHolidayDate && !isInsetDayDate && handleDateClick(date)}
         className={`
           relative w-full h-24 p-1 border border-gray-200 hover:bg-blue-50 transition-colors duration-200
@@ -1206,7 +1206,7 @@ export function LessonPlannerCalendar({
             updatedAt: new Date()
           };
           
-          onUpdateLessonPlan(newPlan);
+          onUpdateLessonPlan(newPlan as any);
           triggerSlot2Flash();
         } else if (item.unit) {
           console.log('Unit dropped:', item.unit);
@@ -1223,7 +1223,7 @@ export function LessonPlannerCalendar({
 
     return (
       <div 
-        ref={drop}
+        ref={drop as unknown as React.Ref<HTMLDivElement>}
         className={`border border-gray-200 p-2 min-h-[100px] ${
           isHolidayDate || isInsetDayDate ? 'bg-gray-100' : 'bg-white'
         } ${slot2DropClass} ${slot2Flash}`}
@@ -1380,7 +1380,7 @@ export function LessonPlannerCalendar({
             updatedAt: new Date()
           };
           
-          onUpdateLessonPlan(newPlan);
+          onUpdateLessonPlan(newPlan as any);
           triggerSlot3Flash();
         } else if (item.unit) {
           console.log('Unit dropped:', item.unit);
@@ -1401,7 +1401,7 @@ export function LessonPlannerCalendar({
     
     return (
       <div
-        ref={drop}
+        ref={drop as unknown as React.Ref<HTMLDivElement>}
         onClick={() => !isHolidayDate && !isInsetDayDate && handleTimeSlotClick(dayOfWeek, date, hour)}
         className={`
           relative border border-gray-200 p-1 h-16 transition-colors duration-200
@@ -2521,7 +2521,7 @@ export function LessonPlannerCalendar({
         <LessonDetailsModal
           lessonNumber={selectedLessonForDetails}
           onClose={() => setSelectedLessonForDetails(null)}
-          theme={theme}
+          theme={theme as any}
           onEdit={() => {
             // Open lesson builder for editing
             setSelectedLessonForDetails(null);
@@ -2585,7 +2585,7 @@ export function LessonPlannerCalendar({
           onTimetableUpdate={(classes) => {
             saveTimetableClasses(classes);
           }}
-          initialEditClass={editingTimetableClass}
+          initialEditClass={editingTimetableClass as any}
         />
       )}
     </div>

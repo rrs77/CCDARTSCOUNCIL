@@ -671,8 +671,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                       onClick={() => imageInputRef.current?.click()}
                       className="px-3 py-2 text-white text-sm font-medium rounded-lg flex items-center space-x-1"
                       style={{ backgroundColor: '#0BA596' }}
-                      onMouseEnter={(e) => e.target.style.backgroundColor = '#0A9688'}
-                      onMouseLeave={(e) => e.target.style.backgroundColor = '#0BA596'}
+                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0A9688'}
+                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0BA596'}
                     >
                       <Upload className="h-4 w-4" />
                       <span>Upload</span>
@@ -775,8 +775,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
               onClick={handleSubmit}
               className="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
               style={{ backgroundColor: '#0BA596' }}
-              onMouseEnter={(e) => e.target.style.backgroundColor = '#0A9688'}
-              onMouseLeave={(e) => e.target.style.backgroundColor = '#0BA596'}
+              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0A9688'}
+              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0BA596'}
             >
               <Save className="h-5 w-5" />
               <span>Create Activity</span>

@@ -15,6 +15,9 @@ export interface Activity {
   description: string;
   activityText?: string; // New field for activity text
   htmlDescription?: string;
+  descriptionHeading?: string;
+  activityHeading?: string;
+  linkHeading?: string;
   time: number;
   videoLink: string;
   musicLink: string;
@@ -78,6 +81,11 @@ export interface LessonData {
   resourceLink?: string;
   imageLink?: string;
   additionalLinks?: string;
+  notes?: string;
+  standards?: any[];
+  assessmentObjectives?: string[];
+  _trashedStandards?: string[];
+  _trashedAt?: string;
 }
 
 interface SheetInfo {
@@ -102,6 +110,7 @@ export interface LessonPlan {
   term?: string;
   time?: string; // Added time field for scheduled lessons
   stackId?: string; // Added for stack assignments
+  isEditingExisting?: boolean;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -124,6 +133,8 @@ interface HalfTerm {
   lessons: string[]; // Array of lesson numbers in display order
   stacks?: string[]; // Array of stack IDs assigned to this half-term
   isComplete: boolean;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
 // ADD: Subject and SubjectCategory interfaces
@@ -1140,7 +1151,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
             stacks: term.stacks || [] // Ensure stacks field exists
           }));
           
-          if (import.meta.env.DEV) console.log('🔍 Setting half-terms state with data:', formattedHalfTerms.map(ht => ({ id: ht.id, name: ht.name, lessonsCount: ht.lessons?.length || 0, stacksCount: ht.stacks?.length || 0 })));
+          if (import.meta.env.DEV) console.log('🔍 Setting half-terms state with data:', formattedHalfTerms.map((ht: any) => ({ id: ht.id, name: ht.name, lessonsCount: ht.lessons?.length || 0, stacksCount: ht.stacks?.length || 0 })));
           setHalfTerms(formattedHalfTerms);
           // Also update the year-specific state
           setHalfTermsByYear(prev => ({
@@ -2022,7 +2033,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
           const saveLpUserIsAuth = !!saveLpUserId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(saveLpUserId);
           if (!saveLpUserIsAuth) {
             console.warn('⚠️ saveUserCreatedLessonPlans: unauthenticated session — skipping Supabase write (fail closed)');
-            return plans;
+            return;
           }
           const supabasePlans = plans.map(plan => {
             const row: Record<string, unknown> = {
@@ -3256,7 +3267,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
       allLessonsData: newAllLessonsData,
       lessonNumbers: newLessonNumbers,
       teachingUnits,
-      lessonStandards: lessonStandardsData
+      lessonStandards
     };
     localStorage.setItem(`lesson-data-${currentSheetInfo.sheet}`, JSON.stringify(dataToSave));
     if (isSupabaseConfigured()) {
@@ -3353,7 +3364,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
         allLessonsData, 
         lessonNumbers, 
         teachingUnits, 
-        updatedStatements
+        updatedStandards
       );
       
       // Try to save to Supabase if connected
@@ -3362,21 +3373,21 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
           allLessonsData, 
           lessonNumbers, 
           teachingUnits, 
-          updatedStatements
+          updatedStandards
         ).catch(error => console.warn('Failed to save EYFS statements to Supabase:', error));
       }
       
-      return updatedStatements;
+      return updatedStandards;
     });
 
     setAllLessonsData(prev => {
       const updatedLessonsData = { ...prev };
       if (updatedLessonsData[lessonNumber]) {
         const currentStatements = updatedLessonsData[lessonNumber].lessonStandards || [];
-        if (!currentStatements.includes(eyfsStatement)) {
+        if (!currentStatements.includes(standard)) {
           updatedLessonsData[lessonNumber] = {
             ...updatedLessonsData[lessonNumber],
-            lessonStandards: [...currentStatements, eyfsStatement]
+            lessonStandards: [...currentStatements, standard]
           };
         }
       }
@@ -3399,7 +3410,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
         allLessonsData, 
         lessonNumbers, 
         teachingUnits, 
-        updatedStatements
+        updatedStandards
       );
       
       // Try to save to Supabase if connected
@@ -3408,11 +3419,11 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
           allLessonsData, 
           lessonNumbers, 
           teachingUnits, 
-          updatedStatements
+          updatedStandards
         ).catch(error => console.warn('Failed to save EYFS statements to Supabase:', error));
       }
       
-      return updatedStatements;
+      return updatedStandards;
     });
 
     setAllLessonsData(prev => {
@@ -3421,7 +3432,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
         updatedLessonsData[lessonNumber] = {
           ...updatedLessonsData[lessonNumber],
           lessonStandards: updatedLessonsData[lessonNumber].lessonStandards!.filter(
-            statement => statement !== eyfsStatement
+            statement => statement !== standard
           )
         };
       }
@@ -3885,7 +3896,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
       const targetData = localStorage.getItem(targetLocalStorageKey);
       let targetLessonsData: Record<string, LessonData> = {};
       let targetLessonNumbers: string[] = [];
-      let targetTeachingUnits: TeachingUnit[] = [];
+      let targetTeachingUnits: string[] = [];
       let targetLessonStandards: Record<string, string[]> = {};
       
       if (targetData) {

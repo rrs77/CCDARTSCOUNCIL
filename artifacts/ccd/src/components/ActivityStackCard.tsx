@@ -112,7 +112,7 @@ export function ActivityStackCard({
   if (isExpanded) {
     return (
       <div 
-        ref={drag}
+        ref={drag as unknown as React.Ref<HTMLDivElement>}
         className={`bg-white rounded-card shadow-soft border border-gray-200 p-4 ${
           isDragging ? 'opacity-50' : ''
         }`}
@@ -260,7 +260,7 @@ export function ActivityStackCard({
   // Collapsed Stack View - Compact Design
   return (
     <div 
-      ref={drag}
+      ref={drag as unknown as React.Ref<HTMLDivElement>}
       className={`bg-white rounded-card shadow-soft border border-gray-200 hover:shadow-hover transition-all duration-200 cursor-pointer group ${
         isDragging ? 'opacity-50' : ''
       }`}

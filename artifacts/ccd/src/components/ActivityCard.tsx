@@ -49,6 +49,8 @@ interface ActivityCardProps {
   /** Library: show star toggle (empty → gold when starred) */
   isStarred?: boolean;
   onStarToggle?: (activity: Activity) => void;
+  onClick?: () => void;
+  className?: string;
 }
 
 // Character limit for truncated description
@@ -211,7 +213,7 @@ export function ActivityCard({
   if (viewMode === 'minimal') {
     return (
       <div
-        ref={draggable ? drag : undefined}
+        ref={draggable ? (drag as unknown as React.Ref<HTMLDivElement>) : undefined}
 className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all duration-200 hover:shadow-hover cursor-pointer h-full ${
           isDragging ? 'opacity-50' : ''
         }`}
@@ -252,7 +254,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
   if (viewMode === 'compact') {
     return (
       <div
-        ref={draggable ? drag : undefined}
+        ref={draggable ? (drag as unknown as React.Ref<HTMLDivElement>) : undefined}
         className={`bg-white rounded-md shadow-soft border transition-all duration-200 hover:shadow-hover cursor-pointer ${
           isEditing ? 'ring-2 ring-blue-300' : 'border-gray-200 hover:border-gray-300'
         } ${isDragging ? 'opacity-50' : ''} ${isExpanded ? 'border-teal-300' : ''} flex flex-col`}
@@ -347,7 +349,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
   if (viewMode === 'grid') {
     return (
       <div
-        ref={draggable ? drag : undefined}
+        ref={draggable ? (drag as unknown as React.Ref<HTMLDivElement>) : undefined}
         className={`bg-white rounded-card shadow-soft border transition-all duration-200 ${draggable ? 'cursor-move' : 'cursor-pointer'} ${
           isEditing ? 'ring-2 ring-blue-300' : 'border-gray-200 hover:border-teal-400 hover:shadow-lg hover:shadow-teal-100 hover:-translate-y-1 hover:bg-teal-50/30'
         } ${isDragging ? 'opacity-50' : ''} h-full flex flex-col`}
@@ -374,7 +376,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
                 // Create abbreviation: "Lower Kindergarten Music" → "LKG M"
                 // Also handles old labels like "EYFS U", "EYFS L", etc.
                 // Handles comma-separated values like "EYFS U, Reception"
-                const abbreviate = (label: string) => {
+                const abbreviate = (label: string): string => {
                   if (!label) return label;
                   
                   // Handle comma-separated values (e.g., "EYFS U, Reception")
@@ -508,7 +510,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
-                        onDelete(activity._id || activity.id);
+                        onDelete(activity._id || activity.id || '');
                       }}
                       className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                       title="Delete activity"
@@ -527,7 +529,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
 // Detailed view (default)
 return (
   <div
-    ref={draggable ? drag : undefined}
+    ref={draggable ? (drag as unknown as React.Ref<HTMLDivElement>) : undefined}
     className={`bg-white rounded-card shadow-soft border transition-all duration-300 hover:shadow-hover ${draggable ? 'cursor-move' : 'cursor-pointer'} overflow-hidden ${
       isEditing ? 'ring-4 ring-blue-300' : 'border-gray-200 hover:border-gray-300'
     } ${isDragging ? 'opacity-50' : ''} h-full flex flex-col`}
@@ -560,7 +562,7 @@ return (
                     // Create abbreviation: "Lower Kindergarten Music" → "LKG M"
                     // Also handles old labels like "EYFS U", "EYFS L", etc.
                     // Handles comma-separated values like "EYFS U, Reception"
-                    const abbreviate = (label: string) => {
+                    const abbreviate = (label: string): string => {
                       if (!label) return label;
                       
                       // Handle comma-separated values (e.g., "EYFS U, Reception")
@@ -883,7 +885,7 @@ return (
               <button
                 onClick={(e) => {
                   e.stopPropagation();
-                  onDelete(activity._id || activity.id);
+                  onDelete(activity._id || activity.id || '');
                 }}
                 className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-full transition-colors"
                 title="Delete activity"

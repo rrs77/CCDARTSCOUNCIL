@@ -1313,7 +1313,7 @@ export function ActivityLibrary({
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
-                                      handleActivityDelete(activity._id || activity.id);
+                                      handleActivityDelete(activity._id || activity.id || '');
                                     }}
                                     className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
                                     title="Delete activity"

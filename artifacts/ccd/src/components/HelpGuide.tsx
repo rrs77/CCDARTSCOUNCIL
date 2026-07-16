@@ -37,6 +37,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       const timer = setTimeout(() => setIsAnimating(false), 600);
       return () => clearTimeout(timer);
     }
+    return undefined;
   }, [isOpen]);
 
   // Define guide steps for each section
@@ -652,7 +653,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-      <style jsx>{`
+      <style>{`
         .modal-bounce {
           animation: modalBounce 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
         }

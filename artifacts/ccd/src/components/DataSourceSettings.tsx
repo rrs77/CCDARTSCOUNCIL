@@ -79,7 +79,12 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
       setUploadStatus('uploading');
       
       // Get all data from localStorage
-      const data = {
+      const data: {
+        activities: any[];
+        lessons: Record<string, any>;
+        lessonPlans: any[];
+        eyfs: Record<string, any>;
+      } = {
         activities: [],
         lessons: {},
         lessonPlans: [],

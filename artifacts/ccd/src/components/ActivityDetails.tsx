@@ -486,7 +486,7 @@ export function ActivityDetails({
                     if (validYearGroups.length === 0) return null;
                     
                     // Create abbreviation function
-                    const abbreviate = (label: string) => {
+                    const abbreviate = (label: string): string => {
                       if (!label) return label;
                       
                       // Handle comma-separated values (e.g., "EYFS U, Reception")

@@ -357,7 +357,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
 
         // Update areas and objectives for existing year group
         console.log('🔄 Updating areas for existing year group:', formData.areas);
-        for (const areaData of formData.areas) {
+        for (const areaData of formData.areas as Array<{ id?: string; section?: string; name: string; description?: string; objectives: Array<{ id?: string; code: string; text: string; description?: string }> }>) {
           console.log('🔄 Processing area for update:', areaData);
           
           if (areaData.id) {
@@ -470,7 +470,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
       console.log('✅ Year group saved successfully');
       await loadData();
       // Don't auto-close - let user see the success message and close manually
-    } catch (error) {
+    } catch (error: any) {
       console.error('❌ Failed to save year group:', error);
       console.error('❌ Error details:', {
         message: error?.message,
@@ -873,10 +873,14 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                       <div className="flex items-center gap-1.5">
                                         <h4 className="font-medium text-gray-900 truncate">{yearGroup.name}</h4>
                                         {yearGroup.is_locked && (
-                                          <Lock className="h-3 w-3 text-amber-500 flex-shrink-0" title="Locked - Read Only" />
+                                          <span title="Locked - Read Only" className="flex-shrink-0">
+                                            <Lock className="h-3 w-3 text-amber-500" />
+                                          </span>
                                         )}
                                         {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
-                                          <Link2 className="h-3 w-3 text-teal-500 flex-shrink-0" title={`Linked to: ${yearGroup.linked_year_groups.join(', ')}`} />
+                                          <span title={`Linked to: ${yearGroup.linked_year_groups.join(', ')}`} className="flex-shrink-0">
+                                            <Link2 className="h-3 w-3 text-teal-500" />
+                                          </span>
                                         )}
                                       </div>
                                       <p className="text-xs text-gray-500">

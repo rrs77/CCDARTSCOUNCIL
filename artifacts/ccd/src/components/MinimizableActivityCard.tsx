@@ -3,7 +3,7 @@ import React, { useState, useRef } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { X, ChevronRight, ChevronDown, GripVertical, Clock } from 'lucide-react';
-import { Activity } from '../types';
+import type { Activity } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 
 interface MinimizableActivityCardProps {

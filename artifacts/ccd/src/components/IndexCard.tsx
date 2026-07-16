@@ -80,7 +80,7 @@ export function IndexCard({
                 onClick={() => onLessonClick(lessonNumber)}
                 onEdit={onLessonEdit ? () => onLessonEdit(lessonNumber) : undefined}
                 theme={theme}
-                halfTerms={halfTerms}
+                halfTerms={halfTerms as any}
               />
             ))}
           </div>

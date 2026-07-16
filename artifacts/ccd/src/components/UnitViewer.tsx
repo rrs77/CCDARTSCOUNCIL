@@ -629,7 +629,7 @@ export function UnitViewer() {
                       viewMode="grid"
                       onClick={() => handleViewLessonDetails(lessonNumber)}
                       onEdit={() => handleEditLesson(lessonNumber)}
-                      theme={theme}
+                      theme={theme as any}
                       halfTerms={halfTerms}
                       onShare={() => {}} // Share functionality handled internally in card
                     />
@@ -724,7 +724,7 @@ export function UnitViewer() {
                 setSelectedLessonForDetails(null);
                 setSelectedHalfTerm(null);
               }}
-              theme={theme}
+              theme={theme as any}
               onExport={() => {
                 setSelectedLessonForExport(selectedLessonForDetails);
                 setSelectedLessonForDetails(null);
@@ -1280,7 +1280,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                       stackCount={validStacks.length}
                       onClick={() => handleHalfTermClick(halfTerm.id)}
                       isComplete={isComplete}
-                      theme={theme}
+                      theme={theme as any}
                       onLessonClick={handleViewLessonDetails}
                       onLessonEdit={handleEditLesson}
                       halfTerms={halfTerms}
@@ -1334,7 +1334,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                 // Preserve existing stacks when updating half-term
                 const existingHalfTerm = halfTerms.find(term => term.id === selectedHalfTerm);
                 const existingStacks = existingHalfTerm?.stacks || [];
-                updateHalfTerm(selectedHalfTerm, lessons, isComplete, existingStacks);
+                updateHalfTerm(selectedHalfTerm, lessons, isComplete ?? false, existingStacks);
                 setShowLessonSelectionModal(false);
                 setSelectedHalfTerm(null);
               }}
@@ -1356,7 +1356,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                 setSelectedLessonForDetails(null);
                 setSelectedHalfTerm(null);
               }}
-              theme={theme}
+              theme={theme as any}
               onExport={() => {
                 setSelectedLessonForExport(selectedLessonForDetails);
                 setSelectedLessonForDetails(null);

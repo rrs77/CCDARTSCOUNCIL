@@ -87,7 +87,7 @@ export const activitiesApi = {
   create: async (activity: Activity) => {
     try {
       // Convert camelCase to snake_case for database
-      const { uniqueId, ...activityData } = activity;
+      const { _uniqueId, ...activityData } = activity;
       const dbActivity = {
         activity: activityData.activity,
         description: activityData.description,
@@ -169,7 +169,7 @@ export const activitiesApi = {
   update: async (id: string, activity: Activity) => {
     try {
       // Convert camelCase to snake_case for database
-      const { uniqueId, ...activityData } = activity;
+      const { _uniqueId, ...activityData } = activity;
       const dbActivity = {
         activity: activityData.activity,
         description: activityData.description,
@@ -261,7 +261,7 @@ export const activitiesApi = {
   import: async (activities: Activity[]) => {
     try {
       // Convert camelCase to snake_case for database
-      const cleanedActivities = activities.map(({ uniqueId, ...activity }) => ({
+      const cleanedActivities = activities.map(({ _uniqueId, ...activity }) => ({
         activity: activity.activity,
         description: activity.description,
         activity_text: activity.activityText,
@@ -962,10 +962,10 @@ export const halfTermsApi = {
     } catch (error) {
       console.error(`❌ Failed to update half-term ${halfTermId} for ${sheet} in Supabase:`, error);
       console.error(`❌ Error details:`, {
-        message: error.message,
-        code: error.code,
-        details: error.details,
-        hint: error.hint
+        message: (error as any).message,
+        code: (error as any).code,
+        details: (error as any).details,
+        hint: (error as any).hint
       });
       throw error;
     }
@@ -1074,7 +1074,7 @@ const _yearGroupsApiImpl = {
       
       // Deduplicate by name and convert UUIDs back to text IDs for the frontend
       const uniqueData = (data || []).reduce((acc, group) => {
-        const existing = acc.find(g => g.name === group.name);
+        const existing = acc.find((g: any) => g.name === group.name);
         if (!existing) {
           acc.push({
             ...group,
@@ -1113,7 +1113,7 @@ const _yearGroupsApiImpl = {
       
       // Deduplicate incoming year groups by name
       const uniqueYearGroups = yearGroups.reduce((acc, group) => {
-        const exists = acc.find(g => g.name === group.name);
+        const exists = acc.find((g: any) => g.name === group.name);
         if (!exists) {
           acc.push(group);
         }
@@ -1121,7 +1121,7 @@ const _yearGroupsApiImpl = {
       }, [] as any[]);
       
       // Find year groups that need to be added (don't exist yet)
-      const toAdd = uniqueYearGroups.filter(g => !existingNames.has(g.name));
+      const toAdd = uniqueYearGroups.filter((g: any) => !existingNames.has(g.name));
       
       if (toAdd.length === 0) {
         console.log('✅ All year groups already exist, nothing to add');
@@ -1132,14 +1132,14 @@ const _yearGroupsApiImpl = {
       const maxOrder = (existing || []).reduce((max, g) => Math.max(max, g.sort_order || 0), 0);
       
       // Format the new year groups for insertion
-      const formattedYearGroups = toAdd.map((group, index) => ({
+      const formattedYearGroups = toAdd.map((group: any, index: number) => ({
         id: crypto.randomUUID(),
         name: group.name,
         color: group.color || '#14B8A6',
         sort_order: maxOrder + index + 1
       }));
       
-      console.log('📝 Adding missing year groups:', formattedYearGroups.map(g => g.name));
+      console.log('📝 Adding missing year groups:', formattedYearGroups.map((g: any) => g.name));
       
       // Insert only the missing year groups
       const { data, error } = await supabase
@@ -1682,10 +1682,10 @@ export const dataApi = {
       if (activityStacks.error) throw activityStacks.error;
 
       // Try to get custom objectives data (optional - tables might not exist yet)
-      let customObjectiveYearGroups = { data: [] };
-      let customObjectiveAreas = { data: [] };
-      let customObjectives = { data: [] };
-      let activityCustomObjectives = { data: [] };
+      let customObjectiveYearGroups: any = { data: [] };
+      let customObjectiveAreas: any = { data: [] };
+      let customObjectives: any = { data: [] };
+      let activityCustomObjectives: any = { data: [] };
 
       try {
         const [coyg, coa, co, aco] = await Promise.all([

@@ -31,7 +31,7 @@ export const seedReceptionDramaObjectives = async () => {
       const area = await customObjectivesApi.areas.create({
         year_group_id: yearGroup.id,
         name: areaName,
-        description: areaDescription || null,
+        description: areaDescription || undefined,
         sort_order: sortOrder
       });
       
@@ -46,7 +46,7 @@ export const seedReceptionDramaObjectives = async () => {
           area_id: area.id,
           objective_code: `${codePrefix}-${i + 1}`,
           objective_text: objectives[i],
-          description: null,
+          description: undefined,
           sort_order: i + 1
         });
       }

@@ -641,7 +641,7 @@ export function LessonSelectionModal({
         <LessonDetailsModal
           lessonNumber={selectedLessonForDetails}
           onClose={() => setSelectedLessonForDetails(null)}
-          theme={theme}
+          theme={theme as any}
           halfTermId={halfTermId}
           halfTermName={halfTermName}
         />

@@ -250,8 +250,8 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
       } else if (lessonData.grouped) {
         const categoryOrder = lessonData.categoryOrder || Object.keys(lessonData.grouped);
         activities = categoryOrder
-          .filter(category => lessonData.grouped[category])
-          .flatMap(category => lessonData.grouped[category] || [])
+          .filter((category: any) => lessonData.grouped[category])
+          .flatMap((category: any) => lessonData.grouped[category] || [])
           .map((activity: Activity) => ({
             ...activity,
             _uniqueId: Date.now() + Math.random().toString(36).substring(2, 9)
@@ -330,14 +330,14 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
   const handleRemoveLink = (index: number) => {
     setLesson((prev) => ({
       ...prev,
-      additionalLinks: prev.additionalLinks.filter((_, i) => i !== index),
+      additionalLinks: prev.additionalLinks.filter((_: any, i: number) => i !== index),
     }));
   };
 
   const handleLinkChange = (index: number, field: 'url' | 'label', value: string) => {
     setLesson((prev) => ({
       ...prev,
-      additionalLinks: prev.additionalLinks.map((link, i) =>
+      additionalLinks: prev.additionalLinks.map((link: any, i: number) =>
         i === index ? { ...link, [field]: value } : link
       ),
     }));
@@ -763,7 +763,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                 </p>
                 {lesson.assessmentObjectives.length > 0 ? (
                   <div className="space-y-2">
-                    {lesson.assessmentObjectives.map((objective, index) => (
+                    {lesson.assessmentObjectives.map((objective: string, index: number) => (
                       <div 
                         key={index}
                         className="flex items-start space-x-2 bg-white rounded-lg p-3 border border-teal-100"
@@ -777,7 +777,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                           onClick={() => {
                             setLesson(prev => ({
                               ...prev,
-                              assessmentObjectives: prev.assessmentObjectives.filter((_, i) => i !== index)
+                              assessmentObjectives: prev.assessmentObjectives.filter((_: any, i: number) => i !== index)
                             }));
                           }}
                           className="flex-shrink-0 p-1 text-gray-400 hover:text-red-500 transition-colors"
@@ -1191,7 +1191,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                 {/* Additional Links */}
                 {lesson.additionalLinks.length > 0 && (
                   <div className="space-y-2 mb-3">
-                    {lesson.additionalLinks.map((link, index) => (
+                    {lesson.additionalLinks.map((link: any, index: number) => (
                       <div key={index} className="grid grid-cols-[1fr_auto_auto] gap-2">
                         <input
                           type="url"
@@ -1315,7 +1315,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   </h4>
                   <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
                     <ul className="space-y-2">
-                      {lesson.assessmentObjectives.map((objective, index) => (
+                      {lesson.assessmentObjectives.map((objective: string, index: number) => (
                         <li key={index} className="flex items-start space-x-2 text-sm text-gray-700">
                           <span className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-xs font-medium text-purple-700">
                             {index + 1}
@@ -1478,7 +1478,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                         </a>
                       </div>
                     )}
-                    {lesson.additionalLinks && lesson.additionalLinks.length > 0 && lesson.additionalLinks.map((link, index) => (
+                    {lesson.additionalLinks && lesson.additionalLinks.length > 0 && lesson.additionalLinks.map((link: any, index: number) => (
                       link.url && (
                         <div key={index} className="flex items-center space-x-2">
                           <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />

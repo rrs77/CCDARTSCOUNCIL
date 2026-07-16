@@ -143,7 +143,7 @@ export function LessonImportModal({ isOpen, onClose, onImport }: LessonImportMod
       const content = rawText.substring(startPos, endPos).trim();
       
       if (content) {
-        result[section.key] = formatText(content);
+        (result as any)[section.key] = formatText(content);
       }
     });
 

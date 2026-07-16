@@ -604,7 +604,7 @@ export function LessonLibraryCard({
       {/* Duplicate Confirmation Modal */}
       {showDuplicateConfirm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
-          {console.log('🎨 Rendering duplicate confirmation dialog for lesson:', lessonNumber)}
+          {void console.log('🎨 Rendering duplicate confirmation dialog for lesson:', lessonNumber)}
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4">
             <div className="p-6">
               <div className="flex items-center mb-4">

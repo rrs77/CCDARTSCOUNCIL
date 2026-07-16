@@ -42,7 +42,7 @@ export function usePWAInstall() {
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
     // Check if already installed via other means
-    if (window.navigator.standalone || (window.matchMedia('(display-mode: standalone)').matches)) {
+    if ((window.navigator as any).standalone || (window.matchMedia('(display-mode: standalone)').matches)) {
       setIsInstalled(true);
       setCanInstall(false);
     }
