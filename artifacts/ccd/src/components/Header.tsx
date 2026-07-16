@@ -209,12 +209,12 @@ export function Header() {
 
   return (
     <>
-      <header className={`bg-white fixed left-0 right-0 z-50 ${isDemoModeActive() ? 'top-[41px]' : 'top-0'}`} style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
+      <header className={`bg-white fixed left-0 right-0 z-50 ${isDemoModeActive() ? 'top-[var(--preview-banner-height,0px)]' : 'top-0'}`} style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo and Title */}
             <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              {/* Teal gradient logo matching app design */}
+              {/* CCD logo mark */}
               <LogoSVG size="xs-sm" showText={false} letters={settings.branding?.logoLetters} className="flex-shrink-0" />
               <div className="min-w-0 flex-1 flex items-center space-x-2">
                 <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900 truncate" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
@@ -363,7 +363,9 @@ export function Header() {
             {/* Mobile Menu Button */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
+              aria-label={mobileMenuOpen ? 'Close menu' : 'Open menu'}
+              aria-expanded={mobileMenuOpen}
+              className="md:hidden inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-1.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
             </button>

@@ -187,6 +187,8 @@ interface DataContextType {
   resetStandardsToDefaults: () => Promise<void>;
   updateNestedStandards: (standards: Record<string, Record<string, string[]>>) => void;
   updateLessonTitle: (lessonNumber: string, title: string) => void;
+  getTermSpecificLessonNumber: (lessonNumber: string, halfTermId: string) => number;
+  getLessonDisplayTitle: (lessonNumber: string, halfTermId: string) => string;
   updateLessonNotes: (lessonNumber: string, notes: string) => Promise<void>;
   userCreatedLessonPlans: LessonPlan[]; // New property for user-created lesson plans
   addOrUpdateUserLessonPlan: (plan: LessonPlan) => void; // New function to add/update user lesson plans
@@ -1982,7 +1984,15 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
         return;
       }
       
-      const savedPlans = localStorage.getItem('user-created-lesson-plans');
+      let savedPlans = localStorage.getItem('user-created-lesson-plans');
+      if (!savedPlans) {
+        const legacyPlans = localStorage.getItem('lesson-plans');
+        if (legacyPlans) {
+          localStorage.setItem('user-created-lesson-plans', legacyPlans);
+          localStorage.removeItem('lesson-plans');
+          savedPlans = legacyPlans;
+        }
+      }
       if (savedPlans) {
         const plans = JSON.parse(savedPlans).map((plan: any) => ({
           ...plan,

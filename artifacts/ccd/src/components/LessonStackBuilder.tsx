@@ -17,6 +17,7 @@ import type { LessonData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { NestedStandardsBrowser } from './NestedStandardsBrowser';
+import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
 
 interface StackedLesson {
   id: string;
@@ -247,11 +248,10 @@ export function LessonStackBuilder({
                 <label className="block text-sm font-medium text-gray-700 mb-2">
                   Color
                 </label>
-                <div className="flex space-x-2">
-                  <input
-                    type="color"
+                <div className="flex flex-wrap items-start gap-2">
+                  <ColorPickerWithFavorites
                     value={stackColor}
-                    onChange={(e) => setStackColor(e.target.value)}
+                    onChange={setStackColor}
                     className="w-12 h-10 border border-gray-300 rounded-lg cursor-pointer"
                   />
                   <div className="flex flex-wrap gap-1">

@@ -1,0 +1,63 @@
+These screenshots show the newly updated Feature Walkthrough. Please review and improve the slideshow so that it works properly and remains easy to view on all devices.
+
+The main priority is intelligent responsiveness. Some slide text is currently far too large, and the navigation bar can cover or reduce the visible slide area. The walkthrough must automatically adapt to the available screen width and height on desktop, laptop, tablet and mobile devices.
+
+It must display correctly in both portrait and landscape orientation. When the device is rotated, the layout should immediately recalculate the available space and resize or reposition the slide, text and navigation controls without cutting off content or losing the user’s current slide.
+
+Please make the following changes:
+
+* Ensure every slide is fully viewable within the available screen space.
+* Scale the slide, text, images and spacing intelligently according to both the screen width and screen height.
+* Do not simply reduce everything to an unreadably small size.
+* Prevent text, images, buttons or navigation controls from overlapping or being cut off.
+* Make sure the bottom navigation bar never covers the slide content.
+* On smaller or shorter screens, reduce the navigation bar height, thumbnail size, padding and gaps where necessary.
+* Allow the slide area to use as much of the available viewport as possible.
+* Keep important text readable without requiring horizontal scrolling.
+* Where a slide contains too much content, allow it to scroll vertically within the slide area rather than cutting content off.
+* Ensure the layout works properly in desktop, tablet and mobile portrait and landscape modes.
+* Recalculate the layout when the browser is resized or the device orientation changes.
+* Preserve the existing visual style, proportions and overall design as closely as possible.
+
+Navigation improvements:
+
+* Fix the thumbnails at the bottom so that clicking a thumbnail opens the correct slide.
+* Clearly highlight the currently selected thumbnail.
+* Automatically scroll the thumbnail strip so the active thumbnail remains visible.
+* Allow the thumbnail strip to scroll horizontally on smaller screens.
+* Allow users to swipe left or right on touch devices to move between slides.
+* Keep the existing Previous and Next controls working correctly.
+* Support keyboard navigation using the left and right arrow keys.
+* Ensure navigation cannot accidentally skip multiple slides from one swipe or click.
+* Show the current slide number, for example “3 of 8”.
+* Preserve the user’s current slide when the screen is resized or the device is rotated.
+* Add smooth but subtle transitions between slides.
+* Respect reduced-motion accessibility settings.
+
+Mobile and accessibility requirements:
+
+* Make all buttons and thumbnails large enough to tap comfortably.
+* Add appropriate accessible labels to navigation buttons.
+* Ensure the walkthrough can be operated by keyboard.
+* Maintain sufficient colour contrast.
+* Keep focus states visible.
+* Test all slides in both portrait and landscape orientations.
+
+Exit behaviour:
+
+The Exit button must close the walkthrough and direct the user to:
+
+https://www.ccdesigner.co.uk
+
+Please inspect the existing walkthrough components before making changes and reuse the current structure where practical. Avoid unnecessary redesigns or unrelated changes.
+
+After completing the work, test the walkthrough at several representative sizes:
+
+* Large desktop
+* Standard laptop
+* iPad or tablet in portrait and landscape
+* Mobile in portrait and landscape
+* Short-height browser windows
+* Resized browser windows
+
+The final result should feel polished, intuitive and easy to navigate, with every slide remaining clearly visible and readable on any device or screen orientation.

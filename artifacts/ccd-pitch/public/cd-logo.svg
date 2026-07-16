@@ -1,21 +1,22 @@
-<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg">
+<svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CCD">
   <defs>
-    <linearGradient id="tealGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#14B8A6" />
-      <stop offset="50%" stop-color="#0D9488" />
-      <stop offset="100%" stop-color="#008272" />
-    </linearGradient>
+    <radialGradient id="ccdLogoGlow" cx="50%" cy="44%" r="58%">
+      <stop offset="0%" stop-color="#1a4038" />
+      <stop offset="55%" stop-color="#002D24" />
+      <stop offset="100%" stop-color="#001812" />
+    </radialGradient>
   </defs>
-  <circle cx="40" cy="40" r="38" fill="url(#tealGradient)"/>
+  <circle cx="40" cy="40" r="39" fill="none" stroke="#B6FF7E" stroke-opacity="0.18" stroke-width="1" />
+  <circle cx="40" cy="40" r="36" fill="url(#ccdLogoGlow)" stroke="#B6FF7E" stroke-width="1.5" />
   <text
     x="40"
-    y="40"
+    y="40.5"
     text-anchor="middle"
     dominant-baseline="central"
-    fill="white"
+    fill="#FFFFFF"
     font-size="28"
     font-weight="700"
     font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    letter-spacing="-1"
+    letter-spacing="-0.5"
   >CCD</text>
 </svg>

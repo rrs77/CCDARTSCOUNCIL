@@ -1010,8 +1010,8 @@ export function ActivityLibrary({
 
         {/* Search and Sort Controls */}
         <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {/* Search - Shorter width */}
-          <div className="relative" style={{ width: '220px', minWidth: '200px' }}>
+          {/* Search */}
+          <div className="relative w-full sm:flex-1 sm:min-w-[180px]">
             <Search 
               className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-teal-500" 
             />
@@ -1029,7 +1029,7 @@ export function ActivityLibrary({
           </div>
 
           {/* Category Filter Dropdown */}
-          <div className="relative" style={{ width: '200px', minWidth: '180px' }}>
+          <div className="relative w-full sm:w-auto sm:min-w-[180px]">
             <SimpleNestedCategoryDropdown
               selectedCategory={localSelectedCategory === 'all' ? '' : localSelectedCategory}
               onCategoryChange={(category) => handleCategoryChange(category === '' ? 'all' : category)}
@@ -1040,10 +1040,10 @@ export function ActivityLibrary({
           </div>
 
           {/* Sort and View Icons - Properly spaced */}
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2">
             <button
               onClick={() => toggleSort('category')}
-              className={`flex items-center justify-center p-2 rounded-lg transition-colors duration-200 ${
+              className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 rounded-lg transition-colors duration-200 ${
                 sortBy === 'category' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
               }`}
               title="Sort by Category"

@@ -106,6 +106,20 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
         </div>
       );
     }
+    case 'timetable-block': {
+      const cls = item?.class;
+      const label = cls?.className || 'Class';
+      const time = cls?.startTime || '';
+      return (
+        <div
+          className="inline-flex items-center gap-2 px-3 py-2 rounded-lg shadow-2xl ring-2 ring-white/40 text-xs font-medium text-white max-w-xs"
+          style={{ backgroundColor: cls?.color || '#0d9488' }}
+        >
+          {time && <span className="font-semibold text-white/90 shrink-0">{time}</span>}
+          <span className="truncate">{label}</span>
+        </div>
+      );
+    }
     default:
       // Generic fallback so every drag has *some* visible ghost.
       return (

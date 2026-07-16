@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
-import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi } from '../config/api';
+import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
 import {
   getOrderedYearGroupsFromSections,
@@ -141,6 +141,17 @@ interface CategoryGroups {
   groups: string[];
 }
 
+/** Folder for organising categories in Settings → Categories */
+export interface CategoryFolder {
+  id: string;
+  name: string;
+  color: string;
+  position: number;
+}
+
+const CATEGORY_FOLDERS_STORAGE_KEY = 'category-folders';
+const FAVORITE_COLORS_STORAGE_KEY = 'favorite-colors';
+
 interface SettingsContextType {
   getThemeForClass: (className: string) => Theme;
   getThemeForSubject: (subjectId: string) => Theme;
@@ -186,8 +197,6 @@ interface SettingsContextType {
   resetToDefaults: () => void;
   resetCategoriesToDefaults: () => void;
   resetYearGroupsToDefaults: () => void;
-  /** Add any default year groups (e.g. Reception) that are missing from the current list. */
-  addMissingDefaultYearGroups: () => Promise<void>;
   /** Put any year group that exists in the list but is not in any section into Other (recovers e.g. renamed year groups that disappeared). */
   ensureYearGroupsInSections: () => void;
   // Simple Category Groups
@@ -195,6 +204,18 @@ interface SettingsContextType {
   addCategoryGroup: (groupName: string) => void;
   removeCategoryGroup: (groupName: string) => void;
   updateCategoryGroup: (oldName: string, newName: string) => void;
+  // Category folders (organise categories in settings)
+  categoryFolders: CategoryFolder[];
+  addCategoryFolder: (name: string, color?: string) => void;
+  removeCategoryFolder: (id: string) => void;
+  renameCategoryFolder: (id: string, newName: string) => void;
+  updateCategoryFolderColor: (id: string, color: string) => void;
+  reorderCategoryFolders: (dragIndex: number, hoverIndex: number) => void;
+  assignCategoryToFolder: (categoryName: string, folderName: string | null) => void;
+  // Favourite colours (shared across colour pickers)
+  favoriteColors: string[];
+  addFavoriteColor: (color: string) => void;
+  removeFavoriteColor: (color: string) => void;
   // User change management
   startUserChange: () => void;
   endUserChange: () => void;
@@ -485,12 +506,21 @@ export const useSettings = () => {
       resetToDefaults: () => {},
       resetCategoriesToDefaults: () => {},
       resetYearGroupsToDefaults: () => {},
-      addMissingDefaultYearGroups: async () => {},
       ensureYearGroupsInSections: () => {},
       categoryGroups: { groups: [] },
       addCategoryGroup: () => {},
       removeCategoryGroup: () => {},
       updateCategoryGroup: () => {},
+      categoryFolders: [],
+      addCategoryFolder: () => {},
+      removeCategoryFolder: () => {},
+      renameCategoryFolder: () => {},
+      updateCategoryFolderColor: () => {},
+      reorderCategoryFolders: () => {},
+      assignCategoryToFolder: () => {},
+      favoriteColors: [],
+      addFavoriteColor: () => {},
+      removeFavoriteColor: () => {},
       startUserChange: () => {},
       endUserChange: () => {},
       resourceLinks: DEFAULT_RESOURCE_LINKS,
@@ -528,6 +558,22 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     } catch (_) {}
     return buildDefaultYearGroupSections(DEFAULT_YEAR_GROUPS);
   });
+
+  // Debounced Supabase persistence for year-group sections. Without this, section
+  // assignments are only saved in localStorage and "aren't remembered" across
+  // devices, incognito sessions, or cache clears.
+  const sectionsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const queueSectionsSupabaseSave = React.useCallback((sections: YearGroupSection[]) => {
+    if (sectionsSaveTimerRef.current) clearTimeout(sectionsSaveTimerRef.current);
+    sectionsSaveTimerRef.current = setTimeout(() => {
+      void yearGroupSectionsApi.upsert(sections).then((ok) => {
+        if (import.meta.env.DEV) {
+          console.log(ok ? '✅ Sections saved to Supabase' : '⚠️ Sections save returned false');
+        }
+      });
+    }, 600);
+  }, []);
+
   const updateYearGroupSections: (
     sections: YearGroupSection[] | ((prev: YearGroupSection[]) => YearGroupSection[]),
     yearGroupsOverride?: YearGroup[]
@@ -554,13 +600,15 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       try {
         localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
       } catch (_) {}
+      // Fire-and-forget Supabase persistence so the change is remembered across devices.
+      queueSectionsSupabaseSave(next);
       setYearGroupBands((currentBands) => {
         const candidate = flatToBands(getOrderedYearGroupsFromSections(next, groupsBasis));
         return JSON.stringify(currentBands) === JSON.stringify(candidate) ? currentBands : candidate;
       });
       return next;
     });
-  }, [customYearGroups]);
+  }, [customYearGroups, queueSectionsSupabaseSave]);
 
   const getOrderedYearGroups = React.useCallback((sectionsOverride?: YearGroupSection[]) => {
     const sec = sectionsOverride ?? yearGroupSections;
@@ -695,6 +743,8 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     }, 1000); // 1 second debounce for better batching
   };
   const [categoryGroups, setCategoryGroups] = useState<CategoryGroups>(DEFAULT_CATEGORY_GROUPS);
+  const [categoryFolders, setCategoryFolders] = useState<CategoryFolder[]>([]);
+  const [favoriteColors, setFavoriteColors] = useState<string[]>([]);
   const [lastSyncTimestamp, setLastSyncTimestamp] = useState<number>(0);
   const [isUserMakingChanges, setIsUserMakingChanges] = useState<boolean>(false);
   const [realTimePaused, setRealTimePaused] = useState<boolean>(false);
@@ -740,6 +790,44 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           console.warn('Failed to migrate old nested categories config:', error);
         }
       }
+    }
+
+    // Load category folders (migrate from category-groups if needed)
+    try {
+      const savedFolders = localStorage.getItem(CATEGORY_FOLDERS_STORAGE_KEY);
+      if (savedFolders) {
+        const parsed = JSON.parse(savedFolders) as CategoryFolder[];
+        if (Array.isArray(parsed)) {
+          setCategoryFolders(parsed);
+        }
+      } else {
+        const legacyGroups = localStorage.getItem('category-groups');
+        if (legacyGroups) {
+          const { groups } = JSON.parse(legacyGroups) as CategoryGroups;
+          if (groups?.length) {
+            const migrated = groups.map((name, i) => ({
+              id: crypto.randomUUID(),
+              name,
+              color: '#14B8A6',
+              position: i,
+            }));
+            setCategoryFolders(migrated);
+            localStorage.setItem(CATEGORY_FOLDERS_STORAGE_KEY, JSON.stringify(migrated));
+          }
+        }
+      }
+    } catch (error) {
+      console.warn('Failed to load category folders:', error);
+    }
+
+    try {
+      const savedFavorites = localStorage.getItem(FAVORITE_COLORS_STORAGE_KEY);
+      if (savedFavorites) {
+        const parsed = JSON.parse(savedFavorites) as string[];
+        if (Array.isArray(parsed)) setFavoriteColors(parsed);
+      }
+    } catch (error) {
+      console.warn('Failed to load favourite colours:', error);
     }
 
     const adminStatus = localStorage.getItem('isAdmin') === 'true';
@@ -981,25 +1069,24 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               bandsToUse = flatToBands(deduplicated);
             }
             setYearGroupBands(bandsToUse);
+            // Try the persisted sections from Supabase first — they are the source of truth
+            // for the user's section grouping across devices.
+            const remoteSections = (await yearGroupSectionsApi.get()) as YearGroupSection[] | null;
             setYearGroupSectionsState(prev => {
               const loadedIds = deduplicated.map((g: any) => g.id);
-              // Distinguish "user has actually customised sections" from "we initialised
-              // state with built-in defaults". Without this check, prev.length > 0 is
-              // always true (defaults populate it), so a new user whose Supabase year
-              // groups have UUID ids would merge against legacy default tokens (LKG,
-              // Year1, …) that don't resolve — dumping every loaded year group into
-              // "Other".
-              let userSaved = false;
-              try {
-                const stored = localStorage.getItem(YEAR_GROUP_SECTIONS_STORAGE_KEY);
-                if (stored) {
-                  const parsed = JSON.parse(stored);
-                  userSaved = Array.isArray(parsed) && parsed.length > 0;
-                }
-              } catch (_) {}
-              const next = userSaved
-                ? mergeSectionsWithYearGroups(prev, loadedIds, deduplicated)
-                : buildDefaultYearGroupSections(deduplicated);
+              let next: YearGroupSection[];
+              if (Array.isArray(remoteSections) && remoteSections.length > 0) {
+                // Merge any year groups that aren't yet referenced into Other.
+                next = mergeSectionsWithYearGroups(remoteSections, loadedIds, deduplicated);
+                console.log('📦 Loaded year-group sections from Supabase');
+              } else {
+                const hasMatchingIds = prev.length > 0 && prev.some(s => s.yearGroupIds.some((id: string) => loadedIds.includes(id)));
+                next = hasMatchingIds
+                  ? mergeSectionsWithYearGroups(prev, loadedIds, deduplicated)
+                  : buildDefaultYearGroupSections(deduplicated);
+                // No remote sections yet — seed Supabase so future loads have a source of truth.
+                queueSectionsSupabaseSave(next);
+              }
               try {
                 localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
               } catch (_) {}
@@ -1122,7 +1209,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         } catch (error: any) {
           // Silently handle Supabase errors - fallback to localStorage
           // This prevents 500 errors from showing in console as failures
-          if (isDevelopment) {
+          if (import.meta.env.DEV) {
             console.warn('⚠️ Supabase load failed (using localStorage fallback):', error?.message || error);
             console.warn('⚠️ Error details:', {
               message: error?.message,
@@ -1132,7 +1219,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           }
           
           // Enhanced fallback for Safari compatibility
-          if (isDevelopment) {
+          if (import.meta.env.DEV) {
             console.log('📦 Supabase failed, falling back to localStorage with Safari-safe approach...');
           }
           
@@ -1724,6 +1811,26 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
 
   const updateYearGroupBands = React.useCallback((bands: YearGroupBand[]) => {
     setYearGroupBands(bands);
+  }, []);
+
+  const deleteYearGroupClass = React.useCallback((bandIndex: number, classIndex: number) => {
+    setYearGroupBands((prev) =>
+      prev
+        .map((band, i) =>
+          i === bandIndex
+            ? { ...band, classes: band.classes.filter((_, ci) => ci !== classIndex) }
+            : band
+        )
+        .filter((band) => band.classes.length > 0)
+    );
+  }, []);
+
+  const addClassToBand = React.useCallback((bandIndex: number, classId: string, className: string) => {
+    setYearGroupBands((prev) =>
+      prev.map((band, i) =>
+        i === bandIndex ? { ...band, classes: [...band.classes, { id: classId, name: className }] } : band
+      )
+    );
   }, []);
 
   // Manual sync function to force refresh from Supabase
@@ -2523,6 +2630,103 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     updateCategories(updatedCategories);
   };
 
+  const persistCategoryFolders = async (folders: CategoryFolder[]) => {
+    setCategoryFolders(folders);
+    localStorage.setItem(CATEGORY_FOLDERS_STORAGE_KEY, JSON.stringify(folders));
+    const groupNames = [...folders].sort((a, b) => a.position - b.position).map((f) => f.name);
+    const updatedGroups = { groups: groupNames };
+    setCategoryGroups(updatedGroups);
+    localStorage.setItem('category-groups', JSON.stringify(updatedGroups));
+    if (isSupabaseConfigured()) {
+      try {
+        await categoryGroupsApi.upsert(groupNames);
+      } catch (error) {
+        console.warn('Failed to sync category folders to Supabase:', error);
+      }
+    }
+  };
+
+  const addCategoryFolder = (name: string, color = '#14B8A6') => {
+    const trimmed = name.trim();
+    if (!trimmed || categoryFolders.some((f) => f.name.toLowerCase() === trimmed.toLowerCase())) return;
+    const next: CategoryFolder[] = [
+      ...categoryFolders,
+      { id: crypto.randomUUID(), name: trimmed, color, position: categoryFolders.length },
+    ];
+    void persistCategoryFolders(next);
+  };
+
+  const removeCategoryFolder = (id: string) => {
+    const folder = categoryFolders.find((f) => f.id === id);
+    if (!folder) return;
+    const next = categoryFolders.filter((f) => f.id !== id).map((f, i) => ({ ...f, position: i }));
+    void persistCategoryFolders(next);
+    const updatedCategories = categories.map((cat) => {
+      if (cat.group === folder.name) {
+        return { ...cat, group: undefined };
+      }
+      if (cat.groups?.includes(folder.name)) {
+        const newGroups = cat.groups.filter((g) => g !== folder.name);
+        return { ...cat, groups: newGroups.length ? newGroups : undefined };
+      }
+      return cat;
+    });
+    updateCategories(updatedCategories);
+  };
+
+  const renameCategoryFolder = (id: string, newName: string) => {
+    const trimmed = newName.trim();
+    const folder = categoryFolders.find((f) => f.id === id);
+    if (!folder || !trimmed || trimmed === folder.name) return;
+    if (categoryFolders.some((f) => f.id !== id && f.name.toLowerCase() === trimmed.toLowerCase())) return;
+    const next = categoryFolders.map((f) => (f.id === id ? { ...f, name: trimmed } : f));
+    void persistCategoryFolders(next);
+    void updateCategoryGroup(folder.name, trimmed);
+  };
+
+  const updateCategoryFolderColor = (id: string, color: string) => {
+    const next = categoryFolders.map((f) => (f.id === id ? { ...f, color } : f));
+    void persistCategoryFolders(next);
+  };
+
+  const reorderCategoryFolders = (dragIndex: number, hoverIndex: number) => {
+    const sorted = [...categoryFolders].sort((a, b) => a.position - b.position);
+    const [removed] = sorted.splice(dragIndex, 1);
+    sorted.splice(hoverIndex, 0, removed);
+    const next = sorted.map((f, i) => ({ ...f, position: i }));
+    void persistCategoryFolders(next);
+  };
+
+  const assignCategoryToFolder = (categoryName: string, folderName: string | null) => {
+    const updatedCategories = categories.map((cat) => {
+      if (cat.name !== categoryName) return cat;
+      if (!folderName) {
+        return { ...cat, group: undefined, groups: undefined };
+      }
+      return { ...cat, group: folderName, groups: undefined };
+    });
+    updateCategories(updatedCategories);
+  };
+
+  const addFavoriteColor = (color: string) => {
+    const normalized = color.toUpperCase();
+    setFavoriteColors((prev) => {
+      if (prev.some((c) => c.toUpperCase() === normalized)) return prev;
+      const next = [...prev, normalized].slice(0, 24);
+      localStorage.setItem(FAVORITE_COLORS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
+  const removeFavoriteColor = (color: string) => {
+    const normalized = color.toUpperCase();
+    setFavoriteColors((prev) => {
+      const next = prev.filter((c) => c.toUpperCase() !== normalized);
+      localStorage.setItem(FAVORITE_COLORS_STORAGE_KEY, JSON.stringify(next));
+      return next;
+    });
+  };
+
   const contextValue: SettingsContextType = {
     getThemeForClass,
     getThemeForSubject,
@@ -2547,6 +2751,8 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     updateYearGroupSections,
     getOrderedYearGroups,
     updateYearGroupBands,
+    deleteYearGroupClass,
+    addClassToBand,
     deleteYearGroup,
     forceSyncYearGroups,
     cleanupDuplicates,
@@ -2559,13 +2765,22 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     resetToDefaults,
     resetCategoriesToDefaults,
     resetYearGroupsToDefaults,
-    addMissingDefaultYearGroups,
     ensureYearGroupsInSections,
     // Simple Category Groups
     categoryGroups,
     addCategoryGroup,
     removeCategoryGroup,
     updateCategoryGroup,
+    categoryFolders,
+    addCategoryFolder,
+    removeCategoryFolder,
+    renameCategoryFolder,
+    updateCategoryFolderColor,
+    reorderCategoryFolders,
+    assignCategoryToFolder,
+    favoriteColors,
+    addFavoriteColor,
+    removeFavoriteColor,
     // User change management
     startUserChange,
     endUserChange,

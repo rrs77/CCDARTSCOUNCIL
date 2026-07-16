@@ -1592,6 +1592,47 @@ export const brandingApi = {
   }
 };
 
+// Year-group sections are persisted as a JSON document in the generic
+// `branding_settings` key/value table so the user's section grouping (EYFS/KS1/…)
+// survives across devices, browsers, and cache clears.
+export const yearGroupSectionsApi = {
+  get: async (): Promise<unknown[] | null> => {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.BRANDING_SETTINGS)
+        .select('data')
+        .eq('key', 'year_group_sections')
+        .maybeSingle();
+      if (error) throw error;
+      const value = (data?.data as { sections?: unknown[] } | null)?.sections;
+      return Array.isArray(value) ? value : null;
+    } catch (error) {
+      if (import.meta.env.DEV) console.warn('Failed to load year-group sections from Supabase:', error);
+      return null;
+    }
+  },
+
+  upsert: async (sections: unknown[]): Promise<boolean> => {
+    try {
+      const { error } = await supabase
+        .from(TABLES.BRANDING_SETTINGS)
+        .upsert(
+          {
+            key: 'year_group_sections',
+            data: { sections },
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'key' }
+        );
+      if (error) throw error;
+      return true;
+    } catch (error) {
+      console.error('Failed to save year-group sections to Supabase:', error);
+      return false;
+    }
+  },
+};
+
 // Export/Import all data
 export const dataApi = {
   /** Lightweight check that Supabase is reachable (used for connection status). Uses only the activities table. */

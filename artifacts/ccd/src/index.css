@@ -16,6 +16,24 @@
   --ccd-teal-deep: #0D9488;
 }
 
+/* Promo walkthrough motion-graphics palette (scoped to the login promo surface) */
+.ccd-promo-surface {
+  --color-primary: #14B8A6;
+  --color-primary-light: #5EEAD4;
+  --color-primary-dark: #008272;
+  --color-accent: #FF6B6B;
+  --color-accent-light: #FFA6A6;
+  --color-accent-dark: #FF5252;
+  --color-bg-light: #fffaf7;
+  --color-bg-dark: #0f2a2e;
+  --color-bg-muted: #f4f6f8;
+  --color-text-primary: #0f2a2e;
+  --color-text-secondary: #6b7d80;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+  font-family: Inter, system-ui, sans-serif;
+}
+
 /* Smoother body rendering */
 body {
   -webkit-font-smoothing: antialiased;

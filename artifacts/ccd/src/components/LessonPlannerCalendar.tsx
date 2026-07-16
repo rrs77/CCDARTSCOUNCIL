@@ -70,6 +70,7 @@ import { WeekLessonView } from './WeekLessonView';
 import { useLessonStacks } from '../hooks/useLessonStacks';
 import { toast } from 'react-hot-toast';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
+import { downloadIcsFile, generateIcsFromLessonPlans } from '../utils/exportIcal';
 
 interface LessonPlannerCalendarProps {
   onDateSelect: (date: Date) => void;
@@ -523,7 +524,7 @@ export function LessonPlannerCalendar({
       const activities = Object.values(lessonData.grouped || {}).flat();
       
       const newPlan: LessonPlan = {
-        id: `plan-${Date.now()}-${index}`,
+        id: crypto.randomUUID(),
         date,
         week: weekNumber,
         className,
@@ -542,6 +543,19 @@ export function LessonPlannerCalendar({
 
       onUpdateLessonPlan(newPlan);
     });
+  };
+
+  const handleExportIcal = () => {
+    if (filteredLessonPlans.length === 0) {
+      toast.error('No scheduled lessons to export.');
+      return;
+    }
+
+    const calendarName = `${className} Lessons`;
+    const ics = generateIcsFromLessonPlans(filteredLessonPlans, calendarName);
+    const safeClassName = className.replace(/[^a-z0-9]+/gi, '-').toLowerCase() || 'lessons';
+    downloadIcsFile(ics, `${safeClassName}-calendar.ics`);
+    toast.success(`Exported ${filteredLessonPlans.length} lesson(s) to calendar file.`);
   };
 
   // Handle Calendar PDF Export - generates well-designed PDF with branding
@@ -882,7 +896,7 @@ export function LessonPlannerCalendar({
         const activities = Object.values(lessonData.grouped || {}).flat();
         
         const newPlan: LessonPlan = {
-          id: `plan-${Date.now()}-${dateIndex}-${lessonIndex}`,
+          id: crypto.randomUUID(),
           date,
           week: weekNumber,
           className,
@@ -963,7 +977,7 @@ export function LessonPlannerCalendar({
           const weekNumber = getWeekNumber(date);
           
           const newPlan = {
-            id: `plan-${Date.now()}`,
+            id: crypto.randomUUID(),
             date,
             week: weekNumber,
             className,
@@ -1179,7 +1193,7 @@ export function LessonPlannerCalendar({
           const weekNumber = getWeekNumber(date);
           
           const newPlan = {
-            id: `plan-${Date.now()}`,
+            id: crypto.randomUUID(),
             date,
             week: weekNumber,
             className,
@@ -1353,7 +1367,7 @@ export function LessonPlannerCalendar({
           const weekNumber = getWeekNumber(date);
           
           const newPlan = {
-            id: `plan-${Date.now()}`,
+            id: crypto.randomUUID(),
             date,
             week: weekNumber,
             className,
@@ -2084,40 +2098,49 @@ export function LessonPlannerCalendar({
   return (
     <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden" ref={calendarRef}>
       {/* Calendar Header */}
-      <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between space-y-4 md:space-y-0">
-          <div className="flex items-center space-x-3">
-            <CalendarIcon className="h-6 w-6" />
-            <div>
-              <h2 className="text-xl font-bold">Calendar</h2>
-              <p className="text-teal-100 text-sm">
+      <div className="p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="flex items-center gap-3 min-w-0">
+            <CalendarIcon className="h-6 w-6 flex-shrink-0" />
+            <div className="min-w-0">
+              <h2 className="text-lg sm:text-xl font-bold">Calendar</h2>
+              <p className="text-teal-100 text-xs sm:text-sm truncate">
                 {className} • {viewMode === 'month' ? 'Month View' : viewMode === 'week' ? 'Week View' : viewMode === 'week-lessons' ? 'Week Lessons' : 'Day View'}
               </p>
             </div>
           </div>
           
-          <div className="flex flex-wrap items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
             {/* Print / Export PDF Button */}
             <button
               onClick={handlePrintCalendar}
               disabled={isExportingPdf}
-              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2 disabled:opacity-60 disabled:cursor-not-allowed"
+              className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <Printer className="h-4 w-4" />
-              <span>{isExportingPdf ? 'Exporting…' : 'Export PDF'}</span>
+              <Printer className="h-4 w-4 shrink-0" />
+              <span className="text-sm whitespace-nowrap">{isExportingPdf ? 'Exporting…' : 'Export PDF'}</span>
+            </button>
+
+            <button
+              onClick={handleExportIcal}
+              className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200"
+              title="Download scheduled lessons as an .ics calendar file"
+            >
+              <Download className="h-4 w-4 shrink-0" />
+              <span className="text-sm whitespace-nowrap">Export iCal</span>
             </button>
             
             {/* Timetable Builder Button */}
             <button
               onClick={() => setShowTimetableBuilder(true)}
-              className="px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200"
             >
-              <Users className="h-4 w-4" />
-              <span>Timetable Builder</span>
+              <Users className="h-4 w-4 shrink-0" />
+              <span className="text-sm whitespace-nowrap">Timetable Builder</span>
             </button>
             
             {/* View Mode Selector */}
-            <div className="flex bg-white bg-opacity-20 rounded-lg overflow-hidden">
+            <div className="flex w-full sm:w-auto bg-white bg-opacity-20 rounded-lg overflow-hidden">
               <button
                 onClick={(e) => {
                   e.preventDefault();
@@ -2128,7 +2151,7 @@ export function LessonPlannerCalendar({
                     console.error('Error switching to month view:', error);
                   }
                 }}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
                   viewMode === 'month' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
                 }`}
               >
@@ -2144,7 +2167,7 @@ export function LessonPlannerCalendar({
                     console.error('Error switching to week view:', error);
                   }
                 }}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
                   viewMode === 'week' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
                 }`}
               >
@@ -2160,11 +2183,12 @@ export function LessonPlannerCalendar({
                     console.error('Error switching to week-lessons view:', error);
                   }
                 }}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
                   viewMode === 'week-lessons' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
                 }`}
               >
-                Week Lessons
+                <span className="hidden sm:inline">Week Lessons</span>
+                <span className="sm:hidden">Lessons</span>
               </button>
               <button
                 onClick={(e) => {
@@ -2176,7 +2200,7 @@ export function LessonPlannerCalendar({
                     console.error('Error switching to day view:', error);
                   }
                 }}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors duration-200 ${
+                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
                   viewMode === 'day' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
                 }`}
               >
@@ -2189,7 +2213,7 @@ export function LessonPlannerCalendar({
               <select
                 value={unitFilter}
                 onChange={(e) => setUnitFilter(e.target.value)}
-                className="px-3 py-1.5 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent text-sm"
+                className="w-full sm:w-auto min-h-[44px] px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent text-sm"
               >
                 <option value="all" className="text-gray-900">All Units</option>
                 {units.map(unit => (
@@ -2203,9 +2227,9 @@ export function LessonPlannerCalendar({
             {/* Timetable Button */}
             <button
               onClick={() => setShowTimetableModal(true)}
-              className="px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1"
+              className="inline-flex min-h-[44px] items-center gap-1.5 px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200"
             >
-              <Repeat className="h-4 w-4" />
+              <Repeat className="h-4 w-4 shrink-0" />
               <span>Timetable</span>
             </button>
             
@@ -2215,16 +2239,16 @@ export function LessonPlannerCalendar({
                 setEditingEvent(null);
                 setShowEventModal(true);
               }}
-              className="px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200 flex items-center space-x-1"
+              className="inline-flex min-h-[44px] items-center gap-1.5 px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200"
             >
-              <Plus className="h-4 w-4" />
+              <Plus className="h-4 w-4 shrink-0" />
               <span>Add Event</span>
             </button>
           </div>
         </div>
         
-        <div className="flex items-center justify-between mt-4">
-          <div className="flex items-center space-x-2">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-4">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => {
                 if (viewMode === 'month') {
@@ -2235,7 +2259,8 @@ export function LessonPlannerCalendar({
                   setDayViewDate(addDays(dayViewDate, -1));
                 }
               }}
-              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
+              aria-label="Previous period"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
@@ -2245,7 +2270,7 @@ export function LessonPlannerCalendar({
                 setCurrentDate(new Date());
                 setDayViewDate(new Date());
               }}
-              className="px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200"
+              className="inline-flex min-h-[44px] items-center px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200"
             >
               Today
             </button>
@@ -2260,14 +2285,15 @@ export function LessonPlannerCalendar({
                   setDayViewDate(addDays(dayViewDate, 1));
                 }
               }}
-              className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
+              aria-label="Next period"
+              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
             >
               <ChevronRight className="h-5 w-5" />
             </button>
           </div>
           
           {viewMode !== 'week-lessons' && (
-            <h3 className="text-lg font-semibold">
+            <h3 className="text-base sm:text-lg font-semibold text-center sm:text-left">
               {viewMode === 'month' 
                 ? format(currentDate, 'MMMM yyyy')
                 : viewMode === 'week'
@@ -2276,8 +2302,6 @@ export function LessonPlannerCalendar({
               }
             </h3>
           )}
-          
-          <div className="w-24"></div> {/* Spacer for alignment */}
         </div>
       </div>
 

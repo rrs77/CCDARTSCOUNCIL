@@ -1,7 +1,7 @@
 /**
  * School-specific public homepage configuration.
  *
- * Each entry maps a URL slug (e.g. `/coopersalehall`) to a branded
+ * Each entry maps a URL slug (e.g. `/oakhill`) to a branded
  * split-screen homepage. To add a new school, append an entry here —
  * no other code changes are needed.
  *
@@ -32,8 +32,8 @@ export interface SchoolHomepageConfig {
 
 export const SCHOOL_HOMEPAGES: SchoolHomepageConfig[] = [
   {
-    slug: 'coopersalehall',
-    displayName: 'Coopersale Hall School',
+    slug: 'oakhill',
+    displayName: 'Oakhill School',
     tagline: 'Inspiring curiosity, nurturing creativity',
     primaryColor: '#0F4C5C',
     accentColor: '#E5B25D',

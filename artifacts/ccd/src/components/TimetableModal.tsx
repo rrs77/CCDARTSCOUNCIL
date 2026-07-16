@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { X, Plus, Save, Trash2, Clock, MapPin, Repeat, FolderOpen, Check, InfoIcon, Pencil, Share2, Download, Lock } from 'lucide-react';
+import { X, Plus, Save, Trash2, Clock, MapPin, Repeat, FolderOpen, Check, InfoIcon, Pencil, Share2, Download, Lock, Link2, Copy } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useShareTimetable } from '../hooks/useShareTimetable';
 import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
+import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
 
 interface TimetableClass {
   id: string;
@@ -341,18 +342,17 @@ export function TimetableModal({
                     <label className="block text-sm font-medium text-gray-700 mb-1">
                       Color
                     </label>
-                    <div className="flex items-center space-x-2">
-                      <input
-                        type="color"
+                    <div className="space-y-2">
+                      <ColorPickerWithFavorites
                         value={newClass.color}
-                        onChange={(e) => setNewClass(prev => ({ ...prev, color: e.target.value }))}
+                        onChange={(color) => setNewClass(prev => ({ ...prev, color }))}
                         className="h-10 w-10 rounded border border-gray-300 cursor-pointer"
                       />
                       <input
                         type="text"
                         value={newClass.color}
                         onChange={(e) => setNewClass(prev => ({ ...prev, color: e.target.value }))}
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                         placeholder="#3B82F6"
                       />
                     </div>
@@ -589,10 +589,9 @@ export function TimetableModal({
                                       <label className="block text-xs font-medium text-gray-500 mb-1">
                                         Color
                                       </label>
-                                      <input
-                                        type="color"
+                                      <ColorPickerWithFavorites
                                         value={editingClass.color}
-                                        onChange={(e) => setEditingClass(prev => prev ? { ...prev, color: e.target.value } : null)}
+                                        onChange={(color) => setEditingClass(prev => prev ? { ...prev, color } : null)}
                                         className="w-full h-10 rounded border border-gray-300 cursor-pointer"
                                       />
                                     </div>
