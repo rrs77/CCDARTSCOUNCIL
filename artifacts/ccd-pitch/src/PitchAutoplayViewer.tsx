@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight, Pause, Play, X } from "lucide-react";
 import { slides } from "@/slideLoader";
 
 const SLIDE_MS = 8000;
+const DESIGN_WIDTH = 1280;
+const DESIGN_HEIGHT = 720;
 const PROGRESS_TICK_MS = 100;
 const SITE_URL = "https://www.ccdesigner.co.uk";
 const SWIPE_THRESHOLD_PX = 45;
@@ -225,18 +227,39 @@ export function PitchAutoplayViewer() {
       {/* Stage — slide letterboxed to 16:9 inside the space above the nav bar */}
       <div ref={stageRef} className="relative min-h-0 flex-1">
         <div className="absolute inset-0 flex items-center justify-center">
-          <iframe
-            ref={iframeRef}
-            src={`${base}/slide${firstPosition}`}
-            tabIndex={-1}
+          {/*
+            The slide renders inside the iframe at a fixed 16:9 design
+            resolution and is scaled down with a CSS transform. This keeps
+            typography and layout identical to desktop on small screens
+            (e.g. iPhone portrait) instead of letting px-based minimums
+            overlap and clip in a tiny viewport.
+          */}
+          <div
             style={{
               width: Math.floor(stageDims.width),
               height: Math.floor(stageDims.height),
-              border: "none",
+              overflow: "hidden",
+              position: "relative",
             }}
-            title="Feature walkthrough slide"
-            aria-label={`Slide ${index + 1} of ${slides.length}: ${slides[index]?.title ?? ""}`}
-          />
+          >
+            <iframe
+              ref={iframeRef}
+              src={`${base}/slide${firstPosition}`}
+              tabIndex={-1}
+              style={{
+                width: DESIGN_WIDTH,
+                height: DESIGN_HEIGHT,
+                border: "none",
+                transform: `scale(${stageDims.width > 0 ? stageDims.width / DESIGN_WIDTH : 1})`,
+                transformOrigin: "top left",
+                position: "absolute",
+                top: 0,
+                left: 0,
+              }}
+              title="Feature walkthrough slide"
+              aria-label={`Slide ${index + 1} of ${slides.length}: ${slides[index]?.title ?? ""}`}
+            />
+          </div>
         </div>
         {/* Transparent overlay: viewer owns all tap/swipe/click navigation */}
         <div
