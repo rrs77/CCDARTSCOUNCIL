@@ -19,6 +19,12 @@ import { slides } from "@/slideLoader";
 import BrandStamp from "@/components/BrandStamp";
 import { PitchAutoplayViewer } from "@/PitchAutoplayViewer";
 
+// Slides that already present a full-size logo get no corner stamp.
+const NO_BRAND_SLIDES = new Set(["MeltingPotIntro.tsx", "PromoWelcome.tsx"]);
+function showBrand(filepath: string): boolean {
+  return !NO_BRAND_SLIDES.has(filepath.split("/").pop() ?? "");
+}
+
 function getSlideIndex(pathname: string): number {
   const match = pathname.match(/^\/slide(\d+)$/);
   if (!match) return -1;
@@ -135,7 +141,7 @@ function SlideEditor() {
           style={{ display: index === currentIndex ? "block" : "none" }}
         >
           <slide.Component />
-          <BrandStamp />
+          {showBrand(slide.filepath) && <BrandStamp />}
         </div>
       ))}
     </div>
@@ -158,7 +164,7 @@ function AllSlides() {
           <div className="h-full w-full [&_.h-screen]:!h-full [&_.w-screen]:!w-full">
             <slide.Component />
           </div>
-          <BrandStamp />
+          {showBrand(slide.filepath) && <BrandStamp />}
         </div>
       ))}
     </div>
@@ -204,13 +210,33 @@ function SlideViewer() {
       className="slide-viewer h-screen w-screen overflow-hidden bg-black flex items-center justify-center"
       onClick={() => iframeRef.current?.focus()}
     >
-      <iframe
-        ref={iframeRef}
-        src={`${base}/slide${firstPosition}`}
-        style={{ width: dims.width, height: dims.height, border: "none" }}
-        onLoad={() => iframeRef.current?.focus()}
-        title="Slide viewer"
-      />
+      {/* Fixed 16:9 design resolution scaled to fit — keeps slide layout
+          identical across phones, tablets and desktops. */}
+      <div
+        style={{
+          width: dims.width,
+          height: dims.height,
+          overflow: "hidden",
+          position: "relative",
+        }}
+      >
+        <iframe
+          ref={iframeRef}
+          src={`${base}/slide${firstPosition}`}
+          style={{
+            width: 1280,
+            height: 720,
+            border: "none",
+            transform: `scale(${dims.width > 0 ? dims.width / 1280 : 1})`,
+            transformOrigin: "top left",
+            position: "absolute",
+            top: 0,
+            left: 0,
+          }}
+          onLoad={() => iframeRef.current?.focus()}
+          title="Slide viewer"
+        />
+      </div>
     </div>
   );
 }
