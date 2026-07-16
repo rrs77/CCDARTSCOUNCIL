@@ -93,22 +93,54 @@ body {
   padding: clamp(1.65rem, 3.8vh, 2.65rem) clamp(1.65rem, 4.2vw, 3.25rem);
 }
 
-/* Autoplay strip — slim overlay controls */
+/* Autoplay nav bar — reserved strip below the slide stage */
 .pitch-nav-strip {
-  transition: transform 280ms cubic-bezier(0.22, 0.61, 0.36, 1),
-    opacity 280ms cubic-bezier(0.22, 0.61, 0.36, 1);
+  min-height: 3rem;
 }
 
-.pitch-nav-strip[data-hidden="true"] {
-  transform: translateY(110%);
-  opacity: 0;
-  pointer-events: none;
+.pitch-nav-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.4rem;
+  color: rgba(255, 255, 255, 0.75);
+  transition: background-color 160ms ease, color 160ms ease;
+}
+
+.pitch-nav-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+.pitch-nav-btn:focus-visible,
+.pitch-thumb:focus-visible {
+  outline: 2px solid #b6ff7e;
+  outline-offset: 1px;
+}
+
+.pitch-thumb-strip {
+  position: relative;
+  display: flex;
+  flex: 1 1 0;
+  min-width: 0;
+  align-items: center;
+  gap: 0.25rem;
+  overflow-x: auto;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.pitch-thumb-strip::-webkit-scrollbar {
+  display: none;
 }
 
 .pitch-thumb {
   position: relative;
-  flex: 1 1 0;
-  min-width: 0;
+  flex: 0 0 auto;
+  width: clamp(3.4rem, 8vw, 5.5rem);
   height: 2.25rem;
   border-radius: 0.35rem;
   overflow: hidden;
@@ -133,8 +165,11 @@ body {
   height: 100%;
   align-items: center;
   justify-content: center;
-  padding: 0 0.2rem;
-  font-size: 0.55rem;
+  padding: 0 0.25rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 0.6rem;
   font-weight: 600;
   letter-spacing: 0.02em;
   line-height: 1.15;
@@ -244,7 +279,29 @@ body {
     animation: none;
   }
 
-  .pitch-nav-strip {
+  .pitch-nav-strip,
+  .pitch-nav-btn,
+  .pitch-thumb,
+  .pitch-thumb-fill {
     transition: none;
+  }
+}
+
+/* Short screens (landscape phones): slimmer bar and thumbnails */
+@media (max-height: 480px) {
+  .pitch-nav-strip {
+    min-height: 2.4rem;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+  }
+
+  .pitch-nav-btn {
+    width: 2rem;
+    height: 2rem;
+  }
+
+  .pitch-thumb {
+    height: 1.7rem;
+    width: clamp(3rem, 7vw, 4.5rem);
   }
 }

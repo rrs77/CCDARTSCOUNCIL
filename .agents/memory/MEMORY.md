@@ -1,0 +1,1 @@
+- [Walkthrough viewer architecture](walkthrough-viewer-architecture.md) — pitch slides use vw/vh, so render in a letterboxed 16:9 iframe with postMessage nav; rebuild embedded bundle via build:pitch.

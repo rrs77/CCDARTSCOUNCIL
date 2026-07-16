@@ -17,6 +17,7 @@ import { useLocation } from "wouter";
 
 import { slides } from "@/slideLoader";
 import BrandStamp from "@/components/BrandStamp";
+import { PitchAutoplayViewer } from "@/PitchAutoplayViewer";
 
 function getSlideIndex(pathname: string): number {
   const match = pathname.match(/^\/slide(\d+)$/);
@@ -249,7 +250,11 @@ export default function App() {
     return () => window.removeEventListener("message", onMessage);
   }, [navigate]);
 
-  if (location === "/") return <SlideViewer />;
+  if (location === "/") {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("autoplay") === "1") return <PitchAutoplayViewer />;
+    return <SlideViewer />;
+  }
   if (location === "/allslides") return <AllSlides />;
   return <SlideEditor />;
 }
