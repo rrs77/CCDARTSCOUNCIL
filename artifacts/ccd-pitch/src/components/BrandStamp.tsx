@@ -8,17 +8,17 @@ const base = import.meta.env.BASE_URL;
 export default function BrandStamp() {
   return (
     <div
-      className="absolute top-[3vh] left-[2.5vw] z-[60] pointer-events-none"
+      className="absolute top-[2vh] left-[2vw] z-[60] pointer-events-none"
       aria-hidden="true"
     >
       <div
         className="inline-flex items-center"
         style={{
-          height: "5vh",
-          fontSize: "5vh",
+          height: "3.4vh",
+          fontSize: "3.4vh",
           gap: "0.18em",
           lineHeight: 1,
-          padding: "0.9vh 1.4vh",
+          padding: "0.7vh 1.2vh",
           borderRadius: "999px",
           background: "rgba(255,255,255,0.88)",
           boxShadow: "0 2px 10px rgba(26,16,51,0.18)",
