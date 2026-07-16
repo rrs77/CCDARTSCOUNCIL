@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene02_TeacherCreativity } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoTeacherCreativity() {
   return (
@@ -13,7 +12,6 @@ export default function PromoTeacherCreativity() {
           <div className="absolute inset-0">
             <Scene02_TeacherCreativity />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

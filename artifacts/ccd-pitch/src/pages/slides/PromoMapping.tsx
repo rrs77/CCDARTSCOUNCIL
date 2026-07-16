@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene05_Mapping } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoMapping() {
   return (
@@ -13,7 +12,6 @@ export default function PromoMapping() {
           <div className="absolute inset-0">
             <Scene05_Mapping />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

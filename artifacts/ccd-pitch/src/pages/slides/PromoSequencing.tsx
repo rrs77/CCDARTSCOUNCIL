@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene16_Sequencing } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoSequencing() {
   return (
@@ -13,7 +12,6 @@ export default function PromoSequencing() {
           <div className="absolute inset-0">
             <Scene16_Sequencing />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

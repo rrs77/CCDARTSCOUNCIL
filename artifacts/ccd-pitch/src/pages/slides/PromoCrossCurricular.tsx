@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene13_CrossCurricular } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoCrossCurricular() {
   return (
@@ -13,7 +12,6 @@ export default function PromoCrossCurricular() {
           <div className="absolute inset-0">
             <Scene13_CrossCurricular />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

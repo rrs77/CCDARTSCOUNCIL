@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene08_Creative } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoCreative() {
   return (
@@ -13,7 +12,6 @@ export default function PromoCreative() {
           <div className="absolute inset-0">
             <Scene08_Creative />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

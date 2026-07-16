@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene07_ArtsFocus } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoArtsFocus() {
   return (
@@ -13,7 +12,6 @@ export default function PromoArtsFocus() {
           <div className="absolute inset-0">
             <Scene07_ArtsFocus />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

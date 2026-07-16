@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene03_NeverLose } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoNeverLose() {
   return (
@@ -13,7 +12,6 @@ export default function PromoNeverLose() {
           <div className="absolute inset-0">
             <Scene03_NeverLose />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>
