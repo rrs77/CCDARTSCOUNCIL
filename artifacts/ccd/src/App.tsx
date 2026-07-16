@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
+import { PrototypeGate } from './components/PrototypeGate';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
@@ -136,7 +137,9 @@ function App() {
   if (typeof window !== 'undefined' && window.location.pathname === '/reset-password') {
     return (
       <ErrorBoundary>
-        <ResetPasswordPage />
+        <PrototypeGate>
+          <ResetPasswordPage />
+        </PrototypeGate>
       </ErrorBoundary>
     );
   }
@@ -151,15 +154,17 @@ function App() {
 
   return (
     <ErrorBoundary>
-      <AuthProvider>
-        <SettingsProviderNew>
-          <DataProvider>
-            <DndRoot>
-              <AppContent schoolHomepage={schoolHomepage} />
-            </DndRoot>
-          </DataProvider>
-        </SettingsProviderNew>
-      </AuthProvider>
+      <PrototypeGate>
+        <AuthProvider>
+          <SettingsProviderNew>
+            <DataProvider>
+              <DndRoot>
+                <AppContent schoolHomepage={schoolHomepage} />
+              </DndRoot>
+            </DataProvider>
+          </SettingsProviderNew>
+        </AuthProvider>
+      </PrototypeGate>
     </ErrorBoundary>
   );
 }
