@@ -103,7 +103,11 @@ export function PitchAutoplayViewer() {
     () => !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
   );
   const [tick, setTick] = useState(0);
-  const [stageDims, setStageDims] = useState({ width: 0, height: 0 });
+  const [stageDims, setStageDims] = useState({
+    width: 0,
+    height: 0,
+    rotated: false,
+  });
   const stageRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const indexRef = useRef(0);
@@ -142,9 +146,14 @@ export function PitchAutoplayViewer() {
     if (!stage) return;
     const update = () => {
       const rect = stage.getBoundingClientRect();
-      const width = Math.min(rect.width, rect.height * (16 / 9));
-      const height = Math.min(rect.height, rect.width * (9 / 16));
-      setStageDims({ width, height });
+      // Portrait phones: rotate the 16:9 slide 90° so it fills the screen
+      // instead of sitting in a small letterboxed strip.
+      const rotated = rect.height > rect.width;
+      const availW = rotated ? rect.height : rect.width;
+      const availH = rotated ? rect.width : rect.height;
+      const width = Math.min(availW, availH * (16 / 9));
+      const height = Math.min(availH, availW * (9 / 16));
+      setStageDims({ width, height, rotated });
     };
     update();
     const observer = new ResizeObserver(update);
@@ -192,12 +201,18 @@ export function PitchAutoplayViewer() {
     if (!start) return;
     const dx = event.changedTouches[0].clientX - start.x;
     const dy = event.changedTouches[0].clientY - start.y;
-    if (Math.abs(dx) >= SWIPE_THRESHOLD_PX && Math.abs(dx) > Math.abs(dy)) {
-      if (dx < 0) goNext();
+    // When the slide is rotated 90° (portrait phones) the slide's
+    // horizontal axis runs down the screen, so navigate on dy instead.
+    const along = stageDims.rotated ? dy : dx;
+    const across = stageDims.rotated ? dx : dy;
+    if (Math.abs(along) >= SWIPE_THRESHOLD_PX && Math.abs(along) > Math.abs(across)) {
+      if (along < 0) goNext();
       else goPrev();
     } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-      // Tap: left 35% goes back, the rest advances.
-      const fraction = start.x / window.innerWidth;
+      // Tap: the first 35% of the slide goes back, the rest advances.
+      const fraction = stageDims.rotated
+        ? start.y / window.innerHeight
+        : start.x / window.innerWidth;
       if (fraction < 0.35) goPrev();
       else goNext();
     }
@@ -214,7 +229,9 @@ export function PitchAutoplayViewer() {
 
   const onOverlayClick = (event: React.MouseEvent) => {
     if (touchClickGuardActive.current) return;
-    const fraction = event.clientX / window.innerWidth;
+    const fraction = stageDims.rotated
+      ? event.clientY / window.innerHeight
+      : event.clientX / window.innerWidth;
     if (fraction < 0.35) goPrev();
     else goNext();
   };
@@ -240,6 +257,8 @@ export function PitchAutoplayViewer() {
               height: Math.floor(stageDims.height),
               overflow: "hidden",
               position: "relative",
+              flexShrink: 0,
+              transform: stageDims.rotated ? "rotate(90deg)" : undefined,
             }}
           >
             <iframe
@@ -264,7 +283,7 @@ export function PitchAutoplayViewer() {
         {/* Transparent overlay: viewer owns all tap/swipe/click navigation */}
         <div
           className="absolute inset-0 z-10"
-          style={{ touchAction: "pan-y" }}
+          style={{ touchAction: stageDims.rotated ? "none" : "pan-y" }}
           onClick={onOverlayClick}
           onTouchStart={onOverlayTouchStart}
           onTouchEnd={onOverlayTouchEnd}
