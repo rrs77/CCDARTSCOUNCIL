@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene19_VisualMap } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoVisualMap() {
   return (
@@ -13,7 +12,6 @@ export default function PromoVisualMap() {
           <div className="absolute inset-0">
             <Scene19_VisualMap />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

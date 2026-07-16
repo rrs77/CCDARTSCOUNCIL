@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene06_Planning } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoPlanning() {
   return (
@@ -13,7 +12,6 @@ export default function PromoPlanning() {
           <div className="absolute inset-0">
             <Scene06_Planning />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

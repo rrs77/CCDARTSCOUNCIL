@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene10_Adaptive } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoAdaptive() {
   return (
@@ -13,7 +12,6 @@ export default function PromoAdaptive() {
           <div className="absolute inset-0">
             <Scene10_Adaptive />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

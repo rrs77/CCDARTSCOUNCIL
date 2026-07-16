@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene15_Progression } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoProgression() {
   return (
@@ -13,7 +12,6 @@ export default function PromoProgression() {
           <div className="absolute inset-0">
             <Scene15_Progression />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>

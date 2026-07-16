@@ -1,6 +1,5 @@
 import { MotionConfig } from "framer-motion";
 import { Scene17_Inspiration } from "@/promo/scenes";
-import { CornerBrand } from "@/promo/_shared";
 
 export default function PromoInspiration() {
   return (
@@ -13,7 +12,6 @@ export default function PromoInspiration() {
           <div className="absolute inset-0">
             <Scene17_Inspiration />
           </div>
-          <CornerBrand />
         </div>
       </div>
     </MotionConfig>
