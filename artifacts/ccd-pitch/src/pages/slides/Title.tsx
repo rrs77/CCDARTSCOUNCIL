@@ -113,7 +113,7 @@ export default function Title() {
           Creative Curriculum Designer
         </span>
         <span className="font-body" style={{ fontSize: "0.8vw" }}>
-          creativecurriculumdesigner.com
+          www.rhythmstix.co.uk
         </span>
       </div>
     </div>
