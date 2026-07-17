@@ -43,11 +43,11 @@ export default function CallToAction() {
         <div className="grid grid-cols-3 gap-[2vw]">
           <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.4vh_1.6vw]">
             <div className="font-display font-semibold text-accent text-[1vw] uppercase tracking-wide mb-[1vh]">Visit</div>
-            <div className="font-display font-bold text-white text-[1.4vw] leading-tight">www.rhythmstix.co.uk</div>
+            <div className="font-display font-bold text-white text-[1.4vw] leading-tight">www.ccdesigner.co.uk</div>
           </div>
           <div className="rounded-[1.5rem] bg-white/8 border border-white/15 backdrop-blur-sm p-[2.4vh_1.6vw]">
             <div className="font-display font-semibold text-accent text-[1vw] uppercase tracking-wide mb-[1vh]">Email</div>
-            <div className="font-display font-bold text-white text-[1.4vw] leading-tight">hello@rhythmstix.co.uk</div>
+            <div className="font-display font-bold text-white text-[1.4vw] leading-tight">hello@ccdesigner.co.uk</div>
           </div>
           <div className="rounded-[1.5rem] bg-accent text-white p-[2.4vh_1.6vw]">
             <div className="font-display font-semibold text-white/90 text-[1vw] uppercase tracking-wide mb-[1vh]">Book a demo</div>

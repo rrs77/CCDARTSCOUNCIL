@@ -6,7 +6,7 @@ const SLIDE_MS = 8000;
 const DESIGN_WIDTH = 1280;
 const DESIGN_HEIGHT = 720;
 const PROGRESS_TICK_MS = 100;
-const SITE_URL = "https://www.rhythmstix.co.uk";
+const SITE_URL = "https://www.ccdesigner.co.uk";
 const SWIPE_THRESHOLD_PX = 45;
 
 /** Short readable label derived from the slide title. */
@@ -376,8 +376,8 @@ export function PitchAutoplayViewer() {
           type="button"
           onClick={leaveWalkthrough}
           className="pitch-nav-btn"
-          title="Close and return to www.rhythmstix.co.uk"
-          aria-label="Close walkthrough and return to www.rhythmstix.co.uk"
+          title="Close and return to www.ccdesigner.co.uk"
+          aria-label="Close walkthrough and return to www.ccdesigner.co.uk"
         >
           <X className="h-4 w-4" />
         </button>
