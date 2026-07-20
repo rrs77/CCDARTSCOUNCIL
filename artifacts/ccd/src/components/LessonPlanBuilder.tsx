@@ -73,54 +73,72 @@ export function LessonPlanBuilder({
     );
   }
   
-  // Get categories assigned to current year group
-  const getCurrentYearGroupKeys = (): string[] => {
+  // Get categories assigned to current year group (parity with ActivityLibrary)
+  const normalizeKey = React.useCallback(
+    (value: string | undefined | null) => (value || '').trim().toLowerCase(),
+    [],
+  );
+
+  const getCurrentYearGroupKeys = React.useCallback((): string[] => {
     const sheetId = currentSheetInfo?.sheet;
     if (!sheetId) return [];
-    
+
     if (!customYearGroups || !Array.isArray(customYearGroups)) {
       return [];
     }
-    
-    // Try exact match first
-    let yearGroup = customYearGroups.find(yg => yg.id === sheetId);
-    
-    // If no exact match, try to find by name match (e.g., "Reception Music" contains "Reception")
+
+    let yearGroup = customYearGroups.find(
+      (yg) => normalizeKey(yg.id) === normalizeKey(sheetId),
+    );
+
     if (!yearGroup) {
-      yearGroup = customYearGroups.find(yg => {
-        // Check if sheet name contains year group name or vice versa
-        const sheetLower = sheetId.toLowerCase();
-        const ygNameLower = yg.name.toLowerCase();
-        const ygIdLower = yg.id.toLowerCase();
-        return sheetLower.includes(ygNameLower) || 
-               sheetLower.includes(ygIdLower) ||
-               ygNameLower.includes(sheetLower) ||
-               ygIdLower.includes(sheetLower);
-      });
+      yearGroup = customYearGroups.find(
+        (yg) =>
+          normalizeKey(yg.name) === normalizeKey(sheetId) ||
+          normalizeKey(sheetId).includes(normalizeKey(yg.name)) ||
+          normalizeKey(yg.name).includes(normalizeKey(sheetId)),
+      );
     }
-    
+
+    // Backward-compat: LKG / UKG / Reception short codes → long names
+    if (!yearGroup) {
+      const sheetNorm = normalizeKey(sheetId);
+      const shortToLongMatchers: Record<string, (name: string) => boolean> = {
+        lkg: (n) => n.includes('lower') && n.includes('kindergarten'),
+        ukg: (n) => n.includes('upper') && n.includes('kindergarten'),
+        reception: (n) => n === 'reception',
+      };
+      const matcher = shortToLongMatchers[sheetNorm];
+      if (matcher) {
+        yearGroup = customYearGroups.find((yg) => matcher(normalizeKey(yg.name)));
+      }
+    }
+
     if (yearGroup) {
-      // Return both the ID and name as potential keys to check (must match ActivityLibrary logic)
       const keys: string[] = [];
       const primaryKey = yearGroup.id || yearGroup.name;
       if (primaryKey) keys.push(primaryKey);
       if (yearGroup.id && yearGroup.name && yearGroup.id !== yearGroup.name) {
         keys.push(yearGroup.name);
       }
-      // Also add derived codes for backward compatibility
-      if (yearGroup.name.toLowerCase().includes('reception')) {
-        if (!keys.includes('Reception')) keys.push('Reception');
+      if (sheetId && !keys.includes(sheetId)) {
+        keys.push(sheetId);
       }
-      if (yearGroup.name.toLowerCase().includes('lower kindergarten') || yearGroup.name.toLowerCase().includes('lkg')) {
+      const nameLower = yearGroup.name.toLowerCase();
+      if (nameLower.includes('lower') || nameLower.includes('lkg')) {
         if (!keys.includes('LKG')) keys.push('LKG');
       }
-      if (yearGroup.name.toLowerCase().includes('upper kindergarten') || yearGroup.name.toLowerCase().includes('ukg')) {
+      if (nameLower.includes('upper') || nameLower.includes('ukg')) {
         if (!keys.includes('UKG')) keys.push('UKG');
+      }
+      if (nameLower.includes('reception')) {
+        if (!keys.includes('Reception')) keys.push('Reception');
       }
       return keys.filter(Boolean);
     }
-    return [];
-  };
+    // Fall back to the raw sheet id so activity.yearGroups tags still match
+    return [sheetId];
+  }, [currentSheetInfo, customYearGroups, normalizeKey]);
   
   // Get categories available for current year group
   // STRICT FILTERING: Only show categories EXPLICITLY assigned to current year group
@@ -145,7 +163,9 @@ export function LessonPlanBuilder({
     
     // Find the current year group object (exact match for this class/sheet)
     const currentYearGroup = customYearGroups?.find(
-      yg => yg.id === currentYearGroupKey || yg.name === currentYearGroupKey
+      yg =>
+        normalizeKey(yg.id) === normalizeKey(currentYearGroupKey) ||
+        normalizeKey(yg.name) === normalizeKey(currentYearGroupKey)
     );
     
     console.log('📋 STRICT Lesson Builder Filtering:', {
@@ -155,12 +175,13 @@ export function LessonPlanBuilder({
       totalCategories: categories.length
     });
     
-    // Keys used when saving assignments in UserSettings: yearGroup.id || yearGroup.name. Match exactly only.
-    const keysToCheck = [
+    // Keys used when saving assignments in UserSettings — include all aliases (parity with ActivityLibrary)
+    const keysToCheck = [...new Set([
       currentYearGroup?.id,
       currentYearGroup?.name,
-      currentYearGroupKey
-    ].filter(Boolean) as string[];
+      currentYearGroupKey,
+      ...getCurrentYearGroupKeys(),
+    ].filter(Boolean).map((k) => String(k).trim()))];
     
     // STRICT: Only include categories that are EXPLICITLY assigned to this year group. No "show for all" fallback.
     const filteredCategories = categories
@@ -178,8 +199,8 @@ export function LessonPlanBuilder({
         }
         // Exact match only: assigned key must equal one of this class's keys (case-insensitive). No partial/startsWith.
         const isAssigned = assignedKeys.some(assignedKey => {
-          const a = (assignedKey || '').toLowerCase().trim();
-          return keysToCheck.some(checkKey => (checkKey || '').toLowerCase().trim() === a);
+          const a = normalizeKey(assignedKey);
+          return keysToCheck.some(checkKey => normalizeKey(checkKey) === a);
         });
         if (isAssigned) {
           console.log(`✅ Category "${category.name}" assigned to "${currentYearGroup?.name || currentYearGroupKey}"`);
@@ -200,7 +221,7 @@ export function LessonPlanBuilder({
     
     // Return empty array if no categories assigned (NOT null - we want to show nothing)
     return categoryNames.length > 0 ? categoryNames : [];
-  }, [categories, currentSheetInfo, customYearGroups]);
+  }, [categories, currentSheetInfo, customYearGroups, getCurrentYearGroupKeys, normalizeKey]);
   
   // Helper function to get storage key
   const getStorageKeyHelper = (className: string) => `lesson-builder-draft-${className}`;
@@ -819,12 +840,15 @@ export function LessonPlanBuilder({
       return {};
     }
     
-    // Filter activities by search query, category, AND year group assignment
-    const yearGroupKeys = getCurrentYearGroupKeys();
+    // OR-style visibility (parity with ActivityLibrary): show if the category is
+    // assigned to this year group in Settings, OR the activity itself is tagged
+    // for the current year group.
+    const ygKeys = getCurrentYearGroupKeys();
     let filtered = allActivities.filter(activity => {
+      const description = activity.description || '';
       const matchesSearch = searchQuery === '' || 
         activity.activity.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        activity.description.toLowerCase().includes(searchQuery.toLowerCase());
+        description.toLowerCase().includes(searchQuery.toLowerCase());
       
       // Filter by selected category if one is chosen (but still show all if 'all' is selected)
       const matchesCategory = activityMatchesSelectedLibraryCategory(
@@ -832,16 +856,22 @@ export function LessonPlanBuilder({
         selectedCategory
       );
 
-      // Category must be assigned to year group. Once assigned, show ALL activities in that category.
       const categoryIsAssignedToYearGroup = activityCategoryAllowedForYearGroup(
         activity.category,
         availableCategoriesForYearGroup
       );
+      const activityYearGroups = Array.isArray(activity.yearGroups) ? activity.yearGroups : [];
+      const activityIsTaggedForYearGroup =
+        activityYearGroups.length > 0 &&
+        ygKeys.length > 0 &&
+        activityYearGroups.some((tag) => {
+          const t = normalizeKey(String(tag));
+          return ygKeys.some((k) => normalizeKey(String(k)) === t);
+        });
+      const visibleForYearGroup =
+        categoryIsAssignedToYearGroup || activityIsTaggedForYearGroup;
 
-      // When a category is applied to a year group, that year group sees all activities in the category (no activity-level year filter).
-      const activityIsAssignedToYearGroup = categoryIsAssignedToYearGroup;
-
-      return matchesSearch && matchesCategory && categoryIsAssignedToYearGroup && activityIsAssignedToYearGroup;
+      return matchesSearch && matchesCategory && visibleForYearGroup;
     });
 
     // Sort activities within each category
@@ -876,19 +906,23 @@ export function LessonPlanBuilder({
       grouped[category].push(activity);
     });
 
-    // Sort categories by the order they appear in availableCategoriesForYearGroup
-    // Only show categories that are assigned to the current year group
-    const sortedCategories = availableCategoriesForYearGroup
-      .filter(categoryName => grouped[categoryName] && grouped[categoryName].length > 0)
-      .concat(
-        Object.keys(grouped).filter(cat => 
-          !availableCategoriesForYearGroup.includes(cat) &&
-          !categories.some(c => c.name === cat)
-        )
-      );
+    // Prefer Settings-assigned category order, then include any remaining categories
+    // that appeared via activity yearGroup tags.
+    const sortedCategories = [
+      ...availableCategoriesForYearGroup.filter(
+        (categoryName) => grouped[categoryName] && grouped[categoryName].length > 0,
+      ),
+      ...Object.keys(grouped)
+        .filter((cat) => !availableCategoriesForYearGroup.includes(cat))
+        .sort((a, b) => {
+          const ca = categories.find((c) => c.name === a);
+          const cb = categories.find((c) => c.name === b);
+          return (ca?.position ?? 999) - (cb?.position ?? 999) || a.localeCompare(b);
+        }),
+    ];
 
     return { grouped, sortedCategories };
-  }, [allActivities, searchQuery, selectedCategory, sortBy, sortOrder, availableCategoriesForYearGroup, categories, currentSheetInfo, customYearGroups]);
+  }, [allActivities, searchQuery, selectedCategory, sortBy, sortOrder, availableCategoriesForYearGroup, categories, getCurrentYearGroupKeys, normalizeKey]);
 
   const toggleSort = (field: typeof sortBy) => {
     if (sortBy === field) {
@@ -1105,8 +1139,13 @@ export function LessonPlanBuilder({
                 {/* Activity List - Grouped by Category */}
                 <div className="p-3 pt-6 flex-1 overflow-y-auto min-h-0">
                   {(groupedActivitiesByCategory.sortedCategories?.length ?? 0) === 0 ? (
-                    <div className="text-center py-8">
+                    <div className="text-center py-8 space-y-2">
                       <p className="text-gray-500">No matching activities found</p>
+                      {Array.isArray(allActivities) && allActivities.length > 0 && (
+                        <p className="text-xs text-gray-400 max-w-sm mx-auto">
+                          Activities are loaded, but none match this class yet. In Settings, assign categories to this year group, or tag activities with this year group.
+                        </p>
+                      )}
                     </div>
                   ) : (
                     <div className="space-y-3">
