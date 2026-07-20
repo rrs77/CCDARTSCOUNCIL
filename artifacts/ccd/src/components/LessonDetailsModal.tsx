@@ -165,16 +165,16 @@ export function LessonDetailsModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-2 sm:p-4 z-[60] animate-fade-in">
-      <div className="bg-white rounded-card shadow-soft w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[98vh] sm:max-h-[95vh] overflow-hidden flex flex-col animate-scale-in">
-        {/* Header */}
+      <div className="bg-white rounded-card shadow-soft w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-scale-in">
+        {/* Header — shrink-0 so action menu never scrolls/clips off-screen */}
         <div 
-          className="p-4 text-white relative"
+          className="p-3 sm:p-4 text-white relative flex-shrink-0 z-10"
           style={{ 
             background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)'
           }}
         >
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0 pr-2">
               {editingLessonTitle ? (
                 <div className="flex items-center space-x-2">
                   <input
@@ -203,10 +203,10 @@ export function LessonDetailsModal({
                 </div>
               ) : (
                 <h1 className="text-xl font-bold mb-1 flex items-center space-x-2">
-                  <span>{lessonData.title || `Lesson ${lessonNumber}`}</span>
+                  <span className="truncate">{lessonData.title || `Lesson ${lessonNumber}`}</span>
                   <button
                     onClick={() => setEditingLessonTitle(true)}
-                    className="p-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-white"
+                    className="p-1 bg-white bg-opacity-20 hover:bg-opacity-30 rounded text-white flex-shrink-0"
                     title="Edit lesson title"
                   >
                     <Edit3 className="h-4 w-4" />
@@ -217,7 +217,7 @@ export function LessonDetailsModal({
                 {lessonData.totalTime} minutes • {lessonData.categoryOrder.length} categories
               </p>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 flex-shrink-0">
               {onEdit && (
                 <button
                   onClick={() => {
@@ -228,7 +228,7 @@ export function LessonDetailsModal({
                   title="Edit Lesson"
                 >
                   <Edit3 className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                  <span className="text-sm font-medium">Edit</span>
+                  <span className="text-sm font-medium hidden sm:inline">Edit</span>
                 </button>
               )}
               <button
@@ -237,7 +237,7 @@ export function LessonDetailsModal({
                 title="Delete Lesson"
               >
                 <Trash2 className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                <span className="text-sm font-medium">Delete</span>
+                <span className="text-sm font-medium hidden sm:inline">Delete</span>
               </button>
               <button
                 onClick={() => setShowEyfsSelector(!showEyfsSelector)}
@@ -245,7 +245,7 @@ export function LessonDetailsModal({
                 title="Manage Standards"
               >
                 <Tag className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                <span className="text-sm font-medium">Standards</span>
+                <span className="text-sm font-medium hidden md:inline">Standards</span>
               </button>
               
               {/* Export PDF Button */}
@@ -268,7 +268,7 @@ export function LessonDetailsModal({
                 ) : (
                   <Download className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
                 )}
-                <span className="text-sm font-medium">Export PDF</span>
+                <span className="text-sm font-medium hidden sm:inline">Export PDF</span>
               </button>
               {/* Copy Link Button */}
               <button
@@ -285,7 +285,7 @@ export function LessonDetailsModal({
                 {isSharingLink ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin flex-shrink-0" aria-hidden="true" />
-                    <span className="text-sm font-medium">Creating link…</span>
+                    <span className="text-sm font-medium hidden sm:inline">Creating link…</span>
                   </>
                 ) : (
                   <>
@@ -294,7 +294,7 @@ export function LessonDetailsModal({
                     ) : (
                       <Link className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
                     )}
-                    <span className="text-sm font-medium">Copy Link</span>
+                    <span className="text-sm font-medium hidden sm:inline">Copy Link</span>
                   </>
                 )}
               </button>
@@ -309,8 +309,8 @@ export function LessonDetailsModal({
           </div>
         </div>
 
-        {/* Content - Scrollable */}
-        <div className="p-6 overflow-y-auto max-h-[calc(90vh-200px)]">
+        {/* Content - Scrollable (flex-1 so header/footer stay on screen) */}
+        <div className="p-4 sm:p-6 flex-1 min-h-0 overflow-y-auto">
           {/* Standards Selector (conditionally shown) */}
           {showEyfsSelector && (
             <div className="mb-6">
@@ -668,7 +668,7 @@ export function LessonDetailsModal({
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+        <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end flex-shrink-0">
           <button
             onClick={onClose}
             className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
