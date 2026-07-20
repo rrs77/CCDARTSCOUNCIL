@@ -45,6 +45,9 @@ testem.log
 artifacts/*/.env
 artifacts/*/.env.local
 
+# Vercel static export (copied from artifacts/ccd/dist/public during build)
+/public
+
 # System Files
 .DS_Store
 Thumbs.db

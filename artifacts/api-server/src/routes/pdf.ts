@@ -1,5 +1,6 @@
 import { Router, type IRouter } from "express";
 import jwt from "jsonwebtoken";
+import { createClient } from "@supabase/supabase-js";
 
 const router: IRouter = Router();
 
@@ -12,47 +13,38 @@ const PDFBOLT_API_URL = "https://api.pdfbolt.com/v1/direct";
  */
 const MAX_HTML_BYTES = 40 * 1024 * 1024;
 
-/**
- * POST /api/pdf/generate
- *
- * Server-side proxy for PDFBolt. The PDFBOLT_API_KEY never leaves the server.
- *
- * Auth assumptions:
- * - Supabase must be configured with HS256 JWT signing (the default for all
- *   Supabase projects). RS256/ES256 projects would need a public-key variant.
- *   Set SUPABASE_JWT_SECRET to the value from the Supabase dashboard
- *   (Settings → API → JWT Settings → JWT Secret).
- *
- * Fail-closed in production: both PDFBOLT_API_KEY and SUPABASE_JWT_SECRET must
- * be present. Locally (NODE_ENV=development or PDF_LOCAL_DEV=1), JWT verification
- * is skipped when SUPABASE_JWT_SECRET is unset so PDF export works with only
- * PDFBOLT_API_KEY. When the secret is set, every request must supply a valid
- * Supabase access token in Authorization: Bearer; missing/invalid → 401.
- */
-router.post("/pdf/generate", async (req, res) => {
+const DEFAULT_SUPABASE_URL = "https://wiudrzdkbpyziaodqoog.supabase.co";
+
+function isLocalDev(): boolean {
+  return (
+    process.env["NODE_ENV"] === "development" ||
+    process.env["PDF_LOCAL_DEV"] === "1"
+  );
+}
+
+function requirePdfBoltKey(res: import("express").Response): string | null {
   const apiKey = process.env["PDFBOLT_API_KEY"];
   if (!apiKey) {
-    res
-      .status(503)
-      .json({
-        error:
-          "PDF generation is not configured on this server. Set PDFBOLT_API_KEY.",
-      });
-    return;
+    res.status(503).json({
+      error:
+        "PDF generation is not configured on this server. Set PDFBOLT_API_KEY.",
+    });
+    return null;
   }
+  return apiKey;
+}
 
-  // Production is fail-closed (JWT required). Local dev can run with only
-  // PDFBOLT_API_KEY when SUPABASE_JWT_SECRET is unset.
-  const isLocalDev =
-    process.env["NODE_ENV"] === "development" ||
-    process.env["PDF_LOCAL_DEV"] === "1";
+function enforcePdfAuth(
+  req: import("express").Request,
+  res: import("express").Response,
+): boolean {
   const jwtSecret = process.env["SUPABASE_JWT_SECRET"];
 
-  if (!jwtSecret && !isLocalDev) {
+  if (!jwtSecret && !isLocalDev()) {
     res
       .status(503)
       .json({ error: "PDF generation auth is not configured on this server." });
-    return;
+    return false;
   }
 
   const authHeader = req.headers["authorization"] ?? "";
@@ -64,18 +56,55 @@ router.post("/pdf/generate", async (req, res) => {
   if (jwtSecret) {
     if (!token) {
       res.status(401).json({ error: "Unauthorized" });
-      return;
+      return false;
     }
     try {
       jwt.verify(token, jwtSecret, { algorithms: ["HS256"] });
     } catch {
       res.status(401).json({ error: "Unauthorized" });
-      return;
+      return false;
     }
   }
 
-  // Basic payload validation: reject obviously malformed or oversized requests
-  // before forwarding them to PDFBolt.
+  return true;
+}
+
+async function generatePdfBuffer(
+  apiKey: string,
+  body: Record<string, unknown>,
+): Promise<Buffer> {
+  const upstream = await fetch(PDFBOLT_API_URL, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      API_KEY: apiKey,
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (!upstream.ok) {
+    const errorText = await upstream.text();
+    throw new Error(`PDFBolt error: ${upstream.status} ${errorText}`);
+  }
+
+  return Buffer.from(await upstream.arrayBuffer());
+}
+
+/**
+ * POST /api/pdf/generate
+ *
+ * Server-side proxy for PDFBolt. The PDFBOLT_API_KEY never leaves the server.
+ *
+ * Fail-closed in production: both PDFBOLT_API_KEY and SUPABASE_JWT_SECRET must
+ * be present. Locally (NODE_ENV=development or PDF_LOCAL_DEV=1), JWT verification
+ * is skipped when SUPABASE_JWT_SECRET is unset so PDF export works with only
+ * PDFBOLT_API_KEY.
+ */
+router.post("/pdf/generate", async (req, res) => {
+  const apiKey = requirePdfBoltKey(res);
+  if (!apiKey) return;
+  if (!enforcePdfAuth(req, res)) return;
+
   const body = req.body as Record<string, unknown>;
   if (typeof body !== "object" || body === null || Array.isArray(body)) {
     res.status(400).json({ error: "Invalid request payload." });
@@ -117,27 +146,108 @@ router.post("/pdf/generate", async (req, res) => {
   }
 
   try {
-    const upstream = await fetch(PDFBOLT_API_URL, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "API_KEY": apiKey,
-      },
-      body: JSON.stringify(body),
+    const pdfBuffer = await generatePdfBuffer(apiKey, body);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader("Content-Length", pdfBuffer.byteLength);
+    res.send(pdfBuffer);
+  } catch (error: unknown) {
+    const message =
+      error instanceof Error ? error.message : "PDF generation failed";
+    res.status(500).json({ error: message });
+  }
+});
+
+/**
+ * POST /api/generate-pdf
+ *
+ * Generate a PDF with PDFBolt, upload to Supabase Storage (lesson-pdfs),
+ * and return a public URL for Copy Link / share flows.
+ *
+ * Body: { html, footerTemplate?, headerTemplate?, fileName?, lessonNumber? }
+ * Env: PDFBOLT_API_KEY, SUPABASE_SERVICE_ROLE_KEY,
+ *      SUPABASE_URL or VITE_SUPABASE_URL
+ */
+router.post("/generate-pdf", async (req, res) => {
+  const apiKey = requirePdfBoltKey(res);
+  if (!apiKey) return;
+  if (!enforcePdfAuth(req, res)) return;
+
+  const body = req.body as Record<string, unknown>;
+  const encodedHtml = body["html"];
+  if (typeof encodedHtml !== "string" || encodedHtml.length === 0) {
+    res.status(400).json({ error: "Missing html content" });
+    return;
+  }
+  if (Buffer.byteLength(encodedHtml, "utf8") > MAX_HTML_BYTES) {
+    res.status(413).json({ error: "HTML payload exceeds maximum allowed size." });
+    return;
+  }
+
+  const serviceRoleKey = process.env["SUPABASE_SERVICE_ROLE_KEY"];
+  if (!serviceRoleKey) {
+    res.status(503).json({
+      error:
+        "Copy link requires SUPABASE_SERVICE_ROLE_KEY so the server can upload the PDF. Add it to .env (Supabase → Settings → API → service_role).",
+    });
+    return;
+  }
+
+  const supabaseUrl =
+    process.env["SUPABASE_URL"] ||
+    process.env["VITE_SUPABASE_URL"] ||
+    DEFAULT_SUPABASE_URL;
+
+  const footerTemplate =
+    typeof body["footerTemplate"] === "string" ? body["footerTemplate"] : "";
+  const headerTemplate =
+    typeof body["headerTemplate"] === "string" ? body["headerTemplate"] : "";
+  const fileNameRaw =
+    typeof body["fileName"] === "string" && body["fileName"]
+      ? body["fileName"]
+      : `shared-pdfs/${Date.now()}_lesson.pdf`;
+  const storagePath = fileNameRaw.startsWith("shared-pdfs/")
+    ? fileNameRaw
+    : `shared-pdfs/${fileNameRaw}`;
+
+  try {
+    const pdfBuffer = await generatePdfBuffer(apiKey, {
+      html: encodedHtml,
+      printBackground: true,
+      waitUntil: "networkidle",
+      format: "A4",
+      margin: { top: "15px", right: "20px", left: "20px", bottom: "55px" },
+      displayHeaderFooter: true,
+      footerTemplate,
+      headerTemplate,
+      emulateMediaType: "screen",
     });
 
-    if (!upstream.ok) {
-      const errorText = await upstream.text();
-      res
-        .status(upstream.status)
-        .json({ error: `PDFBolt error: ${errorText}` });
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: { persistSession: false },
+    });
+
+    const { error: uploadError } = await supabase.storage
+      .from("lesson-pdfs")
+      .upload(storagePath, pdfBuffer, {
+        contentType: "application/pdf",
+        upsert: true,
+      });
+
+    if (uploadError) {
+      res.status(500).json({ error: `Upload failed: ${uploadError.message}` });
       return;
     }
 
-    const pdfBuffer = await upstream.arrayBuffer();
-    res.setHeader("Content-Type", "application/pdf");
-    res.setHeader("Content-Length", pdfBuffer.byteLength);
-    res.send(Buffer.from(pdfBuffer));
+    const { data: urlData } = supabase.storage
+      .from("lesson-pdfs")
+      .getPublicUrl(storagePath);
+
+    if (!urlData?.publicUrl) {
+      res.status(500).json({ error: "No public URL returned after upload." });
+      return;
+    }
+
+    res.json({ success: true, url: urlData.publicUrl, path: storagePath });
   } catch (error: unknown) {
     const message =
       error instanceof Error ? error.message : "PDF generation failed";

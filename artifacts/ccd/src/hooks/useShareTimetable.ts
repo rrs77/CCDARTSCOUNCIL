@@ -266,67 +266,26 @@ export function useShareTimetable() {
       const sanitizedClassName = className.replace(/[^a-zA-Z0-9]/g, '_');
       const fileName = `shared-pdfs/${timestamp}_${sanitizedClassName}_Timetable.pdf`;
 
-      // Use Vercel API to generate PDF and upload (bypasses CORS)
-      const pdfApiUrl = '/api/generate-pdf';
-      
-      console.log('Generating timetable PDF via Vercel API:', pdfApiUrl);
-      
-      let uploadResponse;
-      try {
-        uploadResponse = await fetch(pdfApiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            html: encodedHtml,
-            footerTemplate: encodedFooter,
-            fileName: fileName
-          })
-        });
-      } catch (fetchError: any) {
-        console.error('Network error calling Vercel API:', fetchError);
-        throw new Error(`Failed to connect to PDF generation service. Error: ${fetchError.message || 'Network error'}`);
-      }
+      const { generateAndUploadSharePdf } = await import('../utils/pdfApi');
+      console.log('Generating timetable PDF via PDFBolt proxy + Supabase upload');
 
-      if (!uploadResponse.ok) {
-        let errorText;
-        try {
-          errorText = await uploadResponse.text();
-        } catch (textError) {
-          throw new Error(`Upload failed with status ${uploadResponse.status}. Unable to read error message.`);
-        }
-        
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: errorText || 'Upload failed' };
-        }
-        
-        if (errorData.error === 'Server configuration error' || uploadResponse.status === 500) {
-          throw new Error('Server configuration error: Please ensure SUPABASE_SERVICE_ROLE_KEY is set in Vercel environment variables.');
-        }
-        
-        if (uploadResponse.status === 404) {
-          throw new Error('Upload function not found. Please ensure the Vercel API route is deployed correctly.');
-        }
-        
-        throw new Error(errorData.error || `Upload failed: ${uploadResponse.status}`);
-      }
-
-      const responseData = await uploadResponse.json();
-      const publicUrl = responseData.url || responseData.publicUrl;
-      
+      const { url: publicUrl } = await generateAndUploadSharePdf({
+        html: encodedHtml,
+        footerTemplate: encodedFooter,
+        fileName,
+      });
       if (!publicUrl) {
-        throw new Error('No URL returned from upload function');
+        throw new Error('No URL returned from PDF service');
       }
+
       setShareUrl(publicUrl);
 
+      // Copy to clipboard
       const clipboardSuccess = await copyToClipboard(publicUrl);
       if (!clipboardSuccess && import.meta.env.DEV) {
         console.warn('Auto-copy failed; URL is shown for manual copy');
       }
+
       return publicUrl;
     } catch (error: any) {
       console.error('Share failed:', error);

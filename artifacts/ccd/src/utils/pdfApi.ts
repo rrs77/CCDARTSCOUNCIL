@@ -50,9 +50,72 @@ export async function generatePdfViaProxy(
   return response.blob();
 }
 
+export type SharePdfOptions = {
+  html: string;
+  footerTemplate?: string;
+  headerTemplate?: string;
+  /** Storage path under the lesson-pdfs bucket, e.g. shared-pdfs/123_Lesson_1.pdf */
+  fileName: string;
+  lessonNumber?: string;
+};
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      headers['Authorization'] = `Bearer ${data.session.access_token}`;
+    }
+  } catch {
+    // ignore — local PDF may allow unauthenticated
+  }
+  return headers;
+}
+
 /**
- * @deprecated Use generatePdfViaProxy() for all new PDF generation calls.
- * Kept for any callers that still reference the old Vercel generate-pdf route.
+ * Generate a PDF via PDFBolt, upload to Supabase Storage (server-side),
+ * and return the public URL for Copy Link / share flows.
+ */
+export async function generateAndUploadSharePdf(
+  options: SharePdfOptions,
+): Promise<{ url: string }> {
+  const headers = await authHeaders();
+  const response = await fetch(getVercelApiUrl('/api/generate-pdf'), {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({
+      html: options.html,
+      footerTemplate: options.footerTemplate || '',
+      headerTemplate: options.headerTemplate || '',
+      fileName: options.fileName,
+      lessonNumber: options.lessonNumber,
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text();
+    let msg = errText;
+    try {
+      const d = JSON.parse(errText || '{}') as { error?: string };
+      if (d.error) msg = d.error;
+    } catch (_) {}
+    throw new Error(msg || `Share PDF failed: ${response.status}`);
+  }
+
+  const data = (await response.json()) as {
+    url?: string;
+    publicUrl?: string;
+    error?: string;
+  };
+  const url = data.url || data.publicUrl;
+  if (!url) {
+    throw new Error(data.error || 'No share URL was returned.');
+  }
+  return { url };
+}
+
+/**
+ * @deprecated Prefer generateAndUploadSharePdf() for share/copy-link flows.
  */
 export function getPdfApiUrl(): string {
   if (import.meta.env.DEV) {

@@ -470,99 +470,17 @@ export function useShareLesson() {
       const timestamp = Date.now();
       const fileName = `shared-pdfs/${timestamp}_${currentSheetInfo.sheet}_Lesson_${lessonDisplayNumber}.pdf`;
 
-      // Use Vercel API (bypasses CORS)
-      const { getPdfApiUrl } = await import('../utils/pdfApi');
-      const pdfApiUrl = getPdfApiUrl();
-      
-      console.log('Generating PDF via API:', pdfApiUrl);
-      
-      let uploadResponse;
-      try {
-        uploadResponse = await fetch(pdfApiUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            html: encodedHtml,
-            footerTemplate: encodedFooter,
-            headerTemplate: encodedHeader,
-            fileName: fileName,
-            lessonNumber: lessonNumber
-          })
-        });
-      } catch (fetchError: any) {
-        console.error('Network error calling PDF API:', fetchError);
-        console.error('API URL attempted:', pdfApiUrl);
-        throw new Error(`Failed to connect to PDF generation service. This might be a network issue or the API may not be deployed. Error: ${fetchError.message || 'Network error'}`);
-      }
+      const { generateAndUploadSharePdf } = await import('../utils/pdfApi');
+      console.log('Generating share PDF via PDFBolt proxy + Supabase upload');
 
-      if (!uploadResponse.ok) {
-        let errorText;
-        try {
-          errorText = await uploadResponse.text();
-        } catch (textError) {
-          throw new Error(`Upload failed with status ${uploadResponse.status}. Unable to read error message.`);
-        }
-        
-        let errorData;
-        try {
-          errorData = JSON.parse(errorText);
-        } catch {
-          errorData = { error: errorText || 'Upload failed' };
-        }
-        
-        // If it's a server configuration error, provide helpful message
-        if (errorData.error === 'Server configuration error' || uploadResponse.status === 500) {
-          // Check if it's a Blob token error
-          if (errorData.error?.includes('BLOB_READ_WRITE_TOKEN') || errorData.error?.includes('Blob store')) {
-            throw new Error(
-              'Vercel Blob Storage not configured.\n\nSetup:\n1. Go to Vercel Dashboard → Your Project → Storage tab\n2. Click "Create Blob Store"\n3. Name it (e.g., "lesson-pdfs")\n4. Redeploy your project\n\nThe BLOB_READ_WRITE_TOKEN is automatically created by Vercel.'
-            );
-          }
-          throw new Error(
-            'PDF generation service error. ' +
-            'Please check Vercel function logs for details. ' +
-            'Ensure PDFBOLT_API_KEY and BLOB_READ_WRITE_TOKEN are set in Vercel environment variables.'
-          );
-        }
-        
-        // If API not found
-        if (uploadResponse.status === 404) {
-          const isDev = import.meta.env.DEV;
-          const vercelUrl = import.meta.env.VITE_VERCEL_URL;
-          
-          let helpfulMessage: string;
-          if (isDev) {
-            if (!vercelUrl) {
-              helpfulMessage = 'PDF API not found in development.\n\nTo test locally:\n1. Add VITE_VERCEL_URL=https://your-app.vercel.app to your .env file\n2. Restart the dev server\n\nOr test in production where the API route is automatically available.';
-            } else {
-              helpfulMessage = `PDF API not found at ${pdfApiUrl}.\n\nPlease ensure:\n1. Your Vercel app is deployed\n2. The api/generate-pdf.js route exists\n3. Environment variables are set in Vercel\n4. The deployment completed successfully`;
-            }
-          } else {
-            helpfulMessage = 'PDF API not found. Please ensure:\n1. api/generate-pdf.js exists in your project\n2. The project is deployed on Vercel\n3. Environment variables (PDFBOLT_API_KEY, BLOB_READ_WRITE_TOKEN) are set in Vercel\n4. A Blob store is created in Vercel Dashboard → Storage\n5. The deployment completed successfully';
-          }
-          throw new Error(helpfulMessage);
-        }
-        
-        throw new Error(errorData.error || `Upload failed: ${uploadResponse.status}`);
-      }
+      const { url: publicUrl } = await generateAndUploadSharePdf({
+        html: encodedHtml,
+        footerTemplate: encodedFooter,
+        headerTemplate: encodedHeader,
+        fileName,
+      });
 
-      let responseData: { url?: string; publicUrl?: string; shortUrl?: string; error?: string };
-      try {
-        responseData = await uploadResponse.json();
-      } catch (parseErr) {
-        throw new Error(
-          'PDF service returned an invalid response. The server may be misconfigured—check Vercel function logs.'
-        );
-      }
-      const publicUrl = responseData?.url ?? responseData?.publicUrl;
-      if (!publicUrl || typeof publicUrl !== 'string') {
-        const serverMsg = responseData?.error ? ` Server: ${responseData.error}` : '';
-        throw new Error(`No share URL was returned.${serverMsg}`);
-      }
-      // Prefer short URL (e.g. ccdesigner.co.uk/pdf/1) when the API registered one
-      const displayUrl = (responseData?.shortUrl && typeof responseData.shortUrl === 'string') ? responseData.shortUrl : publicUrl;
+      const displayUrl = publicUrl;
 
       storeShareUrl(lessonNumber, displayUrl);
       setShareUrl(displayUrl);
@@ -610,39 +528,17 @@ export function useShareLesson() {
       const timestamp = Date.now();
       const fileName = `shared-pdfs/${timestamp}_${currentSheetInfo.sheet}_Lesson_${lessonDisplayNumber}.pdf`;
 
-      const { getPdfApiUrl } = await import('../utils/pdfApi');
-      const pdfApiUrl = getPdfApiUrl();
-      if (import.meta.env.DEV) console.log('[PDF] Using service:', pdfApiUrl);
+      const { generateAndUploadSharePdf } = await import('../utils/pdfApi');
+      if (import.meta.env.DEV) console.log('[PDF] Generating share PDF via PDFBolt proxy');
 
-      const uploadResponse = await fetch(pdfApiUrl, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          html: encodedHtml,
-          footerTemplate: encodedFooter,
-          headerTemplate: encodedHeader,
-          fileName,
-          lessonNumber,
-        }),
+      const { url: publicUrl } = await generateAndUploadSharePdf({
+        html: encodedHtml,
+        footerTemplate: encodedFooter,
+        headerTemplate: encodedHeader,
+        fileName,
       });
-
-      if (!uploadResponse.ok) {
-        const errorText = await uploadResponse.text();
-        let errData: { error?: string } = {};
-        try { errData = JSON.parse(errorText); } catch { errData = { error: errorText }; }
-        if (uploadResponse.status === 404) {
-          throw new Error('PDF service not found. Please ensure api/generate-pdf is deployed on Vercel.');
-        }
-        throw new Error(errData.error || `PDF service error: ${uploadResponse.status}`);
-      }
-
-      const responseData = await uploadResponse.json();
-      const publicUrl = responseData.url || responseData.publicUrl;
-      if (!publicUrl) throw new Error('No URL returned from PDF service');
-      // Prefer short URL (e.g. yoursite.com/pdf/1) when the API registered one
-      const displayUrl = (responseData.shortUrl && typeof responseData.shortUrl === 'string') ? responseData.shortUrl : publicUrl;
-      storeShareUrl(lessonNumber, displayUrl);
-      return displayUrl;
+      storeShareUrl(lessonNumber, publicUrl);
+      return publicUrl;
     } catch (error: any) {
       setShareError(error.message);
       throw error;
