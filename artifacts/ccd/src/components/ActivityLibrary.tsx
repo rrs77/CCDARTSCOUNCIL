@@ -39,8 +39,8 @@ import { activityPacksApi } from '../config/api';
 import { supabase, isSupabaseConfigured } from '../config/supabase';
 import type { Activity } from '../contexts/DataContext';
 import {
-  activityCategoryAllowedForYearGroup,
   activityMatchesSelectedLibraryCategory,
+  activityVisibleForYearGroup,
 } from '../utils/activityLibraryCategories';
 
 /** Stable key for starring (prefer DB id). */
@@ -422,28 +422,27 @@ export function ActivityLibrary({
     }
   };
 
-  // Get unique categories - mirrors the OR-style visibility used by displayGroups
-  // so the category sub-tabs include any category whose activities are visible
-  // (whether via category-level Settings assignment or via the activity's own
-  // yearGroups tag).
+  // Get unique categories — Settings year-group assignment is authoritative.
   const uniqueCategories = useMemo(() => {
     if (availableCategoriesForYearGroup === null) {
       const cats = new Set(allActivities.map(a => a.category));
       return Array.from(cats).sort();
     }
     const ygKeys = getCurrentYearGroupKeys();
-    const filteredActivities = allActivities.filter((activity) => {
-      if (activityCategoryAllowedForYearGroup(activity.category, availableCategoriesForYearGroup)) return true;
-      const activityYearGroups = Array.isArray(activity.yearGroups) ? activity.yearGroups : [];
-      if (activityYearGroups.length === 0 || ygKeys.length === 0) return false;
-      return activityYearGroups.some((tag) => {
-        const t = normalizeKey(String(tag));
-        return ygKeys.some((k) => normalizeKey(String(k)) === t);
-      });
-    });
+    const settingsCategoryNames = categories.map((c) => c.name);
+    const filteredActivities = allActivities.filter((activity) =>
+      activityVisibleForYearGroup({
+        activityCategory: activity.category,
+        availableCategoriesForYearGroup,
+        activityYearGroups: activity.yearGroups,
+        yearGroupKeys: ygKeys,
+        settingsCategoryNames,
+        normalizeKey,
+      }),
+    );
     const cats = new Set(filteredActivities.map(a => a.category));
     return Array.from(cats).sort();
-  }, [allActivities, availableCategoriesForYearGroup, getCurrentYearGroupKeys, normalizeKey]);
+  }, [allActivities, availableCategoriesForYearGroup, categories, getCurrentYearGroupKeys, normalizeKey]);
 
   const uniqueLevels = useMemo(() => {
     // Use custom year groups from settings instead of database levels
@@ -515,25 +514,16 @@ export function ActivityLibrary({
       // Level filtering removed - show all levels
       const matchesLevel = true;
       
-      // Visibility is OR-style: show the activity if EITHER its category is
-      // explicitly enabled for the current year group in Settings, OR the
-      // activity's own `yearGroups` array tags it for the current year group.
-      // This keeps the Settings-driven defaults working while ensuring newly
-      // created / AI-generated activities (which carry yearGroups but whose
-      // category may not yet be ticked for that year group) are immediately
-      // visible.
-      const categoryIsAssignedToYearGroup = activityCategoryAllowedForYearGroup(
-        activity.category,
-        availableCategoriesForYearGroup
-      );
-      const activityYearGroups = Array.isArray(activity.yearGroups) ? activity.yearGroups : [];
-      const ygKeys = getCurrentYearGroupKeys();
-      const activityIsTaggedForYearGroup = activityYearGroups.length > 0 && ygKeys.length > 0 &&
-        activityYearGroups.some((tag) => {
-          const t = normalizeKey(String(tag));
-          return ygKeys.some((k) => normalizeKey(String(k)) === t);
-        });
-      const visibleForYearGroup = categoryIsAssignedToYearGroup || activityIsTaggedForYearGroup;
+      // Settings category year-group assignment is authoritative. Activity-level
+      // yearGroups tags only apply when the category is not configured in Settings.
+      const visibleForYearGroup = activityVisibleForYearGroup({
+        activityCategory: activity.category,
+        availableCategoriesForYearGroup,
+        activityYearGroups: activity.yearGroups,
+        yearGroupKeys: getCurrentYearGroupKeys(),
+        settingsCategoryNames: categories.map((c) => c.name),
+        normalizeKey,
+      });
 
       // Check if user owns required pack (if activity requires one)
       const hasPackAccess = !activity.requiredPack || userOwnedPacks.includes(activity.requiredPack);
@@ -596,25 +586,22 @@ export function ActivityLibrary({
   }, [allActivities, debouncedSearchQuery, localSelectedCategory, selectedTopic, sortBy, sortOrder, categories, userOwnedPacks, availableCategoriesForYearGroup, getCurrentYearGroupKeys, normalizeKey, globalStarredFirst, starredFirstCategories, starredIds]);
 
   // Calculate total activities available for the current year group (without search/category filters)
-  // Mirrors the OR-style visibility rule used in `displayGroups` above.
   const totalActivitiesForYearGroup = useMemo(() => {
     const ygKeys = getCurrentYearGroupKeys();
+    const settingsCategoryNames = categories.map((c) => c.name);
     return allActivities.filter(activity => {
-      const categoryIsAssignedToYearGroup = activityCategoryAllowedForYearGroup(
-        activity.category,
-        availableCategoriesForYearGroup
-      );
-      const activityYearGroups = Array.isArray(activity.yearGroups) ? activity.yearGroups : [];
-      const activityIsTaggedForYearGroup = activityYearGroups.length > 0 && ygKeys.length > 0 &&
-        activityYearGroups.some((tag) => {
-          const t = normalizeKey(String(tag));
-          return ygKeys.some((k) => normalizeKey(String(k)) === t);
-        });
-      const visibleForYearGroup = categoryIsAssignedToYearGroup || activityIsTaggedForYearGroup;
+      const visibleForYearGroup = activityVisibleForYearGroup({
+        activityCategory: activity.category,
+        availableCategoriesForYearGroup,
+        activityYearGroups: activity.yearGroups,
+        yearGroupKeys: ygKeys,
+        settingsCategoryNames,
+        normalizeKey,
+      });
       const hasPackAccess = !activity.requiredPack || userOwnedPacks.includes(activity.requiredPack);
       return visibleForYearGroup && hasPackAccess;
     }).length;
-  }, [allActivities, availableCategoriesForYearGroup, getCurrentYearGroupKeys, normalizeKey, userOwnedPacks]);
+  }, [allActivities, availableCategoriesForYearGroup, categories, getCurrentYearGroupKeys, normalizeKey, userOwnedPacks]);
 
   const availableTopicsForSelection = useMemo(() => {
     const topics = new Set<string>();

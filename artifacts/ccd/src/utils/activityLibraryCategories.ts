@@ -77,3 +77,66 @@ export function activityMatchesSelectedLibraryCategory(
   }
   return false;
 }
+
+function categoryNameKnownInSettings(
+  activityCategory: string,
+  settingsCategoryNames: string[],
+  normalizeKey: (value: string) => string = normalizeCategoryKey,
+): boolean {
+  const ac = (activityCategory || '').trim();
+  if (!ac) return false;
+  return settingsCategoryNames.some((name) => {
+    const n = (name || '').trim();
+    if (!n) return false;
+    if (normalizeKey(n) === normalizeKey(ac)) return true;
+    if (isVocalWarmupLibraryName(n) && isVocalWarmupSubcategory(ac)) return true;
+    if (isVocalWarmupLibraryName(ac) && isVocalWarmupLibraryName(n)) return true;
+    return false;
+  });
+}
+
+/**
+ * Year-group visibility with Settings as the source of truth.
+ *
+ * - Category assigned to this year group in Settings → show
+ * - Category exists in Settings but is NOT assigned here → hide
+ *   (activity.yearGroups tags must not override an explicit Settings choice,
+ *   e.g. "Drama Games" with no year groups must not appear in Reception)
+ * - Category unknown to Settings → fall back to activity.yearGroups tags
+ */
+export function activityVisibleForYearGroup(options: {
+  activityCategory: string;
+  availableCategoriesForYearGroup: string[] | null;
+  activityYearGroups: unknown;
+  yearGroupKeys: string[];
+  settingsCategoryNames: string[];
+  normalizeKey?: (value: string) => string;
+}): boolean {
+  const normalize = options.normalizeKey ?? normalizeCategoryKey;
+  const categoryAssigned = activityCategoryAllowedForYearGroup(
+    options.activityCategory,
+    options.availableCategoriesForYearGroup,
+  );
+  if (categoryAssigned) return true;
+
+  if (
+    categoryNameKnownInSettings(
+      options.activityCategory,
+      options.settingsCategoryNames,
+      normalize,
+    )
+  ) {
+    return false;
+  }
+
+  const tags = Array.isArray(options.activityYearGroups)
+    ? options.activityYearGroups
+    : [];
+  const ygKeys = options.yearGroupKeys || [];
+  if (tags.length === 0 || ygKeys.length === 0) return false;
+
+  return tags.some((tag) => {
+    const t = normalize(String(tag));
+    return ygKeys.some((k) => normalize(String(k)) === t);
+  });
+}

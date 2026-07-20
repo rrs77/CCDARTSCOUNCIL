@@ -32,8 +32,8 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import type { Activity, LessonPlan, ActivityStack } from '../contexts/DataContext';
 import {
-  activityCategoryAllowedForYearGroup,
   activityMatchesSelectedLibraryCategory,
+  activityVisibleForYearGroup,
 } from '../utils/activityLibraryCategories';
 
 // Define half-term periods
@@ -856,20 +856,14 @@ export function LessonPlanBuilder({
         selectedCategory
       );
 
-      const categoryIsAssignedToYearGroup = activityCategoryAllowedForYearGroup(
-        activity.category,
-        availableCategoriesForYearGroup
-      );
-      const activityYearGroups = Array.isArray(activity.yearGroups) ? activity.yearGroups : [];
-      const activityIsTaggedForYearGroup =
-        activityYearGroups.length > 0 &&
-        ygKeys.length > 0 &&
-        activityYearGroups.some((tag) => {
-          const t = normalizeKey(String(tag));
-          return ygKeys.some((k) => normalizeKey(String(k)) === t);
-        });
-      const visibleForYearGroup =
-        categoryIsAssignedToYearGroup || activityIsTaggedForYearGroup;
+      const visibleForYearGroup = activityVisibleForYearGroup({
+        activityCategory: activity.category,
+        availableCategoriesForYearGroup,
+        activityYearGroups: activity.yearGroups,
+        yearGroupKeys: ygKeys,
+        settingsCategoryNames: categories.map((c) => c.name),
+        normalizeKey,
+      });
 
       return matchesSearch && matchesCategory && visibleForYearGroup;
     });
@@ -906,8 +900,8 @@ export function LessonPlanBuilder({
       grouped[category].push(activity);
     });
 
-    // Prefer Settings-assigned category order, then include any remaining categories
-    // that appeared via activity yearGroup tags.
+    // Prefer Settings-assigned category order; only then unknown categories
+    // that passed the Settings-first visibility rule.
     const sortedCategories = [
       ...availableCategoriesForYearGroup.filter(
         (categoryName) => grouped[categoryName] && grouped[categoryName].length > 0,
