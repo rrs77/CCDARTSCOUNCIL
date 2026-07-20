@@ -78,55 +78,34 @@ export function activityMatchesSelectedLibraryCategory(
   return false;
 }
 
-function categoryNameKnownInSettings(
-  activityCategory: string,
-  settingsCategoryNames: string[],
-  normalizeKey: (value: string) => string = normalizeCategoryKey,
-): boolean {
-  const ac = (activityCategory || '').trim();
-  if (!ac) return false;
-  return settingsCategoryNames.some((name) => {
-    const n = (name || '').trim();
-    if (!n) return false;
-    if (normalizeKey(n) === normalizeKey(ac)) return true;
-    if (isVocalWarmupLibraryName(n) && isVocalWarmupSubcategory(ac)) return true;
-    if (isVocalWarmupLibraryName(ac) && isVocalWarmupLibraryName(n)) return true;
-    return false;
-  });
-}
-
 /**
- * Year-group visibility with Settings as the source of truth.
+ * Year-group visibility (OR-style).
  *
- * - Category assigned to this year group in Settings → show
- * - Category exists in Settings but is NOT assigned here → hide
- *   (activity.yearGroups tags must not override an explicit Settings choice,
- *   e.g. "Drama Games" with no year groups must not appear in Reception)
- * - Category unknown to Settings → fall back to activity.yearGroups tags
+ * Show the activity if EITHER:
+ * - its category is assigned to this year group in Settings, OR
+ * - the activity's own `yearGroups` tags match the current year group
+ *
+ * Activity tags must remain a fallback: many EYFS/Reception activities rely on
+ * tags when category year-group keys are legacy (LKG/UKG/Reception) or empty.
+ * Settings-only filtering emptied the library for those classes.
  */
 export function activityVisibleForYearGroup(options: {
   activityCategory: string;
   availableCategoriesForYearGroup: string[] | null;
   activityYearGroups: unknown;
   yearGroupKeys: string[];
-  settingsCategoryNames: string[];
+  /** Kept for call-site compatibility; no longer used to block tag fallback. */
+  settingsCategoryNames?: string[];
   normalizeKey?: (value: string) => string;
 }): boolean {
   const normalize = options.normalizeKey ?? normalizeCategoryKey;
-  const categoryAssigned = activityCategoryAllowedForYearGroup(
-    options.activityCategory,
-    options.availableCategoriesForYearGroup,
-  );
-  if (categoryAssigned) return true;
-
   if (
-    categoryNameKnownInSettings(
+    activityCategoryAllowedForYearGroup(
       options.activityCategory,
-      options.settingsCategoryNames,
-      normalize,
+      options.availableCategoriesForYearGroup,
     )
   ) {
-    return false;
+    return true;
   }
 
   const tags = Array.isArray(options.activityYearGroups)

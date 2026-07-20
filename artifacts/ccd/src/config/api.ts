@@ -1228,23 +1228,103 @@ function normaliseYearGroups(raw: any): Record<string, boolean> {
   return {};
 }
 
-// TENANT-ISOLATION GUARD — see comment above yearGroupsApi.
-export const customCategoriesApi = {
-  getAll: async () => {
-    console.warn('⚠️ customCategoriesApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
-    return [];
-  },
-  upsert: async (_categories: any[]) => {
-    console.warn('⚠️ customCategoriesApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
-    return [];
-  },
-  delete: async (_name: string) => {
-    console.warn('⚠️ customCategoriesApi.delete disabled — table has no tenant key (cross-tenant tampering)');
-    return { success: true };
-  }
+// Per-user category settings (including year-group assignment ticks).
+// Stored in branding_settings under key `user:{uuid}:custom_categories` so each
+// school/user keeps their own assignments without overwriting the shared
+// custom_categories catalog (which has no tenant column).
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const getAuthenticatedUserId = (): string | null => {
+  const uid = localStorage.getItem('rhythmstix_user_id');
+  return uid && UUID_RE.test(uid) ? uid : null;
 };
 
-// (Original customCategoriesApi implementation retained below for reference only — not exported)
+const getUserCategoriesKey = (): string | null => {
+  const uid = getAuthenticatedUserId();
+  return uid ? `user:${uid}:custom_categories` : null;
+};
+
+function normaliseCategoryRecord(cat: any) {
+  return {
+    id: cat.id,
+    name: cat.name,
+    color: cat.color || '#6B7280',
+    position: typeof cat.position === 'number' ? cat.position : parseInt(String(cat.position || 0), 10) || 0,
+    group: cat.group,
+    groups: Array.isArray(cat.groups) ? cat.groups : (cat.group ? [cat.group] : []),
+    yearGroups: normaliseYearGroups(cat.yearGroups ?? cat.year_groups ?? {}),
+  };
+}
+
+export const customCategoriesApi = {
+  getAll: async () => {
+    try {
+      const key = getUserCategoriesKey();
+      if (!key) {
+        if (import.meta.env.DEV) {
+          console.warn('⚠️ customCategoriesApi.getAll: unauthenticated — skipping cloud read (fail closed)');
+        }
+        return [];
+      }
+      const { data, error } = await supabase
+        .from(TABLES.BRANDING_SETTINGS)
+        .select('data')
+        .eq('key', key)
+        .maybeSingle();
+      if (error) throw error;
+      const categories = (data?.data as { categories?: unknown[] } | null)?.categories;
+      if (!Array.isArray(categories) || categories.length === 0) return [];
+      return categories.map((cat) => normaliseCategoryRecord(cat));
+    } catch (error) {
+      console.warn('Failed to load per-user categories from Supabase:', error);
+      return [];
+    }
+  },
+
+  upsert: async (categories: any[]) => {
+    try {
+      const key = getUserCategoriesKey();
+      if (!key) {
+        console.warn('⚠️ customCategoriesApi.upsert: unauthenticated — skipping cloud write (fail closed)');
+        return [];
+      }
+      const normalised = (categories || []).map((cat) => normaliseCategoryRecord(cat));
+      const { error } = await supabase
+        .from(TABLES.BRANDING_SETTINGS)
+        .upsert(
+          {
+            key,
+            data: { categories: normalised },
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'key' },
+        );
+      if (error) throw error;
+      if (import.meta.env.DEV) {
+        console.log('✅ Saved per-user categories to cloud:', normalised.length);
+      }
+      return normalised;
+    } catch (error) {
+      console.error('Failed to save per-user categories to Supabase:', error);
+      throw error;
+    }
+  },
+
+  delete: async (name: string) => {
+    try {
+      const existing = await customCategoriesApi.getAll();
+      const next = existing.filter((cat: any) => cat.name !== name);
+      await customCategoriesApi.upsert(next);
+      return { success: true };
+    } catch (error) {
+      console.warn(`Failed to delete category "${name}" from per-user cloud store:`, error);
+      return { success: false };
+    }
+  },
+};
+
+// (Legacy shared-table implementation retained for reference only — do not export.
+//  custom_categories has no tenant key; writing it would overwrite every school.)
 const _customCategoriesApiImpl = {
   getAll: async () => {
     try {

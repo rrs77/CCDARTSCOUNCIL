@@ -1,7 +1,7 @@
 // Creative Curriculum Designer - Service Worker
 // Offline-first PWA with smart caching
 
-const CACHE_NAME = 'ccd-v2.1.0';
+const CACHE_NAME = 'ccd-v2.2.0';
 const OFFLINE_URL = '/offline.html';
 
 // Critical assets to cache immediately

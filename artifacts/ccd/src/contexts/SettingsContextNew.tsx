@@ -690,9 +690,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             console.warn('⚠️ Skipping year_groups Supabase write — table has no tenant key; writes would cross-contaminate all tenants');
             break;
           case 'categories':
-            // custom_categories has no per-tenant column: same cross-tenant risk as
-            // year_groups. Persist only to localStorage until schema is migrated.
-            console.warn('⚠️ Skipping custom_categories Supabase write — table has no tenant key; writes would cross-contaminate all tenants');
+            // Per-user category settings (incl. year-group ticks) live in
+            // branding_settings under user:{uid}:custom_categories — safe across tenants.
+            await customCategoriesApi.upsert(item.data);
             break;
           case 'categoryGroups':
             // category_groups has no per-tenant column: same cross-tenant risk.
@@ -933,15 +933,10 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
           if (supabaseCategories && supabaseCategories.length > 0) {
             isCurrentlyLoading.current = true;
             const formattedCategories = supabaseCategories.map((cat: any) => {
-              let yearGroups = cat.yearGroups || {};
-              if (yearGroups && typeof yearGroups === 'object') {
-                const hasOldDefaults =
-                  yearGroups.LKG === true &&
-                  yearGroups.UKG === true &&
-                  yearGroups.Reception === true &&
-                  Object.keys(yearGroups).length === 3;
-                if (hasOldDefaults) yearGroups = {};
-              }
+              // Keep yearGroups as stored. LKG+UKG+Reception alone is a valid EYFS
+              // assignment, not legacy junk — wiping it emptied the Activity Library
+              // for Reception and all EYFS classes.
+              const yearGroups = cat.yearGroups || {};
               return {
                 id: cat.id,
                 name: cat.name,
@@ -988,6 +983,19 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                     })()
                   : localCategories;
                 setCategories(merged);
+                // One-time migrate: this browser had category year-group links in
+                // localStorage only — push them to the per-user cloud store so other
+                // devices can load them.
+                const hasAssignments = merged.some((c: any) =>
+                  c.yearGroups && Object.values(c.yearGroups).some((v: any) => v === true)
+                );
+                if (hasAssignments) {
+                  void customCategoriesApi.upsert(merged).then(() => {
+                    console.log('☁️ Migrated local category year-group links to cloud');
+                  }).catch((err) => {
+                    console.warn('Failed to migrate local categories to cloud:', err);
+                  });
+                }
               } catch (_) {
                 const activeFixed = FIXED_CATEGORIES.filter((f: any) =>
                   requiredFixedNames.has(f.name) || !deletedFixedCategories.has(f.name)
@@ -1610,10 +1618,11 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             })
             .map((cat: any) => cat.name);
           if (categoriesToDelete.length > 0) {
-            // custom_categories has no per-tenant column: deleting by name here would remove
-            // that category for every other tenant sharing the table. Writes are disabled
-            // until a schema migration adds a tenant/school identifier.
-            console.warn('⚠️ Skipping Supabase category cleanup — custom_categories table has no tenant key; deletes would be cross-tenant:', categoriesToDelete);
+            // Per-user store is replaced wholesale on upsert, so deleted names
+            // disappear when the current list is saved. No shared-table deletes.
+            if (import.meta.env.DEV) {
+              console.log('🗑️ Categories removed from local list (cloud upsert will drop them):', categoriesToDelete);
+            }
           }
         } catch (e) {
           console.warn('Error during category cleanup:', e);
@@ -2163,12 +2172,11 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       const yearGroupsToSync = override?.yearGroups ?? customYearGroups;
       console.log('🔄 Force syncing settings to Supabase...', { categoriesCount: categoriesToSync.length, yearGroupsCount: yearGroupsToSync.length });
       
-      // year_groups and custom_categories have no per-tenant column: any write would
-      // overwrite every other tenant's configuration. Writes are disabled until a schema
-      // migration adds a tenant/school identifier to these tables and their constraints.
-      // Settings continue to persist in localStorage as the authoritative local store.
-      console.warn('⚠️ forceSyncToSupabase: writes to year_groups and custom_categories are disabled — tables have no tenant key');
-      return false;
+      // Categories (with year-group assignment ticks) sync to a per-user cloud
+      // document. Year groups remain local-only until that table has a tenant key.
+      await customCategoriesApi.upsert(categoriesToSync);
+      console.log('✅ Categories synced to cloud for this user');
+      return true;
     } catch (error) {
       console.error('❌ Failed to force sync to Supabase:', error);
       return false;
@@ -2241,22 +2249,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       const supabaseCategories = await customCategoriesApi.getAll();
       if (supabaseCategories && supabaseCategories.length > 0) {
         const formattedCategories = supabaseCategories.map((cat: any) => {
-          // Clean old default yearGroups assignments
-          let yearGroups = cat.yearGroups || {};
-          
-          // If category has old default assignments (all legacy keys = true), clear them
-          if (yearGroups && typeof yearGroups === 'object') {
-            const hasOldDefaults = 
-              yearGroups.LKG === true && 
-              yearGroups.UKG === true && 
-              yearGroups.Reception === true &&
-              Object.keys(yearGroups).length === 3;
-            
-            if (hasOldDefaults) {
-              console.log(`🧹 Cleaning old default yearGroups for category "${cat.name}"`);
-              yearGroups = {}; // Clear old defaults
-            }
-          }
+          // Keep yearGroups as stored. LKG+UKG+Reception alone is a valid EYFS
+          // assignment — do not clear it as "old defaults".
+          const yearGroups = cat.yearGroups || {};
           
           return {
             id: cat.id,  // Preserve Supabase PK
@@ -2265,7 +2260,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             position: cat.position || 0,
             group: cat.group, // Single group (backward compatibility)
             groups: cat.groups || (cat.group ? [cat.group] : []), // Multiple groups
-            yearGroups: yearGroups // Cleaned yearGroups
+            yearGroups: yearGroups
           };
         });
         

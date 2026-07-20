@@ -299,15 +299,12 @@ export function Header() {
                 </button>
               )}
 
-              {/* Help / Tour Button — primary action is to (re)launch the
-                  Feature Walkthrough. The static HelpGuide stays reachable
-                  via App.tsx's handleOpenGuide hooks (e.g. from
-                  LessonExporter, Print modal, etc). */}
+              {/* Help Button — opens the Help Guide (topic list + step-by-step). */}
               <button
-                onClick={() => setShowWalkthrough(true)}
+                onClick={() => setShowHelpGuide(true)}
                 className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="Take a tour"
-                aria-label="Take a tour of the app"
+                title="Help Guide"
+                aria-label="Open help guide"
                 data-help-button
               >
                 <HelpCircle className="h-4 w-4 lg:h-5 lg:w-5" />
@@ -454,8 +451,12 @@ export function Header() {
                       </button>
                     )}
                     <button
-                      onClick={() => setShowHelpGuide(true)}
+                      onClick={() => {
+                        setShowHelpGuide(true);
+                        setMobileMenuOpen(false);
+                      }}
                       className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                      aria-label="Open help guide"
                     >
                       <HelpCircle className="h-5 w-5" />
                     </button>

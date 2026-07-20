@@ -774,7 +774,17 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                 </button>
               </div>
             </div>
-            <div className="p-4 border-t border-gray-200 bg-white/60 flex justify-end">
+            <div className="p-4 border-t border-gray-200 bg-white/60 flex flex-wrap items-center justify-between gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  onClose();
+                  window.dispatchEvent(new Event('ccd:start-walkthrough'));
+                }}
+                className="px-4 py-2 text-teal-700 hover:bg-teal-50 font-medium rounded-lg transition-colors duration-200"
+              >
+                Take a quick tour
+              </button>
               <button
                 onClick={onClose}
                 className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"

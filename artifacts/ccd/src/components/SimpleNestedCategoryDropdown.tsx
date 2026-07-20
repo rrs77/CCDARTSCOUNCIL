@@ -125,25 +125,6 @@ export function SimpleNestedCategoryDropdown({
         return false;
       }
 
-      // Check if this category has old default assignments (all legacy keys set to true)
-      // This indicates it was never properly assigned and should be ignored
-      const hasOldDefaults = 
-        category.yearGroups.LKG === true && 
-        category.yearGroups.UKG === true && 
-        category.yearGroups.Reception === true &&
-        Object.keys(category.yearGroups).length === 3;
-      
-      if (hasOldDefaults) {
-        // This category has old default values - ignore it unless explicitly assigned to current year group
-        if (import.meta.env.DEV) {
-          const categoryIndex = categories.indexOf(category);
-          if (categoryIndex < 3) {
-            console.log(`⚠️ Category "${category.name}" has old default assignments (LKG, UKG, Reception all true) - ignoring`);
-          }
-        }
-        return false;
-      }
-
       // Get all keys stored in this category's yearGroups
       const storedKeys = Object.keys(category.yearGroups);
       const storedValues = Object.entries(category.yearGroups).map(([k, v]) => `${k}:${v}`);

@@ -514,8 +514,7 @@ export function ActivityLibrary({
       // Level filtering removed - show all levels
       const matchesLevel = true;
       
-      // Settings category year-group assignment is authoritative. Activity-level
-      // yearGroups tags only apply when the category is not configured in Settings.
+      // OR-style: category assigned in Settings, or activity tagged for this year group.
       const visibleForYearGroup = activityVisibleForYearGroup({
         activityCategory: activity.category,
         availableCategoriesForYearGroup,

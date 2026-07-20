@@ -6,7 +6,8 @@ interface FeatureWalkthroughModalProps {
   onClose: () => void;
 }
 
-const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/?autoplay=1`;
+// Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
+const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/?autoplay=1&v=2026-07-20`;
 const SITE_URL = 'https://www.ccdesigner.co.uk';
 
 export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughModalProps) {
@@ -23,7 +24,16 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
 
   const handleClose = () => {
     onClose();
-    window.location.href = SITE_URL;
+    // Only bounce back to the marketing site when this modal was opened from
+    // that origin (Arts Council / pitch flows). In-app use should just close.
+    try {
+      if (document.referrer.includes('ccdesigner.co.uk')) {
+        window.location.href = SITE_URL;
+        return;
+      }
+    } catch {
+      // ignore
+    }
   };
 
   return (
@@ -34,6 +44,7 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
       aria-label="Feature walkthrough"
     >
       <iframe
+        key={PROMO_SRC}
         src={PROMO_SRC}
         title="Creative Curriculum Designer promo"
         className="h-full w-full border-0"
