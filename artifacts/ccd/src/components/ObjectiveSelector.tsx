@@ -3,6 +3,7 @@ import { X, Search, ChevronDown, ChevronRight, Check, Target, Plus } from 'lucid
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import { useSettings } from '../contexts/SettingsContextNew';
 import type { CustomObjectiveYearGroupWithAreas } from '../types/customObjectives';
+import { isSystemUnassignedPool } from '../utils/objectivesFolderUtils';
 
 interface ObjectiveSelectorProps {
   isOpen: boolean;
@@ -52,11 +53,12 @@ export function ObjectiveSelector({
       const dataPromise = customObjectivesApi.getCompleteStructure();
       
       const data = await Promise.race([dataPromise, timeoutPromise]) as CustomObjectiveYearGroupWithAreas[];
-      setYearGroups(data);
+      const visible = data.filter((yg) => !isSystemUnassignedPool(yg));
+      setYearGroups(visible);
       
       // Auto-expand first year group
-      if (data.length > 0) {
-        setExpandedYearGroups(new Set([data[0].id]));
+      if (visible.length > 0) {
+        setExpandedYearGroups(new Set([visible[0].id]));
       }
     } catch (err) {
       console.error('Failed to load objectives:', err);

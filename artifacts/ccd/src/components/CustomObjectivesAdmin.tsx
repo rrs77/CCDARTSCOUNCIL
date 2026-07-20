@@ -855,23 +855,23 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                 onDragEnd={() => {}}
                               >
                               <div
-                                className={`p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-colors duration-200 ${
+                                className={`p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-colors duration-200 overflow-hidden ${
                                   selectedYearGroup === yearGroup.id
                                     ? 'border-teal-500 bg-teal-50'
                                     : 'border-gray-200 bg-white hover:border-gray-300'
                                 }`}
                                 onClick={() => setSelectedYearGroup(yearGroup.id)}
                               >
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2 flex-1">
+                                <div className="flex items-center justify-between gap-2 min-w-0">
+                                  <div className="flex items-center space-x-2 flex-1 min-w-0 overflow-hidden">
                                     <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
                                     <div
                                       className="w-3 h-3 rounded-full flex-shrink-0"
                                       style={{ backgroundColor: yearGroup.color }}
                                     />
-                                    <div className="flex-1 min-w-0">
-                                      <div className="flex items-center gap-1.5">
-                                        <h4 className="font-medium text-gray-900 truncate">{yearGroup.name}</h4>
+                                    <div className="flex-1 min-w-0 overflow-hidden">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <h4 className="font-medium text-gray-900 truncate min-w-0 flex-1" title={yearGroup.name}>{yearGroup.name}</h4>
                                         {yearGroup.is_locked && (
                                           <span title="Locked - Read Only" className="flex-shrink-0">
                                             <Lock className="h-3 w-3 text-amber-500" />
@@ -883,7 +883,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                           </span>
                                         )}
                                       </div>
-                                      <p className="text-xs text-gray-500">
+                                      <p className="text-xs text-gray-500 truncate">
                                         {yearGroup.areas.length} areas, {yearGroup.areas.reduce((sum, area) => sum + area.objectives.length, 0)} objectives
                                       </p>
                                       {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (

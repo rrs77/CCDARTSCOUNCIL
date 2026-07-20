@@ -3,6 +3,7 @@ import { ChevronRight, ChevronDown, ChevronUp, Tag, Check, X } from 'lucide-reac
 import { useData } from '../contexts/DataContext';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjectiveYearGroup, CustomObjectiveArea, CustomObjective } from '../types/customObjectives';
+import { isSystemUnassignedPool } from '../utils/objectivesFolderUtils';
 
 interface NestedStandardsBrowserProps {
   lessonNumber?: string;
@@ -57,7 +58,7 @@ export function NestedStandardsBrowser({
           ]),
           timeoutPromise
         ]);
-        setCustomYearGroups(yearGroups);
+        setCustomYearGroups(yearGroups.filter((yg) => !isSystemUnassignedPool(yg)));
         setCustomAreas(areas);
         setCustomObjectives(objectives);
       } catch (error) {
