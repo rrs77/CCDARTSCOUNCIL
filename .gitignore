@@ -38,6 +38,13 @@ yarn-error.log
 testem.log
 /typings
 
+# local secrets (PDFBolt, Supabase JWT, etc.)
+.env
+.env.local
+.env.*.local
+artifacts/*/.env
+artifacts/*/.env.local
+
 # System Files
 .DS_Store
 Thumbs.db

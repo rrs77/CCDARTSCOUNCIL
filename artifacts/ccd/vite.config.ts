@@ -48,6 +48,13 @@ export default defineConfig({
     fs: {
       strict: true,
     },
+    // Local PDF export (PDFBolt) and other /api routes live on the Express api-server.
+    proxy: {
+      "/api": {
+        target: process.env.VITE_API_PROXY_TARGET || "http://127.0.0.1:8080",
+        changeOrigin: true,
+      },
+    },
   },
   preview: {
     port,

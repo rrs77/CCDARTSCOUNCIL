@@ -23,22 +23,32 @@ const MAX_HTML_BYTES = 40 * 1024 * 1024;
  *   Set SUPABASE_JWT_SECRET to the value from the Supabase dashboard
  *   (Settings → API → JWT Settings → JWT Secret).
  *
- * Fail-closed: both PDFBOLT_API_KEY and SUPABASE_JWT_SECRET must be present.
- * When either is missing the endpoint returns 503 rather than becoming an open
- * proxy. Every request must supply a valid Supabase access token in the
- * Authorization: Bearer header; missing, expired, or invalid tokens → 401.
+ * Fail-closed in production: both PDFBOLT_API_KEY and SUPABASE_JWT_SECRET must
+ * be present. Locally (NODE_ENV=development or PDF_LOCAL_DEV=1), JWT verification
+ * is skipped when SUPABASE_JWT_SECRET is unset so PDF export works with only
+ * PDFBOLT_API_KEY. When the secret is set, every request must supply a valid
+ * Supabase access token in Authorization: Bearer; missing/invalid → 401.
  */
 router.post("/pdf/generate", async (req, res) => {
   const apiKey = process.env["PDFBOLT_API_KEY"];
   if (!apiKey) {
     res
       .status(503)
-      .json({ error: "PDF generation is not configured on this server." });
+      .json({
+        error:
+          "PDF generation is not configured on this server. Set PDFBOLT_API_KEY.",
+      });
     return;
   }
 
+  // Production is fail-closed (JWT required). Local dev can run with only
+  // PDFBOLT_API_KEY when SUPABASE_JWT_SECRET is unset.
+  const isLocalDev =
+    process.env["NODE_ENV"] === "development" ||
+    process.env["PDF_LOCAL_DEV"] === "1";
   const jwtSecret = process.env["SUPABASE_JWT_SECRET"];
-  if (!jwtSecret) {
+
+  if (!jwtSecret && !isLocalDev) {
     res
       .status(503)
       .json({ error: "PDF generation auth is not configured on this server." });
@@ -51,16 +61,17 @@ router.post("/pdf/generate", async (req, res) => {
       ? authHeader.replace(/^Bearer\s+/i, "").trim()
       : "";
 
-  if (!token) {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
-  }
-
-  try {
-    jwt.verify(token, jwtSecret, { algorithms: ["HS256"] });
-  } catch {
-    res.status(401).json({ error: "Unauthorized" });
-    return;
+  if (jwtSecret) {
+    if (!token) {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
+    try {
+      jwt.verify(token, jwtSecret, { algorithms: ["HS256"] });
+    } catch {
+      res.status(401).json({ error: "Unauthorized" });
+      return;
+    }
   }
 
   // Basic payload validation: reject obviously malformed or oversized requests
