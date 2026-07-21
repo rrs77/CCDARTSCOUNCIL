@@ -182,29 +182,54 @@ export function activityTagsMatchYearGroupKeys(
 }
 
 /**
+ * Build category.yearGroups ticks for a chosen class (id + name + aliases).
+ * Used when opening LSO activities in a selected year group.
+ */
+export function resolveYearGroupAssignmentKeys(
+  yearGroup: YearGroupLike | string | undefined | null,
+  customYearGroups?: YearGroupLike[] | null,
+): Record<string, boolean> {
+  let groups = Array.isArray(customYearGroups) ? customYearGroups : [];
+  if (groups.length === 0) {
+    try {
+      const raw = localStorage.getItem('custom-year-groups');
+      if (raw) {
+        const parsed = JSON.parse(raw) as YearGroupLike[];
+        if (Array.isArray(parsed)) groups = parsed;
+      }
+    } catch {
+      /* ignore */
+    }
+  }
+
+  const sheet =
+    typeof yearGroup === 'string'
+      ? yearGroup
+      : String(yearGroup?.id || yearGroup?.name || '').trim();
+  if (!sheet) return {};
+
+  const keys = new Set<string>(resolveYearGroupMatchKeys(sheet, groups));
+  if (typeof yearGroup === 'object' && yearGroup) {
+    if (yearGroup.id) keys.add(String(yearGroup.id));
+    if (yearGroup.name) keys.add(String(yearGroup.name));
+  }
+
+  const out: Record<string, boolean> = {};
+  keys.forEach((k) => {
+    if (k) out[k] = true;
+  });
+  return out;
+}
+
+/**
  * Year 6 / Year6 / Year 6 Music keys for seeding LSO category ticks.
  * Reads custom-year-groups from localStorage when available.
  */
 export function resolveYear6AssignmentKeys(): Record<string, boolean> {
-  const keys = new Set<string>(['Year6', 'Year 6', 'Year 6 Music']);
-  try {
-    const raw = localStorage.getItem('custom-year-groups');
-    if (raw) {
-      const groups = JSON.parse(raw) as YearGroupLike[];
-      if (Array.isArray(groups)) {
-        for (const k of resolveYearGroupMatchKeys('Year6', groups)) keys.add(k);
-        for (const k of resolveYearGroupMatchKeys('Year 6', groups)) keys.add(k);
-        const music = groups.find((g) => normalizeYgKey(g.name).includes('year 6'));
-        if (music?.id) keys.add(String(music.id));
-        if (music?.name) keys.add(String(music.name));
-      }
-    }
-  } catch {
-    /* ignore */
-  }
-  const out: Record<string, boolean> = {};
-  keys.forEach((k) => {
-    out[k] = true;
-  });
+  const out = resolveYearGroupAssignmentKeys('Year6');
+  // Always include canonical Year 6 aliases used by the LSO seed
+  out.Year6 = true;
+  out['Year 6'] = true;
+  out['Year 6 Music'] = true;
   return out;
 }

@@ -12,6 +12,8 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
+import { HTBAO_PROJECT_PREFIX } from '../utils/lsoBranding';
+import { resolveYearGroupAssignmentKeys } from '../utils/yearGroupMatchKeys';
 
 interface Unit {
   id: string;
@@ -49,7 +51,13 @@ export function Dashboard() {
     addOrUpdateUserLessonPlan,
     deleteUserLessonPlan,
   } = useData();
-  const { getThemeForClass, customYearGroups } = useSettings();
+  const {
+    getThemeForClass,
+    customYearGroups,
+    categories,
+    updateCategories,
+    forceSyncToSupabase,
+  } = useSettings();
   const [activeTab, setActiveTab] = useState('unit-viewer');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -342,18 +350,31 @@ export function Dashboard() {
 
             <TabsContent value="our-partners" className="mt-6 ccd-fade-in-up" key={`op-${activeTab}`}>
               <OurPartners
-                onOpenHtbaoInApp={() => {
-                  // LSO HTBAO activities are Year 6–filtered; select that class first
-                  const year6 =
-                    customYearGroups?.find(
-                      (g) => g.id === 'Year6' || g.name === 'Year 6',
-                    ) ?? { id: 'Year6', name: 'Year 6' };
+                onOpenHtbaoInApp={(yearGroup) => {
+                  // Header pattern: sheet = id, display = name
                   setCurrentSheetInfo({
-                    sheet: year6.id,
-                    display: year6.name,
-                    eyfs: `${year6.id} Statements`,
+                    sheet: yearGroup.id,
+                    display: yearGroup.name,
+                    eyfs: `${yearGroup.id} Statements`,
                   });
-                  setSelectedCategory('How to Build an Orchestra — Listening');
+
+                  // Tick chosen year group on HTBAO LSO categories (Settings → Categories)
+                  const ticks = resolveYearGroupAssignmentKeys(yearGroup, customYearGroups);
+                  const updatedCategories = (categories || []).map((cat) => {
+                    const name = String(cat?.name || '');
+                    if (!name.startsWith(HTBAO_PROJECT_PREFIX)) return cat;
+                    return {
+                      ...cat,
+                      yearGroups: {
+                        ...(cat.yearGroups && typeof cat.yearGroups === 'object' ? cat.yearGroups : {}),
+                        ...ticks,
+                      },
+                    };
+                  });
+                  updateCategories(updatedCategories);
+                  void forceSyncToSupabase({ categories: updatedCategories });
+
+                  setSelectedCategory(`${HTBAO_PROJECT_PREFIX} — Listening`);
                   handleTabChange('activity-library');
                 }}
               />

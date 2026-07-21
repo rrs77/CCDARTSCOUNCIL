@@ -1,8 +1,18 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { ArrowLeft, ChevronDown, ExternalLink, Handshake } from 'lucide-react';
 import { PARTNER_LOGOS } from '../config/partnerLogos';
 import { LSO_LOGO_SRC } from '../utils/lsoBranding';
 import { openActivityResource } from '../utils/openActivityResource';
+import { useSettings } from '../contexts/SettingsContextNew';
+import { useAuth } from '../hooks/useAuth';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from './ui/dialog';
 
 const LSO_SITE = 'https://www.lso.co.uk/';
 const HTBAO_PAGE =
@@ -26,9 +36,11 @@ const LSO_PROJECTS = [
 
 type LsoProjectId = (typeof LSO_PROJECTS)[number]['id'];
 
+export type HtbaoYearGroupChoice = { id: string; name: string };
+
 interface OurPartnersProps {
   /** Jump to in-app content for How to Build an Orchestra (e.g. Activity Library). */
-  onOpenHtbaoInApp?: () => void;
+  onOpenHtbaoInApp?: (yearGroup: HtbaoYearGroupChoice) => void;
 }
 
 export function OurPartners({ onOpenHtbaoInApp }: OurPartnersProps) {
@@ -131,7 +143,7 @@ export function OurPartners({ onOpenHtbaoInApp }: OurPartnersProps) {
 
 interface LsoPartnerDetailProps {
   onBack: () => void;
-  onOpenHtbaoInApp?: () => void;
+  onOpenHtbaoInApp?: (yearGroup: HtbaoYearGroupChoice) => void;
 }
 
 function LsoPartnerDetail({ onBack, onOpenHtbaoInApp }: LsoPartnerDetailProps) {
@@ -255,7 +267,31 @@ function LsoPartnerDetail({ onBack, onOpenHtbaoInApp }: LsoPartnerDetailProps) {
   );
 }
 
-function HtbaoProjectPanel({ onOpenHtbaoInApp }: { onOpenHtbaoInApp?: () => void }) {
+function HtbaoProjectPanel({
+  onOpenHtbaoInApp,
+}: {
+  onOpenHtbaoInApp?: (yearGroup: HtbaoYearGroupChoice) => void;
+}) {
+  const { user } = useAuth();
+  const { customYearGroups, getOrderedYearGroups } = useSettings();
+  const [pickerOpen, setPickerOpen] = useState(false);
+
+  const yearGroupsForPicker = useMemo(() => {
+    const ordered =
+      typeof getOrderedYearGroups === 'function' ? getOrderedYearGroups() : customYearGroups;
+    const base = Array.isArray(ordered) && ordered.length > 0 ? ordered : customYearGroups || [];
+    const allowedIds = user?.profile?.allowed_year_groups ?? null;
+    if (allowedIds != null && allowedIds.length > 0) {
+      return base.filter((g) => allowedIds.includes(g.id) || allowedIds.includes(g.name ?? ''));
+    }
+    return base;
+  }, [customYearGroups, getOrderedYearGroups, user?.profile?.allowed_year_groups]);
+
+  const handlePick = (group: HtbaoYearGroupChoice) => {
+    setPickerOpen(false);
+    onOpenHtbaoInApp?.(group);
+  };
+
   return (
     <div className="space-y-3 text-sm text-gray-700 sm:text-base">
       <p className="leading-relaxed">
@@ -283,21 +319,64 @@ function HtbaoProjectPanel({ onOpenHtbaoInApp }: { onOpenHtbaoInApp?: () => void
       <div className="rounded-lg border border-teal-200 bg-white px-4 py-4 text-sm text-gray-700">
         <p className="font-medium text-gray-900">In this app</p>
         <p className="mt-1.5 leading-relaxed">
-          The seeded Year 6 unit lives under the <strong>LSO</strong> folder in Activity Library
-          (Listening, Practical, Composition, Warm-up) and as a lesson stack named{' '}
-          <strong>How to Build an Orchestra</strong> in Lesson Library / Unit Viewer. Switch to Year
-          6 to see the lessons after the LSO seed has run.
+          Activities live under the <strong>LSO</strong> folder in Activity Library (Listening,
+          Practical, Composition, Warm-up) and as a lesson stack named{' '}
+          <strong>How to Build an Orchestra</strong> in Lesson Library / Unit Viewer. Choose which
+          class/year group to open — that class will be selected and the LSO categories assigned to
+          it in Settings.
         </p>
         {onOpenHtbaoInApp && (
           <button
             type="button"
-            onClick={onOpenHtbaoInApp}
+            onClick={() => setPickerOpen(true)}
             className="mt-3 rounded-lg bg-teal-600 px-3.5 py-2 text-sm font-medium text-white hover:bg-teal-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
           >
             Go to Activity Library
           </button>
         )}
       </div>
+
+      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Open LSO activities</DialogTitle>
+            <DialogDescription>
+              Open LSO activities in which class/year group?
+            </DialogDescription>
+          </DialogHeader>
+
+          {yearGroupsForPicker.length === 0 ? (
+            <p className="text-sm text-gray-600">
+              No year groups are set up yet. Add classes in Settings, then try again.
+            </p>
+          ) : (
+            <ul className="max-h-64 space-y-1 overflow-y-auto py-1" role="listbox" aria-label="Year groups">
+              {yearGroupsForPicker.map((group) => (
+                <li key={group.id}>
+                  <button
+                    type="button"
+                    role="option"
+                    onClick={() => handlePick({ id: group.id, name: group.name })}
+                    className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-left text-sm font-medium text-gray-800 hover:border-teal-300 hover:bg-teal-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                  >
+                    {group.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <DialogFooter>
+            <button
+              type="button"
+              onClick={() => setPickerOpen(false)}
+              className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+            >
+              Cancel
+            </button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
