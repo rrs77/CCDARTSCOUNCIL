@@ -20,6 +20,10 @@ import { isSupabaseConfigured } from '../config/supabase';
 import type { Activity, LessonData } from '../contexts/DataContext';
 import type { StackedLesson } from '../hooks/useLessonStacks';
 import { LSO_FOLDER_NAME, LSO_LOGO_SRC, HTBAO_PROJECT_PREFIX } from './lsoBranding';
+import { resolveYear6AssignmentKeys } from './yearGroupMatchKeys';
+
+/** Dispatched after seed writes saved-categories so SettingsContext can reload React state. */
+export const CCD_CATEGORIES_UPDATED_EVENT = 'ccd-categories-updated';
 
 const HTBAO_PACK_PDF =
   'https://www.hachette.co.uk/wp-content/uploads/2020/05/How_to_Build_an_Orchestra_KS2-Project-Pack.pdf';
@@ -41,7 +45,7 @@ const UNIT = 'How to Build an Orchestra';
 const STACK_NAME = 'How to Build an Orchestra';
 const LEVEL = 'KS2';
 const YEAR_GROUPS = [SHEET_ID, SHEET_NAME];
-const MARKER_KEY = 'ccd-lso-year6-seeded-v6';
+const MARKER_KEY = 'ccd-lso-year6-seeded-v7';
 const STACK_ID_KEY = 'ccd-lso-year6-lesson-stack-id';
 const LESSON_KEYS_KEY = 'ccd-lso-year6-lesson-keys';
 const ACADEMIC_YEAR = '2026-2027';
@@ -630,18 +634,29 @@ function isLsoCategoryName(name: unknown): boolean {
 
 function mergeCategoriesIntoLocalStorage() {
   const existing = readJson<any[]>('saved-categories', []);
+  // Keep every non-LSO category intact — never wipe their yearGroups.
   const without = existing.filter((c) => !isLsoCategoryName(c?.name));
+  const year6Ticks = resolveYear6AssignmentKeys();
   const basePos = Math.max(0, ...without.map((c) => Number(c.position) || 0), 0);
   const colors = ['#1e3a8a', '#0f766e', '#b45309', '#7c3aed'];
-  const created = ALL_CATEGORIES.map((name, i) => ({
-    name,
-    color: colors[i % 4],
-    position: basePos + i + 1,
-    group: FOLDER,
-    groups: [FOLDER],
-    yearGroups: { [SHEET_ID]: true, [SHEET_NAME]: true },
-  }));
-  localStorage.setItem('saved-categories', JSON.stringify([...without, ...created]));
+  const created = ALL_CATEGORIES.map((name, i) => {
+    const prev = existing.find((c) => c?.name === name);
+    return {
+      ...(prev || {}),
+      name,
+      color: prev?.color || colors[i % 4],
+      position: typeof prev?.position === 'number' ? prev.position : basePos + i + 1,
+      group: FOLDER,
+      groups: [FOLDER],
+      // Preselect Year 6 (and aliases like Year 6 Music) without clearing other ticks
+      yearGroups: {
+        ...(prev?.yearGroups && typeof prev.yearGroups === 'object' ? prev.yearGroups : {}),
+        ...year6Ticks,
+      },
+    };
+  });
+  const merged = [...without, ...created];
+  localStorage.setItem('saved-categories', JSON.stringify(merged));
 
   const folders = readJson<any[]>('category-folders', []);
   // Prefer brand folder “LSO”; remove legacy “KS2 Music” folder if we created it for this unit
@@ -655,7 +670,17 @@ function mergeCategoriesIntoLocalStorage() {
     });
   }
   localStorage.setItem('category-folders', JSON.stringify(withoutLegacy));
-  return created;
+
+  // Notify SettingsContext so Manage Categories + Activity Library pick up LSO cats immediately
+  try {
+    window.dispatchEvent(
+      new CustomEvent(CCD_CATEGORIES_UPDATED_EVENT, { detail: { categories: merged, source: 'lso-seed' } }),
+    );
+  } catch {
+    /* ignore */
+  }
+
+  return { created, merged };
 }
 
 function isOldLsoActivity(a: any): boolean {
@@ -885,7 +910,7 @@ function mergeLessonStackIntoLocalStorage(stack: StackedLesson) {
 }
 
 async function tryCloudSync(
-  categories: ReturnType<typeof mergeCategoriesIntoLocalStorage>,
+  categoryMerge: ReturnType<typeof mergeCategoriesIntoLocalStorage>,
   activities: Activity[],
   lessonPayload: any,
   lessonStack: StackedLesson,
@@ -893,9 +918,34 @@ async function tryCloudSync(
   if (!isSupabaseConfigured()) return;
 
   try {
+    // Merge into cloud — never replace the whole store with LSO-only categories.
+    // Prefer local merged list (preserves other categories' yearGroups) as source of truth.
     const existingCats = await customCategoriesApi.getAll();
-    const without = (existingCats || []).filter((c: any) => !isLsoCategoryName(c.name));
-    await customCategoriesApi.upsert([...without, ...categories]);
+    const byName = new Map<string, any>();
+    for (const c of existingCats || []) {
+      if (c?.name && !isLsoCategoryName(c.name)) byName.set(c.name, c);
+    }
+    for (const c of categoryMerge.merged) {
+      if (!c?.name) continue;
+      if (isLsoCategoryName(c.name)) {
+        byName.set(c.name, c);
+        continue;
+      }
+      const cloud = byName.get(c.name);
+      byName.set(c.name, {
+        ...(cloud || {}),
+        ...c,
+        yearGroups: {
+          ...(cloud?.yearGroups || {}),
+          ...(c.yearGroups || {}),
+        },
+      });
+    }
+    // Ensure LSO created cats are present with Year 6 ticks
+    for (const c of categoryMerge.created) {
+      byName.set(c.name, c);
+    }
+    await customCategoriesApi.upsert([...byName.values()]);
   } catch (e) {
     console.warn('LSO seed: category cloud sync skipped', e);
   }
@@ -997,9 +1047,9 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
     return { success: true, skipped: true };
   }
 
-  console.log('🚀 Seeding Year 6 Lesson Library unit: How to Build an Orchestra (v6)...');
+  console.log('🚀 Seeding Year 6 Lesson Library unit: How to Build an Orchestra (v7)...');
 
-  const categories = mergeCategoriesIntoLocalStorage();
+  const categoryMerge = mergeCategoriesIntoLocalStorage();
   cleanupOldActivityStacks();
 
   const prepared = SEED_ACTIVITIES.map(blankMedia);
@@ -1014,7 +1064,7 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
   const lessonStack = buildLessonStack(writtenNumbers, activities);
   mergeLessonStackIntoLocalStorage(lessonStack);
 
-  await tryCloudSync(categories, activities, payload, lessonStack);
+  await tryCloudSync(categoryMerge, activities, payload, lessonStack);
 
   localStorage.setItem(MARKER_KEY, '1');
   localStorage.removeItem('ccd-lso-year6-seeded-v1');
@@ -1022,8 +1072,9 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
   localStorage.removeItem('ccd-lso-year6-seeded-v3');
   localStorage.removeItem('ccd-lso-year6-seeded-v4');
   localStorage.removeItem('ccd-lso-year6-seeded-v5');
+  localStorage.removeItem('ccd-lso-year6-seeded-v6');
 
-  console.log('✅ Year 6 — How to Build an Orchestra ready (v6)');
+  console.log('✅ Year 6 — How to Build an Orchestra ready (v7)');
   console.log(`   Lesson stack (Lesson Library): "${STACK_NAME}" → lessons ${writtenNumbers.join(', ')}`);
   console.log(`   Folder: ${FOLDER} (LSO brand) · Project categories:`);
   ALL_CATEGORIES.forEach((c) => console.log(`     • ${c}`));

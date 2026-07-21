@@ -2,6 +2,10 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { useSettings, Category } from '../contexts/SettingsContextNew';
 import { useData } from '../contexts/DataContext';
 import { ChevronDown, ChevronRight, Search, X } from 'lucide-react';
+import {
+  categoryAssignedToYearGroupKeys,
+  resolveYearGroupMatchKeys,
+} from '../utils/yearGroupMatchKeys';
 
 interface SimpleNestedCategoryDropdownProps {
   selectedCategory: string;
@@ -33,58 +37,9 @@ export function SimpleNestedCategoryDropdown({
   const KEY_STAGE_LABELS: Record<string, string> = { eyfs: 'EYFS', ks1: 'KS1', ks2: 'KS2', ks3: 'KS3', ks4: 'KS4', ks5: 'KS5', other: 'Other' };
 
   // Helper function to get the year group key(s) to check in category.yearGroups
-  // This matches the EXACT logic used in UserSettings when saving categories (line 1557-1560)
-  // IMPORTANT: Only return the PRIMARY key used when saving - don't include backward compatibility keys
-  // This ensures we only show categories explicitly assigned to this year group
+  // Alias-aware: LKG↔Lower Kindergarten, Year6↔Year 6 / Year 6 Music, etc.
   const getCurrentYearGroupKeys = (): string[] => {
-    const sheetId = currentSheetInfo?.sheet;
-    if (!sheetId) return [];
-
-    const norm = (v: string | undefined | null) => (v || '').trim().toLowerCase();
-    const sheetNorm = norm(sheetId);
-
-    // Short-code → long-name matchers for backward compatibility.
-    const shortToLong: Record<string, (name: string) => boolean> = {
-      lkg: (n) => n.includes('lower') && n.includes('kindergarten'),
-      ukg: (n) => n.includes('upper') && n.includes('kindergarten'),
-      reception: (n) => n === 'reception',
-    };
-
-    // 1) Try exact match by ID, then by name.
-    let yearGroup = customYearGroups.find(yg => yg.id === sheetId);
-    if (!yearGroup) {
-      yearGroup = customYearGroups.find(yg => yg.name === sheetId);
-    }
-    // 2) Fallback: if sheetId is a legacy short code (LKG / UKG / Reception),
-    //    resolve it to the long-named year group saved in Supabase.
-    if (!yearGroup && shortToLong[sheetNorm]) {
-      const matcher = shortToLong[sheetNorm];
-      yearGroup = customYearGroups.find((yg) => matcher(norm(yg.name)));
-    }
-
-    const keys: string[] = [];
-
-    if (yearGroup) {
-      const nameLower = yearGroup.name.toLowerCase();
-      const primaryKey = yearGroup.id ||
-        (nameLower.includes('lower') || nameLower.includes('lkg') ? 'LKG' :
-         nameLower.includes('upper') || nameLower.includes('ukg') ? 'UKG' :
-         nameLower.includes('reception') ? 'Reception' : yearGroup.name);
-
-      if (primaryKey) keys.push(primaryKey);
-      if (yearGroup.name && !keys.includes(yearGroup.name)) keys.push(yearGroup.name);
-      // Also include derived short codes so categories assigned under either
-      // long name or short code both match.
-      if ((nameLower.includes('lower') || nameLower.includes('lkg')) && !keys.includes('LKG')) keys.push('LKG');
-      if ((nameLower.includes('upper') || nameLower.includes('ukg')) && !keys.includes('UKG')) keys.push('UKG');
-      if (nameLower.includes('reception') && !keys.includes('Reception')) keys.push('Reception');
-    }
-
-    // Always include the original sheetId as a safety net.
-    if (sheetId && !keys.includes(sheetId)) keys.push(sheetId);
-
-    if (import.meta.env.DEV) console.log('🔑 Year group keys:', { sheetId, keys });
-    return keys;
+    return resolveYearGroupMatchKeys(currentSheetInfo?.sheet, customYearGroups);
   };
 
   // Get current year group display name for visual indicator
@@ -118,17 +73,12 @@ export function SimpleNestedCategoryDropdown({
       return categories;
     }
 
-    // Filter categories to only show those enabled for the current year group
+    // Filter categories to only show those enabled for the current year group (any alias key)
     const filtered = categories.filter(category => {
-      // If category doesn't have yearGroups property or it's empty, don't show it (must be explicitly assigned)
       if (!category.yearGroups || Object.keys(category.yearGroups).length === 0) {
         return false;
       }
 
-      // Get all keys stored in this category's yearGroups
-      const storedKeys = Object.keys(category.yearGroups);
-      const storedValues = Object.entries(category.yearGroups).map(([k, v]) => `${k}:${v}`);
-      
       // EXPLICIT EXCLUSIONS: Never show KS2/KS1 categories for Lower Kindergarten/Reception
       const categoryNameLower = category.name.toLowerCase();
       const primaryKey = yearGroupKeys[0];
@@ -141,29 +91,9 @@ export function SimpleNestedCategoryDropdown({
         return false;
       }
       
-      // Check if this category is enabled for the PRIMARY year group key
-      // We only check the primary key to ensure strict matching
-      const value = category.yearGroups[primaryKey];
-      const isEnabled = value === true;
-      
-      // Log detailed info for debugging (only first 5 categories to avoid spam)
-      if (import.meta.env.DEV) {
-        const categoryIndex = categories.indexOf(category);
-        if (categoryIndex < 5) {
-          console.log(`📋 Category "${category.name}":`, {
-            storedKeys,
-            storedValues,
-            primaryKey,
-            value,
-            isEnabled
-          });
-        }
-      }
-      
-      return isEnabled;
+      return categoryAssignedToYearGroupKeys(category.yearGroups, yearGroupKeys);
     });
     
-    // Log summary with detailed breakdown
     const categoriesWithYearGroups = categories.filter(c => c.yearGroups && Object.keys(c.yearGroups).length > 0);
     const categoriesWithoutYearGroups = categories.filter(c => !c.yearGroups || Object.keys(c.yearGroups).length === 0);
     

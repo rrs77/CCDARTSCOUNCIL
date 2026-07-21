@@ -35,6 +35,10 @@ import {
   activityMatchesSelectedLibraryCategory,
   activityVisibleForYearGroup,
 } from '../utils/activityLibraryCategories';
+import {
+  categoryAssignedToYearGroupKeys,
+  resolveYearGroupMatchKeys,
+} from '../utils/yearGroupMatchKeys';
 
 // Define half-term periods
 const HALF_TERMS = [
@@ -73,75 +77,16 @@ export function LessonPlanBuilder({
     );
   }
   
-  // Get categories assigned to current year group (parity with ActivityLibrary)
   const normalizeKey = React.useCallback(
     (value: string | undefined | null) => (value || '').trim().toLowerCase(),
     [],
   );
 
   const getCurrentYearGroupKeys = React.useCallback((): string[] => {
-    const sheetId = currentSheetInfo?.sheet;
-    if (!sheetId) return [];
-
-    if (!customYearGroups || !Array.isArray(customYearGroups)) {
-      return [];
-    }
-
-    let yearGroup = customYearGroups.find(
-      (yg) => normalizeKey(yg.id) === normalizeKey(sheetId),
-    );
-
-    if (!yearGroup) {
-      yearGroup = customYearGroups.find(
-        (yg) =>
-          normalizeKey(yg.name) === normalizeKey(sheetId) ||
-          normalizeKey(sheetId).includes(normalizeKey(yg.name)) ||
-          normalizeKey(yg.name).includes(normalizeKey(sheetId)),
-      );
-    }
-
-    // Backward-compat: LKG / UKG / Reception short codes → long names
-    if (!yearGroup) {
-      const sheetNorm = normalizeKey(sheetId);
-      const shortToLongMatchers: Record<string, (name: string) => boolean> = {
-        lkg: (n) => n.includes('lower') && n.includes('kindergarten'),
-        ukg: (n) => n.includes('upper') && n.includes('kindergarten'),
-        reception: (n) => n === 'reception',
-      };
-      const matcher = shortToLongMatchers[sheetNorm];
-      if (matcher) {
-        yearGroup = customYearGroups.find((yg) => matcher(normalizeKey(yg.name)));
-      }
-    }
-
-    if (yearGroup) {
-      const keys: string[] = [];
-      const primaryKey = yearGroup.id || yearGroup.name;
-      if (primaryKey) keys.push(primaryKey);
-      if (yearGroup.id && yearGroup.name && yearGroup.id !== yearGroup.name) {
-        keys.push(yearGroup.name);
-      }
-      if (sheetId && !keys.includes(sheetId)) {
-        keys.push(sheetId);
-      }
-      const nameLower = yearGroup.name.toLowerCase();
-      if (nameLower.includes('lower') || nameLower.includes('lkg')) {
-        if (!keys.includes('LKG')) keys.push('LKG');
-      }
-      if (nameLower.includes('upper') || nameLower.includes('ukg')) {
-        if (!keys.includes('UKG')) keys.push('UKG');
-      }
-      if (nameLower.includes('reception')) {
-        if (!keys.includes('Reception')) keys.push('Reception');
-      }
-      return keys.filter(Boolean);
-    }
-    // Fall back to the raw sheet id so activity.yearGroups tags still match
-    return [sheetId];
-  }, [currentSheetInfo, customYearGroups, normalizeKey]);
+    return resolveYearGroupMatchKeys(currentSheetInfo?.sheet, customYearGroups);
+  }, [currentSheetInfo, customYearGroups]);
   
-  // Get categories available for current year group
-  // STRICT FILTERING: Only show categories EXPLICITLY assigned to current year group
+  // Categories assigned to current year group (alias-aware; parity with ActivityLibrary)
   const availableCategoriesForYearGroup = React.useMemo(() => {
     if (!categories || categories.length === 0) {
       console.warn('📋 Lesson Builder: No categories available');
@@ -155,73 +100,33 @@ export function LessonPlanBuilder({
       return [];
     }
 
-    // Until year groups have loaded, show no categories (avoid showing wrong activities; list may be empty briefly)
-    if (!customYearGroups?.length) {
-      if (import.meta.env.DEV) console.log('📋 Lesson Builder: Year groups not loaded yet, showing no categories until loaded');
+    const keysToCheck = getCurrentYearGroupKeys();
+    if (keysToCheck.length === 0) {
+      if (import.meta.env.DEV) console.log('📋 Lesson Builder: No year group keys yet');
       return [];
     }
     
-    // Find the current year group object (exact match for this class/sheet)
-    const currentYearGroup = customYearGroups?.find(
-      yg =>
-        normalizeKey(yg.id) === normalizeKey(currentYearGroupKey) ||
-        normalizeKey(yg.name) === normalizeKey(currentYearGroupKey)
-    );
-    
-    console.log('📋 STRICT Lesson Builder Filtering:', {
+    console.log('📋 Lesson Builder Filtering:', {
       currentYearGroupKey,
-      currentYearGroupId: currentYearGroup?.id,
-      currentYearGroupName: currentYearGroup?.name,
+      keysToCheck,
       totalCategories: categories.length
     });
     
-    // Keys used when saving assignments in UserSettings — include all aliases (parity with ActivityLibrary)
-    const keysToCheck = [...new Set([
-      currentYearGroup?.id,
-      currentYearGroup?.name,
-      currentYearGroupKey,
-      ...getCurrentYearGroupKeys(),
-    ].filter(Boolean).map((k) => String(k).trim()))];
+    const filteredCategories = categories.filter((category) => {
+      if (!category?.name) return false;
+      return categoryAssignedToYearGroupKeys(category.yearGroups, keysToCheck);
+    });
     
-    // STRICT: Only include categories that are EXPLICITLY assigned to this year group. No "show for all" fallback.
-    const filteredCategories = categories
-      .filter((category) => {
-        if (!category?.name) return false;
-        // No yearGroups or empty: do NOT show to any class until admin assigns
-        if (!category.yearGroups || Object.keys(category.yearGroups).length === 0) {
-          if (import.meta.env.DEV) console.log(`❌ Category "${category.name}" has no yearGroups - excluding`);
-          return false;
-        }
-        const assignedKeys = Object.keys(category.yearGroups).filter(k => category.yearGroups[k] === true);
-        if (assignedKeys.length === 0) {
-          if (import.meta.env.DEV) console.log(`❌ Category "${category.name}" has no assignments - excluding`);
-          return false;
-        }
-        // Exact match only: assigned key must equal one of this class's keys (case-insensitive). No partial/startsWith.
-        const isAssigned = assignedKeys.some(assignedKey => {
-          const a = normalizeKey(assignedKey);
-          return keysToCheck.some(checkKey => normalizeKey(checkKey) === a);
-        });
-        if (isAssigned) {
-          console.log(`✅ Category "${category.name}" assigned to "${currentYearGroup?.name || currentYearGroupKey}"`);
-        } else {
-          if (import.meta.env.DEV) console.log(`❌ Category "${category.name}" NOT assigned. Has: [${assignedKeys.join(', ')}], Need exact: [${keysToCheck.join(', ')}]`);
-        }
-        return isAssigned;
-      });
-    
-    // Include both "Vocal Warmups" and "Vocal Warm-Ups" when either is assigned so activities match regardless of spelling
     const categoryNames = [...new Set(filteredCategories.flatMap(c => {
       const name = c.name;
       if (name === 'Vocal Warm-Ups' || name === 'Vocal Warmups') return ['Vocal Warmups', 'Vocal Warm-Ups'];
       return [name];
     }))];
     
-    console.log(`📋 STRICT Lesson Builder Result: ${categoryNames.length} categories for "${currentYearGroup?.name || currentYearGroupKey}":`, categoryNames);
+    console.log(`📋 Lesson Builder Result: ${categoryNames.length} categories for "${currentYearGroupKey}":`, categoryNames);
     
-    // Return empty array if no categories assigned (NOT null - we want to show nothing)
-    return categoryNames.length > 0 ? categoryNames : [];
-  }, [categories, currentSheetInfo, customYearGroups, getCurrentYearGroupKeys, normalizeKey]);
+    return categoryNames;
+  }, [categories, currentSheetInfo, getCurrentYearGroupKeys]);
   
   // Helper function to get storage key
   const getStorageKeyHelper = (className: string) => `lesson-builder-draft-${className}`;

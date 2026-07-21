@@ -1216,11 +1216,19 @@ const _yearGroupsApiImpl = {
 // Normalise year_groups from DB (can be object or string from JSONB)
 function normaliseYearGroups(raw: any): Record<string, boolean> {
   if (raw == null) return {};
-  if (typeof raw === 'object' && !Array.isArray(raw)) return raw as Record<string, boolean>;
+  if (Array.isArray(raw)) {
+    // Legacy: ["LKG","UKG"] → { LKG: true, UKG: true }
+    const out: Record<string, boolean> = {};
+    raw.forEach((k) => {
+      if (k != null && String(k).trim()) out[String(k).trim()] = true;
+    });
+    return out;
+  }
+  if (typeof raw === 'object') return raw as Record<string, boolean>;
   if (typeof raw === 'string') {
     try {
       const parsed = JSON.parse(raw);
-      return typeof parsed === 'object' && parsed !== null && !Array.isArray(parsed) ? parsed : {};
+      return normaliseYearGroups(parsed);
     } catch {
       return {};
     }
@@ -1235,6 +1243,7 @@ function normaliseYearGroups(raw: any): Record<string, boolean> {
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
 const getAuthenticatedUserId = (): string | null => {
+  if (isDemoModeActive()) return DEMO_USER_ID;
   const uid = localStorage.getItem('rhythmstix_user_id');
   return uid && UUID_RE.test(uid) ? uid : null;
 };
@@ -1243,6 +1252,14 @@ const getUserCategoriesKey = (): string | null => {
   const uid = getAuthenticatedUserId();
   return uid ? `user:${uid}:custom_categories` : null;
 };
+
+/** Error thrown when cloud category write is skipped due to missing auth UUID. */
+export class CategoriesCloudAuthError extends Error {
+  constructor(message = 'Not authenticated — cannot save categories to cloud') {
+    super(message);
+    this.name = 'CategoriesCloudAuthError';
+  }
+}
 
 function normaliseCategoryRecord(cat: any) {
   return {
@@ -1282,12 +1299,12 @@ export const customCategoriesApi = {
   },
 
   upsert: async (categories: any[]) => {
+    const key = getUserCategoriesKey();
+    if (!key) {
+      console.warn('⚠️ customCategoriesApi.upsert: unauthenticated — skipping cloud write (fail closed)');
+      throw new CategoriesCloudAuthError();
+    }
     try {
-      const key = getUserCategoriesKey();
-      if (!key) {
-        console.warn('⚠️ customCategoriesApi.upsert: unauthenticated — skipping cloud write (fail closed)');
-        return [];
-      }
       const normalised = (categories || []).map((cat) => normaliseCategoryRecord(cat));
       const { error } = await supabase
         .from(TABLES.BRANDING_SETTINGS)
@@ -1305,6 +1322,7 @@ export const customCategoriesApi = {
       }
       return normalised;
     } catch (error) {
+      if (error instanceof CategoriesCloudAuthError) throw error;
       console.error('Failed to save per-user categories to Supabase:', error);
       throw error;
     }

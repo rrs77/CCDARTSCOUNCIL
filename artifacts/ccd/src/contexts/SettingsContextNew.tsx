@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
-import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi } from '../config/api';
+import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
 import {
   getOrderedYearGroupsFromSections,
@@ -705,9 +705,14 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       
       console.log('✅ Save queue processing completed');
     } catch (error) {
-      console.error('❌ Error processing save queue:', error);
-      // Re-queue failed items
-      saveQueue.current.unshift(...items);
+      if (error instanceof CategoriesCloudAuthError) {
+        console.warn('⚠️ Categories cloud save skipped — user not authenticated (UUID). Local save kept.');
+        // Do not re-queue: auth must be fixed first
+      } else {
+        console.error('❌ Error processing save queue:', error);
+        // Re-queue failed items
+        saveQueue.current.unshift(...items);
+      }
     } finally {
       isSavingToSupabase.current = false;
       
@@ -947,14 +952,54 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                 yearGroups: yearGroups
               };
             });
-            const namesInSupabase = new Set(formattedCategories.map((c: any) => c.name));
+            // Merge with localStorage so seed / unsynced year-group ticks are not lost
+            // when cloud is stale or a prior LSO-only upsert wiped assignments.
+            let localByName = new Map<string, any>();
+            try {
+              const localRaw = localStorage.getItem('saved-categories');
+              if (localRaw) {
+                const localCats = JSON.parse(localRaw);
+                if (Array.isArray(localCats)) {
+                  localCats.forEach((c: any) => {
+                    if (c?.name) localByName.set(c.name, c);
+                  });
+                }
+              }
+            } catch (_) {}
+
+            const mergedCloud = formattedCategories.map((cat: any) => {
+              const local = localByName.get(cat.name);
+              if (!local?.yearGroups) return cat;
+              const cloudHas =
+                cat.yearGroups && Object.values(cat.yearGroups).some((v: any) => v === true);
+              const localHas =
+                local.yearGroups && Object.values(local.yearGroups).some((v: any) => v === true);
+              if (!cloudHas && localHas) {
+                return { ...cat, yearGroups: { ...local.yearGroups } };
+              }
+              if (cloudHas && localHas) {
+                return {
+                  ...cat,
+                  yearGroups: { ...local.yearGroups, ...cat.yearGroups },
+                };
+              }
+              return cat;
+            });
+            // Keep local-only categories (e.g. freshly seeded LSO) that cloud does not have yet
+            localByName.forEach((local, name) => {
+              if (!mergedCloud.some((c: any) => c.name === name)) {
+                mergedCloud.push(local);
+              }
+            });
+
+            const namesInSupabase = new Set(mergedCloud.map((c: any) => c.name));
             const requiredNames = new Set(['Drama Games', 'Vocal Warmups']);
             const missingFixed = FIXED_CATEGORIES.filter((f: any) => {
               if (namesInSupabase.has(f.name)) return false;
               if (f.name === 'Vocal Warmups' && namesInSupabase.has('Vocal Warm-Ups')) return false;
               return requiredNames.has(f.name) || !deletedFixedCategories.has(f.name);
             });
-            const merged = [...formattedCategories];
+            const merged = [...mergedCloud];
             if (missingFixed.length > 0) {
               missingFixed.forEach((f: any) => merged.push({ ...f }));
               merged.sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
@@ -1477,6 +1522,30 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     console.log('📦 Ensured missing categories in list:', missing.join(', '));
   }, [categories]);
 
+  // LSO seed (and other writers) update localStorage then dispatch this event so
+  // Settings React state + Manage Categories pick up new categories / Year 6 ticks.
+  useEffect(() => {
+    const onCategoriesUpdated = (ev: Event) => {
+      const detail = (ev as CustomEvent)?.detail;
+      let next: Category[] | null = Array.isArray(detail?.categories) ? detail.categories : null;
+      if (!next) {
+        try {
+          const raw = localStorage.getItem('saved-categories');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (Array.isArray(parsed)) next = parsed;
+          }
+        } catch (_) {}
+      }
+      if (!next || next.length === 0) return;
+      console.log('📦 Categories updated from external seed/event:', next.length);
+      setCategories(next);
+      // Persist to cloud once load gates allow (useEffect on categories will queueSave)
+    };
+    window.addEventListener('ccd-categories-updated', onCategoriesUpdated as EventListener);
+    return () => window.removeEventListener('ccd-categories-updated', onCategoriesUpdated as EventListener);
+  }, []);
+
   // Save settings to localStorage whenever they change
   useEffect(() => {
     try {
@@ -1550,90 +1619,28 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     localStorage.setItem('saved-categories', JSON.stringify(categories));
     console.log('💾 Categories saved to localStorage');
     
-    // Filter categories for Supabase save
-    // Save ALL categories that have:
-    // 1. Custom categories (not in FIXED_CATEGORIES)
-    // 2. Categories with group assignments
-    // 3. Categories with yearGroups assignments (to preserve user's year group assignments)
-    const categoriesToSave = categories.filter(cat => {
-      const isCustom = !FIXED_CATEGORIES.some(fixed => fixed.name === cat.name);
-      const hasGroupAssignments = (cat.groups && cat.groups.length > 0) || cat.group;
-      const hasYearGroupAssignments = cat.yearGroups && Object.keys(cat.yearGroups).length > 0 && 
-        Object.values(cat.yearGroups).some(v => v === true);
-      
-      const shouldSave = isCustom || hasGroupAssignments || hasYearGroupAssignments;
-      
-      // Debug logging for first few categories
-      if (categories.indexOf(cat) < 5) {
-        console.log(`🔍 Category "${cat.name}":`, {
-          isCustom,
-          hasGroupAssignments,
-          hasYearGroupAssignments,
-          yearGroups: cat.yearGroups,
-          shouldSave
-        });
-      }
-      
-      return shouldSave;
-    });
+    // Upsert the FULL category list to the per-user cloud document.
+    // Filtering to a subset previously wiped unassigned fixed categories from cloud
+    // on every save (wholesale replace), which broke Activity Library after reload.
+    const categoriesForSupabase = categories.map(cat => ({
+      id: cat.id,
+      name: cat.name,
+      color: cat.color,
+      position: cat.position,
+      group: cat.group,
+      groups: cat.groups || [],
+      yearGroups: cat.yearGroups || {}
+    }));
     
-    console.log('💾 Categories save filter results:', {
-      totalCategories: categories.length,
-      categoriesToSave: categoriesToSave.length,
-      categoriesWithYearGroups: categoriesToSave.filter(c => c.yearGroups && Object.keys(c.yearGroups).length > 0).length,
-      categoriesExcluded: categories.length - categoriesToSave.length,
-      sampleYearGroups: categoriesToSave.slice(0, 5).map(c => ({ 
-        name: c.name, 
-        yearGroups: c.yearGroups,
-        hasYearGroups: !!(c.yearGroups && Object.keys(c.yearGroups).length > 0)
-      }))
+    console.log('💾 Queueing full categories save to Supabase:', {
+      count: categoriesForSupabase.length,
+      withYearGroups: categoriesForSupabase.filter(c =>
+        c.yearGroups && Object.values(c.yearGroups).some((v) => v === true)
+      ).length,
+      sample: categoriesForSupabase.slice(0, 3).map(c => ({ name: c.name, yearGroups: c.yearGroups }))
     });
-    
-    if (categoriesToSave.length > 0) {
-      const categoriesForSupabase = categoriesToSave.map(cat => ({
-        id: cat.id,  // Preserve Supabase PK so upserts don't fail on missing id
-        name: cat.name,
-        color: cat.color,
-        position: cat.position,
-        group: cat.group,
-        groups: cat.groups || [],
-        yearGroups: cat.yearGroups || {} // Preserve yearGroups assignments
-      }));
-      
-      console.log('💾 Queueing categories save to Supabase:', {
-        count: categoriesForSupabase.length,
-        sample: categoriesForSupabase.slice(0, 3).map(c => ({ name: c.name, yearGroups: c.yearGroups }))
-      });
-      
-      // Delete from Supabase any category no longer in the list (so deleted categories stay deleted)
-      const currentCategoryNames = new Set(categoriesToSave.map(c => c.name));
-      (async () => {
-        if (!isSupabaseConfigured() || !dataLoadedFromSupabase.current) return;
-        try {
-          const supabaseCategories = await customCategoriesApi.getAll();
-          const categoriesToDelete = supabaseCategories
-            .filter((supabaseCat: any) => {
-              const isFixed = FIXED_CATEGORIES.some(fixed => fixed.name === supabaseCat.name);
-              return !isFixed && !currentCategoryNames.has(supabaseCat.name);
-            })
-            .map((cat: any) => cat.name);
-          if (categoriesToDelete.length > 0) {
-            // Per-user store is replaced wholesale on upsert, so deleted names
-            // disappear when the current list is saved. No shared-table deletes.
-            if (import.meta.env.DEV) {
-              console.log('🗑️ Categories removed from local list (cloud upsert will drop them):', categoriesToDelete);
-            }
-          }
-        } catch (e) {
-          console.warn('Error during category cleanup:', e);
-        }
-      })();
 
-      // Queue Supabase save
-      queueSave('categories', categoriesForSupabase);
-    } else {
-      console.warn('⚠️ No categories to save - all categories were filtered out!');
-    }
+    queueSave('categories', categoriesForSupabase);
   }, [categories]);
 
   // Save category groups using queue-based system to prevent race conditions
@@ -2178,6 +2185,10 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       console.log('✅ Categories synced to cloud for this user');
       return true;
     } catch (error) {
+      if (error instanceof CategoriesCloudAuthError) {
+        console.warn('⚠️ Force sync skipped — not authenticated (need Supabase UUID in rhythmstix_user_id)');
+        return false;
+      }
       console.error('❌ Failed to force sync to Supabase:', error);
       return false;
     }

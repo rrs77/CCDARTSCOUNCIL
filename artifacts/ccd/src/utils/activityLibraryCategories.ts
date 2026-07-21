@@ -78,12 +78,15 @@ export function activityMatchesSelectedLibraryCategory(
   return false;
 }
 
+import { activityTagsMatchYearGroupKeys } from './yearGroupMatchKeys';
+
 /**
  * Year-group visibility (OR-style).
  *
  * Show the activity if EITHER:
  * - its category is assigned to this year group in Settings, OR
  * - the activity's own `yearGroups` tags match the current year group
+ *   (id / name / aliases: LKG↔Lower Kindergarten, Year6↔Year 6, etc.)
  *
  * Activity tags must remain a fallback: many EYFS/Reception activities rely on
  * tags when category year-group keys are legacy (LKG/UKG/Reception) or empty.
@@ -98,7 +101,6 @@ export function activityVisibleForYearGroup(options: {
   settingsCategoryNames?: string[];
   normalizeKey?: (value: string) => string;
 }): boolean {
-  const normalize = options.normalizeKey ?? normalizeCategoryKey;
   if (
     activityCategoryAllowedForYearGroup(
       options.activityCategory,
@@ -108,14 +110,8 @@ export function activityVisibleForYearGroup(options: {
     return true;
   }
 
-  const tags = Array.isArray(options.activityYearGroups)
-    ? options.activityYearGroups
-    : [];
-  const ygKeys = options.yearGroupKeys || [];
-  if (tags.length === 0 || ygKeys.length === 0) return false;
-
-  return tags.some((tag) => {
-    const t = normalize(String(tag));
-    return ygKeys.some((k) => normalize(String(k)) === t);
-  });
+  return activityTagsMatchYearGroupKeys(
+    options.activityYearGroups,
+    options.yearGroupKeys || [],
+  );
 }
