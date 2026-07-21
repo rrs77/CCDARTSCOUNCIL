@@ -38,7 +38,8 @@ export function Dashboard() {
   const { user } = useAuth();
   const isViewOnly = useIsViewOnly();
   const { 
-    currentSheetInfo, 
+    currentSheetInfo,
+    setCurrentSheetInfo,
     allLessonsData, 
     updateHalfTerm, 
     getLessonsForHalfTerm,
@@ -48,7 +49,7 @@ export function Dashboard() {
     addOrUpdateUserLessonPlan,
     deleteUserLessonPlan,
   } = useData();
-  const { getThemeForClass } = useSettings();
+  const { getThemeForClass, customYearGroups } = useSettings();
   const [activeTab, setActiveTab] = useState('unit-viewer');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -342,6 +343,16 @@ export function Dashboard() {
             <TabsContent value="our-partners" className="mt-6 ccd-fade-in-up" key={`op-${activeTab}`}>
               <OurPartners
                 onOpenHtbaoInApp={() => {
+                  // LSO HTBAO activities are Year 6–filtered; select that class first
+                  const year6 =
+                    customYearGroups?.find(
+                      (g) => g.id === 'Year6' || g.name === 'Year 6',
+                    ) ?? { id: 'Year6', name: 'Year 6' };
+                  setCurrentSheetInfo({
+                    sheet: year6.id,
+                    display: year6.name,
+                    eyfs: `${year6.id} Statements`,
+                  });
                   setSelectedCategory('How to Build an Orchestra — Listening');
                   handleTabChange('activity-library');
                 }}
