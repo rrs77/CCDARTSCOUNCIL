@@ -1455,35 +1455,47 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                   </h4>
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-2">
                     {lesson.videoLink && (
-                      <div className="flex items-center space-x-2">
-                        <span className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0"></span>
-                        <a href={lesson.videoLink} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-800 hover:underline text-sm">
-                          Video Link
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center space-x-2">
+                          <span className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0"></span>
+                          <span className="text-sm font-medium text-gray-800">Video</span>
+                        </div>
+                        <a href={lesson.videoLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                          {lesson.videoLink}
                         </a>
                       </div>
                     )}
                     {lesson.resourceLink && (
-                      <div className="flex items-center space-x-2">
-                        <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
-                        <a href={lesson.resourceLink} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-800 hover:underline text-sm">
-                          Resource Link
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-800">Resource</span>
+                        </div>
+                        <a href={lesson.resourceLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                          {lesson.resourceLink}
                         </a>
                       </div>
                     )}
                     {lesson.imageLink && (
-                      <div className="flex items-center space-x-2">
-                        <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
-                        <a href={lesson.imageLink} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-800 hover:underline text-sm">
-                          Image Link
+                      <div className="flex flex-col gap-0.5">
+                        <div className="flex items-center space-x-2">
+                          <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                          <span className="text-sm font-medium text-gray-800">Image</span>
+                        </div>
+                        <a href={lesson.imageLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                          {lesson.imageLink}
                         </a>
                       </div>
                     )}
                     {lesson.additionalLinks && lesson.additionalLinks.length > 0 && lesson.additionalLinks.map((link: any, index: number) => (
                       link.url && (
-                        <div key={index} className="flex items-center space-x-2">
-                          <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
-                          <a href={link.url} target="_blank" rel="noopener noreferrer" className="text-teal-600 hover:text-teal-800 hover:underline text-sm">
-                            {link.label || `Link ${index + 1}`}
+                        <div key={index} className="flex flex-col gap-0.5">
+                          <div className="flex items-center space-x-2">
+                            <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                            <span className="text-sm font-medium text-gray-800">{link.label || `Link ${index + 1}`}</span>
+                          </div>
+                          <a href={link.url} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                            {link.url}
                           </a>
                         </div>
                       )

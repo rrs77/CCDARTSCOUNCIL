@@ -355,20 +355,10 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     setTempResourceLinks(resourceLinks);
   }, [resourceLinks]);
 
-  // Immediate update for categories to ensure group assignments are saved
-  React.useEffect(() => {
-    // Skip immediate update if a category is being edited (to prevent losing focus on each keystroke)
-    if (editingCategory) {
-      return;
-    }
-    
-    // Only update if tempCategories is different from current categories
-    // This prevents infinite loops but ensures immediate saves
-    if (tempCategories !== categories) {
-      console.log('🔄 Immediate update of categories from tempCategories changes');
-      updateCategories(tempCategories);
-    }
-  }, [tempCategories, editingCategory]);
+  // Note: Do NOT auto-sync tempCategories → categories in an effect.
+  // Pairing that with the categories → tempCategories effect above causes a
+  // maximum-update-depth loop when drag-reorder only updates temp state.
+  // Call updateCategories explicitly from save/drop/drag-end handlers instead.
 
   // Note: Removed automatic refresh when modal opens to prevent race conditions
   // Data should already be up-to-date from the initial load
@@ -2045,11 +2035,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       ).length
                     }
                     onAssignCategory={(categoryName, folderName) => {
-                      const updated = tempCategories.map((c) =>
+                      const updated = tempCategoriesRef.current.map((c) =>
                         c.name === categoryName
                           ? { ...c, group: folderName || undefined, groups: undefined }
                           : c
                       );
+                      tempCategoriesRef.current = updated;
                       setTempCategories(updated);
                       updateCategories(updated);
                     }}
@@ -2068,16 +2059,20 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         category={category}
                         index={index}
                         onReorder={(dragIndex, hoverIndex) => {
-                          const newCategories = [...tempCategories];
-                          const [removed] = newCategories.splice(dragIndex, 1);
-                          newCategories.splice(hoverIndex, 0, removed);
-                          newCategories.forEach((cat, i) => {
-                            cat.position = i;
+                          if (dragIndex === hoverIndex) return;
+                          setTempCategories((prev) => {
+                            const newCategories = [...prev];
+                            const [removed] = newCategories.splice(dragIndex, 1);
+                            newCategories.splice(hoverIndex, 0, removed);
+                            const withPositions = newCategories.map((cat, i) =>
+                              cat.position === i ? cat : { ...cat, position: i }
+                            );
+                            tempCategoriesRef.current = withPositions;
+                            return withPositions;
                           });
-                          setTempCategories(newCategories);
                         }}
                         onDragEnd={() => {
-                          updateCategories(tempCategories);
+                          updateCategories(tempCategoriesRef.current);
                         }}
                       >
                       <div 

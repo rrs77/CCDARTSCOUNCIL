@@ -328,7 +328,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
                           if (onResourceClick) onResourceClick(resource.url, `${activity.activity} - ${resource.label}`, resource.type);
                         }}
                         className="w-6 h-6 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                        title={`${resource.label} - Click to open`}
+                        title={`${resource.label}: ${resource.url}`}
                       >
                         <IconComponent className="h-3 w-3 text-gray-600" />
                       </button>
@@ -464,7 +464,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
                           if (onResourceClick) onResourceClick(resource.url, `${activity.activity} - ${resource.label}`, resource.type);
                         }}
                         className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center hover:bg-gray-200 transition-colors"
-                        title={`${resource.label} - Click to open`}
+                        title={`${resource.label}: ${resource.url}`}
                       >
                         <IconComponent className="h-4 w-4 text-gray-600" />
                       </button>
@@ -822,24 +822,37 @@ return (
               </div>
             ) : (
               showResources && (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="space-y-2">
                   {resources.map((resource, index) => {
                     const IconComponent = resource.icon;
                     return (
-                      <button
-                        key={index}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (onResourceClick) {
-                            onResourceClick(resource.url, `${activity.activity} - ${resource.label}`, resource.type);
-                          }
-                        }}
-                        className={`flex items-center space-x-2 p-2 rounded-lg border transition-all duration-200 hover:scale-105 hover:shadow-sm ${resource.color}`}
-                      >
-                        <IconComponent className="h-4 w-4 flex-shrink-0" />
-                        <span className="text-sm font-medium truncate" dir="ltr">{resource.label}</span>
-                        <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
-                      </button>
+                      <div key={index} className={`rounded-lg border p-2 ${resource.color}`}>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            if (onResourceClick) {
+                              onResourceClick(resource.url, `${activity.activity} - ${resource.label}`, resource.type);
+                            }
+                          }}
+                          className="flex w-full items-center space-x-2 transition-all duration-200 hover:opacity-90"
+                          title={resource.url}
+                        >
+                          <IconComponent className="h-4 w-4 flex-shrink-0" />
+                          <span className="text-sm font-medium truncate" dir="ltr">{resource.label}</span>
+                          <ExternalLink className="h-3 w-3 flex-shrink-0 opacity-60" />
+                        </button>
+                        <a
+                          href={resource.url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={(e) => e.stopPropagation()}
+                          className="mt-1 block text-[11px] leading-snug break-all opacity-80 hover:underline"
+                          dir="ltr"
+                        >
+                          {resource.url}
+                        </a>
+                      </div>
                     );
                   })}
                 </div>

@@ -444,11 +444,96 @@ export function LessonDetailsModal({
                 <div className="space-y-2">
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900">Resources</h4>
                   <div 
-                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none"
+                    className="bg-gray-50 rounded-lg p-4 border border-gray-200 text-gray-700 prose prose-sm max-w-none break-words"
                     dangerouslySetInnerHTML={{ __html: sanitizeHtml(lessonData.resources) }}
                   />
                 </div>
               )}
+
+              {/* Lesson-level web links (video / resource / additional) — show URL text for demos */}
+              {(() => {
+                const extra = Array.isArray(lessonData.additionalLinks)
+                  ? (lessonData.additionalLinks as unknown as { url?: string; label?: string }[])
+                  : [];
+                const hasLinks =
+                  Boolean(lessonData.videoLink) ||
+                  Boolean(lessonData.resourceLink) ||
+                  Boolean(lessonData.imageLink) ||
+                  extra.some((l) => l?.url);
+                if (!hasLinks) return null;
+                return (
+                  <div className="space-y-2">
+                    <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
+                      <Link className="h-5 w-5 text-teal-600" />
+                      <span>Links &amp; Resources</span>
+                    </h4>
+                    <div className="bg-teal-50 rounded-lg p-4 border border-teal-100 space-y-3">
+                      {lessonData.videoLink && (
+                        <div>
+                          <div className="flex items-center gap-2 text-sm font-medium text-teal-900">
+                            <span className="w-2.5 h-2.5 bg-red-500 rounded-full flex-shrink-0" />
+                            Video
+                          </div>
+                          <a
+                            href={lessonData.videoLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                          >
+                            {lessonData.videoLink}
+                          </a>
+                        </div>
+                      )}
+                      {lessonData.resourceLink && (
+                        <div>
+                          <div className="flex items-center gap-2 text-sm font-medium text-teal-900">
+                            <FileText className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                            Resource pack
+                          </div>
+                          <a
+                            href={lessonData.resourceLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                          >
+                            {lessonData.resourceLink}
+                          </a>
+                        </div>
+                      )}
+                      {lessonData.imageLink && (
+                        <div>
+                          <div className="text-sm font-medium text-teal-900">Image</div>
+                          <a
+                            href={lessonData.imageLink}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                          >
+                            {lessonData.imageLink}
+                          </a>
+                        </div>
+                      )}
+                      {extra.map((link, index) =>
+                        link?.url ? (
+                          <div key={`${link.url}-${index}`}>
+                            <div className="text-sm font-medium text-teal-900">
+                              {link.label || `Link ${index + 1}`}
+                            </div>
+                            <a
+                              href={link.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                            >
+                              {link.url}
+                            </a>
+                          </div>
+                        ) : null,
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* Differentiation */}
               {lessonData.differentiation && (
@@ -578,7 +663,7 @@ export function LessonDetailsModal({
                             </div>
                           )}
 
-                          {/* Web Links Section - Now using modal buttons instead of direct links */}
+                          {/* Web Links Section — show clickable label + full URL for meetings/demos */}
                           {(activity.videoLink || activity.musicLink || activity.backingLink || 
                             activity.resourceLink || activity.link || activity.vocalsLink || 
                             activity.imageLink) && (
@@ -587,98 +672,40 @@ export function LessonDetailsModal({
                                 <FileText className="h-5 w-5 mr-2" />
                                 Web Resources
                               </h5>
-                              <div className="grid grid-cols-2 gap-3">
-                                {activity.videoLink && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResourceClick(activity.videoLink, `${activity.activity} - Video`, 'video');
-                                    }}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
-                                  >
-                                    <span className="w-3 h-3 bg-red-500 rounded-full mr-2 flex-shrink-0"></span>
-                                    Video Link
-                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
-                                  </button>
-                                )}
-                                {activity.musicLink && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResourceClick(activity.musicLink, `${activity.activity} - Music`, 'music');
-                                    }}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
-                                  >
-                                    <span className="w-3 h-3 bg-green-500 rounded-full mr-2 flex-shrink-0"></span>
-                                    Music Link
-                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
-                                  </button>
-                                )}
-                                {activity.backingLink && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResourceClick(activity.backingLink, `${activity.activity} - Backing Track`, 'backing');
-                                    }}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
-                                  >
-                                    <span className="w-3 h-3 bg-blue-500 rounded-full mr-2 flex-shrink-0"></span>
-                                    Backing Track
-                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
-                                  </button>
-                                )}
-                                {activity.resourceLink && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResourceClick(activity.resourceLink, `${activity.activity} - Resource`, 'resource');
-                                    }}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
-                                  >
-                                    <span className="w-3 h-3 bg-purple-500 rounded-full mr-2 flex-shrink-0"></span>
-                                    Resource
-                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
-                                  </button>
-                                )}
-                                {activity.link && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResourceClick(activity.link, `${activity.activity} - Additional Link`, 'link');
-                                    }}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
-                                  >
-                                    <span className="w-3 h-3 bg-gray-500 rounded-full mr-2 flex-shrink-0"></span>
-                                    Additional Link
-                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
-                                  </button>
-                                )}
-                                {activity.vocalsLink && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResourceClick(activity.vocalsLink, `${activity.activity} - Vocals`, 'vocals');
-                                    }}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
-                                  >
-                                    <span className="w-3 h-3 bg-orange-500 rounded-full mr-2 flex-shrink-0"></span>
-                                    Vocals
-                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
-                                  </button>
-                                )}
-                                {activity.imageLink && (
-                                  <button 
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleResourceClick(activity.imageLink, `${activity.activity} - Image`, 'image');
-                                    }}
-                                    className="text-sm font-medium text-blue-600 hover:text-blue-800 hover:underline truncate flex items-center cursor-pointer py-1"
-                                  >
-                                    <span className="w-3 h-3 bg-pink-500 rounded-full mr-2 flex-shrink-0"></span>
-                                    Image
-                                    <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
-                                  </button>
-                                )}
+                              <div className="space-y-3">
+                                {([
+                                  { key: 'video', url: activity.videoLink, label: 'Video', dot: 'bg-red-500' },
+                                  { key: 'music', url: activity.musicLink, label: 'Music', dot: 'bg-green-500' },
+                                  { key: 'backing', url: activity.backingLink, label: 'Backing Track', dot: 'bg-blue-500' },
+                                  { key: 'resource', url: activity.resourceLink, label: 'Resource', dot: 'bg-purple-500' },
+                                  { key: 'link', url: activity.link, label: 'Web Link', dot: 'bg-gray-500' },
+                                  { key: 'vocals', url: activity.vocalsLink, label: 'Vocals', dot: 'bg-orange-500' },
+                                  { key: 'image', url: activity.imageLink, label: 'Image', dot: 'bg-pink-500' },
+                                ] as const).filter((r) => r.url).map((r) => (
+                                  <div key={r.key} className="min-w-0">
+                                    <button
+                                      type="button"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        handleResourceClick(r.url!, `${activity.activity} - ${r.label}`, r.key);
+                                      }}
+                                      className="text-sm font-medium text-blue-700 hover:text-blue-900 hover:underline flex items-center cursor-pointer"
+                                    >
+                                      <span className={`w-3 h-3 ${r.dot} rounded-full mr-2 flex-shrink-0`} />
+                                      {r.label}
+                                      <ExternalLink className="h-4 w-4 ml-2 flex-shrink-0" />
+                                    </button>
+                                    <a
+                                      href={r.url!}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="mt-0.5 ml-5 block text-xs text-blue-600 hover:underline break-all"
+                                    >
+                                      {r.url}
+                                    </a>
+                                  </div>
+                                ))}
                               </div>
                             </div>
                           )}

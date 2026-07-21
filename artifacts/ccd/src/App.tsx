@@ -23,6 +23,7 @@ import './utils/setupDanceObjectives'; // Make setupDanceObjectives available in
 import './utils/setupSecondaryDramaObjectives'; // Make setupSecondaryDramaObjectives available in browser console
 import './utils/addForParentsToLKG'; // Make addForParentsToLKG available in browser console
 import './utils/addLKGActivitiesToAllYearGroups'; // Make addLKGActivitiesToAllYearGroups available in browser console
+import './utils/setupLSOYear6'; // Seed LSO Year 6 example (category, stacks, lessons)
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
