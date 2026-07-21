@@ -1,18 +1,10 @@
-import { useMemo, useState } from 'react';
-import { ArrowLeft, ChevronDown, ExternalLink, Handshake } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { ArrowLeft, ChevronDown, ExternalLink, Handshake, X } from 'lucide-react';
 import { PARTNER_LOGOS } from '../config/partnerLogos';
 import { LSO_LOGO_SRC } from '../utils/lsoBranding';
 import { openActivityResource } from '../utils/openActivityResource';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from './ui/dialog';
 
 const LSO_SITE = 'https://www.lso.co.uk/';
 const HTBAO_PAGE =
@@ -292,6 +284,15 @@ function HtbaoProjectPanel({
     onOpenHtbaoInApp?.(group);
   };
 
+  useEffect(() => {
+    if (!pickerOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setPickerOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [pickerOpen]);
+
   return (
     <div className="space-y-3 text-sm text-gray-700 sm:text-base">
       <p className="leading-relaxed">
@@ -336,47 +337,74 @@ function HtbaoProjectPanel({
         )}
       </div>
 
-      <Dialog open={pickerOpen} onOpenChange={setPickerOpen}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Open LSO activities</DialogTitle>
-            <DialogDescription>
-              Open LSO activities in which class/year group?
-            </DialogDescription>
-          </DialogHeader>
+      {pickerOpen && (
+        <div
+          className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+          role="presentation"
+          onClick={() => setPickerOpen(false)}
+        >
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="htbao-year-group-title"
+            aria-describedby="htbao-year-group-desc"
+            className="flex w-full max-w-md max-h-[80vh] flex-col overflow-hidden rounded-xl bg-white shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex flex-shrink-0 items-start justify-between gap-3 border-b border-gray-200 px-5 py-4">
+              <div className="min-w-0">
+                <h2 id="htbao-year-group-title" className="text-lg font-semibold text-gray-900">
+                  Open LSO activities
+                </h2>
+                <p id="htbao-year-group-desc" className="mt-1 text-sm text-gray-600">
+                  Choose which class/year group to open in Activity Library.
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setPickerOpen(false)}
+                className="flex-shrink-0 rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
 
-          {yearGroupsForPicker.length === 0 ? (
-            <p className="text-sm text-gray-600">
-              No year groups are set up yet. Add classes in Settings, then try again.
-            </p>
-          ) : (
-            <ul className="max-h-64 space-y-1 overflow-y-auto py-1" role="listbox" aria-label="Year groups">
-              {yearGroupsForPicker.map((group) => (
-                <li key={group.id}>
-                  <button
-                    type="button"
-                    role="option"
-                    onClick={() => handlePick({ id: group.id, name: group.name })}
-                    className="w-full rounded-lg border border-gray-200 bg-white px-3.5 py-2.5 text-left text-sm font-medium text-gray-800 hover:border-teal-300 hover:bg-teal-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-                  >
-                    {group.name}
-                  </button>
-                </li>
-              ))}
-            </ul>
-          )}
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4">
+              {yearGroupsForPicker.length === 0 ? (
+                <p className="text-sm text-gray-600">
+                  No year groups are set up yet. Add classes in Settings, then try again.
+                </p>
+              ) : (
+                <ul className="max-h-64 space-y-2 overflow-y-auto" role="listbox" aria-label="Year groups">
+                  {yearGroupsForPicker.map((group) => (
+                    <li key={group.id}>
+                      <button
+                        type="button"
+                        role="option"
+                        onClick={() => handlePick({ id: group.id, name: group.name })}
+                        className="w-full rounded-lg border border-teal-300 bg-white px-3.5 py-2.5 text-left text-sm font-medium text-gray-800 hover:bg-teal-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+                      >
+                        {group.name}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
 
-          <DialogFooter>
-            <button
-              type="button"
-              onClick={() => setPickerOpen(false)}
-              className="rounded-lg border border-gray-300 bg-white px-3.5 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
-            >
-              Cancel
-            </button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+            <div className="flex flex-shrink-0 justify-end border-t border-gray-200 px-5 py-3">
+              <button
+                type="button"
+                onClick={() => setPickerOpen(false)}
+                className="rounded-lg px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
