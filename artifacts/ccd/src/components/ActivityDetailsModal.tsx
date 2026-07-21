@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { sanitizeHtml } from '../utils/sanitize';
 import { createPortal } from 'react-dom';
-import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Tag, Users, ExternalLink, Edit3, Palette } from 'lucide-react';
+import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Tag, Users, ExternalLink, Edit3, Palette, ArrowLeft } from 'lucide-react';
 import type { Activity } from '../contexts/DataContext';
 import { ResourceViewer } from './ResourceViewer';
+import { openActivityResource, shouldOpenResourceInNewTab } from '../utils/openActivityResource';
 
 interface ActivityDetailsModalProps {
   isOpen: boolean;
@@ -49,19 +50,29 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
       <div className="bg-white rounded-card shadow-soft w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4">
         {/* Header */}
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <div className="p-2 bg-white bg-opacity-20 rounded-lg">
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center space-x-3 min-w-0">
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-white/20 hover:bg-white/30 rounded-lg transition-colors flex-shrink-0"
+                title="Back to Activity Library"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </button>
+              <div className="p-2 bg-white bg-opacity-20 rounded-lg flex-shrink-0">
                 <Tag className="h-5 w-5" />
               </div>
-              <div>
-                <h2 className="text-xl font-semibold">{activity.activity}</h2>
-                <p className="text-teal-100 text-sm">{activity.category}</p>
+              <div className="min-w-0">
+                <h2 className="text-xl font-semibold truncate">{activity.activity}</h2>
+                <p className="text-teal-100 text-sm truncate">{activity.category}</p>
               </div>
             </div>
             <button
               onClick={onClose}
-              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200"
+              className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200 flex-shrink-0"
+              title="Close"
             >
               <X className="h-5 w-5" />
             </button>
@@ -156,12 +167,14 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
                 {resources.map((resource, index) => {
                   const IconComponent = resource.icon;
                   
-                  // Handle resource click - open in ResourceViewer modal
+                  // Prefer new tab for packs / LSO / external links; embed Canva in-app
                   const handleResourceClick = (e: React.MouseEvent, url: string, type: string) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    
-                    // Open all resources in modal
+                    if (shouldOpenResourceInNewTab(url, type)) {
+                      openActivityResource(url);
+                      return;
+                    }
                     setSelectedResource({
                       url: url,
                       title: `${activity.activity} - ${resource.label}`,
@@ -207,9 +220,10 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
           )}
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center gap-2"
           >
-            Close
+            <ArrowLeft className="h-4 w-4" />
+            <span>Back</span>
           </button>
         </div>
       </div>

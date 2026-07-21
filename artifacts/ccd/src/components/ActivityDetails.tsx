@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { sanitizeHtml } from '../utils/sanitize';
-import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Upload, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette } from 'lucide-react';
+import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Upload, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette, ArrowLeft } from 'lucide-react';
 import { EditableText } from './EditableText';
 import { RichTextEditor } from './RichTextEditor';
 import { ResourceViewer } from './ResourceViewer';
@@ -12,6 +12,7 @@ import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useDemoMode } from '../hooks/useDemoMode';
+import { openActivityResource, shouldOpenResourceInNewTab } from '../utils/openActivityResource';
 import toast from 'react-hot-toast';
 
 interface ActivityDetailsProps {
@@ -86,11 +87,14 @@ export function ActivityDetails({
   const isViewOnly = useIsViewOnly();
   const isReadOnly = isViewOnly;
 
-  // Set the initial resource if provided
+  // Open deep-linked resources in a new tab (or keep Canva embed in-app)
   useEffect(() => {
-    if (initialResource) {
-      setSelectedResource(initialResource);
+    if (!initialResource?.url) return;
+    if (shouldOpenResourceInNewTab(initialResource.url, initialResource.type)) {
+      openActivityResource(initialResource.url);
+      return;
     }
+    setSelectedResource(initialResource);
   }, [initialResource]);
 
   // Fullscreen functionality
@@ -338,32 +342,16 @@ export function ActivityDetails({
     { label: 'Canva', url: isEditMode ? editedActivity.canvaLink : activity.canvaLink, icon: Palette, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', type: 'canva' },
   ].filter(resource => resource.url && resource.url.trim());
 
-  const handleResourceClick = (resource: any) => {
-    // Open all resources in ResourceViewer modal
+  const handleResourceClick = (resource: { url: string; label: string; type: string }) => {
+    if (shouldOpenResourceInNewTab(resource.url, resource.type)) {
+      openActivityResource(resource.url);
+      return;
+    }
     setSelectedResource({
       url: resource.url,
       title: `${activity.activity} - ${resource.label}`,
-      type: resource.type
+      type: resource.type,
     });
-    const url = resource.url;
-    
-    // Force open in browser window - bypass PWA context
-    const newWindow = window.open(url, '_blank', 'noopener,noreferrer');
-    
-    // Fallback if popup blocked - create temporary link and click it
-    if (!newWindow || newWindow.closed || typeof newWindow.closed === 'undefined') {
-      const link = document.createElement('a');
-      link.href = url;
-      link.target = '_blank';
-      link.rel = 'noopener noreferrer';
-      // Add to body temporarily
-      document.body.appendChild(link);
-      link.click();
-      // Remove after click
-      setTimeout(() => {
-        document.body.removeChild(link);
-      }, 100);
-    }
   };
 
   const handleStandardsToggle = (standard: string) => {
@@ -447,8 +435,18 @@ export function ActivityDetails({
           onMouseUp={(e) => e.stopPropagation()}
         >
           {/* Header */}
-          <div className="flex items-center justify-between p-6 border-b border-gray-200">
-            <div>
+          <div className="flex items-center justify-between gap-3 p-6 border-b border-gray-200">
+            <div className="flex items-start gap-3 min-w-0 flex-1">
+              <button
+                type="button"
+                onClick={onClose}
+                className="mt-0.5 inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors flex-shrink-0"
+                title="Back to Activity Library"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                <span>Back</span>
+              </button>
+              <div className="min-w-0">
               {isEditMode && !isReadOnly ? (
                 <input
                   type="text"
@@ -631,6 +629,7 @@ export function ActivityDetails({
                     </div>
                   );
                 })()}
+              </div>
               </div>
             </div>
             <div className="flex items-center space-x-2">
@@ -968,7 +967,11 @@ export function ActivityDetails({
                         return (
                           <button
                             key={index}
-                            onClick={() => handleResourceClick(resource)}
+                            onClick={() => handleResourceClick({
+                              url: resource.url!,
+                              label: resource.label,
+                              type: resource.type,
+                            })}
                             className={`flex items-center space-x-2 p-2 rounded-lg border transition-all duration-200 hover:scale-105 hover:shadow-sm ${resource.color}`}
                           >
                             <IconComponent className="h-4 w-4 flex-shrink-0" />
@@ -1080,12 +1083,10 @@ export function ActivityDetails({
                 <div className="flex items-center space-x-3">
                   <button
                     onClick={onClose}
-                    className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
+                    className="px-6 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center gap-2"
                   >
-                    <EditableText 
-                      id="activity-close-button" 
-                      fallback="Close"
-                    />
+                    <ArrowLeft className="h-4 w-4" />
+                    <span>Back</span>
                   </button>
                 </div>
               </div>

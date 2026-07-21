@@ -28,6 +28,8 @@ import {
 import { ActivityCard } from './ActivityCard';
 import { ActivityDetails } from './ActivityDetails';
 import { ActivityDetailsModal } from './ActivityDetailsModal';
+import { openActivityResource } from '../utils/openActivityResource';
+import { isLsoLibraryCategory, LSO_LOGO_SRC } from '../utils/lsoBranding';
 import { ActivityImporter } from './ActivityImporter';
 import { ActivityCreator } from './ActivityCreator';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
@@ -711,27 +713,9 @@ export function ActivityLibrary({
     setShowActivityModal(true);
   };
 
-  const handleResourceClick = (url: string, title: string, type: string) => {
-    // If we have a selected activity, open the resource in the ActivityDetails modal
-    if (selectedActivityDetails) {
-      setInitialResource({url, title, type});
-    } else {
-      // Find the activity that contains this resource
-      const activity = allActivities.find(a => 
-        a.videoLink === url || 
-        a.musicLink === url || 
-        a.backingLink === url || 
-        a.resourceLink === url || 
-        a.link === url || 
-        a.vocalsLink === url || 
-        a.imageLink === url
-      );
-      
-      if (activity) {
-        // Open the activity details with this resource
-        handleViewActivityDetails(activity, {url, title, type});
-      }
-    }
+  const handleResourceClick = (url: string, _title: string, _type: string) => {
+    // Open packs / LSO / external media in a new tab (do not trap in ResourceViewer)
+    openActivityResource(url);
   };
 
   const handleEditActivity = (activity: Activity) => {
@@ -1206,6 +1190,15 @@ export function ActivityLibrary({
             {displayGroups.map((group) => (
               <React.Fragment key={`cat-${group.name}`}>
                 <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-teal-200 bg-white/95 backdrop-blur sticky top-0 z-10">
+                  {isLsoLibraryCategory(group.name) && (
+                    <div
+                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+                      style={{ backgroundColor: '#0b1f4a' }}
+                      title="London Symphony Orchestra"
+                    >
+                      <img src={LSO_LOGO_SRC} alt="LSO" className="h-6 w-auto" />
+                    </div>
+                  )}
                   <h3 className="text-lg font-bold text-teal-700">{group.name}</h3>
                   <button
                     type="button"
@@ -1324,6 +1317,15 @@ export function ActivityLibrary({
             {displayGroups.map((group) => (
               <React.Fragment key={`grid-cat-${group.name}`}>
                 <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-teal-200 bg-white/95 backdrop-blur sticky top-0 z-10">
+                  {isLsoLibraryCategory(group.name) && (
+                    <div
+                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+                      style={{ backgroundColor: '#0b1f4a' }}
+                      title="London Symphony Orchestra"
+                    >
+                      <img src={LSO_LOGO_SRC} alt="LSO" className="h-6 w-auto" />
+                    </div>
+                  )}
                   <h3 className="text-lg font-bold text-teal-700">{group.name}</h3>
                   <button
                     type="button"

@@ -28,6 +28,7 @@ import { useDrag } from 'react-dnd';
 import { RichTextEditor } from './RichTextEditor';
 import type { Activity } from '../contexts/DataContext';
 import { isDemoModeActive } from '../utils/demoMode';
+import { openActivityResource } from '../utils/openActivityResource';
 
 interface ActivityCardProps {
   activity: Activity;
@@ -831,9 +832,8 @@ return (
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            if (onResourceClick) {
-                              onResourceClick(resource.url, `${activity.activity} - ${resource.label}`, resource.type);
-                            }
+                            // Always open external media in a new tab from the card
+                            openActivityResource(resource.url!);
                           }}
                           className="flex w-full items-center space-x-2 transition-all duration-200 hover:opacity-90"
                           title={resource.url}

@@ -9,6 +9,7 @@ import { EditableText } from './EditableText';
 import { NestedStandardsBrowser } from './NestedStandardsBrowser';
 import { LessonPrintModal } from './LessonPrintModal';
 import { ResourceViewer } from './ResourceViewer';
+import { openActivityResource, shouldOpenResourceInNewTab } from '../utils/openActivityResource';
 import { useShareLesson } from '../hooks/useShareLesson';
 import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
@@ -84,8 +85,12 @@ export function LessonDetailsModal({
 
   const lessonData = allLessonsData[lessonNumber];
 
-  // Handle resource clicks - open in ResourceViewer modal
+  // Prefer new tab for packs / LSO / external links; embed Canva in-app
   const handleResourceClick = (url: string, title: string, type: string) => {
+    if (shouldOpenResourceInNewTab(url, type)) {
+      openActivityResource(url);
+      return;
+    }
     setSelectedResource({ url, title, type });
   };
 

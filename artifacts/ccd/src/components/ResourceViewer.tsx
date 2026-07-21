@@ -126,10 +126,11 @@ export function ResourceViewer({ url, title, type, onClose }: ResourceViewerProp
                 e.stopPropagation();
                 onClose();
               }}
-              className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors"
-              title="Back to CC Designer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+              title="Back"
             >
-              <ArrowLeft className="h-5 w-5" />
+              <ArrowLeft className="h-4 w-4" />
+              <span>Back</span>
             </button>
             <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-sm">C</span>
@@ -214,7 +215,7 @@ export function ResourceViewer({ url, title, type, onClose }: ResourceViewerProp
           <p className="text-xs text-gray-500 text-center">
             {shouldEmbed ? (
               <>
-                Resource embedded from{' '}
+                Press ESC or click Back to return •{' '}
                 <a
                   href={url}
                   target="_blank"
@@ -222,9 +223,8 @@ export function ResourceViewer({ url, title, type, onClose }: ResourceViewerProp
                   className="text-blue-600 hover:text-blue-800 underline"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  source
+                  Open in new tab
                 </a>
-                {' '}• Press ESC or click X to exit
               </>
             ) : (
               <>

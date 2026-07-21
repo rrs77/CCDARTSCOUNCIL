@@ -5,7 +5,8 @@ import { LessonPlanBuilder } from "./LessonPlanBuilder";
 import { LessonPlannerCalendar } from "./LessonPlannerCalendar";
 import { ActivityLibrary } from "./ActivityLibrary";
 import { LessonLibrary } from "./LessonLibrary";
-import { Calendar, BookOpen, Edit3, FolderOpen, Tag } from 'lucide-react';
+import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake } from 'lucide-react';
+import { OurPartners } from './OurPartners';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
@@ -229,8 +230,8 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
-            {/* 5 tabs — must use grid-cols-5 on sm+ (not 4) or Calendar wraps to a clipped second row */}
-            <TabsList className="w-full h-auto grid grid-cols-3 sm:grid-cols-5 gap-1 auto-rows-auto">
+            {/* 6 tabs — grid-cols-3 on mobile; sm+ uses 6 so nothing wraps to a clipped row */}
+            <TabsList className="w-full h-auto grid grid-cols-3 sm:grid-cols-6 gap-1 auto-rows-auto">
               <TabsTrigger 
                 value="unit-viewer"
                 data-tab="unit-viewer"
@@ -280,6 +281,16 @@ export function Dashboard() {
                 <span className="hidden sm:inline">Calendar</span>
                 <span className="sm:hidden">Calendar</span>
               </TabsTrigger>
+
+              <TabsTrigger 
+                value="our-partners"
+                data-tab="our-partners"
+                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+              >
+                <Handshake className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="hidden sm:inline">Our Partners</span>
+                <span className="sm:hidden">Partners</span>
+              </TabsTrigger>
             </TabsList>
 
 
@@ -325,6 +336,15 @@ export function Dashboard() {
                 onDeleteLessonPlan={handleDeleteLessonPlan}
                 onCreateLessonPlan={handleCreateLessonPlan}
                 className={currentSheetInfo.sheet}
+              />
+            </TabsContent>
+
+            <TabsContent value="our-partners" className="mt-6 ccd-fade-in-up" key={`op-${activeTab}`}>
+              <OurPartners
+                onOpenHtbaoInApp={() => {
+                  setSelectedCategory('How to Build an Orchestra — Listening');
+                  handleTabChange('activity-library');
+                }}
               />
             </TabsContent>
           </Tabs>
