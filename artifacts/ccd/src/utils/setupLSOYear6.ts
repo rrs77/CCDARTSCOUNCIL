@@ -41,7 +41,7 @@ const UNIT = 'How to Build an Orchestra';
 const STACK_NAME = 'How to Build an Orchestra';
 const LEVEL = 'KS2';
 const YEAR_GROUPS = [SHEET_ID, SHEET_NAME];
-const MARKER_KEY = 'ccd-lso-year6-seeded-v5';
+const MARKER_KEY = 'ccd-lso-year6-seeded-v6';
 const STACK_ID_KEY = 'ccd-lso-year6-lesson-stack-id';
 const LESSON_KEYS_KEY = 'ccd-lso-year6-lesson-keys';
 const ACADEMIC_YEAR = '2026-2027';
@@ -679,18 +679,24 @@ function mergeActivitiesIntoLocalStorage(activities: Activity[]) {
   return withIds;
 }
 
-/** Remove old LSO *activity* stacks (wrong type for this unit). */
+/** True if this activity-stack entry is leftover LSO / HTBAO seed (wrong type for this unit). */
+function isLsoActivityStack(s: any): boolean {
+  if (!s) return false;
+  const id = String(s.id || '');
+  const name = String(s.name || '');
+  const description = String(s.description || '');
+  if (id.startsWith('lso-y6-stack-')) return true;
+  if (name === STACK_NAME || name.includes('How to Build an Orchestra')) return true;
+  if (name.startsWith('LSO L') || name.startsWith('LSO:') || name.startsWith('LSO ')) return true;
+  if (description.includes('LSO_Y6_SEED') || description.includes('How to Build an Orchestra')) return true;
+  if (isLsoCategoryName(s.category)) return true;
+  return false;
+}
+
+/** Remove old LSO *activity* stacks (unit lives as a lesson stack in Lesson Library only). */
 function cleanupOldActivityStacks() {
   const existing = readJson<any[]>('activity-stacks', []);
-  const cleaned = existing.filter((s) => {
-    if (!s) return false;
-    const id = String(s.id || '');
-    const name = String(s.name || '');
-    if (id.startsWith('lso-y6-stack-')) return false;
-    if (name === STACK_NAME || name.startsWith('LSO L') || name.startsWith('LSO:')) return false;
-    if (isLsoCategoryName(s.category)) return false;
-    return true;
-  });
+  const cleaned = existing.filter((s) => !isLsoActivityStack(s));
   localStorage.setItem('activity-stacks', JSON.stringify(cleaned));
 }
 
@@ -923,15 +929,7 @@ async function tryCloudSync(
   try {
     const existingStacks = await activityStacksApi.getAll();
     for (const s of existingStacks) {
-      const id = String(s.id || '');
-      const name = String(s.name || '');
-      if (
-        id.startsWith('lso-y6-stack-') ||
-        name === STACK_NAME ||
-        name.startsWith('LSO L') ||
-        name.startsWith('LSO:') ||
-        isLsoCategoryName(s.category)
-      ) {
+      if (isLsoActivityStack(s)) {
         try {
           await activityStacksApi.delete(s.id);
         } catch {
@@ -999,7 +997,7 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
     return { success: true, skipped: true };
   }
 
-  console.log('🚀 Seeding Year 6 Lesson Library unit: How to Build an Orchestra (v5)...');
+  console.log('🚀 Seeding Year 6 Lesson Library unit: How to Build an Orchestra (v6)...');
 
   const categories = mergeCategoriesIntoLocalStorage();
   cleanupOldActivityStacks();
@@ -1023,12 +1021,13 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
   localStorage.removeItem('ccd-lso-year6-seeded-v2');
   localStorage.removeItem('ccd-lso-year6-seeded-v3');
   localStorage.removeItem('ccd-lso-year6-seeded-v4');
+  localStorage.removeItem('ccd-lso-year6-seeded-v5');
 
-  console.log('✅ Year 6 — How to Build an Orchestra ready (v5)');
+  console.log('✅ Year 6 — How to Build an Orchestra ready (v6)');
   console.log(`   Lesson stack (Lesson Library): "${STACK_NAME}" → lessons ${writtenNumbers.join(', ')}`);
   console.log(`   Folder: ${FOLDER} (LSO brand) · Project categories:`);
   ALL_CATEGORIES.forEach((c) => console.log(`     • ${c}`));
-  console.log(`   Activities: ${activities.length} (Lesson Builder / Activity Library only)`);
+  console.log(`   Activities: ${activities.length} (Activity Library / Lesson Builder — no activity stacks)`);
   console.log(`   Packs: ${HTBAO_PACK_PDF}`);
   console.log(`          ${BEETHOVEN_BOLERO_PACK_PDF}`);
 
@@ -1048,6 +1047,8 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
 if (typeof window !== 'undefined') {
   (window as any).setupLSOYear6Example = setupLSOYear6Example;
   try {
+    // Always purge leftover LSO activity stacks (even when seed is skipped).
+    cleanupOldActivityStacks();
     if (localStorage.getItem(MARKER_KEY) !== '1') {
       void setupLSOYear6Example();
     }

@@ -80,13 +80,6 @@ export function ActivityLibrary({
     deleteActivity, 
     loading: dataLoading, 
     refreshData,
-    activityStacks,
-    createActivityStack,
-    updateActivityStack,
-    deleteActivityStack,
-    addActivitiesToStack,
-    removeActivityFromStack,
-    unstackActivities,
     currentSheetInfo
   } = useData();
   const { getCategoryColor, categories, updateCategories, customYearGroups, mapActivityLevelToYearGroup } = useSettings();
