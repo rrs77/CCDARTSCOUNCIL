@@ -33,7 +33,7 @@ export function Footer() {
   const socialLinks = (customLinks?.length ? customLinks : legacyLinks) as { platform: string; url: string }[];
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 text-white py-3 z-50 shadow-lg" style={{ backgroundColor: footerBg }}>
+    <footer className="fixed bottom-0 left-0 right-0 text-white py-3 z-30 shadow-lg" style={{ backgroundColor: footerBg }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           

@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { sanitizeHtml } from '../utils/sanitize';
 import { X, Download, Edit3, Save, Check, Tag, Clock, Users, ExternalLink, FileText, Trash2, Share2, Target, Link, Loader2, Lock } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
@@ -56,6 +57,15 @@ export function LessonDetailsModal({
   const { shareLesson, isSharing: isSharingLink } = useShareLesson();
   const { isDemo, showUpgradePrompt } = useDemoMode();
 
+  // Keep the page behind from scrolling while this modal is open, and unlock on close.
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, []);
+
   const handleCopyLink = async () => {
     if (isDemo) {
       showUpgradePrompt('Lesson sharing');
@@ -89,21 +99,24 @@ export function LessonDetailsModal({
   }, [lessonData, lessonNumber]);
 
   if (!lessonData) {
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-        <div className="bg-white rounded-card shadow-soft p-6 max-w-md w-full">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Error</h2>
-          <p className="text-gray-600 mb-6">Lesson data not found for lesson {lessonNumber}.</p>
-          <div className="flex justify-end">
-            <button
-              onClick={onClose}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg"
-            >
-              Close
-            </button>
+    return createPortal(
+      <div className="fixed inset-0 z-[100] overflow-y-auto bg-black/50 p-4">
+        <div className="flex min-h-full items-center justify-center pb-24">
+          <div className="bg-white rounded-card shadow-soft p-6 max-w-md w-full">
+            <h2 className="text-xl font-bold text-gray-900 mb-4">Error</h2>
+            <p className="text-gray-600 mb-6">Lesson data not found for lesson {lessonNumber}.</p>
+            <div className="flex justify-end">
+              <button
+                onClick={onClose}
+                className="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg"
+              >
+                Close
+              </button>
+            </div>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   }
 
@@ -163,9 +176,26 @@ export function LessonDetailsModal({
   // Get standards count
   const standardsCount = (lessonStandards[lessonNumber] || []).length;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-2 sm:p-4 z-[60] animate-fade-in">
-      <div className="bg-white rounded-card shadow-soft w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[95vh] overflow-hidden flex flex-col animate-scale-in">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[100] isolate overflow-y-auto overscroll-contain animate-fade-in"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="lesson-details-title"
+    >
+      {/* Backdrop — click to close; covers header/footer so nav labels cannot bleed through */}
+      <div
+        className="fixed inset-0 bg-black/75"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+
+      {/* Scrollable shell: works at any viewport size; bottom padding clears the fixed site footer */}
+      <div className="relative z-10 flex min-h-full items-start justify-center p-2 sm:p-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] sm:items-center">
+        <div
+          className="relative bg-white rounded-card shadow-soft w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-6rem)] overflow-hidden flex flex-col animate-scale-in"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Header — shrink-0 so action menu never scrolls/clips off-screen */}
         <div 
           className="p-3 sm:p-4 text-white relative flex-shrink-0 z-10"
@@ -202,7 +232,7 @@ export function LessonDetailsModal({
                   </button>
                 </div>
               ) : (
-                <h1 className="text-xl font-bold mb-1 flex items-center space-x-2">
+                <h1 id="lesson-details-title" className="text-xl font-bold mb-1 flex items-center space-x-2">
                   <span className="truncate">{lessonData.title || `Lesson ${lessonNumber}`}</span>
                   <button
                     onClick={() => setEditingLessonTitle(true)}
@@ -676,6 +706,7 @@ export function LessonDetailsModal({
             Close
           </button>
         </div>
+        </div>
       </div>
 
       {/* Activity Details Modal - SIMPLIFIED: Read-only mode */}
@@ -702,8 +733,8 @@ export function LessonDetailsModal({
 
       {/* Delete Confirmation Modal */}
       {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-          <div className="bg-white rounded-card shadow-soft max-w-md w-full p-6">
+        <div className="fixed inset-0 bg-black/50 flex items-start sm:items-center justify-center p-4 pb-24 z-[110] overflow-y-auto">
+          <div className="bg-white rounded-card shadow-soft max-w-md w-full p-6 my-4">
             <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Lesson</h3>
             <p className="text-gray-700 mb-6">
               {halfTermId ? (
@@ -748,6 +779,7 @@ export function LessonDetailsModal({
           pdfDownloadOnly
         />
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }

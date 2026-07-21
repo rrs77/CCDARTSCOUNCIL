@@ -1032,18 +1032,18 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               </span>
             </button>
             {showStacksSection && (
-              <div className="px-5 pb-5 pt-0 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <p className="text-sm text-gray-600">
+              <div className="px-5 pb-5 pt-4 border-t border-gray-200">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4">
+                  <p className="text-sm text-gray-600 flex-1 min-w-0">
                     Stacks are units of lessons. Assign a stack to a term, then add it to the calendar from a start date—it will split over the days you have this class.
                   </p>
                   <button
                     type="button"
                     onClick={handleCreateStack}
-                    className="flex items-center gap-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg text-sm font-medium"
+                    className="flex items-center justify-center gap-2 h-10 px-5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap flex-shrink-0 self-start sm:self-auto"
                   >
                     <Plus className="h-4 w-4" />
-                    Create Stack
+                    <span>Create Stack</span>
                   </button>
                 </div>
                 {stacks.length === 0 ? (
