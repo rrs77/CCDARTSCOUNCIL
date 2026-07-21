@@ -135,8 +135,8 @@ interface LsoPartnerDetailProps {
 }
 
 function LsoPartnerDetail({ onBack, onOpenHtbaoInApp }: LsoPartnerDetailProps) {
-  /** Accordion: one open at a time. HTBAO expanded by default for demos. */
-  const [openProjectId, setOpenProjectId] = useState<LsoProjectId | null>(HTBAO_ID);
+  /** Accordion: one open at a time. All projects start collapsed. */
+  const [openProjectId, setOpenProjectId] = useState<LsoProjectId | null>(null);
 
   const toggleProject = (id: LsoProjectId) => {
     setOpenProjectId((current) => (current === id ? null : id));
