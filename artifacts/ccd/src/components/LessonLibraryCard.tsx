@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Clock, Users, Calendar, Edit3, Copy, Share2, Check, X, Link2, Send } from 'lucide-react';
+import { Clock, Users, Calendar, Edit3, Copy, Share2, Check, X, Link2, Send, Trash2 } from 'lucide-react';
 import type { LessonData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { AssignToHalfTermModal } from './AssignToHalfTermModal';
@@ -32,6 +32,7 @@ interface LessonLibraryCardProps {
   onDuplicate?: () => void;
   onShare?: () => void;
   onCopyToYear?: () => void;
+  onDelete?: () => void;
 }
 
 export function LessonLibraryCard({
@@ -44,6 +45,7 @@ export function LessonLibraryCard({
   onDuplicate,
   onShare,
   onCopyToYear,
+  onDelete,
   theme,
   onAssignToUnit,
   halfTerms = []
@@ -98,6 +100,15 @@ export function LessonLibraryCard({
     e.stopPropagation();
     e.preventDefault();
     setShowAssignModal(true);
+  };
+
+  const handleDeleteClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!onDelete) return;
+    if (confirm('Delete this lesson?')) {
+      onDelete();
+    }
   };
 
   const handleAssignToHalfTerm = (halfTermId: string) => {
@@ -272,6 +283,16 @@ export function LessonLibraryCard({
                   <span className="text-xs">Edit</span>
                 </button>
               )}
+              {onDelete && (
+                <button
+                  onClick={handleDeleteClick}
+                  className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm flex items-center space-x-1"
+                  title="Delete lesson"
+                >
+                  <Trash2 className="h-3 w-3" />
+                  <span className="text-xs">Delete</span>
+                </button>
+              )}
             </div>
             )}
           </div>
@@ -435,6 +456,16 @@ export function LessonLibraryCard({
                 <span className="text-xs">Edit</span>
               </button>
             )}
+            {onDelete && (
+              <button
+                onClick={handleDeleteClick}
+                className="p-2 bg-red-600 hover:bg-red-700 text-white rounded-lg shadow-sm flex items-center space-x-1"
+                title="Delete lesson"
+              >
+                <Trash2 className="h-4 w-4" />
+                <span className="text-xs">Delete</span>
+              </button>
+            )}
             </div>
             )}
           </div>
@@ -532,8 +563,8 @@ export function LessonLibraryCard({
         </div>
         
 
-        {/* Action buttons - Assign, Duplicate, and Edit buttons */}
-            {((onAssignToUnit && halfTerms.length > 0) || onEdit || onDuplicate || onCopyToYear) && (
+        {/* Action buttons - Assign, Duplicate, Edit, and Delete */}
+            {((onAssignToUnit && halfTerms.length > 0) || onEdit || onDuplicate || onCopyToYear || onDelete) && (
           <div className="absolute top-2 right-2 z-20 flex items-center space-x-2">
             {onAssignToUnit && halfTerms.length > 0 && (
               <button
@@ -584,6 +615,15 @@ export function LessonLibraryCard({
                 title="Edit Lesson"
               >
                 <Edit3 className="h-4 w-4" />
+              </button>
+            )}
+            {onDelete && (
+              <button
+                onClick={handleDeleteClick}
+                className="p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-lg shadow-sm text-red-600 hover:text-red-800 transition-colors"
+                title="Delete lesson"
+              >
+                <Trash2 className="h-4 w-4" />
               </button>
             )}
           </div>

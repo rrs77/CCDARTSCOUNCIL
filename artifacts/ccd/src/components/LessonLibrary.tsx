@@ -44,6 +44,7 @@ import { ClassCopyModal } from './ClassCopyModal';
 import { StandaloneLessonCreator } from './StandaloneLessonCreator';
 import { IndexCard } from './IndexCard';
 import { LessonPrintModal } from './LessonPrintModal';
+import { useIsViewOnly } from '../hooks/useIsViewOnly';
 
 // Helper function to safely render HTML content
 const renderHtmlContent = (htmlContent: any) => {
@@ -88,6 +89,7 @@ export function LessonLibrary({
   onAssignToUnit,
   onNavigateToBuilder
 }: LessonLibraryProps) {
+  const isViewOnly = useIsViewOnly();
   const { 
     lessonNumbers, 
     allLessonsData, 
@@ -104,6 +106,7 @@ export function LessonLibrary({
     trashLessons,
     restoreLesson,
     permanentDeleteFromTrash,
+    deleteLesson,
     refreshData,
     loadExampleLessonsFromUrl,
     loadStackIntoSheet
@@ -1318,6 +1321,10 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                     onCopyToYear={() => {
                       setClassCopyInitialLessons([lessonNum]);
                       setShowClassCopyModal(true);
+                    }}
+                    onDelete={isViewOnly ? undefined : () => {
+                      deleteLesson(lessonNum);
+                      toast.success('Lesson moved to trash', { duration: 3000 });
                     }}
                     onShare={() => {}} // Share functionality handled internally in card
                   />

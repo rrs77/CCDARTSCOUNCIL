@@ -7,7 +7,7 @@ interface FeatureWalkthroughModalProps {
 }
 
 // Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
-const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/?autoplay=1&v=2026-07-20`;
+const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/?autoplay=1&v=2026-07-21`;
 const SITE_URL = 'https://www.ccdesigner.co.uk';
 
 export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughModalProps) {
