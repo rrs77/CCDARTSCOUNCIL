@@ -139,7 +139,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
           <LsoPartnerHub
             standalone
             onAddedToApp={({ sheetId }) =>
-              goHomeAfterAdd('ccd-open-after-partner', sheetId, 'activity-library')
+              goHomeAfterAdd('ccd-open-after-partner', sheetId, 'lesson-library')
             }
           />
         );

@@ -26,7 +26,8 @@ import {
   MoreHorizontal,
   Pencil,
   Copy,
-  Eye
+  Eye,
+  Star,
 } from 'lucide-react';
 import { 
   format, 
@@ -70,6 +71,19 @@ import { useLessonStacks } from '../hooks/useLessonStacks';
 import { toast } from 'react-hot-toast';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
 import { downloadIcsFile, generateIcsFromLessonPlans } from '../utils/exportIcal';
+import {
+  PartnerKeyDatesModal,
+  ImportantDatesConfirmPopup,
+} from './partners/PartnerKeyDatesModal';
+import { ImportantDatesPanel } from './partners/ImportantDatesPanel';
+import {
+  getPartnerHubsForKeyDates,
+  importantDateToCalendarEvent,
+  upsertImportantDatesFromSuggestions,
+  readImportantDates,
+  CCD_IMPORTANT_DATES_UPDATED_EVENT,
+  type PartnerKeyDateSuggestion,
+} from '../utils/partnerKeyDates';
 
 interface LessonPlannerCalendarProps {
   onDateSelect: (date: Date) => void;
@@ -99,9 +113,14 @@ interface CalendarEvent {
   title: string;
   startDate: Date;
   endDate: Date;
-  type: 'holiday' | 'inset' | 'event';
+  type: 'holiday' | 'inset' | 'event' | 'key-date';
   description?: string;
   color: string;
+  /** Partner hub slug when type is key-date */
+  orgId?: string;
+  keyStage?: string;
+  importantDateId?: string;
+  attendReminder?: boolean;
 }
 
 // Map day numbers to names
@@ -122,6 +141,7 @@ const EVENT_COLORS = {
   'holiday': '#EF4444', // Red
   'inset': '#8B5CF6', // Purple
   'event': '#F59E0B', // Amber
+  'key-date': '#0F766E', // Teal — partner important dates
 };
 
 export function LessonPlannerCalendar({
@@ -163,7 +183,14 @@ export function LessonPlannerCalendar({
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [nowTick, setNowTick] = useState(() => new Date());
+  const [keyDatesOrgId, setKeyDatesOrgId] = useState('');
+  const [showKeyDatesModal, setShowKeyDatesModal] = useState(false);
+  const [confirmImportantDates, setConfirmImportantDates] = useState<{
+    orgId: string;
+    dates: PartnerKeyDateSuggestion[];
+  } | null>(null);
   const actionsMenuRef = useRef<HTMLDivElement>(null);
+  const keyDatesSelectRef = useRef<HTMLSelectElement>(null);
   const { stacks } = useLessonStacks();
   const calendarRef = useRef<HTMLDivElement>(null);
 
@@ -245,10 +272,61 @@ export function LessonPlannerCalendar({
           startDate: new Date(event.startDate),
           endDate: new Date(event.endDate)
         }));
-        setCalendarEvents(eventsWithDates);
+        const merged = (() => {
+          const important = readImportantDates();
+          if (!important.length) {
+            return eventsWithDates.filter((e: CalendarEvent) => e.type !== 'key-date');
+          }
+          const withoutStale = eventsWithDates.filter((e: CalendarEvent) => e.type !== 'key-date');
+          const keyEvents = important.map((d) => {
+            const mapped = importantDateToCalendarEvent(d);
+            return {
+              id: mapped.id,
+              title: mapped.title,
+              startDate: mapped.startDate,
+              endDate: mapped.endDate,
+              type: 'key-date' as const,
+              description: mapped.description,
+              color: mapped.color,
+              orgId: mapped.orgId,
+              keyStage: mapped.keyStage,
+              importantDateId: mapped.importantDateId,
+              attendReminder: mapped.attendReminder,
+            };
+          });
+          return [...withoutStale, ...keyEvents];
+        })();
+        setCalendarEvents(merged);
       } catch (error) {
         console.error('Error loading calendar events:', error);
         setCalendarEvents([]);
+      }
+    } else {
+      // Still surface Important dates if the class has none yet
+      try {
+        const important = readImportantDates();
+        if (important.length) {
+          setCalendarEvents(
+            important.map((d) => {
+              const mapped = importantDateToCalendarEvent(d);
+              return {
+                id: mapped.id,
+                title: mapped.title,
+                startDate: mapped.startDate,
+                endDate: mapped.endDate,
+                type: 'key-date' as const,
+                description: mapped.description,
+                color: mapped.color,
+                orgId: mapped.orgId,
+                keyStage: mapped.keyStage,
+                importantDateId: mapped.importantDateId,
+                attendReminder: mapped.attendReminder,
+              };
+            }),
+          );
+        }
+      } catch {
+        /* ignore */
       }
     }
   }, [className]);
@@ -263,6 +341,69 @@ export function LessonPlannerCalendar({
   const saveCalendarEvents = (events: CalendarEvent[]) => {
     localStorage.setItem(`calendar-events-${className}`, JSON.stringify(events));
     setCalendarEvents(events);
+  };
+
+  /** Merge Important dates (partner key dates) onto the calendar event list. */
+  const mergeImportantDatesOntoCalendar = (baseEvents: CalendarEvent[]): CalendarEvent[] => {
+    const important = readImportantDates();
+    if (!important.length) {
+      return baseEvents.filter((e) => e.type !== 'key-date');
+    }
+    const withoutStaleKeyDates = baseEvents.filter((e) => e.type !== 'key-date');
+    const keyEvents: CalendarEvent[] = important.map((d) => {
+      const mapped = importantDateToCalendarEvent(d);
+      return {
+        id: mapped.id,
+        title: mapped.title,
+        startDate: mapped.startDate,
+        endDate: mapped.endDate,
+        type: 'key-date' as const,
+        description: mapped.description,
+        color: mapped.color,
+        orgId: mapped.orgId,
+        keyStage: mapped.keyStage,
+        importantDateId: mapped.importantDateId,
+        attendReminder: mapped.attendReminder,
+      };
+    });
+    return [...withoutStaleKeyDates, ...keyEvents];
+  };
+
+  // Keep calendar key-date events in sync with Important dates store
+  useEffect(() => {
+    const sync = () => {
+      setCalendarEvents((prev) => {
+        const merged = mergeImportantDatesOntoCalendar(prev);
+        localStorage.setItem(`calendar-events-${className}`, JSON.stringify(merged));
+        return merged;
+      });
+    };
+    window.addEventListener(CCD_IMPORTANT_DATES_UPDATED_EVENT, sync);
+    return () => window.removeEventListener(CCD_IMPORTANT_DATES_UPDATED_EVENT, sync);
+  }, [className]);
+
+  const handleKeyDatesConfirm = (selected: PartnerKeyDateSuggestion[]) => {
+    if (!keyDatesOrgId || selected.length === 0) return;
+    const touched = upsertImportantDatesFromSuggestions(selected, { attendReminder: true });
+    setCalendarEvents((prev) => {
+      const merged = mergeImportantDatesOntoCalendar(prev);
+      localStorage.setItem(`calendar-events-${className}`, JSON.stringify(merged));
+      return merged;
+    });
+    setShowKeyDatesModal(false);
+    setConfirmImportantDates({ orgId: keyDatesOrgId, dates: selected });
+    setKeyDatesOrgId('');
+    if (keyDatesSelectRef.current) keyDatesSelectRef.current.value = '';
+    toast.success(
+      `${touched.length} important date${touched.length === 1 ? '' : 's'} added · reminder set (demo)`,
+    );
+    // Jump calendar toward the earliest selected date so KS1/KS2 examples are visible
+    const earliest = [...selected].sort((a, b) => a.date.localeCompare(b.date))[0];
+    if (earliest) {
+      const [y, m] = earliest.date.split('-').map(Number);
+      setCurrentDate(new Date(y, (m || 1) - 1, 1));
+      setViewMode('month');
+    }
   };
 
   const monthStart = startOfMonth(currentDate);
@@ -1166,22 +1307,35 @@ export function LessonPlannerCalendar({
           
           {/* Events */}
           {eventsForDate.length > 0 && !isHolidayDate && !isInsetDayDate && (
-            <div className="mt-0.5">
-              {eventsForDate.slice(0, 1).map((event, idx) => (
-                <div 
-                  key={idx}
-                  className="text-xs px-1 py-0.5 truncate rounded-sm"
-                  style={{ 
-                    backgroundColor: `${event.color}20`,
-                    color: event.color
-                  }}
-                  title={event.title}
-                >
-                  {event.title}
-                </div>
-              ))}
-              {eventsForDate.length > 1 && (
-                <div className="text-xs text-gray-500">+{eventsForDate.length - 1} more</div>
+            <div className="mt-0.5 space-y-0.5">
+              {eventsForDate.slice(0, 2).map((event, idx) => {
+                const isKeyDate = event.type === 'key-date';
+                return (
+                  <div 
+                    key={idx}
+                    className={`text-xs px-1 py-0.5 truncate rounded-sm flex items-center gap-0.5 ${
+                      isKeyDate ? 'font-semibold ring-1 ring-teal-700/20' : ''
+                    }`}
+                    style={{ 
+                      backgroundColor: isKeyDate ? 'rgba(15, 118, 110, 0.12)' : `${event.color}20`,
+                      color: isKeyDate ? '#0F766E' : event.color
+                    }}
+                    title={
+                      isKeyDate
+                        ? `${event.title}${event.attendReminder ? ' · Reminder set' : ''}`
+                        : event.title
+                    }
+                    data-ccd-calendar-key-date={isKeyDate ? '1' : undefined}
+                  >
+                    {isKeyDate ? (
+                      <Star className="h-2.5 w-2.5 shrink-0" fill="currentColor" aria-hidden />
+                    ) : null}
+                    <span className="truncate">{event.title}</span>
+                  </div>
+                );
+              })}
+              {eventsForDate.length > 2 && (
+                <div className="text-xs text-gray-500">+{eventsForDate.length - 2} more</div>
               )}
             </div>
           )}
@@ -2283,6 +2437,59 @@ export function LessonPlannerCalendar({
           </div>
         </div>
 
+        {/* Partner key dates — populate Important dates across months */}
+        <div
+          className="px-3 sm:px-5 md:px-6 pb-3 sm:pb-3.5"
+          data-ccd-key-dates-populate="1"
+        >
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3 rounded-xl border border-[#E5EDE8] bg-white/80 px-3 py-2.5 sm:px-4">
+            <div className="min-w-0 flex-1">
+              <label
+                htmlFor="ccd-populate-key-dates"
+                className="block text-xs font-semibold text-[#002D24]"
+              >
+                Populate with key dates from
+              </label>
+              <p className="mt-0.5 text-[11px] text-gray-500">
+                KS1 &amp; KS2 partner examples across the year — tick to attend &amp; remind
+              </p>
+            </div>
+            <div className="relative w-full sm:w-64 shrink-0">
+              <select
+                id="ccd-populate-key-dates"
+                ref={keyDatesSelectRef}
+                data-ccd-key-dates-select="1"
+                defaultValue=""
+                onChange={(e) => {
+                  const value = e.target.value;
+                  if (!value) return;
+                  setKeyDatesOrgId(value);
+                  setShowKeyDatesModal(true);
+                }}
+                className="w-full min-h-[40px] appearance-none rounded-lg border border-[#002D24]/20 bg-white py-2 pl-3 pr-9 text-sm text-[#002D24] focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20"
+              >
+                <option value="">Choose a partner…</option>
+                {getPartnerHubsForKeyDates().map((hub) => (
+                  <option key={hub.slug} value={hub.slug}>
+                    {hub.shortName}
+                    {hub.paid ? ' (paid)' : ''}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#002D24]/50" />
+            </div>
+          </div>
+          <ImportantDatesPanel
+            className="mt-2.5"
+            compact
+            onJumpToDate={(date) => {
+              setCurrentDate(date);
+              setViewMode('month');
+              onDateSelect(date);
+            }}
+          />
+        </div>
+
         {/* Secondary row: period nav + view switcher */}
         <div className="px-3 sm:px-5 md:px-6 pb-3 sm:pb-4 flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between">
           <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
@@ -2625,6 +2832,24 @@ export function LessonPlannerCalendar({
           className={className}
         />
       )}
+
+      {/* Partner key dates populate flow */}
+      <PartnerKeyDatesModal
+        isOpen={showKeyDatesModal}
+        orgId={keyDatesOrgId || null}
+        onClose={() => {
+          setShowKeyDatesModal(false);
+          setKeyDatesOrgId('');
+          if (keyDatesSelectRef.current) keyDatesSelectRef.current.value = '';
+        }}
+        onConfirm={handleKeyDatesConfirm}
+      />
+      <ImportantDatesConfirmPopup
+        isOpen={Boolean(confirmImportantDates)}
+        orgId={confirmImportantDates?.orgId || null}
+        dates={confirmImportantDates?.dates || []}
+        onClose={() => setConfirmImportantDates(null)}
+      />
 
       {/* Lesson Details Modal */}
       {selectedLessonForDetails && (

@@ -7,9 +7,13 @@ interface CalendarEvent {
   title: string;
   startDate: Date;
   endDate: Date;
-  type: 'holiday' | 'inset' | 'event';
+  type: 'holiday' | 'inset' | 'event' | 'key-date';
   description?: string;
   color: string;
+  orgId?: string;
+  keyStage?: string;
+  importantDateId?: string;
+  attendReminder?: boolean;
 }
 
 interface EventModalProps {
@@ -27,6 +31,7 @@ const EVENT_COLORS = {
   'holiday': '#EF4444', // Red
   'inset': '#8B5CF6', // Purple
   'event': '#F59E0B', // Amber
+  'key-date': '#0F766E', // Teal — partner important dates
 };
 
 export function EventModal({
@@ -153,12 +158,15 @@ export function EventModal({
             </label>
             <select
               value={event.type}
-              onChange={(e) => setEvent(prev => ({ ...prev, type: e.target.value as 'holiday' | 'inset' | 'event' }))}
+              onChange={(e) => setEvent(prev => ({ ...prev, type: e.target.value as 'holiday' | 'inset' | 'event' | 'key-date' }))}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
             >
               <option value="holiday">Holiday</option>
               <option value="inset">Inset Day</option>
               <option value="event">Event</option>
+              {event.type === 'key-date' ? (
+                <option value="key-date">Important date (partner)</option>
+              ) : null}
             </select>
           </div>
           

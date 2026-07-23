@@ -99,11 +99,20 @@ export function Dashboard() {
       const sheetId = parsed.sheetId || 'Year5';
       setCurrentSheetInfo({
         sheet: sheetId,
-        display: sheetId === 'Year5' ? 'Year 5' : sheetId,
+        display:
+          sheetId === 'Year5'
+            ? 'Year 5'
+            : sheetId === 'Year6'
+              ? 'Year 6'
+              : /^Year\d+$/i.test(sheetId)
+                ? sheetId.replace(/^(Year)(\d+)$/i, 'Year $2')
+                : sheetId,
         eyfs: `${sheetId} Statements`,
       });
       if (sheetId === 'Year5' || String(sheetId).includes('Year 5')) {
         setSelectedCategory('Romeo and Juliet — Explore');
+      } else if (sheetId === 'Year6' || String(sheetId).includes('Year 6')) {
+        setSelectedCategory('How to Build an Orchestra — Listening');
       } else if (String(sheetId).toLowerCase().includes('drama')) {
         setSelectedCategory('Blood Brothers — Explore');
       }

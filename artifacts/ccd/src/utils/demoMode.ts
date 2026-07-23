@@ -84,6 +84,7 @@ const DEMO_OWNED_KEYS = [
   'ccd-starred-first-activity-categories',
   'ccd-starred-first-activity-global',
   'ccd-partner-planning-v1',
+  'ccd-important-dates-v1',
 ];
 
 /**
@@ -98,6 +99,7 @@ const DEMO_OWNED_PREFIXES = [
   'units-',
   'half-terms-',
   'trash-lessons-',
+  'calendar-events-',
   // Demo seed markers for partner hubs + curated packs (cleared then re-seeded)
   'ccd-roh-',
   'ccd-lso-',
@@ -106,6 +108,7 @@ const DEMO_OWNED_PREFIXES = [
   'ccd-ocr-',
   'ccd-starred-',
   'ccd-partner-planning-',
+  'ccd-important-dates-',
   'prototype-objectives-',
 ];
 
