@@ -1,6 +1,6 @@
 {
-  "title": "CCDesigner \u2014 Feature demo for external organisations",
-  "generatedAt": "2026-07-23T18:54:34.045Z",
+  "title": "CCDesigner — Feature demo for external organisations",
+  "generatedAt": "2026-07-23T19:06:00.000Z",
   "baseUrl": "http://127.0.0.1:5173",
   "canvas": {
     "width": 1920,
@@ -17,69 +17,22 @@
     "email": "rob@rhythmstix.co.uk",
     "web": "https://www.ccdesigner.co.uk"
   },
-  "businessNote": "CCDesigner only takes a cut of 10\u201320% of paid resources.",
+  "businessNote": "CCDesigner only takes a cut of 10–20% of paid resources.",
   "disclaimer": "Partners and logos are shown for demonstration only and do not imply endorsement.",
   "chapters": [
-    {
-      "id": "01-logo",
-      "title": "CCDesigner",
-      "caption": "Forest & lime brand intro"
-    },
-    {
-      "id": "02-disclaimer",
-      "title": "Demonstration only",
-      "caption": "For potential partners & funding \u2014 no endorsement implied"
-    },
-    {
-      "id": "03-landing",
-      "title": "Exceptional lessons start with connection",
-      "caption": "Real CCDesigner first page + live disclaimer"
-    },
-    {
-      "id": "04-context",
-      "title": "Arts organisations together",
-      "caption": "One place for planning"
-    },
-    {
-      "id": "05-action",
-      "title": "Let's see the app in action",
-      "caption": "Explore the working prototype"
-    },
-    {
-      "id": "06-free-hubs",
-      "title": "Free partner resources",
-      "caption": "LSO \u00b7 ROH \u2192 libraries \u2192 term \u2192 calendar"
-    },
-    {
-      "id": "09-calendar",
-      "title": "Populate with key dates from",
-      "caption": "Partner dropdown \u00b7 KS1/KS2 \u00b7 Important dates"
-    },
-    {
-      "id": "07-create",
-      "title": "Create activity & lesson",
-      "caption": "EYFS / KS2 / KS3 \u2014 every field + live links"
-    },
-    {
-      "id": "08-settings",
-      "title": "Customisable to key stage",
-      "caption": "Settings \u2192 Year Groups"
-    },
-    {
-      "id": "10-paid",
-      "title": "Paid partners",
-      "caption": "We Teach Drama & iCompose \u2014 CCDesigner takes 10\u201320%"
-    },
-    {
-      "id": "11-orgs",
-      "title": "Your organisation hub",
-      "caption": "Admin backend + template pages for free resources"
-    },
-    {
-      "id": "12-close",
-      "title": "Get in touch",
-      "caption": "rob@rhythmstix.co.uk \u00b7 www.ccdesigner.co.uk"
-    }
+    { "id": "01-logo", "title": "CCDesigner", "caption": "Brand intro" },
+    { "id": "02-disclaimer", "title": "Demonstration only", "caption": "For potential partners & funding — no endorsement implied" },
+    { "id": "03-landing", "title": "Exceptional lessons start with connection", "caption": "Live first page" },
+    { "id": "04-ideas", "title": "Keep every lightning moment", "caption": "Excellent ideas · melting pot for arts planning" },
+    { "id": "05-context", "title": "Arts organisations together", "caption": "One place for planning" },
+    { "id": "06-action", "title": "Let's see the app in action", "caption": "Explore the working prototype" },
+    { "id": "08-free", "title": "Free partner resources", "caption": "LSO · ROH → libraries → term" },
+    { "id": "09-key-dates", "title": "Populate with key dates", "caption": "Partner dropdown · KS1/KS2 · Important dates" },
+    { "id": "07-create", "title": "Build your own", "caption": "Create activity & lesson" },
+    { "id": "08-settings", "title": "Customisable to key stage", "caption": "Settings · year-group folders" },
+    { "id": "10-paid", "title": "Paid partners", "caption": "We Teach Drama & iCompose — 10–20% cut" },
+    { "id": "11-orgs", "title": "For organisations", "caption": "Own hub + admin backend templates" },
+    { "id": "12-close", "title": "Get in touch", "caption": "rob@rhythmstix.co.uk · www.ccdesigner.co.uk" }
   ],
   "video": {
     "webm": "ccdesigner-feature-demo.webm",
@@ -89,15 +42,16 @@
     "frames/01-logo.png",
     "frames/02-disclaimer.png",
     "frames/03-landing.png",
-    "frames/04-context.png",
-    "frames/05-action.png",
-    "frames/06-free-hubs.png",
-    "frames/09-calendar.png",
-    "frames/07-create.png",
-    "frames/08-settings.png",
-    "frames/10-paid.png",
+    "frames/04-ideas.png",
+    "frames/05-context.png",
+    "frames/06-action.png",
+    "frames/08-free-slide.png",
+    "frames/09-key-dates-slide.png",
+    "frames/07-create-slide.png",
+    "frames/08-settings-slide.png",
+    "frames/10-paid-slide.png",
     "frames/11-orgs.png",
     "frames/12-close.png"
   ],
-  "durationSeconds": 234
+  "durationSeconds": 117
 }

@@ -137,7 +137,8 @@ function slideShellCss() {
     }
     .frame {
       width: 1920px; height: 1080px; position: relative; overflow: hidden;
-      padding: 110px 140px;
+      /* Top padding clears absolute corner logo (48 + 88) so headlines stay legible. */
+      padding: 160px 140px 110px;
       display: flex; flex-direction: column; justify-content: center;
     }
     .kb {
@@ -148,14 +149,18 @@ function slideShellCss() {
       animation: kenBurns 9s ease-in-out forwards;
       z-index: 0;
     }
-    .frame > *:not(.kb) { position: relative; z-index: 1; }
-    .mark {
-      position: absolute; top: 52px; left: 68px; z-index: 2;
+    /* Exclude .mark so corner logo stays absolute top-left (not in text flow). */
+    .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
+    .frame > .mark {
+      position: absolute; top: 48px; left: 56px; z-index: 3;
       width: 88px; height: 88px; border-radius: 999px;
       border: 3px solid var(--accent); background: var(--bg-forest);
       display: grid; place-items: center;
       font-size: 28px; font-weight: 800; color: #FFFFFF;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      letter-spacing: -0.02em;
       opacity: 0; animation: fadeIn 0.7s ease 0.12s forwards;
+      pointer-events: none;
     }
     .eyebrow {
       font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase;
@@ -340,13 +345,14 @@ export function heroConnectionHtml(heroImageUrl = HERO_IMAGE_URL) {
       linear-gradient(90deg, rgba(0,45,36,0.86) 0%, rgba(0,45,36,0.58) 50%, rgba(0,45,36,0.78) 100%),
       linear-gradient(180deg, rgba(0,45,36,0.28) 0%, rgba(0,45,36,0.45) 45%, rgba(0,45,36,0.92) 100%);
   }
-  .mark {
-    position: absolute; top: 52px; left: 68px; z-index: 2;
+  .stage > .mark {
+    position: absolute; top: 48px; left: 56px; z-index: 3;
     width: 88px; height: 88px; border-radius: 999px;
     border: 3px solid #B6FF7E; background: #002D24;
     display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #fff;
-    font-family: "Source Sans 3", system-ui, sans-serif;
+    font-family: "Source Sans 3", system-ui, sans-serif; letter-spacing: -0.02em;
     opacity: 0; animation: fadeIn 0.7s ease 0.15s forwards;
+    pointer-events: none;
   }
   .copy {
     position: relative; z-index: 1; height: 100%;
@@ -394,7 +400,7 @@ export function closingSlideHtml() {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1920px; height: 1080px; overflow: hidden; background: #05231e; }
-  .frame { width: 1920px; height: 1080px; position: relative; overflow: hidden; padding: 100px 140px; display: flex; flex-direction: column; justify-content: center; }
+  .frame { width: 1920px; height: 1080px; position: relative; overflow: hidden; padding: 160px 140px 100px; display: flex; flex-direction: column; justify-content: center; }
   .kb {
     position: absolute; inset: -10%;
     background:
@@ -402,12 +408,14 @@ export function closingSlideHtml() {
       linear-gradient(155deg, #05231e 0%, #002D24 50%, #05231e 100%);
     animation: kenBurns 9s ease-in-out forwards;
   }
-  .frame > *:not(.kb) { position: relative; z-index: 1; }
-  .mark {
-    position: absolute; top: 52px; left: 68px; z-index: 2;
+  .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
+  .frame > .mark {
+    position: absolute; top: 48px; left: 56px; z-index: 3;
     width: 88px; height: 88px; border-radius: 999px; border: 3px solid #B6FF7E; background: #002D24;
     display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #fff;
+    font-family: "Source Sans 3", system-ui, sans-serif; letter-spacing: -0.02em;
     opacity: 0; animation: fadeIn 0.7s ease 0.1s forwards;
+    pointer-events: none;
   }
   .eyebrow {
     font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase;
@@ -463,13 +471,27 @@ export function closingSlideHtml() {
 </body></html>`;
 }
 
-export function contextSlideHtml() {
+export function contextPressureSlideHtml() {
   return slideHtml({
-    eyebrow: 'The opportunity',
-    title: 'Arts organisations together — one place for planning',
-    body: 'Teachers, music hubs and major arts partners collaborating so curriculum reach is richer and joined-up.',
+    eyebrow: 'The challenge',
+    title: 'Performing arts under pressure',
+    body: 'In schools and further education, specialist expertise and opportunities are harder to reach.',
     compactTitle: true,
   });
+}
+
+export function contextResponseSlideHtml() {
+  return slideHtml({
+    eyebrow: 'The response',
+    title: 'One place to plan and connect',
+    body: 'Music hubs and arts organisations together — so great teaching ideas stay alive.',
+    compactTitle: true,
+  });
+}
+
+/** @deprecated Use contextPressureSlideHtml / contextResponseSlideHtml */
+export function contextSlideHtml() {
+  return contextResponseSlideHtml();
 }
 
 /** Sleek animated slide — capture lightning moments / melting pot of ideas. */
@@ -484,7 +506,7 @@ export function ideasSlideHtml() {
   html, body { width: 1920px; height: 1080px; overflow: hidden; background: #05231e; }
   .frame {
     width: 1920px; height: 1080px; position: relative; overflow: hidden;
-    padding: 120px 140px; display: flex; flex-direction: column; justify-content: center;
+    padding: 160px 140px 120px; display: flex; flex-direction: column; justify-content: center;
   }
   .kb {
     position: absolute; inset: -12%;
@@ -494,14 +516,15 @@ export function ideasSlideHtml() {
       linear-gradient(155deg, #05231e 0%, #002D24 48%, #05231e 100%);
     animation: kenBurns 9s ease-in-out forwards;
   }
-  .frame > *:not(.kb) { position: relative; z-index: 1; }
-  .mark {
-    position: absolute; top: 52px; left: 68px; z-index: 2;
+  .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
+  .frame > .mark {
+    position: absolute; top: 48px; left: 56px; z-index: 3;
     width: 88px; height: 88px; border-radius: 999px;
     border: 3px solid #B6FF7E; background: #002D24;
     display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #fff;
-    font-family: "Source Sans 3", system-ui, sans-serif;
+    font-family: "Source Sans 3", system-ui, sans-serif; letter-spacing: -0.02em;
     opacity: 0; animation: fadeIn 0.7s ease 0.1s forwards;
+    pointer-events: none;
   }
   .eyebrow {
     font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase;
@@ -566,7 +589,7 @@ export function ideasSlideHtml() {
     <div class="eyebrow">For every teacher</div>
     <p class="hook">Ever had an <em>excellent idea</em> — then felt it slip away?</p>
     <p class="promise">Keep every <strong>lightning moment</strong> in one place.</p>
-    <p class="tag">A melting pot of ideas for arts planning — captured, shaped, shared.</p>
+    <p class="tag">A melting pot of ideas for arts planning.</p>
   </div>
 </body></html>`;
 }

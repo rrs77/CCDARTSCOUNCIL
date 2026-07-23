@@ -1,9 +1,10 @@
 /**
  * CCDesigner feature demo recorder — 1920×1080 fixed canvas.
  *
- * Story: context → logo/action → free hubs (LSO, ROH) → create activity/lesson
- * (EYFS/KS2/KS3) → settings → calendar → paid (WTD, iCompose, 10–20% cut) →
- * org advert → closing with contact URLs (not "thank you").
+ * Linear pathway:
+ *   logo → context pressure → context response → disclaimer → live login →
+ *   ideas → action → explore → free hubs → key dates → settings → create →
+ *   calendar week → paid → org hub → closing contacts (not "thank you").
  */
 import { chromium } from 'playwright';
 import fs from 'node:fs';
@@ -14,7 +15,6 @@ import {
   VIEWPORT,
   GATE_KEY,
   DEMO_MODE_KEY,
-  HERO_IMAGE_URL,
   hold,
   dismissIfVisible,
   ensureCursor,
@@ -24,6 +24,9 @@ import {
   partnerDisclaimerSlideHtml,
   slideHtml,
   contextSlideHtml,
+  contextPressureSlideHtml,
+  contextResponseSlideHtml,
+  ideasSlideHtml,
   closingSlideHtml,
   smoothClick,
   clickTab,
@@ -38,18 +41,22 @@ const VIDEO_DIR = path.join(OUT_DIR, 'raw-video');
 const FRAMES_DIR = path.join(OUT_DIR, 'frames');
 
 export const CHAPTERS = [
-  { id: '01-logo', title: 'CCDesigner', caption: 'Forest & lime brand intro' },
-  { id: '02-disclaimer', title: 'Demonstration only', caption: 'For potential partners & funding — no endorsement implied' },
-  { id: '03-landing', title: 'Exceptional lessons start with connection', caption: 'Real CCDesigner first page + live disclaimer' },
-  { id: '04-context', title: 'Arts organisations together', caption: 'One place for planning' },
-  { id: '05-action', title: "Let's see the app in action", caption: 'Explore the working prototype' },
-  { id: '06-free-hubs', title: 'Free partner resources', caption: 'LSO · ROH → libraries → term → calendar' },
-  { id: '09-calendar', title: 'Populate with key dates from', caption: 'Partner dropdown · KS1/KS2 · Important dates' },
-  { id: '07-create', title: 'Create activity & lesson', caption: 'EYFS / KS2 / KS3 — every field + live links' },
-  { id: '08-settings', title: 'Customisable to key stage', caption: 'Settings → Year Groups' },
-  { id: '10-paid', title: 'Paid partners', caption: 'We Teach Drama & iCompose — CCDesigner takes 10–20%' },
-  { id: '11-orgs', title: 'Your organisation hub', caption: 'Admin backend + template pages for free resources' },
-  { id: '12-close', title: 'Get in touch', caption: 'rob@rhythmstix.co.uk · www.ccdesigner.co.uk' },
+  { id: '01-logo', title: 'CCDesigner', caption: 'Brand intro' },
+  { id: '02-pressure', title: 'Performing arts under pressure', caption: 'Schools & FE — expertise harder to reach' },
+  { id: '03-response', title: 'One place to plan and connect', caption: 'Music hubs · arts organisations · ideas kept alive' },
+  { id: '04-disclaimer', title: 'Demonstration only', caption: 'For potential partners & funding — no endorsement implied' },
+  { id: '05-landing', title: 'Exceptional lessons start with connection', caption: 'Live first page' },
+  { id: '06-ideas', title: 'Keep every lightning moment', caption: 'Excellent ideas · melting pot for arts planning' },
+  { id: '07-action', title: "Let's see the app in action", caption: 'Explore the working prototype' },
+  { id: '08-explore', title: 'Inside the prototype', caption: 'Dashboard · Half-Term Designer' },
+  { id: '09-free', title: 'Free partner resources', caption: 'LSO → libraries → term · ROH' },
+  { id: '10-key-dates', title: 'Populate with key dates', caption: 'Partner dropdown · KS1/KS2 · Important dates' },
+  { id: '11-settings', title: 'Customisable to key stage', caption: 'Settings · year-group folders' },
+  { id: '12-create', title: 'Build your own', caption: 'Create activity & lesson · live links' },
+  { id: '13-calendar', title: 'Calendar week & timetable', caption: 'Week view · add event · timetable' },
+  { id: '14-paid', title: 'Paid partners', caption: 'We Teach Drama & iCompose — 10–20% cut' },
+  { id: '15-orgs', title: 'For organisations', caption: 'Own hub + admin backend templates' },
+  { id: '16-close', title: 'Get in touch', caption: 'rob@rhythmstix.co.uk · www.ccdesigner.co.uk' },
 ];
 
 const WELCOME_DISMISS = [
@@ -260,45 +267,41 @@ async function showHubContentThroughTermAndCalendar(page) {
 }
 
 async function chapterFreeHubs(page) {
-  await setCaption(page, 'Free partner resources', 'LSO, Royal Ballet and Opera, music hubs & major arts orgs');
+  await setCaption(page, 'Free partner resources', 'Start with LSO — then into your libraries and term');
   await clickTab(page, 'our-partners');
-  await hold(page, 1400);
+  await hold(page, 1200);
 
-  // Expand music hubs
   const musicBtn = page.getByRole('button', { name: /Music hubs/i }).first();
   if (await musicBtn.isVisible({ timeout: 1200 }).catch(() => false)) {
     if ((await musicBtn.getAttribute('aria-expanded')) !== 'true') {
       await smoothClick(page, musicBtn);
-      await hold(page, 1200);
+      await hold(page, 1000);
     }
   }
   await page.mouse.wheel(0, 380);
-  await hold(page, 1200);
+  await hold(page, 900);
 
-  // LSO
   await setCaption(page, 'LSO Partner Hub', 'How to Build an Orchestra — free Discovery resources');
   await openPartnerHub(page, /London Symphony Orchestra/i, 'lso');
-  await snap(page, FRAMES_DIR, '04-lso');
+  await snap(page, FRAMES_DIR, '09-lso');
   await addFromHub(page);
 
-  // ROH
-  await setCaption(page, 'Royal Ballet and Opera', 'Free classroom resources from ROH');
-  await ensureInApp(page);
-  await openPartnerHub(page, /Royal Ballet and Opera/i, 'roh');
-  await snap(page, FRAMES_DIR, '04-roh');
-  await addFromHub(page);
-
-  // Libraries → term → calendar (live path after free hub adds)
   await ensureInApp(page);
   await showHubContentThroughTermAndCalendar(page);
 
-  // Back to hubs overview — free orgs strip
+  await setCaption(page, 'Royal Ballet and Opera', 'Another free hub — same Add pathway');
+  await ensureInApp(page);
+  await openPartnerHub(page, /Royal Ballet and Opera/i, 'roh');
+  await snap(page, FRAMES_DIR, '09-roh');
+  await hold(page, 1800);
+  await addFromHub(page).catch(() => {});
+
   await ensureInApp(page);
   await clickTab(page, 'our-partners');
   await hold(page, 1000);
-  await page.mouse.wheel(0, 500);
-  await hold(page, 1400);
-  await snap(page, FRAMES_DIR, '06-free-hubs');
+  await page.mouse.wheel(0, 420);
+  await hold(page, 1200);
+  await snap(page, FRAMES_DIR, '09-free');
 }
 
 async function fillRichEditors(page, introText, activityText) {
@@ -496,7 +499,7 @@ async function buildFullLesson(page) {
 
   await page.mouse.wheel(0, 240);
   await hold(page, 900);
-  await snap(page, FRAMES_DIR, '07-create');
+  await snap(page, FRAMES_DIR, '12-create');
 
   const saveLesson = page.getByRole('button', { name: /Save Lesson/i }).first();
   if (await saveLesson.isVisible({ timeout: 1200 }).catch(() => false)) {
@@ -504,16 +507,10 @@ async function buildFullLesson(page) {
     await hold(page, 1500);
   }
   await dismissOverlays(page);
-
-  // Brief EYFS glance
-  await setCaption(page, 'EYFS example', 'Switch year group to show early years content');
-  await selectYearGroup(page, /Reception|LKG|EYFS|Lower Kindergarten/i);
-  await clickTab(page, 'activity-library');
-  await hold(page, 1600);
 }
 
 async function showSettings(page) {
-  await setCaption(page, 'Settings', 'Customisable year groups across EYFS, KS2 and KS3');
+  await setCaption(page, 'Settings', 'Key-stage folders — customise year groups for your school');
   const settingsBtn = page.locator('[data-walkthrough="settings"]').first();
   if (await settingsBtn.isVisible({ timeout: 1800 }).catch(() => false)) {
     await smoothClick(page, settingsBtn);
@@ -524,16 +521,16 @@ async function showSettings(page) {
   const ygTab = page.getByRole('button', { name: /Year Groups/i }).first();
   if (await ygTab.isVisible({ timeout: 1800 }).catch(() => false)) {
     await smoothClick(page, ygTab);
-    await hold(page, 2000);
+    await hold(page, 2200);
   }
   await page.mouse.wheel(0, 180);
   await hold(page, 1000);
-  await snap(page, FRAMES_DIR, '08-settings');
+  await snap(page, FRAMES_DIR, '11-settings');
   await page.keyboard.press('Escape');
   await dismissOverlays(page);
 }
 
-async function chapterCalendar(page) {
+async function chapterKeyDates(page) {
   await dismissOverlays(page);
   await selectYearGroup(page, /Year 6 Music|Year 5 Music|Year 4 Music|Year 2|KS2/i);
   await dismissOverlays(page);
@@ -546,7 +543,6 @@ async function chapterCalendar(page) {
   await dismissOverlays(page);
   await hold(page, 1000);
 
-  // Hard-wait for key-dates UI — retry tab if needed
   let keyDatesSelect = page.locator('[data-ccd-key-dates-select]').first();
   if (!(await keyDatesSelect.isVisible({ timeout: 3000 }).catch(() => false))) {
     await clickTab(page, 'calendar');
@@ -567,7 +563,6 @@ async function chapterCalendar(page) {
     await hold(page, 900);
   }
 
-  // LSO — KS1 & KS2 examples across months
   await setCaption(page, 'LSO key dates', 'KS1 & KS2 examples across the year');
   await keyDatesSelect.selectOption({ value: 'lso' });
   await page.evaluate(() => {
@@ -613,7 +608,7 @@ async function chapterCalendar(page) {
   if (await confirmPopup.isVisible({ timeout: 800 }).catch(() => false)) {
     await setCaption(page, 'Suggested selections', 'Confirm list → Important dates in the app');
     await hold(page, 2200);
-    await snap(page, FRAMES_DIR, '09-confirm-popup');
+    await snap(page, FRAMES_DIR, '10-confirm-popup');
     await hold(page, 800);
     const donePopup = page.locator('[data-ccd-important-dates-confirm-done]').first();
     if (await donePopup.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -641,48 +636,57 @@ async function chapterCalendar(page) {
     await starred.scrollIntoViewIfNeeded().catch(() => {});
     await hold(page, 1600);
   }
-  await snap(page, FRAMES_DIR, '09-key-dates');
+  await snap(page, FRAMES_DIR, '10-key-dates');
+  await dismissOverlays(page);
+}
 
-  // Optional second partner (ROH)
-  await setCaption(page, 'More partners', 'Populate key dates from ROH too');
-  if (await populateRow.isVisible({ timeout: 800 }).catch(() => false)) {
-    await populateRow.scrollIntoViewIfNeeded().catch(() => {});
+async function chapterCalendarWeek(page) {
+  await dismissOverlays(page);
+  await setCaption(page, 'Calendar week', 'Week view · add an event · school timetable');
+  await clickTab(page, 'calendar');
+  await dismissOverlays(page);
+  await hold(page, 900);
+
+  const weekBtn = page.getByRole('button', { name: /^Week$/i }).first();
+  if (await weekBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await weekBtn.click({ force: true });
+    await hold(page, 1800);
   }
-  if (await keyDatesSelect.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await keyDatesSelect.selectOption({ value: 'roh' }).catch(() => {});
-    await page.evaluate(() => {
-      const el = document.querySelector('[data-ccd-key-dates-select]');
-      if (el) {
-        el.value = 'roh';
-        el.dispatchEvent(new Event('input', { bubbles: true }));
-        el.dispatchEvent(new Event('change', { bubbles: true }));
+
+  const addEvent = page
+    .getByRole('button', { name: /Add (event|Event)|New event|Create event/i })
+    .first();
+  if (await addEvent.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await setCaption(page, 'Add event', 'Drop a school or arts event onto the week');
+    await smoothClick(page, addEvent);
+    await hold(page, 1200);
+    const titleInput = page
+      .getByPlaceholder(/Title|Event name|Event title/i)
+      .or(page.locator('input[name="title"], input[name="name"]').first())
+      .first();
+    if (await titleInput.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await typeSlow(page, titleInput, 'LSO Discovery visit', { delay: 28 });
+      await hold(page, 600);
+      const saveEvent = page.getByRole('button', { name: /Save|Add Event|Create|Confirm/i }).last();
+      if (await saveEvent.isVisible({ timeout: 1200 }).catch(() => false)) {
+        await smoothClick(page, saveEvent);
+        await hold(page, 1200);
+      } else {
+        await page.keyboard.press('Escape').catch(() => {});
       }
-    }).catch(() => {});
-    await hold(page, 900);
-    const modal2 = page.locator('[data-ccd-key-dates-modal]').first();
-    if (await modal2.isVisible({ timeout: 2500 }).catch(() => false)) {
-      await hold(page, 1200);
-      const confirm2 = page.locator('[data-ccd-key-dates-confirm]').first();
-      if (await confirm2.isVisible({ timeout: 1500 }).catch(() => false)) {
-        await confirm2.click({ force: true });
-        await hold(page, 1000);
-      }
-      const done2 = page.locator('[data-ccd-important-dates-confirm-done]').first();
-      if (await done2.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await hold(page, 1600);
-        await done2.click({ force: true });
-        await hold(page, 800);
-      }
+    } else {
+      await page.keyboard.press('Escape').catch(() => {});
     }
   }
 
-  const weekBtn = page.getByRole('button', { name: /^Week$/i }).first();
-  if (await weekBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await weekBtn.click({ force: true });
-    await hold(page, 1600);
+  const weekLessons = page.getByRole('button', { name: /Week Lessons|Timetable/i }).first();
+  if (await weekLessons.isVisible({ timeout: 1200 }).catch(() => false)) {
+    await setCaption(page, 'Timetable', 'School week lessons sitting alongside events');
+    await weekLessons.click({ force: true });
+    await hold(page, 2000);
   }
 
-  await snap(page, FRAMES_DIR, '09-calendar');
+  await snap(page, FRAMES_DIR, '13-calendar');
   await dismissOverlays(page);
 }
 
@@ -704,7 +708,7 @@ async function chapterPaid(page) {
     await smoothClick(page, basket);
     await hold(page, 1400);
   }
-  await snap(page, FRAMES_DIR, '08-wtd');
+  await snap(page, FRAMES_DIR, '14-wtd');
 
   // iCompose
   await setCaption(page, 'iCompose', 'Paid courses available to purchase — 10–20% platform cut');
@@ -720,10 +724,9 @@ async function chapterPaid(page) {
   }
   const addFree = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
   if (await addFree.isVisible({ timeout: 1500 }).catch(() => false)) {
-    // show free seed option exists too, but don't redirect if paid focus
     await hold(page, 800);
   }
-  await snap(page, FRAMES_DIR, '10-paid');
+  await snap(page, FRAMES_DIR, '14-paid');
   await hold(page, 1000);
 }
 
@@ -756,7 +759,6 @@ async function main() {
 
   await page.addInitScript(({ gateKey }) => {
     try {
-      // Unlock gate only — do NOT activate demo mode yet so the real login landing shows
       sessionStorage.setItem(gateKey, '1');
       sessionStorage.setItem('ccd-prototype-welcome-seen', '1');
       sessionStorage.setItem('ccd-partners-funding-video-seen', '1');
@@ -764,17 +766,20 @@ async function main() {
     } catch { /* ignore */ }
   }, { gateKey: GATE_KEY });
 
-  // 01 Short logo mark
   console.log('01 logo');
   await recordSlide(page, logoIntroHtml(), 3200, '01-logo');
 
-  // 02 Partner/funding disclaimer — large readable type (exact copy)
-  console.log('02 disclaimer');
+  console.log('02 context pressure');
   await clearCaption(page);
-  await recordSlide(page, partnerDisclaimerSlideHtml(), 7200, '02-disclaimer');
+  await recordSlide(page, contextPressureSlideHtml(), 5200, '02-pressure');
 
-  // 03 REAL first page — disclaimer band at top, then hero
-  console.log('03 live landing + disclaimer');
+  console.log('03 context response');
+  await recordSlide(page, contextResponseSlideHtml(), 5200, '03-response');
+
+  console.log('04 disclaimer');
+  await recordSlide(page, partnerDisclaimerSlideHtml(), 7200, '04-disclaimer');
+
+  console.log('05 live landing');
   await page.goto(BASE_URL, { waitUntil: 'networkidle' });
   await hold(page, 600);
   await dismissIfVisible(page, WELCOME_DISMISS);
@@ -801,22 +806,18 @@ async function main() {
     'Demonstration only',
     'For potential partners and for funding — no endorsement implied',
   );
-  // Hold so the live first-page disclaimer is clearly readable on camera
-  await hold(page, 6500);
-  await snap(page, FRAMES_DIR, '03-landing');
+  await hold(page, 5000);
+  await snap(page, FRAMES_DIR, '05-landing');
   await clearCaption(page);
 
-  // Brief hero hold (connection + lightning) after disclaimer beat
   await page.getByText(/Exceptional lessons start with/i).first().waitFor({ timeout: 10000 }).catch(() => {});
   await page.getByText(/Exceptional lessons start with/i).first().scrollIntoViewIfNeeded().catch(() => {});
-  await hold(page, 3500);
+  await hold(page, 3200);
 
-  // 04 Context (organisations together)
-  console.log('04 context');
-  await recordSlide(page, contextSlideHtml(), 4200, '04-context');
+  console.log('06 ideas');
+  await recordSlide(page, ideasSlideHtml(), 6800, '06-ideas');
 
-  // 05 Action
-  console.log('05 action');
+  console.log('07 action');
   await recordSlide(
     page,
     slideHtml({
@@ -825,84 +826,75 @@ async function main() {
       body: 'Free partner hubs first — then planning tools — then paid resources.',
     }),
     3800,
-    '05-action',
+    '07-action',
   );
 
-  // Explore from real landing — no password on camera
-  console.log('explore prototype');
-  await page.goto(BASE_URL, { waitUntil: 'domcontentloaded' });
-  await hold(page, 700);
-  await dismissIfVisible(page, WELCOME_DISMISS);
-  await ensureCursor(page);
-  const explore = page.getByRole('button', { name: /Explore the working prototype/i });
-  await explore.waitFor({ state: 'visible', timeout: 12000 });
-  await smoothClick(page, explore);
-  const pwd = page.getByPlaceholder(/Access password/i);
-  if (await pwd.isVisible({ timeout: 700 }).catch(() => false)) {
-    // Hide prompt visually and unlock instantly (gate should already be set)
-    await page.evaluate(() => {
-      document.querySelectorAll('.fixed').forEach((el) => {
-        if (el.textContent?.includes('password') || el.textContent?.includes('Working prototype')) {
-          el.style.display = 'none';
-        }
-      });
-    }).catch(() => {});
-    await page.evaluate(({ demoKey }) => {
-      try { sessionStorage.setItem(demoKey, '1'); } catch { /* */ }
-    }, { demoKey: DEMO_MODE_KEY });
-    await page.goto(`${BASE_URL}/?demo=1`, { waitUntil: 'domcontentloaded' });
-  }
-  await page.waitForSelector('[data-tab="unit-viewer"], [data-walkthrough="year-group-selector"]', {
-    timeout: 60000,
-  });
-  await ensureCursor(page);
-  await dismissIfVisible(page, WELCOME_DISMISS);
-  await hold(page, 1000);
+  console.log('08 explore → Half-Term');
+  await enterPrototypeFast(page);
+  await setCaption(page, 'Inside the prototype', 'Half-Term Designer — your planning home');
+  await clickTab(page, 'unit-viewer');
+  await hold(page, 2200);
+  await page.mouse.wheel(0, 180);
+  await hold(page, 1400);
+  await snap(page, FRAMES_DIR, '08-explore');
+  await clearCaption(page);
 
-  // Free hubs — LSO + ROH
-  console.log('06 free hubs LSO ROH');
+  console.log('09 free hubs');
   await recordSlide(
     page,
     slideHtml({
       eyebrow: 'Free resources',
-      title: 'LSO and ROH Partner Hubs',
-      body: 'See free activities from major arts organisations — then add them into CCDesigner.',
+      title: "Let's go to the free partner hubs",
+      body: 'LSO and Royal Ballet and Opera — add free activities into CCDesigner.',
       compactTitle: true,
     }),
     4000,
-    '06-free-slide',
+    '09-free-slide',
   );
   await ensureInApp(page);
   await chapterFreeHubs(page);
 
-  // Calendar + partner key dates (immediately after free hub → libraries → term)
-  console.log('07 calendar + key dates');
+  console.log('10 key dates');
   await recordSlide(
     page,
     slideHtml({
       eyebrow: 'Calendar',
       title: 'Populate with key dates from partners',
-      body: 'Pick a partner, tick KS1 and KS2 dates to attend, confirm — they become Important dates on the calendar.',
+      body: 'Pick a partner, tick KS1 and KS2 dates, confirm — they become Important dates.',
       compactTitle: true,
     }),
-    4200,
-    '09-calendar-slide',
+    4000,
+    '10-key-dates-slide',
   );
   await ensureInApp(page);
-  await chapterCalendar(page);
+  await chapterKeyDates(page);
 
-  // Create activity + lesson
-  console.log('08 create activity + lesson');
+  console.log('11 settings');
   await recordSlide(
     page,
     slideHtml({
       eyebrow: 'Your library',
-      title: 'Build your own resources too',
-      body: 'Create activities and lessons for EYFS, KS2 and KS3 — every field, including live links.',
+      title: 'Customisable to your key stage',
+      body: 'Manage year-group folders in Settings so the library matches your school.',
       compactTitle: true,
     }),
     3800,
-    '07-create-slide',
+    '11-settings-slide',
+  );
+  await ensureInApp(page);
+  await showSettings(page);
+
+  console.log('12 create');
+  await recordSlide(
+    page,
+    slideHtml({
+      eyebrow: 'Build your own',
+      title: 'Create activities and lessons',
+      body: 'Populate every field — including live resource links — for EYFS to A-level.',
+      compactTitle: true,
+    }),
+    3800,
+    '12-create-slide',
   );
   await ensureInApp(page);
   try {
@@ -913,24 +905,22 @@ async function main() {
     await dismissOverlays(page);
   }
 
-  // Settings
-  console.log('09 settings');
+  console.log('13 calendar week');
   await recordSlide(
     page,
     slideHtml({
-      eyebrow: 'Key stages',
-      title: 'Customisable to your key stage',
-      body: 'Manage EYFS, KS2 and KS3 in Settings so the library matches your school.',
+      eyebrow: 'Planning',
+      title: 'Week view, events and timetable',
+      body: 'See the school week, add events, and keep lessons on the timetable.',
       compactTitle: true,
     }),
-    3800,
-    '08-settings-slide',
+    3600,
+    '13-calendar-slide',
   );
   await ensureInApp(page);
-  await showSettings(page);
+  await chapterCalendarWeek(page);
 
-  // Paid — end
-  console.log('10 paid WTD + iCompose');
+  console.log('14 paid');
   await recordSlide(
     page,
     slideHtml({
@@ -940,12 +930,11 @@ async function main() {
       compactTitle: true,
     }),
     4500,
-    '10-paid-slide',
+    '14-paid-slide',
   );
   await chapterPaid(page);
 
-  // Org advert
-  console.log('11 org advert');
+  console.log('15 org advert');
   await recordSlide(
     page,
     slideHtml({
@@ -955,18 +944,31 @@ async function main() {
       compactTitle: true,
     }),
     4800,
-    '11-orgs',
+    '15-orgs',
   );
 
-  // Closing — NOT thank you
-  console.log('12 close');
+  console.log('16 close');
   await clearCaption(page);
-  await recordSlide(page, closingSlideHtml(), 5600, '12-close');
+  await recordSlide(page, closingSlideHtml(), 5600, '16-close');
 
-  const videoPath = await page.video()?.path();
+  // Close context first so Playwright finalizes the webm on disk.
+  let videoPath = null;
+  try {
+    videoPath = await page.video()?.path();
+  } catch {
+    videoPath = null;
+  }
   await context.close();
   await browser.close();
 
+  if (!videoPath || !fs.existsSync(videoPath)) {
+    const candidates = fs
+      .readdirSync(VIDEO_DIR)
+      .filter((f) => f.endsWith('.webm'))
+      .map((f) => path.join(VIDEO_DIR, f))
+      .sort((a, b) => fs.statSync(b).mtimeMs - fs.statSync(a).mtimeMs);
+    videoPath = candidates[0] || null;
+  }
   if (!videoPath || !fs.existsSync(videoPath)) throw new Error('No video produced');
 
   const finalWebm = path.join(OUT_DIR, 'ccdesigner-feature-demo.webm');

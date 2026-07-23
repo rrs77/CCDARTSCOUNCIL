@@ -4,8 +4,6 @@ import { PartnerLogoStrip } from './PartnerLogoStrip';
 const HERO_IMAGE = '/login/hero-arts.jpg?v=ages-3';
 const HERO_VALUE =
   'Capture ideas. Build lessons. Connect with the best arts organisations — EYFS to A-level.';
-const HERO_LIGHTNING =
-  'Ever lost an excellent idea? Keep every lightning moment in one place — a melting pot of ideas for arts planning.';
 
 interface LoginHeroPanelProps {
   logoLetters?: string;
@@ -54,10 +52,9 @@ export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
               </span>
             </h1>
 
-            <div className="ccd-login-hero-fade ccd-login-hero-fade-delay-2 mt-3 space-y-2.5 text-sm leading-relaxed text-white/90 sm:text-base lg:max-w-md lg:text-lg">
-              <p>{HERO_VALUE}</p>
-              <p className="text-white/85">{HERO_LIGHTNING}</p>
-            </div>
+            <p className="ccd-login-hero-fade ccd-login-hero-fade-delay-2 mt-3 text-sm leading-relaxed text-white/90 sm:text-base lg:max-w-md lg:text-lg">
+              {HERO_VALUE}
+            </p>
           </div>
 
           <div className="ccd-login-hero-fade ccd-login-hero-fade-delay-3">

@@ -15,20 +15,21 @@ Shareable walkthrough of the **working CCDesigner prototype** — mostly live UI
 ## Linear pathway (story order)
 
 1. **Logo** — CCD brand intro  
-2. **Disclaimer** — partners for demonstration; for partners & funding  
-3. **Live login** — Exceptional lessons start with *connection* (short value line only; no lightning copy)  
-4. **Ideas slide** — Ever had an excellent idea… / lightning moments / melting pot  
-5. **Context slide** — arts organisations together · music hubs · one place for planning  
-6. **Action slide** — Let's see the app in action  
-7. **Live explore** — enter prototype (no password) → Half-Term Designer  
-8. **Free hubs** — slide → LSO Add → Activity/Lesson Library → term → calendar peek → brief ROH  
-9. **Key dates** — Populate with key dates → tick KS1/KS2 → Important dates  
-10. **Settings** — customisable key-stage / year-group folders  
-11. **Create** — activity + lesson with live links  
-12. **Calendar week** — week view · add event · timetable  
-13. **Paid** — We Teach Drama & iCompose; **10–20%** cut → live hubs / basket  
-14. **Organisations** — own hub + admin backend templates  
-15. **Closing** — contacts only (not “thank you”): rob@rhythmstix.co.uk · www.ccdesigner.co.uk  
+2. **Context A** — Performing arts under pressure (schools & FE; expertise harder to reach)  
+3. **Context B** — One place to plan and connect (music hubs · arts organisations · ideas kept alive)  
+4. **Disclaimer** — partners for demonstration; for partners & funding  
+5. **Live login** — Exceptional lessons start with *connection* (short value line only; no lightning copy)  
+6. **Ideas slide** — Ever had an excellent idea… / lightning moments / melting pot  
+7. **Action slide** — Let's see the app in action  
+8. **Live explore** — enter prototype (no password) → Half-Term Designer  
+9. **Free hubs** — slide → LSO Add → libraries → term → brief ROH  
+10. **Key dates** — Populate with key dates → tick KS1/KS2 → Important dates  
+11. **Settings** — customisable key-stage / year-group folders  
+12. **Create** — activity + lesson with live links  
+13. **Calendar week** — week view · add event · timetable  
+14. **Paid** — We Teach Drama & iCompose; **10–20%** cut → live hubs / basket  
+15. **Organisations** — own hub + admin backend templates  
+16. **Closing** — contacts only (not “thank you”): rob@rhythmstix.co.uk · www.ccdesigner.co.uk  
 
 ## Contact (clickable on the player page)
 
