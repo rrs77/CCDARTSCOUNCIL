@@ -191,6 +191,191 @@
       }
       .note strong { color: var(--forest); }
       a { color: var(--forest); font-weight: 600; }
+
+      /* Always-visible contact strip (video pixels aren't clickable) */
+      .contact-strip {
+        margin-top: 16px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px 16px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 18px;
+        border-radius: 16px;
+        background: linear-gradient(135deg, #002d24 0%, #0a3d32 55%, #123f35 100%);
+        color: #fff;
+        box-shadow: 0 12px 32px rgba(0, 45, 36, 0.18);
+      }
+      .contact-strip__copy {
+        min-width: min(100%, 220px);
+      }
+      .contact-strip__label {
+        margin: 0;
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: rgba(182, 255, 126, 0.92);
+      }
+      .contact-strip__title {
+        margin: 4px 0 0;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: 1.25rem;
+        font-weight: 700;
+        line-height: 1.2;
+      }
+      .contact-strip__hint {
+        margin: 4px 0 0;
+        font-size: 0.88rem;
+        color: rgba(255, 255, 255, 0.72);
+        max-width: 42ch;
+      }
+      .contact-strip__actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+      .cta-link {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 48px;
+        padding: 12px 18px;
+        border-radius: 12px;
+        font: inherit;
+        font-weight: 700;
+        font-size: 1rem;
+        text-decoration: none;
+        cursor: pointer;
+        border: 0;
+        transition: transform 0.15s ease, opacity 0.15s ease;
+      }
+      .cta-link:hover { transform: translateY(-1px); opacity: 0.94; }
+      .cta-link:focus-visible {
+        outline: 2px solid var(--lime);
+        outline-offset: 3px;
+      }
+      .cta-link--lime {
+        background: var(--lime);
+        color: #10241d;
+      }
+      .cta-link--ghost {
+        background: transparent;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.32);
+      }
+      .cta-link--forest {
+        background: var(--forest);
+        color: #fff;
+      }
+      .cta-link--outline-forest {
+        background: transparent;
+        color: var(--forest);
+        border: 1.5px solid rgba(0, 45, 36, 0.28);
+      }
+
+      /* End-of-demo contact modal */
+      .modal-backdrop {
+        position: fixed;
+        inset: 0;
+        z-index: 100;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 20px;
+        background: rgba(0, 18, 14, 0.55);
+        backdrop-filter: blur(4px);
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s ease, visibility 0.2s ease;
+      }
+      .modal-backdrop.is-open {
+        opacity: 1;
+        visibility: visible;
+      }
+      .modal {
+        width: min(100%, 440px);
+        border-radius: 20px;
+        overflow: hidden;
+        background: #fff;
+        border: 1px solid rgba(0, 45, 36, 0.15);
+        box-shadow: 0 28px 64px rgba(0, 18, 14, 0.35);
+        transform: translateY(10px) scale(0.98);
+        transition: transform 0.22s ease;
+      }
+      .modal-backdrop.is-open .modal {
+        transform: translateY(0) scale(1);
+      }
+      .modal__hero {
+        position: relative;
+        padding: 28px 28px 22px;
+        background: linear-gradient(165deg, #002d24 0%, #0a3d32 55%, #123f35 100%);
+        color: #fff;
+      }
+      .modal__eyebrow {
+        margin: 0;
+        font-size: 0.72rem;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        font-weight: 700;
+        color: rgba(182, 255, 126, 0.92);
+      }
+      .modal__title {
+        margin: 8px 0 0;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(1.45rem, 4vw, 1.85rem);
+        font-weight: 700;
+        line-height: 1.15;
+        color: #fff;
+      }
+      .modal__lede {
+        margin: 10px 0 0;
+        font-size: 0.95rem;
+        line-height: 1.45;
+        color: rgba(255, 255, 255, 0.8);
+        max-width: 34ch;
+      }
+      .modal__close {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 40px;
+        height: 40px;
+        border: 0;
+        border-radius: 10px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.7);
+        font-size: 1.4rem;
+        line-height: 1;
+        cursor: pointer;
+      }
+      .modal__close:hover {
+        background: rgba(255, 255, 255, 0.1);
+        color: #fff;
+      }
+      .modal__body {
+        padding: 22px 28px 28px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .modal__body .cta-link {
+        width: 100%;
+      }
+      .modal__note {
+        margin: 4px 0 0;
+        padding: 12px 14px;
+        border-radius: 12px;
+        background: var(--sage);
+        border: 1px solid rgba(0, 45, 36, 0.1);
+        font-size: 0.82rem;
+        line-height: 1.45;
+        color: var(--muted);
+      }
+      .modal__note strong { color: var(--forest); }
+      body.modal-open { overflow: hidden; }
     </style>
   </head>
   <body>
@@ -218,11 +403,38 @@
           <div class="btn-row">
             <button class="primary" id="playBtn" type="button">Play demo</button>
             <button class="ghost" id="stillModeBtn" type="button">Chapter stills</button>
+            <button class="ghost" id="contactBtn" type="button">Get in touch</button>
             <a class="ghost" id="downloadLink" href="ccdesigner-feature-demo.mp4" download style="text-decoration:none;display:inline-flex;align-items:center;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.28);color:#fff;font-weight:700;">Download MP4</a>
           </div>
           <div class="caption" id="liveCaption">Loading chapters…</div>
         </div>
       </div>
+
+      <!-- Always-visible active links (closing slide URLs in the MP4 are display-only) -->
+      <aside class="contact-strip" aria-label="Contact CCDesigner">
+        <div class="contact-strip__copy">
+          <p class="contact-strip__label">Get in touch</p>
+          <p class="contact-strip__title">Email &amp; web links</p>
+          <p class="contact-strip__hint">
+            Video pixels aren’t clickable — use these working links anytime, or after the closing slide.
+          </p>
+        </div>
+        <div class="contact-strip__actions">
+          <a
+            class="cta-link cta-link--lime"
+            id="stripMailto"
+            href="mailto:rob@rhythmstix.co.uk?subject=CCDesigner%20Query"
+          >Email rob@rhythmstix.co.uk</a>
+          <a
+            class="cta-link cta-link--ghost"
+            id="stripWeb"
+            href="https://www.ccdesigner.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+          >www.ccdesigner.co.uk</a>
+          <button class="cta-link cta-link--ghost" id="stripModalBtn" type="button">Open contact</button>
+        </div>
+      </aside>
 
       <div class="chapters" id="chapters"></div>
 
@@ -234,26 +446,87 @@
         <br /><br />
         <strong>Palette:</strong> forest <code>#002D24</code> / <code>#05231e</code>, text <code>#FFFFFF</code>, accent lime <code>#B6FF7E</code>.
         Fixed <strong>1920×1080</strong> video frames (not responsive).<br /><br />
-        <strong>Story:</strong> logo → <em>partner/funding disclaimer</em> (large + live first page) → connection hero → context → action → live UI (free LSO/ROH first) →
-        create activity/lesson → Settings → calendar → paid (WTD &amp; iCompose, 10–20% cut) → org hub → contact closing.<br /><br />
+        <strong>Story:</strong> logo → disclaimer → live login (connection) → ideas → context → action →
+        explore (Half-Term) → free hubs (LSO → libraries → ROH) → key dates → settings → create →
+        calendar week → paid (10–20%) → org hub → contact closing.<br /><br />
         <strong>Disclaimer:</strong> Partner logos are for demonstration only and do not imply endorsement.
       </div>
     </div>
 
+    <div
+      class="modal-backdrop"
+      id="contactModal"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="contactModalTitle"
+      aria-hidden="true"
+      hidden
+    >
+      <div class="modal" role="document">
+        <div class="modal__hero">
+          <button class="modal__close" id="contactModalClose" type="button" aria-label="Close contact">×</button>
+          <p class="modal__eyebrow">End of demo</p>
+          <h2 class="modal__title" id="contactModalTitle">Get in touch</h2>
+          <p class="modal__lede">
+            Reach Rob directly — the closing slide shows these details; here they’re active links.
+          </p>
+        </div>
+        <div class="modal__body">
+          <a
+            class="cta-link cta-link--lime"
+            id="modalMailto"
+            href="mailto:rob@rhythmstix.co.uk?subject=CCDesigner%20Query"
+          >Email rob@rhythmstix.co.uk</a>
+          <a
+            class="cta-link cta-link--forest"
+            id="modalWeb"
+            href="https://www.ccdesigner.co.uk"
+            target="_blank"
+            rel="noopener noreferrer"
+          >Visit www.ccdesigner.co.uk</a>
+          <button class="cta-link cta-link--outline-forest" id="contactModalDismiss" type="button">
+            Continue watching
+          </button>
+          <p class="modal__note">
+            <strong>Subject prefilled:</strong> CCDesigner Query — same as the main site contact links.
+          </p>
+        </div>
+      </div>
+    </div>
+
     <script>
+      const CONTACT_EMAIL = "rob@rhythmstix.co.uk";
+      const CONTACT_SUBJECT = "CCDesigner Query";
+      const CONTACT_WEB = "https://www.ccdesigner.co.uk";
+
+      /** Same shape as `buildQueryMailto` in src/utils/mailto.ts */
+      function buildQueryMailto(email = CONTACT_EMAIL, subject = CONTACT_SUBJECT) {
+        const to = typeof email === "string" ? email.trim() : "";
+        const safeTo =
+          to && !to.includes("://") && !/\s/.test(to) ? to : CONTACT_EMAIL;
+        const safeSubject =
+          typeof subject === "string" && subject.trim()
+            ? subject.trim()
+            : CONTACT_SUBJECT;
+        return `mailto:${safeTo}?subject=${encodeURIComponent(safeSubject)}`;
+      }
+
       const FALLBACK_CHAPTERS = [
-        { id: "01-logo", title: "CCDesigner", caption: "Forest & lime brand intro", at: 0 },
+        { id: "01-logo", title: "CCDesigner", caption: "Brand intro", at: 0 },
         { id: "02-disclaimer", title: "Demonstration only", caption: "For potential partners & funding", at: 4 },
-        { id: "03-landing", title: "Exceptional lessons start with connection", caption: "Real first page + live disclaimer", at: 12 },
-        { id: "04-context", title: "Arts organisations together", caption: "One place for planning", at: 20 },
-        { id: "05-action", title: "Let's see the app in action", caption: "Explore the working prototype", at: 28 },
-        { id: "06-free-hubs", title: "Free partner resources", caption: "LSO · ROH → libraries → term", at: 36 },
-        { id: "07-create", title: "Create activity & lesson", caption: "EYFS / KS2 / KS3 + live links", at: 80 },
-        { id: "08-settings", title: "Customisable to key stage", caption: "Settings → Year Groups", at: 125 },
-        { id: "09-calendar", title: "Calendar key dates", caption: "Populate · tick · Important dates", at: 145 },
-        { id: "10-paid", title: "Paid partners", caption: "WTD & iCompose — 10–20% cut", at: 160 },
-        { id: "11-orgs", title: "Your organisation hub", caption: "Admin backend + template pages", at: 190 },
-        { id: "12-close", title: "Get in touch", caption: "rob@rhythmstix.co.uk · www.ccdesigner.co.uk", at: 205 },
+        { id: "03-landing", title: "Exceptional lessons start with connection", caption: "Live first page", at: 12 },
+        { id: "04-ideas", title: "Keep every lightning moment", caption: "Excellent ideas · melting pot", at: 20 },
+        { id: "05-context", title: "Arts organisations together", caption: "One place for planning", at: 28 },
+        { id: "06-action", title: "Let's see the app in action", caption: "Explore the working prototype", at: 34 },
+        { id: "07-explore", title: "Inside the prototype", caption: "Dashboard · Half-Term Designer", at: 40 },
+        { id: "08-free", title: "Free partner resources", caption: "LSO → libraries → term · ROH", at: 48 },
+        { id: "09-key-dates", title: "Populate with key dates", caption: "Partner · KS1/KS2 · Important dates", at: 90 },
+        { id: "10-settings", title: "Customisable to key stage", caption: "Settings · year-group folders", at: 120 },
+        { id: "11-create", title: "Build your own", caption: "Create activity & lesson", at: 135 },
+        { id: "12-calendar", title: "Calendar week & timetable", caption: "Week · add event · timetable", at: 175 },
+        { id: "13-paid", title: "Paid partners", caption: "WTD & iCompose — 10–20% cut", at: 195 },
+        { id: "14-orgs", title: "For organisations", caption: "Own hub + admin backend", at: 220 },
+        { id: "15-close", title: "Get in touch", caption: "rob@rhythmstix.co.uk · www.ccdesigner.co.uk", at: 235 },
       ];
 
       const video = document.getElementById("video");
@@ -262,12 +535,56 @@
       const liveCaption = document.getElementById("liveCaption");
       const playBtn = document.getElementById("playBtn");
       const stillModeBtn = document.getElementById("stillModeBtn");
+      const contactBtn = document.getElementById("contactBtn");
+      const stripModalBtn = document.getElementById("stripModalBtn");
       const downloadLink = document.getElementById("downloadLink");
+      const contactModal = document.getElementById("contactModal");
+      const contactModalClose = document.getElementById("contactModalClose");
+      const contactModalDismiss = document.getElementById("contactModalDismiss");
+
+      const mailtoHref = buildQueryMailto();
+      ["stripMailto", "modalMailto"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.href = mailtoHref;
+      });
+      ["stripWeb", "modalWeb"].forEach((id) => {
+        const el = document.getElementById(id);
+        if (el) el.href = CONTACT_WEB;
+      });
 
       let chapters = FALLBACK_CHAPTERS;
       let stillMode = false;
       let stillIndex = 0;
       let stillTimer = null;
+      let contactModalOpenedOnce = false;
+      let lastActiveChapter = -1;
+
+      function isClosingChapter(i) {
+        const c = chapters[i];
+        if (!c) return false;
+        if (i === chapters.length - 1) return true;
+        const id = String(c.id || "").toLowerCase();
+        const title = String(c.title || "").toLowerCase();
+        return id.includes("close") || title.includes("get in touch") || title.includes("contact");
+      }
+
+      function openContactModal() {
+        contactModal.hidden = false;
+        contactModal.classList.add("is-open");
+        contactModal.setAttribute("aria-hidden", "false");
+        document.body.classList.add("modal-open");
+        contactModalOpenedOnce = true;
+        contactModalClose.focus();
+      }
+
+      function closeContactModal() {
+        contactModal.classList.remove("is-open");
+        contactModal.setAttribute("aria-hidden", "true");
+        document.body.classList.remove("modal-open");
+        window.setTimeout(() => {
+          if (!contactModal.classList.contains("is-open")) contactModal.hidden = true;
+        }, 220);
+      }
 
       async function loadManifest() {
         try {
@@ -311,6 +628,12 @@
         });
         const c = chapters[i];
         if (c) liveCaption.textContent = `${c.title} — ${c.caption}`;
+
+        // Open contact modal once when the viewer reaches the closing chapter
+        if (isClosingChapter(i) && lastActiveChapter !== i && !contactModalOpenedOnce) {
+          openContactModal();
+        }
+        lastActiveChapter = i;
       }
 
       function jumpToChapter(i) {
@@ -365,6 +688,24 @@
         else enterStillMode();
       });
 
+      contactBtn.addEventListener("click", openContactModal);
+      stripModalBtn.addEventListener("click", openContactModal);
+      contactModalClose.addEventListener("click", closeContactModal);
+      contactModalDismiss.addEventListener("click", closeContactModal);
+      contactModal.addEventListener("click", (e) => {
+        if (e.target === contactModal) closeContactModal();
+      });
+      window.addEventListener("keydown", (e) => {
+        if (e.key === "Escape" && contactModal.classList.contains("is-open")) {
+          closeContactModal();
+        }
+      });
+
+      // Deep-link: ?contact=1 or #contact opens the modal on load
+      if (/[?&]contact=1(?:&|$)/.test(location.search) || location.hash === "#contact") {
+        openContactModal();
+      }
+
       chaptersEl.addEventListener("click", (e) => {
         const btn = e.target.closest(".chapter");
         if (!btn) return;
@@ -378,6 +719,10 @@
           if (video.currentTime >= (chapters[i].at || 0)) idx = i;
         }
         setActive(idx);
+      });
+
+      video.addEventListener("ended", () => {
+        openContactModal();
       });
 
       video.addEventListener("loadedmetadata", () => {
