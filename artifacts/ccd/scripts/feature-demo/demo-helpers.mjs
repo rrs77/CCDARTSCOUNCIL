@@ -43,29 +43,71 @@ export async function ensureCursor(page) {
       if (document.getElementById('ccd-demo-cursor')) return;
       const style = document.createElement('style');
       style.id = 'ccd-demo-cursor-style';
+      // Standard arrow pointer (not a green dot). Tip sits at (x,y).
+      // Subtle click ripple only — primary pointer must look like a normal cursor.
       style.textContent = `
         #ccd-demo-cursor {
           position: fixed; left: 0; top: 0; width: 28px; height: 28px;
-          margin-left: -4px; margin-top: -4px; border-radius: 50%;
-          background: rgba(182,255,126,0.95); border: 2px solid #002D24;
-          box-shadow: 0 0 0 4px rgba(182,255,126,0.3), 0 10px 28px rgba(0,0,0,0.35);
           pointer-events: none; z-index: 2147483646;
           transform: translate(-120px, -120px);
-          transition: transform 35ms linear, width 120ms ease, height 120ms ease;
+          transition: transform 35ms linear;
         }
-        #ccd-demo-cursor.down { width: 18px; height: 18px; background: #002D24; border-color: #B6FF7E; }
+        #ccd-demo-cursor svg {
+          display: block; width: 28px; height: 28px;
+          filter: drop-shadow(0 1px 1px rgba(0,0,0,0.45));
+        }
+        #ccd-demo-cursor.down svg { transform: scale(0.92); transform-origin: 2px 2px; }
+        #ccd-demo-ripple {
+          position: fixed; left: 0; top: 0; width: 10px; height: 10px;
+          margin-left: -5px; margin-top: -5px; border-radius: 50%;
+          border: 2px solid rgba(0,0,0,0.35); background: rgba(0,0,0,0.08);
+          pointer-events: none; z-index: 2147483645;
+          opacity: 0; transform: translate(-120px, -120px) scale(0.4);
+        }
+        #ccd-demo-ripple.flash {
+          animation: ccd-demo-ripple 320ms ease-out forwards;
+        }
+        @keyframes ccd-demo-ripple {
+          0% { opacity: 0.55; transform: translate(var(--ccd-rx), var(--ccd-ry)) scale(0.35); }
+          100% { opacity: 0; transform: translate(var(--ccd-rx), var(--ccd-ry)) scale(2.2); }
+        }
         html.ccd-demo-recording, html.ccd-demo-recording * { cursor: none !important; }
       `;
       document.documentElement.appendChild(style);
       document.documentElement.classList.add('ccd-demo-recording');
       const cur = document.createElement('div');
       cur.id = 'ccd-demo-cursor';
+      cur.innerHTML = `
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path
+            fill="#ffffff"
+            stroke="#111111"
+            stroke-width="1.15"
+            stroke-linejoin="round"
+            d="M4.2 2.4 L4.2 19.6 L9.1 14.9 L12.8 22.3 L15.6 21 L12 13.8 L18.8 13.8 Z"
+          />
+        </svg>`;
       document.documentElement.appendChild(cur);
+      const ripple = document.createElement('div');
+      ripple.id = 'ccd-demo-ripple';
+      document.documentElement.appendChild(ripple);
       window.__ccdMoveCursor = (x, y, down) => {
         const el = document.getElementById('ccd-demo-cursor');
         if (!el) return;
         el.style.transform = `translate(${x}px, ${y}px)`;
+        const wasDown = el.classList.contains('down');
         el.classList.toggle('down', !!down);
+        if (down && !wasDown) {
+          const r = document.getElementById('ccd-demo-ripple');
+          if (r) {
+            r.classList.remove('flash');
+            r.style.setProperty('--ccd-rx', `${x}px`);
+            r.style.setProperty('--ccd-ry', `${y}px`);
+            // reflow so animation restarts
+            void r.offsetWidth;
+            r.classList.add('flash');
+          }
+        }
       };
       window.addEventListener(
         'mousemove',

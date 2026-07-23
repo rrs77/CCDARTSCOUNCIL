@@ -24,16 +24,19 @@ Shareable walkthrough of the **working CCDesigner prototype** — mostly live UI
 8. **Explore** — Half-Term Designer home  
 9. **LSO hub** — click arts org → choose **How to Build an Orchestra** → **Add to CCDesigner**  
 10. **Activity Library** — same LSO topic activities visible  
-11. **Lesson** — those LSO activities added into a lesson (+ Lesson Library assign)  
-12. **Term overview** — lesson on Half-Term Designer  
+11. **Lesson Builder → Lesson Library** — create a named lesson from those activities, save, then show that same lesson in Lesson Library before assign  
+12. **Term overview** — lesson from Library on Half-Term Designer  
 13. **Key dates**  
 14. **Settings**  
-15. **Create** (own activity/lesson)  
+15. **Create** (own activity/lesson → Library)  
 16. **Calendar week**  
 17. **Paid** (WTD / iCompose · 10–20%)  
 18. **Organisations**  
 19. **Closing** — contacts (not thank you)  
 
+## Audio
+
+Background music is muxed at encode time from `audio/autumn-leaves-piano-improv.mp3` (user-supplied *Autumn Leaves Piano Improv*). Soft bed (~20% volume), fade in/out, looped to video length. **Rights:** clear clearance/licence before public distribution — track is not CCDesigner-owned.
 ## Contact
 
 - Email: [rob@rhythmstix.co.uk](mailto:rob@rhythmstix.co.uk?subject=CCDesigner%20Query)  

@@ -51,8 +51,8 @@ export const CHAPTERS = [
   { id: '08-explore', title: 'Inside the prototype', caption: 'Dashboard · Half-Term Designer' },
   { id: '09-lso', title: 'LSO Partner Hub', caption: 'Choose How to Build an Orchestra · Add to CCDesigner' },
   { id: '10-activities', title: 'Activity Library', caption: 'LSO topic activities in your library' },
-  { id: '11-lesson', title: 'Into a lesson', caption: 'Same LSO topic added into a lesson' },
-  { id: '12-term', title: 'Term overview', caption: 'Lesson placed on Half-Term Designer' },
+  { id: '11-lesson', title: 'Lesson Builder → Library', caption: 'Build from LSO activities · same lesson appears in Library' },
+  { id: '12-term', title: 'Term overview', caption: 'Lesson from Library placed on Half-Term Designer' },
   { id: '13-key-dates', title: 'Populate with key dates', caption: 'Partner dropdown · KS1/KS2 · Important dates' },
   { id: '14-settings', title: 'Customisable to key stage', caption: 'Settings · year-group folders' },
   { id: '15-create', title: 'Build your own', caption: 'Create activity & lesson · live links' },
@@ -225,10 +225,13 @@ async function chooseAndAddLsoTopic(page) {
 }
 
 /**
- * Core arc on camera: Activity Library (LSO pack) → Lesson with those activities → Term.
- * Long dwells — do not rush.
+ * Core arc on camera:
+ * Activity Library (LSO pack) → Lesson Builder (create) → Lesson Library (same lesson) → Term.
+ * Long dwells — do not rush. Do not skip Builder → Library.
  */
 async function showLsoActivitiesLessonAndTerm(page) {
+  const CREATED_LESSON = 'LSO — How to Build an Orchestra';
+
   await dismissOverlays(page);
   await selectYearGroup(page, /Year 6 Music|Year 6|Year 5 Music/i).catch(() => {});
   await dismissOverlays(page);
@@ -284,11 +287,11 @@ async function showLsoActivitiesLessonAndTerm(page) {
   await hold(page, 2200);
   await snap(page, FRAMES_DIR, '10-activities');
 
-  // ——— LESSON (Builder: pick LSO activities into a lesson) ———
+  // ——— LESSON BUILDER: create a named lesson from LSO activities ———
   await setCaption(
     page,
-    'Build a lesson from LSO activities',
-    'Same How to Build an Orchestra topic — select activities into a lesson',
+    'Lesson Builder',
+    'Create a lesson from How to Build an Orchestra activities',
   );
   await clickTab(page, 'lesson-builder');
   await dismissOverlays(page);
@@ -296,7 +299,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
 
   const lessonName = page.getByPlaceholder(/Lesson Name|Lesson Title/i).first();
   if (await lessonName.isVisible({ timeout: 2500 }).catch(() => false)) {
-    await typeSlow(page, lessonName, 'LSO — How to Build an Orchestra', { delay: 36 });
+    await typeSlow(page, lessonName, CREATED_LESSON, { delay: 36 });
     await hold(page, 900);
   }
 
@@ -344,31 +347,70 @@ async function showLsoActivitiesLessonAndTerm(page) {
 
   await page.mouse.wheel(0, 200);
   await hold(page, 1600);
+  await setCaption(page, 'Save the lesson', `"${CREATED_LESSON}" — then open Lesson Library`);
   const saveLesson = page.getByRole('button', { name: /Save Lesson/i }).first();
   if (await saveLesson.isVisible({ timeout: 2000 }).catch(() => false)) {
     await smoothClick(page, saveLesson);
-    await hold(page, 2000);
+    await hold(page, 2400);
   }
+  await dismissOverlays(page);
   await snap(page, FRAMES_DIR, '11-lesson');
 
-  // Also show Lesson Library stack for the same unit (seeded lessons)
-  await setCaption(page, 'Lesson Library', 'How to Build an Orchestra unit — ready to assign');
+  // ——— LESSON LIBRARY: must show the lesson just created in Builder ———
+  await setCaption(
+    page,
+    'Lesson Library',
+    `Same lesson you just built — "${CREATED_LESSON}"`,
+  );
   await clickTab(page, 'lesson-library');
   await dismissOverlays(page);
-  await hold(page, 2200);
-  const unitHeading = page.getByText(/How to Build an Orchestra/i).first();
-  if (await unitHeading.isVisible({ timeout: 3000 }).catch(() => false)) {
-    await unitHeading.scrollIntoViewIfNeeded().catch(() => {});
-    await hold(page, 2800);
-  }
-  await page.mouse.wheel(0, 240);
-  await hold(page, 1800);
+  await hold(page, 2400);
 
-  // Assign one LSO lesson to the term
-  await setCaption(page, 'Assign to term', 'Place an LSO lesson onto Half-Term Designer');
-  const assignBtn = page
+  // Prefer the exact created title; fall back to HTBAO unit heading
+  let createdLoc = page.getByText(CREATED_LESSON, { exact: false }).first();
+  if (!(await createdLoc.isVisible({ timeout: 4000 }).catch(() => false))) {
+    createdLoc = page.getByText(/LSO\s*[—–-]\s*How to Build an Orchestra/i).first();
+  }
+  if (!(await createdLoc.isVisible({ timeout: 2500 }).catch(() => false))) {
+    createdLoc = page.getByText(/How to Build an Orchestra/i).first();
+  }
+  if (await createdLoc.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await createdLoc.scrollIntoViewIfNeeded().catch(() => {});
+    await hold(page, 1200);
+    await page.evaluate((title) => {
+      const nodes = [...document.querySelectorAll('h2,h3,h4,p,span,div,button')];
+      const hit =
+        nodes.find((n) => (n.textContent || '').includes(title)) ||
+        nodes.find((n) => /LSO\s*[—–-]\s*How to Build an Orchestra/i.test(n.textContent || '')) ||
+        nodes.find((n) => /How to Build an Orchestra/i.test(n.textContent || ''));
+      const card =
+        hit?.closest('[class*="card"], [class*="Card"], article, li, section') ||
+        hit?.parentElement;
+      if (card) {
+        card.style.outline = '3px solid #B6FF7E';
+        card.style.outlineOffset = '4px';
+        card.scrollIntoView({ block: 'center', behavior: 'instant' });
+      }
+    }, CREATED_LESSON).catch(() => {});
+    await hold(page, 3200);
+  }
+  await page.mouse.wheel(0, 200);
+  await hold(page, 2000);
+
+  // Assign the created lesson (card containing its title) to the term
+  await setCaption(page, 'Assign to term', `Place "${CREATED_LESSON}" onto Half-Term Designer`);
+  const lessonCard = page
+    .locator('[class*="card"], [class*="Card"], article, li, section, div')
+    .filter({ hasText: CREATED_LESSON })
+    .first();
+  let assignBtn = lessonCard
     .locator('button[title*="Assign to Half-Term"], button[title*="Reassign to Different Half-Term"]')
     .first();
+  if (!(await assignBtn.isVisible({ timeout: 2500 }).catch(() => false))) {
+    assignBtn = page
+      .locator('button[title*="Assign to Half-Term"], button[title*="Reassign to Different Half-Term"]')
+      .first();
+  }
   if (await assignBtn.isVisible({ timeout: 4000 }).catch(() => false)) {
     await smoothClick(page, assignBtn);
     await hold(page, 1400);
@@ -388,23 +430,29 @@ async function showLsoActivitiesLessonAndTerm(page) {
   await setCaption(
     page,
     'Half-Term Designer',
-    'Term overview — LSO lesson sitting on Autumn 1',
+    'Term overview — your Library lesson sitting on Autumn 1',
   );
   await clickTab(page, 'unit-viewer');
   await dismissOverlays(page);
   await hold(page, 2800);
   await page.mouse.wheel(0, 160);
   await hold(page, 2400);
-  // Highlight any LSO / HTBAO card on the board
-  await page.evaluate(() => {
+  // Highlight the created lesson / HTBAO card on the board
+  await page.evaluate((title) => {
     const nodes = [...document.querySelectorAll('button, div, span, h3, h4')];
-    const hit = nodes.find((n) => /How to Build|Build an Orchestra|LSO|Building the Orchestra|Meet the Families/i.test(n.textContent || ''));
+    const hit =
+      nodes.find((n) => (n.textContent || '').includes(title)) ||
+      nodes.find((n) =>
+        /How to Build|Build an Orchestra|LSO|Building the Orchestra|Meet the Families/i.test(
+          n.textContent || '',
+        ),
+      );
     const card = hit?.closest('[class*="card"], [class*="Card"], button, div');
     if (card) {
       card.style.outline = '3px solid #B6FF7E';
       card.style.outlineOffset = '4px';
     }
-  }).catch(() => {});
+  }, CREATED_LESSON).catch(() => {});
   await hold(page, 3600);
   await snap(page, FRAMES_DIR, '12-term');
   await dismissOverlays(page);
@@ -591,6 +639,7 @@ async function createFullActivity(page) {
 }
 
 async function buildFullLesson(page) {
+  const CREATED_LESSON = 'KS3 — Film & stage crossover';
   await setCaption(page, 'Build a lesson — KS3 flavour', 'Title, notes, select activities, save');
   await selectYearGroup(page, /Year 9 Music|Year 9 Drama|KS3/i).catch(() => {});
   await clickTab(page, 'lesson-builder');
@@ -598,7 +647,7 @@ async function buildFullLesson(page) {
 
   const lessonName = page.getByPlaceholder(/Lesson Name|Lesson Title/i).first();
   if (await lessonName.isVisible({ timeout: 2200 }).catch(() => false)) {
-    await typeSlow(page, lessonName, 'KS3 — Film & stage crossover', { delay: 32 });
+    await typeSlow(page, lessonName, CREATED_LESSON, { delay: 32 });
   }
 
   const notes = page.getByPlaceholder(/Add notes, instructions/i).first();
@@ -648,6 +697,27 @@ async function buildFullLesson(page) {
   if (await saveLesson.isVisible({ timeout: 1200 }).catch(() => false)) {
     await smoothClick(page, saveLesson);
     await hold(page, 1500);
+  }
+  await dismissOverlays(page);
+
+  // Show Lesson Library populated with the lesson just created
+  await setCaption(page, 'Lesson Library', `Saved lesson appears here — "${CREATED_LESSON}"`);
+  await clickTab(page, 'lesson-library');
+  await dismissOverlays(page);
+  await hold(page, 1800);
+  const created = page.getByText(CREATED_LESSON, { exact: false }).first();
+  if (await created.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await created.scrollIntoViewIfNeeded().catch(() => {});
+    await page.evaluate((title) => {
+      const nodes = [...document.querySelectorAll('h2,h3,h4,p,span,div')];
+      const hit = nodes.find((n) => (n.textContent || '').includes(title));
+      const card = hit?.closest('[class*="card"], [class*="Card"], article, li, section') || hit?.parentElement;
+      if (card) {
+        card.style.outline = '3px solid #B6FF7E';
+        card.style.outlineOffset = '4px';
+      }
+    }, CREATED_LESSON).catch(() => {});
+    await hold(page, 2400);
   }
   await dismissOverlays(page);
 }
@@ -873,15 +943,83 @@ async function chapterPaid(page) {
   await hold(page, 1000);
 }
 
-function encodeMp4(webmPath, outMp4) {
+function ffmpegBin() {
   const ff = path.join(__dirname, 'node_modules/ffmpeg-static/ffmpeg');
-  const bin = fs.existsSync(ff) ? ff : 'ffmpeg';
+  return fs.existsSync(ff) ? ff : 'ffmpeg';
+}
+
+function probeDurationSeconds(mediaPath) {
+  const r = spawnSync(ffmpegBin(), ['-i', mediaPath], { encoding: 'utf8' });
+  const m = /Duration:\s*(\d+):(\d+):(\d+\.\d+)/.exec(r.stderr || '');
+  if (!m) return null;
+  return +m[1] * 3600 + +m[2] * 60 + parseFloat(m[3]);
+}
+
+function resolveDemoMusicPath() {
+  const candidates = [
+    process.env.CCD_DEMO_MUSIC,
+    path.join(OUT_DIR, 'audio/autumn-leaves-piano-improv.mp3'),
+    '/Users/rfreich-storer/Music/4K YouTube to MP3/Autumn Leaves Piano Improv.mp3',
+  ].filter(Boolean);
+  return candidates.find((p) => fs.existsSync(p)) || null;
+}
+
+/**
+ * Encode webm → mp4 with tasteful looping piano underscore.
+ * Volume ~20%; fade in/out; loop or trim to video length. No voice track today,
+ * so no ducking needed — keep bed quiet under UI captions.
+ */
+function encodeMp4(webmPath, outMp4) {
+  const bin = ffmpegBin();
+  const audioPath = resolveDemoMusicPath();
+  const videoArgs = ['-c:v', 'libx264', '-preset', 'medium', '-crf', '21', '-pix_fmt', 'yuv420p', '-movflags', '+faststart'];
+
+  if (!audioPath) {
+    console.warn('No demo music found — encoding silent MP4');
+    const r = spawnSync(bin, ['-y', '-i', webmPath, ...videoArgs, '-an', outMp4], { encoding: 'utf8' });
+    return r.status === 0 && fs.existsSync(outMp4) ? outMp4 : null;
+  }
+
+  const dur = probeDurationSeconds(webmPath) || 0;
+  const fadeIn = Math.min(2.5, Math.max(0.5, dur * 0.04));
+  const fadeOut = Math.min(3.5, Math.max(1, dur * 0.05));
+  const fadeOutStart = Math.max(0, dur - fadeOut);
+  // Soft bed (~20%). If a future voice stem exists, mix with sidechaincompress instead.
+  const filter = `[1:a]volume=0.20,afade=t=in:st=0:d=${fadeIn.toFixed(2)},afade=t=out:st=${fadeOutStart.toFixed(2)}:d=${fadeOut.toFixed(2)}[aout]`;
+
+  console.log(`Muxing background music: ${audioPath} (loop to ${dur.toFixed(1)}s, vol=0.20)`);
   const r = spawnSync(
     bin,
-    ['-y', '-i', webmPath, '-c:v', 'libx264', '-preset', 'medium', '-crf', '21', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', outMp4],
+    [
+      '-y',
+      '-i',
+      webmPath,
+      '-stream_loop',
+      '-1',
+      '-i',
+      audioPath,
+      '-filter_complex',
+      filter,
+      '-map',
+      '0:v:0',
+      '-map',
+      '[aout]',
+      ...videoArgs,
+      '-c:a',
+      'aac',
+      '-b:a',
+      '160k',
+      '-shortest',
+      outMp4,
+    ],
     { encoding: 'utf8' },
   );
-  return r.status === 0 && fs.existsSync(outMp4) ? outMp4 : null;
+  if (r.status !== 0) {
+    console.warn('Music mux failed — falling back to silent encode', r.stderr?.slice(-400));
+    const fallback = spawnSync(bin, ['-y', '-i', webmPath, ...videoArgs, '-an', outMp4], { encoding: 'utf8' });
+    return fallback.status === 0 && fs.existsSync(outMp4) ? outMp4 : null;
+  }
+  return fs.existsSync(outMp4) ? outMp4 : null;
 }
 
 async function main() {
@@ -989,7 +1127,7 @@ async function main() {
     slideHtml({
       eyebrow: 'Free resources',
       title: "Let's go to an arts organisation",
-      body: 'Start with LSO — choose a topic, add it, then watch it flow into activities, a lesson, and the term.',
+      body: 'Start with LSO — choose a topic, add it, then watch it flow into activities, Lesson Builder, Lesson Library, and the term.',
       compactTitle: true,
     }),
     5200,
@@ -1151,6 +1289,12 @@ async function main() {
         businessNote: 'CCDesigner only takes a cut of 10–20% of paid resources.',
         disclaimer:
           'Partners and logos are shown for demonstration only and do not imply endorsement.',
+        music: {
+          file: 'audio/autumn-leaves-piano-improv.mp3',
+          title: 'Autumn Leaves Piano Improv',
+          volume: 0.2,
+          note: 'User-supplied underscore — clear rights/licence before public distribution.',
+        },
         chapters: CHAPTERS,
         video: { webm: 'ccdesigner-feature-demo.webm', mp4: mp4Path ? 'ccdesigner-feature-demo.mp4' : null },
         frames: CHAPTERS.map((c) => `frames/${c.id}.png`),
