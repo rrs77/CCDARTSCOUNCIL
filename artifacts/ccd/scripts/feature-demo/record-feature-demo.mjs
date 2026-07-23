@@ -16,6 +16,7 @@ import {
   VIEWPORT,
   GATE_KEY,
   DEMO_MODE_KEY,
+  INTRO_SLIDE_MS,
   hold,
   dismissIfVisible,
   ensureCursor,
@@ -24,7 +25,6 @@ import {
   logoIntroHtml,
   partnerDisclaimerSlideHtml,
   slideHtml,
-  contextSlideHtml,
   contextPressureSlideHtml,
   contextResponseSlideHtml,
   ideasSlideHtml,
@@ -37,26 +37,34 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const BASE_URL = process.env.CCD_BASE_URL || 'http://127.0.0.1:5173';
+/** Film mode hides prototype notice + disclaimer chrome (html.ccd-feature-demo). */
 const OUT_DIR = path.resolve(__dirname, '../../public/feature-demo');
 const VIDEO_DIR = path.join(OUT_DIR, 'raw-video');
 const FRAMES_DIR = path.join(OUT_DIR, 'frames');
 
+function appUrl(pathAndQuery = '/') {
+  const raw = pathAndQuery.startsWith('/') ? pathAndQuery : `/${pathAndQuery}`;
+  const u = new URL(raw, BASE_URL);
+  u.searchParams.set('ccd-feature-demo', '1');
+  return u.toString();
+}
+
 export const CHAPTERS = [
-  { id: '01-logo', title: 'CCDesigner', caption: 'Brand intro' },
+  { id: '01-logo', title: 'Exceptional lessons start with connection', caption: 'CCDesigner · arts hero' },
   { id: '02-pressure', title: 'Performing arts under pressure', caption: 'Schools & FE — expertise harder to reach' },
   { id: '03-response', title: 'One place to plan and connect', caption: 'Music hubs · arts organisations · ideas kept alive' },
   { id: '04-disclaimer', title: 'Demonstration only', caption: 'For potential partners & funding — no endorsement implied' },
   { id: '05-landing', title: 'Exceptional lessons start with connection', caption: 'Live first page' },
   { id: '06-ideas', title: 'Keep every lightning moment', caption: 'Excellent ideas · melting pot for arts planning' },
   { id: '07-action', title: "Let's see the app in action", caption: 'Explore the working prototype' },
-  { id: '08-explore', title: 'Inside the prototype', caption: 'Dashboard · Half-Term Designer' },
+  { id: '08-explore', title: 'Inside the prototype', caption: 'Year 6 · Half-Term Designer' },
   { id: '09-lso', title: 'LSO Partner Hub', caption: 'Choose How to Build an Orchestra · Add to CCDesigner' },
   { id: '10-activities', title: 'Activity Library', caption: 'LSO topic activities in your library' },
   { id: '11-lesson', title: 'Lesson Builder → Library', caption: 'Build from LSO activities · same lesson appears in Library' },
   { id: '12-term', title: 'Term overview', caption: 'Lesson from Library placed on Half-Term Designer' },
   { id: '13-key-dates', title: 'Populate with key dates', caption: 'Partner dropdown · KS1/KS2 · Important dates' },
   { id: '14-settings', title: 'Customisable to key stage', caption: 'Settings · year-group folders' },
-  { id: '15-create', title: 'Build your own', caption: 'Create activity & lesson · live links' },
+  { id: '15-create', title: 'Build your own', caption: 'Same create path — LSO flow already proved it' },
   { id: '16-calendar', title: 'Calendar week & timetable', caption: 'Week view · add event · timetable' },
   { id: '17-paid', title: 'Paid partners', caption: 'We Teach Drama & iCompose — 10–20% cut' },
   { id: '18-orgs', title: 'For organisations', caption: 'Own hub + admin backend templates' },
@@ -78,9 +86,31 @@ function ensureDirs() {
   fs.mkdirSync(FRAMES_DIR, { recursive: true });
 }
 
+/** Soft dissolve out before leaving a slide for live UI. */
+async function fadeOutSlide(page, ms = 280) {
+  await page
+    .evaluate((dur) => {
+      const root = document.documentElement;
+      root.style.transition = `opacity ${dur}ms ease`;
+      root.style.opacity = '0';
+    }, ms)
+    .catch(() => {});
+  await hold(page, ms + 40);
+}
+
 async function recordSlide(page, html, holdMs, frameId) {
   await page.setContent(html, { waitUntil: 'domcontentloaded' });
   await page.evaluate(() => document.fonts?.ready?.catch?.(() => {})).catch(() => {});
+  // Soft fade-in for slide→live continuity
+  await page
+    .evaluate(() => {
+      document.documentElement.style.opacity = '0';
+      requestAnimationFrame(() => {
+        document.documentElement.style.transition = 'opacity 320ms ease';
+        document.documentElement.style.opacity = '1';
+      });
+    })
+    .catch(() => {});
   await hold(page, holdMs);
   await snap(page, FRAMES_DIR, frameId);
 }
@@ -132,7 +162,7 @@ async function selectYearGroup(page, nameRe) {
 }
 
 async function ensureInApp(page) {
-  await page.goto(`${BASE_URL}/?demo=1`, { waitUntil: 'domcontentloaded' });
+  await page.goto(appUrl('/?demo=1'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-tab]', { timeout: 45000 }).catch(() => {});
   await ensureCursor(page);
   await dismissOverlays(page);
@@ -146,16 +176,18 @@ async function enterPrototypeFast(page) {
       try {
         sessionStorage.setItem(gateKey, '1');
         sessionStorage.setItem(demoKey, '1');
+        sessionStorage.setItem('ccd-feature-demo', '1');
         sessionStorage.setItem('ccd-prototype-welcome-seen', '1');
         sessionStorage.setItem('ccd-partners-funding-video-seen', '1');
         sessionStorage.setItem('ccd-activity-library-welcome-seen', '1');
+        document.documentElement.classList.add('ccd-feature-demo');
       } catch {
         /* ignore */
       }
     },
     { gateKey: GATE_KEY, demoKey: DEMO_MODE_KEY },
   );
-  await page.goto(`${BASE_URL}/?demo=1`, { waitUntil: 'domcontentloaded' });
+  await page.goto(appUrl('/?demo=1'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-tab="unit-viewer"], [data-walkthrough="year-group-selector"]', {
     timeout: 60000,
   });
@@ -175,7 +207,7 @@ async function openPartnerHub(page, nameRe, slug) {
   if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
     await smoothClick(page, btn);
   } else {
-    await page.goto(`${BASE_URL}/${slug}`, { waitUntil: 'domcontentloaded' });
+    await page.goto(appUrl(`/${slug}`), { waitUntil: 'domcontentloaded' });
   }
   await page.waitForURL(new RegExp(`/${slug}`), { timeout: 15000 }).catch(() => {});
   await hold(page, 1350);
@@ -230,7 +262,7 @@ async function chooseAndAddLsoTopic(page) {
  * Activity Library (LSO pack) → Lesson Builder (create) → Lesson Library (same lesson) → Term.
  * Energetic beats — brief but visible. Do not skip Builder → Library.
  */
-async function showLsoActivitiesLessonAndTerm(page) {
+async function showLsoActivitiesLessonAndTerm(page, markChapter = () => {}) {
   const CREATED_LESSON = 'LSO — How to Build an Orchestra';
 
   await dismissOverlays(page);
@@ -238,6 +270,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
   await dismissOverlays(page);
 
   // ——— ACTIVITIES ———
+  markChapter('10-activities');
   await setCaption(
     page,
     'Activity Library',
@@ -289,6 +322,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
   await snap(page, FRAMES_DIR, '10-activities');
 
   // ——— LESSON BUILDER: create a named lesson from LSO activities ———
+  markChapter('11-lesson');
   await setCaption(
     page,
     'Lesson Builder',
@@ -427,17 +461,34 @@ async function showLsoActivitiesLessonAndTerm(page) {
     }
   }
 
-  // ——— TERM OVERVIEW ———
+  // ——— TERM OVERVIEW — wait until the lesson is visible on the board BEFORE caption/snap ———
+  markChapter('12-term');
+  await clickTab(page, 'unit-viewer');
+  await dismissOverlays(page);
+  await hold(page, 900);
+
+  // Prefer Autumn 1 / term board context if a half-term picker exists
+  const autumn = page.getByRole('button', { name: /Autumn 1/i }).first();
+  if (await autumn.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await smoothClick(page, autumn).catch(() => {});
+    await hold(page, 700);
+  }
+
+  const lessonOnBoard = page
+    .getByText(new RegExp(`${CREATED_LESSON}|How to Build an Orchestra|Build an Orchestra`, 'i'))
+    .first();
+  await lessonOnBoard.waitFor({ state: 'visible', timeout: 12000 }).catch(() => {});
+  await lessonOnBoard.scrollIntoViewIfNeeded().catch(() => {});
+  await hold(page, 600);
+
   await setCaption(
     page,
     'Half-Term Designer',
     'Term overview — your Library lesson sitting on Autumn 1',
   );
-  await clickTab(page, 'unit-viewer');
-  await dismissOverlays(page);
-  await hold(page, 1350);
+  await hold(page, 900);
   await page.mouse.wheel(0, 160);
-  await hold(page, 1150);
+  await hold(page, 800);
   // Highlight the created lesson / HTBAO card on the board
   await page.evaluate((title) => {
     const nodes = [...document.querySelectorAll('button, div, span, h3, h4')];
@@ -454,12 +505,12 @@ async function showLsoActivitiesLessonAndTerm(page) {
       card.style.outlineOffset = '4px';
     }
   }, CREATED_LESSON).catch(() => {});
-  await hold(page, 1500);
+  await hold(page, 1400);
   await snap(page, FRAMES_DIR, '12-term');
   await dismissOverlays(page);
 }
 
-async function chapterLsoPathway(page) {
+async function chapterLsoPathway(page, markChapter = () => {}) {
   // Organisation list first
   await setCaption(page, 'Arts organisations', 'Partner Hubs — start with free resources · LSO');
   await clickTab(page, 'our-partners');
@@ -481,19 +532,8 @@ async function chapterLsoPathway(page) {
 
   await chooseAndAddLsoTopic(page);
   await ensureInApp(page);
-  await showLsoActivitiesLessonAndTerm(page);
-
-  // Brief ROH after the full LSO arc (do not steal the story)
-  await setCaption(page, 'Royal Ballet and Opera', 'Another free hub — same Add pathway');
-  await ensureInApp(page);
-  await openPartnerHub(page, /Royal Ballet and Opera/i, 'roh');
-  await snap(page, FRAMES_DIR, '09-roh');
-  await hold(page, 1350);
-  const rohAdd = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
-  if (await rohAdd.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await hold(page, 750);
-  }
-  await ensureInApp(page);
+  await showLsoActivitiesLessonAndTerm(page, markChapter);
+  // No ROH interrupt after term — keep LSO → activities → lesson → term clear on camera.
 }
 
 async function fillRichEditors(page, introText, activityText) {
@@ -912,7 +952,7 @@ async function chapterPaid(page) {
   );
 
   // We Teach Drama
-  await page.goto(`${BASE_URL}/weteachdrama`, { waitUntil: 'domcontentloaded' });
+  await page.goto(appUrl('/weteachdrama'), { waitUntil: 'domcontentloaded' });
   await hold(page, 1100);
   await ensureCursor(page);
   await page.mouse.wheel(0, 300);
@@ -926,7 +966,7 @@ async function chapterPaid(page) {
 
   // iCompose
   await setCaption(page, 'iCompose', 'Paid courses available to purchase — 10–20% platform cut');
-  await page.goto(`${BASE_URL}/icompose`, { waitUntil: 'domcontentloaded' });
+  await page.goto(appUrl('/icompose'), { waitUntil: 'domcontentloaded' });
   await hold(page, 1100);
   await ensureCursor(page);
   await page.mouse.wheel(0, 320);
@@ -1055,51 +1095,72 @@ async function main() {
   await page.addInitScript(({ gateKey }) => {
     try {
       sessionStorage.setItem(gateKey, '1');
+      sessionStorage.setItem('ccd-feature-demo', '1');
       sessionStorage.setItem('ccd-prototype-welcome-seen', '1');
       sessionStorage.setItem('ccd-partners-funding-video-seen', '1');
       sessionStorage.setItem('ccd-activity-library-welcome-seen', '1');
+      document.documentElement.classList.add('ccd-feature-demo');
+      document.documentElement.setAttribute('data-ccd-record', '1');
     } catch { /* ignore */ }
   }, { gateKey: GATE_KEY });
 
+  await page.addInitScript(() => {
+    const id = 'ccd-feature-demo-film-css';
+    if (document.getElementById(id)) return;
+    const style = document.createElement('style');
+    style.id = id;
+    style.textContent =
+      'html.ccd-feature-demo [data-ccd-prototype-chrome],html[data-ccd-record] [data-ccd-prototype-chrome]{display:none!important}';
+    document.documentElement.appendChild(style);
+    document.documentElement.classList.add('ccd-feature-demo');
+    document.documentElement.setAttribute('data-ccd-record', '1');
+  });
+
+  const recordingStartedAt = Date.now();
+  const chapterAts = {};
+  const markChapter = (id) => {
+    chapterAts[id] = Math.max(0, Math.round((Date.now() - recordingStartedAt) / 1000));
+  };
+
   console.log('01 logo');
-  await recordSlide(page, logoIntroHtml(), 2200, '01-logo');
+  markChapter('01-logo');
+  await recordSlide(page, logoIntroHtml(), INTRO_SLIDE_MS, '01-logo');
 
   console.log('02 context pressure');
   await clearCaption(page);
-  await recordSlide(page, contextPressureSlideHtml(), 2600, '02-pressure');
+  markChapter('02-pressure');
+  await recordSlide(page, contextPressureSlideHtml(), INTRO_SLIDE_MS, '02-pressure');
 
   console.log('03 context response');
-  await recordSlide(page, contextResponseSlideHtml(), 2600, '03-response');
+  markChapter('03-response');
+  await recordSlide(page, contextResponseSlideHtml(), INTRO_SLIDE_MS, '03-response');
 
   console.log('04 disclaimer');
-  await recordSlide(page, partnerDisclaimerSlideHtml(), 2300, '04-disclaimer');
+  markChapter('04-disclaimer');
+  await recordSlide(page, partnerDisclaimerSlideHtml(), INTRO_SLIDE_MS, '04-disclaimer');
 
-  console.log('05 live landing');
-  await page.goto(BASE_URL, { waitUntil: 'networkidle' });
+  console.log('05 live landing (clean hero — chrome hidden)');
+  await fadeOutSlide(page, 260);
+  markChapter('05-landing');
+  await page.goto(appUrl('/'), { waitUntil: 'networkidle' });
   await hold(page, 500);
   await dismissIfVisible(page, WELCOME_DISMISS);
   await ensureCursor(page);
+  await page.evaluate(() => document.documentElement.classList.add('ccd-feature-demo')).catch(() => {});
 
-  // Show the real in-app DemonstrationDisclaimerBand only — no injected overlay card.
-  const disclaimerBand = page.locator('[aria-label="Demonstration disclaimer"]').first();
-  const disclaimerText = page.getByText(/Organisations shown are examples for demonstration only/i).first();
-  if (await disclaimerBand.isVisible({ timeout: 8000 }).catch(() => false)) {
-    await disclaimerBand.scrollIntoViewIfNeeded().catch(() => {});
-  } else {
-    await disclaimerText.waitFor({ state: 'visible', timeout: 12000 });
-    await disclaimerText.scrollIntoViewIfNeeded().catch(() => {});
-  }
+  // Clean app hero — prototype banner / disclaimer stack hidden via film mode
+  await page.getByText(/Exceptional lessons start with/i).first().waitFor({ timeout: 12000 }).catch(() => {});
+  await page.getByText(/Exceptional lessons start with/i).first().scrollIntoViewIfNeeded().catch(() => {});
   await hold(page, 1600);
   await snap(page, FRAMES_DIR, '05-landing');
-
-  await page.getByText(/Exceptional lessons start with/i).first().waitFor({ timeout: 10000 }).catch(() => {});
-  await page.getByText(/Exceptional lessons start with/i).first().scrollIntoViewIfNeeded().catch(() => {});
-  await hold(page, 1350);
+  await hold(page, 900);
 
   console.log('06 ideas');
-  await recordSlide(page, ideasSlideHtml(), 2300, '06-ideas');
+  markChapter('06-ideas');
+  await recordSlide(page, ideasSlideHtml(), INTRO_SLIDE_MS, '06-ideas');
 
   console.log('07 action');
+  markChapter('07-action');
   await recordSlide(
     page,
     slideHtml({
@@ -1107,13 +1168,16 @@ async function main() {
       title: "Let's see it in action",
       body: 'Free hubs → planning tools → paid resources.',
     }),
-    2200,
+    INTRO_SLIDE_MS,
     '07-action',
   );
 
-  console.log('08 explore → Half-Term');
+  console.log('08 explore → Half-Term (Year 6)');
+  await fadeOutSlide(page, 260);
+  markChapter('08-explore');
   await enterPrototypeFast(page);
-  await setCaption(page, 'Inside the prototype', 'Half-Term Designer — your planning home');
+  await selectYearGroup(page, /Year 6 Music|Year 6/i).catch(() => {});
+  await setCaption(page, 'Inside the prototype', 'Year 6 · Half-Term Designer — your planning home');
   await clickTab(page, 'unit-viewer');
   await hold(page, 1100);
   await page.mouse.wheel(0, 180);
@@ -1123,6 +1187,7 @@ async function main() {
 
   // 09–12 LSO arc: Organisation → Activities → Lesson → Term (full pathway, paced)
   console.log('09–12 LSO org → activities → lesson → term');
+  markChapter('09-lso');
   await recordSlide(
     page,
     slideHtml({
@@ -1131,13 +1196,15 @@ async function main() {
       body: 'LSO → choose a topic → Add → activities → lesson → term.',
       compactTitle: true,
     }),
-    2400,
+    INTRO_SLIDE_MS,
     '09-lso-slide',
   );
   await ensureInApp(page);
-  await chapterLsoPathway(page);
+  await selectYearGroup(page, /Year 6 Music|Year 6/i).catch(() => {});
+  await chapterLsoPathway(page, markChapter);
 
   console.log('13 key dates');
+  markChapter('13-key-dates');
   await recordSlide(
     page,
     slideHtml({
@@ -1146,13 +1213,14 @@ async function main() {
       body: 'Tick KS1/KS2 dates — they become Important dates.',
       compactTitle: true,
     }),
-    2200,
+    INTRO_SLIDE_MS,
     '13-key-dates-slide',
   );
   await ensureInApp(page);
   await chapterKeyDates(page);
 
   console.log('14 settings');
+  markChapter('14-settings');
   await recordSlide(
     page,
     slideHtml({
@@ -1161,34 +1229,35 @@ async function main() {
       body: 'Year-group folders that match your school.',
       compactTitle: true,
     }),
-    2200,
+    INTRO_SLIDE_MS,
     '14-settings-slide',
   );
   await ensureInApp(page);
   await showSettings(page);
 
-  console.log('15 create');
+  // Create: LSO path already proved Builder → Library → term — keep a snappy title only.
+  console.log('15 create (snappy slide — LSO already proved the flow)');
+  markChapter('15-create');
   await recordSlide(
     page,
     slideHtml({
       eyebrow: 'Build your own',
       title: 'Create activities and lessons',
-      body: 'Full fields + live resource links — EYFS to A-level.',
+      body: 'Same path you just saw — full fields and live links, EYFS to A-level.',
       compactTitle: true,
     }),
-    2200,
+    INTRO_SLIDE_MS,
     '15-create-slide',
   );
-  await ensureInApp(page);
+  // Still frame for chapter strip — reuse create-slide as 15-create
   try {
-    const created = await createFullActivity(page);
-    if (created !== false) await buildFullLesson(page);
-  } catch (err) {
-    console.warn('Create/lesson chapter failed — continuing', err?.message || err);
-    await dismissOverlays(page);
+    fs.copyFileSync(path.join(FRAMES_DIR, '15-create-slide.png'), path.join(FRAMES_DIR, '15-create.png'));
+  } catch {
+    /* ignore */
   }
 
   console.log('16 calendar week');
+  markChapter('16-calendar');
   await recordSlide(
     page,
     slideHtml({
@@ -1197,13 +1266,14 @@ async function main() {
       body: 'School week · events · lessons together.',
       compactTitle: true,
     }),
-    2200,
+    INTRO_SLIDE_MS,
     '16-calendar-slide',
   );
   await ensureInApp(page);
   await chapterCalendarWeek(page);
 
   console.log('17 paid');
+  markChapter('17-paid');
   await recordSlide(
     page,
     slideHtml({
@@ -1212,12 +1282,13 @@ async function main() {
       body: 'We Teach Drama · iCompose — platform cut 10–20%.',
       compactTitle: true,
     }),
-    2400,
+    INTRO_SLIDE_MS,
     '17-paid-slide',
   );
   await chapterPaid(page);
 
   console.log('18 org advert');
+  markChapter('18-orgs');
   await recordSlide(
     page,
     slideHtml({
@@ -1226,13 +1297,14 @@ async function main() {
       body: 'Admin backend · template pages · share free resources.',
       compactTitle: true,
     }),
-    2400,
+    INTRO_SLIDE_MS,
     '18-orgs',
   );
 
   console.log('19 close');
   await clearCaption(page);
-  await recordSlide(page, closingSlideHtml(), 2800, '19-close');
+  markChapter('19-close');
+  await recordSlide(page, closingSlideHtml(), INTRO_SLIDE_MS, '19-close');
 
   // Close context first so Playwright finalizes the webm on disk.
   let videoPath = null;
@@ -1268,6 +1340,22 @@ async function main() {
     durationSeconds = Math.round(+m[1] * 3600 + +m[2] * 60 + parseFloat(m[3]));
   }
 
+  // Bake real `at` timestamps for chapter seeking (wall-clock during record ≈ video time).
+  const chaptersWithAt = CHAPTERS.map((c) => ({
+    ...c,
+    at: chapterAts[c.id] ?? 0,
+  }));
+  // Ensure monotonic non-decreasing ats
+  let lastAt = 0;
+  for (const c of chaptersWithAt) {
+    if (c.at < lastAt) c.at = lastAt;
+    lastAt = c.at;
+  }
+  if (durationSeconds && chaptersWithAt.length) {
+    const close = chaptersWithAt[chaptersWithAt.length - 1];
+    if (close.at > durationSeconds - 2) close.at = Math.max(0, durationSeconds - 3);
+  }
+
   fs.writeFileSync(
     path.join(OUT_DIR, 'manifest.json'),
     JSON.stringify(
@@ -1296,7 +1384,7 @@ async function main() {
           volume: 0.2,
           note: 'User-supplied underscore — clear rights/licence before public distribution.',
         },
-        chapters: CHAPTERS,
+        chapters: chaptersWithAt,
         video: { webm: 'ccdesigner-feature-demo.webm', mp4: mp4Path ? 'ccdesigner-feature-demo.mp4' : null },
         frames: CHAPTERS.map((c) => `frames/${c.id}.png`),
         durationSeconds,
@@ -1309,6 +1397,10 @@ async function main() {
   console.log('Wrote', finalWebm);
   if (mp4Path) console.log('Wrote', mp4Path);
   if (durationSeconds) console.log(`Duration ~${durationSeconds}s`);
+  console.log(
+    'Chapter ats:',
+    chaptersWithAt.map((c) => `${c.id}@${c.at}s`).join(', '),
+  );
 }
 
 main().catch((err) => {

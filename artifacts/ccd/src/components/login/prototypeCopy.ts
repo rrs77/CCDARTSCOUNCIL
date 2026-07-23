@@ -24,20 +24,26 @@ export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen';
 /** Session-scoped key for the partners/funding start popup (same dismiss behaviour as welcome). */
 export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-video-seen';
 
+/** Title for the first-open start popup. */
+export const PARTNERS_FUNDING_START_TITLE = 'Prototype notice';
+
+/** Title for the in-app feature demo video modal. */
 export const PARTNERS_FUNDING_VIDEO_TITLE = 'For partners and funding';
 
 export const PARTNERS_FUNDING_VIDEO_INTRO =
   'A short overview of how CCDesigner supports curriculum planning with cultural organisations.';
 
-/** Shortened org notice for the partners/funding start popup. */
+/** Shortened org/logo notice for the partners/funding start popup. */
 export const PARTNERS_FUNDING_VIDEO_NOTICE =
-  'Organisations shown are for demonstration only — not endorsement, funding or partnership.';
+  'Organisations and logos are for demonstration only — not an endorsement or partnership.';
 
 /** Clear prototype awareness before the user continues. */
 export const PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS =
-  'Only continue if you understand this is a prototype.';
+  'Continue only if you understand this is an early prototype.';
 
 export const PARTNERS_FUNDING_VIDEO_CTA = 'Watch feature demo';
+
+export const PARTNERS_FUNDING_CONTINUE_CTA = 'Continue to sign in';
 
 /** Public player page served from `public/feature-demo/`. */
 export const FEATURE_DEMO_PATH = '/feature-demo/';

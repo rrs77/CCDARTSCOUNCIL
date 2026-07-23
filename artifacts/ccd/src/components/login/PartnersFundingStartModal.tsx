@@ -2,11 +2,12 @@ import { useEffect } from 'react';
 import { PlayCircle, X } from 'lucide-react';
 import {
   PARTNER_DISCLAIMER_FRAMING,
+  PARTNERS_FUNDING_CONTINUE_CTA,
+  PARTNERS_FUNDING_START_TITLE,
   PARTNERS_FUNDING_VIDEO_CTA,
   PARTNERS_FUNDING_VIDEO_INTRO,
   PARTNERS_FUNDING_VIDEO_NOTICE,
   PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS,
-  PARTNERS_FUNDING_VIDEO_TITLE,
 } from './prototypeCopy';
 
 interface PartnersFundingStartModalProps {
@@ -67,7 +68,7 @@ export function PartnersFundingStartModal({
             className="mt-2 max-w-[20rem] text-2xl font-semibold tracking-tight text-white"
             style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
           >
-            {PARTNERS_FUNDING_VIDEO_TITLE}
+            {PARTNERS_FUNDING_START_TITLE}
           </h2>
           <p className="mt-3 max-w-md text-sm leading-relaxed text-white/80">
             {PARTNERS_FUNDING_VIDEO_INTRO}
@@ -76,10 +77,7 @@ export function PartnersFundingStartModal({
 
         <div className="space-y-5 px-6 py-6 sm:px-8 sm:py-7">
           <div className="space-y-2 rounded-lg border border-[#002D24]/10 bg-[#e8f0ea] px-3.5 py-3 text-xs leading-relaxed text-gray-600">
-            <p>
-              <span className="font-semibold text-[#002D24]">Demonstration notice. </span>
-              {PARTNERS_FUNDING_VIDEO_NOTICE}
-            </p>
+            <p>{PARTNERS_FUNDING_VIDEO_NOTICE}</p>
             <p className="font-semibold text-[#002D24]">
               {PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS}
             </p>
@@ -100,7 +98,7 @@ export function PartnersFundingStartModal({
             className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-95"
             style={{ backgroundColor: '#002D24' }}
           >
-            Continue to sign in
+            {PARTNERS_FUNDING_CONTINUE_CTA}
           </button>
         </div>
       </div>
