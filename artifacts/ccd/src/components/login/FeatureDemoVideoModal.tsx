@@ -36,38 +36,48 @@ export function featureDemoPlayerHref(): string {
 function isVideoFullscreen(video: VideoWithWebkitFullscreen | null): boolean {
   if (!video) return false;
   if (video.webkitDisplayingFullscreen) return true;
-  const fullscreenEl =
-    document.fullscreenElement ||
-    (document as Document & { webkitFullscreenElement?: Element | null }).webkitFullscreenElement;
+  const doc = document as Document & { webkitFullscreenElement?: Element | null };
+  const fullscreenEl = document.fullscreenElement || doc.webkitFullscreenElement;
   return fullscreenEl === video;
 }
 
-async function enterVideoFullscreen(video: VideoWithWebkitFullscreen): Promise<void> {
-  // iOS Safari: native video fullscreen (works with playsInline)
-  if (typeof video.webkitEnterFullscreen === 'function') {
-    video.webkitEnterFullscreen();
+/**
+ * Enter fullscreen on the <video> itself.
+ *
+ * Important: do NOT call webkitEnterFullscreen first. Desktop Safari exposes that
+ * method, but it only works for iOS native video fullscreen — calling it fails and
+ * previously prevented requestFullscreen from ever running.
+ */
+function enterVideoFullscreen(video: VideoWithWebkitFullscreen): void {
+  // Chrome / Firefox / desktop Safari: standard Fullscreen API (sync call keeps user gesture).
+  if (typeof video.requestFullscreen === 'function' && document.fullscreenEnabled !== false) {
+    void video.requestFullscreen();
     return;
   }
-  if (typeof video.requestFullscreen === 'function') {
-    await video.requestFullscreen();
-    return;
-  }
+
   if (typeof video.webkitRequestFullscreen === 'function') {
     video.webkitRequestFullscreen();
     return;
   }
+
   if (typeof video.msRequestFullscreen === 'function') {
     video.msRequestFullscreen();
+    return;
+  }
+
+  // iOS Safari: presentation-mode fullscreen (works with playsInline).
+  if (typeof video.webkitEnterFullscreen === 'function') {
+    video.webkitEnterFullscreen();
   }
 }
 
-async function exitVideoFullscreen(video: VideoWithWebkitFullscreen): Promise<void> {
+function exitVideoFullscreen(video: VideoWithWebkitFullscreen): void {
   if (typeof video.webkitExitFullscreen === 'function' && video.webkitDisplayingFullscreen) {
     video.webkitExitFullscreen();
     return;
   }
   if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
-    await document.exitFullscreen();
+    void document.exitFullscreen();
     return;
   }
   const doc = document as Document & { webkitExitFullscreen?: () => void };
@@ -140,20 +150,21 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
     };
   }, [isOpen]);
 
-  const toggleFullscreen = async () => {
+  // Must stay a direct click handler so requestFullscreen keeps the user gesture.
+  const toggleFullscreen = () => {
     const video = videoRef.current as VideoWithWebkitFullscreen | null;
     if (!video) return;
     try {
       if (isVideoFullscreen(video)) {
-        await exitVideoFullscreen(video);
+        exitVideoFullscreen(video);
       } else {
-        await enterVideoFullscreen(video);
+        enterVideoFullscreen(video);
       }
     } catch {
       // Fullscreen can be denied by the browser; native controls remain as fallback.
-    } finally {
-      syncFullscreenState();
     }
+    // Events (fullscreenchange / webkitbeginfullscreen) also sync; this covers sync failures.
+    syncFullscreenState();
   };
 
   if (!isOpen) return null;
@@ -211,7 +222,7 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
               playsInline
               preload="metadata"
               poster={posterSrc}
-              // Keep native fullscreen in the control bar where the browser supports it.
+              // Do not set controlsList="nofullscreen" — native control bar fullscreen must stay available.
             >
               <source src={mp4Src} type="video/mp4" />
               <source src={webmSrc} type="video/webm" />
@@ -224,7 +235,7 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
           <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
             <button
               type="button"
-              onClick={() => void toggleFullscreen()}
+              onClick={toggleFullscreen}
               className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#B6FF7E]/40 bg-white/5 px-3.5 py-2.5 text-sm font-semibold text-[#B6FF7E] transition-colors hover:bg-white/10"
               aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             >

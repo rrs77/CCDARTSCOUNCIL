@@ -30,7 +30,6 @@ import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthrough
 import { PrototypePasswordPrompt, isPrototypeUnlocked } from './PrototypeGate';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
-import { DemonstrationDisclaimerBand } from './login/DemonstrationDisclaimerBand';
 import { PartnersFundingStartModal } from './login/PartnersFundingStartModal';
 import { FeatureDemoVideoModal } from './login/FeatureDemoVideoModal';
 import { PARTNERS_FUNDING_VIDEO_STORAGE_KEY } from './login/prototypeCopy';
@@ -217,7 +216,6 @@ export function LoginForm() {
     >
       {/* Hidden in film mode via html.ccd-feature-demo CSS (see index.css). */}
       <PrototypeNoticeBar />
-      <DemonstrationDisclaimerBand />
       {/* Outer surround only: fluid padding scales with viewport; stage design unchanged */}
       <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-[clamp(0.75rem,2vw,1rem)] lg:p-[clamp(1rem,2.5vw,1.5rem)]">
         <div className="relative mx-auto flex w-full max-w-[min(1440px,100%)] flex-col bg-[#002D24] sm:min-h-[calc(100dvh-2.5rem)] sm:overflow-hidden sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.18)] lg:min-h-[calc(100dvh-3.5rem)]">
