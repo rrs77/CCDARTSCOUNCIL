@@ -31,8 +31,8 @@ import { PrototypePasswordPrompt, isPrototypeUnlocked } from './PrototypeGate';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
 import { DemonstrationDisclaimerBand } from './login/DemonstrationDisclaimerBand';
-import { PrototypeWelcomeModal } from './login/PrototypeWelcomeModal';
-import { WELCOME_PROTOTYPE_STORAGE_KEY } from './login/prototypeCopy';
+import { PartnersFundingStartModal } from './login/PartnersFundingStartModal';
+import { PARTNERS_FUNDING_VIDEO_STORAGE_KEY } from './login/prototypeCopy';
 import { LogoSVG, LOGO_BG } from './Logo';
 
 const LOGIN_GREEN = LOGO_BG;
@@ -57,7 +57,7 @@ export function LoginForm() {
   const [forgotError, setForgotError] = useState('');
   const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
   const [showPrototypePassword, setShowPrototypePassword] = useState(false);
-  const [showWelcomePrototype, setShowWelcomePrototype] = useState(false);
+  const [showPartnersFundingStart, setShowPartnersFundingStart] = useState(false);
 
   const branding = settings.branding || {};
   const logoLetters = branding.logoLetters || 'CCD';
@@ -112,20 +112,20 @@ export function LoginForm() {
 
   useEffect(() => {
     try {
-      if (sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1') return;
+      if (sessionStorage.getItem(PARTNERS_FUNDING_VIDEO_STORAGE_KEY) === '1') return;
     } catch {
       // sessionStorage may be unavailable; still show the notice
     }
-    setShowWelcomePrototype(true);
+    setShowPartnersFundingStart(true);
   }, []);
 
-  const dismissWelcomePrototype = () => {
+  const dismissPartnersFundingStart = () => {
     try {
-      sessionStorage.setItem(WELCOME_PROTOTYPE_STORAGE_KEY, '1');
+      sessionStorage.setItem(PARTNERS_FUNDING_VIDEO_STORAGE_KEY, '1');
     } catch {
       // ignore
     }
-    setShowWelcomePrototype(false);
+    setShowPartnersFundingStart(false);
   };
   useEffect(() => {
     if (canInstall && !isInstalled) {
@@ -459,9 +459,9 @@ export function LoginForm() {
         />
       )}
 
-      <PrototypeWelcomeModal
-        isOpen={showWelcomePrototype}
-        onClose={dismissWelcomePrototype}
+      <PartnersFundingStartModal
+        isOpen={showPartnersFundingStart}
+        onClose={dismissPartnersFundingStart}
       />
     </div>
   );
