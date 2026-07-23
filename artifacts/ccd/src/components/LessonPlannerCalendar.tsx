@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, memo } from 'react';
+import { createPortal } from 'react-dom';
 import { 
   Calendar as CalendarIcon, 
   ChevronLeft, 
@@ -1977,9 +1978,20 @@ export function LessonPlannerCalendar({
     
     const timeSlots = Object.keys(groupedPlans).sort();
     
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-        <div className="bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden w-[90%] max-w-4xl max-h-[90vh] flex flex-col">
+    return createPortal(
+      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+        <div
+          className="fixed inset-0 bg-black/50"
+          aria-hidden="true"
+          onClick={() => {
+            setIsLessonSummaryOpen(false);
+            setRemoveFromDayDropdownOpen(false);
+          }}
+        />
+        <div
+          className="relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden w-[90%] max-w-4xl max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+        >
           {/* Header */}
           <div 
             className="p-4 text-white relative"
@@ -2276,7 +2288,8 @@ export function LessonPlannerCalendar({
             </div>
           </div>
         </div>
-      </div>
+      </div>,
+      document.body,
     );
   };
 
@@ -2683,9 +2696,13 @@ export function LessonPlannerCalendar({
       {renderLessonSummary()}
 
       {/* Edit Plan Modal */}
-      {editingPlan && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-          <div className="bg-white rounded-2xl shadow-xl w-full max-w-md">
+      {editingPlan && createPortal(
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={() => setEditingPlan(null)} />
+          <div
+            className="relative z-10 bg-white rounded-2xl shadow-xl w-full max-w-md"
+            onClick={(e) => e.stopPropagation()}
+          >
             <div className="p-6 border-b border-gray-200">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold text-gray-900">Edit Lesson Plan</h3>
@@ -2795,7 +2812,8 @@ export function LessonPlannerCalendar({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body,
       )}
 
       {/* Timetable Modal */}

@@ -1,4 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, Star, X, Bell, CalendarDays } from 'lucide-react';
 import { format } from 'date-fns';
 import {
@@ -80,15 +81,20 @@ export function PartnerKeyDatesModal({
     onConfirm(selected);
   };
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[70] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[70] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="partner-key-dates-title"
       data-ccd-key-dates-modal="1"
     >
-      <div className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-card border border-[#E5EDE8] bg-white shadow-soft">
+      {/* Full-viewport dim — portaled so header dims (not trapped by calendar transform/overflow) */}
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+      <div
+        className="relative z-10 flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded-card border border-[#E5EDE8] bg-white shadow-soft"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div
           className="flex items-start justify-between gap-3 border-b border-[#E5EDE8] px-4 py-3 sm:px-5"
           style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}
@@ -231,7 +237,8 @@ export function PartnerKeyDatesModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
@@ -252,15 +259,19 @@ export function ImportantDatesConfirmPopup({
   if (!isOpen) return null;
   const shortName = orgId ? getPartnerShortName(orgId) : 'Partner';
 
-  return (
+  return createPortal(
     <div
-      className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-[80] flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="important-dates-confirm-title"
       data-ccd-important-dates-confirm="1"
     >
-      <div className="w-full max-w-md overflow-hidden rounded-card border border-[#E5EDE8] bg-white shadow-soft">
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+      <div
+        className="relative z-10 w-full max-w-md overflow-hidden rounded-card border border-[#E5EDE8] bg-white shadow-soft"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div
           className="border-b border-[#E5EDE8] px-5 py-4"
           style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}
@@ -318,6 +329,7 @@ export function ImportantDatesConfirmPopup({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

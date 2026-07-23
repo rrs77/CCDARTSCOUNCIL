@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { X, BookOpen, Layers, Calendar, Clock, ChevronRight, Search } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useLessonStacks, type StackedLesson } from '../hooks/useLessonStacks';
@@ -145,9 +146,13 @@ export function CalendarLessonAssignmentModal({
 
   if (!isOpen) return null;
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-end sm:items-center justify-center p-0 sm:p-4 z-[70] animate-fade-in">
-      <div className="bg-white rounded-t-card sm:rounded-card shadow-soft w-full max-w-3xl max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden">
+  return createPortal(
+    <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center p-0 sm:p-4 animate-fade-in">
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={handleClose} />
+      <div
+        className="relative z-10 bg-white rounded-t-card sm:rounded-card shadow-soft w-full max-w-3xl max-h-[92vh] sm:max-h-[90vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-4 sm:p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
           <div className="flex items-start justify-between gap-3">
@@ -395,7 +400,8 @@ export function CalendarLessonAssignmentModal({
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
 
