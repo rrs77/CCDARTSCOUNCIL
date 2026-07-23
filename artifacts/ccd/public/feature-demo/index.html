@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>CCDesigner — Feature demo</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=Source+Sans+3:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      :root {
+        --forest: #002d24;
+        --lime: #b6ff7e;
+        --sage: #e8f0ea;
+        --ink: #0f241f;
+        --muted: rgba(15, 36, 31, 0.68);
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Source Sans 3", system-ui, sans-serif;
+        color: var(--ink);
+        background:
+          radial-gradient(ellipse 80% 50% at 10% -10%, rgba(182, 255, 126, 0.28), transparent 55%),
+          radial-gradient(ellipse 70% 45% at 100% 0%, rgba(0, 45, 36, 0.12), transparent 50%),
+          linear-gradient(180deg, #f4f7f4 0%, #e9efe9 100%);
+        min-height: 100vh;
+      }
+      .wrap {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 28px 20px 64px;
+      }
+      header {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        align-items: flex-end;
+        justify-content: space-between;
+        margin-bottom: 22px;
+      }
+      .brand {
+        display: flex;
+        gap: 14px;
+        align-items: center;
+      }
+      .mark {
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
+        background: var(--forest);
+        color: var(--lime);
+        display: grid;
+        place-items: center;
+        font-weight: 700;
+        letter-spacing: 0.04em;
+      }
+      h1 {
+        margin: 0;
+        font-family: "Playfair Display", Georgia, serif;
+        font-size: clamp(1.6rem, 3vw, 2.2rem);
+        line-height: 1.15;
+        color: var(--forest);
+      }
+      .lede {
+        margin: 6px 0 0;
+        color: var(--muted);
+        max-width: 46ch;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: var(--forest);
+        color: #fff;
+        border-radius: 999px;
+        padding: 8px 14px;
+        font-size: 0.85rem;
+        font-weight: 600;
+      }
+      .badge span { color: var(--lime); }
+      .stage {
+        background: #0b1f1a;
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 45, 36, 0.22);
+        border: 1px solid rgba(0, 45, 36, 0.2);
+      }
+      video, .still {
+        display: block;
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        background: #001812;
+        object-fit: contain;
+      }
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 16px;
+        background: linear-gradient(180deg, rgba(0, 45, 36, 0.96), #002d24);
+        color: #fff;
+      }
+      .controls button {
+        appearance: none;
+        border: 0;
+        border-radius: 10px;
+        padding: 10px 14px;
+        font: inherit;
+        font-weight: 700;
+        cursor: pointer;
+      }
+      .primary { background: var(--lime); color: #10241d; }
+      .ghost {
+        background: transparent;
+        color: #fff;
+        border: 1px solid rgba(255, 255, 255, 0.28) !important;
+      }
+      .btn-row { display: flex; flex-wrap: wrap; gap: 8px; }
+      .caption {
+        font-size: 0.92rem;
+        color: rgba(255, 255, 255, 0.88);
+        max-width: 52ch;
+      }
+      .chapters {
+        margin-top: 22px;
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+        gap: 12px;
+      }
+      .chapter {
+        text-align: left;
+        border: 1px solid rgba(0, 45, 36, 0.12);
+        background: rgba(255, 255, 255, 0.78);
+        border-radius: 14px;
+        padding: 0;
+        overflow: hidden;
+        cursor: pointer;
+        font: inherit;
+        color: inherit;
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+      }
+      .chapter:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 10px 24px rgba(0, 45, 36, 0.12);
+      }
+      .chapter.active {
+        outline: 2px solid var(--forest);
+        outline-offset: 0;
+      }
+      .chapter img {
+        width: 100%;
+        aspect-ratio: 16 / 10;
+        object-fit: cover;
+        display: block;
+        background: var(--sage);
+      }
+      .chapter .meta { padding: 10px 12px 12px; }
+      .chapter .n {
+        font-size: 0.72rem;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: rgba(0, 45, 36, 0.55);
+        font-weight: 700;
+      }
+      .chapter .t {
+        margin-top: 2px;
+        font-weight: 700;
+        color: var(--forest);
+      }
+      .chapter .c {
+        margin-top: 4px;
+        font-size: 0.85rem;
+        color: var(--muted);
+        line-height: 1.35;
+      }
+      .note {
+        margin-top: 24px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.7);
+        border: 1px solid rgba(0, 45, 36, 0.1);
+        color: var(--muted);
+        font-size: 0.92rem;
+        line-height: 1.5;
+      }
+      .note strong { color: var(--forest); }
+      a { color: var(--forest); font-weight: 600; }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <div class="brand">
+          <div class="mark">CCD</div>
+          <div>
+            <h1>CCDesigner feature demo</h1>
+            <p class="lede">
+              A short walkthrough of the working prototype for Arts Council and partner organisations.
+            </p>
+          </div>
+        </div>
+        <div class="badge"><span>●</span> Live UI recording · ~1–2 min</div>
+      </header>
+
+      <div class="stage">
+        <video id="video" controls playsinline preload="metadata" poster="frames/01-login.png">
+          <source src="ccdesigner-feature-demo.webm" type="video/webm" />
+          <source src="ccdesigner-feature-demo.mp4" type="video/mp4" />
+        </video>
+        <img id="still" class="still" hidden alt="" />
+        <div class="controls">
+          <div class="btn-row">
+            <button class="primary" id="playBtn" type="button">Play demo</button>
+            <button class="ghost" id="stillModeBtn" type="button">Chapter stills</button>
+            <a class="ghost" id="downloadLink" href="ccdesigner-feature-demo.webm" download style="text-decoration:none;display:inline-flex;align-items:center;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.28);color:#fff;font-weight:700;">Download video</a>
+          </div>
+          <div class="caption" id="liveCaption">Loading chapters…</div>
+        </div>
+      </div>
+
+      <div class="chapters" id="chapters"></div>
+
+      <div class="note">
+        <strong>What this covers:</strong> login &amp; Explore prototype · Half-Term Designer · Activity Library ·
+        Lesson Builder · Lesson Library · Calendar (month + week timed grid) · Partner Hubs (music / premium / free orgs) ·
+        open a hub · Partner Planning accordion.<br /><br />
+        <strong>Disclaimer:</strong> Partner logos and branding are for demonstration only and do not imply endorsement,
+        funding, or partnership. Prototype content may be illustrative.
+      </div>
+    </div>
+
+    <script>
+      const FALLBACK_CHAPTERS = [
+        { id: "01-login", title: "Welcome to CCDesigner", caption: "Forest/lime creative curriculum studio for schools & arts partners", at: 0 },
+        { id: "02-prototype", title: "Explore the working prototype", caption: "Password-gated demo for Arts Council & partner consultation", at: 5 },
+        { id: "03-dashboard", title: "Half-Term Designer", caption: "Plan Autumn–Summer half-terms and assign lessons to units", at: 12 },
+        { id: "04-activity", title: "Activity Library", caption: "Browse, star, and reuse classroom activities", at: 20 },
+        { id: "05-builder", title: "Lesson Builder", caption: "Compose lessons from activities", at: 28 },
+        { id: "06-lessons", title: "Lesson Library", caption: "Store and assign finished lessons", at: 35 },
+        { id: "07-calendar-month", title: "Calendar — Month", caption: "Term at a glance", at: 42 },
+        { id: "08-calendar-week", title: "Calendar — Week grid", caption: "Timed week view", at: 49 },
+        { id: "09-hubs", title: "Partner Hubs", caption: "Music hubs, premium partners, free orgs", at: 56 },
+        { id: "10-hub-open", title: "Inside a Partner Hub", caption: "Open a hub and add resources", at: 64 },
+        { id: "11-planning", title: "Partner Planning", caption: "Partner packs in Activity Library", at: 72 },
+        { id: "12-close", title: "Share & next steps", caption: "Demonstration only — contact rob@rhythmstix.co.uk", at: 80 },
+      ];
+
+      const video = document.getElementById("video");
+      const still = document.getElementById("still");
+      const chaptersEl = document.getElementById("chapters");
+      const liveCaption = document.getElementById("liveCaption");
+      const playBtn = document.getElementById("playBtn");
+      const stillModeBtn = document.getElementById("stillModeBtn");
+      const downloadLink = document.getElementById("downloadLink");
+
+      let chapters = FALLBACK_CHAPTERS;
+      let stillMode = false;
+      let stillIndex = 0;
+      let stillTimer = null;
+
+      async function loadManifest() {
+        try {
+          const res = await fetch("manifest.json", { cache: "no-store" });
+          if (!res.ok) return;
+          const data = await res.json();
+          if (Array.isArray(data.chapters) && data.chapters.length) {
+            const dur = video.duration && isFinite(video.duration) ? video.duration : 72;
+            const step = dur / data.chapters.length;
+            chapters = data.chapters.map((c, i) => ({ ...c, at: Math.round(i * step) }));
+          }
+          if (data.video?.mp4) {
+            downloadLink.href = data.video.mp4;
+          } else if (data.video?.webm) {
+            downloadLink.href = data.video.webm;
+          }
+        } catch (_) {
+          /* offline / file:// still works with fallbacks */
+        }
+      }
+
+      function renderChapters() {
+        chaptersEl.innerHTML = chapters
+          .map(
+            (c, i) => `
+          <button class="chapter" type="button" data-index="${i}" aria-label="Jump to ${c.title}">
+            <img src="frames/${c.id}.png" alt="" loading="lazy" />
+            <div class="meta">
+              <div class="n">Chapter ${String(i + 1).padStart(2, "0")}</div>
+              <div class="t">${c.title}</div>
+              <div class="c">${c.caption}</div>
+            </div>
+          </button>`,
+          )
+          .join("");
+      }
+
+      function setActive(i) {
+        [...chaptersEl.querySelectorAll(".chapter")].forEach((el, idx) => {
+          el.classList.toggle("active", idx === i);
+        });
+        const c = chapters[i];
+        if (c) liveCaption.textContent = `${c.title} — ${c.caption}`;
+      }
+
+      function jumpToChapter(i) {
+        const c = chapters[i];
+        if (!c) return;
+        setActive(i);
+        if (stillMode) {
+          stillIndex = i;
+          still.src = `frames/${c.id}.png`;
+          still.alt = c.title;
+          return;
+        }
+        video.currentTime = Math.min(c.at || 0, Math.max(0, (video.duration || c.at) - 0.2));
+        video.play().catch(() => {});
+      }
+
+      function enterStillMode() {
+        stillMode = true;
+        video.pause();
+        video.hidden = true;
+        still.hidden = false;
+        stillModeBtn.textContent = "Back to video";
+        playBtn.textContent = "Autoplay stills";
+        jumpToChapter(stillIndex);
+      }
+
+      function exitStillMode() {
+        stillMode = false;
+        clearInterval(stillTimer);
+        stillTimer = null;
+        still.hidden = true;
+        video.hidden = false;
+        stillModeBtn.textContent = "Chapter stills";
+        playBtn.textContent = "Play demo";
+      }
+
+      playBtn.addEventListener("click", () => {
+        if (stillMode) {
+          clearInterval(stillTimer);
+          stillTimer = setInterval(() => {
+            stillIndex = (stillIndex + 1) % chapters.length;
+            jumpToChapter(stillIndex);
+          }, 3200);
+          jumpToChapter(stillIndex);
+          return;
+        }
+        video.play().catch(() => {});
+      });
+
+      stillModeBtn.addEventListener("click", () => {
+        if (stillMode) exitStillMode();
+        else enterStillMode();
+      });
+
+      chaptersEl.addEventListener("click", (e) => {
+        const btn = e.target.closest(".chapter");
+        if (!btn) return;
+        jumpToChapter(Number(btn.dataset.index));
+      });
+
+      video.addEventListener("timeupdate", () => {
+        if (stillMode || !chapters.length) return;
+        let idx = 0;
+        for (let i = 0; i < chapters.length; i++) {
+          if (video.currentTime >= (chapters[i].at || 0)) idx = i;
+        }
+        setActive(idx);
+      });
+
+      video.addEventListener("loadedmetadata", () => {
+        const dur = video.duration || 72;
+        const step = dur / chapters.length;
+        chapters = chapters.map((c, i) => ({ ...c, at: c.at ?? Math.round(i * step) }));
+      });
+
+      renderChapters();
+      setActive(0);
+      loadManifest().then(renderChapters);
+    </script>
+  </body>
+</html>

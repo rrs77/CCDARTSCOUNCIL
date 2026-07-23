@@ -1,0 +1,15 @@
+{
+  "name": "ccd-feature-demo",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Records a shareable CCDesigner feature walkthrough video from the live prototype UI",
+  "scripts": {
+    "record": "node record-feature-demo.mjs",
+    "encode:mp4": "node encode-mp4.mjs"
+  },
+  "dependencies": {
+    "ffmpeg-static": "^5.2.0",
+    "playwright": "^1.52.0"
+  }
+}

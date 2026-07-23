@@ -1,0 +1,87 @@
+{
+  "title": "CCDesigner — Feature demo for external organisations",
+  "generatedAt": "2026-07-23T16:39:06.002Z",
+  "baseUrl": "http://127.0.0.1:5173",
+  "disclaimer": "Partners and logos are shown for demonstration only and do not imply endorsement.",
+  "chapters": [
+    {
+      "id": "01-login",
+      "title": "Welcome to CCDesigner",
+      "caption": "Forest/lime creative curriculum studio for schools & arts partners"
+    },
+    {
+      "id": "02-prototype",
+      "title": "Explore the working prototype",
+      "caption": "Password-gated demo for Arts Council & partner consultation"
+    },
+    {
+      "id": "03-dashboard",
+      "title": "Half-Term Designer",
+      "caption": "Plan Autumn–Summer half-terms and assign lessons to units"
+    },
+    {
+      "id": "04-activity",
+      "title": "Activity Library",
+      "caption": "Browse, star, and reuse classroom activities — including recently added partner picks"
+    },
+    {
+      "id": "05-builder",
+      "title": "Lesson Builder",
+      "caption": "Compose lessons from the Activity Library into ready-to-teach sequences"
+    },
+    {
+      "id": "06-lessons",
+      "title": "Lesson Library",
+      "caption": "Store, open, and assign finished lessons across your curriculum"
+    },
+    {
+      "id": "07-calendar-month",
+      "title": "Calendar — Month",
+      "caption": "See the term at a glance with lessons, events, and school days"
+    },
+    {
+      "id": "08-calendar-week",
+      "title": "Calendar — Week grid",
+      "caption": "Timed week view for timetable-style planning"
+    },
+    {
+      "id": "09-hubs",
+      "title": "Partner Hubs",
+      "caption": "Music hubs, premium partners, and free cultural organisations"
+    },
+    {
+      "id": "10-hub-open",
+      "title": "Inside a Partner Hub",
+      "caption": "Open a hub and add resources into CCDesigner (local prototype)"
+    },
+    {
+      "id": "11-planning",
+      "title": "Partner Planning",
+      "caption": "Accordion of partner packs linked into Activity Library planning"
+    },
+    {
+      "id": "12-close",
+      "title": "Share & next steps",
+      "caption": "Partners & logos shown for demonstration only — contact rob@rhythmstix.co.uk"
+    }
+  ],
+  "video": {
+    "webm": "ccdesigner-feature-demo.webm",
+    "mp4": "ccdesigner-feature-demo.mp4"
+  },
+  "frames": [
+    "frames/01-login.png",
+    "frames/02-prototype.png",
+    "frames/03-dashboard.png",
+    "frames/04-activity.png",
+    "frames/05-builder.png",
+    "frames/06-lessons.png",
+    "frames/07-calendar-month.png",
+    "frames/08-calendar-week.png",
+    "frames/09-hubs.png",
+    "frames/10-hub-open.png",
+    "frames/11-planning.png",
+    "frames/12-close.png"
+  ],
+  "durationSeconds": 72
+}
