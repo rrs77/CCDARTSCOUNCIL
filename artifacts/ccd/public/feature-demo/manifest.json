@@ -1,6 +1,6 @@
 {
-  "title": "CCDesigner \u2014 Feature demo for external organisations",
-  "generatedAt": "2026-07-23T19:31:26.068Z",
+  "title": "CCDesigner — Feature demo for external organisations",
+  "generatedAt": "2026-07-23T20:57:17.878Z",
   "baseUrl": "http://127.0.0.1:5173",
   "canvas": {
     "width": 1920,
@@ -17,8 +17,14 @@
     "email": "rob@rhythmstix.co.uk",
     "web": "https://www.ccdesigner.co.uk"
   },
-  "businessNote": "CCDesigner only takes a cut of 10\u201320% of paid resources.",
+  "businessNote": "CCDesigner only takes a cut of 10–20% of paid resources.",
   "disclaimer": "Partners and logos are shown for demonstration only and do not imply endorsement.",
+  "music": {
+    "file": "audio/head-of-the-class.mp3",
+    "title": "Head of the Class",
+    "volume": 0.2,
+    "note": "User-supplied underscore — clear rights/licence before public distribution."
+  },
   "chapters": [
     {
       "id": "01-logo",
@@ -28,17 +34,17 @@
     {
       "id": "02-pressure",
       "title": "Performing arts under pressure",
-      "caption": "Schools & FE \u2014 expertise harder to reach"
+      "caption": "Schools & FE — expertise harder to reach"
     },
     {
       "id": "03-response",
       "title": "One place to plan and connect",
-      "caption": "Music hubs \u00b7 arts organisations \u00b7 ideas kept alive"
+      "caption": "Music hubs · arts organisations · ideas kept alive"
     },
     {
       "id": "04-disclaimer",
       "title": "Demonstration only",
-      "caption": "For potential partners & funding \u2014 no endorsement implied"
+      "caption": "For potential partners & funding — no endorsement implied"
     },
     {
       "id": "05-landing",
@@ -48,7 +54,7 @@
     {
       "id": "06-ideas",
       "title": "Keep every lightning moment",
-      "caption": "Excellent ideas \u00b7 melting pot for arts planning"
+      "caption": "Excellent ideas · melting pot for arts planning"
     },
     {
       "id": "07-action",
@@ -58,12 +64,12 @@
     {
       "id": "08-explore",
       "title": "Inside the prototype",
-      "caption": "Dashboard \u00b7 Half-Term Designer"
+      "caption": "Dashboard · Half-Term Designer"
     },
     {
       "id": "09-lso",
       "title": "LSO Partner Hub",
-      "caption": "Choose How to Build an Orchestra \u00b7 Add to CCDesigner"
+      "caption": "Choose How to Build an Orchestra · Add to CCDesigner"
     },
     {
       "id": "10-activities",
@@ -72,8 +78,8 @@
     },
     {
       "id": "11-lesson",
-      "title": "Lesson Builder \u2192 Library",
-      "caption": "Build from LSO activities \u00b7 same lesson appears in Library"
+      "title": "Lesson Builder → Library",
+      "caption": "Build from LSO activities · same lesson appears in Library"
     },
     {
       "id": "12-term",
@@ -83,27 +89,27 @@
     {
       "id": "13-key-dates",
       "title": "Populate with key dates",
-      "caption": "Partner dropdown \u00b7 KS1/KS2 \u00b7 Important dates"
+      "caption": "Partner dropdown · KS1/KS2 · Important dates"
     },
     {
       "id": "14-settings",
       "title": "Customisable to key stage",
-      "caption": "Settings \u00b7 year-group folders"
+      "caption": "Settings · year-group folders"
     },
     {
       "id": "15-create",
       "title": "Build your own",
-      "caption": "Create activity & lesson \u00b7 live links"
+      "caption": "Create activity & lesson · live links"
     },
     {
       "id": "16-calendar",
       "title": "Calendar week & timetable",
-      "caption": "Week view \u00b7 add event \u00b7 timetable"
+      "caption": "Week view · add event · timetable"
     },
     {
       "id": "17-paid",
       "title": "Paid partners",
-      "caption": "We Teach Drama & iCompose \u2014 10\u201320% cut"
+      "caption": "We Teach Drama & iCompose — 10–20% cut"
     },
     {
       "id": "18-orgs",
@@ -113,7 +119,7 @@
     {
       "id": "19-close",
       "title": "Get in touch",
-      "caption": "rob@rhythmstix.co.uk \u00b7 www.ccdesigner.co.uk"
+      "caption": "rob@rhythmstix.co.uk · www.ccdesigner.co.uk"
     }
   ],
   "video": {
@@ -141,11 +147,5 @@
     "frames/18-orgs.png",
     "frames/19-close.png"
   ],
-  "durationSeconds": 346,
-  "music": {
-    "file": "audio/autumn-leaves-piano-improv.mp3",
-    "title": "Autumn Leaves Piano Improv",
-    "volume": 0.2,
-    "note": "User-supplied underscore \u2014 clear rights/licence before public distribution."
-  }
+  "durationSeconds": 206
 }

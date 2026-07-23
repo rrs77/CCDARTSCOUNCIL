@@ -25,8 +25,7 @@ function probeDurationSeconds(mediaPath) {
 function resolveDemoMusicPath() {
   const candidates = [
     process.env.CCD_DEMO_MUSIC,
-    path.join(outDir, 'audio/autumn-leaves-piano-improv.mp3'),
-    '/Users/rfreich-storer/Music/4K YouTube to MP3/Autumn Leaves Piano Improv.mp3',
+    path.join(outDir, 'audio/head-of-the-class.mp3'),
   ].filter(Boolean);
   return candidates.find((p) => fs.existsSync(p)) || null;
 }

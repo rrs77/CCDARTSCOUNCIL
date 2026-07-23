@@ -100,7 +100,7 @@ async function dismissOverlays(page) {
   }
   for (let i = 0; i < 3; i++) {
     await page.keyboard.press('Escape').catch(() => {});
-    await hold(page, 140);
+    await hold(page, 150);
   }
 }
 
@@ -115,7 +115,7 @@ async function selectYearGroup(page, nameRe) {
       const text = await btn.textContent().catch(() => '');
       // expand sections that might contain the target
       await smoothClick(page, btn).catch(() => {});
-      await hold(page, 280);
+      await hold(page, 300);
     }
   }
   const opt = page
@@ -168,9 +168,9 @@ async function enterPrototypeFast(page) {
 
 async function openPartnerHub(page, nameRe, slug) {
   await clickTab(page, 'our-partners');
-  await hold(page, 1600);
+  await hold(page, 900);
   await page.mouse.wheel(0, 420);
-  await hold(page, 1200);
+  await hold(page, 750);
   const btn = page.getByRole('button', { name: nameRe }).first();
   if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
     await smoothClick(page, btn);
@@ -178,7 +178,7 @@ async function openPartnerHub(page, nameRe, slug) {
     await page.goto(`${BASE_URL}/${slug}`, { waitUntil: 'domcontentloaded' });
   }
   await page.waitForURL(new RegExp(`/${slug}`), { timeout: 15000 }).catch(() => {});
-  await hold(page, 2800);
+  await hold(page, 1350);
   await ensureCursor(page);
 }
 
@@ -192,7 +192,7 @@ async function chooseAndAddLsoTopic(page) {
   const featured = page.getByRole('heading', { name: /How to Build an Orchestra/i }).first();
   await featured.waitFor({ state: 'visible', timeout: 12000 }).catch(() => {});
   await featured.scrollIntoViewIfNeeded().catch(() => {});
-  await hold(page, 3200);
+  await hold(page, 1350);
 
   // Emphasise the featured block on camera
   await page.evaluate(() => {
@@ -205,13 +205,13 @@ async function chooseAndAddLsoTopic(page) {
       block.style.outlineOffset = '6px';
     }
   }).catch(() => {});
-  await hold(page, 2800);
+  await hold(page, 1350);
   await snap(page, FRAMES_DIR, '09-lso-topic');
 
   const add = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
   await add.waitFor({ state: 'visible', timeout: 8000 });
   await add.scrollIntoViewIfNeeded().catch(() => {});
-  await hold(page, 1600);
+  await hold(page, 900);
   await setCaption(page, 'Add to CCDesigner', 'Seed the LSO unit into Year 6 libraries');
   await smoothClick(page, add);
   await page
@@ -221,14 +221,14 @@ async function chooseAndAddLsoTopic(page) {
   await ensureCursor(page);
   await dismissIfVisible(page, WELCOME_DISMISS);
   await dismissOverlays(page);
-  await hold(page, 2200);
+  await hold(page, 1050);
   return true;
 }
 
 /**
  * Core arc on camera:
  * Activity Library (LSO pack) → Lesson Builder (create) → Lesson Library (same lesson) → Term.
- * Long dwells — do not rush. Do not skip Builder → Library.
+ * Energetic beats — brief but visible. Do not skip Builder → Library.
  */
 async function showLsoActivitiesLessonAndTerm(page) {
   const CREATED_LESSON = 'LSO — How to Build an Orchestra';
@@ -246,7 +246,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
   await clickTab(page, 'activity-library');
   await dismissOverlays(page);
   await dismissIfVisible(page, WELCOME_DISMISS);
-  await hold(page, 2200);
+  await hold(page, 1050);
 
   // Partner planning filter if present
   const partnerPlan = page.locator('[data-partner-planning]').first();
@@ -258,12 +258,12 @@ async function showLsoActivitiesLessonAndTerm(page) {
       const lsoOpt = page.getByRole('button', { name: /London Symphony Orchestra/i }).first();
       if (await lsoOpt.isVisible({ timeout: 1500 }).catch(() => false)) {
         await smoothClick(page, lsoOpt);
-        await hold(page, 1200);
+        await hold(page, 750);
       }
       const htbao = page.getByRole('button', { name: /How to Build an Orchestra/i }).first();
       if (await htbao.isVisible({ timeout: 1500 }).catch(() => false)) {
         await smoothClick(page, htbao);
-        await hold(page, 1600);
+        await hold(page, 900);
       }
     }
   }
@@ -281,11 +281,11 @@ async function showLsoActivitiesLessonAndTerm(page) {
       }
     }).catch(() => {});
   }
-  await hold(page, 3200);
+  await hold(page, 1350);
   await page.mouse.wheel(0, 360);
-  await hold(page, 2400);
+  await hold(page, 1150);
   await page.mouse.wheel(0, 360);
-  await hold(page, 2200);
+  await hold(page, 1050);
   await snap(page, FRAMES_DIR, '10-activities');
 
   // ——— LESSON BUILDER: create a named lesson from LSO activities ———
@@ -296,7 +296,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
   );
   await clickTab(page, 'lesson-builder');
   await dismissOverlays(page);
-  await hold(page, 2200);
+  await hold(page, 1050);
 
   const lessonName = page.getByPlaceholder(/Lesson Name|Lesson Title/i).first();
   if (await lessonName.isVisible({ timeout: 2500 }).catch(() => false)) {
@@ -317,7 +317,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
     const project = page.getByRole('button', { name: /How to Build an Orchestra|Select How to Build an Orchestra/i }).first();
     if (await project.isVisible({ timeout: 1500 }).catch(() => false)) {
       await smoothClick(page, project);
-      await hold(page, 1600);
+      await hold(page, 900);
     }
   }
 
@@ -343,16 +343,16 @@ async function showLsoActivitiesLessonAndTerm(page) {
   if (await addSelected.isVisible({ timeout: 3000 }).catch(() => false)) {
     await setCaption(page, 'Add selected activities', 'LSO activities drop into this lesson');
     await smoothClick(page, addSelected);
-    await hold(page, 2200);
+    await hold(page, 1050);
   }
 
   await page.mouse.wheel(0, 200);
-  await hold(page, 1600);
+  await hold(page, 900);
   await setCaption(page, 'Save the lesson', `"${CREATED_LESSON}" — then open Lesson Library`);
   const saveLesson = page.getByRole('button', { name: /Save Lesson/i }).first();
   if (await saveLesson.isVisible({ timeout: 2000 }).catch(() => false)) {
     await smoothClick(page, saveLesson);
-    await hold(page, 2400);
+    await hold(page, 1150);
   }
   await dismissOverlays(page);
   await snap(page, FRAMES_DIR, '11-lesson');
@@ -365,7 +365,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
   );
   await clickTab(page, 'lesson-library');
   await dismissOverlays(page);
-  await hold(page, 2400);
+  await hold(page, 1150);
 
   // Prefer the exact created title; fall back to HTBAO unit heading
   let createdLoc = page.getByText(CREATED_LESSON, { exact: false }).first();
@@ -377,7 +377,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
   }
   if (await createdLoc.isVisible({ timeout: 2000 }).catch(() => false)) {
     await createdLoc.scrollIntoViewIfNeeded().catch(() => {});
-    await hold(page, 1200);
+    await hold(page, 750);
     await page.evaluate((title) => {
       const nodes = [...document.querySelectorAll('h2,h3,h4,p,span,div,button')];
       const hit =
@@ -393,10 +393,10 @@ async function showLsoActivitiesLessonAndTerm(page) {
         card.scrollIntoView({ block: 'center', behavior: 'instant' });
       }
     }, CREATED_LESSON).catch(() => {});
-    await hold(page, 3200);
+    await hold(page, 1350);
   }
   await page.mouse.wheel(0, 200);
-  await hold(page, 2000);
+  await hold(page, 1100);
 
   // Assign the created lesson (card containing its title) to the term
   await setCaption(page, 'Assign to term', `Place "${CREATED_LESSON}" onto Half-Term Designer`);
@@ -414,7 +414,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
   }
   if (await assignBtn.isVisible({ timeout: 4000 }).catch(() => false)) {
     await smoothClick(page, assignBtn);
-    await hold(page, 1400);
+    await hold(page, 850);
     const termChoice = page.locator('.fixed button').filter({ hasText: /Autumn 1/i }).first();
     if (await termChoice.isVisible({ timeout: 2500 }).catch(() => false)) {
       await smoothClick(page, termChoice);
@@ -423,7 +423,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
     const confirmAssign = page.getByRole('button', { name: /Assign to Half-Term/i }).last();
     if (await confirmAssign.isVisible({ timeout: 2500 }).catch(() => false)) {
       await smoothClick(page, confirmAssign);
-      await hold(page, 2000);
+      await hold(page, 1100);
     }
   }
 
@@ -435,9 +435,9 @@ async function showLsoActivitiesLessonAndTerm(page) {
   );
   await clickTab(page, 'unit-viewer');
   await dismissOverlays(page);
-  await hold(page, 2800);
+  await hold(page, 1350);
   await page.mouse.wheel(0, 160);
-  await hold(page, 2400);
+  await hold(page, 1150);
   // Highlight the created lesson / HTBAO card on the board
   await page.evaluate((title) => {
     const nodes = [...document.querySelectorAll('button, div, span, h3, h4')];
@@ -454,7 +454,7 @@ async function showLsoActivitiesLessonAndTerm(page) {
       card.style.outlineOffset = '4px';
     }
   }, CREATED_LESSON).catch(() => {});
-  await hold(page, 3600);
+  await hold(page, 1500);
   await snap(page, FRAMES_DIR, '12-term');
   await dismissOverlays(page);
 }
@@ -463,15 +463,15 @@ async function chapterLsoPathway(page) {
   // Organisation list first
   await setCaption(page, 'Arts organisations', 'Partner Hubs — start with free resources · LSO');
   await clickTab(page, 'our-partners');
-  await hold(page, 2000);
+  await hold(page, 1100);
   await page.mouse.wheel(0, 380);
-  await hold(page, 1600);
+  await hold(page, 900);
 
   const musicBtn = page.getByRole('button', { name: /Music hubs/i }).first();
   if (await musicBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
     if ((await musicBtn.getAttribute('aria-expanded')) !== 'true') {
       await smoothClick(page, musicBtn);
-      await hold(page, 1400);
+      await hold(page, 850);
     }
   }
 
@@ -488,10 +488,10 @@ async function chapterLsoPathway(page) {
   await ensureInApp(page);
   await openPartnerHub(page, /Royal Ballet and Opera/i, 'roh');
   await snap(page, FRAMES_DIR, '09-roh');
-  await hold(page, 2800);
+  await hold(page, 1350);
   const rohAdd = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
   if (await rohAdd.isVisible({ timeout: 2000 }).catch(() => false)) {
-    await hold(page, 1200);
+    await hold(page, 750);
   }
   await ensureInApp(page);
 }
@@ -522,7 +522,7 @@ async function createFullActivity(page) {
   await clickTab(page, 'activity-library');
   await dismissIfVisible(page, WELCOME_DISMISS);
   await dismissOverlays(page);
-  await hold(page, 1200);
+  await hold(page, 750);
 
   const createBtn = page.getByRole('button', { name: /Create Activity/i }).first();
   if (!(await createBtn.isVisible({ timeout: 4000 }).catch(() => false))) {
@@ -530,13 +530,13 @@ async function createFullActivity(page) {
     return false;
   }
   await smoothClick(page, createBtn);
-  await hold(page, 1400);
+  await hold(page, 850);
 
   let nameInput = page.getByPlaceholder(/Enter activity name/i).first();
   if (!(await nameInput.isVisible({ timeout: 5000 }).catch(() => false))) {
     // Retry open once
     await smoothClick(page, createBtn).catch(() => {});
-    await hold(page, 1500);
+    await hold(page, 950);
     nameInput = page.getByPlaceholder(/Enter activity name/i).first();
   }
   if (!(await nameInput.isVisible({ timeout: 4000 }).catch(() => false))) {
@@ -617,7 +617,7 @@ async function createFullActivity(page) {
     const input = page.getByPlaceholder(ph).first();
     if (await input.isVisible({ timeout: 700 }).catch(() => false)) {
       await typeSlow(page, input, val, { delay: 8 });
-      await hold(page, 220);
+      await hold(page, 200);
     }
   }
   for (const name of ['videoLink', 'musicLink', 'backingLink', 'resourceLink', 'link']) {
@@ -633,7 +633,7 @@ async function createFullActivity(page) {
   const save = page.getByRole('button', { name: /^Create Activity$/i }).last();
   if (await save.isVisible({ timeout: 1200 }).catch(() => false)) {
     await smoothClick(page, save);
-    await hold(page, 1600);
+    await hold(page, 900);
   }
   await dismissOverlays(page);
   return true;
@@ -644,7 +644,7 @@ async function buildFullLesson(page) {
   await setCaption(page, 'Build a lesson — KS3 flavour', 'Title, notes, select activities, save');
   await selectYearGroup(page, /Year 9 Music|Year 9 Drama|KS3/i).catch(() => {});
   await clickTab(page, 'lesson-builder');
-  await hold(page, 1400);
+  await hold(page, 850);
 
   const lessonName = page.getByPlaceholder(/Lesson Name|Lesson Title/i).first();
   if (await lessonName.isVisible({ timeout: 2200 }).catch(() => false)) {
@@ -687,7 +687,7 @@ async function buildFullLesson(page) {
   const addSelected = page.getByRole('button', { name: /Add \d+ Selected/i }).first();
   if (await addSelected.isVisible({ timeout: 2000 }).catch(() => false)) {
     await smoothClick(page, addSelected);
-    await hold(page, 1400);
+    await hold(page, 850);
   }
 
   await page.mouse.wheel(0, 240);
@@ -697,7 +697,7 @@ async function buildFullLesson(page) {
   const saveLesson = page.getByRole('button', { name: /Save Lesson/i }).first();
   if (await saveLesson.isVisible({ timeout: 1200 }).catch(() => false)) {
     await smoothClick(page, saveLesson);
-    await hold(page, 1500);
+    await hold(page, 950);
   }
   await dismissOverlays(page);
 
@@ -705,7 +705,7 @@ async function buildFullLesson(page) {
   await setCaption(page, 'Lesson Library', `Saved lesson appears here — "${CREATED_LESSON}"`);
   await clickTab(page, 'lesson-library');
   await dismissOverlays(page);
-  await hold(page, 1800);
+  await hold(page, 1000);
   const created = page.getByText(CREATED_LESSON, { exact: false }).first();
   if (await created.isVisible({ timeout: 3000 }).catch(() => false)) {
     await created.scrollIntoViewIfNeeded().catch(() => {});
@@ -718,7 +718,7 @@ async function buildFullLesson(page) {
         card.style.outlineOffset = '4px';
       }
     }, CREATED_LESSON).catch(() => {});
-    await hold(page, 2400);
+    await hold(page, 1150);
   }
   await dismissOverlays(page);
 }
@@ -731,11 +731,11 @@ async function showSettings(page) {
   } else {
     await smoothClick(page, page.getByRole('button', { name: /Settings/i }).first());
   }
-  await hold(page, 1200);
+  await hold(page, 750);
   const ygTab = page.getByRole('button', { name: /Year Groups/i }).first();
   if (await ygTab.isVisible({ timeout: 1800 }).catch(() => false)) {
     await smoothClick(page, ygTab);
-    await hold(page, 2200);
+    await hold(page, 1050);
   }
   await page.mouse.wheel(0, 180);
   await hold(page, 1000);
@@ -786,7 +786,7 @@ async function chapterKeyDates(page) {
     el.dispatchEvent(new Event('input', { bubbles: true }));
     el.dispatchEvent(new Event('change', { bubbles: true }));
   });
-  await hold(page, 1200);
+  await hold(page, 750);
 
   const modal = page.locator('[data-ccd-key-dates-modal]').first();
   await modal.waitFor({ state: 'visible', timeout: 8000 });
@@ -813,7 +813,7 @@ async function chapterKeyDates(page) {
 
     const confirmKeyDates = page.locator('[data-ccd-key-dates-confirm]').first();
     await confirmKeyDates.click({ force: true });
-    await hold(page, 1400);
+    await hold(page, 850);
     await modal.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
   }
 
@@ -821,7 +821,7 @@ async function chapterKeyDates(page) {
   await confirmPopup.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
   if (await confirmPopup.isVisible({ timeout: 800 }).catch(() => false)) {
     await setCaption(page, 'Suggested selections', 'Confirm list → Important dates in the app');
-    await hold(page, 2200);
+    await hold(page, 1050);
     await snap(page, FRAMES_DIR, '13-confirm-popup');
     await hold(page, 800);
     const donePopup = page.locator('[data-ccd-important-dates-confirm-done]').first();
@@ -835,7 +835,7 @@ async function chapterKeyDates(page) {
   const panel = page.locator('[data-ccd-important-dates-panel]').first();
   if (await panel.isVisible({ timeout: 2000 }).catch(() => false)) {
     await panel.scrollIntoViewIfNeeded().catch(() => {});
-    await hold(page, 1800);
+    await hold(page, 1000);
   }
 
   for (let i = 0; i < 3; i++) {
@@ -848,7 +848,7 @@ async function chapterKeyDates(page) {
   const starred = page.locator('[data-ccd-calendar-key-date="1"]').first();
   if (await starred.isVisible({ timeout: 1500 }).catch(() => false)) {
     await starred.scrollIntoViewIfNeeded().catch(() => {});
-    await hold(page, 1600);
+    await hold(page, 900);
   }
   await snap(page, FRAMES_DIR, '13-key-dates');
   await dismissOverlays(page);
@@ -864,7 +864,7 @@ async function chapterCalendarWeek(page) {
   const weekBtn = page.getByRole('button', { name: /^Week$/i }).first();
   if (await weekBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
     await weekBtn.click({ force: true });
-    await hold(page, 1800);
+    await hold(page, 1000);
   }
 
   const addEvent = page
@@ -873,7 +873,7 @@ async function chapterCalendarWeek(page) {
   if (await addEvent.isVisible({ timeout: 1500 }).catch(() => false)) {
     await setCaption(page, 'Add event', 'Drop a school or arts event onto the week');
     await smoothClick(page, addEvent);
-    await hold(page, 1200);
+    await hold(page, 750);
     const titleInput = page
       .getByPlaceholder(/Title|Event name|Event title/i)
       .or(page.locator('input[name="title"], input[name="name"]').first())
@@ -884,7 +884,7 @@ async function chapterCalendarWeek(page) {
       const saveEvent = page.getByRole('button', { name: /Save|Add Event|Create|Confirm/i }).last();
       if (await saveEvent.isVisible({ timeout: 1200 }).catch(() => false)) {
         await smoothClick(page, saveEvent);
-        await hold(page, 1200);
+        await hold(page, 750);
       } else {
         await page.keyboard.press('Escape').catch(() => {});
       }
@@ -897,7 +897,7 @@ async function chapterCalendarWeek(page) {
   if (await weekLessons.isVisible({ timeout: 1200 }).catch(() => false)) {
     await setCaption(page, 'Timetable', 'School week lessons sitting alongside events');
     await weekLessons.click({ force: true });
-    await hold(page, 2000);
+    await hold(page, 1100);
   }
 
   await snap(page, FRAMES_DIR, '16-calendar');
@@ -913,28 +913,28 @@ async function chapterPaid(page) {
 
   // We Teach Drama
   await page.goto(`${BASE_URL}/weteachdrama`, { waitUntil: 'domcontentloaded' });
-  await hold(page, 2000);
+  await hold(page, 1100);
   await ensureCursor(page);
   await page.mouse.wheel(0, 300);
   await hold(page, 1000);
   const basket = page.getByRole('button', { name: /Add to basket/i }).first();
   if (await basket.isVisible({ timeout: 3000 }).catch(() => false)) {
     await smoothClick(page, basket);
-    await hold(page, 1400);
+    await hold(page, 850);
   }
   await snap(page, FRAMES_DIR, '17-wtd');
 
   // iCompose
   await setCaption(page, 'iCompose', 'Paid courses available to purchase — 10–20% platform cut');
   await page.goto(`${BASE_URL}/icompose`, { waitUntil: 'domcontentloaded' });
-  await hold(page, 2000);
+  await hold(page, 1100);
   await ensureCursor(page);
   await page.mouse.wheel(0, 320);
-  await hold(page, 1200);
+  await hold(page, 750);
   const iccBasket = page.getByRole('button', { name: /Add to basket/i }).first();
   if (await iccBasket.isVisible({ timeout: 2500 }).catch(() => false)) {
     await smoothClick(page, iccBasket);
-    await hold(page, 1400);
+    await hold(page, 850);
   }
   const addFree = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
   if (await addFree.isVisible({ timeout: 1500 }).catch(() => false)) {
@@ -959,14 +959,13 @@ function probeDurationSeconds(mediaPath) {
 function resolveDemoMusicPath() {
   const candidates = [
     process.env.CCD_DEMO_MUSIC,
-    path.join(OUT_DIR, 'audio/autumn-leaves-piano-improv.mp3'),
-    '/Users/rfreich-storer/Music/4K YouTube to MP3/Autumn Leaves Piano Improv.mp3',
+    path.join(OUT_DIR, 'audio/head-of-the-class.mp3'),
   ].filter(Boolean);
   return candidates.find((p) => fs.existsSync(p)) || null;
 }
 
 /**
- * Encode webm → mp4 with tasteful looping piano underscore.
+ * Encode webm → mp4 with looping underscore music.
  * Volume ~20%; fade in/out at timeline ends only. Loop via PCM WAV — never
  * -stream_loop an MP3 (encoder delay/padding desyncs after the first pass).
  */
@@ -1063,65 +1062,52 @@ async function main() {
   }, { gateKey: GATE_KEY });
 
   console.log('01 logo');
-  await recordSlide(page, logoIntroHtml(), 3800, '01-logo');
+  await recordSlide(page, logoIntroHtml(), 2200, '01-logo');
 
   console.log('02 context pressure');
   await clearCaption(page);
-  await recordSlide(page, contextPressureSlideHtml(), 6000, '02-pressure');
+  await recordSlide(page, contextPressureSlideHtml(), 2600, '02-pressure');
 
   console.log('03 context response');
-  await recordSlide(page, contextResponseSlideHtml(), 6000, '03-response');
+  await recordSlide(page, contextResponseSlideHtml(), 2600, '03-response');
 
   console.log('04 disclaimer');
-  await recordSlide(page, partnerDisclaimerSlideHtml(), 8000, '04-disclaimer');
+  await recordSlide(page, partnerDisclaimerSlideHtml(), 2300, '04-disclaimer');
 
   console.log('05 live landing');
   await page.goto(BASE_URL, { waitUntil: 'networkidle' });
-  await hold(page, 600);
+  await hold(page, 500);
   await dismissIfVisible(page, WELCOME_DISMISS);
   await ensureCursor(page);
 
+  // Show the real in-app DemonstrationDisclaimerBand only — no injected overlay card.
   const disclaimerBand = page.locator('[aria-label="Demonstration disclaimer"]').first();
   const disclaimerText = page.getByText(/Organisations shown are examples for demonstration only/i).first();
   if (await disclaimerBand.isVisible({ timeout: 8000 }).catch(() => false)) {
     await disclaimerBand.scrollIntoViewIfNeeded().catch(() => {});
-    await page.evaluate(() => {
-      const el = document.querySelector('[aria-label="Demonstration disclaimer"]');
-      if (el) {
-        el.style.outline = '3px solid #B6FF7E';
-        el.style.outlineOffset = '4px';
-        el.style.boxShadow = '0 0 0 10px rgba(182,255,126,0.2)';
-      }
-    }).catch(() => {});
   } else {
     await disclaimerText.waitFor({ state: 'visible', timeout: 12000 });
     await disclaimerText.scrollIntoViewIfNeeded().catch(() => {});
   }
-  await setCaption(
-    page,
-    'Demonstration only',
-    'For potential partners and for funding — no endorsement implied',
-  );
-  await hold(page, 5500);
+  await hold(page, 1600);
   await snap(page, FRAMES_DIR, '05-landing');
-  await clearCaption(page);
 
   await page.getByText(/Exceptional lessons start with/i).first().waitFor({ timeout: 10000 }).catch(() => {});
   await page.getByText(/Exceptional lessons start with/i).first().scrollIntoViewIfNeeded().catch(() => {});
-  await hold(page, 4000);
+  await hold(page, 1350);
 
   console.log('06 ideas');
-  await recordSlide(page, ideasSlideHtml(), 7800, '06-ideas');
+  await recordSlide(page, ideasSlideHtml(), 2300, '06-ideas');
 
   console.log('07 action');
   await recordSlide(
     page,
     slideHtml({
       eyebrow: 'Feature demo',
-      title: "Let's see the app in action",
-      body: 'Free partner hubs first — then planning tools — then paid resources.',
+      title: "Let's see it in action",
+      body: 'Free hubs → planning tools → paid resources.',
     }),
-    4500,
+    2200,
     '07-action',
   );
 
@@ -1129,23 +1115,23 @@ async function main() {
   await enterPrototypeFast(page);
   await setCaption(page, 'Inside the prototype', 'Half-Term Designer — your planning home');
   await clickTab(page, 'unit-viewer');
-  await hold(page, 3200);
+  await hold(page, 1100);
   await page.mouse.wheel(0, 180);
-  await hold(page, 2200);
+  await hold(page, 700);
   await snap(page, FRAMES_DIR, '08-explore');
   await clearCaption(page);
 
-  // 09–12 LSO arc: Organisation → Activities → Lesson → Term (full pace)
+  // 09–12 LSO arc: Organisation → Activities → Lesson → Term (full pathway, paced)
   console.log('09–12 LSO org → activities → lesson → term');
   await recordSlide(
     page,
     slideHtml({
       eyebrow: 'Free resources',
-      title: "Let's go to an arts organisation",
-      body: 'Start with LSO — choose a topic, add it, then watch it flow into activities, Lesson Builder, Lesson Library, and the term.',
+      title: 'Start with an arts organisation',
+      body: 'LSO → choose a topic → Add → activities → lesson → term.',
       compactTitle: true,
     }),
-    5200,
+    2400,
     '09-lso-slide',
   );
   await ensureInApp(page);
@@ -1156,11 +1142,11 @@ async function main() {
     page,
     slideHtml({
       eyebrow: 'Calendar',
-      title: 'Populate with key dates from partners',
-      body: 'Pick a partner, tick KS1 and KS2 dates, confirm — they become Important dates.',
+      title: 'Partner key dates, one click',
+      body: 'Tick KS1/KS2 dates — they become Important dates.',
       compactTitle: true,
     }),
-    4800,
+    2200,
     '13-key-dates-slide',
   );
   await ensureInApp(page);
@@ -1172,10 +1158,10 @@ async function main() {
     slideHtml({
       eyebrow: 'Your library',
       title: 'Customisable to your key stage',
-      body: 'Manage year-group folders in Settings so the library matches your school.',
+      body: 'Year-group folders that match your school.',
       compactTitle: true,
     }),
-    4200,
+    2200,
     '14-settings-slide',
   );
   await ensureInApp(page);
@@ -1187,10 +1173,10 @@ async function main() {
     slideHtml({
       eyebrow: 'Build your own',
       title: 'Create activities and lessons',
-      body: 'Populate every field — including live resource links — for EYFS to A-level.',
+      body: 'Full fields + live resource links — EYFS to A-level.',
       compactTitle: true,
     }),
-    4200,
+    2200,
     '15-create-slide',
   );
   await ensureInApp(page);
@@ -1208,10 +1194,10 @@ async function main() {
     slideHtml({
       eyebrow: 'Planning',
       title: 'Week view, events and timetable',
-      body: 'See the school week, add events, and keep lessons on the timetable.',
+      body: 'School week · events · lessons together.',
       compactTitle: true,
     }),
-    4200,
+    2200,
     '16-calendar-slide',
   );
   await ensureInApp(page);
@@ -1223,10 +1209,10 @@ async function main() {
     slideHtml({
       eyebrow: 'Paid partners',
       title: "What's available to purchase",
-      body: 'We Teach Drama and iCompose. CCDesigner only takes a cut of 10–20% of paid resources.',
+      body: 'We Teach Drama · iCompose — platform cut 10–20%.',
       compactTitle: true,
     }),
-    5200,
+    2400,
     '17-paid-slide',
   );
   await chapterPaid(page);
@@ -1237,16 +1223,16 @@ async function main() {
     slideHtml({
       eyebrow: 'For organisations',
       title: 'Your own hub. Your free resources.',
-      body: 'Each organisation gets a hub with an admin backend to create template pages and share free resources.',
+      body: 'Admin backend · template pages · share free resources.',
       compactTitle: true,
     }),
-    5200,
+    2400,
     '18-orgs',
   );
 
   console.log('19 close');
   await clearCaption(page);
-  await recordSlide(page, closingSlideHtml(), 6400, '19-close');
+  await recordSlide(page, closingSlideHtml(), 2800, '19-close');
 
   // Close context first so Playwright finalizes the webm on disk.
   let videoPath = null;
@@ -1305,8 +1291,8 @@ async function main() {
         disclaimer:
           'Partners and logos are shown for demonstration only and do not imply endorsement.',
         music: {
-          file: 'audio/autumn-leaves-piano-improv.mp3',
-          title: 'Autumn Leaves Piano Improv',
+          file: 'audio/head-of-the-class.mp3',
+          title: 'Head of the Class',
           volume: 0.2,
           note: 'User-supplied underscore — clear rights/licence before public distribution.',
         },

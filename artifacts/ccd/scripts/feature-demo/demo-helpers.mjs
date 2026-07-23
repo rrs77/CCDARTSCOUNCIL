@@ -16,6 +16,9 @@ export const GATE_KEY = 'ccd-prototype-gate';
 export const DEMO_MODE_KEY = 'ccd-demo-mode';
 export const HERO_IMAGE_URL = 'http://127.0.0.1:5173/login/hero-arts.jpg?v=ages-3';
 
+/** Global pacing — energetic holds are authored short; keep multiplier near 1. */
+export const DEMO_PACE = 1;
+
 export const PALETTE = {
   bgDeep: '#05231e',
   bgForest: '#002D24',
@@ -24,7 +27,7 @@ export const PALETTE = {
 };
 
 export function hold(page, ms) {
-  return page.waitForTimeout(ms);
+  return page.waitForTimeout(Math.max(30, Math.round(ms * DEMO_PACE)));
 }
 
 export async function dismissIfVisible(page, selectors) {
@@ -188,7 +191,7 @@ function slideShellCss() {
       background:
         radial-gradient(ellipse 1200px 700px at 42% 28%, rgba(182,255,126,0.16), transparent 62%),
         linear-gradient(160deg, #05231e 0%, #002D24 52%, #05231e 100%);
-      animation: kenBurns 9s ease-in-out forwards;
+      animation: kenBurns 3.2s ease-in-out forwards;
       z-index: 0;
     }
     /* Exclude .mark so corner logo stays absolute top-left (not in text flow). */
@@ -312,7 +315,7 @@ export function logoIntroHtml() {
     background:
       radial-gradient(ellipse 1300px 760px at 50% 40%, rgba(182,255,126,0.18), transparent 64%),
       linear-gradient(165deg, #05231e 0%, #002D24 55%, #05231e 100%);
-    animation: kenBurns 8s ease-in-out forwards;
+    animation: kenBurns 3.2s ease-in-out forwards;
   }
   .content { position: relative; z-index: 1; }
   .logo-wrap {
@@ -379,7 +382,7 @@ export function heroConnectionHtml(heroImageUrl = HERO_IMAGE_URL) {
   .photo {
     position: absolute; inset: -8%;
     background: #002D24 url("${heroImageUrl}") center center / cover no-repeat;
-    animation: kenBurns 10s ease-in-out forwards;
+    animation: kenBurns 3.2s ease-in-out forwards;
   }
   .veil {
     position: absolute; inset: 0;
@@ -448,7 +451,7 @@ export function closingSlideHtml() {
     background:
       radial-gradient(ellipse 1200px 700px at 70% 20%, rgba(182,255,126,0.18), transparent 58%),
       linear-gradient(155deg, #05231e 0%, #002D24 50%, #05231e 100%);
-    animation: kenBurns 9s ease-in-out forwards;
+    animation: kenBurns 3.2s ease-in-out forwards;
   }
   .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
   .frame > .mark {
@@ -556,7 +559,7 @@ export function ideasSlideHtml() {
       radial-gradient(ellipse 1000px 600px at 70% 25%, rgba(182,255,126,0.2), transparent 55%),
       radial-gradient(ellipse 900px 500px at 15% 80%, rgba(182,255,126,0.08), transparent 50%),
       linear-gradient(155deg, #05231e 0%, #002D24 48%, #05231e 100%);
-    animation: kenBurns 9s ease-in-out forwards;
+    animation: kenBurns 3.2s ease-in-out forwards;
   }
   .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
   .frame > .mark {
@@ -636,7 +639,7 @@ export function ideasSlideHtml() {
 </body></html>`;
 }
 
-export async function smoothClick(page, locator, { steps = 16, settle = 260 } = {}) {
+export async function smoothClick(page, locator, { steps = 8, settle = 110 } = {}) {
   const target = locator.first();
   await target.scrollIntoViewIfNeeded().catch(() => {});
   const box = await target.boundingBox().catch(() => null);
@@ -653,7 +656,7 @@ export async function smoothClick(page, locator, { steps = 16, settle = 260 } = 
   await moveCursor(page, x, y, true);
   try {
     await page.mouse.down();
-    await hold(page, 70);
+    await hold(page, 45);
     await page.mouse.up();
   } catch {
     await target.click({ timeout: 5000 }).catch(() => {});
@@ -661,7 +664,7 @@ export async function smoothClick(page, locator, { steps = 16, settle = 260 } = 
   await page.waitForLoadState('domcontentloaded').catch(() => {});
   await ensureCursor(page).catch(() => {});
   await moveCursor(page, x, y, false);
-  await hold(page, 180);
+  await hold(page, 90);
 }
 
 export async function clickTab(page, tab) {
@@ -678,13 +681,13 @@ export async function clickTab(page, tab) {
   if (box) {
     const x = box.x + box.width / 2;
     const y = box.y + box.height / 2;
-    await page.mouse.move(x, y, { steps: 12 }).catch(() => {});
+    await page.mouse.move(x, y, { steps: 6 }).catch(() => {});
     await moveCursor(page, x, y, false).catch(() => {});
-    await hold(page, 200);
+    await hold(page, 90);
   }
   // Real Playwright click — mouse.down/up alone can miss Radix TabsTrigger
   await loc.click({ force: true, timeout: 8000 });
-  await hold(page, 700);
+  await hold(page, 380);
   await page
     .waitForFunction(
       (t) => {
@@ -700,15 +703,15 @@ export async function clickTab(page, tab) {
     )
     .catch(() => {});
   await ensureCursor(page).catch(() => {});
-  await hold(page, 400);
+  await hold(page, 180);
 }
 
 export async function snap(page, framesDir, id) {
   await page.screenshot({ path: path.join(framesDir, `${id}.png`), type: 'png' });
 }
 
-export async function typeSlow(page, locator, text, { delay = 36 } = {}) {
+export async function typeSlow(page, locator, text, { delay = 22 } = {}) {
   await smoothClick(page, locator);
   await locator.fill('');
-  await locator.type(text, { delay });
+  await locator.type(text, { delay: Math.max(3, Math.round(delay * DEMO_PACE)) });
 }

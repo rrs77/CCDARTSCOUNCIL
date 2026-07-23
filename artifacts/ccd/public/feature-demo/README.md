@@ -36,7 +36,7 @@ Shareable walkthrough of the **working CCDesigner prototype** — mostly live UI
 
 ## Audio
 
-Background music is muxed at encode time from `audio/autumn-leaves-piano-improv.mp3` (user-supplied *Autumn Leaves Piano Improv*). Soft bed (~20% volume), fade in/out, looped to video length. **Rights:** clear clearance/licence before public distribution — track is not CCDesigner-owned.
+Background music is muxed at encode time from `audio/head-of-the-class.mp3` (user-supplied *Head of the Class*). Soft bed (~20% volume), fade in/out, looped to video length. **Rights:** clear clearance/licence before public distribution — track is not CCDesigner-owned.
 ## Contact
 
 - Email: [rob@rhythmstix.co.uk](mailto:rob@rhythmstix.co.uk?subject=CCDesigner%20Query)  
