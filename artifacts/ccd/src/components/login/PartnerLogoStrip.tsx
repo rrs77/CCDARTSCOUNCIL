@@ -42,7 +42,7 @@ export function PartnerLogoStrip({ compact = false }: PartnerLogoStripProps) {
           </li>
         ))}
       </ul>
-      <p className="mt-4 max-w-xl text-[0.75rem] font-semibold leading-relaxed text-white sm:text-[0.8rem] lg:max-w-2xl">
+      <p className="mt-4 max-w-xl text-xs font-semibold leading-relaxed text-white sm:text-sm lg:max-w-2xl">
         {PARTNER_DISCLAIMER}
       </p>
     </div>
