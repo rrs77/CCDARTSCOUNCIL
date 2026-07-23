@@ -4,12 +4,12 @@ import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yea
 import { useAuth } from '../hooks/useAuth';
 import {
   buildDefaultYearGroupSections,
-  getDefaultSectionIdForYearGroup,
   getOrderedYearGroupsFromSections,
   mergeSectionsWithYearGroups,
   normalizeSectionYearGroupIdList,
   remapYearGroupSectionsToGroups,
   sectionsHaveResolvableGroups,
+  sectionsMatchHeuristicAssignment,
 } from '../utils/yearGroupSectionOrder';
 
 // Safari detection for enhanced sync handling
@@ -395,7 +395,7 @@ const DEFAULT_YEAR_GROUPS: YearGroup[] = [
 const DEFAULT_YEAR_GROUP_BANDS: YearGroupBand[] = flatToBands(DEFAULT_YEAR_GROUPS);
 
 const YEAR_GROUP_SECTIONS_STORAGE_KEY = 'year-group-sections';
-const YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY = 'year-group-sections-auto-migrated-v2';
+const YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY = 'year-group-sections-auto-migrated-v3';
 
 // Default category groups
 const DEFAULT_CATEGORY_GROUPS: CategoryGroups = {
@@ -576,17 +576,33 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     return getOrderedYearGroupsFromSections(sec, customYearGroups);
   }, [yearGroupSections, customYearGroups]);
 
-  // One-time quick reassignment of existing classes into EYFS/KS1-KS5 sections.
-  // Users can still customize sections normally afterwards.
+  // One-time section seed / undo of v2 name-based auto-bucketing.
+  // Keep real custom nesting; reset pure heuristic layouts to all-in-Other;
+  // seed empty key-stage folders when nothing is configured yet.
   useEffect(() => {
     if (!customYearGroups?.length) return;
     try {
       const alreadyMigrated = localStorage.getItem(YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY) === 'true';
       if (alreadyMigrated) return;
 
-      const next = buildDefaultYearGroupSections(customYearGroups);
-      setYearGroupSectionsState(next);
-      localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
+      setYearGroupSectionsState((prev) => {
+        const ids = customYearGroups.map((g) => g.id);
+        let next: YearGroupSection[];
+        if (prev.length > 0 && sectionsMatchHeuristicAssignment(prev, customYearGroups)) {
+          // Old v2 migration auto-filled EYFS/KS1… — treat as unallocated.
+          next = buildDefaultYearGroupSections(customYearGroups) as YearGroupSection[];
+        } else if (prev.length > 0 && sectionsHaveResolvableGroups(prev, customYearGroups)) {
+          next = mergeSectionsWithYearGroups(prev, ids, customYearGroups) as YearGroupSection[];
+        } else {
+          next = buildDefaultYearGroupSections(customYearGroups) as YearGroupSection[];
+        }
+        try {
+          localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
+        } catch (_) {
+          /* quota */
+        }
+        return next;
+      });
       localStorage.setItem(YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY, 'true');
     } catch (_) {
       // no-op
@@ -1997,11 +2013,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     const merged = [...current, ...toAdd];
     setCustomYearGroups(merged);
     setYearGroupSectionsState(prev => {
-      return prev.map(s => {
-        const toAppend = toAdd.filter(g => (getDefaultSectionIdForYearGroup(g.id, g.name) === s.id)).map(g => g.id);
-        if (toAppend.length === 0) return s;
-        return { ...s, yearGroupIds: [...(s.yearGroupIds || []), ...toAppend] };
-      });
+      // New defaults start unallocated (Other) until the user drags them into a key stage.
+      return prev.map(s =>
+        s.id === 'other'
+          ? { ...s, yearGroupIds: [...(s.yearGroupIds || []), ...toAdd.map((g) => g.id)] }
+          : s,
+      );
     });
     // year_groups has no per-tenant column: writes are disabled until schema migration.
     console.warn('⚠️ Skipping Supabase sync for added default year groups — table has no tenant key');

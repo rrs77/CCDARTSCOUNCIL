@@ -40,7 +40,7 @@ export function resolveYearGroupFromToken<T extends YearGroupLike>(
   );
 }
 
-/** Assign a year group to a default section by name/id pattern. */
+/** Suggest a key-stage section by name/id pattern (hint only — never auto-allocate for real users). */
 export function getDefaultSectionIdForYearGroup(id: string, name: string): string {
   const n = name || id || '';
   const lower = n.toLowerCase();
@@ -64,17 +64,13 @@ export function getDefaultSectionIdForYearGroup(id: string, name: string): strin
   return 'other';
 }
 
-/** Build default EYFS/KS1… sections with yearGroupIds from a flat list of year groups. */
-export function buildDefaultYearGroupSections<T extends YearGroupLike>(
-  yearGroups: T[]
-): YearGroupSectionLike[] {
+function emptySectionBuckets(): Map<string, string[]> {
   const bySection = new Map<string, string[]>();
   DEFAULT_YEAR_GROUP_SECTION_LABELS.forEach((s) => bySection.set(s.id, []));
-  yearGroups.forEach((g) => {
-    const sectionId = getDefaultSectionIdForYearGroup(g.id, g.name);
-    const arr = bySection.get(sectionId) ?? bySection.get('other')!;
-    arr.push(g.id);
-  });
+  return bySection;
+}
+
+function sectionsFromBuckets(bySection: Map<string, string[]>): YearGroupSectionLike[] {
   return DEFAULT_YEAR_GROUP_SECTION_LABELS.map((s) => ({
     id: s.id,
     label: s.label,
@@ -82,6 +78,93 @@ export function buildDefaultYearGroupSections<T extends YearGroupLike>(
     collapsed: true,
     yearGroupIds: bySection.get(s.id) || [],
   }));
+}
+
+/**
+ * Default sections for real users: empty key-stage folders, every class in Other.
+ * Header only lists classes the user has dragged into a key stage in Settings.
+ */
+export function buildDefaultYearGroupSections<T extends YearGroupLike>(
+  yearGroups: T[]
+): YearGroupSectionLike[] {
+  const bySection = emptySectionBuckets();
+  const other = bySection.get('other')!;
+  yearGroups.forEach((g) => other.push(g.id));
+  return sectionsFromBuckets(bySection);
+}
+
+/**
+ * Name-based bucketing into EYFS/KS1…/Other. Kept for optional tooling;
+ * do not use for live defaults or Header visibility.
+ */
+export function buildHeuristicYearGroupSections<T extends YearGroupLike>(
+  yearGroups: T[]
+): YearGroupSectionLike[] {
+  const bySection = emptySectionBuckets();
+  yearGroups.forEach((g) => {
+    const sectionId = getDefaultSectionIdForYearGroup(g.id, g.name);
+    const arr = bySection.get(sectionId) ?? bySection.get('other')!;
+    arr.push(g.id);
+  });
+  return sectionsFromBuckets(bySection);
+}
+
+/**
+ * Demo cold-start: pre-assign a primary subset (EYFS / KS1 / KS2) by name;
+ * leave KS3+ and unmatched classes in Other so they stay out of the Header
+ * until dragged into a key stage in Settings.
+ */
+export function buildDemoYearGroupSections<T extends YearGroupLike>(
+  yearGroups: T[]
+): YearGroupSectionLike[] {
+  const bySection = emptySectionBuckets();
+  yearGroups.forEach((g) => {
+    const hinted = getDefaultSectionIdForYearGroup(g.id, g.name);
+    const sectionId =
+      hinted === 'eyfs' || hinted === 'ks1' || hinted === 'ks2' ? hinted : 'other';
+    (bySection.get(sectionId) ?? bySection.get('other')!).push(g.id);
+  });
+  return sectionsFromBuckets(bySection);
+}
+
+/**
+ * Demo helper: move classes out of KS3/KS4/KS5 into Other so the Header only
+ * surfaces a primary (EYFS/KS1/KS2) allocated subset unless the user re-drags.
+ */
+export function demoteSecondarySectionsToOther<S extends YearGroupSectionLike>(
+  sections: S[],
+  groups: YearGroupLike[],
+): S[] {
+  const secondaryIds = new Set(['ks3', 'ks4', 'ks5']);
+  const moved: string[] = [];
+  const working = sections.map((s) => {
+    if (!secondaryIds.has(s.id)) return s;
+    const ids = normalizeSectionYearGroupIdList(s.yearGroupIds || [], groups);
+    moved.push(...ids);
+    return { ...s, yearGroupIds: [] as string[] };
+  });
+  if (moved.length === 0) return working;
+  if (!working.some((s) => s.id === 'other')) {
+    const maxOrder = working.reduce((m, s) => Math.max(m, Number(s.sortOrder) || 0), -1);
+    working.push({
+      id: 'other',
+      label: 'Other',
+      sortOrder: maxOrder + 1,
+      collapsed: true,
+      yearGroupIds: [] as string[],
+    } as unknown as S);
+  }
+  return working.map((s) => {
+    if (s.id !== 'other') return s;
+    const existing = normalizeSectionYearGroupIdList(s.yearGroupIds || [], groups);
+    const seen = new Set(existing);
+    const extra = moved.filter((id) => {
+      if (seen.has(id)) return false;
+      seen.add(id);
+      return true;
+    });
+    return { ...s, yearGroupIds: [...existing, ...extra] };
+  });
 }
 
 /**
@@ -173,8 +256,31 @@ export function sectionContainsCanonicalId<T extends YearGroupLike>(
 }
 
 /**
- * Append any canonical ids missing from sections into Other (matches legacy ids or names in lists).
- * Creates an Other section when the user removed it, so demo-only sheets are never dropped.
+ * True when section nesting matches name-based heuristic bucketing exactly
+ * (same section id per class). Used to detect the old v2 auto-migration so we
+ * can reset those users to unallocated (Other) without wiping real custom layouts.
+ */
+export function sectionsMatchHeuristicAssignment<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(sections: S[], groups: T[]): boolean {
+  if (!groups.length || !sections.length) return false;
+  const heuristic = buildHeuristicYearGroupSections(groups);
+  const sectionIdFor = (secs: YearGroupSectionLike[], groupId: string): string | null => {
+    for (const s of secs) {
+      if (sectionContainsCanonicalId(s.yearGroupIds || [], groupId, groups)) return s.id;
+    }
+    return null;
+  };
+  return groups.every(
+    (g) => sectionIdFor(sections, g.id) === sectionIdFor(heuristic, g.id),
+  );
+}
+
+/**
+ * Append any canonical ids missing from sections into Other (unallocated pool).
+ * Creates an Other section when the user removed it, so classes are never dropped.
+ * Does not auto-place orphans into EYFS/KS1… — only explicit Settings drags do that.
  */
 export function mergeSectionsWithYearGroups<
   S extends { id: string; label?: string; sortOrder?: number; collapsed?: boolean; yearGroupIds: string[] },

@@ -22,7 +22,8 @@
 import { DEMO_SEED_MARKER_KEY, clearDemoLocalStorage } from './demoMode';
 import { writeDemoTable } from './demoDb';
 import {
-  buildDefaultYearGroupSections,
+  buildDemoYearGroupSections,
+  demoteSecondarySectionsToOther,
   mergeSectionsWithYearGroups,
   remapYearGroupSectionsToGroups,
   sectionsHaveResolvableGroups,
@@ -47,7 +48,7 @@ import { setupROHRomeoJuliet } from './setupROHRomeoJuliet';
 type Row = Record<string, any>;
 
 const YEAR_GROUP_SECTIONS_STORAGE_KEY = 'year-group-sections';
-const YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY = 'year-group-sections-auto-migrated-v2';
+const YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY = 'year-group-sections-auto-migrated-v3';
 
 /** Snapshot of the logged-in account's year groups / sections before demo wipe. */
 function captureLiveYearGroupConfig(): {
@@ -114,10 +115,10 @@ function extractSnapshotSections(tables: Record<string, Row[]>): YearGroupSectio
 /**
  * Prefer the user's Manage Year Groups sections (captured from login localStorage
  * before the demo wipe), then snapshot branding_settings.year_group_sections,
- * then name-based EYFS/KS1… defaults. Always remaps tokens onto the seeded
- * year-group ids (sheet names in demo). Re-run `pnpm exec node scripts/fetch-demo-snapshot.mjs`
- * after changing live section nesting if cold-start Preview (no prior login
- * localStorage) should pick up account headings without a live capture.
+ * then a curated EYFS/KS1/KS2 demo subset (KS3+ stay in Other / Header-hidden).
+ * Always remaps tokens onto the seeded year-group ids (sheet names in demo).
+ * Re-run `pnpm exec node scripts/fetch-demo-snapshot.mjs` after changing live
+ * section nesting if cold-start Preview should pick up account headings.
  */
 function resolveDemoYearGroupSections(
   targetGroups: YearGroupLike[],
@@ -142,10 +143,13 @@ function resolveDemoYearGroupSections(
       captured.yearGroups.length > 0 ? captured.yearGroups : undefined,
     );
     // Keep user labels/order; park any demo-only sheets (e.g. generated KS3) in Other.
-    return mergeSectionsWithYearGroups(remapped, targetIds, targetGroups);
+    // Also demote KS3+ out of key stages so Header only shows explicitly primary-allocated
+    // classes when the snapshot used full name-based auto-bucketing.
+    const merged = mergeSectionsWithYearGroups(remapped, targetIds, targetGroups);
+    return demoteSecondarySectionsToOther(merged, targetGroups);
   }
 
-  return buildDefaultYearGroupSections(targetGroups);
+  return buildDemoYearGroupSections(targetGroups);
 }
 
 const CURRENT_ACADEMIC_YEAR = '2026-2027';

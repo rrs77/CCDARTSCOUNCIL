@@ -79,6 +79,7 @@ const DEMO_OWNED_KEYS = [
   // login-account snapshot / captured Settings so nesting survives demo entry.
   'year-group-sections',
   'year-group-sections-auto-migrated-v2',
+  'year-group-sections-auto-migrated-v3',
   'rhythmstix_user_id',
   'ccd-starred-activity-ids',
   'ccd-starred-first-activity-categories',

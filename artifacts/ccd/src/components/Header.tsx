@@ -83,14 +83,14 @@ export function Header() {
     return [...yearGroupSections]
       .sort((a, b) => a.sortOrder - b.sortOrder)
       .filter((section) => !isOtherSection(section))
-      .filter((section) => section.yearGroupIds.some((token) => selectorTokenMap.has(normalizeToken(token))))
       .map((section) => ({
         ...section,
         groups: section.yearGroupIds
           .map((token) => selectorTokenMap.get(normalizeToken(token)))
           .filter((g): g is { id: string; name: string; color?: string } => Boolean(g))
           .filter((g, index, arr) => arr.findIndex((x) => x.id === g.id) === index),
-      }));
+      }))
+      .filter((section) => section.groups.length > 0);
   }, [yearGroupSections, selectorTokenMap]);
 
   // Flat list of classes assigned to a key-stage folder (order follows section order).

@@ -17,7 +17,7 @@ import { CCD_CATEGORIES_UPDATED_EVENT } from './setupLSOYear6';
 import { notifyHubActivitiesUpdated } from './hubSeedLocal';
 import { writeDemoTable, readDemoTable } from './demoDb';
 import { isDemoModeActive } from './demoMode';
-import { getDefaultSectionIdForYearGroup, mergeSectionsWithYearGroups, resolveYearGroupFromToken } from './yearGroupSectionOrder';
+import { mergeSectionsWithYearGroups, resolveYearGroupFromToken } from './yearGroupSectionOrder';
 
 export function readJson<T>(key: string, fallback: T): T {
   try {
@@ -190,8 +190,8 @@ export function ensureLocalYearGroup(sheetId: string, displayName: string, color
     localStorage.setItem('year-group-bands', JSON.stringify(bands));
   }
 
-  // Keep existing EYFS/KS1… presets; nest the new class under the matching
-  // key-stage section (or Other). Never wipe year-group-sections when hub-seeding.
+  // Keep existing EYFS/KS1… presets. Hub-seeded classes start in Other
+  // (unallocated) so they stay out of the Header until dragged into a key stage.
   try {
     const sections = readJson<any[]>('year-group-sections', []);
     if (!Array.isArray(sections) || sections.length === 0) return;
@@ -205,22 +205,12 @@ export function ensureLocalYearGroup(sheetId: string, displayName: string, color
         (token: string) => resolveYearGroupFromToken(likeGroups, token)?.id === sheetId,
       ),
     );
-    let next = sections;
-    if (!alreadyPlaced) {
-      const targetSectionId = getDefaultSectionIdForYearGroup(sheetId, displayName || sheetId);
-      if (next.some((s) => s.id === targetSectionId)) {
-        next = next.map((s) =>
-          s.id === targetSectionId
-            ? { ...s, yearGroupIds: [...(s.yearGroupIds || []), sheetId] }
-            : s,
-        );
-      }
-      next = mergeSectionsWithYearGroups(
-        next,
-        likeGroups.map((g) => g.id),
-        likeGroups,
-      );
-    }
+    if (alreadyPlaced) return;
+    const next = mergeSectionsWithYearGroups(
+      sections,
+      likeGroups.map((g) => g.id),
+      likeGroups,
+    );
     localStorage.setItem('year-group-sections', JSON.stringify(next));
   } catch {
     /* ignore */
