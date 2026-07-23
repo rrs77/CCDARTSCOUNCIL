@@ -1,6 +1,7 @@
 import ffmpegPath from 'ffmpeg-static';
 import { spawnSync } from 'node:child_process';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -30,6 +31,27 @@ function resolveDemoMusicPath() {
   return candidates.find((p) => fs.existsSync(p)) || null;
 }
 
+/**
+ * Decode MP3 → PCM WAV (audio-only). Looping MP3 with -stream_loop desyncs after
+ * the first pass (encoder delay / padding); PCM loops cleanly.
+ */
+function decodeMusicToWav(audioPath, wavPath) {
+  const r = spawnSync(
+    ffmpegPath,
+    ['-y', '-i', audioPath, '-map', '0:a:0', '-c:a', 'pcm_s16le', wavPath],
+    { encoding: 'utf8' },
+  );
+  return r.status === 0 && fs.existsSync(wavPath);
+}
+
+function buildUnderscoreFilter(durSeconds) {
+  const fadeIn = Math.min(2, Math.max(1, durSeconds * 0.03));
+  const fadeOut = Math.min(2, Math.max(1, durSeconds * 0.03));
+  const fadeOutStart = Math.max(0, durSeconds - fadeOut);
+  // Gentle bed (~20%); fade only at timeline start/end — no atempo/asetrate.
+  return `[1:a]volume=0.20,atrim=0:${durSeconds.toFixed(3)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=${fadeIn.toFixed(2)},afade=t=out:st=${fadeOutStart.toFixed(2)}:d=${fadeOut.toFixed(2)}[aout]`;
+}
+
 if (!fs.existsSync(input)) {
   console.error('Missing input webm:', input);
   process.exit(1);
@@ -50,16 +72,20 @@ const videoArgs = [
 ];
 
 let args;
+let tmpWav = null;
+
 if (!audioPath) {
   console.warn('No demo music found — encoding silent MP4');
   args = ['-y', '-i', input, ...videoArgs, '-an', output];
 } else {
   const dur = probeDurationSeconds(input) || 0;
-  const fadeIn = Math.min(2.5, Math.max(0.5, dur * 0.04));
-  const fadeOut = Math.min(3.5, Math.max(1, dur * 0.05));
-  const fadeOutStart = Math.max(0, dur - fadeOut);
-  const filter = `[1:a]volume=0.20,afade=t=in:st=0:d=${fadeIn.toFixed(2)},afade=t=out:st=${fadeOutStart.toFixed(2)}:d=${fadeOut.toFixed(2)}[aout]`;
-  console.log(`Muxing background music: ${audioPath} (loop to ${dur.toFixed(1)}s, vol=0.20)`);
+  tmpWav = path.join(os.tmpdir(), `ccd-demo-music-${process.pid}.wav`);
+  if (!decodeMusicToWav(audioPath, tmpWav)) {
+    console.error('Failed to decode demo music to WAV:', audioPath);
+    process.exit(1);
+  }
+  const filter = buildUnderscoreFilter(dur);
+  console.log(`Muxing background music: ${audioPath} (PCM loop to ${dur.toFixed(1)}s, vol=0.20)`);
   args = [
     '-y',
     '-i',
@@ -67,7 +93,7 @@ if (!audioPath) {
     '-stream_loop',
     '-1',
     '-i',
-    audioPath,
+    tmpWav,
     '-filter_complex',
     filter,
     '-map',
@@ -78,11 +104,16 @@ if (!audioPath) {
     '-c:a',
     'aac',
     '-b:a',
-    '160k',
+    '192k',
+    '-ar',
+    '48000',
+    '-ac',
+    '2',
     '-shortest',
     output,
   ];
 }
 
 const r = spawnSync(ffmpegPath, args, { stdio: 'inherit' });
+if (tmpWav) fs.rmSync(tmpWav, { force: true });
 process.exit(r.status ?? 1);

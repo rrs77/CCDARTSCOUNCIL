@@ -8,6 +8,7 @@
  */
 import { chromium } from 'playwright';
 import fs from 'node:fs';
+import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { spawnSync } from 'node:child_process';
@@ -966,8 +967,8 @@ function resolveDemoMusicPath() {
 
 /**
  * Encode webm → mp4 with tasteful looping piano underscore.
- * Volume ~20%; fade in/out; loop or trim to video length. No voice track today,
- * so no ducking needed — keep bed quiet under UI captions.
+ * Volume ~20%; fade in/out at timeline ends only. Loop via PCM WAV — never
+ * -stream_loop an MP3 (encoder delay/padding desyncs after the first pass).
  */
 function encodeMp4(webmPath, outMp4) {
   const bin = ffmpegBin();
@@ -981,13 +982,22 @@ function encodeMp4(webmPath, outMp4) {
   }
 
   const dur = probeDurationSeconds(webmPath) || 0;
-  const fadeIn = Math.min(2.5, Math.max(0.5, dur * 0.04));
-  const fadeOut = Math.min(3.5, Math.max(1, dur * 0.05));
+  const fadeIn = Math.min(2, Math.max(1, dur * 0.03));
+  const fadeOut = Math.min(2, Math.max(1, dur * 0.03));
   const fadeOutStart = Math.max(0, dur - fadeOut);
-  // Soft bed (~20%). If a future voice stem exists, mix with sidechaincompress instead.
-  const filter = `[1:a]volume=0.20,afade=t=in:st=0:d=${fadeIn.toFixed(2)},afade=t=out:st=${fadeOutStart.toFixed(2)}:d=${fadeOut.toFixed(2)}[aout]`;
+  const filter = `[1:a]volume=0.20,atrim=0:${dur.toFixed(3)},asetpts=PTS-STARTPTS,afade=t=in:st=0:d=${fadeIn.toFixed(2)},afade=t=out:st=${fadeOutStart.toFixed(2)}:d=${fadeOut.toFixed(2)}[aout]`;
 
-  console.log(`Muxing background music: ${audioPath} (loop to ${dur.toFixed(1)}s, vol=0.20)`);
+  const tmpWav = path.join(os.tmpdir(), `ccd-demo-music-${process.pid}.wav`);
+  const decode = spawnSync(bin, ['-y', '-i', audioPath, '-map', '0:a:0', '-c:a', 'pcm_s16le', tmpWav], {
+    encoding: 'utf8',
+  });
+  if (decode.status !== 0 || !fs.existsSync(tmpWav)) {
+    console.warn('Music decode failed — falling back to silent encode', decode.stderr?.slice(-400));
+    const fallback = spawnSync(bin, ['-y', '-i', webmPath, ...videoArgs, '-an', outMp4], { encoding: 'utf8' });
+    return fallback.status === 0 && fs.existsSync(outMp4) ? outMp4 : null;
+  }
+
+  console.log(`Muxing background music: ${audioPath} (PCM loop to ${dur.toFixed(1)}s, vol=0.20)`);
   const r = spawnSync(
     bin,
     [
@@ -997,7 +1007,7 @@ function encodeMp4(webmPath, outMp4) {
       '-stream_loop',
       '-1',
       '-i',
-      audioPath,
+      tmpWav,
       '-filter_complex',
       filter,
       '-map',
@@ -1008,12 +1018,17 @@ function encodeMp4(webmPath, outMp4) {
       '-c:a',
       'aac',
       '-b:a',
-      '160k',
+      '192k',
+      '-ar',
+      '48000',
+      '-ac',
+      '2',
       '-shortest',
       outMp4,
     ],
     { encoding: 'utf8' },
   );
+  fs.rmSync(tmpWav, { force: true });
   if (r.status !== 0) {
     console.warn('Music mux failed — falling back to silent encode', r.stderr?.slice(-400));
     const fallback = spawnSync(bin, ['-y', '-i', webmPath, ...videoArgs, '-an', outMp4], { encoding: 'utf8' });
