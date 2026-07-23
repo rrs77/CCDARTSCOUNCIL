@@ -17,3 +17,10 @@ export const WELCOME_PROTOTYPE_BODY =
 export const WELCOME_PROTOTYPE_CONTACT_EMAIL = 'rob@rhythmstix.co.uk';
 
 export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen';
+
+export const ACTIVITY_LIBRARY_WELCOME_TITLE = 'About these activities';
+
+export const ACTIVITY_LIBRARY_WELCOME_BODY =
+  'These activities are included only as examples. They are completely customisable in Settings — add your own resources, and share activities with colleagues or externally.';
+
+export const ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY = 'ccd-activity-library-welcome-seen';

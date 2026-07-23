@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   DR_CPD,
@@ -11,9 +10,12 @@ import {
   DR_TEN_SECOND_OBJECTS,
 } from '../../utils/dramaResourceBranding';
 import { setupDramaResourceExample } from '../../utils/setupDramaResourceExample';
+import { openActivityResource } from '../../utils/openActivityResource';
 import {
   PartnerHubAddButton,
   PartnerHubFeaturedSection,
+  PartnerHubResourceList,
+  PartnerHubResourceRow,
 } from './PartnerHubLayout';
 
 interface DramaResourcePartnerHubProps {
@@ -21,40 +23,45 @@ interface DramaResourcePartnerHubProps {
   standalone?: boolean;
 }
 
-const FEATURED_LINKS = [
+const DR_RESOURCES = [
   {
     id: 'games',
     title: 'Drama games',
-    meta: 'Warm-ups, improvisation, concentration and group dynamics',
+    kind: 'Library',
     href: DR_DRAMA_GAMES,
+    blurb: 'Warm-ups, improvisation, concentration and group dynamics.',
   },
   {
     id: 'strategies',
     title: 'Drama strategies',
-    meta: 'Teacher-in-role, freeze-frames and classroom techniques',
+    kind: 'Library',
     href: DR_STRATEGIES,
+    blurb: 'Teacher-in-role, freeze-frames and classroom techniques.',
   },
   {
     id: 'lessons',
     title: 'Drama lesson plans',
-    meta: 'Downloadable units linked to stories, themes and practitioners',
+    kind: 'Plans',
     href: DR_LESSON_PLANS,
+    blurb: 'Downloadable units linked to stories, themes and practitioners.',
   },
   {
     id: 'just-add',
     title: 'Just Add Drama',
-    meta: 'Creative Teacher’s Toolkit — online course, videos and lesson plans',
+    kind: 'Toolkit',
     href: DR_JUST_ADD_DRAMA,
+    blurb: 'Creative Teacher’s Toolkit — online course, videos and lesson plans.',
   },
   {
     id: 'cpd',
     title: 'Drama CPD / INSET',
-    meta: 'Courses and training with David Farmer',
+    kind: 'CPD',
     href: DR_CPD,
+    blurb: 'Courses and training with David Farmer.',
   },
 ] as const;
 
-/** Drama Resource hub body — logo / description / contact live in PartnerHubPage. */
+/** Drama Resource hub body — same LSO template: featured + resource list. */
 export function DramaResourcePartnerHub({ onAddedToApp }: DramaResourcePartnerHubProps) {
   const [adding, setAdding] = useState(false);
   const [added, setAdded] = useState(false);
@@ -105,31 +112,29 @@ export function DramaResourcePartnerHub({ onAddedToApp }: DramaResourcePartnerHu
         }
       />
 
-      <section>
-        <h3 className="text-lg font-semibold text-gray-900">Teacher resources</h3>
-        <ul className="mt-3 space-y-2">
-          {FEATURED_LINKS.map((item) => (
-            <li
-              key={item.id}
-              className="flex flex-col gap-2 rounded-xl border border-gray-200 bg-white p-4 sm:flex-row sm:items-center sm:justify-between"
-            >
-              <div>
-                <h4 className="font-semibold text-gray-900">{item.title}</h4>
-                <p className="mt-0.5 text-xs text-gray-500">{item.meta}</p>
-              </div>
-              <a
-                href={item.href}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex shrink-0 items-center gap-1 text-sm font-medium text-[#0F3D2E] hover:underline"
+      <PartnerHubResourceList
+        title="Teacher resources"
+        subtitle="Official Drama Resource libraries and CPD. Only Ten Second Objects is seeded in CCDesigner for now."
+      >
+        {DR_RESOURCES.map((item) => (
+          <PartnerHubResourceRow
+            key={item.id}
+            eyebrow={item.kind}
+            title={item.title}
+            description={item.blurb}
+            links={[{ href: item.href, label: 'Open resource', icon: 'external' }]}
+            action={
+              <button
+                type="button"
+                onClick={() => openActivityResource(item.href)}
+                className="inline-flex shrink-0 items-center justify-center rounded-lg border border-emerald-300 bg-white px-3 py-2.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-50"
               >
                 Open
-                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-              </a>
-            </li>
-          ))}
-        </ul>
-      </section>
+              </button>
+            }
+          />
+        ))}
+      </PartnerHubResourceList>
     </div>
   );
 }

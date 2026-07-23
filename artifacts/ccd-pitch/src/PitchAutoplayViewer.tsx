@@ -23,13 +23,15 @@ function thumbLabel(title: string): string {
 }
 
 function leaveWalkthrough() {
+  // When embedded in the CCD login modal iframe, ask the parent to close
+  // instead of navigating the whole app away to the marketing site.
   try {
-    if (window.top && window.top !== window) {
-      window.top.location.href = SITE_URL;
+    if (window.parent && window.parent !== window) {
+      window.parent.postMessage({ type: "ccd-pitch-close" }, "*");
       return;
     }
   } catch {
-    // Cross-origin top — fall through
+    // Cross-origin parent — fall through to marketing redirect
   }
   window.location.href = SITE_URL;
 }
@@ -249,6 +251,9 @@ export function PitchAutoplayViewer() {
 
   const base = import.meta.env.BASE_URL.replace(/\/$/, "");
   const firstPosition = slides.length > 0 ? slides[0].position : 1;
+  // Explicit index.html — directory URLs like `/ccd-pitch/slide1` fall through
+  // to the parent SPA shell under Vite and some static hosts.
+  const slideSrc = `${base}/slide${firstPosition}/index.html`;
 
   return (
     <div
@@ -288,7 +293,7 @@ export function PitchAutoplayViewer() {
           >
             <iframe
               ref={iframeRef}
-              src={`${base}/slide${firstPosition}`}
+              src={slideSrc}
               tabIndex={-1}
               style={{
                 width: DESIGN_WIDTH,
@@ -376,8 +381,8 @@ export function PitchAutoplayViewer() {
           type="button"
           onClick={leaveWalkthrough}
           className="pitch-nav-btn"
-          title="Close and return to www.ccdesigner.co.uk"
-          aria-label="Close walkthrough and return to www.ccdesigner.co.uk"
+          title="Close walkthrough"
+          aria-label="Close walkthrough"
         >
           <X className="h-4 w-4" />
         </button>

@@ -1,6 +1,6 @@
 /** We Teach Drama partner branding helpers. */
 
-export const WTD_LOGO_SRC = '/partners/we-teach-drama.svg';
+export const WTD_LOGO_SRC = '/partners/we-teach-drama.png';
 export const WTD_SITE = 'https://www.weteachdrama.com/';
 export const WTD_FOLDER_NAME = 'We Teach Drama';
 export const WTD_BB_PREFIX = 'Blood Brothers';

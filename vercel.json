@@ -18,6 +18,9 @@
     }
   ],
   "rewrites": [
-    { "source": "/((?!api/).*)", "destination": "/index.html" }
+    {
+      "source": "/((?!api(?:/|$)|ccd-pitch(?:/|$)).*)",
+      "destination": "/index.html"
+    }
   ]
 }

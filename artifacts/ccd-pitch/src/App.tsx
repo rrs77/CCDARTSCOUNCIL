@@ -26,7 +26,9 @@ function showBrand(filepath: string): boolean {
 }
 
 function getSlideIndex(pathname: string): number {
-  const match = pathname.match(/^\/slide(\d+)$/);
+  // Accept `/slideN` and `/slideN/index.html` (static hosts / Vite need the
+  // explicit index file; wouter may keep that path until the first navigate).
+  const match = pathname.match(/^\/slide(\d+)(?:\/index\.html)?$/);
   if (!match) return -1;
   const position = parseInt(match[1], 10);
   return slides.findIndex((s) => s.position === position);
@@ -231,7 +233,7 @@ function SlideViewer() {
       >
         <iframe
           ref={iframeRef}
-          src={`${base}/slide${firstPosition}`}
+          src={`${base}/slide${firstPosition}/index.html`}
           style={{
             width: 1280,
             height: 720,
@@ -252,12 +254,13 @@ function SlideViewer() {
 
 export default function App() {
   const [location, navigate] = useLocation();
+  const isHome = location === "/" || location === "/index.html";
 
   // DO NOT edit this useEffect - redirects unknown routes to the first slide.
   // The "/" and "/allslides" routes are handled separately below.
   useEffect(() => {
     if (
-      location !== "/" &&
+      !isHome &&
       location !== "/allslides" &&
       getSlideIndex(location) === -1
     ) {
@@ -265,7 +268,7 @@ export default function App() {
         navigate(`/slide${slides[0].position}`, { replace: true });
       }
     }
-  }, [location, navigate]);
+  }, [location, navigate, isHome]);
 
   // DO NOT edit this useEffect - allows the parent frame to navigate
   // between slides via postMessage so it can avoid changing the iframe
@@ -285,7 +288,7 @@ export default function App() {
     return () => window.removeEventListener("message", onMessage);
   }, [navigate]);
 
-  if (location === "/") {
+  if (isHome) {
     const params = new URLSearchParams(window.location.search);
     if (params.get("autoplay") === "1") return <PitchAutoplayViewer />;
     return <SlideViewer />;

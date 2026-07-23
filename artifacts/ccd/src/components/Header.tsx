@@ -84,77 +84,34 @@ export function Header() {
     return map;
   }, [yearGroupsForSelector]);
 
-  const visibleSections = React.useMemo(() => {
+  // Headings only for sections the user assigned classes to in Settings.
+  // Never show an auto "Other" bucket — uncategorized classes stay selectable as a flat list.
+  const isOtherSection = (section: { id: string; label?: string }) =>
+    section.id === 'other' || normalizeToken(section.label) === 'other';
+
+  const displaySections = React.useMemo(() => {
     return [...yearGroupSections]
       .sort((a, b) => a.sortOrder - b.sortOrder)
-      .filter(section => section.yearGroupIds.some(token => selectorTokenMap.has(normalizeToken(token))))
-      .map(section => ({
+      .filter((section) => !isOtherSection(section))
+      .filter((section) => section.yearGroupIds.some((token) => selectorTokenMap.has(normalizeToken(token))))
+      .map((section) => ({
         ...section,
         groups: section.yearGroupIds
-          .map(token => selectorTokenMap.get(normalizeToken(token)))
+          .map((token) => selectorTokenMap.get(normalizeToken(token)))
           .filter((g): g is { id: string; name: string; color?: string } => Boolean(g))
-          .filter((g, index, arr) => arr.findIndex(x => x.id === g.id) === index)
+          .filter((g, index, arr) => arr.findIndex((x) => x.id === g.id) === index),
       }));
   }, [yearGroupSections, selectorTokenMap]);
 
-  // Quick auto-grouping for faster setup (keeps normal custom sections available in Settings).
-  const quickSections = React.useMemo(() => {
-    const SECTION_LABELS: Record<string, string> = {
-      eyfs: 'EYFS',
-      ks1: 'KS1',
-      ks2: 'KS2',
-      ks3: 'KS3',
-      ks4: 'KS4',
-      ks5: 'KS5',
-      other: 'Other',
-    };
-    const order = ['eyfs', 'ks1', 'ks2', 'ks3', 'ks4', 'ks5', 'other'];
-
-    const getSectionId = (group: { id: string; name: string }) => {
-      const text = `${group.name} ${group.id}`.toLowerCase();
-      if (
-        text.includes('lower kindergarten') ||
-        text.includes('upper kindergarten') ||
-        text.includes('reception') ||
-        /\blkg\b/.test(text) ||
-        /\bukg\b/.test(text)
-      ) {
-        return 'eyfs';
-      }
-      const yearMatch = text.match(/year\s*([0-9]{1,2})/i);
-      const rawNum = yearMatch?.[1] ?? (text.match(/(?:^|[^0-9])([0-9]{1,2})(?:[^0-9]|$)/)?.[1] ?? '');
-      const yearNum = Number(rawNum);
-      if (Number.isFinite(yearNum) && yearNum > 0) {
-        if (yearNum <= 2) return 'ks1';
-        if (yearNum <= 6) return 'ks2';
-        if (yearNum <= 9) return 'ks3';
-        if (yearNum <= 11) return 'ks4';
-        if (yearNum <= 14) return 'ks5';
-      }
-      return 'other';
-    };
-
-    const buckets = new Map<string, { id: string; name: string; color?: string }[]>();
-    yearGroupsForSelector.forEach((g) => {
-      const sid = getSectionId(g);
-      if (!buckets.has(sid)) buckets.set(sid, []);
-      buckets.get(sid)!.push(g);
+  const uncategorizedGroups = React.useMemo(() => {
+    const assignedIds = new Set<string>();
+    displaySections.forEach((section) => {
+      section.groups.forEach((g) => assignedIds.add(g.id));
     });
+    return yearGroupsForSelector.filter((g) => !assignedIds.has(g.id));
+  }, [displaySections, yearGroupsForSelector]);
 
-    return order
-      .map((id) => ({
-        id,
-        label: SECTION_LABELS[id],
-        groups: buckets.get(id) || [],
-      }))
-      .filter((s) => s.groups.length > 0);
-  }, [yearGroupsForSelector]);
-
-  const displaySections = React.useMemo(() => {
-    // Prefer user/settings-defined sections so header matches Manage Year Groups exactly.
-    // Fallback to quick auto-grouping only when no visible configured sections exist.
-    return visibleSections.length > 0 ? visibleSections : quickSections;
-  }, [visibleSections, quickSections]);
+  const hasSelectorItems = displaySections.length > 0 || uncategorizedGroups.length > 0;
 
   const currentSection = React.useMemo(() => {
     return (
@@ -169,6 +126,11 @@ export function Header() {
   const classSelectorLabel = currentSection
     ? `${currentSection.label} · ${currentSheetInfo.display || currentSheetInfo.sheet}`
     : currentSheetInfo.display || currentSheetInfo.sheet;
+
+  const selectYearGroup = (group: { id: string; name: string }) => {
+    setCurrentSheetInfo({ sheet: group.id, display: group.name, eyfs: `${group.id} Statements` });
+    setYearGroupDropdownOpen(false);
+  };
 
   const openYearGroupDropdown = () => {
     setYearGroupDropdownOpen((prev) => {
@@ -192,11 +154,6 @@ export function Header() {
       else next.add(sectionId);
       return next;
     });
-  };
-
-  const selectYearGroup = (group: { id: string; name: string }) => {
-    setCurrentSheetInfo({ sheet: group.id, display: group.name, eyfs: `${group.id} Statements` });
-    setYearGroupDropdownOpen(false);
   };
 
   // Keep header label in sync when a class is renamed in Settings.
@@ -291,7 +248,7 @@ export function Header() {
                   </span>
                   <ChevronDown className={`h-4 w-4 flex-shrink-0 text-gray-500 transition-transform ${yearGroupDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
-                {yearGroupDropdownOpen && displaySections.length > 0 && (
+                {yearGroupDropdownOpen && hasSelectorItems && (
                   <div className="absolute top-full left-0 mt-1 w-64 max-h-[70vh] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
                     {displaySections.map((section) => {
                       const isExpanded = yearGroupSectionsExpanded.has(section.id);
@@ -324,9 +281,24 @@ export function Header() {
                         </div>
                       );
                     })}
+                    {uncategorizedGroups.length > 0 && (
+                      <div className={displaySections.length > 0 ? 'border-t border-gray-100 pt-1' : ''}>
+                        {uncategorizedGroups.map((group) => (
+                          <button
+                            key={group.id}
+                            type="button"
+                            onClick={() => selectYearGroup(group)}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-teal-50 ${currentSheetInfo.sheet === group.id ? 'bg-teal-50 text-teal-800 font-medium' : 'text-gray-700'}`}
+                          >
+                            {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                            <span className={currentSheetInfo.sheet === group.id ? 'font-medium' : ''}>{group.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
-                {yearGroupDropdownOpen && displaySections.length === 0 && (
+                {yearGroupDropdownOpen && !hasSelectorItems && (
                   <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 text-sm text-gray-500">
                     No year groups. Add and assign key stages in Settings → Year Groups.
                   </div>
@@ -459,7 +431,18 @@ export function Header() {
                         </div>
                       );
                     })}
-                    {displaySections.length === 0 && (
+                    {uncategorizedGroups.map((group) => (
+                      <button
+                        key={group.id}
+                        type="button"
+                        onClick={() => { selectYearGroup(group); setMobileMenuOpen(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm bg-white border-b border-gray-100 last:border-b-0 ${currentSheetInfo.sheet === group.id ? 'bg-teal-100 text-teal-800 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                        {group.name}
+                      </button>
+                    ))}
+                    {!hasSelectorItems && (
                       <p className="px-3 py-2 text-sm text-gray-500">No year groups. Add key stages in Settings.</p>
                     )}
                   </div>

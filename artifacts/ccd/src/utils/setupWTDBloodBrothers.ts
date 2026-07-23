@@ -5,10 +5,11 @@
  * “Revise Blood Brothers” scheme / CPD positioning for AQA GCSE Drama.
  * Does NOT include paid/copyrighted pack content.
  *
- * Curated demo seed pack: included by seedDemoData() on prototype activate
- * and via We Teach Drama hub “Add to CCDesigner”. Never written to production.
+ * Paid hub pack: only seeds / registers / stars when the user clicks
+ * “Add to CCDesigner” on /weteachdrama (registerPartnerPlanning: true).
+ * Not auto-seeded on demo activate.
  *
- * Usage: await setupWTDBloodBrothers({ force: true })
+ * Usage: await setupWTDBloodBrothers({ force: true, registerPartnerPlanning: true })
  */
 
 import type { Activity, LessonData } from '../contexts/DataContext';
@@ -31,6 +32,16 @@ import {
   PARTNER_PLANNING_ORGS,
   registerPartnerPlanningPack,
 } from './partnerPlanning';
+import { highlightPaidHubActivities } from './recentlyAddedActivities';
+
+/** Curated subset surfaced in Activity Library → Recently added (with star). */
+const WTD_BB_FEATURED_TITLES = [
+  'Status continuum',
+  'Class divide freeze-frames',
+  'Twin mirror / contrast',
+  'Design mood boards',
+  'Timed performer response',
+];
 
 const SHEET_ID = 'Year 11 Drama (GCSE)';
 const UNIT = 'Blood Brothers';
@@ -447,6 +458,17 @@ function registerWtdBloodBrothersPlanning(activities: Activity[], lessonKeys: st
     sheetId: SHEET_ID,
     activityIds: activities.map((a) => getActivityStarKey(a)),
     lessonKeys,
+    thumbSrc: '/partners/weteachdrama/blood-brothers-cover.png',
+  });
+}
+
+function highlightWtdBloodBrothers(activities: Activity[]) {
+  highlightPaidHubActivities(activities, {
+    partnerSlug: 'weteachdrama',
+    partnerLabel: 'We Teach Drama',
+    pickTitles: WTD_BB_FEATURED_TITLES,
+    fallbackCount: 5,
+    categories: ALL_CATEGORIES,
   });
 }
 
@@ -465,6 +487,7 @@ export async function setupWTDBloodBrothers(options?: {
         );
         const lessonKeys = readJson<string[]>(LESSON_KEYS_KEY, []);
         registerWtdBloodBrothersPlanning(existing, lessonKeys);
+        highlightWtdBloodBrothers(existing);
       } catch {
         /* ignore */
       }
@@ -515,10 +538,13 @@ export async function setupWTDBloodBrothers(options?: {
     categoryMerge,
     source: 'wtd-bb-seed',
     markerKey: MARKER_KEY,
+    // Paid hub: star only curated picks after explicit Add (not all activities).
+    starActivities: false,
   });
 
   if (shouldRegister) {
     registerWtdBloodBrothersPlanning(activities, lessonPayload.writtenNumbers);
+    highlightWtdBloodBrothers(activities);
   }
 
   return {
@@ -535,7 +561,7 @@ export const WTD_BB_COURSE = {
   siteUrl: WTD_SITE,
   productUrl: 'https://www.weteachdrama.com/product-page/revise-blood-brothers-scheme-of-learning',
   pdfUrl: PDF,
-  shopImage: SHOP_IMG,
+  shopImage: '/partners/weteachdrama/blood-brothers-cover.png',
   level: LEVEL,
   sheetId: SHEET_ID,
   keyStage: 'KS4',

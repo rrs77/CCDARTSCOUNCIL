@@ -5,6 +5,7 @@ import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { AuthProvider } from './contexts/AuthContext';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
+import { PaidBasketProvider } from './contexts/PaidBasketContext';
 import { DndRoot } from './components/dnd';
 import { Header } from './components/Header';
 import { Dashboard } from './components/Dashboard';
@@ -183,6 +184,8 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       case 'nationaltheatre':
       case 'bbctenpieces':
       case 'nationalgallery':
+      case 'triborough':
+      case 'tbmh':
         body = <PartnerResourcesHub hub={partnerHub} />;
         break;
       default:
@@ -262,9 +265,11 @@ function App() {
       <AuthProvider>
         <SettingsProviderNew>
           <DataProvider>
-            <DndRoot>
-              <AppContent schoolHomepage={schoolHomepage} />
-            </DndRoot>
+            <PaidBasketProvider>
+              <DndRoot>
+                <AppContent schoolHomepage={schoolHomepage} />
+              </DndRoot>
+            </PaidBasketProvider>
           </DataProvider>
         </SettingsProviderNew>
       </AuthProvider>

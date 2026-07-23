@@ -207,8 +207,9 @@ export function LoginForm() {
       }}
     >
       <PrototypeNoticeBar />
-      <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-4 lg:p-6">
-        <div className="relative mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-[#002D24] sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.18)] lg:min-h-[calc(100vh-3.5rem)]">
+      {/* Outer surround only: fluid padding scales with viewport; stage design unchanged */}
+      <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-[clamp(0.75rem,2vw,1rem)] lg:p-[clamp(1rem,2.5vw,1.5rem)]">
+        <div className="relative mx-auto flex min-h-0 w-full max-w-[min(1440px,100%)] flex-1 flex-col overflow-hidden bg-[#002D24] sm:min-h-[calc(100dvh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.18)] lg:min-h-[calc(100dvh-3.5rem)]">
           {/* Full-bleed hero — all three age panels visible across the stage */}
           <div className="relative min-h-[300px] flex-1 sm:min-h-[340px] lg:absolute lg:inset-0 lg:min-h-0">
             <LoginHeroPanel logoLetters={logoLetters} />

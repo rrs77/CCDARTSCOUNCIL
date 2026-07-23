@@ -928,6 +928,7 @@ export function LessonLibrary({
       className="mb-6"
       mode="lessons"
       activities={allActivities || []}
+      currentSheetId={currentSheetInfo.sheet}
       renderLessons={renderPartnerPlanningLessons}
     />
   );

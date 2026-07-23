@@ -627,7 +627,7 @@ export async function seedDemoData(): Promise<void> {
       setupLSOYear6Example({ force: true, registerPartnerPlanning: true }),
       setupROHRomeoJuliet({ force: true, registerPartnerPlanning: true }),
       setupKS3FourChords({ force: true }),
-      setupWTDBloodBrothers({ force: true, registerPartnerPlanning: true }),
+      // WTD / iCompose paid packs are hub-Add only — not auto-seeded on demo activate.
       setupOCRFilmComputerMusic({ force: true }),
     ]);
 
@@ -641,21 +641,17 @@ export async function seedDemoData(): Promise<void> {
       }
     };
     const fourChordLessons = readLessonKeys('ccd-ks3-4chords-lesson-keys');
-    const bloodBrothersLessons = readLessonKeys('ccd-wtd-bb-lesson-keys');
     const ocrFilmLessons = readLessonKeys('ccd-ocr-film-comp-lesson-keys');
 
     // Featured prototype examples + representative mix across key stages.
     const monday = new Date();
     monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); // this week's Monday
     const scheduleSpec: { dayOffset: number; hour: number; minute: number; sheet: string; lessonNumber: string }[] = [
-      // Featured prototypes (high visibility) — KS3 4 Chords, AQA Blood Brothers, OCR Film/Computer
+      // Featured prototypes (high visibility) — KS3 4 Chords, OCR Film/Computer
       { dayOffset: 0, hour: 11, minute: 0, sheet: 'Year 8 Music', lessonNumber: fourChordLessons[0] || '1' },
-      { dayOffset: 0, hour: 14, minute: 0, sheet: 'Year 11 Drama (GCSE)', lessonNumber: bloodBrothersLessons[0] || '1' },
       { dayOffset: 1, hour: 11, minute: 0, sheet: 'Year 10 Music (OCR)', lessonNumber: ocrFilmLessons[0] || '1' },
       { dayOffset: 2, hour: 11, minute: 0, sheet: 'Year 8 Music', lessonNumber: fourChordLessons[1] || '2' },
-      { dayOffset: 3, hour: 14, minute: 0, sheet: 'Year 11 Drama (GCSE)', lessonNumber: bloodBrothersLessons[1] || '2' },
       { dayOffset: 4, hour: 11, minute: 0, sheet: 'Year 10 Music (OCR)', lessonNumber: ocrFilmLessons[1] || '2' },
-      { dayOffset: 7, hour: 14, minute: 0, sheet: 'Year 11 Drama (GCSE)', lessonNumber: bloodBrothersLessons[2] || '3' },
       { dayOffset: 8, hour: 11, minute: 0, sheet: 'Year 8 Music', lessonNumber: fourChordLessons[2] || '3' },
       { dayOffset: 9, hour: 14, minute: 0, sheet: 'Year 10 Music (OCR)', lessonNumber: ocrFilmLessons[2] || '3' },
       // EYFS / primary (ELG / Y6 objectives pre-attached — not secondary banks)

@@ -41,6 +41,10 @@ import {
 } from '../utils/yearGroupMatchKeys';
 import { PartnerPlanningPanel } from './partners/PartnerPlanningPanel';
 import { getActivityStarKey } from '../utils/activityStars';
+import {
+  partnerPlanningActivityPool,
+  partnerPlanningProjectKey,
+} from '../utils/partnerPlanning';
 
 // Define half-term periods
 const HALF_TERMS = [
@@ -205,6 +209,7 @@ export function LessonPlanBuilder({
   const [viewMode, setViewMode] = useState<'grid' | 'list' | 'compact'>('grid');
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
+  const [partnerSelectedProjectKeys, setPartnerSelectedProjectKeys] = useState<string[]>([]);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -845,8 +850,8 @@ export function LessonPlanBuilder({
 
   // Add selected activities to lesson plan
   const addSelectedActivities = () => {
-    // Find all selected activities
-    const activitiesToAdd = allActivities.filter(activity => {
+    const pool = partnerPlanningActivityPool(allActivities) as Activity[];
+    const activitiesToAdd = pool.filter((activity) => {
       const activityId = `${activity.activity}-${activity.category}`;
       return selectedActivities.includes(activityId);
     });
@@ -1043,6 +1048,14 @@ export function LessonPlanBuilder({
                     className="mb-4"
                     compact
                     activities={allActivities}
+                    currentSheetId={currentSheetInfo?.sheet}
+                    selectable
+                    selectedProjectKeys={partnerSelectedProjectKeys}
+                    selectedActivityKeys={selectedActivities.flatMap((id) => {
+                      const pool = partnerPlanningActivityPool(allActivities) as Activity[];
+                      const match = pool.find((a) => `${a.activity}-${a.category}` === id);
+                      return match ? [getActivityStarKey(match)] : [];
+                    })}
                     activityFilter={(activity) =>
                       activityVisibleForYearGroup({
                         activityCategory: activity.category,
@@ -1052,6 +1065,32 @@ export function LessonPlanBuilder({
                         normalizeKey,
                       })
                     }
+                    onActivitySelectionChange={(activity, selected) => {
+                      const activityId = `${activity.activity}-${activity.category}`;
+                      if (selected) {
+                        if (!selectedActivities.includes(activityId)) {
+                          toggleActivitySelection(activityId);
+                        }
+                      } else if (selectedActivities.includes(activityId)) {
+                        toggleActivitySelection(activityId);
+                      }
+                    }}
+                    onProjectSelectionChange={(pack, packActs, selected) => {
+                      const pKey = partnerPlanningProjectKey(pack.orgId, pack.projectId);
+                      setPartnerSelectedProjectKeys((prev) =>
+                        selected
+                          ? prev.includes(pKey)
+                            ? prev
+                            : [...prev, pKey]
+                          : prev.filter((k) => k !== pKey),
+                      );
+                      const ids = packActs.map((a) => `${a.activity}-${a.category}`);
+                      setSelectedActivities((prev) => {
+                        if (selected) return [...new Set([...prev, ...ids])];
+                        const drop = new Set(ids);
+                        return prev.filter((id) => !drop.has(id));
+                      });
+                    }}
                     renderLessons={(pack) =>
                       pack.lessonKeys?.length ? (
                         <div className="border-b border-gray-100 px-2 py-1.5 text-xs text-gray-600">
@@ -1063,9 +1102,10 @@ export function LessonPlanBuilder({
                         </div>
                       ) : null
                     }
-                    renderActivity={({ activity }) => {
+                    renderActivity={({ activity, selected }) => {
                       const activityId = `${activity.activity}-${activity.category}`;
-                      const isSelected = selectedActivities.includes(activityId);
+                      const isSelected =
+                        selected || selectedActivities.includes(activityId);
                       return (
                         <ActivityCard
                           key={getActivityStarKey(activity)}
@@ -1074,8 +1114,8 @@ export function LessonPlanBuilder({
                           draggable={true}
                           selectable={true}
                           isSelected={isSelected}
-                          onSelectionChange={(_id, selected) => {
-                            if (selected) {
+                          onSelectionChange={(_id, next) => {
+                            if (next) {
                               if (!selectedActivities.includes(activityId)) {
                                 toggleActivitySelection(activityId);
                               }

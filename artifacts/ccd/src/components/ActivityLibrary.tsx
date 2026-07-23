@@ -59,6 +59,9 @@ import {
 } from '../utils/activityStars';
 import { readHubSeededActivitiesFromLocal } from '../utils/hubSeedLocal';
 import { PartnerPlanningPanel } from './partners/PartnerPlanningPanel';
+import { partnerPlanningProjectKey } from '../utils/partnerPlanning';
+import { ActivityLibraryWelcomeModal } from './ActivityLibraryWelcomeModal';
+import { ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY } from './login/prototypeCopy';
 
 /**
  * True when curated demo/hub seed packs are present in the session store.
@@ -206,6 +209,27 @@ export function ActivityLibrary({
   const [historyUndoStack, setHistoryUndoStack] = useState<ActivityHistoryAction[]>([]);
   const [historyRedoStack, setHistoryRedoStack] = useState<ActivityHistoryAction[]>([]);
   const [isApplyingHistory, setIsApplyingHistory] = useState(false);
+  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
+  const [partnerSelectedActivityKeys, setPartnerSelectedActivityKeys] = useState<string[]>([]);
+  const [partnerSelectedProjectKeys, setPartnerSelectedProjectKeys] = useState<string[]>([]);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY) === '1') return;
+    } catch {
+      // still show
+    }
+    setShowWelcomeModal(true);
+  }, []);
+
+  const dismissWelcomeModal = () => {
+    try {
+      sessionStorage.setItem(ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY, '1');
+    } catch {
+      // ignore
+    }
+    setShowWelcomeModal(false);
+  };
 
   const [starredIds, setStarredIds] = useState<Set<string>>(() => new Set(readLocalStarPrefs().starredIds));
   const [globalStarredFirst, setGlobalStarredFirst] = useState(() => readLocalStarPrefs().globalStarredFirst);
@@ -1087,6 +1111,10 @@ export function ActivityLibrary({
         <PartnerPlanningPanel
           className="mb-4"
           activities={allActivities}
+          currentSheetId={className || currentSheetInfo?.sheet}
+          selectable
+          selectedActivityKeys={partnerSelectedActivityKeys}
+          selectedProjectKeys={partnerSelectedProjectKeys}
           activityFilter={(activity) =>
             activityVisibleForYearGroup({
               activityCategory: activity.category,
@@ -1096,17 +1124,63 @@ export function ActivityLibrary({
               normalizeKey,
             })
           }
-          renderActivity={({ activity }) => {
+          onActivitySelectionChange={(activity, selected) => {
+            const key = getActivityStarKey(activity);
+            setPartnerSelectedActivityKeys((prev) =>
+              selected
+                ? prev.includes(key)
+                  ? prev
+                  : [...prev, key]
+                : prev.filter((k) => k !== key),
+            );
+            if (selected) {
+              handleActivityClick(activity);
+            }
+          }}
+          onProjectSelectionChange={(pack, packActs, selected) => {
+            const pKey = partnerPlanningProjectKey(pack.orgId, pack.projectId);
+            setPartnerSelectedProjectKeys((prev) =>
+              selected
+                ? prev.includes(pKey)
+                  ? prev
+                  : [...prev, pKey]
+                : prev.filter((k) => k !== pKey),
+            );
+            const keys = packActs.map((a) => getActivityStarKey(a));
+            setPartnerSelectedActivityKeys((prev) => {
+              if (selected) return [...new Set([...prev, ...keys])];
+              const drop = new Set(keys);
+              return prev.filter((k) => !drop.has(k));
+            });
+            if (selected && packActs[0]) {
+              handleActivityClick(packActs[0]);
+            }
+          }}
+          onActivityOpen={(activity) => handleActivityClick(activity)}
+          renderActivity={({ activity, selected }) => {
             const isStarred = starredIds.has(getActivityStarKey(activity));
             return (
               <ActivityCard
                 key={getActivityStarKey(activity)}
                 activity={activity}
-                onActivityClick={() => onActivitySelect(activity)}
+                onActivityClick={() => handleActivityClick(activity)}
                 categoryColor={getCategoryColor(activity.category)}
                 viewMode="compact"
                 isStarred={isStarred}
                 onStarToggle={() => toggleActivityStarred(activity)}
+                selectable
+                isSelected={selected}
+                onSelectionChange={(_id, next) => {
+                  const key = getActivityStarKey(activity);
+                  setPartnerSelectedActivityKeys((prev) =>
+                    next
+                      ? prev.includes(key)
+                        ? prev
+                        : [...prev, key]
+                      : prev.filter((k) => k !== key),
+                  );
+                  if (next) handleActivityClick(activity);
+                }}
               />
             );
           }}
@@ -1493,6 +1567,11 @@ export function ActivityLibrary({
           setShowActivityModal(false);
           setSelectedActivityForModal(null);
         }}
+      />
+
+      <ActivityLibraryWelcomeModal
+        isOpen={showWelcomeModal}
+        onClose={dismissWelcomeModal}
       />
 
     </div>

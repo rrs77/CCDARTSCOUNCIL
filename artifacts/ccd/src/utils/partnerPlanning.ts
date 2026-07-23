@@ -4,6 +4,10 @@
  * Lesson Library, and Lesson Builder. Never synced to Supabase.
  */
 
+import type { Activity } from '../contexts/DataContext';
+import { getActivityStarKey } from './activityStars';
+import { readLocalLibraryActivities } from './hubSeedLocal';
+
 export const PARTNER_PLANNING_KEY = 'ccd-partner-planning-v1';
 export const CCD_PARTNER_PLANNING_UPDATED_EVENT = 'ccd-partner-planning-updated';
 
@@ -21,7 +25,129 @@ export type PartnerPlanningPack = {
   activityIds: string[];
   lessonKeys: string[];
   addedAt: string;
+  /** Optional lesson/project thumbnail (e.g. WTD / iCompose cover art) */
+  thumbSrc?: string;
 };
+
+export type PartnerPlanningActivityRef = Pick<
+  Activity,
+  '_id' | 'id' | 'activity' | 'category' | 'unitName' | 'teachingUnit' | 'notes' | 'yearGroups'
+>;
+
+function nameCatKey(activity: PartnerPlanningActivityRef): string {
+  return `${String(activity.activity || '')
+    .trim()
+    .toLowerCase()}::${String(activity.category || '')
+    .trim()
+    .toLowerCase()}`;
+}
+
+function parseHashActivityId(id: string): { name: string; category: string } | null {
+  if (!id.startsWith('h:')) return null;
+  const rest = id.slice(2);
+  const sep = rest.indexOf('::');
+  if (sep < 0) return null;
+  return {
+    name: rest.slice(0, sep).trim().toLowerCase(),
+    category: rest.slice(sep + 2).trim().toLowerCase(),
+  };
+}
+
+function indexActivities(pool: PartnerPlanningActivityRef[]): Map<string, PartnerPlanningActivityRef> {
+  const byKey = new Map<string, PartnerPlanningActivityRef>();
+  for (const a of pool) {
+    if (!a) continue;
+    byKey.set(getActivityStarKey(a), a);
+    if (a._id) byKey.set(String(a._id), a);
+    if (a.id) byKey.set(String(a.id), a);
+    byKey.set(nameCatKey(a), a);
+  }
+  return byKey;
+}
+
+function dedupeActivities<T extends PartnerPlanningActivityRef>(list: T[]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const a of list) {
+    const k = getActivityStarKey(a);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(a);
+  }
+  return out;
+}
+
+/** Merge live React activities with the local library store (hub seeds live here). */
+export function partnerPlanningActivityPool(
+  activities: PartnerPlanningActivityRef[] = [],
+): PartnerPlanningActivityRef[] {
+  const local = readLocalLibraryActivities<PartnerPlanningActivityRef>();
+  return dedupeActivities([...(activities || []), ...(local || [])]);
+}
+
+/**
+ * Resolve pack.activityIds against the given pool / local library.
+ * Falls back to unitName / project title matches when stored IDs are stale
+ * after a re-seed.
+ */
+export function resolvePartnerPlanningActivities<T extends PartnerPlanningActivityRef>(
+  pack: PartnerPlanningPack,
+  activities: T[] = [],
+  activityFilter?: (activity: T) => boolean,
+): T[] {
+  const pool = partnerPlanningActivityPool(activities) as T[];
+  const byKey = indexActivities(pool);
+  const resolved: T[] = [];
+  const seen = new Set<string>();
+
+  const push = (a: T | undefined | null) => {
+    if (!a) return;
+    if (activityFilter && !activityFilter(a)) return;
+    const k = getActivityStarKey(a);
+    if (seen.has(k)) return;
+    seen.add(k);
+    resolved.push(a);
+  };
+
+  for (const rawId of pack.activityIds || []) {
+    const id = String(rawId || '');
+    if (!id) continue;
+    const direct = byKey.get(id) as T | undefined;
+    if (direct) {
+      push(direct);
+      continue;
+    }
+    const hashed = parseHashActivityId(id);
+    if (hashed) {
+      const viaName = byKey.get(`${hashed.name}::${hashed.category}`) as T | undefined;
+      push(viaName);
+    }
+  }
+
+  // Stale IDs after re-seed: recover by project / unit title within the pool.
+  if (resolved.length === 0 && (pack.activityIds || []).length > 0) {
+    const title = String(pack.projectTitle || '')
+      .trim()
+      .toLowerCase();
+    if (title) {
+      for (const a of pool) {
+        const unit = String(a.unitName || a.teachingUnit || '')
+          .trim()
+          .toLowerCase();
+        if (unit === title || (unit && unit.includes(title)) || (title && title.includes(unit) && unit.length > 3)) {
+          push(a as T);
+        }
+      }
+    }
+  }
+
+  return resolved;
+}
+
+/** Stable key for a partner planning project row. */
+export function partnerPlanningProjectKey(orgId: string, projectId: string): string {
+  return `${orgId}::${projectId}`;
+}
 
 export type PartnerPlanningOrgGroup = {
   orgId: string;
@@ -147,8 +273,8 @@ export const PARTNER_PLANNING_ORGS = {
   weteachdrama: {
     orgId: 'weteachdrama',
     orgLabel: 'We Teach Drama',
-    logoSrc: '/partners/we-teach-drama.svg',
-    logoBg: '#111827',
+    logoSrc: '/partners/we-teach-drama.png',
+    logoBg: '#FFFFFF',
     logoInvert: false,
   },
   ems: {
@@ -161,8 +287,8 @@ export const PARTNER_PLANNING_ORGS = {
   icompose: {
     orgId: 'icompose',
     orgLabel: 'iCompose',
-    logoSrc: '/partners/icompose.svg',
-    logoBg: '#0a1628',
+    logoSrc: '/partners/icompose-logo.svg',
+    logoBg: '#FFFFFF',
     logoInvert: false,
   },
   dramaresource: {

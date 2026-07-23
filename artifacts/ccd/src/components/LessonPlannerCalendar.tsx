@@ -47,7 +47,6 @@ import {
   isWithinInterval,
   isBefore,
   isAfter,
-  addMinutes,
   setHours,
   setMinutes,
   getHours,
@@ -162,8 +161,27 @@ export function LessonPlannerCalendar({
   const [assignmentDate, setAssignmentDate] = useState<Date | null>(null);
   const [removeFromDayDropdownOpen, setRemoveFromDayDropdownOpen] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [showActionsMenu, setShowActionsMenu] = useState(false);
+  const [nowTick, setNowTick] = useState(() => new Date());
+  const actionsMenuRef = useRef<HTMLDivElement>(null);
   const { stacks } = useLessonStacks();
   const calendarRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!showActionsMenu) return;
+    const handlePointerDown = (event: MouseEvent) => {
+      if (actionsMenuRef.current && !actionsMenuRef.current.contains(event.target as Node)) {
+        setShowActionsMenu(false);
+      }
+    };
+    document.addEventListener('mousedown', handlePointerDown);
+    return () => document.removeEventListener('mousedown', handlePointerDown);
+  }, [showActionsMenu]);
+
+  useEffect(() => {
+    const id = window.setInterval(() => setNowTick(new Date()), 60_000);
+    return () => window.clearInterval(id);
+  }, []);
   
   // Get theme colors for current class
   const theme = getThemeForClass(className);
@@ -270,13 +288,75 @@ export function LessonPlannerCalendar({
   // Combine all days
   const calendarDays = [...prevMonthDays, ...currentMonthDays, ...nextMonthDays];
 
-  // Week view days
-  const weekStart = startOfWeek(currentDate);
-  const weekEnd = endOfWeek(currentDate);
+  // School week (Mon–Fri) — matches Week Lessons / school timetable
+  const weekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
+  const weekEnd = addDays(weekStart, 4);
   const weekDays = eachDayOfInterval({ start: weekStart, end: weekEnd });
 
-  // Day view hours (8am to 6pm)
-  const dayViewHours = Array.from({ length: 11 }, (_, i) => i + 8);
+  // Timed grid: 8:00–18:00 (school day)
+  const GRID_START_HOUR = 8;
+  const GRID_END_HOUR = 18;
+  const HOUR_HEIGHT_PX = 64;
+  const DEFAULT_LESSON_MINS = 45;
+  const dayViewHours = Array.from(
+    { length: GRID_END_HOUR - GRID_START_HOUR },
+    (_, i) => GRID_START_HOUR + i
+  );
+  const gridHeightPx = dayViewHours.length * HOUR_HEIGHT_PX;
+
+  const parseTimeToMinutes = (time?: string): number | null => {
+    if (!time || typeof time !== 'string') return null;
+    const parts = time.split(':');
+    if (parts.length < 2) return null;
+    const h = parseInt(parts[0], 10);
+    const m = parseInt(parts[1], 10);
+    if (isNaN(h) || isNaN(m)) return null;
+    return h * 60 + m;
+  };
+
+  const minutesToY = (minutes: number) =>
+    ((minutes - GRID_START_HOUR * 60) / 60) * HOUR_HEIGHT_PX;
+
+  const durationToHeight = (durationMin: number) =>
+    Math.max((Math.max(durationMin, 15) / 60) * HOUR_HEIGHT_PX, 22);
+
+  /** Simple overlap columns (Google Calendar style) */
+  const layoutTimedBlocks = <T extends { startMin: number; endMin: number }>(
+    items: T[]
+  ): Array<T & { col: number; colCount: number }> => {
+    if (items.length === 0) return [];
+    const sorted = [...items].sort(
+      (a, b) => a.startMin - b.startMin || b.endMin - a.endMin
+    );
+    type LaidOut = T & { col: number; colCount: number };
+    const result: LaidOut[] = sorted.map((item) => ({ ...item, col: 0, colCount: 1 }));
+    const colEnds: number[] = [];
+    result.forEach((item) => {
+      let col = colEnds.findIndex((end) => end <= item.startMin);
+      if (col === -1) {
+        col = colEnds.length;
+        colEnds.push(item.endMin);
+      } else {
+        colEnds[col] = item.endMin;
+      }
+      item.col = col;
+    });
+    let i = 0;
+    while (i < result.length) {
+      let groupEnd = result[i].endMin;
+      let j = i + 1;
+      let maxCol = result[i].col;
+      while (j < result.length && result[j].startMin < groupEnd) {
+        groupEnd = Math.max(groupEnd, result[j].endMin);
+        maxCol = Math.max(maxCol, result[j].col);
+        j += 1;
+      }
+      const colCount = maxCol + 1;
+      for (let k = i; k < j; k++) result[k].colCount = colCount;
+      i = j;
+    }
+    return result;
+  };
 
   // Filter lesson plans based on unit filter and class
   // Match by exact className or by year group ID/name (e.g., "LKG" matches "Lower Kindergarten Music")
@@ -1004,7 +1084,7 @@ export function LessonPlannerCalendar({
 
     const calDropClass = useDropZoneStyle({ isOver, canDrop, variant: 'cell' });
 
-    let cellBgColor = isCurrentMonth ? 'bg-white' : 'bg-gray-50 opacity-60';
+    let cellBgColor = isCurrentMonth ? 'bg-white' : 'bg-[#F7FAF8] opacity-70';
     if (isHolidayDate) cellBgColor = 'bg-red-50';
     if (isInsetDayDate) cellBgColor = 'bg-purple-50';
     
@@ -1013,18 +1093,25 @@ export function LessonPlannerCalendar({
         ref={drop as unknown as React.Ref<HTMLDivElement>}
         onClick={() => !isHolidayDate && !isInsetDayDate && handleDateClick(date)}
         className={`
-          relative w-full h-24 p-1 border border-gray-200 hover:bg-blue-50 transition-colors duration-200
-          ${isSelected ? 'bg-blue-100 border-blue-300' : cellBgColor}
-          ${isTodayDate ? 'ring-2 ring-blue-400' : ''}
-          ${hasPlans ? 'bg-green-50' : ''}
-          ${isSelectedWithPlans && isLessonSummaryOpen ? 'bg-blue-100 border-blue-300 ring-2 ring-blue-500' : ''}
+          relative w-full min-h-[5.5rem] sm:h-24 p-1.5 border border-[#E5EDE8] rounded-md
+          hover:bg-[rgba(0,45,36,0.03)] transition-colors duration-200
+          ${isSelected ? 'bg-[rgba(182,255,126,0.18)] border-[#002D24]/30' : cellBgColor}
+          ${isTodayDate ? 'ring-2 ring-[#002D24]/35 ring-offset-1' : ''}
+          ${hasPlans && !isSelected ? 'bg-[#F1F6F2]' : ''}
+          ${isSelectedWithPlans && isLessonSummaryOpen ? 'bg-[rgba(182,255,126,0.28)] border-[#002D24]/40 ring-2 ring-[#002D24]/40' : ''}
           ${isHolidayDate || isInsetDayDate ? 'cursor-default' : 'cursor-pointer'}
           ${calDropClass} ${calFlash}
         `}
       >
         <div className="flex flex-col h-full">
           <div className="flex justify-between items-start">
-            <span className={`text-sm font-medium ${isTodayDate ? 'text-blue-600' : 'text-gray-900'}`}>
+            <span
+              className={`text-sm font-medium ${
+                isTodayDate
+                  ? 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#002D24] text-white text-xs'
+                  : 'text-gray-800'
+              }`}
+            >
               {format(date, 'd')}
             </span>
             
@@ -1122,250 +1209,43 @@ export function LessonPlannerCalendar({
     );
   });
 
-  // DayTimeSlot component - separate component to allow hooks in day view
-  const DayTimeSlot = memo(({
+  // Timed day column (Outlook/Google style) — absolute event blocks + drop target
+  const TimedDayColumn = memo(({
     date,
-    hour,
-    dayOfWeek,
-    getLessonPlansForDate,
-    isHoliday,
-    isInsetDay,
-    timetableClasses,
-    getWeekNumber,
-    className,
-    onUpdateLessonPlan,
-    handleTimeSlotClick,
-    units,
-    theme,
-    setSelectedDateWithPlans,
-    setIsLessonSummaryOpen
+    showHourLabels,
+    compact,
   }: {
     date: Date;
-    hour: number;
-    dayOfWeek: number;
-    getLessonPlansForDate: (date: Date) => LessonPlan[];
-    isHoliday: (date: Date) => boolean;
-    isInsetDay: (date: Date) => boolean;
-    timetableClasses: TimetableClass[];
-    getWeekNumber: (date: Date) => number;
-    className: string;
-    onUpdateLessonPlan: (plan: LessonPlan) => void;
-    handleTimeSlotClick: (day: number, date: Date, hour: number) => void;
-    units: any[];
-    theme: any;
-    setSelectedDateWithPlans: (data: {date: Date, plans: LessonPlan[]}) => void;
-    setIsLessonSummaryOpen: (open: boolean) => void;
+    showHourLabels?: boolean;
+    compact?: boolean;
   }) => {
-    const plansForDate = getLessonPlansForDate(date);
-    const isHolidayDate = isHoliday(date);
-    const isInsetDayDate = isInsetDay(date);
-    
-    // Find timetable classes that overlap with this time slot
-    const timetableClassesForSlot = (timetableClasses || []).filter(tClass => {
-      if (!tClass || tClass.day !== dayOfWeek) return false;
-      if (!tClass.startTime || !tClass.endTime) return false;
-      try {
-        const classStartHour = parseInt(tClass.startTime.split(':')[0], 10);
-        const classEndHour = parseInt(tClass.endTime.split(':')[0], 10);
-        return hour >= classStartHour && hour < classEndHour;
-      } catch {
-        return false;
-      }
-    });
-    
-    // Find lesson plans for this time slot (guard against invalid plan.time)
-    const plansForTimeSlot = plansForDate.filter(plan => {
-      if (typeof plan.time !== 'string' || !plan.time) return false;
-      try {
-        const planHour = parseInt(plan.time.split(':')[0], 10);
-        return !isNaN(planHour) && planHour === hour;
-      } catch {
-        return false;
-      }
-    });
-    
-    const { flashClass: slot2Flash, triggerFlash: triggerSlot2Flash } = useDropFlash();
-
-    const [{ isOver: isOverSlot2, canDrop: canDropSlot2 }, drop] = useDrop(() => ({
-      accept: ['activity', 'unit'],
-      drop: (item: any) => {
-        if (item.activity) {
-          const weekNumber = getWeekNumber(date);
-          
-          const newPlan = {
-            id: crypto.randomUUID(),
-            date,
-            week: weekNumber,
-            className,
-            activities: [item.activity],
-            duration: item.activity.time || 0,
-            notes: '',
-            status: 'planned',
-            time: `${hour}:00`,
-            createdAt: new Date(),
-            updatedAt: new Date()
-          };
-          
-          onUpdateLessonPlan(newPlan as any);
-          triggerSlot2Flash();
-        } else if (item.unit) {
-          console.log('Unit dropped:', item.unit);
-          triggerSlot2Flash();
-        }
-      },
-      collect: (monitor) => ({
-        isOver: monitor.isOver(),
-        canDrop: monitor.canDrop(),
-      })
-    }), [date, hour, className, getWeekNumber, onUpdateLessonPlan, dayOfWeek, timetableClasses, units, theme, setSelectedDateWithPlans, setIsLessonSummaryOpen]);
-
-    const slot2DropClass = useDropZoneStyle({ isOver: isOverSlot2, canDrop: canDropSlot2, variant: 'cell' });
-
-    return (
-      <div 
-        ref={drop as unknown as React.Ref<HTMLDivElement>}
-        className={`border border-gray-200 p-2 min-h-[100px] ${
-          isHolidayDate || isInsetDayDate ? 'bg-gray-100' : 'bg-white'
-        } ${slot2DropClass} ${slot2Flash}`}
-        onClick={() => !isHolidayDate && !isInsetDayDate && handleTimeSlotClick(dayOfWeek, date, hour)}
-      >
-        <div className="flex justify-between items-start mb-2">
-          <div className="text-sm font-medium text-gray-700">{hour}:00</div>
-          {!isHolidayDate && !isInsetDayDate && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                handleTimeSlotClick(dayOfWeek, date, hour);
-              }}
-              className="p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded"
-            >
-              <Plus className="h-4 w-4" />
-            </button>
-          )}
-        </div>
-        
-        {/* Timetable classes */}
-        {timetableClassesForSlot.length > 0 && !isHolidayDate && !isInsetDayDate && (
-          <div className="space-y-1 mb-2">
-            {timetableClassesForSlot.map((tClass, idx) => (
-              <div 
-                key={idx}
-                className="text-sm p-1 rounded"
-                style={{ 
-                  backgroundColor: `${tClass.color}10`,
-                  color: tClass.color,
-                  borderLeft: `3px solid ${tClass.color}`
-                }}
-              >
-                <div className="font-medium">{tClass.className}</div>
-                <div className="text-xs">{tClass.startTime} - {tClass.endTime}</div>
-                {tClass.location && (
-                  <div className="text-xs">{tClass.location}</div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-        
-        {/* Lesson plans */}
-        {plansForTimeSlot.length > 0 && !isHolidayDate && !isInsetDayDate && (
-          <div className="space-y-1">
-            {plansForTimeSlot.map((plan, idx) => {
-              // Get the unit color if this plan is part of a unit
-              const unitColor = plan.unitId 
-                ? units.find(u => u.id === plan.unitId)?.color || theme.primary
-                : theme.primary;
-              
-              return (
-                <div 
-                  key={idx}
-                  className="text-sm p-1 rounded"
-                  style={{
-                    backgroundColor: `${unitColor}10`,
-                    color: unitColor,
-                    borderLeft: `3px solid ${unitColor}`
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setSelectedDateWithPlans({date, plans: [plan]});
-                    setIsLessonSummaryOpen(true);
-                  }}
-                >
-                  <div className="font-medium">{plan.title || `Lesson ${plan.lessonNumber || ''}`}</div>
-                  {plan.time && (
-                    <div className="text-xs">{plan.time}</div>
-                  )}
-                  {plan.activities && plan.activities.length > 0 && (
-                    <div className="text-xs text-gray-500">
-                      {plan.activities.length} {plan.activities.length === 1 ? 'activity' : 'activities'}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        )}
-      </div>
-    );
-  });
-
-  // WeekTimeSlot component - separate component to allow hooks
-  const WeekTimeSlot = memo(({ 
-    date, 
-    hour,
-    getLessonPlansForDate,
-    isHoliday,
-    isInsetDay,
-    timetableClasses,
-    getWeekNumber,
-    className,
-    onUpdateLessonPlan,
-    handleTimeSlotClick,
-    units,
-    theme,
-    setSelectedDateWithPlans,
-    setIsLessonSummaryOpen
-  }: { 
-    date: Date; 
-    hour: number;
-    getLessonPlansForDate: (date: Date) => LessonPlan[];
-    isHoliday: (date: Date) => boolean;
-    isInsetDay: (date: Date) => boolean;
-    timetableClasses: TimetableClass[];
-    getWeekNumber: (date: Date) => number;
-    className: string;
-    onUpdateLessonPlan: (plan: LessonPlan) => void;
-    handleTimeSlotClick: (day: number, date: Date, hour: number) => void;
-    units: any[];
-    theme: any;
-    setSelectedDateWithPlans: (data: {date: Date, plans: LessonPlan[]}) => void;
-    setIsLessonSummaryOpen: (open: boolean) => void;
-  }) => {
-    const startTime = setHours(setMinutes(date, 0), hour);
-    const endTime = addMinutes(startTime, 59);
-    const plansForDate = getLessonPlansForDate(date);
-    const isHolidayDate = isHoliday(date);
-    const isInsetDayDate = isInsetDay(date);
+    const columnRef = useRef<HTMLDivElement>(null);
     const dayOfWeek = getDay(date);
-    
-    // Find timetable classes that overlap with this time slot
-    const timetableClassesForSlot = timetableClasses.filter(tClass => {
-      if (tClass.day !== dayOfWeek) return false;
-      
-      const classStartHour = parseInt(tClass.startTime.split(':')[0]);
-      const classEndHour = parseInt(tClass.endTime.split(':')[0]);
-      
-      return hour >= classStartHour && hour < classEndHour;
-    });
-    
-    const { flashClass: slot3Flash, triggerFlash: triggerSlot3Flash } = useDropFlash();
+    const isTodayDate = isSameDay(date, nowTick);
+    const isHolidayDate = isHoliday(date);
+    const isInsetDayDate = isInsetDay(date);
+    const plansForDate = getLessonPlansForDate(date);
 
-    const [{ isOver: isOverSlot3, canDrop: canDropSlot3 }, drop] = useDrop(() => ({
+    const hourFromClientY = (clientY: number) => {
+      const el = columnRef.current;
+      if (!el) return GRID_START_HOUR;
+      const rect = el.getBoundingClientRect();
+      const y = Math.max(0, Math.min(clientY - rect.top, gridHeightPx - 1));
+      return Math.min(
+        GRID_END_HOUR - 1,
+        Math.max(GRID_START_HOUR, GRID_START_HOUR + Math.floor(y / HOUR_HEIGHT_PX))
+      );
+    };
+
+    const { flashClass, triggerFlash } = useDropFlash();
+    const [{ isOver, canDrop }, drop] = useDrop(() => ({
       accept: ['activity', 'unit'],
-      drop: (item: any) => {
+      drop: (item: any, monitor) => {
+        if (isHolidayDate || isInsetDayDate) return;
+        const offset = monitor.getClientOffset();
+        const hour = offset ? hourFromClientY(offset.y) : GRID_START_HOUR;
         if (item.activity) {
           const weekNumber = getWeekNumber(date);
-          
           const newPlan = {
             id: crypto.randomUUID(),
             date,
@@ -1375,110 +1255,195 @@ export function LessonPlannerCalendar({
             duration: item.activity.time || 0,
             notes: '',
             status: 'planned',
-            time: `${hour}:00`,
+            time: `${String(hour).padStart(2, '0')}:00`,
             createdAt: new Date(),
-            updatedAt: new Date()
+            updatedAt: new Date(),
           };
-          
           onUpdateLessonPlan(newPlan as any);
-          triggerSlot3Flash();
+          triggerFlash();
         } else if (item.unit) {
-          console.log('Unit dropped:', item.unit);
-          triggerSlot3Flash();
+          triggerFlash();
         }
       },
       collect: (monitor) => ({
         isOver: monitor.isOver(),
         canDrop: monitor.canDrop(),
-      })
-    }), [date, hour, className, getWeekNumber, onUpdateLessonPlan, handleTimeSlotClick, timetableClasses, units, theme, setSelectedDateWithPlans, setIsLessonSummaryOpen]);
+      }),
+    }), [date, className, isHolidayDate, isInsetDayDate, gridHeightPx]);
 
-    const slot3DropClass = useDropZoneStyle({ isOver: isOverSlot3, canDrop: canDropSlot3, variant: 'cell' });
+    const setDropRef = (node: HTMLDivElement | null) => {
+      columnRef.current = node;
+      drop(node);
+    };
 
-    let cellBgColor = 'bg-white';
-    if (isHolidayDate) cellBgColor = 'bg-red-50';
-    if (isInsetDayDate) cellBgColor = 'bg-purple-50';
-    
+    const dropClass = useDropZoneStyle({ isOver, canDrop, variant: 'cell' });
+
+    type TimedItem = {
+      id: string;
+      kind: 'timetable' | 'lesson';
+      title: string;
+      subtitle?: string;
+      startMin: number;
+      endMin: number;
+      color: string;
+      plan?: LessonPlan;
+      tClass?: TimetableClass;
+    };
+
+    const timedItems: TimedItem[] = [];
+
+    if (!isHolidayDate && !isInsetDayDate) {
+      getTimetableClassesForDay(dayOfWeek).forEach((tClass) => {
+        const startMin = parseTimeToMinutes(tClass.startTime);
+        const endMin = parseTimeToMinutes(tClass.endTime);
+        if (startMin == null || endMin == null || endMin <= startMin) return;
+        if (endMin <= GRID_START_HOUR * 60 || startMin >= GRID_END_HOUR * 60) return;
+        timedItems.push({
+          id: `tt-${tClass.id}`,
+          kind: 'timetable',
+          title: tClass.className,
+          subtitle: tClass.location || `${tClass.startTime}–${tClass.endTime}`,
+          startMin: Math.max(startMin, GRID_START_HOUR * 60),
+          endMin: Math.min(endMin, GRID_END_HOUR * 60),
+          color: tClass.color || '#3D6B5E',
+          tClass,
+        });
+      });
+
+      plansForDate.forEach((plan) => {
+        const startMin = parseTimeToMinutes(plan.time);
+        if (startMin == null) return;
+        const duration =
+          plan.duration && plan.duration > 0 ? plan.duration : DEFAULT_LESSON_MINS;
+        const endMin = startMin + duration;
+        if (endMin <= GRID_START_HOUR * 60 || startMin >= GRID_END_HOUR * 60) return;
+        const unitColor = plan.unitId
+          ? units.find((u) => u.id === plan.unitId)?.color || theme.primary
+          : theme.primary;
+        timedItems.push({
+          id: `plan-${plan.id}`,
+          kind: 'lesson',
+          title: plan.title || `Lesson ${plan.lessonNumber || ''}`,
+          subtitle: plan.time,
+          startMin: Math.max(startMin, GRID_START_HOUR * 60),
+          endMin: Math.min(endMin, GRID_END_HOUR * 60),
+          color: unitColor || '#3D6B5E',
+          plan,
+        });
+      });
+    }
+
+    const laidOut = layoutTimedBlocks(timedItems);
+
+    const nowMinutes = nowTick.getHours() * 60 + nowTick.getMinutes();
+    const showNow =
+      isTodayDate &&
+      nowMinutes >= GRID_START_HOUR * 60 &&
+      nowMinutes < GRID_END_HOUR * 60;
+
     return (
       <div
-        ref={drop as unknown as React.Ref<HTMLDivElement>}
-        onClick={() => !isHolidayDate && !isInsetDayDate && handleTimeSlotClick(dayOfWeek, date, hour)}
-        className={`
-          relative border border-gray-200 p-1 h-16 transition-colors duration-200
-          ${cellBgColor}
-          ${isHolidayDate || isInsetDayDate ? 'cursor-default' : 'cursor-pointer hover:bg-blue-50'}
-          ${slot3DropClass} ${slot3Flash}
-        `}
+        ref={setDropRef}
+        className={`relative flex-1 min-w-0 border-l border-[#E5EDE8] ${
+          isHolidayDate ? 'bg-red-50/40' : isInsetDayDate ? 'bg-purple-50/40' : 'bg-white'
+        } ${isTodayDate ? 'bg-[#F1F6F2]/70' : ''} ${dropClass} ${flashClass}`}
+        style={{ height: gridHeightPx }}
+        onClick={(e) => {
+          if (isHolidayDate || isInsetDayDate) return;
+          if ((e.target as HTMLElement).closest('[data-event-block]')) return;
+          const hour = hourFromClientY(e.clientY);
+          handleTimeSlotClick(dayOfWeek, date, hour);
+        }}
       >
-        {/* Time indicator */}
-        <div className="text-xs text-gray-500 mb-1">{hour}:00</div>
-        
-        {/* Timetable classes */}
-        {timetableClassesForSlot.length > 0 && !isHolidayDate && !isInsetDayDate && (
-          <div className="flex flex-col space-y-0.5">
-            {timetableClassesForSlot.map((tClass, idx) => (
-              <div 
-                key={idx}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setEditingTimetableClass(tClass);
-                  setShowTimetableBuilder(true);
-                }}
-                className="text-xs px-1 py-0.5 truncate rounded-sm cursor-pointer hover:opacity-80 transition-opacity group"
-                style={{ 
-                  backgroundColor: `${tClass.color}20`,
-                  color: tClass.color,
-                  borderLeft: `2px solid ${tClass.color}`
-                }}
-                title={`${tClass.className} (${tClass.startTime}-${tClass.endTime}) - Click to edit`}
-              >
-                <div className="flex items-center justify-between">
-                  <span>{tClass.className}</span>
-                  <Edit3 className="h-2.5 w-2.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
-                </div>
-              </div>
-            ))}
+        {/* Hour grid lines */}
+        {dayViewHours.map((hour) => (
+          <div
+            key={hour}
+            className="absolute left-0 right-0 border-t border-[#E5EDE8] pointer-events-none"
+            style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX, height: HOUR_HEIGHT_PX }}
+          >
+            {showHourLabels && (
+              <span className="absolute -left-14 -top-2.5 w-12 text-right text-[11px] text-gray-500 tabular-nums">
+                {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
+              </span>
+            )}
+          </div>
+        ))}
+
+        {(isHolidayDate || isInsetDayDate) && (
+          <div className="absolute inset-x-1 top-2 z-[1] text-center pointer-events-none">
+            <span
+              className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                isHolidayDate ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-800'
+              }`}
+            >
+              {isHolidayDate ? 'Holiday' : 'Inset Day'}
+            </span>
           </div>
         )}
-        
-        {/* Lesson plans for this time slot */}
-        {plansForDate.filter(plan => {
-          if (!plan.time) return false;
-          const planHour = parseInt(plan.time.split(':')[0]);
-          return planHour === hour;
-        }).map((plan, idx) => {
-          // Get the unit color if this plan is part of a unit
-          const unitColor = plan.unitId 
-            ? units.find(u => u.id === plan.unitId)?.color || theme.primary
-            : theme.primary;
-          
+
+        {/* Timed event blocks */}
+        {laidOut.map((item) => {
+          const top = minutesToY(item.startMin);
+          const height = durationToHeight(item.endMin - item.startMin);
+          const widthPct = 100 / item.colCount;
+          const leftPct = item.col * widthPct;
+          const pad = compact ? 1 : 2;
           return (
-            <div 
-              key={idx}
-              className="text-xs px-1 py-0.5 truncate rounded-sm mt-0.5"
+            <div
+              key={item.id}
+              data-event-block
+              role="button"
+              tabIndex={0}
+              title={`${item.title}${item.subtitle ? ` · ${item.subtitle}` : ''}`}
+              className="absolute z-[2] overflow-hidden rounded-md border border-black/5 shadow-sm cursor-pointer hover:brightness-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002D24]/35"
               style={{
-                backgroundColor: `${unitColor}20`,
-                color: unitColor,
-                borderLeft: `2px solid ${unitColor}`
+                top: top + 1,
+                height: Math.max(height - 2, 20),
+                left: `calc(${leftPct}% + ${pad}px)`,
+                width: `calc(${widthPct}% - ${pad * 2}px)`,
+                backgroundColor: `${item.color}22`,
+                borderLeft: `3px solid ${item.color}`,
+                color: '#1a2e28',
               }}
               onClick={(e) => {
                 e.stopPropagation();
-                setSelectedDateWithPlans({date, plans: [plan]});
-                setIsLessonSummaryOpen(true);
+                if (item.kind === 'timetable' && item.tClass) {
+                  setEditingTimetableClass(item.tClass);
+                  setShowTimetableBuilder(true);
+                } else if (item.plan) {
+                  setSelectedDateWithPlans({ date, plans: [item.plan] });
+                  setIsLessonSummaryOpen(true);
+                }
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                  e.preventDefault();
+                  (e.currentTarget as HTMLElement).click();
+                }
               }}
             >
-              {plan.title || `Lesson ${plan.lessonNumber || ''}`}
+              <div className={`px-1.5 py-0.5 leading-tight ${compact ? 'text-[10px]' : 'text-xs'}`}>
+                <div className="font-semibold truncate" style={{ color: item.color }}>
+                  {item.title}
+                </div>
+                {!compact && item.subtitle && (
+                  <div className="text-[10px] text-gray-600 truncate">{item.subtitle}</div>
+                )}
+              </div>
             </div>
           );
         })}
-        
-        {/* Holiday or Inset Day Indicator */}
-        {(isHolidayDate || isInsetDayDate) && (
-          <div className="flex-1 flex items-center justify-center">
-            <div className={`text-xs px-1 py-0.5 rounded-sm ${
-              isHolidayDate ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-800'
-            }`}>
-              {isHolidayDate ? 'Holiday' : 'Inset Day'}
+
+        {/* Current time indicator */}
+        {showNow && (
+          <div
+            className="absolute left-0 right-0 z-[3] pointer-events-none"
+            style={{ top: minutesToY(nowMinutes) }}
+          >
+            <div className="relative">
+              <div className="absolute -left-1.5 -top-1.5 h-3 w-3 rounded-full bg-[#C45C26]" />
+              <div className="h-[2px] w-full bg-[#C45C26]" />
             </div>
           </div>
         )}
@@ -1486,240 +1451,283 @@ export function LessonPlannerCalendar({
     );
   });
 
-  // Render a day column for the week view
-  const renderWeekDayColumn = (date: Date) => {
-    const isToday = isSameDay(date, new Date());
-    const isHolidayDate = isHoliday(date);
-    const isInsetDayDate = isInsetDay(date);
-    
-    return (
-      <div key={date.toISOString()} className="flex-1">
-        <div className={`text-center p-2 font-medium ${
-          isToday ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 text-gray-700'
-        } ${isHolidayDate ? 'bg-red-100 text-red-800' : ''} 
-          ${isInsetDayDate ? 'bg-purple-100 text-purple-800' : ''}`}>
-          <div>{format(date, 'EEE')}</div>
-          <div className={`text-lg ${isToday ? 'font-bold' : ''}`}>{format(date, 'd')}</div>
-        </div>
-        <div className="flex flex-col">
-          {dayViewHours.map(hour => (
-            <WeekTimeSlot 
-              key={`${date.toISOString()}-${hour}`} 
-              date={date} 
-              hour={hour}
-              getLessonPlansForDate={getLessonPlansForDate}
-              isHoliday={isHoliday}
-              isInsetDay={isInsetDay}
-              timetableClasses={timetableClasses}
-              getWeekNumber={getWeekNumber}
-              className={className}
-              onUpdateLessonPlan={onUpdateLessonPlan}
-              handleTimeSlotClick={handleTimeSlotClick}
-              units={units}
-              theme={theme}
-              setSelectedDateWithPlans={setSelectedDateWithPlans}
-              setIsLessonSummaryOpen={setIsLessonSummaryOpen}
-            />
-          ))}
-        </div>
-      </div>
-    );
-  };
-
-  // Render the week view
+  // Render the week view — Outlook / Google Calendar style timed grid
   const renderWeekView = () => {
+    const allDayByDate = weekDays.map((date) => {
+      const events = getEventsForDate(date);
+      const untimedPlans = getLessonPlansForDate(date).filter(
+        (p) => parseTimeToMinutes(p.time) == null
+      );
+      return { date, events, untimedPlans };
+    });
+    const hasAllDay = allDayByDate.some(
+      (d) => d.events.length > 0 || d.untimedPlans.length > 0 || isHoliday(d.date) || isInsetDay(d.date)
+    );
+
     return (
-      <div className="flex flex-col h-full">
-        {/* Time labels column + day columns */}
-        <div className="flex">
-          {/* Empty corner cell */}
-          <div className="w-16 bg-gray-50 border border-gray-200 p-2"></div>
-          
-          {/* Day headers */}
-          {weekDays.map(date => (
-            <div 
-              key={date.toISOString()} 
-              className={`flex-1 text-center p-2 font-medium ${
-                isSameDay(date, new Date()) ? 'bg-blue-100 text-blue-800' : 'bg-gray-50 text-gray-700'
-              } ${isHoliday(date) ? 'bg-red-100 text-red-800' : ''} 
-                ${isInsetDay(date) ? 'bg-purple-100 text-purple-800' : ''}`}
-            >
-              <div>{format(date, 'EEE')}</div>
-              <div className={`text-lg ${isSameDay(date, new Date()) ? 'font-bold' : ''}`}>{format(date, 'd')}</div>
-            </div>
-          ))}
+      <div className="flex flex-col rounded-xl border border-[#E5EDE8] overflow-hidden bg-white">
+        {/* Day headers */}
+        <div className="flex border-b border-[#E5EDE8]" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}>
+          <div className="w-14 sm:w-16 shrink-0 border-r border-[#E5EDE8]" />
+          {weekDays.map((date) => {
+            const today = isSameDay(date, nowTick);
+            return (
+              <button
+                type="button"
+                key={date.toISOString()}
+                onClick={() => {
+                  setDayViewDate(date);
+                  setCalendarViewMode('day');
+                }}
+                className={`flex-1 min-w-0 py-1 text-center transition-colors hover:bg-white/60 ${
+                  today ? 'bg-white' : ''
+                }`}
+              >
+                <div className={`text-[10px] leading-none uppercase tracking-wide ${today ? 'text-[#002D24] font-semibold' : 'text-gray-500'}`}>
+                  {format(date, 'EEE')}
+                </div>
+                <div
+                  className={`mt-px inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold leading-none ${
+                    today ? 'bg-[#002D24] text-white' : 'text-[#002D24]'
+                  }`}
+                >
+                  {format(date, 'd')}
+                </div>
+              </button>
+            );
+          })}
         </div>
-        
-        {/* Time grid */}
-        <div className="flex flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 300px)' }}>
-          {/* Time labels */}
-          <div className="w-16 flex flex-col flex-shrink-0">
-            {dayViewHours.map(hour => (
-              <div key={hour} className="h-16 border border-gray-200 p-1 text-xs text-gray-500 bg-gray-50">
-                {hour}:00
+
+        {/* All-day row */}
+        {hasAllDay && (
+          <div className="flex border-b border-[#E5EDE8] min-h-[36px]" style={{ backgroundColor: '#FAFCFA' }}>
+            <div className="w-14 sm:w-16 shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-[#E5EDE8]">
+              <span className="text-[10px] uppercase tracking-wide text-gray-400">All day</span>
+            </div>
+            {allDayByDate.map(({ date, events, untimedPlans }) => (
+              <div key={`allday-${date.toISOString()}`} className="flex-1 min-w-0 border-l border-[#E5EDE8] px-1 py-1 space-y-0.5">
+                {events.map((event) => (
+                    <button
+                      key={event.id}
+                      type="button"
+                      onClick={() => {
+                        setEditingEvent(event);
+                        setShowEventModal(true);
+                      }}
+                      className="block w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate font-medium"
+                      style={{ backgroundColor: `${event.color}22`, color: event.color }}
+                      title={event.title}
+                    >
+                      {event.title}
+                    </button>
+                  ))}
+                {untimedPlans.map((plan) => {
+                  const unitColor = plan.unitId
+                    ? units.find((u) => u.id === plan.unitId)?.color || theme.primary
+                    : theme.primary;
+                  return (
+                    <button
+                      key={plan.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDateWithPlans({ date, plans: [plan] });
+                        setIsLessonSummaryOpen(true);
+                      }}
+                      className="block w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate font-medium"
+                      style={{ backgroundColor: `${unitColor}22`, color: unitColor }}
+                      title={plan.title || `Lesson ${plan.lessonNumber || ''}`}
+                    >
+                      {plan.title || `Lesson ${plan.lessonNumber || ''}`}
+                    </button>
+                  );
+                })}
               </div>
             ))}
           </div>
-          
-          {/* Day columns with time slots */}
-          {weekDays.map(date => (
-            <div key={date.toISOString()} className="flex-1 flex flex-col">
-              {dayViewHours.map(hour => (
-                <WeekTimeSlot 
-                  key={`${date.toISOString()}-${hour}`} 
-                  date={date} 
-                  hour={hour}
-                  getLessonPlansForDate={getLessonPlansForDate}
-                  isHoliday={isHoliday}
-                  isInsetDay={isInsetDay}
-                  timetableClasses={timetableClasses}
-                  getWeekNumber={getWeekNumber}
-                  className={className}
-                  onUpdateLessonPlan={onUpdateLessonPlan}
-                  handleTimeSlotClick={handleTimeSlotClick}
-                  units={units}
-                  theme={theme}
-                  setSelectedDateWithPlans={setSelectedDateWithPlans}
-                  setIsLessonSummaryOpen={setIsLessonSummaryOpen}
-                />
+        )}
+
+        {/* Scrollable timed grid */}
+        <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+          <div className="flex relative" style={{ height: gridHeightPx }}>
+            {/* Time gutter */}
+            <div className="w-14 sm:w-16 shrink-0 relative border-r border-[#E5EDE8] bg-[#FAFCFA]">
+              {dayViewHours.map((hour) => (
+                <div
+                  key={hour}
+                  className="absolute right-2 text-[11px] text-gray-500 tabular-nums -translate-y-1/2"
+                  style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX }}
+                >
+                  {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
+                </div>
               ))}
             </div>
-          ))}
+
+            {/* Day columns */}
+            <div className="flex flex-1 min-w-0">
+              {weekDays.map((date) => (
+                <TimedDayColumn key={date.toISOString()} date={date} compact />
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     );
   };
 
-  // Render the day view
+  // Render the day view — same timed grid pattern as week
   const renderDayView = () => {
     try {
-      // Ensure we have a valid date (avoid crash from invalid or missing dayViewDate)
       const isValid = dayViewDate instanceof Date && !isNaN(dayViewDate.getTime());
       const safeDate = isValid ? dayViewDate : new Date();
       if (!isValid) setDayViewDate(safeDate);
 
-      const dayOfWeek = getDay(safeDate);
       const isHolidayDate = isHoliday(safeDate);
       const isInsetDayDate = isInsetDay(safeDate);
       const eventsForDate = getEventsForDate(safeDate);
-      const plansForDate = getLessonPlansForDate(safeDate);
-    
-    return (
-      <div className="flex flex-col h-full">
-        {/* Day header */}
-        <div className={`p-4 ${
-          isSameDay(safeDate, new Date()) ? 'bg-blue-100' : 'bg-gray-50'
-        } ${isHolidayDate ? 'bg-red-100' : ''} 
-          ${isInsetDayDate ? 'bg-purple-100' : ''}`}>
-          <div className="flex justify-between items-center">
-            <div>
-              <h2 className="text-xl font-bold">
-                {format(safeDate, 'EEEE, MMMM d, yyyy')}
-              </h2>
-              <div className="flex items-center space-x-2 mt-1">
-                {isSameDay(safeDate, new Date()) && (
-                  <span className="text-xs px-2 py-0.5 bg-blue-200 text-blue-800 rounded-full">Today</span>
-                )}
-                {isHolidayDate && (
-                  <span className="text-xs px-2 py-0.5 bg-red-200 text-red-800 rounded-full">Holiday</span>
-                )}
-                {isInsetDayDate && (
-                  <span className="text-xs px-2 py-0.5 bg-purple-200 text-purple-800 rounded-full">Inset Day</span>
-                )}
+      const untimedPlans = getLessonPlansForDate(safeDate).filter(
+        (p) => parseTimeToMinutes(p.time) == null
+      );
+      const today = isSameDay(safeDate, nowTick);
+      const dayNavBtn =
+        'inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24]';
+
+      return (
+        <div className="flex flex-col rounded-xl border border-[#E5EDE8] overflow-hidden bg-white">
+          <div
+            className={`px-4 py-3 border-b border-[#E5EDE8] ${
+              isHolidayDate ? 'bg-red-50' : isInsetDayDate ? 'bg-purple-50' : ''
+            }`}
+            style={
+              !isHolidayDate && !isInsetDayDate
+                ? { backgroundColor: 'var(--ccd-sage, #F3F6F3)' }
+                : undefined
+            }
+          >
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <h2
+                  className="text-lg sm:text-xl font-semibold text-[#002D24]"
+                  style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+                >
+                  {format(safeDate, 'EEEE, MMMM d, yyyy')}
+                </h2>
+                <div className="flex items-center flex-wrap gap-2 mt-1">
+                  {today && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#002D24] text-white font-medium">
+                      Today
+                    </span>
+                  )}
+                  {isHolidayDate && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-medium">
+                      Holiday
+                    </span>
+                  )}
+                  {isInsetDayDate && (
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium">
+                      Inset Day
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setDayViewDate(addDays(safeDate, -1))}
+                  className={dayNavBtn}
+                  aria-label="Previous day"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDayViewDate(new Date())}
+                  className="inline-flex min-h-[40px] items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:border-[#002D24] hover:text-[#002D24]"
+                >
+                  Today
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setDayViewDate(addDays(safeDate, 1))}
+                  className={dayNavBtn}
+                  aria-label="Next day"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
               </div>
             </div>
-            <div className="flex space-x-2">
-              <button
-                onClick={() => setDayViewDate(addDays(dayViewDate, -1))}
-                className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded"
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </button>
-              <button
-                onClick={() => setDayViewDate(new Date())}
-                className="px-2 py-1 text-xs text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded"
-              >
-                Today
-              </button>
-              <button
-                onClick={() => setDayViewDate(addDays(dayViewDate, 1))}
-                className="p-1 text-gray-600 hover:text-gray-900 hover:bg-gray-200 rounded"
-              >
-                <ChevronRight className="h-5 w-5" />
-              </button>
-            </div>
-          </div>
-          
-          {/* Events for this day */}
-          {eventsForDate.length > 0 && (
-            <div className="mt-2 space-y-1">
-              {eventsForDate.map((event, idx) => (
-                <div 
-                  key={idx}
-                  className="flex items-center space-x-2 text-sm p-1 rounded"
-                  style={{ 
-                    backgroundColor: `${event.color}10`,
-                    color: event.color
-                  }}
-                >
-                  <div 
-                    className="w-3 h-3 rounded-full flex-shrink-0"
-                    style={{ backgroundColor: event.color }}
-                  ></div>
-                  <span>{event.title}</span>
-                  {event.description && (
-                    <span className="text-xs text-gray-500">{event.description}</span>
-                  )}
+
+            {(eventsForDate.length > 0 || untimedPlans.length > 0) && (
+              <div className="mt-3 flex flex-wrap gap-1.5">
+                {eventsForDate.map((event) => (
                   <button
+                    key={event.id}
+                    type="button"
                     onClick={() => {
                       setEditingEvent(event);
                       setShowEventModal(true);
                     }}
-                    className="ml-auto p-1 text-gray-400 hover:text-gray-600 hover:bg-gray-200 rounded-full"
+                    className="inline-flex items-center gap-1.5 text-xs px-2 py-1 rounded-md font-medium"
+                    style={{ backgroundColor: `${event.color}18`, color: event.color }}
                   >
-                    <Edit3 className="h-3 w-3" />
+                    <span
+                      className="w-2 h-2 rounded-full shrink-0"
+                      style={{ backgroundColor: event.color }}
+                    />
+                    {event.title}
+                    <Edit3 className="h-3 w-3 opacity-60" />
                   </button>
-                </div>
-              ))}
+                ))}
+                {untimedPlans.map((plan) => {
+                  const unitColor = plan.unitId
+                    ? units.find((u) => u.id === plan.unitId)?.color || theme.primary
+                    : theme.primary;
+                  return (
+                    <button
+                      key={plan.id}
+                      type="button"
+                      onClick={() => {
+                        setSelectedDateWithPlans({ date: safeDate, plans: [plan] });
+                        setIsLessonSummaryOpen(true);
+                      }}
+                      className="inline-flex items-center text-xs px-2 py-1 rounded-md font-medium"
+                      style={{ backgroundColor: `${unitColor}18`, color: unitColor }}
+                    >
+                      {plan.title || `Lesson ${plan.lessonNumber || ''}`}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
+            <div className="flex relative" style={{ height: gridHeightPx }}>
+              <div className="w-14 sm:w-16 shrink-0 relative border-r border-[#E5EDE8] bg-[#FAFCFA]">
+                {dayViewHours.map((hour) => (
+                  <div
+                    key={hour}
+                    className="absolute right-2 text-[11px] text-gray-500 tabular-nums -translate-y-1/2"
+                    style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX }}
+                  >
+                    {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
+                  </div>
+                ))}
+              </div>
+              <div className="flex-1 min-w-0">
+                <TimedDayColumn date={safeDate} />
+              </div>
             </div>
-          )}
-        </div>
-        
-        {/* Timetable for this day - use DayTimeSlot so useDrop is not called inside a loop (Rules of Hooks) */}
-        <div className="flex-1 overflow-y-auto" style={{ height: 'calc(100vh - 300px)' }}>
-          <div className="flex flex-col">
-            {dayViewHours.map(hour => (
-              <DayTimeSlot
-                key={hour}
-                date={safeDate}
-                hour={hour}
-                dayOfWeek={dayOfWeek}
-                getLessonPlansForDate={getLessonPlansForDate}
-                isHoliday={isHoliday}
-                isInsetDay={isInsetDay}
-                timetableClasses={timetableClasses || []}
-                getWeekNumber={getWeekNumber}
-                className={className}
-                onUpdateLessonPlan={onUpdateLessonPlan}
-                handleTimeSlotClick={handleTimeSlotClick}
-                units={units}
-                theme={theme}
-                setSelectedDateWithPlans={setSelectedDateWithPlans}
-                setIsLessonSummaryOpen={setIsLessonSummaryOpen}
-              />
-            ))}
           </div>
         </div>
-      </div>
-    );
+      );
     } catch (error) {
       console.error('Error rendering day view:', error);
       return (
         <div className="p-4 text-red-600">
           <p>Error loading day view. Please try again.</p>
-          <button 
+          <button
             onClick={() => setViewMode('month')}
-            className="mt-2 px-4 py-2 bg-teal-600 text-white rounded-lg"
+            className="mt-2 px-4 py-2 bg-[#002D24] text-white rounded-lg"
           >
             Return to Month View
           </button>
@@ -1731,9 +1739,12 @@ export function LessonPlannerCalendar({
   // Render the month view
   const renderMonthView = () => {
     return (
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-1.5">
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
-          <div key={day} className="text-center font-medium text-gray-700 py-1 text-xs">
+          <div
+            key={day}
+            className="text-center font-medium text-[11px] sm:text-xs tracking-wide uppercase text-gray-500 py-2"
+          >
             {day}
           </div>
         ))}
@@ -2095,186 +2106,188 @@ export function LessonPlannerCalendar({
     );
   };
 
+  const viewModeLabel =
+    viewMode === 'month'
+      ? 'Month View'
+      : viewMode === 'week'
+        ? 'Week View'
+        : viewMode === 'week-lessons'
+          ? 'Week Lessons'
+          : 'Day View';
+
+  const periodLabel =
+    viewMode === 'month'
+      ? format(currentDate, 'MMMM yyyy')
+      : viewMode === 'week'
+        ? `Week of ${format(weekStart, 'MMM d, yyyy')}`
+        : viewMode === 'week-lessons'
+          ? `Week of ${format(weekStart, 'MMM d, yyyy')}`
+          : format(dayViewDate, 'MMMM d, yyyy');
+
+  const setCalendarViewMode = (mode: 'month' | 'week' | 'day' | 'week-lessons') => {
+    try {
+      setViewMode(mode);
+    } catch (error) {
+      console.error(`Error switching to ${mode} view:`, error);
+    }
+  };
+
+  const navBtnClass =
+    'inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24]';
+
+  const viewBtnClass = (active: boolean) =>
+    `flex-1 min-w-0 sm:flex-none min-h-[40px] md:min-h-[44px] px-2 sm:px-2.5 md:px-3.5 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
+      active
+        ? 'bg-[#002D24] text-white shadow-sm'
+        : 'text-gray-600 hover:text-[#002D24] hover:bg-white'
+    }`;
+
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden" ref={calendarRef}>
-      {/* Calendar Header */}
-      <div className="p-3 sm:p-4 border-b border-gray-200 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-          <div className="flex items-center gap-3 min-w-0">
-            <CalendarIcon className="h-6 w-6 flex-shrink-0" />
+    <div className="bg-white rounded-card shadow-soft border border-gray-100 overflow-hidden ccd-fade-in-up" ref={calendarRef}>
+      {/* Calendar Header — light forest/sage, split primary vs tools */}
+      <div
+        className="border-b border-[#E5EDE8]"
+        style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}
+      >
+        {/* Primary row: title + primary CTA + overflow tools */}
+        <div className="px-3 sm:px-5 md:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0 flex items-center gap-3">
+            <div
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#002D24]/12"
+              style={{ backgroundColor: 'rgba(182, 255, 126, 0.35)' }}
+            >
+              <CalendarIcon className="h-5 w-5" style={{ color: '#002D24' }} />
+            </div>
             <div className="min-w-0">
-              <h2 className="text-lg sm:text-xl font-bold">Calendar</h2>
-              <p className="text-teal-100 text-xs sm:text-sm truncate">
-                {className} • {viewMode === 'month' ? 'Month View' : viewMode === 'week' ? 'Week View' : viewMode === 'week-lessons' ? 'Week Lessons' : 'Day View'}
+              <h2
+                className="text-xl sm:text-2xl font-semibold tracking-tight"
+                style={{
+                  fontFamily: '"Playfair Display", Georgia, serif',
+                  color: '#002D24',
+                }}
+              >
+                Calendar
+              </h2>
+              <p className="mt-0.5 text-xs sm:text-sm text-gray-600 truncate">
+                {className}
+                <span className="mx-1.5 text-gray-300">·</span>
+                {viewModeLabel}
               </p>
             </div>
           </div>
-          
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            {/* Print / Export PDF Button */}
-            <button
-              onClick={handlePrintCalendar}
-              disabled={isExportingPdf}
-              className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200 disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <Printer className="h-4 w-4 shrink-0" />
-              <span className="text-sm whitespace-nowrap">{isExportingPdf ? 'Exporting…' : 'Export PDF'}</span>
-            </button>
 
-            <button
-              onClick={handleExportIcal}
-              className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200"
-              title="Download scheduled lessons as an .ics calendar file"
-            >
-              <Download className="h-4 w-4 shrink-0" />
-              <span className="text-sm whitespace-nowrap">Export iCal</span>
-            </button>
-            
-            {/* Timetable Builder Button */}
-            <button
-              onClick={() => setShowTimetableBuilder(true)}
-              className="inline-flex min-h-[44px] items-center gap-2 px-3 sm:px-4 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 text-white font-medium rounded-lg transition-colors duration-200"
-            >
-              <Users className="h-4 w-4 shrink-0" />
-              <span className="text-sm whitespace-nowrap">Timetable Builder</span>
-            </button>
-            
-            {/* View Mode Selector */}
-            <div className="flex w-full sm:w-auto bg-white bg-opacity-20 rounded-lg overflow-hidden">
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  try {
-                    setViewMode('month');
-                  } catch (error) {
-                    console.error('Error switching to month view:', error);
-                  }
-                }}
-                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
-                  viewMode === 'month' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
-                }`}
-              >
-                Month
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  try {
-                    setViewMode('week');
-                  } catch (error) {
-                    console.error('Error switching to week view:', error);
-                  }
-                }}
-                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
-                  viewMode === 'week' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
-                }`}
-              >
-                Week
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  try {
-                    setViewMode('week-lessons');
-                  } catch (error) {
-                    console.error('Error switching to week-lessons view:', error);
-                  }
-                }}
-                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
-                  viewMode === 'week-lessons' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
-                }`}
-              >
-                <span className="hidden sm:inline">Week Lessons</span>
-                <span className="sm:hidden">Lessons</span>
-              </button>
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  try {
-                    setViewMode('day');
-                  } catch (error) {
-                    console.error('Error switching to day view:', error);
-                  }
-                }}
-                className={`flex-1 sm:flex-none min-h-[44px] px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium transition-colors duration-200 ${
-                  viewMode === 'day' ? 'bg-white text-teal-600' : 'text-white hover:bg-white hover:bg-opacity-10'
-                }`}
-              >
-                Day
-              </button>
-            </div>
-            
-            {/* Unit Filter */}
-            {units.length > 0 && (
-              <select
-                value={unitFilter}
-                onChange={(e) => setUnitFilter(e.target.value)}
-                className="w-full sm:w-auto min-h-[44px] px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent text-sm"
-              >
-                <option value="all" className="text-gray-900">All Units</option>
-                {units.map(unit => (
-                  <option key={unit.id} value={unit.id} className="text-gray-900">
-                    {unit.name}
-                  </option>
-                ))}
-              </select>
-            )}
-            
-            {/* Timetable Button */}
-            <button
-              onClick={() => setShowTimetableModal(true)}
-              className="inline-flex min-h-[44px] items-center gap-1.5 px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200"
-            >
-              <Repeat className="h-4 w-4 shrink-0" />
-              <span>Timetable</span>
-            </button>
-            
-            {/* Add Event Button */}
+          <div className="flex flex-wrap items-center gap-2 sm:gap-2.5 sm:justify-end sm:shrink-0">
             <button
               onClick={() => {
                 setEditingEvent(null);
                 setShowEventModal(true);
               }}
-              className="inline-flex min-h-[44px] items-center gap-1.5 px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200"
+              className="inline-flex min-h-[44px] sm:min-h-[48px] flex-1 sm:flex-none items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-opacity duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#002D24]/30 focus:ring-offset-2"
+              style={{ backgroundColor: '#B6FF7E', color: '#002D24' }}
             >
-              <Plus className="h-4 w-4 shrink-0" />
+              <Plus className="h-5 w-5 shrink-0" />
               <span>Add Event</span>
             </button>
+
+            <div className="relative shrink-0" ref={actionsMenuRef}>
+              <button
+                type="button"
+                onClick={() => setShowActionsMenu((open) => !open)}
+                aria-expanded={showActionsMenu}
+                aria-haspopup="menu"
+                className={`${navBtnClass} gap-1.5 px-3 min-h-[44px] sm:min-h-[48px] min-w-[44px] sm:min-w-0`}
+                title="More calendar tools"
+              >
+                <MoreHorizontal className="h-4 w-4" />
+                <span className="text-sm font-medium hidden md:inline">Tools</span>
+              </button>
+
+              {showActionsMenu && (
+                <div
+                  role="menu"
+                  className="absolute right-0 top-full mt-2 z-50 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                >
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      handlePrintCalendar();
+                    }}
+                    disabled={isExportingPdf}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2] disabled:opacity-60"
+                  >
+                    <Printer className="h-4 w-4 text-gray-500 shrink-0" />
+                    {isExportingPdf ? 'Exporting…' : 'Export PDF'}
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      handleExportIcal();
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2]"
+                  >
+                    <Download className="h-4 w-4 text-gray-500 shrink-0" />
+                    Export iCal
+                  </button>
+                  <div className="my-1 border-t border-gray-100" />
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      setShowTimetableBuilder(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2]"
+                  >
+                    <Users className="h-4 w-4 text-gray-500 shrink-0" />
+                    Timetable Builder
+                  </button>
+                  <button
+                    role="menuitem"
+                    onClick={() => {
+                      setShowActionsMenu(false);
+                      setShowTimetableModal(true);
+                    }}
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2]"
+                  >
+                    <Repeat className="h-4 w-4 text-gray-500 shrink-0" />
+                    Timetable sync
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         </div>
-        
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mt-4">
-          <div className="flex items-center gap-2">
+
+        {/* Secondary row: period nav + view switcher */}
+        <div className="px-3 sm:px-5 md:px-6 pb-3 sm:pb-4 flex flex-col gap-2.5 sm:gap-3 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-wrap items-center gap-1.5 sm:gap-2 min-w-0">
             <button
               onClick={() => {
                 if (viewMode === 'month') {
                   setCurrentDate(subMonths(currentDate, 1));
-                } else if (viewMode === 'week') {
+                } else if (viewMode === 'week' || viewMode === 'week-lessons') {
                   setCurrentDate(subWeeks(currentDate, 1));
                 } else {
                   setDayViewDate(addDays(dayViewDate, -1));
                 }
               }}
               aria-label="Previous period"
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
+              className={navBtnClass}
             >
               <ChevronLeft className="h-5 w-5" />
             </button>
-            
+
             <button
               onClick={() => {
                 setCurrentDate(new Date());
                 setDayViewDate(new Date());
               }}
-              className="inline-flex min-h-[44px] items-center px-3 py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg text-sm font-medium transition-colors duration-200"
+              className="inline-flex min-h-[40px] md:min-h-[44px] items-center px-3 sm:px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24]"
             >
               Today
             </button>
-            
+
             <button
               onClick={() => {
                 if (viewMode === 'month') {
@@ -2286,22 +2299,95 @@ export function LessonPlannerCalendar({
                 }
               }}
               aria-label="Next period"
-              className="inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
+              className={navBtnClass}
             >
               <ChevronRight className="h-5 w-5" />
             </button>
-          </div>
-          
-          {viewMode !== 'week-lessons' && (
-            <h3 className="text-base sm:text-lg font-semibold text-center sm:text-left">
-              {viewMode === 'month' 
-                ? format(currentDate, 'MMMM yyyy')
-                : viewMode === 'week'
-                ? `Week of ${format(weekStart, 'MMM d, yyyy')}`
-                : format(dayViewDate, 'MMMM d, yyyy')
-              }
+
+            <h3
+              className="ml-0.5 sm:ml-1 basis-full sm:basis-auto text-base sm:text-lg font-semibold tracking-tight text-[#002D24] truncate"
+              style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+            >
+              {periodLabel}
             </h3>
-          )}
+          </div>
+
+          <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 min-w-0 w-full lg:w-auto lg:shrink-0">
+            {units.length > 0 && (
+              <select
+                value={unitFilter}
+                onChange={(e) => setUnitFilter(e.target.value)}
+                className="w-full sm:w-auto min-h-[40px] md:min-h-[44px] px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#002D24]/25 focus:border-[#002D24]"
+              >
+                <option value="all">All Units</option>
+                {units.map((unit) => (
+                  <option key={unit.id} value={unit.id}>
+                    {unit.name}
+                  </option>
+                ))}
+              </select>
+            )}
+
+            <div
+              className="flex w-full lg:w-auto min-w-0 p-1 rounded-lg border border-gray-200 bg-[#E8F0EA]/60"
+              role="tablist"
+              aria-label="Calendar view"
+            >
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'month'}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCalendarViewMode('month');
+                }}
+                className={viewBtnClass(viewMode === 'month')}
+              >
+                Month
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'week'}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCalendarViewMode('week');
+                }}
+                className={viewBtnClass(viewMode === 'week')}
+              >
+                Week
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'week-lessons'}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCalendarViewMode('week-lessons');
+                }}
+                className={viewBtnClass(viewMode === 'week-lessons')}
+              >
+                <span className="hidden sm:inline">Week Lessons</span>
+                <span className="sm:hidden">Lessons</span>
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={viewMode === 'day'}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setCalendarViewMode('day');
+                }}
+                className={viewBtnClass(viewMode === 'day')}
+              >
+                Day
+              </button>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -2327,36 +2413,36 @@ export function LessonPlannerCalendar({
           allLessonsData={allLessonsData}
         />
       ) : (
-        <div className="p-4">
+        <div className="p-4 sm:p-5 bg-white">
           {viewMode === 'month' ? renderMonthView() : viewMode === 'week' ? renderWeekView() : renderDayView()}
         </div>
       )}
 
       {/* Legend */}
-      <div className="px-4 pb-4">
-        <div className="flex items-center justify-center flex-wrap gap-4 text-xs">
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+      <div className="px-4 sm:px-5 pb-5 pt-1 border-t border-[#E5EDE8]" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}>
+        <div className="flex items-center justify-center flex-wrap gap-x-5 gap-y-2 text-xs">
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-[#3D6B5E]" />
             <span className="text-gray-600">Planned</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-green-500" />
             <span className="text-gray-600">Completed</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-red-500" />
             <span className="text-gray-600">Holiday</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-purple-500 rounded-full"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-purple-500" />
             <span className="text-gray-600">Inset Day</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-amber-500 rounded-full"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-amber-500" />
             <span className="text-gray-600">Event</span>
           </div>
-          <div className="flex items-center space-x-1">
-            <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+          <div className="flex items-center gap-1.5">
+            <div className="w-2 h-2 rounded-full bg-gray-400" />
             <span className="text-gray-600">Timetabled Class</span>
           </div>
         </div>

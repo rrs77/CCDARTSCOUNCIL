@@ -2,8 +2,10 @@
  * Partner mini-hub URL slugs (e.g. `/roh`, `/lso`).
  * Accessible when signed in; linked from Partner Hubs.
  *
- * Hubs render as one continuous page: featured logo at top, org description,
- * then featured resources / Add to CCDesigner (see PartnerHubPage).
+ * Shared template (LSO-style collapsed header):
+ *   back → compact branded logo strip → name / intro → featured resource
+ *   → resource list (Add where applicable) → contact footer
+ * Each org keeps its own palette + logo via primaryColor / accentColor / logoSrc.
  */
 
 export interface PartnerHubConfig {
@@ -33,6 +35,16 @@ export interface PartnerHubConfig {
   logoInvert?: boolean;
   /** Optional dark panel behind the logo (defaults to primaryColor) */
   logoPanelColor?: string;
+  /**
+   * Use a light plate behind a full-colour / dark logo (clearer than white-on-dark
+   * wordmarks for WTD / iCompose site logos).
+   */
+  logoOnPlate?: boolean;
+  /**
+   * Paid / premium partner — shown in a separate Partner Hubs section with
+   * Add to basket demo. Only We Teach Drama and iCompose use this.
+   */
+  paid?: boolean;
 }
 
 export const PARTNER_HUBS: PartnerHubConfig[] = [
@@ -78,8 +90,9 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'We Teach Drama',
     shortName: 'We Teach Drama',
     siteUrl: 'https://www.weteachdrama.com/',
-    logoSrc: '/partners/we-teach-drama.svg',
+    logoSrc: '/partners/we-teach-drama.png',
     interactive: true,
+    paid: true,
     tagline: 'Drama schemes and classroom resources',
     description: [
       'We Teach Drama publishes classroom schemes, CPD and design resources for secondary drama teachers — from KS3 cover packs and theatre design challenge mats to GCSE AQA set-text revision (including Blood Brothers) and practitioner packs for ages 14–18.',
@@ -87,8 +100,9 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#1f2937',
     accentColor: '#F59E0B',
-    /** White wordmark SVG — no invert (same pattern as LSO) */
-    logoPanelColor: '#111827',
+    /** Site logo (dark) on light plate for legibility */
+    logoOnPlate: true,
+    logoPanelColor: '#FFFFFF',
   },
   {
     slug: 'ems',
@@ -109,14 +123,35 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     logoPanelColor: '#330968',
   },
   {
+    slug: 'triborough',
+    aliases: ['tbmh', 'tri-borough'],
+    partnerLogoId: 'tri-borough-music-hub',
+    displayName: 'Tri-Borough Music Hub',
+    shortName: 'TBMH',
+    siteUrl: 'https://www.triboroughmusichub.org/',
+    logoSrc: '/partners/tri-borough-music-hub-trans.png',
+    interactive: false,
+    tagline: 'Music education across three London boroughs',
+    description: [
+      'Tri-Borough Music Hub (TBMH) supports music education for children and young people across Kensington & Chelsea, Hammersmith & Fulham and Westminster — including school services, tuition, singing resources and inclusive music programmes.',
+      'This hub links official TBMH school and about pages for planning. Demo only — logos and links do not imply endorsement; book and access provision via the official Tri-Borough Music Hub site.',
+    ],
+    primaryColor: '#1a1a1a',
+    accentColor: '#F5E827',
+    /** Full-colour site logo on light plate */
+    logoOnPlate: true,
+    logoPanelColor: '#FFFFFF',
+  },
+  {
     slug: 'icompose',
     aliases: ['icancompose'],
     partnerLogoId: 'icompose',
     displayName: 'iCompose',
     shortName: 'iCompose',
     siteUrl: 'https://www.icancompose.com/',
-    logoSrc: '/partners/icompose.svg',
+    logoSrc: '/partners/icompose-logo.svg',
     interactive: true,
+    paid: true,
     tagline: 'Online composition courses for secondary musicians',
     description: [
       'iCompose offers award-winning online composing courses for secondary musicians and teachers — step-by-step lessons with exemplar listening, model compositions and video guidance, including a free Getting Started track for KS3 / GCSE beginners.',
@@ -124,8 +159,9 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#0a1628',
     accentColor: '#5BA3D9',
-    /** White wordmark SVG on dark panel (LSO / National Theatre strip style) */
-    logoPanelColor: '#0a1628',
+    /** Official colour logo on light plate — readable in compact rows */
+    logoOnPlate: true,
+    logoPanelColor: '#FFFFFF',
   },
   {
     slug: 'dramaresource',

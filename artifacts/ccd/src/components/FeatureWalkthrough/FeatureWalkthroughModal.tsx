@@ -6,9 +6,12 @@ interface FeatureWalkthroughModalProps {
   onClose: () => void;
 }
 
+// Use explicit index.html — bare `/ccd-pitch/` is caught by the Vite/Vercel SPA
+// fallback and serves the main CCD shell instead of the pitch promo.
 // Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
-const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/?autoplay=1&v=2026-07-21`;
+const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/index.html?autoplay=1&v=2026-07-23`;
 const SITE_URL = 'https://www.ccdesigner.co.uk';
+const PITCH_CLOSE_MESSAGE = 'ccd-pitch-close';
 
 export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughModalProps) {
   useEffect(() => {
@@ -19,6 +22,16 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
       document.body.style.overflow = previousOverflow;
     };
   }, [isOpen]);
+
+  // PitchAutoplayViewer posts this when its own Close control is used inside the iframe.
+  useEffect(() => {
+    if (!isOpen) return;
+    const onMessage = (event: MessageEvent) => {
+      if (event.data?.type === PITCH_CLOSE_MESSAGE) onClose();
+    };
+    window.addEventListener('message', onMessage);
+    return () => window.removeEventListener('message', onMessage);
+  }, [isOpen, onClose]);
 
   if (!isOpen) return null;
 
@@ -55,7 +68,7 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
         onClick={handleClose}
         className="absolute right-4 top-4 z-[110] rounded-full bg-[#002D24]/70 p-2 text-white/80 backdrop-blur-sm transition-colors hover:bg-[#002D24]/90 hover:text-[#B6FF7E]"
         aria-label="Close walkthrough"
-        title="Close and return to ccdesigner.co.uk"
+        title="Close walkthrough"
       >
         <X className="h-4 w-4" />
       </button>

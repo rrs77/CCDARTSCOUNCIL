@@ -1,6 +1,6 @@
 /** iCompose partner branding helpers. */
 
-export const ICC_LOGO_SRC = '/partners/icompose.svg';
+export const ICC_LOGO_SRC = '/partners/icompose-logo.svg';
 export const ICC_SITE = 'https://www.icancompose.com/';
 export const ICC_KS3_TRACK = 'https://www.icancompose.com/course-track/ks3/';
 export const ICC_COURSES = 'https://www.icancompose.com/courses/';

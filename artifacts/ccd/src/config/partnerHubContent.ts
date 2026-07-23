@@ -202,6 +202,39 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
     ],
   },
 
+  triborough: {
+    slug: 'triborough',
+    headerBg: '#1a1a1a',
+    siteLabel: 'triboroughmusichub.org',
+    about: [
+      'Tri-Borough Music Hub (TBMH) supports music education for children and young people across Kensington & Chelsea, Hammersmith & Fulham and Westminster — including school services, tuition, singing resources and inclusive music programmes.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open official TBMH pages for the latest school services, tuition and events.',
+    ],
+    resourcesHeading: 'School & hub resources',
+    resourcesIntro:
+      'Official Tri-Borough Music Hub links for schools, about the hub and virtual music school. Use these in planning; classroom seeding in CCDesigner can be added later.',
+    resources: [
+      {
+        title: 'Music Hub services for schools',
+        href: 'https://www.triboroughmusichub.org/schools',
+        description: 'School services overview and hub offer for schools.',
+        kind: 'Schools',
+      },
+      {
+        title: 'About Tri-Borough Music Hub',
+        href: 'https://www.triboroughmusichub.org/about-us/',
+        description: 'Team, strategic aims, partners and key documents.',
+        kind: 'About',
+      },
+      {
+        title: 'TBMH Virtual Music School',
+        href: 'https://www.triboroughmusichub.org/tbmh-virtual-music-school',
+        description: 'Virtual music school pathway and related resources.',
+        kind: 'Hub',
+      },
+    ],
+  },
+
   nationalgallery: {
     slug: 'nationalgallery',
     headerBg: '#0c2340',

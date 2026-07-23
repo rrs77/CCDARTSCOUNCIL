@@ -82,6 +82,14 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     heightClass: 'h-6 sm:h-7',
   },
   {
+    id: 'tri-borough-music-hub',
+    name: 'Tri-Borough Music Hub',
+    src: '/partners/tri-borough-music-hub-trans.png',
+    href: 'https://www.triboroughmusichub.org/',
+    heightClass: 'h-6 sm:h-7',
+    onPlate: true,
+  },
+  {
     id: 'icompose',
     name: 'iCompose',
     src: '/partners/icompose.svg',

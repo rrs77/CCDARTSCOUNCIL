@@ -51,6 +51,13 @@ export const PARTNER_CONTACTS: Record<string, PartnerContactInfo> = {
     webLabel: 'essexmusicservice.org.uk',
     sourceUrl: 'https://www.essexmusicservice.org.uk/site/contact/',
   },
+  triborough: {
+    orgId: 'triborough',
+    lines: ['Tri-Borough Music Hub'],
+    web: 'https://www.triboroughmusichub.org/',
+    webLabel: 'triboroughmusichub.org',
+    sourceUrl: 'https://www.triboroughmusichub.org/about-us/',
+  },
   icompose: {
     orgId: 'icompose',
     lines: ['iCompose'],

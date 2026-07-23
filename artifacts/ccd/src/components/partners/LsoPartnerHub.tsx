@@ -15,58 +15,127 @@ const LSO_DIGITAL_HUB =
   'https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/';
 const LSO_SCHOOLS =
   'https://www.lso.co.uk/learn-and-discover/activities-for-schools-and-teachers/';
+const LSO_TES = 'https://www.tes.com/member/lsodiscovery';
 
-/** Official LSO Discovery projects — only HTBAO seeds into CCDesigner. */
+/**
+ * Official LSO Discovery resources from
+ * https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/
+ * Only HTBAO seeds into CCDesigner.
+ */
 const LSO_PROJECTS = [
   {
     id: 'htbao',
     name: 'How to Build an Orchestra',
+    band: 'KS2',
     interactive: true,
     href: HTBAO_PAGE,
     blurb:
-      'KS1–2 classroom film, family videos and creative projects with Sir Simon Rattle and Rachel Leach.',
+      'Ages 7–12 — classroom film with Sir Simon Rattle & Rachel Leach, family videos and creative projects inspired by Mary Auld’s book.',
   },
   {
     id: 'planets',
     name: 'The Planets',
+    band: 'KS2 · Featured on LSO',
     interactive: false,
-    href: 'https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/the-planets/',
-    blurb: 'KS2 Holst series — videos, lesson plans and quizzes with Rachel Leach and Tim Peake.',
+    href: 'https://lso.co.uk/planets',
+    blurb:
+      'Ages 7–12 — Holst suite with videos, games and lesson plans featuring Rachel Leach, Sir Antonio Pappano and Tim Peake.',
   },
   {
     id: 'alice',
     name: 'The Alice Sound',
+    band: 'KS2',
     interactive: false,
-    href: 'https://thealicesound.com/',
-    blurb: 'Wonderland cross-curricular resources with Paul Rissmann’s suites and free downloads.',
+    href: 'https://www.thealicesound.com/',
+    blurb: 'Ages 7–12 — Wonderland cross-curricular resources with Paul Rissmann’s suites and free downloads.',
   },
   {
     id: 'space',
     name: 'Space … but not as we know it',
+    band: 'KS2',
     interactive: false,
     href: 'https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/space-but-not-as-we-know-it/',
-    blurb: 'KS2 online concert and classroom packs on how sound travels around an orchestra.',
+    blurb: 'Ages 7–12 — online concert and classroom packs on how sound travels around an orchestra.',
   },
   {
     id: 'leon',
     name: 'Leon and the Place Between',
+    band: 'KS2',
     interactive: false,
     href: 'https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/leon-and-the-place-between/',
-    blurb: 'Interactive concert plus downloadable classroom and family resources.',
+    blurb: 'Ages 7–12 — interactive concert plus downloadable classroom and family resources.',
   },
   {
     id: 'lso-play',
     name: 'LSO Play',
+    band: 'KS2',
     interactive: false,
     href: 'https://play.lso.co.uk/',
-    blurb: 'Multi-angle performances, instrument exploration and masterclasses.',
+    blurb: 'Ages 7–12 — multi-angle performances, instrument exploration and masterclasses.',
   },
   {
-    id: 'rachel-leach',
-    name: 'Rachel Leach listening activities',
+    id: 'lockdown-listening',
+    name: "Rachel Leach's Lockdown Listening",
+    band: 'KS2 · YouTube',
     interactive: false,
-    href: LSO_DIGITAL_HUB,
-    blurb: 'Browse LSO digital resources for listening packs and related activities.',
+    href: 'https://youtube.com/playlist?list=PLTjZ3o6K-BOn25PsSiEZRbZ6wrNlw-wgv',
+    blurb: 'Ages 7–12 — listening playlist from the LSO digital resources grid.',
+  },
+  {
+    id: 'olivia',
+    name: 'Olivia Forms a Band',
+    band: 'KS1',
+    interactive: false,
+    href: 'https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/olivia-forms-a-band/',
+    blurb: 'Age 5+ — story-led classroom and family activities.',
+  },
+  {
+    id: 'simon',
+    name: "Where's Simon?",
+    band: 'KS1–2',
+    interactive: false,
+    href: 'https://www.lso.co.uk/wheres-simon/',
+    blurb: 'Ages 5–12 — find-the-conductor style discovery resource.',
+  },
+  {
+    id: 'jemma',
+    name: "Jemma's Journey",
+    band: 'EYFS',
+    interactive: false,
+    href: 'https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/jemmas-journey/',
+    blurb: 'Under-5s — Early Years Foundation Stage listening and movement resource.',
+  },
+  {
+    id: 'fergal',
+    name: 'Fergal is Fuming!',
+    band: 'EYFS',
+    interactive: false,
+    href: 'https://www.lso.co.uk/learn-and-discover/digital-activities-and-resources/fergal-is-fuming/',
+    blurb: 'Under-5s — Early Years story and music activities.',
+  },
+  {
+    id: 'a-level-seminars',
+    name: 'A-Level Seminars',
+    band: 'KS5 · YouTube',
+    interactive: false,
+    href: 'https://youtube.com/playlist?list=PLTjZ3o6K-BOmGAKJx_tOf63vDkQJ7I9ME',
+    blurb: 'Age 16+ — seminar playlist for A-Level / Key Stage 5 students.',
+  },
+  {
+    id: 'a-level-shorts',
+    name: 'A-Level Revision Shorts',
+    band: 'KS5 · YouTube',
+    interactive: false,
+    href: 'https://youtube.com/playlist?list=PLTjZ3o6K-BOnKsd0GLdhTLy2Rt5WxBK67',
+    blurb: 'Age 16+ — short revision videos from the LSO Discovery grid.',
+  },
+  {
+    id: 'tes',
+    name: 'LSO resources on TES',
+    band: 'Teaching platforms',
+    interactive: false,
+    href: LSO_TES,
+    blurb: 'Teacher resource packs and LSO Play listening tasks for KS2–3 on TES.com.',
   },
 ] as const;
 
@@ -76,7 +145,7 @@ interface LsoPartnerHubProps {
 }
 
 /**
- * LSO hub body — logo / description / contact live in PartnerHubPage.
+ * LSO hub body — collapsed logo / description / contact live in PartnerHubPage.
  */
 export function LsoPartnerHub({ onAddedToApp }: LsoPartnerHubProps) {
   const [adding, setAdding] = useState(false);
@@ -129,12 +198,12 @@ export function LsoPartnerHub({ onAddedToApp }: LsoPartnerHubProps) {
 
       <PartnerHubResourceList
         title="LSO Discovery projects"
-        subtitle="Official classroom and family resources. Only How to Build an Orchestra is seeded in CCDesigner for now."
+        subtitle="From the official Activities and Resources for Families and Schools page. Only How to Build an Orchestra is seeded in CCDesigner for now."
       >
         {LSO_PROJECTS.map((project) => (
           <PartnerHubResourceRow
             key={project.id}
-            eyebrow={project.interactive ? 'In CCDesigner' : 'On LSO'}
+            eyebrow={project.interactive ? `In CCDesigner · ${project.band}` : project.band}
             title={project.name}
             description={project.blurb}
             links={[{ href: project.href, label: 'Open resource', icon: 'external' }]}

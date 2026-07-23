@@ -304,11 +304,18 @@ export function finishPrototypeSeed(options: {
   categoryMerge: { merged: any[] };
   source: string;
   markerKey: string;
+  /**
+   * Default true. Paid WTD / iCompose hubs set false and star a curated subset
+   * into Recently added after hub Add instead.
+   */
+  starActivities?: boolean;
 }) {
-  starActivityObjectsLocally(options.activities, {
-    enableGlobalStarredFirst: true,
-    starredFirstCategories: options.categories,
-  });
+  if (options.starActivities !== false) {
+    starActivityObjectsLocally(options.activities, {
+      enableGlobalStarredFirst: true,
+      starredFirstCategories: options.categories,
+    });
+  }
   localStorage.setItem(options.markerKey, '1');
   window.dispatchEvent(
     new CustomEvent(CCD_CATEGORIES_UPDATED_EVENT, {
