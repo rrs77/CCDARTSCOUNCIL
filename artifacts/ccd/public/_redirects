@@ -1,5 +1,6 @@
-# Cloudflare Pages SPA routing
-# This file handles client-side routing for single-page applications
-
-# Redirect all routes to index.html for SPA routing
+# Cloudflare Pages SPA fallback — do not catch static assets or the feature-demo player.
+# Vercel uses vercel.json rewrites instead; this file is for Cloudflare-compatible hosts.
+/api/*    /api/:splat   200
+/ccd-pitch/*    /ccd-pitch/:splat   200
+/feature-demo/*    /feature-demo/:splat   200
 /*    /index.html   200

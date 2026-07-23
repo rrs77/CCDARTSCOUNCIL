@@ -15,11 +15,17 @@
       "headers": [
         { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
       ]
+    },
+    {
+      "source": "/feature-demo/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "public, max-age=3600" }
+      ]
     }
   ],
   "rewrites": [
     {
-      "source": "/((?!api(?:/|$)|ccd-pitch(?:/|$)).*)",
+      "source": "/((?!api/|ccd-pitch/|feature-demo/).*)",
       "destination": "/index.html"
     }
   ]

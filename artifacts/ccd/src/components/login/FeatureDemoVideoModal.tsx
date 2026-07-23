@@ -89,6 +89,7 @@ function exitVideoFullscreen(video: VideoWithWebkitFullscreen): void {
 export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   const syncFullscreenState = useCallback(() => {
     setIsFullscreen(isVideoFullscreen(videoRef.current as VideoWithWebkitFullscreen | null));
@@ -133,11 +134,14 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
     const video = videoRef.current;
     if (!isOpen || !video) return;
 
+    setLoadError(false);
+
     // Older iOS Safari still looks for the webkit attribute.
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
 
     video.currentTime = 0;
+    // CTA that opened this modal is a user gesture — play should succeed without muted.
     const playPromise = video.play();
     if (playPromise && typeof playPromise.catch === 'function') {
       playPromise.catch(() => {
@@ -220,14 +224,30 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
               className="aspect-video w-full bg-black"
               controls
               playsInline
-              preload="metadata"
+              preload="auto"
               poster={posterSrc}
+              onError={() => setLoadError(true)}
+              onLoadedData={() => setLoadError(false)}
               // Do not set controlsList="nofullscreen" — native control bar fullscreen must stay available.
             >
               <source src={mp4Src} type="video/mp4" />
               <source src={webmSrc} type="video/webm" />
               Your browser does not support embedded video.
             </video>
+            {loadError && (
+              <div className="border-t border-white/10 bg-black/80 px-4 py-3 text-center text-sm text-white/85">
+                Video could not load.{' '}
+                <a
+                  href={fullPlayerHref}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-semibold text-[#B6FF7E] underline-offset-2 hover:underline"
+                >
+                  Open the feature-demo page
+                </a>{' '}
+                instead.
+              </div>
+            )}
           </div>
         </div>
 

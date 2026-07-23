@@ -21,8 +21,9 @@ export const WELCOME_PROTOTYPE_CONTACT_EMAIL = 'rob@rhythmstix.co.uk';
 
 export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen';
 
-/** Session-scoped key for the partners/funding start popup (same dismiss behaviour as welcome). */
-export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-video-seen';
+/** Session-scoped key for the partners/funding start popup (same dismiss behaviour as welcome).
+ * Bump suffix when the first-open / video flow changes so returning visitors see it again. */
+export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-video-seen-v2';
 
 /** Title for the first-open start popup. */
 export const PARTNERS_FUNDING_START_TITLE = 'Prototype notice';
