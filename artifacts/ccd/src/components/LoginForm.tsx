@@ -10,7 +10,6 @@ import {
   RefreshCw,
   ArrowRight,
   PlayCircle,
-  Shield,
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -423,11 +422,6 @@ export function LoginForm() {
                         Create one
                       </a>
                     </p>
-
-                    <div className="mt-5 flex items-center justify-center gap-1.5 text-xs text-gray-400">
-                      <Shield className="h-3.5 w-3.5" />
-                      <span>AES-256 encrypted &amp; secure</span>
-                    </div>
                   </>
                 )}
               </div>
