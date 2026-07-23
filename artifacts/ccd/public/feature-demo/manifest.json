@@ -1,6 +1,6 @@
 {
   "title": "CCDesigner — Feature demo for external organisations",
-  "generatedAt": "2026-07-23T19:06:00.000Z",
+  "generatedAt": "2026-07-23T19:18:09.502Z",
   "baseUrl": "http://127.0.0.1:5173",
   "canvas": {
     "width": 1920,
@@ -20,19 +20,101 @@
   "businessNote": "CCDesigner only takes a cut of 10–20% of paid resources.",
   "disclaimer": "Partners and logos are shown for demonstration only and do not imply endorsement.",
   "chapters": [
-    { "id": "01-logo", "title": "CCDesigner", "caption": "Brand intro" },
-    { "id": "02-disclaimer", "title": "Demonstration only", "caption": "For potential partners & funding — no endorsement implied" },
-    { "id": "03-landing", "title": "Exceptional lessons start with connection", "caption": "Live first page" },
-    { "id": "04-ideas", "title": "Keep every lightning moment", "caption": "Excellent ideas · melting pot for arts planning" },
-    { "id": "05-context", "title": "Arts organisations together", "caption": "One place for planning" },
-    { "id": "06-action", "title": "Let's see the app in action", "caption": "Explore the working prototype" },
-    { "id": "08-free", "title": "Free partner resources", "caption": "LSO · ROH → libraries → term" },
-    { "id": "09-key-dates", "title": "Populate with key dates", "caption": "Partner dropdown · KS1/KS2 · Important dates" },
-    { "id": "07-create", "title": "Build your own", "caption": "Create activity & lesson" },
-    { "id": "08-settings", "title": "Customisable to key stage", "caption": "Settings · year-group folders" },
-    { "id": "10-paid", "title": "Paid partners", "caption": "We Teach Drama & iCompose — 10–20% cut" },
-    { "id": "11-orgs", "title": "For organisations", "caption": "Own hub + admin backend templates" },
-    { "id": "12-close", "title": "Get in touch", "caption": "rob@rhythmstix.co.uk · www.ccdesigner.co.uk" }
+    {
+      "id": "01-logo",
+      "title": "CCDesigner",
+      "caption": "Brand intro"
+    },
+    {
+      "id": "02-pressure",
+      "title": "Performing arts under pressure",
+      "caption": "Schools & FE — expertise harder to reach"
+    },
+    {
+      "id": "03-response",
+      "title": "One place to plan and connect",
+      "caption": "Music hubs · arts organisations · ideas kept alive"
+    },
+    {
+      "id": "04-disclaimer",
+      "title": "Demonstration only",
+      "caption": "For potential partners & funding — no endorsement implied"
+    },
+    {
+      "id": "05-landing",
+      "title": "Exceptional lessons start with connection",
+      "caption": "Live first page"
+    },
+    {
+      "id": "06-ideas",
+      "title": "Keep every lightning moment",
+      "caption": "Excellent ideas · melting pot for arts planning"
+    },
+    {
+      "id": "07-action",
+      "title": "Let's see the app in action",
+      "caption": "Explore the working prototype"
+    },
+    {
+      "id": "08-explore",
+      "title": "Inside the prototype",
+      "caption": "Dashboard · Half-Term Designer"
+    },
+    {
+      "id": "09-lso",
+      "title": "LSO Partner Hub",
+      "caption": "Choose How to Build an Orchestra · Add to CCDesigner"
+    },
+    {
+      "id": "10-activities",
+      "title": "Activity Library",
+      "caption": "LSO topic activities in your library"
+    },
+    {
+      "id": "11-lesson",
+      "title": "Into a lesson",
+      "caption": "Same LSO topic added into a lesson"
+    },
+    {
+      "id": "12-term",
+      "title": "Term overview",
+      "caption": "Lesson placed on Half-Term Designer"
+    },
+    {
+      "id": "13-key-dates",
+      "title": "Populate with key dates",
+      "caption": "Partner dropdown · KS1/KS2 · Important dates"
+    },
+    {
+      "id": "14-settings",
+      "title": "Customisable to key stage",
+      "caption": "Settings · year-group folders"
+    },
+    {
+      "id": "15-create",
+      "title": "Build your own",
+      "caption": "Create activity & lesson · live links"
+    },
+    {
+      "id": "16-calendar",
+      "title": "Calendar week & timetable",
+      "caption": "Week view · add event · timetable"
+    },
+    {
+      "id": "17-paid",
+      "title": "Paid partners",
+      "caption": "We Teach Drama & iCompose — 10–20% cut"
+    },
+    {
+      "id": "18-orgs",
+      "title": "For organisations",
+      "caption": "Own hub + admin backend templates"
+    },
+    {
+      "id": "19-close",
+      "title": "Get in touch",
+      "caption": "rob@rhythmstix.co.uk · www.ccdesigner.co.uk"
+    }
   ],
   "video": {
     "webm": "ccdesigner-feature-demo.webm",
@@ -40,18 +122,24 @@
   },
   "frames": [
     "frames/01-logo.png",
-    "frames/02-disclaimer.png",
-    "frames/03-landing.png",
-    "frames/04-ideas.png",
-    "frames/05-context.png",
-    "frames/06-action.png",
-    "frames/08-free-slide.png",
-    "frames/09-key-dates-slide.png",
-    "frames/07-create-slide.png",
-    "frames/08-settings-slide.png",
-    "frames/10-paid-slide.png",
-    "frames/11-orgs.png",
-    "frames/12-close.png"
+    "frames/02-pressure.png",
+    "frames/03-response.png",
+    "frames/04-disclaimer.png",
+    "frames/05-landing.png",
+    "frames/06-ideas.png",
+    "frames/07-action.png",
+    "frames/08-explore.png",
+    "frames/09-lso.png",
+    "frames/10-activities.png",
+    "frames/11-lesson.png",
+    "frames/12-term.png",
+    "frames/13-key-dates.png",
+    "frames/14-settings.png",
+    "frames/15-create.png",
+    "frames/16-calendar.png",
+    "frames/17-paid.png",
+    "frames/18-orgs.png",
+    "frames/19-close.png"
   ],
-  "durationSeconds": 117
+  "durationSeconds": 356
 }

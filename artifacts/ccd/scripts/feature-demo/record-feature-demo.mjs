@@ -49,14 +49,17 @@ export const CHAPTERS = [
   { id: '06-ideas', title: 'Keep every lightning moment', caption: 'Excellent ideas · melting pot for arts planning' },
   { id: '07-action', title: "Let's see the app in action", caption: 'Explore the working prototype' },
   { id: '08-explore', title: 'Inside the prototype', caption: 'Dashboard · Half-Term Designer' },
-  { id: '09-free', title: 'Free partner resources', caption: 'LSO → libraries → term · ROH' },
-  { id: '10-key-dates', title: 'Populate with key dates', caption: 'Partner dropdown · KS1/KS2 · Important dates' },
-  { id: '11-settings', title: 'Customisable to key stage', caption: 'Settings · year-group folders' },
-  { id: '12-create', title: 'Build your own', caption: 'Create activity & lesson · live links' },
-  { id: '13-calendar', title: 'Calendar week & timetable', caption: 'Week view · add event · timetable' },
-  { id: '14-paid', title: 'Paid partners', caption: 'We Teach Drama & iCompose — 10–20% cut' },
-  { id: '15-orgs', title: 'For organisations', caption: 'Own hub + admin backend templates' },
-  { id: '16-close', title: 'Get in touch', caption: 'rob@rhythmstix.co.uk · www.ccdesigner.co.uk' },
+  { id: '09-lso', title: 'LSO Partner Hub', caption: 'Choose How to Build an Orchestra · Add to CCDesigner' },
+  { id: '10-activities', title: 'Activity Library', caption: 'LSO topic activities in your library' },
+  { id: '11-lesson', title: 'Into a lesson', caption: 'Same LSO topic added into a lesson' },
+  { id: '12-term', title: 'Term overview', caption: 'Lesson placed on Half-Term Designer' },
+  { id: '13-key-dates', title: 'Populate with key dates', caption: 'Partner dropdown · KS1/KS2 · Important dates' },
+  { id: '14-settings', title: 'Customisable to key stage', caption: 'Settings · year-group folders' },
+  { id: '15-create', title: 'Build your own', caption: 'Create activity & lesson · live links' },
+  { id: '16-calendar', title: 'Calendar week & timetable', caption: 'Week view · add event · timetable' },
+  { id: '17-paid', title: 'Paid partners', caption: 'We Teach Drama & iCompose — 10–20% cut' },
+  { id: '18-orgs', title: 'For organisations', caption: 'Own hub + admin backend templates' },
+  { id: '19-close', title: 'Get in touch', caption: 'rob@rhythmstix.co.uk · www.ccdesigner.co.uk' },
 ];
 
 const WELCOME_DISMISS = [
@@ -164,144 +167,284 @@ async function enterPrototypeFast(page) {
 
 async function openPartnerHub(page, nameRe, slug) {
   await clickTab(page, 'our-partners');
-  await hold(page, 1000);
+  await hold(page, 1600);
   await page.mouse.wheel(0, 420);
-  await hold(page, 700);
+  await hold(page, 1200);
   const btn = page.getByRole('button', { name: nameRe }).first();
-  if (await btn.isVisible({ timeout: 2000 }).catch(() => false)) {
+  if (await btn.isVisible({ timeout: 3000 }).catch(() => false)) {
     await smoothClick(page, btn);
   } else {
     await page.goto(`${BASE_URL}/${slug}`, { waitUntil: 'domcontentloaded' });
   }
   await page.waitForURL(new RegExp(`/${slug}`), { timeout: 15000 }).catch(() => {});
-  await hold(page, 2000);
+  await hold(page, 2800);
   await ensureCursor(page);
 }
 
-async function addFromHub(page) {
-  await page.mouse.wheel(0, 280);
-  await hold(page, 900);
-  const add = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
-  if (await add.isVisible({ timeout: 3500 }).catch(() => false)) {
-    await smoothClick(page, add);
-    await page.waitForURL((url) => !/\/(lso|roh|weteachdrama|icompose)/.test(url.pathname), {
-      timeout: 20000,
-    }).catch(() => {});
-    await page.waitForSelector('[data-tab]', { timeout: 30000 }).catch(() => {});
-    await ensureCursor(page);
-    await dismissIfVisible(page, WELCOME_DISMISS);
-    await hold(page, 1500);
-    return true;
-  }
-  return false;
-}
-
-/** After hub Add: Activity Library → Lesson Library → Half-Term → Calendar peek. */
-async function showHubContentThroughTermAndCalendar(page) {
+/** Scroll to featured HTBAO on LSO hub, dwell, then Add unit to CCDesigner. */
+async function chooseAndAddLsoTopic(page) {
   await setCaption(
     page,
-    'Partner content in your libraries',
-    'Activity sections → Lesson Library → Half-Term Designer → Calendar',
+    'How to Build an Orchestra',
+    'Featured LSO Discovery project — choose this topic, then add it',
   );
+  const featured = page.getByRole('heading', { name: /How to Build an Orchestra/i }).first();
+  await featured.waitFor({ state: 'visible', timeout: 12000 }).catch(() => {});
+  await featured.scrollIntoViewIfNeeded().catch(() => {});
+  await hold(page, 3200);
+
+  // Emphasise the featured block on camera
+  await page.evaluate(() => {
+    const h = [...document.querySelectorAll('h1,h2,h3')].find((el) =>
+      /How to Build an Orchestra/i.test(el.textContent || ''),
+    );
+    const block = h?.closest('section, article, div');
+    if (block) {
+      block.style.outline = '3px solid #B6FF7E';
+      block.style.outlineOffset = '6px';
+    }
+  }).catch(() => {});
+  await hold(page, 2800);
+  await snap(page, FRAMES_DIR, '09-lso-topic');
+
+  const add = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
+  await add.waitFor({ state: 'visible', timeout: 8000 });
+  await add.scrollIntoViewIfNeeded().catch(() => {});
+  await hold(page, 1600);
+  await setCaption(page, 'Add to CCDesigner', 'Seed the LSO unit into Year 6 libraries');
+  await smoothClick(page, add);
+  await page
+    .waitForURL((url) => !/\/lso/.test(url.pathname), { timeout: 25000 })
+    .catch(() => {});
+  await page.waitForSelector('[data-tab]', { timeout: 30000 }).catch(() => {});
+  await ensureCursor(page);
+  await dismissIfVisible(page, WELCOME_DISMISS);
   await dismissOverlays(page);
-  await selectYearGroup(page, /Year 6 Music|Year 5 Music|Year 4 Music|KS2/i).catch(() => {});
+  await hold(page, 2200);
+  return true;
+}
+
+/**
+ * Core arc on camera: Activity Library (LSO pack) → Lesson with those activities → Term.
+ * Long dwells — do not rush.
+ */
+async function showLsoActivitiesLessonAndTerm(page) {
+  await dismissOverlays(page);
+  await selectYearGroup(page, /Year 6 Music|Year 6|Year 5 Music/i).catch(() => {});
   await dismissOverlays(page);
 
-  // Activity Library sections populated
+  // ——— ACTIVITIES ———
+  await setCaption(
+    page,
+    'Activity Library',
+    'How to Build an Orchestra — LSO activities now in your library',
+  );
   await clickTab(page, 'activity-library');
   await dismissOverlays(page);
   await dismissIfVisible(page, WELCOME_DISMISS);
-  await hold(page, 1600);
-  await page.mouse.wheel(0, 320);
-  await hold(page, 1400);
-  await snap(page, FRAMES_DIR, '06-activity-from-hub');
+  await hold(page, 2200);
 
-  // Lesson Library populated
-  await setCaption(page, 'Lesson Library', 'Partner hub lessons ready to plan');
+  // Partner planning filter if present
+  const partnerPlan = page.locator('[data-partner-planning]').first();
+  if (await partnerPlan.isVisible({ timeout: 2000 }).catch(() => false)) {
+    const openPlan = page.getByRole('button', { name: /Select partner planning|Partner planning/i }).first();
+    if (await openPlan.isVisible({ timeout: 1200 }).catch(() => false)) {
+      await smoothClick(page, openPlan);
+      await hold(page, 1000);
+      const lsoOpt = page.getByRole('button', { name: /London Symphony Orchestra/i }).first();
+      if (await lsoOpt.isVisible({ timeout: 1500 }).catch(() => false)) {
+        await smoothClick(page, lsoOpt);
+        await hold(page, 1200);
+      }
+      const htbao = page.getByRole('button', { name: /How to Build an Orchestra/i }).first();
+      if (await htbao.isVisible({ timeout: 1500 }).catch(() => false)) {
+        await smoothClick(page, htbao);
+        await hold(page, 1600);
+      }
+    }
+  }
+
+  const listening = page.getByText(/How to Build an Orchestra — Listening/i).first();
+  if (await listening.isVisible({ timeout: 4000 }).catch(() => false)) {
+    await listening.scrollIntoViewIfNeeded().catch(() => {});
+    await page.evaluate(() => {
+      const el = [...document.querySelectorAll('h2,h3,h4')].find((n) =>
+        /How to Build an Orchestra — Listening/i.test(n.textContent || ''),
+      );
+      if (el) {
+        el.style.outline = '3px solid #B6FF7E';
+        el.style.outlineOffset = '4px';
+      }
+    }).catch(() => {});
+  }
+  await hold(page, 3200);
+  await page.mouse.wheel(0, 360);
+  await hold(page, 2400);
+  await page.mouse.wheel(0, 360);
+  await hold(page, 2200);
+  await snap(page, FRAMES_DIR, '10-activities');
+
+  // ——— LESSON (Builder: pick LSO activities into a lesson) ———
+  await setCaption(
+    page,
+    'Build a lesson from LSO activities',
+    'Same How to Build an Orchestra topic — select activities into a lesson',
+  );
+  await clickTab(page, 'lesson-builder');
+  await dismissOverlays(page);
+  await hold(page, 2200);
+
+  const lessonName = page.getByPlaceholder(/Lesson Name|Lesson Title/i).first();
+  if (await lessonName.isVisible({ timeout: 2500 }).catch(() => false)) {
+    await typeSlow(page, lessonName, 'LSO — How to Build an Orchestra', { delay: 36 });
+    await hold(page, 900);
+  }
+
+  // Expand partner planning / category so LSO activities show
+  const planBtn = page.getByRole('button', { name: /Select partner planning|Partner planning/i }).first();
+  if (await planBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await smoothClick(page, planBtn);
+    await hold(page, 900);
+    const lso = page.getByRole('button', { name: /London Symphony Orchestra/i }).first();
+    if (await lso.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await smoothClick(page, lso);
+      await hold(page, 1000);
+    }
+    const project = page.getByRole('button', { name: /How to Build an Orchestra|Select How to Build an Orchestra/i }).first();
+    if (await project.isVisible({ timeout: 1500 }).catch(() => false)) {
+      await smoothClick(page, project);
+      await hold(page, 1600);
+    }
+  }
+
+  // Tick several activity checkboxes
+  const checks = page.locator('input[type="checkbox"]');
+  const nCheck = Math.min(await checks.count(), 4);
+  for (let i = 0; i < nCheck; i++) {
+    if (await checks.nth(i).isVisible({ timeout: 400 }).catch(() => false)) {
+      await smoothClick(page, checks.nth(i));
+      await hold(page, 450);
+    }
+  }
+  if (nCheck === 0) {
+    const selectable = page.getByRole('checkbox');
+    const m = Math.min(await selectable.count(), 4);
+    for (let i = 0; i < m; i++) {
+      await smoothClick(page, selectable.nth(i));
+      await hold(page, 450);
+    }
+  }
+
+  const addSelected = page.getByRole('button', { name: /Add \d+ Selected/i }).first();
+  if (await addSelected.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await setCaption(page, 'Add selected activities', 'LSO activities drop into this lesson');
+    await smoothClick(page, addSelected);
+    await hold(page, 2200);
+  }
+
+  await page.mouse.wheel(0, 200);
+  await hold(page, 1600);
+  const saveLesson = page.getByRole('button', { name: /Save Lesson/i }).first();
+  if (await saveLesson.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await smoothClick(page, saveLesson);
+    await hold(page, 2000);
+  }
+  await snap(page, FRAMES_DIR, '11-lesson');
+
+  // Also show Lesson Library stack for the same unit (seeded lessons)
+  await setCaption(page, 'Lesson Library', 'How to Build an Orchestra unit — ready to assign');
   await clickTab(page, 'lesson-library');
   await dismissOverlays(page);
-  await dismissIfVisible(page, WELCOME_DISMISS);
-  await hold(page, 1600);
+  await hold(page, 2200);
+  const unitHeading = page.getByText(/How to Build an Orchestra/i).first();
+  if (await unitHeading.isVisible({ timeout: 3000 }).catch(() => false)) {
+    await unitHeading.scrollIntoViewIfNeeded().catch(() => {});
+    await hold(page, 2800);
+  }
   await page.mouse.wheel(0, 240);
-  await hold(page, 1200);
-  await snap(page, FRAMES_DIR, '06-lesson-from-hub');
+  await hold(page, 1800);
 
-  // Assign to term (Half-Term Designer)
-  await setCaption(page, 'Add to term', 'Assign a partner lesson into Half-Term Designer');
+  // Assign one LSO lesson to the term
+  await setCaption(page, 'Assign to term', 'Place an LSO lesson onto Half-Term Designer');
   const assignBtn = page
     .locator('button[title*="Assign to Half-Term"], button[title*="Reassign to Different Half-Term"]')
     .first();
-  if (await assignBtn.isVisible({ timeout: 2500 }).catch(() => false)) {
+  if (await assignBtn.isVisible({ timeout: 4000 }).catch(() => false)) {
     await smoothClick(page, assignBtn);
-    await hold(page, 900);
-    const termChoice = page
-      .locator('.fixed button')
-      .filter({ hasText: /Autumn 1/i })
-      .first();
-    if (await termChoice.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await hold(page, 1400);
+    const termChoice = page.locator('.fixed button').filter({ hasText: /Autumn 1/i }).first();
+    if (await termChoice.isVisible({ timeout: 2500 }).catch(() => false)) {
       await smoothClick(page, termChoice);
-      await hold(page, 600);
+      await hold(page, 900);
     }
-    const confirmAssign = page
-      .getByRole('button', { name: /Assign to Half-Term/i })
-      .last();
-    if (await confirmAssign.isVisible({ timeout: 2000 }).catch(() => false)) {
+    const confirmAssign = page.getByRole('button', { name: /Assign to Half-Term/i }).last();
+    if (await confirmAssign.isVisible({ timeout: 2500 }).catch(() => false)) {
       await smoothClick(page, confirmAssign);
+      await hold(page, 2000);
+    }
+  }
+
+  // ——— TERM OVERVIEW ———
+  await setCaption(
+    page,
+    'Half-Term Designer',
+    'Term overview — LSO lesson sitting on Autumn 1',
+  );
+  await clickTab(page, 'unit-viewer');
+  await dismissOverlays(page);
+  await hold(page, 2800);
+  await page.mouse.wheel(0, 160);
+  await hold(page, 2400);
+  // Highlight any LSO / HTBAO card on the board
+  await page.evaluate(() => {
+    const nodes = [...document.querySelectorAll('button, div, span, h3, h4')];
+    const hit = nodes.find((n) => /How to Build|Build an Orchestra|LSO|Building the Orchestra|Meet the Families/i.test(n.textContent || ''));
+    const card = hit?.closest('[class*="card"], [class*="Card"], button, div');
+    if (card) {
+      card.style.outline = '3px solid #B6FF7E';
+      card.style.outlineOffset = '4px';
+    }
+  }).catch(() => {});
+  await hold(page, 3600);
+  await snap(page, FRAMES_DIR, '12-term');
+  await dismissOverlays(page);
+}
+
+async function chapterLsoPathway(page) {
+  // Organisation list first
+  await setCaption(page, 'Arts organisations', 'Partner Hubs — start with free resources · LSO');
+  await clickTab(page, 'our-partners');
+  await hold(page, 2000);
+  await page.mouse.wheel(0, 380);
+  await hold(page, 1600);
+
+  const musicBtn = page.getByRole('button', { name: /Music hubs/i }).first();
+  if (await musicBtn.isVisible({ timeout: 1500 }).catch(() => false)) {
+    if ((await musicBtn.getAttribute('aria-expanded')) !== 'true') {
+      await smoothClick(page, musicBtn);
       await hold(page, 1400);
     }
   }
 
-  // Half-Term Designer shows the term
-  await setCaption(page, 'Half-Term Designer', 'Partner lesson sitting in the term plan');
-  await clickTab(page, 'unit-viewer');
-  await hold(page, 1800);
-  await page.mouse.wheel(0, 200);
-  await hold(page, 1200);
-  await snap(page, FRAMES_DIR, '06-term-from-hub');
-
-  // Brief calendar land (key dates chapter expands this)
-  await setCaption(page, 'Onto the calendar', 'Next — populate partner key dates');
-  await clickTab(page, 'calendar');
-  await hold(page, 1600);
-  await snap(page, FRAMES_DIR, '06-calendar-peek');
-}
-
-async function chapterFreeHubs(page) {
-  await setCaption(page, 'Free partner resources', 'Start with LSO — then into your libraries and term');
-  await clickTab(page, 'our-partners');
-  await hold(page, 1200);
-
-  const musicBtn = page.getByRole('button', { name: /Music hubs/i }).first();
-  if (await musicBtn.isVisible({ timeout: 1200 }).catch(() => false)) {
-    if ((await musicBtn.getAttribute('aria-expanded')) !== 'true') {
-      await smoothClick(page, musicBtn);
-      await hold(page, 1000);
-    }
-  }
-  await page.mouse.wheel(0, 380);
-  await hold(page, 900);
-
-  await setCaption(page, 'LSO Partner Hub', 'How to Build an Orchestra — free Discovery resources');
+  await setCaption(page, 'London Symphony Orchestra', 'Open the free LSO Partner Hub');
   await openPartnerHub(page, /London Symphony Orchestra/i, 'lso');
   await snap(page, FRAMES_DIR, '09-lso');
-  await addFromHub(page);
 
+  await chooseAndAddLsoTopic(page);
   await ensureInApp(page);
-  await showHubContentThroughTermAndCalendar(page);
+  await showLsoActivitiesLessonAndTerm(page);
 
+  // Brief ROH after the full LSO arc (do not steal the story)
   await setCaption(page, 'Royal Ballet and Opera', 'Another free hub — same Add pathway');
   await ensureInApp(page);
   await openPartnerHub(page, /Royal Ballet and Opera/i, 'roh');
   await snap(page, FRAMES_DIR, '09-roh');
-  await hold(page, 1800);
-  await addFromHub(page).catch(() => {});
-
+  await hold(page, 2800);
+  const rohAdd = page.getByRole('button', { name: /Add unit to CCDesigner|Add to CCDesigner/i }).first();
+  if (await rohAdd.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await hold(page, 1200);
+  }
   await ensureInApp(page);
-  await clickTab(page, 'our-partners');
-  await hold(page, 1000);
-  await page.mouse.wheel(0, 420);
-  await hold(page, 1200);
-  await snap(page, FRAMES_DIR, '09-free');
 }
 
 async function fillRichEditors(page, introText, activityText) {
@@ -437,7 +580,7 @@ async function createFullActivity(page) {
   }
 
   await hold(page, 800);
-  await snap(page, FRAMES_DIR, '05-activity');
+  await snap(page, FRAMES_DIR, '15-activity');
   const save = page.getByRole('button', { name: /^Create Activity$/i }).last();
   if (await save.isVisible({ timeout: 1200 }).catch(() => false)) {
     await smoothClick(page, save);
@@ -499,7 +642,7 @@ async function buildFullLesson(page) {
 
   await page.mouse.wheel(0, 240);
   await hold(page, 900);
-  await snap(page, FRAMES_DIR, '12-create');
+  await snap(page, FRAMES_DIR, '15-create');
 
   const saveLesson = page.getByRole('button', { name: /Save Lesson/i }).first();
   if (await saveLesson.isVisible({ timeout: 1200 }).catch(() => false)) {
@@ -525,7 +668,7 @@ async function showSettings(page) {
   }
   await page.mouse.wheel(0, 180);
   await hold(page, 1000);
-  await snap(page, FRAMES_DIR, '11-settings');
+  await snap(page, FRAMES_DIR, '14-settings');
   await page.keyboard.press('Escape');
   await dismissOverlays(page);
 }
@@ -608,7 +751,7 @@ async function chapterKeyDates(page) {
   if (await confirmPopup.isVisible({ timeout: 800 }).catch(() => false)) {
     await setCaption(page, 'Suggested selections', 'Confirm list → Important dates in the app');
     await hold(page, 2200);
-    await snap(page, FRAMES_DIR, '10-confirm-popup');
+    await snap(page, FRAMES_DIR, '13-confirm-popup');
     await hold(page, 800);
     const donePopup = page.locator('[data-ccd-important-dates-confirm-done]').first();
     if (await donePopup.isVisible({ timeout: 2000 }).catch(() => false)) {
@@ -636,7 +779,7 @@ async function chapterKeyDates(page) {
     await starred.scrollIntoViewIfNeeded().catch(() => {});
     await hold(page, 1600);
   }
-  await snap(page, FRAMES_DIR, '10-key-dates');
+  await snap(page, FRAMES_DIR, '13-key-dates');
   await dismissOverlays(page);
 }
 
@@ -686,7 +829,7 @@ async function chapterCalendarWeek(page) {
     await hold(page, 2000);
   }
 
-  await snap(page, FRAMES_DIR, '13-calendar');
+  await snap(page, FRAMES_DIR, '16-calendar');
   await dismissOverlays(page);
 }
 
@@ -708,7 +851,7 @@ async function chapterPaid(page) {
     await smoothClick(page, basket);
     await hold(page, 1400);
   }
-  await snap(page, FRAMES_DIR, '14-wtd');
+  await snap(page, FRAMES_DIR, '17-wtd');
 
   // iCompose
   await setCaption(page, 'iCompose', 'Paid courses available to purchase — 10–20% platform cut');
@@ -726,7 +869,7 @@ async function chapterPaid(page) {
   if (await addFree.isVisible({ timeout: 1500 }).catch(() => false)) {
     await hold(page, 800);
   }
-  await snap(page, FRAMES_DIR, '14-paid');
+  await snap(page, FRAMES_DIR, '17-paid');
   await hold(page, 1000);
 }
 
@@ -767,17 +910,17 @@ async function main() {
   }, { gateKey: GATE_KEY });
 
   console.log('01 logo');
-  await recordSlide(page, logoIntroHtml(), 3200, '01-logo');
+  await recordSlide(page, logoIntroHtml(), 3800, '01-logo');
 
   console.log('02 context pressure');
   await clearCaption(page);
-  await recordSlide(page, contextPressureSlideHtml(), 5200, '02-pressure');
+  await recordSlide(page, contextPressureSlideHtml(), 6000, '02-pressure');
 
   console.log('03 context response');
-  await recordSlide(page, contextResponseSlideHtml(), 5200, '03-response');
+  await recordSlide(page, contextResponseSlideHtml(), 6000, '03-response');
 
   console.log('04 disclaimer');
-  await recordSlide(page, partnerDisclaimerSlideHtml(), 7200, '04-disclaimer');
+  await recordSlide(page, partnerDisclaimerSlideHtml(), 8000, '04-disclaimer');
 
   console.log('05 live landing');
   await page.goto(BASE_URL, { waitUntil: 'networkidle' });
@@ -806,16 +949,16 @@ async function main() {
     'Demonstration only',
     'For potential partners and for funding — no endorsement implied',
   );
-  await hold(page, 5000);
+  await hold(page, 5500);
   await snap(page, FRAMES_DIR, '05-landing');
   await clearCaption(page);
 
   await page.getByText(/Exceptional lessons start with/i).first().waitFor({ timeout: 10000 }).catch(() => {});
   await page.getByText(/Exceptional lessons start with/i).first().scrollIntoViewIfNeeded().catch(() => {});
-  await hold(page, 3200);
+  await hold(page, 4000);
 
   console.log('06 ideas');
-  await recordSlide(page, ideasSlideHtml(), 6800, '06-ideas');
+  await recordSlide(page, ideasSlideHtml(), 7800, '06-ideas');
 
   console.log('07 action');
   await recordSlide(
@@ -825,7 +968,7 @@ async function main() {
       title: "Let's see the app in action",
       body: 'Free partner hubs first — then planning tools — then paid resources.',
     }),
-    3800,
+    4500,
     '07-action',
   );
 
@@ -833,28 +976,29 @@ async function main() {
   await enterPrototypeFast(page);
   await setCaption(page, 'Inside the prototype', 'Half-Term Designer — your planning home');
   await clickTab(page, 'unit-viewer');
-  await hold(page, 2200);
+  await hold(page, 3200);
   await page.mouse.wheel(0, 180);
-  await hold(page, 1400);
+  await hold(page, 2200);
   await snap(page, FRAMES_DIR, '08-explore');
   await clearCaption(page);
 
-  console.log('09 free hubs');
+  // 09–12 LSO arc: Organisation → Activities → Lesson → Term (full pace)
+  console.log('09–12 LSO org → activities → lesson → term');
   await recordSlide(
     page,
     slideHtml({
       eyebrow: 'Free resources',
-      title: "Let's go to the free partner hubs",
-      body: 'LSO and Royal Ballet and Opera — add free activities into CCDesigner.',
+      title: "Let's go to an arts organisation",
+      body: 'Start with LSO — choose a topic, add it, then watch it flow into activities, a lesson, and the term.',
       compactTitle: true,
     }),
-    4000,
-    '09-free-slide',
+    5200,
+    '09-lso-slide',
   );
   await ensureInApp(page);
-  await chapterFreeHubs(page);
+  await chapterLsoPathway(page);
 
-  console.log('10 key dates');
+  console.log('13 key dates');
   await recordSlide(
     page,
     slideHtml({
@@ -863,13 +1007,13 @@ async function main() {
       body: 'Pick a partner, tick KS1 and KS2 dates, confirm — they become Important dates.',
       compactTitle: true,
     }),
-    4000,
-    '10-key-dates-slide',
+    4800,
+    '13-key-dates-slide',
   );
   await ensureInApp(page);
   await chapterKeyDates(page);
 
-  console.log('11 settings');
+  console.log('14 settings');
   await recordSlide(
     page,
     slideHtml({
@@ -878,13 +1022,13 @@ async function main() {
       body: 'Manage year-group folders in Settings so the library matches your school.',
       compactTitle: true,
     }),
-    3800,
-    '11-settings-slide',
+    4200,
+    '14-settings-slide',
   );
   await ensureInApp(page);
   await showSettings(page);
 
-  console.log('12 create');
+  console.log('15 create');
   await recordSlide(
     page,
     slideHtml({
@@ -893,8 +1037,8 @@ async function main() {
       body: 'Populate every field — including live resource links — for EYFS to A-level.',
       compactTitle: true,
     }),
-    3800,
-    '12-create-slide',
+    4200,
+    '15-create-slide',
   );
   await ensureInApp(page);
   try {
@@ -905,7 +1049,7 @@ async function main() {
     await dismissOverlays(page);
   }
 
-  console.log('13 calendar week');
+  console.log('16 calendar week');
   await recordSlide(
     page,
     slideHtml({
@@ -914,13 +1058,13 @@ async function main() {
       body: 'See the school week, add events, and keep lessons on the timetable.',
       compactTitle: true,
     }),
-    3600,
-    '13-calendar-slide',
+    4200,
+    '16-calendar-slide',
   );
   await ensureInApp(page);
   await chapterCalendarWeek(page);
 
-  console.log('14 paid');
+  console.log('17 paid');
   await recordSlide(
     page,
     slideHtml({
@@ -929,12 +1073,12 @@ async function main() {
       body: 'We Teach Drama and iCompose. CCDesigner only takes a cut of 10–20% of paid resources.',
       compactTitle: true,
     }),
-    4500,
-    '14-paid-slide',
+    5200,
+    '17-paid-slide',
   );
   await chapterPaid(page);
 
-  console.log('15 org advert');
+  console.log('18 org advert');
   await recordSlide(
     page,
     slideHtml({
@@ -943,13 +1087,13 @@ async function main() {
       body: 'Each organisation gets a hub with an admin backend to create template pages and share free resources.',
       compactTitle: true,
     }),
-    4800,
-    '15-orgs',
+    5200,
+    '18-orgs',
   );
 
-  console.log('16 close');
+  console.log('19 close');
   await clearCaption(page);
-  await recordSlide(page, closingSlideHtml(), 5600, '16-close');
+  await recordSlide(page, closingSlideHtml(), 6400, '19-close');
 
   // Close context first so Playwright finalizes the webm on disk.
   let videoPath = null;

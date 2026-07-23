@@ -12,35 +12,34 @@ Shareable walkthrough of the **working CCDesigner prototype** — mostly live UI
 | `--text-body` | `#F2F7F4` | Body copy (high contrast) |
 | `--accent` | `#B6FF7E` | Eyebrows / underlines only |
 
-## Linear pathway (story order)
+## Linear pathway (full-length — do not shorten)
 
-1. **Logo** — CCD brand intro  
-2. **Context A** — Performing arts under pressure (schools & FE; expertise harder to reach)  
-3. **Context B** — One place to plan and connect (music hubs · arts organisations · ideas kept alive)  
-4. **Disclaimer** — partners for demonstration; for partners & funding  
-5. **Live login** — Exceptional lessons start with *connection* (short value line only; no lightning copy)  
-6. **Ideas slide** — Ever had an excellent idea… / lightning moments / melting pot  
-7. **Action slide** — Let's see the app in action  
-8. **Live explore** — enter prototype (no password) → Half-Term Designer  
-9. **Free hubs** — slide → LSO Add → libraries → term → brief ROH  
-10. **Key dates** — Populate with key dates → tick KS1/KS2 → Important dates  
-11. **Settings** — customisable key-stage / year-group folders  
-12. **Create** — activity + lesson with live links  
-13. **Calendar week** — week view · add event · timetable  
-14. **Paid** — We Teach Drama & iCompose; **10–20%** cut → live hubs / basket  
-15. **Organisations** — own hub + admin backend templates  
-16. **Closing** — contacts only (not “thank you”): rob@rhythmstix.co.uk · www.ccdesigner.co.uk  
+1. **Logo**  
+2. **Context A** — Performing arts under pressure (schools & FE)  
+3. **Context B** — One place to plan and connect  
+4. **Disclaimer**  
+5. **Live login** — connection hero only (no lightning on page)  
+6. **Ideas slide** — lightning / melting pot  
+7. **Action** — Let's see the app in action  
+8. **Explore** — Half-Term Designer home  
+9. **LSO hub** — click arts org → choose **How to Build an Orchestra** → **Add to CCDesigner**  
+10. **Activity Library** — same LSO topic activities visible  
+11. **Lesson** — those LSO activities added into a lesson (+ Lesson Library assign)  
+12. **Term overview** — lesson on Half-Term Designer  
+13. **Key dates**  
+14. **Settings**  
+15. **Create** (own activity/lesson)  
+16. **Calendar week**  
+17. **Paid** (WTD / iCompose · 10–20%)  
+18. **Organisations**  
+19. **Closing** — contacts (not thank you)  
 
-## Contact (clickable on the player page)
+## Contact
 
 - Email: [rob@rhythmstix.co.uk](mailto:rob@rhythmstix.co.uk?subject=CCDesigner%20Query)  
 - Web: [www.ccdesigner.co.uk](https://www.ccdesigner.co.uk)  
 
-**MP4 path:** `/Users/rfreich-storer/CCDesignerARTSCOUNCIL/artifacts/ccd/public/feature-demo/ccdesigner-feature-demo.mp4`
-
-## Disclaimer
-
-Partners and logos are shown **for demonstration only** and do not imply endorsement.
+**MP4:** `artifacts/ccd/public/feature-demo/ccdesigner-feature-demo.mp4`
 
 ## Re-record
 
