@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { sanitizeHtml } from '../utils/sanitize';
 import toast from 'react-hot-toast';
 import { 
@@ -303,14 +304,24 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-      <div className="bg-white rounded-card shadow-soft w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="create-activity-title"
+    >
+      {/* Full-viewport dim — portaled so it is not clipped by ActivityLibrary overflow-hidden */}
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+      <div
+        className="relative z-10 bg-white rounded-card shadow-soft w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(135deg, #0BA596 0%, #0BA596 100%)' }}>
           <div className="flex items-center space-x-3">
             <Tag className="h-6 w-6" />
-            <h2 className="text-xl font-bold">Create New Activity</h2>
+            <h2 id="create-activity-title" className="text-xl font-bold">Create New Activity</h2>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -787,8 +798,9 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
 
       {/* Objectives Browser Modal */}
       {showObjectivesBrowser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+        <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={() => setShowObjectivesBrowser(false)} />
+          <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
             <NestedStandardsBrowser
               isOpen={showObjectivesBrowser}
               onClose={() => setShowObjectivesBrowser(false)}
@@ -799,6 +811,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
           </div>
         </div>
       )}
-    </div>
+    </div>,
+    document.body
   );
 }

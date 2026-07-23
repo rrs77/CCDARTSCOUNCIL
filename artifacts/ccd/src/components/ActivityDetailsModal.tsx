@@ -46,8 +46,16 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
   ].filter(resource => resource.url && resource.url.trim());
 
   return createPortal(
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
-      <div className="bg-white rounded-card shadow-soft w-full max-w-2xl max-h-[90vh] overflow-hidden mx-4">
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+    >
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+      <div
+        className="relative z-10 bg-white rounded-card shadow-soft w-full max-w-2xl max-h-[90vh] overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
           <div className="flex items-center justify-between gap-3">

@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { Upload, FileText, CheckCircle, AlertCircle, X, Download, RefreshCw } from 'lucide-react';
 import * as XLSX from '@e965/xlsx';
 import { activitiesApi } from '../config/api';
@@ -375,15 +376,24 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
     }
   };
 
-  return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden">
+  return createPortal(
+    <div
+      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="import-activities-title"
+    >
+      <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
+      <div
+        className="relative z-10 bg-white rounded-2xl shadow-xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
           <div className="flex items-center space-x-3">
             <Upload className="h-6 w-6" />
             <div>
-              <h2 className="text-xl font-bold">Import/Export Activities</h2>
+              <h2 id="import-activities-title" className="text-xl font-bold">Import/Export Activities</h2>
               <p className="text-teal-100 text-sm">Upload an Excel file with your activity data or export existing activities</p>
             </div>
           </div>
@@ -557,6 +567,7 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
           </div>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }

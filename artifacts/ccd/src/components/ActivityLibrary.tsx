@@ -1,4 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { 
   Search, 
@@ -1528,10 +1529,20 @@ export function ActivityLibrary({
       )}
 
       {/* Delete Confirmation Modal */}
-      {showDeleteConfirm && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <h3 className="text-lg font-bold text-gray-900 mb-4">Delete Activity</h3>
+      {showDeleteConfirm && createPortal(
+        <div
+          className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="delete-activity-title"
+        >
+          <div
+            className="fixed inset-0 bg-black/50"
+            aria-hidden="true"
+            onClick={() => setShowDeleteConfirm(null)}
+          />
+          <div className="relative z-10 bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 id="delete-activity-title" className="text-lg font-bold text-gray-900 mb-4">Delete Activity</h3>
             <p className="text-gray-700 mb-6">
               Are you sure you want to delete this activity? This action cannot be undone.
             </p>
@@ -1551,7 +1562,8 @@ export function ActivityLibrary({
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* Activity Details Modal - Simple view for clicking activities */}

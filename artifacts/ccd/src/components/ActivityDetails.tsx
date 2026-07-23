@@ -420,14 +420,15 @@ export function ActivityDetails({
   return createPortal(
     <>
       <div 
-        className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]"
+        className="fixed inset-0 z-[60] flex items-center justify-center p-4"
         onClick={(e) => e.stopPropagation()}
         onMouseDown={(e) => e.stopPropagation()}
         onMouseUp={(e) => e.stopPropagation()}
       >
+        <div className="fixed inset-0 bg-black/50" aria-hidden="true" />
         <div 
           ref={containerRef}
-          className={`bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col modal-content modal-responsive ${
+          className={`relative z-10 bg-white rounded-2xl shadow-xl max-w-2xl w-full max-h-[90vh] flex flex-col modal-content modal-responsive ${
             isFullscreen ? 'fixed inset-0 rounded-none max-w-none max-h-none' : ''
           }`}
           onClick={(e) => e.stopPropagation()}
