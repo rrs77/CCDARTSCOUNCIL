@@ -25,7 +25,7 @@
   ],
   "rewrites": [
     {
-      "source": "/((?!api/|ccd-pitch/|feature-demo/).*)",
+      "source": "/(.*)",
       "destination": "/index.html"
     }
   ]
