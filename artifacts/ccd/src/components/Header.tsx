@@ -25,16 +25,6 @@ export function Header() {
     ? customYearGroups.filter(g => allowedIds.includes(g.id) || allowedIds.includes(g.name ?? ''))
     : customYearGroups;
 
-  // If user has restricted list and current sheet is not in it, switch to first allowed
-  useEffect(() => {
-    if (yearGroupsForSelector.length === 0) return;
-    const currentInList = yearGroupsForSelector.some(g => g.id === currentSheetInfo.sheet || g.name === currentSheetInfo.display);
-    if (!currentInList) {
-      const first = yearGroupsForSelector[0];
-      setCurrentSheetInfo({ sheet: first.id, display: first.name, eyfs: `${first.id} Statements` });
-    }
-  }, [yearGroupsForSelector, currentSheetInfo.sheet, currentSheetInfo.display, setCurrentSheetInfo]);
-
   const { canInstall, isInstalled, install } = usePWAInstall();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -84,8 +74,8 @@ export function Header() {
     return map;
   }, [yearGroupsForSelector]);
 
-  // Headings only for sections the user assigned classes to in Settings.
-  // Never show an auto "Other" bucket — uncategorized classes stay selectable as a flat list.
+  // Header lists only key-stage folders from Settings (EYFS, KS1…) with nested
+  // classes. Skip "Other" and never surface unassigned year groups as a flat list.
   const isOtherSection = (section: { id: string; label?: string }) =>
     section.id === 'other' || normalizeToken(section.label) === 'other';
 
@@ -103,15 +93,33 @@ export function Header() {
       }));
   }, [yearGroupSections, selectorTokenMap]);
 
-  const uncategorizedGroups = React.useMemo(() => {
-    const assignedIds = new Set<string>();
+  // Flat list of classes assigned to a key-stage folder (order follows section order).
+  const selectableYearGroups = React.useMemo(() => {
+    const groups: { id: string; name: string; color?: string }[] = [];
+    const seen = new Set<string>();
     displaySections.forEach((section) => {
-      section.groups.forEach((g) => assignedIds.add(g.id));
+      section.groups.forEach((g) => {
+        if (seen.has(g.id)) return;
+        seen.add(g.id);
+        groups.push(g);
+      });
     });
-    return yearGroupsForSelector.filter((g) => !assignedIds.has(g.id));
-  }, [displaySections, yearGroupsForSelector]);
+    return groups;
+  }, [displaySections]);
 
-  const hasSelectorItems = displaySections.length > 0 || uncategorizedGroups.length > 0;
+  const hasSelectorItems = displaySections.length > 0;
+
+  // If current class is not under a key stage (or not allowed), switch to the first assigned one.
+  useEffect(() => {
+    if (selectableYearGroups.length === 0) return;
+    const currentInList = selectableYearGroups.some(
+      (g) => g.id === currentSheetInfo.sheet || g.name === currentSheetInfo.display,
+    );
+    if (!currentInList) {
+      const first = selectableYearGroups[0];
+      setCurrentSheetInfo({ sheet: first.id, display: first.name, eyfs: `${first.id} Statements` });
+    }
+  }, [selectableYearGroups, currentSheetInfo.sheet, currentSheetInfo.display, setCurrentSheetInfo]);
 
   const currentSection = React.useMemo(() => {
     return (
@@ -281,26 +289,11 @@ export function Header() {
                         </div>
                       );
                     })}
-                    {uncategorizedGroups.length > 0 && (
-                      <div className={displaySections.length > 0 ? 'border-t border-gray-100 pt-1' : ''}>
-                        {uncategorizedGroups.map((group) => (
-                          <button
-                            key={group.id}
-                            type="button"
-                            onClick={() => selectYearGroup(group)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-teal-50 ${currentSheetInfo.sheet === group.id ? 'bg-teal-50 text-teal-800 font-medium' : 'text-gray-700'}`}
-                          >
-                            {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
-                            <span className={currentSheetInfo.sheet === group.id ? 'font-medium' : ''}>{group.name}</span>
-                          </button>
-                        ))}
-                      </div>
-                    )}
                   </div>
                 )}
                 {yearGroupDropdownOpen && !hasSelectorItems && (
                   <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 text-sm text-gray-500">
-                    No year groups. Add and assign key stages in Settings → Year Groups.
+                    No year groups. Drag classes into key stages in Settings → Year Groups.
                   </div>
                 )}
               </div>
@@ -431,19 +424,8 @@ export function Header() {
                         </div>
                       );
                     })}
-                    {uncategorizedGroups.map((group) => (
-                      <button
-                        key={group.id}
-                        type="button"
-                        onClick={() => { selectYearGroup(group); setMobileMenuOpen(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm bg-white border-b border-gray-100 last:border-b-0 ${currentSheetInfo.sheet === group.id ? 'bg-teal-100 text-teal-800 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
-                      >
-                        {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
-                        {group.name}
-                      </button>
-                    ))}
                     {!hasSelectorItems && (
-                      <p className="px-3 py-2 text-sm text-gray-500">No year groups. Add key stages in Settings.</p>
+                      <p className="px-3 py-2 text-sm text-gray-500">No year groups. Drag classes into key stages in Settings.</p>
                     )}
                   </div>
                 </div>
