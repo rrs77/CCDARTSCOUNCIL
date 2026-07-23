@@ -215,6 +215,7 @@ export function LoginForm() {
         backgroundSize: '180px 180px',
       }}
     >
+      {/* Hidden in film mode via html.ccd-feature-demo CSS (see index.css). */}
       <PrototypeNoticeBar />
       <DemonstrationDisclaimerBand />
       {/* Outer surround only: fluid padding scales with viewport; stage design unchanged */}

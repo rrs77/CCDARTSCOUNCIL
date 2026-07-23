@@ -4,6 +4,10 @@ import App from './App';
 import './index.css';
 import { isDemoModeActive } from './utils/demoMode';
 import { seedDemoData } from './utils/demoSeed';
+import { applyFeatureDemoFilmClass } from './utils/featureDemoFilm';
+
+// Feature-demo film mode (?ccd-feature-demo=1) — hide notice/disclaimer chrome.
+applyFeatureDemoFilmClass();
 
 // In development, unregister any service workers that may have been installed
 // from a previous Vercel/PWA deploy so HMR is not intercepted by stale caches.

@@ -84,10 +84,10 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
   {
     id: 'tri-borough-music-hub',
     name: 'Tri-Borough Music Hub',
+    /** White wordmark + colour mark on transparent — matches LSO/NT strip on dark hero */
     src: '/partners/tri-borough-music-hub-trans.png',
     href: 'https://www.triboroughmusichub.org/',
     heightClass: 'h-6 sm:h-7',
-    onPlate: true,
   },
   {
     id: 'icompose',

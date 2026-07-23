@@ -129,7 +129,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'Tri-Borough Music Hub',
     shortName: 'TBMH',
     siteUrl: 'https://www.triboroughmusichub.org/',
-    logoSrc: '/partners/tri-borough-music-hub-trans.png',
+    /** Dark wordmark + colour mark — readable on the white plate */
+    logoSrc: '/partners/tri-borough-music-hub.png',
     interactive: false,
     tagline: 'Music education across three London boroughs',
     description: [
@@ -138,7 +139,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#1a1a1a',
     accentColor: '#F5E827',
-    /** Full-colour site logo on light plate */
+    /** Full-colour site logo (dark text) on light plate */
     logoOnPlate: true,
     logoPanelColor: '#FFFFFF',
   },

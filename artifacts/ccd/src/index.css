@@ -797,3 +797,13 @@ button[data-state="active"] {
     padding-top: 0.5rem;
   }
 }
+
+/*
+ * Feature-demo film mode (?ccd-feature-demo=1 → html.ccd-feature-demo / data-ccd-record).
+ * Hides the prototype notice bar + demonstration disclaimer stack so the
+ * login/app hero is clean on camera. Disclaimer still covered by a title slide.
+ */
+html.ccd-feature-demo [data-ccd-prototype-chrome],
+html[data-ccd-record] [data-ccd-prototype-chrome] {
+  display: none !important;
+}
