@@ -2,8 +2,10 @@ import { LogoSVG } from '../Logo';
 import { PartnerLogoStrip } from './PartnerLogoStrip';
 
 const HERO_IMAGE = '/login/hero-arts.jpg?v=ages-3';
-const HERO_SUPPORTING =
-  'Capture ideas. Build lessons. Connect with the best arts organisations. Share or sell your resources. Create inspiring learning experiences — EYFS to A-level.';
+const HERO_VALUE =
+  'Capture ideas. Build lessons. Connect with the best arts organisations — EYFS to A-level.';
+const HERO_LIGHTNING =
+  'Ever lost an excellent idea? Keep every lightning moment in one place — a melting pot of ideas for arts planning.';
 
 interface LoginHeroPanelProps {
   logoLetters?: string;
@@ -19,7 +21,7 @@ export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
       <img
         src={HERO_IMAGE}
         alt="EYFS percussion, KS3 drama, and a teenage dancer"
-        className="absolute inset-0 h-full w-full object-cover object-center"
+        className="ccd-login-hero-image absolute inset-0 h-full w-full object-cover object-center"
         decoding="async"
       />
       {/* Soft teal overlay for text readability — stronger left / bottom, image stays vivid */}
@@ -35,12 +37,12 @@ export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
       />
 
       <div className="relative z-10 flex h-full min-h-[300px] flex-col justify-between gap-8 px-5 py-6 sm:min-h-[340px] sm:px-8 sm:py-8 lg:min-h-full lg:max-w-[58%] lg:px-12 lg:py-12 xl:px-14">
-        <LogoSVG size="lg" showText={false} letters={logoLetters} className="!space-x-0" />
+        <LogoSVG size="lg" showText={false} letters={logoLetters} className="!space-x-0 ccd-login-hero-fade" />
 
         <div className="flex flex-col gap-6 lg:gap-8">
           <div className="max-w-xl">
             <h1
-              className="text-[1.65rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2rem] lg:text-[2.45rem] xl:text-[2.7rem]"
+              className="ccd-login-hero-fade ccd-login-hero-fade-delay-1 text-[1.65rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2rem] lg:text-[2.45rem] xl:text-[2.7rem]"
               style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
             >
               Exceptional lessons start with{' '}
@@ -52,12 +54,15 @@ export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
               </span>
             </h1>
 
-            <p className="mt-3 text-sm leading-relaxed text-white/90 sm:text-base lg:text-lg lg:max-w-md">
-              {HERO_SUPPORTING}
-            </p>
+            <div className="ccd-login-hero-fade ccd-login-hero-fade-delay-2 mt-3 space-y-2.5 text-sm leading-relaxed text-white/90 sm:text-base lg:max-w-md lg:text-lg">
+              <p>{HERO_VALUE}</p>
+              <p className="text-white/85">{HERO_LIGHTNING}</p>
+            </div>
           </div>
 
-          <PartnerLogoStrip />
+          <div className="ccd-login-hero-fade ccd-login-hero-fade-delay-3">
+            <PartnerLogoStrip />
+          </div>
         </div>
       </div>
     </div>

@@ -291,6 +291,52 @@ textarea:focus-visible {
   background-clip: content-box;
 }
 
+/* ---------------------------------------------------------------------------
+ * Login hero — Ken Burns image drift + staggered copy fade-in
+ * Soft, continuous zoom on the arts photo; text enters once on load.
+ * ------------------------------------------------------------------------ */
+@keyframes ccd-login-ken-burns {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.07) translate3d(-1.2%, -0.8%, 0);
+  }
+}
+
+.ccd-login-hero-image {
+  animation: ccd-login-ken-burns 32s var(--ccd-ease-in-out) infinite alternate;
+  will-change: transform;
+  transform-origin: 45% 40%;
+}
+
+@keyframes ccd-login-hero-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ccd-login-hero-fade {
+  animation: ccd-login-hero-fade 0.85s var(--ccd-ease-out) both;
+}
+
+.ccd-login-hero-fade-delay-1 {
+  animation-delay: 0.12s;
+}
+
+.ccd-login-hero-fade-delay-2 {
+  animation-delay: 0.28s;
+}
+
+.ccd-login-hero-fade-delay-3 {
+  animation-delay: 0.44s;
+}
+
 /* Respect users who prefer reduced motion — disables all the entrance,
  * shimmer, drop-flash, scale-in animations app-wide. Iframes/modals still
  * function, just no movement. */
@@ -306,6 +352,12 @@ textarea:focus-visible {
 
   .ccd-card-lift:hover {
     transform: none;
+  }
+
+  .ccd-login-hero-image {
+    animation: none;
+    transform: none;
+    will-change: auto;
   }
 }
 
