@@ -16,15 +16,63 @@ export const GATE_KEY = 'ccd-prototype-gate';
 export const DEMO_MODE_KEY = 'ccd-demo-mode';
 export const HERO_IMAGE_URL = 'http://127.0.0.1:5173/login/hero-arts.jpg?v=ages-3';
 
+/** Brand lime — matches Logo.tsx LOGO_RING / attachment ring */
+export const BRAND_LIME = '#B6FF7E';
+export const BRAND_FOREST = '#002D24';
+
 /** Global pacing — energetic holds are authored short; keep multiplier near 1. */
 export const DEMO_PACE = 1;
 
+/** Intro / title slides — long enough for Ken Burns (3.2s) to finish. */
+export const INTRO_SLIDE_MS = 3100;
+
 export const PALETTE = {
   bgDeep: '#05231e',
-  bgForest: '#002D24',
+  bgForest: BRAND_FOREST,
   text: '#FFFFFF',
-  accent: '#B6FF7E',
+  accent: BRAND_LIME,
 };
+
+/**
+ * Shared CCD lockup: circular mark + CCDesigner wordmark under it.
+ * Matches LogoMark (white CCD, dark fill, lime ring #B6FF7E).
+ */
+export function brandLockupCss({ top = 40, left = 48, mark = 88, word = 22 } = {}) {
+  return `
+    .brand-lockup {
+      position: absolute; top: ${top}px; left: ${left}px; z-index: 4;
+      display: flex; flex-direction: column; align-items: center; gap: 10px;
+      width: ${Math.max(mark, 140)}px;
+      opacity: 0; animation: brandLockupIn 0.7s ease 0.1s forwards;
+      pointer-events: none;
+    }
+    .brand-lockup .brand-mark {
+      width: ${mark}px; height: ${mark}px; border-radius: 50%;
+      background: radial-gradient(circle at 50% 42%, #1a4038 0%, ${BRAND_FOREST} 55%, #001812 100%);
+      border: 3px solid ${BRAND_LIME};
+      box-shadow: 0 0 28px rgba(182,255,126,0.22);
+      display: grid; place-items: center;
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      font-size: ${Math.round(mark * 0.32)}px; font-weight: 800; color: #FFFFFF;
+      letter-spacing: -0.04em;
+    }
+    .brand-lockup .brand-word {
+      font-family: "Source Sans 3", system-ui, sans-serif;
+      font-size: ${word}px; font-weight: 700; color: #FFFFFF;
+      letter-spacing: -0.02em; line-height: 1; white-space: nowrap;
+      text-shadow: 0 2px 12px rgba(0,0,0,0.45);
+    }
+    .brand-lockup .brand-word span { color: ${BRAND_LIME}; }
+    @keyframes brandLockupIn { to { opacity: 1; } }
+  `;
+}
+
+export function brandLockupHtml() {
+  return `<div class="brand-lockup" aria-label="CCDesigner">
+  <div class="brand-mark">CCD</div>
+  <div class="brand-word">CC<span>Designer</span></div>
+</div>`;
+}
 
 export function hold(page, ms) {
   return page.waitForTimeout(Math.max(30, Math.round(ms * DEMO_PACE)));
@@ -170,9 +218,9 @@ function slideShellCss() {
   return `
     :root {
       --bg-deep: #05231e;
-      --bg-forest: #002D24;
+      --bg-forest: ${BRAND_FOREST};
       --text: #FFFFFF;
-      --accent: #B6FF7E;
+      --accent: ${BRAND_LIME};
     }
     * { box-sizing: border-box; margin: 0; padding: 0; }
     html, body {
@@ -182,31 +230,20 @@ function slideShellCss() {
     }
     .frame {
       width: 1920px; height: 1080px; position: relative; overflow: hidden;
-      /* Top padding clears absolute corner logo (48 + 88) so headlines stay legible. */
-      padding: 160px 140px 110px;
+      /* Clears absolute CCD lockup (mark + wordmark under circle). */
+      padding: 190px 140px 110px;
       display: flex; flex-direction: column; justify-content: center;
     }
     .kb {
       position: absolute; inset: -10%;
       background:
         radial-gradient(ellipse 1200px 700px at 42% 28%, rgba(182,255,126,0.16), transparent 62%),
-        linear-gradient(160deg, #05231e 0%, #002D24 52%, #05231e 100%);
+        linear-gradient(160deg, #05231e 0%, ${BRAND_FOREST} 52%, #05231e 100%);
       animation: kenBurns 3.2s ease-in-out forwards;
       z-index: 0;
     }
-    /* Exclude .mark so corner logo stays absolute top-left (not in text flow). */
-    .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
-    .frame > .mark {
-      position: absolute; top: 48px; left: 56px; z-index: 3;
-      width: 88px; height: 88px; border-radius: 999px;
-      border: 3px solid var(--accent); background: var(--bg-forest);
-      display: grid; place-items: center;
-      font-size: 28px; font-weight: 800; color: #FFFFFF;
-      font-family: "Source Sans 3", system-ui, sans-serif;
-      letter-spacing: -0.02em;
-      opacity: 0; animation: fadeIn 0.7s ease 0.12s forwards;
-      pointer-events: none;
-    }
+    .frame > *:not(.kb):not(.brand-lockup) { position: relative; z-index: 1; }
+    ${brandLockupCss()}
     .eyebrow {
       font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase;
       color: var(--accent); font-weight: 700; margin-bottom: 28px;
@@ -259,7 +296,7 @@ export function slideHtml({ eyebrow, title, body, pill, compactTitle = false }) 
 <body>
   <div class="frame">
     <div class="kb" aria-hidden="true"></div>
-    <div class="mark">CCD</div>
+    ${brandLockupHtml()}
     ${eyebrow ? `<div class="eyebrow">${eyebrow}</div>` : ''}
     <h1 class="${compactTitle ? 'compact' : ''}">${title}</h1>
     ${body ? `<p class="body">${body}</p>` : ''}
@@ -291,7 +328,7 @@ export function partnerDisclaimerSlideHtml() {
 <body>
   <div class="frame">
     <div class="kb" aria-hidden="true"></div>
-    <div class="mark">CCD</div>
+    ${brandLockupHtml()}
     <div class="eyebrow">For potential partners &amp; funding</div>
     <h1 class="compact">Demonstration only</h1>
     <p class="body">${PARTNER_DISCLAIMER_TEXT}</p>
@@ -300,76 +337,11 @@ export function partnerDisclaimerSlideHtml() {
 </body></html>`;
 }
 
-export function logoIntroHtml() {
-  const fonts =
-    'https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Source+Sans+3:wght@600;700&display=swap';
-  return `<!doctype html>
-<html lang="en"><head><meta charset="utf-8" />
-<link href="${fonts}" rel="stylesheet" />
-<style>
-  * { box-sizing: border-box; margin: 0; }
-  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #05231e; }
-  .stage { width: 1920px; height: 1080px; position: relative; overflow: hidden; display: grid; place-items: center; text-align: center; }
-  .kb {
-    position: absolute; inset: -12%;
-    background:
-      radial-gradient(ellipse 1300px 760px at 50% 40%, rgba(182,255,126,0.18), transparent 64%),
-      linear-gradient(165deg, #05231e 0%, #002D24 55%, #05231e 100%);
-    animation: kenBurns 3.2s ease-in-out forwards;
-  }
-  .content { position: relative; z-index: 1; }
-  .logo-wrap {
-    position: relative; width: 260px; height: 260px; margin: 0 auto 48px;
-    opacity: 0; transform: scale(0.76);
-    animation: logoIn 1.35s cubic-bezier(.2,.85,.2,1) 0.2s forwards;
-  }
-  .ring { position: absolute; inset: 0; border-radius: 50%; border: 3px solid rgba(182,255,126,0.45); animation: pulse 2.4s ease-in-out 1.25s infinite; }
-  .ring.r2 { inset: -22px; border-color: rgba(182,255,126,0.22); animation-delay: 1.45s; }
-  .mark {
-    position: absolute; inset: 16px; border-radius: 50%;
-    background: radial-gradient(circle at 50% 42%, #1a4038 0%, #002D24 55%, #05231e 100%);
-    border: 3px solid #B6FF7E; display: grid; place-items: center;
-    box-shadow: 0 0 60px rgba(182,255,126,0.28);
-    font-weight: 800; font-size: 72px; letter-spacing: -0.04em; color: #FFFFFF;
-    font-family: "Source Sans 3", system-ui, sans-serif;
-  }
-  .brand { opacity: 0; transform: translateY(18px); animation: fadeUp 0.95s ease 1.05s forwards; }
-  .brand h1 {
-    font-family: "Playfair Display", Georgia, serif;
-    font-size: 108px; font-weight: 700; color: #FFFFFF;
-  }
-  .brand h1 span { color: #B6FF7E; }
-  .brand p { margin-top: 22px; font-size: 36px; color: #FFFFFF; font-weight: 600; font-family: "Source Sans 3", system-ui, sans-serif; }
-  .line {
-    width: 0; height: 5px; margin: 34px auto 0;
-    background: linear-gradient(90deg, transparent, #B6FF7E, transparent);
-    animation: lineGrow 0.9s ease 1.5s forwards;
-  }
-  @keyframes logoIn { to { opacity: 1; transform: scale(1); } }
-  @keyframes fadeUp { to { opacity: 1; transform: translateY(0); } }
-  @keyframes lineGrow { to { width: 260px; } }
-  @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.05);opacity:.55} }
-  @keyframes kenBurns { from{transform:scale(1)} to{transform:scale(1.1) translate(1%, -.6%)} }
-</style></head>
-<body>
-  <div class="stage">
-    <div class="kb" aria-hidden="true"></div>
-    <div class="content">
-      <div class="logo-wrap">
-        <div class="ring r2"></div><div class="ring"></div>
-        <div class="mark">CCD</div>
-      </div>
-      <div class="brand">
-        <h1>CC<span>Designer</span></h1>
-        <p>Creative curriculum studio for schools &amp; arts partners</p>
-        <div class="line"></div>
-      </div>
-    </div>
-  </div>
-</body></html>`;
-}
-
-export function heroConnectionHtml(heroImageUrl = HERO_IMAGE_URL) {
+/**
+ * Opening slide — hero arts photo + connection copy + CCD lockup.
+ * Replaces the old centred tagline (erroneous "desuik" / wrong subtitle).
+ */
+export function logoIntroHtml(heroImageUrl = HERO_IMAGE_URL) {
   const fonts =
     'https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0;700;1;500&family=Source+Sans+3:wght@600;700&display=swap';
   return `<!doctype html>
@@ -377,63 +349,65 @@ export function heroConnectionHtml(heroImageUrl = HERO_IMAGE_URL) {
 <link href="${fonts}" rel="stylesheet" />
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #002D24; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: ${BRAND_FOREST}; }
   .stage { width: 1920px; height: 1080px; position: relative; overflow: hidden; }
   .photo {
     position: absolute; inset: -8%;
-    background: #002D24 url("${heroImageUrl}") center center / cover no-repeat;
+    background: ${BRAND_FOREST} url("${heroImageUrl}") center center / cover no-repeat;
     animation: kenBurns 3.2s ease-in-out forwards;
   }
   .veil {
     position: absolute; inset: 0;
     background:
-      linear-gradient(90deg, rgba(0,45,36,0.86) 0%, rgba(0,45,36,0.58) 50%, rgba(0,45,36,0.78) 100%),
-      linear-gradient(180deg, rgba(0,45,36,0.28) 0%, rgba(0,45,36,0.45) 45%, rgba(0,45,36,0.92) 100%);
+      linear-gradient(90deg, rgba(0,45,36,0.88) 0%, rgba(0,45,36,0.55) 48%, rgba(0,45,36,0.72) 100%),
+      linear-gradient(180deg, rgba(0,45,36,0.22) 0%, rgba(0,45,36,0.42) 45%, rgba(0,45,36,0.92) 100%);
   }
-  .stage > .mark {
-    position: absolute; top: 48px; left: 56px; z-index: 3;
-    width: 88px; height: 88px; border-radius: 999px;
-    border: 3px solid #B6FF7E; background: #002D24;
-    display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #fff;
-    font-family: "Source Sans 3", system-ui, sans-serif; letter-spacing: -0.02em;
-    opacity: 0; animation: fadeIn 0.7s ease 0.15s forwards;
-    pointer-events: none;
-  }
+  ${brandLockupCss({ top: 44, left: 52, mark: 96, word: 24 })}
   .copy {
     position: relative; z-index: 1; height: 100%;
-    padding: 120px 140px; display: flex; flex-direction: column; justify-content: center;
-    max-width: 1280px;
+    padding: 160px 140px 120px; display: flex; flex-direction: column; justify-content: center;
+    max-width: 1320px;
   }
   h1 {
     font-family: "Playfair Display", Georgia, serif;
-    font-size: 92px; line-height: 1.06; font-weight: 700; color: #FFFFFF;
+    font-size: 88px; line-height: 1.06; font-weight: 700; color: #FFFFFF;
     text-shadow: 0 4px 32px rgba(0,0,0,0.5);
     opacity: 0; transform: translateY(18px);
-    animation: rise 0.95s cubic-bezier(.2,.8,.2,1) 0.3s forwards;
+    animation: rise 0.95s cubic-bezier(.2,.8,.2,1) 0.35s forwards;
   }
-  h1 em { font-style: italic; font-weight: 500; color: #B6FF7E; }
+  h1 em { font-style: italic; font-weight: 500; color: ${BRAND_LIME}; }
   p {
-    margin-top: 40px; font-family: "Source Sans 3", system-ui, sans-serif;
-    font-size: 38px; line-height: 1.35; font-weight: 600; color: #FFFFFF;
-    max-width: 1100px; text-shadow: 0 2px 20px rgba(0,0,0,0.45);
+    margin-top: 36px; font-family: "Source Sans 3", system-ui, sans-serif;
+    font-size: 36px; line-height: 1.35; font-weight: 600; color: #FFFFFF;
+    max-width: 1080px; text-shadow: 0 2px 20px rgba(0,0,0,0.45);
     opacity: 0; transform: translateY(14px);
-    animation: rise 0.95s cubic-bezier(.2,.8,.2,1) 0.5s forwards;
+    animation: rise 0.95s cubic-bezier(.2,.8,.2,1) 0.55s forwards;
+  }
+  .line {
+    width: 0; height: 4px; margin-top: 40px;
+    background: linear-gradient(90deg, ${BRAND_LIME}, transparent);
+    animation: lineGrow 0.9s ease 1.1s forwards;
   }
   @keyframes rise { to { opacity: 1; transform: translateY(0); } }
-  @keyframes fadeIn { to { opacity: 1; } }
-  @keyframes kenBurns { from{transform:scale(1)} to{transform:scale(1.12) translate(-2%,1%)} }
+  @keyframes lineGrow { to { width: 220px; } }
+  @keyframes kenBurns { from{transform:scale(1)} to{transform:scale(1.1) translate(-1.5%, .8%)} }
 </style></head>
 <body>
   <div class="stage">
     <div class="photo" aria-hidden="true"></div>
     <div class="veil" aria-hidden="true"></div>
-    <div class="mark">CCD</div>
+    ${brandLockupHtml()}
     <div class="copy">
       <h1>Exceptional lessons start with <em>connection</em></h1>
       <p>Capture ideas. Build lessons. Connect with the best arts organisations. Share or sell your resources. Create inspiring learning experiences — EYFS to A-level.</p>
+      <div class="line" aria-hidden="true"></div>
     </div>
   </div>
 </body></html>`;
+}
+
+export function heroConnectionHtml(heroImageUrl = HERO_IMAGE_URL) {
+  return logoIntroHtml(heroImageUrl);
 }
 
 export function closingSlideHtml() {
@@ -445,30 +419,23 @@ export function closingSlideHtml() {
 <style>
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html, body { width: 1920px; height: 1080px; overflow: hidden; background: #05231e; }
-  .frame { width: 1920px; height: 1080px; position: relative; overflow: hidden; padding: 160px 140px 100px; display: flex; flex-direction: column; justify-content: center; }
+  .frame { width: 1920px; height: 1080px; position: relative; overflow: hidden; padding: 190px 140px 100px; display: flex; flex-direction: column; justify-content: center; }
   .kb {
     position: absolute; inset: -10%;
     background:
       radial-gradient(ellipse 1200px 700px at 70% 20%, rgba(182,255,126,0.18), transparent 58%),
-      linear-gradient(155deg, #05231e 0%, #002D24 50%, #05231e 100%);
+      linear-gradient(155deg, #05231e 0%, ${BRAND_FOREST} 50%, #05231e 100%);
     animation: kenBurns 3.2s ease-in-out forwards;
   }
-  .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
-  .frame > .mark {
-    position: absolute; top: 48px; left: 56px; z-index: 3;
-    width: 88px; height: 88px; border-radius: 999px; border: 3px solid #B6FF7E; background: #002D24;
-    display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #fff;
-    font-family: "Source Sans 3", system-ui, sans-serif; letter-spacing: -0.02em;
-    opacity: 0; animation: fadeIn 0.7s ease 0.1s forwards;
-    pointer-events: none;
-  }
+  .frame > *:not(.kb):not(.brand-lockup) { position: relative; z-index: 1; }
+  ${brandLockupCss()}
   .eyebrow {
     font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: #B6FF7E; font-weight: 700; margin-bottom: 24px;
+    color: ${BRAND_LIME}; font-weight: 700; margin-bottom: 24px;
     opacity: 0; transform: translateY(12px);
     animation: rise 0.85s cubic-bezier(.2,.8,.2,1) 0.2s forwards;
   }
-  .eyebrow::after { content:""; display:block; width:100px; height:5px; background:#B6FF7E; margin-top:16px; }
+  .eyebrow::after { content:""; display:block; width:100px; height:5px; background:${BRAND_LIME}; margin-top:16px; }
   h1 {
     font-family: "Playfair Display", Georgia, serif;
     font-size: 84px; line-height: 1.06; font-weight: 700; color: #FFFFFF; max-width: 1600px;
@@ -483,16 +450,16 @@ export function closingSlideHtml() {
   }
   .contacts { margin-top: 48px; display: flex; flex-direction: column; gap: 22px; opacity: 0; animation: fadeIn 1s ease 0.7s forwards; }
   .contact { display: flex; align-items: baseline; gap: 24px; }
-  .contact .label { font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; color: #B6FF7E; font-weight: 700; min-width: 110px; }
+  .contact .label { font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; color: ${BRAND_LIME}; font-weight: 700; min-width: 110px; }
   .contact .value { font-size: 44px; font-weight: 700; color: #FFFFFF; letter-spacing: -0.01em; }
   .pill {
     margin-top: 40px; display: inline-block; padding: 16px 26px; border-radius: 999px;
-    border: 2px solid rgba(182,255,126,0.65); color: #B6FF7E; font-size: 24px; font-weight: 700;
+    border: 2px solid rgba(182,255,126,0.65); color: ${BRAND_LIME}; font-size: 24px; font-weight: 700;
     opacity: 0; animation: fadeIn 0.9s ease 0.95s forwards;
   }
   .glow-line {
     position: absolute; left: 140px; right: 140px; bottom: 64px; height: 3px; z-index: 1;
-    background: linear-gradient(90deg, transparent, #B6FF7E, transparent);
+    background: linear-gradient(90deg, transparent, ${BRAND_LIME}, transparent);
     opacity: 0; animation: fadeIn 1s ease 1.05s forwards;
   }
   @keyframes rise { to { opacity: 1; transform: translateY(0); } }
@@ -502,7 +469,7 @@ export function closingSlideHtml() {
 <body>
   <div class="frame">
     <div class="kb" aria-hidden="true"></div>
-    <div class="mark">CCD</div>
+    ${brandLockupHtml()}
     <div class="eyebrow">Next steps</div>
     <h1>Bring schools and arts partners into one planning space</h1>
     <p class="body">Prototype for Arts Council consultation. Logos for demonstration only.</p>
@@ -551,35 +518,27 @@ export function ideasSlideHtml() {
   html, body { width: 1920px; height: 1080px; overflow: hidden; background: #05231e; }
   .frame {
     width: 1920px; height: 1080px; position: relative; overflow: hidden;
-    padding: 160px 140px 120px; display: flex; flex-direction: column; justify-content: center;
+    padding: 190px 140px 120px; display: flex; flex-direction: column; justify-content: center;
   }
   .kb {
     position: absolute; inset: -12%;
     background:
       radial-gradient(ellipse 1000px 600px at 70% 25%, rgba(182,255,126,0.2), transparent 55%),
       radial-gradient(ellipse 900px 500px at 15% 80%, rgba(182,255,126,0.08), transparent 50%),
-      linear-gradient(155deg, #05231e 0%, #002D24 48%, #05231e 100%);
+      linear-gradient(155deg, #05231e 0%, ${BRAND_FOREST} 48%, #05231e 100%);
     animation: kenBurns 3.2s ease-in-out forwards;
   }
-  .frame > *:not(.kb):not(.mark) { position: relative; z-index: 1; }
-  .frame > .mark {
-    position: absolute; top: 48px; left: 56px; z-index: 3;
-    width: 88px; height: 88px; border-radius: 999px;
-    border: 3px solid #B6FF7E; background: #002D24;
-    display: grid; place-items: center; font-size: 28px; font-weight: 800; color: #fff;
-    font-family: "Source Sans 3", system-ui, sans-serif; letter-spacing: -0.02em;
-    opacity: 0; animation: fadeIn 0.7s ease 0.1s forwards;
-    pointer-events: none;
-  }
+  .frame > *:not(.kb):not(.brand-lockup) { position: relative; z-index: 1; }
+  ${brandLockupCss()}
   .eyebrow {
     font-size: 28px; letter-spacing: 0.18em; text-transform: uppercase;
-    color: #B6FF7E; font-weight: 700; margin-bottom: 36px;
+    color: ${BRAND_LIME}; font-weight: 700; margin-bottom: 36px;
     opacity: 0; transform: translateY(14px);
     animation: rise 0.8s cubic-bezier(.2,.8,.2,1) 0.25s forwards;
   }
   .eyebrow::after {
     content: ""; display: block; width: 100px; height: 5px;
-    background: #B6FF7E; margin-top: 18px;
+    background: ${BRAND_LIME}; margin-top: 18px;
   }
   .hook {
     font-family: "Playfair Display", Georgia, serif;
@@ -588,7 +547,7 @@ export function ideasSlideHtml() {
     opacity: 0; transform: translateY(22px);
     animation: rise 0.9s cubic-bezier(.2,.8,.2,1) 0.4s forwards;
   }
-  .hook em { font-style: italic; font-weight: 500; color: #B6FF7E; }
+  .hook em { font-style: italic; font-weight: 500; color: ${BRAND_LIME}; }
   .promise {
     margin-top: 40px;
     font-family: "Playfair Display", Georgia, serif;
@@ -598,7 +557,7 @@ export function ideasSlideHtml() {
     animation: rise 0.95s cubic-bezier(.2,.8,.2,1) 0.7s forwards;
   }
   .promise strong {
-    color: #B6FF7E; font-weight: 700;
+    color: ${BRAND_LIME}; font-weight: 700;
   }
   .tag {
     margin-top: 44px;
@@ -609,7 +568,7 @@ export function ideasSlideHtml() {
     animation: rise 0.95s cubic-bezier(.2,.8,.2,1) 1s forwards;
   }
   .spark {
-    position: absolute; right: 160px; top: 180px;
+    position: absolute; right: 160px; top: 200px;
     width: 180px; height: 180px; border-radius: 50%;
     border: 2px solid rgba(182,255,126,0.35);
     opacity: 0; animation: pulseRing 2.8s ease-in-out 1.1s infinite, fadeIn 1s ease 0.9s forwards;
@@ -629,7 +588,7 @@ export function ideasSlideHtml() {
 <body>
   <div class="frame">
     <div class="kb" aria-hidden="true"></div>
-    <div class="mark">CCD</div>
+    ${brandLockupHtml()}
     <div class="spark" aria-hidden="true"></div>
     <div class="eyebrow">For every teacher</div>
     <p class="hook">Ever had an <em>excellent idea</em> — then felt it slip away?</p>

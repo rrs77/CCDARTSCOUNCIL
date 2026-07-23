@@ -60,3 +60,6 @@ Thumbs.db
 .local/
 .vercel
 .env*
+
+# Feature-demo recorder scratch (source webm before encode) — keep out of git
+artifacts/ccd/public/feature-demo/raw-video/

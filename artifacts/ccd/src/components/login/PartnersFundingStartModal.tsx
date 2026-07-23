@@ -1,7 +1,6 @@
 import { useEffect } from 'react';
-import { ExternalLink, PlayCircle, X } from 'lucide-react';
+import { PlayCircle, X } from 'lucide-react';
 import {
-  FEATURE_DEMO_PATH,
   PARTNER_DISCLAIMER,
   PARTNER_DISCLAIMER_FRAMING,
   PARTNERS_FUNDING_VIDEO_CTA,
@@ -12,15 +11,15 @@ import {
 interface PartnersFundingStartModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Primary CTA: acknowledge org/images notice, then open the in-app video modal. */
+  onWatchVideo: () => void;
 }
 
-function featureDemoHref(): string {
-  const base = import.meta.env.BASE_URL || '/';
-  const normalisedBase = base.endsWith('/') ? base.slice(0, -1) : base;
-  return `${normalisedBase}${FEATURE_DEMO_PATH}`;
-}
-
-export function PartnersFundingStartModal({ isOpen, onClose }: PartnersFundingStartModalProps) {
+export function PartnersFundingStartModal({
+  isOpen,
+  onClose,
+  onWatchVideo,
+}: PartnersFundingStartModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -31,8 +30,6 @@ export function PartnersFundingStartModal({ isOpen, onClose }: PartnersFundingSt
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
-
-  const videoHref = featureDemoHref();
 
   return (
     <div
@@ -77,16 +74,14 @@ export function PartnersFundingStartModal({ isOpen, onClose }: PartnersFundingSt
         </div>
 
         <div className="space-y-5 px-6 py-6 sm:px-8 sm:py-7">
-          <a
-            href={videoHref}
-            target="_blank"
-            rel="noopener noreferrer"
+          <button
+            type="button"
+            onClick={onWatchVideo}
             className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#B6FF7E] px-4 py-3.5 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
           >
             <PlayCircle className="h-5 w-5 shrink-0" aria-hidden />
             <span>{PARTNERS_FUNDING_VIDEO_CTA}</span>
-            <ExternalLink className="h-4 w-4 shrink-0 opacity-70" aria-hidden />
-          </a>
+          </button>
 
           <p className="rounded-lg border border-[#002D24]/10 bg-[#e8f0ea] px-3.5 py-3 text-xs leading-relaxed text-gray-600">
             <span className="font-semibold text-[#002D24]">Demonstration notice. </span>

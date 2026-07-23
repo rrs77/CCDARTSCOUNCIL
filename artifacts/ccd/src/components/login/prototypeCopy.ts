@@ -29,10 +29,15 @@ export const PARTNERS_FUNDING_VIDEO_TITLE = 'For partners and funding';
 export const PARTNERS_FUNDING_VIDEO_INTRO =
   'Shown for potential partners and for funding. Watch a short feature overview of how CCDesigner supports curriculum planning with cultural organisations.';
 
-export const PARTNERS_FUNDING_VIDEO_CTA = 'Video for partners and funding';
+export const PARTNERS_FUNDING_VIDEO_CTA = 'Watch feature demo';
 
 /** Public player page served from `public/feature-demo/`. */
 export const FEATURE_DEMO_PATH = '/feature-demo/';
+
+/** In-app modal video sources under `public/feature-demo/`. */
+export const FEATURE_DEMO_VIDEO_MP4 = 'feature-demo/ccdesigner-feature-demo.mp4';
+export const FEATURE_DEMO_VIDEO_WEBM = 'feature-demo/ccdesigner-feature-demo.webm';
+export const FEATURE_DEMO_VIDEO_POSTER = 'feature-demo/frames/04-disclaimer.png';
 
 export const ACTIVITY_LIBRARY_WELCOME_TITLE = 'About these activities';
 

@@ -32,6 +32,7 @@ import { LoginHeroPanel } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
 import { DemonstrationDisclaimerBand } from './login/DemonstrationDisclaimerBand';
 import { PartnersFundingStartModal } from './login/PartnersFundingStartModal';
+import { FeatureDemoVideoModal } from './login/FeatureDemoVideoModal';
 import { PARTNERS_FUNDING_VIDEO_STORAGE_KEY } from './login/prototypeCopy';
 import { LogoSVG, LOGO_BG } from './Logo';
 
@@ -58,6 +59,7 @@ export function LoginForm() {
   const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
   const [showPrototypePassword, setShowPrototypePassword] = useState(false);
   const [showPartnersFundingStart, setShowPartnersFundingStart] = useState(false);
+  const [showFeatureDemoVideo, setShowFeatureDemoVideo] = useState(false);
 
   const branding = settings.branding || {};
   const logoLetters = branding.logoLetters || 'CCD';
@@ -126,6 +128,12 @@ export function LoginForm() {
       // ignore
     }
     setShowPartnersFundingStart(false);
+  };
+
+  /** Acknowledge org/images disclaimer, then open the in-app feature demo video modal. */
+  const watchFeatureDemoFromStart = () => {
+    dismissPartnersFundingStart();
+    setShowFeatureDemoVideo(true);
   };
   useEffect(() => {
     if (canInstall && !isInstalled) {
@@ -462,6 +470,12 @@ export function LoginForm() {
       <PartnersFundingStartModal
         isOpen={showPartnersFundingStart}
         onClose={dismissPartnersFundingStart}
+        onWatchVideo={watchFeatureDemoFromStart}
+      />
+
+      <FeatureDemoVideoModal
+        isOpen={showFeatureDemoVideo}
+        onClose={() => setShowFeatureDemoVideo(false)}
       />
     </div>
   );
