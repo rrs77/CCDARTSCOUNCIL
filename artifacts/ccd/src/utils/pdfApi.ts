@@ -31,11 +31,19 @@ export async function generatePdfViaProxy(
     // the request with 401. PDF exports require an authenticated session.
   }
 
-  const response = await fetch(getPdfBoltProxyUrl(), {
-    method: 'POST',
-    headers,
-    body: JSON.stringify(body),
-  });
+  let response: Response;
+  try {
+    response = await fetch(getPdfBoltProxyUrl(), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify(body),
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : 'network error';
+    throw new Error(
+      `Cannot reach the PDF service (${detail}). Start the API server on port 8080, or use Print → Save as PDF.`,
+    );
+  }
 
   if (!response.ok) {
     const errText = await response.text();
@@ -44,7 +52,13 @@ export async function generatePdfViaProxy(
       const d = JSON.parse(errText || '{}') as { error?: string };
       if (d.error) msg = d.error;
     } catch (_) {}
-    throw new Error(msg || `PDF generation failed: ${response.status}`);
+    if (!msg || !msg.trim()) {
+      msg =
+        response.status === 502 || response.status === 503 || response.status === 500
+          ? 'PDF service unavailable. Ensure the API server is running and PDFBOLT_API_KEY is set.'
+          : `PDF generation failed: ${response.status}`;
+    }
+    throw new Error(msg);
   }
 
   return response.blob();

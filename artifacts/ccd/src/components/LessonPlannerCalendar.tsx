@@ -923,30 +923,50 @@ export function LessonPlannerCalendar({
       </div>
     `;
 
+    const openPrintFallback = () => {
+      const printWin = window.open('', '_blank');
+      if (!printWin) {
+        throw new Error('Pop-up blocked. Allow pop-ups to export the calendar, or disable the blocker and try again.');
+      }
+      printWin.document.write(fullHtml);
+      printWin.document.close();
+      printWin.focus();
+      setTimeout(() => {
+        printWin.print();
+      }, 150);
+    };
+
     setIsExportingPdf(true);
     try {
-      const pdfBlob = await generatePdfViaProxy({
-        html: encodeUnicodeBase64(fullHtml),
-        printBackground: true,
-        waitUntil: 'networkidle',
-        format: 'A4',
-        margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
-        displayHeaderFooter: true,
-        footerTemplate: encodeUnicodeBase64(footerContent),
-        headerTemplate: encodeUnicodeBase64('<div></div>'),
-        emulateMediaType: 'screen',
-      });
-      const fileName = `Calendar_${className.replace(/\s+/g, '_')}_${viewLabel.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = fileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+      try {
+        const pdfBlob = await generatePdfViaProxy({
+          html: encodeUnicodeBase64(fullHtml),
+          printBackground: true,
+          waitUntil: 'networkidle',
+          format: 'A4',
+          margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+          displayHeaderFooter: true,
+          footerTemplate: encodeUnicodeBase64(footerContent),
+          headerTemplate: encodeUnicodeBase64('<div></div>'),
+          emulateMediaType: 'screen',
+        });
+        const fileName = `Calendar_${className.replace(/\s+/g, '_')}_${viewLabel.replace(/\s+/g, '_')}_${format(new Date(), 'yyyy-MM-dd')}.pdf`;
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = fileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
 
-      toast.success('PDF exported successfully', { icon: '📄' });
+        toast.success('PDF exported successfully', { icon: '📄' });
+      } catch (proxyError: unknown) {
+        // Local/dev often has no API server or PDFBOLT_API_KEY — fall back to browser print → Save as PDF
+        console.warn('PDF proxy failed, falling back to print dialog:', proxyError);
+        openPrintFallback();
+        toast.success('Opened print dialog — choose “Save as PDF” to export', { duration: 5000 });
+      }
     } catch (e: any) {
       console.error('PDF export failed:', e);
       toast.error(e?.message || 'Failed to export PDF');
@@ -2208,10 +2228,11 @@ export function LessonPlannerCalendar({
                   className="absolute right-0 top-full mt-2 z-50 w-56 rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
                 >
                   <button
+                    type="button"
                     role="menuitem"
                     onClick={() => {
                       setShowActionsMenu(false);
-                      handlePrintCalendar();
+                      void handlePrintCalendar();
                     }}
                     disabled={isExportingPdf}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2] disabled:opacity-60"
@@ -2220,6 +2241,7 @@ export function LessonPlannerCalendar({
                     {isExportingPdf ? 'Exporting…' : 'Export PDF'}
                   </button>
                   <button
+                    type="button"
                     role="menuitem"
                     onClick={() => {
                       setShowActionsMenu(false);
@@ -2232,6 +2254,7 @@ export function LessonPlannerCalendar({
                   </button>
                   <div className="my-1 border-t border-gray-100" />
                   <button
+                    type="button"
                     role="menuitem"
                     onClick={() => {
                       setShowActionsMenu(false);
@@ -2243,6 +2266,7 @@ export function LessonPlannerCalendar({
                     Timetable Builder
                   </button>
                   <button
+                    type="button"
                     role="menuitem"
                     onClick={() => {
                       setShowActionsMenu(false);
