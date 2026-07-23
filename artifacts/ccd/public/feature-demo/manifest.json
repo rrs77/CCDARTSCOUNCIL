@@ -1,68 +1,84 @@
 {
-  "title": "CCDesigner — Feature demo for external organisations",
-  "generatedAt": "2026-07-23T16:39:06.002Z",
+  "title": "CCDesigner \u2014 Feature demo for external organisations",
+  "generatedAt": "2026-07-23T18:54:34.045Z",
   "baseUrl": "http://127.0.0.1:5173",
+  "canvas": {
+    "width": 1920,
+    "height": 1080
+  },
+  "palette": {
+    "bgDeep": "#05231e",
+    "bgForest": "#002D24",
+    "text": "#FFFFFF",
+    "textBody": "#F2F7F4",
+    "accent": "#B6FF7E"
+  },
+  "contacts": {
+    "email": "rob@rhythmstix.co.uk",
+    "web": "https://www.ccdesigner.co.uk"
+  },
+  "businessNote": "CCDesigner only takes a cut of 10\u201320% of paid resources.",
   "disclaimer": "Partners and logos are shown for demonstration only and do not imply endorsement.",
   "chapters": [
     {
-      "id": "01-login",
-      "title": "Welcome to CCDesigner",
-      "caption": "Forest/lime creative curriculum studio for schools & arts partners"
+      "id": "01-logo",
+      "title": "CCDesigner",
+      "caption": "Forest & lime brand intro"
     },
     {
-      "id": "02-prototype",
-      "title": "Explore the working prototype",
-      "caption": "Password-gated demo for Arts Council & partner consultation"
+      "id": "02-disclaimer",
+      "title": "Demonstration only",
+      "caption": "For potential partners & funding \u2014 no endorsement implied"
     },
     {
-      "id": "03-dashboard",
-      "title": "Half-Term Designer",
-      "caption": "Plan Autumn–Summer half-terms and assign lessons to units"
+      "id": "03-landing",
+      "title": "Exceptional lessons start with connection",
+      "caption": "Real CCDesigner first page + live disclaimer"
     },
     {
-      "id": "04-activity",
-      "title": "Activity Library",
-      "caption": "Browse, star, and reuse classroom activities — including recently added partner picks"
+      "id": "04-context",
+      "title": "Arts organisations together",
+      "caption": "One place for planning"
     },
     {
-      "id": "05-builder",
-      "title": "Lesson Builder",
-      "caption": "Compose lessons from the Activity Library into ready-to-teach sequences"
+      "id": "05-action",
+      "title": "Let's see the app in action",
+      "caption": "Explore the working prototype"
     },
     {
-      "id": "06-lessons",
-      "title": "Lesson Library",
-      "caption": "Store, open, and assign finished lessons across your curriculum"
+      "id": "06-free-hubs",
+      "title": "Free partner resources",
+      "caption": "LSO \u00b7 ROH \u2192 libraries \u2192 term \u2192 calendar"
     },
     {
-      "id": "07-calendar-month",
-      "title": "Calendar — Month",
-      "caption": "See the term at a glance with lessons, events, and school days"
+      "id": "09-calendar",
+      "title": "Populate with key dates from",
+      "caption": "Partner dropdown \u00b7 KS1/KS2 \u00b7 Important dates"
     },
     {
-      "id": "08-calendar-week",
-      "title": "Calendar — Week grid",
-      "caption": "Timed week view for timetable-style planning"
+      "id": "07-create",
+      "title": "Create activity & lesson",
+      "caption": "EYFS / KS2 / KS3 \u2014 every field + live links"
     },
     {
-      "id": "09-hubs",
-      "title": "Partner Hubs",
-      "caption": "Music hubs, premium partners, and free cultural organisations"
+      "id": "08-settings",
+      "title": "Customisable to key stage",
+      "caption": "Settings \u2192 Year Groups"
     },
     {
-      "id": "10-hub-open",
-      "title": "Inside a Partner Hub",
-      "caption": "Open a hub and add resources into CCDesigner (local prototype)"
+      "id": "10-paid",
+      "title": "Paid partners",
+      "caption": "We Teach Drama & iCompose \u2014 CCDesigner takes 10\u201320%"
     },
     {
-      "id": "11-planning",
-      "title": "Partner Planning",
-      "caption": "Accordion of partner packs linked into Activity Library planning"
+      "id": "11-orgs",
+      "title": "Your organisation hub",
+      "caption": "Admin backend + template pages for free resources"
     },
     {
       "id": "12-close",
-      "title": "Share & next steps",
-      "caption": "Partners & logos shown for demonstration only — contact rob@rhythmstix.co.uk"
+      "title": "Get in touch",
+      "caption": "rob@rhythmstix.co.uk \u00b7 www.ccdesigner.co.uk"
     }
   ],
   "video": {
@@ -70,18 +86,18 @@
     "mp4": "ccdesigner-feature-demo.mp4"
   },
   "frames": [
-    "frames/01-login.png",
-    "frames/02-prototype.png",
-    "frames/03-dashboard.png",
-    "frames/04-activity.png",
-    "frames/05-builder.png",
-    "frames/06-lessons.png",
-    "frames/07-calendar-month.png",
-    "frames/08-calendar-week.png",
-    "frames/09-hubs.png",
-    "frames/10-hub-open.png",
-    "frames/11-planning.png",
+    "frames/01-logo.png",
+    "frames/02-disclaimer.png",
+    "frames/03-landing.png",
+    "frames/04-context.png",
+    "frames/05-action.png",
+    "frames/06-free-hubs.png",
+    "frames/09-calendar.png",
+    "frames/07-create.png",
+    "frames/08-settings.png",
+    "frames/10-paid.png",
+    "frames/11-orgs.png",
     "frames/12-close.png"
   ],
-  "durationSeconds": 72
+  "durationSeconds": 234
 }

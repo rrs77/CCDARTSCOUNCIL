@@ -43,10 +43,10 @@ export const CHAPTERS = [
   { id: '03-landing', title: 'Exceptional lessons start with connection', caption: 'Real CCDesigner first page + live disclaimer' },
   { id: '04-context', title: 'Arts organisations together', caption: 'One place for planning' },
   { id: '05-action', title: "Let's see the app in action", caption: 'Explore the working prototype' },
-  { id: '06-free-hubs', title: 'Free partner resources', caption: 'LSO · ROH · music hubs & major arts orgs' },
+  { id: '06-free-hubs', title: 'Free partner resources', caption: 'LSO · ROH → libraries → term → calendar' },
+  { id: '09-calendar', title: 'Populate with key dates from', caption: 'Partner dropdown · KS1/KS2 · Important dates' },
   { id: '07-create', title: 'Create activity & lesson', caption: 'EYFS / KS2 / KS3 — every field + live links' },
   { id: '08-settings', title: 'Customisable to key stage', caption: 'Settings → Year Groups' },
-  { id: '09-calendar', title: 'Calendar & timetable', caption: 'Key dates · Important dates · week grid' },
   { id: '10-paid', title: 'Paid partners', caption: 'We Teach Drama & iCompose — CCDesigner takes 10–20%' },
   { id: '11-orgs', title: 'Your organisation hub', caption: 'Admin backend + template pages for free resources' },
   { id: '12-close', title: 'Get in touch', caption: 'rob@rhythmstix.co.uk · www.ccdesigner.co.uk' },
@@ -76,6 +76,17 @@ async function recordSlide(page, html, holdMs, frameId) {
 
 async function dismissOverlays(page) {
   await dismissIfVisible(page, WELCOME_DISMISS);
+  // Help guide / generic dialogs that block tab clicks
+  const closeHelp = page.getByRole('button', { name: /^Close$/i }).first();
+  if (await closeHelp.isVisible({ timeout: 400 }).catch(() => false)) {
+    await closeHelp.click({ force: true }).catch(() => {});
+    await hold(page, 200);
+  }
+  const dialogClose = page.locator('.fixed button:has-text("Close"), [role="dialog"] button:has-text("Close")').first();
+  if (await dialogClose.isVisible({ timeout: 300 }).catch(() => false)) {
+    await dialogClose.click({ force: true }).catch(() => {});
+    await hold(page, 200);
+  }
   for (let i = 0; i < 3; i++) {
     await page.keyboard.press('Escape').catch(() => {});
     await hold(page, 140);
@@ -113,7 +124,7 @@ async function ensureInApp(page) {
   await page.goto(`${BASE_URL}/?demo=1`, { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-tab]', { timeout: 45000 }).catch(() => {});
   await ensureCursor(page);
-  await dismissIfVisible(page, WELCOME_DISMISS);
+  await dismissOverlays(page);
 }
 
 /** Enter demo with no password UI — session flags set before navigation. */
@@ -178,6 +189,76 @@ async function addFromHub(page) {
   return false;
 }
 
+/** After hub Add: Activity Library → Lesson Library → Half-Term → Calendar peek. */
+async function showHubContentThroughTermAndCalendar(page) {
+  await setCaption(
+    page,
+    'Partner content in your libraries',
+    'Activity sections → Lesson Library → Half-Term Designer → Calendar',
+  );
+  await dismissOverlays(page);
+  await selectYearGroup(page, /Year 6 Music|Year 5 Music|Year 4 Music|KS2/i).catch(() => {});
+  await dismissOverlays(page);
+
+  // Activity Library sections populated
+  await clickTab(page, 'activity-library');
+  await dismissOverlays(page);
+  await dismissIfVisible(page, WELCOME_DISMISS);
+  await hold(page, 1600);
+  await page.mouse.wheel(0, 320);
+  await hold(page, 1400);
+  await snap(page, FRAMES_DIR, '06-activity-from-hub');
+
+  // Lesson Library populated
+  await setCaption(page, 'Lesson Library', 'Partner hub lessons ready to plan');
+  await clickTab(page, 'lesson-library');
+  await dismissOverlays(page);
+  await dismissIfVisible(page, WELCOME_DISMISS);
+  await hold(page, 1600);
+  await page.mouse.wheel(0, 240);
+  await hold(page, 1200);
+  await snap(page, FRAMES_DIR, '06-lesson-from-hub');
+
+  // Assign to term (Half-Term Designer)
+  await setCaption(page, 'Add to term', 'Assign a partner lesson into Half-Term Designer');
+  const assignBtn = page
+    .locator('button[title*="Assign to Half-Term"], button[title*="Reassign to Different Half-Term"]')
+    .first();
+  if (await assignBtn.isVisible({ timeout: 2500 }).catch(() => false)) {
+    await smoothClick(page, assignBtn);
+    await hold(page, 900);
+    const termChoice = page
+      .locator('.fixed button')
+      .filter({ hasText: /Autumn 1/i })
+      .first();
+    if (await termChoice.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await smoothClick(page, termChoice);
+      await hold(page, 600);
+    }
+    const confirmAssign = page
+      .getByRole('button', { name: /Assign to Half-Term/i })
+      .last();
+    if (await confirmAssign.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await smoothClick(page, confirmAssign);
+      await hold(page, 1400);
+    }
+  }
+
+  // Half-Term Designer shows the term
+  await setCaption(page, 'Half-Term Designer', 'Partner lesson sitting in the term plan');
+  await clickTab(page, 'unit-viewer');
+  await hold(page, 1800);
+  await page.mouse.wheel(0, 200);
+  await hold(page, 1200);
+  await snap(page, FRAMES_DIR, '06-term-from-hub');
+
+  // Brief calendar land (key dates chapter expands this)
+  await setCaption(page, 'Onto the calendar', 'Next — populate partner key dates');
+  await clickTab(page, 'calendar');
+  await hold(page, 1600);
+  await snap(page, FRAMES_DIR, '06-calendar-peek');
+}
+
 async function chapterFreeHubs(page) {
   await setCaption(page, 'Free partner resources', 'LSO, Royal Ballet and Opera, music hubs & major arts orgs');
   await clickTab(page, 'our-partners');
@@ -206,6 +287,10 @@ async function chapterFreeHubs(page) {
   await openPartnerHub(page, /Royal Ballet and Opera/i, 'roh');
   await snap(page, FRAMES_DIR, '04-roh');
   await addFromHub(page);
+
+  // Libraries → term → calendar (live path after free hub adds)
+  await ensureInApp(page);
+  await showHubContentThroughTermAndCalendar(page);
 
   // Back to hubs overview — free orgs strip
   await ensureInApp(page);
@@ -237,15 +322,34 @@ async function createFullActivity(page) {
     'Create an activity — KS2 example',
     'Every field populated, including live resource links',
   );
+  await ensureInApp(page);
   await selectYearGroup(page, /Year 6 Music|Year 5 Music/i);
   await clickTab(page, 'activity-library');
   await dismissIfVisible(page, WELCOME_DISMISS);
-  await hold(page, 1000);
+  await dismissOverlays(page);
+  await hold(page, 1200);
 
-  await smoothClick(page, page.getByRole('button', { name: /Create Activity/i }).first());
-  await hold(page, 1100);
+  const createBtn = page.getByRole('button', { name: /Create Activity/i }).first();
+  if (!(await createBtn.isVisible({ timeout: 4000 }).catch(() => false))) {
+    console.warn('Create Activity button not visible — skipping create chapter');
+    return false;
+  }
+  await smoothClick(page, createBtn);
+  await hold(page, 1400);
 
-  await typeSlow(page, page.getByPlaceholder(/Enter activity name/i), 'KS2 Orchestra listening circle', {
+  let nameInput = page.getByPlaceholder(/Enter activity name/i).first();
+  if (!(await nameInput.isVisible({ timeout: 5000 }).catch(() => false))) {
+    // Retry open once
+    await smoothClick(page, createBtn).catch(() => {});
+    await hold(page, 1500);
+    nameInput = page.getByPlaceholder(/Enter activity name/i).first();
+  }
+  if (!(await nameInput.isVisible({ timeout: 4000 }).catch(() => false))) {
+    console.warn('Activity creator form did not open — skipping create chapter');
+    return false;
+  }
+
+  await typeSlow(page, nameInput, 'KS2 Orchestra listening circle', {
     delay: 34,
   });
 
@@ -337,6 +441,7 @@ async function createFullActivity(page) {
     await hold(page, 1600);
   }
   await dismissOverlays(page);
+  return true;
 }
 
 async function buildFullLesson(page) {
@@ -430,77 +535,153 @@ async function showSettings(page) {
 
 async function chapterCalendar(page) {
   await dismissOverlays(page);
-  await selectYearGroup(page, /Year 6 Music|Year 5 Music/i);
-  await setCaption(page, 'Calendar & timetable', 'Key dates · Add events · week grid · Tools');
+  await selectYearGroup(page, /Year 6 Music|Year 5 Music|Year 4 Music|Year 2|KS2/i);
+  await dismissOverlays(page);
+  await setCaption(
+    page,
+    'Populate with key dates from',
+    'Partner dropdown · tick KS1 & KS2 · Important dates',
+  );
   await clickTab(page, 'calendar');
-  await hold(page, 1200);
+  await dismissOverlays(page);
+  await hold(page, 1000);
+
+  // Hard-wait for key-dates UI — retry tab if needed
+  let keyDatesSelect = page.locator('[data-ccd-key-dates-select]').first();
+  if (!(await keyDatesSelect.isVisible({ timeout: 3000 }).catch(() => false))) {
+    await clickTab(page, 'calendar');
+    await dismissOverlays(page);
+    keyDatesSelect = page.locator('[data-ccd-key-dates-select]').first();
+  }
+  await keyDatesSelect.waitFor({ state: 'visible', timeout: 12000 });
 
   const monthBtn = page.getByRole('button', { name: /^Month$/i }).first();
   if (await monthBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await smoothClick(page, monthBtn);
+    await monthBtn.click({ force: true });
     await hold(page, 800);
   }
 
-  // Partner key dates → Important dates (hooks: data-ccd-key-dates-*)
-  const keyDatesSelect = page.locator('[data-ccd-key-dates-select]').first();
-  if (await keyDatesSelect.isVisible({ timeout: 1800 }).catch(() => false)) {
-    await keyDatesSelect.selectOption('lso');
+  const populateRow = page.locator('[data-ccd-key-dates-populate]').first();
+  if (await populateRow.isVisible({ timeout: 2500 }).catch(() => false)) {
+    await populateRow.scrollIntoViewIfNeeded().catch(() => {});
     await hold(page, 900);
-    const confirmKeyDates = page.locator('[data-ccd-key-dates-confirm]').first();
-    if (await confirmKeyDates.isVisible({ timeout: 2000 }).catch(() => false)) {
-      await smoothClick(page, confirmKeyDates);
-      await hold(page, 1200);
-      const donePopup = page.locator('[data-ccd-important-dates-confirm-done]').first();
-      if (await donePopup.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await smoothClick(page, donePopup);
-        await hold(page, 800);
+  }
+
+  // LSO — KS1 & KS2 examples across months
+  await setCaption(page, 'LSO key dates', 'KS1 & KS2 examples across the year');
+  await keyDatesSelect.selectOption({ value: 'lso' });
+  await page.evaluate(() => {
+    const el = document.querySelector('[data-ccd-key-dates-select]');
+    if (!el) return;
+    el.value = 'lso';
+    el.dispatchEvent(new Event('input', { bubbles: true }));
+    el.dispatchEvent(new Event('change', { bubbles: true }));
+  });
+  await hold(page, 1200);
+
+  const modal = page.locator('[data-ccd-key-dates-modal]').first();
+  await modal.waitFor({ state: 'visible', timeout: 8000 });
+  if (await modal.isVisible({ timeout: 1000 }).catch(() => false)) {
+    const scrollArea = modal.locator('.overflow-y-auto').first();
+    if (await scrollArea.isVisible({ timeout: 800 }).catch(() => false)) {
+      await scrollArea.evaluate((el) => { el.scrollTop = 80; }).catch(() => {});
+      await hold(page, 1100);
+      await scrollArea.evaluate((el) => { el.scrollTop = 220; }).catch(() => {});
+      await hold(page, 1100);
+    }
+    const ksRows = modal.locator('[data-ccd-key-date-row]');
+    const rowCount = Math.min(await ksRows.count(), 3);
+    for (let i = 0; i < rowCount; i++) {
+      const row = ksRows.nth(i);
+      if (await row.isVisible({ timeout: 400 }).catch(() => false)) {
+        await row.click({ force: true });
+        await hold(page, 350);
+        await row.click({ force: true });
+        await hold(page, 400);
       }
     }
-    const panel = page.locator('[data-ccd-important-dates-panel]').first();
-    if (await panel.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await hold(page, 900);
+
+    const confirmKeyDates = page.locator('[data-ccd-key-dates-confirm]').first();
+    await confirmKeyDates.click({ force: true });
+    await hold(page, 1400);
+    await modal.waitFor({ state: 'hidden', timeout: 5000 }).catch(() => {});
+  }
+
+  const confirmPopup = page.locator('[data-ccd-important-dates-confirm]').first();
+  await confirmPopup.waitFor({ state: 'visible', timeout: 6000 }).catch(() => {});
+  if (await confirmPopup.isVisible({ timeout: 800 }).catch(() => false)) {
+    await setCaption(page, 'Suggested selections', 'Confirm list → Important dates in the app');
+    await hold(page, 2200);
+    await snap(page, FRAMES_DIR, '09-confirm-popup');
+    await hold(page, 800);
+    const donePopup = page.locator('[data-ccd-important-dates-confirm-done]').first();
+    if (await donePopup.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await donePopup.click({ force: true });
       await hold(page, 1000);
     }
   }
 
-  const addEvent = page.getByRole('button', { name: /Add Event/i }).first();
-  if (await addEvent.isVisible({ timeout: 1800 }).catch(() => false)) {
-    await smoothClick(page, addEvent);
-    await hold(page, 800);
-    const titleInput = page.locator('input[placeholder*="Summer Holiday"], input[placeholder*="e.g."]').first();
-    if (await titleInput.isVisible({ timeout: 1800 }).catch(() => false)) {
-      await typeSlow(page, titleInput, 'KS2 orchestra workshop', { delay: 30 });
-      const typeSelect = page.locator('select').first();
-      if (await typeSelect.isVisible({ timeout: 500 }).catch(() => false)) {
-        await typeSelect.selectOption({ label: 'Event' }).catch(() => {});
+  await setCaption(page, 'Important dates', 'Starred on the calendar · remind to go');
+  const panel = page.locator('[data-ccd-important-dates-panel]').first();
+  if (await panel.isVisible({ timeout: 2000 }).catch(() => false)) {
+    await panel.scrollIntoViewIfNeeded().catch(() => {});
+    await hold(page, 1800);
+  }
+
+  for (let i = 0; i < 3; i++) {
+    const next = page.locator('button[aria-label="Next period"]').first();
+    if (await next.isVisible({ timeout: 800 }).catch(() => false)) {
+      await next.click({ force: true });
+      await hold(page, 1100);
+    }
+  }
+  const starred = page.locator('[data-ccd-calendar-key-date="1"]').first();
+  if (await starred.isVisible({ timeout: 1500 }).catch(() => false)) {
+    await starred.scrollIntoViewIfNeeded().catch(() => {});
+    await hold(page, 1600);
+  }
+  await snap(page, FRAMES_DIR, '09-key-dates');
+
+  // Optional second partner (ROH)
+  await setCaption(page, 'More partners', 'Populate key dates from ROH too');
+  if (await populateRow.isVisible({ timeout: 800 }).catch(() => false)) {
+    await populateRow.scrollIntoViewIfNeeded().catch(() => {});
+  }
+  if (await keyDatesSelect.isVisible({ timeout: 1000 }).catch(() => false)) {
+    await keyDatesSelect.selectOption({ value: 'roh' }).catch(() => {});
+    await page.evaluate(() => {
+      const el = document.querySelector('[data-ccd-key-dates-select]');
+      if (el) {
+        el.value = 'roh';
+        el.dispatchEvent(new Event('input', { bubbles: true }));
+        el.dispatchEvent(new Event('change', { bubbles: true }));
       }
-      const desc = page.getByPlaceholder(/additional details/i);
-      if (await desc.isVisible({ timeout: 500 }).catch(() => false)) {
-        await typeSlow(page, desc, 'EYFS–KS3 arts week demo entry.', { delay: 18 });
-      }
-      await smoothClick(page, page.getByRole('button', { name: /Add Event/i }).last());
+    }).catch(() => {});
+    await hold(page, 900);
+    const modal2 = page.locator('[data-ccd-key-dates-modal]').first();
+    if (await modal2.isVisible({ timeout: 2500 }).catch(() => false)) {
       await hold(page, 1200);
+      const confirm2 = page.locator('[data-ccd-key-dates-confirm]').first();
+      if (await confirm2.isVisible({ timeout: 1500 }).catch(() => false)) {
+        await confirm2.click({ force: true });
+        await hold(page, 1000);
+      }
+      const done2 = page.locator('[data-ccd-important-dates-confirm-done]').first();
+      if (await done2.isVisible({ timeout: 2000 }).catch(() => false)) {
+        await hold(page, 1600);
+        await done2.click({ force: true });
+        await hold(page, 800);
+      }
     }
   }
 
   const weekBtn = page.getByRole('button', { name: /^Week$/i }).first();
   if (await weekBtn.isVisible({ timeout: 1000 }).catch(() => false)) {
-    await smoothClick(page, weekBtn);
+    await weekBtn.click({ force: true });
     await hold(page, 1600);
   }
 
-  const tools = page.getByRole('button', { name: /Tools/i }).first();
-  if (await tools.isVisible({ timeout: 1200 }).catch(() => false)) {
-    await smoothClick(page, tools);
-    await hold(page, 1100);
-    const builder = page.getByRole('menuitem', { name: /Timetable Builder/i }).first();
-    if (await builder.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await smoothClick(page, builder);
-      await hold(page, 1800);
-      await page.keyboard.press('Escape').catch(() => {});
-      const close = page.getByRole('button', { name: /Close|Done|Cancel/i }).first();
-      if (await close.isVisible({ timeout: 800 }).catch(() => false)) await smoothClick(page, close);
-    }
-  }
   await snap(page, FRAMES_DIR, '09-calendar');
   await dismissOverlays(page);
 }
@@ -694,8 +875,24 @@ async function main() {
   await ensureInApp(page);
   await chapterFreeHubs(page);
 
+  // Calendar + partner key dates (immediately after free hub → libraries → term)
+  console.log('07 calendar + key dates');
+  await recordSlide(
+    page,
+    slideHtml({
+      eyebrow: 'Calendar',
+      title: 'Populate with key dates from partners',
+      body: 'Pick a partner, tick KS1 and KS2 dates to attend, confirm — they become Important dates on the calendar.',
+      compactTitle: true,
+    }),
+    4200,
+    '09-calendar-slide',
+  );
+  await ensureInApp(page);
+  await chapterCalendar(page);
+
   // Create activity + lesson
-  console.log('07 create activity + lesson');
+  console.log('08 create activity + lesson');
   await recordSlide(
     page,
     slideHtml({
@@ -708,11 +905,16 @@ async function main() {
     '07-create-slide',
   );
   await ensureInApp(page);
-  await createFullActivity(page);
-  await buildFullLesson(page);
+  try {
+    const created = await createFullActivity(page);
+    if (created !== false) await buildFullLesson(page);
+  } catch (err) {
+    console.warn('Create/lesson chapter failed — continuing', err?.message || err);
+    await dismissOverlays(page);
+  }
 
   // Settings
-  console.log('08 settings');
+  console.log('09 settings');
   await recordSlide(
     page,
     slideHtml({
@@ -726,10 +928,6 @@ async function main() {
   );
   await ensureInApp(page);
   await showSettings(page);
-
-  // Calendar
-  console.log('09 calendar');
-  await chapterCalendar(page);
 
   // Paid — end
   console.log('10 paid WTD + iCompose');

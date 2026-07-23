@@ -15,7 +15,23 @@ if (!ffmpegPath) {
 
 const r = spawnSync(
   ffmpegPath,
-  ['-y', '-i', input, '-c:v', 'libx264', '-pix_fmt', 'yuv420p', '-movflags', '+faststart', '-an', output],
+  [
+    '-y',
+    '-i',
+    input,
+    '-c:v',
+    'libx264',
+    '-preset',
+    'medium',
+    '-crf',
+    '22',
+    '-pix_fmt',
+    'yuv420p',
+    '-movflags',
+    '+faststart',
+    '-an',
+    output,
+  ],
   { stdio: 'inherit' },
 );
 process.exit(r.status ?? 1);

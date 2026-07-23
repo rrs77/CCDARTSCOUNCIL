@@ -205,20 +205,20 @@
             </p>
           </div>
         </div>
-        <div class="badge"><span>●</span> Live UI recording · ~1–2 min</div>
+        <div class="badge"><span>●</span> Live UI + classy slides · 1920×1080</div>
       </header>
 
       <div class="stage">
-        <video id="video" controls playsinline preload="metadata" poster="frames/01-login.png">
-          <source src="ccdesigner-feature-demo.webm" type="video/webm" />
+        <video id="video" controls playsinline preload="metadata" poster="frames/02-disclaimer.png">
           <source src="ccdesigner-feature-demo.mp4" type="video/mp4" />
+          <source src="ccdesigner-feature-demo.webm" type="video/webm" />
         </video>
         <img id="still" class="still" hidden alt="" />
         <div class="controls">
           <div class="btn-row">
             <button class="primary" id="playBtn" type="button">Play demo</button>
             <button class="ghost" id="stillModeBtn" type="button">Chapter stills</button>
-            <a class="ghost" id="downloadLink" href="ccdesigner-feature-demo.webm" download style="text-decoration:none;display:inline-flex;align-items:center;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.28);color:#fff;font-weight:700;">Download video</a>
+            <a class="ghost" id="downloadLink" href="ccdesigner-feature-demo.mp4" download style="text-decoration:none;display:inline-flex;align-items:center;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.28);color:#fff;font-weight:700;">Download MP4</a>
           </div>
           <div class="caption" id="liveCaption">Loading chapters…</div>
         </div>
@@ -227,28 +227,33 @@
       <div class="chapters" id="chapters"></div>
 
       <div class="note">
-        <strong>What this covers:</strong> login &amp; Explore prototype · Half-Term Designer · Activity Library ·
-        Lesson Builder · Lesson Library · Calendar (month + week timed grid) · Partner Hubs (music / premium / free orgs) ·
-        open a hub · Partner Planning accordion.<br /><br />
-        <strong>Disclaimer:</strong> Partner logos and branding are for demonstration only and do not imply endorsement,
-        funding, or partnership. Prototype content may be illustrative.
+        <strong>Get in touch:</strong>
+        <a href="mailto:rob@rhythmstix.co.uk">rob@rhythmstix.co.uk</a>
+        ·
+        <a href="https://www.ccdesigner.co.uk" target="_blank" rel="noopener noreferrer">www.ccdesigner.co.uk</a>
+        <br /><br />
+        <strong>Palette:</strong> forest <code>#002D24</code> / <code>#05231e</code>, text <code>#FFFFFF</code>, accent lime <code>#B6FF7E</code>.
+        Fixed <strong>1920×1080</strong> video frames (not responsive).<br /><br />
+        <strong>Story:</strong> logo → <em>partner/funding disclaimer</em> (large + live first page) → connection hero → context → action → live UI (free LSO/ROH first) →
+        create activity/lesson → Settings → calendar → paid (WTD &amp; iCompose, 10–20% cut) → org hub → contact closing.<br /><br />
+        <strong>Disclaimer:</strong> Partner logos are for demonstration only and do not imply endorsement.
       </div>
     </div>
 
     <script>
       const FALLBACK_CHAPTERS = [
-        { id: "01-login", title: "Welcome to CCDesigner", caption: "Forest/lime creative curriculum studio for schools & arts partners", at: 0 },
-        { id: "02-prototype", title: "Explore the working prototype", caption: "Password-gated demo for Arts Council & partner consultation", at: 5 },
-        { id: "03-dashboard", title: "Half-Term Designer", caption: "Plan Autumn–Summer half-terms and assign lessons to units", at: 12 },
-        { id: "04-activity", title: "Activity Library", caption: "Browse, star, and reuse classroom activities", at: 20 },
-        { id: "05-builder", title: "Lesson Builder", caption: "Compose lessons from activities", at: 28 },
-        { id: "06-lessons", title: "Lesson Library", caption: "Store and assign finished lessons", at: 35 },
-        { id: "07-calendar-month", title: "Calendar — Month", caption: "Term at a glance", at: 42 },
-        { id: "08-calendar-week", title: "Calendar — Week grid", caption: "Timed week view", at: 49 },
-        { id: "09-hubs", title: "Partner Hubs", caption: "Music hubs, premium partners, free orgs", at: 56 },
-        { id: "10-hub-open", title: "Inside a Partner Hub", caption: "Open a hub and add resources", at: 64 },
-        { id: "11-planning", title: "Partner Planning", caption: "Partner packs in Activity Library", at: 72 },
-        { id: "12-close", title: "Share & next steps", caption: "Demonstration only — contact rob@rhythmstix.co.uk", at: 80 },
+        { id: "01-logo", title: "CCDesigner", caption: "Forest & lime brand intro", at: 0 },
+        { id: "02-disclaimer", title: "Demonstration only", caption: "For potential partners & funding", at: 4 },
+        { id: "03-landing", title: "Exceptional lessons start with connection", caption: "Real first page + live disclaimer", at: 12 },
+        { id: "04-context", title: "Arts organisations together", caption: "One place for planning", at: 20 },
+        { id: "05-action", title: "Let's see the app in action", caption: "Explore the working prototype", at: 28 },
+        { id: "06-free-hubs", title: "Free partner resources", caption: "LSO · ROH → libraries → term", at: 36 },
+        { id: "07-create", title: "Create activity & lesson", caption: "EYFS / KS2 / KS3 + live links", at: 80 },
+        { id: "08-settings", title: "Customisable to key stage", caption: "Settings → Year Groups", at: 125 },
+        { id: "09-calendar", title: "Calendar key dates", caption: "Populate · tick · Important dates", at: 145 },
+        { id: "10-paid", title: "Paid partners", caption: "WTD & iCompose — 10–20% cut", at: 160 },
+        { id: "11-orgs", title: "Your organisation hub", caption: "Admin backend + template pages", at: 190 },
+        { id: "12-close", title: "Get in touch", caption: "rob@rhythmstix.co.uk · www.ccdesigner.co.uk", at: 205 },
       ];
 
       const video = document.getElementById("video");
