@@ -5,6 +5,7 @@ import {
   WELCOME_PROTOTYPE_CONTACT_EMAIL,
   WELCOME_PROTOTYPE_TITLE,
 } from './prototypeCopy';
+import { buildQueryMailto } from '../../utils/mailto';
 
 interface PrototypeWelcomeModalProps {
   isOpen: boolean;
@@ -22,7 +23,7 @@ function renderWelcomeParagraph(paragraph: string) {
     <>
       {parts[0]}
       <a
-        href={`mailto:${email}`}
+        href={buildQueryMailto(email)}
         className="font-semibold text-[#002D24] underline underline-offset-2 hover:opacity-80"
       >
         {email}

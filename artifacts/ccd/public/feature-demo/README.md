@@ -29,7 +29,7 @@ Shareable walkthrough of the **working CCDesigner prototype** — mostly live UI
 
 ## Contact (clickable on the player page)
 
-- Email: [rob@rhythmstix.co.uk](mailto:rob@rhythmstix.co.uk)  
+- Email: [rob@rhythmstix.co.uk](mailto:rob@rhythmstix.co.uk?subject=CCDesigner%20Query)  
 - Web: [www.ccdesigner.co.uk](https://www.ccdesigner.co.uk)  
 
 **MP4 path:** `/Users/rfreich-storer/CCDesignerARTSCOUNCIL/artifacts/ccd/public/feature-demo/ccdesigner-feature-demo.mp4`
