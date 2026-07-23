@@ -1,6 +1,6 @@
 {
   "title": "CCDesigner — Feature demo for external organisations",
-  "generatedAt": "2026-07-23T20:57:17.878Z",
+  "generatedAt": "2026-07-23T21:11:38.318Z",
   "baseUrl": "http://127.0.0.1:5173",
   "canvas": {
     "width": 1920,
@@ -28,98 +28,117 @@
   "chapters": [
     {
       "id": "01-logo",
-      "title": "CCDesigner",
-      "caption": "Brand intro"
+      "title": "Exceptional lessons start with connection",
+      "caption": "CCDesigner · arts hero",
+      "at": 0
     },
     {
       "id": "02-pressure",
       "title": "Performing arts under pressure",
-      "caption": "Schools & FE — expertise harder to reach"
+      "caption": "Schools & FE — expertise harder to reach",
+      "at": 4
     },
     {
       "id": "03-response",
       "title": "One place to plan and connect",
-      "caption": "Music hubs · arts organisations · ideas kept alive"
+      "caption": "Music hubs · arts organisations · ideas kept alive",
+      "at": 7
     },
     {
       "id": "04-disclaimer",
       "title": "Demonstration only",
-      "caption": "For potential partners & funding — no endorsement implied"
+      "caption": "For potential partners & funding — no endorsement implied",
+      "at": 10
     },
     {
       "id": "05-landing",
       "title": "Exceptional lessons start with connection",
-      "caption": "Live first page"
+      "caption": "Live first page",
+      "at": 14
     },
     {
       "id": "06-ideas",
       "title": "Keep every lightning moment",
-      "caption": "Excellent ideas · melting pot for arts planning"
+      "caption": "Excellent ideas · melting pot for arts planning",
+      "at": 19
     },
     {
       "id": "07-action",
       "title": "Let's see the app in action",
-      "caption": "Explore the working prototype"
+      "caption": "Explore the working prototype",
+      "at": 23
     },
     {
       "id": "08-explore",
       "title": "Inside the prototype",
-      "caption": "Dashboard · Half-Term Designer"
+      "caption": "Year 6 · Half-Term Designer",
+      "at": 26
     },
     {
       "id": "09-lso",
       "title": "LSO Partner Hub",
-      "caption": "Choose How to Build an Orchestra · Add to CCDesigner"
+      "caption": "Choose How to Build an Orchestra · Add to CCDesigner",
+      "at": 31
     },
     {
       "id": "10-activities",
       "title": "Activity Library",
-      "caption": "LSO topic activities in your library"
+      "caption": "LSO topic activities in your library",
+      "at": 53
     },
     {
       "id": "11-lesson",
       "title": "Lesson Builder → Library",
-      "caption": "Build from LSO activities · same lesson appears in Library"
+      "caption": "Build from LSO activities · same lesson appears in Library",
+      "at": 64
     },
     {
       "id": "12-term",
       "title": "Term overview",
-      "caption": "Lesson from Library placed on Half-Term Designer"
+      "caption": "Lesson from Library placed on Half-Term Designer",
+      "at": 88
     },
     {
       "id": "13-key-dates",
       "title": "Populate with key dates",
-      "caption": "Partner dropdown · KS1/KS2 · Important dates"
+      "caption": "Partner dropdown · KS1/KS2 · Important dates",
+      "at": 99
     },
     {
       "id": "14-settings",
       "title": "Customisable to key stage",
-      "caption": "Settings · year-group folders"
+      "caption": "Settings · year-group folders",
+      "at": 123
     },
     {
       "id": "15-create",
       "title": "Build your own",
-      "caption": "Create activity & lesson · live links"
+      "caption": "Same create path — LSO flow already proved it",
+      "at": 131
     },
     {
       "id": "16-calendar",
       "title": "Calendar week & timetable",
-      "caption": "Week view · add event · timetable"
+      "caption": "Week view · add event · timetable",
+      "at": 134
     },
     {
       "id": "17-paid",
       "title": "Paid partners",
-      "caption": "We Teach Drama & iCompose — 10–20% cut"
+      "caption": "We Teach Drama & iCompose — 10–20% cut",
+      "at": 142
     },
     {
       "id": "18-orgs",
       "title": "For organisations",
-      "caption": "Own hub + admin backend templates"
+      "caption": "Own hub + admin backend templates",
+      "at": 154
     },
     {
       "id": "19-close",
       "title": "Get in touch",
-      "caption": "rob@rhythmstix.co.uk · www.ccdesigner.co.uk"
+      "caption": "rob@rhythmstix.co.uk · www.ccdesigner.co.uk",
+      "at": 158
     }
   ],
   "video": {
@@ -147,5 +166,5 @@
     "frames/18-orgs.png",
     "frames/19-close.png"
   ],
-  "durationSeconds": 206
+  "durationSeconds": 176
 }
