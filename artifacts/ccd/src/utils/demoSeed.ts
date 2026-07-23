@@ -14,14 +14,139 @@
  * and re-runs from the pristine snapshot on every new session, so visitor
  * edits are temporary and never duplicated.
  *
- * It also appends generated Secondary / KS4 Music & Drama example content and
- * populates the planner across days, subjects and year groups.
+ * It also appends generated Secondary / KS4 Music & Drama example content
+ * (Four Chords, Blood Brothers AQA, OCR Film & Computer Music) with
+ * pre-attached curriculum objectives, and populates the planner.
  */
 
 import { DEMO_SEED_MARKER_KEY, clearDemoLocalStorage } from './demoMode';
 import { writeDemoTable } from './demoDb';
+import {
+  buildDefaultYearGroupSections,
+  mergeSectionsWithYearGroups,
+  remapYearGroupSectionsToGroups,
+  sectionsHaveResolvableGroups,
+  type YearGroupLike,
+  type YearGroupSectionLike,
+} from './yearGroupSectionOrder';
+import {
+  ALL_GENERATED_SHEETS,
+  EYFS_DEMO_SHEETS,
+  EYFS_ELG_TEXTS,
+  EYFS_MUSIC_DRAMA_OBJECTIVE_IDS,
+  YEAR6_MUSIC_OBJECTIVE_IDS,
+  flattenDemoObjectiveRows,
+  type DemoGenSheet,
+} from './demoPrototypeCurriculum';
+import { setupKS3FourChords } from './setupKS3FourChords';
+import { setupOCRFilmComputerMusic } from './setupOCRFilmComputerMusic';
+import { setupWTDBloodBrothers } from './setupWTDBloodBrothers';
+import { setupLSOYear6Example } from './setupLSOYear6';
+import { setupROHRomeoJuliet } from './setupROHRomeoJuliet';
 
 type Row = Record<string, any>;
+
+const YEAR_GROUP_SECTIONS_STORAGE_KEY = 'year-group-sections';
+const YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY = 'year-group-sections-auto-migrated-v2';
+
+/** Snapshot of the logged-in account's year groups / sections before demo wipe. */
+function captureLiveYearGroupConfig(): {
+  yearGroups: YearGroupLike[];
+  sections: YearGroupSectionLike[] | null;
+} {
+  let yearGroups: YearGroupLike[] = [];
+  let sections: YearGroupSectionLike[] | null = null;
+  const pushGroup = (g: any) => {
+    if (!g || typeof g.name !== 'string' || !g.name.trim()) return;
+    const id = String(g.id || g.name);
+    if (yearGroups.some((y) => y.name === g.name || y.id === id)) return;
+    yearGroups.push({
+      id,
+      name: String(g.name),
+      color: typeof g.color === 'string' ? g.color : undefined,
+    });
+  };
+  try {
+    const rawGroups = localStorage.getItem('custom-year-groups');
+    if (rawGroups) {
+      const parsed = JSON.parse(rawGroups);
+      if (Array.isArray(parsed)) parsed.forEach(pushGroup);
+    }
+  } catch {
+    /* ignore */
+  }
+  // Bands are the Settings UI source of truth when flat custom-year-groups is stale.
+  try {
+    const rawBands = localStorage.getItem('year-group-bands');
+    if (rawBands) {
+      const parsed = JSON.parse(rawBands);
+      if (Array.isArray(parsed)) {
+        for (const band of parsed) {
+          pushGroup(band);
+          if (Array.isArray(band?.classes)) band.classes.forEach(pushGroup);
+        }
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  try {
+    const rawSections = localStorage.getItem(YEAR_GROUP_SECTIONS_STORAGE_KEY);
+    if (rawSections) {
+      const parsed = JSON.parse(rawSections);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        sections = parsed as YearGroupSectionLike[];
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  return { yearGroups, sections };
+}
+
+function extractSnapshotSections(tables: Record<string, Row[]>): YearGroupSectionLike[] | null {
+  const branding = tables.branding_settings || [];
+  const row = branding.find((r) => r.key === 'year_group_sections');
+  const sections = (row?.data as { sections?: YearGroupSectionLike[] } | undefined)?.sections;
+  return Array.isArray(sections) && sections.length > 0 ? sections : null;
+}
+
+/**
+ * Prefer the user's Manage Year Groups sections (captured from login localStorage
+ * before the demo wipe), then snapshot branding_settings.year_group_sections,
+ * then name-based EYFS/KS1… defaults. Always remaps tokens onto the seeded
+ * year-group ids (sheet names in demo). Re-run `pnpm exec node scripts/fetch-demo-snapshot.mjs`
+ * after changing live section nesting if cold-start Preview (no prior login
+ * localStorage) should pick up account headings without a live capture.
+ */
+function resolveDemoYearGroupSections(
+  targetGroups: YearGroupLike[],
+  captured: { yearGroups: YearGroupLike[]; sections: YearGroupSectionLike[] | null },
+  snapshotSections: YearGroupSectionLike[] | null,
+): YearGroupSectionLike[] {
+  const targetIds = targetGroups.map((g) => g.id);
+  const prefer =
+    captured.sections &&
+    captured.sections.length > 0 &&
+    (sectionsHaveResolvableGroups(captured.sections, targetGroups) ||
+      sectionsHaveResolvableGroups(captured.sections, captured.yearGroups))
+      ? captured.sections
+      : snapshotSections && snapshotSections.length > 0
+        ? snapshotSections
+        : null;
+
+  if (prefer) {
+    const remapped = remapYearGroupSectionsToGroups(
+      prefer,
+      targetGroups,
+      captured.yearGroups.length > 0 ? captured.yearGroups : undefined,
+    );
+    // Keep user labels/order; park any demo-only sheets (e.g. generated KS3) in Other.
+    return mergeSectionsWithYearGroups(remapped, targetIds, targetGroups);
+  }
+
+  return buildDefaultYearGroupSections(targetGroups);
+}
 
 const CURRENT_ACADEMIC_YEAR = '2026-2027';
 const SNAPSHOT_ACADEMIC_YEARS = ['2025-2026', '2026-2027'];
@@ -79,219 +204,13 @@ const HALF_TERM_DEFS = [
 
 // ---------- generated Secondary / KS4 supplement ----------
 
-interface GenActivity {
-  activity: string;
-  description: string;
-  time: number;
-  category: string;
-  level: string;
-  unitName: string;
-  link?: string;
-}
+const KS3_KS4_SHEETS: DemoGenSheet[] = ALL_GENERATED_SHEETS;
 
-interface GenLesson {
-  number: string;
-  title: string;
-  unit: string;
-  term: string;
-  activities: GenActivity[];
-}
-
-interface GenSheet {
-  sheet: string;
-  color: string;
-  lessons: GenLesson[];
-}
-
-function act(
-  activity: string,
-  description: string,
-  time: number,
-  category: string,
-  level: string,
-  unitName: string,
-  link = '',
-): GenActivity {
-  return { activity, description, time, category, level, unitName, link };
-}
-
-const KS3_KS4_SHEETS: GenSheet[] = [
-  {
-    sheet: 'Year 9 Music',
-    color: '#0EA5E9',
-    lessons: [
-      {
-        number: '1',
-        title: 'Hooks & Riffs: Building Blocks of Pop',
-        unit: 'Hooks & Riffs',
-        term: 'A1',
-        activities: [
-          act('Riff Recognition Warm-up', '<p>Play short excerpts of well-known riffs (Seven Nation Army, Smoke on the Water, Sweet Child O\' Mine). Students identify the instrument carrying the riff and describe its shape — ascending, descending, static. Introduce the terms <strong>hook</strong>, <strong>riff</strong> and <strong>ostinato</strong> and how they differ.</p>', 10, 'Vocal Warmups', 'KS3', 'Hooks & Riffs'),
-          act('Keyboard Riff Workshop', '<p>In pairs at keyboards, students learn the Seven Nation Army riff by ear, then transpose it up a tone. Extension: add a rhythmic variation while keeping the pitch contour. Focus on accurate rhythm against a drum backing at 92bpm.</p>', 25, 'Teaching Units', 'KS3', 'Hooks & Riffs'),
-          act('Compose a 4-Bar Hook', '<p>Using the pentatonic scale on A, compose and notate a 4-bar hook that could open a pop song. Success criteria: memorable contour, clear rhythmic identity, repeats with one variation. Perform to another pair for structured feedback.</p>', 20, 'Teaching Units', 'KS3', 'Hooks & Riffs'),
-        ],
-      },
-      {
-        number: '2',
-        title: 'Layering Riffs into a Groove',
-        unit: 'Hooks & Riffs',
-        term: 'A1',
-        activities: [
-          act('Body Percussion Groove', '<p>Whole-class layered body percussion: group 1 keeps a pulse, group 2 adds an off-beat clap, group 3 performs a syncopated riff rhythm. Swap roles every 8 bars. Discuss how layering creates texture.</p>', 10, 'Percussion Games', 'KS3', 'Hooks & Riffs'),
-          act('Band Skills: Layered Riff Piece', '<p>In groups of 4 (keyboard, bass, drums/percussion, voice or second keyboard), build a 16-bar piece from last lesson\'s hooks. Each layer enters every 4 bars. Record a rough take at the end for review next lesson.</p>', 30, 'Teaching Units', 'KS3', 'Hooks & Riffs'),
-          act('Listening: Bolero & Minimalism', '<p>Compare Ravel\'s Bolero opening with Steve Reich\'s Clapping Music. How do composers sustain interest when material repeats? Students note two techniques and suggest one improvement to their own group piece.</p>', 15, 'Teaching Units', 'KS3', 'Hooks & Riffs'),
-        ],
-      },
-    ],
-  },
-  {
-    sheet: 'Year 10 Music (GCSE)',
-    color: '#6366F1',
-    lessons: [
-      {
-        number: '1',
-        title: 'AoS1: Elements of Musical Language',
-        unit: 'GCSE Component 1: Musical Language',
-        term: 'A1',
-        activities: [
-          act('DR SMITH Elements Audit', '<p>Recap the elements framework (Dynamics, Rhythm, Structure, Melody, Instrumentation, Texture, Harmony) using a 90-second dictation from Bach\'s Badinerie. Students annotate a skeleton score with three observations per element group.</p>', 15, 'Teaching Units', 'KS4 GCSE', 'Musical Language'),
-          act('Cadence Aural Drill', '<p>Aural identification of perfect, plagal, imperfect and interrupted cadences at the keyboard. Students then harmonise a given 8-bar melody ending with two different cadence choices and justify the effect of each.</p>', 20, 'Teaching Units', 'KS4 GCSE', 'Musical Language'),
-          act('Composition Sketchbook: Motif Development', '<p>Develop a 2-bar motif using sequence, inversion, augmentation and fragmentation. Produce four one-line sketches in notation software; select the strongest for the coursework portfolio and log the decision in the composition diary.</p>', 25, 'Teaching Units', 'KS4 GCSE', 'Musical Language'),
-        ],
-      },
-      {
-        number: '2',
-        title: 'Performance Workshop: Solo Pieces',
-        unit: 'GCSE Component 2: Performing',
-        term: 'A2',
-        activities: [
-          act('Technical Warm-up Circuit', '<p>Instrument-specific warm-ups: scales at three dynamics, slow-practice spot bars, and a 60-second mental rehearsal of the opening phrase. Vocalists: sirens, lip trills and mapped breathing points.</p>', 10, 'Vocal Warmups', 'KS4 GCSE', 'Performing'),
-          act('Recorded Run-through & Self-Assessment', '<p>Each student records a full run of their solo piece. Using the GCSE performing criteria (accuracy, technical control, expression and interpretation), they mark their own recording and set two practice targets for the fortnight.</p>', 30, 'Teaching Units', 'KS4 GCSE', 'Performing'),
-          act('Peer Feedback Panels', '<p>In trios, students play back recordings and give structured feedback: one strength tied to a criterion, one specific, actionable target. Teacher models the language of the top band first.</p>', 15, 'Teaching Units', 'KS4 GCSE', 'Performing'),
-        ],
-      },
-    ],
-  },
-  {
-    sheet: 'Year 11 Music (GCSE)',
-    color: '#8B5CF6',
-    lessons: [
-      {
-        number: '1',
-        title: 'Set Work Revision: Africa — Toto',
-        unit: 'GCSE Revision: Set Works',
-        term: 'SP1',
-        activities: [
-          act('Score Speed-Dating', '<p>Eight numbered stations, each with a short extract of the set work score and one exam-style question (instrumentation of the intro, kalimba/synth timbre, chord loop of the chorus, vocal texture in the bridge). Two minutes per station, whole-class review after.</p>', 20, 'Teaching Units', 'KS4 GCSE', 'Set Works'),
-          act('10-Mark Essay Planning', '<p>Model then co-construct a plan for: "Evaluate how the elements of music are used to create contrast between the verse and chorus." Students write the response in timed conditions (12 minutes) and self-mark against the band descriptors.</p>', 25, 'Teaching Units', 'KS4 GCSE', 'Set Works'),
-          act('Aural Recall Quiz', '<p>Low-stakes retrieval: 10 quick-fire aural questions from all four areas of study, mixing this set work with unfamiliar listening in the same style. Track scores in the revision log.</p>', 10, 'IWB Games', 'KS4 GCSE', 'Set Works'),
-        ],
-      },
-      {
-        number: '2',
-        title: 'Free Composition: Final Drafting',
-        unit: 'GCSE Component 3: Composing',
-        term: 'SP1',
-        activities: [
-          act('Structure Health-Check', '<p>Students map their composition\'s structure on paper (bars, sections, keys, texture changes) and check it against the brief. Identify any section that repeats without development and plan one intervention.</p>', 15, 'Teaching Units', 'KS4 GCSE', 'Composing'),
-          act('Drafting Session with Milestones', '<p>Focused drafting in notation/DAW software with three timed milestones: complete the transition into the final section, balance the mix/dynamics, and export a dated draft to the coursework folder.</p>', 30, 'Teaching Units', 'KS4 GCSE', 'Composing'),
-          act('Programme Note Draft', '<p>Write the 150-word programme note: influences, intended mood, key compositional decisions. Peer-check that every claim in the note is audible in the draft recording.</p>', 10, 'Teaching Units', 'KS4 GCSE', 'Composing'),
-        ],
-      },
-    ],
-  },
-  {
-    sheet: 'Year 9 Drama',
-    color: '#F59E0B',
-    lessons: [
-      {
-        number: '1',
-        title: 'Devising from Stimulus: The Empty Chair',
-        unit: 'Devising Theatre',
-        term: 'A1',
-        activities: [
-          act('Ensemble Energy: Zip Zap Boing', '<p>Fast-paced circle game to sharpen focus and reaction. Add a physical flourish rule in round two — any player may replace their word with a gesture the group must echo. Sets the ensemble tone for devising.</p>', 8, 'Drama Games', 'KS3', 'Devising Theatre'),
-          act('Stimulus Response Carousel', '<p>Groups rotate around four stimuli (a photograph of an empty chair, a news headline, a 4-line poem, a 20-second soundscape). At each station they improvise a 30-second moment. Capture the strongest idea from each rotation on the devising wall.</p>', 22, 'Drama Games', 'KS3', 'Devising Theatre'),
-          act('Marking the Moment', '<p>Each group builds a 2-minute devised scene from their chosen stimulus and "marks the moment" of greatest tension using a chosen technique: freeze, slow motion, direct address, or lighting shift (torch). Peer audiences identify the marked moment and the technique.</p>', 20, 'KS1 Drama', 'KS3', 'Devising Theatre'),
-        ],
-      },
-      {
-        number: '2',
-        title: 'Physical Theatre: Frantic Assembly Basics',
-        unit: 'Devising Theatre',
-        term: 'A2',
-        activities: [
-          act('Push Hands Warm-up', '<p>Paired balance-and-counterbalance sequence: palm-to-palm pressure, shifting weight without losing contact. Builds the trust and body awareness needed for lifts and contact work.</p>', 10, 'Drama Games', 'KS3', 'Physical Theatre'),
-          act('Chair Duets', '<p>Using the Frantic Assembly chair duet method, pairs build a movement sequence of sits, swaps, leans and blocks around a single chair, then set it to contrasting music tracks and observe how meaning changes.</p>', 25, 'KS1 Drama', 'KS3', 'Physical Theatre'),
-          act('Round-by-Through Sequences', '<p>Trios create a travelling sequence using the round/by/through vocabulary, then layer in one line of text each from the stimulus poem. Share half-way versions for a two-star-and-a-wish response.</p>', 15, 'KS1 Drama', 'KS3', 'Physical Theatre'),
-        ],
-      },
-    ],
-  },
-  {
-    sheet: 'Year 10 Drama (GCSE)',
-    color: '#EF4444',
-    lessons: [
-      {
-        number: '1',
-        title: 'Component 1: Devising Log Foundations',
-        unit: 'GCSE Component 1: Devising',
-        term: 'A1',
-        activities: [
-          act('Practitioner Speed Briefing', '<p>Three-station recap of Stanislavski, Brecht and Artaud: key aims, three signature techniques, one famous production each. Students choose the practitioner whose approach best fits their devising intentions and justify the choice in their log.</p>', 15, 'Teaching Units', 'KS4 GCSE', 'Devising'),
-          act('Devising Workshop: Structure & Style', '<p>Groups apply their chosen practitioner to the exam stimulus: Brechtian groups add placards/narration, Stanislavskian groups build given circumstances, Artaudian groups score a movement-and-sound sequence. Rehearse the opening two minutes.</p>', 30, 'KS1 Drama', 'KS4 GCSE', 'Devising'),
-          act('Portfolio Entry: Initial Response', '<p>Timed 20-minute write-up for the devising log Section 1: response to stimulus, research directions, dramatic intentions and style decisions, with one annotated photo of today\'s rehearsal.</p>', 20, 'Teaching Units', 'KS4 GCSE', 'Devising'),
-        ],
-      },
-      {
-        number: '2',
-        title: 'Rehearsal & Refinement: Scene Transitions',
-        unit: 'GCSE Component 1: Devising',
-        term: 'A2',
-        activities: [
-          act('Vocal & Physical Warm-up', '<p>Articulation drills (unique New York, red leather yellow leather), resonance humming, then a whole-group energy build from stillness to full ensemble movement in 8 counts.</p>', 10, 'Vocal Warmups', 'KS4 GCSE', 'Devising'),
-          act('Transitions Clinic', '<p>Groups identify their weakest scene change and rebuild it three ways: a snap blackout convention, a choreographed transition in role, and an underscored fluid transition. Keep the strongest and record the decision in the log.</p>', 25, 'KS1 Drama', 'KS4 GCSE', 'Devising'),
-          act('Mock Moderation', '<p>Perform the current 5 minutes to another group who mark against the devising criteria bands. Discuss the gap between current and target band and set two rehearsal priorities.</p>', 20, 'Teaching Units', 'KS4 GCSE', 'Devising'),
-        ],
-      },
-    ],
-  },
-  {
-    sheet: 'Year 11 Drama (GCSE)',
-    color: '#DC2626',
-    lessons: [
-      {
-        number: '1',
-        title: 'Set Text in Practice: Blood Brothers',
-        unit: 'GCSE Component 3: Set Text',
-        term: 'SP1',
-        activities: [
-          act('Context Carousel', '<p>Five-minute stations on 1980s Liverpool: unemployment, class divide, superstition, Willy Russell\'s intentions, and original staging conventions. Students collect one usable exam point per station.</p>', 15, 'Teaching Units', 'KS4 GCSE', 'Set Text'),
-          act('Staging the Reunion Scene', '<p>In groups, block the Mickey/Eddie reunion showing the class gap through proxemics, levels and contrasting physicality. Trial two different stage configurations (in-the-round vs proscenium) and evaluate the impact of each.</p>', 25, 'KS1 Drama', 'KS4 GCSE', 'Set Text'),
-          act('Exam Question Deconstruction', '<p>Model answer surgery on a 20-mark performer question: highlight where marks are won (vocal, physical, proxemic, audience effect), then students write their own response for a different character in timed conditions.</p>', 20, 'Teaching Units', 'KS4 GCSE', 'Set Text'),
-        ],
-      },
-      {
-        number: '2',
-        title: 'Live Theatre Evaluation Masterclass',
-        unit: 'GCSE Component 3: Live Theatre',
-        term: 'SP2',
-        activities: [
-          act('Memory Retrieval Grid', '<p>From the live production seen this term, students complete a retrieval grid: three moments of striking design, three performance choices, the audience reaction to each. No notes for the first pass; then improve answers with notes.</p>', 15, 'Teaching Units', 'KS4 GCSE', 'Live Theatre'),
-          act('Analyse vs Evaluate Sorting', '<p>Sort 12 sample sentences into "describes", "analyses" and "evaluates", then upgrade three describing sentences into evaluative ones using the because–effect–judgement frame.</p>', 15, 'IWB Games', 'KS4 GCSE', 'Live Theatre'),
-          act('Timed 14-Mark Response', '<p>Full timed answer on how one performer created tension in a key scene. Peer-mark with the band descriptors, identifying the exact sentence where the answer moves up or drops a band.</p>', 25, 'Teaching Units', 'KS4 GCSE', 'Live Theatre'),
-        ],
-      },
-    ],
-  },
-];
-
-// ---------- seeding ----------
-
-function buildGeneratedSheetData(sheet: GenSheet) {
+function buildGeneratedSheetData(sheet: DemoGenSheet) {
   const allLessonsData: Row = {};
   const activities: Row[] = [];
   const teachingUnits = new Set<string>();
+  const lessonStandardsMap: Record<string, string[]> = {};
 
   for (const lesson of sheet.lessons) {
     teachingUnits.add(lesson.unit);
@@ -308,7 +227,7 @@ function buildGeneratedSheetData(sheet: GenSheet) {
         videoLink: '',
         musicLink: '',
         backingLink: '',
-        resourceLink: '',
+        resourceLink: a.resourceLink || '',
         link: a.link || '',
         vocalsLink: '',
         imageLink: '',
@@ -318,7 +237,9 @@ function buildGeneratedSheetData(sheet: GenSheet) {
         level: a.level,
         unitName: a.unitName,
         lessonNumber: lesson.number,
-        eyfsStandards: [],
+        eyfsStandards: lesson.curriculumType === 'EYFS' ? lesson.lessonStandards || [] : [],
+        customObjectives: lesson.customObjectives || [],
+        curriculumType: lesson.curriculumType || 'CUSTOM',
         yearGroups: [sheet.sheet],
       };
       activities.push(row);
@@ -335,6 +256,10 @@ function buildGeneratedSheetData(sheet: GenSheet) {
       grouped[a.category].push(a);
     }
 
+    if (lesson.lessonStandards?.length) {
+      lessonStandardsMap[lesson.number] = [...lesson.lessonStandards];
+    }
+
     allLessonsData[lesson.number] = {
       grouped,
       categoryOrder,
@@ -344,10 +269,46 @@ function buildGeneratedSheetData(sheet: GenSheet) {
       academicYear: CURRENT_ACADEMIC_YEAR,
       orderedActivities,
       isUserCreated: false,
+      customObjectives: lesson.customObjectives || [],
+      curriculumType: lesson.curriculumType || 'CUSTOM',
+      lessonStandards: lesson.lessonStandards || [],
     };
   }
 
-  return { allLessonsData, activities, teachingUnits: [...teachingUnits] };
+  return {
+    allLessonsData,
+    activities,
+    teachingUnits: [...teachingUnits],
+    lessonStandards: lessonStandardsMap,
+  };
+}
+
+/** Pre-attach EYFS ELGs (or Year 6 music objectives) to snapshot lessons by phase. */
+function attachPhaseStandardsToSnapshotLesson(
+  sheetName: string,
+  allLessonsData: Row,
+  lessonStandardsMap: Record<string, string[]>,
+): void {
+  const isEyfs = EYFS_DEMO_SHEETS.has(sheetName);
+  const isYear6Music = sheetName === 'Year 6 Music';
+  if (!isEyfs && !isYear6Music) return;
+
+  for (const [num, lesson] of Object.entries(allLessonsData)) {
+    if (!lesson || typeof lesson !== 'object') continue;
+    if (['teachingUnits', 'lessonStandards'].includes(num)) continue;
+
+    if (isEyfs) {
+      // Store ELG texts in lessonStandards (legacy EYFS path) AND custom objective
+      // IDs so ObjectiveSelector / print views resolve against the EYFS bank.
+      lesson.curriculumType = 'CUSTOM';
+      lesson.customObjectives = [...EYFS_MUSIC_DRAMA_OBJECTIVE_IDS];
+      lesson.lessonStandards = [...EYFS_ELG_TEXTS];
+      lessonStandardsMap[num] = [...EYFS_ELG_TEXTS];
+    } else if (isYear6Music) {
+      lesson.curriculumType = 'CUSTOM';
+      lesson.customObjectives = [...YEAR6_MUSIC_OBJECTIVE_IDS];
+    }
+  }
 }
 
 function nextWeekday(base: Date, offsetDays: number): Date {
@@ -373,6 +334,10 @@ function atTime(d: Date, hours: number, minutes: number): Date {
 export async function seedDemoData(): Promise<void> {
   try {
     if (sessionStorage.getItem(DEMO_SEED_MARKER_KEY) === '1') return;
+
+    // Capture the logged-in account's year-group / section config BEFORE wipe,
+    // so Settings nesting (EYFS → classes, etc.) transfers into the prototype.
+    const capturedYearGroupConfig = captureLiveYearGroupConfig();
 
     // Start pristine: remove any demo-owned keys left behind by a previous
     // session that ended without an explicit logout, so a new session never
@@ -404,6 +369,7 @@ export async function seedDemoData(): Promise<void> {
         teaching_unit: a.teachingUnit,
         lesson_number: a.lessonNumber,
         link: a.link,
+        resource_link: a.resourceLink || '',
         yeargroups: a.yearGroups,
       })),
     ];
@@ -416,18 +382,23 @@ export async function seedDemoData(): Promise<void> {
     for (const row of tables.lessons || []) {
       if (SKIP_SHEETS.has(row.sheet_name)) continue;
       const raw = row.data || {};
-      const allLessonsData: Row = raw.allLessonsData ?? raw;
+      const allLessonsData: Row = structuredClone(raw.allLessonsData ?? raw);
       if (!allLessonsData || Object.keys(allLessonsData).length === 0) continue;
+
+      const lessonStandardsMap: Record<string, string[]> = {
+        ...(raw.lessonStandards || {}),
+      };
+      attachPhaseStandardsToSnapshotLesson(row.sheet_name, allLessonsData, lessonStandardsMap);
 
       const bundle = {
         allLessonsData,
         lessonNumbers: row.lesson_numbers || Object.keys(allLessonsData),
         teachingUnits: raw.teachingUnits || row.teaching_units || [],
-        lessonStandards: raw.lessonStandards || {},
+        lessonStandards: lessonStandardsMap,
       };
       localStorage.setItem(`lesson-data-${row.sheet_name}`, JSON.stringify(bundle));
       sheetNames.push({ sheet: row.sheet_name });
-      dbLessons.push(row);
+      dbLessons.push({ ...row, data: { ...(typeof raw === 'object' ? raw : {}), allLessonsData, lessonStandards: lessonStandardsMap } });
     }
 
     for (const { sheet, data } of generatedPerSheet) {
@@ -435,7 +406,7 @@ export async function seedDemoData(): Promise<void> {
         allLessonsData: data.allLessonsData,
         lessonNumbers: Object.keys(data.allLessonsData),
         teachingUnits: data.teachingUnits,
-        lessonStandards: {},
+        lessonStandards: data.lessonStandards || {},
       };
       localStorage.setItem(`lesson-data-${sheet.sheet}`, JSON.stringify(bundle));
       sheetNames.push({ sheet: sheet.sheet, color: sheet.color });
@@ -458,7 +429,7 @@ export async function seedDemoData(): Promise<void> {
       bySheet[ht.sheet_name] = bySheet[ht.sheet_name] || {};
       bySheet[ht.sheet_name][ht.term_id] = ht.lessons || [];
     }
-    for (const { sheet: gen, data } of generatedPerSheet) {
+    for (const { sheet: gen } of generatedPerSheet) {
       const map: Record<string, string[]> = {};
       for (const lesson of gen.lessons) {
         map[lesson.term] = [...(map[lesson.term] || []), lesson.number];
@@ -508,22 +479,95 @@ export async function seedDemoData(): Promise<void> {
         yearGroups.push({ id: y.name, name: y.name, color: y.color, sort_order: yearGroups.length });
       }
     }
+    // Merge classes the user configured while logged in (not yet in the snapshot).
+    for (const g of capturedYearGroupConfig.yearGroups) {
+      if (!yearGroups.some((y) => y.name === g.name || y.id === g.id)) {
+        yearGroups.push({
+          id: g.name,
+          name: g.name,
+          color: g.color || palette[colorIdx++ % palette.length],
+          sort_order: yearGroups.length,
+        });
+      }
+    }
     void snapshotNames;
+
+    const yearGroupsForSettings: YearGroupLike[] = yearGroups.map((g) => ({
+      id: String(g.id),
+      name: String(g.name),
+      color: typeof g.color === 'string' ? g.color : undefined,
+    }));
+    const snapshotSections = extractSnapshotSections(tables);
+    const demoSections = resolveDemoYearGroupSections(
+      yearGroupsForSettings,
+      capturedYearGroupConfig,
+      snapshotSections,
+    );
+
     writeDemoTable('year_groups', yearGroups);
     localStorage.setItem(
       'custom-year-groups',
-      JSON.stringify(yearGroups.map((g) => ({ id: g.id, name: g.name, color: g.color }))),
+      JSON.stringify(yearGroupsForSettings),
     );
+    // Keep bands in sync so SettingsContext does not rebuild a flat list that
+    // drifts from section nesting (and so hub seeds can append without wiping).
+    try {
+      const bands = yearGroupsForSettings.map((g) => ({
+        id: g.id,
+        name: g.name,
+        color: g.color,
+        classes: [{ id: g.id, name: g.name }],
+      }));
+      localStorage.setItem('year-group-bands', JSON.stringify(bands));
+    } catch {
+      /* quota / private mode */
+    }
+    // Persist section presets for Header + Settings (and the mock branding API).
+    try {
+      localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(demoSections));
+      localStorage.setItem(YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY, 'true');
+    } catch {
+      /* quota / private mode */
+    }
 
     // ---- 5. Categories, groups, objectives (served by the mock client) ----
     writeDemoTable('custom_categories', tables.custom_categories || []);
     writeDemoTable('category_groups', tables.category_groups || []);
-    writeDemoTable('custom_objective_year_groups', tables.custom_objective_year_groups || []);
-    writeDemoTable('custom_objective_areas', tables.custom_objective_areas || []);
-    writeDemoTable('custom_objectives', tables.custom_objectives || []);
+
+    // Merge snapshot objective banks with demo KS3 Music / OCR / AQA banks.
+    const extraObjectives = flattenDemoObjectiveRows();
+    const snapYg = tables.custom_objective_year_groups || [];
+    const snapAreas = tables.custom_objective_areas || [];
+    const snapObjs = tables.custom_objectives || [];
+    const ygIds = new Set(snapYg.map((y) => y.id));
+    writeDemoTable('custom_objective_year_groups', [
+      ...snapYg,
+      ...extraObjectives.yearGroups.filter((y) => !ygIds.has(String(y.id))),
+    ]);
+    const areaIds = new Set(snapAreas.map((a) => a.id));
+    writeDemoTable('custom_objective_areas', [
+      ...snapAreas,
+      ...extraObjectives.areas.filter((a) => !areaIds.has(String(a.id))),
+    ]);
+    const objIds = new Set(snapObjs.map((o) => o.id));
+    writeDemoTable('custom_objectives', [
+      ...snapObjs,
+      ...extraObjectives.objectives.filter((o) => !objIds.has(String(o.id))),
+    ]);
     writeDemoTable('activity_custom_objectives', tables.activity_custom_objectives || []);
     writeDemoTable('eyfs_statements', tables.eyfs_statements || []);
-    writeDemoTable('branding_settings', []);
+    // Keep any other branding_settings rows from the snapshot, but always
+    // ensure year_group_sections is present so SettingsContext remote load
+    // does not rebuild defaults and wipe the transferred nesting.
+    const brandingRows = [...(tables.branding_settings || [])].filter(
+      (r) => r.key !== 'year_group_sections',
+    );
+    brandingRows.push({
+      key: 'year_group_sections',
+      data: { sections: demoSections },
+      updated_at: new Date().toISOString(),
+    });
+    writeDemoTable('branding_settings', brandingRows);
     writeDemoTable('timetable_classes', []);
     writeDemoTable('profiles', []);
 
@@ -553,7 +597,7 @@ export async function seedDemoData(): Promise<void> {
     }));
     localStorage.setItem('activity-stacks', JSON.stringify(activityStacks));
 
-    // ---- 7. Planner: snapshot plans + representative generated schedule ----
+    // ---- 7. Planner: snapshot plans + featured prototype schedule ----
     const plans: Row[] = [];
     for (const p of tables.lesson_plans || []) {
       plans.push({
@@ -576,31 +620,57 @@ export async function seedDemoData(): Promise<void> {
       });
     }
 
-    // A representative timetable for the current two weeks: different days,
-    // times, subjects, year groups and key stages, openable from the calendar.
+    // Curated prototype packs + partner units — first-class demo seed (same as
+    // LSO/ROH): always present after activate, starred, share setup* with hubs.
+    // Isolation from production Supabase is via demo mode, not “ephemeral packs”.
+    await Promise.all([
+      setupLSOYear6Example({ force: true, registerPartnerPlanning: true }),
+      setupROHRomeoJuliet({ force: true, registerPartnerPlanning: true }),
+      setupKS3FourChords({ force: true }),
+      setupWTDBloodBrothers({ force: true, registerPartnerPlanning: true }),
+      setupOCRFilmComputerMusic({ force: true }),
+    ]);
+
+    const readLessonKeys = (storageKey: string): string[] => {
+      try {
+        const raw = localStorage.getItem(storageKey);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed.map(String) : [];
+      } catch {
+        return [];
+      }
+    };
+    const fourChordLessons = readLessonKeys('ccd-ks3-4chords-lesson-keys');
+    const bloodBrothersLessons = readLessonKeys('ccd-wtd-bb-lesson-keys');
+    const ocrFilmLessons = readLessonKeys('ccd-ocr-film-comp-lesson-keys');
+
+    // Featured prototype examples + representative mix across key stages.
     const monday = new Date();
     monday.setDate(monday.getDate() - ((monday.getDay() + 6) % 7)); // this week's Monday
     const scheduleSpec: { dayOffset: number; hour: number; minute: number; sheet: string; lessonNumber: string }[] = [
-      { dayOffset: 0, hour: 9, minute: 0, sheet: 'LKG', lessonNumber: '1' },
-      { dayOffset: 0, hour: 11, minute: 0, sheet: 'Year 9 Music', lessonNumber: '1' },
-      { dayOffset: 0, hour: 13, minute: 30, sheet: 'Year 10 Drama (GCSE)', lessonNumber: '1' },
-      { dayOffset: 1, hour: 9, minute: 30, sheet: 'Reception Drama', lessonNumber: '1' },
-      { dayOffset: 1, hour: 11, minute: 15, sheet: 'Year 6 Music', lessonNumber: '1' },
-      { dayOffset: 1, hour: 14, minute: 0, sheet: 'Year 11 Music (GCSE)', lessonNumber: '1' },
+      // Featured prototypes (high visibility) — KS3 4 Chords, AQA Blood Brothers, OCR Film/Computer
+      { dayOffset: 0, hour: 11, minute: 0, sheet: 'Year 8 Music', lessonNumber: fourChordLessons[0] || '1' },
+      { dayOffset: 0, hour: 14, minute: 0, sheet: 'Year 11 Drama (GCSE)', lessonNumber: bloodBrothersLessons[0] || '1' },
+      { dayOffset: 1, hour: 11, minute: 0, sheet: 'Year 10 Music (OCR)', lessonNumber: ocrFilmLessons[0] || '1' },
+      { dayOffset: 2, hour: 11, minute: 0, sheet: 'Year 8 Music', lessonNumber: fourChordLessons[1] || '2' },
+      { dayOffset: 3, hour: 14, minute: 0, sheet: 'Year 11 Drama (GCSE)', lessonNumber: bloodBrothersLessons[1] || '2' },
+      { dayOffset: 4, hour: 11, minute: 0, sheet: 'Year 10 Music (OCR)', lessonNumber: ocrFilmLessons[1] || '2' },
+      { dayOffset: 7, hour: 14, minute: 0, sheet: 'Year 11 Drama (GCSE)', lessonNumber: bloodBrothersLessons[2] || '3' },
+      { dayOffset: 8, hour: 11, minute: 0, sheet: 'Year 8 Music', lessonNumber: fourChordLessons[2] || '3' },
+      { dayOffset: 9, hour: 14, minute: 0, sheet: 'Year 10 Music (OCR)', lessonNumber: ocrFilmLessons[2] || '3' },
+      // EYFS / primary (ELG / Y6 objectives pre-attached — not secondary banks)
+      { dayOffset: 0, hour: 9, minute: 0, sheet: 'LKG', lessonNumber: '3' },
+      { dayOffset: 1, hour: 9, minute: 30, sheet: 'Reception Drama', lessonNumber: 'lesson1' },
+      { dayOffset: 1, hour: 14, minute: 0, sheet: 'Year 6 Music', lessonNumber: '1' },
       { dayOffset: 2, hour: 9, minute: 0, sheet: 'Lower Kindergarten Music', lessonNumber: '3' },
-      { dayOffset: 2, hour: 10, minute: 30, sheet: 'Year 1 Drama', lessonNumber: '1' },
-      { dayOffset: 2, hour: 13, minute: 0, sheet: 'Year 9 Drama', lessonNumber: '1' },
       { dayOffset: 3, hour: 9, minute: 45, sheet: 'UKG', lessonNumber: '1' },
-      { dayOffset: 3, hour: 11, minute: 30, sheet: 'Year 10 Music (GCSE)', lessonNumber: '1' },
-      { dayOffset: 3, hour: 14, minute: 15, sheet: 'Year 11 Drama (GCSE)', lessonNumber: '1' },
-      { dayOffset: 4, hour: 9, minute: 0, sheet: 'Year 2 Drama', lessonNumber: '1' },
-      { dayOffset: 4, hour: 10, minute: 45, sheet: 'Year 9 Music', lessonNumber: '2' },
-      { dayOffset: 7, hour: 9, minute: 0, sheet: 'Year 10 Drama (GCSE)', lessonNumber: '2' },
-      { dayOffset: 7, hour: 11, minute: 0, sheet: 'Lower Kindergarten Music', lessonNumber: '4' },
-      { dayOffset: 8, hour: 10, minute: 0, sheet: 'Year 11 Music (GCSE)', lessonNumber: '2' },
-      { dayOffset: 8, hour: 13, minute: 30, sheet: 'Year 9 Drama', lessonNumber: '2' },
       { dayOffset: 9, hour: 9, minute: 30, sheet: 'Reception', lessonNumber: '1' },
-      { dayOffset: 9, hour: 14, minute: 0, sheet: 'Year 10 Music (GCSE)', lessonNumber: '2' },
+      // Supporting KS3/KS4
+      { dayOffset: 2, hour: 13, minute: 0, sheet: 'Year 9 Drama', lessonNumber: '1' },
+      { dayOffset: 4, hour: 13, minute: 30, sheet: 'Year 9 Music', lessonNumber: '1' },
+      { dayOffset: 7, hour: 11, minute: 0, sheet: 'Lower Kindergarten Music', lessonNumber: '4' },
+      { dayOffset: 8, hour: 10, minute: 0, sheet: 'Year 11 Music (GCSE)', lessonNumber: '1' },
+      { dayOffset: 8, hour: 13, minute: 30, sheet: 'Year 9 Drama', lessonNumber: '2' },
     ];
 
     const lessonBundleCache: Record<string, Row | null> = {};

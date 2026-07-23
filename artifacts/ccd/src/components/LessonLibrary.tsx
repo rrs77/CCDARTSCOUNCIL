@@ -45,6 +45,38 @@ import { StandaloneLessonCreator } from './StandaloneLessonCreator';
 import { IndexCard } from './IndexCard';
 import { LessonPrintModal } from './LessonPrintModal';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
+import { PartnerPlanningPanel } from './partners/PartnerPlanningPanel';
+import { readLocalLessonSheet } from '../utils/hubSeedLocal';
+import type { PartnerPlanningPack } from '../utils/partnerPlanning';
+
+function formatPartnerSheetDisplay(sheetId: string): string {
+  if (sheetId === 'Year6') return 'Year 6';
+  if (sheetId === 'Year5') return 'Year 5';
+  if (/^Year\d+$/i.test(sheetId)) {
+    return sheetId.replace(/^(Year)(\d+)$/i, (_, y, n) => `Year ${n}`);
+  }
+  return sheetId;
+}
+
+function resolvePartnerLessonTitle(
+  pack: PartnerPlanningPack,
+  lessonKey: string,
+  currentSheet: string,
+  currentLessons: Record<string, { title?: string; lessonName?: string } | undefined>,
+): string {
+  if (pack.sheetId === currentSheet || !pack.sheetId) {
+    const local = currentLessons[lessonKey];
+    if (local?.title) return String(local.title);
+    if (local?.lessonName) return String(local.lessonName);
+  }
+  if (pack.sheetId) {
+    const sheet = readLocalLessonSheet(pack.sheetId);
+    const lesson = sheet?.allLessonsData?.[lessonKey];
+    if (lesson?.title) return String(lesson.title);
+    if (lesson?.lessonName) return String(lesson.lessonName);
+  }
+  return `Lesson ${lessonKey}`;
+}
 
 // Helper function to safely render HTML content
 const renderHtmlContent = (htmlContent: any) => {
@@ -93,7 +125,8 @@ export function LessonLibrary({
   const { 
     lessonNumbers, 
     allLessonsData, 
-    currentSheetInfo, 
+    currentSheetInfo,
+    setCurrentSheetInfo,
     currentAcademicYear,
     halfTerms, 
     getLessonsForHalfTerm,
@@ -809,6 +842,96 @@ export function LessonLibrary({
     }
   };
 
+  const handlePartnerLessonClick = (pack: PartnerPlanningPack, lessonKey: string) => {
+    const targetSheet = pack.sheetId;
+    if (targetSheet && targetSheet !== currentSheetInfo.sheet) {
+      setCurrentSheetInfo({
+        sheet: targetSheet,
+        display: formatPartnerSheetDisplay(targetSheet),
+        eyfs: `${targetSheet} Statements`,
+      });
+      toast.success(
+        `Switched to ${formatPartnerSheetDisplay(targetSheet)} — open Lesson ${lessonKey} from the list or partner planning`,
+      );
+      return;
+    }
+    if (allLessonsData[lessonKey]) {
+      handleLessonClick(lessonKey);
+      return;
+    }
+    toast.error(
+      `Lesson ${lessonKey} is not in this class library yet. Switch to ${
+        targetSheet ? formatPartnerSheetDisplay(targetSheet) : 'the matching year group'
+      } or re-add the pack from Partner Hubs.`,
+    );
+  };
+
+  const renderPartnerPlanningLessons = (pack: PartnerPlanningPack) => {
+    const keys = pack.lessonKeys || [];
+    if (!keys.length) return null;
+    return (
+      <div className="border-b border-gray-100 px-2 py-2 space-y-1">
+        <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-teal-800/80">
+          Lesson plans
+          {pack.sheetId ? (
+            <span className="ml-1 font-normal normal-case tracking-normal text-gray-500">
+              · {formatPartnerSheetDisplay(pack.sheetId)}
+            </span>
+          ) : null}
+        </p>
+        <ul className="space-y-1">
+          {keys.map((lessonKey) => {
+            const title = resolvePartnerLessonTitle(
+              pack,
+              lessonKey,
+              currentSheetInfo.sheet,
+              allLessonsData,
+            );
+            const onCurrentSheet =
+              !pack.sheetId || pack.sheetId === currentSheetInfo.sheet;
+            const available = onCurrentSheet
+              ? Boolean(allLessonsData[lessonKey])
+              : Boolean(readLocalLessonSheet(pack.sheetId!)?.allLessonsData?.[lessonKey]);
+            return (
+              <li key={`${pack.projectId}-${lessonKey}`}>
+                <button
+                  type="button"
+                  onClick={() => handlePartnerLessonClick(pack, lessonKey)}
+                  className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-teal-50 transition-colors"
+                >
+                  <span className="mt-0.5 shrink-0 rounded bg-teal-100 px-1.5 py-0.5 text-[11px] font-semibold text-teal-800">
+                    {lessonKey}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block font-medium text-gray-900 leading-snug">{title}</span>
+                    {!available ? (
+                      <span className="block text-xs text-amber-700">
+                        Not found in local sheet — re-add from Partner Hubs if needed
+                      </span>
+                    ) : !onCurrentSheet ? (
+                      <span className="block text-xs text-gray-500">
+                        Opens {formatPartnerSheetDisplay(pack.sheetId!)} library
+                      </span>
+                    ) : null}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      </div>
+    );
+  };
+
+  const partnerPlanningPanel = (
+    <PartnerPlanningPanel
+      className="mb-6"
+      mode="lessons"
+      activities={allActivities || []}
+      renderLessons={renderPartnerPlanningLessons}
+    />
+  );
+
   const handleAssignToHalfTerm = (lessonNumber: string, halfTermId: string) => {
     console.log('LessonLibrary: Assigning lesson', lessonNumber, 'to half-term', halfTermId);
     if (onAssignToUnit) {
@@ -885,7 +1008,9 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
             </div>
           </div>
         </div>
-        <div className="p-8 text-center">
+        <div className="p-8">
+          {partnerPlanningPanel}
+          <div className="text-center">
           <BookOpen className="h-16 w-16 text-gray-300 mx-auto mb-4" />
           <p className="text-gray-600 mb-2">No lessons found for {currentSheetInfo.display}.</p>
           <p className="text-sm text-gray-500 mb-4">Use the "Create Lesson" button above to get started, or refresh to load from the server.</p>
@@ -907,6 +1032,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
             <RotateCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Loading…' : 'Refresh'}
           </button>
+          </div>
         </div>
       {/* Standalone Lesson Creator Modal */}
       {showStandaloneLessonCreator && (
@@ -1016,6 +1142,8 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
 
 
       <div className="p-8">
+        {!showTrash && partnerPlanningPanel}
+
         {/* Lesson Stacks (collapsible unit) – assign to term; add to calendar splits over timetable days */}
         {!showTrash && (
           <div className="mb-6 border border-gray-200 rounded-xl bg-gray-50 overflow-hidden">

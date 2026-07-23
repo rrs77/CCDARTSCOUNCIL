@@ -39,6 +39,8 @@ import {
   categoryAssignedToYearGroupKeys,
   resolveYearGroupMatchKeys,
 } from '../utils/yearGroupMatchKeys';
+import { PartnerPlanningPanel } from './partners/PartnerPlanningPanel';
+import { getActivityStarKey } from '../utils/activityStars';
 
 // Define half-term periods
 const HALF_TERMS = [
@@ -1036,7 +1038,58 @@ export function LessonPlanBuilder({
                 )}
 
                 {/* Activity List - Grouped by Category */}
-                <div className="p-3 pt-6 flex-1 overflow-y-auto min-h-0">
+                <div className="p-3 pt-3 flex-1 overflow-y-auto min-h-0">
+                  <PartnerPlanningPanel
+                    className="mb-4"
+                    compact
+                    activities={allActivities}
+                    activityFilter={(activity) =>
+                      activityVisibleForYearGroup({
+                        activityCategory: activity.category,
+                        availableCategoriesForYearGroup,
+                        activityYearGroups: activity.yearGroups,
+                        yearGroupKeys: getCurrentYearGroupKeys(),
+                        normalizeKey,
+                      })
+                    }
+                    renderLessons={(pack) =>
+                      pack.lessonKeys?.length ? (
+                        <div className="border-b border-gray-100 px-2 py-1.5 text-xs text-gray-600">
+                          Lesson plans on sheet{' '}
+                          <span className="font-medium text-gray-800">
+                            {pack.sheetId || '—'}
+                          </span>
+                          : {pack.lessonKeys.join(', ')}
+                        </div>
+                      ) : null
+                    }
+                    renderActivity={({ activity }) => {
+                      const activityId = `${activity.activity}-${activity.category}`;
+                      const isSelected = selectedActivities.includes(activityId);
+                      return (
+                        <ActivityCard
+                          key={getActivityStarKey(activity)}
+                          activity={activity}
+                          viewMode="compact"
+                          draggable={true}
+                          selectable={true}
+                          isSelected={isSelected}
+                          onSelectionChange={(_id, selected) => {
+                            if (selected) {
+                              if (!selectedActivities.includes(activityId)) {
+                                toggleActivitySelection(activityId);
+                              }
+                            } else if (selectedActivities.includes(activityId)) {
+                              toggleActivitySelection(activityId);
+                            }
+                          }}
+                          categoryColor={
+                            categories.find((c) => c.name === activity.category)?.color || '#6B7280'
+                          }
+                        />
+                      );
+                    }}
+                  />
                   {(groupedActivitiesByCategory.sortedCategories?.length ?? 0) === 0 ? (
                     <div className="text-center py-8 space-y-2">
                       <p className="text-gray-500">No matching activities found</p>

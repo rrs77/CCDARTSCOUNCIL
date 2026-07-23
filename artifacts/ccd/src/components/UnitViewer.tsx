@@ -994,167 +994,161 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
 
   // Default view - half-term cards
   return (
-      <div key={refreshKey} className="min-h-screen" style={{ backgroundColor: '#F9FAFB' }}>
+      <div key={refreshKey} className="min-h-screen" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-          {/* Clean White Header Card */}
-          <div className="bg-white rounded-card shadow-soft border border-gray-200 mb-6 sm:mb-8 p-4 sm:p-6 md:p-7">
-            <div className="text-gray-900">
-              <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-                <div className="flex-shrink-0 min-w-0">
-                  <h2 
-                    className="text-xl sm:text-2xl font-semibold text-gray-900 mb-1"
-                    style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-                  >
-                    Half-Term Designer
-                  </h2>
-                  <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                    <span className="text-xs sm:text-sm font-normal text-gray-600">
-                      Academic Year {currentAcademicYear}
-                    </span>
-                    {(() => {
-                      // Academic year runs Sept–Aug: current year is 2025-2026 until Sept 2026, then 2026-2027
-                      const now = new Date();
-                      const month = now.getMonth(); // 0=Jan, 8=Sep
-                      const year = now.getFullYear();
-                      const currentSchoolYear = month >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-                      return currentAcademicYear === currentSchoolYear && (
-                        <span className="text-xs font-medium px-2 sm:px-3 py-1 rounded-full whitespace-nowrap" style={{ backgroundColor: '#F0FDFA', color: '#0F766E' }}>
-                          Current Year
-                        </span>
-                      );
-                    })()}
-                  </div>
-                </div>
-                
-                <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch xl:items-center xl:flex-initial xl:max-w-none">
-                  {/* Year Navigation Arrows */}
-                  <div className="flex items-center gap-2 flex-shrink-0">
-                    <button
-                      onClick={() => {
-                        const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
-                        const canGoBack = currentIndex < getAvailableYears().length - 1;
-                        if (canGoBack) {
-                          handleYearChange(getAvailableYears()[currentIndex + 1]);
-                        }
+          <div className="bg-white rounded-card shadow-soft mb-6 sm:mb-8 p-4 sm:p-6 md:p-7">
+              <div className="text-gray-900">
+                <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
+                  <div className="flex-shrink-0 min-w-0">
+                    <h2
+                      className="text-xl sm:text-2xl font-semibold mb-1 tracking-tight"
+                      style={{
+                        fontFamily: '"Playfair Display", Georgia, serif',
+                        color: '#002D24',
                       }}
-                      disabled={getAvailableYears().indexOf(currentAcademicYear) >= getAvailableYears().length - 1}
-                      className="w-8 h-8 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center transition-colors duration-200 hover:border-teal-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                      style={{ color: '#6B7280' }}
-                      title="View previous academic year"
                     >
-                      <ChevronLeft className="h-4 w-4" />
-                    </button>
-                    
-                    <button
-                      onClick={() => {
-                        const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
-                        const canGoForward = currentIndex > 0;
-                        if (canGoForward) {
-                          handleYearChange(getAvailableYears()[currentIndex - 1]);
-                        }
-                      }}
-                      disabled={getAvailableYears().indexOf(currentAcademicYear) <= 0}
-                      className="w-8 h-8 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center transition-colors duration-200 hover:border-teal-600 hover:text-teal-600 disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                      style={{ color: '#6B7280' }}
-                      title="Return to more recent year"
-                    >
-                      <ChevronRight className="h-4 w-4" />
-                    </button>
-                  </div>
-                  
-                  {/* Copy Term Button */}
-                  <button
-                    onClick={() => setShowTermCopyModal(true)}
-                    className="px-3 sm:px-4 py-2 text-white rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 touch-manipulation min-h-[36px] sm:min-h-[40px]"
-                    style={{ 
-                      backgroundColor: '#14B8A6', 
-                      fontWeight: 500,
-                      userSelect: 'none',
-                      WebkitUserSelect: 'none',
-                      WebkitTapHighlightColor: 'transparent'
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = '#0D9488';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = '#14B8A6';
-                    }}
-                    onTouchStart={(e) => {
-                      e.currentTarget.style.backgroundColor = '#0D9488';
-                    }}
-                    onTouchEnd={(e) => {
-                      e.currentTarget.style.backgroundColor = '#14B8A6';
-                    }}
-                  >
-                    <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                    <span style={{ fontWeight: 500, userSelect: 'none', whiteSpace: 'nowrap' }}>Copy Term</span>
-                  </button>
-                  
-                  {/* Search field */}
-                  <div className="relative flex-1 sm:flex-initial sm:min-w-[180px] sm:max-w-[240px]">
-                    <div className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ width: '16px', height: '16px' }}>
-                      <svg 
-                        viewBox="0 0 80 80" 
-                        className="w-full h-full"
-                        style={{ fill: 'none' }}
-                      >
-                        <defs>
-                          <linearGradient id="searchBarGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#14B8A6" />
-                            <stop offset="50%" stopColor="#0D9488" />
-                            <stop offset="100%" stopColor="#008272" />
-                          </linearGradient>
-                        </defs>
-                        <circle
-                          cx="40"
-                          cy="40"
-                          r="38"
-                          fill="url(#searchBarGradient)"
-                        />
-                        <text
-                          x="40"
-                          y="40"
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          fill="white"
-                          fontSize="28"
-                          fontWeight="700"
-                          fontFamily="Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-                          letterSpacing="-1"
-                        >
-                          CCD
-                        </text>
-                      </svg>
+                      Half-Term Designer
+                    </h2>
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                      <span className="text-xs sm:text-sm font-normal text-gray-600">
+                        Academic Year {currentAcademicYear}
+                      </span>
+                      {(() => {
+                        // Academic year runs Sept–Aug: current year is 2025-2026 until Sept 2026, then 2026-2027
+                        const now = new Date();
+                        const month = now.getMonth(); // 0=Jan, 8=Sep
+                        const year = now.getFullYear();
+                        const currentSchoolYear = month >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+                        return currentAcademicYear === currentSchoolYear && (
+                          <span
+                            className="text-xs font-medium px-2 sm:px-3 py-1 rounded-full whitespace-nowrap border"
+                            style={{
+                              backgroundColor: 'rgba(182, 255, 126, 0.35)',
+                              borderColor: 'rgba(0, 45, 36, 0.2)',
+                              color: '#002D24',
+                            }}
+                          >
+                            Current Year
+                          </span>
+                        );
+                      })()}
                     </div>
-                    <input
-                      type="text"
-                      placeholder="Search units..."
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full sm:w-48 pl-10 pr-4 border border-gray-300 rounded-lg text-xs sm:text-sm transition-all duration-200 touch-manipulation"
-                      style={{ 
-                        height: '36px',
-                        minHeight: '36px',
-                        fontSize: '14px',
-                        color: '#111827',
-                        backgroundColor: 'white',
-                        WebkitAppearance: 'none',
-                        appearance: 'none'
+                  </div>
+
+                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch xl:items-center xl:flex-initial xl:max-w-none">
+                    {/* Year Navigation Arrows */}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button
+                        onClick={() => {
+                          const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
+                          const canGoBack = currentIndex < getAvailableYears().length - 1;
+                          if (canGoBack) {
+                            handleYearChange(getAvailableYears()[currentIndex + 1]);
+                          }
+                        }}
+                        disabled={getAvailableYears().indexOf(currentAcademicYear) >= getAvailableYears().length - 1}
+                        className="w-8 h-8 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                        style={{ color: '#6B7280' }}
+                        title="View previous academic year"
+                      >
+                        <ChevronLeft className="h-4 w-4" />
+                      </button>
+
+                      <button
+                        onClick={() => {
+                          const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
+                          const canGoForward = currentIndex > 0;
+                          if (canGoForward) {
+                            handleYearChange(getAvailableYears()[currentIndex - 1]);
+                          }
+                        }}
+                        disabled={getAvailableYears().indexOf(currentAcademicYear) <= 0}
+                        className="w-8 h-8 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
+                        style={{ color: '#6B7280' }}
+                        title="Return to more recent year"
+                      >
+                        <ChevronRight className="h-4 w-4" />
+                      </button>
+                    </div>
+
+                    {/* Copy Term Button — lime primary (login brand) */}
+                    <button
+                      onClick={() => setShowTermCopyModal(true)}
+                      className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-opacity duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-[#002D24]/30 focus:ring-offset-2 touch-manipulation min-h-[36px] sm:min-h-[40px] hover:opacity-90"
+                      style={{
+                        backgroundColor: '#B6FF7E',
+                        color: '#002D24',
+                        fontWeight: 600,
+                        userSelect: 'none',
+                        WebkitUserSelect: 'none',
+                        WebkitTapHighlightColor: 'transparent',
                       }}
-                      onFocus={(e) => {
-                        e.target.style.borderColor = 'transparent';
-                        e.target.style.boxShadow = '0 0 0 2px #14B8A6';
-                      }}
-                      onBlur={(e) => {
-                        e.target.style.borderColor = '#D1D5DB';
-                        e.target.style.boxShadow = 'none';
-                      }}
-                      dir="ltr"
-                    />
+                    >
+                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span style={{ fontWeight: 600, userSelect: 'none', whiteSpace: 'nowrap' }}>Copy Term</span>
+                    </button>
+
+                    {/* Search field */}
+                    <div className="relative flex-1 sm:flex-initial sm:min-w-[180px] sm:max-w-[240px]">
+                      <div className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ width: '16px', height: '16px' }}>
+                        <svg
+                          viewBox="0 0 80 80"
+                          className="w-full h-full"
+                          style={{ fill: 'none' }}
+                        >
+                          <circle cx="40" cy="40" r="38" fill="#002D24" />
+                          <circle
+                            cx="40"
+                            cy="40"
+                            r="34"
+                            fill="none"
+                            stroke="#B6FF7E"
+                            strokeWidth="3"
+                          />
+                          <text
+                            x="40"
+                            y="40"
+                            textAnchor="middle"
+                            dominantBaseline="central"
+                            fill="white"
+                            fontSize="28"
+                            fontWeight="700"
+                            fontFamily="Inter, -apple-system, BlinkMacSystemFont, sans-serif"
+                            letterSpacing="-1"
+                          >
+                            CCD
+                          </text>
+                        </svg>
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Search units..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="w-full sm:w-48 pl-10 pr-4 border border-gray-300 rounded-lg text-xs sm:text-sm transition-all duration-200 touch-manipulation"
+                        style={{
+                          height: '36px',
+                          minHeight: '36px',
+                          fontSize: '14px',
+                          color: '#111827',
+                          backgroundColor: 'white',
+                          WebkitAppearance: 'none',
+                          appearance: 'none',
+                        }}
+                        onFocus={(e) => {
+                          e.target.style.borderColor = 'transparent';
+                          e.target.style.boxShadow = '0 0 0 2px #002D24';
+                        }}
+                        onBlur={(e) => {
+                          e.target.style.borderColor = '#D1D5DB';
+                          e.target.style.boxShadow = 'none';
+                        }}
+                        dir="ltr"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
           </div>
 
           {/* Focused Half-Term Indicator */}
@@ -1179,7 +1173,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
           {/* Half-Term Cards Grid */}
           {loading ? (
             <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-teal-600"></div>
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002D24]"></div>
               <span className="ml-3 text-gray-600">Loading half-terms...</span>
             </div>
           ) : (

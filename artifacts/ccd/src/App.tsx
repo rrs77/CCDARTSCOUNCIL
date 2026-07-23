@@ -16,31 +16,50 @@ import { HelpGuide } from './components/HelpGuide';
 import { SchoolHomepage } from './components/SchoolHomepage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
+import { getPartnerHubForPath } from './config/partnerHubs';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
-import { isDemoModeActive } from './utils/demoMode';
+import { shouldShowPreviewBanner } from './utils/demoMode';
 import './utils/setupKS1Maths'; // Make setupKS1MathsExample available in browser console
 import './utils/setupDanceObjectives'; // Make setupDanceObjectives available in browser console
 import './utils/setupSecondaryDramaObjectives'; // Make setupSecondaryDramaObjectives available in browser console
 import './utils/addForParentsToLKG'; // Make addForParentsToLKG available in browser console
 import './utils/addLKGActivitiesToAllYearGroups'; // Make addLKGActivitiesToAllYearGroups available in browser console
 import './utils/setupLSOYear6'; // Seed LSO Year 6 example (categories, activities, lesson stack)
+import './utils/setupROHRomeoJuliet'; // ROH Romeo and Juliet KS2 seed (on-demand + console)
+import './utils/setupWTDBloodBrothers'; // We Teach Drama Blood Brothers GCSE seed
+import './utils/setupWeTeachDramaPacks'; // We Teach Drama hub packs (cover, design, practitioners)
+import './utils/setupKS3FourChords'; // KS3 4 Chords prototype seed
+import './utils/setupOCRFilmComputerMusic'; // OCR Film & Computer Music prototype seed
+import './utils/setupEMSSchoolsExample'; // Essex Music Service schools brochure seed
+import './utils/setupICCGettingStarted'; // iCompose Getting Started seed
+import './utils/setupDramaResourceExample'; // Drama Resource Ten Second Objects seed
+import { RohPartnerHub } from './components/partners/RohPartnerHub';
+import { WtdPartnerHub } from './components/partners/WtdPartnerHub';
+import { EmsPartnerHub } from './components/partners/EmsPartnerHub';
+import { IccPartnerHub } from './components/partners/IccPartnerHub';
+import { DramaResourcePartnerHub } from './components/partners/DramaResourcePartnerHub';
+import { PartnerHubPage } from './components/partners/PartnerHubPage';
+import { PartnerResourcesHub } from './components/partners/PartnerResourcesHub';
+import { LsoPartnerHub } from './components/partners/LsoPartnerHub';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
+  const partnerHub =
+    typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
 
-  // If an authenticated user lands on a school homepage URL (e.g. came back
-  // via a bookmarked `/oakhill`), clean the URL back to `/` so a hard
-  // refresh doesn't briefly flash the public homepage before resolving auth.
+  // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
+  // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
   useEffect(() => {
     if (
       user &&
       schoolHomepage &&
+      !partnerHub &&
       typeof window !== 'undefined' &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
     }
-  }, [user, schoolHomepage]);
+  }, [user, schoolHomepage, partnerHub]);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
@@ -91,7 +110,93 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     setShowHelpGuide(true);
   };
 
-  const inPreview = isDemoModeActive();
+  const showPreviewBanner = shouldShowPreviewBanner();
+
+  // Mini partner hubs at /roh, /lso, /ems, etc. (signed-in) — school-homepage style chrome
+  if (partnerHub) {
+    const goHomeAfterAdd = (key: string, sheetId: string, tab = 'lesson-library') => {
+      try {
+        sessionStorage.setItem(key, JSON.stringify({ sheetId, tab }));
+      } catch {
+        /* ignore */
+      }
+      window.location.assign('/');
+    };
+
+    let body: React.ReactNode;
+    switch (partnerHub.slug) {
+      case 'roh':
+        body = (
+          <RohPartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-roh', sheetId)}
+          />
+        );
+        break;
+      case 'lso':
+        body = (
+          <LsoPartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) =>
+              goHomeAfterAdd('ccd-open-after-partner', sheetId, 'activity-library')
+            }
+          />
+        );
+        break;
+      case 'weteachdrama':
+      case 'wtd':
+        body = (
+          <WtdPartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
+          />
+        );
+        break;
+      case 'ems':
+        body = (
+          <EmsPartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
+          />
+        );
+        break;
+      case 'icompose':
+      case 'icancompose':
+        body = (
+          <IccPartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
+          />
+        );
+        break;
+      case 'dramaresource':
+      case 'davidfarmer':
+        body = (
+          <DramaResourcePartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
+          />
+        );
+        break;
+      case 'sadlerswells':
+      case 'tate':
+      case 'nationaltheatre':
+      case 'bbctenpieces':
+      case 'nationalgallery':
+        body = <PartnerResourcesHub hub={partnerHub} />;
+        break;
+      default:
+        body = <PartnerResourcesHub hub={partnerHub} />;
+    }
+
+    return (
+      <>
+        <Toaster position="top-right" />
+        {showPreviewBanner && <PreviewBanner />}
+        <PartnerHubPage hub={partnerHub}>{body}</PartnerHubPage>
+      </>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -118,9 +223,9 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
           },
         }}
       />
-      {inPreview && <PreviewBanner />}
+      {showPreviewBanner && <PreviewBanner />}
       <Header />
-      <main className={`flex-1 pb-20 ${inPreview ? 'pt-[calc(3.5rem+var(--preview-banner-height,0px))] sm:pt-[calc(4rem+var(--preview-banner-height,0px))]' : 'pt-14 sm:pt-16'}`}>
+      <main className={`flex-1 pb-20 ${showPreviewBanner ? 'pt-[calc(3.5rem+var(--preview-banner-height,0px))] sm:pt-[calc(4rem+var(--preview-banner-height,0px))]' : 'pt-14 sm:pt-16'}`}>
         <Dashboard />
       </main>
       <Footer />
@@ -142,11 +247,13 @@ function App() {
     );
   }
 
-  // Detect a school-specific public homepage at `/<slug>`. The component is
-  // only shown to logged-out visitors so authenticated users always land in
-  // the main app regardless of which URL they originally arrived through.
+  const partnerHub =
+    typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+
+  // Detect a school-specific public homepage at `/<slug>`. Skip when the path
+  // is a partner hub (`/roh`, …) so those routes are not treated as schools.
   const schoolHomepage =
-    typeof window !== 'undefined'
+    typeof window !== 'undefined' && !partnerHub
       ? getSchoolForPath(window.location.pathname)
       : null;
 

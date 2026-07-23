@@ -30,6 +30,8 @@ import { ActivityDetails } from './ActivityDetails';
 import { ActivityDetailsModal } from './ActivityDetailsModal';
 import { openActivityResource } from '../utils/openActivityResource';
 import { isLsoLibraryCategory, LSO_LOGO_SRC } from '../utils/lsoBranding';
+import { isRohLibraryCategory, ROH_LOGO_SRC } from '../utils/rohBranding';
+import { isWtdLibraryCategory, WTD_LOGO_SRC } from '../utils/wtdBranding';
 import { ActivityImporter } from './ActivityImporter';
 import { ActivityCreator } from './ActivityCreator';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
@@ -48,12 +50,34 @@ import {
   categoryAssignedToYearGroupKeys,
   resolveYearGroupMatchKeys,
 } from '../utils/yearGroupMatchKeys';
+import { isDemoModeActive } from '../utils/demoMode';
+import {
+  CCD_ACTIVITY_STARS_UPDATED_EVENT,
+  getActivityStarKey,
+  readLocalStarPrefs,
+  writeLocalStarPrefs,
+} from '../utils/activityStars';
+import { readHubSeededActivitiesFromLocal } from '../utils/hubSeedLocal';
+import { PartnerPlanningPanel } from './partners/PartnerPlanningPanel';
 
-/** Stable key for starring (prefer DB id). */
-function getActivityStarKey(activity: Activity): string {
-  if (activity._id) return String(activity._id);
-  if (activity.id) return String(activity.id);
-  return `h:${activity.activity}::${activity.category || ''}`;
+/**
+ * True when curated demo/hub seed packs are present in the session store.
+ * Keep star prefs in the session (do not overwrite with / push to production).
+ */
+function hasLocalHubSeedMarkers(): boolean {
+  try {
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i) || '';
+      if (
+        /^ccd-(roh|lso|wtd|ks3|ocr)-.*seeded/.test(k) &&
+        localStorage.getItem(k) === '1'
+      )
+        return true;
+    }
+    return readHubSeededActivitiesFromLocal().length > 0;
+  } catch {
+    return false;
+  }
 }
 
 interface ActivityLibraryProps {
@@ -183,14 +207,31 @@ export function ActivityLibrary({
   const [historyRedoStack, setHistoryRedoStack] = useState<ActivityHistoryAction[]>([]);
   const [isApplyingHistory, setIsApplyingHistory] = useState(false);
 
-  const [starredIds, setStarredIds] = useState<Set<string>>(new Set());
-  const [globalStarredFirst, setGlobalStarredFirst] = useState(false);
-  const [starredFirstCategories, setStarredFirstCategories] = useState<Set<string>>(new Set());
+  const [starredIds, setStarredIds] = useState<Set<string>>(() => new Set(readLocalStarPrefs().starredIds));
+  const [globalStarredFirst, setGlobalStarredFirst] = useState(() => readLocalStarPrefs().globalStarredFirst);
+  const [starredFirstCategories, setStarredFirstCategories] = useState<Set<string>>(
+    () => new Set(readLocalStarPrefs().starredFirstCategories),
+  );
   const [hasLoadedStarPrefs, setHasLoadedStarPrefs] = useState(false);
+
+  // Partner hub seeds write stars to localStorage — keep React state in sync.
+  useEffect(() => {
+    const applyLocal = () => {
+      const local = readLocalStarPrefs();
+      setStarredIds(new Set(local.starredIds));
+      setStarredFirstCategories(new Set(local.starredFirstCategories));
+      setGlobalStarredFirst(local.globalStarredFirst);
+    };
+    const onStarsUpdated = () => applyLocal();
+    window.addEventListener(CCD_ACTIVITY_STARS_UPDATED_EVENT, onStarsUpdated);
+    return () => window.removeEventListener(CCD_ACTIVITY_STARS_UPDATED_EVENT, onStarsUpdated);
+  }, []);
 
   useEffect(() => {
     const loadStarPrefsFromSupabase = async () => {
-      if (!user?.id || !isSupabaseConfigured()) {
+      // Demo / hub seed packs: keep star prefs in the session store — never
+      // pull production profile stars over curated demo stars.
+      if (isDemoModeActive() || hasLocalHubSeedMarkers() || !user?.id || !isSupabaseConfigured()) {
         setHasLoadedStarPrefs(true);
         return;
       }
@@ -207,18 +248,23 @@ export function ActivityLibrary({
         }
 
         const remoteStarredIds = Array.isArray(data?.starred_activity_ids)
-          ? new Set((data?.starred_activity_ids || []).map(String))
+          ? (data?.starred_activity_ids || []).map(String)
           : null;
         const remoteStarredCategories = Array.isArray(data?.starred_first_activity_categories)
-          ? new Set((data?.starred_first_activity_categories || []).map(String))
+          ? (data?.starred_first_activity_categories || []).map(String)
           : null;
         const remoteGlobal = typeof data?.starred_first_activity_global === 'boolean'
           ? data.starred_first_activity_global
           : null;
 
-        if (remoteStarredIds) setStarredIds(remoteStarredIds);
-        if (remoteStarredCategories) setStarredFirstCategories(remoteStarredCategories);
-        if (remoteGlobal !== null) setGlobalStarredFirst(remoteGlobal);
+        // Union with local so hub-seeded stars are not wiped by an empty/older remote.
+        if (remoteStarredIds) {
+          setStarredIds((prev) => new Set([...prev, ...remoteStarredIds]));
+        }
+        if (remoteStarredCategories) {
+          setStarredFirstCategories((prev) => new Set([...prev, ...remoteStarredCategories]));
+        }
+        if (remoteGlobal === true) setGlobalStarredFirst(true);
       } catch (e) {
         if (import.meta.env.DEV) console.warn('Error loading star prefs from Supabase:', e);
       } finally {
@@ -230,7 +276,15 @@ export function ActivityLibrary({
   }, [user?.id]);
 
   useEffect(() => {
-    if (!hasLoadedStarPrefs || !user?.id || !isSupabaseConfigured()) return;
+    if (!hasLoadedStarPrefs) return;
+    // Always mirror to localStorage (hub seeds + offline / demo).
+    writeLocalStarPrefs({
+      starredIds: [...starredIds],
+      starredFirstCategories: [...starredFirstCategories],
+      globalStarredFirst,
+    });
+    // Demo / hub seed packs: do not sync star prefs to production Supabase.
+    if (isDemoModeActive() || hasLocalHubSeedMarkers() || !user?.id || !isSupabaseConfigured()) return;
     const timeout = setTimeout(async () => {
       try {
         const { error } = await supabase
@@ -1030,6 +1084,33 @@ export function ActivityLibrary({
             )}
           </div>
         )}
+        <PartnerPlanningPanel
+          className="mb-4"
+          activities={allActivities}
+          activityFilter={(activity) =>
+            activityVisibleForYearGroup({
+              activityCategory: activity.category,
+              availableCategoriesForYearGroup,
+              activityYearGroups: activity.yearGroups,
+              yearGroupKeys: getCurrentYearGroupKeys(),
+              normalizeKey,
+            })
+          }
+          renderActivity={({ activity }) => {
+            const isStarred = starredIds.has(getActivityStarKey(activity));
+            return (
+              <ActivityCard
+                key={getActivityStarKey(activity)}
+                activity={activity}
+                onActivityClick={() => onActivitySelect(activity)}
+                categoryColor={getCategoryColor(activity.category)}
+                viewMode="compact"
+                isStarred={isStarred}
+                onStarToggle={() => toggleActivityStarred(activity)}
+              />
+            );
+          }}
+        />
         {loading || dataLoading ? (
           <div className="text-center py-8">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-purple-600 mx-auto mb-4"></div>
@@ -1087,6 +1168,28 @@ export function ActivityLibrary({
                       title="London Symphony Orchestra"
                     >
                       <img src={LSO_LOGO_SRC} alt="LSO" className="h-6 w-auto" />
+                    </div>
+                  )}
+                  {isRohLibraryCategory(group.name) && (
+                    <div
+                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+                      style={{ backgroundColor: '#1a1033' }}
+                      title="Royal Ballet and Opera"
+                    >
+                      <img
+                        src={ROH_LOGO_SRC}
+                        alt="ROH"
+                        className="h-6 w-auto brightness-0 invert"
+                      />
+                    </div>
+                  )}
+                  {isWtdLibraryCategory(group.name) && (
+                    <div
+                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+                      style={{ backgroundColor: '#111111' }}
+                      title="We Teach Drama"
+                    >
+                      <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
                     </div>
                   )}
                   <h3 className="text-lg font-bold text-teal-700">{group.name}</h3>
@@ -1214,6 +1317,28 @@ export function ActivityLibrary({
                       title="London Symphony Orchestra"
                     >
                       <img src={LSO_LOGO_SRC} alt="LSO" className="h-6 w-auto" />
+                    </div>
+                  )}
+                  {isRohLibraryCategory(group.name) && (
+                    <div
+                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+                      style={{ backgroundColor: '#1a1033' }}
+                      title="Royal Ballet and Opera"
+                    >
+                      <img
+                        src={ROH_LOGO_SRC}
+                        alt="ROH"
+                        className="h-6 w-auto brightness-0 invert"
+                      />
+                    </div>
+                  )}
+                  {isWtdLibraryCategory(group.name) && (
+                    <div
+                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+                      style={{ backgroundColor: '#111111' }}
+                      title="We Teach Drama"
+                    >
+                      <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
                     </div>
                   )}
                   <h3 className="text-lg font-bold text-teal-700">{group.name}</h3>

@@ -1,39 +1,47 @@
 import { LogoSVG } from '../Logo';
 import { PartnerLogoStrip } from './PartnerLogoStrip';
 
+const HERO_IMAGE = '/login/hero-arts.jpg?v=ages-3';
+const HERO_SUPPORTING =
+  'Capture ideas. Build lessons. Connect with the best arts organisations. Share or sell your resources. Create inspiring learning experiences — EYFS to A-level.';
+
 interface LoginHeroPanelProps {
   logoLetters?: string;
-  compact?: boolean;
 }
 
-export function LoginHeroPanel({ logoLetters = 'CCD', compact = false }: LoginHeroPanelProps) {
+/**
+ * Full-bleed arts hero — image spans the whole stage so EYFS / KS3 / dance
+ * panels stay visible; login card floats over the right side on desktop.
+ */
+export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
   return (
-    <div
-      className={`relative flex w-full flex-col overflow-hidden text-white ${
-        compact
-          ? 'px-6 py-8 sm:px-8 sm:py-10'
-          : 'min-h-full px-8 py-10 lg:min-h-[520px] lg:px-14 lg:py-12 xl:px-16'
-      }`}
-      style={{ backgroundColor: '#002D24' }}
-    >
-      <HeroDecor />
+    <div className="relative h-full min-h-[300px] w-full overflow-hidden text-white sm:min-h-[340px] lg:min-h-full" style={{ backgroundColor: '#002D24' }}>
+      <img
+        src={HERO_IMAGE}
+        alt="EYFS percussion, KS3 drama, and a teenage dancer"
+        className="absolute inset-0 h-full w-full object-cover object-center"
+        decoding="async"
+      />
+      {/* Soft teal overlay for text readability — stronger left / bottom, image stays vivid */}
+      <div
+        aria-hidden
+        className="absolute inset-0"
+        style={{
+          background: `
+            linear-gradient(90deg, rgba(0,45,36,0.72) 0%, rgba(0,45,36,0.4) 48%, rgba(0,45,36,0.55) 100%),
+            linear-gradient(180deg, rgba(0,45,36,0.2) 0%, rgba(0,45,36,0.35) 50%, rgba(0,45,36,0.88) 100%)
+          `,
+        }}
+      />
 
-      <div className={`relative z-10 flex flex-1 flex-col ${compact ? 'gap-6' : 'justify-between gap-10 lg:min-h-[560px]'}`}>
-        <div
-          className={`flex flex-col ${
-            compact
-              ? 'items-start gap-5 text-left'
-              : 'flex-1 items-center justify-center gap-8 text-center lg:items-start lg:justify-center lg:text-left'
-          }`}
-        >
-          <LogoSVG size="hero" showText={false} letters={logoLetters} className="!space-x-0" />
+      <div className="relative z-10 flex h-full min-h-[300px] flex-col justify-between gap-8 px-5 py-6 sm:min-h-[340px] sm:px-8 sm:py-8 lg:min-h-full lg:max-w-[58%] lg:px-12 lg:py-12 xl:px-14">
+        <LogoSVG size="lg" showText={false} letters={logoLetters} className="!space-x-0" />
 
-          <div className={compact ? 'max-w-xl' : 'max-w-lg lg:max-w-xl'}>
+        <div className="flex flex-col gap-6 lg:gap-8">
+          <div className="max-w-xl">
             <h1
-              className={`font-semibold leading-[1.12] tracking-tight ${
-                compact ? 'text-[1.75rem] sm:text-[2rem]' : 'text-[2rem] sm:text-[2.35rem] lg:text-[2.65rem] xl:text-[2.85rem]'
-              }`}
-              style={{ fontFamily: 'Inter, system-ui, sans-serif' }}
+              className="text-[1.65rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2rem] lg:text-[2.45rem] xl:text-[2.7rem]"
+              style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
             >
               Exceptional lessons start with{' '}
               <span
@@ -44,49 +52,14 @@ export function LoginHeroPanel({ logoLetters = 'CCD', compact = false }: LoginHe
               </span>
             </h1>
 
-            <p
-              className={`mt-4 text-white/80 leading-relaxed ${
-                compact ? 'text-sm sm:text-base' : 'text-base sm:text-lg lg:max-w-md'
-              }`}
-            >
-              Capture ideas. Build lessons. Connect with the best arts organisations. Share or sell
-              your resources. Create inspiring learning experiences — EYFS to A-level.
+            <p className="mt-3 text-sm leading-relaxed text-white/90 sm:text-base lg:text-lg lg:max-w-md">
+              {HERO_SUPPORTING}
             </p>
           </div>
-        </div>
 
-        <PartnerLogoStrip compact={compact} />
+          <PartnerLogoStrip />
+        </div>
       </div>
     </div>
-  );
-}
-
-function HeroDecor() {
-  return (
-    <svg
-      aria-hidden
-      className="pointer-events-none absolute -left-4 top-0 h-48 w-48 opacity-70 sm:h-56 sm:w-56 lg:h-64 lg:w-64"
-      viewBox="0 0 240 240"
-      fill="none"
-    >
-      <path
-        d="M20 180 C 60 120, 100 200, 140 100 S 200 40, 220 20"
-        stroke="#B6FF7E"
-        strokeWidth="1.5"
-        strokeOpacity="0.35"
-        fill="none"
-      />
-      <path
-        d="M10 140 C 50 100, 90 160, 130 80 S 190 60, 210 40"
-        stroke="#B6FF7E"
-        strokeWidth="1"
-        strokeOpacity="0.22"
-        fill="none"
-      />
-      <circle cx="48" cy="52" r="4" fill="#B6FF7E" fillOpacity="0.55" />
-      <circle cx="112" cy="88" r="3" fill="#B6FF7E" fillOpacity="0.4" />
-      <circle cx="168" cy="36" r="5" fill="#B6FF7E" fillOpacity="0.5" />
-      <circle cx="196" cy="72" r="2.5" fill="#B6FF7E" fillOpacity="0.35" />
-    </svg>
   );
 }

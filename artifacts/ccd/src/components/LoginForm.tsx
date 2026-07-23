@@ -28,9 +28,10 @@ import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoData } from '../utils/demoSeed';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
 import { PrototypePasswordPrompt, isPrototypeUnlocked } from './PrototypeGate';
-import { AboutPrototypeModal } from './login/AboutPrototypeModal';
 import { LoginHeroPanel } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
+import { PrototypeWelcomeModal } from './login/PrototypeWelcomeModal';
+import { WELCOME_PROTOTYPE_STORAGE_KEY } from './login/prototypeCopy';
 import { LogoSVG, LOGO_BG } from './Logo';
 
 const LOGIN_GREEN = LOGO_BG;
@@ -54,12 +55,11 @@ export function LoginForm() {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState('');
   const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
-  const [showAboutPrototype, setShowAboutPrototype] = useState(false);
   const [showPrototypePassword, setShowPrototypePassword] = useState(false);
+  const [showWelcomePrototype, setShowWelcomePrototype] = useState(false);
 
   const branding = settings.branding || {};
   const logoLetters = branding.logoLetters || 'CCD';
-  const loginSubtitleUrl = branding.loginSubtitleUrl || 'https://www.rhythmstix.co.uk';
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -109,6 +109,23 @@ export function LoginForm() {
       });
   }, []);
 
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1') return;
+    } catch {
+      // sessionStorage may be unavailable; still show the notice
+    }
+    setShowWelcomePrototype(true);
+  }, []);
+
+  const dismissWelcomePrototype = () => {
+    try {
+      sessionStorage.setItem(WELCOME_PROTOTYPE_STORAGE_KEY, '1');
+    } catch {
+      // ignore
+    }
+    setShowWelcomePrototype(false);
+  };
   useEffect(() => {
     if (canInstall && !isInstalled) {
       const timer = setTimeout(() => {
@@ -181,9 +198,8 @@ export function LoginForm() {
 
   return (
     <div
-      className="relative flex min-h-screen flex-col overflow-hidden"
+      className="relative flex min-h-screen flex-col overflow-x-hidden"
       style={{
-        /* Soft writing-paper: cool-warm grey + fine tiled grain (not stretched noise). */
         backgroundColor: '#e9e7e3',
         backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.25' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.52 0 0 0 0 0.51 0 0 0 0 0.49 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
         backgroundRepeat: 'repeat',
@@ -192,242 +208,226 @@ export function LoginForm() {
     >
       <PrototypeNoticeBar />
       <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-4 lg:p-6">
-        <div className="mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-white sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.12)] lg:min-h-[calc(100vh-3.5rem)]">
-        <div className="flex flex-1 flex-col lg:flex-row">
-          {/* Mobile hero — compact */}
-          <div className="lg:hidden">
-            <LoginHeroPanel logoLetters={logoLetters} compact />
-          </div>
-
-          {/* Desktop hero */}
-          <div className="hidden lg:flex lg:w-[58%]">
+        <div className="relative mx-auto flex min-h-0 w-full max-w-[1440px] flex-1 flex-col overflow-hidden bg-[#002D24] sm:min-h-[calc(100vh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.18)] lg:min-h-[calc(100vh-3.5rem)]">
+          {/* Full-bleed hero — all three age panels visible across the stage */}
+          <div className="relative min-h-[300px] flex-1 sm:min-h-[340px] lg:absolute lg:inset-0 lg:min-h-0">
             <LoginHeroPanel logoLetters={logoLetters} />
           </div>
 
-          {/* Sign-in panel */}
-          <div className="flex flex-1 flex-col bg-white lg:w-[42%]">
-            <div className="flex items-center justify-end gap-2 px-5 pt-4 sm:px-8 lg:px-10">
-              {canInstall && !isInstalled && (
+          {/* Login card — stacks under hero on phone; floats over image on desktop */}
+          <div className="relative z-20 mx-4 -mt-10 mb-5 sm:mx-6 sm:-mt-12 sm:mb-6 lg:absolute lg:bottom-auto lg:left-auto lg:right-5 lg:top-1/2 lg:mx-0 lg:mb-0 lg:mt-0 lg:w-[min(320px,30%)] lg:-translate-y-1/2 xl:right-8 xl:w-[340px]">
+            <div className="overflow-hidden rounded-2xl border border-transparent bg-white shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:shadow-[0_20px_50px_rgba(0,0,0,0.25)]">
+              <div className="flex items-center justify-end gap-2 px-4 pt-3 sm:px-5 lg:px-5 lg:pt-3">
+                {canInstall && !isInstalled && (
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      await install();
+                    }}
+                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-white/60 hover:text-gray-700"
+                  >
+                    <Download className="h-4 w-4" />
+                    <span className="hidden sm:inline">Install</span>
+                  </button>
+                )}
                 <button
                   type="button"
-                  onClick={async () => {
-                    await install();
-                  }}
-                  className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                  onClick={() => setShowFeatureWalkthrough(true)}
+                  className="flex items-center gap-2 rounded-lg bg-[#B6FF7E] px-3 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
                 >
-                  <Download className="h-4 w-4" />
-                  <span className="hidden sm:inline">Install</span>
+                  <PlayCircle className="h-5 w-5 shrink-0 text-black" />
+                  <span>Feature walkthrough</span>
                 </button>
-              )}
-              <button
-                type="button"
-                onClick={() => setShowFeatureWalkthrough(true)}
-                className="flex items-center gap-2 rounded-lg bg-[#B6FF7E] px-3 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
-              >
-                <PlayCircle className="h-5 w-5 shrink-0 text-black" />
-                <span>Feature walkthrough</span>
-              </button>
-            </div>
+              </div>
 
-            <div className="flex flex-1 items-center justify-center px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-              <div className="w-full max-w-[380px]">
-                <LogoSVG size="sm" showText={false} letters={logoLetters} className="!space-x-0" />
-
-                <div className="mb-7 mt-5">
-                  <h2 className="text-2xl font-bold tracking-tight text-gray-900 sm:text-[1.65rem]">
-                    Welcome back
-                  </h2>
-                  <p className="mt-1 text-sm text-gray-500">Sign in to continue to your account.</p>
-                </div>
-
-                {showForgotPassword ? (
-                  <ForgotPasswordPanel
-                    forgotEmail={forgotEmail}
-                    setForgotEmail={setForgotEmail}
-                    forgotSent={forgotSent}
-                    forgotError={forgotError}
-                    forgotSubmitting={forgotSubmitting}
-                    onSubmit={handleForgotPassword}
-                    onBack={() => {
-                      setShowForgotPassword(false);
-                      setForgotSent(false);
-                      setForgotError('');
-                    }}
-                    inputClassName={inputClassName}
+              <div className="px-4 pb-5 pt-1 sm:px-5 sm:pb-6 lg:px-5 lg:pb-6">
+                <div className="w-full">
+                  {/* Logo on phone/tablet form only — desktop already has the hero mark */}
+                  <LogoSVG
+                    size="sm"
+                    showText={false}
+                    letters={logoLetters}
+                    className="!space-x-0 lg:hidden"
                   />
-                ) : (
-                  <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-                    <div>
-                      <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-gray-700">
-                        Email address
-                      </label>
-                      <div className="relative">
-                        <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input
-                          id="login-email"
-                          type="email"
-                          autoComplete="email"
-                          value={username}
-                          onChange={(e) => setUsername(e.target.value)}
-                          required
-                          className={inputClassName}
-                          placeholder="you@school.org"
-                        />
-                      </div>
-                    </div>
 
-                    <div>
-                      <div className="mb-1.5 flex items-center justify-between">
-                        <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
-                          Password
+                  <div className="mb-5 mt-3 lg:mt-0">
+                    <h2
+                      className="text-xl font-semibold tracking-tight text-[#002D24] sm:text-2xl"
+                      style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+                    >
+                      Welcome back
+                    </h2>
+                    <p className="mt-1 text-sm text-gray-500">Sign in to continue to your account.</p>
+                  </div>
+
+                  {showForgotPassword ? (
+                    <ForgotPasswordPanel
+                      forgotEmail={forgotEmail}
+                      setForgotEmail={setForgotEmail}
+                      forgotSent={forgotSent}
+                      forgotError={forgotError}
+                      forgotSubmitting={forgotSubmitting}
+                      onSubmit={handleForgotPassword}
+                      onBack={() => {
+                        setShowForgotPassword(false);
+                        setForgotSent(false);
+                        setForgotError('');
+                      }}
+                      inputClassName={inputClassName}
+                    />
+                  ) : (
+                    <form onSubmit={handleSubmit} className="space-y-4" noValidate>
+                      <div>
+                        <label htmlFor="login-email" className="mb-1.5 block text-sm font-medium text-gray-700">
+                          Email address
                         </label>
-                        {isSupabaseConfigured() && (
-                          <button
-                            type="button"
-                            onClick={() => setShowForgotPassword(true)}
-                            className="text-sm font-medium text-[#002D24] hover:underline"
-                          >
-                            Forgot password?
-                          </button>
-                        )}
+                        <div className="relative">
+                          <Mail className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                          <input
+                            id="login-email"
+                            type="email"
+                            autoComplete="email"
+                            value={username}
+                            onChange={(e) => setUsername(e.target.value)}
+                            required
+                            className={inputClassName}
+                            placeholder="you@school.org"
+                          />
+                        </div>
                       </div>
-                      <div className="relative">
-                        <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-                        <input
-                          id="login-password"
-                          type={showPassword ? 'text' : 'password'}
-                          autoComplete="current-password"
-                          value={password}
-                          onChange={(e) => setPassword(e.target.value)}
-                          required
-                          className={`${inputClassName} pr-10`}
-                          placeholder="Enter your password"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"
-                          aria-label={showPassword ? 'Hide password' : 'Show password'}
-                        >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                    </div>
 
-                    {isSupabaseAuthEnabled() && (
-                      <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
-                        <input
-                          type="checkbox"
-                          checked={staySignedIn}
-                          onChange={(e) => setStaySignedIn(e.target.checked)}
-                          className="h-4 w-4 rounded border-gray-300 text-[#002D24] focus:ring-[#002D24]"
-                        />
-                        Remember me
-                      </label>
-                    )}
-
-                    {error && (
-                      <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
-                        <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                        <div className="flex-1">
-                          <span>{error}</span>
-                          {error.includes('timed out') && (
+                      <div>
+                        <div className="mb-1.5 flex items-center justify-between">
+                          <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
+                            Password
+                          </label>
+                          {isSupabaseConfigured() && (
                             <button
                               type="button"
-                              onClick={() => handleSubmit()}
-                              disabled={isSubmitting || !username.trim()}
-                              className="mt-1 flex items-center gap-1 text-sm font-medium text-[#002D24] hover:underline"
+                              onClick={() => setShowForgotPassword(true)}
+                              className="text-sm font-medium text-[#002D24] hover:underline"
                             >
-                              <RefreshCw className="h-3.5 w-3.5" />
-                              Try again
+                              Forgot password?
                             </button>
                           )}
                         </div>
+                        <div className="relative">
+                          <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+                          <input
+                            id="login-password"
+                            type={showPassword ? 'text' : 'password'}
+                            autoComplete="current-password"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            required
+                            className={`${inputClassName} pr-10`}
+                            placeholder="Enter your password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 rounded p-1 text-gray-400 hover:text-gray-600"
+                            aria-label={showPassword ? 'Hide password' : 'Show password'}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </button>
+                        </div>
                       </div>
-                    )}
 
-                    {isSupabaseConfigured() && !isSupabaseAuthEnabled() && (
-                      <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-                        Email/password sign-in is off. Set VITE_USE_SUPABASE_AUTH=true in your environment
-                        and redeploy to sign in and use password reset.
-                      </p>
-                    )}
-
-                    {isSupabaseAuthEnabled() && authStatus && authStatus !== 'ok' && (
-                      <div
-                        className={`rounded-lg p-2 text-xs ${
-                          authStatus === 'fail' ? 'bg-amber-50 text-amber-800' : 'bg-gray-50 text-gray-600'
-                        }`}
-                      >
-                        {authStatus === 'checking' && 'Checking Supabase...'}
-                        {authStatus === 'fail' &&
-                          `Supabase Auth: ${authError || 'Not reachable'}. Check Supabase Dashboard.`}
-                      </div>
-                    )}
-
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                      style={{ backgroundColor: isSubmitting ? '#6B7280' : LOGIN_GREEN }}
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <LoadingSpinner size="sm" />
-                          <span>Signing in...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>Sign in</span>
-                          <ArrowRight className="h-4 w-4" />
-                        </>
+                      {isSupabaseAuthEnabled() && (
+                        <label className="flex cursor-pointer items-center gap-2 text-sm text-gray-600">
+                          <input
+                            type="checkbox"
+                            checked={staySignedIn}
+                            onChange={(e) => setStaySignedIn(e.target.checked)}
+                            className="h-4 w-4 rounded border-gray-300 text-[#002D24] focus:ring-[#002D24]"
+                          />
+                          Remember me
+                        </label>
                       )}
-                    </button>
-                  </form>
-                )}
 
-                {!showForgotPassword && (
-                  <>
-                    <div className="my-5 flex items-center gap-3">
-                      <div className="h-px flex-1 bg-gray-200" />
-                      <span className="text-xs font-medium uppercase tracking-wide text-gray-400">or</span>
-                      <div className="h-px flex-1 bg-gray-200" />
-                    </div>
+                      {error && (
+                        <div className="flex items-start gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+                          <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                          <div className="flex-1">
+                            <span>{error}</span>
+                            {error.includes('timed out') && (
+                              <button
+                                type="button"
+                                onClick={() => handleSubmit()}
+                                disabled={isSubmitting || !username.trim()}
+                                className="mt-1 flex items-center gap-1 text-sm font-medium text-[#002D24] hover:underline"
+                              >
+                                <RefreshCw className="h-3.5 w-3.5" />
+                                Try again
+                              </button>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
-                    <button
-                      type="button"
-                      onClick={handleStartPreview}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
-                    >
-                      Explore the working prototype
-                      <ExternalLink className="h-4 w-4" />
-                    </button>
+                      {isSupabaseConfigured() && !isSupabaseAuthEnabled() && (
+                        <p className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+                          Email/password sign-in is off. Set VITE_USE_SUPABASE_AUTH=true in your environment
+                          and redeploy to sign in and use password reset.
+                        </p>
+                      )}
 
-                    <button
-                      type="button"
-                      onClick={() => setShowAboutPrototype(true)}
-                      className="mt-2 w-full text-center text-sm text-gray-500 transition-colors hover:text-[#002D24]"
-                    >
-                      About this prototype
-                    </button>
+                      {isSupabaseAuthEnabled() && authStatus && authStatus !== 'ok' && (
+                        <div
+                          className={`rounded-lg p-2 text-xs ${
+                            authStatus === 'fail' ? 'bg-amber-50 text-amber-800' : 'bg-gray-50 text-gray-600'
+                          }`}
+                        >
+                          {authStatus === 'checking' && 'Checking Supabase...'}
+                          {authStatus === 'fail' &&
+                            `Supabase Auth: ${authError || 'Not reachable'}. Check Supabase Dashboard.`}
+                        </div>
+                      )}
 
-                    <p className="mt-6 text-center text-sm text-gray-500">
-                      Don&apos;t have an account?{' '}
-                      <a
-                        href={loginSubtitleUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="font-semibold text-[#002D24] hover:underline"
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                        style={{ backgroundColor: isSubmitting ? '#6B7280' : LOGIN_GREEN }}
                       >
-                        Create one
-                      </a>
-                    </p>
-                  </>
-                )}
+                        {isSubmitting ? (
+                          <>
+                            <LoadingSpinner size="sm" />
+                            <span>Signing in...</span>
+                          </>
+                        ) : (
+                          <>
+                            <span>Sign in</span>
+                            <ArrowRight className="h-4 w-4" />
+                          </>
+                        )}
+                      </button>
+                    </form>
+                  )}
+
+                  {!showForgotPassword && (
+                    <>
+                      <div className="my-5 flex items-center gap-3">
+                        <div className="h-px flex-1 bg-gray-200" />
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-400">or</span>
+                        <div className="h-px flex-1 bg-gray-200" />
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleStartPreview}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        Explore the working prototype
+                        <ExternalLink className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
               </div>
             </div>
           </div>
-        </div>
         </div>
       </div>
 
@@ -456,9 +456,9 @@ export function LoginForm() {
         />
       )}
 
-      <AboutPrototypeModal
-        isOpen={showAboutPrototype}
-        onClose={() => setShowAboutPrototype(false)}
+      <PrototypeWelcomeModal
+        isOpen={showWelcomePrototype}
+        onClose={dismissWelcomePrototype}
       />
     </div>
   );

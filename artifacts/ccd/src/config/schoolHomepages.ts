@@ -51,10 +51,12 @@ export const SCHOOL_HOMEPAGES: SchoolHomepageConfig[] = [
   },
 ];
 
+import { PARTNER_HUB_SLUGS } from './partnerHubs';
+
 /**
  * Reserved top-level paths that must never be treated as a school slug.
- * Includes app routes and well-known static asset names that can appear
- * as a single path segment.
+ * Includes app routes, partner hub slugs, and well-known static asset names
+ * that can appear as a single path segment.
  */
 const RESERVED_SLUGS = new Set<string>([
   'reset-password',
@@ -65,6 +67,7 @@ const RESERVED_SLUGS = new Set<string>([
   'logout',
   'signup',
   'register',
+  ...PARTNER_HUB_SLUGS,
   'manifest.json',
   'manifest.webmanifest',
   'favicon.ico',

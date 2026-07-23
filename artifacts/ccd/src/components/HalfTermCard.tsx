@@ -1,6 +1,5 @@
 import React from 'react';
-import { Calendar, BookOpen, ChevronRight, CheckCircle, Plus } from 'lucide-react';
-import type { LessonData } from '../contexts/DataContext';
+import { BookOpen, ChevronRight, CheckCircle, Plus } from 'lucide-react';
 
 interface HalfTermCardProps {
   id: string;
@@ -22,6 +21,8 @@ interface HalfTermCardProps {
   halfTerms?: Array<{ id: string; name: string; lessons: string[] }>;
 }
 
+const FOREST = '#002D24';
+
 export function HalfTermCard({
   id,
   name,
@@ -37,22 +38,20 @@ export function HalfTermCard({
   halfTerms = []
 }: HalfTermCardProps) {
   // Three visual variants:
-  //   empty       — light, dashed-feeling band, "Add lessons" affordance
-  //   in-progress — teal-deep band with lesson count
-  //   complete    — primary teal band with check icon
+  //   empty       — light sage band, "Add lessons" affordance
+  //   in-progress — forest footer with lesson count
+  //   complete    — forest footer with check icon
   const variant: 'empty' | 'in-progress' | 'complete' =
     lessonCount === 0 ? 'empty' : isComplete ? 'complete' : 'in-progress';
 
   const bandStyle =
     variant === 'empty'
-      ? { backgroundColor: '#F1FAF8', color: '#0D6E63', borderTop: '1px dashed #CDEAE3' }
-      : variant === 'complete'
-        ? { backgroundColor: '#008272', color: '#FFFFFF', borderTop: '1px solid transparent' }
-        : { backgroundColor: '#0D9488', color: '#FFFFFF', borderTop: '1px solid transparent' };
+      ? { backgroundColor: '#F1F6F2', color: FOREST, borderTop: '1px dashed #D5E3DA' }
+      : { backgroundColor: FOREST, color: '#FFFFFF', borderTop: '1px solid transparent' };
 
   return (
     <div
-      className="bg-white rounded-card shadow-soft ccd-card-lift cursor-pointer group overflow-hidden border border-gray-100 hover:border-teal-200"
+      className="bg-white rounded-card shadow-soft ccd-card-lift cursor-pointer group overflow-hidden border border-gray-100 hover:border-[#002D24]/25"
       onClick={onClick}
     >
       {/* TOP SECTION — title, months chip, chevron */}
@@ -60,8 +59,11 @@ export function HalfTermCard({
         <div className="flex items-start justify-between gap-3 mb-2">
           <div className="min-w-0 flex-1">
             <h3
-              className="text-[17px] sm:text-[18px] font-semibold text-gray-900 leading-tight tracking-tight"
-              style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+              className="text-[17px] sm:text-[18px] font-semibold leading-tight tracking-tight"
+              style={{
+                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
+                color: FOREST,
+              }}
             >
               {name}
             </h3>
@@ -73,7 +75,7 @@ export function HalfTermCard({
             </p>
           </div>
           <ChevronRight
-            className="h-5 w-5 flex-shrink-0 text-gray-300 transition-all duration-200 group-hover:translate-x-1 group-hover:text-teal-600"
+            className="h-5 w-5 flex-shrink-0 text-gray-300 transition-all duration-200 group-hover:translate-x-1 group-hover:text-[#002D24]"
           />
         </div>
       </div>

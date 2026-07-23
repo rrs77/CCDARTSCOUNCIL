@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Mail, Lock, Eye, EyeOff, AlertCircle, ArrowRight, PlayCircle } from 'lucide-react';
 import type { SchoolHomepageConfig } from '../../config/schoolHomepages';
 import { useAuth } from '../../hooks/useAuth';
@@ -10,8 +10,9 @@ import {
 } from '../../config/supabase';
 import { activateDemoMode } from '../../utils/demoMode';
 import { seedDemoData } from '../../utils/demoSeed';
-import { AboutPrototypeModal } from '../login/AboutPrototypeModal';
 import { PrototypeNoticeBar } from '../login/PrototypeNoticeBar';
+import { PrototypeWelcomeModal } from '../login/PrototypeWelcomeModal';
+import { WELCOME_PROTOTYPE_STORAGE_KEY } from '../login/prototypeCopy';
 
 interface SchoolHomepageProps {
   school: SchoolHomepageConfig;
@@ -29,7 +30,25 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   const [staySignedIn, setStaySignedIn] = useState(false);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
-  const [showAboutPrototype, setShowAboutPrototype] = useState(false);
+  const [showWelcomePrototype, setShowWelcomePrototype] = useState(false);
+
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1') return;
+    } catch {
+      // still show
+    }
+    setShowWelcomePrototype(true);
+  }, []);
+
+  const dismissWelcomePrototype = () => {
+    try {
+      sessionStorage.setItem(WELCOME_PROTOTYPE_STORAGE_KEY, '1');
+    } catch {
+      // ignore
+    }
+    setShowWelcomePrototype(false);
+  };
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -284,14 +303,6 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
             />
           </button>
 
-          <button
-            type="button"
-            onClick={() => setShowAboutPrototype(true)}
-            className="mt-2 w-full text-center text-sm text-gray-500 transition-colors hover:text-gray-700"
-          >
-            About this prototype
-          </button>
-
           {/* Sub-foot */}
           <p className="mt-8 text-center text-xs text-gray-400">
             Trouble signing in? Contact your school administrator.
@@ -301,9 +312,9 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
       </div>
       </div>
 
-      <AboutPrototypeModal
-        isOpen={showAboutPrototype}
-        onClose={() => setShowAboutPrototype(false)}
+      <PrototypeWelcomeModal
+        isOpen={showWelcomePrototype}
+        onClose={dismissWelcomePrototype}
       />
     </div>
   );

@@ -6,8 +6,10 @@
  * flag is active:
  *   - AuthContext skips Supabase and injects a synthetic read-only viewer
  *   - DataContext skips Supabase loads and reads from localStorage seeds
- *   - The PreviewBanner is rendered above the main app shell
  *   - All write operations are gated by `useIsViewOnly`
+ *
+ * The purple PreviewBanner is intentionally off for Arts Council / partner-hub
+ * prototypes (`SHOW_PREVIEW_BANNER`). Flip that constant to re-enable it.
  *
  * The flag and seeded data are cleared on logout.
  */
@@ -16,12 +18,20 @@ export const DEMO_MODE_KEY = 'ccd-demo-mode';
 export const DEMO_FROM_SCHOOL_KEY = 'ccd-demo-from-school';
 export const DEMO_SEED_MARKER_KEY = 'ccd-demo-seeded';
 
+/** Purple "exploring a sample curriculum" bar — hidden for ACE prototype. */
+export const SHOW_PREVIEW_BANNER = false;
+
 export function isDemoModeActive(): boolean {
   try {
     return typeof window !== 'undefined' && sessionStorage.getItem(DEMO_MODE_KEY) === '1';
   } catch {
     return false;
   }
+}
+
+/** Whether to render PreviewBanner and reserve top layout space for it. */
+export function shouldShowPreviewBanner(): boolean {
+  return SHOW_PREVIEW_BANNER && isDemoModeActive();
 }
 
 export function activateDemoMode(fromSchoolSlug?: string) {
@@ -60,11 +70,20 @@ const DEMO_OWNED_KEYS = [
   'library-activities',
   'user-created-lesson-plans',
   'activity-stacks',
+  'lesson-stacks',
   'custom-year-groups',
   'saved-categories',
   'category-groups',
   'year-group-bands',
+  // Year-group section presets (EYFS/KS1/…) — cleared then reseeded from the
+  // login-account snapshot / captured Settings so nesting survives demo entry.
+  'year-group-sections',
+  'year-group-sections-auto-migrated-v2',
   'rhythmstix_user_id',
+  'ccd-starred-activity-ids',
+  'ccd-starred-first-activity-categories',
+  'ccd-starred-first-activity-global',
+  'ccd-partner-planning-v1',
 ];
 
 /**
@@ -79,12 +98,21 @@ const DEMO_OWNED_PREFIXES = [
   'units-',
   'half-terms-',
   'trash-lessons-',
+  // Demo seed markers for partner hubs + curated packs (cleared then re-seeded)
+  'ccd-roh-',
+  'ccd-lso-',
+  'ccd-wtd-',
+  'ccd-ks3-',
+  'ccd-ocr-',
+  'ccd-starred-',
+  'ccd-partner-planning-',
+  'prototype-objectives-',
 ];
 
 /**
- * Wipe all demo-owned localStorage. Called on demo exit and again right
- * before reseeding, so a new session always starts from the pristine
- * snapshot even if the previous demo session ended without logout.
+ * Wipe demo-owned localStorage (seeded packs + visitor edits). Called on demo
+ * exit and again right before reseeding. Packs are not “gone forever” — the
+ * next `seedDemoData()` restores curated packs; only session edits stay wiped.
  */
 export function clearDemoLocalStorage() {
   try {

@@ -10,6 +10,11 @@ export interface PartnerLogo {
   heightClass: string;
   /** Set true for dark logos on transparent PNG/SVG — applies CSS invert for white display */
   invert?: boolean;
+  /**
+   * Soft white plate behind the logo (for dark / full-colour assets on the green hero).
+   * Prefer this over invert when the logo needs its brand colours preserved.
+   */
+  onPlate?: boolean;
 }
 
 export const PARTNER_LOGOS: PartnerLogo[] = [
@@ -53,7 +58,7 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     name: 'The National Gallery',
     src: '/partners/national-gallery.svg',
     href: 'https://www.nationalgallery.org.uk/',
-    heightClass: 'h-6 sm:h-7',
+    heightClass: 'h-7 sm:h-8',
   },
   {
     id: 'sadlers-wells',
@@ -61,5 +66,33 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     src: '/partners/sadlers-wells.svg',
     href: 'https://www.sadlerswells.com/',
     heightClass: 'h-5 sm:h-6',
+  },
+  {
+    id: 'we-teach-drama',
+    name: 'We Teach Drama',
+    src: '/partners/we-teach-drama.svg',
+    href: 'https://www.weteachdrama.com/',
+    heightClass: 'h-5 sm:h-6',
+  },
+  {
+    id: 'essex-music-service',
+    name: 'Essex Music Service',
+    src: '/partners/essex-music-service.svg',
+    href: 'https://www.essexmusicservice.org.uk/',
+    heightClass: 'h-6 sm:h-7',
+  },
+  {
+    id: 'icompose',
+    name: 'iCompose',
+    src: '/partners/icompose.svg',
+    href: 'https://www.icancompose.com/',
+    heightClass: 'h-6 sm:h-7',
+  },
+  {
+    id: 'drama-resource',
+    name: 'Drama Resource',
+    src: '/partners/drama-resource.svg',
+    href: 'https://dramaresource.com/',
+    heightClass: 'h-6 sm:h-7',
   },
 ];

@@ -3,9 +3,13 @@ import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
 import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
 import {
+  buildDefaultYearGroupSections,
+  getDefaultSectionIdForYearGroup,
   getOrderedYearGroupsFromSections,
   mergeSectionsWithYearGroups,
   normalizeSectionYearGroupIdList,
+  remapYearGroupSectionsToGroups,
+  sectionsHaveResolvableGroups,
 } from '../utils/yearGroupSectionOrder';
 
 // Safari detection for enhanced sync handling
@@ -392,49 +396,6 @@ const DEFAULT_YEAR_GROUP_BANDS: YearGroupBand[] = flatToBands(DEFAULT_YEAR_GROUP
 
 const YEAR_GROUP_SECTIONS_STORAGE_KEY = 'year-group-sections';
 const YEAR_GROUP_SECTIONS_AUTO_MIGRATION_KEY = 'year-group-sections-auto-migrated-v2';
-
-/** Default section labels (user can customise). */
-const DEFAULT_SECTION_LABELS = [
-  { id: 'eyfs', label: 'EYFS', sortOrder: 0 },
-  { id: 'ks1', label: 'KS1', sortOrder: 1 },
-  { id: 'ks2', label: 'KS2', sortOrder: 2 },
-  { id: 'ks3', label: 'KS3', sortOrder: 3 },
-  { id: 'ks4', label: 'KS4', sortOrder: 4 },
-  { id: 'ks5', label: 'KS5', sortOrder: 5 },
-  { id: 'other', label: 'Other', sortOrder: 6 },
-];
-
-/** Assign a year group id to a section key by name/id pattern. EYFS=LKG/UKG/Reception, KS1=1-2, KS2=3-6, KS3=7-9, KS4=10-11, KS5=12-14. */
-function getDefaultSectionIdForYearGroup(id: string, name: string): string {
-  const n = name || id || '';
-  const lower = n.toLowerCase();
-  if (['lkg', 'ukg', 'lower kindergarten', 'upper kindergarten', 'reception'].some(k => lower.includes(k))) return 'eyfs';
-  if (lower.includes('year 1') || lower.includes('year1')) return 'ks1';
-  if (lower.includes('year 2') || lower.includes('year2')) return 'ks1';
-  if (['year 3', 'year 4', 'year 5', 'year 6'].some(y => lower.includes(y.replace(' ', '')) || lower.includes(y))) return 'ks2';
-  if (['year 7', 'year 8', 'year 9'].some(y => lower.includes(y.replace(' ', '')) || lower.includes(y))) return 'ks3';
-  if (['year 10', 'year 11'].some(y => lower.includes(y.replace(' ', '')) || lower.includes(y))) return 'ks4';
-  if (['year 12', 'year 13', 'year 14'].some(y => lower.includes(y.replace(' ', '')) || lower.includes(y))) return 'ks5';
-  return 'other';
-}
-
-/** Build default sections with yearGroupIds from a flat list of year groups. */
-function buildDefaultYearGroupSections(yearGroups: YearGroup[]): YearGroupSection[] {
-  const bySection = new Map<string, string[]>();
-  DEFAULT_SECTION_LABELS.forEach(s => bySection.set(s.id, []));
-  yearGroups.forEach(g => {
-    const sectionId = getDefaultSectionIdForYearGroup(g.id, g.name);
-    const arr = bySection.get(sectionId) ?? bySection.get('other')!;
-    arr.push(g.id);
-  });
-  return DEFAULT_SECTION_LABELS.map(s => ({
-    id: s.id,
-    label: s.label,
-    sortOrder: s.sortOrder,
-    collapsed: true,
-    yearGroupIds: bySection.get(s.id) || []
-  }));
-}
 
 // Default category groups
 const DEFAULT_CATEGORY_GROUPS: CategoryGroups = {
@@ -1107,8 +1068,8 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               try {
                 const parsed = JSON.parse(storedBands) as YearGroupBand[];
                 const flatFromBands = flattenBands(parsed);
-                const supabaseIds = new Set(deduplicated.map(g => g.id));
-                const bandIds = new Set(flatFromBands.map(g => g.id));
+                const supabaseIds = new Set(deduplicated.map((g: { id: string }) => g.id));
+                const bandIds = new Set(flatFromBands.map((g: { id: string }) => g.id));
                 if (bandIds.size === supabaseIds.size && [...bandIds].every(id => supabaseIds.has(id))) {
                   bandsToUse = parsed;
                   console.log('📦 Using stored year group bands (grouping preserved)');
@@ -1129,14 +1090,23 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
               const loadedIds = deduplicated.map((g: any) => g.id);
               let next: YearGroupSection[];
               if (Array.isArray(remoteSections) && remoteSections.length > 0) {
-                // Merge any year groups that aren't yet referenced into Other.
-                next = mergeSectionsWithYearGroups(remoteSections, loadedIds, deduplicated);
+                // Remap by name/id so demo (sheet-name ids) and live (UUID ids) both resolve.
+                const remapped = remapYearGroupSectionsToGroups(
+                  remoteSections,
+                  deduplicated,
+                ) as YearGroupSection[];
+                next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicated);
                 console.log('📦 Loaded year-group sections from Supabase');
+              } else if (prev.length > 0 && sectionsHaveResolvableGroups(prev, deduplicated)) {
+                // Prefer the user's configured sections (e.g. carried from login into prototype).
+                const remapped = remapYearGroupSectionsToGroups(
+                  prev,
+                  deduplicated,
+                ) as YearGroupSection[];
+                next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicated);
+                queueSectionsSupabaseSave(next);
               } else {
-                const hasMatchingIds = prev.length > 0 && prev.some(s => s.yearGroupIds.some((id: string) => loadedIds.includes(id)));
-                next = hasMatchingIds
-                  ? mergeSectionsWithYearGroups(prev, loadedIds, deduplicated)
-                  : buildDefaultYearGroupSections(deduplicated);
+                next = buildDefaultYearGroupSections(deduplicated) as YearGroupSection[];
                 // No remote sections yet — seed Supabase so future loads have a source of truth.
                 queueSectionsSupabaseSave(next);
               }
@@ -1170,12 +1140,31 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                 if (deduplicatedGroups.length > 0) {
                   const bands = flatToBands(deduplicatedGroups);
                   setYearGroupBands(bands);
+                  // Prefer cloud/demo branding sections when present so prototype
+                  // nesting (captured at seed time) is not lost on the localStorage path.
+                  const remoteSections = (await yearGroupSectionsApi.get()) as YearGroupSection[] | null;
                   setYearGroupSectionsState(prev => {
-                    const merged = mergeSectionsWithYearGroups(prev, deduplicatedGroups.map((g: any) => g.id), deduplicatedGroups);
+                    const loadedIds = deduplicatedGroups.map((g: any) => g.id);
+                    let next: YearGroupSection[];
+                    if (Array.isArray(remoteSections) && remoteSections.length > 0) {
+                      const remapped = remapYearGroupSectionsToGroups(
+                        remoteSections,
+                        deduplicatedGroups,
+                      ) as YearGroupSection[];
+                      next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicatedGroups);
+                    } else if (prev.length > 0 && sectionsHaveResolvableGroups(prev, deduplicatedGroups)) {
+                      const remapped = remapYearGroupSectionsToGroups(
+                        prev,
+                        deduplicatedGroups,
+                      ) as YearGroupSection[];
+                      next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicatedGroups);
+                    } else {
+                      next = mergeSectionsWithYearGroups(prev, loadedIds, deduplicatedGroups);
+                    }
                     try {
-                      localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(merged));
+                      localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
                     } catch (_) {}
-                    return merged;
+                    return next;
                   });
                   console.log('📦 Loaded year groups from localStorage:', deduplicatedGroups.length, '(deduplicated from', filteredGroups.length, ', filtered from', localGroups.length, ')');
                   localStorage.setItem('year-group-bands', JSON.stringify(bands));

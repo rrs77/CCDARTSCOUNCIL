@@ -12,9 +12,6 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
-import { HTBAO_PROJECT_PREFIX } from '../utils/lsoBranding';
-import { resolveYearGroupAssignmentKeys } from '../utils/yearGroupMatchKeys';
-
 interface Unit {
   id: string;
   name: string;
@@ -51,13 +48,7 @@ export function Dashboard() {
     addOrUpdateUserLessonPlan,
     deleteUserLessonPlan,
   } = useData();
-  const {
-    getThemeForClass,
-    customYearGroups,
-    categories,
-    updateCategories,
-    forceSyncToSupabase,
-  } = useSettings();
+  const { getThemeForClass } = useSettings();
   const [activeTab, setActiveTab] = useState('unit-viewer');
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -72,6 +63,55 @@ export function Dashboard() {
     // User can switch tabs freely and continue working when they return
     setActiveTab(newTab);
   };
+
+  // Open tab from `/?tab=our-partners` (Back to CCDesigner from partner hubs)
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const tab = params.get('tab');
+      const allowed = new Set([
+        'unit-viewer',
+        'lesson-library',
+        'lesson-builder',
+        'activity-library',
+        'calendar',
+        'our-partners',
+      ]);
+      if (tab && allowed.has(tab)) {
+        setActiveTab(tab);
+        window.history.replaceState({}, '', window.location.pathname || '/');
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
+  // After Add to CCDesigner from /roh, /weteachdrama, or other partner hubs
+  useEffect(() => {
+    try {
+      const raw =
+        sessionStorage.getItem('ccd-open-after-partner') ||
+        sessionStorage.getItem('ccd-open-after-roh');
+      if (!raw) return;
+      sessionStorage.removeItem('ccd-open-after-partner');
+      sessionStorage.removeItem('ccd-open-after-roh');
+      const parsed = JSON.parse(raw) as { sheetId?: string; tab?: string };
+      const sheetId = parsed.sheetId || 'Year5';
+      setCurrentSheetInfo({
+        sheet: sheetId,
+        display: sheetId === 'Year5' ? 'Year 5' : sheetId,
+        eyfs: `${sheetId} Statements`,
+      });
+      if (sheetId === 'Year5' || String(sheetId).includes('Year 5')) {
+        setSelectedCategory('Romeo and Juliet — Explore');
+      } else if (String(sheetId).toLowerCase().includes('drama')) {
+        setSelectedCategory('Blood Brothers — Explore');
+      }
+      setActiveTab(parsed.tab || 'lesson-library');
+    } catch {
+      /* ignore */
+    }
+  }, [setCurrentSheetInfo]);
   
   // Get theme colors for current class
   const theme = getThemeForClass(currentSheetInfo.sheet);
@@ -234,71 +274,74 @@ export function Dashboard() {
   };
 
 
+  const dashTabClass =
+    'ccd-dash-tab flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal';
+
   return (
-      <div className="min-h-screen" style={{ backgroundColor: '#F9FAFB', paddingTop: '56px' }}>
+      <div className="min-h-screen" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)', paddingTop: '56px' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
             {/* 6 tabs — grid-cols-3 on mobile; sm+ uses 6 so nothing wraps to a clipped row */}
-            <TabsList className="w-full h-auto grid grid-cols-3 sm:grid-cols-6 gap-1 auto-rows-auto">
-              <TabsTrigger 
+            <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-6 gap-1 auto-rows-auto">
+              <TabsTrigger
                 value="unit-viewer"
                 data-tab="unit-viewer"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className={dashTabClass}
               >
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Unit Viewer</span>
                 <span className="sm:hidden">Units</span>
               </TabsTrigger>
-              
-              <TabsTrigger 
+
+              <TabsTrigger
                 value="lesson-library"
                 data-tab="lesson-library"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className={dashTabClass}
               >
                 <FolderOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Library</span>
                 <span className="sm:hidden">Lessons</span>
               </TabsTrigger>
-              
-              <TabsTrigger 
+
+              <TabsTrigger
                 value="lesson-builder"
                 data-tab="lesson-builder"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className={dashTabClass}
               >
                 <Edit3 className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Lesson Builder</span>
                 <span className="sm:hidden">Builder</span>
               </TabsTrigger>
-              
-              <TabsTrigger 
+
+              <TabsTrigger
                 value="activity-library"
                 data-tab="activity-library"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className={dashTabClass}
               >
                 <Tag className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Activity Library</span>
                 <span className="sm:hidden">Activities</span>
               </TabsTrigger>
-              
-              <TabsTrigger 
+
+              <TabsTrigger
                 value="calendar"
                 data-tab="calendar"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className={dashTabClass}
               >
                 <Calendar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Calendar</span>
                 <span className="sm:hidden">Calendar</span>
               </TabsTrigger>
 
-              <TabsTrigger 
+              <TabsTrigger
                 value="our-partners"
                 data-tab="our-partners"
-                className="flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal"
+                className={dashTabClass}
               >
                 <Handshake className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                <span className="hidden sm:inline">Our Partners</span>
-                <span className="sm:hidden">Partners</span>
+                <span className="hidden sm:inline">Partner Hubs</span>
+                <span className="sm:hidden">Hubs</span>
               </TabsTrigger>
             </TabsList>
 
@@ -349,35 +392,7 @@ export function Dashboard() {
             </TabsContent>
 
             <TabsContent value="our-partners" className="mt-6 ccd-fade-in-up" key={`op-${activeTab}`}>
-              <OurPartners
-                onOpenHtbaoInApp={(yearGroup) => {
-                  // Header pattern: sheet = id, display = name
-                  setCurrentSheetInfo({
-                    sheet: yearGroup.id,
-                    display: yearGroup.name,
-                    eyfs: `${yearGroup.id} Statements`,
-                  });
-
-                  // Tick chosen year group on HTBAO LSO categories (Settings → Categories)
-                  const ticks = resolveYearGroupAssignmentKeys(yearGroup, customYearGroups);
-                  const updatedCategories = (categories || []).map((cat) => {
-                    const name = String(cat?.name || '');
-                    if (!name.startsWith(HTBAO_PROJECT_PREFIX)) return cat;
-                    return {
-                      ...cat,
-                      yearGroups: {
-                        ...(cat.yearGroups && typeof cat.yearGroups === 'object' ? cat.yearGroups : {}),
-                        ...ticks,
-                      },
-                    };
-                  });
-                  updateCategories(updatedCategories);
-                  void forceSyncToSupabase({ categories: updatedCategories });
-
-                  setSelectedCategory(`${HTBAO_PROJECT_PREFIX} — Listening`);
-                  handleTabChange('activity-library');
-                }}
-              />
+              <OurPartners />
             </TabsContent>
           </Tabs>
         </div>

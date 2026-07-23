@@ -13,14 +13,16 @@
  * Usage: await setupLSOYear6Example()  |  await setupLSOYear6Example({ force: true })
  */
 
-import { activitiesApi, lessonsApi, customCategoriesApi } from '../config/api';
-import { activityStacksApi } from '../config/activityStacksApi';
-import { lessonStacksApi } from '../config/lessonStacksApi';
-import { isSupabaseConfigured } from '../config/supabase';
 import type { Activity, LessonData } from '../contexts/DataContext';
 import type { StackedLesson } from '../hooks/useLessonStacks';
 import { LSO_FOLDER_NAME, LSO_LOGO_SRC, HTBAO_PROJECT_PREFIX } from './lsoBranding';
 import { resolveYear6AssignmentKeys } from './yearGroupMatchKeys';
+import { starActivityObjectsLocally, getActivityStarKey } from './activityStars';
+import {
+  PARTNER_PLANNING_ORGS,
+  registerPartnerPlanningPack,
+} from './partnerPlanning';
+import { notifyHubActivitiesUpdated } from './hubSeedLocal';
 
 /** Dispatched after seed writes saved-categories so SettingsContext can reload React state. */
 export const CCD_CATEGORIES_UPDATED_EVENT = 'ccd-categories-updated';
@@ -45,11 +47,21 @@ const UNIT = 'How to Build an Orchestra';
 const STACK_NAME = 'How to Build an Orchestra';
 const LEVEL = 'KS2';
 const YEAR_GROUPS = [SHEET_ID, SHEET_NAME];
-const MARKER_KEY = 'ccd-lso-year6-seeded-v7';
+/** v8: heal missing Web Resources (resourceLink / video / music) after local-only migration. */
+const MARKER_KEY = 'ccd-lso-year6-seeded-v8';
 const STACK_ID_KEY = 'ccd-lso-year6-lesson-stack-id';
 const LESSON_KEYS_KEY = 'ccd-lso-year6-lesson-keys';
 const ACADEMIC_YEAR = '2026-2027';
 const SEED_NOTE = 'LSO_Y6_SEED:How to Build an Orchestra';
+const PREVIOUS_MARKERS = [
+  'ccd-lso-year6-seeded-v1',
+  'ccd-lso-year6-seeded-v2',
+  'ccd-lso-year6-seeded-v3',
+  'ccd-lso-year6-seeded-v4',
+  'ccd-lso-year6-seeded-v5',
+  'ccd-lso-year6-seeded-v6',
+  'ccd-lso-year6-seeded-v7',
+] as const;
 
 /**
  * Category names = Activity Library / Lesson Builder section banners.
@@ -600,6 +612,7 @@ function blankMedia(a: SeedActivity): Activity {
   const { unitLesson: _u, ...rest } = a;
   return {
     ...rest,
+    notes: SEED_NOTE,
     videoLink: rest.videoLink || '',
     musicLink: rest.musicLink || '',
     backingLink: rest.backingLink || '',
@@ -684,12 +697,26 @@ function mergeCategoriesIntoLocalStorage() {
 }
 
 function isOldLsoActivity(a: any): boolean {
+  if (!a) return false;
+  if (String(a?.notes || '').includes('LSO_Y6_SEED')) return true;
   if (isLsoCategoryName(a?.category)) return true;
-  if (String(a?.unitName || '') === UNIT) return true;
+  if (String(a?.unitName || '') === UNIT || String(a?.teachingUnit || '') === UNIT) return true;
   if (typeof a?.activity === 'string' && (a.activity.startsWith('LSO') || a.activity.includes('How to Build an Orchestra'))) {
-    return String(a?.category || '').includes('LSO') || String(a?.unitName || '') === UNIT || String(a?.category || '').includes(HTBAO_PROJECT_PREFIX);
+    return (
+      String(a?.category || '').includes('LSO') ||
+      String(a?.unitName || '') === UNIT ||
+      String(a?.category || '').includes(HTBAO_PROJECT_PREFIX)
+    );
   }
   return false;
+}
+
+/** True when v8 marker is set but LSO activities were wiped or lost pack PDFs. */
+function lsoSeedNeedsResourceHeal(): boolean {
+  if (localStorage.getItem(MARKER_KEY) !== '1') return false;
+  const existing = readJson<any[]>('library-activities', []).filter((a) => isOldLsoActivity(a));
+  if (existing.length === 0) return true;
+  return existing.some((a) => !String(a?.resourceLink || '').trim());
 }
 
 function mergeActivitiesIntoLocalStorage(activities: Activity[]) {
@@ -909,145 +936,58 @@ function mergeLessonStackIntoLocalStorage(stack: StackedLesson) {
   localStorage.setItem(STACK_ID_KEY, stack.id);
 }
 
-async function tryCloudSync(
-  categoryMerge: ReturnType<typeof mergeCategoriesIntoLocalStorage>,
-  activities: Activity[],
-  lessonPayload: any,
-  lessonStack: StackedLesson,
-) {
-  if (!isSupabaseConfigured()) return;
-
-  try {
-    // Merge into cloud — never replace the whole store with LSO-only categories.
-    // Prefer local merged list (preserves other categories' yearGroups) as source of truth.
-    const existingCats = await customCategoriesApi.getAll();
-    const byName = new Map<string, any>();
-    for (const c of existingCats || []) {
-      if (c?.name && !isLsoCategoryName(c.name)) byName.set(c.name, c);
-    }
-    for (const c of categoryMerge.merged) {
-      if (!c?.name) continue;
-      if (isLsoCategoryName(c.name)) {
-        byName.set(c.name, c);
-        continue;
-      }
-      const cloud = byName.get(c.name);
-      byName.set(c.name, {
-        ...(cloud || {}),
-        ...c,
-        yearGroups: {
-          ...(cloud?.yearGroups || {}),
-          ...(c.yearGroups || {}),
-        },
-      });
-    }
-    // Ensure LSO created cats are present with Year 6 ticks
-    for (const c of categoryMerge.created) {
-      byName.set(c.name, c);
-    }
-    await customCategoriesApi.upsert([...byName.values()]);
-  } catch (e) {
-    console.warn('LSO seed: category cloud sync skipped', e);
-  }
-
-  try {
-    const all = await activitiesApi.getAll();
-    for (const a of all || []) {
-      if (isOldLsoActivity(a) && a._id) {
-        try {
-          await activitiesApi.delete(a._id);
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('LSO seed: activity cleanup skipped', e);
-  }
-
-  for (const activity of activities) {
-    try {
-      const created = await activitiesApi.create(activity as any);
-      if (created?._id) activity._id = created._id;
-    } catch (e: any) {
-      if (e?.code !== '23505') {
-        console.warn(`LSO seed: activity cloud create skipped (${activity.activity})`, e);
-      }
-    }
-  }
-
-  try {
-    const existingStacks = await activityStacksApi.getAll();
-    for (const s of existingStacks) {
-      if (isLsoActivityStack(s)) {
-        try {
-          await activityStacksApi.delete(s.id);
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-  } catch (e) {
-    console.warn('LSO seed: activity-stack cleanup skipped', e);
-  }
-
-  try {
-    const existingLessonStacks = await lessonStacksApi.getAll();
-    for (const s of existingLessonStacks) {
-      if (s.name === STACK_NAME || s.id === localStorage.getItem(STACK_ID_KEY)) {
-        try {
-          await lessonStacksApi.delete(s.id);
-        } catch {
-          /* ignore */
-        }
-      }
-    }
-    const created = await lessonStacksApi.create({
-      name: lessonStack.name,
-      description: lessonStack.description,
-      color: lessonStack.color,
-      lessons: lessonStack.lessons,
-      totalTime: lessonStack.totalTime,
-      totalActivities: lessonStack.totalActivities,
-      customObjectives: lessonStack.customObjectives || [],
-      curriculumType: lessonStack.curriculumType,
-    });
-    if (created?.id) {
-      lessonStack.id = created.id;
-      localStorage.setItem(STACK_ID_KEY, created.id);
-      const local = readJson<any[]>('lesson-stacks', []);
-      const merged = local.filter((s) => s?.name !== STACK_NAME).concat([
-        { ...lessonStack, id: created.id, created_at: created.created_at || lessonStack.created_at },
-      ]);
-      localStorage.setItem('lesson-stacks', JSON.stringify(merged));
-    }
-  } catch (e) {
-    console.warn('LSO seed: lesson stack cloud sync skipped', e);
-  }
-
-  try {
-    await lessonsApi.updateSheet(
-      SHEET_ID,
-      {
-        allLessonsData: lessonPayload.allLessonsData,
-        lessonNumbers: lessonPayload.lessonNumbers,
-        teachingUnits: lessonPayload.teachingUnits,
-        notes: lessonPayload.notes || '',
-      },
-      ACADEMIC_YEAR,
-    );
-  } catch (e) {
-    console.warn('LSO seed: lessons cloud sync skipped', e);
-  }
+/**
+ * Partner / curated demo seeds write into the prototype session store.
+ * Never call activitiesApi / lessonsApi / lessonStacksApi / activityStacksApi —
+ * packs must not sync to the production Supabase account.
+ */
+async function tryCloudSync(_args?: unknown) {
+  // Intentionally no-op — protect production; packs are demo seed, not cloud rows.
+  return;
 }
 
-export async function setupLSOYear6Example(options?: { force?: boolean }) {
-  if (!options?.force && localStorage.getItem(MARKER_KEY) === '1') {
+function registerLsoPartnerPlanning(activities: Activity[], lessonKeys: string[]) {
+  const org = PARTNER_PLANNING_ORGS.lso;
+  registerPartnerPlanningPack({
+    ...org,
+    projectId: 'how-to-build-an-orchestra',
+    projectTitle: 'How to Build an Orchestra',
+    sheetId: SHEET_ID,
+    activityIds: activities.map((a) => getActivityStarKey(a)),
+    lessonKeys,
+  });
+}
+
+export async function setupLSOYear6Example(options?: {
+  force?: boolean;
+  skipCloudSync?: boolean;
+  /** When true (hub “Add to CCDesigner”), register for partner-planning accordion. */
+  registerPartnerPlanning?: boolean;
+}) {
+  const shouldRegister = Boolean(options?.registerPartnerPlanning);
+  const force = Boolean(options?.force) || lsoSeedNeedsResourceHeal();
+
+  if (!force && localStorage.getItem(MARKER_KEY) === '1') {
     console.log('ℹ️ How to Build an Orchestra (Year 6) already seeded (pass { force: true } to re-seed)');
-    return { success: true, skipped: true };
+    try {
+      const existing = readJson<Activity[]>('library-activities', []).filter((a) => isOldLsoActivity(a));
+      if (existing.length) {
+        starActivityObjectsLocally(existing, {
+          enableGlobalStarredFirst: true,
+          starredFirstCategories: ALL_CATEGORIES,
+        });
+      }
+      if (shouldRegister) {
+        const lessonKeys = readJson<string[]>(LESSON_KEYS_KEY, []);
+        registerLsoPartnerPlanning(existing, lessonKeys);
+      }
+    } catch {
+      /* ignore */
+    }
+    return { success: true, skipped: true, sheetId: SHEET_ID };
   }
 
-  console.log('🚀 Seeding Year 6 Lesson Library unit: How to Build an Orchestra (v7)...');
+  console.log('🚀 Seeding Year 6 Lesson Library unit: How to Build an Orchestra (v8)...');
 
   const categoryMerge = mergeCategoriesIntoLocalStorage();
   cleanupOldActivityStacks();
@@ -1064,17 +1004,30 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
   const lessonStack = buildLessonStack(writtenNumbers, activities);
   mergeLessonStackIntoLocalStorage(lessonStack);
 
-  await tryCloudSync(categoryMerge, activities, payload, lessonStack);
+  // Secondary signal: star + starred-first (primary UI is partner-planning accordion).
+  starActivityObjectsLocally(activities, {
+    enableGlobalStarredFirst: true,
+    starredFirstCategories: ALL_CATEGORIES,
+  });
+
+  if (shouldRegister) {
+    registerLsoPartnerPlanning(activities, writtenNumbers);
+  }
+
+  // Cloud sync stays off — demo/hub packs must not write to production.
+  // Option kept for API compatibility; tryCloudSync is intentionally a no-op.
+  if (options?.skipCloudSync === false) {
+    await tryCloudSync({ categoryMerge, activities, payload, lessonStack });
+  }
 
   localStorage.setItem(MARKER_KEY, '1');
-  localStorage.removeItem('ccd-lso-year6-seeded-v1');
-  localStorage.removeItem('ccd-lso-year6-seeded-v2');
-  localStorage.removeItem('ccd-lso-year6-seeded-v3');
-  localStorage.removeItem('ccd-lso-year6-seeded-v4');
-  localStorage.removeItem('ccd-lso-year6-seeded-v5');
-  localStorage.removeItem('ccd-lso-year6-seeded-v6');
+  for (const key of PREVIOUS_MARKERS) {
+    localStorage.removeItem(key);
+  }
 
-  console.log('✅ Year 6 — How to Build an Orchestra ready (v7)');
+  notifyHubActivitiesUpdated('lso-htbao-seed');
+
+  console.log('✅ Year 6 — How to Build an Orchestra ready (v8)');
   console.log(`   Lesson stack (Lesson Library): "${STACK_NAME}" → lessons ${writtenNumbers.join(', ')}`);
   console.log(`   Folder: ${FOLDER} (LSO brand) · Project categories:`);
   ALL_CATEGORIES.forEach((c) => console.log(`     • ${c}`));
@@ -1092,6 +1045,7 @@ export async function setupLSOYear6Example(options?: { force?: boolean }) {
     activityCount: activities.length,
     lessonNumbers: writtenNumbers,
     activityTitles: SEED_ACTIVITIES.map((a) => a.activity),
+    sheetId: SHEET_ID,
   };
 }
 
@@ -1100,8 +1054,9 @@ if (typeof window !== 'undefined') {
   try {
     // Always purge leftover LSO activity stacks (even when seed is skipped).
     cleanupOldActivityStacks();
-    if (localStorage.getItem(MARKER_KEY) !== '1') {
-      void setupLSOYear6Example();
+    const markerOk = localStorage.getItem(MARKER_KEY) === '1';
+    if (!markerOk || lsoSeedNeedsResourceHeal()) {
+      void setupLSOYear6Example({ force: !markerOk || lsoSeedNeedsResourceHeal() });
     }
   } catch (e) {
     console.warn('LSO Year 6 auto-seed failed', e);

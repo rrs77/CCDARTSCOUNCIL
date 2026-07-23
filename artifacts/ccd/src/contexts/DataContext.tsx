@@ -7,6 +7,11 @@ import { activityStacksApi } from '../config/activityStacksApi';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 import toast from 'react-hot-toast';
 import { isDemoModeActive } from '../utils/demoMode';
+import {
+  mergeActivitiesWithHubSeeds,
+  mergeLessonsWithHubSeeds,
+  CCD_HUB_ACTIVITIES_UPDATED_EVENT,
+} from '../utils/hubSeedLocal';
 
 export interface Activity {
   id?: string;
@@ -38,6 +43,7 @@ export interface Activity {
   eyfsStandards?: string[]; // Keep for backward compatibility
   customObjectives?: string[]; // New field for custom objectives
   curriculumType?: 'EYFS' | 'CUSTOM'; // New field to distinguish curriculum type
+  notes?: string; // Seed / partner markers (e.g. LSO_Y6_SEED) — local hub content
   _uniqueId?: string; // Added for drag and drop uniqueness
 }
 
@@ -545,11 +551,20 @@ export function DataProvider({ children }: DataProviderProps) {
     // ADD: Load subjects
     loadSubjects();
 
+    // Partner hub seeds write library-activities then notify — reload so Web Resources appear.
+    const onHubActivitiesUpdated = () => {
+      void loadActivities(true);
+    };
+    window.addEventListener(CCD_HUB_ACTIVITIES_UPDATED_EVENT, onHubActivitiesUpdated);
+
     // Stop spinner after 8s if load hangs – user can still use the app and refresh manually
     const fallback = setTimeout(() => {
       setLoading(false);
     }, 8000);
-    return () => clearTimeout(fallback);
+    return () => {
+      clearTimeout(fallback);
+      window.removeEventListener(CCD_HUB_ACTIVITIES_UPDATED_EVENT, onHubActivitiesUpdated);
+    };
   }, [currentSheetInfo, currentAcademicYear]);
 
   // Load half-terms from Supabase when sheet or academic year changes
@@ -1505,12 +1520,14 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
   // Load all activities (with cache for faster initial load)
   const loadActivities = async (skipCache = false) => {
     const applyActivities = (activities: any[]) => {
-      const normalizedActivities = activities.map((activity: any) => ({
-        ...activity,
-        yearGroups: Array.isArray(activity.yearGroups) ? activity.yearGroups : 
-                   (activity.level ? [activity.level] : [])
-      }));
-      setAllActivities(normalizedActivities);
+      const withHub = mergeActivitiesWithHubSeeds(
+        activities.map((activity: any) => ({
+          ...activity,
+          yearGroups: Array.isArray(activity.yearGroups) ? activity.yearGroups :
+                     (activity.level ? [activity.level] : [])
+        })),
+      );
+      setAllActivities(withHub);
     };
 
     // Stale-while-revalidate: show cached data immediately if we have any (fresh or stale), then revalidate
@@ -1579,9 +1596,9 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
               localStorage.setItem(ACTIVITIES_CACHE_KEY, JSON.stringify({ data: activities, timestamp: Date.now() }));
             } catch (cacheErr) {
               console.warn('⚠️ Could not cache activities to localStorage (quota?). Continuing with fresh data in memory.', cacheErr);
-              // Try to free space by dropping large/legacy keys, then retry once.
+              // Free space without wiping partner-hub seeds in library-activities.
               try {
-                const legacyKeys = ['library-activities', 'activities-cache', 'cached-activities'];
+                const legacyKeys = ['activities-cache', 'cached-activities', 'old-activities'];
                 legacyKeys.forEach((k) => localStorage.removeItem(k));
                 // Drop any old half-term-lessons dumps which can be large
                 Object.keys(localStorage).forEach((k) => {
@@ -1615,7 +1632,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
         }
       }
       
-      // Fallback to localStorage
+      // Fallback to localStorage (include hub seeds via applyActivities)
       const savedActivities = localStorage.getItem('library-activities');
       if (savedActivities) {
         const activities = JSON.parse(savedActivities);
@@ -1635,7 +1652,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
             yearGroups: yearGroups
           };
         });
-        setAllActivities(normalizedActivities);
+        applyActivities(normalizedActivities);
         return;
       }
       
@@ -2779,6 +2796,18 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
             setLessonNumbers(filteredLessonNumbers.sort((a, b) => parseInt(a) - parseInt(b)));
             setTeachingUnits(lessonData.teachingUnits || []);
             setLessonStandards(lessonData.lessonStandards || {});
+            // Overlay partner/curated demo lesson seeds (session store; not production cloud).
+            try {
+              const merged = mergeLessonsWithHubSeeds(
+                currentSheetInfo.sheet,
+                filteredLessonsData,
+                filteredLessonNumbers,
+              );
+              setAllLessonsData(merged.allLessonsData);
+              setLessonNumbers(merged.lessonNumbers);
+            } catch (_) {
+              /* ignore */
+            }
             setLoading(false);
             return;
           }

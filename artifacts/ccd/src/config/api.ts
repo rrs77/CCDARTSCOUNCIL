@@ -1032,30 +1032,10 @@ export const halfTermsApi = {
 };
 
 // API endpoints for year groups
-// TENANT-ISOLATION GUARD: year_groups, custom_categories, and category_groups have no
-// per-tenant/school column. Any read returns ALL tenants' data; any write silently
-// overwrites ALL tenants' configuration. Every method below is a no-op that returns
-// a safe empty value until a schema migration adds a tenant key and matching RLS.
-export const yearGroupsApi = {
-  getAll: async () => {
-    console.warn('⚠️ yearGroupsApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
-    return [];
-  },
-  upsert: async (_yearGroups: any[]) => {
-    console.warn('⚠️ yearGroupsApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
-    return [];
-  },
-  replaceAll: async (_yearGroups: any[]) => {
-    console.warn('⚠️ yearGroupsApi.replaceAll disabled — table has no tenant key (cross-tenant tampering)');
-    return [];
-  },
-  delete: async (_id: string) => {
-    console.warn('⚠️ yearGroupsApi.delete disabled — table has no tenant key (cross-tenant tampering)');
-    return { success: true };
-  }
-};
-
-// (Original yearGroupsApi implementation retained below for reference only — not exported)
+// TENANT-ISOLATION GUARD (live): year_groups has no per-tenant column, so the
+// exported API is a no-op outside demo. In Preview/Demo the mock client only
+// sees seeded rows, so we delegate to the real impl and Settings can load
+// year groups + remapped EYFS/KS1… sections from branding_settings.
 const _yearGroupsApiImpl = {
   getAll: async () => {
     try {
@@ -1211,6 +1191,29 @@ const _yearGroupsApiImpl = {
     }
     return { success: true };
   }
+};
+
+export const yearGroupsApi = {
+  getAll: async () => {
+    if (isDemoModeActive()) return _yearGroupsApiImpl.getAll();
+    console.warn('⚠️ yearGroupsApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
+    return [];
+  },
+  upsert: async (yearGroups: any[]) => {
+    if (isDemoModeActive()) return _yearGroupsApiImpl.upsert(yearGroups);
+    console.warn('⚠️ yearGroupsApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
+    return [];
+  },
+  replaceAll: async (yearGroups: any[]) => {
+    if (isDemoModeActive()) return _yearGroupsApiImpl.replaceAll(yearGroups);
+    console.warn('⚠️ yearGroupsApi.replaceAll disabled — table has no tenant key (cross-tenant tampering)');
+    return [];
+  },
+  delete: async (id: string) => {
+    if (isDemoModeActive()) return _yearGroupsApiImpl.delete(id);
+    console.warn('⚠️ yearGroupsApi.delete disabled — table has no tenant key (cross-tenant tampering)');
+    return { success: true };
+  },
 };
 
 // Normalise year_groups from DB (can be object or string from JSONB)

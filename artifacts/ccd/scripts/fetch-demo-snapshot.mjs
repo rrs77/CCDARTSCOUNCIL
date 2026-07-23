@@ -31,6 +31,8 @@ const TABLES = [
   "activity_custom_objectives",
   "half_terms",
   "eyfs_statements",
+  // Includes year_group_sections (EYFS/KS1 nesting) for the prototype seed.
+  "branding_settings",
 ];
 
 const PAGE = 1000;

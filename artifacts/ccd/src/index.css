@@ -14,6 +14,11 @@
   --ccd-duration-slow: 360ms;
   --ccd-teal: #14B8A6;
   --ccd-teal-deep: #0D9488;
+  /* Login brand — used in Unit Viewer / Half-Term Designer */
+  --ccd-forest: #002D24;
+  --ccd-lime: #B6FF7E;
+  --ccd-sage: #F3F6F3;
+  --ccd-sage-mist: #E8F0EA;
 }
 
 /* Promo walkthrough motion-graphics palette (scoped to the login promo surface) */
@@ -179,8 +184,8 @@ textarea:focus-visible {
   animation: ccd-fade-in-up var(--ccd-duration-slow) var(--ccd-ease-out) both;
 }
 
-/* Card-lift utility — apply to any clickable card. Lifts ~2px on hover with a
- * deeper shadow. Cheaper than per-component re-styling. */
+/* Card-lift utility — apply to any clickable card. Lifts on hover with a
+ * deeper shadow so term cards “pop out”. */
 .ccd-card-lift {
   transition:
     transform var(--ccd-duration-base) var(--ccd-ease-out),
@@ -189,9 +194,54 @@ textarea:focus-visible {
   will-change: transform;
 }
 .ccd-card-lift:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 12px 28px -10px rgba(15, 42, 46, 0.18),
-              0 4px 10px -4px rgba(15, 42, 46, 0.08);
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 18px 36px -12px rgba(0, 45, 36, 0.22),
+              0 8px 16px -6px rgba(0, 45, 36, 0.12);
+}
+
+/* Dashboard main tabs — house-green underline under every tab; active is stronger. */
+.ccd-dash-tabs {
+  background: #F4F7F5 !important;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  padding: 0.15rem 0.15rem 0 !important;
+  gap: 0.25rem;
+  border-bottom: none;
+}
+.ccd-dash-tab {
+  position: relative;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #4B5563;
+}
+.ccd-dash-tab::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: #002D24;
+  opacity: 0.28;
+}
+.ccd-dash-tab:hover {
+  color: var(--ccd-forest);
+  background: rgba(0, 45, 36, 0.04) !important;
+}
+.ccd-dash-tab:hover::after {
+  opacity: 0.55;
+}
+.ccd-dash-tab[data-state='active'] {
+  color: var(--ccd-forest) !important;
+  font-weight: 600;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.ccd-dash-tab[data-state='active']::after {
+  height: 3px;
+  background: #3D6B5E;
+  opacity: 1;
 }
 
 /* Skeleton shimmer for loading states. */
@@ -252,6 +302,10 @@ textarea:focus-visible {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+
+  .ccd-card-lift:hover {
+    transform: none;
   }
 }
 

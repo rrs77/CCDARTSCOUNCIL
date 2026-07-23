@@ -9,13 +9,13 @@ import { WalkthroughGuide } from './WalkthroughGuide';
 import { HelpGuide } from './HelpGuide';
 import { LogoSVG } from './Logo';
 import { usePWAInstall } from '../hooks/usePWAInstall';
-import { isDemoModeActive } from '../utils/demoMode';
+import { shouldShowPreviewBanner } from '../utils/demoMode';
 
 export function Header() {
   const { user, logout } = useAuth();
   const isViewOnly = useIsViewOnly();
   const { currentSheetInfo, setCurrentSheetInfo, refreshData, loading } = useData();
-  const { settings, getThemeForClass, customYearGroups, yearGroupSections } = useSettings();
+  const { settings, customYearGroups, yearGroupSections } = useSettings();
   const yearGroupDropdownRef = useRef<HTMLDivElement>(null);
   const [yearGroupDropdownOpen, setYearGroupDropdownOpen] = useState(false);
   const [yearGroupSectionsExpanded, setYearGroupSectionsExpanded] = useState<Set<string>>(new Set());
@@ -156,6 +156,35 @@ export function Header() {
     return visibleSections.length > 0 ? visibleSections : quickSections;
   }, [visibleSections, quickSections]);
 
+  const currentSection = React.useMemo(() => {
+    return (
+      displaySections.find((section) =>
+        section.groups.some(
+          (g) => g.id === currentSheetInfo.sheet || g.name === currentSheetInfo.display,
+        ),
+      ) ?? null
+    );
+  }, [displaySections, currentSheetInfo.sheet, currentSheetInfo.display]);
+
+  const classSelectorLabel = currentSection
+    ? `${currentSection.label} · ${currentSheetInfo.display || currentSheetInfo.sheet}`
+    : currentSheetInfo.display || currentSheetInfo.sheet;
+
+  const openYearGroupDropdown = () => {
+    setYearGroupDropdownOpen((prev) => {
+      const next = !prev;
+      if (next && currentSection) {
+        setYearGroupSectionsExpanded((expanded) => {
+          if (expanded.has(currentSection.id)) return expanded;
+          const copy = new Set(expanded);
+          copy.add(currentSection.id);
+          return copy;
+        });
+      }
+      return next;
+    });
+  };
+
   const toggleSectionExpanded = (sectionId: string) => {
     setYearGroupSectionsExpanded(prev => {
       const next = new Set(prev);
@@ -198,8 +227,16 @@ export function Header() {
     return undefined;
   }, [yearGroupDropdownOpen]);
 
-  // Get theme colors for current class
-  const theme = getThemeForClass(currentSheetInfo.sheet);
+  useEffect(() => {
+    if (mobileMenuOpen && currentSection) {
+      setYearGroupSectionsExpanded((expanded) => {
+        if (expanded.has(currentSection.id)) return expanded;
+        const copy = new Set(expanded);
+        copy.add(currentSection.id);
+        return copy;
+      });
+    }
+  }, [mobileMenuOpen, currentSection]);
 
   // Keep document title in sync with branding (tab/window title)
   const productName = settings.branding?.loginTitle || 'Creative Curriculum Designer';
@@ -210,7 +247,7 @@ export function Header() {
 
   return (
     <>
-      <header className={`bg-white fixed left-0 right-0 z-50 ${isDemoModeActive() ? 'top-[var(--preview-banner-height,0px)]' : 'top-0'}`} style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
+      <header className={`bg-white fixed left-0 right-0 z-50 ${shouldShowPreviewBanner() ? 'top-[var(--preview-banner-height,0px)]' : 'top-0'}`} style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             {/* Logo and Title */}
@@ -236,10 +273,22 @@ export function Header() {
               <div className="relative min-w-0" ref={yearGroupDropdownRef} data-walkthrough="year-group-selector">
                 <button
                   type="button"
-                  onClick={() => setYearGroupDropdownOpen(prev => !prev)}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-xs lg:text-sm rounded-lg focus:border-teal-500 focus:ring-0 focus:outline-none px-3 py-1.5 lg:py-2 pr-8 flex items-center justify-between gap-2 min-w-[120px] lg:min-w-[180px] hover:bg-gray-100 transition-colors"
+                  onClick={openYearGroupDropdown}
+                  className="bg-gray-50 border border-gray-300 text-gray-900 text-xs lg:text-sm rounded-lg focus:border-teal-500 focus:ring-0 focus:outline-none px-3 py-1.5 lg:py-2 pr-8 flex items-center justify-between gap-2 min-w-[120px] lg:min-w-[200px] max-w-[280px] hover:bg-gray-100 transition-colors"
+                  title={classSelectorLabel}
+                  aria-label={`Class: ${classSelectorLabel}`}
                 >
-                  <span className="truncate">{currentSheetInfo.display || currentSheetInfo.sheet}</span>
+                  <span className="truncate">
+                    {currentSection ? (
+                      <>
+                        <span className="font-semibold text-teal-800">{currentSection.label}</span>
+                        <span className="text-gray-400"> · </span>
+                        <span>{currentSheetInfo.display || currentSheetInfo.sheet}</span>
+                      </>
+                    ) : (
+                      currentSheetInfo.display || currentSheetInfo.sheet
+                    )}
+                  </span>
                   <ChevronDown className={`h-4 w-4 flex-shrink-0 text-gray-500 transition-transform ${yearGroupDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 {yearGroupDropdownOpen && displaySections.length > 0 && (
