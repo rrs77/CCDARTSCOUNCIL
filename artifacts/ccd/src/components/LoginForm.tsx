@@ -211,14 +211,14 @@ export function LoginForm() {
       <DemonstrationDisclaimerBand />
       {/* Outer surround only: fluid padding scales with viewport; stage design unchanged */}
       <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-[clamp(0.75rem,2vw,1rem)] lg:p-[clamp(1rem,2.5vw,1.5rem)]">
-        <div className="relative mx-auto flex min-h-0 w-full max-w-[min(1440px,100%)] flex-1 flex-col overflow-hidden bg-[#002D24] sm:min-h-[calc(100dvh-2.5rem)] sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.18)] lg:min-h-[calc(100dvh-3.5rem)]">
-          {/* Full-bleed hero — all three age panels visible across the stage */}
-          <div className="relative min-h-[300px] flex-1 sm:min-h-[340px] lg:absolute lg:inset-0 lg:min-h-0">
+        <div className="relative mx-auto flex w-full max-w-[min(1440px,100%)] flex-col bg-[#002D24] sm:min-h-[calc(100dvh-2.5rem)] sm:overflow-hidden sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.18)] lg:min-h-[calc(100dvh-3.5rem)]">
+          {/* Full-bleed hero — content-sized stack on phone; fills stage on desktop */}
+          <div className="relative w-full lg:absolute lg:inset-0">
             <LoginHeroPanel logoLetters={logoLetters} />
           </div>
 
-          {/* Login card — stacks under hero on phone; floats over image on desktop */}
-          <div className="relative z-20 mx-4 -mt-10 mb-5 sm:mx-6 sm:-mt-12 sm:mb-6 lg:absolute lg:bottom-auto lg:left-auto lg:right-5 lg:top-1/2 lg:mx-0 lg:mb-0 lg:mt-0 lg:w-[min(320px,30%)] lg:-translate-y-1/2 xl:right-8 xl:w-[340px]">
+          {/* Login card — below hero on phone/tablet (no overlap); floats over image on desktop */}
+          <div className="relative z-20 mx-4 mb-5 mt-4 sm:mx-6 sm:mb-6 sm:mt-5 lg:absolute lg:bottom-auto lg:left-auto lg:right-5 lg:top-1/2 lg:mx-0 lg:mb-0 lg:mt-0 lg:w-[min(320px,30%)] lg:-translate-y-1/2 xl:right-8 xl:w-[340px]">
             <div className="overflow-hidden rounded-2xl border border-transparent bg-white shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:shadow-[0_20px_50px_rgba(0,0,0,0.25)]">
               <div className="flex items-center justify-end gap-2 px-4 pt-3 sm:px-5 lg:px-5 lg:pt-3">
                 {canInstall && !isInstalled && (
