@@ -27,7 +27,15 @@ export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-video-se
 export const PARTNERS_FUNDING_VIDEO_TITLE = 'For partners and funding';
 
 export const PARTNERS_FUNDING_VIDEO_INTRO =
-  'Shown for potential partners and for funding. Watch a short feature overview of how CCDesigner supports curriculum planning with cultural organisations.';
+  'A short overview of how CCDesigner supports curriculum planning with cultural organisations.';
+
+/** Shortened org notice for the partners/funding start popup. */
+export const PARTNERS_FUNDING_VIDEO_NOTICE =
+  'Organisations shown are for demonstration only — not endorsement, funding or partnership.';
+
+/** Clear prototype awareness before the user continues. */
+export const PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS =
+  'Only continue if you understand this is a prototype.';
 
 export const PARTNERS_FUNDING_VIDEO_CTA = 'Watch feature demo';
 

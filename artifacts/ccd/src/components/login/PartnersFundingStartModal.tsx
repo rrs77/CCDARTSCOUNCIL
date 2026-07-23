@@ -1,10 +1,11 @@
 import { useEffect } from 'react';
 import { PlayCircle, X } from 'lucide-react';
 import {
-  PARTNER_DISCLAIMER,
   PARTNER_DISCLAIMER_FRAMING,
   PARTNERS_FUNDING_VIDEO_CTA,
   PARTNERS_FUNDING_VIDEO_INTRO,
+  PARTNERS_FUNDING_VIDEO_NOTICE,
+  PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS,
   PARTNERS_FUNDING_VIDEO_TITLE,
 } from './prototypeCopy';
 
@@ -74,6 +75,16 @@ export function PartnersFundingStartModal({
         </div>
 
         <div className="space-y-5 px-6 py-6 sm:px-8 sm:py-7">
+          <div className="space-y-2 rounded-lg border border-[#002D24]/10 bg-[#e8f0ea] px-3.5 py-3 text-xs leading-relaxed text-gray-600">
+            <p>
+              <span className="font-semibold text-[#002D24]">Demonstration notice. </span>
+              {PARTNERS_FUNDING_VIDEO_NOTICE}
+            </p>
+            <p className="font-semibold text-[#002D24]">
+              {PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS}
+            </p>
+          </div>
+
           <button
             type="button"
             onClick={onWatchVideo}
@@ -82,11 +93,6 @@ export function PartnersFundingStartModal({
             <PlayCircle className="h-5 w-5 shrink-0" aria-hidden />
             <span>{PARTNERS_FUNDING_VIDEO_CTA}</span>
           </button>
-
-          <p className="rounded-lg border border-[#002D24]/10 bg-[#e8f0ea] px-3.5 py-3 text-xs leading-relaxed text-gray-600">
-            <span className="font-semibold text-[#002D24]">Demonstration notice. </span>
-            {PARTNER_DISCLAIMER}
-          </p>
 
           <button
             type="button"
