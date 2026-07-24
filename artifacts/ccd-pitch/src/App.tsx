@@ -181,11 +181,12 @@ function AllSlides() {
 // This component is used for the deployed view at `/`
 function SlideViewer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  // Letterbox the 16:9 stage into the real viewport — stay upright in both
-  // portrait and landscape (no forced 90° rotation).
+  // Letterbox the 16:9 stage into the live viewport. Follows device
+  // orientation (portrait tall / landscape wide) — no forced 90° rotate.
   const fitDims = () => {
-    const availW = window.innerWidth;
-    const availH = window.innerHeight;
+    const vv = window.visualViewport;
+    const availW = Math.round(vv?.width ?? window.innerWidth);
+    const availH = Math.round(vv?.height ?? window.innerHeight);
     const orientation =
       availH >= availW ? ("portrait" as const) : ("landscape" as const);
     return {
@@ -199,14 +200,18 @@ function SlideViewer() {
   useEffect(() => {
     const update = () => setDims(fitDims());
     const onOrientation = () => {
+      window.setTimeout(update, 50);
       window.setTimeout(update, 120);
       window.setTimeout(update, 350);
     };
     window.addEventListener("resize", update);
     window.addEventListener("orientationchange", onOrientation);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", update);
     return () => {
       window.removeEventListener("resize", update);
       window.removeEventListener("orientationchange", onOrientation);
+      vv?.removeEventListener("resize", update);
     };
   }, []);
 
@@ -227,9 +232,10 @@ function SlideViewer() {
 
   return (
     <div
-      className="slide-viewer h-[100dvh] w-screen overflow-hidden bg-black flex items-center justify-center"
+      className="slide-viewer h-[100svh] h-[100dvh] w-screen max-h-[100dvh] overflow-hidden bg-black flex items-center justify-center"
       data-orientation={dims.orientation}
       style={{
+        width: "100%",
         paddingTop: "env(safe-area-inset-top, 0px)",
         paddingRight: "env(safe-area-inset-right, 0px)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",

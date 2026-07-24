@@ -106,13 +106,14 @@ export function PitchAutoplayViewer() {
   );
   const [tick, setTick] = useState(0);
   const [stageDims, setStageDims] = useState({ width: 0, height: 0 });
-  // Track device orientation so chrome (nav, safe areas) adapts while the
-  // 16:9 slide stage stays upright — never force-rotate the deck.
+  // Follow the phone’s real orientation — portrait tall / landscape wide.
+  // No forced 90° CSS rotate and no orientation.lock.
   const [orientation, setOrientation] = useState<"portrait" | "landscape">(
     () =>
       window.innerHeight >= window.innerWidth ? "portrait" : "landscape",
   );
   const stageRef = useRef<HTMLDivElement>(null);
+  const shellRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const indexRef = useRef(0);
   indexRef.current = index;
@@ -137,23 +138,36 @@ export function PitchAutoplayViewer() {
 
   useEffect(() => {
     const update = () => {
-      setOrientation(
-        window.innerHeight >= window.innerWidth ? "portrait" : "landscape",
-      );
+      const vv = window.visualViewport;
+      const w = Math.round(vv?.width ?? window.innerWidth);
+      const h = Math.round(vv?.height ?? window.innerHeight);
+      setOrientation(h >= w ? "portrait" : "landscape");
+
+      // Keep the shell filling the live iframe viewport after rotate.
+      const shell = shellRef.current;
+      if (shell) {
+        shell.style.width = "100%";
+        shell.style.height = "100%";
+        shell.style.minHeight = `${h}px`;
+      }
     };
     update();
     window.addEventListener("resize", update);
     window.addEventListener("orientationchange", update);
     // iOS often fires orientationchange before the new viewport settles.
     const onOrientation = () => {
+      window.setTimeout(update, 50);
       window.setTimeout(update, 120);
       window.setTimeout(update, 350);
     };
     window.addEventListener("orientationchange", onOrientation);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", update);
     return () => {
       window.removeEventListener("resize", update);
       window.removeEventListener("orientationchange", update);
       window.removeEventListener("orientationchange", onOrientation);
+      vv?.removeEventListener("resize", update);
     };
   }, []);
 
@@ -181,10 +195,20 @@ export function PitchAutoplayViewer() {
     update();
     const observer = new ResizeObserver(update);
     observer.observe(stage);
-    window.addEventListener("orientationchange", update);
+    const onOrientation = () => {
+      window.setTimeout(update, 50);
+      window.setTimeout(update, 120);
+      window.setTimeout(update, 350);
+    };
+    window.addEventListener("orientationchange", onOrientation);
+    window.addEventListener("resize", update);
+    const vv = window.visualViewport;
+    vv?.addEventListener("resize", update);
     return () => {
       observer.disconnect();
-      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("orientationchange", onOrientation);
+      window.removeEventListener("resize", update);
+      vv?.removeEventListener("resize", update);
     };
   }, [orientation]);
 
@@ -258,12 +282,14 @@ export function PitchAutoplayViewer() {
 
   return (
     <div
+      ref={shellRef}
       className="pitch-autoplay-shell flex select-none flex-col overflow-hidden bg-black"
       data-orientation={orientation}
       style={{
         width: "100%",
         height: "100%",
-        minHeight: "100dvh",
+        minHeight: "100svh",
+        maxHeight: "100dvh",
         paddingTop: "env(safe-area-inset-top, 0px)",
         paddingRight: "env(safe-area-inset-right, 0px)",
         paddingBottom: "env(safe-area-inset-bottom, 0px)",
