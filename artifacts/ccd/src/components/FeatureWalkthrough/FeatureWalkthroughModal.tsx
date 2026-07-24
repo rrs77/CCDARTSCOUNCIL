@@ -9,7 +9,7 @@ interface FeatureWalkthroughModalProps {
 // Use explicit index.html — bare `/ccd-pitch/` is caught by the Vite/Vercel SPA
 // fallback and serves the main CCD shell instead of the pitch promo.
 // Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
-const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/index.html?autoplay=1&v=2026-07-24f`;
+const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/index.html?autoplay=1&v=2026-07-24g`;
 const SITE_URL = 'https://www.ccdesigner.co.uk';
 const PITCH_CLOSE_MESSAGE = 'ccd-pitch-close';
 

@@ -87,7 +87,13 @@ export default function WalkthroughLsoHub() {
                   <motion.div
                     className="mt-[1.6vh] inline-flex items-center gap-[0.4vw] px-[0.9vw] py-[0.7vh] rounded-[0.5rem] bg-primary-dark text-white font-display font-semibold"
                     style={{ fontSize: "0.82vw" }}
-                    animate={{ boxShadow: ["0 0 0 0 rgba(182,255,126,0)", "0 0 0 0.35vw rgba(182,255,126,0.45)", "0 0 0 0 rgba(182,255,126,0)"] }}
+                    animate={{
+                      boxShadow: [
+                        "0 0 0 0px rgba(182,255,126,0)",
+                        "0 0 0 6px rgba(182,255,126,0.45)",
+                        "0 0 0 0px rgba(182,255,126,0)",
+                      ],
+                    }}
                     transition={{ duration: 2.2, repeat: Infinity, ease: "easeInOut" }}
                   >
                     Add to CCDesigner

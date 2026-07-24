@@ -33,6 +33,7 @@ function formatIssuePath(issuePath: PropertyKey[]): string {
 }
 
 function getSlideFilenames(): string[] {
+  // Active slides live directly in slides/; archive/ is intentionally unused.
   return readdirSync(slidesDir).filter((name) => name.endsWith(".tsx"));
 }
 

@@ -31,8 +31,8 @@ export default function WalkthroughPaidPartners() {
               iCompose — and We Teach Drama.
             </h2>
             <p className="pitch-body-lg mt-[1.8vh] text-muted font-body leading-snug max-w-[44vw]" style={{ textWrap: "pretty" }}>
-              Premium partner products sit in a basket with clear school pricing. A small platform cut
-              (10–20%) helps sustain the ecosystem while partners keep creating.
+              Premium partner products sit in a clear school basket. A small platform fee (10–20%)
+              helps sustain CCDesigner while partners keep creating classroom-ready packs.
             </p>
           </motion.div>
 
@@ -93,7 +93,7 @@ export default function WalkthroughPaidPartners() {
                 </div>
               </div>
               <div className="font-body text-white/75 leading-snug" style={{ fontSize: "0.9vw" }}>
-                Platform cut 10–20% · partners keep creating · schools get classroom-ready packs
+                Platform fee 10–20% · partners keep creating · schools get classroom-ready packs
               </div>
             </motion.div>
           </div>
