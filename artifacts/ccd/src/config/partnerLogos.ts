@@ -17,6 +17,10 @@ export interface PartnerLogo {
   onPlate?: boolean;
 }
 
+/**
+ * Full partner logo catalogue (hubs / marketing elsewhere).
+ * Login uses {@link LOGIN_PARTNER_LOGOS} so the hero strip stays a curated set of four.
+ */
 export const PARTNER_LOGOS: PartnerLogo[] = [
   {
     id: 'royal-opera-house',
@@ -104,3 +108,19 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     heightClass: 'h-6 sm:h-7',
   },
 ];
+
+const LOGIN_PARTNER_IDS = [
+  'lso',
+  'royal-opera-house',
+  'national-theatre',
+  'tate',
+] as const;
+
+/** Curated four logos for the login hero — does not affect Partner Hubs. */
+export const LOGIN_PARTNER_LOGOS: PartnerLogo[] = LOGIN_PARTNER_IDS.map((id) => {
+  const partner = PARTNER_LOGOS.find((p) => p.id === id);
+  if (!partner) {
+    throw new Error(`LOGIN_PARTNER_LOGOS: missing partner "${id}"`);
+  }
+  return partner;
+});

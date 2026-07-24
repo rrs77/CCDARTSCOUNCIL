@@ -1,4 +1,4 @@
-import { PARTNER_LOGOS } from '../../config/partnerLogos';
+import { LOGIN_PARTNER_LOGOS } from '../../config/partnerLogos';
 import { PARTNER_DISCLAIMER } from './prototypeCopy';
 
 interface PartnerLogoStripProps {
@@ -11,12 +11,12 @@ export function PartnerLogoStrip({ compact = false }: PartnerLogoStripProps) {
       <ul
         className={`m-0 grid list-none items-center p-0 ${
           compact
-            ? 'grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-3'
-            : 'grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-3 sm:gap-x-5 lg:grid-cols-3 lg:gap-x-6 lg:gap-y-4 xl:grid-cols-4'
+            ? 'grid-cols-2 gap-x-4 gap-y-3 sm:grid-cols-4'
+            : 'grid-cols-2 gap-x-4 gap-y-4 sm:grid-cols-4 sm:gap-x-5 lg:gap-x-6'
         }`}
         aria-label="Example organisations for demonstration"
       >
-        {PARTNER_LOGOS.map((partner) => (
+        {LOGIN_PARTNER_LOGOS.map((partner) => (
           <li key={partner.id} className="flex min-w-0 items-center">
             <a
               href={partner.href}
