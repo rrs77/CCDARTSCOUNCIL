@@ -1,5 +1,7 @@
-import { useEffect, useRef } from 'react';
-import { X } from 'lucide-react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { ExternalLink, Maximize, Minimize, X } from 'lucide-react';
+import { publicAssetHref } from '../login/FeatureDemoVideoModal';
+import { PARTNERS_FUNDING_CONTINUE_CTA } from '../login/prototypeCopy';
 
 interface FeatureWalkthroughModalProps {
   isOpen: boolean;
@@ -9,23 +11,74 @@ interface FeatureWalkthroughModalProps {
 // Use explicit index.html — bare `/ccd-pitch/` is caught by the Vite/Vercel SPA
 // fallback and serves the main CCD shell instead of the pitch promo.
 // Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
-const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/index.html?autoplay=1&v=2026-07-24g`;
-const SITE_URL = 'https://www.ccdesigner.co.uk';
+const PROMO_PATH = 'ccd-pitch/index.html?autoplay=1&v=2026-07-24g';
 const PITCH_CLOSE_MESSAGE = 'ccd-pitch-close';
+const SITE_URL = 'https://www.ccdesigner.co.uk';
 
-function readViewportSize() {
-  const vv = window.visualViewport;
-  return {
-    width: Math.round(vv?.width ?? window.innerWidth),
-    height: Math.round(vv?.height ?? window.innerHeight),
-    offsetTop: Math.round(vv?.offsetTop ?? 0),
-    offsetLeft: Math.round(vv?.offsetLeft ?? 0),
-  };
+type FsElement = HTMLElement & {
+  webkitRequestFullscreen?: () => void;
+  msRequestFullscreen?: () => void;
+};
+
+function isElementFullscreen(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  const doc = document as Document & { webkitFullscreenElement?: Element | null };
+  const fullscreenEl = document.fullscreenElement || doc.webkitFullscreenElement;
+  return fullscreenEl === el;
 }
 
+function enterElementFullscreen(el: FsElement): void {
+  if (typeof el.requestFullscreen === 'function' && document.fullscreenEnabled !== false) {
+    void el.requestFullscreen();
+    return;
+  }
+  if (typeof el.webkitRequestFullscreen === 'function') {
+    el.webkitRequestFullscreen();
+    return;
+  }
+  if (typeof el.msRequestFullscreen === 'function') {
+    el.msRequestFullscreen();
+  }
+}
+
+function exitElementFullscreen(): void {
+  if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
+    void document.exitFullscreen();
+    return;
+  }
+  const doc = document as Document & { webkitExitFullscreen?: () => void };
+  if (typeof doc.webkitExitFullscreen === 'function') {
+    doc.webkitExitFullscreen();
+  }
+}
+
+/**
+ * Feature walkthrough slideshow in the FeatureDemoVideoModal chrome:
+ * forest card, lime (#B6FF7E) surrounds, header, footer CTAs — iframe replaces <video>.
+ */
 export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughModalProps) {
-  const shellRef = useRef<HTMLDivElement>(null);
-  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const mediaRef = useRef<HTMLDivElement>(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  const promoSrc = publicAssetHref(PROMO_PATH);
+  const fullPitchHref = publicAssetHref('ccd-pitch/index.html');
+
+  const syncFullscreenState = useCallback(() => {
+    setIsFullscreen(isElementFullscreen(mediaRef.current));
+  }, []);
+
+  const handleClose = useCallback(() => {
+    onClose();
+    // Only bounce back to the marketing site when this modal was opened from
+    // that origin (Arts Council / pitch flows). In-app use should just close.
+    try {
+      if (document.referrer.includes('ccdesigner.co.uk')) {
+        window.location.href = SITE_URL;
+      }
+    } catch {
+      // ignore
+    }
+  }, [onClose]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -36,118 +89,149 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
     };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && !isElementFullscreen(mediaRef.current)) {
+        handleClose();
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, handleClose]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      setIsFullscreen(false);
+      return;
+    }
+
+    const onFsChange = () => syncFullscreenState();
+    document.addEventListener('fullscreenchange', onFsChange);
+    document.addEventListener('webkitfullscreenchange', onFsChange);
+
+    return () => {
+      document.removeEventListener('fullscreenchange', onFsChange);
+      document.removeEventListener('webkitfullscreenchange', onFsChange);
+    };
+  }, [isOpen, syncFullscreenState]);
+
   // PitchAutoplayViewer posts this when its own Close control is used inside the iframe.
   useEffect(() => {
     if (!isOpen) return;
     const onMessage = (event: MessageEvent) => {
-      if (event.data?.type === PITCH_CLOSE_MESSAGE) onClose();
+      if (event.data?.type === PITCH_CLOSE_MESSAGE) handleClose();
     };
     window.addEventListener('message', onMessage);
     return () => window.removeEventListener('message', onMessage);
-  }, [isOpen, onClose]);
+  }, [isOpen, handleClose]);
 
-  // Keep modal + iframe filling the live viewport across portrait ↔ landscape
-  // (iOS Safari often settles layout after orientationchange / visualViewport resize).
-  useEffect(() => {
-    if (!isOpen) return;
-    const shell = shellRef.current;
-    if (!shell) return;
-
-    const apply = () => {
-      const { width, height, offsetTop, offsetLeft } = readViewportSize();
-      shell.style.width = `${width}px`;
-      shell.style.height = `${height}px`;
-      shell.style.top = `${offsetTop}px`;
-      shell.style.left = `${offsetLeft}px`;
-      shell.dataset.orientation = height >= width ? 'portrait' : 'landscape';
-
-      const iframe = iframeRef.current;
-      if (iframe) {
-        iframe.style.width = '100%';
-        iframe.style.height = '100%';
+  // Must stay a direct click handler so requestFullscreen keeps the user gesture.
+  const toggleFullscreen = () => {
+    const media = mediaRef.current as FsElement | null;
+    if (!media) return;
+    try {
+      if (isElementFullscreen(media)) {
+        exitElementFullscreen();
+      } else {
+        enterElementFullscreen(media);
       }
-    };
-
-    apply();
-    const onOrientation = () => {
-      window.setTimeout(apply, 50);
-      window.setTimeout(apply, 120);
-      window.setTimeout(apply, 350);
-    };
-
-    window.addEventListener('resize', apply);
-    window.addEventListener('orientationchange', onOrientation);
-    const vv = window.visualViewport;
-    vv?.addEventListener('resize', apply);
-    vv?.addEventListener('scroll', apply);
-
-    return () => {
-      window.removeEventListener('resize', apply);
-      window.removeEventListener('orientationchange', onOrientation);
-      vv?.removeEventListener('resize', apply);
-      vv?.removeEventListener('scroll', apply);
-    };
-  }, [isOpen]);
+    } catch {
+      // Fullscreen can be denied by the browser.
+    }
+    syncFullscreenState();
+  };
 
   if (!isOpen) return null;
 
-  const handleClose = () => {
-    onClose();
-    // Only bounce back to the marketing site when this modal was opened from
-    // that origin (Arts Council / pitch flows). In-app use should just close.
-    try {
-      if (document.referrer.includes('ccdesigner.co.uk')) {
-        window.location.href = SITE_URL;
-        return;
-      }
-    } catch {
-      // ignore
-    }
-  };
-
   return (
     <div
-      ref={shellRef}
-      className="fixed z-[100] flex flex-col bg-black"
+      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/55 p-3 sm:p-6"
       role="dialog"
       aria-modal="true"
-      aria-label="Feature walkthrough"
-      style={{
-        top: 0,
-        left: 0,
-        width: '100%',
-        height: '100%',
-        minHeight: '100svh',
-        maxHeight: '100dvh',
-        paddingTop: 'env(safe-area-inset-top, 0px)',
-        paddingRight: 'env(safe-area-inset-right, 0px)',
-        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
-        paddingLeft: 'env(safe-area-inset-left, 0px)',
-        boxSizing: 'border-box',
-      }}
+      aria-labelledby="feature-walkthrough-title"
+      onClick={handleClose}
     >
-      <iframe
-        ref={iframeRef}
-        key={PROMO_SRC}
-        src={PROMO_SRC}
-        title="Creative Curriculum Designer promo"
-        className="min-h-0 w-full flex-1 border-0"
-        allow="autoplay"
-        style={{ width: '100%', height: '100%' }}
-      />
-      <button
-        type="button"
-        onClick={handleClose}
-        className="absolute z-[110] rounded-full bg-[#002D24]/70 p-2 text-white/80 backdrop-blur-sm transition-colors hover:bg-[#002D24]/90 hover:text-[#B6FF7E]"
+      <div
+        className="flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#B6FF7E]/25 shadow-2xl"
         style={{
-          top: 'max(0.75rem, env(safe-area-inset-top, 0px))',
-          right: 'max(0.75rem, env(safe-area-inset-right, 0px))',
+          background:
+            'linear-gradient(165deg, #002D24 0%, #0a3d32 55%, #123f35 100%)',
         }}
-        aria-label="Close walkthrough"
-        title="Close walkthrough"
+        onClick={(e) => e.stopPropagation()}
       >
-        <X className="h-4 w-4" />
-      </button>
+        <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
+          <div className="min-w-0">
+            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B6FF7E]/90">
+              Feature overview
+            </p>
+            <h2
+              id="feature-walkthrough-title"
+              className="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl"
+              style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+            >
+              Feature walkthrough
+            </h2>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="shrink-0 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            aria-label="Close walkthrough"
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+
+        <div className="px-3 sm:px-5">
+          <div
+            ref={mediaRef}
+            className="overflow-hidden rounded-xl border border-white/10 bg-black shadow-inner [&:fullscreen]:flex [&:fullscreen]:h-screen [&:fullscreen]:w-screen [&:fullscreen]:items-center [&:fullscreen]:justify-center [&:fullscreen]:rounded-none [&:fullscreen]:border-0 [&:fullscreen>iframe]:h-full [&:fullscreen>iframe]:w-full [&:fullscreen>iframe]:[aspect-ratio:auto]"
+          >
+            <iframe
+              key={promoSrc}
+              src={promoSrc}
+              title="Creative Curriculum Designer promo"
+              className="aspect-video w-full border-0 bg-black"
+              allow="autoplay; fullscreen"
+            />
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-5">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
+            <button
+              type="button"
+              onClick={toggleFullscreen}
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#B6FF7E]/40 bg-white/5 px-3.5 py-2.5 text-sm font-semibold text-[#B6FF7E] transition-colors hover:bg-white/10"
+              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            >
+              {isFullscreen ? (
+                <Minimize className="h-4 w-4 shrink-0" aria-hidden />
+              ) : (
+                <Maximize className="h-4 w-4 shrink-0" aria-hidden />
+              )}
+              <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
+            </button>
+            <a
+              href={fullPitchHref}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-center gap-2 text-sm font-medium text-[#B6FF7E] underline-offset-2 transition-opacity hover:underline hover:opacity-90"
+            >
+              Open full walkthrough page
+              <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
+            </a>
+          </div>
+          <button
+            type="button"
+            onClick={handleClose}
+            className="rounded-lg bg-[#B6FF7E] px-4 py-2.5 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
+          >
+            {PARTNERS_FUNDING_CONTINUE_CTA}
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
