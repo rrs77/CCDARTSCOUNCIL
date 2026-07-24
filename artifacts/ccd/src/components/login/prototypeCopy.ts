@@ -42,8 +42,8 @@ export const PARTNERS_FUNDING_VIDEO_NOTICE =
 export const PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS =
   'This is an early prototype.';
 
-/** Primary CTA opens the animated Feature Walkthrough (ccd-pitch). */
-export const PARTNERS_FUNDING_VIDEO_CTA = 'Start feature walkthrough';
+/** Primary CTA opens the animated Feature Walkthrough (ccd-pitch) in the old video-modal slot. */
+export const PARTNERS_FUNDING_VIDEO_CTA = 'Watch walkthrough';
 
 export const PARTNERS_FUNDING_CONTINUE_CTA = 'Continue to sign in';
 

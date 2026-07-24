@@ -8,6 +8,11 @@ import {
   PARTNERS_FUNDING_VIDEO_TITLE,
 } from './prototypeCopy';
 
+/**
+ * Archived MP4 player (July 2026).
+ * Login first-open CTA now opens FeatureWalkthroughModal (ccd-pitch) instead.
+ * Kept in-repo for optional replay; do not wire back as the primary post-notice path.
+ */
 interface FeatureDemoVideoModalProps {
   isOpen: boolean;
   onClose: () => void;

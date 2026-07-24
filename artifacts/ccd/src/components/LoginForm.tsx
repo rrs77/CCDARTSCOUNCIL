@@ -127,7 +127,7 @@ export function LoginForm() {
     setShowPartnersFundingStart(false);
   };
 
-  /** Acknowledge notice, then open the animated Feature Walkthrough (ccd-pitch). */
+  /** Notice primary CTA → open animated walkthrough in the old FeatureDemoVideoModal slot. */
   const startWalkthroughFromStart = () => {
     dismissPartnersFundingStart();
     setShowFeatureWalkthrough(true);
