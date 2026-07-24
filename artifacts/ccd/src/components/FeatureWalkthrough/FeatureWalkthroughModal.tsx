@@ -10,7 +10,7 @@ interface FeatureWalkthroughModalProps {
 // Use explicit index.html — bare `/ccd-pitch/` is caught by the Vite/Vercel SPA
 // fallback and serves the main CCD shell instead of the pitch promo.
 // Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
-const PROMO_PATH = 'ccd-pitch/index.html?autoplay=1&v=2026-07-24h';
+const PROMO_PATH = 'ccd-pitch/index.html?autoplay=1&v=2026-07-24i';
 const PITCH_CLOSE_MESSAGE = 'ccd-pitch-close';
 const SITE_URL = 'https://www.ccdesigner.co.uk';
 
@@ -115,16 +115,16 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
           <button
             type="button"
             onClick={toggleEnlarge}
-            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#B6FF7E]/40 bg-white/5 px-3 py-2 text-sm font-semibold text-[#B6FF7E] transition-colors hover:bg-white/10"
+            className="inline-flex items-center justify-center rounded-lg border border-[#B6FF7E]/40 bg-white/5 p-2 text-[#B6FF7E] transition-colors hover:bg-white/10"
             aria-label={isEnlarged ? 'Exit enlarge' : 'Enlarge'}
             aria-pressed={isEnlarged}
+            title={isEnlarged ? 'Exit enlarge' : 'Enlarge'}
           >
             {isEnlarged ? (
               <Minimize className="h-4 w-4 shrink-0" aria-hidden />
             ) : (
               <Maximize className="h-4 w-4 shrink-0" aria-hidden />
             )}
-            <span>{isEnlarged ? 'Exit enlarge' : 'Enlarge'}</span>
           </button>
           <button
             type="button"

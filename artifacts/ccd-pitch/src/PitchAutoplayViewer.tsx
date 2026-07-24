@@ -7,6 +7,10 @@ const DESIGN_WIDTH = 1280;
 const DESIGN_HEIGHT = 720;
 const SITE_URL = "https://www.ccdesigner.co.uk";
 const SWIPE_THRESHOLD_PX = 45;
+/** Idle delay before chrome fades during autoplay (video-player UX). */
+const CHROME_HIDE_MS = 2200;
+/** Reveal chrome when the pointer is within this many px of the bottom edge. */
+const BOTTOM_HOTZONE_PX = 72;
 
 function leaveWalkthrough() {
   // When embedded in the CCD login modal iframe, ask the parent to close
@@ -38,10 +42,78 @@ export function PitchAutoplayViewer() {
   const stageRef = useRef<HTMLDivElement>(null);
   const shellRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
+  const hideChromeTimerRef = useRef<number | null>(null);
+  const chromePinnedRef = useRef(false);
   const indexRef = useRef(0);
   indexRef.current = index;
 
+  // Video-style chrome: visible when paused; auto-hides while playing unless
+  // the pointer is near the bottom / over the nav strip.
+  const [chromeVisible, setChromeVisible] = useState(true);
+
   const bump = useCallback(() => setTick((t) => t + 1), []);
+
+  const clearHideChromeTimer = useCallback(() => {
+    if (hideChromeTimerRef.current != null) {
+      window.clearTimeout(hideChromeTimerRef.current);
+      hideChromeTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHideChrome = useCallback(() => {
+    clearHideChromeTimer();
+    if (!playing || chromePinnedRef.current) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    hideChromeTimerRef.current = window.setTimeout(() => {
+      setChromeVisible(false);
+      hideChromeTimerRef.current = null;
+    }, CHROME_HIDE_MS);
+  }, [playing, clearHideChromeTimer]);
+
+  const revealChrome = useCallback(() => {
+    setChromeVisible(true);
+    scheduleHideChrome();
+  }, [scheduleHideChrome]);
+
+  useEffect(() => {
+    if (!playing) {
+      clearHideChromeTimer();
+      setChromeVisible(true);
+      return;
+    }
+    // Fresh play: show briefly, then fade like a video control bar.
+    setChromeVisible(true);
+    scheduleHideChrome();
+    return () => clearHideChromeTimer();
+  }, [playing, scheduleHideChrome, clearHideChromeTimer]);
+
+  const onShellPointerMove = useCallback(
+    (event: React.MouseEvent | React.TouchEvent) => {
+      const shell = shellRef.current;
+      if (!shell) return;
+      const clientY =
+        "touches" in event
+          ? event.touches[0]?.clientY
+          : (event as React.MouseEvent).clientY;
+      if (clientY == null) return;
+      const fromBottom = shell.getBoundingClientRect().bottom - clientY;
+      if (fromBottom <= BOTTOM_HOTZONE_PX) {
+        revealChrome();
+      }
+    },
+    [revealChrome],
+  );
+
+  const onNavPointerEnter = useCallback(() => {
+    chromePinnedRef.current = true;
+    clearHideChromeTimer();
+    setChromeVisible(true);
+  }, [clearHideChromeTimer]);
+
+  const onNavPointerLeave = useCallback(() => {
+    chromePinnedRef.current = false;
+    scheduleHideChrome();
+  }, [scheduleHideChrome]);
 
   const jumpTo = useCallback(
     (next: number) => {
@@ -206,8 +278,11 @@ export function PitchAutoplayViewer() {
   return (
     <div
       ref={shellRef}
-      className="pitch-autoplay-shell flex select-none flex-col overflow-hidden bg-black"
+      className="pitch-autoplay-shell relative flex select-none flex-col overflow-hidden bg-black"
       data-orientation={orientation}
+      data-chrome-visible={chromeVisible ? "true" : "false"}
+      onMouseMove={onShellPointerMove}
+      onTouchStart={onShellPointerMove}
       style={{
         width: "100%",
         height: "100%",
@@ -220,7 +295,7 @@ export function PitchAutoplayViewer() {
         boxSizing: "border-box",
       }}
     >
-      {/* Stage — slide letterboxed to 16:9 inside the space above the nav bar */}
+      {/* Stage fills the shell; nav overlays the bottom like video chrome. */}
       <div ref={stageRef} className="pitch-stage relative min-h-0 flex-1">
         <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
           {/*
@@ -271,11 +346,30 @@ export function PitchAutoplayViewer() {
         />
       </div>
 
-      {/* Compact controls — no thumbnail strip; parent modal owns chrome */}
+      {/* Bottom hot zone — catches hover/tap near the edge while chrome is faded. */}
       <div
-        className="pitch-nav-strip z-20 flex shrink-0 items-center justify-center gap-1.5 border-t border-white/10 bg-[#002D24] px-2 py-1.5 sm:gap-2 sm:px-3"
+        className="pitch-chrome-hotzone"
+        aria-hidden
+        onMouseEnter={revealChrome}
+        onTouchStart={revealChrome}
+      />
+
+      {/* Compact controls — overlays stage; auto-hides while playing */}
+      <div
+        className="pitch-nav-strip z-20 flex items-center justify-center gap-1.5 border-t border-white/10 bg-[#002D24] px-2 py-1.5 sm:gap-2 sm:px-3"
         role="toolbar"
         aria-label="Walkthrough navigation"
+        aria-hidden={!chromeVisible}
+        data-chrome-hidden={chromeVisible ? "false" : "true"}
+        onMouseEnter={onNavPointerEnter}
+        onMouseLeave={onNavPointerLeave}
+        onFocusCapture={onNavPointerEnter}
+        onBlurCapture={(event) => {
+          // Keep chrome while focus remains inside the strip.
+          if (!event.currentTarget.contains(event.relatedTarget as Node | null)) {
+            onNavPointerLeave();
+          }
+        }}
       >
         <button
           type="button"
@@ -287,6 +381,7 @@ export function PitchAutoplayViewer() {
           title={playing ? "Pause" : "Play"}
           aria-label={playing ? "Pause autoplay" : "Play autoplay"}
           aria-pressed={playing}
+          tabIndex={chromeVisible ? 0 : -1}
         >
           {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4" />}
         </button>
@@ -297,6 +392,7 @@ export function PitchAutoplayViewer() {
           className="pitch-nav-btn"
           title="Previous slide"
           aria-label="Previous slide"
+          tabIndex={chromeVisible ? 0 : -1}
         >
           <ChevronLeft className="h-4.5 w-4.5" />
         </button>
@@ -314,6 +410,7 @@ export function PitchAutoplayViewer() {
           className="pitch-nav-btn"
           title="Next slide"
           aria-label="Next slide"
+          tabIndex={chromeVisible ? 0 : -1}
         >
           <ChevronRight className="h-4.5 w-4.5" />
         </button>
@@ -324,6 +421,7 @@ export function PitchAutoplayViewer() {
           className="pitch-nav-btn"
           title="Close walkthrough"
           aria-label="Close walkthrough"
+          tabIndex={chromeVisible ? 0 : -1}
         >
           <X className="h-4 w-4" />
         </button>

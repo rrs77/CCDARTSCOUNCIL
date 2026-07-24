@@ -117,9 +117,40 @@ body {
   padding: clamp(1.65rem, 3.8vh, 2.65rem) clamp(1.65rem, 4.2vw, 3.25rem);
 }
 
-/* Autoplay nav bar — reserved strip below the slide stage */
+/* Autoplay nav bar — overlays the bottom of the stage (video-chrome style) */
 .pitch-nav-strip {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
   min-height: 3rem;
+  transition:
+    opacity 280ms ease,
+    transform 280ms ease,
+    visibility 280ms ease;
+  will-change: opacity, transform;
+}
+
+.pitch-nav-strip[data-chrome-hidden="true"] {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(10px);
+}
+
+/* Invisible hit target so chrome can be revealed while faded */
+.pitch-chrome-hotzone {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 4.5rem;
+  z-index: 15;
+  pointer-events: none;
+}
+
+.pitch-autoplay-shell[data-chrome-visible="false"] .pitch-chrome-hotzone {
+  pointer-events: auto;
 }
 
 .pitch-nav-btn {
@@ -236,6 +267,14 @@ body {
   .pitch-nav-strip,
   .pitch-nav-btn {
     transition: none;
+  }
+
+  .pitch-nav-strip[data-chrome-hidden="true"] {
+    /* Keep controls reachable when motion is reduced */
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: none;
   }
 }
 
