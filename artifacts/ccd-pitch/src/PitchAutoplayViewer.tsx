@@ -106,23 +106,12 @@ export function PitchAutoplayViewer() {
   );
   const [tick, setTick] = useState(0);
   const [stageDims, setStageDims] = useState({ width: 0, height: 0 });
-  // Portrait phones: the whole viewer (slide + nav bar) rotates 90° so the
-  // deck always plays in landscape with the navigation along its bottom.
-  const [vp, setVp] = useState({
-    w: window.innerWidth,
-    h: window.innerHeight,
-  });
-  const rotated = vp.h > vp.w;
-
-  useEffect(() => {
-    const update = () => setVp({ w: window.innerWidth, h: window.innerHeight });
-    window.addEventListener("resize", update);
-    window.addEventListener("orientationchange", update);
-    return () => {
-      window.removeEventListener("resize", update);
-      window.removeEventListener("orientationchange", update);
-    };
-  }, []);
+  // Track device orientation so chrome (nav, safe areas) adapts while the
+  // 16:9 slide stage stays upright — never force-rotate the deck.
+  const [orientation, setOrientation] = useState<"portrait" | "landscape">(
+    () =>
+      window.innerHeight >= window.innerWidth ? "portrait" : "landscape",
+  );
   const stageRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const indexRef = useRef(0);
@@ -146,6 +135,28 @@ export function PitchAutoplayViewer() {
   const goPrev = useCallback(() => jumpTo(indexRef.current - 1), [jumpTo]);
   const goNext = useCallback(() => jumpTo(indexRef.current + 1), [jumpTo]);
 
+  useEffect(() => {
+    const update = () => {
+      setOrientation(
+        window.innerHeight >= window.innerWidth ? "portrait" : "landscape",
+      );
+    };
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("orientationchange", update);
+    // iOS often fires orientationchange before the new viewport settles.
+    const onOrientation = () => {
+      window.setTimeout(update, 120);
+      window.setTimeout(update, 350);
+    };
+    window.addEventListener("orientationchange", onOrientation);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("orientationchange", onOrientation);
+    };
+  }, []);
+
   // Autoplay.
   useEffect(() => {
     if (!playing) return;
@@ -160,10 +171,9 @@ export function PitchAutoplayViewer() {
     const stage = stageRef.current;
     if (!stage) return;
     const update = () => {
-      // offsetWidth/Height are layout dimensions, unaffected by the
-      // whole-viewer rotation transform applied in portrait mode.
-      const availW = stage.offsetWidth;
-      const availH = stage.offsetHeight;
+      const availW = stage.clientWidth;
+      const availH = stage.clientHeight;
+      if (availW <= 0 || availH <= 0) return;
       const width = Math.min(availW, availH * (16 / 9));
       const height = Math.min(availH, availW * (9 / 16));
       setStageDims({ width, height });
@@ -176,7 +186,7 @@ export function PitchAutoplayViewer() {
       observer.disconnect();
       window.removeEventListener("orientationchange", update);
     };
-  }, []);
+  }, [orientation]);
 
   // Keyboard navigation (the overlay keeps focus in this window).
   useEffect(() => {
@@ -198,13 +208,12 @@ export function PitchAutoplayViewer() {
   }, [goPrev, goNext]);
 
   // Tap / swipe on the stage overlay — exactly one step per gesture.
-  const touchRef = useRef<{ x: number; y: number; handled: boolean } | null>(null);
+  const touchRef = useRef<{ x: number; y: number } | null>(null);
 
   const onOverlayTouchStart = (event: React.TouchEvent) => {
     touchRef.current = {
       x: event.touches[0].clientX,
       y: event.touches[0].clientY,
-      handled: false,
     };
   };
 
@@ -214,18 +223,12 @@ export function PitchAutoplayViewer() {
     if (!start) return;
     const dx = event.changedTouches[0].clientX - start.x;
     const dy = event.changedTouches[0].clientY - start.y;
-    // When the slide is rotated 90° (portrait phones) the slide's
-    // horizontal axis runs down the screen, so navigate on dy instead.
-    const along = rotated ? dy : dx;
-    const across = rotated ? dx : dy;
-    if (Math.abs(along) >= SWIPE_THRESHOLD_PX && Math.abs(along) > Math.abs(across)) {
-      if (along < 0) goNext();
+    if (Math.abs(dx) >= SWIPE_THRESHOLD_PX && Math.abs(dx) > Math.abs(dy)) {
+      if (dx < 0) goNext();
       else goPrev();
     } else if (Math.abs(dx) < 10 && Math.abs(dy) < 10) {
-      // Tap: the first 35% of the slide goes back, the rest advances.
-      const fraction = rotated
-        ? start.y / window.innerHeight
-        : start.x / window.innerWidth;
+      // Tap: the first 35% of the stage goes back, the rest advances.
+      const fraction = start.x / window.innerWidth;
       if (fraction < 0.35) goPrev();
       else goNext();
     }
@@ -242,9 +245,7 @@ export function PitchAutoplayViewer() {
 
   const onOverlayClick = (event: React.MouseEvent) => {
     if (touchClickGuardActive.current) return;
-    const fraction = rotated
-      ? event.clientY / window.innerHeight
-      : event.clientX / window.innerWidth;
+    const fraction = event.clientX / window.innerWidth;
     if (fraction < 0.35) goPrev();
     else goNext();
   };
@@ -257,38 +258,38 @@ export function PitchAutoplayViewer() {
 
   return (
     <div
-      className="flex select-none flex-col overflow-hidden bg-black"
-      style={
-        rotated
-          ? {
-              position: "fixed",
-              top: 0,
-              left: 0,
-              width: vp.h,
-              height: vp.w,
-              transform: "rotate(90deg) translateY(-100%)",
-              transformOrigin: "top left",
-            }
-          : { width: "100vw", height: "100dvh" }
-      }
+      className="pitch-autoplay-shell flex select-none flex-col overflow-hidden bg-black"
+      data-orientation={orientation}
+      style={{
+        width: "100%",
+        height: "100%",
+        minHeight: "100dvh",
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        boxSizing: "border-box",
+      }}
     >
       {/* Stage — slide letterboxed to 16:9 inside the space above the nav bar */}
-      <div ref={stageRef} className="relative min-h-0 flex-1">
-        <div className="absolute inset-0 flex items-center justify-center">
+      <div ref={stageRef} className="pitch-stage relative min-h-0 flex-1">
+        <div className="absolute inset-0 flex items-center justify-center overflow-hidden">
           {/*
             The slide renders inside the iframe at a fixed 16:9 design
             resolution and is scaled down with a CSS transform. This keeps
             typography and layout identical to desktop on small screens
-            (e.g. iPhone portrait) instead of letting px-based minimums
-            overlap and clip in a tiny viewport.
+            instead of letting px-based minimums overlap and clip.
           */}
           <div
+            className="pitch-stage-frame"
             style={{
               width: Math.floor(stageDims.width),
               height: Math.floor(stageDims.height),
               overflow: "hidden",
               position: "relative",
               flexShrink: 0,
+              maxWidth: "100%",
+              maxHeight: "100%",
             }}
           >
             <iframe
@@ -313,7 +314,7 @@ export function PitchAutoplayViewer() {
         {/* Transparent overlay: viewer owns all tap/swipe/click navigation */}
         <div
           className="absolute inset-0 z-10"
-          style={{ touchAction: rotated ? "none" : "pan-y" }}
+          style={{ touchAction: "manipulation" }}
           onClick={onOverlayClick}
           onTouchStart={onOverlayTouchStart}
           onTouchEnd={onOverlayTouchEnd}
@@ -371,7 +372,7 @@ export function PitchAutoplayViewer() {
         />
 
         <div
-          className="shrink-0 whitespace-nowrap px-1 font-mono text-[0.7rem] tabular-nums text-white/70"
+          className="pitch-nav-count shrink-0 whitespace-nowrap px-1 font-mono text-[0.7rem] tabular-nums text-white/70"
           aria-live="polite"
         >
           {index + 1} of {slides.length}

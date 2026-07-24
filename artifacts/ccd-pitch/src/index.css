@@ -37,6 +37,7 @@ body,
   width: 100%;
   height: 100%;
   margin: 0;
+  overflow: hidden;
 }
 
 body {
@@ -45,12 +46,29 @@ body {
   font-family: var(--font-body-family);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  overscroll-behavior: none;
 }
 
 .slide {
   width: 100vw;
   height: 100vh;
   overflow: hidden;
+}
+
+/* Autoplay shell — fills the modal / phone viewport upright in both orientations */
+.pitch-autoplay-shell {
+  width: 100%;
+  height: 100%;
+  min-height: 100dvh;
+  max-height: 100dvh;
+}
+
+.pitch-stage {
+  min-height: 0;
+}
+
+.pitch-stage-frame {
+  background: #000;
 }
 
 /* House style — balanced for desktop walkthrough iframe.
@@ -288,11 +306,12 @@ body {
 }
 
 /* Short screens (landscape phones): slimmer bar and thumbnails */
-@media (max-height: 480px) {
+@media (max-height: 480px), (orientation: landscape) and (max-width: 926px) {
   .pitch-nav-strip {
-    min-height: 2.4rem;
-    padding-top: 0.25rem;
-    padding-bottom: 0.25rem;
+    min-height: 2.35rem;
+    padding-top: 0.2rem;
+    padding-bottom: 0.2rem;
+    gap: 0.35rem;
   }
 
   .pitch-nav-btn {
@@ -301,7 +320,62 @@ body {
   }
 
   .pitch-thumb {
-    height: 1.7rem;
-    width: clamp(3rem, 7vw, 4.5rem);
+    height: 1.65rem;
+    width: clamp(2.8rem, 6.5vw, 4.2rem);
+  }
+
+  .pitch-nav-count {
+    font-size: 0.62rem;
+  }
+
+  .pitch-thumb-label {
+    font-size: 0.52rem;
+  }
+}
+
+/* Portrait phones: readable chrome, room for notch / home indicator */
+@media (orientation: portrait) and (max-width: 500px) {
+  .pitch-nav-strip {
+    min-height: 3.15rem;
+    padding-top: 0.4rem;
+    padding-bottom: 0.45rem;
+  }
+
+  .pitch-nav-btn {
+    width: 2.6rem;
+    height: 2.6rem;
+  }
+
+  .pitch-thumb {
+    height: 2.15rem;
+    width: clamp(3.2rem, 18vw, 4.8rem);
+  }
+
+  .pitch-thumb-label {
+    font-size: 0.58rem;
+  }
+
+  .pitch-h1 {
+    font-size: clamp(1.35rem, 5.2vw, 2.2rem);
+  }
+
+  .pitch-h2 {
+    font-size: clamp(1.15rem, 4.4vw, 1.85rem);
+  }
+
+  .pitch-slide-pad {
+    padding: clamp(1.1rem, 3.2vh, 1.8rem) clamp(1.1rem, 4vw, 1.8rem);
+  }
+}
+
+/* Landscape phones: use horizontal space; keep stage frame from clipping */
+@media (orientation: landscape) and (max-height: 500px) {
+  .pitch-autoplay-shell {
+    min-height: 100dvh;
+  }
+
+  .pitch-stage {
+    /* Prefer a larger stage when the nav is slim */
+    min-height: 0;
   }
 }

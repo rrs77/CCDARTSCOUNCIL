@@ -21,7 +21,7 @@ import { PitchAutoplayViewer } from "@/PitchAutoplayViewer";
 
 // Slides that already present a full-size logo get no corner stamp.
 const NO_BRAND_SLIDES = new Set([
-  "MeltingPotIntro.tsx",
+  "CCDesignerIntro.tsx",
   "PromoFuture.tsx",
   "WalkthroughIntro.tsx",
   "WalkthroughContact.tsx",
@@ -181,26 +181,32 @@ function AllSlides() {
 // This component is used for the deployed view at `/`
 function SlideViewer() {
   const iframeRef = useRef<HTMLIFrameElement>(null);
-  // Portrait screens rotate the 16:9 slide 90° so it fills the screen.
+  // Letterbox the 16:9 stage into the real viewport — stay upright in both
+  // portrait and landscape (no forced 90° rotation).
   const fitDims = () => {
-    const rotated = window.innerHeight > window.innerWidth;
-    const availW = rotated ? window.innerHeight : window.innerWidth;
-    const availH = rotated ? window.innerWidth : window.innerHeight;
+    const availW = window.innerWidth;
+    const availH = window.innerHeight;
+    const orientation =
+      availH >= availW ? ("portrait" as const) : ("landscape" as const);
     return {
       width: Math.min(availW, availH * (16 / 9)),
       height: Math.min(availH, availW * (9 / 16)),
-      rotated,
+      orientation,
     };
   };
   const [dims, setDims] = useState(fitDims);
 
   useEffect(() => {
     const update = () => setDims(fitDims());
+    const onOrientation = () => {
+      window.setTimeout(update, 120);
+      window.setTimeout(update, 350);
+    };
     window.addEventListener("resize", update);
-    window.addEventListener("orientationchange", update);
+    window.addEventListener("orientationchange", onOrientation);
     return () => {
       window.removeEventListener("resize", update);
-      window.removeEventListener("orientationchange", update);
+      window.removeEventListener("orientationchange", onOrientation);
     };
   }, []);
 
@@ -221,19 +227,29 @@ function SlideViewer() {
 
   return (
     <div
-      className="slide-viewer h-screen w-screen overflow-hidden bg-black flex items-center justify-center"
+      className="slide-viewer h-[100dvh] w-screen overflow-hidden bg-black flex items-center justify-center"
+      data-orientation={dims.orientation}
+      style={{
+        paddingTop: "env(safe-area-inset-top, 0px)",
+        paddingRight: "env(safe-area-inset-right, 0px)",
+        paddingBottom: "env(safe-area-inset-bottom, 0px)",
+        paddingLeft: "env(safe-area-inset-left, 0px)",
+        boxSizing: "border-box",
+      }}
       onClick={() => iframeRef.current?.focus()}
     >
       {/* Fixed 16:9 design resolution scaled to fit — keeps slide layout
           identical across phones, tablets and desktops. */}
       <div
+        className="pitch-stage-frame"
         style={{
           width: dims.width,
           height: dims.height,
           overflow: "hidden",
           position: "relative",
           flexShrink: 0,
-          transform: dims.rotated ? "rotate(90deg)" : undefined,
+          maxWidth: "100%",
+          maxHeight: "100%",
         }}
       >
         <iframe

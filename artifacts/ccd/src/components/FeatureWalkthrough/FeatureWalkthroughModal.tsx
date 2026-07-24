@@ -9,7 +9,7 @@ interface FeatureWalkthroughModalProps {
 // Use explicit index.html — bare `/ccd-pitch/` is caught by the Vite/Vercel SPA
 // fallback and serves the main CCD shell instead of the pitch promo.
 // Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
-const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/index.html?autoplay=1&v=2026-07-24c`;
+const PROMO_SRC = `${import.meta.env.BASE_URL}ccd-pitch/index.html?autoplay=1&v=2026-07-24e`;
 const SITE_URL = 'https://www.ccdesigner.co.uk';
 const PITCH_CLOSE_MESSAGE = 'ccd-pitch-close';
 
@@ -51,22 +51,37 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
 
   return (
     <div
-      className="fixed inset-0 z-[100] bg-black"
+      className="fixed inset-0 z-[100] flex flex-col bg-black"
       role="dialog"
       aria-modal="true"
       aria-label="Feature walkthrough"
+      style={{
+        width: '100%',
+        height: '100%',
+        minHeight: '100dvh',
+        paddingTop: 'env(safe-area-inset-top, 0px)',
+        paddingRight: 'env(safe-area-inset-right, 0px)',
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
+        paddingLeft: 'env(safe-area-inset-left, 0px)',
+        boxSizing: 'border-box',
+      }}
     >
       <iframe
         key={PROMO_SRC}
         src={PROMO_SRC}
         title="Creative Curriculum Designer promo"
-        className="h-full w-full border-0"
+        className="min-h-0 w-full flex-1 border-0"
         allow="autoplay"
+        style={{ height: '100%' }}
       />
       <button
         type="button"
         onClick={handleClose}
-        className="absolute right-4 top-4 z-[110] rounded-full bg-[#002D24]/70 p-2 text-white/80 backdrop-blur-sm transition-colors hover:bg-[#002D24]/90 hover:text-[#B6FF7E]"
+        className="absolute z-[110] rounded-full bg-[#002D24]/70 p-2 text-white/80 backdrop-blur-sm transition-colors hover:bg-[#002D24]/90 hover:text-[#B6FF7E]"
+        style={{
+          top: 'max(0.75rem, env(safe-area-inset-top, 0px))',
+          right: 'max(0.75rem, env(safe-area-inset-right, 0px))',
+        }}
         aria-label="Close walkthrough"
         title="Close walkthrough"
       >
