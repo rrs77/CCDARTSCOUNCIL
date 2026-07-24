@@ -58,3 +58,17 @@ export function sanitizeUrl(url: string): string {
   if (SAFE_URL_PATTERN.test(trimmed)) return trimmed;
   return '#';
 }
+
+/** LSO partner site HTML — allows inline images (https or data:image). */
+export function sanitizeLsoHtml(html: string): string {
+  if (!html) return '';
+  return String(
+    DOMPurify.sanitize(html, {
+      ALLOWED_TAGS: [...ALLOWED_TAGS, 'img'],
+      ALLOWED_ATTR: [...ALLOWED_ATTR, 'src', 'alt', 'width', 'height', 'style'],
+      ALLOW_DATA_ATTR: false,
+      ALLOWED_URI_REGEXP:
+        /^(?:(?:(?:f|ht)tps?|mailto|tel|callto|sms|cid|xmpp):|data:image\/(?:png|jpeg|jpg|gif|webp);base64,|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    }),
+  );
+}

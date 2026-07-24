@@ -27,8 +27,8 @@ export function PartnerHubFeaturedSection({
   action,
   children,
 }: {
-  eyebrow: string;
-  title: string;
+  eyebrow: ReactNode;
+  title: ReactNode;
   description?: ReactNode;
   links?: { href: string; label: string; icon?: 'external' | 'file' }[];
   accentClassName?: string;
@@ -46,15 +46,15 @@ export function PartnerHubFeaturedSection({
     >
       <div className="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between lg:gap-8">
         <div className="min-w-0 flex-1">
-          <p
+          <div
             className={`text-xs font-semibold uppercase tracking-[0.12em] ${eyebrowClassName}`}
             style={eyebrowStyle}
           >
             {eyebrow}
-          </p>
-          <h3 className="mt-1.5 text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
+          </div>
+          <div className="mt-1.5 text-xl font-semibold tracking-tight text-gray-900 sm:text-2xl">
             {title}
-          </h3>
+          </div>
           {description && (
             <div className="mt-2 max-w-3xl text-sm leading-relaxed text-gray-600 sm:text-[0.95rem]">
               {description}

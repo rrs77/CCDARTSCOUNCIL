@@ -17,7 +17,8 @@ import { HelpGuide } from './components/HelpGuide';
 import { SchoolHomepage } from './components/SchoolHomepage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
-import { getPartnerHubForPath } from './config/partnerHubs';
+import { getPartnerHubForPath, PARTNER_HUBS } from './config/partnerHubs';
+import { parseLsoSitePath } from './utils/lsoSiteContent';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
 import { shouldShowPreviewBanner } from './utils/demoMode';
 import './utils/setupKS1Maths'; // Make setupKS1MathsExample available in browser console
@@ -42,11 +43,17 @@ import { DramaResourcePartnerHub } from './components/partners/DramaResourcePart
 import { PartnerHubPage } from './components/partners/PartnerHubPage';
 import { PartnerResourcesHub } from './components/partners/PartnerResourcesHub';
 import { LsoPartnerHub } from './components/partners/LsoPartnerHub';
+import { LsoSiteShell } from './components/partners/lso/LsoSiteShell';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
-  const partnerHub =
-    typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const lsoPath = typeof window !== 'undefined' ? parseLsoSitePath(pathname) : null;
+  const partnerHub = lsoPath
+    ? PARTNER_HUBS.find((h) => h.slug === 'lso') ?? null
+    : typeof window !== 'undefined'
+      ? getPartnerHubForPath(pathname)
+      : null;
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
   // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
@@ -135,7 +142,14 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
         );
         break;
       case 'lso':
-        body = (
+        body = lsoPath ? (
+          <LsoSiteShell
+            path={lsoPath}
+            onAddedToApp={({ sheetId }) =>
+              goHomeAfterAdd('ccd-open-after-partner', sheetId, 'lesson-library')
+            }
+          />
+        ) : (
           <LsoPartnerHub
             standalone
             onAddedToApp={({ sheetId }) =>
@@ -250,14 +264,19 @@ function App() {
     );
   }
 
-  const partnerHub =
-    typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+  const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
+  const lsoPath = typeof window !== 'undefined' ? parseLsoSitePath(pathname) : null;
+  const partnerHub = lsoPath
+    ? PARTNER_HUBS.find((h) => h.slug === 'lso') ?? null
+    : typeof window !== 'undefined'
+      ? getPartnerHubForPath(pathname)
+      : null;
 
   // Detect a school-specific public homepage at `/<slug>`. Skip when the path
-  // is a partner hub (`/roh`, …) so those routes are not treated as schools.
+  // is a partner hub (`/roh`, `/lso`, `/lso/edit`, …) so those routes are not treated as schools.
   const schoolHomepage =
     typeof window !== 'undefined' && !partnerHub
-      ? getSchoolForPath(window.location.pathname)
+      ? getSchoolForPath(pathname)
       : null;
 
   return (

@@ -15,6 +15,9 @@ interface RichTextEditorProps {
   minHeight?: string;
   maxHeight?: string;
   className?: string;
+  /** Prototype image insert (data URL / https) for partner site editors */
+  enableImages?: boolean;
+  onInsertImage?: () => void;
 }
 
 const ToolbarButton = ({
@@ -52,6 +55,8 @@ export function RichTextEditor({
   minHeight = '150px',
   maxHeight = '400px',
   className = '',
+  enableImages = false,
+  onInsertImage,
 }: RichTextEditorProps) {
   const editor = useEditor({
     extensions: [
@@ -212,6 +217,12 @@ export function RichTextEditor({
           color: #17A697;
           text-decoration: underline;
         }
+        .rich-text-editor .tiptap-editor-content img {
+          max-width: 100%;
+          height: auto;
+          border-radius: 0.5rem;
+          margin: 0.75em 0;
+        }
       `}</style>
 
       <div className="tiptap-toolbar">
@@ -257,6 +268,26 @@ export function RichTextEditor({
         <ToolbarButton onClick={setLink} active={editor.isActive('link')} title="Link">
           🔗
         </ToolbarButton>
+        {enableImages && (
+          <ToolbarButton
+            onClick={() => {
+              if (onInsertImage) {
+                onInsertImage();
+                return;
+              }
+              const url = window.prompt('Image URL (https://… or paste after uploading elsewhere)');
+              if (!url) return;
+              editor
+                .chain()
+                .focus()
+                .insertContent(`<img src="${url.replace(/"/g, '&quot;')}" alt="" />`)
+                .run();
+            }}
+            title="Insert image"
+          >
+            🖼
+          </ToolbarButton>
+        )}
 
         <div className="separator" />
 
