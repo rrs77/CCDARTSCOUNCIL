@@ -2,7 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight, Pause, Play, X } from "lucide-react";
 import { slides } from "@/slideLoader";
 
-const SLIDE_MS = 8000;
+const SLIDE_MS = 9000;
 const DESIGN_WIDTH = 1280;
 const DESIGN_HEIGHT = 720;
 const PROGRESS_TICK_MS = 100;

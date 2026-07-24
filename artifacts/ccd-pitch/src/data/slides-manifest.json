@@ -1,306 +1,82 @@
 [
   {
-    "id": "4f7d6ac4-0b56-447e-8f6c-d935df49eb05",
+    "id": "walkthrough-001-intro",
     "position": 1,
-    "filepath": "src/pages/slides/MeltingPotIntro.tsx",
-    "title": "The Melting Pot \u2014 the app suite for teachers in performing arts",
-    "description": "Animated opening slide revealing The Melting Pot logo \u2014 the app suite for teachers in performing arts.",
+    "filepath": "src/pages/slides/WalkthroughIntro.tsx",
+    "title": "Feature walkthrough — welcome",
+    "description": "Brief prototype intro with CCD forest/lime brand and connection framing.",
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
+    "id": "walkthrough-002-music-hubs",
     "position": 2,
-    "filepath": "src/pages/slides/Title.tsx",
-    "title": "A living home for creative teaching",
-    "description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music \u2014 across every key stage from EYFS to KS5.",
+    "filepath": "src/pages/slides/WalkthroughMusicHubs.tsx",
+    "title": "Music hubs & Partner Hubs",
+    "description": "EMS, Tri-Borough, and Partner Hubs structure on the dashboard.",
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000002",
+    "id": "walkthrough-003-lso",
     "position": 3,
-    "filepath": "src/pages/slides/Problem.tsx",
-    "title": "The problem: arts teachers are working alone",
-    "description": "Why drama, dance and music teachers \u2014 and the non-specialists supporting them \u2014 are losing creative practice today.",
+    "filepath": "src/pages/slides/WalkthroughLsoHub.tsx",
+    "title": "LSO hub — Add to CCDesigner",
+    "description": "Choose an LSO resource and add it to the CCDesigner library.",
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000020",
+    "id": "walkthrough-004-lesson-flow",
     "position": 4,
-    "filepath": "src/pages/slides/WhyNow.tsx",
-    "title": "Why now: the arts in higher education are at a tipping point",
-    "description": "The case for the arts \u2014 university course closures, falling GCSE entries, the pipeline that feeds the creative industries.",
+    "filepath": "src/pages/slides/WalkthroughLessonFlow.tsx",
+    "title": "Activity → Lesson → Term",
+    "description": "Activity Library, Lesson Builder, Lesson Library, then half-term planner.",
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000024",
+    "id": "walkthrough-005-key-dates",
     "position": 5,
-    "filepath": "src/pages/slides/ProtectThePipeline.tsx",
-    "title": "Protecting the pipeline \u2014 from EYFS to the conservatoire stage",
-    "description": "One continuous arc from a Reception assembly to a university stage, and why every stage of the journey depends on the last.",
+    "filepath": "src/pages/slides/WalkthroughKeyDates.tsx",
+    "title": "Key dates & Important dates",
+    "description": "Populate calendar with partner key dates and Important dates panel.",
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000003",
+    "id": "walkthrough-006-calendar",
     "position": 6,
-    "filepath": "src/pages/slides/Solution.tsx",
-    "title": "The solution: one living home",
-    "description": "Half-term planner, lesson library, and activity stacks in one workspace \u2014 purpose-built for performing arts education across every key stage from EYFS to KS5.",
+    "filepath": "src/pages/slides/WalkthroughCalendar.tsx",
+    "title": "Calendar week & timetable",
+    "description": "Week and timetable views with partner and school lesson highlights.",
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
+    "id": "walkthrough-007-paid",
     "position": 7,
-    "filepath": "src/pages/slides/WhoItsFor.tsx",
-    "title": "Who it's for: arts educators across every key stage",
-    "description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form (EYFS to KS5), and the arts sector partners contributing alongside them.",
+    "filepath": "src/pages/slides/WalkthroughPaidPartners.tsx",
+    "title": "iCompose & We Teach Drama",
+    "description": "Paid partner hubs and basket with platform cut messaging.",
     "speakerNotes": ""
   },
   {
-    "id": "4f03e31d-6980-4053-b287-34a5ef93918f",
+    "id": "walkthrough-008-settings",
     "position": 8,
-    "filepath": "src/pages/slides/PromoTeacherCreativity.tsx",
-    "title": "Promo: Your creativity is your craft",
-    "description": "Animated scene celebrating the creative work teachers pour into every lesson.",
+    "filepath": "src/pages/slides/WalkthroughSettings.tsx",
+    "title": "Settings & key-stage folders",
+    "description": "Customisable library folders, categories, and academic year allocation.",
     "speakerNotes": ""
   },
   {
-    "id": "988ee265-8f7c-4775-ae26-204c3a15efd6",
+    "id": "walkthrough-009-org",
     "position": 9,
-    "filepath": "src/pages/slides/PromoNeverLose.tsx",
-    "title": "Promo: Never lose a great lesson again",
-    "description": "Animated scene on capturing great lessons so they are never lost.",
+    "filepath": "src/pages/slides/WalkthroughOrgHub.tsx",
+    "title": "Organisation hub & share",
+    "description": "School and partner organisation sharing value — brief.",
     "speakerNotes": ""
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000010",
+    "id": "walkthrough-010-contact",
     "position": 10,
-    "filepath": "src/pages/slides/PerformingArtsCoverage.tsx",
-    "title": "Drama, Music & Dance \u2014 one workspace",
-    "description": "Subject coverage breakdown with example units for each performing-arts discipline.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "c3b58873-83b4-487a-9ad9-7a35df7837ee",
-    "position": 11,
-    "filepath": "src/pages/slides/PromoCreative.tsx",
-    "title": "Promo: Designed for creative teaching",
-    "description": "Animated scene on tools shaped around creative classroom practice.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000011",
-    "position": 12,
-    "filepath": "src/pages/slides/LessonPlannerCalendar.tsx",
-    "title": "Feature: Lesson planner calendar",
-    "description": "Weekly timetable view with drag-and-drop lesson slots across drama, music and dance.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "87eba588-648b-4278-82b3-1982893bc124",
-    "position": 13,
-    "filepath": "src/pages/slides/PromoMapping.tsx",
-    "title": "Promo: Curriculum mapping made visual",
-    "description": "Animated scene on mapping curriculum coverage visually across terms.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "6c697492-690d-4981-be32-415eb9bb0562",
-    "position": 14,
-    "filepath": "src/pages/slides/PromoSequencing.tsx",
-    "title": "Promo: Sequencing that makes sense",
-    "description": "Animated scene on coherent lesson sequencing across a term.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "1b05f05d-5a7b-4723-bc7e-a0852a7c77e8",
-    "position": 15,
-    "filepath": "src/pages/slides/PromoProgression.tsx",
-    "title": "Promo: Progression you can see",
-    "description": "Animated scene showing skills progression across year groups.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000006",
-    "position": 16,
-    "filepath": "src/pages/slides/LessonLibrary.tsx",
-    "title": "Feature: Lesson library",
-    "description": "Searchable, taggable library of drama, music and dance lessons.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000007",
-    "position": 17,
-    "filepath": "src/pages/slides/ActivityStacks.tsx",
-    "title": "Feature: Activity stacks",
-    "description": "Reusable groups of warm-ups, mains, and plenaries for drama and music.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000012",
-    "position": 18,
-    "filepath": "src/pages/slides/ActivityCardsWithLinks.tsx",
-    "title": "Feature: Activity cards with web links",
-    "description": "Activity cards carry video, music, backing, vocal and web-link resources for one-tap access in the classroom.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000013",
-    "position": 19,
-    "filepath": "src/pages/slides/ActivityCreation.tsx",
-    "title": "Feature: Activity creation flow",
-    "description": "The new-activity form, with dedicated fields for video, web link, backing track and resources.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "fff1b9a8-567f-425b-850d-360303cc60aa",
-    "position": 20,
-    "filepath": "src/pages/slides/PromoAI.tsx",
-    "title": "Promo: AI that supports, never replaces",
-    "description": "Animated scene on AI assistance that amplifies teacher judgement.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "dc4f0823-5232-481a-b599-e828077ae9f7",
-    "position": 21,
-    "filepath": "src/pages/slides/PromoAdaptive.tsx",
-    "title": "Promo: Adaptive teaching built in",
-    "description": "Animated scene on adapting activities for every learner.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "5e1707e6-cda5-4b1b-b1b1-88fc60f2352c",
-    "position": 22,
-    "filepath": "src/pages/slides/PromoSEND.tsx",
-    "title": "Promo: SEND support at the core",
-    "description": "Animated scene on inclusive planning for SEND learners.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "6f776b28-e06b-41f4-9a0e-0196d2e1570e",
-    "position": 23,
-    "filepath": "src/pages/slides/PromoStretch.tsx",
-    "title": "Promo: Stretch and challenge",
-    "description": "Animated scene on extending high-attaining learners.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "6762014b-f9ec-419e-a558-3052bd84f4ba",
-    "position": 24,
-    "filepath": "src/pages/slides/PromoCrossCurricular.tsx",
-    "title": "Promo: Cross-curricular connections",
-    "description": "Animated scene linking the arts across the wider curriculum.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "9b8e1e0d-138a-43c9-ab9b-730b6f5efaa1",
-    "position": 25,
-    "filepath": "src/pages/slides/PromoReflect.tsx",
-    "title": "Promo: Reflect and refine",
-    "description": "Animated scene on reflecting after lessons and improving over time.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "9e5effec-70b2-4921-b501-9f4ddeed762c",
-    "position": 26,
-    "filepath": "src/pages/slides/PromoInspiration.tsx",
-    "title": "Promo: Inspiration on tap",
-    "description": "Animated scene on discovering fresh activity ideas.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000014",
-    "position": 27,
-    "filepath": "src/pages/slides/LessonPDFExport.tsx",
-    "title": "Feature: Print-ready lesson PDFs",
-    "description": "Sample lesson PDF export with school header, learning objective, and activity sequence.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0f1f669c-a3d2-4006-82f5-ed3bb53f3be2",
-    "position": 28,
-    "filepath": "src/pages/slides/PromoMobile.tsx",
-    "title": "Promo: Works wherever you teach",
-    "description": "Animated scene showing mobile and tablet use around school.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000015",
-    "position": 29,
-    "filepath": "src/pages/slides/SettingsHub.tsx",
-    "title": "Feature: Settings",
-    "description": "Settings panel showing year groups, categories, branding, and data tabs.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000016",
-    "position": 30,
-    "filepath": "src/pages/slides/SchoolHomepageAndPreview.tsx",
-    "title": "Feature: School homepages & preview mode",
-    "description": "Public school landing pages and the one-click read-only preview experience.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "de2ac443-f3ac-4a3f-9918-b9bbdc3a371a",
-    "position": 31,
-    "filepath": "src/pages/slides/PromoCommunity.tsx",
-    "title": "Promo: A community of creative educators",
-    "description": "Animated scene on sharing practice across a community of arts teachers.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000008",
-    "position": 32,
-    "filepath": "src/pages/slides/HowItWorks.tsx",
-    "title": "How it works",
-    "description": "The four-step flow from empty term to ready-to-teach.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000021",
-    "position": 33,
-    "filepath": "src/pages/slides/MeltingPot.tsx",
-    "title": "A melting pot of knowledge",
-    "description": "Schools, universities, arts organisations, practitioners and communities pouring their best into one living archive for children.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "c454004b-4fa8-433f-8ca6-691d8d5e60e7",
-    "position": 34,
-    "filepath": "src/pages/slides/PartnerAndMarketplace.tsx",
-    "title": "Partner activity packs & marketplace",
-    "description": "Arts-sector partners \u2014 Royal Opera House, National Theatre and more \u2014 contributing activity packs through a partner marketplace.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000022",
-    "position": 35,
-    "filepath": "src/pages/slides/CelebrateArts.tsx",
-    "title": "Celebrating learning in the arts",
-    "description": "Surfacing the daily craft of arts teaching \u2014 to parents, leaders, partner organisations and the wider sector.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000023",
-    "position": 36,
-    "filepath": "src/pages/slides/LifeChanging.tsx",
-    "title": "Inspiring, life-changing arts education",
-    "description": "Why one teacher, one moment, one lesson can change a life \u2014 and why CCD is built so those lessons multiply.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "ba146a3a-dd0e-4d93-9730-940c4b0b8d02",
-    "position": 37,
-    "filepath": "src/pages/slides/PromoFuture.tsx",
-    "title": "Promo: The future of creative teaching",
-    "description": "Animated closing scene looking to the future of creative education.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
-    "position": 38,
-    "filepath": "src/pages/slides/CallToAction.tsx",
-    "title": "Grow your creative practice \u2014 together",
-    "description": "Closing call to action inviting schools, departments and arts organisations to join the creative ecosystem.",
+    "filepath": "src/pages/slides/WalkthroughContact.tsx",
+    "title": "Contact & next steps",
+    "description": "Email, web, and continue into the prototype.",
     "speakerNotes": ""
   }
 ]

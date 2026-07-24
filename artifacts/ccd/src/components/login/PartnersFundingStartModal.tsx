@@ -7,20 +7,19 @@ import {
   PARTNERS_FUNDING_VIDEO_CTA,
   PARTNERS_FUNDING_VIDEO_INTRO,
   PARTNERS_FUNDING_VIDEO_NOTICE,
-  PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS,
 } from './prototypeCopy';
 
 interface PartnersFundingStartModalProps {
   isOpen: boolean;
   onClose: () => void;
-  /** Primary CTA: acknowledge org/images notice, then open the in-app video modal. */
-  onWatchVideo: () => void;
+  /** Primary CTA: open the animated Feature Walkthrough (ccd-pitch). */
+  onStartWalkthrough: () => void;
 }
 
 export function PartnersFundingStartModal({
   isOpen,
   onClose,
-  onWatchVideo,
+  onStartWalkthrough,
 }: PartnersFundingStartModalProps) {
   useEffect(() => {
     if (!isOpen) return;
@@ -65,7 +64,7 @@ export function PartnersFundingStartModal({
           </p>
           <h2
             id="partners-funding-start-title"
-            className="mt-2 max-w-[20rem] text-2xl font-semibold tracking-tight text-white"
+            className="mt-2 max-w-[22rem] text-2xl font-semibold tracking-tight text-white"
             style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
           >
             {PARTNERS_FUNDING_START_TITLE}
@@ -75,17 +74,14 @@ export function PartnersFundingStartModal({
           </p>
         </div>
 
-        <div className="space-y-5 px-6 py-6 sm:px-8 sm:py-7">
-          <div className="space-y-2 rounded-lg border border-[#002D24]/10 bg-[#e8f0ea] px-3.5 py-3 text-xs leading-relaxed text-gray-600">
-            <p>{PARTNERS_FUNDING_VIDEO_NOTICE}</p>
-            <p className="font-semibold text-[#002D24]">
-              {PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS}
-            </p>
-          </div>
+        <div className="space-y-4 px-6 py-6 sm:px-8 sm:py-7">
+          <p className="text-xs leading-relaxed text-gray-500">
+            {PARTNERS_FUNDING_VIDEO_NOTICE}
+          </p>
 
           <button
             type="button"
-            onClick={onWatchVideo}
+            onClick={onStartWalkthrough}
             className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#B6FF7E] px-4 py-3.5 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
           >
             <PlayCircle className="h-5 w-5 shrink-0" aria-hidden />
