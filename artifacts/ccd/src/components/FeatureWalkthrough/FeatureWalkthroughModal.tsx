@@ -19,13 +19,35 @@ type FsElement = HTMLElement & {
   msRequestFullscreen?: () => void;
 };
 
-function isElementFullscreen(el: HTMLElement | null): boolean {
-  if (!el) return false;
-  const doc = document as Document & { webkitFullscreenElement?: Element | null };
-  const fullscreenEl = document.fullscreenElement || doc.webkitFullscreenElement;
-  return fullscreenEl === el;
+type FsDocument = Document & {
+  webkitFullscreenElement?: Element | null;
+  webkitExitFullscreen?: () => void;
+  msFullscreenElement?: Element | null;
+  msExitFullscreen?: () => void;
+};
+
+function getFullscreenElement(): Element | null {
+  const doc = document as FsDocument;
+  return (
+    document.fullscreenElement ||
+    doc.webkitFullscreenElement ||
+    doc.msFullscreenElement ||
+    null
+  );
 }
 
+function isElementFullscreen(el: HTMLElement | null): boolean {
+  if (!el) return false;
+  return getFullscreenElement() === el;
+}
+
+/**
+ * Fullscreen the slideshow media frame (outer wrapper that contains the iframe).
+ *
+ * Prefer the standard Fullscreen API synchronously so the user gesture is kept.
+ * Do not call iOS-only webkitEnterFullscreen — it is video-only and previously
+ * blocked requestFullscreen from running in the feature-demo modal.
+ */
 function enterElementFullscreen(el: FsElement): void {
   if (typeof el.requestFullscreen === 'function' && document.fullscreenEnabled !== false) {
     void el.requestFullscreen();
@@ -41,19 +63,34 @@ function enterElementFullscreen(el: FsElement): void {
 }
 
 function exitElementFullscreen(): void {
+  const doc = document as FsDocument;
   if (document.fullscreenElement && typeof document.exitFullscreen === 'function') {
     void document.exitFullscreen();
     return;
   }
-  const doc = document as Document & { webkitExitFullscreen?: () => void };
-  if (typeof doc.webkitExitFullscreen === 'function') {
+  if (doc.webkitFullscreenElement && typeof doc.webkitExitFullscreen === 'function') {
     doc.webkitExitFullscreen();
+    return;
+  }
+  if (doc.msFullscreenElement && typeof doc.msExitFullscreen === 'function') {
+    doc.msExitFullscreen();
   }
 }
 
+const MEDIA_FULLSCREEN_CLASS =
+  'overflow-hidden bg-black ' +
+  '[&:fullscreen]:flex [&:fullscreen]:h-screen [&:fullscreen]:w-screen ' +
+  '[&:fullscreen]:items-center [&:fullscreen]:justify-center ' +
+  '[&:fullscreen>iframe]:h-full [&:fullscreen>iframe]:w-full [&:fullscreen>iframe]:[aspect-ratio:auto] ' +
+  '[&:-webkit-full-screen]:flex [&:-webkit-full-screen]:h-screen [&:-webkit-full-screen]:w-screen ' +
+  '[&:-webkit-full-screen]:items-center [&:-webkit-full-screen]:justify-center ' +
+  '[&:-webkit-full-screen>iframe]:h-full [&:-webkit-full-screen>iframe]:w-full ' +
+  '[&:-webkit-full-screen>iframe]:[aspect-ratio:auto]';
+
 /**
- * Minimal walkthrough modal: forest card, thin lime edge, close + fullscreen.
- * The ccd-pitch slideshow fills the frame — no titles, disclaimer, or footer CTAs.
+ * Minimal walkthrough modal: forest card, thin lime edge, close + enlarge.
+ * Controls sit above the iframe so clicks are not swallowed by the embed.
+ * Fullscreen targets the media frame that wraps the iframe.
  */
 export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughModalProps) {
   const mediaRef = useRef<HTMLDivElement>(null);
@@ -93,6 +130,7 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
+      // Native Escape exits fullscreen first; only close the modal when not fullscreen.
       if (e.key === 'Escape' && !isElementFullscreen(mediaRef.current)) {
         handleClose();
       }
@@ -110,10 +148,12 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
     const onFsChange = () => syncFullscreenState();
     document.addEventListener('fullscreenchange', onFsChange);
     document.addEventListener('webkitfullscreenchange', onFsChange);
+    document.addEventListener('MSFullscreenChange', onFsChange);
 
     return () => {
       document.removeEventListener('fullscreenchange', onFsChange);
       document.removeEventListener('webkitfullscreenchange', onFsChange);
+      document.removeEventListener('MSFullscreenChange', onFsChange);
     };
   }, [isOpen, syncFullscreenState]);
 
@@ -140,6 +180,7 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
     } catch {
       // Fullscreen can be denied by the browser.
     }
+    // fullscreenchange also syncs; this covers immediate sync failures.
     syncFullscreenState();
   };
 
@@ -161,39 +202,39 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="absolute right-2 top-2 z-10 flex items-center gap-1 sm:right-3 sm:top-3">
+        {/* Keep controls outside the iframe box — iframes steal clicks from overlays. */}
+        <div className="flex items-center justify-end gap-2 px-3 py-2.5 sm:px-4">
           <button
             type="button"
             onClick={toggleFullscreen}
-            className="rounded-lg border border-[#B6FF7E]/35 bg-[#002D24]/75 p-2 text-[#B6FF7E] shadow-sm backdrop-blur-sm transition-colors hover:bg-[#002D24]/95 hover:text-white"
-            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+            className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#B6FF7E]/40 bg-white/5 px-3 py-2 text-sm font-semibold text-[#B6FF7E] transition-colors hover:bg-white/10"
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enlarge'}
           >
             {isFullscreen ? (
-              <Minimize className="h-4 w-4" aria-hidden />
+              <Minimize className="h-4 w-4 shrink-0" aria-hidden />
             ) : (
-              <Maximize className="h-4 w-4" aria-hidden />
+              <Maximize className="h-4 w-4 shrink-0" aria-hidden />
             )}
+            <span>{isFullscreen ? 'Exit fullscreen' : 'Enlarge'}</span>
           </button>
           <button
             type="button"
             onClick={handleClose}
-            className="rounded-lg border border-white/15 bg-[#002D24]/75 p-2 text-white/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-[#002D24]/95 hover:text-white"
+            className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-white/5 p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
             aria-label="Close walkthrough"
           >
             <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div
-          ref={mediaRef}
-          className="overflow-hidden bg-black [&:fullscreen]:flex [&:fullscreen]:h-screen [&:fullscreen]:w-screen [&:fullscreen]:items-center [&:fullscreen]:justify-center [&:fullscreen>iframe]:h-full [&:fullscreen>iframe]:w-full [&:fullscreen>iframe]:[aspect-ratio:auto]"
-        >
+        <div ref={mediaRef} className={MEDIA_FULLSCREEN_CLASS}>
           <iframe
             key={promoSrc}
             src={promoSrc}
             title="Feature walkthrough slideshow"
             className="aspect-video w-full border-0 bg-black"
             allow="autoplay; fullscreen"
+            allowFullScreen
           />
         </div>
       </div>
