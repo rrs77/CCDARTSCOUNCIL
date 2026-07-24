@@ -111,29 +111,34 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
         onClick={(e) => e.stopPropagation()}
       >
         {/* Keep controls outside the iframe box — iframes steal clicks from overlays. */}
-        <div className="flex shrink-0 items-center justify-end gap-2 px-3 py-2.5 sm:px-4">
-          <button
-            type="button"
-            onClick={toggleEnlarge}
-            className="inline-flex items-center justify-center rounded-lg border border-[#B6FF7E]/40 bg-white/5 p-2 text-[#B6FF7E] transition-colors hover:bg-white/10"
-            aria-label={isEnlarged ? 'Exit enlarge' : 'Enlarge'}
-            aria-pressed={isEnlarged}
-            title={isEnlarged ? 'Exit enlarge' : 'Enlarge'}
-          >
-            {isEnlarged ? (
-              <Minimize className="h-4 w-4 shrink-0" aria-hidden />
-            ) : (
-              <Maximize className="h-4 w-4 shrink-0" aria-hidden />
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-white/5 p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
-            aria-label="Close walkthrough"
-          >
-            <X className="h-4 w-4" />
-          </button>
+        <div className="flex shrink-0 items-center justify-between gap-3 px-3 py-2.5 sm:px-4">
+          <p className="min-w-0 text-[11px] leading-snug text-[#B6FF7E]/45 sm:text-xs">
+            Use ← → or click to navigate
+          </p>
+          <div className="flex shrink-0 items-center gap-2">
+            <button
+              type="button"
+              onClick={toggleEnlarge}
+              className="inline-flex items-center justify-center rounded-lg border border-[#B6FF7E]/40 bg-white/5 p-2 text-[#B6FF7E] transition-colors hover:bg-white/10"
+              aria-label={isEnlarged ? 'Exit enlarge' : 'Enlarge'}
+              aria-pressed={isEnlarged}
+              title={isEnlarged ? 'Exit enlarge' : 'Enlarge'}
+            >
+              {isEnlarged ? (
+                <Minimize className="h-4 w-4 shrink-0" aria-hidden />
+              ) : (
+                <Maximize className="h-4 w-4 shrink-0" aria-hidden />
+              )}
+            </button>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="inline-flex items-center justify-center rounded-lg border border-white/15 bg-white/5 p-2 text-white/80 transition-colors hover:bg-white/10 hover:text-white"
+              aria-label="Close walkthrough"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
         </div>
 
         <div
