@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ExternalLink, Maximize, Minimize, X } from 'lucide-react';
+import { Maximize, Minimize, X } from 'lucide-react';
 import { publicAssetHref } from '../login/FeatureDemoVideoModal';
-import { PARTNERS_FUNDING_CONTINUE_CTA } from '../login/prototypeCopy';
 
 interface FeatureWalkthroughModalProps {
   isOpen: boolean;
@@ -11,7 +10,7 @@ interface FeatureWalkthroughModalProps {
 // Use explicit index.html — bare `/ccd-pitch/` is caught by the Vite/Vercel SPA
 // fallback and serves the main CCD shell instead of the pitch promo.
 // Cache-bust so browsers / the PWA service worker don't keep serving an old pitch build.
-const PROMO_PATH = 'ccd-pitch/index.html?autoplay=1&v=2026-07-24g';
+const PROMO_PATH = 'ccd-pitch/index.html?autoplay=1&v=2026-07-24h';
 const PITCH_CLOSE_MESSAGE = 'ccd-pitch-close';
 const SITE_URL = 'https://www.ccdesigner.co.uk';
 
@@ -53,21 +52,23 @@ function exitElementFullscreen(): void {
 }
 
 /**
- * Feature walkthrough slideshow in the FeatureDemoVideoModal chrome:
- * forest card, lime (#B6FF7E) surrounds, header, footer CTAs — iframe replaces <video>.
+ * Minimal walkthrough modal: forest card, thin lime edge, close + fullscreen.
+ * The ccd-pitch slideshow fills the frame — no titles, disclaimer, or footer CTAs.
  */
 export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughModalProps) {
   const mediaRef = useRef<HTMLDivElement>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
 
   const promoSrc = publicAssetHref(PROMO_PATH);
-  const fullPitchHref = publicAssetHref('ccd-pitch/index.html');
 
   const syncFullscreenState = useCallback(() => {
     setIsFullscreen(isElementFullscreen(mediaRef.current));
   }, []);
 
   const handleClose = useCallback(() => {
+    if (isElementFullscreen(mediaRef.current)) {
+      exitElementFullscreen();
+    }
     onClose();
     // Only bounce back to the marketing site when this modal was opened from
     // that origin (Arts Council / pitch flows). In-app use should just close.
@@ -146,90 +147,54 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
 
   return (
     <div
-      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/55 p-3 sm:p-6"
+      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/60 p-3 sm:p-5"
       role="dialog"
       aria-modal="true"
-      aria-labelledby="feature-walkthrough-title"
+      aria-label="Feature walkthrough"
       onClick={handleClose}
     >
       <div
-        className="flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#B6FF7E]/25 shadow-2xl"
+        className="relative flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#B6FF7E]/35 shadow-2xl"
         style={{
           background:
             'linear-gradient(165deg, #002D24 0%, #0a3d32 55%, #123f35 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
-          <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B6FF7E]/90">
-              Feature overview
-            </p>
-            <h2
-              id="feature-walkthrough-title"
-              className="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl"
-              style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
-            >
-              Feature walkthrough
-            </h2>
-          </div>
+        <div className="absolute right-2 top-2 z-10 flex items-center gap-1 sm:right-3 sm:top-3">
+          <button
+            type="button"
+            onClick={toggleFullscreen}
+            className="rounded-lg border border-[#B6FF7E]/35 bg-[#002D24]/75 p-2 text-[#B6FF7E] shadow-sm backdrop-blur-sm transition-colors hover:bg-[#002D24]/95 hover:text-white"
+            aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
+          >
+            {isFullscreen ? (
+              <Minimize className="h-4 w-4" aria-hidden />
+            ) : (
+              <Maximize className="h-4 w-4" aria-hidden />
+            )}
+          </button>
           <button
             type="button"
             onClick={handleClose}
-            className="shrink-0 rounded-lg p-1.5 text-white/70 transition-colors hover:bg-white/10 hover:text-white"
+            className="rounded-lg border border-white/15 bg-[#002D24]/75 p-2 text-white/80 shadow-sm backdrop-blur-sm transition-colors hover:bg-[#002D24]/95 hover:text-white"
             aria-label="Close walkthrough"
           >
-            <X className="h-5 w-5" />
+            <X className="h-4 w-4" />
           </button>
         </div>
 
-        <div className="px-3 sm:px-5">
-          <div
-            ref={mediaRef}
-            className="overflow-hidden rounded-xl border border-white/10 bg-black shadow-inner [&:fullscreen]:flex [&:fullscreen]:h-screen [&:fullscreen]:w-screen [&:fullscreen]:items-center [&:fullscreen]:justify-center [&:fullscreen]:rounded-none [&:fullscreen]:border-0 [&:fullscreen>iframe]:h-full [&:fullscreen>iframe]:w-full [&:fullscreen>iframe]:[aspect-ratio:auto]"
-          >
-            <iframe
-              key={promoSrc}
-              src={promoSrc}
-              title="Creative Curriculum Designer promo"
-              className="aspect-video w-full border-0 bg-black"
-              allow="autoplay; fullscreen"
-            />
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3 px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-5">
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
-            <button
-              type="button"
-              onClick={toggleFullscreen}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#B6FF7E]/40 bg-white/5 px-3.5 py-2.5 text-sm font-semibold text-[#B6FF7E] transition-colors hover:bg-white/10"
-              aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
-            >
-              {isFullscreen ? (
-                <Minimize className="h-4 w-4 shrink-0" aria-hidden />
-              ) : (
-                <Maximize className="h-4 w-4 shrink-0" aria-hidden />
-              )}
-              <span>{isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}</span>
-            </button>
-            <a
-              href={fullPitchHref}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 text-sm font-medium text-[#B6FF7E] underline-offset-2 transition-opacity hover:underline hover:opacity-90"
-            >
-              Open full walkthrough page
-              <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
-            </a>
-          </div>
-          <button
-            type="button"
-            onClick={handleClose}
-            className="rounded-lg bg-[#B6FF7E] px-4 py-2.5 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
-          >
-            {PARTNERS_FUNDING_CONTINUE_CTA}
-          </button>
+        <div
+          ref={mediaRef}
+          className="overflow-hidden bg-black [&:fullscreen]:flex [&:fullscreen]:h-screen [&:fullscreen]:w-screen [&:fullscreen]:items-center [&:fullscreen]:justify-center [&:fullscreen>iframe]:h-full [&:fullscreen>iframe]:w-full [&:fullscreen>iframe]:[aspect-ratio:auto]"
+        >
+          <iframe
+            key={promoSrc}
+            src={promoSrc}
+            title="Feature walkthrough slideshow"
+            className="aspect-video w-full border-0 bg-black"
+            allow="autoplay; fullscreen"
+          />
         </div>
       </div>
     </div>

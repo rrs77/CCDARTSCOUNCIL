@@ -139,79 +139,9 @@ body {
   color: #ffffff;
 }
 
-.pitch-nav-btn:focus-visible,
-.pitch-thumb:focus-visible {
+.pitch-nav-btn:focus-visible {
   outline: 2px solid #b6ff7e;
   outline-offset: 1px;
-}
-
-.pitch-thumb-strip {
-  position: relative;
-  display: flex;
-  flex: 1 1 0;
-  min-width: 0;
-  align-items: center;
-  gap: 0.25rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-}
-
-.pitch-thumb-strip::-webkit-scrollbar {
-  display: none;
-}
-
-.pitch-thumb {
-  position: relative;
-  flex: 0 0 auto;
-  width: clamp(3.4rem, 8vw, 5.5rem);
-  height: 2.25rem;
-  border-radius: 0.35rem;
-  overflow: hidden;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(0, 45, 36, 0.85);
-  cursor: pointer;
-  transition: border-color 160ms ease, transform 160ms ease;
-}
-
-.pitch-thumb:hover {
-  border-color: rgba(182, 255, 126, 0.55);
-  transform: translateY(-1px);
-}
-
-.pitch-thumb[data-active="true"] {
-  border-color: #b6ff7e;
-  box-shadow: 0 0 0 1px rgba(182, 255, 126, 0.35);
-}
-
-.pitch-thumb-label {
-  display: flex;
-  height: 100%;
-  align-items: center;
-  justify-content: center;
-  padding: 0 0.25rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  font-size: 0.6rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  line-height: 1.15;
-  text-align: center;
-  color: rgba(255, 255, 255, 0.78);
-}
-
-.pitch-thumb[data-active="true"] .pitch-thumb-label {
-  color: #b6ff7e;
-}
-
-.pitch-thumb-fill {
-  position: absolute;
-  left: 0;
-  bottom: 0;
-  height: 2px;
-  background: #b6ff7e;
-  transition: width 100ms linear;
 }
 
 .slide-viewer {
@@ -304,14 +234,12 @@ body {
   }
 
   .pitch-nav-strip,
-  .pitch-nav-btn,
-  .pitch-thumb,
-  .pitch-thumb-fill {
+  .pitch-nav-btn {
     transition: none;
   }
 }
 
-/* Short screens (landscape phones): slimmer bar and thumbnails */
+/* Short screens (landscape phones): slimmer control bar */
 @media (max-height: 480px), (orientation: landscape) and (max-width: 926px) {
   .pitch-nav-strip {
     min-height: 2.35rem;
@@ -325,17 +253,8 @@ body {
     height: 2rem;
   }
 
-  .pitch-thumb {
-    height: 1.65rem;
-    width: clamp(2.8rem, 6.5vw, 4.2rem);
-  }
-
   .pitch-nav-count {
     font-size: 0.62rem;
-  }
-
-  .pitch-thumb-label {
-    font-size: 0.52rem;
   }
 }
 
@@ -355,15 +274,6 @@ body {
   .pitch-nav-btn {
     width: 2.6rem;
     height: 2.6rem;
-  }
-
-  .pitch-thumb {
-    height: 2.15rem;
-    width: clamp(3.2rem, 18vw, 4.8rem);
-  }
-
-  .pitch-thumb-label {
-    font-size: 0.58rem;
   }
 
   .pitch-h1 {

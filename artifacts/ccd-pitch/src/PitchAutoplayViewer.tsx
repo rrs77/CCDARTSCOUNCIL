@@ -5,22 +5,8 @@ import { slides } from "@/slideLoader";
 const SLIDE_MS = 9000;
 const DESIGN_WIDTH = 1280;
 const DESIGN_HEIGHT = 720;
-const PROGRESS_TICK_MS = 100;
 const SITE_URL = "https://www.ccdesigner.co.uk";
 const SWIPE_THRESHOLD_PX = 45;
-
-/** Short readable label derived from the slide title. */
-function thumbLabel(title: string): string {
-  const cleaned = title
-    .replace(/^Promo:\s*/i, "")
-    .replace(/^Feature:\s*/i, "")
-    .replace(/[—–:.].*$/, "")
-    .trim();
-  const words = cleaned.split(/\s+/);
-  let label = words[0] ?? "";
-  if (label.length <= 4 && words[1]) label = `${label} ${words[1]}`;
-  return label.length > 12 ? `${label.slice(0, 11)}…` : label;
-}
 
 function leaveWalkthrough() {
   // When embedded in the CCD login modal iframe, ask the parent to close
@@ -34,69 +20,6 @@ function leaveWalkthrough() {
     // Cross-origin parent — fall through to marketing redirect
   }
   window.location.href = SITE_URL;
-}
-
-function ThumbStrip({
-  activeIndex,
-  tick,
-  playing,
-  onJumpTo,
-}: {
-  activeIndex: number;
-  tick: number;
-  playing: boolean;
-  onJumpTo: (index: number) => void;
-}) {
-  const [elapsed, setElapsed] = useState(0);
-  const stripRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    setElapsed(0);
-    if (!playing) return;
-    const start = performance.now();
-    const id = window.setInterval(() => {
-      setElapsed(performance.now() - start);
-    }, PROGRESS_TICK_MS);
-    return () => window.clearInterval(id);
-  }, [tick, playing]);
-
-  // Keep the active thumbnail visible as the deck advances.
-  useEffect(() => {
-    const strip = stripRef.current;
-    if (!strip) return;
-    const active = strip.querySelector<HTMLElement>('[data-active="true"]');
-    if (!active) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const left =
-      active.offsetLeft - strip.clientWidth / 2 + active.clientWidth / 2;
-    strip.scrollTo({ left, behavior: reduce ? "auto" : "smooth" });
-  }, [activeIndex]);
-
-  const progress = playing && SLIDE_MS > 0 ? Math.min(1, elapsed / SLIDE_MS) : 0;
-
-  return (
-    <div ref={stripRef} className="pitch-thumb-strip">
-      {slides.map((slide, i) => {
-        const isActive = i === activeIndex;
-        const fill = isActive ? progress * 100 : i < activeIndex ? 100 : 0;
-        return (
-          <button
-            key={slide.id}
-            type="button"
-            onClick={() => onJumpTo(i)}
-            className="pitch-thumb"
-            data-active={isActive ? "true" : undefined}
-            aria-label={`Go to slide ${i + 1}: ${slide.title}`}
-            aria-current={isActive ? "true" : undefined}
-            title={slide.title}
-          >
-            <span className="pitch-thumb-label">{thumbLabel(slide.title)}</span>
-            <span className="pitch-thumb-fill" style={{ width: `${fill}%` }} />
-          </button>
-        );
-      })}
-    </div>
-  );
 }
 
 export function PitchAutoplayViewer() {
@@ -348,9 +271,9 @@ export function PitchAutoplayViewer() {
         />
       </div>
 
-      {/* Nav bar — reserved space below the stage, never covers the slide */}
+      {/* Compact controls — no thumbnail strip; parent modal owns chrome */}
       <div
-        className="pitch-nav-strip z-20 flex shrink-0 items-center gap-1.5 border-t border-white/10 bg-[#002D24] px-2 py-1.5 sm:gap-2 sm:px-2.5"
+        className="pitch-nav-strip z-20 flex shrink-0 items-center justify-center gap-1.5 border-t border-white/10 bg-[#002D24] px-2 py-1.5 sm:gap-2 sm:px-3"
         role="toolbar"
         aria-label="Walkthrough navigation"
       >
@@ -378,6 +301,13 @@ export function PitchAutoplayViewer() {
           <ChevronLeft className="h-4.5 w-4.5" />
         </button>
 
+        <div
+          className="pitch-nav-count shrink-0 whitespace-nowrap px-1.5 font-mono text-[0.7rem] tabular-nums text-white/70"
+          aria-live="polite"
+        >
+          {index + 1} / {slides.length}
+        </div>
+
         <button
           type="button"
           onClick={goNext}
@@ -387,22 +317,6 @@ export function PitchAutoplayViewer() {
         >
           <ChevronRight className="h-4.5 w-4.5" />
         </button>
-
-        <div className="hidden h-4 w-px shrink-0 bg-white/15 sm:block" aria-hidden="true" />
-
-        <ThumbStrip
-          activeIndex={index}
-          tick={tick}
-          playing={playing}
-          onJumpTo={jumpTo}
-        />
-
-        <div
-          className="pitch-nav-count shrink-0 whitespace-nowrap px-1 font-mono text-[0.7rem] tabular-nums text-white/70"
-          aria-live="polite"
-        >
-          {index + 1} of {slides.length}
-        </div>
 
         <button
           type="button"
