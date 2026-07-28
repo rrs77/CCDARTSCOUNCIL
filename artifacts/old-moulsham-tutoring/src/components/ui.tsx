@@ -22,7 +22,7 @@ export function SectionHeading({
       {eyebrow ? (
         <p
           className={`mb-3 text-xs font-bold tracking-[0.18em] uppercase ${
-            light ? "text-gold-soft" : "text-coral"
+            light ? "text-gold-soft" : "text-gold"
           }`}
         >
           {eyebrow}
@@ -58,7 +58,7 @@ export function CtaButton({
 }) {
   const styles =
     variant === "gold"
-      ? "bg-coral text-white hover:bg-gold-bright"
+      ? "bg-gold text-white hover:bg-gold-bright"
       : variant === "teal"
         ? "bg-teal text-white hover:bg-teal-deep"
         : "border border-white/40 bg-white/10 text-white backdrop-blur-sm hover:bg-white/20";
@@ -101,7 +101,7 @@ export function HeroGraphic() {
       className="relative mx-auto flex w-full max-w-md items-center justify-center lg:max-w-lg"
       aria-hidden
     >
-      <div className="animate-float absolute inset-[6%] rounded-[2rem] bg-gradient-to-br from-coral/30 via-cream/20 to-transparent blur-2xl" />
+      <div className="animate-float absolute inset-[6%] rounded-[2rem] bg-gradient-to-br from-gold/30 via-cream/20 to-transparent blur-2xl" />
       <div className="relative overflow-hidden rounded-[1.5rem] bg-cream shadow-[0_20px_60px_rgba(18,49,41,0.35)] ring-1 ring-white/20">
         <img
           src={`${import.meta.env.BASE_URL}logo.png`}
@@ -115,7 +115,7 @@ export function HeroGraphic() {
           <p className="font-display text-sm font-bold tracking-[0.12em] text-ink uppercase">
             Grade 9 · Maths &amp; Science
           </p>
-          <div className="mx-auto mt-2 h-0.5 w-12 origin-left -rotate-3 bg-coral" />
+          <div className="mx-auto mt-2 h-0.5 w-12 origin-left -rotate-3 bg-gold" />
         </div>
       </div>
     </div>

@@ -9,10 +9,10 @@ export function HomePage() {
         <div className="mesh-lines pointer-events-none absolute inset-0 opacity-40" aria-hidden />
         <div className="safe-px relative mx-auto grid min-h-[calc(100dvh-4.5rem)] max-w-6xl items-center gap-10 py-12 sm:py-16 lg:grid-cols-[1.15fr_0.85fr] lg:gap-12 lg:py-20">
           <div className="animate-fade-rise">
-            <p className="font-display text-2xl font-bold tracking-tight text-gold-soft sm:text-3xl md:text-4xl">
+            <p className="font-display text-2xl font-bold tracking-tight text-white sm:text-3xl md:text-4xl">
               Old Moulsham Tutoring
             </p>
-            <div className="mt-3 h-0.5 w-14 origin-left -rotate-3 bg-coral" aria-hidden />
+            <div className="mt-3 h-0.5 w-14 origin-left -rotate-3 bg-gold" aria-hidden />
             <h1 className="mt-5 font-display text-balance text-4xl leading-[1.1] font-extrabold tracking-tight text-white sm:text-5xl lg:text-[3.35rem]">
               Personalised tutoring from someone who understands
             </h1>

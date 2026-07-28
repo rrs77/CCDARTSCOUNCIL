@@ -216,7 +216,7 @@ export function ContactPage() {
 
                 <button
                   type="submit"
-                  className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-coral px-6 py-3 text-base font-bold text-white transition hover:bg-gold-bright sm:w-auto"
+                  className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-md bg-gold px-6 py-3 text-base font-bold text-white transition hover:bg-gold-bright sm:w-auto"
                 >
                   Send enquiry
                 </button>

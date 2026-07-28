@@ -63,7 +63,7 @@ export function Header() {
           })}
           <Link
             href="/contact"
-            className="ml-2 inline-flex items-center rounded-md bg-coral px-4 py-2.5 text-sm font-bold text-white transition hover:bg-gold-bright"
+            className="ml-2 inline-flex items-center rounded-md bg-gold px-4 py-2.5 text-sm font-bold text-white transition hover:bg-gold-bright"
           >
             Book a lesson
           </Link>
@@ -111,7 +111,7 @@ export function Header() {
           })}
           <Link
             href="/contact"
-            className="mt-2 block rounded-lg bg-coral px-4 py-3.5 text-center text-base font-bold text-white"
+            className="mt-2 block rounded-lg bg-gold px-4 py-3.5 text-center text-base font-bold text-white"
           >
             Book a lesson
           </Link>
