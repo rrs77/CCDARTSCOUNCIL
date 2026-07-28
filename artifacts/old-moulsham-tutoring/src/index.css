@@ -1,22 +1,24 @@
 @import "tailwindcss";
 
 @theme {
-  --font-display: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
-  --font-body: "Figtree", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Montserrat", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Montserrat", ui-sans-serif, system-ui, sans-serif;
 
-  --color-ink: #12343b;
-  --color-ink-soft: #2a5259;
-  --color-teal: #0d5c63;
-  --color-teal-deep: #09464c;
-  --color-sage: #7cb7a3;
-  --color-sage-soft: #b8dccf;
-  --color-mint: #e8f4ef;
-  --color-sky: #e4eef2;
-  --color-gold: #c9920e;
-  --color-gold-bright: #d4a017;
-  --color-gold-soft: #f3e2b0;
-  --color-surface: #f5faf8;
+  --color-ink: #1a4335;
+  --color-ink-soft: #3d5f52;
+  --color-teal: #1a4335;
+  --color-teal-deep: #123129;
+  --color-sage: #6f8f7f;
+  --color-sage-soft: #c7d6ce;
+  --color-mint: #eef4f0;
+  --color-sky: #f1ebe3;
+  --color-gold: #e67e5d;
+  --color-gold-bright: #ef8f71;
+  --color-gold-soft: #f3c4b4;
+  --color-surface: #f9f5f0;
+  --color-cream: #f9f5f0;
   --color-white: #ffffff;
+  --color-coral: #e67e5d;
 }
 
 @layer base {
@@ -60,7 +62,7 @@
   }
 
   :focus-visible {
-    outline: 2px solid var(--color-gold);
+    outline: 2px solid var(--color-coral);
     outline-offset: 3px;
   }
 }
@@ -76,25 +78,31 @@
 
   .atmosphere {
     background:
-      radial-gradient(ellipse 90% 70% at 85% 10%, rgba(124, 183, 163, 0.45), transparent 55%),
-      radial-gradient(ellipse 70% 60% at 10% 90%, rgba(212, 160, 23, 0.18), transparent 50%),
-      radial-gradient(ellipse 60% 50% at 50% 40%, rgba(228, 238, 242, 0.9), transparent 70%),
-      linear-gradient(165deg, #dceee8 0%, #e8f2f4 42%, #f0f6f4 100%);
+      radial-gradient(ellipse 90% 70% at 90% 0%, rgba(230, 126, 93, 0.14), transparent 55%),
+      radial-gradient(ellipse 70% 60% at 5% 100%, rgba(26, 67, 53, 0.1), transparent 50%),
+      linear-gradient(165deg, #f9f5f0 0%, #f3ece4 48%, #eef4f0 100%);
   }
 
   .hero-atmosphere {
     background:
-      radial-gradient(ellipse 100% 80% at 100% 0%, rgba(13, 92, 99, 0.55), transparent 55%),
-      radial-gradient(ellipse 80% 70% at 0% 100%, rgba(124, 183, 163, 0.5), transparent 50%),
-      radial-gradient(ellipse 50% 40% at 70% 60%, rgba(212, 160, 23, 0.22), transparent 60%),
-      linear-gradient(155deg, #0a454b 0%, #0d5c63 38%, #1a6f6a 72%, #2f8578 100%);
+      radial-gradient(ellipse 90% 70% at 100% 0%, rgba(230, 126, 93, 0.28), transparent 55%),
+      radial-gradient(ellipse 70% 60% at 0% 100%, rgba(111, 143, 127, 0.25), transparent 50%),
+      linear-gradient(155deg, #123129 0%, #1a4335 42%, #245442 78%, #2f6350 100%);
   }
 
   .mesh-lines {
     background-image:
-      linear-gradient(rgba(255, 255, 255, 0.06) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255, 255, 255, 0.06) 1px, transparent 1px);
+      linear-gradient(rgba(255, 255, 255, 0.05) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 255, 255, 0.05) 1px, transparent 1px);
     background-size: 48px 48px;
+  }
+
+  .accent-rule {
+    width: 3.5rem;
+    height: 0.2rem;
+    border-radius: 999px;
+    background: var(--color-coral);
+    transform: rotate(-4deg);
   }
 
   .safe-px {
@@ -129,7 +137,7 @@
 
 @keyframes draw-in {
   from {
-    stroke-dashoffset: 120;
+    stroke-dashoffset: 80;
     opacity: 0.2;
   }
   to {
@@ -154,8 +162,8 @@
 }
 
 .animate-draw {
-  stroke-dasharray: 120;
-  animation: draw-in 1.6s ease-out forwards;
+  stroke-dasharray: 80;
+  animation: draw-in 1.4s ease-out forwards;
 }
 
 .animate-fade-rise {

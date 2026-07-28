@@ -41,7 +41,7 @@ export function Header() {
     >
       <div className="safe-px mx-auto flex max-w-6xl items-center justify-between gap-4 py-3 sm:py-4">
         <Link href="/" className="relative z-10 min-w-0" aria-label="Old Moulsham Tutoring home">
-          <Logo />
+          <Logo compact />
         </Link>
 
         <nav className="hidden items-center gap-1 lg:flex" aria-label="Primary">
@@ -63,7 +63,7 @@ export function Header() {
           })}
           <Link
             href="/contact"
-            className="ml-2 inline-flex items-center rounded-md bg-gold px-4 py-2.5 text-sm font-bold text-ink transition hover:bg-gold-bright"
+            className="ml-2 inline-flex items-center rounded-md bg-coral px-4 py-2.5 text-sm font-bold text-white transition hover:bg-gold-bright"
           >
             Book a lesson
           </Link>
@@ -83,7 +83,7 @@ export function Header() {
 
       <div
         id="mobile-nav"
-        className={`lg:hidden ${open ? "pointer-events-auto visible opacity-100" : "pointer-events-none invisible opacity-0"} fixed inset-0 top-[68px] z-40 transition-opacity duration-200`}
+        className={`lg:hidden ${open ? "pointer-events-auto visible opacity-100" : "pointer-events-none invisible opacity-0"} fixed inset-0 top-[4.75rem] z-40 transition-opacity duration-200`}
       >
         <button
           type="button"
@@ -111,7 +111,7 @@ export function Header() {
           })}
           <Link
             href="/contact"
-            className="mt-2 block rounded-lg bg-gold px-4 py-3.5 text-center text-base font-bold text-ink"
+            className="mt-2 block rounded-lg bg-coral px-4 py-3.5 text-center text-base font-bold text-white"
           >
             Book a lesson
           </Link>

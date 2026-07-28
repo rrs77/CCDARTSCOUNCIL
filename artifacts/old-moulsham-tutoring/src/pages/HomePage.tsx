@@ -12,7 +12,8 @@ export function HomePage() {
             <p className="font-display text-2xl font-bold tracking-tight text-gold-soft sm:text-3xl md:text-4xl">
               Old Moulsham Tutoring
             </p>
-            <h1 className="mt-4 font-display text-balance text-4xl leading-[1.1] font-extrabold tracking-tight sm:text-5xl lg:text-[3.35rem]">
+            <div className="mt-3 h-0.5 w-14 origin-left -rotate-3 bg-coral" aria-hidden />
+            <h1 className="mt-5 font-display text-balance text-4xl leading-[1.1] font-extrabold tracking-tight text-white sm:text-5xl lg:text-[3.35rem]">
               Personalised tutoring from someone who understands
             </h1>
             <p className="mt-5 max-w-xl text-base leading-relaxed text-mint/90 sm:text-lg">
@@ -184,7 +185,7 @@ export function HomePage() {
           </div>
 
           <FadeIn delay={0.18}>
-            <div className="mt-10 flex flex-col items-start justify-between gap-6 rounded-2xl bg-gold/15 px-6 py-6 sm:flex-row sm:items-center sm:px-8">
+            <div className="mt-10 flex flex-col items-start justify-between gap-6 rounded-2xl bg-coral/15 px-6 py-6 sm:flex-row sm:items-center sm:px-8">
               <div>
                 <p className="font-display text-2xl font-bold text-gold-soft">£45 per hour</p>
                 <p className="mt-1 text-sm text-mint/85">

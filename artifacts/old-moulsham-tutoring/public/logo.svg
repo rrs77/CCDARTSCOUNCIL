@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 280" role="img" aria-label="Old Moulsham Tutoring">
+  <g fill="#1A4335" font-family="Montserrat, Arial, Helvetica, sans-serif">
+    <text x="160" y="118" text-anchor="middle" font-size="108" font-weight="700" letter-spacing="4">OM</text>
+    <text x="160" y="178" text-anchor="middle" font-size="22" font-weight="600" letter-spacing="6">OLD MOULSHAM</text>
+  </g>
+  <line x1="168" y1="128" x2="248" y2="122" stroke="#E67E5D" stroke-width="3.5" stroke-linecap="round"/>
+  <text x="160" y="218" text-anchor="middle" fill="#E67E5D" font-family="Montserrat, Arial, Helvetica, sans-serif" font-size="16" font-weight="600" letter-spacing="14">TUTORING</text>
+</svg>

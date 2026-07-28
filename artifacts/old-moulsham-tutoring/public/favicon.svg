@@ -1,9 +1,5 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" role="img" aria-label="Old Moulsham Tutoring">
-  <circle cx="32" cy="32" r="30" fill="#0D5C63"/>
-  <path d="M32 12c-2.2 4.8-8.4 10.6-14.2 14.2 2.6 1.1 5.4 1.7 8.2 1.7 2.2 0 4.3-.4 6.2-1.1C30.8 20.4 31.4 15.8 32 12z" fill="#7CB7A3"/>
-  <path d="M32 12c2.2 4.8 8.4 10.6 14.2 14.2-2.6 1.1-5.4 1.7-8.2 1.7-2.2 0-4.3-.4-6.2-1.1C33.2 20.4 32.6 15.8 32 12z" fill="#9FCFB8"/>
-  <path d="M18 30.5c4.8 1.4 9.6 1.2 14-.4 4.4 1.6 9.2 1.8 14 .4-1.8 8.6-7.2 15.4-14 18.8-6.8-3.4-12.2-10.2-14-18.8z" fill="#E8F4EF" opacity=".95"/>
-  <path d="M32 28.8c.4 4.2.8 8.6 0 13.2" stroke="#D4A017" stroke-width="2.2" stroke-linecap="round"/>
-  <path d="M24.5 36.2c2.6 1.8 5.4 3 7.5 3.6 2.1-.6 4.9-1.8 7.5-3.6" stroke="#0D5C63" stroke-width="1.6" stroke-linecap="round" opacity=".55"/>
-  <circle cx="32" cy="42.5" r="2.2" fill="#D4A017"/>
+  <rect width="64" height="64" rx="12" fill="#F9F5F0"/>
+  <text x="32" y="40" text-anchor="middle" fill="#1A4335" font-family="Montserrat, Arial, Helvetica, sans-serif" font-size="26" font-weight="700" letter-spacing="1">OM</text>
+  <line x1="34" y1="44" x2="50" y2="42" stroke="#E67E5D" stroke-width="2.2" stroke-linecap="round"/>
 </svg>
