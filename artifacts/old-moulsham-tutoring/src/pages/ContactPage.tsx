@@ -2,7 +2,7 @@ import { type FormEvent, type ReactNode, useState } from "react";
 import { CheckCircle2, Mail } from "lucide-react";
 import { FadeIn, SectionHeading } from "@/components/ui";
 
-const CONTACT_EMAIL = "hello@oldmoulshamtutoring.co.uk";
+const CONTACT_EMAIL = "isaacjackrs@gmail.com";
 
 type FormState = {
   name: string;
