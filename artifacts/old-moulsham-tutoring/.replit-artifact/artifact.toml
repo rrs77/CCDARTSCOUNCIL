@@ -1,0 +1,27 @@
+kind = "web"
+previewPath = "/old-moulsham-tutoring/"
+title = "Old Moulsham Tutoring"
+version = "1.0.0"
+id = "artifacts/old-moulsham-tutoring"
+router = "path"
+
+[[services]]
+name = "web"
+paths = [ "/old-moulsham-tutoring/" ]
+localPort = 5180
+
+[services.development]
+run = "pnpm --filter @workspace/old-moulsham-tutoring run dev"
+
+[services.production]
+build = [ "pnpm", "--filter", "@workspace/old-moulsham-tutoring", "run", "build" ]
+publicDir = "artifacts/old-moulsham-tutoring/dist/public"
+serve = "static"
+
+[[services.production.rewrites]]
+from = "/*"
+to = "/index.html"
+
+[services.env]
+PORT = "5180"
+BASE_PATH = "/old-moulsham-tutoring/"
