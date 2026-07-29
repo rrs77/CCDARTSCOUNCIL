@@ -54,6 +54,14 @@ export const PAID_PARTNER_PRODUCTS: PaidPartnerProduct[] = [
     meta: 'KS3–KS5 · Challenge mats',
   },
   {
+    id: 'icc-getting-started',
+    partnerSlug: 'icompose',
+    partnerName: 'iCompose',
+    title: 'Composition – how to get started!',
+    pricePence: 0,
+    meta: 'FREE · 12 lessons · Beginner · KS3 / GCSE',
+  },
+  {
     id: 'icc-fanfare',
     partnerSlug: 'icompose',
     partnerName: 'iCompose',

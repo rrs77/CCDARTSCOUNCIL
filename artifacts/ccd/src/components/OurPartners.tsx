@@ -1,6 +1,12 @@
 import { useState } from 'react';
 import { ChevronDown, ChevronRight, Handshake, Music2, ShoppingBag } from 'lucide-react';
 import { PARTNER_HUBS, openPartnerHub, type PartnerHubConfig } from '../config/partnerHubs';
+import {
+  formatPricePence,
+  getPaidProductsForPartner,
+  type PaidPartnerSlug,
+} from '../config/paidPartnerProducts';
+import { AddToBasketButton } from './partners/AddToBasketButton';
 import { PaidBasketDrawer } from './partners/PaidBasketDrawer';
 
 /** Music hubs section — EMS + Tri-Borough only (user-specified). */
@@ -14,6 +20,50 @@ const FREE_LOGO_STRIP_BG = '#002D24';
 
 function hubBySlug(slug: string): PartnerHubConfig | undefined {
   return PARTNER_HUBS.find((h) => h.slug === slug);
+}
+
+const PREMIUM_SLUGS = new Set(['weteachdrama', 'icompose', 'dramaresource']);
+
+/** Demo packs shown when a premium partner row is expanded. */
+function PremiumPartnerResources({ slug }: { slug: string }) {
+  if (!PREMIUM_SLUGS.has(slug)) return null;
+  const products = getPaidProductsForPartner(slug as PaidPartnerSlug);
+  if (products.length === 0) return null;
+
+  return (
+    <div className="mt-4">
+      <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#3F6212]">
+        Demo packs &amp; resources
+      </p>
+      <ul className="mt-2 space-y-2" aria-label={`${slug} demo packs`}>
+        {products.map((product) => (
+          <li
+            key={product.id}
+            className="flex flex-col gap-2 rounded-lg border border-[#A3E635]/50 bg-white/95 px-3 py-2.5 sm:flex-row sm:items-center sm:justify-between"
+          >
+            <div className="min-w-0">
+              <p className="text-sm font-semibold text-[#002D24]">{product.title}</p>
+              <p className="mt-0.5 text-xs text-[#002D24]/65">
+                {product.meta ? `${product.meta} · ` : ''}
+                {formatPricePence(product.pricePence)}
+                <span className="text-[#002D24]/45"> · demo only</span>
+              </p>
+            </div>
+            <div className="flex shrink-0 flex-wrap gap-2">
+              <AddToBasketButton productId={product.id} variant="secondary" />
+              <button
+                type="button"
+                onClick={() => openPartnerHub(slug)}
+                className="inline-flex items-center justify-center rounded-lg border border-[#002D24]/20 bg-[#F7FEE7] px-3 py-2 text-xs font-semibold text-[#002D24] hover:bg-[#E8F0EA]"
+              >
+                View in hub
+              </button>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
 }
 
 /**
@@ -158,6 +208,11 @@ function PartnerHubAccordion({
                 <p className="mt-1.5 text-sm leading-relaxed text-[#002D24]/75">
                   {hub.description[0]}
                 </p>
+
+                {isPremium && (
+                  <PremiumPartnerResources slug={hub.slug} />
+                )}
+
                 <div className="mt-4 flex flex-wrap gap-2">
                   <button
                     type="button"
@@ -177,8 +232,7 @@ function PartnerHubAccordion({
                 </div>
                 {isPremium && (
                   <p className="mt-3 text-xs text-[#002D24]/55">
-                    Add to basket and Add to CCDesigner are inside the hub on each paid pack’s
-                    details.
+                    Open the hub for full pack details, mock PDFs and Add to CCDesigner.
                   </p>
                 )}
               </div>
