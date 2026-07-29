@@ -35,12 +35,15 @@ import './utils/setupEMSSchoolsExample'; // Essex Music Service schools brochure
 import './utils/setupEMSWorkshops'; // EMS DJ + Rap-It! workshop showcase seeds
 import './utils/setupTBMHProgrammes'; // Tri-Borough Groove n Play + Music Makes Me seeds
 import './utils/setupICCGettingStarted'; // iCompose Getting Started seed
+import './utils/setupICCFanfare'; // iCompose Fanfare paid course seed
 import './utils/setupDramaResourceExample'; // Drama Resource Ten Second Objects seed
+import './utils/setupJazzNorthExample'; // Jazz North Mr Big + Playlist Project seeds
 import { RohPartnerHub } from './components/partners/RohPartnerHub';
 import { WtdPartnerHub } from './components/partners/WtdPartnerHub';
 import { EmsPartnerHub } from './components/partners/EmsPartnerHub';
 import { IccPartnerHub } from './components/partners/IccPartnerHub';
 import { DramaResourcePartnerHub } from './components/partners/DramaResourcePartnerHub';
+import { JazzNorthPartnerHub } from './components/partners/JazzNorthPartnerHub';
 import { TriBoroughPartnerHub } from './components/partners/TriBoroughPartnerHub';
 import { PartnerHubPage } from './components/partners/PartnerHubPage';
 import { PartnerResourcesHub } from './components/partners/PartnerResourcesHub';
@@ -201,6 +204,16 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       case 'davidfarmer':
         body = (
           <DramaResourcePartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
+          />
+        );
+        break;
+      case 'jazznorth':
+      case 'jazz-north':
+      case 'jn':
+        body = (
+          <JazzNorthPartnerHub
             standalone
             onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
           />

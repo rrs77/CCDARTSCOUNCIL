@@ -22,7 +22,7 @@ function hubBySlug(slug: string): PartnerHubConfig | undefined {
   return PARTNER_HUBS.find((h) => h.slug === slug);
 }
 
-const PREMIUM_SLUGS = new Set(['weteachdrama', 'icompose', 'dramaresource']);
+const PREMIUM_SLUGS = new Set(['weteachdrama', 'icompose', 'dramaresource', 'jazznorth']);
 
 /** Demo packs shown when a premium partner row is expanded. */
 function PremiumPartnerResources({ slug }: { slug: string }) {
@@ -315,7 +315,7 @@ export function OurPartners() {
               id="premium-partners-heading"
               className="mt-1 text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl"
             >
-              We Teach Drama, iCompose &amp; Drama Resource
+              We Teach Drama, iCompose, Drama Resource &amp; Jazz North
             </h3>
             <p className="mt-1 text-sm text-[#002D24]/70">
               Expand a row for details, then open the hub for paid pack Add to basket (demo).

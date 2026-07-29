@@ -42,7 +42,7 @@ export interface PartnerHubConfig {
   logoOnPlate?: boolean;
   /**
    * Paid / premium partner — shown in a separate Partner Hubs section with
-   * Add to basket demo. We Teach Drama, iCompose, and Drama Resource (David Farmer).
+   * Add to basket demo. We Teach Drama, iCompose, Drama Resource, Jazz North.
    */
   paid?: boolean;
 }
@@ -182,6 +182,27 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     primaryColor: '#0F3D2E',
     accentColor: '#2DD4BF',
     logoPanelColor: '#0F3D2E',
+  },
+  {
+    slug: 'jazznorth',
+    aliases: ['jazz-north', 'jn'],
+    partnerLogoId: 'jazz-north',
+    displayName: 'Jazz North',
+    shortName: 'Jazz North',
+    siteUrl: 'https://www.jazznorth.org/',
+    logoSrc: '/partners/jazz-north.png',
+    interactive: true,
+    paid: true,
+    tagline: 'Strategic development agency for jazz in the North',
+    description: [
+      'Jazz North is the strategic development agency for jazz in the North of England — Artist Development, Sector Support and Learning & Participation, including free classroom improvisation resources, the Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
+      'This hub follows the premium Partner Hub template: Add to basket (demo) plus showcase lessons that seed Activity Library activities and Lesson Library plans. Official downloads stay on jazznorth.org (Learning Resources Area account).',
+    ],
+    primaryColor: '#1A0A14',
+    accentColor: '#FF53B6',
+    /** Official pink logo on light plate */
+    logoOnPlate: true,
+    logoPanelColor: '#FFFFFF',
   },
   {
     slug: 'sadlerswells',

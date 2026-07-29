@@ -349,6 +349,64 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
       },
     ],
   },
+
+  jazznorth: {
+    slug: 'jazznorth',
+    headerBg: '#1A0A14',
+    siteLabel: 'jazznorth.org',
+    about: [
+      'Jazz North is the strategic development agency for jazz in the North of England, with programmes in Artist Development, Sector Support and Learning & Participation — including free improvisation resources for schools.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open official Jazz North pages for the latest packs, camps and booking details.',
+    ],
+    resourcesHeading: 'Teacher & learning resources',
+    resourcesIntro:
+      'Learning Resources Area, Mr Big scheme, Playlist Project, Jazz Camp for Girls and Educators’ Forums. Prototype Add seeds activities + lesson plans on the interactive hub.',
+    resources: [
+      {
+        title: 'Learning Resources Area',
+        href: 'https://www.jazznorth.org/learning-resources-area',
+        description:
+          'Free downloadable improvisation pathways for KS1–4 teachers, instrumental tutors and lifetime learners (account required).',
+        kind: 'Library',
+      },
+      {
+        title: 'Mr Big scheme of work',
+        href: 'https://www.jazznorth.org/mr-big-scheme-of-work',
+        description: 'KS1 active listening scheme inspired by Ed Vere’s Mr Big (featured Add seed).',
+        kind: 'KS1',
+      },
+      {
+        title: 'Playlist Project',
+        href: 'https://www.jazznorth.org/playlist-project',
+        description: 'KS2 Milestones listening pathway — repeated listening to active activities to live/video culmination.',
+        kind: 'KS2',
+      },
+      {
+        title: 'Jazz Camp for Girls',
+        href: 'https://www.jazznorth.org/jazz-camp-for-girls',
+        description: 'Award-winning improvisation camps for young female musicians across the North.',
+        kind: 'Camps',
+      },
+      {
+        title: 'Educators’ Forum',
+        href: 'https://www.jazznorth.org/news/educators-forum-june-2026',
+        description: 'Termly online forums on improvisation pedagogy and youth jazz ensembles.',
+        kind: 'CPD',
+      },
+      {
+        title: 'Northern Line',
+        href: 'https://www.jazznorth.org/northern-line',
+        description: 'Live talent development programme for northern jazz artists.',
+        kind: 'Artists',
+      },
+      {
+        title: 'About / mission',
+        href: 'https://www.jazznorth.org/what-we-do',
+        description: 'Mission, vision and Learning & Participation overview.',
+        kind: 'About',
+      },
+    ],
+  },
 };
 
 export function getPartnerHubContent(slug: string): PartnerHubPageContent | null {

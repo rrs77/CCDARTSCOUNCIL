@@ -21,6 +21,7 @@ const HUB_SEED_NOTE_MARKERS = [
   'EMS_SEED',
   'ICC_SEED',
   'DR_SEED',
+  'JN_SEED',
   'CCD_HUB_SEED',
 ] as const;
 
@@ -44,6 +45,7 @@ export function isHubSeededActivity(activity: {
   )
     return true;
   if (cat.startsWith('Drama Resource') || cat.startsWith('DR ')) return true;
+  if (cat.startsWith('Jazz North') || cat.startsWith('JN ')) return true;
   return false;
 }
 

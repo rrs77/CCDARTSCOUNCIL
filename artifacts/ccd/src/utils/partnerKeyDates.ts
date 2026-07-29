@@ -221,6 +221,35 @@ const CATALOGUE: PartnerKeyDateSuggestion[] = [
     description: 'Drama CPD day. Demo only.',
   },
 
+  // —— Jazz North ——
+  {
+    id: 'jn-educators-forum-jun',
+    orgId: 'jazznorth',
+    title: 'Educators’ Forum — improvisation pedagogy',
+    date: d(6, 16),
+    keyStage: 'All',
+    kind: 'inset',
+    description: 'Termly online Educators’ Forum. Demo only.',
+  },
+  {
+    id: 'jn-jazz-camp-mar',
+    orgId: 'jazznorth',
+    title: 'Jazz Camp for Girls (spring camps)',
+    date: d(3, 7, 1),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description: 'Regional Jazz Camp for Girls weekends. Demo only.',
+  },
+  {
+    id: 'jn-playlist-autumn',
+    orgId: 'jazznorth',
+    title: 'Playlist Project Stage One listening (KS2)',
+    date: d(10, 6),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description: 'Start repeated playlist listening pathway. Demo only.',
+  },
+
   // —— We Teach Drama ——
   {
     id: 'wtd-ks3-bb-oct',

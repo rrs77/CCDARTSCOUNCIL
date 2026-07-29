@@ -18,7 +18,8 @@ export type PaidHubPartnerSlug =
   | 'icompose'
   | 'dramaresource'
   | 'ems'
-  | 'triborough';
+  | 'triborough'
+  | 'jazznorth';
 
 export type RecentlyAddedEntry = {
   activityId: string;
@@ -45,7 +46,8 @@ function readRaw(): RecentlyAddedEntry[] {
           e.partnerSlug === 'icompose' ||
           e.partnerSlug === 'dramaresource' ||
           e.partnerSlug === 'ems' ||
-          e.partnerSlug === 'triborough'),
+          e.partnerSlug === 'triborough' ||
+          e.partnerSlug === 'jazznorth'),
     ) as RecentlyAddedEntry[];
   } catch {
     return [];

@@ -30,6 +30,7 @@ import {
   PARTNER_PLANNING_ORGS,
   registerPartnerPlanningPack,
 } from './partnerPlanning';
+import { highlightPaidHubActivities } from './recentlyAddedActivities';
 
 export type WtdPackId =
   | 'cover'
@@ -909,6 +910,15 @@ export async function setupWeTeachDramaPack(
     categoryMerge,
     source: `wtd-${pack.id}-seed`,
     markerKey: pack.markerKey,
+    starActivities: false,
+  });
+
+  highlightPaidHubActivities(activities, {
+    partnerSlug: 'weteachdrama',
+    partnerLabel: 'We Teach Drama',
+    pickTitles: pack.lessons.flatMap((l) => l.activities.map((a) => a.activity)).slice(0, 5),
+    fallbackCount: 4,
+    categories: cats,
   });
 
   if (shouldRegister) {

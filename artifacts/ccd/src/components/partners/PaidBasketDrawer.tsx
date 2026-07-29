@@ -50,7 +50,7 @@ export function PaidBasketDrawer() {
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
           <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
             Prototype only — no payment is taken. Items are placeholders for partner and music-hub
-            demo products (We Teach Drama, iCompose, Drama Resource, EMS, Tri-Borough).
+            demo products (We Teach Drama, iCompose, Drama Resource, Jazz North, EMS, Tri-Borough).
           </p>
 
           {lines.length === 0 ? (

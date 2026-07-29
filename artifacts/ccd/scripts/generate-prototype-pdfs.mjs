@@ -495,6 +495,92 @@ copyFileSync(
   join(drDir, 'dr-ten-second-objects-lesson-plan.pdf'),
 );
 
+const jnDir = join(root, 'public', 'partners', 'jazznorth');
+mkdirSync(jnDir, { recursive: true });
+
+writeDoc(
+  'jn-mr-big-lesson-overview.pdf',
+  'Jazz North — Mr Big → Jazz contrasts (showcase overview)',
+  [
+    '## Purpose of this PDF',
+    'CCDesigner prototype showcase lesson plan for Jazz North. Shows the depth of a full exportable lesson (outcomes, criteria, timed activities, differentiation, assessment). Inspired by the public Mr Big scheme of work on jazznorth.org — not a copy of downloadable Learning Resources Area packs.',
+    '',
+    '## Key stage & timing',
+    'KS1 showcase (Year 2 Music) · Ages 5–7 adaptable · ≈ 60 minutes · Untuned percussion',
+    'Inspired by: https://www.jazznorth.org/mr-big-scheme-of-work',
+    '',
+    '## Learning outcomes',
+    'Pupils listen for musical contrasts in a jazz-inspired story context and improvise short contrasting soundscapes with voice and untuned percussion.',
+    '',
+    '## Success criteria',
+    '- We can name at least one musical contrast we heard.',
+    '- We use quiet/loud or sparse/busy sounds on purpose.',
+    '- We stop and start together on the conductor signal.',
+    '- Everyone contributes a sound to at least one scene.',
+    '',
+    '## Vocabulary',
+    'Jazz · improvisation · dynamics · pitch · tempo · mood · instrumentation · contrast · ostinato · call-and-response · pulse',
+    '',
+    '## Lesson structure (timed)',
+    '1. Circle welcome & jazz curiosity (5 min)',
+    '2. Meet Mr Big — story hook (10 min)',
+    '3. Contrast detective listening (12 min)',
+    '4. Voice colours for Mr Big (8 min)',
+    '5. Percussion improvisation — jazz contrasts (15 min)',
+    '6. Perform, reflect, next listening (10 min)',
+    '',
+    '## How to see this in CCDesigner',
+    'Partner Hubs → Jazz North → Add showcase lesson → Year 2 Music → Lesson Library + Activity Library → Export PDF.',
+    '',
+    '## Official links',
+    'Mr Big scheme: https://www.jazznorth.org/mr-big-scheme-of-work',
+    'Learning Resources Area: https://www.jazznorth.org/learning-resources-area',
+    'Jazz North home: https://www.jazznorth.org/',
+  ],
+);
+copyFileSync(join(examplesDir, 'jn-mr-big-lesson-overview.pdf'), join(jnDir, 'jn-mr-big-lesson-overview.pdf'));
+
+writeDoc(
+  'jn-playlist-milestones-overview.pdf',
+  'Jazz North — Playlist Project: Milestones (showcase overview)',
+  [
+    '## Purpose of this PDF',
+    'CCDesigner prototype showcase for Jazz North’s Playlist Project (Milestones) — KS2 repeated listening pathway. Not a copy of official downloadable packs.',
+    '',
+    '## Key stage & timing',
+    'KS2 showcase (Year 5 Music) · Ages 8–11 adaptable · ≈ 60 minutes',
+    'Official page: https://www.jazznorth.org/playlist-project',
+    '',
+    '## Pathway (public listing)',
+    'Stage One — Listening to a playlist several times a week (Autumn)',
+    'Stage Two — Active listening classroom activities with resource pack (Spring)',
+    'Stage Three — Interactive classroom visit video or live jazz musicians visit (Summer)',
+    '',
+    '## Learning outcomes',
+    'Pupils use repeated and active listening to notice hooks in a jazz playlist track and respond with movement, echo and a short improvisation idea.',
+    '',
+    '## Lesson structure (timed)',
+    '1. Playlist welcome & listening goals (5 min)',
+    '2. Milestones hook — why repeated listening works (10 min)',
+    '3. Focus listen — find the hook (12 min)',
+    '4. Active listening stations (12 min)',
+    '5. Call-and-response improvisation taste (12 min)',
+    '6. Reflect & plan the listening week (9 min)',
+    '',
+    '## How to see this in CCDesigner',
+    'Partner Hubs → Jazz North → Add Playlist Project → Year 5 Music → Lesson Library + Activity Library.',
+    '',
+    '## Official links',
+    'Playlist Project: https://www.jazznorth.org/playlist-project',
+    'Learning Resources Area: https://www.jazznorth.org/learning-resources-area',
+    'Contact Learning & Participation: helena@jazznorth.org',
+  ],
+);
+copyFileSync(
+  join(examplesDir, 'jn-playlist-milestones-overview.pdf'),
+  join(jnDir, 'jn-playlist-milestones-overview.pdf'),
+);
+
 const emsDir = join(root, 'public', 'partners', 'ems');
 mkdirSync(emsDir, { recursive: true });
 
@@ -683,4 +769,4 @@ copyFileSync(join(examplesDir, 'ocr-music-film-computer-overview.pdf'), join(pro
 copyFileSync(join(examplesDir, 'gcse-drama-blood-brothers-aqa-pack.pdf'), join(wtdDir, 'gcse-drama-blood-brothers-aqa-pack.pdf'));
 copyFileSync(join(examplesDir, 'gcse-drama-blood-brothers-scene-notes.pdf'), join(wtdDir, 'gcse-drama-blood-brothers-scene-notes.pdf'));
 
-console.log('PDFs written to public/examples/ (+ demo-resources, prototype, partners/weteachdrama|icompose|dramaresource)');
+console.log('PDFs written to public/examples/ (+ demo-resources, prototype, partners/weteachdrama|icompose|dramaresource|jazznorth)');

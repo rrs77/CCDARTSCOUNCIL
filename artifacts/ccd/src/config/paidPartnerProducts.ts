@@ -1,12 +1,13 @@
 /**
- * Dummy paid products for We Teach Drama, iCompose, and Drama Resource basket demo.
- * Prices are placeholders — no real payment is processed.
+ * Dummy paid products for We Teach Drama, iCompose, Drama Resource, Jazz North
+ * (and music-hub) basket demos. Prices are placeholders — no real payment is processed.
  */
 
 export type PaidPartnerSlug =
   | 'weteachdrama'
   | 'icompose'
   | 'dramaresource'
+  | 'jazznorth'
   | 'ems'
   | 'triborough';
 
@@ -84,6 +85,30 @@ export const PAID_PARTNER_PRODUCTS: PaidPartnerProduct[] = [
     title: 'Downloadable drama lesson units (bundle demo)',
     pricePence: 2500,
     meta: 'Story / curriculum units · demo price',
+  },
+  {
+    id: 'jn-learning-resources',
+    partnerSlug: 'jazznorth',
+    partnerName: 'Jazz North',
+    title: 'Learning Resources Area (improvisation pathways)',
+    pricePence: 0,
+    meta: 'FREE · KS1–4 · Free account on jazznorth.org',
+  },
+  {
+    id: 'jn-playlist-milestones',
+    partnerSlug: 'jazznorth',
+    partnerName: 'Jazz North',
+    title: 'Playlist Project — Milestones scheme (demo pack)',
+    pricePence: 0,
+    meta: 'FREE · KS2 listening pathway · demo overview',
+  },
+  {
+    id: 'jn-educators-forum',
+    partnerSlug: 'jazznorth',
+    partnerName: 'Jazz North',
+    title: 'Educators’ Forum — improvisation pedagogy (demo)',
+    pricePence: 0,
+    meta: 'FREE · Termly online CPD · demo listing',
   },
   {
     id: 'ems-dj-workshop',

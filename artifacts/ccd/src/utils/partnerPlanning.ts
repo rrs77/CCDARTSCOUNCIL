@@ -305,4 +305,11 @@ export const PARTNER_PLANNING_ORGS = {
     logoBg: '#0F3D2E',
     logoInvert: false,
   },
+  jazznorth: {
+    orgId: 'jazznorth',
+    orgLabel: 'Jazz North',
+    logoSrc: '/partners/jazz-north.png',
+    logoBg: '#FFFFFF',
+    logoInvert: false,
+  },
 } as const;

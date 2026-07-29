@@ -21,6 +21,7 @@ import {
   PARTNER_PLANNING_ORGS,
   registerPartnerPlanningPack,
 } from './partnerPlanning';
+import { highlightPaidHubActivities } from './recentlyAddedActivities';
 import { ICC_KS3_TRACK, ICC_SITE } from './iccBranding';
 
 const SHEET_ID = 'Year 8 Music';
@@ -44,14 +45,14 @@ const ALL_CATEGORIES = Object.values(CAT);
 
 function isOwnedCategory(name: string) {
   return (
-    name.startsWith('iCompose —') ||
-    name.startsWith('I Can Compose —') ||
-    name.startsWith('ICC')
+    name === CAT.listen ||
+    name === CAT.explore ||
+    name === CAT.compose
   );
 }
 function isOwnedActivity(a: Activity) {
   return (
-    String((a as any)?.notes || '').includes('ICC_SEED') ||
+    String((a as any)?.notes || '').includes(SEED_NOTE) ||
     isOwnedCategory(String(a?.category || ''))
   );
 }
@@ -163,6 +164,17 @@ export async function setupICCGettingStarted(options?: {
           isOwnedActivity(a),
         );
         registerIccPlanning(existing, readJson<string[]>(LESSON_KEYS_KEY, []));
+        highlightPaidHubActivities(existing, {
+          partnerSlug: 'icompose',
+          partnerLabel: 'iCompose',
+          pickTitles: [
+            'Course overview — how to get started',
+            'Listening starters from ICC free course',
+            'First composition sketch',
+          ],
+          fallbackCount: 3,
+          categories: ALL_CATEGORIES,
+        });
       } catch {
         /* ignore */
       }
@@ -209,6 +221,19 @@ export async function setupICCGettingStarted(options?: {
     categoryMerge,
     source: 'icc-getting-started-seed',
     markerKey: MARKER_KEY,
+    starActivities: false,
+  });
+
+  highlightPaidHubActivities(activities, {
+    partnerSlug: 'icompose',
+    partnerLabel: 'iCompose',
+    pickTitles: [
+      'Course overview — how to get started',
+      'Listening starters from ICC free course',
+      'First composition sketch',
+    ],
+    fallbackCount: 3,
+    categories: ALL_CATEGORIES,
   });
 
   if (shouldRegister) {

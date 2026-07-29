@@ -77,4 +77,16 @@ export const PARTNER_CONTACTS: Record<string, PartnerContactInfo> = {
     webLabel: 'dramaresource.com/contact',
     sourceUrl: 'https://dramaresource.com/contact/',
   },
+  jazznorth: {
+    orgId: 'jazznorth',
+    lines: [
+      'Jazz North',
+      'Strategic development agency for jazz in the North',
+      'Virtual office — team across the North of England',
+    ],
+    email: 'helena@jazznorth.org',
+    web: 'https://www.jazznorth.org/contact',
+    webLabel: 'jazznorth.org/contact',
+    sourceUrl: 'https://www.jazznorth.org/contact',
+  },
 };

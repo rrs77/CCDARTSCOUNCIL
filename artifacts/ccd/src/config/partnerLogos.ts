@@ -107,6 +107,14 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     href: 'https://dramaresource.com/',
     heightClass: 'h-6 sm:h-7',
   },
+  {
+    id: 'jazz-north',
+    name: 'Jazz North',
+    src: '/partners/jazz-north.png',
+    href: 'https://www.jazznorth.org/',
+    heightClass: 'h-6 sm:h-7',
+    onPlate: true,
+  },
 ];
 
 const LOGIN_PARTNER_IDS = [
