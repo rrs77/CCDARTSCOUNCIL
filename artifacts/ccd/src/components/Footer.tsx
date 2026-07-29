@@ -17,7 +17,7 @@ export function Footer() {
   const { settings } = useSettings();
   const b = settings.branding || {};
   const footerBg = b.footerBackgroundColor || '#128c7e';
-  const contactEmail = b.footerContactEmail || 'info@rhythmstix.co.uk';
+  const contactEmail = b.footerContactEmail || 'rob@rhythmstix.co.uk';
   const privacyUrl = b.footerPrivacyUrl || 'https://www.rhythmstix.co.uk/policy';
   const copyrightYear = b.footerCopyrightYear || '2026';
   const companyName = b.footerCompanyName || 'Rhythmstix';

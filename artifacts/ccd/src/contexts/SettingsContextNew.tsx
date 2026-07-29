@@ -59,7 +59,7 @@ export interface BrandingSettings {
   // Footer customization
   footerCompanyName?: string; // Company name in footer (default: "Rhythmstix")
   footerCopyrightYear?: string; // Copyright year (default: "2026")
-  footerContactEmail?: string; // Contact email (default: "info@rhythmstix.co.uk")
+  footerContactEmail?: string; // Contact email (default: "rob@rhythmstix.co.uk")
   footerPrivacyUrl?: string; // Privacy policy URL (default: "https://www.rhythmstix.co.uk/policy")
   footerBackgroundColor?: string; // Footer background color (default: "#128c7e")
   
@@ -344,7 +344,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
   loginButtonColor: '#008272',
   footerCompanyName: 'Rhythmstix',
   footerCopyrightYear: '2026',
-  footerContactEmail: 'info@rhythmstix.co.uk',
+  footerContactEmail: 'rob@rhythmstix.co.uk',
   footerPrivacyUrl: 'https://www.rhythmstix.co.uk/policy',
   footerBackgroundColor: '#128c7e',
   footerYoutubeUrl: 'https://www.youtube.com/channel/UCooHhU7FKALUQ4CtqjDFMsw',

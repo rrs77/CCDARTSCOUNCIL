@@ -2804,7 +2804,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         loginButtonColor: '#008272',
                         footerCompanyName: 'Rhythmstix',
                         footerCopyrightYear: '2026',
-                        footerContactEmail: 'info@rhythmstix.co.uk',
+                        footerContactEmail: 'rob@rhythmstix.co.uk',
                         footerPrivacyUrl: 'https://www.rhythmstix.co.uk/policy',
                         footerBackgroundColor: '#128c7e',
                         showSocialMedia: true,
@@ -2925,7 +2925,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       value={tempSettings.branding?.footerContactEmail ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, footerContactEmail: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="info@rhythmstix.co.uk"
+                      placeholder="rob@rhythmstix.co.uk"
                     />
                   </div>
                   <div>
