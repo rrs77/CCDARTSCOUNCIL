@@ -368,6 +368,17 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Don't set loading=true here – it would unmount LoginForm and clear the password field.
       // LoginForm handles its own submit loading state.
 
+      // Real credentials must never inherit a stuck demo session / seeded selector state.
+      // Clear demo flag + seeded localStorage when leaving demo (or if a prior demo user id remains).
+      try {
+        const priorUserId = localStorage.getItem('rhythmstix_user_id');
+        if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
+          clearDemoMode();
+        }
+      } catch {
+        /* privacy mode – best effort */
+      }
+
       if (isSupabaseAuthEnabled()) {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: username.trim(),
