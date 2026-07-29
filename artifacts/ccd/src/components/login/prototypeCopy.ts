@@ -68,3 +68,65 @@ export const ACTIVITY_LIBRARY_WELCOME_BODY =
   'Example activities — customise them in Settings, and share with colleagues.';
 
 export const ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY = 'ccd-activity-library-welcome-seen';
+
+/** Bump when tabs explainer copy changes so returning demo visitors see it again. */
+export const TABS_EXPLAINER_STORAGE_KEY = 'ccd-tabs-explainer-seen-v1';
+
+export const TABS_EXPLAINER_TITLE = 'Your Dashboard tabs';
+
+export const TABS_EXPLAINER_INTRO =
+  'A quick tour of the seven tabs along the top — tap a name to jump there.';
+
+export const TABS_EXPLAINER_CTA = 'Got it';
+
+export type TabsExplainerTabId =
+  | 'unit-viewer'
+  | 'lesson-library'
+  | 'lesson-builder'
+  | 'activity-library'
+  | 'calendar'
+  | 'our-partners'
+  | 'contact-us';
+
+export const TABS_EXPLAINER_ITEMS: ReadonlyArray<{
+  id: TabsExplainerTabId;
+  label: string;
+  description: string;
+}> = [
+  {
+    id: 'unit-viewer',
+    label: 'Planner Overview',
+    description: 'See your term plan and units at a glance.',
+  },
+  {
+    id: 'lesson-library',
+    label: 'Lesson Library',
+    description: 'Browse and open your saved lesson plans.',
+  },
+  {
+    id: 'lesson-builder',
+    label: 'Lesson Builder',
+    description: 'Build and edit lessons from activities.',
+  },
+  {
+    id: 'activity-library',
+    label: 'Activity Library',
+    description:
+      "Where a teacher's personal activities live, plus any they've selected or added from Partner Hubs.",
+  },
+  {
+    id: 'calendar',
+    label: 'Calendar',
+    description: 'Schedule lessons and keep track of key dates.',
+  },
+  {
+    id: 'our-partners',
+    label: 'Partner Hubs',
+    description: 'Explore partner pages and add resources into your library.',
+  },
+  {
+    id: 'contact-us',
+    label: 'Contact Us',
+    description: 'Get in touch or request a full teacher login.',
+  },
+];

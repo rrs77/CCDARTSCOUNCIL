@@ -49,13 +49,19 @@ import { PartnerHubPage } from './components/partners/PartnerHubPage';
 import { PartnerResourcesHub } from './components/partners/PartnerResourcesHub';
 import { LsoPartnerHub } from './components/partners/LsoPartnerHub';
 import { PrototypeWelcomeModal } from './components/login/PrototypeWelcomeModal';
-import { WELCOME_PROTOTYPE_STORAGE_KEY } from './components/login/prototypeCopy';
+import { TabsExplainerModal } from './components/login/TabsExplainerModal';
+import {
+  TABS_EXPLAINER_STORAGE_KEY,
+  WELCOME_PROTOTYPE_STORAGE_KEY,
+  type TabsExplainerTabId,
+} from './components/login/prototypeCopy';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
   const partnerHub =
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
   const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
+  const [showTabsExplainer, setShowTabsExplainer] = useState(false);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
   // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
@@ -75,16 +81,34 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
   >(undefined);
 
-  // Demo / prototype entry only — explain limits and Partner Hubs.
-  // Real teacher logins must not see this popup.
+  const tabsExplainerAlreadySeen = () => {
+    try {
+      return sessionStorage.getItem(TABS_EXPLAINER_STORAGE_KEY) === '1';
+    } catch {
+      return false;
+    }
+  };
+
+  const maybeShowTabsExplainer = () => {
+    if (tabsExplainerAlreadySeen()) return;
+    setShowTabsExplainer(true);
+  };
+
+  // Demo / prototype entry only — welcome first, then tabs explainer.
+  // Real teacher logins must not see these popups.
   useEffect(() => {
     if (!user || partnerHub || !isAuthorizedDemoMode()) return;
+    let welcomeSeen = false;
     try {
-      if (sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1') return;
+      welcomeSeen = sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1';
     } catch {
-      // still show
+      // still show welcome
     }
-    setShowPrototypeWelcome(true);
+    if (!welcomeSeen) {
+      setShowPrototypeWelcome(true);
+      return;
+    }
+    maybeShowTabsExplainer();
   }, [user, partnerHub]);
 
   const dismissPrototypeWelcome = () => {
@@ -94,6 +118,26 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       // ignore
     }
     setShowPrototypeWelcome(false);
+    maybeShowTabsExplainer();
+  };
+
+  const dismissTabsExplainer = () => {
+    try {
+      sessionStorage.setItem(TABS_EXPLAINER_STORAGE_KEY, '1');
+    } catch {
+      // ignore
+    }
+    setShowTabsExplainer(false);
+  };
+
+  const openDashboardTab = (tabId: TabsExplainerTabId) => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('ccd:open-tab', { detail: { tab: tabId } }),
+      );
+    } catch {
+      /* ignore */
+    }
   };
 
   // Defer Supabase keep-alive so it doesn't compete with initial auth/data load
@@ -301,6 +345,11 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
             /* ignore */
           }
         }}
+      />
+      <TabsExplainerModal
+        isOpen={showTabsExplainer && !showPrototypeWelcome}
+        onClose={dismissTabsExplainer}
+        onOpenTab={openDashboardTab}
       />
     </div>
   );
