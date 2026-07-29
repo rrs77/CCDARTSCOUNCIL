@@ -2,6 +2,8 @@ import { useState } from 'react';
 import toast from 'react-hot-toast';
 import {
   ICC_COURSES,
+  ICC_FANFARE_PDF,
+  ICC_GETTING_STARTED_PDF,
   ICC_KS3_TRACK,
   ICC_TEACHER_RESOURCES,
 } from '../../utils/iccBranding';
@@ -114,6 +116,11 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
             label: 'Course page',
             icon: 'external',
           },
+          {
+            href: ICC_GETTING_STARTED_PDF,
+            label: 'Prototype overview PDF',
+            icon: 'file',
+          },
         ]}
         action={
           <PartnerHubAddButton
@@ -155,6 +162,14 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
             className="inline-flex items-center justify-center rounded-lg border border-[#002D24]/20 bg-white px-3.5 py-2.5 text-sm font-semibold text-[#002D24] hover:bg-white/80"
           >
             View on iCompose
+          </a>
+          <a
+            href={ICC_FANFARE_PDF}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center justify-center rounded-lg border border-[#002D24]/20 bg-white px-3.5 py-2.5 text-sm font-semibold text-[#002D24] hover:bg-white/80"
+          >
+            Mock PDF
           </a>
         </div>
       </section>

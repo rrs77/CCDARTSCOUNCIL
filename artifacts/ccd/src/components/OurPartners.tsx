@@ -261,7 +261,7 @@ export function OurPartners() {
               id="premium-partners-heading"
               className="mt-1 text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl"
             >
-              We Teach Drama &amp; iCompose
+              We Teach Drama, iCompose &amp; Drama Resource
             </h3>
             <p className="mt-1 text-sm text-[#002D24]/70">
               Expand a row for details, then open the hub for paid pack Add to basket (demo).

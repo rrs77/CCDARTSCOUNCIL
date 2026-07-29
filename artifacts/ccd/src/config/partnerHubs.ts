@@ -42,7 +42,7 @@ export interface PartnerHubConfig {
   logoOnPlate?: boolean;
   /**
    * Paid / premium partner — shown in a separate Partner Hubs section with
-   * Add to basket demo. Only We Teach Drama and iCompose use this.
+   * Add to basket demo. We Teach Drama, iCompose, and Drama Resource (David Farmer).
    */
   paid?: boolean;
 }
@@ -168,15 +168,16 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     slug: 'dramaresource',
     aliases: ['davidfarmer'],
     partnerLogoId: 'drama-resource',
-    displayName: 'Drama Resource',
+    displayName: 'Drama Resource (David Farmer)',
     shortName: 'Drama Resource',
     siteUrl: 'https://dramaresource.com/',
     logoSrc: '/partners/drama-resource.svg',
     interactive: true,
+    paid: true,
     tagline: 'Creative ideas for teaching drama — David Farmer',
     description: [
       'Drama Resource, directed by theatre director and author David Farmer, publishes drama games, strategies, lesson plans and CPD for primary, secondary and language teachers — from free classroom games to downloadable units and the Just Add Drama toolkit.',
-      'This hub links official Drama Resource pages for planning. Add to CCDesigner seeds original local outlines that point back to dramaresource.com — paid PDFs are never copied.',
+      'This hub follows the premium Partner Hub template: Add to basket (demo) plus a full showcase lesson you can export to PDF. Official paid materials stay on dramaresource.com.',
     ],
     primaryColor: '#0F3D2E',
     accentColor: '#2DD4BF',

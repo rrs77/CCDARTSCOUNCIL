@@ -8,6 +8,10 @@ export const DR_STRATEGIES = 'https://dramaresource.com/drama-strategies/';
 export const DR_JUST_ADD_DRAMA = 'https://dramaresource.com/just-add-drama/';
 export const DR_CPD = 'https://dramaresource.com/drama-cpd-courses-inset/';
 export const DR_TEN_SECOND_OBJECTS = 'https://dramaresource.com/ten-second-objects/';
+
+/** Prototype showcase lesson PDF (generated; not an official paid pack). */
+export const DR_SHOWCASE_LESSON_PDF =
+  '/partners/dramaresource/dr-ten-second-objects-lesson-plan.pdf';
 export const DR_FOLDER_NAME = 'Drama Resource';
 
 export function isDramaResourceLibraryCategory(

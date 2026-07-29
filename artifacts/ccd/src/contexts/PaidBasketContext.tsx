@@ -1,5 +1,5 @@
 /**
- * Demo basket for We Teach Drama + iCompose paid resources.
+ * Demo basket for We Teach Drama, iCompose and Drama Resource paid resources.
  * Persists to localStorage; checkout is a prototype toast only.
  */
 
@@ -130,7 +130,7 @@ export function PaidBasketProvider({ children }: { children: React.ReactNode }) 
           <p className="font-semibold text-[#002D24]">Demo checkout only</p>
           <p className="text-gray-600">
             No payment is taken. This basket ({formatPricePence(totalPence)}) is a prototype
-            for We Teach Drama and iCompose paid resources.
+            for We Teach Drama, iCompose and Drama Resource paid resources.
           </p>
           <button
             type="button"

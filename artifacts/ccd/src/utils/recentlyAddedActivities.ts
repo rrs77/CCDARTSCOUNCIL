@@ -13,7 +13,7 @@ import {
 export const RECENTLY_ADDED_KEY = 'ccd-recently-added-activities-v1';
 export const CCD_RECENTLY_ADDED_UPDATED_EVENT = 'ccd-recently-added-updated';
 
-export type PaidHubPartnerSlug = 'weteachdrama' | 'icompose';
+export type PaidHubPartnerSlug = 'weteachdrama' | 'icompose' | 'dramaresource';
 
 export type RecentlyAddedEntry = {
   activityId: string;
@@ -36,7 +36,9 @@ function readRaw(): RecentlyAddedEntry[] {
       (e) =>
         e &&
         typeof e.activityId === 'string' &&
-        (e.partnerSlug === 'weteachdrama' || e.partnerSlug === 'icompose'),
+        (e.partnerSlug === 'weteachdrama' ||
+          e.partnerSlug === 'icompose' ||
+          e.partnerSlug === 'dramaresource'),
     ) as RecentlyAddedEntry[];
   } catch {
     return [];

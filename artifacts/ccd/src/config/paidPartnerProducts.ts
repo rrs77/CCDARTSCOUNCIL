@@ -1,9 +1,9 @@
 /**
- * Dummy paid products for We Teach Drama + iCompose basket demo.
+ * Dummy paid products for We Teach Drama, iCompose, and Drama Resource basket demo.
  * Prices are placeholders — no real payment is processed.
  */
 
-export type PaidPartnerSlug = 'weteachdrama' | 'icompose';
+export type PaidPartnerSlug = 'weteachdrama' | 'icompose' | 'dramaresource';
 
 export interface PaidPartnerProduct {
   id: string;
@@ -55,6 +55,22 @@ export const PAID_PARTNER_PRODUCTS: PaidPartnerProduct[] = [
     title: 'How to Compose a Fanfare',
     pricePence: 1500,
     meta: '22 lessons · Beginner / Intermediate',
+  },
+  {
+    id: 'dr-just-add-drama',
+    partnerSlug: 'dramaresource',
+    partnerName: 'Drama Resource',
+    title: 'Just Add Drama — The Creative Teacher’s Toolkit',
+    pricePence: 13500,
+    meta: 'Online course · Primary / Secondary / EFL',
+  },
+  {
+    id: 'dr-lesson-downloads',
+    partnerSlug: 'dramaresource',
+    partnerName: 'Drama Resource',
+    title: 'Downloadable drama lesson units (bundle demo)',
+    pricePence: 2500,
+    meta: 'Story / curriculum units · demo price',
   },
 ];
 

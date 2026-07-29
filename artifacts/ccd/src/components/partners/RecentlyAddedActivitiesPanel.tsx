@@ -91,7 +91,7 @@ export function RecentlyAddedActivitiesPanel({
           Recently added
         </h3>
         <span className="text-xs font-medium text-[#3F6212]">
-          Partner picks · We Teach Drama &amp; iCompose
+          Partner picks · We Teach Drama, iCompose &amp; Drama Resource
         </span>
         <span className="ml-auto text-xs text-[#002D24]/60">
           {resolved.length} activit{resolved.length === 1 ? 'y' : 'ies'}

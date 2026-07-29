@@ -293,7 +293,7 @@ export const PARTNER_PLANNING_ORGS = {
   },
   dramaresource: {
     orgId: 'dramaresource',
-    orgLabel: 'Drama Resource',
+    orgLabel: 'Drama Resource (David Farmer)',
     logoSrc: '/partners/drama-resource.svg',
     logoBg: '#0F3D2E',
     logoInvert: false,
