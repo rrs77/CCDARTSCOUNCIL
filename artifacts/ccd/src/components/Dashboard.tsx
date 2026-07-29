@@ -5,13 +5,14 @@ import { LessonPlanBuilder } from "./LessonPlanBuilder";
 import { LessonPlannerCalendar } from "./LessonPlannerCalendar";
 import { ActivityLibrary } from "./ActivityLibrary";
 import { LessonLibrary } from "./LessonLibrary";
-import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake, Mail } from 'lucide-react';
+import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake, Mail, CircleHelp } from 'lucide-react';
 import { OurPartners } from './OurPartners';
 import { ContactUsPanel } from './ContactUsPanel';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
+import { isAuthorizedDemoMode } from '../utils/demoMode';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
 interface Unit {
   id: string;
@@ -314,12 +315,33 @@ export function Dashboard() {
 
   const dashTabClass =
     'ccd-dash-tab flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:px-1.5 sm:py-2.5 md:p-3 text-xs sm:text-xs md:text-sm min-h-[44px] w-full text-center leading-tight whitespace-nowrap';
+  const showTabsExplainerButton = isAuthorizedDemoMode();
 
   return (
       <div className="min-h-screen" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)', paddingTop: '56px' }}>
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
+            {showTabsExplainerButton && (
+              <div className="mb-1.5 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      window.dispatchEvent(new CustomEvent('ccd:open-tabs-explainer'));
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-[#002D24]/70 transition-colors hover:bg-white/70 hover:text-[#002D24]"
+                  title="About these tabs"
+                  aria-label="About these tabs — see what each Dashboard tab does"
+                >
+                  <CircleHelp className="h-4 w-4 shrink-0" aria-hidden />
+                  <span className="hidden sm:inline">About these tabs</span>
+                </button>
+              </div>
+            )}
             {/* 7 tabs — 3-col wrap on mobile; sm+ uses 7 so Partner Hubs + Contact fit */}
             <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-7 gap-1 auto-rows-auto">
               <TabsTrigger
@@ -328,8 +350,7 @@ export function Dashboard() {
                 className={dashTabClass}
               >
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                <span className="hidden sm:inline whitespace-nowrap">Planner Overview</span>
-                <span className="sm:hidden">Planner</span>
+                <span className="whitespace-nowrap">HT Planner</span>
               </TabsTrigger>
 
               <TabsTrigger
