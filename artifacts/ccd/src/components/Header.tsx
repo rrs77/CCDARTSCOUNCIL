@@ -9,7 +9,7 @@ import { WalkthroughGuide } from './WalkthroughGuide';
 import { HelpGuide } from './HelpGuide';
 import { LogoSVG } from './Logo';
 import { usePWAInstall } from '../hooks/usePWAInstall';
-import { shouldShowPreviewBanner } from '../utils/demoMode';
+import { isDemoModeActive, shouldShowPreviewBanner } from '../utils/demoMode';
 
 export function Header() {
   const { user, logout } = useAuth();
@@ -19,6 +19,8 @@ export function Header() {
   const yearGroupDropdownRef = useRef<HTMLDivElement>(null);
   const [yearGroupDropdownOpen, setYearGroupDropdownOpen] = useState(false);
   const [yearGroupSectionsExpanded, setYearGroupSectionsExpanded] = useState<Set<string>>(new Set());
+  // Demo keeps a curated primary-only selector; real teachers need unassigned classes too.
+  const demoMode = isDemoModeActive();
   // Restrict class selector to allowed year groups when admin has set them (user cannot change admin-assigned list)
   const allowedIds = user?.profile?.allowed_year_groups ?? null;
   const yearGroupsForSelector = allowedIds != null && allowedIds.length > 0
@@ -74,8 +76,8 @@ export function Header() {
     return map;
   }, [yearGroupsForSelector]);
 
-  // Header lists only key-stage folders from Settings (EYFS, KS1…) with nested
-  // classes. Skip "Other" and never surface unassigned year groups as a flat list.
+  // Key-stage folders from Settings (EYFS, KS1…). Skip "Other" as a labelled bucket —
+  // demo hides those classes entirely; real logins surface them as a flat list below.
   const isOtherSection = (section: { id: string; label?: string }) =>
     section.id === 'other' || normalizeToken(section.label) === 'other';
 
@@ -93,7 +95,18 @@ export function Header() {
       .filter((section) => section.groups.length > 0);
   }, [yearGroupSections, selectorTokenMap]);
 
-  // Flat list of classes assigned to a key-stage folder (order follows section order).
+  // Classes in Other / not assigned to a key stage. Demo intentionally omits these;
+  // real teachers need them so the selector is not empty when defaults live in Other.
+  const uncategorizedGroups = React.useMemo(() => {
+    if (demoMode) return [] as { id: string; name: string; color?: string }[];
+    const assignedIds = new Set<string>();
+    displaySections.forEach((section) => {
+      section.groups.forEach((g) => assignedIds.add(g.id));
+    });
+    return yearGroupsForSelector.filter((g) => !assignedIds.has(g.id));
+  }, [demoMode, displaySections, yearGroupsForSelector]);
+
+  // Flat list of selectable classes (key-stage folders, then uncategorized for real logins).
   const selectableYearGroups = React.useMemo(() => {
     const groups: { id: string; name: string; color?: string }[] = [];
     const seen = new Set<string>();
@@ -104,10 +117,19 @@ export function Header() {
         groups.push(g);
       });
     });
+    uncategorizedGroups.forEach((g) => {
+      if (seen.has(g.id)) return;
+      seen.add(g.id);
+      groups.push(g);
+    });
     return groups;
-  }, [displaySections]);
+  }, [displaySections, uncategorizedGroups]);
 
-  const hasSelectorItems = displaySections.length > 0;
+  const hasSelectorItems = displaySections.length > 0 || uncategorizedGroups.length > 0;
+
+  const emptySelectorMessage = demoMode
+    ? 'Your classes will appear here once you add them in Settings → Year Groups.'
+    : 'No classes in this list yet. Add them in Settings → Year Groups.';
 
   // If current class is not under a key stage (or not allowed), switch to the first assigned one.
   useEffect(() => {
@@ -289,11 +311,26 @@ export function Header() {
                         </div>
                       );
                     })}
+                    {uncategorizedGroups.length > 0 && (
+                      <div className={displaySections.length > 0 ? 'border-t border-gray-100 pt-1' : ''}>
+                        {uncategorizedGroups.map((group) => (
+                          <button
+                            key={group.id}
+                            type="button"
+                            onClick={() => selectYearGroup(group)}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-teal-50 ${currentSheetInfo.sheet === group.id ? 'bg-teal-50 text-teal-800 font-medium' : 'text-gray-700'}`}
+                          >
+                            {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                            <span className={currentSheetInfo.sheet === group.id ? 'font-medium' : ''}>{group.name}</span>
+                          </button>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 )}
                 {yearGroupDropdownOpen && !hasSelectorItems && (
                   <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 text-sm text-gray-500">
-                    Your classes will appear here once you add them in Settings → Year Groups.
+                    {emptySelectorMessage}
                   </div>
                 )}
               </div>
@@ -424,8 +461,19 @@ export function Header() {
                         </div>
                       );
                     })}
+                    {uncategorizedGroups.map((group) => (
+                      <button
+                        key={group.id}
+                        type="button"
+                        onClick={() => { selectYearGroup(group); setMobileMenuOpen(false); }}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm bg-white border-b border-gray-100 last:border-b-0 ${currentSheetInfo.sheet === group.id ? 'bg-teal-100 text-teal-800 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                      >
+                        {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                        {group.name}
+                      </button>
+                    ))}
                     {!hasSelectorItems && (
-                      <p className="px-3 py-2 text-sm text-gray-500">Your classes will appear here once you add them in Settings → Year Groups.</p>
+                      <p className="px-3 py-2 text-sm text-gray-500">{emptySelectorMessage}</p>
                     )}
                   </div>
                 </div>
