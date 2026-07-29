@@ -298,7 +298,7 @@ export function Dashboard() {
 
 
   const dashTabClass =
-    'ccd-dash-tab flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:p-3 text-xs sm:text-sm min-h-[44px] w-full text-center leading-tight whitespace-normal';
+    'ccd-dash-tab flex flex-col sm:flex-row items-center justify-center gap-1 p-2 sm:px-1.5 sm:py-2.5 md:p-3 text-xs sm:text-xs md:text-sm min-h-[44px] w-full text-center leading-tight whitespace-nowrap';
 
   return (
       <div className="min-h-screen" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)', paddingTop: '56px' }}>
@@ -313,7 +313,7 @@ export function Dashboard() {
                 className={dashTabClass}
               >
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                <span className="hidden sm:inline">Planner Overview</span>
+                <span className="hidden sm:inline whitespace-nowrap">Planner Overview</span>
                 <span className="sm:hidden">Planner</span>
               </TabsTrigger>
 
