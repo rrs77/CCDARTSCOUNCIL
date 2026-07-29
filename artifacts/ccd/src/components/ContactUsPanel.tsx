@@ -75,8 +75,7 @@ export function ContactUsPanel() {
             Contact us
           </h2>
           <p className="text-sm leading-snug text-[#002D24]/70">
-            Send an enquiry about CCDesigner — opens your email app with the message ready for{' '}
-            <span className="font-medium">{CCDESIGNER_CONTACT_EMAIL}</span>
+            Send an enquiry about CCDesigner.
           </p>
         </div>
       </div>
