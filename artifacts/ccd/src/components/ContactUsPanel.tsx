@@ -24,7 +24,7 @@ const INITIAL: FormState = {
 /**
  * Contact form matching the OMTutoring / Isaac enquiry pattern:
  * mailto with details separated line-by-line. No dropdowns — free text only.
- * Sends to rob@rhythmstix.co.uk.
+ * Sends to rob@rhythmstix.co.uk
  */
 export function ContactUsPanel() {
   const [form, setForm] = useState<FormState>(INITIAL);
@@ -76,7 +76,7 @@ export function ContactUsPanel() {
           </h2>
           <p className="text-sm leading-snug text-[#002D24]/70">
             Send an enquiry about CCDesigner — opens your email app with the message ready for{' '}
-            <span className="font-medium">{CCDESIGNER_CONTACT_EMAIL}</span>.
+            <span className="font-medium">{CCDESIGNER_CONTACT_EMAIL}</span>
           </p>
         </div>
       </div>
