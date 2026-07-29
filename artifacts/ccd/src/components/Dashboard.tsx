@@ -88,15 +88,30 @@ export function Dashboard() {
     }
   }, []);
 
-  // Header / footer / welcome modal can request Contact Us or Partner Hubs
+  // Header / footer / welcome / tabs explainer can request a Dashboard tab
   useEffect(() => {
+    const allowed = new Set([
+      'unit-viewer',
+      'lesson-library',
+      'lesson-builder',
+      'activity-library',
+      'calendar',
+      'our-partners',
+      'contact-us',
+    ]);
     const openContact = () => setActiveTab('contact-us');
     const openPartners = () => setActiveTab('our-partners');
+    const openTab = (e: Event) => {
+      const tab = (e as CustomEvent<{ tab?: string }>).detail?.tab;
+      if (tab && allowed.has(tab)) setActiveTab(tab);
+    };
     window.addEventListener('ccd:open-contact-us', openContact);
     window.addEventListener('ccd:open-our-partners', openPartners);
+    window.addEventListener('ccd:open-tab', openTab);
     return () => {
       window.removeEventListener('ccd:open-contact-us', openContact);
       window.removeEventListener('ccd:open-our-partners', openPartners);
+      window.removeEventListener('ccd:open-tab', openTab);
     };
   }, []);
 
