@@ -22,13 +22,55 @@ export function buildQueryMailto(
   return `mailto:${safeTo}?subject=${encodeURIComponent(safeSubject)}`;
 }
 
+export type EnquiryMailtoFields = {
+  name: string;
+  email: string;
+  phone?: string;
+  organisation?: string;
+  /** Optional — omitted from body when empty. */
+  role?: string;
+  /** Optional — omitted from body when empty. */
+  mobile?: string;
+  /** Optional — omitted from body when empty. */
+  preferredTimes?: string;
+  message: string;
+};
+
+/**
+ * Line-by-line enquiry body (OMTutoring-style).
+ * Role, mobile and preferred times only appear when provided.
+ */
+export function buildEnquiryBody(fields: EnquiryMailtoFields): string {
+  const lines: string[] = [
+    `Name: ${fields.name.trim()}`,
+    `Email: ${fields.email.trim()}`,
+    `Phone: ${fields.phone?.trim() || 'Not provided'}`,
+    `Organisation / school: ${fields.organisation?.trim() || 'Not provided'}`,
+  ];
+
+  const role = fields.role?.trim();
+  if (role) lines.push(`Role: ${role}`);
+
+  const mobile = fields.mobile?.trim();
+  if (mobile) lines.push(`Mobile: ${mobile}`);
+
+  const preferredTimes = fields.preferredTimes?.trim();
+  if (preferredTimes) lines.push(`Preferred follow-up times: ${preferredTimes}`);
+
+  lines.push('', fields.message.trim());
+  return lines.join('\n');
+}
+
 /**
  * Build a mailto with subject + body (OMTutoring-style enquiry emails).
+ * Pass `body` directly, or pass `fields` to build the body (optional fields
+ * only included when provided).
  */
 export function buildEnquiryMailto(options: {
   email?: string;
   subject?: string;
-  body: string;
+  body?: string;
+  fields?: EnquiryMailtoFields;
 }): string {
   const to =
     typeof options.email === 'string' && options.email.trim()
@@ -40,6 +82,11 @@ export function buildEnquiryMailto(options: {
     typeof options.subject === 'string' && options.subject.trim()
       ? options.subject.trim()
       : 'CCDesigner enquiry';
-  const body = typeof options.body === 'string' ? options.body : '';
+  const body =
+    options.fields != null
+      ? buildEnquiryBody(options.fields)
+      : typeof options.body === 'string'
+        ? options.body
+        : '';
   return `mailto:${safeTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 }

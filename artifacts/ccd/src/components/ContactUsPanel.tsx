@@ -5,11 +5,23 @@ import {
   buildEnquiryMailto,
 } from '../utils/mailto';
 
+const ROLE_OPTIONS = [
+  '',
+  'Teacher',
+  'Subject lead',
+  'Hub',
+  'Funder',
+  'Other / prefer not to say',
+] as const;
+
 type FormState = {
   name: string;
   email: string;
   phone: string;
   organisation: string;
+  role: string;
+  mobile: string;
+  preferredTimes: string;
   message: string;
 };
 
@@ -18,12 +30,15 @@ const INITIAL: FormState = {
   email: '',
   phone: '',
   organisation: '',
+  role: '',
+  mobile: '',
+  preferredTimes: '',
   message: '',
 };
 
 /**
  * Contact form matching the OMTutoring / Isaac enquiry pattern:
- * mailto with details separated line-by-line. No dropdowns — free text only.
+ * mailto with details separated line-by-line.
  * Sends to rob@rhythmstix.co.uk
  */
 export function ContactUsPanel() {
@@ -44,19 +59,19 @@ export function ContactUsPanel() {
       return;
     }
 
-    const body = [
-      `Name: ${form.name.trim()}`,
-      `Email: ${form.email.trim()}`,
-      `Phone: ${form.phone.trim() || 'Not provided'}`,
-      `Organisation / school: ${form.organisation.trim() || 'Not provided'}`,
-      '',
-      form.message.trim(),
-    ].join('\n');
-
     window.location.href = buildEnquiryMailto({
       email: CCDESIGNER_CONTACT_EMAIL,
       subject: 'CCDesigner enquiry',
-      body,
+      fields: {
+        name: form.name,
+        email: form.email,
+        phone: form.phone,
+        organisation: form.organisation,
+        role: form.role,
+        mobile: form.mobile,
+        preferredTimes: form.preferredTimes,
+        message: form.message,
+      },
     });
     setSubmitted(true);
   }
@@ -96,12 +111,11 @@ export function ContactUsPanel() {
             </p>
           </div>
           <div className="rounded-2xl border border-[#002D24]/10 bg-white px-5 py-5 text-sm text-[#002D24]/75">
-            <p className="font-semibold text-[#002D24]">Before you write</p>
-            <ul className="mt-2 list-disc space-y-1.5 pl-5">
-              <li>Your role (teacher, subject lead, hub, funder…)</li>
-              <li>What you’d like to explore in CCDesigner</li>
-              <li>Any preferred times for a follow-up</li>
-            </ul>
+            <p className="font-semibold text-[#002D24]">Optional details help</p>
+            <p className="mt-2 leading-relaxed">
+              Role, mobile and preferred follow-up times are optional — fill them in if useful, then
+              tell us what you’d like to explore in CCDesigner.
+            </p>
           </div>
         </aside>
 
@@ -186,7 +200,61 @@ export function ContactUsPanel() {
                   className="ccd-contact-input"
                 />
               </Field>
-              <Field label="Message" htmlFor="ccd-contact-message" className="sm:col-span-2">
+            </div>
+
+            <div className="mt-6 border-t border-[#002D24]/10 pt-5">
+              <p className="text-sm font-semibold text-[#002D24]">Before you write</p>
+              <p className="mt-1 text-xs text-[#002D24]/55">
+                Optional — only included in your email if you fill them in.
+              </p>
+              <div className="mt-4 grid gap-5 sm:grid-cols-2">
+                <Field label="Your role (optional)" htmlFor="ccd-contact-role">
+                  <select
+                    id="ccd-contact-role"
+                    name="role"
+                    value={form.role}
+                    onChange={(e) => update('role', e.target.value)}
+                    className="ccd-contact-input ccd-contact-select"
+                  >
+                    <option value="">Select a role…</option>
+                    {ROLE_OPTIONS.filter(Boolean).map((role) => (
+                      <option key={role} value={role}>
+                        {role}
+                      </option>
+                    ))}
+                  </select>
+                </Field>
+                <Field label="Mobile (optional)" htmlFor="ccd-contact-mobile">
+                  <input
+                    id="ccd-contact-mobile"
+                    name="mobile"
+                    type="tel"
+                    autoComplete="tel-national"
+                    inputMode="tel"
+                    value={form.mobile}
+                    onChange={(e) => update('mobile', e.target.value)}
+                    className="ccd-contact-input"
+                  />
+                </Field>
+                <Field
+                  label="Preferred times for a follow-up (optional)"
+                  htmlFor="ccd-contact-preferred-times"
+                  className="sm:col-span-2"
+                >
+                  <input
+                    id="ccd-contact-preferred-times"
+                    name="preferredTimes"
+                    value={form.preferredTimes}
+                    onChange={(e) => update('preferredTimes', e.target.value)}
+                    className="ccd-contact-input"
+                    placeholder="e.g. weekday mornings, after 3pm…"
+                  />
+                </Field>
+              </div>
+            </div>
+
+            <div className="mt-6 border-t border-[#002D24]/10 pt-5">
+              <Field label="Message" htmlFor="ccd-contact-message">
                 <textarea
                   id="ccd-contact-message"
                   name="message"
@@ -231,11 +299,21 @@ export function ContactUsPanel() {
           font-size: 0.875rem;
           transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
         }
+        .ccd-contact-select {
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23002D24' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+          background-repeat: no-repeat;
+          background-position: right 0.75rem center;
+          padding-right: 2.25rem;
+        }
         .ccd-contact-input:focus {
           outline: none;
           border-color: #002D24;
           box-shadow: 0 0 0 3px rgba(182, 255, 126, 0.35);
           background: #fff;
+        }
+        .ccd-contact-select:focus {
+          background-color: #fff;
         }
       `}</style>
     </div>
