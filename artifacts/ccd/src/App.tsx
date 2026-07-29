@@ -19,7 +19,7 @@ import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
 import { getPartnerHubForPath } from './config/partnerHubs';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
-import { shouldShowPreviewBanner } from './utils/demoMode';
+import { isDemoModeActive, shouldShowPreviewBanner } from './utils/demoMode';
 import './utils/setupKS1Maths'; // Make setupKS1MathsExample available in browser console
 import './utils/setupDanceObjectives'; // Make setupDanceObjectives available in browser console
 import './utils/setupSecondaryDramaObjectives'; // Make setupSecondaryDramaObjectives available in browser console
@@ -72,9 +72,10 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
   >(undefined);
 
-  // After login / prototype entry — explain limits and Partner Hubs
+  // Demo / prototype entry only — explain limits and Partner Hubs.
+  // Real teacher logins must not see this popup.
   useEffect(() => {
-    if (!user || partnerHub) return;
+    if (!user || partnerHub || !isDemoModeActive()) return;
     try {
       if (sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1') return;
     } catch {
