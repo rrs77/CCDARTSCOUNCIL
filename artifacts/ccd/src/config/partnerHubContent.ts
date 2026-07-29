@@ -303,13 +303,19 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
     ],
     resourcesHeading: 'Teacher & classroom resources',
     resourcesIntro:
-      'Free drama games plus downloadable lesson plans, Just Add Drama and CPD. Prototype Add for Ten Second Objects is available on the interactive hub.',
+      'Landscape scrollers for David Farmer’s books and drama games (click through to dramaresource.com), plus Just Add Drama and CPD. Prototype Add for Ten Second Objects is on the interactive hub.',
     resources: [
       {
         title: 'Drama games',
         href: 'https://dramaresource.com/drama-games/',
-        description: 'Warm-ups, improvisation, concentration and group dynamics activities.',
+        description: 'Warm-ups, improvisation, concentration and group dynamics — click images on the hub to open each game.',
         kind: 'Games',
+      },
+      {
+        title: "David Farmer's books",
+        href: 'https://dramaresource.com/drama-books-by-david-farmer/',
+        description: '101 Drama Games, Learning Through Drama, Drop of a Hat, Playful Plays and more.',
+        kind: 'Books',
       },
       {
         title: 'Drama strategies',

@@ -1,14 +1,18 @@
-import { useState } from 'react';
-import { ExternalLink, FileText, Loader2, PlusCircle, Check } from 'lucide-react';
+import { useRef, useState } from 'react';
+import { ChevronLeft, ChevronRight, ExternalLink, FileText, Loader2, PlusCircle, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
+  DR_BOOKS,
+  DR_BOOKS_GALLERY,
   DR_CPD,
   DR_DRAMA_GAMES,
+  DR_DRAMA_GAMES_GALLERY,
   DR_JUST_ADD_DRAMA,
   DR_LESSON_PLANS,
   DR_SITE,
   DR_STRATEGIES,
   DR_TEN_SECOND_OBJECTS,
+  type DrLinkedImage,
 } from '../../utils/dramaResourceBranding';
 import {
   DR_SHOWCASE,
@@ -21,6 +25,77 @@ import {
 } from './PartnerHubLayout';
 import { AddToBasketButton } from './AddToBasketButton';
 import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
+
+function LandscapeImageScroller({
+  items,
+  label,
+  imageClassName,
+}: {
+  items: DrLinkedImage[];
+  label: string;
+  /** Book covers are portrait; game thumbs are closer to square */
+  imageClassName: string;
+}) {
+  const scrollerRef = useRef<HTMLDivElement>(null);
+
+  const scrollBy = (dir: -1 | 1) => {
+    const el = scrollerRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * Math.max(240, el.clientWidth * 0.7), behavior: 'smooth' });
+  };
+
+  return (
+    <div className="relative">
+      <div className="mb-2 flex items-center justify-end gap-1">
+        <button
+          type="button"
+          onClick={() => scrollBy(-1)}
+          className="rounded-full border border-gray-200 bg-white p-1.5 text-gray-700 shadow-sm hover:bg-gray-50"
+          aria-label={`Scroll ${label} left`}
+        >
+          <ChevronLeft className="h-4 w-4" aria-hidden />
+        </button>
+        <button
+          type="button"
+          onClick={() => scrollBy(1)}
+          className="rounded-full border border-gray-200 bg-white p-1.5 text-gray-700 shadow-sm hover:bg-gray-50"
+          aria-label={`Scroll ${label} right`}
+        >
+          <ChevronRight className="h-4 w-4" aria-hidden />
+        </button>
+      </div>
+      <div
+        ref={scrollerRef}
+        className="flex gap-3 overflow-x-auto pb-2 scroll-smooth snap-x snap-mandatory [-ms-overflow-style:none] [scrollbar-width:thin]"
+        role="list"
+        aria-label={label}
+      >
+        {items.map((item) => (
+          <a
+            key={item.href}
+            href={item.href}
+            target="_blank"
+            rel="noopener noreferrer"
+            role="listitem"
+            className="group relative shrink-0 snap-start overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition hover:border-emerald-400 hover:shadow-md focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600"
+            title={`Open ${item.title} on dramaresource.com`}
+          >
+            <img
+              src={item.imageSrc}
+              alt={item.title}
+              loading="lazy"
+              referrerPolicy="no-referrer"
+              className={`block object-cover ${imageClassName}`}
+            />
+            <span className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2 pb-2 pt-8 text-left text-xs font-semibold leading-snug text-white opacity-95">
+              {item.title}
+            </span>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
 
 interface DramaResourcePartnerHubProps {
   onAddedToApp?: (info: { sheetId: string }) => void;
@@ -168,6 +243,69 @@ export function DramaResourcePartnerHub({ onAddedToApp }: DramaResourcePartnerHu
           the full plan layout.
         </p>
       </PartnerHubFeaturedSection>
+
+      <section className="space-y-2">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              David Farmer&apos;s books
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Scroll sideways — click a cover to open the book page.
+            </p>
+          </div>
+          <a
+            href={DR_BOOKS}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:underline"
+          >
+            All books
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          </a>
+        </div>
+        <LandscapeImageScroller
+          items={DR_BOOKS_GALLERY}
+          label="David Farmer books"
+          imageClassName="h-44 w-[7.5rem] sm:h-52 sm:w-36"
+        />
+      </section>
+
+      <section className="space-y-2">
+        <div className="flex flex-wrap items-end justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
+              Drama games
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Landscape scroll of games from{' '}
+              <a
+                href={DR_DRAMA_GAMES}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-medium text-teal-700 hover:underline"
+              >
+                dramaresource.com/drama-games
+              </a>
+              — click an image to open that game.
+            </p>
+          </div>
+          <a
+            href={DR_DRAMA_GAMES}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:underline"
+          >
+            Full games library
+            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+          </a>
+        </div>
+        <LandscapeImageScroller
+          items={DR_DRAMA_GAMES_GALLERY}
+          label="Drama games"
+          imageClassName="h-36 w-36 sm:h-40 sm:w-40"
+        />
+      </section>
 
       <section className="space-y-3">
         <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-500">
