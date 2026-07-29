@@ -199,7 +199,7 @@ textarea:focus-visible {
               0 8px 16px -6px rgba(0, 45, 36, 0.12);
 }
 
-/* Dashboard main tabs — house-green underline under every tab; active is stronger. */
+/* Dashboard main tabs — teal underline under every tab; active is stronger/thicker. */
 .ccd-dash-tabs {
   background: #F4F7F5 !important;
   border-radius: 0.5rem 0.5rem 0 0 !important;
@@ -220,9 +220,9 @@ textarea:focus-visible {
   left: 12%;
   right: 12%;
   bottom: 0;
-  height: 2px;
+  height: 3px;
   border-radius: 2px 2px 0 0;
-  background: #002D24;
+  background: var(--ccd-teal-deep, #0D9488);
   opacity: 0.28;
 }
 .ccd-dash-tab:hover {
@@ -239,8 +239,8 @@ textarea:focus-visible {
   box-shadow: none !important;
 }
 .ccd-dash-tab[data-state='active']::after {
-  height: 3px;
-  background: #3D6B5E;
+  height: 4px;
+  background: var(--ccd-teal-deep, #0D9488);
   opacity: 1;
 }
 
