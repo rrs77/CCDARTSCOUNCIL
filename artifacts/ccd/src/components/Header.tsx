@@ -344,23 +344,25 @@ export function Header() {
                 <RefreshCw className={`h-4 w-4 lg:h-5 lg:w-5 ${loading ? 'animate-spin' : ''}`} />
               </button>
 
+              {/* Contact Us — same icon style as Help / Settings / Refresh */}
+              <button
+                type="button"
+                onClick={() => {
+                  try {
+                    window.dispatchEvent(new CustomEvent('ccd:open-contact-us'));
+                  } catch {
+                    /* ignore */
+                  }
+                }}
+                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
+                title="Contact Us"
+                aria-label="Contact Us"
+              >
+                <Mail className="h-4 w-4 lg:h-5 lg:w-5" aria-hidden />
+              </button>
+
               {/* User Menu */}
               <div className="flex items-center space-x-1 lg:space-x-3 flex-shrink-0 min-w-0">
-                <button
-                  type="button"
-                  onClick={() => {
-                    try {
-                      window.dispatchEvent(new CustomEvent('ccd:open-contact-us'));
-                    } catch {
-                      /* ignore */
-                    }
-                  }}
-                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#002D24] transition-colors hover:bg-[#E8F0EA] lg:text-sm"
-                  title="Contact Us"
-                >
-                  <Mail className="h-4 w-4 shrink-0" aria-hidden />
-                  <span>Contact Us</span>
-                </button>
                 <div className="flex items-center space-x-1 lg:space-x-2 min-w-0 p-1 lg:p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer">
                   {user?.avatar ? (
                     <img
