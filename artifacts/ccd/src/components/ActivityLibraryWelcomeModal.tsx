@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { X } from 'lucide-react';
 import {
   ACTIVITY_LIBRARY_WELCOME_BODY,
@@ -19,18 +20,25 @@ export function ActivityLibraryWelcomeModal({
     const onKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
     window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = prevOverflow;
+      window.removeEventListener('keydown', onKeyDown);
+    };
   }, [isOpen, onClose]);
 
-  if (!isOpen) return null;
+  if (!isOpen || typeof document === 'undefined') return null;
 
-  return (
+  return createPortal(
     <div
       className="fixed inset-0 z-[80] flex items-center justify-center bg-black/45 p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="activity-library-welcome-title"
+      data-ccd-activity-welcome-modal="1"
+      onClick={onClose}
     >
       <div
         className="w-full max-w-lg rounded-2xl border border-gray-200 bg-white p-6 shadow-xl sm:p-8"
@@ -67,6 +75,7 @@ export function ActivityLibraryWelcomeModal({
           Got it
         </button>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }
