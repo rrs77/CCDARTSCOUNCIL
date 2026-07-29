@@ -4,6 +4,7 @@ import { supabase, isSupabaseAuthEnabled } from '../config/supabase';
 import type { AppUser, Profile } from '../types/auth';
 import {
   isDemoModeActive,
+  isAuthorizedDemoMode,
   clearDemoMode,
   getDemoOriginSchool,
 } from '../utils/demoMode';
@@ -270,9 +271,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, AUTH_CHECK_TIMEOUT_MS);
 
     try {
-      // Demo / Preview mode short-circuits all auth backends so school
-      // homepage visitors can explore the app without real credentials.
-      if (isDemoModeActive()) {
+      // Demo / Preview mode short-circuits all auth backends so visitors
+      // who completed the prototype password gate can explore without
+      // real credentials. Unauthorized ?demo=1 / stale flags are rejected.
+      if (isAuthorizedDemoMode()) {
         resolvedRef.current = true;
         setUser(DEMO_USER);
         setProfile(null);

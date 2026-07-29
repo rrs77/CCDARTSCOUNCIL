@@ -1,20 +1,21 @@
 import { useState, type FormEvent } from 'react';
 import { Lock, X } from 'lucide-react';
+import {
+  isPrototypeGateUnlocked,
+  PROTOTYPE_GATE_KEY,
+} from '../utils/demoMode';
 
 const GATE_PASSWORD = 'artscouncil26';
-const GATE_KEY = 'ccd-prototype-gate';
+
+export { PROTOTYPE_GATE_KEY };
 
 export function isPrototypeUnlocked(): boolean {
-  try {
-    return sessionStorage.getItem(GATE_KEY) === '1';
-  } catch {
-    return false;
-  }
+  return isPrototypeGateUnlocked();
 }
 
 function rememberUnlock() {
   try {
-    sessionStorage.setItem(GATE_KEY, '1');
+    sessionStorage.setItem(PROTOTYPE_GATE_KEY, '1');
   } catch {
     // Storage unavailable — the caller still proceeds for this page view
   }

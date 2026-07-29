@@ -17,6 +17,8 @@
 export const DEMO_MODE_KEY = 'ccd-demo-mode';
 export const DEMO_FROM_SCHOOL_KEY = 'ccd-demo-from-school';
 export const DEMO_SEED_MARKER_KEY = 'ccd-demo-seeded';
+/** Must match PrototypeGate / index.html (`ccd-prototype-gate`). */
+export const PROTOTYPE_GATE_KEY = 'ccd-prototype-gate';
 
 /** Purple "exploring a sample curriculum" bar — hidden for ACE prototype. */
 export const SHOW_PREVIEW_BANNER = false;
@@ -29,19 +31,49 @@ export function isDemoModeActive(): boolean {
   }
 }
 
+/** True when the prototype password was entered this tab session. */
+export function isPrototypeGateUnlocked(): boolean {
+  try {
+    return typeof window !== 'undefined' && sessionStorage.getItem(PROTOTYPE_GATE_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Demo mode is only valid when the prototype password gate is unlocked.
+ * Clears a stale demo flag if the gate is missing (e.g. forged ?demo=1).
+ */
+export function isAuthorizedDemoMode(): boolean {
+  if (!isDemoModeActive()) return false;
+  if (isPrototypeGateUnlocked()) return true;
+  clearDemoMode();
+  return false;
+}
+
 /** Whether to render PreviewBanner and reserve top layout space for it. */
 export function shouldShowPreviewBanner(): boolean {
   return SHOW_PREVIEW_BANNER && isDemoModeActive();
 }
 
-export function activateDemoMode(fromSchoolSlug?: string) {
+/**
+ * Activate demo mode. Refuses unless the prototype password gate is unlocked
+ * for this tab — callers must show PrototypePasswordPrompt first.
+ * @returns true if demo mode was activated
+ */
+export function activateDemoMode(fromSchoolSlug?: string): boolean {
+  if (!isPrototypeGateUnlocked()) {
+    return false;
+  }
   try {
     sessionStorage.setItem(DEMO_MODE_KEY, '1');
     if (fromSchoolSlug) {
       sessionStorage.setItem(DEMO_FROM_SCHOOL_KEY, fromSchoolSlug);
     }
+    return true;
   } catch {
     /* sessionStorage may be blocked – degrade gracefully */
+    return false;
   }
 }
 

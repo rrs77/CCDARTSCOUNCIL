@@ -162,6 +162,18 @@ async function selectYearGroup(page, nameRe) {
 }
 
 async function ensureInApp(page) {
+  // Re-assert gate + demo flags so ?demo=1 is accepted after navigations.
+  await page.evaluate(
+    ({ gateKey, demoKey }) => {
+      try {
+        sessionStorage.setItem(gateKey, '1');
+        sessionStorage.setItem(demoKey, '1');
+      } catch {
+        /* ignore */
+      }
+    },
+    { gateKey: GATE_KEY, demoKey: DEMO_MODE_KEY },
+  );
   await page.goto(appUrl('/?demo=1'), { waitUntil: 'domcontentloaded' });
   await page.waitForSelector('[data-tab]', { timeout: 45000 }).catch(() => {});
   await ensureCursor(page);

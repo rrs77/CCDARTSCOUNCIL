@@ -14,13 +14,27 @@
     </script>
 
     <!-- Activate Preview/Demo mode before any module code runs when the page
-         is opened directly with ?demo=1 (e.g. a shared preview link). The
-         flag must be set before the app bundle evaluates so the mock, local
-         Supabase client is used from the very first import. -->
+         is opened with ?demo=1 *and* the prototype password gate is already
+         unlocked for this tab. The flag must be set before the app bundle
+         evaluates so the mock, local Supabase client is used from the very
+         first import. Cold ?demo=1 visits without the gate are rejected. -->
     <script>
       try {
-        if (new URLSearchParams(location.search).get('demo') === '1') {
-          sessionStorage.setItem('ccd-demo-mode', '1');
+        var params = new URLSearchParams(location.search);
+        if (params.get('demo') === '1') {
+          var unlocked = sessionStorage.getItem('ccd-prototype-gate') === '1';
+          if (unlocked) {
+            sessionStorage.setItem('ccd-demo-mode', '1');
+          } else {
+            sessionStorage.removeItem('ccd-demo-mode');
+            params.delete('demo');
+            var qs = params.toString();
+            history.replaceState(
+              {},
+              '',
+              location.pathname + (qs ? '?' + qs : '') + location.hash
+            );
+          }
         }
       } catch (e) {}
     </script>

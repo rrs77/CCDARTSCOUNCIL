@@ -2,7 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
-import { isDemoModeActive } from './utils/demoMode';
+import { isAuthorizedDemoMode } from './utils/demoMode';
 import { seedDemoData } from './utils/demoSeed';
 import { applyFeatureDemoFilmClass } from './utils/featureDemoFilm';
 
@@ -29,11 +29,10 @@ if (import.meta.env.DEV && 'serviceWorker' in navigator) {
 const ENABLE_STRICT_MODE = false; // Set to true to enable double-mounting checks
 
 async function boot() {
-  // In Preview/Demo mode, make sure the snapshot content is seeded into
-  // browser storage before the app (and its contexts) mount. Seeding is
-  // idempotent per session, so this is a no-op when the login/homepage
-  // button already seeded before navigating.
-  if (isDemoModeActive()) {
+  // In Preview/Demo mode (only after prototype password unlock), seed the
+  // snapshot before the app mounts. Idempotent per session — no-op when the
+  // login/homepage button already seeded before navigating.
+  if (isAuthorizedDemoMode()) {
     await seedDemoData();
   }
 

@@ -194,7 +194,15 @@ export function LoginForm() {
   };
 
   const enterPrototype = async () => {
-    activateDemoMode('default');
+    // Defense in depth: never seed/navigate without the password gate.
+    if (!isPrototypeUnlocked()) {
+      setShowPrototypePassword(true);
+      return;
+    }
+    if (!activateDemoMode('default')) {
+      setShowPrototypePassword(true);
+      return;
+    }
     await seedDemoData();
     window.location.assign('/?demo=1');
   };

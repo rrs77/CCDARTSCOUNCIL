@@ -10,6 +10,7 @@ import {
 } from '../../config/supabase';
 import { activateDemoMode } from '../../utils/demoMode';
 import { seedDemoData } from '../../utils/demoSeed';
+import { PrototypePasswordPrompt, isPrototypeUnlocked } from '../PrototypeGate';
 import { PrototypeNoticeBar } from '../login/PrototypeNoticeBar';
 import { PrototypeWelcomeModal } from '../login/PrototypeWelcomeModal';
 import { WELCOME_PROTOTYPE_STORAGE_KEY } from '../login/prototypeCopy';
@@ -31,6 +32,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [showWelcomePrototype, setShowWelcomePrototype] = useState(false);
+  const [showPrototypePassword, setShowPrototypePassword] = useState(false);
 
   useEffect(() => {
     try {
@@ -81,13 +83,28 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
     }
   };
 
-  const handleStartDemo = async () => {
+  const enterPrototype = async () => {
+    if (!isPrototypeUnlocked()) {
+      setShowPrototypePassword(true);
+      return;
+    }
     // Activate demo mode and seed the full account-snapshot content into
     // localStorage *before* navigating, so DataContext picks it up on its
     // first load and the visitor sees the fully populated prototype.
-    activateDemoMode(school.slug);
+    if (!activateDemoMode(school.slug)) {
+      setShowPrototypePassword(true);
+      return;
+    }
     await seedDemoData();
     window.location.assign('/?demo=1');
+  };
+
+  const handleStartDemo = async () => {
+    if (!isPrototypeUnlocked()) {
+      setShowPrototypePassword(true);
+      return;
+    }
+    await enterPrototype();
   };
 
   return (
@@ -316,6 +333,16 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
         isOpen={showWelcomePrototype}
         onClose={dismissWelcomePrototype}
       />
+
+      {showPrototypePassword && (
+        <PrototypePasswordPrompt
+          onUnlocked={() => {
+            setShowPrototypePassword(false);
+            void enterPrototype();
+          }}
+          onCancel={() => setShowPrototypePassword(false)}
+        />
+      )}
     </div>
   );
 }
