@@ -308,8 +308,8 @@ export function Dashboard() {
                 className={dashTabClass}
               >
                 <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                <span className="hidden sm:inline">Unit Viewer</span>
-                <span className="sm:hidden">Units</span>
+                <span className="hidden sm:inline">Planner Overview</span>
+                <span className="sm:hidden">Planner</span>
               </TabsTrigger>
 
               <TabsTrigger

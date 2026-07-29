@@ -97,7 +97,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
         icon: <Tag className="h-7 w-7 text-pink-500" />,
       },
       {
-        title: 'Unit Viewer',
+        title: 'Planner Overview',
         description:
           'Browse units of work for the selected class. Open a unit to see its lessons, objectives, and how it sits across the school year.',
         target: '[data-tab="unit-viewer"]',

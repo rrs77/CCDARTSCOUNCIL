@@ -94,7 +94,7 @@ const MANUAL_SECTIONS: ManualSection[] = [
     icon: Package,
     steps: [
       'Units group related lessons together (for example, "Voice Drama" or "Movement").',
-      'Open the Unit Viewer to see all lessons under a unit and reorder them.',
+      'Open Planner Overview to see all lessons under a unit and reorder them.',
       'Assign an activity to a unit by setting its "Unit" field in the activity edit view.',
     ],
   },
