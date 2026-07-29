@@ -1,11 +1,16 @@
 import { useState } from 'react';
-import { ChevronDown, ChevronRight, Handshake, Music2, ShoppingBag } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Handshake, Loader2, Music2, PlusCircle, ShoppingBag } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { PARTNER_HUBS, openPartnerHub, type PartnerHubConfig } from '../config/partnerHubs';
 import {
   formatPricePence,
   getPaidProductsForPartner,
   type PaidPartnerSlug,
 } from '../config/paidPartnerProducts';
+import {
+  canSeedPaidProduct,
+  seedPaidPartnerProduct,
+} from '../utils/seedPaidPartnerProduct';
 import { AddToBasketButton } from './partners/AddToBasketButton';
 import { PaidBasketDrawer } from './partners/PaidBasketDrawer';
 
@@ -26,9 +31,48 @@ const PREMIUM_SLUGS = new Set(['weteachdrama', 'icompose', 'dramaresource', 'jaz
 
 /** Demo packs shown when a premium partner row is expanded. */
 function PremiumPartnerResources({ slug }: { slug: string }) {
+  const [addingId, setAddingId] = useState<string | null>(null);
+  const [addedIds, setAddedIds] = useState<Record<string, boolean>>({});
+
   if (!PREMIUM_SLUGS.has(slug)) return null;
   const products = getPaidProductsForPartner(slug as PaidPartnerSlug);
   if (products.length === 0) return null;
+
+  const handleAddToApp = async (productId: string) => {
+    if (!canSeedPaidProduct(productId)) {
+      openPartnerHub(slug);
+      return;
+    }
+    setAddingId(productId);
+    try {
+      const result = await seedPaidPartnerProduct(productId, { force: true });
+      if (!result) {
+        toast.error('No prototype seed for this pack yet — open the hub for details.');
+        return;
+      }
+      if (result.skipped) {
+        toast.success('Already in your local library');
+      } else {
+        toast.success(
+          `Added ${result.lessons ?? 1} lesson · ${result.activities ?? 0} activities to CCDesigner`,
+        );
+      }
+      setAddedIds((prev) => ({ ...prev, [productId]: true }));
+      try {
+        sessionStorage.setItem(
+          'ccd-open-after-partner',
+          JSON.stringify({ sheetId: result.sheetId, tab: 'lesson-library' }),
+        );
+      } catch {
+        /* ignore */
+      }
+    } catch (e) {
+      console.error(e);
+      toast.error('Could not add pack to CCDesigner. Please try again.');
+    } finally {
+      setAddingId(null);
+    }
+  };
 
   return (
     <div className="mt-4">
@@ -51,6 +95,23 @@ function PremiumPartnerResources({ slug }: { slug: string }) {
             </div>
             <div className="flex shrink-0 flex-wrap gap-2">
               <AddToBasketButton productId={product.id} variant="secondary" />
+              {canSeedPaidProduct(product.id) && (
+                <button
+                  type="button"
+                  onClick={() => void handleAddToApp(product.id)}
+                  disabled={addingId !== null}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-[#002D24]/25 bg-white px-3 py-2 text-xs font-semibold text-[#002D24] hover:bg-[#E8F0EA] disabled:opacity-60"
+                >
+                  {addingId === product.id ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                  ) : addedIds[product.id] ? (
+                    <Check className="h-3.5 w-3.5" aria-hidden />
+                  ) : (
+                    <PlusCircle className="h-3.5 w-3.5" aria-hidden />
+                  )}
+                  {addedIds[product.id] ? 'Added' : 'Add to CCDesigner'}
+                </button>
+              )}
               <button
                 type="button"
                 onClick={() => openPartnerHub(slug)}
