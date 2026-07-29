@@ -67,10 +67,7 @@ export const ACTIVITY_LIBRARY_WELCOME_BODY =
 
 export const ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY = 'ccd-activity-library-welcome-seen';
 
-/** Bump when tabs explainer copy changes so returning demo visitors see it again. */
-export const TABS_EXPLAINER_STORAGE_KEY = 'ccd-tabs-explainer-seen-v1';
-
-export const TABS_EXPLAINER_TITLE = 'Your Dashboard tabs';
+export const TABS_EXPLAINER_TITLE = 'About these tabs';
 
 export const TABS_EXPLAINER_INTRO =
   'A quick tour of the seven tabs along the top — tap a name to jump there.';
@@ -93,7 +90,7 @@ export const TABS_EXPLAINER_ITEMS: ReadonlyArray<{
 }> = [
   {
     id: 'unit-viewer',
-    label: 'Planner Overview',
+    label: 'HT Planner',
     description: 'See your term plan and units at a glance.',
   },
   {

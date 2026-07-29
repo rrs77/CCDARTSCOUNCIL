@@ -51,7 +51,6 @@ import { LsoPartnerHub } from './components/partners/LsoPartnerHub';
 import { PrototypeWelcomeModal } from './components/login/PrototypeWelcomeModal';
 import { TabsExplainerModal } from './components/login/TabsExplainerModal';
 import {
-  TABS_EXPLAINER_STORAGE_KEY,
   WELCOME_PROTOTYPE_STORAGE_KEY,
   type TabsExplainerTabId,
 } from './components/login/prototypeCopy';
@@ -81,20 +80,8 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
   >(undefined);
 
-  const tabsExplainerAlreadySeen = () => {
-    try {
-      return sessionStorage.getItem(TABS_EXPLAINER_STORAGE_KEY) === '1';
-    } catch {
-      return false;
-    }
-  };
-
-  const maybeShowTabsExplainer = () => {
-    if (tabsExplainerAlreadySeen()) return;
-    setShowTabsExplainer(true);
-  };
-
-  // Demo / prototype entry only — welcome first, then tabs explainer.
+  // Demo / prototype entry only — welcome modal. Tabs explainer opens on
+  // explicit click near the Dashboard tabs (not chained after welcome).
   // Real teacher logins must not see these popups.
   useEffect(() => {
     if (!user || partnerHub || !isAuthorizedDemoMode()) return;
@@ -106,10 +93,15 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     }
     if (!welcomeSeen) {
       setShowPrototypeWelcome(true);
-      return;
     }
-    maybeShowTabsExplainer();
   }, [user, partnerHub]);
+
+  // Demo-only: Dashboard "About these tabs" button re-opens the explainer anytime.
+  useEffect(() => {
+    const openTabsExplainer = () => setShowTabsExplainer(true);
+    window.addEventListener('ccd:open-tabs-explainer', openTabsExplainer);
+    return () => window.removeEventListener('ccd:open-tabs-explainer', openTabsExplainer);
+  }, []);
 
   const dismissPrototypeWelcome = () => {
     try {
@@ -118,15 +110,9 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       // ignore
     }
     setShowPrototypeWelcome(false);
-    maybeShowTabsExplainer();
   };
 
   const dismissTabsExplainer = () => {
-    try {
-      sessionStorage.setItem(TABS_EXPLAINER_STORAGE_KEY, '1');
-    } catch {
-      // ignore
-    }
     setShowTabsExplainer(false);
   };
 
