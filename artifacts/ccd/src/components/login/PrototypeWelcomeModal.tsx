@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
-import { X } from 'lucide-react';
+import { Handshake, X } from 'lucide-react';
 import {
   WELCOME_PROTOTYPE_BODY,
   WELCOME_PROTOTYPE_CONTACT_EMAIL,
+  WELCOME_PROTOTYPE_CONTINUE_CTA,
+  WELCOME_PROTOTYPE_PARTNER_HUBS_CTA,
   WELCOME_PROTOTYPE_TITLE,
 } from './prototypeCopy';
 import { buildQueryMailto } from '../../utils/mailto';
@@ -10,6 +12,8 @@ import { buildQueryMailto } from '../../utils/mailto';
 interface PrototypeWelcomeModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Optional: open Partner Hubs after dismiss (post-login dashboard). */
+  onOpenPartnerHubs?: () => void;
 }
 
 function renderWelcomeParagraph(paragraph: string) {
@@ -33,7 +37,11 @@ function renderWelcomeParagraph(paragraph: string) {
   );
 }
 
-export function PrototypeWelcomeModal({ isOpen, onClose }: PrototypeWelcomeModalProps) {
+export function PrototypeWelcomeModal({
+  isOpen,
+  onClose,
+  onOpenPartnerHubs,
+}: PrototypeWelcomeModalProps) {
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
@@ -44,6 +52,19 @@ export function PrototypeWelcomeModal({ isOpen, onClose }: PrototypeWelcomeModal
   }, [isOpen, onClose]);
 
   if (!isOpen) return null;
+
+  const openPartnerHubs = () => {
+    onClose();
+    if (onOpenPartnerHubs) {
+      onOpenPartnerHubs();
+      return;
+    }
+    try {
+      window.dispatchEvent(new CustomEvent('ccd:open-our-partners'));
+    } catch {
+      /* ignore */
+    }
+  };
 
   return (
     <div
@@ -80,14 +101,26 @@ export function PrototypeWelcomeModal({ isOpen, onClose }: PrototypeWelcomeModal
           ))}
         </div>
 
-        <button
-          type="button"
-          onClick={onClose}
-          className="mt-8 w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-95"
-          style={{ backgroundColor: '#002D24' }}
-        >
-          I understand — continue
-        </button>
+        <div className="mt-8 space-y-3">
+          {onOpenPartnerHubs ? (
+            <button
+              type="button"
+              onClick={openPartnerHubs}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#B6FF7E] px-4 py-3 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
+            >
+              <Handshake className="h-4 w-4 shrink-0" aria-hidden />
+              {WELCOME_PROTOTYPE_PARTNER_HUBS_CTA}
+            </button>
+          ) : null}
+          <button
+            type="button"
+            onClick={onClose}
+            className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-95"
+            style={{ backgroundColor: '#002D24' }}
+          >
+            {WELCOME_PROTOTYPE_CONTINUE_CTA}
+          </button>
+        </div>
       </div>
     </div>
   );

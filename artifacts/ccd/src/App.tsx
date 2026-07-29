@@ -45,11 +45,14 @@ import { TriBoroughPartnerHub } from './components/partners/TriBoroughPartnerHub
 import { PartnerHubPage } from './components/partners/PartnerHubPage';
 import { PartnerResourcesHub } from './components/partners/PartnerResourcesHub';
 import { LsoPartnerHub } from './components/partners/LsoPartnerHub';
+import { PrototypeWelcomeModal } from './components/login/PrototypeWelcomeModal';
+import { WELCOME_PROTOTYPE_STORAGE_KEY } from './components/login/prototypeCopy';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
   const partnerHub =
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+  const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
   // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
@@ -68,6 +71,26 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   const [helpGuideSection, setHelpGuideSection] = useState<
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
   >(undefined);
+
+  // After login / prototype entry — explain limits and Partner Hubs
+  useEffect(() => {
+    if (!user || partnerHub) return;
+    try {
+      if (sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1') return;
+    } catch {
+      // still show
+    }
+    setShowPrototypeWelcome(true);
+  }, [user, partnerHub]);
+
+  const dismissPrototypeWelcome = () => {
+    try {
+      sessionStorage.setItem(WELCOME_PROTOTYPE_STORAGE_KEY, '1');
+    } catch {
+      // ignore
+    }
+    setShowPrototypeWelcome(false);
+  };
 
   // Defer Supabase keep-alive so it doesn't compete with initial auth/data load
   useEffect(() => {
@@ -246,6 +269,17 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
         isOpen={showHelpGuide}
         onClose={() => setShowHelpGuide(false)}
         initialSection={helpGuideSection}
+      />
+      <PrototypeWelcomeModal
+        isOpen={showPrototypeWelcome}
+        onClose={dismissPrototypeWelcome}
+        onOpenPartnerHubs={() => {
+          try {
+            window.dispatchEvent(new CustomEvent('ccd:open-our-partners'));
+          } catch {
+            /* ignore */
+          }
+        }}
       />
     </div>
   );

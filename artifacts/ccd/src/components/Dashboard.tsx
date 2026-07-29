@@ -88,11 +88,16 @@ export function Dashboard() {
     }
   }, []);
 
-  // Header / footer can request the Contact Us tab
+  // Header / footer / welcome modal can request Contact Us or Partner Hubs
   useEffect(() => {
     const openContact = () => setActiveTab('contact-us');
+    const openPartners = () => setActiveTab('our-partners');
     window.addEventListener('ccd:open-contact-us', openContact);
-    return () => window.removeEventListener('ccd:open-contact-us', openContact);
+    window.addEventListener('ccd:open-our-partners', openPartners);
+    return () => {
+      window.removeEventListener('ccd:open-contact-us', openContact);
+      window.removeEventListener('ccd:open-our-partners', openPartners);
+    };
   }, []);
 
   // After Add to CCDesigner from /roh, /weteachdrama, or other partner hubs

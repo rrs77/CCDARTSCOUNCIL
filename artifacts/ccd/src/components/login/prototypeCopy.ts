@@ -12,14 +12,19 @@ export const ABOUT_PROTOTYPE_TITLE = 'About this prototype';
 export const ABOUT_PROTOTYPE_BODY =
   'CCDesigner is an early interactive prototype for funding discussions and arts-sector feedback.\n\nSome features and content are illustrative. Organisation logos are for demonstration only.';
 
-export const WELCOME_PROTOTYPE_TITLE = 'This is a prototype';
+export const WELCOME_PROTOTYPE_TITLE = 'Welcome to the prototype';
 
 export const WELCOME_PROTOTYPE_BODY =
-  'Early interactive demo for funding and arts-sector consultation.\n\nOrganisation logos are for demonstration only — not an endorsement or partnership.\n\nFor access, contact rob@rhythmstix.co.uk.';
+  'This is a working prototype — some settings are limited.\n\nOpen Partner Hubs to explore partner pages.\n\nMessage rob@rhythmstix.co.uk if you would like a full login of your own. That gives you an editable teacher account so you can make changes.';
 
 export const WELCOME_PROTOTYPE_CONTACT_EMAIL = 'rob@rhythmstix.co.uk';
 
-export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen';
+export const WELCOME_PROTOTYPE_PARTNER_HUBS_CTA = 'Open Partner Hubs';
+
+export const WELCOME_PROTOTYPE_CONTINUE_CTA = 'I understand — continue';
+
+/** Bump when welcome copy changes so returning visitors see the updated notice. */
+export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen-v2';
 
 /** Session-scoped key for the partners/funding start popup.
  * Bump suffix when the first-open flow changes so returning visitors see it again. */
