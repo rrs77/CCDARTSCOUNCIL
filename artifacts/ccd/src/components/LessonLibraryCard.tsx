@@ -187,7 +187,6 @@ export function LessonLibraryCard({
               </div>
               <div className="flex items-center space-x-2 text-xs text-gray-500">
                 <span>{safeLessonData.totalTime} mins</span>
-                <span>•</span>
                 <span>{totalActivities} activities</span>
               </div>
             </div>
