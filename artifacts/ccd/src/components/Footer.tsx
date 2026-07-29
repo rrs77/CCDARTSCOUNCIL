@@ -1,7 +1,6 @@
 import React from 'react';
 import { Youtube, Linkedin, Facebook, Twitter, Instagram, Music, Globe, Mail } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
-import { buildQueryMailto } from '../utils/mailto';
 
 const SOCIAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> = {
   youtube: Youtube,
@@ -17,7 +16,6 @@ export function Footer() {
   const { settings } = useSettings();
   const b = settings.branding || {};
   const footerBg = b.footerBackgroundColor || '#128c7e';
-  const contactEmail = b.footerContactEmail || 'rob@rhythmstix.co.uk';
   const privacyUrl = b.footerPrivacyUrl || 'https://www.rhythmstix.co.uk/policy';
   const copyrightYear = b.footerCopyrightYear || '2026';
   const companyName = b.footerCompanyName || 'Rhythmstix';
@@ -43,7 +41,16 @@ export function Footer() {
               rest of the app. */}
           <div className="flex items-center space-x-4 text-base order-2 md:order-1">
             <a
-              href={buildQueryMailto(contactEmail)}
+              href="#contact-us"
+              onClick={(e) => {
+                e.preventDefault();
+                try {
+                  window.dispatchEvent(new CustomEvent('ccd:open-contact-us'));
+                } catch {
+                  /* ignore */
+                }
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+              }}
               className="inline-flex items-center gap-2 text-white hover:text-blue-200 transition-colors duration-200 font-medium"
             >
               <Mail className="h-5 w-5" aria-hidden="true" />

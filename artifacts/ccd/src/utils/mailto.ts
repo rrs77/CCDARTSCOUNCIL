@@ -21,3 +21,25 @@ export function buildQueryMailto(
       : CCDESIGNER_QUERY_MAIL_SUBJECT;
   return `mailto:${safeTo}?subject=${encodeURIComponent(safeSubject)}`;
 }
+
+/**
+ * Build a mailto with subject + body (OMTutoring-style enquiry emails).
+ */
+export function buildEnquiryMailto(options: {
+  email?: string;
+  subject?: string;
+  body: string;
+}): string {
+  const to =
+    typeof options.email === 'string' && options.email.trim()
+      ? options.email.trim()
+      : CCDESIGNER_CONTACT_EMAIL;
+  const safeTo =
+    to && !to.includes('://') && !/\s/.test(to) ? to : CCDESIGNER_CONTACT_EMAIL;
+  const subject =
+    typeof options.subject === 'string' && options.subject.trim()
+      ? options.subject.trim()
+      : 'CCDesigner enquiry';
+  const body = typeof options.body === 'string' ? options.body : '';
+  return `mailto:${safeTo}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+}

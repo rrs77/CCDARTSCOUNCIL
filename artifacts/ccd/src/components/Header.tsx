@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, User, LogOut, BookOpen, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { Menu, X, User, LogOut, BookOpen, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, Mail } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useData } from '../contexts/DataContext';
@@ -346,6 +346,21 @@ export function Header() {
 
               {/* User Menu */}
               <div className="flex items-center space-x-1 lg:space-x-3 flex-shrink-0 min-w-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    try {
+                      window.dispatchEvent(new CustomEvent('ccd:open-contact-us'));
+                    } catch {
+                      /* ignore */
+                    }
+                  }}
+                  className="hidden sm:inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-semibold text-[#002D24] transition-colors hover:bg-[#E8F0EA] lg:text-sm"
+                  title="Contact Us"
+                >
+                  <Mail className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>Contact Us</span>
+                </button>
                 <div className="flex items-center space-x-1 lg:space-x-2 min-w-0 p-1 lg:p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer">
                   {user?.avatar ? (
                     <img
@@ -449,6 +464,22 @@ export function Header() {
                     </span>
                   </div>
                   <div className="flex space-x-2 flex-shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        try {
+                          window.dispatchEvent(new CustomEvent('ccd:open-contact-us'));
+                        } catch {
+                          /* ignore */
+                        }
+                        setMobileMenuOpen(false);
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-lg border border-[#002D24]/15 px-2.5 py-2 text-sm font-semibold text-[#002D24] hover:bg-[#E8F0EA]"
+                      title="Contact Us"
+                    >
+                      <Mail className="h-4 w-4" aria-hidden />
+                      Contact
+                    </button>
                     {canInstall && !isInstalled && (
                       <button
                         onClick={async () => {

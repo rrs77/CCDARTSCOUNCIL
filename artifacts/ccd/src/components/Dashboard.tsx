@@ -5,8 +5,9 @@ import { LessonPlanBuilder } from "./LessonPlanBuilder";
 import { LessonPlannerCalendar } from "./LessonPlannerCalendar";
 import { ActivityLibrary } from "./ActivityLibrary";
 import { LessonLibrary } from "./LessonLibrary";
-import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake } from 'lucide-react';
+import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake, Mail } from 'lucide-react';
 import { OurPartners } from './OurPartners';
+import { ContactUsPanel } from './ContactUsPanel';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
@@ -76,6 +77,7 @@ export function Dashboard() {
         'activity-library',
         'calendar',
         'our-partners',
+        'contact-us',
       ]);
       if (tab && allowed.has(tab)) {
         setActiveTab(tab);
@@ -84,6 +86,13 @@ export function Dashboard() {
     } catch {
       /* ignore */
     }
+  }, []);
+
+  // Header / footer can request the Contact Us tab
+  useEffect(() => {
+    const openContact = () => setActiveTab('contact-us');
+    window.addEventListener('ccd:open-contact-us', openContact);
+    return () => window.removeEventListener('ccd:open-contact-us', openContact);
   }, []);
 
   // After Add to CCDesigner from /roh, /weteachdrama, or other partner hubs
@@ -291,8 +300,8 @@ export function Dashboard() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
           {/* Main Tabs */}
           <Tabs value={activeTab} onValueChange={handleTabChange} className="mb-6 lg:mb-8">
-            {/* 6 tabs — grid-cols-3 on mobile; sm+ uses 6 so nothing wraps to a clipped row */}
-            <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-6 gap-1 auto-rows-auto">
+            {/* 7 tabs — 3-col wrap on mobile; sm+ uses 7 so Partner Hubs + Contact fit */}
+            <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-7 gap-1 auto-rows-auto">
               <TabsTrigger
                 value="unit-viewer"
                 data-tab="unit-viewer"
@@ -352,6 +361,16 @@ export function Dashboard() {
                 <span className="hidden sm:inline">Partner Hubs</span>
                 <span className="sm:hidden">Hubs</span>
               </TabsTrigger>
+
+              <TabsTrigger
+                value="contact-us"
+                data-tab="contact-us"
+                className={dashTabClass}
+              >
+                <Mail className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="hidden sm:inline">Contact Us</span>
+                <span className="sm:hidden">Contact</span>
+              </TabsTrigger>
             </TabsList>
 
 
@@ -402,6 +421,10 @@ export function Dashboard() {
 
             <TabsContent value="our-partners" className="mt-6 ccd-fade-in-up" key={`op-${activeTab}`}>
               <OurPartners />
+            </TabsContent>
+
+            <TabsContent value="contact-us" className="mt-6 ccd-fade-in-up" key={`cu-${activeTab}`}>
+              <ContactUsPanel />
             </TabsContent>
           </Tabs>
         </div>
