@@ -293,7 +293,7 @@ export function Header() {
                 )}
                 {yearGroupDropdownOpen && !hasSelectorItems && (
                   <div className="absolute top-full left-0 mt-1 w-64 bg-white border border-gray-200 rounded-lg shadow-lg z-50 p-3 text-sm text-gray-500">
-                    No year groups. Drag classes into key stages in Settings → Year Groups.
+                    Your classes will appear here once you add them in Settings → Year Groups.
                   </div>
                 )}
               </div>
@@ -442,7 +442,7 @@ export function Header() {
                       );
                     })}
                     {!hasSelectorItems && (
-                      <p className="px-3 py-2 text-sm text-gray-500">No year groups. Drag classes into key stages in Settings.</p>
+                      <p className="px-3 py-2 text-sm text-gray-500">Your classes will appear here once you add them in Settings → Year Groups.</p>
                     )}
                   </div>
                 </div>
