@@ -6,17 +6,17 @@
   "scope": "/",
   "display": "standalone",
   "display_override": ["standalone", "window-controls-overlay"],
-  "background_color": "#ffffff",
-  "theme_color": "#14B8A6",
+  "background_color": "#002D24",
+  "theme_color": "#002D24",
   "orientation": "any",
   "dir": "ltr",
   "lang": "en",
   "prefer_related_applications": false,
   "icons": [
     {
-      "src": "/ccdesigner-logo.png",
+      "src": "/favicon.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     },
     {
@@ -52,15 +52,14 @@
       "short_name": "Builder",
       "description": "Create a new lesson",
       "url": "/?tab=lesson-builder",
-      "icons": [{ "src": "/ccdesigner-logo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     },
     {
       "name": "Activity Library",
       "short_name": "Activities",
       "description": "Browse activities",
       "url": "/?tab=activity-library",
-      "icons": [{ "src": "/ccdesigner-logo.png", "sizes": "96x96" }]
+      "icons": [{ "src": "/icon-192.png", "sizes": "192x192" }]
     }
   ]
 }
-
