@@ -395,7 +395,6 @@ export function StackedLessonCard({
                   </div>
                   <div className="flex items-center space-x-2 text-xs text-gray-500">
                     <span>{lesson.data.totalTime} mins</span>
-                    <span>•</span>
                     <span>{Object.values(lesson.data.grouped).reduce((sum: number, acts: any) => sum + acts.length, 0)} activities</span>
                   </div>
                 </div>

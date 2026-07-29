@@ -36,7 +36,7 @@ export function ActivityStackModal({
           <div>
             <h3 className="text-white text-lg font-semibold">{stack.name}</h3>
             <p className="text-white/80 text-sm">
-              {stack.activities.length} activities • {totalTime} minutes
+              {stack.activities.length} activities · {totalTime} minutes
             </p>
           </div>
           <div className="flex items-center space-x-2">

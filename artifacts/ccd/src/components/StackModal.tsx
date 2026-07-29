@@ -24,8 +24,8 @@ export function StackModal({ isOpen, onClose, stack, onOpenLesson }: StackModalP
       <div className="relative bg-white w-full max-w-5xl max-h-[85vh] rounded-card shadow-soft overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600">
           <div>
-            <h3 className="text-white text-lg font-semibold">{stack.name} — Lessons</h3>
-            <p className="text-white/80 text-sm">{stack.lessons.length} lessons • {stack.totalTime} minutes</p>
+            <h3 className="text-white text-lg font-semibold">{stack.name} Lessons</h3>
+            <p className="text-white/80 text-sm">{stack.lessons.length} lessons · {stack.totalTime} minutes</p>
           </div>
           <div className="flex items-center space-x-2">
             <button onClick={onClose} className="p-2 text-white/90 hover:text-white hover:bg-white/10 rounded-lg">
