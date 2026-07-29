@@ -37,11 +37,14 @@ export function PartnerKeyDatesModal({
 
   useEffect(() => {
     if (!isOpen || !orgId) return;
-    // Pre-tick KS1 + KS2 examples so the demo path is one confirm away
+    // Pre-tick KS1 + KS2 examples so the demo path is one confirm away.
+    // Primary curriculum dummy: select everything (Music/Drama/Dance/Art spread).
     const pre = new Set(
-      suggestions
-        .filter((s) => s.keyStage === 'KS1' || s.keyStage === 'KS2')
-        .map((s) => s.id),
+      orgId === 'primary-curriculum'
+        ? suggestions.map((s) => s.id)
+        : suggestions
+            .filter((s) => s.keyStage === 'KS1' || s.keyStage === 'KS2')
+            .map((s) => s.id),
     );
     if (pre.size === 0) {
       suggestions.forEach((s) => pre.add(s.id));

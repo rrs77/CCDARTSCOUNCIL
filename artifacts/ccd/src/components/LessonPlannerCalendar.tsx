@@ -78,7 +78,7 @@ import {
 } from './partners/PartnerKeyDatesModal';
 import { ImportantDatesPanel } from './partners/ImportantDatesPanel';
 import {
-  getPartnerHubsForKeyDates,
+  getKeyDatePopulateOptions,
   importantDateToCalendarEvent,
   upsertImportantDatesFromSuggestions,
   readImportantDates,
@@ -2464,10 +2464,11 @@ export function LessonPlannerCalendar({
                 Populate with key dates from
               </label>
               <p className="mt-0.5 text-[11px] text-gray-500">
-                KS1 &amp; KS2 partner examples across the year — tick to attend &amp; remind
+                Start with primary Music · Drama · Dance · Art (dummy), or partner examples —
+                tick to attend &amp; remind
               </p>
             </div>
-            <div className="relative w-full sm:w-64 shrink-0">
+            <div className="relative w-full sm:w-72 shrink-0">
               <select
                 id="ccd-populate-key-dates"
                 ref={keyDatesSelectRef}
@@ -2481,11 +2482,11 @@ export function LessonPlannerCalendar({
                 }}
                 className="w-full min-h-[40px] appearance-none rounded-lg border border-[#002D24]/20 bg-white py-2 pl-3 pr-9 text-sm text-[#002D24] focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20"
               >
-                <option value="">Choose a partner…</option>
-                {getPartnerHubsForKeyDates().map((hub) => (
-                  <option key={hub.slug} value={hub.slug}>
-                    {hub.shortName}
-                    {hub.paid ? ' (paid)' : ''}
+                <option value="">Choose a source…</option>
+                {getKeyDatePopulateOptions().map((opt) => (
+                  <option key={opt.id} value={opt.id}>
+                    {opt.label}
+                    {opt.hint ? ` — ${opt.hint}` : ''}
                   </option>
                 ))}
               </select>

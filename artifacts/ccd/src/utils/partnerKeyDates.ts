@@ -443,10 +443,379 @@ const CATALOGUE: PartnerKeyDateSuggestion[] = [
     kind: 'inset',
     description: 'Hub CPD day. Demo only.',
   },
+
+  // —— Primary curriculum (dummy) — Music, Drama, Dance, Art ——
+  // Academic year spread: Autumn → Summer. Marked as dummy information for demos.
+  {
+    id: 'pri-music-ks1-sep',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · KS1 singing & pulse baseline',
+    date: d(9, 16),
+    keyStage: 'KS1',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Music. Baseline singing / pulse activities for Year 1–2. Not a real booking.',
+    venue: 'School hall',
+  },
+  {
+    id: 'pri-drama-ks1-sep',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · KS1 drama games & freeze-frames',
+    date: d(9, 23),
+    keyStage: 'KS1',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Drama. Ice-breakers, freeze-frames and simple role-play. Not a real booking.',
+  },
+  {
+    id: 'pri-art-ks2-sep',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · KS2 drawing skills launch',
+    date: d(9, 30),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Art. Observational drawing unit start (line, tone, proportion). Not a real booking.',
+  },
+  {
+    id: 'pri-dance-ks1-oct',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Dance · KS1 moving & copying phrases',
+    date: d(10, 7),
+    keyStage: 'KS1',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Dance. Travel, freeze and copy simple movement phrases. Not a real booking.',
+    venue: 'School hall / studio',
+  },
+  {
+    id: 'pri-music-ks2-oct',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · KS2 whole-class instrumental mid-point',
+    date: d(10, 14),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Music. WCIL / class band progress check and informal sharing. Not a real booking.',
+  },
+  {
+    id: 'pri-drama-ks2-oct',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · KS2 storytelling drama unit',
+    date: d(10, 21),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Drama. Story whoosh, hot-seating and group scenes from a class text. Not a real booking.',
+  },
+  {
+    id: 'pri-art-ks1-nov',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · KS1 colour mixing & painting',
+    date: d(11, 4),
+    keyStage: 'KS1',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Art. Primary/secondary colour exploration and brush control. Not a real booking.',
+  },
+  {
+    id: 'pri-dance-ks2-nov',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Dance · KS2 anti-bullying week choreography',
+    date: d(11, 11),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Dance. Short group phrases exploring friendship / respect themes. Not a real booking.',
+  },
+  {
+    id: 'pri-music-inset-nov',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · Primary music subject lead twilight',
+    date: d(11, 18),
+    keyStage: 'All',
+    kind: 'inset',
+    description:
+      'Dummy primary curriculum date — Music CPD twilight for subject leads (planning, assessment, singing). Not a real booking.',
+  },
+  {
+    id: 'pri-drama-ks1-dec',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · KS1 nativity / winter assembly scenes',
+    date: d(12, 2),
+    keyStage: 'KS1',
+    kind: 'performance',
+    description:
+      'Dummy primary curriculum date — Drama. Rehearsal / sharing of short winter assembly scenes. Not a real booking.',
+    venue: 'School hall',
+  },
+  {
+    id: 'pri-music-ks1-dec',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · Primary Christmas singing concert',
+    date: d(12, 9),
+    keyStage: 'KS1',
+    kind: 'performance',
+    description:
+      'Dummy primary curriculum date — Music. Whole-school / KS1 carol concert (demo date only).',
+    venue: 'School hall',
+  },
+  {
+    id: 'pri-art-ks2-dec',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · KS2 festive print & pattern exhibition',
+    date: d(12, 11),
+    keyStage: 'KS2',
+    kind: 'festival',
+    description:
+      'Dummy primary curriculum date — Art. Corridor / hall display of printmaking and pattern work. Not a real booking.',
+  },
+  {
+    id: 'pri-dance-ks1-jan',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Dance · KS1 folk & playground dances',
+    date: d(1, 13, 1),
+    keyStage: 'KS1',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Dance. Partner and circle dances; counting & spatial awareness. Not a real booking.',
+  },
+  {
+    id: 'pri-music-ks2-jan',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · KS2 composition & graphic scores',
+    date: d(1, 20, 1),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Music. Inventing short pieces with graphic notation. Not a real booking.',
+  },
+  {
+    id: 'pri-drama-ks2-jan',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · KS2 improvisation week',
+    date: d(1, 27, 1),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Drama. Status games, “what if?” scenes and teacher-in-role. Not a real booking.',
+  },
+  {
+    id: 'pri-art-ks1-feb',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · KS1 sculpture / 3D junk modelling',
+    date: d(2, 3, 1),
+    keyStage: 'KS1',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Art. Building forms from recycled materials; talk about texture. Not a real booking.',
+  },
+  {
+    id: 'pri-dance-ks2-feb',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Dance · KS2 motif development workshop',
+    date: d(2, 10, 1),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Dance. Develop, refine and perform a short motif phrase. Not a real booking.',
+  },
+  {
+    id: 'pri-music-ks1-feb',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · KS1 classroom percussion carnival',
+    date: d(2, 24, 1),
+    keyStage: 'KS1',
+    kind: 'festival',
+    description:
+      'Dummy primary curriculum date — Music. Class band / percussion sharing for parents (demo). Not a real booking.',
+    venue: 'School hall',
+  },
+  {
+    id: 'pri-drama-ks1-mar',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · World Book Day storytelling (KS1)',
+    date: d(3, 5, 1),
+    keyStage: 'KS1',
+    kind: 'festival',
+    description:
+      'Dummy primary curriculum date — Drama. Bring a favourite story to life with freeze-frames and mime. Not a real booking.',
+  },
+  {
+    id: 'pri-art-ks2-mar',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · KS2 “Take One Picture” style project',
+    date: d(3, 12, 1),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Art. Looking, talking and making from a focus painting. Not a real booking.',
+  },
+  {
+    id: 'pri-music-ks2-mar',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · KS2 spring schools concert',
+    date: d(3, 19, 1),
+    keyStage: 'KS2',
+    kind: 'performance',
+    description:
+      'Dummy primary curriculum date — Music. Class / year-group spring performance (demo date only).',
+    venue: 'School hall / local venue',
+  },
+  {
+    id: 'pri-dance-ks1-mar',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Dance · KS1 spring sharing assembly',
+    date: d(3, 26, 1),
+    keyStage: 'KS1',
+    kind: 'performance',
+    description:
+      'Dummy primary curriculum date — Dance. Short class dances in assembly. Not a real booking.',
+    venue: 'School hall',
+  },
+  {
+    id: 'pri-drama-inset-apr',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · Primary drama & oracy inset',
+    date: d(4, 21, 1),
+    keyStage: 'All',
+    kind: 'inset',
+    description:
+      'Dummy primary curriculum date — Drama CPD for class teachers (strategies across the curriculum). Not a real booking.',
+  },
+  {
+    id: 'pri-art-ks1-apr',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · KS1 outdoor sketching & nature art',
+    date: d(4, 28, 1),
+    keyStage: 'KS1',
+    kind: 'visit',
+    description:
+      'Dummy primary curriculum date — Art. Sketchbooks outdoors / garden trail (weather permitting). Not a real booking.',
+    venue: 'School grounds',
+  },
+  {
+    id: 'pri-music-ks1-may',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · KS1 singing day / choir visit',
+    date: d(5, 6, 1),
+    keyStage: 'KS1',
+    kind: 'festival',
+    description:
+      'Dummy primary curriculum date — Music. Cluster singing day or visiting choir workshop. Not a real booking.',
+  },
+  {
+    id: 'pri-dance-ks2-may',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Dance · KS2 primary dance festival',
+    date: d(5, 13, 1),
+    keyStage: 'KS2',
+    kind: 'festival',
+    description:
+      'Dummy primary curriculum date — Dance. Local / hub dance festival sharing. Not a real booking.',
+    venue: 'Local theatre / sports hall',
+  },
+  {
+    id: 'pri-drama-ks2-may',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · KS2 summer performance rehearsals',
+    date: d(5, 20, 1),
+    keyStage: 'KS2',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Drama. Blocking and ensemble work for end-of-year show. Not a real booking.',
+  },
+  {
+    id: 'pri-art-ks2-may',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · KS2 gallery / museum visit',
+    date: d(5, 27, 1),
+    keyStage: 'KS2',
+    kind: 'visit',
+    description:
+      'Dummy primary curriculum date — Art. Local gallery or museum workshop day. Not a real booking.',
+    venue: 'Local gallery',
+  },
+  {
+    id: 'pri-music-ks2-jun',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Music · End-of-year music showcase (KS2)',
+    date: d(6, 10, 1),
+    keyStage: 'KS2',
+    kind: 'performance',
+    description:
+      'Dummy primary curriculum date — Music. Year-group showcase of songs, WCIL and compositions. Not a real booking.',
+    venue: 'School hall',
+  },
+  {
+    id: 'pri-drama-ks2-jun',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Drama · Summer performance evening (KS2)',
+    date: d(6, 17, 1),
+    keyStage: 'KS2',
+    kind: 'performance',
+    description:
+      'Dummy primary curriculum date — Drama. Public / parent performance evening. Not a real booking.',
+    venue: 'School hall',
+  },
+  {
+    id: 'pri-dance-ks1-jun',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Dance · Transition dance for Year 2 → 3',
+    date: d(6, 22, 1),
+    keyStage: 'KS1',
+    kind: 'workshop',
+    description:
+      'Dummy primary curriculum date — Dance. Collaborative phrase celebrating moving up. Not a real booking.',
+  },
+  {
+    id: 'pri-art-all-jun',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Art · Primary arts exhibition evening',
+    date: d(6, 24, 1),
+    keyStage: 'All',
+    kind: 'open-day',
+    description:
+      'Dummy primary curriculum date — Art. Whole-school arts exhibition for families (demo date only).',
+    venue: 'School hall / classrooms',
+  },
+  {
+    id: 'pri-arts-open-jul',
+    orgId: 'primary-curriculum',
+    title: '[Dummy] Primary arts open morning (Music · Drama · Dance · Art)',
+    date: d(7, 1, 1),
+    keyStage: 'All',
+    kind: 'open-day',
+    description:
+      'Dummy primary curriculum date — combined arts open morning for prospective families. Not a real booking.',
+    venue: 'Whole school',
+  },
 ];
+
+/** Synthetic org for school primary arts calendar demos (not a Partner Hub). */
+export const PRIMARY_CURRICULUM_ORG_ID = 'primary-curriculum';
 
 export function getPartnerHubsForKeyDates(): PartnerHubConfig[] {
   return PARTNER_HUBS;
+}
+
+/** Options for the calendar “Populate with key dates” control (primary first). */
+export function getKeyDatePopulateOptions(): Array<{
+  id: string;
+  label: string;
+  hint?: string;
+}> {
+  return [
+    {
+      id: PRIMARY_CURRICULUM_ORG_ID,
+      label: 'Primary curriculum (dummy)',
+      hint: 'Music · Drama · Dance · Art',
+    },
+    ...PARTNER_HUBS.map((hub) => ({
+      id: hub.slug,
+      label: `${hub.shortName}${hub.paid ? ' (paid)' : ''}`,
+    })),
+  ];
 }
 
 export function getKeyDateSuggestionsForOrg(orgId: string): PartnerKeyDateSuggestion[] {
@@ -455,11 +824,15 @@ export function getKeyDateSuggestionsForOrg(orgId: string): PartnerKeyDateSugges
 }
 
 export function getPartnerShortName(orgId: string): string {
+  if (orgId === PRIMARY_CURRICULUM_ORG_ID) return 'Primary arts';
   const hub = PARTNER_HUBS.find((h) => h.slug === orgId || h.aliases?.includes(orgId));
   return hub?.shortName || orgId;
 }
 
 export function getPartnerDisplayName(orgId: string): string {
+  if (orgId === PRIMARY_CURRICULUM_ORG_ID) {
+    return 'Primary curriculum — Music, Drama, Dance & Art (dummy)';
+  }
   const hub = PARTNER_HUBS.find((h) => h.slug === orgId || h.aliases?.includes(orgId));
   return hub?.displayName || orgId;
 }
