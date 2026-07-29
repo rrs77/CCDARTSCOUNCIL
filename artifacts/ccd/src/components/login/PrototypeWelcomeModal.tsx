@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import { Handshake, Mail, X } from 'lucide-react';
 import {
   WELCOME_PROTOTYPE_BODY,
-  WELCOME_PROTOTYPE_CONTACT_EMAIL,
   WELCOME_PROTOTYPE_CONTACT_US_CTA,
   WELCOME_PROTOTYPE_CONTINUE_CTA,
   WELCOME_PROTOTYPE_PARTNER_HUBS_CTA,
@@ -16,22 +15,6 @@ interface PrototypeWelcomeModalProps {
   onOpenPartnerHubs?: () => void;
   /** Optional: open Contact Us after dismiss (post-login dashboard). */
   onOpenContactUs?: () => void;
-}
-
-function renderWelcomeParagraph(paragraph: string) {
-  const email = WELCOME_PROTOTYPE_CONTACT_EMAIL;
-  if (!paragraph.includes(email)) {
-    return paragraph;
-  }
-
-  const parts = paragraph.split(email);
-  return (
-    <>
-      {parts[0]}
-      <span className="font-semibold text-[#002D24]">{email}</span>
-      {parts[1]}
-    </>
-  );
 }
 
 export function PrototypeWelcomeModal({
@@ -92,7 +75,7 @@ export function PrototypeWelcomeModal({
 
         <div className="space-y-4 text-sm leading-relaxed text-gray-600">
           {WELCOME_PROTOTYPE_BODY.split('\n\n').map((paragraph) => (
-            <p key={paragraph.slice(0, 40)}>{renderWelcomeParagraph(paragraph)}</p>
+            <p key={paragraph.slice(0, 40)}>{paragraph}</p>
           ))}
         </div>
 
