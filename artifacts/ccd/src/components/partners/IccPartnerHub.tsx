@@ -8,6 +8,7 @@ import {
   ICC_TEACHER_RESOURCES,
 } from '../../utils/iccBranding';
 import { setupICCGettingStarted } from '../../utils/setupICCGettingStarted';
+import { ICC_FANFARE_SHOWCASE, setupICCFanfare } from '../../utils/setupICCFanfare';
 import { openActivityResource } from '../../utils/openActivityResource';
 import {
   PartnerHubAddButton,
@@ -27,7 +28,8 @@ const KS3_COURSES = [
   {
     id: 'getting-started',
     title: 'Composition – how to get started!',
-    interactive: true,
+    interactive: true as const,
+    seed: 'getting-started' as const,
     paid: false,
     basketProductId: null as string | null,
     meta: 'FREE · 12 lessons · ~30 min · Beginner · GCSE, KS3, MYP 4/5',
@@ -36,16 +38,18 @@ const KS3_COURSES = [
   {
     id: 'fanfare',
     title: 'How to Compose a Fanfare',
-    interactive: false,
+    interactive: true as const,
+    seed: 'fanfare' as const,
     paid: true,
-    basketProductId: 'icc-fanfare',
+    basketProductId: 'icc-fanfare' as string | null,
     meta: '£15 · 22 lessons · ~2.5 hours · Beginner / Intermediate · GCSE, KS3, MYP 4/5',
     href: 'https://www.icancompose.com/course/how-to-compose-a-fanfare/',
   },
   {
     id: 'video-game',
     title: 'How to Compose Video Game Music Mini Course',
-    interactive: false,
+    interactive: false as const,
+    seed: null,
     paid: false,
     basketProductId: null as string | null,
     meta: 'FREE · 11 lessons · ~45 min · Intermediate · GCSE, KS3, MYP 4/5',
@@ -54,7 +58,8 @@ const KS3_COURSES = [
   {
     id: 'teacher-resources',
     title: 'Teacher resources',
-    interactive: false,
+    interactive: false as const,
+    seed: null,
     paid: false,
     basketProductId: null as string | null,
     meta: 'Posters, listening packs and downloadable student booklets',
@@ -63,7 +68,8 @@ const KS3_COURSES = [
   {
     id: 'catalogue',
     title: 'All courses catalogue',
-    interactive: false,
+    interactive: false as const,
+    seed: null,
     paid: false,
     basketProductId: null as string | null,
     meta: 'Browse the full iCompose course list',
@@ -73,12 +79,14 @@ const KS3_COURSES = [
 
 /** iCompose hub body — same LSO template: featured + resource list. */
 export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
-  const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
+  const [added, setAdded] = useState<Record<string, boolean>>({});
   const fanfare = getPaidProduct('icc-fanfare');
 
-  const handleAdd = async () => {
-    setAdding(true);
+  const markAdded = (id: string) => setAdded((prev) => ({ ...prev, [id]: true }));
+
+  const handleAddGettingStarted = async () => {
+    setAdding('getting-started');
     try {
       const result = await setupICCGettingStarted({
         force: true,
@@ -91,13 +99,37 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
           `Added ${result.lessons} lessons and ${result.activities} activities (local prototype only)`,
         );
       }
-      setAdded(true);
+      markAdded('getting-started');
       onAddedToApp?.({ sheetId: result.sheetId });
     } catch (e) {
       console.error(e);
       toast.error('Could not add iCompose prototype. Please try again.');
     } finally {
-      setAdding(false);
+      setAdding(null);
+    }
+  };
+
+  const handleAddFanfare = async () => {
+    setAdding('fanfare');
+    try {
+      const result = await setupICCFanfare({
+        force: true,
+        registerPartnerPlanning: true,
+      });
+      if (result.skipped) {
+        toast.success('Fanfare showcase lesson is already in your library');
+      } else {
+        toast.success(
+          `Added ${result.lessons} lesson · ${result.activities} activities — open Year 9 Music → Lesson Library`,
+        );
+      }
+      markAdded('fanfare');
+      onAddedToApp?.({ sheetId: result.sheetId });
+    } catch (e) {
+      console.error(e);
+      toast.error('Could not add Fanfare prototype. Please try again.');
+    } finally {
+      setAdding(null);
     }
   };
 
@@ -106,7 +138,7 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
       <PartnerHubFeaturedSection
         eyebrow="Featured · Free KS3 course track"
         title="Composition – how to get started!"
-        description="Free beginner course from the KS3 track. Prototype Add seeds local planning stubs that link out to the official course page. Paid courses below include Add to basket (demo)."
+        description="Free beginner course from the KS3 track. Prototype Add seeds local planning stubs that link out to the official course page. Paid courses below include Add to basket (demo) and Add to CCDesigner."
         accentClassName="border-sky-200 bg-sky-50/70"
         eyebrowClassName="text-sky-800"
         links={[
@@ -124,9 +156,9 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
         ]}
         action={
           <PartnerHubAddButton
-            busy={adding}
-            done={added}
-            onClick={() => void handleAdd()}
+            busy={adding === 'getting-started'}
+            done={!!added['getting-started']}
+            onClick={() => void handleAddGettingStarted()}
             className="bg-[#0a1628] text-white hover:opacity-95"
             label="Add unit to CCDesigner"
           />
@@ -144,7 +176,7 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
           How to Compose a Fanfare
         </h3>
         <p className="mt-1.5 max-w-2xl text-sm text-gray-600">
-          Official paid course on icancompose.com.
+          {ICC_FANFARE_SHOWCASE.summary}
           {fanfare && (
             <>
               {' '}
@@ -155,6 +187,13 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
         </p>
         <div className="mt-4 flex flex-wrap gap-2">
           <AddToBasketButton productId="icc-fanfare" />
+          <PartnerHubAddButton
+            busy={adding === 'fanfare'}
+            done={!!added.fanfare}
+            onClick={() => void handleAddFanfare()}
+            className="bg-[#0a1628] text-white hover:opacity-95"
+            label="Add showcase lesson to CCDesigner"
+          />
           <a
             href="https://www.icancompose.com/course/how-to-compose-a-fanfare/"
             target="_blank"
@@ -176,7 +215,7 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
 
       <PartnerHubResourceList
         title="iCompose courses & resources"
-        subtitle="Official course and teacher links. Only Getting Started is seeded in CCDesigner for now. Paid rows include Add to basket (demo)."
+        subtitle="Official course and teacher links. Getting Started and Fanfare seed lessons into CCDesigner. Paid rows include Add to basket (demo)."
       >
         {KS3_COURSES.map((c) => (
           <PartnerHubResourceRow
@@ -192,14 +231,27 @@ export function IccPartnerHub({ onAddedToApp }: IccPartnerHubProps) {
             description={c.meta}
             links={[{ href: c.href, label: 'Open resource', icon: 'external' }]}
             action={
-              c.interactive ? (
+              c.seed === 'getting-started' ? (
                 <PartnerHubAddButton
-                  busy={adding}
-                  done={added}
-                  onClick={() => void handleAdd()}
+                  busy={adding === 'getting-started'}
+                  done={!!added['getting-started']}
+                  onClick={() => void handleAddGettingStarted()}
                   variant="secondary"
                   label="Add to CCDesigner"
                 />
+              ) : c.seed === 'fanfare' ? (
+                <div className="flex flex-col gap-2">
+                  {c.basketProductId && (
+                    <AddToBasketButton productId={c.basketProductId} variant="secondary" />
+                  )}
+                  <PartnerHubAddButton
+                    busy={adding === 'fanfare'}
+                    done={!!added.fanfare}
+                    onClick={() => void handleAddFanfare()}
+                    variant="secondary"
+                    label="Add to CCDesigner"
+                  />
+                </div>
               ) : c.basketProductId ? (
                 <div className="flex flex-col gap-2">
                   <AddToBasketButton productId={c.basketProductId} variant="secondary" />
