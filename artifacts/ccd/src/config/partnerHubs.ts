@@ -115,7 +115,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     tagline: 'Greater Essex Music Hub — curriculum, CPD & workshops',
     description: [
       'Essex Music Service (Greater Essex Music Hub) supports schools with curriculum platforms, instrumental learning, singing programmes, workshops and CPD across the county.',
-      'This hub links the public schools brochure and curriculum pages so teachers can preview EMS provision planning in CCDesigner. Demo only — book and price via official EMS channels.',
+      'This hub includes Drama Resource–style mock product pages for DJ Workshop and Rap-It! (example course notes + Add showcase lesson for PDF export), plus the schools brochure. Demo only — book via official EMS channels.',
     ],
     primaryColor: '#330968',
     accentColor: '#7a00df',
@@ -131,11 +131,11 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     siteUrl: 'https://www.triboroughmusichub.org/',
     /** Dark wordmark + colour mark — readable on the white plate */
     logoSrc: '/partners/tri-borough-music-hub.png',
-    interactive: false,
+    interactive: true,
     tagline: 'Music education across three London boroughs',
     description: [
       'Tri-Borough Music Hub (TBMH) supports music education for children and young people across Kensington & Chelsea, Hammersmith & Fulham and Westminster — including school services, tuition, singing resources and inclusive music programmes.',
-      'This hub links official TBMH school and about pages for planning. Demo only — logos and links do not imply endorsement; book and access provision via the official Tri-Borough Music Hub site.',
+      "This hub includes EMS-style mock product pages for Groove'n'Play and Music Makes Me (example course notes + Add showcase lesson for PDF export). Demo only — access resources via the official Tri-Borough Music Hub site.",
     ],
     primaryColor: '#1a1a1a',
     accentColor: '#F5E827',

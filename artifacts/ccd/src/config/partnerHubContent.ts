@@ -208,17 +208,23 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
     siteLabel: 'triboroughmusichub.org',
     about: [
       'Tri-Borough Music Hub (TBMH) supports music education for children and young people across Kensington & Chelsea, Hammersmith & Fulham and Westminster — including school services, tuition, singing resources and inclusive music programmes.',
-      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open official TBMH pages for the latest school services, tuition and events.',
+      "This hub includes mock product pages for Groove'n'Play and Music Makes Me (example course notes + Add showcase lesson for PDF export). Demo only — access resources via the official Tri-Borough Music Hub site.",
     ],
     resourcesHeading: 'School & hub resources',
     resourcesIntro:
-      'Official Tri-Borough Music Hub links for schools, about the hub and virtual music school. Use these in planning; classroom seeding in CCDesigner can be added later.',
+      "Mock programme pages (Groove'n'Play, Music Makes Me) seed detailed showcase lessons for PDF export. Official links below for Virtual Music School, curriculum guidance and school services.",
     resources: [
       {
         title: 'Music Hub services for schools',
         href: 'https://www.triboroughmusichub.org/schools',
         description: 'School services overview and hub offer for schools.',
         kind: 'Schools',
+      },
+      {
+        title: 'Curriculum guidance for schools',
+        href: 'https://www.triboroughmusichub.org/school-services/curriculum-guidance-for-schools/',
+        description: 'Free support documents and teaching materials (birth–25).',
+        kind: 'Guidance',
       },
       {
         title: 'About Tri-Borough Music Hub',
@@ -229,7 +235,7 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
       {
         title: 'TBMH Virtual Music School',
         href: 'https://www.triboroughmusichub.org/tbmh-virtual-music-school',
-        description: 'Virtual music school pathway and related resources.',
+        description: '1,500+ online resources for schools.',
         kind: 'Hub',
       },
     ],

@@ -48,7 +48,7 @@ interface PartnerPlanningPanelProps {
   currentSheetId?: string;
 }
 
-const PAID_ORG_IDS = new Set(['weteachdrama', 'icompose', 'dramaresource']);
+const PAID_ORG_IDS = new Set(['weteachdrama', 'icompose', 'dramaresource', 'ems', 'triborough']);
 
 function formatSheetLabel(sheetId: string): string {
   const s = String(sheetId || '').trim();

@@ -7,11 +7,22 @@ import {
   EMS_SCHOOLS_BROCHURE_PDF,
   EMS_SCHOOLS_BROCHURE_TITLE,
   EMS_SITE,
+  EMS_WORKSHOPS_PAGE,
   EMS_YOUTUBE,
 } from '../../utils/emsBranding';
 import { setupEMSSchoolsExample } from '../../utils/setupEMSSchoolsExample';
+import {
+  EMS_WORKSHOP_SHOWCASES,
+  setupEMSWorkshop,
+  type EmsWorkshopId,
+} from '../../utils/setupEMSWorkshops';
 import { openActivityResource } from '../../utils/openActivityResource';
-import { PartnerHubAddButton, PartnerHubFeaturedSection } from './PartnerHubLayout';
+import {
+  PartnerHubAddButton,
+  PartnerHubFeaturedSection,
+} from './PartnerHubLayout';
+import { AddToBasketButton } from './AddToBasketButton';
+import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
 
 interface EmsPartnerHubProps {
   onAddedToApp?: (info: { sheetId: string }) => void;
@@ -36,70 +47,192 @@ const CURRICULUM_PLATFORM = [
   },
 ] as const;
 
-const BROCHURE_SECTIONS = [
-  'Serving our schools',
-  'Play-It!',
-  'Learn-It! Together',
-  'Band-It!',
-  'Musical nurture groups',
-  'Be a singing school!',
-  'Curriculum resources',
-  'Workshops',
-  'School Music CPD',
-  'Beyond the School Day',
-  'Further information',
-] as const;
-
-const WORKSHOPS = [
+const OTHER_WORKSHOPS = [
   'Drumming Workshop (West African Djembe, Indian Dhol/Dholak, Samba or Didgeridoo)',
-  'Singing Workshop',
-  'Create a Song',
-  'Rap-It! Workshop',
+  'Singing Workshop / Sing-It!',
+  'Create a Song / Create-It!',
   'Conductive Music (2-day STEAM project)',
-  'DJ Workshop',
   'Music Technology',
   'Ableton Move',
   'Bespoke Workshops',
 ] as const;
 
-const NETWORKS = [
-  'EYFS Network',
-  'Primary Music Coordinators',
-  'Secondary Music Teachers',
-  'A Level Music Teachers',
-  'SEND Music Network',
-] as const;
-
+/**
+ * Essex Music Service hub — brochure plus Drama Resource–style mock product pages
+ * for DJ Workshop and Rap-It! (course notes PDF + Add showcase lesson).
+ */
 export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
-  const [adding, setAdding] = useState(false);
-  const [added, setAdded] = useState(false);
+  const [adding, setAdding] = useState<string | null>(null);
+  const [added, setAdded] = useState<Record<string, boolean>>({});
+  const djProduct = getPaidProduct('ems-dj-workshop');
+  const rapProduct = getPaidProduct('ems-rap-it-workshop');
+  const dj = EMS_WORKSHOP_SHOWCASES.dj;
+  const rap = EMS_WORKSHOP_SHOWCASES['rap-it'];
 
-  const handleAdd = async () => {
-    setAdding(true);
+  const markAdded = (id: string) => setAdded((prev) => ({ ...prev, [id]: true }));
+
+  const handleAddBrochure = async () => {
+    setAdding('brochure');
     try {
       const result = await setupEMSSchoolsExample({
         force: true,
         registerPartnerPlanning: true,
       });
       if (result.skipped) {
-        toast.success('Essex Music Service example is already in your local library');
+        toast.success('Essex Music Service brochure example is already in your library');
       } else {
         toast.success(
           `Added ${result.lessons} lessons and ${result.activities} activities (local prototype only)`,
         );
       }
-      setAdded(true);
+      markAdded('brochure');
       onAddedToApp?.({ sheetId: result.sheetId });
     } catch (e) {
       console.error(e);
       toast.error('Could not add EMS prototype. Please try again.');
     } finally {
-      setAdding(false);
+      setAdding(null);
+    }
+  };
+
+  const handleAddWorkshop = async (id: EmsWorkshopId) => {
+    setAdding(id);
+    try {
+      const result = await setupEMSWorkshop(id, {
+        force: true,
+        registerPartnerPlanning: true,
+      });
+      if (result.skipped) {
+        toast.success(`${id === 'dj' ? 'DJ' : 'Rap-It!'} workshop is already in your library`);
+      } else {
+        toast.success(
+          `Added ${result.lessons} detailed lesson · ${result.activities} activities — export PDF from Lesson Library (Year 6 Music)`,
+        );
+      }
+      markAdded(id);
+      onAddedToApp?.({ sheetId: result.sheetId });
+    } catch (e) {
+      console.error(e);
+      toast.error('Could not add EMS workshop prototype. Please try again.');
+    } finally {
+      setAdding(null);
     }
   };
 
   return (
     <div className="space-y-6">
+      <PartnerHubFeaturedSection
+        eyebrow="Featured workshop · mock product"
+        title={dj.title}
+        description={
+          <>
+            {dj.summary}
+            {djProduct && (
+              <span className="mt-1 block font-medium text-[#3F6212]">
+                Demo booking price {formatPricePence(djProduct.pricePence)} — matches EMS public
+                £250/day listing. No payment is taken in this prototype.
+              </span>
+            )}
+          </>
+        }
+        accentClassName="border-[#A3E635]/70 bg-[#F7FEE7]/80"
+        eyebrowClassName="text-[#3F6212]"
+        links={[
+          { href: EMS_WORKSHOPS_PAGE, label: 'Official workshops page', icon: 'external' },
+          { href: dj.pdfUrl, label: 'Example course notes PDF', icon: 'file' },
+        ]}
+        action={
+          <div className="flex flex-col gap-2">
+            <AddToBasketButton productId="ems-dj-workshop" />
+            <PartnerHubAddButton
+              busy={adding === 'dj'}
+              done={!!added.dj}
+              onClick={() => void handleAddWorkshop('dj')}
+              className="bg-[#330968] text-white hover:opacity-95"
+              label="Add DJ showcase lesson"
+            />
+          </div>
+        }
+      >
+        <ul className="mt-3 grid gap-1 text-sm text-gray-700 sm:grid-cols-2">
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#7a00df]" aria-hidden />
+            {dj.agesLabel}
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#7a00df]" aria-hidden />
+            {dj.durationLabel}
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#7a00df]" aria-hidden />
+            Hands-on decks · beat matching · mini mix
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#7a00df]" aria-hidden />
+            Full plan fields for PDF export
+          </li>
+        </ul>
+        <p className="mt-3 text-xs text-gray-500">
+          After Add: Year 6 Music → Lesson Library → export the DJ Workshop lesson to PDF.
+        </p>
+      </PartnerHubFeaturedSection>
+
+      <PartnerHubFeaturedSection
+        eyebrow="Featured workshop · mock product"
+        title={rap.title}
+        description={
+          <>
+            {rap.summary}
+            {rapProduct && (
+              <span className="mt-1 block font-medium text-[#3F6212]">
+                Demo booking price {formatPricePence(rapProduct.pricePence)} — matches EMS public
+                £250/day listing. No payment is taken in this prototype.
+              </span>
+            )}
+          </>
+        }
+        accentClassName="border-[#7a00df]/35 bg-[#7a00df]/5"
+        eyebrowClassName="text-[#7a00df]"
+        links={[
+          { href: EMS_WORKSHOPS_PAGE, label: 'Official workshops page', icon: 'external' },
+          { href: rap.pdfUrl, label: 'Example course notes PDF', icon: 'file' },
+        ]}
+        action={
+          <div className="flex flex-col gap-2">
+            <AddToBasketButton productId="ems-rap-it-workshop" />
+            <PartnerHubAddButton
+              busy={adding === 'rap-it'}
+              done={!!added['rap-it']}
+              onClick={() => void handleAddWorkshop('rap-it')}
+              className="bg-[#7a00df] text-white hover:opacity-95"
+              label="Add Rap-It! showcase lesson"
+            />
+          </div>
+        }
+      >
+        <ul className="mt-3 grid gap-1 text-sm text-gray-700 sm:grid-cols-2">
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#330968]" aria-hidden />
+            {rap.agesLabel}
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#330968]" aria-hidden />
+            {rap.durationLabel}
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#330968]" aria-hidden />
+            Rap · hip-hop · grime · spoken word
+          </li>
+          <li className="flex gap-2">
+            <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-[#330968]" aria-hidden />
+            Confidence + literacy links (English)
+          </li>
+        </ul>
+        <p className="mt-3 text-xs text-gray-500">
+          After Add: Year 6 Music → Lesson Library → export the Rap-It! lesson to PDF.
+        </p>
+      </PartnerHubFeaturedSection>
+
       <PartnerHubFeaturedSection
         eyebrow="Featured brochure · PDF"
         title={EMS_SCHOOLS_BROCHURE_TITLE}
@@ -112,10 +245,11 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
         ]}
         action={
           <PartnerHubAddButton
-            busy={adding}
-            done={added}
-            onClick={() => void handleAdd()}
+            busy={adding === 'brochure'}
+            done={!!added.brochure}
+            onClick={() => void handleAddBrochure()}
             className="bg-[#330968] text-white hover:opacity-95"
+            label="Add brochure planner"
           />
         }
       >
@@ -138,30 +272,38 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
             Download brochure
           </a>
         </div>
-        <ul className="mt-3 flex flex-wrap gap-1.5">
-          {BROCHURE_SECTIONS.map((s) => (
-            <li
-              key={s}
-              className="rounded-full bg-[#330968]/8 px-2.5 py-1 text-xs font-medium text-[#330968]"
-            >
-              {s}
-            </li>
+      </PartnerHubFeaturedSection>
+
+      <section>
+        <h3 className="text-lg font-semibold text-gray-900">Other workshops</h3>
+        <p className="mt-1 text-sm text-gray-600">
+          Also listed on the EMS curriculum enhancement page (£250/day). DJ and Rap-It! have full
+          mock product pages above.
+        </p>
+        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-gray-700">
+          {OTHER_WORKSHOPS.map((w) => (
+            <li key={w}>{w}</li>
           ))}
         </ul>
-      </PartnerHubFeaturedSection>
+        <a
+          href={EMS_WORKSHOPS_PAGE}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:underline"
+        >
+          All workshops on EMS site
+          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+        </a>
+      </section>
 
       <section>
         <h3 className="text-lg font-semibold text-gray-900">Curriculum resources</h3>
         <p className="mt-1 text-sm text-gray-600">
-          From the EMS Music curriculum and CPD resources page — annual subscription platforms
-          (training &amp; CPD included).
+          Annual subscription platforms (training &amp; CPD included on the public EMS page).
         </p>
         <ul className="mt-3 space-y-2">
           {CURRICULUM_PLATFORM.map((p) => (
-            <li
-              key={p.name}
-              className="rounded-xl border border-gray-200 bg-white px-4 py-3"
-            >
+            <li key={p.name} className="rounded-xl border border-gray-200 bg-white px-4 py-3">
               <a
                 href={p.href}
                 target="_blank"
@@ -175,52 +317,10 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
             </li>
           ))}
         </ul>
-        <a
-          href={EMS_CURRICULUM_PAGE}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-teal-700 hover:underline"
-        >
-          Full curriculum &amp; CPD page
-          <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-        </a>
-      </section>
-
-      <section>
-        <h3 className="text-lg font-semibold text-gray-900">Workshops</h3>
-        <p className="mt-1 text-sm text-gray-600">
-          Practical workshops that enhance the music curriculum (£275 per day on the public page).
-        </p>
-        <ul className="mt-3 list-disc space-y-1 pl-5 text-sm text-gray-700">
-          {WORKSHOPS.map((w) => (
-            <li key={w}>{w}</li>
-          ))}
-        </ul>
-      </section>
-
-      <section>
-        <h3 className="text-lg font-semibold text-gray-900">CPD, networks &amp; support</h3>
-        <ul className="mt-2 list-disc space-y-1 pl-5 text-sm text-gray-700">
-          <li>Music Improvement, Development and Support (MIDAS)</li>
-          <li>Trust-wide and strategic support</li>
-          <li>EYFS Music Training</li>
-          <li>Arts Award &amp; Artsmark support</li>
-        </ul>
-        <p className="mt-3 text-sm font-medium text-gray-800">Networks</p>
-        <ul className="mt-1 flex flex-wrap gap-1.5">
-          {NETWORKS.map((n) => (
-            <li
-              key={n}
-              className="rounded-md bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-700"
-            >
-              {n}
-            </li>
-          ))}
-        </ul>
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-white px-5 py-4">
-        <h3 className="text-base font-semibold text-gray-900">Video &amp; social</h3>
+        <h3 className="text-base font-semibold text-gray-900">Video &amp; contact</h3>
         <div className="mt-3 flex flex-wrap gap-3">
           <a
             href={EMS_YOUTUBE}
@@ -230,15 +330,6 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
           >
             <Youtube className="h-4 w-4" aria-hidden />
             Essex Music Service on YouTube
-          </a>
-          <a
-            href="https://youtu.be/vu2oe0_OBT0"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 text-sm font-medium text-teal-700 hover:underline"
-          >
-            Embedded video on curriculum page
-            <ExternalLink className="h-3.5 w-3.5" aria-hidden />
           </a>
           <a
             href={EMS_SITE}
@@ -260,7 +351,6 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
           </a>
         </div>
       </section>
-
     </div>
   );
 }

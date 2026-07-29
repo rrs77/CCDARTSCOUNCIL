@@ -32,6 +32,8 @@ import './utils/setupWeTeachDramaPacks'; // We Teach Drama hub packs (cover, des
 import './utils/setupKS3FourChords'; // KS3 4 Chords prototype seed
 import './utils/setupOCRFilmComputerMusic'; // OCR Film & Computer Music prototype seed
 import './utils/setupEMSSchoolsExample'; // Essex Music Service schools brochure seed
+import './utils/setupEMSWorkshops'; // EMS DJ + Rap-It! workshop showcase seeds
+import './utils/setupTBMHProgrammes'; // Tri-Borough Groove n Play + Music Makes Me seeds
 import './utils/setupICCGettingStarted'; // iCompose Getting Started seed
 import './utils/setupDramaResourceExample'; // Drama Resource Ten Second Objects seed
 import { RohPartnerHub } from './components/partners/RohPartnerHub';
@@ -39,6 +41,7 @@ import { WtdPartnerHub } from './components/partners/WtdPartnerHub';
 import { EmsPartnerHub } from './components/partners/EmsPartnerHub';
 import { IccPartnerHub } from './components/partners/IccPartnerHub';
 import { DramaResourcePartnerHub } from './components/partners/DramaResourcePartnerHub';
+import { TriBoroughPartnerHub } from './components/partners/TriBoroughPartnerHub';
 import { PartnerHubPage } from './components/partners/PartnerHubPage';
 import { PartnerResourcesHub } from './components/partners/PartnerResourcesHub';
 import { LsoPartnerHub } from './components/partners/LsoPartnerHub';
@@ -184,9 +187,16 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       case 'nationaltheatre':
       case 'bbctenpieces':
       case 'nationalgallery':
+        body = <PartnerResourcesHub hub={partnerHub} />;
+        break;
       case 'triborough':
       case 'tbmh':
-        body = <PartnerResourcesHub hub={partnerHub} />;
+        body = (
+          <TriBoroughPartnerHub
+            standalone
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
+          />
+        );
         break;
       default:
         body = <PartnerResourcesHub hub={partnerHub} />;

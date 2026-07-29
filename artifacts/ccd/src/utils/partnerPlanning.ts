@@ -284,6 +284,13 @@ export const PARTNER_PLANNING_ORGS = {
     logoBg: '#330968',
     logoInvert: false,
   },
+  triborough: {
+    orgId: 'triborough',
+    orgLabel: 'Tri-Borough Music Hub',
+    logoSrc: '/partners/tri-borough-music-hub.png',
+    logoBg: '#FFFFFF',
+    logoInvert: false,
+  },
   icompose: {
     orgId: 'icompose',
     orgLabel: 'iCompose',

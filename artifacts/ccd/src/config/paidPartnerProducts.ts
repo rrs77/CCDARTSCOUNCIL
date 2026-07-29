@@ -3,7 +3,12 @@
  * Prices are placeholders — no real payment is processed.
  */
 
-export type PaidPartnerSlug = 'weteachdrama' | 'icompose' | 'dramaresource';
+export type PaidPartnerSlug =
+  | 'weteachdrama'
+  | 'icompose'
+  | 'dramaresource'
+  | 'ems'
+  | 'triborough';
 
 export interface PaidPartnerProduct {
   id: string;
@@ -71,6 +76,38 @@ export const PAID_PARTNER_PRODUCTS: PaidPartnerProduct[] = [
     title: 'Downloadable drama lesson units (bundle demo)',
     pricePence: 2500,
     meta: 'Story / curriculum units · demo price',
+  },
+  {
+    id: 'ems-dj-workshop',
+    partnerSlug: 'ems',
+    partnerName: 'Essex Music Service',
+    title: 'DJ Workshop (curriculum enhancement day)',
+    pricePence: 25000,
+    meta: 'Full day · EYFS–KS3 & SEND · public £250/day',
+  },
+  {
+    id: 'ems-rap-it-workshop',
+    partnerSlug: 'ems',
+    partnerName: 'Essex Music Service',
+    title: 'Rap-It! Workshop (curriculum enhancement day)',
+    pricePence: 25000,
+    meta: 'Full day · KS2–KS4 · literacy-linked · public £250/day',
+  },
+  {
+    id: 'tbmh-groove-n-play',
+    partnerSlug: 'triborough',
+    partnerName: 'Tri-Borough Music Hub',
+    title: "Groove'n'Play WCIL licence + teacher CPD",
+    pricePence: 8500,
+    meta: 'FREE school licence · CPD value £85 (public listing)',
+  },
+  {
+    id: 'tbmh-music-makes-me',
+    partnerSlug: 'triborough',
+    partnerName: 'Tri-Borough Music Hub',
+    title: 'Music Makes Me — Song-writing Resource',
+    pricePence: 0,
+    meta: 'FREE Teaching & Learning resource · 5 song strands',
   },
 ];
 

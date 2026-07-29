@@ -49,8 +49,8 @@ export function PaidBasketDrawer() {
 
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
           <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
-            Prototype only — no payment is taken. Items are placeholders for We Teach Drama,
-            iCompose and Drama Resource paid packs.
+            Prototype only — no payment is taken. Items are placeholders for partner and music-hub
+            demo products (We Teach Drama, iCompose, Drama Resource, EMS, Tri-Borough).
           </p>
 
           {lines.length === 0 ? (
@@ -58,8 +58,7 @@ export function PaidBasketDrawer() {
               <ShoppingBag className="h-10 w-10 text-gray-300" aria-hidden />
               <p className="text-sm">Your basket is empty.</p>
               <p className="max-w-xs text-xs">
-                Open We Teach Drama, iCompose or Drama Resource and use Add to basket on a paid
-                resource.
+                Open a partner or music-hub mock product and use Add to basket.
               </p>
             </div>
           ) : (
