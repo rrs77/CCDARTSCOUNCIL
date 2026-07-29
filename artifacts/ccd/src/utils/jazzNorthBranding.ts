@@ -9,8 +9,7 @@ export const JN_JAZZ_CAMP = 'https://www.jazznorth.org/jazz-camp-for-girls';
 export const JN_EDUCATORS_FORUM =
   'https://www.jazznorth.org/news/educators-forum-june-2026';
 export const JN_NORTHERN_LINE = 'https://www.jazznorth.org/northern-line';
-export const JN_NEW_NORTHERN =
-  'https://www.jazznorth.org/news/jazz-north-announces-the-latest-round-of-new-northern-for-2026-27';
+export const JN_NEW_NORTHERN = 'https://www.jazznorth.org/new-northern';
 export const JN_WHAT_WE_DO = 'https://www.jazznorth.org/what-we-do';
 export const JN_CONTACT = 'https://www.jazznorth.org/contact';
 export const JN_TEAM = 'https://www.jazznorth.org/meet-the-team';
