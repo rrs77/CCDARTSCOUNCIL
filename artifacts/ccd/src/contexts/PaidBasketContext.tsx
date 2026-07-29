@@ -17,6 +17,10 @@ import {
   getPaidProduct,
   type PaidPartnerProduct,
 } from '../config/paidPartnerProducts';
+import {
+  canSeedPaidProduct,
+  seedPaidPartnerProduct,
+} from '../utils/seedPaidPartnerProduct';
 
 const STORAGE_KEY = 'ccd-paid-partner-basket-v1';
 
@@ -106,6 +110,20 @@ export function PaidBasketProvider({ children }: { children: React.ReactNode }) 
       return [...prev, { productId, quantity: 1 }];
     });
     setDrawerOpen(true);
+    // Also seed lesson + activities so basket Add matches hub Add behaviour.
+    if (canSeedPaidProduct(productId)) {
+      void seedPaidPartnerProduct(productId, { force: true })
+        .then((result) => {
+          if (!result || result.skipped) return;
+          toast.success(
+            `Also added ${result.lessons ?? 1} lesson · ${result.activities ?? 0} activities to your library`,
+            { duration: 4000 },
+          );
+        })
+        .catch((e) => {
+          console.error(e);
+        });
+    }
   }, []);
 
   const removeItem = useCallback((productId: string) => {
@@ -124,28 +142,44 @@ export function PaidBasketProvider({ children }: { children: React.ReactNode }) 
       toast.error('Your basket is empty');
       return;
     }
-    toast(
-      (t) => (
-        <div className="space-y-1 text-sm">
-          <p className="font-semibold text-[#002D24]">Demo checkout only</p>
-          <p className="text-gray-600">
-            No payment is taken. This basket ({formatPricePence(totalPence)}) is a prototype
-            for We Teach Drama, iCompose and Drama Resource paid resources.
-          </p>
-          <button
-            type="button"
-            className="mt-1 text-xs font-medium text-teal-700 underline"
-            onClick={() => toast.dismiss(t.id)}
-          >
-            Dismiss
-          </button>
-        </div>
-      ),
-      { duration: 8000 },
-    );
-    clearBasket();
-    setDrawerOpen(false);
-  }, [lines.length, totalPence, clearBasket]);
+    const productIds = lines.map((l) => l.productId);
+    void (async () => {
+      let seeded = 0;
+      for (const id of productIds) {
+        if (!canSeedPaidProduct(id)) continue;
+        try {
+          const result = await seedPaidPartnerProduct(id, { force: true });
+          if (result && !result.skipped) seeded += 1;
+        } catch (e) {
+          console.error(e);
+        }
+      }
+      toast(
+        (t) => (
+          <div className="space-y-1 text-sm">
+            <p className="font-semibold text-[#002D24]">Demo checkout only</p>
+            <p className="text-gray-600">
+              No payment is taken. This basket ({formatPricePence(totalPence)}) is a prototype
+              for premium partner resources.
+              {seeded > 0
+                ? ` Seeded ${seeded} pack${seeded === 1 ? '' : 's'} into Activity Library and Lesson Library.`
+                : ''}
+            </p>
+            <button
+              type="button"
+              className="mt-1 text-xs font-medium text-teal-700 underline"
+              onClick={() => toast.dismiss(t.id)}
+            >
+              Dismiss
+            </button>
+          </div>
+        ),
+        { duration: 8000 },
+      );
+      clearBasket();
+      setDrawerOpen(false);
+    })();
+  }, [lines, totalPence, clearBasket]);
 
   const value = useMemo(
     () => ({
