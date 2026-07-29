@@ -15,9 +15,7 @@ export const ABOUT_PROTOTYPE_BODY =
 export const WELCOME_PROTOTYPE_TITLE = 'Welcome to the prototype';
 
 export const WELCOME_PROTOTYPE_BODY =
-  'This is a working prototype — some settings are limited.\n\nOpen Partner Hubs to explore partner pages.\n\nUse the Contact Us button at the top of the site to message rob@rhythmstix.co.uk for a full teacher login so you can make changes.';
-
-export const WELCOME_PROTOTYPE_CONTACT_EMAIL = 'rob@rhythmstix.co.uk';
+  'This is a working prototype — some settings are limited.\n\nOpen Partner Hubs to explore partner pages.\n\nUse Contact Us in the app to request a full teacher login so you can make changes.';
 
 export const WELCOME_PROTOTYPE_PARTNER_HUBS_CTA = 'Open Partner Hubs';
 
@@ -26,7 +24,7 @@ export const WELCOME_PROTOTYPE_CONTACT_US_CTA = 'Contact Us';
 export const WELCOME_PROTOTYPE_CONTINUE_CTA = 'I understand — continue';
 
 /** Bump when welcome copy changes so returning visitors see the updated notice. */
-export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen-v3';
+export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen-v4';
 
 /** Session-scoped key for the partners/funding start popup.
  * Bump suffix when the first-open flow changes so returning visitors see it again. */
