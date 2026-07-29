@@ -273,6 +273,13 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       <PrototypeWelcomeModal
         isOpen={showPrototypeWelcome}
         onClose={dismissPrototypeWelcome}
+        onOpenContactUs={() => {
+          try {
+            window.dispatchEvent(new CustomEvent('ccd:open-contact-us'));
+          } catch {
+            /* ignore */
+          }
+        }}
         onOpenPartnerHubs={() => {
           try {
             window.dispatchEvent(new CustomEvent('ccd:open-our-partners'));

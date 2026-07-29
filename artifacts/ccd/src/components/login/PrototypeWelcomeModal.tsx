@@ -1,19 +1,21 @@
 import { useEffect } from 'react';
-import { Handshake, X } from 'lucide-react';
+import { Handshake, Mail, X } from 'lucide-react';
 import {
   WELCOME_PROTOTYPE_BODY,
   WELCOME_PROTOTYPE_CONTACT_EMAIL,
+  WELCOME_PROTOTYPE_CONTACT_US_CTA,
   WELCOME_PROTOTYPE_CONTINUE_CTA,
   WELCOME_PROTOTYPE_PARTNER_HUBS_CTA,
   WELCOME_PROTOTYPE_TITLE,
 } from './prototypeCopy';
-import { buildQueryMailto } from '../../utils/mailto';
 
 interface PrototypeWelcomeModalProps {
   isOpen: boolean;
   onClose: () => void;
   /** Optional: open Partner Hubs after dismiss (post-login dashboard). */
   onOpenPartnerHubs?: () => void;
+  /** Optional: open Contact Us after dismiss (post-login dashboard). */
+  onOpenContactUs?: () => void;
 }
 
 function renderWelcomeParagraph(paragraph: string) {
@@ -26,12 +28,7 @@ function renderWelcomeParagraph(paragraph: string) {
   return (
     <>
       {parts[0]}
-      <a
-        href={buildQueryMailto(email)}
-        className="font-semibold text-[#002D24] underline underline-offset-2 hover:opacity-80"
-      >
-        {email}
-      </a>
+      <span className="font-semibold text-[#002D24]">{email}</span>
       {parts[1]}
     </>
   );
@@ -41,6 +38,7 @@ export function PrototypeWelcomeModal({
   isOpen,
   onClose,
   onOpenPartnerHubs,
+  onOpenContactUs,
 }: PrototypeWelcomeModalProps) {
   useEffect(() => {
     if (!isOpen) return;
@@ -55,15 +53,12 @@ export function PrototypeWelcomeModal({
 
   const openPartnerHubs = () => {
     onClose();
-    if (onOpenPartnerHubs) {
-      onOpenPartnerHubs();
-      return;
-    }
-    try {
-      window.dispatchEvent(new CustomEvent('ccd:open-our-partners'));
-    } catch {
-      /* ignore */
-    }
+    onOpenPartnerHubs?.();
+  };
+
+  const openContactUs = () => {
+    onClose();
+    onOpenContactUs?.();
   };
 
   return (
@@ -102,11 +97,21 @@ export function PrototypeWelcomeModal({
         </div>
 
         <div className="mt-8 space-y-3">
+          {onOpenContactUs ? (
+            <button
+              type="button"
+              onClick={openContactUs}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#B6FF7E] px-4 py-3 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
+            >
+              <Mail className="h-4 w-4 shrink-0" aria-hidden />
+              {WELCOME_PROTOTYPE_CONTACT_US_CTA}
+            </button>
+          ) : null}
           {onOpenPartnerHubs ? (
             <button
               type="button"
               onClick={openPartnerHubs}
-              className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#B6FF7E] px-4 py-3 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
+              className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#002D24]/20 bg-white px-4 py-3 text-sm font-semibold text-[#002D24] transition-colors hover:bg-[#E8F0EA]"
             >
               <Handshake className="h-4 w-4 shrink-0" aria-hidden />
               {WELCOME_PROTOTYPE_PARTNER_HUBS_CTA}
