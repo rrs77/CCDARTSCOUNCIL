@@ -92,7 +92,7 @@ export function GlanceModal({
             transition={{ duration: reduced ? 0.01 : shrinking ? 0.3 : 0.24 }}
           />
           <motion.div
-            className={`topic-modal glance-modal ${shrinking ? "topic-modal--shrinking" : ""}`}
+            className={`topic-modal topic-modal--landscape glance-modal ${shrinking ? "topic-modal--shrinking" : ""}`}
             onPointerDown={stopCanvas}
             onWheel={stopCanvas}
             onTouchMove={stopCanvas}

@@ -1,7 +1,7 @@
-import { X } from "lucide-react";
+import { ChevronLeft, ChevronRight, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useEffect, useRef, type ReactNode, type SyntheticEvent } from "react";
-import { ChapterBody } from "@/chapters/ChapterBody";
+import { useEffect, useMemo, useRef, useState, type ReactNode, type SyntheticEvent } from "react";
+import { ChapterBody, SourcesPage } from "@/chapters/ChapterBody";
 import { meta, type TopicDef } from "@/content/facts.content";
 
 export type TravelDir = "left" | "right" | "up" | "down" | null;
@@ -25,8 +25,8 @@ function enterOffset(fromDir: TravelDir, reduced: boolean) {
 }
 
 /**
- * True overlay modal: fixed header, scrollable body.
- * `shrinking` plays the strand “collapse back to box” before travel.
+ * Landscape overlay modal: fixed header, scrollable body, optional Sources page.
+ * Arrow keys are owned by strand travel — page dots change pages inside this topic.
  */
 export function TopicModal({
   cluster,
@@ -46,8 +46,18 @@ export function TopicModal({
   shrinking?: boolean;
 }) {
   const bodyRef = useRef<HTMLDivElement>(null);
+  const swipeRef = useRef<{ x: number; y: number } | null>(null);
   const reduced = useReducedMotion() ?? false;
   const visible = open || shrinking;
+  const hasSourcesPage =
+    cluster.id === "ccd" || (cluster.sourceIds?.length ?? 0) > 0;
+  const pageCount = hasSourcesPage ? 2 : 1;
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    if (!open) return;
+    setPage(0);
+  }, [open, cluster.id]);
 
   useEffect(() => {
     if (!visible) return;
@@ -66,6 +76,7 @@ export function TopicModal({
         e.stopPropagation();
         onClose();
       }
+      // Arrows intentionally NOT handled — strand travel owns them
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
@@ -73,9 +84,14 @@ export function TopicModal({
 
   useEffect(() => {
     if (open && !shrinking) bodyRef.current?.scrollTo({ top: 0 });
-  }, [cluster.id, open, shrinking]);
+  }, [cluster.id, open, shrinking, page]);
 
   const stopCanvas = (e: SyntheticEvent) => e.stopPropagation();
+
+  const pageLabel = useMemo(() => {
+    if (page === 0) return "Story";
+    return "Sources";
+  }, [page]);
 
   return (
     <AnimatePresence>
@@ -106,7 +122,7 @@ export function TopicModal({
           />
           <motion.div
             key={cluster.id}
-            className={`topic-modal ${shrinking ? "topic-modal--shrinking" : ""}`}
+            className={`topic-modal topic-modal--landscape ${shrinking ? "topic-modal--shrinking" : ""}`}
             onPointerDown={stopCanvas}
             onWheel={stopCanvas}
             onTouchMove={stopCanvas}
@@ -140,7 +156,7 @@ export function TopicModal({
                 onClick={onClose}
                 disabled={shrinking}
               >
-                <X className="h-5 w-5" strokeWidth={2.5} />
+                <X className="h-6 w-6" strokeWidth={2.5} />
               </button>
             </header>
 
@@ -149,15 +165,87 @@ export function TopicModal({
                 ref={bodyRef}
                 className="topic-modal-body"
                 onWheel={stopCanvas}
-                onTouchMove={stopCanvas}
+                onTouchStart={(e) => {
+                  if (shrinking || pageCount < 2) return;
+                  const t = e.touches[0];
+                  swipeRef.current = { x: t.clientX, y: t.clientY };
+                }}
+                onTouchEnd={(e) => {
+                  if (shrinking || pageCount < 2) return;
+                  const start = swipeRef.current;
+                  swipeRef.current = null;
+                  if (!start) return;
+                  const t = e.changedTouches[0];
+                  const dx = t.clientX - start.x;
+                  const dy = t.clientY - start.y;
+                  if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
+                  if (dx < 0) setPage((p) => Math.min(pageCount - 1, p + 1));
+                  else setPage((p) => Math.max(0, p - 1));
+                }}
               >
-                <ChapterBody cluster={cluster} showKeys={showKeys} hideTitle />
-                <div className="topic-modal-body-end" aria-hidden />
+                <AnimatePresence mode="wait" initial={false}>
+                  <motion.div
+                    key={`${cluster.id}-${page}`}
+                    initial={reduced ? { opacity: 0 } : { opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={reduced ? { opacity: 0 } : { opacity: 0, x: -10 }}
+                    transition={{ duration: reduced ? 0.01 : 0.22, ease: EASE }}
+                  >
+                    {page === 0 ? (
+                      <ChapterBody cluster={cluster} showKeys={showKeys} hideTitle />
+                    ) : (
+                      <SourcesPage cluster={cluster} showKeys={showKeys} />
+                    )}
+                    <div className="topic-modal-body-end" aria-hidden />
+                  </motion.div>
+                </AnimatePresence>
               </div>
               <div className="topic-modal-fade" aria-hidden />
             </div>
 
-            {footer ? <footer className="topic-modal-footer">{footer}</footer> : null}
+            <footer className="topic-modal-footer topic-modal-footer--pager">
+              {pageCount > 1 ? (
+                <div className="glance-pager topic-inline-pager">
+                  <button
+                    type="button"
+                    className="glance-pager-btn"
+                    disabled={page === 0 || shrinking}
+                    onClick={() => setPage((p) => Math.max(0, p - 1))}
+                  >
+                    <ChevronLeft className="h-4 w-4" />
+                    {meta.ui.prevPage}
+                  </button>
+                  <div className="glance-dots" role="tablist" aria-label="Pages">
+                    {Array.from({ length: pageCount }, (_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        role="tab"
+                        aria-selected={i === page}
+                        className={`glance-dot ${i === page ? "glance-dot-active" : ""}`}
+                        aria-label={i === 0 ? "Story" : "Sources"}
+                        onClick={() => setPage(i)}
+                        disabled={shrinking}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    type="button"
+                    className="glance-pager-btn"
+                    disabled={page >= pageCount - 1 || shrinking}
+                    onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+                  >
+                    {page === 0 ? "Sources" : meta.ui.nextPage}
+                    <ChevronRight className="h-4 w-4" />
+                  </button>
+                </div>
+              ) : (
+                <span className="topic-page-label" aria-hidden>
+                  {pageLabel}
+                </span>
+              )}
+              {footer ? <div className="topic-modal-footer-actions">{footer}</div> : null}
+            </footer>
           </motion.div>
         </motion.div>
       ) : null}

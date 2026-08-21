@@ -59,6 +59,54 @@ const reducedItem = {
   show: { opacity: 1, transition: { duration: 0.12 } },
 };
 
+/** Sources register — second page only; never the main story. */
+export function SourcesPage({
+  cluster,
+  showKeys,
+}: {
+  cluster: TopicDef;
+  showKeys?: boolean;
+}) {
+  const ids =
+    cluster.id === "ccd"
+      ? [...principalSourceIds]
+      : cluster.sourceIds.length
+        ? cluster.sourceIds
+        : [];
+
+  return (
+    <div className="topic-sources-page">
+      <h3 className="topic-sources-heading">
+        Sources
+        {showKeys ? <span className="edit-key"> sources</span> : null}
+      </h3>
+      <ol className="topic-sources-list">
+        {ids.map((id) => {
+          const s = sources[id];
+          if (!s) return null;
+          return (
+            <li key={id}>
+              {s.url ? (
+                <a href={s.url} target="_blank" rel="noopener noreferrer">
+                  {s.label} ({s.year})
+                </a>
+              ) : (
+                `${s.label} (${s.year})`
+              )}
+            </li>
+          );
+        })}
+      </ol>
+      {cluster.id === "ccd" ? (
+        <div className="topic-sources-notes">
+          <p>{meta.verificationNote}</p>
+          <p>{meta.closing}</p>
+        </div>
+      ) : null}
+    </div>
+  );
+}
+
 export function ChapterBody({
   cluster,
   showKeys,
@@ -71,103 +119,97 @@ export function ChapterBody({
   const [drill, setDrill] = useState<string | null>(null);
   const reduced = useReducedMotion() ?? false;
   const item = reduced ? reducedItem : itemVariants;
-  const charts = [...(cluster.chartIds ?? []), ...(cluster.nestedChartIds ?? [])];
+  const isCcd = cluster.id === "ccd";
+  /** CCD story page: pull-out only on the right — no chart legend wall. */
+  const charts = isCcd
+    ? []
+    : [...(cluster.chartIds ?? []), ...(cluster.nestedChartIds ?? [])];
 
   return (
-    <motion.div key={cluster.id} variants={listVariants} initial="hidden" animate="show">
-      {!hideTitle ? (
-        <motion.h2 className="display pitch-h2 mb-2 leading-tight text-[#002d24]" variants={item}>
-          {cluster.title}
-          {showKeys ? <span className="edit-key"> topics.{cluster.id}.title</span> : null}
-        </motion.h2>
-      ) : null}
+    <motion.div
+      key={cluster.id}
+      className="topic-layout"
+      variants={listVariants}
+      initial="hidden"
+      animate="show"
+    >
+      <div className="topic-layout-story">
+        {!hideTitle ? (
+          <motion.h2 className="display pitch-h2 mb-3 leading-tight text-[#002d24]" variants={item}>
+            {cluster.title}
+            {showKeys ? <span className="edit-key"> topics.{cluster.id}.title</span> : null}
+          </motion.h2>
+        ) : null}
 
-      <motion.p className="mb-3 pitch-body font-medium text-[#14b8a6]" variants={item}>
-        {cluster.investorLine}
-        {showKeys ? <span className="edit-key"> investorLine</span> : null}
-      </motion.p>
+        {cluster.investorLine ? (
+          <motion.p className="topic-lead" variants={item}>
+            {cluster.investorLine}
+            {showKeys ? <span className="edit-key"> investorLine</span> : null}
+          </motion.p>
+        ) : null}
 
-      <motion.div className="mt-3 space-y-2.5 text-[#33443e]" variants={item}>
-        {cluster.body.map((p, i) => (
-          <p key={i} className="pitch-body m-0">
-            {p}
-          </p>
-        ))}
-      </motion.div>
-
-      {cluster.statIds?.length ? (
-        <motion.div className="stat-grid mt-4" variants={item}>
-          {cluster.statIds.map((id) => {
-            const s = getStat(id);
-            if (!s) return null;
-            return (
-              <div key={id} className="stat-pill">
-                <div className="num pitch-stat">
-                  {s.value}
-                  {showKeys ? <span className="edit-key"> stats.{id}</span> : null}
-                </div>
-                <div className="lbl pitch-caption">
-                  <strong>{s.label}</strong>
-                  <br />
-                  {s.footnote}
-                </div>
-              </div>
-            );
-          })}
+        <motion.div className="topic-story-paras" variants={item}>
+          {cluster.body.map((p, i) => (
+            <p key={i} className="pitch-body">
+              {p}
+            </p>
+          ))}
         </motion.div>
-      ) : null}
+      </div>
 
-      {charts.map((cid, i) => {
-        const chart = getChart(cid);
-        if (!chart) return null;
-        const nested = i >= (cluster.chartIds?.length ?? 0);
-        return (
-          <motion.div
-            key={cid}
-            className={`mt-4 chart-hero ${nested ? "chart-nested" : ""}`}
-            variants={item}
-          >
-            {nested ? <p className="chart-nested-label">Detail</p> : null}
-            <ContentChart
-              chart={chart}
-              showKeys={showKeys}
-              onDrill={(label) => setDrill(label ? `Selected: ${label}` : null)}
-            />
+      <div className="topic-layout-side">
+        {cluster.statIds?.length ? (
+          <motion.div className="stat-grid" variants={item}>
+            {cluster.statIds.map((id) => {
+              const s = getStat(id);
+              if (!s) return null;
+              return (
+                <div key={id} className="stat-pill">
+                  <div className="num pitch-stat">
+                    {s.value}
+                    {showKeys ? <span className="edit-key"> stats.{id}</span> : null}
+                  </div>
+                  <div className="lbl pitch-caption">
+                    <strong>{s.label}</strong>
+                    <br />
+                    {s.footnote}
+                  </div>
+                </div>
+              );
+            })}
           </motion.div>
-        );
-      })}
+        ) : null}
 
-      {cluster.id === "ccd" ? (
-        <motion.ol className="mt-4 list-decimal space-y-1.5 pl-4 pitch-caption text-[#33443e]" variants={item}>
-          {principalSourceIds.map((id) => {
-            const s = sources[id];
-            if (!s) return null;
-            return (
-              <li key={id}>
-                {s.url ? (
-                  <a href={s.url} target="_blank" rel="noopener noreferrer">
-                    {s.label} ({s.year})
-                  </a>
-                ) : (
-                  `${s.label} (${s.year})`
-                )}
-              </li>
-            );
-          })}
-          <li className="list-none pt-2 italic text-[#6b7d80]">{meta.verificationNote}</li>
-          <li className="list-none italic text-[#6b7d80]">{meta.closing}</li>
-        </motion.ol>
-      ) : null}
+        {charts.map((cid, i) => {
+          const chart = getChart(cid);
+          if (!chart) return null;
+          const nested = i >= (cluster.chartIds?.length ?? 0);
+          return (
+            <motion.div
+              key={cid}
+              className={`chart-hero ${nested ? "chart-nested" : ""}`}
+              variants={item}
+            >
+              {nested ? <p className="chart-nested-label">Detail</p> : null}
+              <ContentChart
+                chart={chart}
+                showKeys={showKeys}
+                onDrill={(label) => setDrill(label ? `Selected: ${label}` : null)}
+              />
+            </motion.div>
+          );
+        })}
 
-      {drill ? (
+        {drill ? (
+          <motion.div variants={item}>
+            <Drill text={drill} onClear={() => setDrill(null)} />
+          </motion.div>
+        ) : null}
+
         <motion.div variants={item}>
-          <Drill text={drill} onClear={() => setDrill(null)} />
+          <WhyCcd showKeys={showKeys}>{cluster.whyThisMattersForCCD}</WhyCcd>
         </motion.div>
-      ) : null}
-
-      <motion.div variants={item}>
-        <WhyCcd showKeys={showKeys}>{cluster.whyThisMattersForCCD}</WhyCcd>
-      </motion.div>
+      </div>
     </motion.div>
   );
 }

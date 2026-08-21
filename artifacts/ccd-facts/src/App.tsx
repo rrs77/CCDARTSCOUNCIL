@@ -1,5 +1,6 @@
 import { animate, motion, useMotionValue } from "framer-motion";
-import { ChevronRight, Home, Pencil, ZoomIn, ZoomOut } from "lucide-react";
+import { Home, Pencil, ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIntoIcon } from "@/components/ZoomChrome";
 import {
   useCallback,
   useEffect,
@@ -646,7 +647,7 @@ export default function App() {
                   }}
                 >
                   <span>{item.label}</span>
-                  <ChevronRight className="topic-chip-chevron" strokeWidth={2.5} />
+                  <ZoomIntoIcon className="topic-chip-zoom" />
                   {showKeys ? <span className="edit-key"> strand.{item.id}</span> : null}
                 </button>
               );
