@@ -1,17 +1,14 @@
 /**
  * Shared Map ↔ canvas accent colours (CCD palette only).
- * Keep in sync with MapNav pips.
  */
 export const SECTION_ACCENT: Record<string, string> = {
   overview: "#B6FF7E",
   title: "#B6FF7E",
-  "the-situation": "#B6FF7E",
-  primary: "#14b8a6",
-  "secondary-and-access": "#14b8a6",
-  "a-level": "#14b8a6",
-  "higher-education": "#B6FF7E",
-  "music-hubs-and-national-centre": "#B6FF7E",
-  "a-solution": "#B6FF7E",
+  "primary-eyfs-ks2": "#14b8a6",
+  "secondary-ks3-ks4": "#14b8a6",
+  "ks5-a-level": "#14b8a6",
+  "university-he": "#B6FF7E",
+  ccdesigner: "#B6FF7E",
   sources: "#6b7d80",
 };
 

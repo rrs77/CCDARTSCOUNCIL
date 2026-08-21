@@ -2,48 +2,27 @@ import { Map as MapIcon } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Presentation } from "@/content/layoutPresentation";
 import { SECTION_ACCENT } from "@/content/sectionAccent";
-import { stackLabel } from "@/content/stackLabels";
+import { STAGE_ORDER, stageLabel } from "@/content/stackLabels";
 
 type NavItem = { id: string | null; label: string };
-type NavGroup = { heading: string; items: NavItem[] };
 
 const ACCENT = SECTION_ACCENT;
 
-function buildGroups(presentation: Presentation): { lone: NavItem[]; groups: NavGroup[] } {
+function buildItems(presentation: Presentation): NavItem[] {
   const byId = new Map(presentation.frames.filter((f) => !f.parentId).map((f) => [f.id, f]));
-  const pick = (id: string): NavItem | null => {
+  const items: NavItem[] = [{ id: null, label: "Overview" }];
+  for (const id of STAGE_ORDER) {
     const f = byId.get(id);
-    if (!f) return null;
-    return { id: f.id, label: stackLabel(f.id, f.navLabel || f.title) };
-  };
-
-  const lone: NavItem[] = [{ id: null, label: "Overview" }];
-  const situation = pick("the-situation");
-  if (situation) lone.push(situation);
-
-  const groups: NavGroup[] = [];
-  const stages = [pick("primary"), pick("secondary-and-access"), pick("a-level")].filter(
-    Boolean,
-  ) as NavItem[];
-  if (stages.length) groups.push({ heading: "Key stages", items: stages });
-
-  const after = [pick("higher-education"), pick("music-hubs-and-national-centre")].filter(
-    Boolean,
-  ) as NavItem[];
-  if (after.length) groups.push({ heading: "After school", items: after });
-
-  const solution = pick("a-solution");
-  if (solution) lone.push(solution);
-
-  const sources = pick("sources");
-  if (sources) lone.push(sources);
-
-  return { lone, groups };
+    if (f) items.push({ id: f.id, label: stageLabel(f.id, f.title) });
+  }
+  const sources = byId.get("sources");
+  if (sources) items.push({ id: sources.id, label: stageLabel(sources.id, sources.title) });
+  return items;
 }
 
 /**
  * Map column: open on load; whole column slides off on mouse leave.
- * Left-edge hover / Map chip brings it back. Touch: tap chip to pin, tap canvas to dismiss.
+ * Labels match key-stage pathway names.
  */
 export function MapNav({
   presentation,
@@ -56,14 +35,12 @@ export function MapNav({
   onOverview: () => void;
   onJump: (id: string) => void;
 }) {
-  /** Visible on first visit */
   const [open, setOpen] = useState(true);
-  /** Touch pin — stays until canvas tap */
   const [pinned, setPinned] = useState(false);
   const closeTimer = useRef<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
-  const { lone, groups } = buildGroups(presentation);
+  const items = buildItems(presentation);
 
   const clearClose = useCallback(() => {
     if (closeTimer.current) {
@@ -98,7 +75,6 @@ export function MapNav({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [open]);
 
-  // Tap outside (canvas) slides the column away on touch / click
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
@@ -115,7 +91,7 @@ export function MapNav({
     if (focusId === id) return true;
     if (!focusId) return false;
     const f = presentation.frames.find((x) => x.id === focusId);
-    return f?.mainSectionId === id || (focusId === "title" && id === null);
+    return f?.mainSectionId === id;
   };
 
   const go = (id: string | null) => {
@@ -137,27 +113,8 @@ export function MapNav({
     setOpen(true);
   };
 
-  const renderLink = (item: NavItem) => {
-    const accent = ACCENT[item.id ?? "overview"] ?? "#B6FF7E";
-    const current = isCurrent(item.id);
-    return (
-      <li key={item.id ?? "overview"}>
-        <button
-          type="button"
-          className={`map-nav-link ${current ? "is-current" : ""}`}
-          style={{ ["--map-accent" as string]: accent }}
-          onClick={() => go(item.id)}
-        >
-          <span className="map-nav-pip" aria-hidden />
-          <span className="map-nav-link-label">{item.label}</span>
-        </button>
-      </li>
-    );
-  };
-
   return (
     <>
-      {/* Left-edge hit zone when column is away */}
       <div
         className={`map-edge-hit ${open ? "is-hidden" : ""}`}
         onMouseEnter={openNow}
@@ -205,18 +162,25 @@ export function MapNav({
             inert={!open ? true : undefined}
           >
             <p className="map-nav-heading">Map</p>
-            <ul className="map-nav-list">{lone.slice(0, 2).map(renderLink)}</ul>
-
-            {groups.map((g) => (
-              <div key={g.heading} className="map-nav-group">
-                <p className="map-nav-subhead">{g.heading}</p>
-                <ul className="map-nav-list">{g.items.map(renderLink)}</ul>
-              </div>
-            ))}
-
-            {lone.length > 2 ? (
-              <ul className="map-nav-list map-nav-list--tail">{lone.slice(2).map(renderLink)}</ul>
-            ) : null}
+            <ul className="map-nav-list">
+              {items.map((item) => {
+                const accent = ACCENT[item.id ?? "overview"] ?? "#B6FF7E";
+                const current = isCurrent(item.id);
+                return (
+                  <li key={item.id ?? "overview"}>
+                    <button
+                      type="button"
+                      className={`map-nav-link ${current ? "is-current" : ""}`}
+                      style={{ ["--map-accent" as string]: accent }}
+                      onClick={() => go(item.id)}
+                    >
+                      <span className="map-nav-pip" aria-hidden />
+                      <span className="map-nav-link-label">{item.label}</span>
+                    </button>
+                  </li>
+                );
+              })}
+            </ul>
           </nav>
         </div>
       </div>
