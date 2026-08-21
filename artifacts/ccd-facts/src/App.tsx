@@ -1,24 +1,43 @@
 import { animate, motion, useMotionValue } from "framer-motion";
-import { ArrowLeft, Home, Maximize2 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { Home, ZoomIn, ZoomOut } from "lucide-react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
 import { ChapterBody } from "@/chapters/ChapterBody";
-import { CHAPTERS, type ChapterId } from "@/data/stats";
+import { LogoMark } from "@/components/LogoMark";
+import {
+  clusters,
+  getStat,
+  journey,
+  meta,
+  type ClusterDef,
+} from "@/content/facts.content";
 
-const CELL_W = 780;
-const CELL_H = 860;
-const GAP_X = 120;
-const GAP_Y = 100;
+const OVERVIEW_STAT_IDS = [
+  "gcse-fall",
+  "alevel-fall",
+  "no-entry",
+  "hours-gap",
+  "deprivation-music",
+  "ofqual-gcse-2026",
+] as const;
 
-function clusterOrigin(id: ChapterId) {
-  const ch = CHAPTERS.find((c) => c.id === id)!;
-  return {
-    x: ch.x * (CELL_W + GAP_X),
-    y: ch.y * (CELL_H + GAP_Y),
-  };
-}
+const STAT_ZOOM_TARGET: Record<string, string> = {
+  "gcse-fall": "glance",
+  "alevel-fall": "glance",
+  "no-entry": "availability",
+  "hours-gap": "primary",
+  "deprivation-music": "poverty",
+  "ofqual-gcse-2026": "gcse",
+};
 
-function useViewportSize() {
-  const [size, setSize] = useState({ w: 1200, h: 800 });
+function useViewport() {
+  const [size, setSize] = useState({ w: 390, h: 844 });
   useEffect(() => {
     const update = () => setSize({ w: window.innerWidth, h: window.innerHeight });
     update();
@@ -28,230 +47,406 @@ function useViewportSize() {
   return size;
 }
 
-export default function App() {
-  const { w, h } = useViewportSize();
-  const [active, setActive] = useState<ChapterId | null>(null);
-  const [overview, setOverview] = useState(true);
+function useReducedMotion() {
+  const [reduced, setReduced] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setReduced(mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  return reduced;
+}
 
-  const scaleMv = useMotionValue(0.28);
+function clamp(n: number, min: number, max: number) {
+  return Math.min(max, Math.max(min, n));
+}
+
+export default function App() {
+  const { w, h } = useViewport();
+  const reduced = useReducedMotion();
+  const [active, setActive] = useState<string | null>(null);
+  const [showKeys] = useState(
+    () => new URLSearchParams(window.location.search).get("edit") === "1",
+  );
+
+  const stageRef = useRef<HTMLDivElement>(null);
+  const scaleMv = useMotionValue(0.22);
   const xMv = useMotionValue(0);
   const yMv = useMotionValue(0);
 
-  const worldW = 3 * CELL_W + 2 * GAP_X;
-  const worldH = 5 * CELL_H + 4 * GAP_Y;
+  const scaleRef = useRef(0.22);
+  const xRef = useRef(0);
+  const yRef = useRef(0);
+  const pointers = useRef(new Map<number, { x: number; y: number }>());
+  const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
+  const dragStart = useRef<{ x: number; y: number; camX: number; camY: number } | null>(null);
+  const moved = useRef(false);
+
+  const syncRefs = useCallback(() => {
+    scaleRef.current = scaleMv.get();
+    xRef.current = xMv.get();
+    yRef.current = yMv.get();
+  }, [scaleMv, xMv, yMv]);
+
+  const setCamera = useCallback(
+    (scale: number, x: number, y: number, animated: boolean) => {
+      const s = clamp(scale, 0.1, 1.4);
+      const duration = !animated || reduced ? 0.01 : 0.58;
+      const ease: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
+      if (animated && !reduced) {
+        animate(scaleMv, s, { duration, ease });
+        animate(xMv, x, { duration, ease });
+        animate(yMv, y, { duration, ease });
+      } else {
+        scaleMv.set(s);
+        xMv.set(x);
+        yMv.set(y);
+      }
+      scaleRef.current = s;
+      xRef.current = x;
+      yRef.current = y;
+    },
+    [reduced, scaleMv, xMv, yMv],
+  );
 
   const fitOverview = useCallback(() => {
-    const pad = 48;
-    const s = Math.min((w - pad) / worldW, (h - pad - 70) / worldH, 0.42);
-    const tx = -((worldW * s) / 2);
-    const ty = -((worldH * s) / 2) + 10;
-    return { s, tx, ty };
-  }, [w, h, worldW, worldH]);
+    const xs = clusters.map((c) => c.x);
+    const ys = clusters.map((c) => c.y);
+    const minX = Math.min(...xs) - 180;
+    const maxX = Math.max(...xs) + 640;
+    const minY = Math.min(...ys) - 140;
+    const maxY = Math.max(...ys) + 360;
+    const worldW = maxX - minX;
+    const worldH = maxY - minY;
+    const topPad = w < 640 ? 220 : 130;
+    const bottomPad = 80;
+    const s = Math.min((w - 28) / worldW, (h - topPad - bottomPad) / worldH, 0.36);
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    return { s, x: -cx * s, y: -cy * s + (topPad - bottomPad) / 5 };
+  }, [w, h]);
 
-  const zoomTo = useCallback(
-    (id: ChapterId | null) => {
+  const flyToCluster = useCallback(
+    (id: string | null) => {
       if (!id) {
-        const { s, tx, ty } = fitOverview();
-        animate(scaleMv, s, { duration: 0.55, ease: [0.22, 1, 0.36, 1] });
-        animate(xMv, tx, { duration: 0.55, ease: [0.22, 1, 0.36, 1] });
-        animate(yMv, ty, { duration: 0.55, ease: [0.22, 1, 0.36, 1] });
+        const { s, x, y } = fitOverview();
+        setCamera(s, x, y, true);
         setActive(null);
-        setOverview(true);
+        const url = new URL(window.location.href);
+        url.searchParams.delete("chapter");
+        if (showKeys) url.searchParams.set("edit", "1");
+        window.history.replaceState({}, "", `${url.pathname}${url.search}`);
         return;
       }
-      const origin = clusterOrigin(id);
-      const targetScale = Math.min(Math.max(Math.min(w / (CELL_W + 40), h / (CELL_H + 120)), 0.72), 1.05);
-      const tx = -(origin.x + CELL_W / 2) * targetScale;
-      const ty = -(origin.y + CELL_H / 2) * targetScale + 12;
-      animate(scaleMv, targetScale, { duration: 0.6, ease: [0.22, 1, 0.36, 1] });
-      animate(xMv, tx, { duration: 0.6, ease: [0.22, 1, 0.36, 1] });
-      animate(yMv, ty, { duration: 0.6, ease: [0.22, 1, 0.36, 1] });
+      const ch = clusters.find((c) => c.id === id);
+      if (!ch) return;
+      const targetScale = w < 640 ? 0.8 : 0.95;
+      const x = -(ch.x + 260) * targetScale;
+      const y = -(ch.y + 200) * targetScale + (w < 640 ? 40 : 16);
+      setCamera(targetScale, x, y, true);
       setActive(id);
-      setOverview(false);
+      const url = new URL(window.location.href);
+      url.searchParams.set("chapter", id);
+      if (showKeys) url.searchParams.set("edit", "1");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
     },
-    [fitOverview, h, scaleMv, w, xMv, yMv],
+    [fitOverview, setCamera, showKeys, w],
   );
 
   useEffect(() => {
-    const { s, tx, ty } = fitOverview();
-    scaleMv.set(s);
-    xMv.set(tx);
-    yMv.set(ty);
-  }, [fitOverview, scaleMv, xMv, yMv]);
+    const { s, x, y } = fitOverview();
+    setCamera(s, x, y, false);
+  }, [fitOverview, setCamera]);
 
-  // Deep-link: ?chapter=gcse
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const ch = params.get("chapter") as ChapterId | null;
-    if (ch && CHAPTERS.some((c) => c.id === ch)) {
-      // slight delay so layout has viewport size
-      const t = window.setTimeout(() => zoomTo(ch), 80);
+    const ch = new URLSearchParams(window.location.search).get("chapter");
+    if (ch && clusters.some((c) => c.id === ch)) {
+      const t = window.setTimeout(() => flyToCluster(ch), 40);
       return () => window.clearTimeout(t);
     }
     return undefined;
-  }, [zoomTo]);
+  }, [flyToCluster]);
 
-  const goHome = () => {
-    window.location.href = "/";
+  const zoomAt = useCallback(
+    (clientX: number, clientY: number, nextScale: number) => {
+      syncRefs();
+      const prev = scaleRef.current;
+      const s = clamp(nextScale, 0.1, 1.4);
+      const rectX = clientX - w / 2;
+      const rectY = clientY - h / 2;
+      const worldX = (rectX - xRef.current) / prev;
+      const worldY = (rectY - yRef.current) / prev;
+      setCamera(s, rectX - worldX * s, rectY - worldY * s, false);
+    },
+    [h, setCamera, syncRefs, w],
+  );
+
+  // Non-passive wheel so we can preventDefault (pan / zoom)
+  useEffect(() => {
+    const el = stageRef.current;
+    if (!el) return;
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      syncRefs();
+      if (e.ctrlKey || e.metaKey) {
+        zoomAt(e.clientX, e.clientY, scaleRef.current * Math.exp(-e.deltaY * 0.01));
+        return;
+      }
+      // Mouse wheel → zoom; trackpad two-finger → pan (when both axes move or small deltas)
+      const mostlyVertical = Math.abs(e.deltaY) > Math.abs(e.deltaX) * 2;
+      if (mostlyVertical && Math.abs(e.deltaX) < 1.2) {
+        zoomAt(e.clientX, e.clientY, scaleRef.current * Math.exp(-e.deltaY * 0.0018));
+        return;
+      }
+      setCamera(scaleRef.current, xRef.current - e.deltaX, yRef.current - e.deltaY, false);
+    };
+    el.addEventListener("wheel", onWheel, { passive: false });
+    return () => el.removeEventListener("wheel", onWheel);
+  }, [setCamera, syncRefs, zoomAt]);
+
+  const onPointerDown = (e: ReactPointerEvent) => {
+    (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    moved.current = false;
+    syncRefs();
+    if (pointers.current.size === 1) {
+      dragStart.current = {
+        x: e.clientX,
+        y: e.clientY,
+        camX: xRef.current,
+        camY: yRef.current,
+      };
+      pinchStart.current = null;
+    } else if (pointers.current.size === 2) {
+      dragStart.current = null;
+      const pts = [...pointers.current.values()];
+      pinchStart.current = {
+        dist: Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y),
+        scale: scaleRef.current,
+      };
+    }
   };
 
-  const activeMeta = useMemo(
-    () => CHAPTERS.find((c) => c.id === active) ?? null,
+  const onPointerMove = (e: ReactPointerEvent) => {
+    if (!pointers.current.has(e.pointerId)) return;
+    pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    if (pointers.current.size === 2 && pinchStart.current) {
+      const pts = [...pointers.current.values()];
+      const dist = Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
+      const midX = (pts[0].x + pts[1].x) / 2;
+      const midY = (pts[0].y + pts[1].y) / 2;
+      zoomAt(midX, midY, pinchStart.current.scale * (dist / Math.max(1, pinchStart.current.dist)));
+      moved.current = true;
+      return;
+    }
+    if (dragStart.current && pointers.current.size === 1) {
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      if (Math.hypot(dx, dy) > 8) moved.current = true;
+      setCamera(
+        scaleRef.current,
+        dragStart.current.camX + dx,
+        dragStart.current.camY + dy,
+        false,
+      );
+    }
+  };
+
+  const onPointerUp = (e: ReactPointerEvent) => {
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinchStart.current = null;
+    if (pointers.current.size === 0) dragStart.current = null;
+  };
+
+  const activeCluster: ClusterDef | undefined = useMemo(
+    () => clusters.find((c) => c.id === active),
     [active],
   );
+  const journeyIndex = active ? journey.indexOf(active) : -1;
+
+  const pathD = useMemo(() => {
+    const pts = journey
+      .map((id) => clusters.find((c) => c.id === id))
+      .filter(Boolean)
+      .map((c) => `${c!.x + 36},${c!.y + 30}`);
+    return pts.length ? `M ${pts.join(" L ")}` : "";
+  }, []);
 
   return (
     <div className="facts-app">
-      <div className="topbar">
-        <div className="flex items-center gap-2">
-          <img src={`${import.meta.env.BASE_URL}cd-logo.svg`} alt="" className="h-9 w-9" />
+      <header className="topbar">
+        <div className="flex items-center gap-2.5">
+          <div className="rounded-full shadow-[0_0_24px_rgba(182,255,126,0.2)]">
+            <LogoMark size={w < 640 ? 34 : 40} />
+          </div>
           <div className="leading-tight text-white">
-            <div className="text-[0.65rem] font-bold uppercase tracking-[0.14em] text-[var(--lime)]">
-              CCDesigner
+            <div className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--lime)]">
+              {meta.brand}
             </div>
-            <div className="text-sm font-semibold">The facts</div>
+            <div className="text-sm font-semibold">
+              The{" "}
+              <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
+                facts
+              </span>
+            </div>
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {!overview ? (
-            <button
-              type="button"
-              onClick={() => zoomTo(null)}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-[var(--lime)]/40 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-[var(--lime)]"
-            >
-              <Maximize2 className="h-3.5 w-3.5" />
-              Map
-            </button>
-          ) : null}
-          {activeMeta && activeMeta.n > 1 ? (
-            <button
-              type="button"
-              onClick={() => {
-                const prev = CHAPTERS.find((c) => c.n === activeMeta.n - 1);
-                if (prev) zoomTo(prev.id);
-              }}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-white/85"
-            >
-              <ArrowLeft className="h-3.5 w-3.5" />
-              Prev
-            </button>
-          ) : null}
-          {activeMeta && activeMeta.n < 15 ? (
-            <button
-              type="button"
-              onClick={() => {
-                const next = CHAPTERS.find((c) => c.n === activeMeta.n + 1);
-                if (next) zoomTo(next.id);
-              }}
-              className="inline-flex items-center gap-1 rounded-lg border border-white/15 bg-white/5 px-2.5 py-1.5 text-xs font-semibold text-white/85"
-            >
-              Next
+        <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Zoom out"
+            onClick={() => {
+              syncRefs();
+              zoomAt(w / 2, h / 2, scaleRef.current * 0.82);
+            }}
+          >
+            <ZoomOut className="h-4 w-4" />
+          </button>
+          <button
+            type="button"
+            className="icon-btn"
+            aria-label="Zoom in"
+            onClick={() => {
+              syncRefs();
+              zoomAt(w / 2, h / 2, scaleRef.current * 1.22);
+            }}
+          >
+            <ZoomIn className="h-4 w-4" />
+          </button>
+          {active ? (
+            <button type="button" className="chip-overview" onClick={() => flyToCluster(null)}>
+              Overview
             </button>
           ) : null}
           <button
             type="button"
-            onClick={goHome}
-            className="inline-flex items-center gap-1.5 rounded-lg bg-[var(--lime)] px-2.5 py-1.5 text-xs font-bold text-[#002d24]"
+            className="chip-home"
+            onClick={() => {
+              window.location.href = "/";
+            }}
           >
             <Home className="h-3.5 w-3.5" />
             Home
           </button>
         </div>
-      </div>
+      </header>
 
-      <div className="canvas-stage">
-        <motion.div
-          className="canvas-world"
-          style={{ scale: scaleMv, x: xMv, y: yMv }}
-        >
-          {CHAPTERS.map((ch) => {
-            const origin = clusterOrigin(ch.id);
+      {!active ? (
+        <div className="overview-facts" aria-label="Key facts">
+          <p className="overview-facts-title">Key facts · tap to explore</p>
+          <div className="overview-facts-grid">
+            {OVERVIEW_STAT_IDS.map((id) => {
+              const s = getStat(id);
+              if (!s) return null;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  className="overview-fact"
+                  onClick={() => flyToCluster(STAT_ZOOM_TARGET[id] ?? "glance")}
+                >
+                  <span className="overview-fact-value">{s.value}</span>
+                  <span className="overview-fact-label">{s.label}</span>
+                  {showKeys ? <span className="edit-key">stats.{id}</span> : null}
+                </button>
+              );
+            })}
+          </div>
+          <p className="overview-hint">Drag to pan · pinch / wheel to zoom · tap a heading</p>
+        </div>
+      ) : null}
+
+      <div
+        ref={stageRef}
+        className="canvas-stage"
+        onPointerDown={onPointerDown}
+        onPointerMove={onPointerMove}
+        onPointerUp={onPointerUp}
+        onPointerCancel={onPointerUp}
+      >
+        <motion.div className="canvas-world" style={{ scale: scaleMv, x: xMv, y: yMv }}>
+          <div className="world-glow" aria-hidden />
+          <svg className="world-path" width="2400" height="3600" aria-hidden>
+            <path
+              d={pathD}
+              fill="none"
+              stroke="rgba(182,255,126,0.22)"
+              strokeWidth="5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+
+          {clusters.map((ch) => {
             const isActive = active === ch.id;
             const isCover = ch.id === "cover";
             return (
               <div
                 key={ch.id}
-                className={`cluster ${isActive ? "active" : ""} ${isCover ? "cover-cluster" : ""}`}
-                style={{
-                  left: origin.x,
-                  top: origin.y,
-                  width: CELL_W,
-                  minHeight: 420,
-                }}
+                className={`node ${isActive ? "node-active" : ""} ${isCover ? "node-cover" : ""}`}
+                style={{ left: ch.x, top: ch.y }}
               >
+                <button
+                  type="button"
+                  className="node-heading"
+                  onPointerDown={(e) => {
+                    // Allow tap without starting a world-drag from the heading
+                    e.stopPropagation();
+                    moved.current = false;
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    flyToCluster(isActive ? null : ch.id);
+                  }}
+                >
+                  <span className="node-kicker">
+                    {ch.n < 10 ? `0${ch.n}` : ch.n}
+                    {showKeys ? <span className="edit-key"> clusters.{ch.id}</span> : null}
+                  </span>
+                  <span className="node-title">{ch.title}</span>
+                  <span className="node-line">{ch.overviewLine}</span>
+                </button>
+
                 {isActive ? (
-                  <div className="cluster-inner">
-                    <div className="cluster-badge">
-                      {ch.n}. {ch.label}
-                    </div>
-                    <ChapterBody id={ch.id} />
-                  </div>
-                ) : (
-                  <button
-                    type="button"
-                    className="w-full border-0 bg-transparent p-0 text-left"
-                    onClick={() => zoomTo(ch.id)}
-                    aria-label={`Open ${ch.label}`}
+                  <div
+                    className="node-detail"
+                    onPointerDown={(e) => e.stopPropagation()}
+                    onWheel={(e) => e.stopPropagation()}
                   >
-                    <div className="cluster-inner">
-                      <div className="cluster-badge">
-                        {ch.n}. {ch.label}
-                      </div>
-                      <PreviewLabel id={ch.id} label={ch.label} />
+                    <ChapterBody cluster={ch} showKeys={showKeys} />
+                    <div className="node-actions">
+                      <button type="button" className="chip-outline" onClick={() => flyToCluster(null)}>
+                        Back to overview
+                      </button>
+                      {journeyIndex >= 0 && journeyIndex < journey.length - 1 ? (
+                        <button
+                          type="button"
+                          className="chip-lime"
+                          onClick={() => flyToCluster(journey[journeyIndex + 1])}
+                        >
+                          Continue path
+                        </button>
+                      ) : null}
                     </div>
-                  </button>
-                )}
+                  </div>
+                ) : null}
               </div>
             );
           })}
         </motion.div>
       </div>
 
-      <nav className="nav-rail" aria-label="Chapters">
-        {CHAPTERS.map((ch) => (
-          <button
-            key={ch.id}
-            type="button"
-            aria-current={active === ch.id ? "true" : undefined}
-            onClick={() => zoomTo(ch.id)}
-          >
-            {ch.n}. {ch.label}
+      {activeCluster ? (
+        <div className="mobile-overview-bar">
+          <button type="button" onClick={() => flyToCluster(null)}>
+            ← Overview
           </button>
-        ))}
-      </nav>
-    </div>
-  );
-}
-
-function PreviewLabel({ id, label }: { id: ChapterId; label: string }) {
-  const blurb: Record<ChapterId, string> = {
-    cover: "Evidence overview for funding & partnership",
-    glance: "Headline verified figures",
-    longterm: "Chart 1 — contraction since ~2010",
-    primary: "Chart 2 — hours gap & subject leads",
-    secondary: "Chart 3 — disadvantage & entries",
-    availability: "Chart 4 — schools with no GCSE entries",
-    gcse: "Chart 5 — indexed 2024–26 GCSE",
-    alevel: "Chart 6 — indexed A-level pipeline",
-    teachers: "Workforce & teaching time",
-    poverty: "Place, FSM & cold spots",
-    he: "Chart 7 — Creative Arts & Design HE",
-    hubs: "Chart 8 — funding streams (non-additive)",
-    centre: "National Centre transition",
-    meaning: "How CCD aims to respond",
-    conclusion: "Sources & verification note",
-  };
-  return (
-    <div>
-      <h2 className={`display text-2xl ${id === "cover" ? "text-white" : "text-[#002d24]"}`}>
-        {label}
-      </h2>
-      <p className={`mt-2 text-sm ${id === "cover" ? "text-white/70" : "text-[#5c6b66]"}`}>
-        {blurb[id]}
-      </p>
-      <p className={`mt-4 text-xs font-semibold ${id === "cover" ? "text-[var(--lime)]" : "text-[#2A9D8F]"}`}>
-        Click to zoom in →
-      </p>
+          <span>{activeCluster.title}</span>
+        </div>
+      ) : null}
     </div>
   );
 }
