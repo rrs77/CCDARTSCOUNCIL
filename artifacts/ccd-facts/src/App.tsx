@@ -67,6 +67,10 @@ export default function App() {
   const { w, h } = useViewport();
   const reduced = useReducedMotion();
   const [active, setActive] = useState<string | null>(null);
+  const [intro, setIntro] = useState(() => {
+    const params = new URLSearchParams(window.location.search);
+    return !params.get("chapter") && params.get("skipIntro") !== "1";
+  });
   const [showKeys] = useState(
     () => new URLSearchParams(window.location.search).get("edit") === "1",
   );
@@ -155,25 +159,25 @@ export default function App() {
     [fitOverview, setCamera, showKeys, w],
   );
 
-  // Opening beat: land briefly on cover framing, then pull back to the map
+  // Opening beat: homepage “connection” world, then reveal the facts map
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("chapter")) return undefined;
-    if (params.get("skipIntro") === "1") return undefined;
-    const cover = clusters.find((c) => c.id === "cover");
-    if (!cover) return undefined;
-    const introScale = w < 640 ? 0.72 : 0.88;
-    setCamera(introScale, -(cover.x + 240) * introScale, -(cover.y + 40) * introScale + 20, false);
-    const t = window.setTimeout(() => {
+    if (!intro) {
       const { s, x, y } = fitOverview();
-      setCamera(s, x, y, true);
-    }, reduced ? 0 : 1100);
+      setCamera(s, x, y, false);
+      return undefined;
+    }
+    const t = window.setTimeout(() => {
+      setIntro(false);
+      const { s, x, y } = fitOverview();
+      setCamera(s, x, y, !reduced);
+    }, reduced ? 0 : 1600);
     return () => window.clearTimeout(t);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps — once on mount
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     const ch = new URLSearchParams(window.location.search).get("chapter");
     if (ch && clusters.some((c) => c.id === ch)) {
+      setIntro(false);
       const t = window.setTimeout(() => flyToCluster(ch), 40);
       return () => window.clearTimeout(t);
     }
@@ -287,7 +291,36 @@ export default function App() {
 
   return (
     <div className="facts-app">
-      <header className="topbar">
+      {intro ? (
+        <div className="intro-beat" role="presentation">
+          <div className="intro-beat-inner slide-auto-enter">
+            <div className="mx-auto mb-5 w-fit rounded-full shadow-[0_0_40px_rgba(182,255,126,0.22)]">
+              <LogoMark size={w < 640 ? 72 : 96} />
+            </div>
+            <p className="pitch-eyebrow text-[var(--lime)]">{meta.brand}</p>
+            <h1 className="pitch-h1 display mt-3 text-white">
+              {meta.heroLineBefore}{" "}
+              <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
+                {meta.heroLineAccent}
+              </span>
+            </h1>
+            <p className="pitch-body-lg mt-3 max-w-md text-white/80">{meta.heroSupport}</p>
+            <button
+              type="button"
+              className="chip-lime mt-6"
+              onClick={() => {
+                setIntro(false);
+                const { s, x, y } = fitOverview();
+                setCamera(s, x, y, !reduced);
+              }}
+            >
+              Enter the facts
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      <header className={`topbar ${intro ? "opacity-0 pointer-events-none" : ""}`}>
         <div className="flex items-center gap-2.5">
           <div className="rounded-full shadow-[0_0_24px_rgba(182,255,126,0.2)]">
             <LogoMark size={w < 640 ? 34 : 40} />

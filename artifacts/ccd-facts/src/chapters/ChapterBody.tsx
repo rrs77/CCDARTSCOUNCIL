@@ -16,7 +16,7 @@ function WhyCcd({ children, showKeys }: { children: React.ReactNode; showKeys?: 
         Why this matters for CCDesigner
         {showKeys ? <span className="edit-key"> whyThisMattersForCcd</span> : null}
       </strong>
-      <p>{children}</p>
+      <p className="pitch-body">{children}</p>
     </aside>
   );
 }
@@ -30,7 +30,7 @@ function Drill({ text, onClear }: { text: string; onClear: () => void }) {
           Clear
         </button>
       </div>
-      {text}
+      <p className="pitch-body m-0">{text}</p>
     </div>
   );
 }
@@ -46,26 +46,19 @@ export function ChapterBody({
   const isCover = cluster.id === "cover";
 
   return (
-    <div className={isCover ? "space-y-4 text-[#fffaf7]" : ""}>
+    <div className={`slide-auto-enter ${isCover ? "text-[#fffaf7]" : ""}`}>
       {isCover ? (
-        <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[var(--lime)]">
+        <p className="pitch-eyebrow text-[var(--lime)]">
           {meta.brand}
           {showKeys ? <span className="edit-key"> meta.brand</span> : null}
         </p>
       ) : null}
 
-      <h2
-        className={`display mb-2 leading-tight ${
-          isCover ? "text-3xl text-white sm:text-4xl" : "text-2xl text-[#002d24]"
-        }`}
-      >
+      <h2 className={`display mb-2 leading-tight ${isCover ? "pitch-h1 text-white" : "pitch-h2 text-[#002d24]"}`}>
         {isCover ? (
           <>
             The State of Creative Education in{" "}
-            <span
-              className="italic font-normal"
-              style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}
-            >
+            <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
               England
             </span>
           </>
@@ -73,35 +66,30 @@ export function ChapterBody({
           cluster.title
         )}
         {showKeys ? (
-          <span className="edit-key">
-            {" "}
-            {isCover ? "meta.title" : `clusters.${cluster.id}.title`}
-          </span>
+          <span className="edit-key"> {isCover ? "meta.title" : `clusters.${cluster.id}.title`}</span>
         ) : null}
       </h2>
 
       {isCover ? (
-        <p className="text-base text-white/80 sm:text-lg">
+        <p className="pitch-body-lg text-white/80">
           {meta.subtitle}
           {showKeys ? <span className="edit-key"> meta.subtitle</span> : null}
         </p>
       ) : (
-        <p className="mb-3 text-sm font-medium text-[#14b8a6]">
+        <p className="mb-3 pitch-body font-medium text-[#14b8a6]">
           {cluster.investorLine}
           {showKeys ? <span className="edit-key"> investorLine</span> : null}
         </p>
       )}
 
-      <div
-        className={`space-y-3 text-sm leading-relaxed ${
-          isCover ? "text-white/85 sm:text-[0.95rem]" : "text-[#33443e]"
-        }`}
-      >
+      <div className={`mt-3 space-y-2.5 ${isCover ? "text-white/85" : "text-[#33443e]"}`}>
         {(isCover ? meta.coverFraming : cluster.body).map((p, i) => (
-          <p key={i}>{p}</p>
+          <p key={i} className="pitch-body m-0">
+            {p}
+          </p>
         ))}
         {isCover ? (
-          <p className="italic text-white/70">
+          <p className="pitch-caption m-0 italic text-white/65">
             {meta.earlyYearsPrinciple}
             {showKeys ? <span className="edit-key"> meta.earlyYearsPrinciple</span> : null}
           </p>
@@ -115,11 +103,11 @@ export function ChapterBody({
             if (!s) return null;
             return (
               <div key={id} className="stat-pill">
-                <div className="num">
+                <div className="num pitch-stat">
                   {s.value}
                   {showKeys ? <span className="edit-key"> stats.{id}</span> : null}
                 </div>
-                <div className="lbl">
+                <div className="lbl pitch-caption">
                   <strong>{s.label}</strong>
                   <br />
                   {s.footnote}
@@ -134,7 +122,7 @@ export function ChapterBody({
         const chart = getChart(cid);
         if (!chart) return null;
         return (
-          <div key={cid} className="mt-4">
+          <div key={cid} className="mt-4 chart-hero">
             <ContentChart
               chart={chart}
               showKeys={showKeys}
@@ -145,7 +133,7 @@ export function ChapterBody({
       })}
 
       {cluster.id === "conclusion" ? (
-        <ol className="mt-4 list-decimal space-y-1.5 pl-4 text-sm text-[#33443e]">
+        <ol className="mt-4 list-decimal space-y-1.5 pl-4 pitch-caption text-[#33443e]">
           {principalSourceIds.map((id) => {
             const s = sources[id];
             if (!s) return null;
@@ -167,10 +155,6 @@ export function ChapterBody({
       {drill ? <Drill text={drill} onClear={() => setDrill(null)} /> : null}
 
       <WhyCcd showKeys={showKeys}>{cluster.whyThisMattersForCcd}</WhyCcd>
-
-      {isCover ? (
-        <p className="text-xs text-white/55">Click any topic on the map — or follow the suggested journey.</p>
-      ) : null}
     </div>
   );
 }

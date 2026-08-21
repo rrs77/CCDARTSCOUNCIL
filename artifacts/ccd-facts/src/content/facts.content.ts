@@ -132,21 +132,26 @@ export const meta = {
   title: "The State of Creative Education in England",
   subtitle:
     "A concise evidence overview for funding, partnership and development. Prepared and re-verified 21 August 2026.",
+  /** Homepage opening beat (login hero language). */
+  heroLineBefore: "Exceptional lessons start with",
+  heroLineAccent: "connection",
+  heroSupport:
+    "Capture ideas. Build lessons. Connect with arts organisations — EYFS to A-level.",
   coverFraming: [
-    "Creative education in England is at a point of change. Long-term evidence shows substantial contraction in arts qualifications, teaching time and parts of the specialist workforce, alongside a pronounced entitlement gap linked to disadvantage. Curriculum reform and the National Centre for Arts and Music Education create an opportunity to strengthen access and partnership.",
-    "CCDesigner is a free national planning and resource platform for performing and creative arts teachers from EYFS to KS5. It aims to bring planning, reusable activity blocks, curriculum links and resources into one place, while connecting teachers directly with arts organisations through dedicated hubs.",
-    "It is not a solution to structural inequality on its own. Its intended contribution is to reduce the distance between excellent practice and the teacher who needs it; make high-quality resources easier to find, retain and adapt; strengthen communication between schools and cultural organisations; and support differentiation and responsive planning. A digital platform cannot replace specialist teachers, instruments, spaces or live cultural experiences. It can help ensure ideas, knowledge and connections are not confined by postcode.",
+    "Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.",
+    "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
+    "Not a fix for structural inequality on its own. It aims to shorten the distance between excellent practice and the teacher who needs it. A platform cannot replace specialists, instruments or live culture — it can keep ideas and connections from being confined by postcode.",
   ],
   earlyYearsPrinciple:
-    "Early-years principle: children should be able to shape and respond to their learning. Creative subjects need not always be confined to a conventional classroom.",
+    "Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.",
   closing:
-    "Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Recent Ofqual provisional figures show mixed short-term movement, not a reversal of the long-term picture. National reform, Music Hubs and the National Centre create space for better connection. CCDesigner aims to be part of that practical response — connecting teachers and arts organisations without over-claiming impact.",
+    "The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to be a practical connection layer — teachers and organisations, day to day — without over-claiming impact.",
   verificationNote:
-    "Verification note: figures on this canvas were re-checked against the cited CLA, Ofqual, DfE and HESA analyses on 21 August 2026. Where secondary briefings conflicted with the primary table, the primary table was preferred. Unverified national percentages (for example a single figure for universities closing arts courses, or weekly Year 7 teaching time) were omitted.",
+    "Verification note: figures re-checked against CLA, Ofqual, DfE and HESA analyses on 21 August 2026. Primary tables preferred over secondary paraphrase. Unverified national percentages omitted.",
   partnerDisclaimer:
     "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships. This is a prototype / demo connection layer.",
   fundingCase:
-    "Strongest funding case: evidence of fragmentation, unequal entitlement and teacher-capacity pressure, while national policy seeks school–cultural partnerships. CCD aims to make those connections usable day-to-day. We don’t need more resources so much as to make the outstanding ones easier to find, connect and build upon.",
+    "Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. CCD aims to make those connections usable. We don’t need more resources so much as to make the outstanding ones easier to find, connect and build upon.",
 };
 
 /** Suggested path through the canvas (click-to-explore still free). */
@@ -612,13 +617,8 @@ export const clusters: ClusterDef[] = [
     overviewLine: "How CCD aims to respond",
     investorLine: "Connect rather than duplicate — make outstanding practice usable day to day.",
     body: [
-      "Connect rather than duplicate — help teachers find and adapt outstanding practice; keep official materials on organisation sites.",
-      "Support generalist and specialist — planning stubs, activity blocks and curriculum links for different levels of confidence.",
-      "Design for different learners — differentiation and responsive planning, including SEND-aware pathways.",
-      "Keep learning cumulative — capture ideas → build lessons → half-term and term plans from EYFS to A-level.",
-      "Make partnership measurable — Partner Hubs as a clear connection layer teachers can actually use.",
-      "Prioritise underserved areas — surface routes into resources where entitlement is thinnest.",
-      "Keep children active — early-years ethos: children help shape learning; arts need not always sit in a typical classroom.",
+      "Connect rather than duplicate. Support generalists and specialists. Design for different learners. Keep learning cumulative from EYFS to A-level.",
+      "Make partnership measurable through Partner Hubs. Prioritise underserved areas. Keep children active in shaping learning.",
       meta.fundingCase,
       meta.partnerDisclaimer,
     ],
