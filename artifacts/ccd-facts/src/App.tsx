@@ -30,6 +30,29 @@ const FLY_MS = 0.42;
 const SHRINK_MS = 360;
 const TRAVEL_MS = 480;
 const MAX_ZOOM_MULT = 10;
+/** Same step for header +/- buttons and keyboard +/-/=/_ (repeatable on keydown). */
+const ZOOM_IN_FACTOR = 1.2;
+const ZOOM_OUT_FACTOR = 1 / ZOOM_IN_FACTOR;
+
+function isZoomInKey(e: KeyboardEvent) {
+  return (
+    e.key === "+" ||
+    e.key === "=" ||
+    e.key === "Add" ||
+    e.code === "Equal" ||
+    e.code === "NumpadAdd"
+  );
+}
+
+function isZoomOutKey(e: KeyboardEvent) {
+  return (
+    e.key === "-" ||
+    e.key === "_" ||
+    e.key === "Subtract" ||
+    e.code === "Minus" ||
+    e.code === "NumpadSubtract"
+  );
+}
 
 function useViewport() {
   const [size, setSize] = useState({ w: 390, h: 844 });
@@ -340,6 +363,32 @@ export default function App() {
     [h, setCamera, syncRefs, w],
   );
 
+  /** Client point to zoom toward: open/focused strand box, else canvas centre. */
+  const zoomFocusClient = useCallback(() => {
+    syncRefs();
+    const id =
+      modalId ?? (glanceOpen ? "situation" : null) ?? focusIdRef.current ?? focusId;
+    const item = id ? getStrandItem(id) : undefined;
+    if (item) {
+      const wx = item.x + 56;
+      const wy = item.y + 18;
+      return {
+        x: w / 2 + xRef.current + wx * scaleRef.current,
+        y: h / 2 + yRef.current + wy * scaleRef.current,
+      };
+    }
+    return { x: w / 2, y: h / 2 };
+  }, [focusId, glanceOpen, h, modalId, syncRefs, w]);
+
+  const zoomByStep = useCallback(
+    (direction: "in" | "out") => {
+      const pt = zoomFocusClient();
+      const factor = direction === "in" ? ZOOM_IN_FACTOR : ZOOM_OUT_FACTOR;
+      zoomAt(pt.x, pt.y, scaleRef.current * factor);
+    },
+    [zoomAt, zoomFocusClient],
+  );
+
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
@@ -362,10 +411,32 @@ export default function App() {
     return () => el.removeEventListener("wheel", onWheel);
   }, [glanceOpen, modalId, setCamera, shrinking, syncRefs, zoomAt]);
 
+  // Keyboard zoom — capture so it works with modal open; skip only in editable fields.
+  // Native key-repeat while held drives continuous zoom.
+  useEffect(() => {
+    const onZoomKey = (e: KeyboardEvent) => {
+      if (isEditingField()) return;
+      if (isZoomInKey(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomByStep("in");
+        return;
+      }
+      if (isZoomOutKey(e)) {
+        e.preventDefault();
+        e.stopPropagation();
+        zoomByStep("out");
+      }
+    };
+    window.addEventListener("keydown", onZoomKey, true);
+    return () => window.removeEventListener("keydown", onZoomKey, true);
+  }, [zoomByStep]);
+
   // Keyboard — strand travel (not modal paging). Works without focusing the canvas.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (isEditingField()) return;
+      if (isZoomInKey(e) || isZoomOutKey(e)) return; // handled in capture
       if (e.key === "Escape") {
         e.preventDefault();
         if (glanceOpen) closeGlance();
@@ -385,14 +456,6 @@ export default function App() {
         void travelStrand(-1);
         return;
       }
-      if (e.key === "+" || e.key === "=") {
-        e.preventDefault();
-        zoomAt(w / 2, h / 2, scaleRef.current * 1.18);
-      }
-      if (e.key === "-" || e.key === "_") {
-        e.preventDefault();
-        zoomAt(w / 2, h / 2, scaleRef.current * 0.85);
-      }
       if (e.key === "Home") {
         e.preventDefault();
         goOverview();
@@ -400,17 +463,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [
-    closeGlance,
-    closeModal,
-    glanceOpen,
-    goOverview,
-    h,
-    modalId,
-    travelStrand,
-    w,
-    zoomAt,
-  ]);
+  }, [closeGlance, closeModal, glanceOpen, goOverview, modalId, travelStrand]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
     if (modalId || glanceOpen || shrinking) return;
@@ -554,16 +607,18 @@ export default function App() {
           <button
             type="button"
             className="icon-btn"
-            aria-label="Zoom out"
-            onClick={() => zoomAt(w / 2, h / 2, scaleRef.current * 0.82)}
+            aria-label={meta.ui.zoomOut}
+            title={`${meta.ui.zoomOut} (−)`}
+            onClick={() => zoomByStep("out")}
           >
             <ZoomOut className="h-4 w-4" />
           </button>
           <button
             type="button"
             className="icon-btn"
-            aria-label="Zoom in"
-            onClick={() => zoomAt(w / 2, h / 2, scaleRef.current * 1.22)}
+            aria-label={meta.ui.zoomIn}
+            title={`${meta.ui.zoomIn} (+)`}
+            onClick={() => zoomByStep("in")}
           >
             <ZoomIn className="h-4 w-4" />
           </button>
