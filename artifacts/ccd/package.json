@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0",
-    "predev": "pnpm run build:pitch",
+    "predev": "pnpm run build:pitch && pnpm run build:facts",
     "build:pitch": "BASE_PATH=/ccd-pitch/ pnpm --filter @workspace/ccd-pitch run build && rm -rf public/ccd-pitch && cp -r ../ccd-pitch/dist/public public/ccd-pitch && node scripts/generate-pitch-slide-fallbacks.mjs",
-    "prebuild": "pnpm run build:pitch",
+    "build:facts": "BASE_PATH=/the-facts/ pnpm --filter @workspace/ccd-facts run build && rm -rf public/the-facts && cp -r ../ccd-facts/dist/public public/the-facts",
+    "prebuild": "pnpm run build:pitch && pnpm run build:facts",
     "build": "vite build --config vite.config.ts",
     "serve": "vite preview --config vite.config.ts --host 0.0.0.0",
     "typecheck": "tsc -p tsconfig.json --noEmit"
