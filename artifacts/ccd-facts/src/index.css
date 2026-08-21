@@ -499,20 +499,26 @@ button {
   left: 50%;
   bottom: 0.85rem;
   transform: translateX(-50%);
-  width: min(1100px, calc(100% - 1.5rem));
   display: flex;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.55rem;
-  padding: 0.55rem 0.75rem;
-  border-radius: 1rem;
-  background: rgba(0, 26, 21, 0.88);
+  justify-content: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.55rem;
+  border-radius: 999px;
+  background: rgba(0, 26, 21, 0.82);
   border: 1px solid rgba(182, 255, 126, 0.28);
   backdrop-filter: blur(12px);
   opacity: 0;
   pointer-events: none;
   transition: opacity 0.3s ease;
+  width: auto;
+  max-width: calc(100% - 1.5rem);
+}
+
+.present-chrome--thin {
+  /* Compact pill — canvas tools only, not a slide deck */
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
 }
 
 .present-chrome.is-visible {
@@ -520,75 +526,32 @@ button {
   pointer-events: auto;
 }
 
-.present-chrome-left,
-.present-chrome-right {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 0.35rem;
-  align-items: center;
-}
-
-.present-chrome-center {
-  flex: 1 1 12rem;
-  min-width: 8rem;
-  text-align: center;
-  color: #fffaf7;
-}
-
-.present-current {
-  margin: 0;
-  font-size: 0.85rem;
-  font-weight: 650;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.present-step {
-  margin: 0.15rem 0 0;
-  font-size: 0.7rem;
-  color: rgba(255, 250, 247, 0.65);
-}
-
-.present-progress {
-  height: 3px;
-  margin: 0.35rem auto 0;
-  max-width: 12rem;
-  border-radius: 99px;
-  background: rgba(255, 255, 255, 0.15);
-  overflow: hidden;
-}
-
-.present-progress-bar {
-  height: 100%;
-  background: var(--lime);
-}
-
 .present-btn,
 .present-icon {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background: rgba(255, 255, 255, 0.06);
   color: #fff;
-  border-radius: 0.65rem;
-  padding: 0.4rem 0.65rem;
+  border-radius: 999px;
+  padding: 0.35rem 0.7rem;
   font-size: 0.78rem;
   font-weight: 650;
 }
 
-.present-btn-primary {
-  background: rgba(182, 255, 126, 0.2);
-  border-color: rgba(182, 255, 126, 0.45);
-  color: var(--lime);
-}
-
 .present-icon {
-  width: 2.35rem;
-  height: 2.35rem;
+  width: 2.2rem;
+  height: 2.2rem;
   justify-content: center;
   padding: 0;
+}
+
+.present-btn:hover,
+.present-icon:hover {
+  background: rgba(182, 255, 126, 0.16);
+  border-color: rgba(182, 255, 126, 0.4);
+  color: var(--lime);
 }
 
 /* —— Collapsible Map (alternative nav) —— */

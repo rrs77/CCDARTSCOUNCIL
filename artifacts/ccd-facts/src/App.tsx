@@ -691,7 +691,6 @@ export default function App() {
       <PresentChrome
         presentation={presentation}
         focusId={focusedId ?? activeChildId ?? highlightId}
-        pathIndex={pathIndex}
         chromeVisible={chromeVisible}
         fullscreen={fullscreen}
         onOverview={() => {
@@ -701,19 +700,10 @@ export default function App() {
           persist(null, pathIndexRef.current);
           writeUrl(null);
         }}
-        onHome={goHome}
-        onPrev={() => stepPath(-1)}
-        onNext={() => stepPath(1)}
-        onResume={() => {
-          const id = focusedId ?? activeChildId ?? highlightId;
-          if (id) openDetail(id);
-          else goHome();
-        }}
         onZoomIn={() => zoomByStep("in")}
         onZoomOut={() => zoomByStep("out")}
         onToggleFullscreen={toggleFullscreen}
         onJump={(id) => {
-          // Same two-step as canvas: first zoom, second opens modal
           handleSelect(id);
         }}
       />
