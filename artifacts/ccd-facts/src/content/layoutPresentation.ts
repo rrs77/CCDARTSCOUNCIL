@@ -1,8 +1,8 @@
 /**
- * Lean Prezi layout from CONTENT.md.
- * - ## → hub (1 sentence + 1 hero). Children = ### and lean extras (max 4).
- * - Frames are spaced far apart — never ellipse-clustered (overlapping rings).
- * - Extra essay text becomes nested stops with unique titles (never reuse hub title).
+ * Lean Prezi layout from CONTENT.md — overlap-safe grid.
+ * Root hubs sit on a quiet pathway grid with large gutters.
+ * Leaf frames are parked far below (path/modal only) so they never
+ * collide with hub overview scenes.
  */
 
 import {
@@ -36,8 +36,11 @@ export type FrameNode = {
   photoHero: boolean;
   photoCrop: PhotoCrop;
   footnotes?: ParsedDocument["footnotes"];
-  /** Child ids for path + hub edge satellites */
   childIds: string[];
+  /** Full CONTENT.md blocks for this section (modal body). */
+  blocks: ContentBlock[];
+  /** Nested ### sections for hub detail modals */
+  subsections?: { title: string; blocks: ContentBlock[] }[];
 };
 
 export type Presentation = {
@@ -49,11 +52,14 @@ export type Presentation = {
 };
 
 const MAX_CHILDREN = 4;
-const FRAME_W = 1280;
-const FRAME_H = 800;
-/** Centres far apart — one scene at a time; no overlapping rings */
-const GAP = 2400;
-const PAD = 480;
+/** Uniform zone size — wide enough for long titles like MUSIC EDUCATION */
+const FRAME_W = 1480;
+const FRAME_H = 860;
+/** Clear edge-to-edge gutter between hubs (≥48px at overview; more when zoomed) */
+const GUTTER = 520;
+const PAD = 560;
+/** Park leaves well below the hub band */
+const LEAF_BAND_GAP = 4200;
 
 function uniqueId(base: string, used: Set<string>): string {
   let id = base;
@@ -63,6 +69,10 @@ function uniqueId(base: string, used: Set<string>): string {
   return id;
 }
 
+/**
+ * Two-tier title. Prefer wrapping-friendly giants (≤2 words) and keep
+ * the rest as the small line so “MUSIC EDUCATION” isn’t cropped.
+ */
 export function splitTitle(title: string): { small: string; giant: string } {
   const words = title.trim().split(/\s+/);
   if (words.length === 1) return { small: "", giant: words[0]!.toUpperCase() };
@@ -72,6 +82,7 @@ export function splitTitle(title: string): { small: string; giant: string } {
   if (words.length === 2) {
     return { small: words[0]!, giant: words[1]!.toUpperCase() };
   }
+  // Long titles: small = lead phrase, giant = last 1–2 words (wraps inside card)
   const giantCount = words.length >= 5 ? 2 : 1;
   return {
     small: words.slice(0, -giantCount).join(" "),
@@ -93,7 +104,6 @@ function shortLabel(text: string, max = 28): string {
   return t.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
 }
 
-/** Title for an extra paragraph leaf — never clone the hub heading. */
 function leafTitleFromSentence(sentence: string, fallback: string): string {
   const t = sentence.replace(/\s+/g, " ").trim();
   const words = t.split(/\s+/).slice(0, 4).join(" ");
@@ -117,6 +127,8 @@ type Proto = {
   photoHero: boolean;
   photoCrop: PhotoCrop;
   footnotes?: ParsedDocument["footnotes"];
+  blocks: ContentBlock[];
+  subsections?: { title: string; blocks: ContentBlock[] }[];
 };
 
 export function expandToProtos(doc: ParsedDocument): Proto[] {
@@ -135,6 +147,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
     sentence: doc.lead[0] ? firstSentence(doc.lead[0]) : "",
     photoHero: true,
     photoCrop: nextCrop(),
+    blocks: doc.lead.map((text) => ({ type: "paragraph" as const, text })),
   });
 
   const mains = doc.sections.filter((s) => s.level === 2);
@@ -163,10 +176,13 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
     used.add(hubId);
     const crop = nextCrop();
 
+    // One hero only: prefer chart OR one stat OR photo — never stack competing ovals
+    const hubChart = !isSources && charts[0] ? charts[0].chartId : undefined;
     const hubStat =
-      !isSources && stats[0]
+      !isSources && !hubChart && stats[0]
         ? { value: stats[0].value, label: shortLabel(stats[0].label, 48) }
         : undefined;
+
     protos.push({
       id: hubId,
       parentId: null,
@@ -180,9 +196,15 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
           ? firstSentence(quotes[0].text)
           : "",
       heroStat: hubStat,
-      photoHero: !hubStat && !isSources,
+      chartId: hubChart,
+      quote: quotes[0] ? firstSentence(quotes[0].text) : undefined,
+      photoHero: !hubStat && !hubChart && !isSources,
       photoCrop: crop,
       footnotes: isSources ? doc.footnotes : undefined,
+      blocks: sec.blocks,
+      subsections: nested
+        .filter((n) => n.parentId === sec.id)
+        .map((n) => ({ title: n.title, blocks: n.blocks })),
     });
 
     type ChildSpec = {
@@ -193,6 +215,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       chartId?: string;
       quote?: string;
       photoHero: boolean;
+      blocks: ContentBlock[];
     };
     const children: ChildSpec[] = [];
     const usedChildTitles = new Set<string>([sec.title.trim().toLowerCase()]);
@@ -239,6 +262,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
           : undefined,
         chartId: !kStats[0] ? kCharts[0]?.chartId : undefined,
         photoHero: false,
+        blocks: kid.blocks,
       });
     }
 
@@ -250,10 +274,11 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
         title: takeTitle(leafTitleFromSentence(sentence, `More ${i}`)),
         sentence,
         photoHero: false,
-        heroStat: undefined,
+        blocks: [{ type: "paragraph", text: paras[i]!.text }],
       });
     }
 
+    // Extra stats (beyond hub hero) → leaf stops — not second ovals on the hub
     const startStat = hubStat ? 1 : 0;
     for (let i = startStat; i < stats.length && children.length < MAX_CHILDREN; i++) {
       const st = stats[i]!;
@@ -264,10 +289,12 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
         sentence: shortLabel(st.label, 100),
         heroStat: { value: st.value, label: shortLabel(st.label, 48) },
         photoHero: false,
+        blocks: [{ type: "stat", value: st.value, label: st.label }],
       });
     }
 
-    if (charts[0] && children.length < MAX_CHILDREN) {
+    // Extra charts only if hub didn’t take the first
+    if (!hubChart && charts[0] && children.length < MAX_CHILDREN) {
       const c = charts[0];
       const id = uniqueId(`${hubId}-${c.chartId}`, used);
       children.push({
@@ -276,17 +303,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
         sentence: "Detail from the evidence overview.",
         chartId: c.chartId,
         photoHero: false,
-      });
-    }
-
-    if (quotes[0] && children.length < MAX_CHILDREN && paras[0]) {
-      const id = uniqueId(`${hubId}-why`, used);
-      children.push({
-        id,
-        title: takeTitle("Why it matters"),
-        sentence: firstSentence(quotes[0].text),
-        quote: firstSentence(quotes[0].text),
-        photoHero: false,
+        blocks: [{ type: "chart", chartId: c.chartId }],
       });
     }
 
@@ -304,6 +321,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
         chartId: ch.chartId,
         photoHero: ch.photoHero,
         photoCrop: crop,
+        blocks: ch.blocks,
       });
     }
   }
@@ -311,26 +329,126 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
   return protos;
 }
 
-/** Place every path stop in its own clear region — no overlapping constellation. */
+/** Quiet pathway grid for hubs — fixed columns, large gutters, no AABB overlap. */
+function placeHubsOnGrid(hubs: FrameNode[]): void {
+  // Pathway bands (story order):
+  // 0: title (full width slot)
+  // 1: situation + key stages (primary, secondary, a-level)
+  // 2: after school (HE, hubs) + solution + sources
+  const COLS = 4;
+  const cellW = FRAME_W + GUTTER;
+  const cellH = FRAME_H + GUTTER;
+
+  const title = hubs.find((h) => h.kind === "title");
+  const rest = hubs.filter((h) => h.kind !== "title");
+
+  if (title) {
+    title.x = PAD;
+    title.y = PAD;
+    title.w = FRAME_W;
+    title.h = FRAME_H;
+  }
+
+  // Extra vertical air after title before the stage band
+  const band0Y = PAD + (title ? FRAME_H + GUTTER + 120 : 0);
+
+  rest.forEach((hub, i) => {
+    const col = i % COLS;
+    const row = Math.floor(i / COLS);
+    // Extra gutter on the hubs / solution band (row ≥ 1)
+    const yBoost = row >= 1 ? 180 : 0;
+    hub.x = PAD + col * cellW;
+    hub.y = band0Y + row * (cellH + yBoost);
+    hub.w = FRAME_W;
+    // Chart hubs need a touch more height — still same outer grid cell
+    hub.h = hub.chartId ? FRAME_H + 40 : FRAME_H;
+  });
+}
+
+function aabbOverlap(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+  pad = 48,
+): boolean {
+  return !(
+    a.x + a.w + pad <= b.x ||
+    b.x + b.w + pad <= a.x ||
+    a.y + a.h + pad <= b.y ||
+    b.y + b.h + pad <= a.y
+  );
+}
+
 export function buildPresentation(doc: ParsedDocument): Presentation {
   const protos = expandToProtos(doc);
   const frames: FrameNode[] = [];
   let sequence = 0;
-
-  const roots = protos.filter((p) => !p.parentId);
-  const ordered: Proto[] = [];
-  for (const root of roots) {
-    ordered.push(root);
-    ordered.push(...protos.filter((p) => p.parentId === root.id));
-  }
-
   const usedGiants = new Set<string>();
 
-  ordered.forEach((p, i) => {
+  const roots = protos.filter((p) => !p.parentId);
+  const hubFrames: FrameNode[] = [];
+
+  for (const p of roots) {
     let { small, giant } = splitTitle(p.title);
-    const gKey = giant.toLowerCase();
-    if (usedGiants.has(gKey)) {
-      // Avoid duplicate wordmarks like TEACHERS twice on the path
+    if (usedGiants.has(giant.toLowerCase())) {
+      const alt = splitTitle(`${p.title} detail`);
+      small = alt.small || small;
+      giant = alt.giant;
+    }
+    usedGiants.add(giant.toLowerCase());
+
+    const node: FrameNode = {
+      id: p.id,
+      parentId: null,
+      mainSectionId: p.mainSectionId,
+      sequence: sequence++,
+      level: p.level,
+      kind: p.kind,
+      title: p.title,
+      titleSmall: small,
+      titleGiant: giant,
+      navLabel: p.title,
+      x: 0,
+      y: 0,
+      w: FRAME_W,
+      h: FRAME_H,
+      sentence: p.sentence,
+      heroStat: p.heroStat,
+      quote: p.quote,
+      chartId: p.chartId,
+      photoHero: p.photoHero,
+      photoCrop: p.photoCrop,
+      footnotes: p.footnotes,
+      childIds: [],
+      blocks: p.blocks,
+      subsections: p.subsections,
+    };
+    hubFrames.push(node);
+    frames.push(node);
+  }
+
+  placeHubsOnGrid(hubFrames);
+
+  // Assert / resolve hub overlaps by pushing down
+  for (let i = 0; i < hubFrames.length; i++) {
+    for (let j = i + 1; j < hubFrames.length; j++) {
+      const a = hubFrames[i]!;
+      const b = hubFrames[j]!;
+      let guard = 0;
+      while (aabbOverlap(a, b, 48) && guard < 40) {
+        b.y += GUTTER;
+        guard += 1;
+      }
+    }
+  }
+
+  let hubMaxY = 0;
+  for (const h of hubFrames) hubMaxY = Math.max(hubMaxY, h.y + h.h);
+
+  // Leaves parked in a distant band — never on the overview constellation
+  const leafProtos = protos.filter((p) => p.parentId);
+  leafProtos.forEach((p, i) => {
+    let { small, giant } = splitTitle(p.title);
+    if (usedGiants.has(giant.toLowerCase())) {
       const alt = splitTitle(`${p.title} detail`);
       small = alt.small || small;
       giant = alt.giant;
@@ -344,24 +462,24 @@ export function buildPresentation(doc: ParsedDocument): Presentation {
       parentId: p.parentId,
       mainSectionId: p.mainSectionId,
       sequence: sequence++,
-      level: p.level,
-      kind: p.kind,
+      level: 3,
+      kind: "leaf",
       title: p.title,
       titleSmall: small,
       titleGiant: giant,
-      navLabel: p.kind === "leaf" && p.heroStat ? p.heroStat.value : p.title,
-      x: PAD + col * GAP,
-      y: PAD + row * GAP,
+      navLabel: p.heroStat ? p.heroStat.value : p.title,
+      x: PAD + col * (FRAME_W + GUTTER),
+      y: hubMaxY + LEAF_BAND_GAP + row * (FRAME_H + GUTTER),
       w: FRAME_W,
-      h: p.chartId ? 900 : FRAME_H,
+      h: p.chartId ? FRAME_H + 40 : FRAME_H,
       sentence: p.sentence,
       heroStat: p.heroStat,
       quote: p.quote,
       chartId: p.chartId,
       photoHero: p.photoHero,
       photoCrop: p.photoCrop,
-      footnotes: p.footnotes,
       childIds: [],
+      blocks: p.blocks,
     };
     frames.push(node);
   });
@@ -378,19 +496,79 @@ export function buildPresentation(doc: ParsedDocument): Presentation {
     maxY = Math.max(maxY, f.y + f.h);
   }
 
-  const path: string[] = ["overview", ...ordered.map((p) => p.id), "overview"];
+  // Path: overview → each hub then its children → overview
+  const path: string[] = ["overview"];
+  for (const hub of hubFrames) {
+    path.push(hub.id);
+    for (const cid of hub.childIds) path.push(cid);
+  }
+  path.push("overview");
 
   return {
     title: doc.title,
     world: {
-      width: Math.max(3600, maxX + PAD),
-      height: Math.max(2400, maxY + PAD),
+      width: Math.max(4200, maxX + PAD),
+      height: Math.max(2800, maxY + PAD),
       heroImage: "hero-arts.jpg",
     },
     frames,
     path,
-    mainSectionIds: roots.filter((r) => r.kind !== "title").map((r) => r.id),
+    mainSectionIds: hubFrames.filter((h) => h.kind !== "title").map((h) => h.id),
   };
+}
+
+/** Edge-to-edge connector that stays in gutters (never through frame centres). */
+export function buildHubConnectorPath(frames: FrameNode[]): string {
+  const hubs = frames.filter((f) => !f.parentId);
+  if (hubs.length < 2) return "";
+  // Story order = sequence order among roots
+  const ordered = [...hubs].sort((a, b) => a.sequence - b.sequence);
+  let d = "";
+  for (let i = 0; i < ordered.length - 1; i++) {
+    const a = ordered[i]!;
+    const b = ordered[i + 1]!;
+    const aRight = a.x + a.w;
+    const aCx = a.x + a.w / 2;
+    const aCy = a.y + a.h / 2;
+    const bLeft = b.x;
+    const bCx = b.x + b.w / 2;
+    const bCy = b.y + b.h / 2;
+
+    // Same row → horizontal gutter connector (edge midpoints)
+    if (Math.abs(a.y - b.y) < 80) {
+      const y = a.y + a.h / 2;
+      const x1 = aRight;
+      const x2 = bLeft;
+      const mid = (x1 + x2) / 2;
+      d += `${d ? " " : ""}M ${x1} ${y} C ${mid} ${y}, ${mid} ${y}, ${x2} ${y}`;
+      continue;
+    }
+
+    // Different row → go down from bottom centre, along gutter, into top centre
+    const x1 = aCx;
+    const y1 = a.y + a.h;
+    const x2 = bCx;
+    const y2 = b.y;
+    const midY = (y1 + y2) / 2;
+    d += `${d ? " " : ""}M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+  }
+  return d;
+}
+
+export function framesOverlap(
+  frames: FrameNode[],
+  pad = 48,
+): { a: string; b: string }[] {
+  const hits: { a: string; b: string }[] = [];
+  const roots = frames.filter((f) => !f.parentId);
+  for (let i = 0; i < roots.length; i++) {
+    for (let j = i + 1; j < roots.length; j++) {
+      const a = roots[i]!;
+      const b = roots[j]!;
+      if (aabbOverlap(a, b, pad)) hits.push({ a: a.id, b: b.id });
+    }
+  }
+  return hits;
 }
 
 export function getFrame(pres: Presentation, id: string | null | undefined): FrameNode | undefined {

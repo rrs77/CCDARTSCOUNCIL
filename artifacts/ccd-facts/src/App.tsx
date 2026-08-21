@@ -5,7 +5,12 @@ import { LogoMark } from "@/components/LogoMark";
 import { PresentChrome } from "@/components/PresentChrome";
 import { SectionFrame } from "@/components/SectionFrame";
 import { meta } from "@/content/facts.content";
-import { getFrame, presentationFromMarkdown, type FrameNode } from "@/content/layoutPresentation";
+import {
+  buildHubConnectorPath,
+  getFrame,
+  presentationFromMarkdown,
+  type FrameNode,
+} from "@/content/layoutPresentation";
 import rawContent from "../CONTENT.md?raw";
 
 const EASE_OUT: [number, number, number, number] = [0.4, 0, 0.2, 1];
@@ -585,18 +590,10 @@ export default function App() {
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  const strandPath = useMemo(() => {
-    const mains = presentation.frames.filter((f) => !f.parentId);
-    if (mains.length < 2) return "";
-    const pts = mains.map((f) => ({ x: f.x + f.w / 2, y: f.y + f.h / 2 }));
-    let d = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1]!;
-      const b = pts[i]!;
-      d += ` C ${a.x + (b.x - a.x) * 0.4} ${a.y}, ${b.x - (b.x - a.x) * 0.4} ${b.y}, ${b.x} ${b.y}`;
-    }
-    return d;
-  }, [presentation.frames]);
+  const strandPath = useMemo(
+    () => buildHubConnectorPath(presentation.frames),
+    [presentation.frames],
+  );
 
   const modalFrame = modalId ? getFrame(presentation, modalId) ?? null : null;
 
@@ -606,17 +603,13 @@ export default function App() {
   return (
     <div className="facts-app">
       <header className={`topbar ${chromeVisible ? "is-visible" : "is-dim"}`}>
-        <div className="flex items-center gap-2.5">
-          <LogoMark size={w < 640 ? 34 : 40} />
-          <div className="leading-tight text-white">
-            <div className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--lime)]">
-              {meta.brand}
-            </div>
-            <div className="text-sm font-semibold">
+        <div className="topbar-brand">
+          <LogoMark size={w < 640 ? 42 : 50} />
+          <div className="topbar-brand-text">
+            <div className="topbar-brand-name">{meta.brand}</div>
+            <div className="topbar-brand-title">
               {meta.experienceLead}{" "}
-              <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
-                {meta.experienceAccent}
-              </span>
+              <span className="topbar-brand-accent">{meta.experienceAccent}</span>
             </div>
           </div>
         </div>
@@ -650,9 +643,10 @@ export default function App() {
               <path
                 d={strandPath}
                 fill="none"
-                stroke="rgba(182,255,126,0.28)"
-                strokeWidth="6"
+                stroke="rgba(182,255,126,0.32)"
+                strokeWidth="4"
                 strokeLinecap="round"
+                strokeLinejoin="round"
               />
             </svg>
 
@@ -697,22 +691,8 @@ export default function App() {
         onZoomOut={() => zoomByStep("out")}
         onToggleFullscreen={toggleFullscreen}
         onJump={(id) => {
-          setModalId(null);
-          const found = presentation.path.indexOf(id);
-          if (found >= 0) {
-            pathIndexRef.current = found;
-            setPathIndex(found);
-          }
-          const { frame, childId } = resolveCanvasTarget(id);
-          setActiveChildId(childId);
-          if (frame) {
-            const cam = cameraForFrame(frame);
-            setCamera(cam.s, cam.x, cam.y, true);
-            setViewMode("frame");
-            setHighlightId(frame.id);
-            persist(id, pathIndexRef.current);
-            writeUrl(id);
-          }
+          // Map item click → open large detail modal (must-have)
+          openDetail(id);
         }}
       />
 

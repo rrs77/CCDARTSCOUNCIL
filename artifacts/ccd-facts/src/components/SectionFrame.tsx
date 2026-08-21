@@ -141,7 +141,9 @@ export function SectionFrame({
                       onOpenChild?.(ch.id);
                     }}
                   >
-                    {ch.title}
+                    {ch.heroStat?.value && ch.heroStat.value.length <= 12
+                      ? ch.heroStat.value
+                      : ch.title}
                   </button>
                 </li>
               ) : null,

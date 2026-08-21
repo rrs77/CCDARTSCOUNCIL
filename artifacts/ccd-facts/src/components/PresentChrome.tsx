@@ -8,7 +8,8 @@ import {
   ZoomIn,
   ZoomOut,
 } from "lucide-react";
-import type { FrameNode, Presentation } from "@/content/layoutPresentation";
+import { MapNav } from "@/components/MapNav";
+import type { Presentation } from "@/content/layoutPresentation";
 
 export function PresentChrome({
   presentation,
@@ -47,10 +48,16 @@ export function PresentChrome({
     focusId === null
       ? "Overview"
       : presentation.frames.find((f) => f.id === focusId)?.title ?? "Section";
-  const mains = presentation.frames.filter((f) => f.level <= 2);
 
   return (
     <>
+      <MapNav
+        presentation={presentation}
+        focusId={focusId}
+        onOverview={onOverview}
+        onJump={onJump}
+      />
+
       <div className={`present-chrome ${chromeVisible ? "is-visible" : ""}`} role="toolbar" aria-label="Presentation">
         <div className="present-chrome-left">
           <button type="button" className="present-btn" onClick={onPrev} title="Previous (←)">
@@ -102,32 +109,6 @@ export function PresentChrome({
           </button>
         </div>
       </div>
-
-      <nav className={`section-nav ${chromeVisible ? "is-visible" : ""}`} aria-label="Sections">
-        <p className="section-nav-label">Map</p>
-        <ul>
-          <li>
-            <button
-              type="button"
-              className={focusId === null ? "is-current" : ""}
-              onClick={onOverview}
-            >
-              Overview
-            </button>
-          </li>
-          {mains.map((f: FrameNode) => (
-            <li key={f.id}>
-              <button
-                type="button"
-                className={focusId === f.id || (focusId && presentation.frames.find((x) => x.id === focusId)?.mainSectionId === f.id && f.level === 2) ? "is-current" : ""}
-                onClick={() => onJump(f.id)}
-              >
-                {f.navLabel}
-              </button>
-            </li>
-          ))}
-        </ul>
-      </nav>
     </>
   );
 }

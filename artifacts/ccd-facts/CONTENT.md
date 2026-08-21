@@ -8,9 +8,7 @@ Creative education in England is at a point of change. Exceptional lessons start
 
 Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.
 
-CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.
-
-Not a fix for structural inequality on its own. It aims to shorten the distance between excellent practice and the teacher who needs it.
+Not a fix for structural inequality on its own. Practical tools aim to shorten the distance between excellent practice and the teacher who needs it.
 
 > Why this matters for CCDesigner: These figures set the case for a connection layer — teachers and arts organisations need a practical way to find, adapt and share outstanding work where entitlement is uneven. CCD aims to shorten that distance — not to claim it will solve structural inequality alone.
 
@@ -27,13 +25,19 @@ Creative education has contracted over a decade-plus — fewer entries, thinner 
 
 ### Who is left out
 
+Entitlement tracks place and disadvantage — association, not proven causation.
+
 - **47% vs 6%** — Independent vs state primary teachers reporting >2.5 hrs arts / week[^2]
 - **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
 - **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
 
+<!-- chart:disadvantage -->
+
+West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions. FSM ≠ LA deprivation.
+
 ## Primary
 
-The hours gap is stark — and partnerships are thin.
+The hours gap is stark — and partnerships are thin. (EYFS–KS2)
 
 Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.[^2]
 
@@ -55,9 +59,9 @@ No official national statistic exists for weekly Year 7 music/drama teaching tim
 
 ## Secondary and access
 
-Long-term contraction; short-term Ofqual movement is mixed — not a reversal.
+Long-term contraction at KS3–KS4; short-term Ofqual movement is mixed — not a reversal.
 
-Arts GCSE entries fell 42% (2010–2022/23) and arts A-level entries 21% (2010/11–2022/23). Teaching hours −21%; arts teachers −14% (CLA Report Card 2024).[^1]
+Arts GCSE entries fell 42% (2010–2022/23). Teaching hours −21%; arts teachers −14% (CLA Report Card 2024).[^1]
 
 In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance — “no entries” does not mean “not taught”.[^1]
 
@@ -79,7 +83,17 @@ Schools with no GCSE entries (2022/23): Music 42%, Drama 41%, Dance 84%.[^1]
 <!-- chart:noGcse -->
 <!-- chart:gcseIndex -->
 
-### A-level
+### Teachers
+
+Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
+
+DfE School Workforce in England remains the census reference for staffing context.[^6]
+
+## A-level
+
+KS5 pathways are thinner; short-term Ofqual movement is mixed — not a long-term reversal.
+
+Arts A-level entries fell 21% (2010/11–2022/23).[^1] Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths.
 
 Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 
@@ -87,34 +101,11 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 - Music **−4.9%**
 - Art **−1.0%**
 
-Short-term movement is mixed — not a long-term reversal. Provisional figures, rounded to 5.
+Provisional figures, rounded to 5.
+
+> Why this matters for CCDesigner: Where KS5 arts thin out, cumulative planning and Partner Hub resources aim to keep specialist pathways reachable for teachers and students.
 
 <!-- chart:alevelIndex -->
-
-### Teachers
-
-Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
-
-DfE School Workforce in England remains the census reference for staffing context.[^6]
-
-## Poverty and place
-
-Entitlement tracks place and disadvantage — association, not proven causation.
-
-54% vs 21% of schools in the most vs least deprived LA fifths have no GCSE Music entries (CLA 2026).[^2]
-
-Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths. FSM pupils are under-represented in arts GCSEs and A-level Music, Dance, Drama and Design & Technology.
-
-West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions. FSM ≠ LA deprivation.
-
-> Why this matters for CCDesigner: CCD aims to prioritise underserved areas in how hubs and resources are surfaced — helping teachers reach beyond postcode limits for ideas and partners.
-
-### Access by disadvantage
-
-<!-- chart:disadvantage -->
-
-- **54% vs 21%** — No GCSE Music by deprivation fifth[^2]
-- **3.8% vs 5.9%** — Arts share of A-levels by deprivation[^2]
 
 ## Higher education
 
@@ -136,13 +127,13 @@ Keep funding streams distinct. Do not say hub funding simply “declined”.
 
 > Why this matters for CCDesigner: CCD aims to make school–cultural partnerships usable day to day — we don’t need more resources so much as to make the outstanding ones easier to find, connect and build upon.
 
-## What this means for CCDesigner
+## A solution
 
-Connect rather than duplicate — make outstanding practice usable day to day. CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5).
+Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, EYFS to A-level / KS5.
 
-Make partnership measurable — Partner Hubs aim to connect teachers with arts organisations in the same place they plan, so collaboration shows up in everyday work.
+Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs aim to connect teachers with arts organisations — an organisation can add a resource into the teacher’s library while official materials stay on the organisation’s own site.
 
-Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Keep Music Hub (£76m annual to AY 2026/27 + £25m capital) and National Centre (up to £13m over three years) streams distinct.
+CCD aims to support generalist and specialist teachers, with differentiation and planning in one place. The intended contribution is to reduce the distance between excellent practice and the teacher who needs it — making outstanding resources easier to find, connect and build upon. It is not a substitute for specialist teachers, instruments, or live culture.
 
 Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.
 
