@@ -203,6 +203,43 @@ export const overview = {
 export const topicOrder = ["exams", "primary", "poverty", "ccd"] as const;
 
 /**
+ * The strand — arrow keys step along this path (not in-modal pages).
+ * situation = key findings glance; then topic chips in order.
+ */
+export type StrandItem = {
+  id: string;
+  /** "glance" opens key findings; "topic" opens topic modal */
+  kind: "glance" | "topic";
+  /** World coords of the small canvas box */
+  x: number;
+  y: number;
+  label: string;
+};
+
+export const strand: StrandItem[] = [
+  { id: "situation", kind: "glance", x: 220, y: 560, label: "The situation" },
+  { id: "exams", kind: "topic", x: 1680, y: 560, label: "Exams" },
+  { id: "primary", kind: "topic", x: 520, y: 980, label: "Primary" },
+  { id: "poverty", kind: "topic", x: 340, y: 420, label: "Poverty & place" },
+  { id: "ccd", kind: "topic", x: 1520, y: 200, label: "CCDesigner" },
+];
+
+export function getStrandIndex(id: string | null | undefined): number {
+  if (!id) return -1;
+  return strand.findIndex((s) => s.id === id);
+}
+
+export function getStrandItem(id: string): StrandItem | undefined {
+  return strand.find((s) => s.id === id);
+}
+
+/** Sync topic chip positions from strand (single source for the path). */
+export function strandPointForTopic(topicId: string): { x: number; y: number } | undefined {
+  const s = strand.find((i) => i.id === topicId);
+  return s ? { x: s.x, y: s.y } : undefined;
+}
+
+/**
  * Key findings modal — two pages (not a 9-card grid).
  * Opened from “The situation” on the overview. Edit figures here.
  */

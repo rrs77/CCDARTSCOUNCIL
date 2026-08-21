@@ -1,5 +1,5 @@
 import { animate, motion, useMotionValue } from "framer-motion";
-import { ChevronRight, Home, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronRight, Home, Pencil, ZoomIn, ZoomOut } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -12,18 +12,22 @@ import { GlanceModal } from "@/components/GlanceModal";
 import { LogoMark } from "@/components/LogoMark";
 import { TopicModal, type TravelDir } from "@/components/TopicModal";
 import {
+  getStrandIndex,
+  getStrandItem,
   getTopic,
   meta,
   overview,
+  strand,
   topicOrder,
-  topics,
-  type CompassDir,
+  type StrandItem,
   type TopicDef,
 } from "@/content/facts.content";
+import { isEditingField } from "@/content/editableStore";
 
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
 const FLY_MS = 0.42;
-/** Cap zoom relative to the fitted overview scale (~8–12×). */
+const SHRINK_MS = 360;
+const TRAVEL_MS = 480;
 const MAX_ZOOM_MULT = 10;
 
 function useViewport() {
@@ -53,8 +57,8 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
-function cameFrom(prev: TopicDef | undefined, next: TopicDef): TravelDir {
-  if (!prev || prev.id === next.id) return null;
+function cameFrom(prev: { x: number; y: number } | undefined, next: { x: number; y: number }): TravelDir {
+  if (!prev) return null;
   const dx = prev.x - next.x;
   const dy = prev.y - next.y;
   if (Math.abs(dx) < 40 && Math.abs(dy) < 40) return null;
@@ -67,19 +71,26 @@ function heroUrl() {
   return `${base}${overview.heroImage}`.replace(/\/{2,}/g, "/").replace(":/", "://");
 }
 
+function wait(ms: number) {
+  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+}
+
 export default function App() {
   const { w, h } = useViewport();
   const reduced = useReducedMotion();
   const [modalId, setModalId] = useState<string | null>(null);
   const [glanceOpen, setGlanceOpen] = useState(false);
+  const [shrinking, setShrinking] = useState(false);
   const [focusId, setFocusId] = useState<string | null>(null);
   const [fromDir, setFromDir] = useState<TravelDir>(null);
-  const [showKeys] = useState(
+  const [editMode, setEditMode] = useState(
     () => new URLSearchParams(window.location.search).get("edit") === "1",
   );
+  const showKeys = editMode;
   const lastTopicRef = useRef<TopicDef | null>(null);
   const focusIdRef = useRef<string | null>(null);
   const overviewScaleRef = useRef(0.35);
+  const travelingRef = useRef(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
   const scaleMv = useMotionValue(0.35);
@@ -102,15 +113,15 @@ export default function App() {
   }, [scaleMv, xMv, yMv]);
 
   const setCamera = useCallback(
-    (scale: number, x: number, y: number, animated: boolean) => {
+    (scale: number, x: number, y: number, animated: boolean, duration = FLY_MS) => {
       const minS = overviewScaleRef.current * 0.85;
       const maxS = overviewScaleRef.current * MAX_ZOOM_MULT;
       const s = clamp(scale, minS, maxS);
-      const duration = !animated || reduced ? 0.01 : FLY_MS;
+      const dur = !animated || reduced ? 0.01 : duration;
       if (animated && !reduced) {
-        animate(scaleMv, s, { duration, ease: EASE_OUT });
-        animate(xMv, x, { duration, ease: EASE_OUT });
-        animate(yMv, y, { duration, ease: EASE_OUT });
+        animate(scaleMv, s, { duration: dur, ease: EASE_OUT });
+        animate(xMv, x, { duration: dur, ease: EASE_OUT });
+        animate(yMv, y, { duration: dur, ease: EASE_OUT });
       } else {
         scaleMv.set(s);
         xMv.set(x);
@@ -134,18 +145,20 @@ export default function App() {
     return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 6 };
   }, [w, h]);
 
-  const cameraForMarker = useCallback(
-    (topic: TopicDef) => {
+  const cameraForPoint = useCallback(
+    (pt: { x: number; y: number }) => {
       const base = overviewScaleRef.current || fitOverview().s;
       const targetScale = clamp(base * 2.65, base * 1.8, base * MAX_ZOOM_MULT);
-      const cx = topic.x + 70;
-      const cy = topic.y + 18;
+      const cx = pt.x + 56;
+      const cy = pt.y + 18;
       return { s: targetScale, x: -cx * targetScale, y: -cy * targetScale };
     },
     [fitOverview],
   );
 
   const goOverview = useCallback(() => {
+    travelingRef.current = false;
+    setShrinking(false);
     const { s, x, y } = fitOverview();
     setCamera(s, x, y, true);
     setModalId(null);
@@ -155,71 +168,138 @@ export default function App() {
     const url = new URL(window.location.href);
     url.searchParams.delete("topic");
     url.searchParams.delete("glance");
-    if (showKeys) url.searchParams.set("edit", "1");
+    if (editMode) url.searchParams.set("edit", "1");
     window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-  }, [fitOverview, setCamera, showKeys]);
+  }, [editMode, fitOverview, setCamera]);
 
-  const openGlance = useCallback(() => {
-    setModalId(null);
-    setGlanceOpen(true);
-    const url = new URL(window.location.href);
-    url.searchParams.delete("topic");
-    url.searchParams.set("glance", "1");
-    if (showKeys) url.searchParams.set("edit", "1");
-    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-  }, [showKeys]);
+  const openGlance = useCallback(
+    (dir: TravelDir = null) => {
+      setFromDir(dir);
+      setShrinking(false);
+      setModalId(null);
+      focusIdRef.current = "situation";
+      setFocusId("situation");
+      const item = getStrandItem("situation");
+      if (item) {
+        const cam = cameraForPoint(item);
+        setCamera(cam.s, cam.x, cam.y, true);
+      }
+      setGlanceOpen(true);
+      const url = new URL(window.location.href);
+      url.searchParams.delete("topic");
+      url.searchParams.set("glance", "1");
+      if (editMode) url.searchParams.set("edit", "1");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+    },
+    [cameraForPoint, editMode, setCamera],
+  );
 
   const closeGlance = useCallback(() => {
     setGlanceOpen(false);
+    setShrinking(false);
     const url = new URL(window.location.href);
     url.searchParams.delete("glance");
-    if (showKeys) url.searchParams.set("edit", "1");
+    if (editMode) url.searchParams.set("edit", "1");
     window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-  }, [showKeys]);
+  }, [editMode]);
 
   const openTopic = useCallback(
-    (id: string) => {
+    (id: string, dir: TravelDir = null) => {
       const topic = getTopic(id);
       if (!topic) return;
-      const prev =
-        topics.find((t) => t.id === focusIdRef.current) ?? lastTopicRef.current ?? undefined;
-      setFromDir(cameFrom(prev, topic));
+      setFromDir(dir);
+      setShrinking(false);
       focusIdRef.current = id;
       setFocusId(id);
       lastTopicRef.current = topic;
-      const cam = cameraForMarker(topic);
+      const item = getStrandItem(id) ?? topic;
+      const cam = cameraForPoint(item);
       setCamera(cam.s, cam.x, cam.y, true);
       setGlanceOpen(false);
       setModalId(id);
       const url = new URL(window.location.href);
+      url.searchParams.delete("glance");
       url.searchParams.set("topic", id);
-      if (showKeys) url.searchParams.set("edit", "1");
+      if (editMode) url.searchParams.set("edit", "1");
       window.history.replaceState({}, "", `${url.pathname}${url.search}`);
     },
-    [cameraForMarker, setCamera, showKeys],
+    [cameraForPoint, editMode, setCamera],
   );
 
   const closeModal = useCallback(() => {
     setModalId(null);
-    // Stay spatially near the marker; Esc again / Home returns to overview
+    setShrinking(false);
     const url = new URL(window.location.href);
     url.searchParams.delete("topic");
-    if (showKeys) url.searchParams.set("edit", "1");
+    if (editMode) url.searchParams.set("edit", "1");
     window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-  }, [showKeys]);
+  }, [editMode]);
 
-  const step = useCallback(
-    (dir: CompassDir) => {
-      const currentId = modalId ?? focusIdRef.current ?? topicOrder[0];
-      const current = getTopic(currentId);
-      if (!current) return;
-      const nextId = current.neighbors[dir];
-      if (nextId) openTopic(nextId);
+  const openStrandItem = useCallback(
+    (item: StrandItem, dir: TravelDir) => {
+      if (item.kind === "glance") openGlance(dir);
+      else openTopic(item.id, dir);
     },
-    [modalId, openTopic],
+    [openGlance, openTopic],
   );
 
-  // Land on overview picture
+  /** Shrink open modal → pan along strand → expand next info */
+  const travelStrand = useCallback(
+    async (delta: 1 | -1) => {
+      if (travelingRef.current || shrinking) return;
+      const openId = glanceOpen ? "situation" : modalId ?? focusIdRef.current;
+      let idx = getStrandIndex(openId);
+      if (idx < 0) idx = delta > 0 ? -1 : 0;
+      const nextIdx = idx + delta;
+      if (nextIdx < 0 || nextIdx >= strand.length) return;
+
+      const fromItem = idx >= 0 ? strand[idx] : null;
+      const toItem = strand[nextIdx];
+      const dir = cameFrom(fromItem ?? undefined, toItem);
+      travelingRef.current = true;
+
+      // 1) Shrink current modal back toward its box
+      if (glanceOpen || modalId) {
+        setShrinking(true);
+        await wait(reduced ? 40 : SHRINK_MS);
+        setGlanceOpen(false);
+        setModalId(null);
+        setShrinking(false);
+      }
+
+      // 2) Camera travels along the connector (midpoint on the strand segment)
+      const base = overviewScaleRef.current || fitOverview().s;
+      const travelScale = clamp(base * 1.55, base, base * MAX_ZOOM_MULT);
+      if (fromItem) {
+        const mid = {
+          x: (fromItem.x + toItem.x) / 2 + 56,
+          y: (fromItem.y + toItem.y) / 2 + 18,
+        };
+        setCamera(travelScale, -mid.x * travelScale, -mid.y * travelScale, true, TRAVEL_MS / 1000);
+        await wait(reduced ? 40 : TRAVEL_MS * 0.55);
+      }
+      const cam = cameraForPoint(toItem);
+      setCamera(cam.s, cam.x, cam.y, true, TRAVEL_MS / 1000);
+      await wait(reduced ? 40 : TRAVEL_MS * 0.55);
+
+      // 3) Expand next box into the large modal
+      focusIdRef.current = toItem.id;
+      setFocusId(toItem.id);
+      openStrandItem(toItem, dir);
+      travelingRef.current = false;
+    },
+    [
+      cameraForPoint,
+      fitOverview,
+      glanceOpen,
+      modalId,
+      openStrandItem,
+      reduced,
+      setCamera,
+      shrinking,
+    ],
+  );
+
   useEffect(() => {
     const { s, x, y } = fitOverview();
     setCamera(s, x, y, false);
@@ -228,8 +308,11 @@ export default function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
+    if (params.get("edit") === "1") setEditMode(true);
     if (params.get("glance") === "1") {
       setGlanceOpen(true);
+      setFocusId("situation");
+      focusIdRef.current = "situation";
       return undefined;
     }
     const id = params.get("topic") || params.get("chapter");
@@ -260,7 +343,7 @@ export default function App() {
     const el = stageRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (modalId || glanceOpen) return;
+      if (modalId || glanceOpen || shrinking) return;
       e.preventDefault();
       syncRefs();
       if (e.ctrlKey || e.metaKey) {
@@ -276,15 +359,12 @@ export default function App() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [glanceOpen, modalId, setCamera, syncRefs, zoomAt]);
+  }, [glanceOpen, modalId, setCamera, shrinking, syncRefs, zoomAt]);
 
-  // Keyboard — works without clicking canvas first (window listener; skip when typing)
+  // Keyboard — strand travel (not modal paging). Works without focusing the canvas.
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
-      const tag = (e.target as HTMLElement | null)?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) {
-        return;
-      }
+      if (isEditingField()) return;
       if (e.key === "Escape") {
         e.preventDefault();
         if (glanceOpen) closeGlance();
@@ -292,25 +372,16 @@ export default function App() {
         else goOverview();
         return;
       }
-      if (modalId || glanceOpen) return; // arrows reserved for modal pages / not canvas
-      const map: Record<string, CompassDir> = {
-        ArrowUp: "up",
-        ArrowDown: "down",
-        ArrowLeft: "left",
-        ArrowRight: "right",
-        w: "up",
-        W: "up",
-        s: "down",
-        S: "down",
-        a: "left",
-        A: "left",
-        d: "right",
-        D: "right",
-      };
-      const dir = map[e.key];
-      if (dir) {
+      const forward = e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "d" || e.key === "D" || e.key === "s" || e.key === "S";
+      const back = e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "a" || e.key === "A" || e.key === "w" || e.key === "W";
+      if (forward) {
         e.preventDefault();
-        step(dir);
+        void travelStrand(1);
+        return;
+      }
+      if (back) {
+        e.preventDefault();
+        void travelStrand(-1);
         return;
       }
       if (e.key === "+" || e.key === "=") {
@@ -328,10 +399,20 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [closeGlance, closeModal, glanceOpen, goOverview, h, modalId, step, w, zoomAt]);
+  }, [
+    closeGlance,
+    closeModal,
+    glanceOpen,
+    goOverview,
+    h,
+    modalId,
+    travelStrand,
+    w,
+    zoomAt,
+  ]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
-    if (modalId || glanceOpen) return;
+    if (modalId || glanceOpen || shrinking) return;
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     moved.current = false;
@@ -356,7 +437,7 @@ export default function App() {
   };
 
   const onPointerMove = (e: ReactPointerEvent) => {
-    if (modalId || glanceOpen) return;
+    if (modalId || glanceOpen || shrinking) return;
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2 && pinchStart.current) {
@@ -382,7 +463,7 @@ export default function App() {
   };
 
   const onPointerUp = (e: ReactPointerEvent) => {
-    if (modalId || glanceOpen) {
+    if (modalId || glanceOpen || shrinking) {
       pointers.current.clear();
       dragStart.current = null;
       return;
@@ -395,10 +476,10 @@ export default function App() {
       const dy = e.clientY - start.y;
       const dt = performance.now() - start.t;
       const dist = Math.hypot(dx, dy);
-      // Quick swipe → neighbouring topic
-      if (dist > 56 && dt < 420 && !pinchStart.current) {
-        if (Math.abs(dx) >= Math.abs(dy)) step(dx < 0 ? "right" : "left");
-        else step(dy < 0 ? "down" : "up");
+      // Swipe along the strand: left-to-right (dx>0) → previous; right-to-left → next
+      if (dist > 56 && dt < 420) {
+        if (Math.abs(dx) >= Math.abs(dy)) void travelStrand(dx < 0 ? 1 : -1);
+        else void travelStrand(dy < 0 ? 1 : -1);
       }
       dragStart.current = null;
     }
@@ -409,33 +490,39 @@ export default function App() {
     if (activeTopic) lastTopicRef.current = activeTopic;
   }, [activeTopic]);
   const panelTopic = activeTopic ?? lastTopicRef.current;
-
-  const pathD = useMemo(() => {
-    const pts = topicOrder
-      .map((id) => getTopic(id))
-      .filter(Boolean)
-      .map((t) => `${t!.x + 56},${t!.y + 16}`);
-    if (pts.length < 2) return "";
-    return `M ${pts[0]} C ${pts[0]} ${pts[1]} ${pts[1]} S ${pts[2] ?? pts[1]} ${pts[2] ?? pts[1]} ${
-      pts[3] ? `S ${pts[3]} ${pts[3]}` : ""
-    }`.trim();
-  }, []);
-
-  const sparsePath = useMemo(() => {
-    const ordered = topicOrder.map((id) => getTopic(id)!).filter(Boolean);
-    if (ordered.length < 2) return "";
-    // Soft asymmetric curve through chips — not a node graph
-    const [a, b, c, d] = ordered;
-    return `M ${a.x + 48} ${a.y + 16}
-      Q ${a.x + 200} ${a.y + 180} ${b.x + 48} ${b.y + 16}
-      Q ${b.x + 280} ${b.y - 120} ${c.x + 48} ${c.y + 16}
-      Q ${c.x + 160} ${c.y + 200} ${d.x + 48} ${d.y + 16}`;
-  }, []);
-
   const topicIndex = modalId ? topicOrder.indexOf(modalId as (typeof topicOrder)[number]) : -1;
 
+  const strandPath = useMemo(() => {
+    if (strand.length < 2) return "";
+    const pts = strand.map((s) => ({ x: s.x + 56, y: s.y + 16 }));
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) {
+      const prev = pts[i - 1];
+      const cur = pts[i];
+      const c1x = prev.x + (cur.x - prev.x) * 0.4;
+      const c1y = prev.y;
+      const c2x = cur.x - (cur.x - prev.x) * 0.4;
+      const c2y = cur.y;
+      d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${cur.x} ${cur.y}`;
+    }
+    return d;
+  }, []);
+
+  const toggleEdit = () => {
+    setEditMode((on) => {
+      const next = !on;
+      const url = new URL(window.location.href);
+      if (next) url.searchParams.set("edit", "1");
+      else url.searchParams.delete("edit");
+      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+      return next;
+    });
+  };
+
+  const anyModal = glanceOpen || !!modalId || shrinking;
+
   return (
-    <div className="facts-app">
+    <div className={`facts-app ${editMode ? "facts-app--edit" : ""}`}>
       <header className="topbar">
         <div className="flex items-center gap-2.5">
           <div className="rounded-full shadow-[0_0_24px_rgba(182,255,126,0.2)]">
@@ -454,6 +541,15 @@ export default function App() {
           </div>
         </div>
         <div className="flex items-center gap-1.5">
+          <button
+            type="button"
+            className={`icon-btn ${editMode ? "icon-btn-active" : ""}`}
+            aria-label={editMode ? "Exit edit mode" : "Edit mode"}
+            aria-pressed={editMode}
+            onClick={toggleEdit}
+          >
+            <Pencil className="h-4 w-4" />
+          </button>
           <button
             type="button"
             className="icon-btn"
@@ -495,21 +591,16 @@ export default function App() {
             className="overview-picture"
             style={{ width: overview.width, height: overview.height }}
           >
-            <img
-              className="overview-hero"
-              src={heroUrl()}
-              alt=""
-              draggable={false}
-            />
+            <img className="overview-hero" src={heroUrl()} alt="" draggable={false} />
             <div className="overview-forest" aria-hidden />
             <div className="overview-vignette" aria-hidden />
 
             <svg className="overview-path" width={overview.width} height={overview.height} aria-hidden>
               <path
-                d={sparsePath || pathD}
+                d={strandPath}
                 fill="none"
-                stroke="rgba(182,255,126,0.28)"
-                strokeWidth="1.5"
+                stroke="rgba(182,255,126,0.45)"
+                strokeWidth="2.5"
                 strokeLinecap="round"
                 strokeLinejoin="round"
               />
@@ -520,17 +611,14 @@ export default function App() {
               style={{ left: overview.headlineX, top: overview.headlineY }}
             >
               <p className="overview-brand">{meta.brand}</p>
-              <button type="button" className="overview-headline-btn" onClick={openGlance}>
-                <h1>
-                  {meta.situationHeadline}
-                  {showKeys ? <span className="edit-key"> meta.situationHeadline</span> : null}
-                </h1>
-                <p className="overview-support">
-                  {meta.situationLine}
-                  {showKeys ? <span className="edit-key"> meta.situationLine</span> : null}
-                </p>
-                <span className="overview-headline-cta">{meta.ui.openGlance}</span>
-              </button>
+              <h1>
+                {meta.situationHeadline}
+                {showKeys ? <span className="edit-key"> meta.situationHeadline</span> : null}
+              </h1>
+              <p className="overview-support">
+                {meta.situationLine}
+                {showKeys ? <span className="edit-key"> meta.situationLine</span> : null}
+              </p>
             </div>
 
             <p
@@ -540,26 +628,26 @@ export default function App() {
               {meta.ui.exploreHint}
             </p>
 
-            {topics.map((t) => {
-              const isHot = focusId === t.id || modalId === t.id;
+            {strand.map((item) => {
+              const isHot = focusId === item.id || modalId === item.id || (item.id === "situation" && glanceOpen);
               return (
                 <button
-                  key={t.id}
+                  key={item.id}
                   type="button"
-                  className={`topic-chip ${isHot ? "topic-chip-active" : ""}`}
-                  style={{ left: t.x, top: t.y }}
+                  className={`topic-chip strand-box ${isHot ? "topic-chip-active" : ""}`}
+                  style={{ left: item.x, top: item.y }}
                   onPointerDown={(e) => {
                     e.stopPropagation();
                     moved.current = false;
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    openTopic(t.id);
+                    openStrandItem(item, null);
                   }}
                 >
-                  <span>{t.markerLabel}</span>
+                  <span>{item.label}</span>
                   <ChevronRight className="topic-chip-chevron" strokeWidth={2.5} />
-                  {showKeys ? <span className="edit-key"> topics.{t.id}</span> : null}
+                  {showKeys ? <span className="edit-key"> strand.{item.id}</span> : null}
                 </button>
               );
             })}
@@ -567,29 +655,34 @@ export default function App() {
         </motion.div>
       </div>
 
-      {/* Mobile / optional D-pad */}
-      {!modalId && !glanceOpen ? (
-        <div className="compass-pad" aria-label="Explore directions">
-          <button type="button" className="compass-btn compass-up" onClick={() => step("up")}>
+      {!anyModal ? (
+        <div className="compass-pad" aria-label="Explore the strand">
+          <button type="button" className="compass-btn compass-up" onClick={() => void travelStrand(-1)}>
             ↑
           </button>
-          <button type="button" className="compass-btn compass-left" onClick={() => step("left")}>
+          <button type="button" className="compass-btn compass-left" onClick={() => void travelStrand(-1)}>
             ←
           </button>
-          <button type="button" className="compass-btn compass-right" onClick={() => step("right")}>
+          <button type="button" className="compass-btn compass-right" onClick={() => void travelStrand(1)}>
             →
           </button>
-          <button type="button" className="compass-btn compass-down" onClick={() => step("down")}>
+          <button type="button" className="compass-btn compass-down" onClick={() => void travelStrand(1)}>
             ↓
           </button>
         </div>
       ) : null}
 
-      <GlanceModal open={glanceOpen} onClose={closeGlance} showKeys={showKeys} />
+      <GlanceModal
+        open={glanceOpen}
+        shrinking={shrinking && glanceOpen}
+        onClose={closeGlance}
+        showKeys={showKeys}
+      />
 
       {panelTopic ? (
         <TopicModal
           open={!!activeTopic}
+          shrinking={shrinking && !!modalId}
           cluster={panelTopic}
           showKeys={showKeys}
           fromDir={fromDir}
@@ -603,7 +696,7 @@ export default function App() {
                 <button
                   type="button"
                   className="chip-lime"
-                  onClick={() => openTopic(topicOrder[topicIndex + 1])}
+                  onClick={() => void travelStrand(1)}
                 >
                   {meta.ui.continuePath}
                 </button>

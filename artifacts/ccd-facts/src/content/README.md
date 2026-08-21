@@ -10,8 +10,9 @@
 | `meta` | Brand, situation headline/line, framing, `ui` chrome |
 | `overview` | Canvas size, hero image, headline/hint positions |
 | `topics` | Four chips: Exams, Primary, Poverty & place, CCDesigner (`markerLabel`, `x`/`y`, modal copy, charts, neighbours) |
-| `topicOrder` | Arrow/swipe ring |
-| `glanceModal` | **Key findings** two-page modal (page headings, figures, sections) |
+| `strand` | Ordered path for arrow keys: situation → exams → primary → poverty → ccd |
+| `topicOrder` | Topic ring (legacy / next-topic button) |
+| `glanceModal` | **Key findings** two-page modal (page dots only — not arrows) |
 | `stats` / `charts` / `sources` | Shared figures and chart series |
 
 ## Key findings modal

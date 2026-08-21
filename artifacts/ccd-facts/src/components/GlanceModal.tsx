@@ -6,70 +6,67 @@ import { glanceModal, meta, type GlancePage } from "@/content/facts.content";
 const EASE: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
 
 /**
- * Two-page key findings modal — clear H2s, not a 9-card grid.
- * Left/right + swipe change pages while open; body stays overflow-y auto.
+ * Two-page key findings modal.
+ * Page dots / Prev-Next change pages inside this topic.
+ * Arrow keys are handled by the canvas strand — not here.
  */
 export function GlanceModal({
   open,
   onClose,
   showKeys,
+  shrinking = false,
 }: {
   open: boolean;
   onClose: () => void;
   showKeys?: boolean;
+  shrinking?: boolean;
 }) {
   const pages: GlancePage[] = glanceModal.pages;
   const [page, setPage] = useState(0);
   const bodyRef = useRef<HTMLDivElement>(null);
   const swipeRef = useRef<{ x: number; y: number } | null>(null);
   const reduced = useReducedMotion() ?? false;
+  const visible = open || shrinking;
 
   useEffect(() => {
     if (!open) return;
     setPage(0);
+  }, [open]);
+
+  useEffect(() => {
+    if (!visible) return;
     const prev = document.body.style.overflow;
     document.body.style.overflow = "hidden";
     return () => {
       document.body.style.overflow = prev;
     };
-  }, [open]);
+  }, [visible]);
 
   useEffect(() => {
-    if (open) bodyRef.current?.scrollTo({ top: 0 });
-  }, [page, open]);
+    if (open && !shrinking) bodyRef.current?.scrollTo({ top: 0 });
+  }, [page, open, shrinking]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || shrinking) return;
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
         e.preventDefault();
         e.stopPropagation();
         onClose();
-        return;
       }
-      if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
-        e.preventDefault();
-        e.stopPropagation();
-        setPage((p) => Math.max(0, p - 1));
-        return;
-      }
-      if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-        e.preventDefault();
-        e.stopPropagation();
-        setPage((p) => Math.min(pages.length - 1, p + 1));
-      }
+      // Arrows intentionally NOT handled — strand travel owns them
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [onClose, open, pages.length]);
+  }, [onClose, open, shrinking]);
 
   const stopCanvas = (e: SyntheticEvent) => e.stopPropagation();
-
-  const current = pages[page];
+  const current = pages[page] ?? pages[0];
+  if (!current) return null;
 
   return (
     <AnimatePresence>
-      {open ? (
+      {visible ? (
         <motion.div
           key="glance-modal-root"
           className="topic-modal-root"
@@ -80,29 +77,40 @@ export function GlanceModal({
           onWheel={stopCanvas}
           onTouchMove={stopCanvas}
           initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
+          animate={{ opacity: shrinking ? 0 : 1 }}
           exit={{ opacity: 0, transition: { duration: reduced ? 0.01 : 0.18 } }}
-          transition={{ duration: reduced ? 0.01 : 0.22, ease: EASE }}
+          transition={{ duration: reduced ? 0.01 : shrinking ? 0.36 : 0.22, ease: EASE }}
         >
           <motion.button
             type="button"
             className="topic-modal-backdrop"
             aria-label="Close"
-            onClick={onClose}
+            onClick={shrinking ? undefined : onClose}
             initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            animate={{ opacity: shrinking ? 0 : 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: reduced ? 0.01 : 0.24 }}
+            transition={{ duration: reduced ? 0.01 : shrinking ? 0.3 : 0.24 }}
           />
           <motion.div
-            className="topic-modal glance-modal"
+            className={`topic-modal glance-modal ${shrinking ? "topic-modal--shrinking" : ""}`}
             onPointerDown={stopCanvas}
             onWheel={stopCanvas}
             onTouchMove={stopCanvas}
-            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={reduced ? { opacity: 0 } : { opacity: 0, y: 8, transition: { duration: 0.18 } }}
-            transition={{ duration: reduced ? 0.01 : 0.26, ease: EASE }}
+            initial={reduced ? { opacity: 0 } : { opacity: 0, y: 12, scale: 0.92 }}
+            animate={
+              shrinking
+                ? reduced
+                  ? { opacity: 0 }
+                  : { opacity: 0, scale: 0.16, y: 48 }
+                : { opacity: 1, y: 0, scale: 1 }
+            }
+            exit={
+              reduced
+                ? { opacity: 0 }
+                : { opacity: 0, scale: 0.16, y: 48, transition: { duration: 0.36, ease: EASE } }
+            }
+            transition={{ duration: reduced ? 0.01 : shrinking ? 0.36 : 0.26, ease: EASE }}
+            style={{ transformOrigin: "50% 90%" }}
           >
             <header className="topic-modal-header">
               <div className="topic-modal-header-text">
@@ -117,6 +125,7 @@ export function GlanceModal({
                 className="topic-modal-close"
                 aria-label={meta.ui.closeModal}
                 onClick={onClose}
+                disabled={shrinking}
               >
                 <X className="h-5 w-5" strokeWidth={2.5} />
               </button>
@@ -128,16 +137,19 @@ export function GlanceModal({
                 className="topic-modal-body"
                 onWheel={stopCanvas}
                 onTouchStart={(e) => {
+                  if (shrinking) return;
                   const t = e.touches[0];
                   swipeRef.current = { x: t.clientX, y: t.clientY };
                 }}
                 onTouchEnd={(e) => {
+                  if (shrinking) return;
                   const start = swipeRef.current;
                   swipeRef.current = null;
                   if (!start) return;
                   const t = e.changedTouches[0];
                   const dx = t.clientX - start.x;
                   const dy = t.clientY - start.y;
+                  // Horizontal swipe inside modal = page change only
                   if (Math.abs(dx) < 56 || Math.abs(dx) < Math.abs(dy) * 1.2) return;
                   if (dx < 0) setPage((p) => Math.min(pages.length - 1, p + 1));
                   else setPage((p) => Math.max(0, p - 1));
@@ -206,7 +218,7 @@ export function GlanceModal({
               <button
                 type="button"
                 className="glance-pager-btn"
-                disabled={page === 0}
+                disabled={page === 0 || shrinking}
                 onClick={() => setPage((p) => Math.max(0, p - 1))}
               >
                 <ChevronLeft className="h-4 w-4" />
@@ -222,13 +234,14 @@ export function GlanceModal({
                     className={`glance-dot ${i === page ? "glance-dot-active" : ""}`}
                     aria-label={`Page ${i + 1}: ${p.heading}`}
                     onClick={() => setPage(i)}
+                    disabled={shrinking}
                   />
                 ))}
               </div>
               <button
                 type="button"
                 className="glance-pager-btn"
-                disabled={page >= pages.length - 1}
+                disabled={page >= pages.length - 1 || shrinking}
                 onClick={() => setPage((p) => Math.min(pages.length - 1, p + 1))}
               >
                 {meta.ui.nextPage}
@@ -241,4 +254,3 @@ export function GlanceModal({
     </AnimatePresence>
   );
 }
-
