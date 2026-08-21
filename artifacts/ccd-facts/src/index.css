@@ -189,7 +189,7 @@ button {
 
 .source-note {
   margin: 0.5rem 0 0;
-  font-size: 0.8rem;
+  font-size: 0.9rem; /* ≥14px in modal */
   line-height: 1.45;
   color: var(--muted);
 }
@@ -235,7 +235,7 @@ button {
 }
 
 .prezi-frame.is-highlighted .prezi-frame-stage {
-  box-shadow: 0 0 0 3px rgba(182, 255, 126, 0.45);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--frame-accent, var(--lime)) 55%, transparent);
 }
 
 .prezi-frame:focus-visible {
@@ -248,26 +248,80 @@ button {
   width: 100%;
   height: 100%;
   overflow: visible;
-  padding: 48px;
+  padding: 40px 44px 36px;
   box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
-  grid-template-rows: auto 1fr;
-  column-gap: 48px;
-  row-gap: 20px;
-  align-items: end;
+  grid-template-rows: auto minmax(0, 1fr);
+  column-gap: 40px;
+  row-gap: 16px;
+  align-items: stretch;
+  justify-items: stretch;
+}
+
+.prezi-accent-bar {
+  position: absolute;
+  left: 12px;
+  top: 28px;
+  bottom: 28px;
+  width: 5px;
+  border-radius: 999px;
+  background: var(--frame-accent, var(--lime));
+  opacity: 0.85;
+  pointer-events: none;
+  z-index: 6;
+}
+
+.prezi-info {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.35rem;
+  height: 2.35rem;
+  padding: 0;
+  border-radius: 999px;
+  border: 1.5px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 70%, #fffaf7);
+  background: rgba(0, 45, 36, 0.92);
+  color: var(--lime);
+  cursor: pointer;
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+  pointer-events: auto;
+}
+
+.prezi-info:hover,
+.prezi-info:focus-visible {
+  background: color-mix(in srgb, var(--frame-accent, var(--lime)) 28%, #002d24);
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
+.prezi-info-icon {
+  width: 1.15rem;
+  height: 1.15rem;
+}
+
+.prezi-info--chart {
+  position: absolute;
+  top: 0.55rem;
+  right: 0.55rem;
+  width: 2rem;
+  height: 2rem;
 }
 
 .prezi-satellites {
   list-style: none;
   margin: 0;
-  padding: 0;
+  padding: 0 2.75rem 0 0;
   grid-column: 1 / -1;
   grid-row: 1;
   z-index: 5;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.45rem;
+  gap: 0.55rem;
   align-content: flex-start;
   pointer-events: none;
   position: relative;
@@ -288,10 +342,11 @@ button {
   grid-row: 2;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
-  gap: 1rem;
+  justify-content: center;
+  gap: 1.15rem;
   pointer-events: none;
   min-width: 0;
+  align-self: stretch;
 }
 
 .prezi-hero {
@@ -304,10 +359,11 @@ button {
   grid-column: 2;
   grid-row: 2;
   display: flex;
-  align-items: flex-end;
+  align-items: center;
   justify-content: flex-end;
   min-width: 0;
   max-height: 100%;
+  align-self: stretch;
 }
 
 .prezi-copy > * {
@@ -315,7 +371,7 @@ button {
 }
 
 .prezi-title-bubble {
-  padding: 1.15rem 1.35rem 1.25rem;
+  padding: 1.25rem 1.4rem 1.35rem;
   border-radius: 1rem;
   background: #002d24;
   border: 1px solid rgba(255, 250, 247, 0.22);
@@ -324,20 +380,20 @@ button {
 }
 
 .prezi-title-small {
-  margin: 0 0 0.2rem;
+  margin: 0 0 0.25rem;
   font-family: var(--font-serif);
-  font-size: clamp(1.15rem, 2.2vw, 1.65rem);
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
   font-weight: 500;
   font-style: italic;
-  line-height: 1.15;
-  color: rgba(255, 250, 247, 0.9);
+  line-height: 1.2;
+  color: rgba(255, 250, 247, 0.92);
 }
 
 .prezi-title-giant {
   margin: 0;
-  font-size: clamp(2.75rem, 6.5vw, 5.25rem);
+  font-size: clamp(2.85rem, 6.2vw, 5rem);
   font-weight: 800;
-  line-height: 0.95;
+  line-height: 0.96;
   letter-spacing: -0.04em;
   text-transform: uppercase;
   color: #fffaf7;
@@ -347,31 +403,38 @@ button {
 }
 
 .prezi-body-card {
-  padding: 1.05rem 1.2rem;
+  padding: 1.15rem 1.3rem;
   border-radius: 1rem;
   background: #fffaf7;
-  color: #1a332e;
-  border: 1px solid rgba(0, 45, 36, 0.12);
+  color: #0f241f;
+  border: 1px solid rgba(0, 45, 36, 0.18);
   box-shadow: 0 14px 40px rgba(0, 0, 0, 0.3);
   max-width: 100%;
 }
 
 .prezi-body-card p {
   margin: 0;
-  font-size: clamp(1.05rem, 1.6vw, 1.3rem);
-  line-height: 1.45;
-  font-weight: 500;
+  /* ≥18px at rest camera (~0.75–0.9×): keep CSS ≥1.55rem */
+  font-size: clamp(1.55rem, 2.1vw, 1.85rem);
+  line-height: 1.4;
+  font-weight: 600;
 }
 
 .prezi-sources-card {
-  max-height: 40%;
-  overflow: auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.prezi-sources-hint {
+  font-size: clamp(1.25rem, 1.8vw, 1.5rem) !important;
+  font-weight: 600 !important;
+  color: #1a332e;
 }
 
 .prezi-sources-card ol {
   margin: 0;
   padding-left: 1.2rem;
-  font-size: 1.05rem;
+  font-size: 1.25rem;
   line-height: 1.45;
 }
 
@@ -385,7 +448,7 @@ button {
   border-radius: 50%;
   overflow: hidden;
   background: #002d24;
-  border: 1px solid rgba(182, 255, 126, 0.7);
+  border: 1px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 75%, transparent);
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
   box-sizing: border-box;
 }
@@ -426,7 +489,7 @@ button {
 
 .prezi-stat-value {
   margin: 0;
-  font-size: clamp(2.5rem, 5vw, 4.5rem);
+  font-size: clamp(2.75rem, 5.2vw, 4.75rem);
   font-weight: 800;
   line-height: 0.95;
   letter-spacing: -0.04em;
@@ -443,23 +506,32 @@ button {
 
 .prezi-stat-label {
   margin: 0.65rem 0 0;
-  font-size: clamp(0.95rem, 1.4vw, 1.2rem);
-  font-weight: 600;
-  line-height: 1.25;
-  color: rgba(255, 250, 247, 0.88);
+  font-size: clamp(1.15rem, 1.6vw, 1.4rem);
+  font-weight: 650;
+  line-height: 1.3;
+  color: rgba(255, 250, 247, 0.92);
   text-align: center;
-  max-width: 14rem;
+  max-width: 16rem;
 }
 
 .prezi-chart-bubble {
+  position: relative;
   width: 100%;
   max-height: 100%;
   border-radius: 1rem;
   background: #fffaf7;
-  border: 1px solid rgba(182, 255, 126, 0.55);
-  padding: 0.75rem;
+  border: 1px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 60%, transparent);
+  padding: 0.85rem 0.85rem 0.7rem;
   box-sizing: border-box;
-  overflow: auto;
+  overflow: visible;
+  color: #0f241f;
+}
+
+.chart-frame--canvas .chart-caption {
+  font-size: 1.2rem;
+  line-height: 1.3;
+  color: #0f241f;
+  padding-right: 2.4rem;
 }
 
 /* Satellites = text chips only (not rings / not destination frames) */
@@ -470,19 +542,37 @@ button {
 .prezi-sat {
   display: inline-flex;
   align-items: center;
-  max-width: 11rem;
-  padding: 0.4rem 0.7rem;
+  gap: 0.4rem;
+  max-width: 16rem;
+  padding: 0.5rem 0.75rem;
   border-radius: 0.55rem;
-  border: 1px solid rgba(182, 255, 126, 0.4);
-  background: rgba(0, 45, 36, 0.92);
+  border: 1px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 45%, transparent);
+  background: rgba(0, 45, 36, 0.94);
   color: var(--lime);
-  font-size: 0.88rem;
+  font-size: 1.05rem;
   font-weight: 700;
-  line-height: 1.2;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.25;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  text-align: left;
+}
+
+.prezi-sat-label {
+  overflow-wrap: anywhere;
+  word-break: normal;
+}
+
+.prezi-sat-info {
+  flex: 0 0 auto;
+  width: 0.95rem;
+  height: 0.95rem;
+  opacity: 0.9;
+}
+
+.prezi-sat--more {
+  border-style: dashed;
 }
 
 .prezi-satellites li.is-active-sat .prezi-sat {

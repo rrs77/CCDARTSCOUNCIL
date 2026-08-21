@@ -52,9 +52,9 @@ export type Presentation = {
 };
 
 const MAX_CHILDREN = 4;
-/** Uniform zone size — wide enough for long titles like MUSIC EDUCATION */
-const FRAME_W = 1480;
-const FRAME_H = 860;
+/** Uniform zone size — tall enough that rest-camera type stays ≥18px */
+const FRAME_W = 1320;
+const FRAME_H = 920;
 /** Clear edge-to-edge gutter between hubs (≥48px at overview; more when zoomed) */
 const GUTTER = 520;
 const PAD = 560;
@@ -360,8 +360,8 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
     hub.x = PAD + col * cellW;
     hub.y = band0Y + row * (cellH + yBoost);
     hub.w = FRAME_W;
-    // Chart hubs need a touch more height — still same outer grid cell
-    hub.h = hub.chartId ? FRAME_H + 40 : FRAME_H;
+    // Chart hubs need more height so ticks/labels aren’t cropped
+    hub.h = hub.chartId ? FRAME_H + 100 : FRAME_H;
   });
 }
 
@@ -489,9 +489,11 @@ export function buildPresentation(doc: ParsedDocument): Presentation {
     f.childIds = frames.filter((c) => c.parentId === f.id).map((c) => c.id);
   }
 
+  // World bounds = hub constellation only (leaves are off-canvas / modal).
+  // Including the leaf band made Overview a postage-stamp cluster in empty green.
   let maxX = 0;
   let maxY = 0;
-  for (const f of frames) {
+  for (const f of hubFrames) {
     maxX = Math.max(maxX, f.x + f.w);
     maxY = Math.max(maxY, f.y + f.h);
   }

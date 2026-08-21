@@ -128,35 +128,54 @@ export default function App() {
     [reduced, scaleMv, xMv, yMv],
   );
 
+  /** Fit the hub constellation large enough to read — not a postage stamp. */
   const fitOverview = useCallback(() => {
-    const padX = Math.max(VIEW_PAD, 56);
-    const padTop = Math.max(VIEW_PAD, 80);
-    const padBottom = Math.max(VIEW_PAD, 100);
-    const s = Math.min(
-      (w - padX * 2) / presentation.world.width,
-      (h - padTop - padBottom) / presentation.world.height,
-    );
+    const hubs = presentation.frames.filter((f) => !f.parentId);
+    let minX = Infinity;
+    let minY = Infinity;
+    let maxX = -Infinity;
+    let maxY = -Infinity;
+    for (const f of hubs) {
+      minX = Math.min(minX, f.x);
+      minY = Math.min(minY, f.y);
+      maxX = Math.max(maxX, f.x + f.w);
+      maxY = Math.max(maxY, f.y + f.h);
+    }
+    if (!Number.isFinite(minX)) {
+      minX = 0;
+      minY = 0;
+      maxX = presentation.world.width;
+      maxY = presentation.world.height;
+    }
+    const hubPad = 120;
+    const bw = maxX - minX + hubPad * 2;
+    const bh = maxY - minY + hubPad * 2;
+    const padX = Math.max(VIEW_PAD, 40);
+    const padTop = Math.max(VIEW_PAD, 64);
+    const padBottom = Math.max(VIEW_PAD, 88);
+    const s = Math.min((w - padX * 2) / bw, (h - padTop - padBottom) / bh);
     overviewScaleRef.current = s;
-    const cx = presentation.world.width / 2;
-    const cy = presentation.world.height / 2;
-    return { s, x: -cx * s, y: -cy * s };
-  }, [h, presentation.world.height, presentation.world.width, w]);
+    const cx = (minX + maxX) / 2;
+    const cy = (minY + maxY) / 2;
+    return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 10 };
+  }, [h, presentation.frames, presentation.world.height, presentation.world.width, w]);
 
-  /** Fit one frame with ≥48px viewport padding — never crop headings. */
+  /** Fit one frame to fill the viewport — comfortable reading, not a tiny card in green. */
   const cameraForFrame = useCallback(
     (frame: FrameNode) => {
-      const pad = VIEW_PAD;
-      const chromeBottom = 96;
-      const chromeTop = 72;
+      const pad = 28;
+      const chromeBottom = 64;
+      const chromeTop = 56;
       const availW = w - pad * 2;
       const availH = h - pad * 2 - chromeBottom - chromeTop;
-      const s = Math.min(availW / frame.w, availH / frame.h);
+      // Slightly oversize so content fills; headings stay inside frame (overflow visible)
+      const s = Math.min(availW / frame.w, availH / frame.h) * 1.02;
       const cx = frame.x + frame.w / 2;
       const cy = frame.y + frame.h / 2;
       return {
         s,
         x: -cx * s,
-        y: -cy * s + (chromeTop - chromeBottom) / 8,
+        y: -cy * s + (chromeTop - chromeBottom) / 10,
       };
     },
     [h, w],
@@ -349,7 +368,7 @@ export default function App() {
     }
   }, [cameraForFrame, persist, presentation, setCamera, showOverview, writeUrl]);
 
-  // Boot
+  // Boot — open enlarged on the title slide (not a tiny overview)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.replace(/^#\/?/, "");
@@ -371,7 +390,24 @@ export default function App() {
         showOverview(false);
       }
     } else {
-      showOverview(false);
+      const titleId = "title";
+      const title = getFrame(presentation, titleId);
+      const titleIdx = Math.max(0, presentation.path.indexOf(titleId));
+      pathIndexRef.current = titleIdx;
+      setPathIndex(titleIdx);
+      setModalId(null);
+      setActiveChildId(null);
+      if (title) {
+        setFocusedId(titleId);
+        const cam = cameraForFrame(title);
+        setCamera(cam.s, cam.x, cam.y, false);
+        setViewMode("frame");
+        setHighlightId(titleId);
+        persist(titleId, titleIdx);
+        writeUrl(titleId);
+      } else {
+        showOverview(false);
+      }
     }
     stageRef.current?.focus({ preventScroll: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -681,6 +717,7 @@ export default function App() {
                 highlighted={highlightId === frame.id}
                 activeChildId={highlightId === frame.id ? activeChildId : null}
                 onOpen={() => handleSelect(frame.id)}
+                onOpenDetail={() => openDetail(frame.id)}
                 onOpenChild={(id) => handleSelect(id)}
               />
             ))}

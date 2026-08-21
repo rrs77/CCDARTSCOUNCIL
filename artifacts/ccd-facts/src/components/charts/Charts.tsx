@@ -31,22 +31,25 @@ function ChartFrame({
   source,
   contentKey,
   showKeys,
+  density = "detail",
   children,
 }: {
   caption: string;
   source: string;
   contentKey?: string;
   showKeys?: boolean;
+  density?: "canvas" | "detail";
   children: React.ReactNode;
 }) {
+  const isCanvas = density === "canvas";
   return (
-    <div>
+    <div className={isCanvas ? "chart-frame chart-frame--canvas" : "chart-frame"}>
       <p className="chart-caption">
         {caption}
         {showKeys && contentKey ? <span className="edit-key"> charts.{contentKey}</span> : null}
       </p>
       {children}
-      <p className="source-note">{source}</p>
+      {isCanvas ? null : <p className="source-note">{source}</p>}
     </div>
   );
 }
@@ -63,10 +66,13 @@ export function ContentChart({
   chart,
   showKeys,
   onDrill,
+  density = "detail",
 }: {
   chart: ChartDef;
   showKeys?: boolean;
   onDrill?: (label: string) => void;
+  /** Canvas scenes need larger ticks; footnotes live in the detail modal. */
+  density?: "canvas" | "detail";
 }) {
   const [active, setActive] = useState<string | null>(null);
   const reduced = useReducedMotion() ?? false;
@@ -74,22 +80,28 @@ export function ContentChart({
   const chartEnter = reduced
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.12 } }
     : enter;
+  const tick = density === "canvas" ? 14 : 11;
+  const tickInk = density === "canvas" ? 15 : 12;
+  const labelFs = density === "canvas" ? 14 : 12;
+  const chartH = density === "canvas" ? "h-[340px] w-full" : "h-[240px] w-full sm:h-[260px]";
+  const chartHTall = density === "canvas" ? "h-[360px] w-full" : "h-[280px] w-full";
+  const chartHFund = density === "canvas" ? "h-[380px] w-full" : "h-[260px] w-full";
 
   if (chart.type === "horizontal-change") {
     return (
-      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
-        <motion.div {...chartEnter} className="h-[240px] w-full sm:h-[260px]">
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart layout="vertical" data={chart.series} margin={{ top: 4, right: 36, left: 8, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
-              <XAxis type="number" domain={[-50, 0]} tickFormatter={(v) => `${v}%`} tick={{ fill: "#6b7d80", fontSize: 11 }} />
-              <YAxis type="category" dataKey="name" width={120} tick={{ fill: "#0f2a2e", fontSize: 11 }} />
+              <XAxis type="number" domain={[-50, 0]} tickFormatter={(v) => `${v}%`} tick={{ fill: "#6b7d80", fontSize: tick }} />
+              <YAxis type="category" dataKey="name" width={density === "canvas" ? 140 : 120} tick={{ fill: "#0f2a2e", fontSize: tickInk }} />
               <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "Change"]} />
               <ReferenceLine x={0} stroke="#94a3b8" />
               <Bar
                 dataKey="change"
                 radius={[6, 0, 0, 6]}
-                label={{ position: "left", fill: "#0f2a2e", fontSize: 12, fontWeight: 700 }}
+                label={{ position: "left", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }}
                 cursor="pointer"
                 isAnimationActive={!reduced}
                 animationDuration={drawMs}
@@ -121,8 +133,8 @@ export function ContentChart({
       { name: "rest2", value: 100 - state, fill: "rgba(42,157,143,0.15)" },
     ];
     return (
-      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
-        <motion.div {...chartEnter} className="relative mx-auto h-[250px] w-full max-w-[320px]">
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div {...chartEnter} className={density === "canvas" ? "relative mx-auto h-[300px] w-full max-w-[360px]" : "relative mx-auto h-[250px] w-full max-w-[320px]"}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie data={outer} dataKey="value" innerRadius={78} outerRadius={98} startAngle={90} endAngle={-270} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={() => onDrill?.(indepLabel)}>
@@ -147,7 +159,7 @@ export function ContentChart({
             </span>
           </div>
         </motion.div>
-        <div className="mt-1 flex flex-wrap justify-center gap-3 text-xs text-[#33443e]">
+        <div className={`mt-1 flex flex-wrap justify-center gap-3 text-[#33443e] ${density === "canvas" ? "text-sm" : "text-xs"}`}>
           <span>
             <span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm" style={{ background: "#7B6B9C" }} />
             {indepLabel}
@@ -165,25 +177,25 @@ export function ContentChart({
     const leastName = chart.axis?.legend?.least ?? "Least disadvantaged fifth";
     const mostName = chart.axis?.legend?.most ?? "Most disadvantaged fifth";
     return (
-      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
-        <motion.div {...chartEnter} className="h-[280px] w-full sm:h-[300px]">
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div {...chartEnter} className={chartHTall}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chart.series} margin={{ top: 18, right: 8, left: 0, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" vertical={false} />
-              <XAxis dataKey="subject" tick={{ fill: "#0f2a2e", fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={50} />
+              <XAxis dataKey="subject" tick={{ fill: "#0f2a2e", fontSize: tick }} interval={0} angle={-15} textAnchor="end" height={56} />
               <YAxis
                 domain={[0, 100]}
-                tick={{ fill: "#6b7d80", fontSize: 11 }}
+                tick={{ fill: "#6b7d80", fontSize: tick }}
                 label={
                   chart.axis?.y
-                    ? { value: chart.axis.y, angle: -90, position: "insideLeft", fill: "#6b7d80", fontSize: 10 }
+                    ? { value: chart.axis.y, angle: -90, position: "insideLeft", fill: "#6b7d80", fontSize: tick }
                     : undefined
                 }
               />
               <Tooltip contentStyle={tip} />
               <Legend />
-              <Bar dataKey="least" name={leastName} fill="#5B7C99" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 10, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
-              <Bar dataKey="most" name={mostName} fill="#E97451" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 10, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Bar dataKey="least" name={leastName} fill="#5B7C99" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Bar dataKey="most" name={mostName} fill="#E97451" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -193,15 +205,15 @@ export function ContentChart({
 
   if (chart.type === "lollipop") {
     return (
-      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
-        <motion.div {...chartEnter} className="h-[220px] w-full">
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 48, left: 8, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
-              <XAxis type="number" domain={[0, 100]} tick={{ fill: "#6b7d80", fontSize: 11 }} />
-              <YAxis type="category" dataKey="subject" width={70} tick={{ fill: "#0f2a2e", fontSize: 12 }} />
+              <XAxis type="number" domain={[0, 100]} tick={{ fill: "#6b7d80", fontSize: tick }} />
+              <YAxis type="category" dataKey="subject" width={80} tick={{ fill: "#0f2a2e", fontSize: tickInk }} />
               <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "No GCSE entries"]} />
-              <Bar dataKey="none" barSize={10} background={{ fill: "#e8eeea" }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: "#0f2a2e", fontSize: 13, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
+              <Bar dataKey="none" barSize={10} background={{ fill: "#e8eeea" }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
                 {chart.series.map((d) => (
                   <Cell key={String(d.subject)} fill={String(d.fill)} />
                 ))}
@@ -218,13 +230,13 @@ export function ContentChart({
     const yMin = Number(chart.meta?.yMin ?? 94);
     const yMax = Number(chart.meta?.yMax ?? 112);
     return (
-      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
-        <motion.div {...chartEnter} className="h-[260px] w-full">
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chart.series} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
               <CartesianGrid stroke="#e8eeea" />
-              <XAxis dataKey="year" tick={{ fill: "#0f2a2e", fontSize: 12 }} />
-              <YAxis domain={[yMin, yMax]} tick={{ fill: "#6b7d80", fontSize: 11 }} />
+              <XAxis dataKey="year" tick={{ fill: "#0f2a2e", fontSize: tickInk }} />
+              <YAxis domain={[yMin, yMax]} tick={{ fill: "#6b7d80", fontSize: tick }} />
               <ReferenceLine y={100} stroke="#94a3b8" strokeDasharray="4 4" />
               <Tooltip contentStyle={tip} />
               <Legend
@@ -248,13 +260,13 @@ export function ContentChart({
 
   if (chart.type === "divergent-bars") {
     return (
-      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
-        <motion.div {...chartEnter} className="h-[280px] w-full">
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div {...chartEnter} className={chartHTall}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 36, left: 8, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
-              <XAxis type="number" domain={[-3.5, 2.5]} tickFormatter={(v) => `${v}%`} tick={{ fill: "#6b7d80", fontSize: 11 }} />
-              <YAxis type="category" dataKey="subject" width={150} tick={{ fill: "#0f2a2e", fontSize: 10 }} />
+              <XAxis type="number" domain={[-3.5, 2.5]} tickFormatter={(v) => `${v}%`} tick={{ fill: "#6b7d80", fontSize: tick }} />
+              <YAxis type="category" dataKey="subject" width={density === "canvas" ? 170 : 150} tick={{ fill: "#0f2a2e", fontSize: tickInk }} />
               <ReferenceLine x={0} stroke="#94a3b8" />
               <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "Change"]} />
               <Legend
@@ -263,7 +275,7 @@ export function ContentChart({
                   { value: chart.axis?.legend?.increase ?? "Increase", type: "square", color: "#2A9D8F" },
                 ]}
               />
-              <Bar dataKey="change" radius={[4, 4, 4, 4]} label={{ position: "right", fill: "#0f2a2e", fontSize: 11, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
+              <Bar dataKey="change" radius={[4, 4, 4, 4]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
                 {chart.series.map((d) => (
                   <Cell key={String(d.subject)} fill={Number(d.change) >= 0 ? "#2A9D8F" : "#E97451"} />
                 ))}
@@ -277,22 +289,47 @@ export function ContentChart({
 
   if (chart.type === "funding-bars") {
     return (
-      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
-        <motion.div {...chartEnter} className="h-[260px] w-full">
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div {...chartEnter} className={chartHFund}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chart.series} margin={{ top: 24, right: 8, left: 0, bottom: 48 }}>
+            <BarChart
+              data={chart.series}
+              margin={
+                density === "canvas"
+                  ? { top: 28, right: 12, left: 4, bottom: 28 }
+                  : { top: 24, right: 8, left: 0, bottom: 48 }
+              }
+            >
               <CartesianGrid stroke="#e8eeea" vertical={false} />
-              <XAxis dataKey="label" tick={{ fill: "#0f2a2e", fontSize: 10 }} interval={0} angle={-12} textAnchor="end" height={60} />
-              <YAxis domain={[0, 80]} tick={{ fill: "#6b7d80", fontSize: 11 }} />
-              <Tooltip contentStyle={tip} formatter={(v: number) => [`£${v}m`, "Funding"]} />
-              <Legend
-                payload={[
-                  { value: chart.axis?.legend?.revenue ?? "Annual revenue backing", type: "square", color: "#2A9D8F" },
-                  { value: chart.axis?.legend?.capital ?? "Additional capital investment", type: "square", color: "#C9A227" },
-                  { value: chart.axis?.legend?.centre ?? "Centre contract support", type: "square", color: "#7B6B9C" },
-                ]}
+              <XAxis
+                dataKey="label"
+                tick={{ fill: "#0f2a2e", fontSize: tickInk }}
+                interval={0}
+                angle={0}
+                textAnchor="middle"
+                height={density === "canvas" ? 42 : 56}
               />
-              <Bar dataKey="value" radius={[6, 6, 0, 0]} label={{ position: "top", formatter: (v: number) => `£${v}m`, fill: "#0f2a2e", fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { label?: string }).label ?? ""))}>
+              <YAxis domain={[0, 80]} tick={{ fill: "#6b7d80", fontSize: tick }} />
+              <Tooltip contentStyle={tip} formatter={(v: number) => [`£${v}m`, "Funding"]} />
+              {density === "canvas" ? null : (
+                <Legend
+                  payload={[
+                    { value: chart.axis?.legend?.revenue ?? "Annual revenue backing", type: "square", color: "#2A9D8F" },
+                    { value: chart.axis?.legend?.capital ?? "Additional capital investment", type: "square", color: "#C9A227" },
+                    { value: chart.axis?.legend?.centre ?? "Centre contract support", type: "square", color: "#7B6B9C" },
+                  ]}
+                />
+              )}
+              <Bar
+                dataKey="value"
+                radius={[6, 6, 0, 0]}
+                label={{ position: "top", formatter: (v: number) => `£${v}m`, fill: "#0f2a2e", fontWeight: 700, fontSize: labelFs }}
+                cursor="pointer"
+                isAnimationActive={!reduced}
+                animationDuration={drawMs}
+                animationEasing="ease-out"
+                onClick={(e) => onDrill?.(String((e as { label?: string }).label ?? ""))}
+              >
                 {chart.series.map((d) => (
                   <Cell key={String(d.label)} fill={String(d.fill)} />
                 ))}

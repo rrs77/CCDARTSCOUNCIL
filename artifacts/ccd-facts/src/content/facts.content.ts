@@ -595,19 +595,19 @@ export const charts: Record<string, ChartDef> = {
     },
     series: [
       {
-        label: "Annual Music Hubs backing (to AY 2026/27)",
+        label: "Music Hubs (annual)",
         value: 76,
         kind: "Annual revenue backing",
         fill: "#2A9D8F",
       },
       {
-        label: "Additional capital for instruments/technology",
+        label: "Capital (instruments)",
         value: 25,
         kind: "Additional capital investment",
         fill: "#C9A227",
       },
       {
-        label: "National Centre (up to 3 years)",
+        label: "National Centre",
         value: 13,
         kind: "Centre contract support",
         fill: "#7B6B9C",

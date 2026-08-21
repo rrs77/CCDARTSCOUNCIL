@@ -1,22 +1,12 @@
 import { Map as MapIcon } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Presentation } from "@/content/layoutPresentation";
+import { SECTION_ACCENT } from "@/content/sectionAccent";
 
 type NavItem = { id: string | null; label: string };
 type NavGroup = { heading: string; items: NavItem[] };
 
-/** Accent pips — CCD palette only (subtle, not a rainbow). */
-const ACCENT: Record<string, string> = {
-  overview: "#B6FF7E",
-  "the-situation": "#B6FF7E",
-  primary: "#14b8a6",
-  "secondary-and-access": "#14b8a6",
-  "a-level": "#14b8a6",
-  "higher-education": "#B6FF7E",
-  "music-hubs-and-national-centre": "#B6FF7E",
-  "a-solution": "#B6FF7E",
-  sources: "#6b7d80",
-};
+const ACCENT = SECTION_ACCENT;
 
 function buildGroups(presentation: Presentation): { lone: NavItem[]; groups: NavGroup[] } {
   const byId = new Map(presentation.frames.filter((f) => !f.parentId).map((f) => [f.id, f]));
