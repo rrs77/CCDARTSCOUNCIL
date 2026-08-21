@@ -1,5 +1,5 @@
 import { animate, motion, useMotionValue } from "framer-motion";
-import { Home, ZoomIn, ZoomOut } from "lucide-react";
+import { ChevronRight, Home, ZoomIn, ZoomOut } from "lucide-react";
 import {
   useCallback,
   useEffect,
@@ -8,25 +8,23 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
+import { GlanceModal } from "@/components/GlanceModal";
 import { LogoMark } from "@/components/LogoMark";
 import { TopicModal, type TravelDir } from "@/components/TopicModal";
 import {
-  clusters,
-  getStat,
-  journey,
-  keyFactStatIds,
+  getTopic,
   meta,
-  type ClusterDef,
+  overview,
+  topicOrder,
+  topics,
+  type CompassDir,
+  type TopicDef,
 } from "@/content/facts.content";
 
-function cameFrom(prev: ClusterDef | undefined, next: ClusterDef): TravelDir {
-  if (!prev || prev.id === next.id) return null;
-  const dx = prev.x - next.x;
-  const dy = prev.y - next.y;
-  if (Math.abs(dx) < 80 && Math.abs(dy) < 80) return null;
-  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "right" : "left";
-  return dy > 0 ? "down" : "up";
-}
+const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
+const FLY_MS = 0.42;
+/** Cap zoom relative to the fitted overview scale (~8–12×). */
+const MAX_ZOOM_MULT = 10;
 
 function useViewport() {
   const [size, setSize] = useState({ w: 390, h: 844 });
@@ -55,32 +53,46 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
+function cameFrom(prev: TopicDef | undefined, next: TopicDef): TravelDir {
+  if (!prev || prev.id === next.id) return null;
+  const dx = prev.x - next.x;
+  const dy = prev.y - next.y;
+  if (Math.abs(dx) < 40 && Math.abs(dy) < 40) return null;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "right" : "left";
+  return dy > 0 ? "down" : "up";
+}
+
+function heroUrl() {
+  const base = import.meta.env.BASE_URL || "/";
+  return `${base}${overview.heroImage}`.replace(/\/{2,}/g, "/").replace(":/", "://");
+}
+
 export default function App() {
   const { w, h } = useViewport();
   const reduced = useReducedMotion();
-  const [active, setActive] = useState<string | null>(null);
+  const [modalId, setModalId] = useState<string | null>(null);
+  const [glanceOpen, setGlanceOpen] = useState(false);
+  const [focusId, setFocusId] = useState<string | null>(null);
   const [fromDir, setFromDir] = useState<TravelDir>(null);
-  const lastClusterRef = useRef<ClusterDef | null>(null);
-  const focusIdRef = useRef<string | null>(null);
-  const [intro, setIntro] = useState(() => {
-    const params = new URLSearchParams(window.location.search);
-    return !params.get("chapter") && params.get("skipIntro") !== "1";
-  });
   const [showKeys] = useState(
     () => new URLSearchParams(window.location.search).get("edit") === "1",
   );
+  const lastTopicRef = useRef<TopicDef | null>(null);
+  const focusIdRef = useRef<string | null>(null);
+  const overviewScaleRef = useRef(0.35);
 
   const stageRef = useRef<HTMLDivElement>(null);
-  const scaleMv = useMotionValue(0.22);
+  const scaleMv = useMotionValue(0.35);
   const xMv = useMotionValue(0);
   const yMv = useMotionValue(0);
-
-  const scaleRef = useRef(0.22);
+  const scaleRef = useRef(0.35);
   const xRef = useRef(0);
   const yRef = useRef(0);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
-  const dragStart = useRef<{ x: number; y: number; camX: number; camY: number } | null>(null);
+  const dragStart = useRef<{ x: number; y: number; camX: number; camY: number; t: number } | null>(
+    null,
+  );
   const moved = useRef(false);
 
   const syncRefs = useCallback(() => {
@@ -91,14 +103,14 @@ export default function App() {
 
   const setCamera = useCallback(
     (scale: number, x: number, y: number, animated: boolean) => {
-      const s = clamp(scale, 0.1, 1.4);
-      // Swift fly: 350–500ms — never 1s+
-      const duration = !animated || reduced ? 0.01 : 0.42;
-      const ease: [number, number, number, number] = [0.16, 1, 0.3, 1]; // ease-out
+      const minS = overviewScaleRef.current * 0.85;
+      const maxS = overviewScaleRef.current * MAX_ZOOM_MULT;
+      const s = clamp(scale, minS, maxS);
+      const duration = !animated || reduced ? 0.01 : FLY_MS;
       if (animated && !reduced) {
-        animate(scaleMv, s, { duration, ease });
-        animate(xMv, x, { duration, ease });
-        animate(yMv, y, { duration, ease });
+        animate(scaleMv, s, { duration, ease: EASE_OUT });
+        animate(xMv, x, { duration, ease: EASE_OUT });
+        animate(yMv, y, { duration, ease: EASE_OUT });
       } else {
         scaleMv.set(s);
         xMv.set(x);
@@ -112,84 +124,129 @@ export default function App() {
   );
 
   const fitOverview = useCallback(() => {
-    const xs = clusters.map((c) => c.x);
-    const ys = clusters.map((c) => c.y);
-    const minX = Math.min(...xs) - 180;
-    const maxX = Math.max(...xs) + 640;
-    const minY = Math.min(...ys) - 140;
-    const maxY = Math.max(...ys) + 360;
-    const worldW = maxX - minX;
-    const worldH = maxY - minY;
-    const topPad = w < 640 ? 220 : 130;
-    const bottomPad = 80;
-    const s = Math.min((w - 28) / worldW, (h - topPad - bottomPad) / worldH, 0.36);
-    const cx = (minX + maxX) / 2;
-    const cy = (minY + maxY) / 2;
-    return { s, x: -cx * s, y: -cy * s + (topPad - bottomPad) / 5 };
+    const padX = 24;
+    const padTop = w < 640 ? 72 : 64;
+    const padBottom = w < 640 ? 100 : 56;
+    const s = Math.min((w - padX * 2) / overview.width, (h - padTop - padBottom) / overview.height);
+    overviewScaleRef.current = s;
+    const cx = overview.width / 2;
+    const cy = overview.height / 2;
+    return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 6 };
   }, [w, h]);
 
-  const flyToCluster = useCallback(
-    (id: string | null) => {
-      if (!id) {
-        const { s, x, y } = fitOverview();
-        setCamera(s, x, y, true);
-        setActive(null);
-        focusIdRef.current = null;
-        const url = new URL(window.location.href);
-        url.searchParams.delete("chapter");
-        if (showKeys) url.searchParams.set("edit", "1");
-        window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-        return;
-      }
-      const ch = clusters.find((c) => c.id === id);
-      if (!ch) return;
-      const prev = clusters.find((c) => c.id === focusIdRef.current) ?? lastClusterRef.current ?? undefined;
-      setFromDir(cameFrom(prev ?? undefined, ch));
+  const cameraForMarker = useCallback(
+    (topic: TopicDef) => {
+      const base = overviewScaleRef.current || fitOverview().s;
+      const targetScale = clamp(base * 2.65, base * 1.8, base * MAX_ZOOM_MULT);
+      const cx = topic.x + 70;
+      const cy = topic.y + 18;
+      return { s: targetScale, x: -cx * targetScale, y: -cy * targetScale };
+    },
+    [fitOverview],
+  );
+
+  const goOverview = useCallback(() => {
+    const { s, x, y } = fitOverview();
+    setCamera(s, x, y, true);
+    setModalId(null);
+    setGlanceOpen(false);
+    focusIdRef.current = null;
+    setFocusId(null);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("topic");
+    url.searchParams.delete("glance");
+    if (showKeys) url.searchParams.set("edit", "1");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  }, [fitOverview, setCamera, showKeys]);
+
+  const openGlance = useCallback(() => {
+    setModalId(null);
+    setGlanceOpen(true);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("topic");
+    url.searchParams.set("glance", "1");
+    if (showKeys) url.searchParams.set("edit", "1");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  }, [showKeys]);
+
+  const closeGlance = useCallback(() => {
+    setGlanceOpen(false);
+    const url = new URL(window.location.href);
+    url.searchParams.delete("glance");
+    if (showKeys) url.searchParams.set("edit", "1");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  }, [showKeys]);
+
+  const openTopic = useCallback(
+    (id: string) => {
+      const topic = getTopic(id);
+      if (!topic) return;
+      const prev =
+        topics.find((t) => t.id === focusIdRef.current) ?? lastTopicRef.current ?? undefined;
+      setFromDir(cameFrom(prev, topic));
       focusIdRef.current = id;
-      lastClusterRef.current = ch;
-      const targetScale = w < 640 ? 0.8 : 0.95;
-      const x = -(ch.x + 260) * targetScale;
-      const y = -(ch.y + 200) * targetScale + (w < 640 ? 40 : 16);
-      setCamera(targetScale, x, y, true);
-      setActive(id);
+      setFocusId(id);
+      lastTopicRef.current = topic;
+      const cam = cameraForMarker(topic);
+      setCamera(cam.s, cam.x, cam.y, true);
+      setGlanceOpen(false);
+      setModalId(id);
       const url = new URL(window.location.href);
-      url.searchParams.set("chapter", id);
+      url.searchParams.set("topic", id);
       if (showKeys) url.searchParams.set("edit", "1");
       window.history.replaceState({}, "", `${url.pathname}${url.search}`);
     },
-    [fitOverview, setCamera, showKeys, w],
+    [cameraForMarker, setCamera, showKeys],
   );
 
-  // Opening beat: homepage “connection” world, then reveal the facts map
+  const closeModal = useCallback(() => {
+    setModalId(null);
+    // Stay spatially near the marker; Esc again / Home returns to overview
+    const url = new URL(window.location.href);
+    url.searchParams.delete("topic");
+    if (showKeys) url.searchParams.set("edit", "1");
+    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  }, [showKeys]);
+
+  const step = useCallback(
+    (dir: CompassDir) => {
+      const currentId = modalId ?? focusIdRef.current ?? topicOrder[0];
+      const current = getTopic(currentId);
+      if (!current) return;
+      const nextId = current.neighbors[dir];
+      if (nextId) openTopic(nextId);
+    },
+    [modalId, openTopic],
+  );
+
+  // Land on overview picture
   useEffect(() => {
-    if (!intro) {
-      const { s, x, y } = fitOverview();
-      setCamera(s, x, y, false);
-      return undefined;
-    }
-    const t = window.setTimeout(() => {
-      setIntro(false);
-      const { s, x, y } = fitOverview();
-      setCamera(s, x, y, !reduced);
-    }, reduced ? 0 : 900);
-    return () => window.clearTimeout(t);
+    const { s, x, y } = fitOverview();
+    setCamera(s, x, y, false);
+    stageRef.current?.focus({ preventScroll: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const ch = new URLSearchParams(window.location.search).get("chapter");
-    if (ch && clusters.some((c) => c.id === ch)) {
-      setIntro(false);
-      const t = window.setTimeout(() => flyToCluster(ch), 40);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("glance") === "1") {
+      setGlanceOpen(true);
+      return undefined;
+    }
+    const id = params.get("topic") || params.get("chapter");
+    if (id && getTopic(id)) {
+      const t = window.setTimeout(() => openTopic(id), 40);
       return () => window.clearTimeout(t);
     }
     return undefined;
-  }, [flyToCluster]);
+  }, [openTopic]);
 
   const zoomAt = useCallback(
     (clientX: number, clientY: number, nextScale: number) => {
       syncRefs();
       const prev = scaleRef.current;
-      const s = clamp(nextScale, 0.1, 1.4);
+      const minS = overviewScaleRef.current * 0.85;
+      const maxS = overviewScaleRef.current * MAX_ZOOM_MULT;
+      const s = clamp(nextScale, minS, maxS);
       const rectX = clientX - w / 2;
       const rectY = clientY - h / 2;
       const worldX = (rectX - xRef.current) / prev;
@@ -199,19 +256,17 @@ export default function App() {
     [h, setCamera, syncRefs, w],
   );
 
-  // Non-passive wheel so we can preventDefault (pan / zoom)
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (active) return; // modal open — do not pan/zoom canvas
+      if (modalId || glanceOpen) return;
       e.preventDefault();
       syncRefs();
       if (e.ctrlKey || e.metaKey) {
         zoomAt(e.clientX, e.clientY, scaleRef.current * Math.exp(-e.deltaY * 0.01));
         return;
       }
-      // Mouse wheel → zoom; trackpad two-finger → pan (when both axes move or small deltas)
       const mostlyVertical = Math.abs(e.deltaY) > Math.abs(e.deltaX) * 2;
       if (mostlyVertical && Math.abs(e.deltaX) < 1.2) {
         zoomAt(e.clientX, e.clientY, scaleRef.current * Math.exp(-e.deltaY * 0.0018));
@@ -221,10 +276,62 @@ export default function App() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [active, setCamera, syncRefs, zoomAt]);
+  }, [glanceOpen, modalId, setCamera, syncRefs, zoomAt]);
+
+  // Keyboard — works without clicking canvas first (window listener; skip when typing)
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement | null)?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || (e.target as HTMLElement)?.isContentEditable) {
+        return;
+      }
+      if (e.key === "Escape") {
+        e.preventDefault();
+        if (glanceOpen) closeGlance();
+        else if (modalId) closeModal();
+        else goOverview();
+        return;
+      }
+      if (modalId || glanceOpen) return; // arrows reserved for modal pages / not canvas
+      const map: Record<string, CompassDir> = {
+        ArrowUp: "up",
+        ArrowDown: "down",
+        ArrowLeft: "left",
+        ArrowRight: "right",
+        w: "up",
+        W: "up",
+        s: "down",
+        S: "down",
+        a: "left",
+        A: "left",
+        d: "right",
+        D: "right",
+      };
+      const dir = map[e.key];
+      if (dir) {
+        e.preventDefault();
+        step(dir);
+        return;
+      }
+      if (e.key === "+" || e.key === "=") {
+        e.preventDefault();
+        zoomAt(w / 2, h / 2, scaleRef.current * 1.18);
+      }
+      if (e.key === "-" || e.key === "_") {
+        e.preventDefault();
+        zoomAt(w / 2, h / 2, scaleRef.current * 0.85);
+      }
+      if (e.key === "Home") {
+        e.preventDefault();
+        goOverview();
+      }
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [closeGlance, closeModal, glanceOpen, goOverview, h, modalId, step, w, zoomAt]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
-    if (active) return;
+    if (modalId || glanceOpen) return;
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     moved.current = false;
@@ -235,6 +342,7 @@ export default function App() {
         y: e.clientY,
         camX: xRef.current,
         camY: yRef.current,
+        t: performance.now(),
       };
       pinchStart.current = null;
     } else if (pointers.current.size === 2) {
@@ -248,6 +356,7 @@ export default function App() {
   };
 
   const onPointerMove = (e: ReactPointerEvent) => {
+    if (modalId || glanceOpen) return;
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2 && pinchStart.current) {
@@ -273,63 +382,61 @@ export default function App() {
   };
 
   const onPointerUp = (e: ReactPointerEvent) => {
+    if (modalId || glanceOpen) {
+      pointers.current.clear();
+      dragStart.current = null;
+      return;
+    }
+    const start = dragStart.current;
     pointers.current.delete(e.pointerId);
     if (pointers.current.size < 2) pinchStart.current = null;
-    if (pointers.current.size === 0) dragStart.current = null;
+    if (pointers.current.size === 0 && start) {
+      const dx = e.clientX - start.x;
+      const dy = e.clientY - start.y;
+      const dt = performance.now() - start.t;
+      const dist = Math.hypot(dx, dy);
+      // Quick swipe → neighbouring topic
+      if (dist > 56 && dt < 420 && !pinchStart.current) {
+        if (Math.abs(dx) >= Math.abs(dy)) step(dx < 0 ? "right" : "left");
+        else step(dy < 0 ? "down" : "up");
+      }
+      dragStart.current = null;
+    }
   };
 
-  const activeCluster: ClusterDef | undefined = useMemo(
-    () => clusters.find((c) => c.id === active),
-    [active],
-  );
-
+  const activeTopic = modalId ? getTopic(modalId) : undefined;
   useEffect(() => {
-    if (activeCluster) lastClusterRef.current = activeCluster;
-  }, [activeCluster]);
-
-  const panelCluster = activeCluster ?? lastClusterRef.current;
-  const journeyIndex = active ? journey.indexOf(active) : -1;
+    if (activeTopic) lastTopicRef.current = activeTopic;
+  }, [activeTopic]);
+  const panelTopic = activeTopic ?? lastTopicRef.current;
 
   const pathD = useMemo(() => {
-    const pts = journey
-      .map((id) => clusters.find((c) => c.id === id))
+    const pts = topicOrder
+      .map((id) => getTopic(id))
       .filter(Boolean)
-      .map((c) => `${c!.x + 36},${c!.y + 30}`);
-    return pts.length ? `M ${pts.join(" L ")}` : "";
+      .map((t) => `${t!.x + 56},${t!.y + 16}`);
+    if (pts.length < 2) return "";
+    return `M ${pts[0]} C ${pts[0]} ${pts[1]} ${pts[1]} S ${pts[2] ?? pts[1]} ${pts[2] ?? pts[1]} ${
+      pts[3] ? `S ${pts[3]} ${pts[3]}` : ""
+    }`.trim();
   }, []);
+
+  const sparsePath = useMemo(() => {
+    const ordered = topicOrder.map((id) => getTopic(id)!).filter(Boolean);
+    if (ordered.length < 2) return "";
+    // Soft asymmetric curve through chips — not a node graph
+    const [a, b, c, d] = ordered;
+    return `M ${a.x + 48} ${a.y + 16}
+      Q ${a.x + 200} ${a.y + 180} ${b.x + 48} ${b.y + 16}
+      Q ${b.x + 280} ${b.y - 120} ${c.x + 48} ${c.y + 16}
+      Q ${c.x + 160} ${c.y + 200} ${d.x + 48} ${d.y + 16}`;
+  }, []);
+
+  const topicIndex = modalId ? topicOrder.indexOf(modalId as (typeof topicOrder)[number]) : -1;
 
   return (
     <div className="facts-app">
-      {intro ? (
-        <div className="intro-beat" role="presentation">
-          <div className="intro-beat-inner slide-auto-enter">
-            <div className="mx-auto mb-5 w-fit rounded-full shadow-[0_0_40px_rgba(182,255,126,0.22)]">
-              <LogoMark size={w < 640 ? 72 : 96} />
-            </div>
-            <p className="pitch-eyebrow text-[var(--lime)]">{meta.brand}</p>
-            <h1 className="pitch-h1 display mt-3 text-white">
-              {meta.heroLineBefore}{" "}
-              <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
-                {meta.heroLineAccent}
-              </span>
-            </h1>
-            <p className="pitch-body-lg mt-3 max-w-md text-white/80">{meta.heroSupport}</p>
-            <button
-              type="button"
-              className="chip-lime mt-6"
-              onClick={() => {
-                setIntro(false);
-                const { s, x, y } = fitOverview();
-                setCamera(s, x, y, !reduced);
-              }}
-            >
-              {meta.ui.enterCta}
-            </button>
-          </div>
-        </div>
-      ) : null}
-
-      <header className={`topbar ${intro ? "opacity-0 pointer-events-none" : ""}`}>
+      <header className="topbar">
         <div className="flex items-center gap-2.5">
           <div className="rounded-full shadow-[0_0_24px_rgba(182,255,126,0.2)]">
             <LogoMark size={w < 640 ? 34 : 40} />
@@ -343,7 +450,6 @@ export default function App() {
               <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
                 {meta.experienceAccent}
               </span>
-              {showKeys ? <span className="edit-key"> meta.experienceAccent</span> : null}
             </div>
           </div>
         </div>
@@ -352,10 +458,7 @@ export default function App() {
             type="button"
             className="icon-btn"
             aria-label="Zoom out"
-            onClick={() => {
-              syncRefs();
-              zoomAt(w / 2, h / 2, scaleRef.current * 0.82);
-            }}
+            onClick={() => zoomAt(w / 2, h / 2, scaleRef.current * 0.82)}
           >
             <ZoomOut className="h-4 w-4" />
           </button>
@@ -363,139 +466,144 @@ export default function App() {
             type="button"
             className="icon-btn"
             aria-label="Zoom in"
-            onClick={() => {
-              syncRefs();
-              zoomAt(w / 2, h / 2, scaleRef.current * 1.22);
-            }}
+            onClick={() => zoomAt(w / 2, h / 2, scaleRef.current * 1.22)}
           >
             <ZoomIn className="h-4 w-4" />
           </button>
-          {active ? (
-            <button type="button" className="chip-overview" onClick={() => flyToCluster(null)}>
-              {meta.ui.overviewChip}
-            </button>
-          ) : null}
-          <button
-            type="button"
-            className="chip-home"
-            onClick={() => {
-              window.location.href = "/";
-            }}
-          >
+          <button type="button" className="chip-overview" onClick={goOverview}>
+            {meta.ui.overviewChip}
+          </button>
+          <button type="button" className="chip-home" onClick={() => { window.location.href = "/"; }}>
             <Home className="h-3.5 w-3.5" />
             {meta.ui.homeLabel}
           </button>
         </div>
       </header>
 
-      {/* Persistent CCD mark while exploring (walkthrough-style) */}
-      {active ? (
-        <div className="pointer-events-none absolute left-3 top-[4.15rem] z-20 opacity-90 sm:left-4">
-          <LogoMark size={26} />
-        </div>
-      ) : null}
-
-      {!active ? (
-        <div className="overview-facts" aria-label="Key facts">
-          <p className="overview-facts-title">
-            {meta.ui.exploreHint}
-            {showKeys ? <span className="edit-key"> overviewStatIds</span> : null}
-          </p>
-          <div className="overview-facts-grid">
-            {keyFactStatIds.map((id) => {
-              const s = getStat(id);
-              if (!s) return null;
-              return (
-                <button
-                  key={id}
-                  type="button"
-                  className="overview-fact"
-                  onClick={() => flyToCluster(s.zoomClusterId ?? "glance")}
-                >
-                  <span className="overview-fact-value">{s.value}</span>
-                  <span className="overview-fact-label">{s.label}</span>
-                  {showKeys ? <span className="edit-key">stats.{id}</span> : null}
-                </button>
-              );
-            })}
-          </div>
-          <p className="overview-hint">{meta.ui.exploreHint}</p>
-        </div>
-      ) : null}
-
       <div
         ref={stageRef}
         className="canvas-stage"
+        tabIndex={0}
+        aria-label="The facts canvas"
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
         onPointerCancel={onPointerUp}
       >
         <motion.div className="canvas-world" style={{ scale: scaleMv, x: xMv, y: yMv }}>
-          <div className="world-glow" aria-hidden />
-          <svg className="world-path" width="2400" height="3600" aria-hidden>
-            <path
-              d={pathD}
-              fill="none"
-              stroke="rgba(182,255,126,0.22)"
-              strokeWidth="5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
+          <div
+            className="overview-picture"
+            style={{ width: overview.width, height: overview.height }}
+          >
+            <img
+              className="overview-hero"
+              src={heroUrl()}
+              alt=""
+              draggable={false}
             />
-          </svg>
+            <div className="overview-forest" aria-hidden />
+            <div className="overview-vignette" aria-hidden />
 
-          {clusters.map((ch) => {
-            const isActive = active === ch.id;
-            const isCover = ch.id === "cover";
-            return (
-              <div
-                key={ch.id}
-                className={`node ${isActive ? "node-active" : ""} ${isCover ? "node-cover" : ""}`}
-                style={{ left: ch.x, top: ch.y }}
-              >
+            <svg className="overview-path" width={overview.width} height={overview.height} aria-hidden>
+              <path
+                d={sparsePath || pathD}
+                fill="none"
+                stroke="rgba(182,255,126,0.28)"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+
+            <div
+              className="overview-headline"
+              style={{ left: overview.headlineX, top: overview.headlineY }}
+            >
+              <p className="overview-brand">{meta.brand}</p>
+              <button type="button" className="overview-headline-btn" onClick={openGlance}>
+                <h1>
+                  {meta.situationHeadline}
+                  {showKeys ? <span className="edit-key"> meta.situationHeadline</span> : null}
+                </h1>
+                <p className="overview-support">
+                  {meta.situationLine}
+                  {showKeys ? <span className="edit-key"> meta.situationLine</span> : null}
+                </p>
+                <span className="overview-headline-cta">{meta.ui.openGlance}</span>
+              </button>
+            </div>
+
+            <p
+              className="overview-explore-hint"
+              style={{ left: overview.hintX, top: overview.hintY }}
+            >
+              {meta.ui.exploreHint}
+            </p>
+
+            {topics.map((t) => {
+              const isHot = focusId === t.id || modalId === t.id;
+              return (
                 <button
+                  key={t.id}
                   type="button"
-                  className="node-heading"
+                  className={`topic-chip ${isHot ? "topic-chip-active" : ""}`}
+                  style={{ left: t.x, top: t.y }}
                   onPointerDown={(e) => {
-                    // Allow tap without starting a world-drag from the heading
                     e.stopPropagation();
                     moved.current = false;
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
-                    flyToCluster(isActive ? null : ch.id);
+                    openTopic(t.id);
                   }}
                 >
-                  <span className="node-kicker">
-                    {ch.n < 10 ? `0${ch.n}` : ch.n}
-                    {showKeys ? <span className="edit-key"> clusters.{ch.id}</span> : null}
-                  </span>
-                  <span className="node-title">{ch.title}</span>
-                  <span className="node-line">{ch.overviewLine}</span>
+                  <span>{t.markerLabel}</span>
+                  <ChevronRight className="topic-chip-chevron" strokeWidth={2.5} />
+                  {showKeys ? <span className="edit-key"> topics.{t.id}</span> : null}
                 </button>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </motion.div>
       </div>
 
-      {panelCluster ? (
+      {/* Mobile / optional D-pad */}
+      {!modalId && !glanceOpen ? (
+        <div className="compass-pad" aria-label="Explore directions">
+          <button type="button" className="compass-btn compass-up" onClick={() => step("up")}>
+            ↑
+          </button>
+          <button type="button" className="compass-btn compass-left" onClick={() => step("left")}>
+            ←
+          </button>
+          <button type="button" className="compass-btn compass-right" onClick={() => step("right")}>
+            →
+          </button>
+          <button type="button" className="compass-btn compass-down" onClick={() => step("down")}>
+            ↓
+          </button>
+        </div>
+      ) : null}
+
+      <GlanceModal open={glanceOpen} onClose={closeGlance} showKeys={showKeys} />
+
+      {panelTopic ? (
         <TopicModal
-          open={!!activeCluster}
-          cluster={panelCluster}
+          open={!!activeTopic}
+          cluster={panelTopic}
           showKeys={showKeys}
           fromDir={fromDir}
-          onClose={() => flyToCluster(null)}
+          onClose={closeModal}
           footer={
             <>
-              <button type="button" className="chip-outline" onClick={() => flyToCluster(null)}>
+              <button type="button" className="chip-outline" onClick={goOverview}>
                 {meta.ui.overviewChip}
               </button>
-              {journeyIndex >= 0 && journeyIndex < journey.length - 1 ? (
+              {topicIndex >= 0 && topicIndex < topicOrder.length - 1 ? (
                 <button
                   type="button"
                   className="chip-lime"
-                  onClick={() => flyToCluster(journey[journeyIndex + 1])}
+                  onClick={() => openTopic(topicOrder[topicIndex + 1])}
                 >
                   {meta.ui.continuePath}
                 </button>

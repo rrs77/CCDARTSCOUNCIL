@@ -7,7 +7,7 @@ import {
   meta,
   principalSourceIds,
   sources,
-  type ClusterDef,
+  type TopicDef,
 } from "@/content/facts.content";
 
 const EASE: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
@@ -64,76 +64,35 @@ export function ChapterBody({
   showKeys,
   hideTitle,
 }: {
-  cluster: ClusterDef;
+  cluster: TopicDef;
   showKeys?: boolean;
-  /** Title lives in the modal header when true */
   hideTitle?: boolean;
 }) {
   const [drill, setDrill] = useState<string | null>(null);
-  const isCover = cluster.id === "cover";
   const reduced = useReducedMotion() ?? false;
   const item = reduced ? reducedItem : itemVariants;
+  const charts = [...(cluster.chartIds ?? []), ...(cluster.nestedChartIds ?? [])];
 
   return (
-    <motion.div
-      key={cluster.id}
-      className={isCover ? "text-[#fffaf7]" : ""}
-      variants={listVariants}
-      initial="hidden"
-      animate="show"
-    >
-      {!hideTitle && isCover ? (
-        <motion.p className="pitch-eyebrow text-[var(--lime)]" variants={item}>
-          {meta.brand}
-          {showKeys ? <span className="edit-key"> meta.brand</span> : null}
-        </motion.p>
-      ) : null}
-
+    <motion.div key={cluster.id} variants={listVariants} initial="hidden" animate="show">
       {!hideTitle ? (
-        <motion.h2
-          className={`display mb-2 leading-tight ${isCover ? "pitch-h1 text-white" : "pitch-h2 text-[#002d24]"}`}
-          variants={item}
-        >
-          {isCover ? (
-            <>
-              {meta.titleLead}{" "}
-              <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
-                {meta.titleAccent}
-              </span>
-            </>
-          ) : (
-            cluster.title
-          )}
-          {showKeys ? (
-            <span className="edit-key"> {isCover ? "meta.title" : `clusters.${cluster.id}.title`}</span>
-          ) : null}
+        <motion.h2 className="display pitch-h2 mb-2 leading-tight text-[#002d24]" variants={item}>
+          {cluster.title}
+          {showKeys ? <span className="edit-key"> topics.{cluster.id}.title</span> : null}
         </motion.h2>
       ) : null}
 
-      {isCover ? (
-        <motion.p className="pitch-body-lg text-white/80" variants={item}>
-          {meta.subtitle}
-          {showKeys ? <span className="edit-key"> meta.subtitle</span> : null}
-        </motion.p>
-      ) : (
-        <motion.p className="mb-3 pitch-body font-medium text-[#14b8a6]" variants={item}>
-          {cluster.investorLine}
-          {showKeys ? <span className="edit-key"> investorLine</span> : null}
-        </motion.p>
-      )}
+      <motion.p className="mb-3 pitch-body font-medium text-[#14b8a6]" variants={item}>
+        {cluster.investorLine}
+        {showKeys ? <span className="edit-key"> investorLine</span> : null}
+      </motion.p>
 
-      <motion.div className={`mt-3 space-y-2.5 ${isCover ? "text-white/85" : "text-[#33443e]"}`} variants={item}>
-        {(isCover ? meta.coverFraming : cluster.body).map((p, i) => (
+      <motion.div className="mt-3 space-y-2.5 text-[#33443e]" variants={item}>
+        {cluster.body.map((p, i) => (
           <p key={i} className="pitch-body m-0">
             {p}
           </p>
         ))}
-        {isCover ? (
-          <p className="pitch-caption m-0 italic text-white/65">
-            {meta.earlyYearsPrinciple}
-            {showKeys ? <span className="edit-key"> meta.earlyYearsPrinciple</span> : null}
-          </p>
-        ) : null}
       </motion.div>
 
       {cluster.statIds?.length ? (
@@ -158,11 +117,17 @@ export function ChapterBody({
         </motion.div>
       ) : null}
 
-      {cluster.chartIds?.map((cid) => {
+      {charts.map((cid, i) => {
         const chart = getChart(cid);
         if (!chart) return null;
+        const nested = i >= (cluster.chartIds?.length ?? 0);
         return (
-          <motion.div key={cid} className="mt-4 chart-hero" variants={item}>
+          <motion.div
+            key={cid}
+            className={`mt-4 chart-hero ${nested ? "chart-nested" : ""}`}
+            variants={item}
+          >
+            {nested ? <p className="chart-nested-label">Detail</p> : null}
             <ContentChart
               chart={chart}
               showKeys={showKeys}
@@ -172,7 +137,7 @@ export function ChapterBody({
         );
       })}
 
-      {cluster.id === "conclusion" ? (
+      {cluster.id === "ccd" ? (
         <motion.ol className="mt-4 list-decimal space-y-1.5 pl-4 pitch-caption text-[#33443e]" variants={item}>
           {principalSourceIds.map((id) => {
             const s = sources[id];
@@ -189,6 +154,8 @@ export function ChapterBody({
               </li>
             );
           })}
+          <li className="list-none pt-2 italic text-[#6b7d80]">{meta.verificationNote}</li>
+          <li className="list-none italic text-[#6b7d80]">{meta.closing}</li>
         </motion.ol>
       ) : null}
 

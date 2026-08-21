@@ -2,7 +2,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, type ReactNode, type SyntheticEvent } from "react";
 import { ChapterBody } from "@/chapters/ChapterBody";
-import { meta, type ClusterDef } from "@/content/facts.content";
+import { meta, type TopicDef } from "@/content/facts.content";
 
 export type TravelDir = "left" | "right" | "up" | "down" | null;
 
@@ -36,7 +36,7 @@ export function TopicModal({
   fromDir = null,
   open,
 }: {
-  cluster: ClusterDef;
+  cluster: TopicDef;
   showKeys?: boolean;
   onClose: () => void;
   footer?: ReactNode;
@@ -107,7 +107,7 @@ export function TopicModal({
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={cluster.id}
-              className={`topic-modal ${cluster.id === "cover" ? "topic-modal--dark" : ""}`}
+              className="topic-modal"
               onPointerDown={stopCanvas}
               onWheel={stopCanvas}
               onTouchMove={stopCanvas}
@@ -127,7 +127,7 @@ export function TopicModal({
                 <div className="topic-modal-header-text">
                   <p className="topic-modal-kicker">{meta.brand}</p>
                   <h2 id="topic-modal-title" className="topic-modal-title">
-                    {cluster.id === "cover" ? meta.title : cluster.title}
+                    {cluster.title}
                   </h2>
                 </div>
                 <button

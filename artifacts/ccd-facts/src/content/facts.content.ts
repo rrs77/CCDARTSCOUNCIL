@@ -1,9 +1,10 @@
 /**
  * CCDesigner — The facts
  * ======================
- * EDIT THIS FILE to change headlines, stats, captions, sources, and cluster order.
+ * EDIT THIS FILE to change headlines, stats, captions, sources, and topic markers.
  * See `README.md` in this folder.
  *
+ * Prezi model: one overview picture + quiet topic chips → scrollable modal scenes.
  * Do not invent numbers. Prefer CLA / Ofqual / DfE primary sources.
  * “No entries” ≠ “not taught”. Use “aims to”, not “will solve”.
  */
@@ -19,11 +20,10 @@ export type StatTile = {
   id: string;
   label: string;
   value: string;
-  /** Optional unit hint for editors (e.g. "%", "pp") — display is usually in `value`. */
   unit?: string;
   footnote: string;
   sourceId: string;
-  /** Cluster to fly to when this tile is tapped on the overview */
+  /** Topic id this fact belongs with */
   zoomClusterId?: string;
 };
 
@@ -41,9 +41,7 @@ export type ChartDef = {
     | "funding-bars";
   caption: string;
   sourceNote: string;
-  /** Colour tokens used by the chart renderer */
   colours?: string[];
-  /** Axis / legend labels — keep copy here, not in React chart code */
   axis?: {
     x?: string;
     y?: string;
@@ -56,32 +54,24 @@ export type ChartDef = {
 
 export type CompassDir = "up" | "down" | "left" | "right";
 
-export type ClusterDef = {
+/** Quiet chip on the overview artwork — click opens the topic modal. */
+export type TopicDef = {
   id: string;
-  n: number;
-  /**
-   * World coordinates on the infinite canvas (pixels in the landscape).
-   * Edit these to rearrange the Prezi map — not a slide index.
-   */
+  /** Short chip label on the picture (subordinate to “The situation”). */
+  markerLabel: string;
+  /** World coordinates of the chip on the overview canvas. */
   x: number;
   y: number;
   title: string;
-  /** Short line readable on the map (before opening the node) */
-  overviewLine: string;
-  /** Investor / funder one-liner */
   investorLine: string;
-  /** Short body paragraphs */
   body: string[];
   whyThisMattersForCCD: string;
   sourceIds: string[];
   chartIds?: string[];
-  /** Optional inline stat tiles shown inside the cluster */
+  /** Extra charts further down the scroll (nested detail in the modal). */
+  nestedChartIds?: string[];
   statIds?: string[];
-  caveats?: string[];
-  /** Compass neighbours — arrow / swipe / D-pad step here (editable). */
-  neighbors?: Partial<Record<CompassDir, string>>;
-  /** Home node: camera lands here; Escape returns here. */
-  isHome?: boolean;
+  neighbors: Partial<Record<CompassDir, string>>;
 };
 
 export const sources: Record<string, SourceRef> = {
@@ -143,26 +133,24 @@ export const sources: Record<string, SourceRef> = {
   },
 };
 
+
 export const meta = {
   brand: "CCDESIGNER",
   productName: "Creative Curriculum Designer",
   title: "The State of Creative Education in England",
-  /** Cover headline split for the italic accent word */
   titleLead: "The State of Creative Education in",
   titleAccent: "England",
   date: "21 August 2026",
   subtitle:
     "A concise evidence overview for funding, partnership and development. Prepared and re-verified 21 August 2026.",
-  /** Homepage opening beat (login hero language). */
   heroLineBefore: "Exceptional lessons start with",
   heroLineAccent: "connection",
   heroSupport:
     "Capture ideas. Build lessons. Connect with arts organisations — EYFS to A-level.",
-  /** Topbar experience name */
   experienceLead: "The",
   experienceAccent: "facts",
-  /** Short line under “The situation” on the home node (map, not a stats dump). */
-  situationLine: "Creative education at a point of change.",
+  situationHeadline: "The situation",
+  situationLine: "Creative education in England is at a point of change.",
   coverFraming: [
     "Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.",
     "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
@@ -178,12 +166,8 @@ export const meta = {
     "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships. This is a prototype / demo connection layer.",
   fundingCase:
     "Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. CCD aims to make those connections usable. We don’t need more resources so much as to make the outstanding ones easier to find, connect and build upon.",
-  /** Chrome / buttons — edit here, not in React components */
   ui: {
-    enterCta: "Enter the facts",
     exploreHint: "Use arrows or swipe to explore",
-    backHome: "The situation",
-    openNode: "Open",
     closeModal: "Close",
     whyCcdLabel: "Why this matters for CCDesigner",
     drillLabel: "Detail",
@@ -191,51 +175,140 @@ export const meta = {
     homeLabel: "Site home",
     overviewChip: "Overview",
     continuePath: "Next topic",
+    prevPage: "Prev",
+    nextPage: "Next",
+    openGlance: "Key findings",
     dirUp: "Up",
     dirDown: "Down",
     dirLeft: "Left",
     dirRight: "Right",
-    scrollMore: "Scroll for more",
   },
 };
 
-/** Home cluster id — Escape / “The situation” control returns here. */
-export const HOME_ID = "situation";
+/**
+ * Overview picture — world size of the Prezi canvas.
+ * Hero image is full-bleed; headline and chips sit in world coordinates.
+ */
+export const overview = {
+  width: 2400,
+  height: 1350,
+  heroImage: "hero-arts.jpg",
+  headlineX: 140,
+  headlineY: 320,
+  hintX: 140,
+  hintY: 1180,
+};
+
+/** Ordered ring for arrows / swipe (neighbourhood also on each topic). */
+export const topicOrder = ["exams", "primary", "poverty", "ccd"] as const;
 
 /**
- * Investor key facts live on their topic nodes (not dumped on home).
- * Listed here so editors can see the persuasive set at a glance.
+ * Key findings modal — two pages (not a 9-card grid).
+ * Opened from “The situation” on the overview. Edit figures here.
  */
-export const keyFactStatIds = [
-  "gcse-fall",
-  "alevel-fall",
-  "no-entry",
-  "hours-gap",
-  "deprivation-music",
-  "ofqual-gcse-2026",
-  "ofqual-alevel-2026",
-] as const;
+export type GlanceFigure = {
+  value: string;
+  label: string;
+  source: string;
+};
 
-/** Soft path glow through topics (visual only). */
-export const journey: string[] = [
-  "cover",
-  "glance",
-  "longterm",
-  "primary",
-  "secondary",
-  "availability",
-  "gcse",
-  "alevel",
-  "teachers",
-  "poverty",
-  "he",
-  "hubs",
-  "centre",
-  "meaning",
-  "conclusion",
-];
+export type GlanceSection = {
+  title: string;
+  figures: GlanceFigure[];
+  caveat?: string;
+};
 
-/** Key investor-facing facts — also shown on the overview map. */
+export type GlancePage = {
+  id: string;
+  heading: string;
+  /** Page 1: flat figures + one-line read */
+  summary?: string;
+  figures?: GlanceFigure[];
+  /** Page 2: titled sections */
+  sections?: GlanceSection[];
+  whyThisMattersForCCD?: string;
+};
+
+export const glanceModal = {
+  title: "Key findings at a glance",
+  pages: [
+    {
+      id: "longterm",
+      heading: "The long-term picture",
+      summary:
+        "Creative education has contracted over a decade-plus — fewer entries, thinner pathways, and uneven school provision.",
+      figures: [
+        {
+          value: "−42%",
+          label: "Arts GCSE entries",
+          source: "CLA Report Card 2024 · 2010–2022/23",
+        },
+        {
+          value: "−21%",
+          label: "Arts A-level entries",
+          source: "CLA Report Card 2024 · 2010/11–2022/23",
+        },
+        {
+          value: "42% / 41% / 84%",
+          label: "Schools with no GCSE Music / Drama / Dance",
+          source: "CLA Report Card 2024 · 2022/23 · “no entries” ≠ “not taught”",
+        },
+        {
+          value: "~1 in 4",
+          label: "Primary teachers under 1 hour arts / week",
+          source: "Teacher Tapp / CLA Report Card 2026",
+        },
+      ],
+    },
+    {
+      id: "leftout",
+      heading: "Who is left out · 2026",
+      sections: [
+        {
+          title: "Access and inequality",
+          figures: [
+            {
+              value: "47% vs 6%",
+              label: "Independent vs state primary teachers reporting >2.5 hrs arts / week",
+              source: "Teacher Tapp / CLA Report Card 2026",
+            },
+            {
+              value: "54% vs 21%",
+              label: "No GCSE Music — most vs least deprived LA fifth",
+              source: "CLA Report Card 2026",
+            },
+            {
+              value: "3.8% vs 5.9%",
+              label: "Arts share of A-levels — most vs least deprived",
+              source: "CLA Report Card 2026",
+            },
+          ],
+        },
+        {
+          title: "Latest year (provisional)",
+          figures: [
+            {
+              value: "Art +2.7% · Drama −0.9% · Music −1.3% · Perf/EA +1.2%",
+              label: "2026 GCSE vs 2025",
+              source: "Ofqual provisional entries, summer 2026",
+            },
+            {
+              value: "Drama −9.5% · Music −4.9% · Art −1.0%",
+              label: "2026 A level vs 2025",
+              source: "Ofqual provisional · all A-levels +2.9%",
+            },
+          ],
+          caveat:
+            "Provisional figures, rounded to 5. Short-term movement is mixed — not a long-term reversal. “No entries” does not mean “not taught”.",
+        },
+      ],
+      whyThisMattersForCCD:
+        "These figures set the case for a connection layer: teachers and arts organisations need a practical way to find, adapt and share outstanding work where entitlement is uneven. CCDesigner aims to shorten that distance — not to claim it will solve structural inequality alone.",
+    },
+  ] satisfies GlancePage[],
+};
+
+
 export const stats: StatTile[] = [
   {
     id: "gcse-fall",
@@ -244,7 +317,7 @@ export const stats: StatTile[] = [
     unit: "%",
     footnote: "2010–2022/23",
     sourceId: "cla2024",
-    zoomClusterId: "glance",
+    zoomClusterId: "exams",
   },
   {
     id: "alevel-fall",
@@ -253,7 +326,7 @@ export const stats: StatTile[] = [
     unit: "%",
     footnote: "2010/11–2022/23",
     sourceId: "cla2024",
-    zoomClusterId: "glance",
+    zoomClusterId: "exams",
   },
   {
     id: "no-entry",
@@ -262,7 +335,7 @@ export const stats: StatTile[] = [
     unit: "% of schools",
     footnote: "2022/23 — “no entries” ≠ “not taught”",
     sourceId: "cla2024",
-    zoomClusterId: "availability",
+    zoomClusterId: "exams",
   },
   {
     id: "primary-hour",
@@ -306,7 +379,7 @@ export const stats: StatTile[] = [
     unit: "% change",
     footnote: "Ofqual; rounded to 5",
     sourceId: "ofqual2026",
-    zoomClusterId: "gcse",
+    zoomClusterId: "exams",
   },
   {
     id: "ofqual-alevel-2026",
@@ -315,7 +388,7 @@ export const stats: StatTile[] = [
     unit: "% change",
     footnote: "Ofqual; all A-levels +2.9%",
     sourceId: "ofqual2026",
-    zoomClusterId: "alevel",
+    zoomClusterId: "exams",
   },
 ];
 
@@ -502,279 +575,93 @@ export const charts: Record<string, ChartDef> = {
   },
 };
 
-export const clusters: ClusterDef[] = [
+
+export const topics: TopicDef[] = [
   {
-    id: "cover",
-    n: 1,
-    x: 0,
-    y: 0,
-    title: "Cover / framing",
-    overviewLine: "Evidence + CCD vision",
-    investorLine: "A connection layer for creative education — not a claim to fix inequality alone.",
-    body: meta.coverFraming,
-    whyThisMattersForCCD:
-      "This canvas sets the evidence case for why a free national planning and partnership platform aims to matter now.",
-    sourceIds: ["cla2026", "ofqual2026"],
-  },
-  {
-    id: "glance",
-    n: 2,
-    x: 920,
-    y: -80,
-    title: "Key findings at a glance",
-    overviewLine: "Investor-ready headline stats",
-    investorLine: "Usable on its own — the figures that persuade a funder in thirty seconds.",
-    body: [
-      "Ofqual 2026 figures are provisional (rounded to 5). “No entries” does not mean “not taught”.",
-    ],
-    whyThisMattersForCCD:
-      "These figures set the case for a connection layer: teachers and arts organisations need a practical way to find, adapt and share outstanding work where entitlement is uneven.",
-    sourceIds: ["cla2024", "cla2026", "ofqual2026"],
-    statIds: [
-      "gcse-fall",
-      "alevel-fall",
-      "no-entry",
-      "primary-hour",
-      "hours-gap",
-      "deprivation-music",
-      "alevel-share",
-      "ofqual-gcse-2026",
-      "ofqual-alevel-2026",
-    ],
-  },
-  {
-    id: "longterm",
-    n: 3,
+    id: "exams",
+    markerLabel: "Exams",
     x: 1680,
-    y: 40,
-    title: "Long-term picture",
-    overviewLine: "Chart 1 — contraction since ~2010",
-    investorLine: "Four separate baselines — do not collapse into one index.",
-    body: ["Each series has its own baseline. End point 2022/23 (CLA Report Card 2024)."],
+    y: 560,
+    title: "Exams · GCSE & A level",
+    investorLine: "Long-term contraction; short-term Ofqual movement is mixed — not a reversal.",
+    body: [
+      "Arts GCSE entries fell 42% (2010–2022/23) and arts A-level entries 21% (2010/11–2022/23). Teaching hours −21%; arts teachers −14% (CLA Report Card 2024).",
+      "In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance — “no entries” does not mean “not taught”.",
+      "Ofqual provisional summer 2026 vs 2025: GCSE Art +2.7%, Drama −0.9%, Music −1.3%, Performing/Expressive Arts +1.2%. A level: Drama −9.5%, Music −4.9%, Art −1.0% (all A-levels +2.9%).",
+      "Access to arts qualifications still tracks disadvantage (DfE Tables 18–19).",
+    ],
     whyThisMattersForCCD:
-      "CCDesigner aims to support teachers working inside a system that has already contracted — by making planning and partnership more usable day to day.",
-    sourceIds: ["cla2024"],
-    chartIds: ["longterm"],
+      "CCDesigner aims to support teachers working inside a system that has already contracted — keeping planning cumulative and partnership reachable where exam pathways thin out.",
+    sourceIds: ["cla2024", "cla2026", "ofqual2026", "ofqualBackground", "dfeAnnex"],
+    statIds: ["gcse-fall", "alevel-fall", "no-entry", "ofqual-gcse-2026", "ofqual-alevel-2026"],
+    chartIds: ["longterm", "noGcse"],
+    nestedChartIds: ["gcseIndex", "alevelIndex", "disadvantage"],
+    neighbors: { left: "poverty", right: "ccd", down: "primary", up: "ccd" },
   },
   {
     id: "primary",
-    n: 4,
-    x: -200,
-    y: 720,
-    title: "Primary provision",
-    overviewLine: "Chart 2 — hours gap & subject leads",
-    investorLine: "The entitlement gap starts early — and partnerships are thin.",
+    markerLabel: "Primary",
+    x: 520,
+    y: 980,
+    title: "Primary · entitlement starts early",
+    investorLine: "The hours gap is stark — and partnerships are thin.",
     body: [
-      "Some schools report music or drama only later, or inside English — treat that as a research question, not a proven national pattern.",
+      "Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.",
+      "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report no external artist or cultural organisation.",
+      "Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.",
       "No official national statistic exists for weekly Year 7 music/drama teaching time — so none is quoted here.",
-      "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report no external artist or cultural organisation. Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.",
     ],
     whyThisMattersForCCD:
       "Where generalists carry the arts, reusable activity blocks and Partner Hubs aim to make excellent practice easier to find and adapt — without claiming to replace specialists.",
     sourceIds: ["cla2026"],
+    statIds: ["hours-gap", "primary-hour"],
     chartIds: ["primaryHours"],
-  },
-  {
-    id: "secondary",
-    n: 5,
-    x: 720,
-    y: 780,
-    title: "Secondary disadvantage",
-    overviewLine: "Chart 3 — who gets entries",
-    investorLine: "Access to arts qualifications tracks disadvantage.",
-    body: [
-      "Percentage of state-funded mainstream schools with entries (DfE Tables 18–19, 2024/25).",
-      "Technical Awards narrow some gaps. These data cannot tell whether Year 7 or 8 receive a weekly lesson.",
-    ],
-    whyThisMattersForCCD:
-      "CCD aims to help cover cold spots by connecting schools with organisation resources — as a proposed connection layer, not a signed partnership claim.",
-    sourceIds: ["dfeAnnex"],
-    chartIds: ["disadvantage"],
-  },
-  {
-    id: "availability",
-    n: 6,
-    x: 1550,
-    y: 820,
-    title: "GCSE availability",
-    overviewLine: "Chart 4 — schools with no entries",
-    investorLine: "Large shares of schools enter nobody for Music, Drama or Dance.",
-    body: [
-      "CLA 2026: 54% vs 21% of schools in the most vs least deprived LA fifths have no GCSE Music entries.",
-      "FSM pupils are under-represented in all arts GCSEs and over-represented in arts Level 2 vocational entries. Stay qualification-neutral when interpreting.",
-    ],
-    whyThisMattersForCCD:
-      "Where GCSE pathways thin out, teachers still need planning stubs and links to official organisation materials — CCD holds the planning layer, not the copyrighted resource itself.",
-    sourceIds: ["cla2024", "cla2026"],
-    chartIds: ["noGcse"],
-  },
-  {
-    id: "gcse",
-    n: 7,
-    x: -120,
-    y: 1520,
-    title: "Latest GCSE",
-    overviewLine: "Chart 5 — indexed 2024–26",
-    investorLine: "Short-term movement is mixed — not a long-term reversal.",
-    body: [
-      "Ofqual provisional summer 2026 vs 2025. All GCSEs +1.1%; age-16 population +1.2%. Collected by 15 April 2026; rounded to 5.",
-      "Music rose 2024–25 then eased in 2026. Read against long-term contraction.",
-    ],
-    whyThisMattersForCCD:
-      "Short-term movement does not undo the long-term fall. CCD aims to help teachers keep creative learning cumulative year to year.",
-    sourceIds: ["ofqual2026", "ofqualBackground"],
-    chartIds: ["gcseIndex"],
-  },
-  {
-    id: "alevel",
-    n: 8,
-    x: 780,
-    y: 1580,
-    title: "A-level pipeline",
-    overviewLine: "Chart 6 — indexed A-level",
-    investorLine: "Drama −9.5% and Music −4.9% in the latest provisional year.",
-    body: [
-      "All A-levels +2.9% in 2026 provisional data, while arts subjects remain well below 2010/11.",
-      "Arts A-level share 3.8% vs 5.9% in most vs least deprived fifths. FSM pupils under-represented in A-level Music, Dance, Drama and Design & Technology.",
-    ],
-    whyThisMattersForCCD:
-      "A thinner post-16 pipeline makes earlier connection — from primary through KS4 — more important. CCD aims to support that continuum.",
-    sourceIds: ["ofqual2026", "cla2026"],
-    chartIds: ["alevelIndex"],
-  },
-  {
-    id: "teachers",
-    n: 9,
-    x: 1620,
-    y: 1500,
-    title: "Teachers & time",
-    overviewLine: "Workforce pressure",
-    investorLine: "Fewer arts teachers and fewer arts hours — while EBacc hours rose.",
-    body: [
-      "CLA 2024: 14% fewer arts teachers vs 2010; −21% teaching hours 2011/12–2022/23 (excl. Dance).",
-      "DfE School Workforce Nov 2025 (pub 4 Jun 2026): 63% of secondary hours in EBacc 2025/26 (54% in 2010/11); 80% of eligible secondaries supplied timetabling data.",
-      "CLA 2026: ~23% of expressive-arts teachers have no subject-relevant post-A-level qualification — that does not mean ineffective.",
-    ],
-    whyThisMattersForCCD:
-      "CCD complements expertise. It aims to reduce planning friction for specialists and generalists alike — not to replace teachers, instruments or live cultural experiences.",
-    sourceIds: ["cla2024", "cla2026", "dfeWorkforce"],
+    neighbors: { up: "poverty", right: "exams", left: "poverty", down: "exams" },
   },
   {
     id: "poverty",
-    n: 10,
-    x: -80,
-    y: 2280,
+    markerLabel: "Poverty & place",
+    x: 340,
+    y: 420,
     title: "Poverty & place",
-    overviewLine: "Cold spots",
     investorLine: "Entitlement tracks place and disadvantage — association, not proven causation.",
     body: [
-      "54% vs 21% (no GCSE Music by LA deprivation fifth); 31% vs 22% (primary hours reduced by FSM); 3.8% vs 5.9% (arts A-level share).",
+      "54% vs 21% of schools in the most vs least deprived LA fifths have no GCSE Music entries (CLA 2026).",
+      "Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths. FSM pupils are under-represented in arts GCSEs and A-level Music, Dance, Drama and Design & Technology.",
       "West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions. FSM ≠ LA deprivation.",
+      "Domestic Creative Arts & Design undergraduates edged down while the wider cohort rose (HESA via CLA 2026).",
     ],
     whyThisMattersForCCD:
       "CCD aims to prioritise underserved areas in how hubs and resources are surfaced — helping teachers reach beyond postcode limits for ideas and partners.",
-    sourceIds: ["cla2026"],
-    statIds: ["deprivation-music", "hours-gap", "alevel-share"],
+    sourceIds: ["cla2026", "hesaCla", "cla2024"],
+    statIds: ["deprivation-music", "alevel-share", "hours-gap"],
+    chartIds: ["disadvantage"],
+    nestedChartIds: ["heChange"],
+    neighbors: { right: "exams", down: "primary", up: "ccd", left: "primary" },
   },
   {
-    id: "he",
-    n: 11,
-    x: 800,
-    y: 2340,
-    title: "Higher education",
-    overviewLine: "Chart 7 — Creative Arts & Design",
-    investorLine: "Domestic CAD undergrads edged down while the wider cohort rose.",
-    body: [
-      "128,300 domestic Creative Arts & Design undergraduates; −0.5% vs total domestic +0.6%; share 7.3%→7.2%.",
-      "Long-term about −6% since 2010 (CLA 2024). Do not invent a national percentage of universities closing arts courses.",
-    ],
-    whyThisMattersForCCD:
-      "A contracting HE pathway reinforces the need to protect school-stage creative learning and keep connections alive earlier in the journey.",
-    sourceIds: ["hesaCla", "cla2024"],
-    chartIds: ["heChange"],
-  },
-  {
-    id: "hubs",
-    n: 12,
-    x: 1600,
-    y: 2280,
-    title: "Music Hubs",
-    overviewLine: "Chart 8 — funding streams",
-    investorLine: "Keep revenue, capital and Centre support as separate streams.",
-    body: [
-      "43 partnerships. £76m annually to AY 2026/27 plus a separate £25m capital programme (>130,000 instruments/kit by end 2026/27).",
-      "Do not say hub funding has simply “declined”. The earlier £79m figure over AY 2023/24–2024/25 is not comparable. Streams are not additive like-for-like totals.",
-    ],
-    whyThisMattersForCCD:
-      "Hubs are a natural CCD partnership model: teachers pull organisation planning stubs into their library while official materials stay on the organisation site.",
-    sourceIds: ["turnItUp"],
-    chartIds: ["funding"],
-  },
-  {
-    id: "centre",
-    n: 13,
-    x: 200,
-    y: 3000,
-    title: "National Centre",
-    overviewLine: "National architecture",
-    investorLine: "Phased from Sept 2026 — aligns with CCD’s connect proposition, without a formal claim.",
-    body: [
-      "Phased establishment from September 2026, backed by up to £13 million over three years.",
-      "Intended Music Hubs fundholder from 1 September 2027 (procurement documentation; the music plan also references August 2027).",
-      "As organisations come together nationally, the opportunity is stronger coordination — not duplication.",
-    ],
-    whyThisMattersForCCD:
-      "CCD aims to make school–organisation connections usable in everyday planning as the national architecture evolves — without claiming any formal relationship with the Centre.",
-    sourceIds: ["nationalCentre", "turnItUp"],
-  },
-  {
-    id: "meaning",
-    n: 14,
-    x: 900,
-    y: 3080,
-    title: "What it means for CCD",
-    overviewLine: "How CCD aims to respond",
+    id: "ccd",
+    markerLabel: "CCDesigner",
+    x: 1520,
+    y: 200,
+    title: "What this means for CCDesigner",
     investorLine: "Connect rather than duplicate — make outstanding practice usable day to day.",
     body: [
-      "Connect rather than duplicate. Support generalists and specialists. Design for different learners. Keep learning cumulative from EYFS to A-level.",
-      "Make partnership measurable through Partner Hubs. Prioritise underserved areas. Keep children active in shaping learning.",
-      meta.fundingCase,
-      meta.partnerDisclaimer,
+      "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
+      "Not a fix for structural inequality on its own. It aims to shorten the distance between excellent practice and the teacher who needs it.",
+      "Music Hubs: £76m annual backing to AY 2026/27 plus a separate £25m capital programme; National Centre backed by up to £13m over three years — keep streams distinct; do not say hub funding simply “declined”.",
+      "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
     ],
     whyThisMattersForCCD:
       "The evidence shows fragmentation and unequal entitlement. CCD aims to be the practical connection layer — not a claimed fix for structural inequality.",
-    sourceIds: ["cla2026", "ofqual2026", "turnItUp"],
-  },
-  {
-    id: "conclusion",
-    n: 15,
-    x: 1600,
-    y: 3020,
-    title: "Conclusion & sources",
-    overviewLine: "Verification & register",
-    investorLine: "Traceable sources; unverified claims omitted.",
-    body: [meta.closing, meta.verificationNote],
-    whyThisMattersForCCD:
-      "A credible evidence base is part of the funding case — quality over quantity.",
-    sourceIds: [
-      "cla2024",
-      "cla2026",
-      "cla2026detail",
-      "ofqual2026",
-      "dfeAnnex",
-      "dfeWorkforce",
-      "turnItUp",
-      "nationalCentre",
-      "hesaCla",
-      "ofqualBackground",
-    ],
+    sourceIds: ["cla2026", "ofqual2026", "turnItUp", "nationalCentre"],
+    chartIds: ["funding"],
+    neighbors: { left: "exams", down: "exams", right: "exams", up: "poverty" },
   },
 ];
 
-export type ClusterId = (typeof clusters)[number]["id"];
-
-export function getCluster(id: string): ClusterDef | undefined {
-  return clusters.find((c) => c.id === id);
+export function getTopic(id: string): TopicDef | undefined {
+  return topics.find((t) => t.id === id);
 }
 
 export function getStat(id: string): StatTile | undefined {
@@ -797,3 +684,10 @@ export const principalSourceIds = [
   "hesaCla",
   "ofqualBackground",
 ] as const;
+
+/** @deprecated alias — prefer getTopic */
+export type ClusterDef = TopicDef;
+export const clusters = topics;
+export function getCluster(id: string) {
+  return getTopic(id);
+}
