@@ -8,14 +8,14 @@ import {
   useState,
   type PointerEvent as ReactPointerEvent,
 } from "react";
-import { ChapterBody } from "@/chapters/ChapterBody";
 import { LogoMark } from "@/components/LogoMark";
+import { TopicModal } from "@/components/TopicModal";
 import {
   clusters,
   getStat,
   journey,
+  keyFactStatIds,
   meta,
-  overviewStatIds,
   type ClusterDef,
 } from "@/content/facts.content";
 
@@ -186,6 +186,7 @@ export default function App() {
     const el = stageRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      if (active) return; // modal open — do not pan/zoom canvas
       e.preventDefault();
       syncRefs();
       if (e.ctrlKey || e.metaKey) {
@@ -202,9 +203,10 @@ export default function App() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [setCamera, syncRefs, zoomAt]);
+  }, [active, setCamera, syncRefs, zoomAt]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
+    if (active) return;
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     moved.current = false;
@@ -372,11 +374,11 @@ export default function App() {
       {!active ? (
         <div className="overview-facts" aria-label="Key facts">
           <p className="overview-facts-title">
-            {meta.ui.overviewTitle}
+            {meta.ui.exploreHint}
             {showKeys ? <span className="edit-key"> overviewStatIds</span> : null}
           </p>
           <div className="overview-facts-grid">
-            {overviewStatIds.map((id) => {
+            {keyFactStatIds.map((id) => {
               const s = getStat(id);
               if (!s) return null;
               return (
@@ -393,7 +395,7 @@ export default function App() {
               );
             })}
           </div>
-          <p className="overview-hint">{meta.ui.overviewHint}</p>
+          <p className="overview-hint">{meta.ui.exploreHint}</p>
         </div>
       ) : null}
 
@@ -447,30 +449,6 @@ export default function App() {
                   <span className="node-title">{ch.title}</span>
                   <span className="node-line">{ch.overviewLine}</span>
                 </button>
-
-                {isActive ? (
-                  <div
-                    className="node-detail"
-                    onPointerDown={(e) => e.stopPropagation()}
-                    onWheel={(e) => e.stopPropagation()}
-                  >
-                    <ChapterBody cluster={ch} showKeys={showKeys} />
-                    <div className="node-actions">
-                      <button type="button" className="chip-outline" onClick={() => flyToCluster(null)}>
-                        {meta.ui.backOverview}
-                      </button>
-                      {journeyIndex >= 0 && journeyIndex < journey.length - 1 ? (
-                        <button
-                          type="button"
-                          className="chip-lime"
-                          onClick={() => flyToCluster(journey[journeyIndex + 1])}
-                        >
-                          {meta.ui.continuePath}
-                        </button>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
               </div>
             );
           })}
@@ -478,12 +456,27 @@ export default function App() {
       </div>
 
       {activeCluster ? (
-        <div className="mobile-overview-bar">
-          <button type="button" onClick={() => flyToCluster(null)}>
-            ← {meta.ui.overviewChip}
-          </button>
-          <span>{activeCluster.title}</span>
-        </div>
+        <TopicModal
+          cluster={activeCluster}
+          showKeys={showKeys}
+          onClose={() => flyToCluster(null)}
+          footer={
+            <>
+              <button type="button" className="chip-outline" onClick={() => flyToCluster(null)}>
+                {meta.ui.overviewChip}
+              </button>
+              {journeyIndex >= 0 && journeyIndex < journey.length - 1 ? (
+                <button
+                  type="button"
+                  className="chip-lime"
+                  onClick={() => flyToCluster(journey[journeyIndex + 1])}
+                >
+                  {meta.ui.continuePath}
+                </button>
+              ) : null}
+            </>
+          }
+        />
       ) : null}
     </div>
   );

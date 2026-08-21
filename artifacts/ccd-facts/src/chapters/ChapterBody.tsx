@@ -38,37 +38,42 @@ function Drill({ text, onClear }: { text: string; onClear: () => void }) {
 export function ChapterBody({
   cluster,
   showKeys,
+  hideTitle,
 }: {
   cluster: ClusterDef;
   showKeys?: boolean;
+  /** Title lives in the modal header when true */
+  hideTitle?: boolean;
 }) {
   const [drill, setDrill] = useState<string | null>(null);
   const isCover = cluster.id === "cover";
 
   return (
     <div className={`slide-auto-enter ${isCover ? "text-[#fffaf7]" : ""}`}>
-      {isCover ? (
+      {!hideTitle && isCover ? (
         <p className="pitch-eyebrow text-[var(--lime)]">
           {meta.brand}
           {showKeys ? <span className="edit-key"> meta.brand</span> : null}
         </p>
       ) : null}
 
-      <h2 className={`display mb-2 leading-tight ${isCover ? "pitch-h1 text-white" : "pitch-h2 text-[#002d24]"}`}>
-        {isCover ? (
-          <>
-            {meta.titleLead}{" "}
-            <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
-              {meta.titleAccent}
-            </span>
-          </>
-        ) : (
-          cluster.title
-        )}
-        {showKeys ? (
-          <span className="edit-key"> {isCover ? "meta.title" : `clusters.${cluster.id}.title`}</span>
-        ) : null}
-      </h2>
+      {!hideTitle ? (
+        <h2 className={`display mb-2 leading-tight ${isCover ? "pitch-h1 text-white" : "pitch-h2 text-[#002d24]"}`}>
+          {isCover ? (
+            <>
+              {meta.titleLead}{" "}
+              <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
+                {meta.titleAccent}
+              </span>
+            </>
+          ) : (
+            cluster.title
+          )}
+          {showKeys ? (
+            <span className="edit-key"> {isCover ? "meta.title" : `clusters.${cluster.id}.title`}</span>
+          ) : null}
+        </h2>
+      ) : null}
 
       {isCover ? (
         <p className="pitch-body-lg text-white/80">

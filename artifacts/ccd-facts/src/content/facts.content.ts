@@ -54,6 +54,8 @@ export type ChartDef = {
   meta?: Record<string, string | number>;
 };
 
+export type CompassDir = "up" | "down" | "left" | "right";
+
 export type ClusterDef = {
   id: string;
   n: number;
@@ -64,7 +66,7 @@ export type ClusterDef = {
   x: number;
   y: number;
   title: string;
-  /** Short line readable on the overview map */
+  /** Short line readable on the map (before opening the node) */
   overviewLine: string;
   /** Investor / funder one-liner */
   investorLine: string;
@@ -76,6 +78,10 @@ export type ClusterDef = {
   /** Optional inline stat tiles shown inside the cluster */
   statIds?: string[];
   caveats?: string[];
+  /** Compass neighbours — arrow / swipe / D-pad step here (editable). */
+  neighbors?: Partial<Record<CompassDir, string>>;
+  /** Home node: camera lands here; Escape returns here. */
+  isHome?: boolean;
 };
 
 export const sources: Record<string, SourceRef> = {
@@ -155,6 +161,8 @@ export const meta = {
   /** Topbar experience name */
   experienceLead: "The",
   experienceAccent: "facts",
+  /** Short line under “The situation” on the home node (map, not a stats dump). */
+  situationLine: "Creative education at a point of change.",
   coverFraming: [
     "Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.",
     "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
@@ -173,23 +181,32 @@ export const meta = {
   /** Chrome / buttons — edit here, not in React components */
   ui: {
     enterCta: "Enter the facts",
-    overviewTitle: "Key facts · tap to explore",
-    overviewHint: "Drag to pan · pinch / wheel to zoom · tap a heading",
-    backOverview: "Back to overview",
-    continuePath: "Continue path",
+    exploreHint: "Use arrows or swipe to explore",
+    backHome: "The situation",
+    openNode: "Open",
+    closeModal: "Close",
     whyCcdLabel: "Why this matters for CCDesigner",
     drillLabel: "Detail",
     drillClear: "Clear",
-    homeLabel: "Home",
+    homeLabel: "Site home",
     overviewChip: "Overview",
+    continuePath: "Next topic",
+    dirUp: "Up",
+    dirDown: "Down",
+    dirLeft: "Left",
+    dirRight: "Right",
+    scrollMore: "Scroll for more",
   },
 };
 
+/** Home cluster id — Escape / “The situation” control returns here. */
+export const HOME_ID = "situation";
+
 /**
- * Investor glance tiles on the overview (order matters).
- * Each id must exist in `stats`. Prefer `stats[n].zoomClusterId` for the fly-to target.
+ * Investor key facts live on their topic nodes (not dumped on home).
+ * Listed here so editors can see the persuasive set at a glance.
  */
-export const overviewStatIds = [
+export const keyFactStatIds = [
   "gcse-fall",
   "alevel-fall",
   "no-entry",
@@ -199,7 +216,7 @@ export const overviewStatIds = [
   "ofqual-alevel-2026",
 ] as const;
 
-/** Suggested path through the canvas (click-to-explore still free). */
+/** Soft path glow through topics (visual only). */
 export const journey: string[] = [
   "cover",
   "glance",
