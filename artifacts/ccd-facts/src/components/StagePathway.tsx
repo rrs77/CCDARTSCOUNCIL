@@ -1,4 +1,4 @@
-import { Lightbulb } from "lucide-react";
+import { Eye } from "lucide-react";
 import { ContentChart } from "@/components/charts/Charts";
 import { getChart } from "@/content/facts.content";
 import type { FrameNode } from "@/content/layoutPresentation";
@@ -6,11 +6,11 @@ import { sectionAccent } from "@/content/sectionAccent";
 import { assetUrl, sectionIllustration } from "@/content/sectionIllustrations";
 import { stageComment, stageLabel } from "@/content/stackLabels";
 
-const BULB_HINT = "Tap the lightbulb for more detail.";
+const EYE_HINT = "Tap the eye for more detail.";
 
 /**
  * Uniform stage zone — title, short comment, chart and/or circular illustration.
- * Zone click → detail modal. Lightbulb → comments modal.
+ * Zone click → detail modal. Eye → comments modal.
  */
 function StageZone({
   frame,
@@ -50,7 +50,7 @@ function StageZone({
         {hasComments ? (
           <button
             type="button"
-            className="stage-zone-bulb"
+            className="stage-zone-eye"
             title="Comments — Why this matters"
             aria-label={`More detail for ${label}`}
             onClick={(e) => {
@@ -58,10 +58,10 @@ function StageZone({
               onOpenComments();
             }}
           >
-            <Lightbulb className="stage-zone-bulb-icon" strokeWidth={2.25} />
+            <Eye className="stage-zone-eye-icon" strokeWidth={2.25} />
           </button>
         ) : null}
-        {hasComments ? <p className="stage-zone-hint">{BULB_HINT}</p> : null}
+        {hasComments ? <p className="stage-zone-hint">{EYE_HINT}</p> : null}
       </div>
 
       {comment ? <p className="stage-zone-comment">{comment}</p> : null}
@@ -98,7 +98,7 @@ function StageZone({
 
 /**
  * Overview pathway: distinct key-stage zones, top-to-bottom, uniform template.
- * Spaced so nothing overlaps. Click → detail modal; bulb → comments.
+ * Spaced so nothing overlaps. Click → detail modal; eye → comments.
  */
 export function StagePathway({
   stages,

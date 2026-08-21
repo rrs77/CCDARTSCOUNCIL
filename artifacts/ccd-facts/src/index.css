@@ -394,7 +394,7 @@ button {
   max-width: 18ch;
 }
 
-.stage-zone-bulb {
+.stage-zone-eye {
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -412,8 +412,8 @@ button {
   transition: border-color 0.15s ease, background 0.15s ease, transform 0.15s ease;
 }
 
-.stage-zone-bulb:hover,
-.stage-zone-bulb:focus-visible {
+.stage-zone-eye:hover,
+.stage-zone-eye:focus-visible {
   border-color: var(--lime);
   background: #003d32;
   outline: 2px solid var(--lime);
@@ -421,7 +421,7 @@ button {
   transform: translateY(-1px);
 }
 
-.stage-zone-bulb-icon {
+.stage-zone-eye-icon {
   width: 1.85rem;
   height: 1.85rem;
 }
@@ -955,7 +955,7 @@ button {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.55rem;
-  padding: 0 4.5rem 0 0; /* clear large lightbulb */
+  padding: 0 4.5rem 0 0; /* clear large eye control */
   max-width: 100%;
   pointer-events: none;
 }
@@ -1800,7 +1800,7 @@ button {
   background: rgba(20, 184, 166, 0.12);
 }
 
-/* —— Comments modal (lightbulb) —— */
+/* —— Comments modal —— */
 .comments-modal-root {
   position: fixed;
   inset: 0;
@@ -1857,7 +1857,7 @@ button {
   color: var(--lime);
 }
 
-.comments-modal-bulb {
+.comments-modal-mark-icon {
   width: 1.2rem;
   height: 1.2rem;
 }

@@ -1,4 +1,4 @@
-import { Lightbulb, X } from "lucide-react";
+import { Eye, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect } from "react";
 import { modalBounce, modalBackdropTransition, modalPanelTransition } from "@/lib/modalMotion";
@@ -85,7 +85,7 @@ export function CommentsModal({
           >
             <header className="comments-modal-header">
               <div className="comments-modal-header-mark" aria-hidden>
-                <Lightbulb className="comments-modal-bulb" strokeWidth={2.25} />
+                <Eye className="comments-modal-mark-icon" strokeWidth={2.25} />
               </div>
               <div className="comments-modal-header-text">
                 <p className="comments-modal-kicker">Why this matters</p>

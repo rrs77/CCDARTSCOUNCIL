@@ -1,4 +1,4 @@
-import { Lightbulb } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ContentChart } from "@/components/charts/Charts";
 import { LogoMark } from "@/components/LogoMark";
@@ -12,7 +12,7 @@ import {
 } from "@/content/sectionIllustrations";
 
 const MAX_VISIBLE_SATS = 2;
-const BULB_HINT = "Tap the lightbulb for more detail.";
+const EYE_HINT = "Tap the eye for more detail.";
 
 /**
  * Opened section / title scene: rounded boxes, eye for detail, no left lime rule.
@@ -97,13 +97,13 @@ export function SectionFrame({
           type="button"
           className="prezi-info"
           aria-label={`More about ${frame.title}`}
-          title="Tap the lightbulb for more detail"
+          title="Tap the eye for more detail"
           onClick={(e) => {
             e.stopPropagation();
             onOpenDetail();
           }}
         >
-          <Lightbulb className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+          <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
         </button>
 
         <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
@@ -132,13 +132,13 @@ export function SectionFrame({
                 type="button"
                 className="prezi-info prezi-info--chart"
                 aria-label={`Chart detail for ${frame.title}`}
-                title="Tap the lightbulb for more detail"
+                title="Tap the eye for more detail"
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenDetail();
                 }}
               >
-                <Lightbulb className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+                <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
               </button>
             </div>
           ) : null}
@@ -184,7 +184,7 @@ export function SectionFrame({
           {frame.kind === "sources" ? (
             <div className="prezi-body-card prezi-sources-card">
               <p className="prezi-sources-hint">
-                Full footnotes open via the lightbulb — readable in the detail panel.
+                Full footnotes open via the eye — readable in the detail panel.
               </p>
             </div>
           ) : null}
@@ -213,7 +213,7 @@ export function SectionFrame({
                           ? ch.heroStat.value
                           : ch.title}
                       </span>
-                      <Lightbulb className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                      <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                     </button>
                   </li>
                 ) : null,
@@ -230,13 +230,13 @@ export function SectionFrame({
                     aria-label={`${overflowCount} more topics — open detail`}
                   >
                     <span className="prezi-sat-label">+{overflowCount} more</span>
-                    <Lightbulb className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                    <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                   </button>
                 </li>
               ) : null}
             </ul>
           ) : null}
-          <p className="prezi-hint">{BULB_HINT}</p>
+          <p className="prezi-hint">{EYE_HINT}</p>
         </div>
       </div>
     </div>
