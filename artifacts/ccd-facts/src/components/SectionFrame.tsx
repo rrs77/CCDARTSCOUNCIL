@@ -1,6 +1,6 @@
 import { ContentChart } from "@/components/charts/Charts";
 import { getChart } from "@/content/facts.content";
-import type { FrameNode } from "@/content/layoutPresentation";
+import type { FrameNode, Presentation } from "@/content/layoutPresentation";
 
 function heroUrl(file: string) {
   const base = import.meta.env.BASE_URL || "/";
@@ -8,22 +8,35 @@ function heroUrl(file: string) {
 }
 
 /**
- * Prezi-style frame: photo/stat bubble hero + two-tier title + one sentence card.
- * Children of hubs are separate frames (satellites) — not decorative pills.
+ * One scene: one green ring around the hero (photo/stat), title + sentence in
+ * the empty left third — never overlapping the ring. Optional small satellites
+ * (text chips only, not rings) for children on hubs.
  */
 export function SectionFrame({
   frame,
-  active,
-  overview,
+  presentation,
+  highlighted,
+  activeChildId,
   onOpen,
+  onOpenChild,
 }: {
   frame: FrameNode;
-  active: boolean;
-  overview: boolean;
+  presentation: Presentation;
+  highlighted?: boolean;
+  /** When path lands on a child, emphasise that satellite label */
+  activeChildId?: string | null;
   onOpen: () => void;
+  onOpenChild?: (id: string) => void;
 }) {
-  const asCard = overview && !active;
   const chart = frame.chartId ? getChart(frame.chartId) : undefined;
+  const showPhoto = frame.photoHero && !frame.heroStat && !chart;
+  const children =
+    frame.kind === "hub" || frame.kind === "title"
+      ? frame.childIds
+          .map((id) => presentation.frames.find((f) => f.id === id))
+          .filter(Boolean)
+          .slice(0, 4)
+      : [];
 
   return (
     <button
@@ -31,8 +44,8 @@ export function SectionFrame({
       className={[
         "prezi-frame",
         `prezi-${frame.kind}`,
-        active ? "is-active" : "",
-        asCard ? "is-overview-card" : "is-open",
+        highlighted ? "is-highlighted" : "",
+        `crop-${frame.photoCrop}`,
       ]
         .filter(Boolean)
         .join(" ")}
@@ -43,67 +56,97 @@ export function SectionFrame({
         onOpen();
       }}
       aria-label={frame.title}
-      aria-current={active ? "true" : undefined}
+      aria-current={highlighted ? "true" : undefined}
     >
       <div className="prezi-frame-stage">
-        {/* Hero object — ~45–60% visual weight, bottom/right weighted */}
-        <div className={`prezi-hero ${frame.heroStat ? "prezi-hero--stat" : "prezi-hero--photo"}`}>
+        {/* Hero — the ONE green ring for this section */}
+        <div className="prezi-hero">
           {frame.heroStat ? (
-            <div className="prezi-stat-bubble">
+            <div className="prezi-stat-bubble" aria-hidden={false}>
               <p className="prezi-stat-value">{frame.heroStat.value}</p>
               <p className="prezi-stat-label">{frame.heroStat.label}</p>
-            </div>
-          ) : frame.photoHero || frame.kind === "title" || frame.kind === "hub" ? (
-            <div className="prezi-photo-bubble">
-              <img src={heroUrl("hero-arts.jpg")} alt="" draggable={false} />
             </div>
           ) : chart ? (
             <div className="prezi-chart-bubble">
               <ContentChart chart={chart} />
             </div>
+          ) : showPhoto ? (
+            <div className="prezi-photo-bubble">
+              <img
+                src={heroUrl("hero-arts.jpg")}
+                alt=""
+                draggable={false}
+                className={`crop-${frame.photoCrop}`}
+              />
+            </div>
           ) : (
-            <div className="prezi-stat-bubble prezi-stat-bubble--soft">
-              <p className="prezi-stat-value">·</p>
+            <div className="prezi-stat-bubble prezi-stat-bubble--plain" aria-hidden>
+              <p className="prezi-stat-value prezi-stat-value--quiet">CCD</p>
             </div>
           )}
         </div>
 
-        {/* Title in dark-green bubble — two-tier type */}
-        <div className="prezi-title-bubble">
-          {frame.titleSmall ? <p className="prezi-title-small">{frame.titleSmall}</p> : null}
-          <h2 className="prezi-title-giant">{frame.titleGiant}</h2>
+        {/* Copy column — left third / below; never under the ring */}
+        <div className="prezi-copy">
+          <div className="prezi-title-bubble">
+            {frame.titleSmall ? <p className="prezi-title-small">{frame.titleSmall}</p> : null}
+            <h2 className="prezi-title-giant">{frame.titleGiant}</h2>
+          </div>
+
+          {frame.sentence || frame.quote ? (
+            <div className="prezi-body-card">
+              <p>{frame.quote || frame.sentence}</p>
+            </div>
+          ) : null}
+
+          {frame.kind === "sources" && frame.footnotes?.length ? (
+            <div className="prezi-body-card prezi-sources-card">
+              <ol>
+                {frame.footnotes.slice(0, 5).map((fn) => (
+                  <li key={fn.id}>
+                    {fn.url ? (
+                      <a
+                        href={fn.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {fn.text}
+                      </a>
+                    ) : (
+                      fn.text
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </div>
+          ) : null}
         </div>
 
-        {/* Body: one sentence (or quote) in a solid card */}
-        {frame.sentence || frame.quote ? (
-          <div className="prezi-body-card">
-            <p>{frame.quote || frame.sentence}</p>
-          </div>
-        ) : null}
-
-        {frame.kind === "sources" && frame.footnotes?.length ? (
-          <div className="prezi-body-card prezi-sources-card">
-            <ol>
-              {frame.footnotes.slice(0, 6).map((fn) => (
-                <li key={fn.id}>
-                  {fn.url ? (
-                    <a href={fn.url} target="_blank" rel="noopener noreferrer">
-                      {fn.text}
-                    </a>
-                  ) : (
-                    fn.text
-                  )}
+        {/* Text chips only — not destination rings */}
+        {children.length ? (
+          <ul className="prezi-satellites" aria-label="Inside this section">
+            {children.map((ch, i) =>
+              ch ? (
+                <li
+                  key={ch.id}
+                  style={{ ["--i" as string]: String(i) }}
+                  className={activeChildId === ch.id ? "is-active-sat" : undefined}
+                >
+                  <button
+                    type="button"
+                    className="prezi-sat"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenChild?.(ch.id);
+                    }}
+                  >
+                    {ch.title}
+                  </button>
                 </li>
-              ))}
-            </ol>
-            {frame.footnotes.length > 6 ? (
-              <p className="prezi-more">+{frame.footnotes.length - 6} more in the document</p>
-            ) : null}
-          </div>
-        ) : null}
-
-        {asCard && frame.childIds.length ? (
-          <p className="prezi-sat-hint">{frame.childIds.length} places inside</p>
+              ) : null,
+            )}
+          </ul>
         ) : null}
       </div>
     </button>

@@ -1,19 +1,18 @@
 import { animate, motion, useMotionValue } from "framer-motion";
 import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { DetailModal } from "@/components/DetailModal";
 import { LogoMark } from "@/components/LogoMark";
 import { PresentChrome } from "@/components/PresentChrome";
 import { SectionFrame } from "@/components/SectionFrame";
 import { meta } from "@/content/facts.content";
-import { getFrame, presentationFromMarkdown } from "@/content/layoutPresentation";
+import { getFrame, presentationFromMarkdown, type FrameNode } from "@/content/layoutPresentation";
 import rawContent from "../CONTENT.md?raw";
 
-/** Prezi-like swift ease — cubic-bezier(.4, 0, .2, 1) */
 const EASE_OUT: [number, number, number, number] = [0.4, 0, 0.2, 1];
-const MOVE_MS = 0.62;
+const MOVE_MS = 0.55;
 const ZOOM_IN = 1.2;
 const ZOOM_OUT = 1 / ZOOM_IN;
-/** Leave room so a piece of the parent stays visible when entering a child */
-const FRAME_FIT = 0.72;
+const VIEW_PAD = 48;
 const STORAGE_KEY = "ccd-facts-location";
 
 function useViewport() {
@@ -58,16 +57,24 @@ function isTypingTarget() {
   return t === "INPUT" || t === "TEXTAREA" || el.getAttribute("role") === "textbox";
 }
 
+/**
+ * Navigation:
+ * - Click canvas item → large detail modal
+ * - Next / Prev → close modal, show that stop on the canvas (fitted, ≥48px pad), do not auto-open modal
+ * - Overview / Escape → full world overview
+ */
 export default function App() {
   const presentation = useMemo(() => presentationFromMarkdown(rawContent), []);
   const { w, h } = useViewport();
   const reduced = useReducedMotion();
 
-  const [focusId, setFocusId] = useState<string | null>(null);
+  const [modalId, setModalId] = useState<string | null>(null);
+  const [highlightId, setHighlightId] = useState<string | null>(null);
   const [pathIndex, setPathIndex] = useState(0);
   const [chromeVisible, setChromeVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
-  const focusIdRef = useRef<string | null>(null);
+  const [viewMode, setViewMode] = useState<"overview" | "frame">("overview");
+
   const pathIndexRef = useRef(0);
   const overviewScaleRef = useRef(0.2);
   const idleTimer = useRef<number | null>(null);
@@ -92,8 +99,8 @@ export default function App() {
 
   const setCamera = useCallback(
     (scale: number, x: number, y: number, animated: boolean) => {
-      const minS = overviewScaleRef.current * 0.7;
-      const maxS = overviewScaleRef.current * 14;
+      const minS = overviewScaleRef.current * 0.55;
+      const maxS = overviewScaleRef.current * 16;
       const s = clamp(scale, minS, maxS);
       const dur = !animated || reduced ? 0.01 : MOVE_MS;
       if (animated && !reduced) {
@@ -113,9 +120,9 @@ export default function App() {
   );
 
   const fitOverview = useCallback(() => {
-    const padX = 56;
-    const padTop = 80;
-    const padBottom = 100;
+    const padX = Math.max(VIEW_PAD, 56);
+    const padTop = Math.max(VIEW_PAD, 80);
+    const padBottom = Math.max(VIEW_PAD, 100);
     const s = Math.min(
       (w - padX * 2) / presentation.world.width,
       (h - padTop - padBottom) / presentation.world.height,
@@ -126,33 +133,56 @@ export default function App() {
     return { s, x: -cx * s, y: -cy * s };
   }, [h, presentation.world.height, presentation.world.width, w]);
 
-  const cameraForFrameId = useCallback(
-    (id: string) => {
+  /** Fit one frame with ≥48px viewport padding — never crop headings. */
+  const cameraForFrame = useCallback(
+    (frame: FrameNode) => {
+      const pad = VIEW_PAD;
+      const chromeBottom = 96;
+      const chromeTop = 72;
+      const availW = w - pad * 2;
+      const availH = h - pad * 2 - chromeBottom - chromeTop;
+      const s = Math.min(availW / frame.w, availH / frame.h);
+      const cx = frame.x + frame.w / 2;
+      const cy = frame.y + frame.h / 2;
+      return {
+        s,
+        x: -cx * s,
+        y: -cy * s + (chromeTop - chromeBottom) / 8,
+      };
+    },
+    [h, w],
+  );
+
+  /**
+   * Canvas stop for a path id: hubs are fitted directly; leaves fit their
+   * parent hub (one ring) with the child satellite emphasised — never two
+   * overlapping rings through the same heading.
+   */
+  const resolveCanvasTarget = useCallback(
+    (id: string | null): { frame: FrameNode | null; childId: string | null } => {
+      if (!id || id === "overview") return { frame: null, childId: null };
       const frame = getFrame(presentation, id);
-      if (!frame) return fitOverview();
-      const padTop = 48;
-      const padBottom = 88;
-      const availW = w * FRAME_FIT;
-      const availH = (h - padTop - padBottom) * FRAME_FIT;
-      let s = Math.min(availW / frame.w, availH / frame.h);
-      // Bias toward right-of-centre content; keep a sliver of parent when nested
-      let cx = frame.x + frame.w * 0.58;
-      let cy = frame.y + frame.h * 0.55;
+      if (!frame) return { frame: null, childId: null };
       if (frame.parentId) {
         const parent = getFrame(presentation, frame.parentId);
-        if (parent) {
-          // Pull camera slightly toward parent so a piece stays in view
-          const pcx = parent.x + parent.w * 0.45;
-          const pcy = parent.y + parent.h * 0.5;
-          cx = cx * 0.82 + pcx * 0.18;
-          cy = cy * 0.82 + pcy * 0.18;
-          s *= 0.92;
-        }
+        return { frame: parent ?? frame, childId: frame.id };
       }
-      return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 14 };
+      return { frame, childId: null };
     },
-    [fitOverview, h, presentation, w],
+    [presentation],
   );
+
+  const showOverview = useCallback(
+    (animated: boolean) => {
+      const base = fitOverview();
+      setCamera(base.s, base.x, base.y, animated);
+      setViewMode("overview");
+      setHighlightId(null);
+    },
+    [fitOverview, setCamera],
+  );
+
+  const [activeChildId, setActiveChildId] = useState<string | null>(null);
 
   const persist = useCallback((id: string | null, idx: number) => {
     try {
@@ -174,98 +204,148 @@ export default function App() {
     window.history.pushState({ section: id }, "", `${url.pathname}${url.search}${url.hash}`);
   }, []);
 
-  const goOverview = useCallback(
-    (animated = true) => {
-      const { s, x, y } = fitOverview();
-      setCamera(s, x, y, animated);
-      focusIdRef.current = null;
-      setFocusId(null);
-      const idx = presentation.path.lastIndexOf("overview");
-      pathIndexRef.current = Math.max(0, idx);
-      setPathIndex(pathIndexRef.current);
-      persist(null, pathIndexRef.current);
-      writeUrl(null);
+  const syncPathToId = useCallback(
+    (id: string | null) => {
+      if (!id) {
+        pathIndexRef.current = 0;
+        setPathIndex(0);
+        return;
+      }
+      const found = presentation.path.indexOf(id);
+      if (found >= 0) {
+        pathIndexRef.current = found;
+        setPathIndex(found);
+      }
     },
-    [fitOverview, persist, presentation.path, setCamera, writeUrl],
+    [presentation.path],
   );
 
-  const openFrame = useCallback(
-    (id: string, animated = true, pathIdx?: number) => {
-      const cam = cameraForFrameId(id);
-      setCamera(cam.s, cam.x, cam.y, animated);
-      focusIdRef.current = id;
-      setFocusId(id);
-      let idx = pathIdx;
-      if (idx == null) {
-        const found = presentation.path.indexOf(id);
-        idx = found >= 0 ? found : pathIndexRef.current;
+  const syncPathToOverviewEnd = useCallback(() => {
+    const idx = presentation.path.lastIndexOf("overview");
+    pathIndexRef.current = Math.max(0, idx);
+    setPathIndex(pathIndexRef.current);
+  }, [presentation.path]);
+
+  /** Click → open detail modal. Canvas stays on that stop (fitted). */
+  const openDetail = useCallback(
+    (id: string) => {
+      setModalId(id);
+      const { frame, childId } = resolveCanvasTarget(id);
+      setActiveChildId(childId ?? (frame?.id === id ? null : id));
+      if (frame) {
+        const cam = cameraForFrame(frame);
+        setCamera(cam.s, cam.x, cam.y, true);
+        setViewMode("frame");
+        setHighlightId(frame.id);
       }
-      pathIndexRef.current = idx;
-      setPathIndex(idx);
-      persist(id, idx);
+      syncPathToId(id);
+      persist(id, pathIndexRef.current);
       writeUrl(id);
     },
-    [cameraForFrameId, persist, presentation.path, setCamera, writeUrl],
+    [cameraForFrame, persist, resolveCanvasTarget, setCamera, syncPathToId, writeUrl],
   );
 
-  const goPath = useCallback(
+  /** Close modal; stay on canvas stop (or overview). */
+  const closeModal = useCallback(
+    (toOverview = false) => {
+      setModalId(null);
+      if (toOverview) {
+        setActiveChildId(null);
+        showOverview(true);
+        syncPathToOverviewEnd();
+        persist(null, pathIndexRef.current);
+        writeUrl(null);
+      }
+    },
+    [persist, showOverview, syncPathToOverviewEnd, writeUrl],
+  );
+
+  /**
+   * Next / Prev: dismiss modal → full overview, highlight next stop’s hub
+   * (and its satellite if the stop is a leaf). Never auto-open the modal.
+   */
+  const stepPath = useCallback(
     (delta: 1 | -1) => {
       const path = presentation.path;
       let i = pathIndexRef.current + delta;
       if (i < 0) i = 0;
       if (i >= path.length) i = path.length - 1;
-      const id = path[i];
       pathIndexRef.current = i;
       setPathIndex(i);
-      if (id === "overview") goOverview(true);
-      else openFrame(id, true, i);
+      const id = path[i]!;
+      setModalId(null);
+
+      const base = fitOverview();
+      setCamera(base.s, base.x, base.y, true);
+      setViewMode("overview");
+
+      if (id === "overview") {
+        setActiveChildId(null);
+        setHighlightId(null);
+        persist(null, i);
+        writeUrl(null);
+        return;
+      }
+
+      const { frame, childId } = resolveCanvasTarget(id);
+      setActiveChildId(childId);
+      setHighlightId(frame?.id ?? null);
+      persist(id, i);
+      writeUrl(id);
+
+      // Ease overview toward the highlighted hub so the next stop is obvious,
+      // still at overview scale (readable map, not a cropped close-up).
+      if (frame) {
+        const cx = frame.x + frame.w / 2;
+        const cy = frame.y + frame.h / 2;
+        const bx = (base.x + -cx * base.s) / 2;
+        const by = (base.y + -cy * base.s) / 2;
+        setCamera(base.s, bx, by, true);
+      }
     },
-    [goOverview, openFrame, presentation.path],
+    [fitOverview, persist, presentation.path, resolveCanvasTarget, setCamera, writeUrl],
   );
 
   const goHome = useCallback(() => {
-    pathIndexRef.current = 1;
-    setPathIndex(1);
-    openFrame("title", true, 1);
-  }, [openFrame]);
-
-  const resume = useCallback(() => {
-    try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) {
-        goHome();
-        return;
-      }
-      const saved = JSON.parse(raw) as { id: string | null; idx: number };
-      if (saved.id) openFrame(saved.id, true, saved.idx);
-      else goOverview(true);
-    } catch {
-      goHome();
+    pathIndexRef.current = Math.max(1, presentation.path.indexOf("title"));
+    setPathIndex(pathIndexRef.current);
+    setModalId(null);
+    setActiveChildId(null);
+    const title = getFrame(presentation, "title");
+    if (title) {
+      const cam = cameraForFrame(title);
+      setCamera(cam.s, cam.x, cam.y, true);
+      setViewMode("frame");
+      setHighlightId("title");
+      persist("title", pathIndexRef.current);
+      writeUrl("title");
+    } else {
+      showOverview(true);
     }
-  }, [goHome, goOverview, openFrame]);
+  }, [cameraForFrame, persist, presentation, setCamera, showOverview, writeUrl]);
 
   // Boot
   useEffect(() => {
-    fitOverview();
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.replace(/^#\/?/, "");
     const fromUrl = params.get("section") || hash || null;
-
-    const savedRaw = localStorage.getItem(STORAGE_KEY);
-    let saved: { id: string | null; idx: number } | null = null;
-    try {
-      saved = savedRaw ? JSON.parse(savedRaw) : null;
-    } catch {
-      saved = null;
-    }
-
+    fitOverview();
     if (fromUrl && getFrame(presentation, fromUrl)) {
-      openFrame(fromUrl, false);
-    } else if (saved?.id && getFrame(presentation, saved.id)) {
-      // Offer resume via chrome; start at overview then user can Resume — or auto-resume
-      openFrame(saved.id, false, saved.idx);
+      pathIndexRef.current = Math.max(0, presentation.path.indexOf(fromUrl));
+      setPathIndex(pathIndexRef.current);
+      const { frame, childId } = resolveCanvasTarget(fromUrl);
+      setActiveChildId(childId);
+      setModalId(null);
+      if (frame) {
+        const cam = cameraForFrame(frame);
+        setCamera(cam.s, cam.x, cam.y, false);
+        setViewMode("frame");
+        setHighlightId(frame.id);
+      } else {
+        showOverview(false);
+      }
     } else {
-      goOverview(false);
+      showOverview(false);
     }
     stageRef.current?.focus({ preventScroll: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -275,23 +355,42 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash.replace(/^#\/?/, "");
       const id = params.get("section") || hash || null;
-      if (id && getFrame(presentation, id)) openFrame(id, true);
-      else goOverview(true);
+      setModalId(null);
+      if (id && getFrame(presentation, id)) {
+        const found = presentation.path.indexOf(id);
+        if (found >= 0) {
+          pathIndexRef.current = found;
+          setPathIndex(found);
+        }
+        const { frame, childId } = resolveCanvasTarget(id);
+        setActiveChildId(childId);
+        if (frame) {
+          const cam = cameraForFrame(frame);
+          setCamera(cam.s, cam.x, cam.y, true);
+          setViewMode("frame");
+          setHighlightId(frame.id);
+        }
+      } else {
+        setActiveChildId(null);
+        showOverview(true);
+      }
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [goOverview, openFrame, presentation]);
+  }, [cameraForFrame, presentation, resolveCanvasTarget, setCamera, showOverview]);
 
   useEffect(() => {
-    fitOverview();
-    if (focusIdRef.current) {
-      const cam = cameraForFrameId(focusIdRef.current);
-      setCamera(cam.s, cam.x, cam.y, false);
-    } else {
-      const { s, x, y } = fitOverview();
-      setCamera(s, x, y, false);
+    if (viewMode === "overview") {
+      const base = fitOverview();
+      setCamera(base.s, base.x, base.y, false);
+    } else if (highlightId) {
+      const frame = getFrame(presentation, highlightId);
+      if (frame) {
+        const cam = cameraForFrame(frame);
+        setCamera(cam.s, cam.x, cam.y, false);
+      }
     }
-  }, [w, h, cameraForFrameId, fitOverview, setCamera]);
+  }, [w, h]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const bumpChrome = useCallback(() => {
     setChromeVisible(true);
@@ -314,8 +413,8 @@ export default function App() {
     (clientX: number, clientY: number, nextScale: number) => {
       syncRefs();
       const prev = scaleRef.current;
-      const minS = overviewScaleRef.current * 0.7;
-      const maxS = overviewScaleRef.current * 14;
+      const minS = overviewScaleRef.current * 0.55;
+      const maxS = overviewScaleRef.current * 16;
       const s = clamp(nextScale, minS, maxS);
       const rectX = clientX - w / 2;
       const rectY = clientY - h / 2;
@@ -328,25 +427,16 @@ export default function App() {
 
   const zoomByStep = useCallback(
     (dir: "in" | "out") => {
-      const frame = focusIdRef.current ? getFrame(presentation, focusIdRef.current) : null;
-      let cx = w / 2;
-      let cy = h / 2;
-      if (frame) {
-        syncRefs();
-        const fx = frame.x + frame.w / 2;
-        const fy = frame.y + frame.h / 2;
-        cx = w / 2 + xRef.current + fx * scaleRef.current;
-        cy = h / 2 + yRef.current + fy * scaleRef.current;
-      }
-      zoomAt(cx, cy, scaleRef.current * (dir === "in" ? ZOOM_IN : ZOOM_OUT));
+      zoomAt(w / 2, h / 2, scaleRef.current * (dir === "in" ? ZOOM_IN : ZOOM_OUT));
     },
-    [h, presentation, syncRefs, w, zoomAt],
+    [h, w, zoomAt],
   );
 
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      if (modalId) return;
       e.preventDefault();
       bumpChrome();
       syncRefs();
@@ -358,7 +448,7 @@ export default function App() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [bumpChrome, setCamera, syncRefs, zoomAt]);
+  }, [bumpChrome, modalId, setCamera, syncRefs, zoomAt]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -380,21 +470,25 @@ export default function App() {
           void document.exitFullscreen();
           return;
         }
-        if (focusIdRef.current) {
-          const frame = getFrame(presentation, focusIdRef.current);
-          if (frame?.parentId) openFrame(frame.parentId, true);
-          else goOverview(true);
-        } else goOverview(true);
+        if (modalId) {
+          closeModal(false);
+          return;
+        }
+        setActiveChildId(null);
+        showOverview(true);
+        syncPathToOverviewEnd();
+        persist(null, pathIndexRef.current);
+        writeUrl(null);
         return;
       }
       if (e.key === " " || e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        goPath(1);
+        stepPath(1);
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        goPath(-1);
+        stepPath(-1);
         return;
       }
       if (e.key === "Home") {
@@ -404,9 +498,21 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [bumpChrome, goHome, goOverview, goPath, openFrame, presentation, zoomByStep]);
+  }, [
+    bumpChrome,
+    closeModal,
+    goHome,
+    modalId,
+    persist,
+    showOverview,
+    stepPath,
+    syncPathToOverviewEnd,
+    writeUrl,
+    zoomByStep,
+  ]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
+    if (modalId) return;
     bumpChrome();
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
@@ -426,6 +532,7 @@ export default function App() {
   };
 
   const onPointerMove = (e: ReactPointerEvent) => {
+    if (modalId) return;
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2 && pinchStart.current) {
@@ -444,14 +551,17 @@ export default function App() {
   };
 
   const onPointerUp = (e: ReactPointerEvent) => {
+    if (modalId) {
+      pointers.current.clear();
+      return;
+    }
     const start = swipeStart.current;
     swipeStart.current = null;
     if (start && pointers.current.size <= 1) {
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
       if (Math.abs(dx) > 72 && Math.abs(dx) > Math.abs(dy) * 1.3) {
-        // swipe left = forward; swipe right = back
-        goPath(dx < 0 ? 1 : -1);
+        stepPath(dx < 0 ? 1 : -1);
       }
     }
     pointers.current.delete(e.pointerId);
@@ -476,19 +586,22 @@ export default function App() {
   }, []);
 
   const strandPath = useMemo(() => {
-    const mains = presentation.frames.filter((f) => f.level <= 2);
+    const mains = presentation.frames.filter((f) => !f.parentId);
     if (mains.length < 2) return "";
     const pts = mains.map((f) => ({ x: f.x + f.w / 2, y: f.y + f.h / 2 }));
     let d = `M ${pts[0].x} ${pts[0].y}`;
     for (let i = 1; i < pts.length; i++) {
-      const a = pts[i - 1];
-      const b = pts[i];
+      const a = pts[i - 1]!;
+      const b = pts[i]!;
       d += ` C ${a.x + (b.x - a.x) * 0.4} ${a.y}, ${b.x - (b.x - a.x) * 0.4} ${b.y}, ${b.x} ${b.y}`;
     }
     return d;
   }, [presentation.frames]);
 
-  const isOverview = focusId === null;
+  const modalFrame = modalId ? getFrame(presentation, modalId) ?? null : null;
+
+  // Only root hubs on canvas — one ring each. Leaves open via satellites / modal.
+  const visibleFrames = presentation.frames.filter((f) => !f.parentId);
 
   return (
     <div className="facts-app">
@@ -528,7 +641,6 @@ export default function App() {
             style={{ width: presentation.world.width, height: presentation.world.height }}
           >
             <div className="prezi-world-wash" aria-hidden />
-
             <svg
               className="overview-path"
               width={presentation.world.width}
@@ -544,44 +656,70 @@ export default function App() {
               />
             </svg>
 
-            {presentation.frames
-              .filter((frame) => {
-                if (isOverview) return !frame.parentId;
-                if (!focusId) return !frame.parentId;
-                const focus = getFrame(presentation, focusId);
-                if (!focus) return !frame.parentId;
-                if (!frame.parentId) return true; // always keep hubs for parent peek
-                const hubId = focus.parentId ?? focus.id;
-                return frame.parentId === hubId || frame.id === focusId;
-              })
-              .map((frame) => (
-                <SectionFrame
-                  key={frame.id}
-                  frame={frame}
-                  active={focusId === frame.id}
-                  overview={isOverview}
-                  onOpen={() => openFrame(frame.id)}
-                />
-              ))}
+            {visibleFrames.map((frame) => (
+              <SectionFrame
+                key={frame.id}
+                frame={frame}
+                presentation={presentation}
+                highlighted={highlightId === frame.id}
+                activeChildId={highlightId === frame.id ? activeChildId : null}
+                onOpen={() => openDetail(frame.id)}
+                onOpenChild={(id) => openDetail(id)}
+              />
+            ))}
           </div>
         </motion.div>
       </div>
 
       <PresentChrome
         presentation={presentation}
-        focusId={focusId}
+        focusId={activeChildId ?? highlightId}
         pathIndex={pathIndex}
         chromeVisible={chromeVisible}
         fullscreen={fullscreen}
-        onOverview={() => goOverview(true)}
+        onOverview={() => {
+          setModalId(null);
+          setActiveChildId(null);
+          showOverview(true);
+          syncPathToOverviewEnd();
+          persist(null, pathIndexRef.current);
+          writeUrl(null);
+        }}
         onHome={goHome}
-        onPrev={() => goPath(-1)}
-        onNext={() => goPath(1)}
-        onResume={resume}
+        onPrev={() => stepPath(-1)}
+        onNext={() => stepPath(1)}
+        onResume={() => {
+          if (activeChildId) openDetail(activeChildId);
+          else if (highlightId) openDetail(highlightId);
+          else goHome();
+        }}
         onZoomIn={() => zoomByStep("in")}
         onZoomOut={() => zoomByStep("out")}
         onToggleFullscreen={toggleFullscreen}
-        onJump={(id) => openFrame(id)}
+        onJump={(id) => {
+          setModalId(null);
+          const found = presentation.path.indexOf(id);
+          if (found >= 0) {
+            pathIndexRef.current = found;
+            setPathIndex(found);
+          }
+          const { frame, childId } = resolveCanvasTarget(id);
+          setActiveChildId(childId);
+          if (frame) {
+            const cam = cameraForFrame(frame);
+            setCamera(cam.s, cam.x, cam.y, true);
+            setViewMode("frame");
+            setHighlightId(frame.id);
+            persist(id, pathIndexRef.current);
+            writeUrl(id);
+          }
+        }}
+      />
+
+      <DetailModal
+        frame={modalFrame}
+        open={!!modalId && !!modalFrame}
+        onClose={() => closeModal(false)}
       />
     </div>
   );
