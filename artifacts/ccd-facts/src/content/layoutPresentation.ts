@@ -52,12 +52,12 @@ export type Presentation = {
 };
 
 const MAX_CHILDREN = 4;
-/** Uniform zone size — tall enough that rest-camera type stays ≥18px */
-const FRAME_W = 1320;
-const FRAME_H = 920;
-/** Clear edge-to-edge gutter between hubs (≥48px at overview; more when zoomed) */
-const GUTTER = 520;
-const PAD = 560;
+/** Uniform zone — sized so rest-camera body stays ≥18px; overview uses readable target scale */
+const FRAME_W = 1180;
+const FRAME_H = 780;
+/** Tight gutters so Overview isn’t empty green with postage stamps */
+const GUTTER = 200;
+const PAD = 180;
 /** Park leaves well below the hub band */
 const LEAF_BAND_GAP = 4200;
 
@@ -198,7 +198,8 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       heroStat: hubStat,
       chartId: hubChart,
       quote: quotes[0] ? firstSentence(quotes[0].text) : undefined,
-      photoHero: !hubStat && !hubChart && !isSources,
+      // Classroom photo ONLY on The situation — unique illustration, not reused
+      photoHero: hubId === "the-situation" && !hubStat && !hubChart && !isSources,
       photoCrop: crop,
       footnotes: isSources ? doc.footnotes : undefined,
       blocks: sec.blocks,
@@ -335,7 +336,7 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   // 0: title (full width slot)
   // 1: situation + key stages (primary, secondary, a-level)
   // 2: after school (HE, hubs) + solution + sources
-  const COLS = 4;
+  const COLS = 3;
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
 
@@ -350,18 +351,16 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   }
 
   // Extra vertical air after title before the stage band
-  const band0Y = PAD + (title ? FRAME_H + GUTTER + 120 : 0);
+  const band0Y = PAD + (title ? FRAME_H + GUTTER : 0);
 
   rest.forEach((hub, i) => {
     const col = i % COLS;
     const row = Math.floor(i / COLS);
-    // Extra gutter on the hubs / solution band (row ≥ 1)
-    const yBoost = row >= 1 ? 180 : 0;
     hub.x = PAD + col * cellW;
-    hub.y = band0Y + row * (cellH + yBoost);
+    hub.y = band0Y + row * cellH;
     hub.w = FRAME_W;
     // Chart hubs need more height so ticks/labels aren’t cropped
-    hub.h = hub.chartId ? FRAME_H + 100 : FRAME_H;
+    hub.h = hub.chartId ? FRAME_H + 80 : FRAME_H;
   });
 }
 

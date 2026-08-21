@@ -1,9 +1,9 @@
-import { Info } from "lucide-react";
+import { Eye } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ContentChart } from "@/components/charts/Charts";
-import { getChart } from "@/content/facts.content";
+import { LogoMark } from "@/components/LogoMark";
+import { getChart, meta } from "@/content/facts.content";
 import type { FrameNode, Presentation } from "@/content/layoutPresentation";
-import { sectionAccent } from "@/content/sectionAccent";
 
 function heroUrl(file: string) {
   const base = import.meta.env.BASE_URL || "/";
@@ -13,16 +13,15 @@ function heroUrl(file: string) {
 const MAX_VISIBLE_SATS = 2;
 
 /**
- * One scene: one green ring around the hero (photo/stat), title + sentence in
- * the empty left third — never overlapping the ring. Optional small satellites
- * (text chips only, not rings) for children on hubs.
- * Info icon on every frame / sat / chart: further detail is available.
+ * Opened section / title scene: rounded boxes, eye for detail, no left lime rule.
+ * Classroom photo on title (start) and Situation only.
  */
 export function SectionFrame({
   frame,
   presentation,
   highlighted,
   activeChildId,
+  layout = "world",
   onOpen,
   onOpenDetail,
   onOpenChild,
@@ -30,24 +29,37 @@ export function SectionFrame({
   frame: FrameNode;
   presentation: Presentation;
   highlighted?: boolean;
-  /** When path lands on a child, emphasise that satellite label */
   activeChildId?: string | null;
+  layout?: "world" | "scene";
   onOpen: () => void;
-  /** Direct open of the large detail modal (info affordance). */
   onOpenDetail: () => void;
   onOpenChild?: (id: string) => void;
 }) {
   const chart = frame.chartId ? getChart(frame.chartId) : undefined;
-  const showPhoto = frame.photoHero && !frame.heroStat && !chart;
+  const showPhoto =
+    (frame.id === "title" || frame.id === "the-situation") &&
+    frame.photoHero &&
+    !frame.heroStat &&
+    !chart;
+  const showBrand = frame.kind === "title";
   const allChildren =
-    frame.kind === "hub" || frame.kind === "title"
+    frame.kind === "hub" || frame.kind === "title" || frame.kind === "sources"
       ? frame.childIds
           .map((id) => presentation.frames.find((f) => f.id === id))
           .filter(Boolean)
       : [];
   const children = allChildren.slice(0, MAX_VISIBLE_SATS);
   const overflowCount = Math.max(0, allChildren.length - children.length);
-  const accent = sectionAccent(frame.id);
+
+  const style: CSSProperties =
+    layout === "scene"
+      ? {}
+      : {
+          left: frame.x,
+          top: frame.y,
+          width: frame.w,
+          height: frame.h,
+        };
 
   return (
     <div
@@ -55,21 +67,14 @@ export function SectionFrame({
       tabIndex={0}
       className={[
         "prezi-frame",
+        layout === "scene" ? "prezi-frame--scene" : "",
         `prezi-${frame.kind}`,
         highlighted ? "is-highlighted" : "",
         `crop-${frame.photoCrop}`,
       ]
         .filter(Boolean)
         .join(" ")}
-      style={
-        {
-          left: frame.x,
-          top: frame.y,
-          width: frame.w,
-          height: frame.h,
-          ["--frame-accent" as string]: accent,
-        } as CSSProperties
-      }
+      style={style}
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
@@ -86,8 +91,6 @@ export function SectionFrame({
       aria-current={highlighted ? "true" : undefined}
     >
       <div className="prezi-frame-stage">
-        <span className="prezi-accent-bar" aria-hidden />
-
         <button
           type="button"
           className="prezi-info"
@@ -98,10 +101,9 @@ export function SectionFrame({
             onOpenDetail();
           }}
         >
-          <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+          <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
         </button>
 
-        {/* Hero — the ONE green ring for this section */}
         <div className="prezi-hero">
           {frame.heroStat ? (
             <div className="prezi-stat-bubble" aria-hidden={false}>
@@ -121,7 +123,7 @@ export function SectionFrame({
                   onOpenDetail();
                 }}
               >
-                <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+                <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
               </button>
             </div>
           ) : showPhoto ? (
@@ -140,8 +142,20 @@ export function SectionFrame({
           )}
         </div>
 
-        {/* Copy column — left; never under the ring */}
         <div className="prezi-copy">
+          {showBrand ? (
+            <div className="prezi-brand-lockup" aria-label={meta.brand}>
+              <LogoMark size={62} title={meta.brand} />
+              <div className="prezi-brand-lockup-text">
+                <div className="prezi-brand-lockup-name">{meta.brand}</div>
+                <div className="prezi-brand-lockup-line">
+                  {meta.experienceLead}{" "}
+                  <span className="prezi-brand-lockup-accent">{meta.experienceAccent}</span>
+                </div>
+              </div>
+            </div>
+          ) : null}
+
           <div className="prezi-title-bubble">
             {frame.titleSmall ? <p className="prezi-title-small">{frame.titleSmall}</p> : null}
             <h2 className="prezi-title-giant">{frame.titleGiant}</h2>
@@ -156,13 +170,12 @@ export function SectionFrame({
           {frame.kind === "sources" ? (
             <div className="prezi-body-card prezi-sources-card">
               <p className="prezi-sources-hint">
-                Full footnotes open via the info icon — readable in the detail panel.
+                Full footnotes open via the eye icon — readable in the detail panel.
               </p>
             </div>
           ) : null}
         </div>
 
-        {/* Text chips only — overflow goes to modal via info */}
         {children.length || overflowCount ? (
           <ul className="prezi-satellites" aria-label="Inside this section">
             {children.map((ch, i) =>
@@ -185,7 +198,7 @@ export function SectionFrame({
                         ? ch.heroStat.value
                         : ch.title}
                     </span>
-                    <Info className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                    <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                   </button>
                 </li>
               ) : null,
@@ -202,7 +215,7 @@ export function SectionFrame({
                   aria-label={`${overflowCount} more topics — open detail`}
                 >
                   <span className="prezi-sat-label">+{overflowCount} more</span>
-                  <Info className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                  <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                 </button>
               </li>
             ) : null}

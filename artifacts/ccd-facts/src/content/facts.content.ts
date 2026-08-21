@@ -595,13 +595,13 @@ export const charts: Record<string, ChartDef> = {
     },
     series: [
       {
-        label: "Music Hubs (annual)",
+        label: "Hubs (annual)",
         value: 76,
         kind: "Annual revenue backing",
         fill: "#2A9D8F",
       },
       {
-        label: "Capital (instruments)",
+        label: "Capital",
         value: 25,
         kind: "Additional capital investment",
         fill: "#C9A227",

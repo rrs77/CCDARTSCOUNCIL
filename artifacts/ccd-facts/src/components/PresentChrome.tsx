@@ -1,10 +1,9 @@
-import { Maximize2, Minimize2, ZoomIn, ZoomOut } from "lucide-react";
+import { Maximize2, Minimize2 } from "lucide-react";
 import { MapNav } from "@/components/MapNav";
 import type { Presentation } from "@/content/layoutPresentation";
 
 /**
- * Thin canvas chrome — not a slide deck.
- * Map chip (left) + Overview + zoom + fullscreen (bottom). Fades when idle.
+ * Thin canvas chrome — Overview returns to the stack; Map jumps sections.
  */
 export function PresentChrome({
   presentation,
@@ -12,8 +11,6 @@ export function PresentChrome({
   chromeVisible,
   fullscreen,
   onOverview,
-  onZoomIn,
-  onZoomOut,
   onToggleFullscreen,
   onJump,
 }: {
@@ -22,8 +19,6 @@ export function PresentChrome({
   chromeVisible: boolean;
   fullscreen: boolean;
   onOverview: () => void;
-  onZoomIn: () => void;
-  onZoomOut: () => void;
   onToggleFullscreen: () => void;
   onJump: (id: string) => void;
 }) {
@@ -41,14 +36,8 @@ export function PresentChrome({
         role="toolbar"
         aria-label="Canvas tools"
       >
-        <button type="button" className="present-btn" onClick={onOverview} title="Overview (Esc)">
+        <button type="button" className="present-btn" onClick={onOverview} title="Overview — section stack (Esc)">
           Overview
-        </button>
-        <button type="button" className="present-icon" onClick={onZoomOut} aria-label="Zoom out" title="Zoom out (−)">
-          <ZoomOut className="h-4 w-4" />
-        </button>
-        <button type="button" className="present-icon" onClick={onZoomIn} aria-label="Zoom in" title="Zoom in (+)">
-          <ZoomIn className="h-4 w-4" />
         </button>
         <button
           type="button"
