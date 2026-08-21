@@ -1,13 +1,16 @@
 /**
- * Lay out parsed CONTENT.md sections on a Prezi world canvas.
- * Adding a ## creates a new frame; size grows with content.
+ * Expand CONTENT.md sections into Prezi-friendly frames:
+ * parent keeps one sentence (+ optional hero stat);
+ * extra paragraphs, list stats, and ### become child satellites.
  */
 
 import {
-  estimateSectionSize,
-  type ContentSection,
+  parseContentMarkdown,
+  type ContentBlock,
   type ParsedDocument,
 } from "./parseContent";
+
+export type SceneKind = "title" | "hub" | "leaf" | "sources";
 
 export type FrameNode = {
   id: string;
@@ -15,157 +18,477 @@ export type FrameNode = {
   mainSectionId: string;
   sequence: number;
   level: 1 | 2 | 3;
+  kind: SceneKind;
   title: string;
+  /** Small mixed-case line */
+  titleSmall: string;
+  /** GIANT condensed caps */
+  titleGiant: string;
   navLabel: string;
   x: number;
   y: number;
   w: number;
   h: number;
-  section: ContentSection | null;
-  /** Title / lead card */
-  lead?: string[];
+  /** One sentence for the body card */
+  sentence: string;
+  /** Optional giant hero stat */
+  heroStat?: { value: string; label: string };
+  quote?: string;
+  chartId?: string;
+  /** Use masked hero photo in the green bubble */
+  photoHero: boolean;
   footnotes?: ParsedDocument["footnotes"];
+  /** Child ids that sit as satellites on this hub */
+  childIds: string[];
 };
 
 export type Presentation = {
   title: string;
   world: { width: number; height: number; heroImage: string };
   frames: FrameNode[];
-  /** Guided path: overview sentinel then frame ids then overview */
   path: string[];
   mainSectionIds: string[];
 };
 
-const GAP_X = 160;
-const GAP_Y = 140;
-const PAD = 200;
-const COLS = 3;
+function slugify(title: string): string {
+  return (
+    title
+      .toLowerCase()
+      .replace(/&/g, " and ")
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/^-|-$/g, "")
+      .slice(0, 64) || "section"
+  );
+}
 
-export function buildPresentation(doc: ParsedDocument): Presentation {
-  const frames: FrameNode[] = [];
-  let sequence = 0;
+function uniqueId(base: string, used: Set<string>): string {
+  let id = base;
+  let n = 2;
+  while (used.has(id)) id = `${base}-${n++}`;
+  used.add(id);
+  return id;
+}
 
-  // Title card
-  const titleW = 1200;
-  const titleH = 520 + doc.lead.length * 40;
-  const titleFrame: FrameNode = {
+/** Two-tier title: small line + GIANT caps. */
+export function splitTitle(title: string): { small: string; giant: string } {
+  const clean = title.trim();
+  const words = clean.split(/\s+/);
+  if (words.length === 1) return { small: "", giant: words[0]!.toUpperCase() };
+  if (/^(the|a|an)\b/i.test(words[0]!)) {
+    return { small: words[0]!, giant: words.slice(1).join(" ").toUpperCase() };
+  }
+  if (words.length === 2) {
+    return { small: words[0]!, giant: words[1]!.toUpperCase() };
+  }
+  // Prefer last 1–2 words as the giant wordmark
+  const giantCount = words.length >= 5 ? 2 : 1;
+  return {
+    small: words.slice(0, -giantCount).join(" "),
+    giant: words.slice(-giantCount).join(" ").toUpperCase(),
+  };
+}
+
+type Proto = {
+  id: string;
+  parentId: string | null;
+  mainSectionId: string;
+  level: 1 | 2 | 3;
+  kind: SceneKind;
+  title: string;
+  sentence: string;
+  heroStat?: { value: string; label: string };
+  quote?: string;
+  chartId?: string;
+  photoHero: boolean;
+  footnotes?: ParsedDocument["footnotes"];
+};
+
+function firstSentence(text: string): string {
+  const t = text.trim();
+  const m = t.match(/^(.+?[.!?])(?:\s|$)/);
+  if (m && m[1]!.length >= 40) return m[1]!;
+  if (t.length <= 160) return t;
+  return t.slice(0, 157).replace(/\s+\S*$/, "") + "…";
+}
+
+/** Turn a parsed doc into flat proto-frames (parent + lean children). */
+export function expandToProtos(doc: ParsedDocument): Proto[] {
+  const used = new Set<string>(["title", "overview"]);
+  const protos: Proto[] = [];
+
+  protos.push({
     id: "title",
     parentId: null,
     mainSectionId: "title",
-    sequence: sequence++,
     level: 1,
+    kind: "title",
     title: doc.title,
-    navLabel: "Title",
-    x: PAD,
-    y: PAD,
-    w: titleW,
-    h: Math.max(560, titleH),
-    section: null,
-    lead: doc.lead,
-  };
-  frames.push(titleFrame);
+    sentence: doc.lead[0] ? firstSentence(doc.lead[0]) : "",
+    photoHero: true,
+  });
 
   const mains = doc.sections.filter((s) => s.level === 2);
   const nested = doc.sections.filter((s) => s.level === 3);
 
-  // Pathway: place main sections in a serpentine grid after the title
-  const mainFrames: FrameNode[] = [];
-  let col = 1;
-  let row = 0;
-  // Title takes col 0 row 0; start mains at col 1
-  mains.forEach((sec, i) => {
+  for (const sec of mains) {
     const isSources = /^sources$/i.test(sec.title);
-    const { w, h } = estimateSectionSize(sec, isSources);
+    const paras = sec.blocks.filter((b) => b.type === "paragraph") as Extract<
+      ContentBlock,
+      { type: "paragraph" }
+    >[];
+    const stats = sec.blocks.filter((b) => b.type === "stat") as Extract<
+      ContentBlock,
+      { type: "stat" }
+    >[];
+    const quotes = sec.blocks.filter((b) => b.type === "quote") as Extract<
+      ContentBlock,
+      { type: "quote" }
+    >[];
+    const charts = sec.blocks.filter((b) => b.type === "chart") as Extract<
+      ContentBlock,
+      { type: "chart" }
+    >[];
+    const lists = sec.blocks.filter((b) => b.type === "list") as Extract<
+      ContentBlock,
+      { type: "list" }
+    >[];
+
+    const hubId = sec.id;
+    used.add(hubId);
+
+    const hub: Proto = {
+      id: hubId,
+      parentId: null,
+      mainSectionId: hubId,
+      level: 2,
+      kind: isSources ? "sources" : "hub",
+      title: sec.title,
+      sentence: paras[0] ? firstSentence(paras[0].text) : firstSentence(doc.lead[0] ?? ""),
+      heroStat: stats[0] ? { value: stats[0].value, label: stats[0].label } : undefined,
+      quote: quotes[0]?.text,
+      chartId: undefined,
+      photoHero: !isSources && !stats[0],
+      footnotes: isSources ? doc.footnotes : undefined,
+    };
+    protos.push(hub);
+
+    // Extra paragraphs → leaf children
+    paras.slice(1).forEach((p, i) => {
+      const id = uniqueId(`${hubId}-p${i + 2}`, used);
+      protos.push({
+        id,
+        parentId: hubId,
+        mainSectionId: hubId,
+        level: 3,
+        kind: "leaf",
+        title: sec.title,
+        sentence: firstSentence(p.text),
+        photoHero: false,
+      });
+    });
+
+    // Stat list items (beyond first hero) → satellite leaves
+    stats.slice(hub.heroStat ? 1 : 0).forEach((st, i) => {
+      const id = uniqueId(`${hubId}-stat-${i + 1}`, used);
+      protos.push({
+        id,
+        parentId: hubId,
+        mainSectionId: hubId,
+        level: 3,
+        kind: "leaf",
+        title: st.label.split(/[—(]/)[0]!.trim().slice(0, 42) || st.label,
+        sentence: st.label,
+        heroStat: { value: st.value, label: st.label },
+        photoHero: false,
+      });
+    });
+
+    // Plain list items → short leaf frames
+    for (const list of lists) {
+      list.items.forEach((item, i) => {
+        const id = uniqueId(`${hubId}-li-${i + 1}`, used);
+        protos.push({
+          id,
+          parentId: hubId,
+          mainSectionId: hubId,
+          level: 3,
+          kind: "leaf",
+          title: item.slice(0, 36),
+          sentence: firstSentence(item),
+          photoHero: false,
+        });
+      });
+    }
+
+    // Quotes beyond first → leaf
+    quotes.slice(1).forEach((q, i) => {
+      const id = uniqueId(`${hubId}-q${i + 2}`, used);
+      protos.push({
+        id,
+        parentId: hubId,
+        mainSectionId: hubId,
+        level: 3,
+        kind: "leaf",
+        title: "Pull-out",
+        sentence: firstSentence(q.text),
+        quote: q.text,
+        photoHero: false,
+      });
+    });
+
+    // Charts → leaf frames
+    charts.forEach((c, i) => {
+      const id = uniqueId(`${hubId}-chart-${c.chartId}`, used);
+      protos.push({
+        id,
+        parentId: hubId,
+        mainSectionId: hubId,
+        level: 3,
+        kind: "leaf",
+        title: c.chartId,
+        sentence: "Explore the chart.",
+        chartId: c.chartId,
+        photoHero: false,
+      });
+      void i;
+    });
+
+    // Explicit ### nested sections
+    const kids = nested.filter((n) => n.parentId === sec.id);
+    for (const kid of kids) {
+      const kParas = kid.blocks.filter((b) => b.type === "paragraph") as Extract<
+        ContentBlock,
+        { type: "paragraph" }
+      >[];
+      const kStats = kid.blocks.filter((b) => b.type === "stat") as Extract<
+        ContentBlock,
+        { type: "stat" }
+      >[];
+      const kQuotes = kid.blocks.filter((b) => b.type === "quote") as Extract<
+        ContentBlock,
+        { type: "quote" }
+      >[];
+      const kCharts = kid.blocks.filter((b) => b.type === "chart") as Extract<
+        ContentBlock,
+        { type: "chart" }
+      >[];
+
+      used.add(kid.id);
+      const nestProto: Proto = {
+        id: kid.id,
+        parentId: hubId,
+        mainSectionId: hubId,
+        level: 3,
+        kind: "leaf",
+        title: kid.title,
+        sentence: kParas[0]
+          ? firstSentence(kParas[0].text)
+          : kStats[0]
+            ? kStats[0].label
+            : "",
+        heroStat: kStats[0] ? { value: kStats[0].value, label: kStats[0].label } : undefined,
+        quote: kQuotes[0]?.text,
+        chartId: kCharts[0]?.chartId,
+        photoHero: false,
+      };
+      protos.push(nestProto);
+
+      // Further stats under ### become their own satellites of the hub (siblings)
+      kStats.slice(1).forEach((st, i) => {
+        const id = uniqueId(`${kid.id}-s${i + 2}`, used);
+        protos.push({
+          id,
+          parentId: hubId,
+          mainSectionId: hubId,
+          level: 3,
+          kind: "leaf",
+          title: st.label.split(/[—(]/)[0]!.trim().slice(0, 42) || kid.title,
+          sentence: st.label,
+          heroStat: { value: st.value, label: st.label },
+          photoHero: false,
+        });
+      });
+
+      kParas.slice(1).forEach((p, i) => {
+        const id = uniqueId(`${kid.id}-p${i + 2}`, used);
+        protos.push({
+          id,
+          parentId: hubId,
+          mainSectionId: hubId,
+          level: 3,
+          kind: "leaf",
+          title: kid.title,
+          sentence: firstSentence(p.text),
+          photoHero: false,
+        });
+      });
+
+      kCharts.slice(1).forEach((c) => {
+        const id = uniqueId(`${kid.id}-${c.chartId}`, used);
+        protos.push({
+          id,
+          parentId: hubId,
+          mainSectionId: hubId,
+          level: 3,
+          kind: "leaf",
+          title: c.chartId,
+          sentence: "Explore the chart.",
+          chartId: c.chartId,
+          photoHero: false,
+        });
+      });
+    }
+  }
+
+  return protos;
+}
+
+const HUB_W = 1680;
+const HUB_H = 1100;
+const LEAF_W = 920;
+const LEAF_H = 720;
+const TITLE_W = 1400;
+const TITLE_H = 900;
+const PAD = 280;
+
+/** Place children on an ellipse around the hub centre — satellites ARE destinations. */
+function placeSatellites(
+  parent: { x: number; y: number; w: number; h: number },
+  children: FrameNode[],
+) {
+  const n = children.length;
+  if (!n) return;
+  const cx = parent.x + parent.w * 0.58;
+  const cy = parent.y + parent.h * 0.52;
+  const rx = parent.w * 0.48 + 220;
+  const ry = parent.h * 0.42 + 160;
+  // Start from upper-right, go clockwise — leave left third emptier
+  const start = -Math.PI * 0.35;
+  const sweep = Math.PI * 1.45;
+  children.forEach((ch, i) => {
+    const t = n === 1 ? start + sweep * 0.35 : start + (sweep * i) / Math.max(1, n - 1);
+    const px = cx + Math.cos(t) * rx - ch.w / 2;
+    const py = cy + Math.sin(t) * ry - ch.h / 2;
+    ch.x = px;
+    ch.y = py;
+  });
+}
+
+export function buildPresentation(doc: ParsedDocument): Presentation {
+  const protos = expandToProtos(doc);
+  const frames: FrameNode[] = [];
+  let sequence = 0;
+
+  const hubs = protos.filter((p) => p.parentId === null);
+  // Arrange hubs in a gentle arc / pathway across the world
+  const hubGapX = 420;
+  const hubGapY = 380;
+  let col = 0;
+  let row = 0;
+  const COLS = 3;
+
+  const hubNodes: FrameNode[] = [];
+
+  for (const p of hubs) {
     if (col >= COLS) {
       col = 0;
       row += 1;
     }
-    // Rough cell origin; refine after measuring row heights
-    const cellX = PAD + col * (1280 + GAP_X);
-    const cellY = PAD + row * (780 + GAP_Y);
+    const isTitle = p.kind === "title";
+    const w = isTitle ? TITLE_W : p.kind === "sources" ? 1100 : HUB_W;
+    const h = isTitle ? TITLE_H : p.kind === "sources" ? 900 : HUB_H;
+    const { small, giant } = splitTitle(p.title);
     const node: FrameNode = {
-      id: sec.id,
+      id: p.id,
       parentId: null,
-      mainSectionId: sec.id,
+      mainSectionId: p.mainSectionId,
       sequence: sequence++,
-      level: 2,
-      title: sec.title,
-      navLabel: sec.title,
-      x: cellX,
-      y: cellY,
+      level: p.level,
+      kind: p.kind,
+      title: p.title,
+      titleSmall: small,
+      titleGiant: giant,
+      navLabel: p.title,
+      x: PAD + col * (HUB_W + hubGapX),
+      y: PAD + row * (HUB_H + hubGapY),
       w,
       h,
-      section: sec,
-      footnotes: isSources ? doc.footnotes : undefined,
+      sentence: p.sentence,
+      heroStat: p.heroStat,
+      quote: p.quote,
+      chartId: p.chartId,
+      photoHero: p.photoHero,
+      footnotes: p.footnotes,
+      childIds: [],
     };
-    mainFrames.push(node);
+    // Title sits left of first row
+    if (isTitle) {
+      node.x = PAD;
+      node.y = PAD;
+      col = 1;
+      row = 0;
+    } else {
+      col += 1;
+    }
+    hubNodes.push(node);
     frames.push(node);
-    col += 1;
-    void i;
-  });
+  }
 
-  // Re-flow mains by measured heights per row for tighter packing
+  // Reflow non-title hubs after title
   {
-    type Row = { nodes: FrameNode[]; maxH: number };
-    const rows: Row[] = [];
-    let r: Row = { nodes: [], maxH: 0 };
-    // Put title alone on first conceptual row, then pack mains
-    const allMain = mainFrames;
-    allMain.forEach((n, idx) => {
-      if (r.nodes.length >= COLS) {
-        rows.push(r);
-        r = { nodes: [], maxH: 0 };
+    const rest = hubNodes.filter((n) => n.kind !== "title");
+    const title = hubNodes.find((n) => n.kind === "title");
+    let x = PAD + (title ? title.w + hubGapX : 0);
+    let y = PAD;
+    let c = title ? 1 : 0;
+    for (const n of rest) {
+      if (c >= COLS) {
+        c = 0;
+        x = PAD;
+        y += HUB_H + hubGapY;
       }
-      r.nodes.push(n);
-      r.maxH = Math.max(r.maxH, n.h);
-      if (idx === allMain.length - 1) rows.push(r);
-    });
-
-    let y = PAD + titleFrame.h + GAP_Y + 40;
-    for (const rowData of rows) {
-      let x = PAD;
-      for (const n of rowData.nodes) {
-        n.x = x;
-        n.y = y;
-        x += n.w + GAP_X;
-      }
-      y += rowData.maxH + GAP_Y;
+      n.x = x;
+      n.y = y;
+      x += n.w + hubGapX;
+      c += 1;
     }
   }
 
-  // Nested frames: sit below-right of parent, offset by index
-  const nestedByParent = new Map<string, ContentSection[]>();
-  for (const n of nested) {
-    if (!n.parentId) continue;
-    const list = nestedByParent.get(n.parentId) ?? [];
-    list.push(n);
-    nestedByParent.set(n.parentId, list);
-  }
-
-  for (const [parentId, kids] of nestedByParent) {
-    const parent = frames.find((f) => f.id === parentId);
-    if (!parent) continue;
-    kids.forEach((sec, ki) => {
-      const { w, h } = estimateSectionSize(sec, false);
+  // Children as satellites
+  for (const hub of hubNodes) {
+    const kids = protos.filter((p) => p.parentId === hub.id);
+    const childNodes: FrameNode[] = kids.map((p) => {
+      const { small, giant } = splitTitle(p.title);
+      const hasChart = !!p.chartId;
       const node: FrameNode = {
-        id: sec.id,
-        parentId,
-        mainSectionId: parent.mainSectionId,
+        id: p.id,
+        parentId: hub.id,
+        mainSectionId: hub.mainSectionId,
         sequence: sequence++,
         level: 3,
-        title: sec.title,
-        navLabel: sec.title,
-        x: parent.x + parent.w + GAP_X * 0.55,
-        y: parent.y + ki * (h + GAP_Y * 0.65),
-        w,
-        h,
-        section: sec,
+        kind: "leaf",
+        title: p.title,
+        titleSmall: small,
+        titleGiant: giant || p.title.toUpperCase(),
+        navLabel: p.title,
+        x: 0,
+        y: 0,
+        w: hasChart ? 1100 : LEAF_W,
+        h: hasChart ? 860 : LEAF_H,
+        sentence: p.sentence,
+        heroStat: p.heroStat,
+        quote: p.quote,
+        chartId: p.chartId,
+        photoHero: p.photoHero,
+        childIds: [],
       };
       frames.push(node);
+      return node;
     });
+    hub.childIds = childNodes.map((c) => c.id);
+    placeSatellites(hub, childNodes);
   }
 
-  // World bounds
   let maxX = 0;
   let maxY = 0;
   for (const f of frames) {
@@ -173,29 +496,32 @@ export function buildPresentation(doc: ParsedDocument): Presentation {
     maxY = Math.max(maxY, f.y + f.h);
   }
 
-  // Guided path: title → each main → its nested (doc order) → next main → …
-  const path: string[] = ["overview", "title"];
-  for (const main of mains) {
-    path.push(main.id);
-    const kids = nested.filter((n) => n.parentId === main.id);
-    for (const k of kids) path.push(k.id);
+  // Guided path: overview → each hub → its children → … → overview
+  const path: string[] = ["overview"];
+  for (const hub of hubNodes) {
+    path.push(hub.id);
+    for (const cid of hub.childIds) path.push(cid);
   }
   path.push("overview");
 
   return {
     title: doc.title,
     world: {
-      width: Math.max(3600, maxX + PAD),
-      height: Math.max(2400, maxY + PAD),
+      width: Math.max(4800, maxX + PAD),
+      height: Math.max(3200, maxY + PAD),
       heroImage: "hero-arts.jpg",
     },
     frames,
     path,
-    mainSectionIds: mains.map((m) => m.id),
+    mainSectionIds: hubNodes.filter((h) => h.kind !== "title").map((h) => h.id),
   };
 }
 
 export function getFrame(pres: Presentation, id: string | null | undefined): FrameNode | undefined {
   if (!id || id === "overview") return undefined;
   return pres.frames.find((f) => f.id === id);
+}
+
+export function presentationFromMarkdown(md: string): Presentation {
+  return buildPresentation(parseContentMarkdown(md));
 }

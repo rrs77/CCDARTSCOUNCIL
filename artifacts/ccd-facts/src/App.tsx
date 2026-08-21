@@ -4,15 +4,16 @@ import { LogoMark } from "@/components/LogoMark";
 import { PresentChrome } from "@/components/PresentChrome";
 import { SectionFrame } from "@/components/SectionFrame";
 import { meta } from "@/content/facts.content";
-import { buildPresentation, getFrame, type Presentation } from "@/content/layoutPresentation";
-import { parseContentMarkdown } from "@/content/parseContent";
+import { getFrame, presentationFromMarkdown } from "@/content/layoutPresentation";
 import rawContent from "../CONTENT.md?raw";
 
-const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
-const MOVE_MS = 0.48;
+/** Prezi-like swift ease — cubic-bezier(.4, 0, .2, 1) */
+const EASE_OUT: [number, number, number, number] = [0.4, 0, 0.2, 1];
+const MOVE_MS = 0.62;
 const ZOOM_IN = 1.2;
 const ZOOM_OUT = 1 / ZOOM_IN;
-const FRAME_FIT = 0.86;
+/** Leave room so a piece of the parent stays visible when entering a child */
+const FRAME_FIT = 0.72;
 const STORAGE_KEY = "ccd-facts-location";
 
 function useViewport() {
@@ -57,17 +58,8 @@ function isTypingTarget() {
   return t === "INPUT" || t === "TEXTAREA" || el.getAttribute("role") === "textbox";
 }
 
-function heroUrl(file: string) {
-  const base = import.meta.env.BASE_URL || "/";
-  return `${base}${file}`.replace(/\/{2,}/g, "/").replace(":/", "://");
-}
-
-function buildFromMarkdown(md: string): Presentation {
-  return buildPresentation(parseContentMarkdown(md));
-}
-
 export default function App() {
-  const presentation = useMemo(() => buildFromMarkdown(rawContent), []);
+  const presentation = useMemo(() => presentationFromMarkdown(rawContent), []);
   const { w, h } = useViewport();
   const reduced = useReducedMotion();
 
@@ -138,14 +130,26 @@ export default function App() {
     (id: string) => {
       const frame = getFrame(presentation, id);
       if (!frame) return fitOverview();
-      const padTop = 56;
-      const padBottom = 96;
+      const padTop = 48;
+      const padBottom = 88;
       const availW = w * FRAME_FIT;
       const availH = (h - padTop - padBottom) * FRAME_FIT;
-      const s = Math.min(availW / frame.w, availH / frame.h);
-      const cx = frame.x + frame.w / 2;
-      const cy = frame.y + frame.h / 2;
-      return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 12 };
+      let s = Math.min(availW / frame.w, availH / frame.h);
+      // Bias toward right-of-centre content; keep a sliver of parent when nested
+      let cx = frame.x + frame.w * 0.58;
+      let cy = frame.y + frame.h * 0.55;
+      if (frame.parentId) {
+        const parent = getFrame(presentation, frame.parentId);
+        if (parent) {
+          // Pull camera slightly toward parent so a piece stays in view
+          const pcx = parent.x + parent.w * 0.45;
+          const pcy = parent.y + parent.h * 0.5;
+          cx = cx * 0.82 + pcx * 0.18;
+          cy = cy * 0.82 + pcy * 0.18;
+          s *= 0.92;
+        }
+      }
+      return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 14 };
     },
     [fitOverview, h, presentation, w],
   );
@@ -520,17 +524,10 @@ export default function App() {
       >
         <motion.div className="canvas-world" style={{ scale: scaleMv, x: xMv, y: yMv }}>
           <div
-            className="overview-picture"
+            className="overview-picture prezi-world"
             style={{ width: presentation.world.width, height: presentation.world.height }}
           >
-            <img
-              className="overview-hero"
-              src={heroUrl(presentation.world.heroImage)}
-              alt="Arts education — photography backdrop"
-              draggable={false}
-            />
-            <div className="overview-forest" aria-hidden />
-            <div className="overview-vignette" aria-hidden />
+            <div className="prezi-world-wash" aria-hidden />
 
             <svg
               className="overview-path"
@@ -541,32 +538,31 @@ export default function App() {
               <path
                 d={strandPath}
                 fill="none"
-                stroke="rgba(182,255,126,0.35)"
-                strokeWidth="8"
+                stroke="rgba(182,255,126,0.28)"
+                strokeWidth="6"
                 strokeLinecap="round"
               />
             </svg>
 
-            {presentation.frames.map((frame) => {
-              const focusFrame = focusId ? getFrame(presentation, focusId) : null;
-              const reveal =
-                focusId === frame.id ||
-                (!!focusFrame &&
-                  (focusFrame.id === frame.id ||
-                    focusFrame.parentId === frame.id ||
-                    frame.parentId === focusFrame.id ||
-                    (frame.mainSectionId === focusFrame.mainSectionId && frame.level === 2)));
-              return (
+            {presentation.frames
+              .filter((frame) => {
+                if (isOverview) return !frame.parentId;
+                if (!focusId) return !frame.parentId;
+                const focus = getFrame(presentation, focusId);
+                if (!focus) return !frame.parentId;
+                if (!frame.parentId) return true; // always keep hubs for parent peek
+                const hubId = focus.parentId ?? focus.id;
+                return frame.parentId === hubId || frame.id === focusId;
+              })
+              .map((frame) => (
                 <SectionFrame
                   key={frame.id}
                   frame={frame}
                   active={focusId === frame.id}
                   overview={isOverview}
-                  revealDetail={reveal}
                   onOpen={() => openFrame(frame.id)}
                 />
-              );
-            })}
+              ))}
           </div>
         </motion.div>
       </div>
