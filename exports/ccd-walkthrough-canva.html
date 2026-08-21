@@ -58,9 +58,8 @@ body {
   padding: 8px 13px; border-radius: 999px;
   background: rgba(255,255,255,0.88);
   box-shadow: 0 2px 10px rgba(26,16,51,0.18);
-  backdrop-filter: blur(4px);
 }
-.brand-stamp-pill img { height: 100%; width: auto; display: block; }
+
 .brand-stamp-pill span {
   color: #1a1033; font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   font-weight: 700; letter-spacing: 0.06em; font-size: 0.4em;
@@ -134,7 +133,6 @@ body {
   border-radius: 24px;
   background: rgba(255,255,255,0.08);
   border: 1px solid rgba(255,255,255,0.15);
-  backdrop-filter: blur(8px);
   padding: 30px 38px;
 }
 .grid-overlay {
@@ -236,8 +234,8 @@ body {
   padding: 0 134px;
 }
 .ccd-mark-wrap { border-radius: 999px; box-shadow: 0 0 43px rgba(182,255,126,0.14); }
-.ccd-mark { width: 220px; height: 220px; }
-.ccd-mark svg { width: 100%; height: 100%; display: block; }
+
+
 .intro-h1 {
   margin-top: 49px;
   color: #fff;
@@ -623,7 +621,7 @@ body {
   padding: 19px; display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(0,76,69,0.06);
 }
 .pack-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-.pack-logo { height: 32px; width: auto; max-width: 129px; filter: brightness(0); opacity: 0.8; }
+
 .pack-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
 .pack-card p { color: var(--slide-muted); font-size: 17px; margin-top: 8px; flex: 1; line-height: 1.35; }
 .pack-foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(15,42,46,0.1); color: rgba(15,42,46,0.75); font-size: 14px; }
@@ -642,7 +640,7 @@ body {
   display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
   padding-top: 4px; border-top: 1px solid rgba(20,184,166,0.15);
 }
-.partner-logo { height: 25px; width: auto; max-width: 103px; filter: brightness(0); opacity: 0.6; }
+
 .marketplace {
   grid-column: span 5; border-radius: 24px; background: var(--slide-primary-dark); color: #fff;
   padding: 28px 31px; box-shadow: 0 16px 48px rgba(0,76,69,0.18); align-self: center;
@@ -717,12 +715,8 @@ body {
 .btn-add {
   margin-top: 17px; display: inline-flex; padding: 8px 17px; border-radius: 8px;
   background: var(--slide-primary-dark); color: #fff; font-family: var(--font-display); font-weight: 600; font-size: 16px;
-  animation: pulse-ring 2.2s ease-in-out infinite;
 }
-@keyframes pulse-ring {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(182,255,126,0); }
-  50% { box-shadow: 0 0 0 6px rgba(182,255,126,0.45); }
-}
+
 .plan-link { margin-top: 13px; font-family: var(--font-display); font-weight: 600; color: var(--slide-primary-dark); font-size: 15px; }
 .lso-sync {
   grid-column: span 2; border-radius: 14px; border: 1px dashed rgba(255,107,107,0.5);
@@ -882,8 +876,7 @@ body {
 }
 .life-quotes { grid-column: span 5; display: flex; flex-direction: column; gap: 22px; }
 .glass-quote {
-  border-radius: 24px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15);
-  backdrop-filter: blur(8px); padding: 26px 35px;
+  border-radius: 24px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 26px 35px;
 }
 .glass-quote blockquote {
   font-family: var(--font-display); font-weight: 600; color: #fff; font-size: 29px; line-height: 1.3;
@@ -913,27 +906,57 @@ body {
 .cta-card-accent .cta-label { color: rgba(255,255,255,0.9); }
 
 /* Animations — Canva-keepable CSS */
-@keyframes slide-fade-up {
-  from { opacity: 0; transform: translateY(14px); }
-  to { opacity: 1; transform: translateY(0); }
+
+
+
+
+
+
+
+
+
+
+
 }
-.slide-fade-up {
-  animation: slide-fade-up 720ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: var(--slide-stagger, 0ms);
+
+  
+.ccd-mark { width: 220px; height: 220px; }
+.ccd-mark-circle {
+  width: 220px; height: 220px; border-radius: 50%;
+  background: #002D24;
+  border: 6px solid #B6FF7E;
+  display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
 }
-.slide-auto-enter > * {
-  animation: slide-fade-up 680ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
-  animation-delay: 80ms;
+.ccd-mark-text {
+  color: #FFFFFF;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 52px;
+  letter-spacing: -0.5px;
+  line-height: 1;
 }
-.slide-auto-enter > *:nth-child(2) { animation-delay: 170ms; }
-.slide-auto-enter > *:nth-child(3) { animation-delay: 260ms; }
-.slide-auto-enter > *:nth-child(4) { animation-delay: 350ms; }
-.slide-auto-enter > *:nth-child(5) { animation-delay: 440ms; }
-.slide-auto-enter > *:nth-child(6) { animation-delay: 530ms; }
-.slide-auto-enter > *:nth-child(7) { animation-delay: 620ms; }
-.slide-auto-enter > *:nth-child(n + 8) { animation-delay: 700ms; }
-@media (prefers-reduced-motion: reduce) {
-  .slide-fade-up, .slide-auto-enter > *, .btn-add { animation: none; }
+.pack-logo {
+  display: inline-block;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: rgba(15,42,46,0.8);
+  letter-spacing: 0.02em;
+  max-width: 180px;
+  line-height: 1.2;
+}
+.partner-logo {
+  display: inline-block;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgba(15,42,46,0.7);
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border: 1px solid rgba(15,42,46,0.12);
+  border-radius: 6px;
+  background: #fff;
 }
 
   </style>
@@ -946,7 +969,7 @@ body {
   Assets: relative to ../artifacts/ccd-pitch/public/ (plus inline CCD mark SVG)
   No app runtime files were modified for this export.
 -->
-<section data-document-role="page" data-label="Research: Arts squeezed since EBacc" data-speaker-notes="CLA Report Card 2026 opener. EBacc 2010 squeeze: time, entries, teachers, access. England 2024/25." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Research: Arts squeezed since EBacc" data-speaker-notes="CLA Report Card 2026 opener. EBacc 2010 squeeze: time, entries, teachers, access. England 2024/25." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
   <div class="page-pad research-grid slide-auto-enter">
     <div class="research-left">
@@ -979,7 +1002,7 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Research: The long drop in arts entries" data-speaker-notes="Long drop: GCSE subject falls, zero-entry schools, A-level collapse, EBacc vs arts hours." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Research: The long drop in arts entries" data-speaker-notes="Long drop: GCSE subject falls, zero-entry schools, A-level collapse, EBacc vs arts hours." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
   <div class="page-pad research-grid slide-auto-enter">
     <div class="research-left">
@@ -1012,7 +1035,7 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Research: Primary arts provision" data-speaker-notes="Primary: independent vs state hours, falling hours in FSM-heavy schools, partners and leads." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Research: Primary arts provision" data-speaker-notes="Primary: independent vs state hours, falling hours in FSM-heavy schools, partners and leads." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
   <div class="page-pad research-grid slide-auto-enter">
     <div class="research-left">
@@ -1045,7 +1068,7 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Research: The teacher &amp; HE pipeline" data-speaker-notes="Pipeline: workforce shortfall, ITT, bursaries, HE falls in modern universities." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Research: The teacher &amp; HE pipeline" data-speaker-notes="Pipeline: workforce shortfall, ITT, bursaries, HE falls in modern universities." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
   <div class="page-pad research-grid slide-auto-enter">
     <div class="research-left">
@@ -1078,7 +1101,7 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Research: Entitlement &amp; disadvantage" data-speaker-notes="Entitlement: deprivation gradients, FSM under-representation, EPI Music gap." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Research: Entitlement &amp; disadvantage" data-speaker-notes="Entitlement: deprivation gradients, FSM under-representation, EPI Music gap." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
   <div class="page-pad research-grid slide-auto-enter">
     <div class="research-left">
@@ -1111,7 +1134,7 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Research: Why the arts matter" data-speaker-notes="Henley quote; CLA Rapid Evidence Reviews; link CLA 2026 Report Card PDF." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Research: Why the arts matter" data-speaker-notes="Henley quote; CLA Rapid Evidence Reviews; link CLA 2026 Report Card PDF." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
   <div class="page-pad research-grid slide-auto-enter">
     <div class="research-left">
@@ -1144,43 +1167,24 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Exceptional lessons start with connection" data-speaker-notes="Opening brand lockup — CCD circle, Playfair connection, value line." style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Exceptional lessons start with connection" data-speaker-notes="Opening brand lockup — CCD circle, Playfair connection, value line." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="absolute-fill" style="background:#002D24;"></div>
   <div class="orb" style="width:1114px;height:1114px;left:50%;top:44%;transform:translate(-50%,-50%);background:radial-gradient(circle, rgba(182,255,126,0.12) 0%, transparent 68%);filter:blur(38px);" aria-hidden="true"></div>
   <div class="intro-center slide-auto-enter">
     <div class="ccd-mark-wrap">
-      <div class="ccd-mark"><svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CCD">
-  <defs>
-    <radialGradient id="ccdLogoGlowInline" cx="50%" cy="44%" r="58%">
-      <stop offset="0%" stop-color="#1a4038" />
-      <stop offset="55%" stop-color="#002D24" />
-      <stop offset="100%" stop-color="#001812" />
-    </radialGradient>
-  </defs>
-  <circle cx="40" cy="40" r="39" fill="none" stroke="#B6FF7E" stroke-opacity="0.18" stroke-width="1" />
-  <circle cx="40" cy="40" r="36" fill="url(#ccdLogoGlowInline)" stroke="#B6FF7E" stroke-width="1.5" />
-  <text
-    x="40"
-    y="40.5"
-    text-anchor="middle"
-    dominant-baseline="central"
-    fill="#FFFFFF"
-    font-size="28"
-    font-weight="700"
-    font-family="Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-    letter-spacing="-0.5"
-  >CCD</text>
-</svg>
-</div>
+      <div class="ccd-mark" aria-label="CCD">
+        <div class="ccd-mark-circle">
+          <span class="ccd-mark-text">CCD</span>
+        </div>
+      </div>
     </div>
     <h1 class="intro-h1">Exceptional lessons start with <span class="intro-em">connection</span></h1>
     <p class="intro-sub">Capture ideas. Build lessons. Connect with the best arts organisations — EYFS to A-level.</p>
   </div>
 </section>
-<section data-document-role="page" data-label="A living home for creative teaching" data-speaker-notes="Title: Arts Council proposal — together for every child." style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="A living home for creative teaching" data-speaker-notes="Title: Arts Council proposal — together for every child." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1197,10 +1201,9 @@ body {
     <span>www.ccdesigner.co.uk</span>
   </div>
 </section>
-<section data-document-role="page" data-label="The problem: arts teachers are working alone" data-speaker-notes="Problem: alone, fragmented practice, invisible arc, lost craft." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="The problem: arts teachers are working alone" data-speaker-notes="Problem: alone, fragmented practice, invisible arc, lost craft." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1224,10 +1227,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Why now: the arts in higher education are at a tipping point" data-speaker-notes="Original WhyNow.tsx figures retained (49, −47%, 1 in 8, £126b)." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Why now: the arts in higher education are at a tipping point" data-speaker-notes="Original WhyNow.tsx figures retained (49, −47%, 1 in 8, £126b)." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1261,10 +1263,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="The solution: one living home" data-speaker-notes="Solution: half-term planner, lesson library, activity stacks." style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="The solution: one living home" data-speaker-notes="Solution: half-term planner, lesson library, activity stacks." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1284,10 +1285,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Who it's for: arts educators across every key stage" data-speaker-notes="Audiences: EY/Primary, Secondary/Sixth Form, Arts Sector Partners." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Who it's for: arts educators across every key stage" data-speaker-notes="Audiences: EY/Primary, Secondary/Sixth Form, Arts Sector Partners." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1322,10 +1322,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Drama, Music &amp; Dance — one workspace" data-speaker-notes="Subject coverage: Drama, Music, Dance example units." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Drama, Music &amp; Dance — one workspace" data-speaker-notes="Subject coverage: Drama, Music, Dance example units." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1355,10 +1354,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Feature: Lesson library" data-speaker-notes="Lesson library feature with mock cards." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Feature: Lesson library" data-speaker-notes="Lesson library feature with mock cards." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1387,10 +1385,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Feature: Activity stacks" data-speaker-notes="Activity stacks feature." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Feature: Activity stacks" data-speaker-notes="Activity stacks feature." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1425,10 +1422,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Feature: Activity cards with web links" data-speaker-notes="Activity cards with resource chips." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Feature: Activity cards with web links" data-speaker-notes="Activity cards with resource chips." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1464,10 +1460,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Feature: Activity creation flow" data-speaker-notes="Activity creation form mock." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Feature: Activity creation flow" data-speaker-notes="Activity creation form mock." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1508,10 +1503,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Feature: Lesson planner calendar" data-speaker-notes="Calendar / timetable feature." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Feature: Lesson planner calendar" data-speaker-notes="Calendar / timetable feature." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1569,10 +1563,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="How it works" data-speaker-notes="Four-step how it works." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="How it works" data-speaker-notes="Four-step how it works." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1600,10 +1593,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Partner activity packs &amp; marketplace" data-speaker-notes="Partner packs and teacher marketplace." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Partner activity packs &amp; marketplace" data-speaker-notes="Partner packs and teacher marketplace." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1620,20 +1612,20 @@ body {
         <div class="partner-label">Partner activity packs</div>
         <div class="partner-packs">
           <div class="pack-card">
-            <div class="pack-top"><img src="../artifacts/ccd-pitch/public/partners/royal-opera-house.svg" alt="Royal Opera House" class="pack-logo" /><span class="body-muted" style="font-size:13px;">Included</span></div>
+            <div class="pack-top"><span class="pack-logo">Royal Opera House</span><span class="body-muted" style="font-size:13px;">Included</span></div>
             <h3>Royal Opera House</h3>
             <p>Opera, ballet and vocal warm-ups — specialist expertise ready to drop into your timetable.</p>
             <div class="pack-foot">12 lesson stacks · video links</div>
           </div>
           <div class="pack-card">
-            <div class="pack-top"><img src="../artifacts/ccd-pitch/public/partners/national-theatre.svg" alt="National Theatre" class="pack-logo" /><span class="body-muted" style="font-size:13px;">Included</span></div>
+            <div class="pack-top"><span class="pack-logo">National Theatre</span><span class="body-muted" style="font-size:13px;">Included</span></div>
             <h3>National Theatre</h3>
             <p>Devising, text work and ensemble drama — classroom-ready units from NT Learning.</p>
             <div class="pack-foot">GCSE &amp; A-level · exam-aligned</div>
           </div>
           <div class="pack-more">
             <div class="pack-more-row"><div><div class="pack-more-title">More partners joining</div><div class="body-muted" style="font-size:15px;margin-top:4px;">Trinity, ABRSM, Rambert and other specialists — their content accessible inside CCD.</div></div><span class="growing">Growing library</span></div>
-            <div class="partner-logos"><img src="../artifacts/ccd-pitch/public/partners/arts-council-england.svg" alt="Arts Council England" class="partner-logo" /><img src="../artifacts/ccd-pitch/public/partners/royal-opera-house.svg" alt="Royal Opera House" class="partner-logo" /><img src="../artifacts/ccd-pitch/public/partners/lso.svg" alt="London Symphony Orchestra" class="partner-logo" /><img src="../artifacts/ccd-pitch/public/partners/national-theatre.svg" alt="National Theatre" class="partner-logo" /><img src="../artifacts/ccd-pitch/public/partners/bbc-ten-pieces.svg" alt="BBC Ten Pieces" class="partner-logo" /><img src="../artifacts/ccd-pitch/public/partners/tate.svg" alt="Tate" class="partner-logo" /><img src="../artifacts/ccd-pitch/public/partners/national-gallery.svg" alt="The National Gallery" class="partner-logo" /><img src="../artifacts/ccd-pitch/public/partners/sadlers-wells.svg" alt="Sadler's Wells" class="partner-logo" /></div>
+            <div class="partner-logos"><span class="partner-logo">Arts Council England</span><span class="partner-logo">Royal Opera House</span><span class="partner-logo">LSO</span><span class="partner-logo">National Theatre</span><span class="partner-logo">BBC Ten Pieces</span><span class="partner-logo">Tate</span><span class="partner-logo">National Gallery</span><span class="partner-logo">Sadler's Wells</span></div>
           </div>
         </div>
       </div>
@@ -1647,10 +1639,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Music hubs &amp; Partner Hubs" data-speaker-notes="Music hubs structure." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Music hubs &amp; Partner Hubs" data-speaker-notes="Music hubs structure." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1669,10 +1660,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="LSO hub — Add to CCDesigner" data-speaker-notes="LSO hub Add to CCDesigner." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="LSO hub — Add to CCDesigner" data-speaker-notes="LSO hub Add to CCDesigner." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1706,10 +1696,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Activity → Lesson → Term" data-speaker-notes="Activity → Lesson → Term flow." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Activity → Lesson → Term" data-speaker-notes="Activity → Lesson → Term flow." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1730,10 +1719,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Key dates &amp; Important dates" data-speaker-notes="Key dates / Important dates." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Key dates &amp; Important dates" data-speaker-notes="Key dates / Important dates." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1759,10 +1747,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Calendar week &amp; timetable" data-speaker-notes="Week / timetable calendar view." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Calendar week &amp; timetable" data-speaker-notes="Week / timetable calendar view." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1787,10 +1774,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="iCompose &amp; We Teach Drama" data-speaker-notes="Paid partners and basket." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="iCompose &amp; We Teach Drama" data-speaker-notes="Paid partners and basket." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1820,10 +1806,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Settings &amp; key-stage folders" data-speaker-notes="Settings and key-stage folders." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Settings &amp; key-stage folders" data-speaker-notes="Settings and key-stage folders." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1844,10 +1829,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Organisation hub &amp; share" data-speaker-notes="Organisation hub and share." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Organisation hub &amp; share" data-speaker-notes="Organisation hub and share." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1865,10 +1849,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Celebrating learning in the arts" data-speaker-notes="Celebrating arts learning." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Celebrating learning in the arts" data-speaker-notes="Celebrating arts learning." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1888,10 +1871,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Inspiring, life-changing arts education" data-speaker-notes="Life-changing arts education quotes." style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Inspiring, life-changing arts education" data-speaker-notes="Life-changing arts education quotes." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
@@ -1911,10 +1893,9 @@ body {
     </div>
   </div>
 </section>
-<section data-document-role="page" data-label="Grow your creative practice — together" data-speaker-notes="Closing CTA." style="width:1920px;height:1080px;position:relative;overflow:hidden;flex-shrink:0;">
+<section data-document-role="page" data-label="Grow your creative practice — together" data-speaker-notes="Closing CTA." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
   <div class="brand-stamp" aria-hidden="true">
     <div class="brand-stamp-pill">
-      <img src="../artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
       <span>Designer</span>
     </div>
   </div>
