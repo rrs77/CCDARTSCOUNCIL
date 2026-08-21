@@ -8,7 +8,7 @@ export const SECTION_ACCENT: Record<string, string> = {
   "secondary-ks3-ks4": "#14b8a6",
   "ks5-a-level": "#14b8a6",
   "university-he": "#B6FF7E",
-  ccdesigner: "#B6FF7E",
+  "a-solution": "#B6FF7E",
   sources: "#6b7d80",
 };
 

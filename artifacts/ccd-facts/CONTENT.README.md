@@ -2,7 +2,7 @@
 
 **Single source of copy:** `artifacts/ccd-facts/CONTENT.md`
 
-Canvas zones follow the key-stage pathway `##` headings (Primary / EYFS–KS2 → Secondary / KS3–KS4 → KS5 / A-level → University / HE → CCDesigner). Nest supporting material under `###` rather than inventing new stats.
+Canvas zones follow the key-stage pathway `##` headings (Primary / EYFS–KS2 → Secondary / KS3–KS4 → KS5 / A-level → University / HE → A solution). Nest supporting material under `###` rather than inventing new stats. The **A solution** zone shows a simple product diagram on the pathway (not an exam graph); funding charts stay nested under Music Hubs for the detail modal.
 
 1. Change any heading or paragraph → that text updates after rebuild / `pnpm dev` save.
 2. Add a new `## Heading` → a new pathway zone (sized to its content).

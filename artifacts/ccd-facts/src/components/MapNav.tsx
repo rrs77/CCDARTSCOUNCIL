@@ -27,16 +27,13 @@ function buildMenu(presentation: Presentation): {
   ].filter(Boolean) as NavItem[];
   if (stages.length) groups.push({ heading: "Key stages", items: stages });
 
-  const after = [
-    pick("university-he", "Higher education"),
-    byId.has("ccdesigner")
-      ? { id: "ccdesigner", label: "Music Hubs and National Centre" }
-      : null,
-  ].filter(Boolean) as NavItem[];
+  const after = [pick("university-he", "Higher education")].filter(Boolean) as NavItem[];
   if (after.length) groups.push({ heading: "After school", items: after });
 
-  const ccd = pick("ccdesigner", "CCDesigner");
-  if (ccd) lone.push(ccd);
+  const solution = pick("a-solution", "CCDesigner");
+  if (solution) {
+    groups.push({ heading: "A solution", items: [solution] });
+  }
 
   const sources = pick("sources", "Sources");
   if (sources) lone.push(sources);

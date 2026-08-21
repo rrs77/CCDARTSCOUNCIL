@@ -1,9 +1,10 @@
 import { Eye } from "lucide-react";
 import { ContentChart } from "@/components/charts/Charts";
+import { SolutionDiagram } from "@/components/SolutionDiagram";
 import { getChart } from "@/content/facts.content";
 import type { FrameNode } from "@/content/layoutPresentation";
 import { sectionAccent } from "@/content/sectionAccent";
-import { stageLabel } from "@/content/stackLabels";
+import { stageComment, stageLabel } from "@/content/stackLabels";
 
 /**
  * Uniform stage zone — title, one comment, one graph/stat set, optional why-pull-out.
@@ -16,15 +17,18 @@ function StageZone({
   frame: FrameNode;
   onOpen: () => void;
 }) {
-  const chart = frame.chartId ? getChart(frame.chartId) : undefined;
+  const isSolution = frame.id === "a-solution";
+  // Solution zone: product diagram only — never an exam/funding chart on the pathway.
+  const chart =
+    !isSolution && frame.chartId ? getChart(frame.chartId) : undefined;
   const accent = sectionAccent(frame.id);
-  const comment = frame.sentence;
+  const comment = stageComment(frame.id, frame.sentence);
   const why = frame.quote;
 
   return (
     <button
       type="button"
-      className="stage-zone"
+      className={`stage-zone${isSolution ? " stage-zone--solution" : ""}`}
       style={{ ["--frame-accent" as string]: accent }}
       onClick={onOpen}
       aria-label={`Open ${stageLabel(frame.id, frame.title)}`}
@@ -39,7 +43,9 @@ function StageZone({
       {comment ? <p className="stage-zone-comment">{comment}</p> : null}
 
       <div className="stage-zone-visual">
-        {chart ? (
+        {isSolution ? (
+          <SolutionDiagram />
+        ) : chart ? (
           <div className="stage-zone-chart">
             <ContentChart chart={chart} density="canvas" />
           </div>
@@ -73,7 +79,7 @@ export function StagePathway({
 }) {
   return (
     <div className="stage-pathway" aria-label="Key stages pathway">
-      <p className="stage-pathway-kicker">Key stages &amp; university</p>
+      <p className="stage-pathway-kicker">Key stages → university → a solution</p>
       <div className="stage-pathway-track">
         {stages.map((frame, i) => (
           <div key={frame.id} className="stage-pathway-slot">

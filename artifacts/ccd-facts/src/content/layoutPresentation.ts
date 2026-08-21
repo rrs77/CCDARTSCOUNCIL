@@ -176,8 +176,11 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
     used.add(hubId);
     const crop = nextCrop();
 
-    // One hero only: prefer chart OR one stat OR photo — never stack competing ovals
-    const hubChart = !isSources && charts[0] ? charts[0].chartId : undefined;
+    // One hero only: prefer chart OR one stat OR photo — never stack competing ovals.
+    // “A solution” is a product zone: no exam/funding graph on the pathway surface.
+    const isSolution = hubId === "a-solution";
+    const hubChart =
+      !isSources && !isSolution && charts[0] ? charts[0].chartId : undefined;
     const hubStat =
       !isSources && !hubChart && stats[0]
         ? { value: stats[0].value, label: shortLabel(stats[0].label, 48) }

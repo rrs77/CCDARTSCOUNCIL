@@ -102,9 +102,9 @@ Domestic Creative Arts & Design undergraduates edged down while the wider cohort
 
 Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA 2024/25 via CLA 2026 Detailed Analysis).[^9]
 
-## CCDesigner
+## A solution
 
-Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, EYFS to A-level / KS5 — a connection layer across the stages above.
+Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, EYFS to A-level / KS5.
 
 Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs aim to connect teachers with arts organisations — an organisation can add a resource into the teacher’s library while official materials stay on the organisation’s own site.
 
@@ -114,11 +114,11 @@ Organisation logos on the live site are for demonstration only — not endorseme
 
 Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.
 
-Not a fix for structural inequality on its own. Practical tools aim to shorten the distance between excellent practice and the teacher who needs it.
+> Why this matters for CCDesigner: The evidence shows fragmentation and unequal entitlement across the stages above. CCD aims to be the practical connection layer — not a claimed fix for structural inequality.
 
-<!-- chart:funding -->
+### How it connects
 
-> Why this matters for CCDesigner: The evidence shows fragmentation and unequal entitlement. CCD aims to be the practical connection layer across primary, secondary, KS5 and HE — not a claimed fix for structural inequality.
+Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance between outstanding practice and the teacher who needs it.
 
 ### Music Hubs and National Centre
 
@@ -129,6 +129,8 @@ Keep funding streams distinct. Do not say hub funding simply “declined”.
 - **£76m** — Annual Music Hubs backing to AY 2026/27[^7]
 - **£25m** — Additional capital for instruments / technology[^7]
 - **Up to £13m** — National Centre for Arts and Music Education over three years[^8]
+
+<!-- chart:funding -->
 
 ## Sources
 

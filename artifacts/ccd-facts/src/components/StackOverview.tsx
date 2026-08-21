@@ -1,7 +1,7 @@
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { FrameNode } from "@/content/layoutPresentation";
-import { stackLabel } from "@/content/stackLabels";
+import { stageLabel } from "@/content/stackLabels";
 
 /**
  * Overview = a visual stack / deck of large section cards.
@@ -74,14 +74,14 @@ export function StackOverview({
                 }}
                 aria-label={
                   isFront
-                    ? `Open ${stackLabel(frame.id, frame.title)}`
-                    : `Bring ${stackLabel(frame.id, frame.title)} to front`
+                    ? `Open ${stageLabel(frame.id, frame.title)}`
+                    : `Bring ${stageLabel(frame.id, frame.title)} to front`
                 }
                 aria-current={isFront ? "true" : undefined}
               >
                 <div className="stack-card-inner">
                   <p className="stack-card-kicker">The facts</p>
-                  <h2 className="stack-card-title">{stackLabel(frame.id, frame.title)}</h2>
+                  <h2 className="stack-card-title">{stageLabel(frame.id, frame.title)}</h2>
                   {isFront && (frame.sentence || frame.quote) ? (
                     <p className="stack-card-blurb">{frame.quote || frame.sentence}</p>
                   ) : null}
@@ -112,7 +112,7 @@ export function StackOverview({
             role="tab"
             aria-selected={i === front}
             className={`stack-dot ${i === front ? "is-active" : ""}`}
-            aria-label={stackLabel(s.id, s.title)}
+            aria-label={stageLabel(s.id, s.title)}
             onClick={() => onFrontChange(i)}
           />
         ))}

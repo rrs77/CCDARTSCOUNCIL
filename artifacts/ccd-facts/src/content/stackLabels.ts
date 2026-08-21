@@ -1,32 +1,45 @@
-/**
- * Key-stage pathway — canvas zones and Map labels.
- * Ids must match CONTENT.md ## slugs from parseContent.
- */
+/** Short titles for pathway zones and Map — keep in sync with CONTENT.md `##` headings. */
 
-export const STAGE_LABELS: Record<string, string> = {
-  "primary-eyfs-ks2": "Primary / EYFS–KS2",
-  "secondary-ks3-ks4": "Secondary / KS3–KS4",
-  "ks5-a-level": "KS5 / A-level",
-  "university-he": "University / HE",
-  ccdesigner: "CCDesigner",
-  sources: "Sources",
-  title: "Title",
-};
-
-/** Pathway order (excludes title & sources from the main stage strip). */
 export const STAGE_ORDER = [
   "primary-eyfs-ks2",
   "secondary-ks3-ks4",
   "ks5-a-level",
   "university-he",
-  "ccdesigner",
-] as const;
+  "a-solution",
+] as const
 
-export function stageLabel(id: string, fallback: string): string {
-  return STAGE_LABELS[id] ?? fallback;
+export type StageId = (typeof STAGE_ORDER)[number]
+
+export const STAGE_LABELS: Record<StageId, string> = {
+  "primary-eyfs-ks2": "Primary / EYFS–KS2",
+  "secondary-ks3-ks4": "Secondary / KS3–KS4",
+  "ks5-a-level": "KS5 / A-level",
+  "university-he": "University / HE",
+  "a-solution": "A solution",
 }
 
-/** @deprecated use STAGE_* — kept for any residual imports */
-export const STACK_LABELS = STAGE_LABELS;
-export const STACK_ORDER = STAGE_ORDER;
-export const stackLabel = stageLabel;
+/** One-line summary under the zone title on the pathway. */
+export const STAGE_COMMENTS: Record<StageId, string> = {
+  "primary-eyfs-ks2":
+    "Music and arts hours falling; specialist teaching scarce in many schools.",
+  "secondary-ks3-ks4":
+    "Arts GCSE entries down sharply; many schools offer no GCSE arts subjects.",
+  "ks5-a-level":
+    "A-level arts entries and university applications for creative subjects declining.",
+  "university-he":
+    "Creative arts undergraduate numbers down; pathways into the sector under pressure.",
+  "a-solution":
+    "A free national platform to plan, share and connect creative teaching — EYFS to KS5.",
+}
+
+export function isStageId(id: string): id is StageId {
+  return (STAGE_ORDER as readonly string[]).includes(id)
+}
+
+export function stageLabel(id: string, fallback: string): string {
+  return isStageId(id) ? STAGE_LABELS[id] : fallback
+}
+
+export function stageComment(id: string, fallback: string): string {
+  return isStageId(id) ? STAGE_COMMENTS[id] : fallback
+}
