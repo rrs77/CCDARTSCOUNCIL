@@ -9,7 +9,7 @@ import {
   type PointerEvent as ReactPointerEvent,
 } from "react";
 import { LogoMark } from "@/components/LogoMark";
-import { TopicModal } from "@/components/TopicModal";
+import { TopicModal, type TravelDir } from "@/components/TopicModal";
 import {
   clusters,
   getStat,
@@ -18,6 +18,15 @@ import {
   meta,
   type ClusterDef,
 } from "@/content/facts.content";
+
+function cameFrom(prev: ClusterDef | undefined, next: ClusterDef): TravelDir {
+  if (!prev || prev.id === next.id) return null;
+  const dx = prev.x - next.x;
+  const dy = prev.y - next.y;
+  if (Math.abs(dx) < 80 && Math.abs(dy) < 80) return null;
+  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "right" : "left";
+  return dy > 0 ? "down" : "up";
+}
 
 function useViewport() {
   const [size, setSize] = useState({ w: 390, h: 844 });
@@ -50,6 +59,9 @@ export default function App() {
   const { w, h } = useViewport();
   const reduced = useReducedMotion();
   const [active, setActive] = useState<string | null>(null);
+  const [fromDir, setFromDir] = useState<TravelDir>(null);
+  const lastClusterRef = useRef<ClusterDef | null>(null);
+  const focusIdRef = useRef<string | null>(null);
   const [intro, setIntro] = useState(() => {
     const params = new URLSearchParams(window.location.search);
     return !params.get("chapter") && params.get("skipIntro") !== "1";
@@ -80,8 +92,9 @@ export default function App() {
   const setCamera = useCallback(
     (scale: number, x: number, y: number, animated: boolean) => {
       const s = clamp(scale, 0.1, 1.4);
-      const duration = !animated || reduced ? 0.01 : 0.58;
-      const ease: [number, number, number, number] = [0.22, 0.61, 0.36, 1];
+      // Swift fly: 350–500ms — never 1s+
+      const duration = !animated || reduced ? 0.01 : 0.42;
+      const ease: [number, number, number, number] = [0.16, 1, 0.3, 1]; // ease-out
       if (animated && !reduced) {
         animate(scaleMv, s, { duration, ease });
         animate(xMv, x, { duration, ease });
@@ -121,6 +134,7 @@ export default function App() {
         const { s, x, y } = fitOverview();
         setCamera(s, x, y, true);
         setActive(null);
+        focusIdRef.current = null;
         const url = new URL(window.location.href);
         url.searchParams.delete("chapter");
         if (showKeys) url.searchParams.set("edit", "1");
@@ -129,6 +143,10 @@ export default function App() {
       }
       const ch = clusters.find((c) => c.id === id);
       if (!ch) return;
+      const prev = clusters.find((c) => c.id === focusIdRef.current) ?? lastClusterRef.current ?? undefined;
+      setFromDir(cameFrom(prev ?? undefined, ch));
+      focusIdRef.current = id;
+      lastClusterRef.current = ch;
       const targetScale = w < 640 ? 0.8 : 0.95;
       const x = -(ch.x + 260) * targetScale;
       const y = -(ch.y + 200) * targetScale + (w < 640 ? 40 : 16);
@@ -153,7 +171,7 @@ export default function App() {
       setIntro(false);
       const { s, x, y } = fitOverview();
       setCamera(s, x, y, !reduced);
-    }, reduced ? 0 : 1600);
+    }, reduced ? 0 : 900);
     return () => window.clearTimeout(t);
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -264,6 +282,12 @@ export default function App() {
     () => clusters.find((c) => c.id === active),
     [active],
   );
+
+  useEffect(() => {
+    if (activeCluster) lastClusterRef.current = activeCluster;
+  }, [activeCluster]);
+
+  const panelCluster = activeCluster ?? lastClusterRef.current;
   const journeyIndex = active ? journey.indexOf(active) : -1;
 
   const pathD = useMemo(() => {
@@ -455,10 +479,12 @@ export default function App() {
         </motion.div>
       </div>
 
-      {activeCluster ? (
+      {panelCluster ? (
         <TopicModal
-          cluster={activeCluster}
+          open={!!activeCluster}
+          cluster={panelCluster}
           showKeys={showKeys}
+          fromDir={fromDir}
           onClose={() => flyToCluster(null)}
           footer={
             <>
