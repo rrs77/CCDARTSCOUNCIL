@@ -1,6 +1,6 @@
 import { Minus, Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState, type SyntheticEvent, type WheelEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type ReactNode, type SyntheticEvent, type WheelEvent } from "react";
 import { ContentChart } from "@/components/charts/Charts";
 import { getChart } from "@/content/facts.content";
 import type { ContentBlock } from "@/content/parseContent";
@@ -11,20 +11,58 @@ function heroUrl(file: string) {
   return `${base}${file}`.replace(/\/{2,}/g, "/").replace(":/", "://");
 }
 
+function linkifyText(
+  text: string,
+  links: { id: string; title: string }[],
+  onNavigate?: (id: string) => void,
+): ReactNode {
+  if (!onNavigate || !links.length) return text;
+  // Longest titles first so “Secondary and access” wins over shorter matches
+  const sorted = [...links].sort((a, b) => b.title.length - a.title.length);
+  const pattern = new RegExp(
+    `(${sorted.map((l) => l.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+    "gi",
+  );
+  const parts = text.split(pattern);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) => {
+    const hit = sorted.find((l) => l.title.toLowerCase() === part.toLowerCase());
+    if (!hit) return <span key={i}>{part}</span>;
+    return (
+      <button
+        key={i}
+        type="button"
+        className="detail-inline-link"
+        onClick={(e) => {
+          e.stopPropagation();
+          onNavigate(hit.id);
+        }}
+      >
+        {part}
+      </button>
+    );
+  });
+}
+
 function Blocks({
   blocks,
   contentZoom,
+  sectionLinks,
+  onNavigate,
 }: {
   blocks: ContentBlock[];
   contentZoom: number;
+  sectionLinks?: { id: string; title: string }[];
+  onNavigate?: (id: string) => void;
 }) {
+  const links = sectionLinks ?? [];
   return (
     <div className="detail-blocks" style={{ ["--detail-zoom" as string]: String(contentZoom) }}>
       {blocks.map((b, i) => {
         if (b.type === "paragraph") {
           return (
             <p key={i} className="detail-sentence">
-              {b.text}
+              {linkifyText(b.text, links, onNavigate)}
             </p>
           );
         }
@@ -32,7 +70,7 @@ function Blocks({
           return (
             <ul key={i} className="detail-list">
               {b.items.map((item, j) => (
-                <li key={j}>{item}</li>
+                <li key={j}>{linkifyText(item, links, onNavigate)}</li>
               ))}
             </ul>
           );
@@ -40,7 +78,7 @@ function Blocks({
         if (b.type === "quote") {
           return (
             <aside key={i} className="detail-quote">
-              <p>{b.text}</p>
+              <p>{linkifyText(b.text, links, onNavigate)}</p>
             </aside>
           );
         }
@@ -69,16 +107,20 @@ function Blocks({
 
 /**
  * Large landscape detail modal (~92vw × 72dvh).
- * Click from Map or canvas heading. Next/Prev owned by App (→ overview).
+ * Second click from a focused canvas/Map heading. Next/Prev owned by App.
  */
 export function DetailModal({
   frame,
   open,
   onClose,
+  sectionLinks = [],
+  onNavigate,
 }: {
   frame: FrameNode | null;
   open: boolean;
   onClose: () => void;
+  sectionLinks?: { id: string; title: string }[];
+  onNavigate?: (id: string) => void;
 }) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion() ?? false;
@@ -237,12 +279,24 @@ export function DetailModal({
                       </aside>
                     ) : null}
 
-                    {hasBlocks ? <Blocks blocks={frame.blocks} contentZoom={1} /> : null}
+                    {hasBlocks ? (
+                      <Blocks
+                        blocks={frame.blocks}
+                        contentZoom={1}
+                        sectionLinks={sectionLinks}
+                        onNavigate={onNavigate}
+                      />
+                    ) : null}
 
                     {frame.subsections?.map((sub) => (
                       <section key={sub.title} className="detail-subsection">
                         <h3 className="detail-subsection-title">{sub.title}</h3>
-                        <Blocks blocks={sub.blocks} contentZoom={1} />
+                        <Blocks
+                          blocks={sub.blocks}
+                          contentZoom={1}
+                          sectionLinks={sectionLinks}
+                          onNavigate={onNavigate}
+                        />
                       </section>
                     ))}
 
@@ -260,6 +314,25 @@ export function DetailModal({
                           </li>
                         ))}
                       </ol>
+                    ) : null}
+
+                    {sectionLinks.length && onNavigate ? (
+                      <nav className="detail-see-also" aria-label="Other sections">
+                        <p className="detail-see-also-label">See also</p>
+                        <ul>
+                          {sectionLinks.slice(0, 8).map((s) => (
+                            <li key={s.id}>
+                              <button
+                                type="button"
+                                className="detail-see-also-link"
+                                onClick={() => onNavigate(s.id)}
+                              >
+                                See {s.title}
+                              </button>
+                            </li>
+                          ))}
+                        </ul>
+                      </nav>
                     ) : null}
                   </div>
 

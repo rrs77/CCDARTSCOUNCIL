@@ -968,8 +968,57 @@ button {
   border: 1px solid rgba(0, 45, 36, 0.1);
 }
 
-.detail-modal-end {
-  height: 1.25rem;
+.detail-inline-link {
+  display: inline;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--teal);
+  font: inherit;
+  font-weight: 650;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.detail-see-also {
+  margin-top: 1.5rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 45, 36, 0.1);
+}
+
+.detail-see-also-label {
+  margin: 0 0 0.45rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--forest);
+}
+
+.detail-see-also ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.detail-see-also-link {
+  display: inline-flex;
+  border: 1px solid rgba(0, 45, 36, 0.14);
+  border-radius: 0.55rem;
+  background: rgba(0, 45, 36, 0.05);
+  color: var(--forest);
+  font-size: 0.92rem;
+  font-weight: 650;
+  padding: 0.4rem 0.7rem;
+}
+
+.detail-see-also-link:hover {
+  border-color: rgba(20, 184, 166, 0.45);
+  background: rgba(20, 184, 166, 0.12);
 }
 
 @media (prefers-reduced-motion: reduce) {

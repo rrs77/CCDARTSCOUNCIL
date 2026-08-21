@@ -64,9 +64,10 @@ function isTypingTarget() {
 
 /**
  * Navigation:
- * - Click canvas item → large detail modal
- * - Next / Prev → close modal, show that stop on the canvas (fitted, ≥48px pad), do not auto-open modal
- * - Overview / Escape → full world overview
+ * - First click → zoom to that section (no modal)
+ * - Second click on the focused section → large detail modal
+ * - Next / Prev → walk scenes, never auto-open modal
+ * - Escape closes modal (stay zoomed); again / Overview → full overview
  */
 export default function App() {
   const presentation = useMemo(() => presentationFromMarkdown(rawContent), []);
@@ -75,6 +76,9 @@ export default function App() {
 
   const [modalId, setModalId] = useState<string | null>(null);
   const [highlightId, setHighlightId] = useState<string | null>(null);
+  /** The id last focused by click/path (hub or leaf) — second click opens modal */
+  const [focusedId, setFocusedId] = useState<string | null>(null);
+  const [activeChildId, setActiveChildId] = useState<string | null>(null);
   const [pathIndex, setPathIndex] = useState(0);
   const [chromeVisible, setChromeVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
@@ -183,11 +187,11 @@ export default function App() {
       setCamera(base.s, base.x, base.y, animated);
       setViewMode("overview");
       setHighlightId(null);
+      setFocusedId(null);
+      setActiveChildId(null);
     },
     [fitOverview, setCamera],
   );
-
-  const [activeChildId, setActiveChildId] = useState<string | null>(null);
 
   const persist = useCallback((id: string | null, idx: number) => {
     try {
@@ -231,18 +235,41 @@ export default function App() {
     setPathIndex(pathIndexRef.current);
   }, [presentation.path]);
 
-  /** Click → open detail modal. Canvas stays on that stop (fitted). */
+  /** Zoom to a section — do not open the modal. */
+  const focusSection = useCallback(
+    (id: string, animated = true) => {
+      setModalId(null);
+      const { frame, childId } = resolveCanvasTarget(id);
+      setActiveChildId(childId);
+      setFocusedId(id);
+      if (!frame) {
+        showOverview(animated);
+        return;
+      }
+      const cam = cameraForFrame(frame);
+      setCamera(cam.s, cam.x, cam.y, animated);
+      setViewMode("frame");
+      setHighlightId(frame.id);
+      syncPathToId(id);
+      persist(id, pathIndexRef.current);
+      writeUrl(id);
+    },
+    [cameraForFrame, persist, resolveCanvasTarget, setCamera, showOverview, syncPathToId, writeUrl],
+  );
+
+  /** Open the large detail modal for a section (second click / Resume). */
   const openDetail = useCallback(
     (id: string) => {
-      setModalId(id);
       const { frame, childId } = resolveCanvasTarget(id);
-      setActiveChildId(childId ?? (frame?.id === id ? null : id));
+      setActiveChildId(childId);
+      setFocusedId(id);
       if (frame) {
         const cam = cameraForFrame(frame);
         setCamera(cam.s, cam.x, cam.y, true);
         setViewMode("frame");
         setHighlightId(frame.id);
       }
+      setModalId(id);
       syncPathToId(id);
       persist(id, pathIndexRef.current);
       writeUrl(id);
@@ -250,12 +277,25 @@ export default function App() {
     [cameraForFrame, persist, resolveCanvasTarget, setCamera, syncPathToId, writeUrl],
   );
 
-  /** Close modal; stay on canvas stop (or overview). */
+  /**
+   * Two-step: first click zooms; second click on the same focused id opens modal.
+   */
+  const handleSelect = useCallback(
+    (id: string) => {
+      if (viewMode === "frame" && focusedId === id) {
+        openDetail(id);
+        return;
+      }
+      focusSection(id);
+    },
+    [focusSection, focusedId, openDetail, viewMode],
+  );
+
+  /** Close modal; stay on zoomed section unless toOverview. */
   const closeModal = useCallback(
     (toOverview = false) => {
       setModalId(null);
       if (toOverview) {
-        setActiveChildId(null);
         showOverview(true);
         syncPathToOverviewEnd();
         persist(null, pathIndexRef.current);
@@ -266,8 +306,7 @@ export default function App() {
   );
 
   /**
-   * Next / Prev: dismiss modal → full overview, highlight next stop’s hub
-   * (and its satellite if the stop is a leaf). Never auto-open the modal.
+   * Next / Prev: dismiss modal → zoom to next/prev scene (no auto-open).
    */
   const stepPath = useCallback(
     (delta: 1 | -1) => {
@@ -280,35 +319,15 @@ export default function App() {
       const id = path[i]!;
       setModalId(null);
 
-      const base = fitOverview();
-      setCamera(base.s, base.x, base.y, true);
-      setViewMode("overview");
-
       if (id === "overview") {
-        setActiveChildId(null);
-        setHighlightId(null);
+        showOverview(true);
         persist(null, i);
         writeUrl(null);
         return;
       }
-
-      const { frame, childId } = resolveCanvasTarget(id);
-      setActiveChildId(childId);
-      setHighlightId(frame?.id ?? null);
-      persist(id, i);
-      writeUrl(id);
-
-      // Ease overview toward the highlighted hub so the next stop is obvious,
-      // still at overview scale (readable map, not a cropped close-up).
-      if (frame) {
-        const cx = frame.x + frame.w / 2;
-        const cy = frame.y + frame.h / 2;
-        const bx = (base.x + -cx * base.s) / 2;
-        const by = (base.y + -cy * base.s) / 2;
-        setCamera(base.s, bx, by, true);
-      }
+      focusSection(id, true);
     },
-    [fitOverview, persist, presentation.path, resolveCanvasTarget, setCamera, writeUrl],
+    [focusSection, persist, presentation.path, showOverview, writeUrl],
   );
 
   const goHome = useCallback(() => {
@@ -316,6 +335,7 @@ export default function App() {
     setPathIndex(pathIndexRef.current);
     setModalId(null);
     setActiveChildId(null);
+    setFocusedId("title");
     const title = getFrame(presentation, "title");
     if (title) {
       const cam = cameraForFrame(title);
@@ -340,6 +360,7 @@ export default function App() {
       setPathIndex(pathIndexRef.current);
       const { frame, childId } = resolveCanvasTarget(fromUrl);
       setActiveChildId(childId);
+      setFocusedId(fromUrl);
       setModalId(null);
       if (frame) {
         const cam = cameraForFrame(frame);
@@ -369,6 +390,7 @@ export default function App() {
         }
         const { frame, childId } = resolveCanvasTarget(id);
         setActiveChildId(childId);
+        setFocusedId(id);
         if (frame) {
           const cam = cameraForFrame(frame);
           setCamera(cam.s, cam.x, cam.y, true);
@@ -376,6 +398,7 @@ export default function App() {
           setHighlightId(frame.id);
         }
       } else {
+        setFocusedId(null);
         setActiveChildId(null);
         showOverview(true);
       }
@@ -657,8 +680,8 @@ export default function App() {
                 presentation={presentation}
                 highlighted={highlightId === frame.id}
                 activeChildId={highlightId === frame.id ? activeChildId : null}
-                onOpen={() => openDetail(frame.id)}
-                onOpenChild={(id) => openDetail(id)}
+                onOpen={() => handleSelect(frame.id)}
+                onOpenChild={(id) => handleSelect(id)}
               />
             ))}
           </div>
@@ -667,13 +690,12 @@ export default function App() {
 
       <PresentChrome
         presentation={presentation}
-        focusId={activeChildId ?? highlightId}
+        focusId={focusedId ?? activeChildId ?? highlightId}
         pathIndex={pathIndex}
         chromeVisible={chromeVisible}
         fullscreen={fullscreen}
         onOverview={() => {
           setModalId(null);
-          setActiveChildId(null);
           showOverview(true);
           syncPathToOverviewEnd();
           persist(null, pathIndexRef.current);
@@ -683,22 +705,29 @@ export default function App() {
         onPrev={() => stepPath(-1)}
         onNext={() => stepPath(1)}
         onResume={() => {
-          if (activeChildId) openDetail(activeChildId);
-          else if (highlightId) openDetail(highlightId);
+          const id = focusedId ?? activeChildId ?? highlightId;
+          if (id) openDetail(id);
           else goHome();
         }}
         onZoomIn={() => zoomByStep("in")}
         onZoomOut={() => zoomByStep("out")}
         onToggleFullscreen={toggleFullscreen}
         onJump={(id) => {
-          // Map item click → open large detail modal (must-have)
-          openDetail(id);
+          // Same two-step as canvas: first zoom, second opens modal
+          handleSelect(id);
         }}
       />
 
       <DetailModal
         frame={modalFrame}
         open={!!modalId && !!modalFrame}
+        sectionLinks={presentation.frames
+          .filter((f) => !f.parentId && f.kind !== "title" && f.id !== modalId)
+          .map((f) => ({ id: f.id, title: f.title }))}
+        onNavigate={(id) => {
+          // Fly to that section (stay out of modal / or reopen after focus)
+          focusSection(id);
+        }}
         onClose={() => closeModal(false)}
       />
     </div>
