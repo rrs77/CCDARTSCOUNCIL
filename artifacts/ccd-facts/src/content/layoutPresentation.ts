@@ -55,9 +55,9 @@ const MAX_CHILDREN = 4;
 /** Uniform zone — sized so rest-camera body stays ≥18px; overview uses readable target scale */
 const FRAME_W = 1180;
 const FRAME_H = 780;
-/** Tight gutters so Overview isn’t empty green with postage stamps */
-const GUTTER = 200;
-const PAD = 180;
+/** Tight gutters so Overview isn’t empty green with postage stamps — still ≥48px clear */
+const GUTTER = 280;
+const PAD = 220;
 /** Park leaves well below the hub band */
 const LEAF_BAND_GAP = 4200;
 

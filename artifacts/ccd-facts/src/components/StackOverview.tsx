@@ -51,10 +51,8 @@ export function StackOverview({
         <AnimatePresence initial={false}>
           {visible.map(({ frame, offset, index }) => {
             const isFront = offset === 0;
-            const y = offset * 18;
-            const x = offset * 14;
-            const scale = 1 - offset * 0.045;
-            const opacity = 1 - offset * 0.12;
+            const scale = 1 - offset * 0.05;
+            const opacity = 1 - offset * 0.14;
             return (
               <motion.button
                 key={frame.id}
@@ -63,9 +61,9 @@ export function StackOverview({
                 style={{ zIndex: 20 - offset }}
                 initial={reduced ? false : { opacity: 0, y: 40 }}
                 animate={{
-                  opacity,
-                  x,
-                  y,
+                  opacity: isFront ? 1 : Math.max(0.35, opacity),
+                  x: offset * 28,
+                  y: offset * 32,
                   scale,
                 }}
                 exit={reduced ? undefined : { opacity: 0, scale: 0.92 }}
@@ -84,7 +82,7 @@ export function StackOverview({
                 <div className="stack-card-inner">
                   <p className="stack-card-kicker">The facts</p>
                   <h2 className="stack-card-title">{stackLabel(frame.id, frame.title)}</h2>
-                  {frame.sentence || frame.quote ? (
+                  {isFront && (frame.sentence || frame.quote) ? (
                     <p className="stack-card-blurb">{frame.quote || frame.sentence}</p>
                   ) : null}
                   {isFront ? (
