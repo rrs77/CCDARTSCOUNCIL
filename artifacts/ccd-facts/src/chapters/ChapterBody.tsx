@@ -13,8 +13,8 @@ function WhyCcd({ children, showKeys }: { children: React.ReactNode; showKeys?: 
   return (
     <aside className="why-ccd">
       <strong>
-        Why this matters for CCDesigner
-        {showKeys ? <span className="edit-key"> whyThisMattersForCcd</span> : null}
+        {meta.ui.whyCcdLabel}
+        {showKeys ? <span className="edit-key"> whyThisMattersForCCD</span> : null}
       </strong>
       <p className="pitch-body">{children}</p>
     </aside>
@@ -25,9 +25,9 @@ function Drill({ text, onClear }: { text: string; onClear: () => void }) {
   return (
     <div className="drill-panel">
       <div className="mb-1 flex items-center justify-between gap-2">
-        <strong className="text-sm text-[#002d24]">Detail</strong>
+        <strong className="text-sm text-[#002d24]">{meta.ui.drillLabel}</strong>
         <button type="button" className="text-xs font-semibold text-[#14b8a6]" onClick={onClear}>
-          Clear
+          {meta.ui.drillClear}
         </button>
       </div>
       <p className="pitch-body m-0">{text}</p>
@@ -57,9 +57,9 @@ export function ChapterBody({
       <h2 className={`display mb-2 leading-tight ${isCover ? "pitch-h1 text-white" : "pitch-h2 text-[#002d24]"}`}>
         {isCover ? (
           <>
-            The State of Creative Education in{" "}
+            {meta.titleLead}{" "}
             <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
-              England
+              {meta.titleAccent}
             </span>
           </>
         ) : (
@@ -154,7 +154,7 @@ export function ChapterBody({
 
       {drill ? <Drill text={drill} onClear={() => setDrill(null)} /> : null}
 
-      <WhyCcd showKeys={showKeys}>{cluster.whyThisMattersForCcd}</WhyCcd>
+      <WhyCcd showKeys={showKeys}>{cluster.whyThisMattersForCCD}</WhyCcd>
     </div>
   );
 }

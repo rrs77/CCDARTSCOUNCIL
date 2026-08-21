@@ -100,12 +100,14 @@ export function ContentChart({
   if (chart.type === "double-doughnut") {
     const independent = Number(chart.series[0]?.value ?? 0);
     const state = Number(chart.series[1]?.value ?? 0);
+    const indepLabel = chart.axis?.legend?.independent ?? "Independent primary teachers";
+    const stateLabel = chart.axis?.legend?.state ?? "State primary teachers";
     const outer = [
-      { name: "Independent primary teachers", value: independent, fill: "#7B6B9C" },
+      { name: indepLabel, value: independent, fill: "#7B6B9C" },
       { name: "rest", value: 100 - independent, fill: "rgba(123,107,156,0.15)" },
     ];
     const inner = [
-      { name: "State primary teachers", value: state, fill: "#2A9D8F" },
+      { name: stateLabel, value: state, fill: "#2A9D8F" },
       { name: "rest2", value: 100 - state, fill: "rgba(42,157,143,0.15)" },
     ];
     return (
@@ -113,12 +115,12 @@ export function ContentChart({
         <motion.div {...enter} className="relative mx-auto h-[250px] w-full max-w-[320px]">
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={outer} dataKey="value" innerRadius={78} outerRadius={98} startAngle={90} endAngle={-270} cursor="pointer" onClick={() => onDrill?.("Independent")}>
+              <Pie data={outer} dataKey="value" innerRadius={78} outerRadius={98} startAngle={90} endAngle={-270} cursor="pointer" onClick={() => onDrill?.(indepLabel)}>
                 {outer.map((d) => (
                   <Cell key={d.name} fill={d.fill} />
                 ))}
               </Pie>
-              <Pie data={inner} dataKey="value" innerRadius={48} outerRadius={68} startAngle={90} endAngle={-270} cursor="pointer" onClick={() => onDrill?.("State")}>
+              <Pie data={inner} dataKey="value" innerRadius={48} outerRadius={68} startAngle={90} endAngle={-270} cursor="pointer" onClick={() => onDrill?.(stateLabel)}>
                 {inner.map((d) => (
                   <Cell key={d.name} fill={d.fill} />
                 ))}
@@ -138,11 +140,11 @@ export function ContentChart({
         <div className="mt-1 flex flex-wrap justify-center gap-3 text-xs text-[#33443e]">
           <span>
             <span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm" style={{ background: "#7B6B9C" }} />
-            Independent primary teachers
+            {indepLabel}
           </span>
           <span>
             <span className="mr-1 inline-block h-2.5 w-2.5 rounded-sm" style={{ background: "#2A9D8F" }} />
-            State primary teachers
+            {stateLabel}
           </span>
         </div>
       </ChartFrame>
@@ -150,6 +152,8 @@ export function ContentChart({
   }
 
   if (chart.type === "grouped-bars") {
+    const leastName = chart.axis?.legend?.least ?? "Least disadvantaged fifth";
+    const mostName = chart.axis?.legend?.most ?? "Most disadvantaged fifth";
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys}>
         <motion.div {...enter} className="h-[280px] w-full sm:h-[300px]">
@@ -157,11 +161,19 @@ export function ContentChart({
             <BarChart data={chart.series} margin={{ top: 18, right: 8, left: 0, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" vertical={false} />
               <XAxis dataKey="subject" tick={{ fill: "#0f2a2e", fontSize: 10 }} interval={0} angle={-15} textAnchor="end" height={50} />
-              <YAxis domain={[0, 100]} tick={{ fill: "#6b7d80", fontSize: 11 }} />
+              <YAxis
+                domain={[0, 100]}
+                tick={{ fill: "#6b7d80", fontSize: 11 }}
+                label={
+                  chart.axis?.y
+                    ? { value: chart.axis.y, angle: -90, position: "insideLeft", fill: "#6b7d80", fontSize: 10 }
+                    : undefined
+                }
+              />
               <Tooltip contentStyle={tip} />
               <Legend />
-              <Bar dataKey="least" name="Least disadvantaged fifth" fill="#5B7C99" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 10, fill: "#0f2a2e" }} cursor="pointer" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
-              <Bar dataKey="most" name="Most disadvantaged fifth" fill="#E97451" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 10, fill: "#0f2a2e" }} cursor="pointer" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Bar dataKey="least" name={leastName} fill="#5B7C99" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 10, fill: "#0f2a2e" }} cursor="pointer" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Bar dataKey="most" name={mostName} fill="#E97451" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: 10, fill: "#0f2a2e" }} cursor="pointer" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -211,11 +223,11 @@ export function ContentChart({
                   onDrill?.(String(e.value ?? e.dataKey));
                 }}
               />
-              <Line type="monotone" dataKey="art" name="Art & Design" stroke="#5B7C99" strokeWidth={active && active !== "art" ? 1.5 : 2.75} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="drama" name="Drama" stroke="#7B6B9C" strokeWidth={active && active !== "drama" ? 1.5 : 2.75} dot={{ r: 4 }} />
-              <Line type="monotone" dataKey="music" name="Music" stroke="#2A9D8F" strokeWidth={active && active !== "music" ? 1.5 : 2.75} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="art" name={chart.axis?.series?.art ?? "Art & Design"} stroke="#5B7C99" strokeWidth={active && active !== "art" ? 1.5 : 2.75} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="drama" name={chart.axis?.series?.drama ?? "Drama"} stroke="#7B6B9C" strokeWidth={active && active !== "drama" ? 1.5 : 2.75} dot={{ r: 4 }} />
+              <Line type="monotone" dataKey="music" name={chart.axis?.series?.music ?? "Music"} stroke="#2A9D8F" strokeWidth={active && active !== "music" ? 1.5 : 2.75} dot={{ r: 4 }} />
               {!isAlevel ? (
-                <Line type="monotone" dataKey="performing" name="Performing / Expressive Arts" stroke="#E97451" strokeWidth={active && active !== "performing" ? 1.5 : 2.75} dot={{ r: 4 }} />
+                <Line type="monotone" dataKey="performing" name={chart.axis?.series?.performing ?? "Performing / Expressive Arts"} stroke="#E97451" strokeWidth={active && active !== "performing" ? 1.5 : 2.75} dot={{ r: 4 }} />
               ) : null}
             </LineChart>
           </ResponsiveContainer>
@@ -237,8 +249,8 @@ export function ContentChart({
               <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "Change"]} />
               <Legend
                 payload={[
-                  { value: "Decrease", type: "square", color: "#E97451" },
-                  { value: "Increase", type: "square", color: "#2A9D8F" },
+                  { value: chart.axis?.legend?.decrease ?? "Decrease", type: "square", color: "#E97451" },
+                  { value: chart.axis?.legend?.increase ?? "Increase", type: "square", color: "#2A9D8F" },
                 ]}
               />
               <Bar dataKey="change" radius={[4, 4, 4, 4]} label={{ position: "right", fill: "#0f2a2e", fontSize: 11, fontWeight: 700 }} cursor="pointer" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
@@ -265,9 +277,9 @@ export function ContentChart({
               <Tooltip contentStyle={tip} formatter={(v: number) => [`£${v}m`, "Funding"]} />
               <Legend
                 payload={[
-                  { value: "Annual revenue backing", type: "square", color: "#2A9D8F" },
-                  { value: "Additional capital investment", type: "square", color: "#C9A227" },
-                  { value: "Centre contract support", type: "square", color: "#7B6B9C" },
+                  { value: chart.axis?.legend?.revenue ?? "Annual revenue backing", type: "square", color: "#2A9D8F" },
+                  { value: chart.axis?.legend?.capital ?? "Additional capital investment", type: "square", color: "#C9A227" },
+                  { value: chart.axis?.legend?.centre ?? "Centre contract support", type: "square", color: "#7B6B9C" },
                 ]}
               />
               <Bar dataKey="value" radius={[6, 6, 0, 0]} label={{ position: "top", formatter: (v: number) => `£${v}m`, fill: "#0f2a2e", fontWeight: 700 }} cursor="pointer" onClick={(e) => onDrill?.(String((e as { label?: string }).label ?? ""))}>

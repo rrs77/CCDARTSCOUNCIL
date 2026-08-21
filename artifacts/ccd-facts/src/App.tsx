@@ -15,26 +15,9 @@ import {
   getStat,
   journey,
   meta,
+  overviewStatIds,
   type ClusterDef,
 } from "@/content/facts.content";
-
-const OVERVIEW_STAT_IDS = [
-  "gcse-fall",
-  "alevel-fall",
-  "no-entry",
-  "hours-gap",
-  "deprivation-music",
-  "ofqual-gcse-2026",
-] as const;
-
-const STAT_ZOOM_TARGET: Record<string, string> = {
-  "gcse-fall": "glance",
-  "alevel-fall": "glance",
-  "no-entry": "availability",
-  "hours-gap": "primary",
-  "deprivation-music": "poverty",
-  "ofqual-gcse-2026": "gcse",
-};
 
 function useViewport() {
   const [size, setSize] = useState({ w: 390, h: 844 });
@@ -314,7 +297,7 @@ export default function App() {
                 setCamera(s, x, y, !reduced);
               }}
             >
-              Enter the facts
+              {meta.ui.enterCta}
             </button>
           </div>
         </div>
@@ -330,10 +313,11 @@ export default function App() {
               {meta.brand}
             </div>
             <div className="text-sm font-semibold">
-              The{" "}
+              {meta.experienceLead}{" "}
               <span className="italic font-normal" style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}>
-                facts
+                {meta.experienceAccent}
               </span>
+              {showKeys ? <span className="edit-key"> meta.experienceAccent</span> : null}
             </div>
           </div>
         </div>
@@ -362,7 +346,7 @@ export default function App() {
           </button>
           {active ? (
             <button type="button" className="chip-overview" onClick={() => flyToCluster(null)}>
-              Overview
+              {meta.ui.overviewChip}
             </button>
           ) : null}
           <button
@@ -373,7 +357,7 @@ export default function App() {
             }}
           >
             <Home className="h-3.5 w-3.5" />
-            Home
+            {meta.ui.homeLabel}
           </button>
         </div>
       </header>
@@ -387,9 +371,12 @@ export default function App() {
 
       {!active ? (
         <div className="overview-facts" aria-label="Key facts">
-          <p className="overview-facts-title">Key facts · tap to explore</p>
+          <p className="overview-facts-title">
+            {meta.ui.overviewTitle}
+            {showKeys ? <span className="edit-key"> overviewStatIds</span> : null}
+          </p>
           <div className="overview-facts-grid">
-            {OVERVIEW_STAT_IDS.map((id) => {
+            {overviewStatIds.map((id) => {
               const s = getStat(id);
               if (!s) return null;
               return (
@@ -397,7 +384,7 @@ export default function App() {
                   key={id}
                   type="button"
                   className="overview-fact"
-                  onClick={() => flyToCluster(STAT_ZOOM_TARGET[id] ?? "glance")}
+                  onClick={() => flyToCluster(s.zoomClusterId ?? "glance")}
                 >
                   <span className="overview-fact-value">{s.value}</span>
                   <span className="overview-fact-label">{s.label}</span>
@@ -406,7 +393,7 @@ export default function App() {
               );
             })}
           </div>
-          <p className="overview-hint">Drag to pan · pinch / wheel to zoom · tap a heading</p>
+          <p className="overview-hint">{meta.ui.overviewHint}</p>
         </div>
       ) : null}
 
@@ -470,7 +457,7 @@ export default function App() {
                     <ChapterBody cluster={ch} showKeys={showKeys} />
                     <div className="node-actions">
                       <button type="button" className="chip-outline" onClick={() => flyToCluster(null)}>
-                        Back to overview
+                        {meta.ui.backOverview}
                       </button>
                       {journeyIndex >= 0 && journeyIndex < journey.length - 1 ? (
                         <button
@@ -478,7 +465,7 @@ export default function App() {
                           className="chip-lime"
                           onClick={() => flyToCluster(journey[journeyIndex + 1])}
                         >
-                          Continue path
+                          {meta.ui.continuePath}
                         </button>
                       ) : null}
                     </div>
@@ -493,7 +480,7 @@ export default function App() {
       {activeCluster ? (
         <div className="mobile-overview-bar">
           <button type="button" onClick={() => flyToCluster(null)}>
-            ← Overview
+            ← {meta.ui.overviewChip}
           </button>
           <span>{activeCluster.title}</span>
         </div>

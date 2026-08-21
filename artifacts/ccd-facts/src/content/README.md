@@ -1,32 +1,44 @@
 # Editing “The facts”
 
-**All user-facing copy, stats, captions, sources, chart series, and cluster order live in [`facts.content.ts`](./facts.content.ts).**
+**To change a headline, edit [`facts.content.ts`](./facts.content.ts).**  
+(`content.ts` re-exports the same module.)
 
-## To change a headline or paragraph
-Edit the matching field on a cluster in `clusters`, or the shared strings in `meta`.
+All user-facing copy, stats, captions, sources, chart series, journey order, map positions, and chrome labels live in that one file. Adding a fact or cluster is adding an object — not editing the Prezi canvas React code.
 
-## To add or change a key fact tile
-Add/edit an object in `stats`, then reference its `id` from a cluster’s `statIds` (and from the overview if it should stay prominent).
+## Shape
 
-## To change a chart number or caption
-Edit the chart object in `charts` (`caption`, `sourceNote`, `series`). The canvas reads these — do not bury copy inside chart React components.
+| Export | Purpose |
+| --- | --- |
+| `meta` | Title (`titleLead`/`titleAccent`), subtitle, date, CCD framing, hero beat, experience name, `ui` chrome strings |
+| `journey` | Ordered cluster ids (suggested path) |
+| `clusters` | Topics: `id`, `x`/`y`, `title`, `investorLine`, `body`, `whyThisMattersForCCD`, `sourceIds`, optional `chartIds` / `statIds` |
+| `stats` | Key-finding tiles: `id`, `label`, `value`, `unit?`, `footnote`, `sourceId`, `zoomClusterId?` |
+| `overviewStatIds` | Which stats appear on the overview (investor glance) |
+| `charts` | Chart defs: `type`, `series`, `caption`, `sourceNote`, `axis` labels, colours |
+| `sources` | Citation register |
 
-## To move topics on the map
-Edit each cluster’s `x` and `y` world coordinates in `clusters`. That is the Prezi landscape — not a slide index.
+## Common edits
 
-## To reorder the suggested journey path
-Edit the `journey` array (ordered cluster ids). Users can still tap any heading freely.
+- **Headline / paragraph** → `meta` or `clusters[n]`
+- **Key fact tile** → add/edit in `stats`, then include its id in `overviewStatIds` and/or a cluster’s `statIds`
+- **Chart number or caption** → `charts[id]` (`series`, `caption`, `sourceNote`, `axis`)
+- **Map layout** → cluster `x` / `y`
+- **Journey order** → `journey` array
+- **Buttons / chrome** → `meta.ui`
 
-## To add a new cluster
-1. Add a `ClusterDef` to `clusters` with a unique `id`, grid `x`/`y`, and copy.
-2. Append the id to `journey` if it belongs on the path.
-3. Optionally add charts/stats and reference them by id.
+## New cluster checklist
+
+1. Add a `ClusterDef` object to `clusters`
+2. Append its `id` to `journey` if it belongs on the path
+3. Optionally add `charts` / `stats` and reference them by id
 
 ## Optional on-screen keys
+
 Open with `?edit=1` to show content keys beside on-screen blocks (local only — not a CMS).
 
 ## Rules
-- Verify numbers against CLA / Ofqual / DfE (or omit).
-- “No entries” ≠ “not taught”.
-- Use “aims to”, not “will solve”.
-- Organisation logos remain demonstration-only.
+
+- Verify numbers against CLA / Ofqual / DfE (or omit)
+- “No entries” ≠ “not taught”
+- Use “aims to”, not “will solve”
+- Organisation logos remain demonstration-only
