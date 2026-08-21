@@ -59,9 +59,24 @@ export function ChapterBody({
           isCover ? "text-3xl text-white sm:text-4xl" : "text-2xl text-[#002d24]"
         }`}
       >
-        {isCover ? meta.title : cluster.title}
+        {isCover ? (
+          <>
+            The State of Creative Education in{" "}
+            <span
+              className="italic font-normal"
+              style={{ fontFamily: "var(--font-serif)", color: "#B6FF7E" }}
+            >
+              England
+            </span>
+          </>
+        ) : (
+          cluster.title
+        )}
         {showKeys ? (
-          <span className="edit-key"> {isCover ? "meta.title" : `clusters.${cluster.id}.title`}</span>
+          <span className="edit-key">
+            {" "}
+            {isCover ? "meta.title" : `clusters.${cluster.id}.title`}
+          </span>
         ) : null}
       </h2>
 

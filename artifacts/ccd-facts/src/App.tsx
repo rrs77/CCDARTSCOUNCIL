@@ -155,10 +155,21 @@ export default function App() {
     [fitOverview, setCamera, showKeys, w],
   );
 
+  // Opening beat: land briefly on cover framing, then pull back to the map
   useEffect(() => {
-    const { s, x, y } = fitOverview();
-    setCamera(s, x, y, false);
-  }, [fitOverview, setCamera]);
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("chapter")) return undefined;
+    if (params.get("skipIntro") === "1") return undefined;
+    const cover = clusters.find((c) => c.id === "cover");
+    if (!cover) return undefined;
+    const introScale = w < 640 ? 0.72 : 0.88;
+    setCamera(introScale, -(cover.x + 240) * introScale, -(cover.y + 40) * introScale + 20, false);
+    const t = window.setTimeout(() => {
+      const { s, x, y } = fitOverview();
+      setCamera(s, x, y, true);
+    }, reduced ? 0 : 1100);
+    return () => window.clearTimeout(t);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps — once on mount
 
   useEffect(() => {
     const ch = new URLSearchParams(window.location.search).get("chapter");
@@ -333,6 +344,13 @@ export default function App() {
           </button>
         </div>
       </header>
+
+      {/* Persistent CCD mark while exploring (walkthrough-style) */}
+      {active ? (
+        <div className="pointer-events-none absolute left-3 top-[4.15rem] z-20 opacity-90 sm:left-4">
+          <LogoMark size={26} />
+        </div>
+      ) : null}
 
       {!active ? (
         <div className="overview-facts" aria-label="Key facts">
