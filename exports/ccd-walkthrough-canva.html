@@ -1,0 +1,1944 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Creative Curriculum Designer — Feature Walkthrough (Canva export)</title>
+  <meta name="description" content="Static HTML export of the CCD Feature Walkthrough for Canva import. 6 CLA research pages + 25 walkthrough pages. Product: Creative Curriculum Designer." />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&family=Playfair+Display:ital,wght@0,600;1,400&display=swap" rel="stylesheet" />
+  <style>
+
+:root {
+  --slide-primary: #14b8a6;
+  --slide-primary-dark: #002d24;
+  --slide-accent: #ff6b6b;
+  --slide-accent-dark: #ff5252;
+  --slide-bg: #fffaf7;
+  --slide-surface: #ffffff;
+  --slide-text: #0f2a2e;
+  --slide-muted: #6b7d80;
+  --slide-lime: #b6ff7e;
+  --font-display: "Inter", system-ui, sans-serif;
+  --font-body: "Inter", system-ui, sans-serif;
+  --font-serif: "Playfair Display", Georgia, serif;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  margin: 0;
+  background: #111;
+  color: var(--slide-text);
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  padding: 24px 0;
+}
+[data-document-role="page"] {
+  background: var(--slide-bg);
+  font-family: var(--font-body);
+}
+.bg-cream { background: var(--slide-bg) !important; }
+.absolute-fill { position: absolute; inset: 0; }
+.orb { position: absolute; border-radius: 50%; pointer-events: none; z-index: 0; }
+.page-pad {
+  position: relative; z-index: 10;
+  width: 100%; height: 100%;
+  padding: 76px 134px;
+}
+.brand-stamp { position: absolute; top: 22px; left: 38px; z-index: 60; pointer-events: none; }
+.brand-stamp-pill {
+  display: inline-flex; align-items: center; gap: 0.18em;
+  height: 37px; font-size: 37px; line-height: 1;
+  padding: 8px 13px; border-radius: 999px;
+  background: rgba(255,255,255,0.88);
+  box-shadow: 0 2px 10px rgba(26,16,51,0.18);
+}
+.brand-stamp-pill img { height: 100%; width: auto; display: block; }
+
+.brand-stamp-pill span {
+  color: #1a1033; font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+  font-weight: 700; letter-spacing: 0.06em; font-size: 0.4em;
+  text-transform: uppercase; white-space: nowrap;
+}
+.text-accent { color: var(--slide-accent); }
+.text-forest { color: var(--slide-primary-dark); }
+.eyebrow {
+  display: inline-block;
+  font-family: var(--font-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 19px;
+  margin-bottom: 27px;
+  color: var(--slide-accent);
+}
+.h2-dark {
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--slide-text);
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  font-size: 88px;
+  text-wrap: balance;
+}
+.h2-white {
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  text-wrap: balance;
+}
+.h3-dark {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--slide-text);
+  font-size: 31px;
+  line-height: 1.15;
+}
+.h3-white {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: #fff;
+  font-size: 33px;
+  line-height: 1.15;
+}
+.body-muted {
+  color: var(--slide-muted);
+  font-family: var(--font-body);
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.body-white-75 { color: rgba(255,255,255,0.75); font-family: var(--font-body); line-height: 1.4; }
+.body-white-70 { color: rgba(255,255,255,0.70); font-family: var(--font-body); line-height: 1.35; font-size: 22px; margin-top: 11px; }
+.body-white-80 { color: rgba(255,255,255,0.80); font-family: var(--font-body); line-height: 1.45; }
+.body-white-85 { color: rgba(255,255,255,0.85); font-family: var(--font-body); font-weight: 500; line-height: 1.35; }
+.pitch-h2 { font-size: clamp(1.35rem, 2.65vw, 2.25rem); font-size: 43px; }
+.pitch-h3 { font-size: 20px; }
+.pitch-body-lg { font-size: 19px; }
+.pitch-body { font-size: 17px; }
+.pitch-caption { font-size: 14px; }
+.pitch-stat { font-size: 32px; font-family: var(--font-display); font-weight: 900; line-height: 1; }
+.surface-card {
+  background: var(--slide-surface);
+  border-radius: 24px;
+  box-shadow: 0 8px 32px rgba(0,76,69,0.08);
+}
+.glass-card {
+  border-radius: 24px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.15);
+  padding: 30px 38px;
+}
+.grid-overlay {
+  opacity: 0.05;
+  background-image:
+    linear-gradient(rgba(255,255,255,0.5) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255,255,255,0.5) 1px, transparent 1px);
+  background-size: 96px 96px;
+  pointer-events: none;
+}
+
+/* Research / WhyNow */
+.research-grid {
+  display: grid;
+  grid-template-columns: repeat(12, 1fr);
+  gap: 38px;
+}
+.research-left {
+  grid-column: span 6;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+.research-h2 {
+  font-family: var(--font-display);
+  font-weight: 900;
+  color: var(--slide-text);
+  letter-spacing: -0.02em;
+  line-height: 1.02;
+  font-size: 84px;
+  text-wrap: balance;
+}
+.research-body {
+  margin-top: 32px;
+  color: var(--slide-muted);
+  font-size: 24px;
+  line-height: 1.45;
+  text-wrap: pretty;
+}
+.research-quote {
+  padding-top: 32px;
+  border-top: 1px solid rgba(15,42,46,0.1);
+}
+.research-quote p {
+  font-family: var(--font-display);
+  font-weight: 600;
+  color: var(--slide-primary-dark);
+  font-size: 27px;
+  line-height: 1.3;
+  max-width: 614px;
+}
+.research-stats {
+  grid-column: span 6;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 27px;
+}
+.stat-card {
+  border-radius: 24px;
+  padding: 28px 35px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 220px;
+}
+.stat-value {
+  font-family: var(--font-display);
+  font-weight: 900;
+  line-height: 1;
+  font-size: 72px;
+}
+.stat-body {
+  font-family: var(--font-body);
+  font-size: 20px;
+  line-height: 1.3;
+  margin-top: 16px;
+}
+.stat-surface-accent { background: #fff; box-shadow: 0 8px 32px rgba(0,76,69,0.08); }
+.stat-surface-accent .stat-value { color: var(--slide-accent); }
+.stat-surface-accent .stat-body { color: var(--slide-muted); }
+.stat-forest { background: var(--slide-primary-dark); color: #fff; }
+.stat-forest .stat-value { color: #fff; }
+.stat-forest .stat-body { color: rgba(255,255,255,0.8); }
+.stat-surface-forest { background: #fff; box-shadow: 0 8px 32px rgba(0,76,69,0.08); }
+.stat-surface-forest .stat-value { color: var(--slide-primary-dark); }
+.stat-surface-forest .stat-body { color: var(--slide-muted); }
+.stat-accent { background: var(--slide-accent); color: #fff; }
+.stat-accent .stat-value { color: #fff; }
+.stat-accent .stat-body { color: rgba(255,255,255,0.85); }
+
+/* Intro */
+.intro-center {
+  position: relative; z-index: 10;
+  height: 100%; width: 100%;
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  text-align: center;
+  padding: 0 134px;
+}
+.ccd-mark-wrap { border-radius: 999px; box-shadow: 0 0 43px rgba(182,255,126,0.14); }
+
+
+.intro-h1 {
+  margin-top: 49px;
+  color: #fff;
+  font-family: var(--font-serif);
+  font-weight: 600;
+  font-size: 55px;
+  letter-spacing: -0.02em;
+  line-height: 1.12;
+  max-width: 18em;
+  text-wrap: balance;
+}
+.intro-em {
+  font-style: italic;
+  font-weight: 400;
+  color: var(--slide-lime);
+  font-family: var(--font-serif);
+}
+.intro-sub {
+  margin-top: 30px;
+  color: rgba(255,255,255,0.9);
+  font-size: 23px;
+  line-height: 1.5;
+  max-width: 36em;
+  text-wrap: pretty;
+}
+
+/* Title */
+.title-block {
+  position: relative; z-index: 10;
+  height: 100%; width: 100%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 0 192px;
+}
+.title-eyebrow {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.32em;
+  color: #7A5A3A;
+  font-size: 18px;
+}
+.title-h1 {
+  font-family: var(--font-display);
+  font-weight: 500;
+  color: #1F1A14;
+  letter-spacing: -0.015em;
+  line-height: 1.02;
+  margin-top: 35px;
+  font-size: 104px;
+  text-wrap: balance;
+}
+.title-italic { color: #B86F3A; font-style: italic; font-weight: 400; }
+.title-muted { color: rgba(31,26,20,0.85); }
+.title-body {
+  margin-top: 43px;
+  color: #2A2218;
+  font-size: 26px;
+  line-height: 1.5;
+  max-width: 883px;
+  text-wrap: pretty;
+}
+.title-chain {
+  position: absolute; bottom: 194px; left: 192px;
+  display: flex; align-items: center; z-index: 10;
+}
+.title-chain-item { display: flex; flex-direction: column; align-items: center; }
+.title-dot {
+  width: 13px; height: 13px; border-radius: 999px;
+  background: #B86F3A; box-shadow: 0 0 0 4px rgba(184,111,58,0.10);
+}
+.title-chain-label {
+  font-family: var(--font-body);
+  color: #5C4530;
+  margin-top: 12px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-size: 15px;
+}
+.title-chain-line {
+  display: block; width: 106px; height: 1px; margin: 0 27px 26px;
+  background: linear-gradient(to right, #B86F3A55, #B86F3A88, #B86F3A55);
+}
+.title-footer {
+  position: absolute; bottom: 54px; left: 192px; right: 192px; z-index: 10;
+  display: flex; justify-content: space-between; align-items: baseline;
+  color: #5C4530; font-size: 15px;
+}
+.title-footer span:first-child {
+  font-family: var(--font-body);
+  text-transform: uppercase;
+  letter-spacing: 0.28em;
+}
+
+/* Problem */
+.problem-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 38px; }
+.problem-left { grid-column: span 5; display: flex; flex-direction: column; justify-content: space-between; }
+.problem-right { grid-column: span 7; display: flex; flex-direction: column; justify-content: center; gap: 22px; }
+.problem-stat-row {
+  display: flex; align-items: center; gap: 29px;
+  padding-top: 32px; border-top: 1px solid rgba(15,42,46,0.1);
+}
+.problem-big {
+  font-family: var(--font-display); font-weight: 900;
+  color: var(--slide-primary-dark); font-size: 96px; line-height: 1;
+}
+.problem-item { padding: 27px 48px; display: flex; align-items: flex-start; gap: 29px; }
+.num-box {
+  width: 58px; height: 58px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 31px; flex-shrink: 0;
+}
+.accent-soft { background: rgba(255,107,107,0.15); color: var(--slide-accent); }
+.teal-soft { background: rgba(20,184,166,0.15); color: var(--slide-primary-dark); }
+
+/* Solution */
+.solution-wrap { display: flex; flex-direction: column; justify-content: center; }
+.solution-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 38px; margin-top: 65px; }
+.icon-sq {
+  width: 67px; height: 67px; border-radius: 16px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 900; color: #fff; font-size: 35px;
+  margin-bottom: 22px;
+}
+.bg-accent { background: var(--slide-accent); }
+.bg-teal { background: var(--slide-primary); }
+
+/* Who */
+.who-wrap { display: flex; flex-direction: column; }
+.who-head { max-width: 1344px; margin-bottom: 65px; }
+.who-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 38px; flex: 1; }
+.who-card { padding: 32px 38px; display: flex; flex-direction: column; }
+.who-card-dark {
+  border-radius: 24px; background: var(--slide-primary-dark); color: #fff;
+  box-shadow: 0 12px 40px rgba(0,76,69,0.2); padding: 32px 38px;
+  display: flex; flex-direction: column;
+}
+.who-title { font-family: var(--font-display); font-weight: 900; color: var(--slide-primary-dark); font-size: 42px; line-height: 1; margin-bottom: 22px; }
+.who-title-white { font-family: var(--font-display); font-weight: 900; color: #fff; font-size: 42px; line-height: 1; margin-bottom: 22px; }
+.who-meta { color: var(--slide-muted); font-size: 19px; margin-bottom: 16px; }
+.who-meta-white { color: rgba(255,255,255,0.7); font-size: 19px; margin-bottom: 16px; }
+.who-foot { margin-top: auto; padding-top: 22px; border-top: 1px solid rgba(15,42,46,0.1); color: rgba(15,42,46,0.8); font-size: 20px; }
+.who-foot-white { margin-top: auto; padding-top: 22px; border-top: 1px solid rgba(255,255,255,0.15); color: rgba(255,255,255,0.85); font-size: 20px; }
+
+/* Coverage */
+.coverage-wrap { display: flex; flex-direction: column; }
+.coverage-head { max-width: 1344px; margin-bottom: 54px; }
+.coverage-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 35px; flex: 1; }
+.cov-card { border-radius: 24px; padding: 32px 35px; display: flex; flex-direction: column; }
+.cov-drama { background: #FFE5D6; border: 1px solid rgba(255,176,122,0.4); color: #A24A1A; }
+.cov-music { background: #D6E8F2; border: 1px solid rgba(14,164,212,0.3); color: #0A4A66; }
+.cov-dance { background: #E8E2F2; border: 1px solid rgba(124,107,240,0.3); color: #3D2F7A; }
+.cov-top { display: flex; align-items: center; justify-content: space-between; margin-bottom: 22px; }
+.cov-name { font-family: var(--font-display); font-weight: 900; font-size: 42px; line-height: 1; }
+.cov-ks { font-size: 18px; opacity: 0.8; }
+.cov-card > p { font-size: 20px; line-height: 1.35; margin-bottom: 22px; opacity: 0.9; }
+.cov-list { margin-top: auto; padding-top: 16px; border-top: 1px solid currentColor; border-top-color: rgba(0,0,0,0.12); display: flex; flex-direction: column; gap: 9px; font-size: 19px; }
+
+/* Library */
+.lib-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 48px; align-items: center; }
+.lib-mock { grid-column: span 7; }
+.lib-mock-inner {
+  background: #fff; border-radius: 24px; padding: 42px;
+  box-shadow: 0 20px 60px rgba(0,76,69,0.12); border: 1px solid rgba(15,42,46,0.05);
+}
+.lib-mock-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+.lib-title { font-family: var(--font-display); font-weight: 700; font-size: 27px; }
+.lib-search {
+  border-radius: 13px; background: var(--slide-bg); border: 1px solid rgba(15,42,46,0.1);
+  padding: 11px 19px; margin-bottom: 22px; display: flex; align-items: center; gap: 15px;
+}
+.lib-search-dot { width: 27px; height: 27px; border-radius: 999px; border: 2px solid var(--slide-muted); }
+.lib-cards { display: grid; grid-template-columns: 1fr 1fr; gap: 23px; }
+.lib-card { border-radius: 16px; border: 1px solid rgba(15,42,46,0.1); padding: 19px 23px; background: #fff; }
+.lib-card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 11px; }
+.lib-card h4 { font-family: var(--font-display); font-weight: 700; font-size: 24px; line-height: 1.2; }
+.lib-card p { color: var(--slide-muted); font-size: 18px; margin-top: 6px; line-height: 1.3; }
+.lib-copy { grid-column: span 5; }
+.lib-stats { margin-top: 43px; display: grid; grid-template-columns: 1fr 1fr; gap: 19px; }
+.mini-stat { border-radius: 16px; background: #fff; border: 1px solid rgba(15,42,46,0.1); padding: 19px 23px; }
+.mini-stat-val { font-family: var(--font-display); font-weight: 900; font-size: 46px; line-height: 1; }
+.pill {
+  display: inline-block; padding: 2px 12px; border-radius: 999px;
+  font-family: var(--font-display); font-weight: 600; font-size: 16px;
+}
+.pill-drama { background: #FFE5D6; color: #A24A1A; }
+.pill-music { background: #D6E8F2; color: #0A4A66; }
+.pill-dance { background: #E8E2F2; color: #3D2F7A; }
+.pill-muted { background: var(--slide-bg); border: 1px solid rgba(15,42,46,0.1); color: var(--slide-muted); font-family: var(--font-body); font-weight: 400; }
+
+/* Stacks */
+.stacks-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 48px; align-items: center; }
+.stacks-copy { grid-column: span 5; }
+.stacks-bullets { margin-top: 43px; display: flex; flex-direction: column; gap: 16px; }
+.stacks-bullet { display: flex; align-items: center; gap: 19px; font-size: 23px; color: var(--slide-text); }
+.letter-box {
+  width: 50px; height: 50px; border-radius: 12px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 25px; flex-shrink: 0;
+}
+.stacks-panels { grid-column: span 7; display: grid; grid-template-columns: 1fr 1fr; gap: 29px; }
+.stack-panel {
+  border-radius: 24px; background: #fff; padding: 27px 31px;
+  box-shadow: 0 12px 40px rgba(0,76,69,0.1); border: 1px solid rgba(15,42,46,0.05);
+}
+.stack-panel-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; font-family: var(--font-display); font-weight: 700; font-size: 25px; }
+.stack-item { border-radius: 13px; padding: 11px 17px; margin-bottom: 11px; font-size: 20px; }
+.stack-item.drama { background: rgba(255,229,214,0.6); border: 1px solid rgba(255,176,122,0.4); }
+.stack-item.music { background: rgba(214,232,242,0.6); border: 1px solid rgba(14,164,212,0.3); }
+.stack-item.drop { border: 2px dashed rgba(15,42,46,0.2); color: var(--slide-muted); text-align: center; }
+
+/* Activity cards */
+.cards-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 39px; align-items: center; padding: 72px 80px; }
+.cards-copy { grid-column: span 5; }
+.cards-mocks { grid-column: span 7; display: flex; flex-direction: column; gap: 15px; }
+.resource-list { margin-top: 33px; display: flex; flex-direction: column; gap: 10px; font-size: 17px; color: var(--slide-text); }
+.resource-row { display: flex; align-items: center; gap: 13px; }
+.r-icon {
+  width: 25px; height: 25px; border-radius: 999px;
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 12px;
+}
+.r-icon.drama { background: #FFE5D6; color: #A24A1A; }
+.r-icon.music { background: #D6E8F2; color: #0A4A66; }
+.r-icon.teal { background: rgba(20,184,166,0.2); color: var(--slide-primary-dark); }
+.r-icon.accent { background: rgba(255,107,107,0.2); color: var(--slide-accent-dark); }
+.activity-card {
+  border-radius: 19px; background: #fff; padding: 19px 25px;
+  box-shadow: 0 12px 40px rgba(0,76,69,0.1); border: 1px solid rgba(15,42,46,0.05);
+}
+.activity-card-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
+.pill-row { display: flex; gap: 9px; margin-bottom: 4px; }
+.activity-card h4 { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.activity-card .meta { color: var(--slide-muted); font-size: 15px; margin-top: 4px; }
+.activity-card > p { color: var(--slide-muted); font-size: 16px; line-height: 1.35; margin-bottom: 12px; }
+.chip-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 11px; border-radius: 999px; font-size: 15px; border: 1px solid transparent;
+}
+.chip.teal { background: rgba(20,184,166,0.1); color: var(--slide-primary-dark); border-color: rgba(20,184,166,0.2); }
+.chip.drama { background: #FFE5D6; color: #A24A1A; border-color: rgba(255,176,122,0.4); }
+.chip.music { background: #D6E8F2; color: #0A4A66; border-color: rgba(14,164,212,0.4); }
+.chip.accent { background: rgba(255,107,107,0.15); color: var(--slide-accent-dark); border-color: rgba(255,107,107,0.25); }
+
+/* Create */
+.create-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 39px; align-items: center; padding: 72px 80px; }
+.create-copy { grid-column: span 5; }
+.create-form {
+  grid-column: span 7; border-radius: 24px; background: #fff;
+  box-shadow: 0 20px 60px rgba(0,76,69,0.12); border: 1px solid rgba(15,42,46,0.05); overflow: hidden;
+}
+.create-points { margin-top: 33px; display: flex; flex-direction: column; gap: 14px; }
+.create-point { display: flex; gap: 16px; align-items: flex-start; }
+.create-point .bar { width: 6px; height: 38px; border-radius: 999px; flex-shrink: 0; margin-top: 4px; }
+.create-point h4 { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.create-point p { color: var(--slide-muted); font-size: 17px; }
+.form-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 24px; border-bottom: 1px solid rgba(15,42,46,0.1); background: var(--slide-bg);
+  font-family: var(--font-display); font-weight: 700; font-size: 19px;
+}
+.form-body { padding: 19px 24px; display: flex; flex-direction: column; gap: 12px; }
+.field label { display: block; font-family: var(--font-display); font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+.field-box { border-radius: 10px; border: 1px solid rgba(15,42,46,0.15); background: #fff; padding: 9px 13px; font-size: 16px; }
+.field-box.sm { font-size: 15px; line-height: 1.35; }
+.field-row-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 13px; }
+.year-pills { display: flex; flex-wrap: wrap; gap: 6px; }
+.yp { padding: 3px 11px; border-radius: 999px; border: 1px solid rgba(15,42,46,0.15); background: var(--slide-bg); color: var(--slide-muted); font-size: 14px; }
+.yp.on { background: var(--slide-primary); color: #fff; border-color: transparent; }
+.links-box { border-radius: 13px; background: rgba(255,107,107,0.08); border: 2px solid rgba(255,107,107,0.3); padding: 12px 16px; }
+.links-head { display: flex; justify-content: space-between; margin-bottom: 8px; font-family: var(--font-display); font-weight: 700; color: var(--slide-accent-dark); font-size: 16px; }
+.links-head span:last-child { font-family: var(--font-body); font-weight: 400; opacity: 0.8; font-size: 13px; }
+.links-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
+.link-cell { border-radius: 8px; border: 1px solid rgba(255,107,107,0.2); background: #fff; padding: 6px 11px; font-size: 14px; }
+.link-cell.dashed { border-style: dashed; background: rgba(255,107,107,0.05); color: rgba(255,82,82,0.7); }
+.link-cell .lk { display: block; color: var(--slide-muted); font-size: 12px; }
+.form-actions { display: flex; justify-content: flex-end; align-items: center; gap: 13px; padding-top: 5px; }
+.btn-save {
+  padding: 8px 19px; border-radius: 10px; background: var(--slide-primary-dark); color: #fff;
+  font-family: var(--font-display); font-weight: 600; font-size: 16px;
+}
+
+/* Calendar feature */
+.cal-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 31px; align-items: center; padding: 72px 80px; }
+.cal-copy { grid-column: span 4; }
+.cal-mini-stats { margin-top: 28px; display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.cal-mocks { grid-column: span 8; display: grid; grid-template-columns: repeat(12, 1fr); gap: 19px; height: 842px; }
+.cal-month {
+  grid-column: span 7; border-radius: 19px; background: #fff;
+  box-shadow: 0 16px 48px rgba(0,76,69,0.1); border: 1px solid rgba(15,42,46,0.05);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.cal-month-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 13px 22px; background: var(--slide-primary-dark); color: #fff;
+  font-family: var(--font-display); font-weight: 700; font-size: 20px;
+}
+.view-pills { display: flex; gap: 6px; }
+.view-pills span {
+  padding: 4px 13px; border-radius: 999px; font-family: var(--font-display); font-weight: 600; font-size: 14px;
+  background: rgba(255,255,255,0.15); color: rgba(255,255,255,0.9);
+}
+.view-pills span.on { background: #fff; color: var(--slide-primary-dark); }
+.view-pills span.on-light { background: #fff; color: var(--slide-primary-dark); }
+.cal-month-body { padding: 22px; flex: 1; display: flex; flex-direction: column; }
+.dow {
+  display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px;
+  font-family: var(--font-display); font-weight: 600; color: var(--slide-muted);
+  text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px; text-align: center; margin-bottom: 8px;
+}
+.cal-cells { display: grid; grid-template-columns: repeat(7, 1fr); gap: 6px; flex: 1; }
+.ccell {
+  border-radius: 7px; border: 1px solid rgba(15,42,46,0.1); background: #fff;
+  padding: 5px 5px; min-height: 59px; display: flex; flex-direction: column; font-size: 14px;
+  font-family: var(--font-display); font-weight: 600;
+}
+.ccell.muted { background: rgba(255,250,247,0.6); border-color: rgba(15,42,46,0.05); color: rgba(107,125,128,0.5); }
+.ccell.holiday { background: #F5F3FF; border-color: rgba(139,92,246,0.3); }
+.ccell.drop { border: 2px dashed rgba(20,184,166,0.5); background: rgba(20,184,166,0.05); }
+.ccell .term { margin-top: auto; color: var(--slide-primary-dark); font-family: var(--font-body); font-weight: 500; font-size: 12px; }
+.ccell .hol { margin-top: auto; color: #6D28D9; font-family: var(--font-body); font-weight: 500; font-size: 12px; }
+.ccell .les { margin-top: auto; border-radius: 4px; padding: 2px 4px; font-size: 12px; }
+.ccell .les.drama { background: #FFE5D6; color: #A24A1A; }
+.ccell .les.dance { background: #E8E2F2; color: #3D2F7A; }
+.ccell .drop-l { margin-top: auto; text-align: center; color: var(--slide-primary-dark); font-size: 12px; }
+.cal-foot {
+  margin-top: 13px; padding-top: 11px; border-top: 1px solid rgba(15,42,46,0.1);
+  display: flex; justify-content: space-between; font-size: 14px; color: var(--slide-muted);
+}
+.cal-foot .link { color: var(--slide-primary-dark); font-family: var(--font-display); font-weight: 600; }
+.cal-add {
+  grid-column: span 5; border-radius: 19px; background: #fff;
+  box-shadow: 0 16px 48px rgba(0,76,69,0.1); border: 1px solid rgba(15,42,46,0.05);
+  overflow: hidden; display: flex; flex-direction: column;
+}
+.cal-add-head { padding: 13px 19px; background: linear-gradient(to right, #14B8A6, #0D9488); color: #fff; }
+.cal-tabs { display: flex; border-bottom: 1px solid rgba(15,42,46,0.1); }
+.cal-tabs div { flex: 1; text-align: center; padding: 11px; font-family: var(--font-display); font-size: 14px; color: var(--slide-muted); }
+.cal-tabs div.on { color: var(--slide-primary-dark); font-weight: 600; border-bottom: 2px solid var(--slide-primary); background: rgba(20,184,166,0.05); }
+.cal-add-body { padding: 19px; flex: 1; display: flex; flex-direction: column; gap: 11px; }
+.search-box { border-radius: 8px; border: 1px solid rgba(15,42,46,0.15); background: var(--slide-bg); padding: 10px 16px; font-size: 14px; color: var(--slide-muted); }
+.add-sel { border-radius: 10px; border: 2px solid rgba(20,184,166,0.4); background: rgba(20,184,166,0.05); padding: 10px 13px; }
+.add-sel-top { display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 700; font-size: 17px; }
+.add-sel-top span:last-child { color: var(--slide-primary-dark); font-family: var(--font-body); font-weight: 600; font-size: 14px; }
+.add-sel p { color: var(--slide-muted); font-size: 14px; margin-top: 4px; }
+.add-row { border-radius: 10px; border: 1px solid rgba(15,42,46,0.1); padding: 10px 13px; }
+.add-row span { font-family: var(--font-display); font-weight: 600; font-size: 17px; }
+.add-row p { color: var(--slide-muted); font-size: 14px; margin-top: 3px; }
+.add-row.dim { opacity: 0.7; }
+.add-foot { margin-top: auto; padding-top: 9px; border-top: 1px solid rgba(15,42,46,0.1); display: flex; justify-content: space-between; align-items: center; font-size: 14px; color: var(--slide-muted); }
+
+/* How */
+.how-wrap { display: flex; flex-direction: column; }
+.how-head { max-width: 1152px; margin-bottom: 65px; }
+.how-steps { display: grid; grid-template-columns: repeat(4, 1fr); gap: 29px; flex: 1; }
+.how-num { font-family: var(--font-display); font-weight: 900; color: rgba(255,107,107,0.3); font-size: 96px; line-height: 1; }
+.how-steps h3 { font-family: var(--font-display); font-weight: 700; font-size: 31px; margin-top: 11px; }
+.how-steps p { color: var(--slide-muted); font-size: 21px; margin-top: 13px; line-height: 1.35; }
+.how-banner {
+  margin-top: 54px; border-radius: 24px; background: var(--slide-primary-dark); color: #fff;
+  padding: 27px 48px; display: flex; align-items: center; justify-content: space-between;
+}
+.how-banner-left { display: flex; align-items: center; gap: 29px; }
+.how-cd {
+  width: 69px; height: 69px; border-radius: 16px; background: rgba(255,255,255,0.1);
+  border: 1px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 900; font-size: 31px;
+}
+.how-banner-title { font-family: var(--font-display); font-weight: 700; font-size: 29px; line-height: 1.2; }
+.how-banner-sub { color: rgba(255,255,255,0.7); font-size: 21px; margin-top: 4px; }
+.how-banner-tags { display: flex; align-items: center; gap: 38px; color: rgba(255,255,255,0.8); font-size: 19px; }
+.how-banner-tags .dot { width: 8px; height: 8px; border-radius: 999px; background: var(--slide-accent); }
+
+/* Partner */
+.partner-wrap { display: flex; flex-direction: column; padding: 72px 80px; }
+.partner-head { max-width: 930px; margin-bottom: 38px; }
+.partner-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 31px; flex: 1; min-height: 0; }
+.partner-left { grid-column: span 7; display: flex; flex-direction: column; gap: 13px; }
+.partner-label { font-family: var(--font-display); font-weight: 600; font-size: 16px; margin-bottom: 4px; }
+.partner-packs { display: grid; grid-template-columns: 1fr 1fr; gap: 19px; flex: 1; }
+.pack-card {
+  border-radius: 19px; border: 1px solid rgba(15,42,46,0.1); background: #fff;
+  padding: 19px; display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(0,76,69,0.06);
+}
+.pack-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+
+.pack-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.pack-card p { color: var(--slide-muted); font-size: 17px; margin-top: 8px; flex: 1; line-height: 1.35; }
+.pack-foot { margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(15,42,46,0.1); color: rgba(15,42,46,0.75); font-size: 14px; }
+.pack-more {
+  grid-column: span 2; border-radius: 19px; border: 1px dashed rgba(20,184,166,0.35);
+  background: rgba(20,184,166,0.05); padding: 19px; display: flex; flex-direction: column; gap: 12px;
+}
+.pack-more-row { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
+.pack-more-title { font-family: var(--font-display); font-weight: 600; color: var(--slide-primary-dark); font-size: 16px; }
+.growing {
+  flex-shrink: 0; padding: 4px 16px; border-radius: 999px; background: #fff;
+  border: 1px solid rgba(20,184,166,0.2); font-family: var(--font-display); font-weight: 600;
+  color: var(--slide-primary-dark); font-size: 15px;
+}
+.partner-logos {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 16px;
+  padding-top: 4px; border-top: 1px solid rgba(20,184,166,0.15);
+}
+
+.marketplace {
+  grid-column: span 5; border-radius: 24px; background: var(--slide-primary-dark); color: #fff;
+  padding: 28px 31px; box-shadow: 0 16px 48px rgba(0,76,69,0.18); align-self: center;
+}
+.mkt-eyebrow { font-family: var(--font-display); font-weight: 600; color: var(--slide-accent); font-size: 16px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 14px; }
+.marketplace h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; margin-bottom: 14px; }
+.marketplace > p { color: rgba(255,255,255,0.75); font-size: 17px; line-height: 1.35; margin-bottom: 24px; }
+.mkt-item { border-radius: 16px; background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); padding: 15px 19px; margin-bottom: 14px; }
+.mkt-item-top { display: flex; justify-content: space-between; font-family: var(--font-display); font-weight: 700; font-size: 16px; }
+.price { color: var(--slide-accent); font-weight: 900; font-size: 19px; }
+.mkt-meta { color: rgba(255,255,255,0.7); font-size: 14px; margin-top: 4px; }
+.mkt-bullets { display: flex; flex-direction: column; gap: 9px; color: rgba(255,255,255,0.85); font-size: 16px; }
+
+/* Walkthrough shared */
+.wt-wrap { display: flex; flex-direction: column; padding: 72px 80px; }
+.wt-head { max-width: 1075px; margin-bottom: 28px; }
+.breadcrumb {
+  margin-bottom: 22px; border-radius: 16px; border: 1px solid rgba(20,184,166,0.2);
+  background: rgba(20,184,166,0.05); padding: 13px 23px;
+  display: inline-flex; align-items: center; gap: 15px; align-self: flex-start; font-size: 16px;
+}
+.bc-strong { font-family: var(--font-display); font-weight: 600; color: var(--slide-primary-dark); }
+.bc-arrow { color: var(--slide-muted); }
+.bc-pill { padding: 3px 13px; border-radius: 999px; background: var(--slide-primary-dark); color: var(--slide-lime); font-family: var(--font-display); font-weight: 600; font-size: 14px; }
+.hub-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 27px; flex: 1; }
+.hub-card {
+  border-radius: 21px; border: 1px solid rgba(15,42,46,0.1); background: #fff;
+  padding: 26px 27px; display: flex; flex-direction: column; box-shadow: 0 12px 36px rgba(0,45,36,0.08);
+}
+.hub-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 22px; }
+.hub-num {
+  width: 46px; height: 46px; border-radius: 999px; background: var(--slide-primary-dark); color: var(--slide-lime);
+  font-family: var(--font-display); font-weight: 900; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0;
+}
+.hub-role {
+  padding: 4px 13px; border-radius: 999px; background: rgba(20,184,166,0.1); color: var(--slide-primary-dark);
+  font-family: var(--font-display); font-weight: 600; font-size: 14px;
+}
+.accent-pill { background: var(--slide-accent) !important; color: var(--slide-primary-dark) !important; }
+.lime-pill { background: rgba(182,255,126,0.4) !important; color: var(--slide-primary-dark) !important; }
+.hub-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.hub-card p { color: var(--slide-muted); font-size: 17px; margin-top: 11px; flex: 1; line-height: 1.35; }
+.hub-foot { margin-top: 22px; padding-top: 13px; border-top: 1px solid rgba(15,42,46,0.1); font-family: var(--font-display); font-weight: 600; color: var(--slide-primary-dark); font-size: 16px; }
+
+/* LSO */
+.lso-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 31px; align-items: center; padding: 72px 80px; }
+.lso-copy { grid-column: span 5; }
+.lso-steps { margin-top: 32px; display: flex; flex-direction: column; gap: 13px; }
+.lso-step { display: flex; align-items: flex-start; gap: 15px; font-size: 17px; }
+.lso-mock {
+  grid-column: span 7; border-radius: 21px; background: #fff;
+  border: 1px solid rgba(15,42,46,0.08); box-shadow: 0 16px 48px rgba(0,45,36,0.1); overflow: hidden;
+}
+.lso-mock-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 15px 25px; background: var(--slide-primary-dark); color: #fff;
+}
+.lso-name { font-family: var(--font-display); font-weight: 700; font-size: 22px; }
+.lso-sub { color: rgba(255,255,255,0.7); font-size: 15px; }
+.lso-mock-body { padding: 25px; display: grid; grid-template-columns: 1fr 1fr; gap: 19px; }
+.lso-pack { border-radius: 14px; padding: 17px 19px; }
+.lso-pack.selected { border: 2px solid rgba(20,184,166,0.45); background: rgba(20,184,166,0.05); }
+.lso-pack.planning { border: 2px solid rgba(255,107,107,0.55); background: rgba(182,255,126,0.12); }
+.lso-pack-title { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+.lso-pack p { color: var(--slide-muted); font-size: 15px; margin-top: 6px; }
+.lso-pack-row { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.check {
+  width: 21px; height: 21px; border-radius: 4px; border: 2px solid var(--slide-primary-dark);
+  background: var(--slide-lime); display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display); font-weight: 900; font-size: 13px; color: var(--slide-primary-dark);
+}
+.btn-add {
+  margin-top: 17px; display: inline-flex; padding: 8px 17px; border-radius: 8px;
+  background: var(--slide-primary-dark); color: #fff; font-family: var(--font-display); font-weight: 600; font-size: 16px;
+}
+
+.plan-link { margin-top: 13px; font-family: var(--font-display); font-weight: 600; color: var(--slide-primary-dark); font-size: 15px; }
+.lso-sync {
+  grid-column: span 2; border-radius: 14px; border: 1px dashed rgba(255,107,107,0.5);
+  background: rgba(182,255,126,0.12); padding: 15px 19px;
+  display: flex; justify-content: space-between; align-items: center; font-size: 17px; color: var(--slide-primary-dark);
+}
+.sync-ok { font-family: var(--font-display); font-weight: 700; }
+
+/* Flow */
+.flow-wrap { display: flex; flex-direction: column; padding: 72px 80px; }
+.flow-stages { display: flex; align-items: stretch; gap: 19px; flex: 1; min-height: 302px; }
+.flow-card {
+  flex: 1; border-radius: 19px; border: 1px solid rgba(15,42,46,0.1); background: #fff;
+  padding: 24px 21px; display: flex; flex-direction: column; box-shadow: 0 10px 32px rgba(0,45,36,0.07);
+}
+.flow-card .hub-num { margin-bottom: 22px; }
+.flow-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 26px; }
+.flow-card p { color: var(--slide-muted); font-size: 18px; margin-top: 11px; line-height: 1.35; }
+.flow-arrow { flex-shrink: 0; align-self: center; color: var(--slide-accent); font-family: var(--font-display); font-weight: 900; font-size: 35px; }
+
+/* Dates */
+.dates-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 31px; align-items: center; padding: 72px 80px; }
+.dates-copy { grid-column: span 5; }
+.populate-box {
+  margin-top: 30px; border-radius: 16px; border: 1px solid rgba(20,184,166,0.25);
+  background: rgba(20,184,166,0.05); padding: 17px 21px;
+}
+.populate-label { font-family: var(--font-display); font-weight: 600; color: var(--slide-primary-dark); font-size: 17px; }
+.populate-select {
+  margin-top: 9px; display: flex; justify-content: space-between; align-items: center;
+  border-radius: 9px; border: 1px solid rgba(15,42,46,0.15); background: #fff; padding: 10px 17px; font-size: 18px;
+}
+.dates-panel {
+  grid-column: span 7; border-radius: 21px; background: #fff;
+  border: 1px solid rgba(15,42,46,0.08); overflow: hidden; box-shadow: 0 16px 48px rgba(0,45,36,0.1);
+}
+.dates-panel-head {
+  padding: 14px 25px; border-bottom: 1px solid rgba(15,42,46,0.1);
+  display: flex; justify-content: space-between; align-items: center;
+  font-family: var(--font-display); font-weight: 700; font-size: 21px; background: #fff;
+}
+.dates-rows { padding: 23px; display: flex; flex-direction: column; gap: 10px; }
+.date-row {
+  display: flex; align-items: center; gap: 19px; border-radius: 12px;
+  border: 1px solid rgba(15,42,46,0.1); background: #fff; padding: 13px 19px;
+}
+.date-d { width: 86px; flex-shrink: 0; font-family: var(--font-display); font-weight: 700; color: var(--slide-primary-dark); font-size: 18px; }
+.date-t { flex: 1; font-size: 18px; }
+.date-tag {
+  padding: 3px 12px; border-radius: 999px; background: rgba(182,255,126,0.35);
+  color: var(--slide-primary-dark); font-family: var(--font-display); font-weight: 600; font-size: 13px;
+}
+
+/* Week calendar */
+.week-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 31px; align-items: center; padding: 72px 80px; }
+.week-copy { grid-column: span 4; }
+.week-mock {
+  grid-column: span 8; border-radius: 21px; background: #fff;
+  border: 1px solid rgba(15,42,46,0.08); overflow: hidden; box-shadow: 0 16px 48px rgba(0,45,36,0.1);
+}
+.week-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 23px; background: var(--slide-primary-dark); color: #fff;
+  font-family: var(--font-display); font-weight: 700; font-size: 21px;
+}
+.week-body { padding: 23px; }
+.week-dow {
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: 13px; margin-bottom: 9px;
+  text-align: center; font-family: var(--font-display); font-weight: 600; color: var(--slide-muted);
+  text-transform: uppercase; letter-spacing: 0.05em; font-size: 14px;
+}
+.week-slots { display: grid; grid-template-columns: repeat(5, 1fr); gap: 13px; min-height: 302px; }
+.week-slot {
+  border-radius: 11px; border: 1px solid rgba(15,42,46,0.1); background: #fff;
+  padding: 9px 10px; min-height: 238px;
+}
+.week-slot.empty { background: rgba(255,250,247,0.4); border-style: dashed; }
+.ws { border-radius: 8px; padding: 8px 9px; font-family: var(--font-display); font-weight: 600; font-size: 16px; line-height: 1.2; }
+
+/* Paid */
+.paid-wrap { display: flex; flex-direction: column; padding: 72px 80px; }
+.paid-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 27px; flex: 1; }
+.paid-card {
+  border-radius: 21px; border: 1px solid rgba(15,42,46,0.1); background: #fff;
+  padding: 26px 27px; display: flex; flex-direction: column; box-shadow: 0 12px 36px rgba(0,45,36,0.08);
+}
+.paid-card:nth-child(1) { grid-column: span 5; }
+.paid-card:nth-child(2) { grid-column: span 4; }
+.paid-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 17px; }
+.paid-name { font-family: var(--font-display); font-weight: 700; font-size: 26px; }
+.paid-name.forest { font-weight: 900; color: var(--slide-primary-dark); font-size: 31px; }
+.paid-card p { color: var(--slide-muted); font-size: 19px; line-height: 1.35; flex: 1; }
+.paid-basket {
+  grid-column: span 3; border-radius: 21px; background: var(--slide-primary-dark); color: #fff;
+  padding: 26px 23px; display: flex; flex-direction: column; justify-content: space-between;
+  box-shadow: 0 16px 48px rgba(0,45,36,0.18);
+}
+.basket-title { font-family: var(--font-display); font-weight: 700; font-size: 23px; margin-top: 11px; }
+.basket-body { color: rgba(255,255,255,0.75); font-size: 17px; line-height: 1.35; }
+
+/* Settings */
+.settings-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 31px; align-items: center; padding: 72px 80px; }
+.settings-copy { grid-column: span 5; }
+.settings-list { margin-top: 28px; list-style: none; display: flex; flex-direction: column; gap: 11px; }
+.settings-list li { display: flex; align-items: flex-start; gap: 13px; font-size: 17px; }
+.bullet { width: 9px; height: 9px; border-radius: 999px; background: var(--slide-accent); flex-shrink: 0; margin-top: 8px; }
+.settings-mock {
+  grid-column: span 7; border-radius: 21px; background: #fff;
+  border: 1px solid rgba(15,42,46,0.08); overflow: hidden; box-shadow: 0 16px 48px rgba(0,45,36,0.1);
+}
+.settings-mock-head {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 14px 25px; border-bottom: 1px solid rgba(15,42,46,0.1); background: #fff;
+  font-family: var(--font-display); font-weight: 700; font-size: 21px;
+}
+.year-dd {
+  display: flex; align-items: center; gap: 10px; border-radius: 8px;
+  border: 1px solid rgba(15,42,46,0.15); padding: 6px 15px;
+}
+.year-val { font-family: var(--font-display); font-weight: 600; color: var(--slide-primary-dark); font-size: 16px; }
+.folder-grid { padding: 25px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 17px; }
+.folder-card { border-radius: 14px; border: 1px solid rgba(15,42,46,0.1); background: #fff; padding: 17px; display: flex; flex-direction: column; gap: 6px; }
+.folder-icon { width: 38px; height: 31px; border-radius: 6px; background: rgba(0,45,36,0.9); }
+.folder-name { font-family: var(--font-display); font-weight: 700; font-size: 20px; }
+
+/* Org */
+.org-wrap { display: flex; flex-direction: column; justify-content: center; padding: 72px 80px; }
+.org-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 25px; max-width: 1498px; }
+.org-card {
+  border-radius: 19px; border: 1px solid rgba(15,42,46,0.1); background: #fff;
+  padding: 26px 25px; box-shadow: 0 10px 32px rgba(0,45,36,0.07);
+}
+.org-dot { width: 35px; height: 35px; border-radius: 999px; background: var(--slide-primary-dark); margin-bottom: 17px; }
+.org-card h3 { font-family: var(--font-display); font-weight: 700; font-size: 26px; }
+.org-card p { color: var(--slide-muted); font-size: 18px; margin-top: 11px; line-height: 1.35; }
+
+/* Celebrate */
+.celebrate-wrap { display: flex; flex-direction: column; justify-content: space-between; }
+.celebrate-head { max-width: 1114px; }
+.celebrate-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 27px; }
+.cel-card {
+  border-radius: 24px; background: #fff; box-shadow: 0 8px 28px rgba(0,76,69,0.10);
+  padding: 26px 27px; display: flex; flex-direction: column; gap: 11px; border-left: 8px solid;
+}
+.cel-kicker { font-family: var(--font-display); font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; font-size: 16px; }
+.cel-title { font-family: var(--font-display); font-weight: 700; font-size: 28px; line-height: 1.2; }
+.cel-card p { color: var(--slide-muted); font-size: 19px; line-height: 1.35; }
+
+/* Life */
+.life-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 48px; align-items: center; }
+.life-copy { grid-column: span 7; }
+.life-pill {
+  display: inline-block; padding: 6px 23px; border-radius: 999px;
+  background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+  color: #fff; font-weight: 500; font-size: 19px; letter-spacing: 0.05em; text-transform: uppercase;
+  margin-bottom: 32px;
+}
+.life-quotes { grid-column: span 5; display: flex; flex-direction: column; gap: 22px; }
+.glass-quote {
+  border-radius: 24px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.15); padding: 26px 35px;
+}
+.glass-quote blockquote {
+  font-family: var(--font-display); font-weight: 600; color: #fff; font-size: 29px; line-height: 1.3;
+}
+.glass-quote figcaption {
+  margin-top: 15px; color: var(--slide-accent); font-family: var(--font-display);
+  font-weight: 600; font-size: 18px; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.life-accent-card {
+  border-radius: 24px; background: var(--slide-accent); color: #fff; padding: 26px 35px;
+  font-family: var(--font-display); font-weight: 700; font-size: 27px; line-height: 1.2;
+}
+
+/* CTA */
+.cta-wrap { display: flex; flex-direction: column; justify-content: center; gap: 48px; }
+.cta-h1 {
+  font-family: var(--font-display); font-weight: 900; color: #fff;
+  letter-spacing: -0.04em; line-height: 0.95; font-size: 125px; text-wrap: balance;
+}
+.cta-h1 .text-accent { display: block; }
+.cta-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 38px; }
+.cta-label { font-family: var(--font-display); font-weight: 600; font-size: 19px; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 11px; }
+.cta-val { font-family: var(--font-display); font-weight: 700; color: #fff; font-size: 27px; line-height: 1.2; }
+.cta-card-accent {
+  border-radius: 24px; background: var(--slide-accent); color: #fff; padding: 26px 31px;
+}
+.cta-card-accent .cta-label { color: rgba(255,255,255,0.9); }
+
+/* Animations — Canva-keepable CSS */
+
+
+
+
+
+
+
+
+
+
+
+}
+
+  
+.ccd-mark { width: 220px; height: 220px; }
+.ccd-mark-circle {
+  width: 220px; height: 220px; border-radius: 50%;
+  background: #002D24;
+  border: 6px solid #B6FF7E;
+  display: flex; align-items: center; justify-content: center;
+  box-sizing: border-box;
+}
+.ccd-mark-text {
+  color: #FFFFFF;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 52px;
+  letter-spacing: -0.5px;
+  line-height: 1;
+}
+.pack-logo {
+  display: inline-block;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 700;
+  font-size: 14px;
+  color: rgba(15,42,46,0.8);
+  letter-spacing: 0.02em;
+  max-width: 180px;
+  line-height: 1.2;
+}
+.partner-logo {
+  display: inline-block;
+  font-family: Inter, system-ui, sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  color: rgba(15,42,46,0.7);
+  letter-spacing: 0.02em;
+  padding: 4px 8px;
+  border: 1px solid rgba(15,42,46,0.12);
+  border-radius: 6px;
+  background: #fff;
+}
+
+  </style>
+</head>
+<body>
+<!--
+  CCD Feature Walkthrough — Canva HTML import
+  Pages: 31 (6 CLA Report Card 2026 research openers + 25 slides-manifest.json walkthrough pages)
+  Page size: 1920×1080 (16:9)
+  Assets: relative to ../artifacts/ccd-pitch/public/ (plus inline CCD mark SVG)
+  No app runtime files were modified for this export.
+-->
+<section data-document-role="page" data-label="Research: Arts squeezed since EBacc" data-speaker-notes="CLA Report Card 2026 opener. EBacc 2010 squeeze: time, entries, teachers, access. England 2024/25." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad research-grid slide-auto-enter">
+    <div class="research-left">
+      <div>
+        <span class="eyebrow text-accent">CLA Report Card 2026 · England · 2024/25</span>
+        <h2 class="research-h2">Since EBacc, arts in English state schools have been <span class="text-accent">squeezed</span>.</h2>
+        <p class="research-body">Since the English Baccalaureate was introduced in 2010, expressive arts in English state schools have been squeezed on time, entries, teachers and access. The Cultural Learning Alliance Report Card 2026 covers the 2024/25 academic year.</p>
+      </div>
+      <div class="research-quote">
+        <p>Time, entries, teachers, access — the pressure is structural, not seasonal.</p>
+      </div>
+    </div>
+    <div class="research-stats">
+      <div class="stat-card stat-surface-accent">
+  <div class="stat-value">2010</div>
+  <div class="stat-body">EBacc introduced — the policy turn that reshaped the arts in English state schools.</div>
+</div>
+<div class="stat-card stat-forest">
+  <div class="stat-value">Time</div>
+  <div class="stat-body">Curriculum hours for expressive arts compressed as EBacc subjects took priority.</div>
+</div>
+<div class="stat-card stat-surface-forest">
+  <div class="stat-value">Entries</div>
+  <div class="stat-body">GCSE and A-level arts entries fall as pathways narrow.</div>
+</div>
+<div class="stat-card stat-accent">
+  <div class="stat-value">Access</div>
+  <div class="stat-body">Teachers and specialist provision uneven — especially where need is greatest.</div>
+</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Research: The long drop in arts entries" data-speaker-notes="Long drop: GCSE subject falls, zero-entry schools, A-level collapse, EBacc vs arts hours." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad research-grid slide-auto-enter">
+    <div class="research-left">
+      <div>
+        <span class="eyebrow text-accent">Why now · the long drop · CLA 2026</span>
+        <h2 class="research-h2">Expressive arts GCSE entries are down <span class="text-accent">41.7%</span> since 2009/10.</h2>
+        <p class="research-body">Expressive arts were 14% of GCSEs in 2009/10 and 6.8% now. Drama GCSE −40.6%, Dance −55.1%, Music −25.6% (Music +5.7% last year), D&amp;T −71.3%. 36% of secondaries entered nobody for GCSE Music; the same for Drama; 83% nobody for Dance. Arts A-level −9.8% in one year (2023/24–2024/25) and −25% since 2011/12. Music A-level −44.7% since 2010/11, Drama A-level −49.5%, Dance A-level −50.5% since 2014/15. KS4 EBacc hours +30% since 2010; expressive arts hours −26%; KS5 arts hours −35%.</p>
+      </div>
+      <div class="research-quote">
+        <p>When entries fall this far, the pipeline into HE and the creative industries thins with them.</p>
+      </div>
+    </div>
+    <div class="research-stats">
+      <div class="stat-card stat-surface-accent">
+  <div class="stat-value">−41.7%</div>
+  <div class="stat-body">expressive arts GCSE entries since 2009/10 — from 14% of GCSEs then to 6.8% now.</div>
+</div>
+<div class="stat-card stat-forest">
+  <div class="stat-value">36%</div>
+  <div class="stat-body">of secondaries entered nobody for GCSE Music — and the same for Drama; 83% nobody for Dance.</div>
+</div>
+<div class="stat-card stat-surface-forest">
+  <div class="stat-value">−9.8%</div>
+  <div class="stat-body">arts A-level in one year (2023/24–2024/25); −25% since 2011/12.</div>
+</div>
+<div class="stat-card stat-accent">
+  <div class="stat-value">+30% / −26%</div>
+  <div class="stat-body">KS4 EBacc hours up since 2010; expressive arts hours down. KS5 arts hours −35%.</div>
+</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Research: Primary arts provision" data-speaker-notes="Primary: independent vs state hours, falling hours in FSM-heavy schools, partners and leads." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad research-grid slide-auto-enter">
+    <div class="research-left">
+      <div>
+        <span class="eyebrow text-accent">Why now · primary · CLA / Teacher Tapp</span>
+        <h2 class="research-h2">Primary arts time is <span class="text-accent">unequal</span> — and thinning.</h2>
+        <p class="research-body">47% of independent primary teachers report more than 2.5 hours of arts a week versus 6% in the state sector. Around 1 in 4 primary teachers report less than one hour. 28% say hours have fallen in the last two years (31% in the most FSM-heavy schools). 43% have no external cultural partner. Only 9% of primaries have a Drama lead; 5% a Dance lead. Hours figures from CLA / Teacher Tapp (about 2,900 teachers).</p>
+      </div>
+      <div class="research-quote">
+        <p>Non-specialists carry the load — with little time, and little external partnership.</p>
+      </div>
+    </div>
+    <div class="research-stats">
+      <div class="stat-card stat-surface-accent">
+  <div class="stat-value">47% vs 6%</div>
+  <div class="stat-body">independent vs state primary teachers reporting &gt;2.5 hours arts/week.</div>
+</div>
+<div class="stat-card stat-forest">
+  <div class="stat-value">~1 in 4</div>
+  <div class="stat-body">primary teachers report less than one hour of arts a week.</div>
+</div>
+<div class="stat-card stat-surface-forest">
+  <div class="stat-value">43%</div>
+  <div class="stat-body">of primaries have no external cultural partner.</div>
+</div>
+<div class="stat-card stat-accent">
+  <div class="stat-value">9% / 5%</div>
+  <div class="stat-body">primaries with a Drama lead / Dance lead.</div>
+</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Research: The teacher &amp; HE pipeline" data-speaker-notes="Pipeline: workforce shortfall, ITT, bursaries, HE falls in modern universities." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad research-grid slide-auto-enter">
+    <div class="research-left">
+      <div>
+        <span class="eyebrow text-accent">Why now · workforce &amp; HE · CLA 2026</span>
+        <h2 class="research-h2">The teacher pipeline is <span class="text-accent">6,000 below</span> 2010/11.</h2>
+        <p class="research-body">Vacancies in Art &amp; Design and Music are 3.8× 2010 levels. Music ITT −51.3% since 2010/11; D&amp;T −52.3%. Government met 40% of the Music ITT target in 2024/25 and 49% for Drama (was 79% the prior year). Just under 23% of expressive arts teachers have no subject-relevant qualification beyond A-level; Music +10% in one year. £10k Music and Art &amp; Design ITT bursaries were scrapped. HE Creative Arts &amp; Design applications −3% in 2025 vs 2024, −7.6% vs the 2022 peak. 9 of 10 universities with the steepest falls in home Creative Arts undergraduates are modern universities. Roehampton, Kent and Cumbria each lost two-thirds of Creative Arts academic staff since 2014/15.</p>
+      </div>
+      <div class="research-quote">
+        <p>When bursaries go and ITT targets are missed, classrooms feel it first.</p>
+      </div>
+    </div>
+    <div class="research-stats">
+      <div class="stat-card stat-surface-accent">
+  <div class="stat-value">6,000</div>
+  <div class="stat-body">arts workforce below 2010/11 levels.</div>
+</div>
+<div class="stat-card stat-forest">
+  <div class="stat-value">3.8×</div>
+  <div class="stat-body">Art &amp; Design and Music vacancies vs 2010.</div>
+</div>
+<div class="stat-card stat-surface-forest">
+  <div class="stat-value">−51.3%</div>
+  <div class="stat-body">Music ITT since 2010/11. Gov met 40% of Music ITT target 2024/25.</div>
+</div>
+<div class="stat-card stat-accent">
+  <div class="stat-value">−7.6%</div>
+  <div class="stat-body">HE Creative Arts &amp; Design applications vs 2022 peak; −3% vs 2024.</div>
+</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Research: Entitlement &amp; disadvantage" data-speaker-notes="Entitlement: deprivation gradients, FSM under-representation, EPI Music gap." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad research-grid slide-auto-enter">
+    <div class="research-left">
+      <div>
+        <span class="eyebrow text-accent">Why now · entitlement · CLA 2026 / EPI</span>
+        <h2 class="research-h2">Arts entitlement tracks <span class="text-accent">deprivation</span>.</h2>
+        <p class="research-body">54% of schools in the most deprived fifth of local authorities have no GCSE Music entries versus 21% in the least deprived; for Drama it is 59% versus 17%. FSM pupils are under-represented in every arts GCSE. Music A-level: 3.8% FSM versus 9.3% of all A-level students. Music has the largest GCSE disadvantage gap: poorer pupils are 20.1 months behind and 38% less likely to take it (EPI 2020, cited by CLA). Black and Asian students are under-represented in every arts A-level.</p>
+      </div>
+      <div class="research-quote">
+        <p>Where need is greatest, access is thinnest.</p>
+      </div>
+    </div>
+    <div class="research-stats">
+      <div class="stat-card stat-surface-accent">
+  <div class="stat-value">54% vs 21%</div>
+  <div class="stat-body">schools with no GCSE Music entries — most vs least deprived fifth of LAs. Drama: 59% vs 17%.</div>
+</div>
+<div class="stat-card stat-forest">
+  <div class="stat-value">FSM</div>
+  <div class="stat-body">under-represented in every arts GCSE.</div>
+</div>
+<div class="stat-card stat-surface-forest">
+  <div class="stat-value">3.8% vs 9.3%</div>
+  <div class="stat-body">FSM share of Music A-level vs all A-level students.</div>
+</div>
+<div class="stat-card stat-accent">
+  <div class="stat-value">20.1 mo</div>
+  <div class="stat-body">Music GCSE disadvantage gap — poorer pupils behind; 38% less likely to take it (EPI 2020).</div>
+</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Research: Why the arts matter" data-speaker-notes="Henley quote; CLA Rapid Evidence Reviews; link CLA 2026 Report Card PDF." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad research-grid slide-auto-enter">
+    <div class="research-left">
+      <div>
+        <span class="eyebrow text-accent">Why now · the case for the arts · CLA / ACE</span>
+        <h2 class="research-h2">The arts are not a luxury — they are <span class="text-accent">essential</span>.</h2>
+        <p class="research-body">Darren Henley, Arts Council England: “The arts are not a luxury; they are essential to every child’s education.” CLA Rapid Evidence Reviews with the RSC synthesise 1,175 studies on agency, wellbeing, collaboration, communication, empathy and creativity. Source: https://www.culturallearningalliance.org.uk/wp-content/uploads/2026/05/CLA-2026-Report-Card-final.pdf</p>
+      </div>
+      <div class="research-quote">
+        <p>CLA Rapid Evidence Reviews · RSC · 1,175 studies.</p>
+      </div>
+    </div>
+    <div class="research-stats">
+      <div class="stat-card stat-surface-accent">
+  <div class="stat-value">Essential</div>
+  <div class="stat-body">Darren Henley, ACE — arts are essential to every child’s education.</div>
+</div>
+<div class="stat-card stat-forest">
+  <div class="stat-value">1,175</div>
+  <div class="stat-body">studies in CLA Rapid Evidence Reviews with the RSC.</div>
+</div>
+<div class="stat-card stat-surface-forest">
+  <div class="stat-value">Agency</div>
+  <div class="stat-body">Wellbeing · collaboration · communication · empathy · creativity.</div>
+</div>
+<div class="stat-card stat-accent">
+  <div class="stat-value">CLA 2026</div>
+  <div class="stat-body">Report Card — England, covering 2024/25.</div>
+</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Exceptional lessons start with connection" data-speaker-notes="Opening brand lockup — CCD circle, Playfair connection, value line." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="absolute-fill" style="background:#002D24;"></div>
+  <div class="orb" style="width:1114px;height:1114px;left:50%;top:44%;transform:translate(-50%,-50%);background:radial-gradient(circle, rgba(182,255,126,0.12) 0%, transparent 68%);filter:blur(38px);" aria-hidden="true"></div>
+  <div class="intro-center slide-auto-enter">
+    <div class="ccd-mark-wrap">
+      <div class="ccd-mark" aria-label="CCD">
+        <div class="ccd-mark-circle">
+          <span class="ccd-mark-text">CCD</span>
+        </div>
+      </div>
+    </div>
+    <h1 class="intro-h1">Exceptional lessons start with <span class="intro-em">connection</span></h1>
+    <p class="intro-sub">Capture ideas. Build lessons. Connect with the best arts organisations — EYFS to A-level.</p>
+  </div>
+</section>
+<section data-document-role="page" data-label="A living home for creative teaching" data-speaker-notes="Title: Arts Council proposal — together for every child." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="absolute-fill" style="background:radial-gradient(ellipse 90% 70% at 50% 40%, #FBF7F1 0%, #F4ECDF 55%, #E9DCC4 100%);"></div>
+  <div class="absolute-fill" style="background:radial-gradient(ellipse 55% 40% at 50% 38%, rgba(255,193,141,0.22), transparent 70%);pointer-events:none;"></div>
+  <div class="title-block">
+    <div class="title-eyebrow slide-fade-up" style="--slide-stagger:120ms">A proposal to the Arts Council</div>
+    <h1 class="title-h1 slide-fade-up" style="--slide-stagger:240ms">Bringing the arts<br /><span class="title-italic">together</span> <span class="title-muted">— for every child.</span></h1>
+    <p class="title-body slide-fade-up" style="--slide-stagger:360ms">One connected home for schools, arts organisations and practitioners — so exceptional creative opportunities reach the children who need them.</p>
+  </div>
+  <div class="title-chain slide-fade-up" style="--slide-stagger:480ms"><div class="title-chain-item"><span class="title-dot"></span><span class="title-chain-label">Schools</span></div><span class="title-chain-line"></span><div class="title-chain-item"><span class="title-dot"></span><span class="title-chain-label">Arts orgs</span></div><span class="title-chain-line"></span><div class="title-chain-item"><span class="title-dot"></span><span class="title-chain-label">Practitioners</span></div><span class="title-chain-line"></span><div class="title-chain-item"><span class="title-dot"></span><span class="title-chain-label">Children</span></div></div>
+  <div class="title-footer slide-fade-up" style="--slide-stagger:600ms">
+    <span>Creative Curriculum Designer</span>
+    <span>www.ccdesigner.co.uk</span>
+  </div>
+</section>
+<section data-document-role="page" data-label="The problem: arts teachers are working alone" data-speaker-notes="Problem: alone, fragmented practice, invisible arc, lost craft." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-162px;left:-192px;width:864px;height:864px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad problem-grid slide-auto-enter">
+    <div class="problem-left">
+      <div>
+        <span class="eyebrow text-accent">The problem</span>
+        <h2 class="h2-dark">Arts teachers are working alone.</h2>
+        <p class="body-muted" style="margin-top:32px;font-size:29px;">Drama, dance and music teachers stitch a year together from PDFs, shared drives, photocopied schemes and last year's tabs — often as the only specialist in the building. Great practice gets lost; non-specialists are left guessing.</p>
+      </div>
+      <div class="problem-stat-row">
+        <div class="problem-big">5+</div>
+        <span class="body-muted" style="font-size:23px;max-width:270px;">hours a week the average teacher spends planning outside of class — most of it reinventing what someone, somewhere has already made.</span>
+      </div>
+    </div>
+    <div class="problem-right">
+      <div class="surface-card problem-item"><div class="num-box accent-soft">01</div><div><h3 class="h3-dark">Practice lives in too many places</h3><p class="body-muted" style="margin-top:8px;font-size:23px;">Schemes in folders, rehearsal notes on a phone, warm-ups in a notebook. Nothing connects, nothing carries forward.</p></div></div>
+      <div class="surface-card problem-item"><div class="num-box teal-soft">02</div><div><h3 class="h3-dark">The bigger arc is invisible</h3><p class="body-muted" style="margin-top:8px;font-size:23px;">It's hard to see how a term, a key stage, or a whole creative journey fits together — let alone shape it without starting over.</p></div></div>
+      <div class="surface-card problem-item"><div class="num-box accent-soft">03</div><div><h3 class="h3-dark">Creative practice gets lost</h3><p class="body-muted" style="margin-top:8px;font-size:23px;">Teaching is creative work — but the warm-up that worked, the rehearsal that landed, the unit a colleague nailed disappear into forgotten documents by July, learned again the hard way next September.</p></div></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Why now: the arts in higher education are at a tipping point" data-speaker-notes="Original WhyNow.tsx figures retained (49, −47%, 1 in 8, £126b)." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad research-grid slide-auto-enter">
+    <div class="research-left">
+      <div>
+        <span class="eyebrow text-accent">Why now · the case for the arts</span>
+        <h2 class="research-h2">The arts in higher education are at a <span class="text-accent">tipping point</span>.</h2>
+        <p class="research-body">Drama, music and dance courses at UK universities are being merged, paused and closed. The pipeline that feeds the West End, our orchestras, our touring dance companies — and every primary classroom that sings — starts in the schools we teach in today. If the practice we share now is thin, the cohort that arrives at university in five years will be too.</p>
+      </div>
+      <div class="research-quote"><p>"We don't get a second chance at a generation of artists."</p></div>
+    </div>
+    <div class="research-stats">
+      <div class="stat-card stat-surface-accent">
+  <div class="stat-value">49</div>
+  <div class="stat-body">UK universities have closed, merged or paused arts &amp; humanities courses since 2023.</div>
+</div>
+      <div class="stat-card stat-forest">
+  <div class="stat-value">−47%</div>
+  <div class="stat-body">fall in arts GCSE entries since the EBacc was introduced.</div>
+</div>
+      <div class="stat-card stat-surface-forest">
+  <div class="stat-value">1 in 8</div>
+  <div class="stat-body">state primaries have no specialist music or drama provision at all.</div>
+</div>
+      <div class="stat-card stat-accent">
+  <div class="stat-value">£126b</div>
+  <div class="stat-body">the UK creative industries — built on the artists our classrooms shape.</div>
+</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="The solution: one living home" data-speaker-notes="Solution: half-term planner, lesson library, activity stacks." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="absolute-fill" style="background:#002D24;"></div>
+  <div class="orb" style="top:0;right:0;width:1152px;height:1152px;transform:translate(20%,-30%);background:radial-gradient(circle at center, rgba(255,107,107,0.35), transparent 65%);filter:blur(38px);" aria-hidden="true"></div>
+  <div class="absolute-fill grid-overlay" aria-hidden="true"></div>
+  <div class="page-pad solution-wrap slide-auto-enter">
+    <div>
+      <span class="eyebrow text-accent">The solution</span>
+      <h2 class="h2-white" style="font-size:100px;max-width:1540px;">One living home for drama, dance and music.</h2>
+      <p class="body-white-75" style="margin-top:27px;font-size:31px;max-width:1152px;">Creative Curriculum Designer is a living workspace where great teaching ideas live, evolve and grow — purpose-built for performing arts education from EYFS through to KS5, and shared with the wider arts sector.</p>
+    </div>
+    <div class="solution-cards">
+      <div class="glass-card"><div class="icon-sq bg-accent">1</div><h3 class="h3-white">Half-term planner</h3><p class="body-white-70">See six half-terms at a glance. Drag, reorder, and shape the year before the year begins.</p></div>
+      <div class="glass-card"><div class="icon-sq bg-teal">2</div><h3 class="h3-white">Lesson library</h3><p class="body-white-70">Build, reuse and share lessons. Tag by year group and unit. Find the right one in seconds.</p></div>
+      <div class="glass-card"><div class="icon-sq bg-accent">3</div><h3 class="h3-white">Activity stacks</h3><p class="body-white-70">Group warm-ups, mains and plenaries into reusable stacks. Drop them straight into any lesson.</p></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Who it's for: arts educators across every key stage" data-speaker-notes="Audiences: EY/Primary, Secondary/Sixth Form, Arts Sector Partners." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="bottom:-216px;right:-192px;width:960px;height:960px;background:radial-gradient(circle at center, rgba(20,184,166,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad who-wrap slide-auto-enter">
+    <div class="who-head">
+      <span class="eyebrow text-accent">Who it's for</span>
+      <h2 class="h2-dark" style="font-size:88px;">Built with arts educators — every key stage, EYFS to KS5.</h2>
+    </div>
+    <div class="who-cards">
+      <div class="surface-card who-card">
+        <div class="who-title">Early Years &amp; Primary</div>
+        <div class="who-meta">EYFS · KS1 · KS2 · Ages 3–11</div>
+        <h3 class="h3-dark" style="margin:16px 0;">Reception leads, generalist teachers and primary arts specialists</h3>
+        <p class="body-muted" style="font-size:22px;">Plan around continuous provision and adult-led inputs. Give non-specialist teachers the confidence to lead drama, dance and music — backed by activities they can actually run.</p>
+        <div class="who-foot">Continuous provision · non-specialist support</div>
+      </div>
+      <div class="who-card who-card-dark">
+        <div class="who-title-white">Secondary &amp; Sixth Form</div>
+        <div class="who-meta-white">KS3 · KS4 · KS5 · Ages 11–18</div>
+        <h3 class="h3-white" style="margin:16px 0;">Drama, dance and music subject leads &amp; departments</h3>
+        <p class="body-white-75" style="font-size:22px;">Sequence units across years, key stages and qualifications — GCSE, A-Level, BTEC and beyond. Build a shared department library of rehearsal techniques, schemes of work and reflective practice, so a great unit is taught well by every teacher.</p>
+        <div class="who-foot-white">GCSE, A-Level &amp; BTEC frameworks · departmental sharing</div>
+      </div>
+      <div class="surface-card who-card">
+        <div class="who-title">Arts Sector Partners</div>
+        <div class="who-meta">Theatres · Orchestras · Dance companies · Universities</div>
+        <h3 class="h3-dark" style="margin:16px 0;">Outreach teams, practitioners, training providers and university arts faculties</h3>
+        <p class="body-muted" style="font-size:22px;">Contribute outreach resources, rehearsal techniques, research-informed frameworks and training pathways into the schools you partner with — strengthening creative practice from EYFS to KS5.</p>
+        <div class="who-foot">Outreach · training · sector-wide collaboration</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Drama, Music &amp; Dance — one workspace" data-speaker-notes="Subject coverage: Drama, Music, Dance example units." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-162px;right:-288px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad coverage-wrap slide-auto-enter">
+    <div class="coverage-head">
+      <span class="eyebrow text-accent">What it covers</span>
+      <h2 class="h2-dark" style="font-size:88px;">Drama. Music. Dance. One workspace.</h2>
+      <p class="body-muted" style="margin-top:22px;font-size:27px;max-width:1056px;">Three disciplines that share the same rhythm of teaching — warm-up, main, plenary — modelled end-to-end with starter content across every key stage from EYFS to KS5. Designed so a non-specialist can step in confidently, and a specialist can build on top.</p>
+    </div>
+    <div class="coverage-cards">
+      <div class="cov-card cov-drama">
+        <div class="cov-top"><span class="cov-name">Drama</span><span class="cov-ks">EYFS · KS1–KS2 · KS3–KS5</span></div>
+        <p>Storytelling, voice, character &amp; physical theatre — built around ensemble work and clear performance moments.</p>
+        <div class="cov-list"><div>· Storytelling Through Drama</div><div>· Improvisation &amp; Status</div><div>· Scripted Scene Work</div><div>· Devising from Stimulus</div></div>
+      </div>
+      <div class="cov-card cov-music">
+        <div class="cov-top"><span class="cov-name">Music</span><span class="cov-ks">EYFS · KS1–KS2 · KS3–KS5</span></div>
+        <p>Rhythm, pitch, listening and singing — with backing tracks, vocal guides and resource links attached to every activity.</p>
+        <div class="cov-list"><div>· Rhythms of West Africa</div><div>· Singing &amp; Vocal Health</div><div>· Body Percussion</div><div>· Composing with Loops</div></div>
+      </div>
+      <div class="cov-card cov-dance">
+        <div class="cov-top"><span class="cov-name">Dance</span><span class="cov-ks">EYFS · KS1–KS2 · KS3–KS5</span></div>
+        <p>Motif, canon, contact and choreography — sequenced so a class can build a performance piece across a half-term.</p>
+        <div class="cov-list"><div>· Motif &amp; Canon</div><div>· Contact &amp; Trust Work</div><div>· Storm &amp; Weather Studies</div><div>· Choreographing in Groups</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Feature: Lesson library" data-speaker-notes="Lesson library feature with mock cards." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-108px;left:-192px;width:768px;height:768px;background:radial-gradient(circle at center, rgba(20,184,166,0.15), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad lib-grid slide-auto-enter">
+    <div class="lib-mock">
+      <div class="lib-mock-inner">
+        <div class="lib-mock-head"><span class="lib-title">Lesson library</span><span class="body-muted" style="font-size:19px;">214 lessons</span></div>
+        <div class="lib-search"><span class="lib-search-dot"></span><span class="body-muted" style="font-size:21px;">Search by title, year, or unit…</span></div>
+        <div class="lib-cards">
+          <div class="lib-card"><div class="lib-card-top"><span class="pill pill-drama">Drama · Y4</span><span class="body-muted" style="font-size:16px;">45 min</span></div><h4>Freeze-frame storytelling</h4><p>Three still images that retell a fable using levels, gesture and gaze.</p></div>
+          <div class="lib-card"><div class="lib-card-top"><span class="pill pill-music">Music · Y3</span><span class="body-muted" style="font-size:16px;">40 min</span></div><h4>Rhythms of West Africa</h4><p>Active listening, body percussion, then a class call-and-response.</p></div>
+          <div class="lib-card"><div class="lib-card-top"><span class="pill pill-dance">Dance · Y5</span><span class="body-muted" style="font-size:16px;">50 min</span></div><h4>Storm motif &amp; canon</h4><p>Build a 16-count motif, then layer it as a four-group canon.</p></div>
+          <div class="lib-card"><div class="lib-card-top"><span class="pill pill-drama">Drama · EYFS</span><span class="body-muted" style="font-size:16px;">20 min</span></div><h4>Animal walks circle game</h4><p>Pretend movement and partner observation in a circle.</p></div>
+        </div>
+      </div>
+    </div>
+    <div class="lib-copy">
+      <span class="eyebrow text-accent">Feature 02</span>
+      <h2 class="h2-dark" style="font-size:81px;">Every good lesson, kept.</h2>
+      <p class="body-muted" style="margin-top:32px;font-size:27px;">A searchable library of lessons your team builds together — and that grows beyond your team, with contributions from outreach teams, training providers and arts partners across the sector. Tag by year group, unit and objective. Open the right one when you need it.</p>
+      <div class="lib-stats">
+        <div class="mini-stat"><div class="mini-stat-val text-forest">200+</div><div class="body-muted" style="font-size:19px;margin-top:5px;">starter lessons included</div></div>
+        <div class="mini-stat"><div class="mini-stat-val text-accent">1-click</div><div class="body-muted" style="font-size:19px;margin-top:5px;">duplicate, edit, share</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Feature: Activity stacks" data-speaker-notes="Activity stacks feature." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="page-pad stacks-grid slide-auto-enter">
+    <div class="stacks-copy">
+      <span class="eyebrow text-accent">Feature 03</span>
+      <h2 class="h2-dark" style="font-size:81px;">Stack activities like Lego.</h2>
+      <p class="body-muted" style="margin-top:32px;font-size:27px;">Group your favourite warm-ups, mains and plenaries into reusable stacks. Drop a whole stack into any lesson and adapt as you go — so brilliant practice survives the end of a project, a funding cycle, or a school year.</p>
+      <div class="stacks-bullets">
+        <div class="stacks-bullet"><div class="letter-box accent-soft">A</div><span>Build once, reuse all year.</span></div>
+        <div class="stacks-bullet"><div class="letter-box teal-soft">B</div><span>Share stacks across the team.</span></div>
+        <div class="stacks-bullet"><div class="letter-box accent-soft">C</div><span>Drag straight into lesson plans.</span></div>
+      </div>
+    </div>
+    <div class="stacks-panels">
+      <div class="stack-panel">
+        <div class="stack-panel-head"><span>Drama · Storytelling</span><span class="pill pill-drama">5 items</span></div>
+        <div class="stack-item drama">Mirror game warm-up</div>
+        <div class="stack-item drama">Story circle &amp; offers</div>
+        <div class="stack-item drama">Character hot-seating</div>
+        <div class="stack-item drama">Freeze-frame moments</div>
+        <div class="stack-item drama">Audience feedback circle</div>
+      </div>
+      <div class="stack-panel">
+        <div class="stack-panel-head"><span>Music · Rhythm &amp; voice</span><span class="pill pill-music">4 items</span></div>
+        <div class="stack-item music">Body-percussion warm-up</div>
+        <div class="stack-item music">Active listening: West Africa</div>
+        <div class="stack-item music">Call-and-response clapping</div>
+        <div class="stack-item music">Sing &amp; sign reflection</div>
+        <div class="stack-item drop">Drop activity here</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Feature: Activity cards with web links" data-speaker-notes="Activity cards with resource chips." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="bottom:-216px;left:-192px;width:768px;height:768px;background:radial-gradient(circle at center, rgba(20,184,166,0.15), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad cards-grid slide-auto-enter">
+    <div class="cards-copy">
+      <span class="eyebrow text-accent">Feature 04</span>
+      <h2 class="h2-dark pitch-h2">Every resource, one tap away.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:28px;">Activity cards carry the things you actually need in the room: a video demo, a backing track, a vocal guide, a worksheet, a web link. Pupils can see them on the smartboard. Teachers click straight through.</p>
+      <div class="resource-list">
+        <div class="resource-row"><span class="r-icon drama">▶</span> Video demos &amp; performance clips</div>
+        <div class="resource-row"><span class="r-icon music">♪</span> Backing tracks &amp; vocal guides</div>
+        <div class="resource-row"><span class="r-icon teal">↗</span> Web links &amp; teaching ideas</div>
+        <div class="resource-row"><span class="r-icon accent">≡</span> Worksheets &amp; printable resources</div>
+      </div>
+    </div>
+    <div class="cards-mocks">
+      <div class="activity-card">
+        <div class="activity-card-top"><div><div class="pill-row"><span class="pill pill-drama">Drama</span><span class="pill pill-muted">Y4 · 20 min</span></div><h4>Freeze-Frame Storytelling</h4></div><span class="meta">Main activity</span></div>
+        <p>Groups of four create three still images that retell a familiar fable. Encourage clear use of levels, facial expression, and gesture.</p>
+        <div class="chip-row"><span class="chip teal">↗ BBC Bitesize: Drama warm-up games</span><span class="chip teal">↗ Teaching Ideas: Freeze-frames</span></div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-card-top"><div><div class="pill-row"><span class="pill pill-music">Music</span><span class="pill pill-muted">Y3 · 15 min</span></div><h4>Active Listening: Rhythms of West Africa</h4></div><span class="meta">Warm-up</span></div>
+        <p>Play a short djembe ensemble recording. Pupils tap the underlying pulse, then identify the call-and-response pattern and shifting layers.</p>
+        <div class="chip-row"><span class="chip drama">▶ Video demo</span><span class="chip music">♪ Backing track</span><span class="chip teal">↗ BBC Teach: Djembe ensemble</span></div>
+      </div>
+      <div class="activity-card">
+        <div class="activity-card-top"><div><div class="pill-row"><span class="pill pill-dance">Dance</span><span class="pill pill-muted">Y5 · 25 min</span></div><h4>Storm Motif &amp; Canon</h4></div><span class="meta">Main activity</span></div>
+        <p>Build a 16-count motif inspired by a storm. In four groups, layer the motif as a canon, two counts apart.</p>
+        <div class="chip-row"><span class="chip drama">▶ Choreography demo</span><span class="chip music">♪ Storm music</span><span class="chip accent">≡ Counting worksheet</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Feature: Activity creation flow" data-speaker-notes="Activity creation form mock." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-108px;right:-192px;width:864px;height:864px;background:radial-gradient(circle at center, rgba(255,107,107,0.15), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad create-grid slide-auto-enter">
+    <div class="create-copy">
+      <span class="eyebrow text-accent">Feature 05</span>
+      <h2 class="h2-dark pitch-h2">Build an activity in two minutes.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:28px;">A focused form for the things that matter — name, year groups, time, instructions — with dedicated fields for the YouTube clip, the backing track, the worksheet and the web link you'd otherwise lose in a folder.</p>
+      <div class="create-points">
+        <div class="create-point"><div class="bar bg-accent"></div><div><h4>Tag once, find forever</h4><p>Subject, year groups and category attach instantly.</p></div></div>
+        <div class="create-point"><div class="bar bg-teal"></div><div><h4>Web links built in</h4><p>Six labelled link slots — video, music, backing, vocals, worksheet, web.</p></div></div>
+        <div class="create-point"><div class="bar bg-accent"></div><div><h4>Drag straight in</h4><p>New activity drops into the lesson you're building.</p></div></div>
+      </div>
+    </div>
+    <div class="create-form">
+      <div class="form-head"><span>New activity</span><span class="body-muted" style="font-size:15px;">Lesson 1 · Storytelling Through Drama</span></div>
+      <div class="form-body">
+        <div class="field"><label>Activity name</label><div class="field-box">Freeze-Frame Storytelling</div></div>
+        <div class="field-row-3">
+          <div class="field"><label>Subject</label><div class="field-box">Drama</div></div>
+          <div class="field"><label>Category</label><div class="field-box">Main Activity</div></div>
+          <div class="field"><label>Time (min)</label><div class="field-box">20</div></div>
+        </div>
+        <div class="field"><label>Year groups</label><div class="year-pills"><span class="yp on">Year 9</span><span class="yp on">Year 11</span><span class="yp">Year 12</span><span class="yp">Year 13</span></div></div>
+        <div class="field"><label>Instructions</label><div class="field-box sm">Groups of four create three still images that retell a familiar fable. Use levels, facial expression, and gesture.</div></div>
+        <div class="links-box">
+          <div class="links-head"><span>Web links &amp; resources</span><span>All optional</span></div>
+          <div class="links-grid">
+            <div class="link-cell"><span class="lk">Video link</span>youtube.com/watch?v=bP-hnB</div>
+            <div class="link-cell"><span class="lk">Web resource</span>teachingideas.co.uk/drama</div>
+            <div class="link-cell"><span class="lk">Backing track</span>spotify.com/track/...</div>
+            <div class="link-cell dashed"><span class="lk">Worksheet</span>+ Add link</div>
+          </div>
+        </div>
+        <div class="form-actions"><span class="body-muted">Cancel</span><span class="btn-save">Save activity</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Feature: Lesson planner calendar" data-speaker-notes="Calendar / timetable feature." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:0;right:0;width:864px;height:864px;transform:translate(25%,-30%);background:radial-gradient(circle at center, rgba(20,184,166,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad cal-grid slide-auto-enter">
+    <div class="cal-copy">
+      <span class="eyebrow text-accent">Key feature · Calendar</span>
+      <h2 class="h2-dark pitch-h2">Your school calendar, your timetable.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:24px;">Set term dates to match your school year. Then drag lessons or whole stacks straight into the slots where you actually teach.</p>
+      <div class="create-points" style="margin-top:28px;">
+        <div class="create-point"><div class="bar bg-teal"></div><div><h4>Term dates you control</h4><p>Autumn, spring and summer blocks align to your inset days and holidays.</p></div></div>
+        <div class="create-point"><div class="bar bg-accent"></div><div><h4>Drag lessons into slots</h4><p>Drop a single lesson from the library onto any teaching day.</p></div></div>
+        <div class="create-point"><div class="bar bg-accent"></div><div><h4>Drop whole stacks</h4><p>A stack spreads across your timetable days — one lesson per session.</p></div></div>
+      </div>
+      <div class="cal-mini-stats">
+        <div class="mini-stat"><div class="pitch-stat text-forest">Month</div><div class="pitch-caption body-muted">term overview</div></div>
+        <div class="mini-stat"><div class="pitch-stat text-accent">Timetable</div><div class="pitch-caption body-muted">slot-by-slot</div></div>
+      </div>
+    </div>
+    <div class="cal-mocks">
+      <div class="cal-month">
+        <div class="cal-month-head"><span>October 2025 · Year 4 Drama</span><div class="view-pills"><span>Month</span><span>Week</span><span class="on">Timetable</span></div></div>
+        <div class="cal-month-body">
+          <div class="dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div><div>Sat</div><div>Sun</div></div>
+          <div class="cal-cells">
+            <div class="ccell muted"><span>29</span></div>
+            <div class="ccell muted"><span>30</span></div>
+            <div class="ccell"><span>1</span><span class="term">Autumn 1</span></div>
+            <div class="ccell"><span>2</span><span class="les drama">Freeze-frames</span></div>
+            <div class="ccell"><span>3</span></div>
+            <div class="ccell"><span>4</span><span class="les drama">Hot-seating</span></div>
+            <div class="ccell holiday"><span>5</span><span class="hol">Inset</span></div>
+            <div class="ccell"><span>6</span></div>
+            <div class="ccell"><span>7</span><span class="les drama">Devising</span></div>
+            <div class="ccell"><span>8</span></div>
+            <div class="ccell"><span>9</span><span class="les dance">Motif build</span></div>
+            <div class="ccell"><span>10</span></div>
+            <div class="ccell"><span>11</span></div>
+            <div class="ccell drop"><span>12</span><span class="drop-l">Drop stack</span></div>
+          </div>
+          <div class="cal-foot"><span>Term dates synced · Autumn 1 ends 24 Oct</span><span class="link">Edit term dates →</span></div>
+        </div>
+      </div>
+      <div class="cal-add">
+        <div class="cal-add-head"><div class="pitch-h3">Add to Calendar</div><div class="pitch-caption">Sunday, October 12, 2025</div></div>
+        <div class="cal-tabs"><div class="on">Lesson from Library</div><div>Stack</div></div>
+        <div class="cal-add-body">
+          <div class="search-box">Search lessons…</div>
+          <div class="add-sel"><div class="add-sel-top"><span>Commedia KS3 unit</span><span>Stack · 4 lessons</span></div><p>Spreads across your Mon &amp; Thu timetable slots</p></div>
+          <div class="add-row"><span>Freeze-frame storytelling</span><p>Drama · Year 4 · 45 min</p></div>
+          <div class="add-row dim"><span>Rhythms of West Africa</span><p>Music · Year 3 · 40 min</p></div>
+          <div class="add-foot"><span>4 sessions from start date</span><span class="btn-save">Add to Calendar</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="How it works" data-speaker-notes="Four-step how it works." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:50%;left:50%;width:1344px;height:1344px;transform:translate(-50%,-50%);background:radial-gradient(circle at center, rgba(20,184,166,0.08), transparent 60%);filter:blur(77px);" aria-hidden="true"></div>
+  <div class="page-pad how-wrap slide-auto-enter">
+    <div class="how-head">
+      <span class="eyebrow text-accent">How it works</span>
+      <h2 class="h2-dark" style="font-size:88px;">From empty term to ready-to-teach.</h2>
+    </div>
+    <div class="how-steps">
+      <div><div class="how-num">01</div><h3>Map the year</h3><p>Open the half-term planner and sketch the arc of your year. Themes, units and topic windows.</p></div>
+      <div><div class="how-num">02</div><h3>Pull from the library</h3><p>Drop existing lessons into each half-term or duplicate one and tweak it for a new year group.</p></div>
+      <div><div class="how-num">03</div><h3>Stack the activities</h3><p>Add warm-ups, mains and plenaries. Save winning combinations as reusable stacks.</p></div>
+      <div><div class="how-num">04</div><h3>Teach, refine &amp; share</h3><p>Print, project, or share with the team — and contribute back to a wider creative archive the whole sector can draw on.</p></div>
+    </div>
+    <div class="how-banner">
+      <div class="how-banner-left">
+        <div class="how-cd">CD</div>
+        <div>
+          <div class="how-banner-title">Built for performing arts teaching from EYFS to KS5 — free for educators.</div>
+          <div class="how-banner-sub">Works on a laptop, a smartboard, a studio tablet, or a phone in the rehearsal room.</div>
+        </div>
+      </div>
+      <div class="how-banner-tags"><span>Web &amp; PWA</span><span class="dot"></span><span>Offline-friendly</span><span class="dot"></span><span>Print-ready</span></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Partner activity packs &amp; marketplace" data-speaker-notes="Partner packs and teacher marketplace." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-130px;left:-154px;width:922px;height:922px;background:radial-gradient(circle at center, rgba(255,107,107,0.16), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="orb" style="bottom:-194px;right:-230px;width:998px;height:998px;background:radial-gradient(circle at center, rgba(20,184,166,0.14), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad partner-wrap slide-auto-enter">
+    <div class="partner-head">
+      <span class="eyebrow text-accent">Partner &amp; teacher resources</span>
+      <h2 class="h2-dark pitch-h2">Expert content from partners — and a place for yours.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:20px;max-width:750px;">Curated packs from leading arts organisations sit alongside your school library. Teachers can share packs with colleagues — or sell their own lesson plans to others.</p>
+    </div>
+    <div class="partner-grid">
+      <div class="partner-left">
+        <div class="partner-label">Partner activity packs</div>
+        <div class="partner-packs">
+          <div class="pack-card">
+            <div class="pack-top"><span class="pack-logo">Royal Opera House</span><span class="body-muted" style="font-size:13px;">Included</span></div>
+            <h3>Royal Opera House</h3>
+            <p>Opera, ballet and vocal warm-ups — specialist expertise ready to drop into your timetable.</p>
+            <div class="pack-foot">12 lesson stacks · video links</div>
+          </div>
+          <div class="pack-card">
+            <div class="pack-top"><span class="pack-logo">National Theatre</span><span class="body-muted" style="font-size:13px;">Included</span></div>
+            <h3>National Theatre</h3>
+            <p>Devising, text work and ensemble drama — classroom-ready units from NT Learning.</p>
+            <div class="pack-foot">GCSE &amp; A-level · exam-aligned</div>
+          </div>
+          <div class="pack-more">
+            <div class="pack-more-row"><div><div class="pack-more-title">More partners joining</div><div class="body-muted" style="font-size:15px;margin-top:4px;">Trinity, ABRSM, Rambert and other specialists — their content accessible inside CCD.</div></div><span class="growing">Growing library</span></div>
+            <div class="partner-logos"><span class="partner-logo">Arts Council England</span><span class="partner-logo">Royal Opera House</span><span class="partner-logo">LSO</span><span class="partner-logo">National Theatre</span><span class="partner-logo">BBC Ten Pieces</span><span class="partner-logo">Tate</span><span class="partner-logo">National Gallery</span><span class="partner-logo">Sadler's Wells</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="marketplace">
+        <div class="mkt-eyebrow">Teacher marketplace</div>
+        <h3>Share free. Sell what you've built.</h3>
+        <p>Package your lesson stacks into activity packs. Assign them to your department, share with partner schools, or list them for purchase.</p>
+        <div class="mkt-item"><div class="mkt-item-top"><span>Commedia KS3 pack</span><span class="price">£24.99</span></div><div class="mkt-meta">By Sarah M. · 8 lessons · Drama</div></div>
+        <div class="mkt-bullets"><div>● Share packs with your team at no cost</div><div>● Sell to other schools and keep creating</div><div>● Partner content always one click away</div></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Music hubs &amp; Partner Hubs" data-speaker-notes="Music hubs structure." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-130px;left:-154px;width:806px;height:806px;background:radial-gradient(circle at center, rgba(182,255,126,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad wt-wrap slide-auto-enter">
+    <div class="wt-head">
+      <span class="eyebrow text-accent">Partner Hubs</span>
+      <h2 class="h2-dark pitch-h2">Music hubs in one Partner Hubs home.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:20px;max-width:845px;">Dashboard → Partner Hubs → Music section. EMS, Tri-Borough and LSO sit together so teachers find the right organisation in one place.</p>
+    </div>
+    <div class="breadcrumb"><span class="bc-strong">Partner Hubs</span><span class="bc-arrow">→</span><span class="bc-pill">Music</span><span class="bc-arrow">→</span><span>EMS · Tri-Borough · LSO</span></div>
+    <div class="hub-cards">
+      <div class="hub-card"><div class="hub-top"><span class="hub-num">1</span><span class="hub-role">Interactive</span></div><h3>EMS Music Hub</h3><p>Browse resources · Add to CCDesigner</p><div class="hub-foot">Open from Partner Hubs →</div></div>
+      <div class="hub-card"><div class="hub-top"><span class="hub-num">2</span><span class="hub-role">Links hub</span></div><h3>Tri-Borough</h3><p>Music education pathways &amp; partner links</p><div class="hub-foot">Open from Partner Hubs →</div></div>
+      <div class="hub-card"><div class="hub-top"><span class="hub-num">3</span><span class="hub-role">Interactive</span></div><h3>LSO hub</h3><p>Choose a pack · Add to CCDesigner</p><div class="hub-foot">Open from Partner Hubs →</div></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="LSO hub — Add to CCDesigner" data-speaker-notes="LSO hub Add to CCDesigner." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:0;right:0;width:922px;height:922px;transform:translate(20%,-30%);background:radial-gradient(circle at center, rgba(20,184,166,0.16), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad lso-grid slide-auto-enter">
+    <div class="lso-copy">
+      <span class="eyebrow text-accent">LSO hub</span>
+      <h2 class="h2-dark pitch-h2">Choose a resource. Add it to CCDesigner.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:22px;">Open the London Symphony Orchestra hub, pick a classroom pack such as How to Build an Orchestra, then bring those activities straight into your library — or select Partner Planning for the term.</p>
+      <div class="lso-steps">
+        <div class="lso-step"><span class="hub-num">1</span><span>Browse LSO learning resources</span></div>
+        <div class="lso-step"><span class="hub-num">2</span><span>Select a pack for your year group</span></div>
+        <div class="lso-step"><span class="hub-num">3</span><span>Add to CCDesigner — activities appear in your library</span></div>
+      </div>
+    </div>
+    <div class="lso-mock">
+      <div class="lso-mock-head"><div><div class="lso-name">London Symphony Orchestra</div><div class="lso-sub">Partner hub · Music</div></div><span class="hub-role accent-pill">Interactive</span></div>
+      <div class="lso-mock-body">
+        <div class="lso-pack selected">
+          <div class="lso-pack-title">How to Build an Orchestra</div>
+          <p>Year 6 · classroom pack</p>
+          <div class="btn-add">Add to CCDesigner</div>
+        </div>
+        <div class="lso-pack planning">
+          <div class="lso-pack-row"><div class="lso-pack-title">Partner planning</div><span class="check">✓</span></div>
+          <p>Selectable units for your term overview</p>
+          <div class="plan-link">Select partner planning</div>
+        </div>
+        <div class="lso-sync"><span>Activities land in Activity Library · ready for Lesson Builder</span><span class="sync-ok">✓ Synced</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Activity → Lesson → Term" data-speaker-notes="Activity → Lesson → Term flow." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="page-pad flow-wrap slide-auto-enter">
+    <div class="wt-head">
+      <span class="eyebrow text-accent">Planning flow</span>
+      <h2 class="h2-dark pitch-h2">From activity to lesson to term.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:20px;max-width:845px;">Partner activities become a named lesson, then sit on your half-term designer — one continuous path from sector content to the classroom.</p>
+    </div>
+    <div class="flow-stages">
+      <div class="flow-card"><div class="hub-num">1</div><h3>Activity Library</h3><p>Partner &amp; school activities in one place</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-card"><div class="hub-num">2</div><h3>Lesson Builder</h3><p>Sequence warm-ups, mains, plenaries</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-card"><div class="hub-num">3</div><h3>Lesson Library</h3><p>Save, name, and reuse the lesson</p></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-card"><div class="hub-num">4</div><h3>Half-term / term</h3><p>Place it on your planner overview</p></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Key dates &amp; Important dates" data-speaker-notes="Key dates / Important dates." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="bottom:-194px;right:-192px;width:883px;height:883px;background:radial-gradient(circle at center, rgba(182,255,126,0.16), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad dates-grid slide-auto-enter">
+    <div class="dates-copy">
+      <span class="eyebrow text-accent">Key dates</span>
+      <h2 class="h2-dark pitch-h2">Populate with partner key dates.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:22px;">Pull Important dates from a partner into your calendar — concerts, workshops, and sector milestones sit alongside your school year.</p>
+      <div class="populate-box">
+        <div class="populate-label">Populate with key dates from</div>
+        <div class="populate-select"><span>London Symphony Orchestra</span><span>▾</span></div>
+      </div>
+    </div>
+    <div class="dates-panel">
+      <div class="dates-panel-head"><span>Important dates</span><span class="body-muted" style="font-size:15px;">Academic year · 2025–26</span></div>
+      <div class="dates-rows">
+        <div class="date-row"><div class="date-d">12 Oct</div><div class="date-t">LSO Discovery workshop</div><span class="date-tag">Partner</span></div>
+        <div class="date-row"><div class="date-d">3 Nov</div><div class="date-t">Schools concert — Barbican</div><span class="date-tag">Key date</span></div>
+        <div class="date-row"><div class="date-d">18 Jan</div><div class="date-t">Composer visit (primary)</div><span class="date-tag">Partner</span></div>
+        <div class="date-row"><div class="date-d">9 Mar</div><div class="date-t">Spring showcase deadline</div><span class="date-tag">School</span></div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Calendar week &amp; timetable" data-speaker-notes="Week / timetable calendar view." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="page-pad week-grid slide-auto-enter">
+    <div class="week-copy">
+      <span class="eyebrow text-accent">Calendar</span>
+      <h2 class="h2-dark pitch-h2">Your week, your timetable.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:22px;">See partner lessons and school sessions in week or timetable view — then place library lessons into the slots you actually teach.</p>
+    </div>
+    <div class="week-mock">
+      <div class="week-head"><span>Week view · Year 6 Music</span><div class="view-pills"><span>Month</span><span class="on-light">Week</span><span>Timetable</span></div></div>
+      <div class="week-body">
+        <div class="week-dow"><div>Mon</div><div>Tue</div><div>Wed</div><div>Thu</div><div>Fri</div></div>
+        <div class="week-slots">
+          <div class="week-slot"><div class="ws" style="background:#E8F8F0;color:#0A3D32;">Orchestra build</div></div>
+          <div class="week-slot empty"></div>
+          <div class="week-slot"><div class="ws" style="background:#FFF4D6;color:#7A5200;">Rhythm warm-up</div></div>
+          <div class="week-slot"><div class="ws" style="background:#B6FF7E;color:#002D24;">LSO workshop</div></div>
+          <div class="week-slot"><div class="ws" style="background:#E8E2F2;color:#3D2F7A;">Reflect &amp; share</div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="iCompose &amp; We Teach Drama" data-speaker-notes="Paid partners and basket." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-162px;right:-154px;width:845px;height:845px;background:radial-gradient(circle at center, rgba(20,184,166,0.14), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad paid-wrap slide-auto-enter">
+    <div class="wt-head">
+      <span class="eyebrow text-accent">Paid partners</span>
+      <h2 class="h2-dark pitch-h2">iCompose — and We Teach Drama.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:20px;max-width:845px;">Premium partner products sit in a clear school basket. A small platform fee (10–20%) helps sustain CCDesigner while partners keep creating classroom-ready packs.</p>
+    </div>
+    <div class="paid-grid">
+      <div class="paid-card">
+        <div class="paid-top"><span class="paid-name forest">iCompose</span><span class="hub-role accent-pill">Paid hub</span></div>
+        <p>Composition pathways for classrooms — browse the hub, add getting-started packs, and check out through the paid basket.</p>
+        <div class="hub-foot">Add to basket →</div>
+      </div>
+      <div class="paid-card">
+        <div class="paid-top"><span class="paid-name">We Teach Drama</span><span class="hub-role lime-pill">Paid</span></div>
+        <p>Specialist drama resources for schools — same basket flow, clear licensing for departments.</p>
+        <div class="body-muted" style="margin-top:auto;padding-top:13px;border-top:1px solid rgba(15,42,46,0.1);font-size:16px;">Brief mention · full hub in prototype</div>
+      </div>
+      <div class="paid-basket">
+        <div class="mkt-eyebrow">Basket</div>
+        <div class="basket-title">Paid partner checkout</div>
+        <div class="basket-body">Platform fee 10–20% · partners keep creating · schools get classroom-ready packs</div>
+      </div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Settings &amp; key-stage folders" data-speaker-notes="Settings and key-stage folders." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="page-pad settings-grid slide-auto-enter">
+    <div class="settings-copy">
+      <span class="eyebrow text-accent">Settings</span>
+      <h2 class="h2-dark pitch-h2">Key-stage folders you shape.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:22px;">Organise your activity library by key stage and category. Choose the academic year from the year dropdown — your school's structure, not a fixed template.</p>
+      <ul class="settings-list">
+        <li><span class="bullet"></span>Key-stage folders for drama, music &amp; dance</li>
+        <li><span class="bullet"></span>Custom categories and resource links</li>
+        <li><span class="bullet"></span>Academic year dropdown for allocation</li>
+      </ul>
+    </div>
+    <div class="settings-mock">
+      <div class="settings-mock-head"><span>Library · key stages</span><div class="year-dd"><span class="body-muted" style="font-size:14px;">Year</span><span class="year-val">2025–26 ▾</span></div></div>
+      <div class="folder-grid"><div class="folder-card"><div class="folder-icon"></div><div class="folder-name">EYFS</div><div class="body-muted" style="font-size:14px;">Customisable folder</div></div><div class="folder-card"><div class="folder-icon"></div><div class="folder-name">KS1</div><div class="body-muted" style="font-size:14px;">Customisable folder</div></div><div class="folder-card"><div class="folder-icon"></div><div class="folder-name">KS2</div><div class="body-muted" style="font-size:14px;">Customisable folder</div></div><div class="folder-card"><div class="folder-icon"></div><div class="folder-name">KS3</div><div class="body-muted" style="font-size:14px;">Customisable folder</div></div><div class="folder-card"><div class="folder-icon"></div><div class="folder-name">KS4</div><div class="body-muted" style="font-size:14px;">Customisable folder</div></div><div class="folder-card"><div class="folder-icon"></div><div class="folder-name">KS5</div><div class="body-muted" style="font-size:14px;">Customisable folder</div></div></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Organisation hub &amp; share" data-speaker-notes="Organisation hub and share." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="bottom:-216px;left:-230px;width:922px;height:922px;background:radial-gradient(circle at center, rgba(182,255,126,0.14), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad org-wrap slide-auto-enter">
+    <div class="wt-head" style="margin-bottom:43px;">
+      <span class="eyebrow text-accent">Organisations</span>
+      <h2 class="h2-dark pitch-h2">Share practice across your organisation.</h2>
+      <p class="body-muted pitch-body-lg" style="margin-top:22px;max-width:883px;">School and arts-organisation hubs keep lessons, partner packs, and planning visible to the right people — so great teaching multiplies beyond one classroom.</p>
+    </div>
+    <div class="org-cards">
+      <div class="org-card"><div class="org-dot"></div><h3>School hub</h3><p>Department libraries, branding, and shared units</p></div>
+      <div class="org-card"><div class="org-dot"></div><h3>Partner hub</h3><p>Sector resources teachers can pull in once</p></div>
+      <div class="org-card"><div class="org-dot"></div><h3>Share value</h3><p>Colleagues reuse what works — nothing lost</p></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Celebrating learning in the arts" data-speaker-notes="Celebrating arts learning." class="bg-cream" style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="orb" style="top:-162px;left:-192px;width:960px;height:960px;background:radial-gradient(circle at center, rgba(20,184,166,0.18), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="orb" style="bottom:-216px;right:-192px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.16), transparent 65%);filter:blur(58px);" aria-hidden="true"></div>
+  <div class="page-pad celebrate-wrap slide-auto-enter">
+    <div class="celebrate-head">
+      <span class="eyebrow text-accent">Celebrating the work</span>
+      <h2 class="h2-dark" style="font-size:88px;">Learning in the arts deserves to be <span class="text-accent" style="font-style:italic;">seen</span>.</h2>
+      <p class="body-muted" style="margin-top:32px;font-size:27px;max-width:1056px;">Every freeze-frame, every first improvisation, every Year 6 ensemble piece is evidence that the arts are alive in our schools. CCD turns the daily craft of teaching into a record worth celebrating — published to school homepages, shared with parents, gathered into year-end showcases that tell the real story of arts education.</p>
+    </div>
+    <div class="celebrate-cards">
+      <div class="cel-card" style="border-left-color:#008272;"><div class="cel-kicker" style="color:#008272;">On the school homepage</div><div class="cel-title">This week in the arts</div><p>Lessons published live so parents and SLT see what's happening on stage and in the studio — not just on the spreadsheet.</p></div>
+      <div class="cel-card" style="border-left-color:#7C3AED;"><div class="cel-kicker" style="color:#7C3AED;">Year-end showcase</div><div class="cel-title">From sketchbook to stage</div><p>Pull every lesson, photo and reflection from a unit into a single, shareable timeline. Frame the journey, not just the performance.</p></div>
+      <div class="cel-card" style="border-left-color:#FF6B6B;"><div class="cel-kicker" style="color:#FF6B6B;">Practitioner portfolio</div><div class="cel-title">What I taught this year</div><p>An export every educator can hand to a head, a partner organisation, or take with them into the next role.</p></div>
+      <div class="cel-card" style="border-left-color:#FBBF24;"><div class="cel-kicker" style="color:#FBBF24;">Sector evidence</div><div class="cel-title">What the arts look like in 1,000 classrooms</div><p>Anonymised, aggregated insight for funders, MATs and arts councils — so the case for the arts is grounded in real practice.</p></div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Inspiring, life-changing arts education" data-speaker-notes="Life-changing arts education quotes." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="absolute-fill" style="background:#002D24;"></div>
+  <div class="orb" style="top:-216px;right:-288px;width:1152px;height:1152px;background:radial-gradient(circle at center, rgba(124,58,237,0.35), transparent 65%);filter:blur(77px);" aria-hidden="true"></div>
+  <div class="orb" style="bottom:-270px;left:-288px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(255,107,107,0.30), transparent 65%);filter:blur(77px);" aria-hidden="true"></div>
+  <div class="page-pad life-grid slide-auto-enter">
+    <div class="life-copy">
+      <span class="life-pill">Inspiring · Life-changing</span>
+      <h2 class="h2-white" style="font-size:104px;line-height:0.98;">One inspiring lesson can <span class="text-accent">change a life</span>.</h2>
+      <p class="body-white-80" style="margin-top:32px;font-size:27px;max-width:806px;">Ask any director, choreographer, conductor or composer where it started, and you'll hear the same answer: a teacher, a moment, a lesson that opened a door. CCD is built so those moments multiply — so the brilliant lesson a teacher teaches in Stoke this Tuesday is the lesson a non-specialist in Truro can teach next week.</p>
+    </div>
+    <div class="life-quotes">
+      <figure class="glass-quote"><blockquote>"My drama teacher gave me the courage to audition. Without that one lesson I'd have never set foot on a stage."</blockquote><figcaption>RSC company member, 2024</figcaption></figure>
+      <figure class="glass-quote"><blockquote>"I learned to read music in Year 5 from a peripatetic teacher who came in once a week. That teacher built my whole career."</blockquote><figcaption>BBC Symphony player</figcaption></figure>
+      <div class="life-accent-card">Every shared lesson is one more door, opened for one more child.</div>
+    </div>
+  </div>
+</section>
+<section data-document-role="page" data-label="Grow your creative practice — together" data-speaker-notes="Closing CTA." style="width:1920px;height:1080px;position:relative;overflow:visible;flex-shrink:0;">
+  <div class="brand-stamp" aria-hidden="true">
+    <div class="brand-stamp-pill">
+      <img src="https://raw.githubusercontent.com/rrs77/CCDARTSCOUNCIL/main/artifacts/ccd-pitch/public/cc-mark.png" alt="" width="60" height="34" />
+      <span>Designer</span>
+    </div>
+  </div>
+  <div class="absolute-fill" style="background:#002D24;"></div>
+  <div class="orb" style="bottom:-324px;right:-384px;width:1344px;height:1344px;background:radial-gradient(circle at center, rgba(255,107,107,0.45), transparent 65%);filter:blur(77px);" aria-hidden="true"></div>
+  <div class="orb" style="top:-216px;left:-288px;width:1056px;height:1056px;background:radial-gradient(circle at center, rgba(20,184,166,0.35), transparent 65%);filter:blur(77px);" aria-hidden="true"></div>
+  <div class="page-pad cta-wrap slide-auto-enter">
+    <div class="cta-head">
+      <span class="life-pill">Try it with your school, department or arts organisation</span>
+      <h1 class="cta-h1">Grow your creative<span class="text-accent">practice — together.</span></h1>
+      <p class="body-white-85" style="margin-top:32px;font-size:31px;max-width:1056px;">Built with educators and tested in real classrooms. Powered by your creativity. Shared with theatres, orchestras, dance companies, universities and outreach teams — together, building the creative archive your sector deserves. Bring CCD into your school, department or arts organisation for a half-term trial and we'll walk your team through it.</p>
+    </div>
+    <div class="cta-cards">
+      <div class="glass-card"><div class="cta-label text-accent">Visit</div><div class="cta-val">www.ccdesigner.co.uk</div></div>
+      <div class="glass-card"><div class="cta-label text-accent">Email</div><div class="cta-val">hello@ccdesigner.co.uk</div></div>
+      <div class="cta-card-accent"><div class="cta-label">Book a demo</div><div class="cta-val">30-minute walk-through with your team or partners</div></div>
+    </div>
+  </div>
+</section>
+</body>
+</html>
