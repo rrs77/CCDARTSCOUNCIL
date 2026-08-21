@@ -2,27 +2,52 @@ import { Map as MapIcon } from "lucide-react";
 import { useCallback, useEffect, useId, useRef, useState } from "react";
 import type { Presentation } from "@/content/layoutPresentation";
 import { SECTION_ACCENT } from "@/content/sectionAccent";
-import { STAGE_ORDER, stageLabel } from "@/content/stackLabels";
 
 type NavItem = { id: string | null; label: string };
+type NavGroup = { heading: string; items: NavItem[] };
 
 const ACCENT = SECTION_ACCENT;
 
-function buildItems(presentation: Presentation): NavItem[] {
+/** Short Map labels — nested menu, not the long document title. */
+function buildMenu(presentation: Presentation): {
+  lone: NavItem[];
+  groups: NavGroup[];
+} {
   const byId = new Map(presentation.frames.filter((f) => !f.parentId).map((f) => [f.id, f]));
-  const items: NavItem[] = [{ id: null, label: "Overview" }];
-  for (const id of STAGE_ORDER) {
-    const f = byId.get(id);
-    if (f) items.push({ id: f.id, label: stageLabel(f.id, f.title) });
-  }
-  const sources = byId.get("sources");
-  if (sources) items.push({ id: sources.id, label: stageLabel(sources.id, sources.title) });
-  return items;
+  const pick = (id: string, label: string): NavItem | null =>
+    byId.has(id) ? { id, label } : null;
+
+  const lone: NavItem[] = [{ id: null, label: "Overview" }];
+
+  const groups: NavGroup[] = [];
+  const stages = [
+    pick("primary-eyfs-ks2", "Primary"),
+    pick("secondary-ks3-ks4", "Secondary and access"),
+    pick("ks5-a-level", "A-level"),
+  ].filter(Boolean) as NavItem[];
+  if (stages.length) groups.push({ heading: "Key stages", items: stages });
+
+  const after = [
+    pick("university-he", "Higher education"),
+    byId.has("ccdesigner")
+      ? { id: "ccdesigner", label: "Music Hubs and National Centre" }
+      : null,
+  ].filter(Boolean) as NavItem[];
+  if (after.length) groups.push({ heading: "After school", items: after });
+
+  const ccd = pick("ccdesigner", "CCDesigner");
+  if (ccd) lone.push(ccd);
+
+  const sources = pick("sources", "Sources");
+  if (sources) lone.push(sources);
+
+  return { lone, groups };
 }
 
 /**
- * Map column: open on load; whole column slides off on mouse leave.
- * Labels match key-stage pathway names.
+ * Alternative navigation: collapsed Map chip by default (does not cover canvas).
+ * Hover/focus expands a narrow panel; mouse leave (≈250ms) closes it.
+ * Touch: tap chip to open/pin, tap canvas or chip again to close.
  */
 export function MapNav({
   presentation,
@@ -35,12 +60,12 @@ export function MapNav({
   onOverview: () => void;
   onJump: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const closeTimer = useRef<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
-  const items = buildItems(presentation);
+  const { lone, groups } = buildMenu(presentation);
 
   const clearClose = useCallback(() => {
     if (closeTimer.current) {
@@ -52,7 +77,7 @@ export function MapNav({
   const scheduleClose = useCallback(() => {
     if (pinned) return;
     clearClose();
-    closeTimer.current = window.setTimeout(() => setOpen(false), 220);
+    closeTimer.current = window.setTimeout(() => setOpen(false), 250);
   }, [clearClose, pinned]);
 
   const openNow = useCallback(() => {
@@ -75,6 +100,7 @@ export function MapNav({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [open]);
 
+  // Tap outside closes (touch / click on canvas)
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
@@ -97,93 +123,82 @@ export function MapNav({
   const go = (id: string | null) => {
     if (id === null) onOverview();
     else onJump(id);
+    // Keep panel usable on desktop hover; on touch, close after navigate
+    if (pinned) {
+      setPinned(false);
+      setOpen(false);
+    }
   };
 
   const onTabClick = () => {
-    if (open && pinned) {
+    if (open) {
       setPinned(false);
       setOpen(false);
-      return;
-    }
-    if (open) {
-      setPinned(true);
       return;
     }
     setPinned(true);
     setOpen(true);
   };
 
-  return (
-    <>
-      <div
-        className={`map-edge-hit ${open ? "is-hidden" : ""}`}
-        onMouseEnter={openNow}
-        onFocus={openNow}
-        aria-hidden={open}
-      >
+  const renderLink = (item: NavItem) => {
+    const accent = ACCENT[item.id ?? "overview"] ?? "#B6FF7E";
+    const current = isCurrent(item.id);
+    return (
+      <li key={`${item.id ?? "overview"}-${item.label}`}>
         <button
           type="button"
-          className="map-edge-chip"
-          aria-label="Show map"
-          onClick={() => {
-            setPinned(true);
-            setOpen(true);
-          }}
+          className={`map-nav-link ${current ? "is-current" : ""}`}
+          style={{ ["--map-accent" as string]: accent }}
+          onClick={() => go(item.id)}
         >
-          <MapIcon className="map-nav-tab-icon" strokeWidth={2.25} aria-hidden />
+          <span className="map-nav-pip" aria-hidden />
+          <span className="map-nav-link-label">{item.label}</span>
         </button>
-      </div>
+      </li>
+    );
+  };
 
-      <div
-        ref={rootRef}
-        className={`map-nav ${open ? "is-open" : "is-collapsed"} ${pinned ? "is-pinned" : ""}`}
-        onMouseEnter={openNow}
-        onMouseLeave={scheduleClose}
-        onFocusCapture={openNow}
+  return (
+    <div
+      ref={rootRef}
+      className={`map-nav ${open ? "is-open" : "is-collapsed"} ${pinned ? "is-pinned" : ""}`}
+      onMouseEnter={openNow}
+      onMouseLeave={scheduleClose}
+      onFocusCapture={openNow}
+    >
+      <button
+        type="button"
+        className="map-nav-tab"
+        aria-expanded={open}
+        aria-controls={panelId}
+        title="Map — alternative navigation"
+        onClick={onTabClick}
       >
-        <div className="map-nav-column">
-          <button
-            type="button"
-            className="map-nav-tab"
-            aria-expanded={open}
-            aria-controls={panelId}
-            title={pinned ? "Unpin map" : "Map"}
-            onClick={onTabClick}
-          >
-            <MapIcon className="map-nav-tab-icon" strokeWidth={2.25} aria-hidden />
-            <span className="map-nav-tab-text">Map</span>
-          </button>
+        <MapIcon className="map-nav-tab-icon" strokeWidth={2.25} aria-hidden />
+        <span className="map-nav-tab-text">Map</span>
+      </button>
 
-          <nav
-            id={panelId}
-            className="map-nav-panel"
-            aria-label="Map"
-            aria-hidden={!open}
-            inert={!open ? true : undefined}
-          >
-            <p className="map-nav-heading">Map</p>
-            <ul className="map-nav-list">
-              {items.map((item) => {
-                const accent = ACCENT[item.id ?? "overview"] ?? "#B6FF7E";
-                const current = isCurrent(item.id);
-                return (
-                  <li key={item.id ?? "overview"}>
-                    <button
-                      type="button"
-                      className={`map-nav-link ${current ? "is-current" : ""}`}
-                      style={{ ["--map-accent" as string]: accent }}
-                      onClick={() => go(item.id)}
-                    >
-                      <span className="map-nav-pip" aria-hidden />
-                      <span className="map-nav-link-label">{item.label}</span>
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
-          </nav>
-        </div>
-      </div>
-    </>
+      <nav
+        id={panelId}
+        className="map-nav-panel"
+        aria-label="Map"
+        aria-hidden={!open}
+        inert={!open ? true : undefined}
+      >
+        <p className="map-nav-heading">Map</p>
+        <ul className="map-nav-list">{lone.slice(0, 1).map(renderLink)}</ul>
+
+        {groups.map((g) => (
+          <div key={g.heading} className="map-nav-group">
+            <p className="map-nav-subhead">{g.heading}</p>
+            <ul className="map-nav-list">{g.items.map(renderLink)}</ul>
+          </div>
+        ))}
+
+        {lone.length > 1 ? (
+          <ul className="map-nav-list map-nav-list--tail">{lone.slice(1).map(renderLink)}</ul>
+        ) : null}
+      </nav>
+    </div>
   );
 }
