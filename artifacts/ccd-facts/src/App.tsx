@@ -341,7 +341,7 @@ export default function App() {
     <div className="facts-app">
       <header className={`topbar ${chromeVisible ? "is-visible" : "is-dim"}`}>
         <div className="topbar-brand">
-          <LogoMark size={w < 640 ? 42 : 50} />
+          <LogoMark size={w < 640 ? 53 : 63} />
           <div className="topbar-brand-text">
             <div className="topbar-brand-name">{meta.brand}</div>
             <div className="topbar-brand-title">
