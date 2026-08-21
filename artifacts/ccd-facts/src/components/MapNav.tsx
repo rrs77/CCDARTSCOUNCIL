@@ -8,18 +8,27 @@ type NavGroup = { heading: string; items: NavItem[] };
 
 const ACCENT = SECTION_ACCENT;
 
-/** Short Map labels — nested menu, not the long document title. */
+/**
+ * Nested Map menu — short labels only (never the long document title).
+ * Overview → The situation → Key stages → After school → A solution
+ */
 function buildMenu(presentation: Presentation): {
   lone: NavItem[];
   groups: NavGroup[];
+  destIds: Set<string>;
 } {
-  const byId = new Map(presentation.frames.filter((f) => !f.parentId).map((f) => [f.id, f]));
+  const byId = new Map(presentation.frames.map((f) => [f.id, f]));
   const pick = (id: string, label: string): NavItem | null =>
     byId.has(id) ? { id, label } : null;
 
-  const lone: NavItem[] = [{ id: null, label: "Overview" }];
+  // Overview + opening title as “The situation” — not the full # document title
+  const lone: NavItem[] = [
+    { id: null, label: "Overview" },
+    ...(pick("title", "The situation") ? [pick("title", "The situation")!] : []),
+  ];
 
   const groups: NavGroup[] = [];
+
   const stages = [
     pick("primary-eyfs-ks2", "Primary"),
     pick("secondary-ks3-ks4", "Secondary and access"),
@@ -27,18 +36,21 @@ function buildMenu(presentation: Presentation): {
   ].filter(Boolean) as NavItem[];
   if (stages.length) groups.push({ heading: "Key stages", items: stages });
 
-  const after = [pick("university-he", "Higher education")].filter(Boolean) as NavItem[];
+  const after = [
+    pick("university-he", "Higher education"),
+    pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
+  ].filter(Boolean) as NavItem[];
   if (after.length) groups.push({ heading: "After school", items: after });
 
   const solution = pick("a-solution", "CCDesigner");
-  if (solution) {
-    groups.push({ heading: "A solution", items: [solution] });
+  if (solution) groups.push({ heading: "A solution", items: [solution] });
+
+  const destIds = new Set<string>();
+  for (const item of [...lone, ...groups.flatMap((g) => g.items)]) {
+    if (item.id) destIds.add(item.id);
   }
 
-  const sources = pick("sources", "Sources");
-  if (sources) lone.push(sources);
-
-  return { lone, groups };
+  return { lone, groups, destIds };
 }
 
 /**
@@ -62,7 +74,7 @@ export function MapNav({
   const closeTimer = useRef<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
-  const { lone, groups } = buildMenu(presentation);
+  const { lone, groups, destIds } = buildMenu(presentation);
 
   const clearClose = useCallback(() => {
     if (closeTimer.current) {
@@ -97,7 +109,6 @@ export function MapNav({
     return () => window.removeEventListener("keydown", onKey, true);
   }, [open]);
 
-  // Tap outside closes (touch / click on canvas)
   useEffect(() => {
     if (!open) return;
     const onDown = (e: PointerEvent) => {
@@ -113,14 +124,17 @@ export function MapNav({
     if (id === null) return focusId === null;
     if (focusId === id) return true;
     if (!focusId) return false;
-    const f = presentation.frames.find((x) => x.id === focusId);
-    return f?.mainSectionId === id;
+    const focused = presentation.frames.find((x) => x.id === focusId);
+    if (!focused) return false;
+    // Dedicated Map row (e.g. Music Hubs) owns its own highlight — don’t light the parent
+    if (destIds.has(focusId)) return false;
+    // Unlisted leaf → highlight its hub row
+    return focused.mainSectionId === id;
   };
 
   const go = (id: string | null) => {
     if (id === null) onOverview();
     else onJump(id);
-    // Keep panel usable on desktop hover; on touch, close after navigate
     if (pinned) {
       setPinned(false);
       setOpen(false);
@@ -182,19 +196,16 @@ export function MapNav({
         aria-hidden={!open}
         inert={!open ? true : undefined}
       >
-        <p className="map-nav-heading">Map</p>
-        <ul className="map-nav-list">{lone.slice(0, 1).map(renderLink)}</ul>
+        <div className="map-nav-panel-inner">
+          <ul className="map-nav-list">{lone.map(renderLink)}</ul>
 
-        {groups.map((g) => (
-          <div key={g.heading} className="map-nav-group">
-            <p className="map-nav-subhead">{g.heading}</p>
-            <ul className="map-nav-list">{g.items.map(renderLink)}</ul>
-          </div>
-        ))}
-
-        {lone.length > 1 ? (
-          <ul className="map-nav-list map-nav-list--tail">{lone.slice(1).map(renderLink)}</ul>
-        ) : null}
+          {groups.map((g) => (
+            <div key={g.heading} className="map-nav-group">
+              <p className="map-nav-subhead">{g.heading}</p>
+              <ul className="map-nav-list">{g.items.map(renderLink)}</ul>
+            </div>
+          ))}
+        </div>
       </nav>
     </div>
   );
