@@ -798,8 +798,7 @@ button {
   margin-top: 1.35rem;
 }
 
-.glance-section p,
-.glance-caveat {
+.glance-section p {
   margin: 0.9em 0 0;
   font-size: 1.125rem;
   line-height: 1.55;
@@ -815,9 +814,9 @@ button {
 }
 
 .glance-caveat {
-  margin: 0.75rem 0 0;
-  font-size: 0.8rem;
-  line-height: 1.45;
+  margin: 0.9em 0 0;
+  font-size: 1.05rem;
+  line-height: 1.55;
   color: var(--muted);
   font-style: italic;
 }
