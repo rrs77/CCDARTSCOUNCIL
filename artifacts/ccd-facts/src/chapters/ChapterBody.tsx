@@ -1,6 +1,7 @@
 import { motion, useReducedMotion } from "framer-motion";
-import { useState, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { ContentChart } from "@/components/charts/Charts";
+import { EditableText } from "@/components/EditableText";
 import {
   getChart,
   getStat,
@@ -107,28 +108,102 @@ export function SourcesPage({
   );
 }
 
+/** Stacked story paragraphs — each idea is its own block with real air between. */
+function StoryParas({
+  paragraphs,
+  editMode,
+  onChange,
+  showKeys,
+  topicId,
+}: {
+  paragraphs: string[];
+  editMode?: boolean;
+  onChange?: (next: string[]) => void;
+  showKeys?: boolean;
+  topicId: string;
+}) {
+  const focusAfterInsert = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (focusAfterInsert.current == null) return;
+    const idx = focusAfterInsert.current;
+    focusAfterInsert.current = null;
+    const el = document.querySelector(
+      `[data-story-para="${topicId}-${idx}"]`,
+    ) as HTMLElement | null;
+    el?.focus();
+  }, [paragraphs, topicId]);
+
+  const setAt = (index: number, value: string) => {
+    if (!onChange) return;
+    const next = [...paragraphs];
+    next[index] = value;
+    onChange(next);
+  };
+
+  const insertAfter = (index: number) => {
+    if (!onChange) return;
+    const next = [...paragraphs];
+    next.splice(index + 1, 0, "");
+    focusAfterInsert.current = index + 1;
+    onChange(next);
+  };
+
+  return (
+    <ul className="topic-story-list">
+      {paragraphs.map((p, i) => (
+        <li key={`${topicId}-p-${i}`} className="topic-story-item">
+          {editMode && onChange ? (
+            <EditableText
+              value={p}
+              editMode
+              as="p"
+              className="pitch-body topic-story-para"
+              data-story-para={`${topicId}-${i}`}
+              placeholder="New paragraph…"
+              aria-label={`Paragraph ${i + 1}`}
+              onChange={(v) => setAt(i, v)}
+              onEnterNewParagraph={() => insertAfter(i)}
+            />
+          ) : (
+            <p className="pitch-body topic-story-para">{p}</p>
+          )}
+          {showKeys ? <span className="edit-key"> body[{i}]</span> : null}
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 export function ChapterBody({
   cluster,
   showKeys,
   hideTitle,
+  editMode,
 }: {
   cluster: TopicDef;
   showKeys?: boolean;
   hideTitle?: boolean;
+  editMode?: boolean;
 }) {
   const [drill, setDrill] = useState<string | null>(null);
+  const [body, setBody] = useState(cluster.body);
   const reduced = useReducedMotion() ?? false;
   const item = reduced ? reducedItem : itemVariants;
   const isCcd = cluster.id === "ccd";
-  /** CCD story page: pull-out only on the right — no chart legend wall. */
   const charts = isCcd
     ? []
     : [...(cluster.chartIds ?? []), ...(cluster.nestedChartIds ?? [])];
+  const hasFigures = !!(cluster.statIds?.length || charts.length);
+
+  useEffect(() => {
+    setBody(cluster.body);
+  }, [cluster.id, cluster.body]);
 
   return (
     <motion.div
       key={cluster.id}
-      className="topic-layout"
+      className="topic-layout topic-layout--stack"
       variants={listVariants}
       initial="hidden"
       animate="show"
@@ -148,68 +223,73 @@ export function ChapterBody({
           </motion.p>
         ) : null}
 
-        <motion.div className="topic-story-paras" variants={item}>
-          {cluster.body.map((p, i) => (
-            <p key={i} className="pitch-body">
-              {p}
-            </p>
-          ))}
-        </motion.div>
-      </div>
-
-      <div className="topic-layout-side">
-        {cluster.statIds?.length ? (
-          <motion.div className="stat-grid" variants={item}>
-            {cluster.statIds.map((id) => {
-              const s = getStat(id);
-              if (!s) return null;
-              return (
-                <div key={id} className="stat-pill">
-                  <div className="num pitch-stat">
-                    {s.value}
-                    {showKeys ? <span className="edit-key"> stats.{id}</span> : null}
-                  </div>
-                  <div className="lbl pitch-caption">
-                    <strong>{s.label}</strong>
-                    <br />
-                    {s.footnote}
-                  </div>
-                </div>
-              );
-            })}
-          </motion.div>
-        ) : null}
-
-        {charts.map((cid, i) => {
-          const chart = getChart(cid);
-          if (!chart) return null;
-          const nested = i >= (cluster.chartIds?.length ?? 0);
-          return (
-            <motion.div
-              key={cid}
-              className={`chart-hero ${nested ? "chart-nested" : ""}`}
-              variants={item}
-            >
-              {nested ? <p className="chart-nested-label">Detail</p> : null}
-              <ContentChart
-                chart={chart}
-                showKeys={showKeys}
-                onDrill={(label) => setDrill(label ? `Selected: ${label}` : null)}
-              />
-            </motion.div>
-          );
-        })}
-
-        {drill ? (
-          <motion.div variants={item}>
-            <Drill text={drill} onClear={() => setDrill(null)} />
-          </motion.div>
-        ) : null}
-
         <motion.div variants={item}>
-          <WhyCcd showKeys={showKeys}>{cluster.whyThisMattersForCCD}</WhyCcd>
+          <StoryParas
+            topicId={cluster.id}
+            paragraphs={body}
+            editMode={editMode}
+            showKeys={showKeys}
+            onChange={editMode ? setBody : undefined}
+          />
         </motion.div>
       </div>
+
+      {hasFigures ? (
+        <div className="topic-layout-figures">
+          {cluster.statIds?.length ? (
+            <motion.div className="stat-grid" variants={item}>
+              {cluster.statIds.map((id) => {
+                const s = getStat(id);
+                if (!s) return null;
+                return (
+                  <div key={id} className="stat-pill">
+                    <div className="num pitch-stat">
+                      {s.value}
+                      {showKeys ? <span className="edit-key"> stats.{id}</span> : null}
+                    </div>
+                    <div className="lbl pitch-caption">
+                      <strong>{s.label}</strong>
+                      <br />
+                      {s.footnote}
+                    </div>
+                  </div>
+                );
+              })}
+            </motion.div>
+          ) : null}
+
+          {charts.map((cid, i) => {
+            const chart = getChart(cid);
+            if (!chart) return null;
+            const nested = i >= (cluster.chartIds?.length ?? 0);
+            return (
+              <motion.div
+                key={cid}
+                className={`chart-hero ${nested ? "chart-nested" : ""}`}
+                variants={item}
+              >
+                {nested ? <p className="chart-nested-label">Detail</p> : null}
+                <ContentChart
+                  chart={chart}
+                  showKeys={showKeys}
+                  onDrill={(label) => setDrill(label ? `Selected: ${label}` : null)}
+                />
+              </motion.div>
+            );
+          })}
+
+          {drill ? (
+            <motion.div variants={item}>
+              <Drill text={drill} onClear={() => setDrill(null)} />
+            </motion.div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* Pull-out last — after body, reachable by scroll */}
+      <motion.div className="topic-layout-why" variants={item}>
+        <WhyCcd showKeys={showKeys}>{cluster.whyThisMattersForCCD}</WhyCcd>
+      </motion.div>
     </motion.div>
   );
 }

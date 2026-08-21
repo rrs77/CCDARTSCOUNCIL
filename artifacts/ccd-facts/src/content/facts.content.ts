@@ -691,7 +691,7 @@ export const topics: TopicDef[] = [
       "Connect rather than duplicate — make outstanding practice usable day to day. CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5).",
       "Make partnership measurable — Partner Hubs aim to connect teachers with arts organisations in the same place they plan, so collaboration shows up in everyday work.",
       "Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Keep Music Hub (£76m annual to AY 2026/27 + £25m capital) and National Centre (up to £13m over three years) streams distinct; do not say hub funding simply “declined”.",
-      "Logos are demonstration only — organisation marks on the live site are not endorsements or signed partnerships.",
+      "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
     ],
     whyThisMattersForCCD:
       "The evidence shows fragmentation and unequal entitlement. CCD aims to be the practical connection layer — not a claimed fix for structural inequality.",

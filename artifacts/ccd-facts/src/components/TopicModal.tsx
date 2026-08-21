@@ -36,6 +36,7 @@ export function TopicModal({
   fromDir = null,
   open,
   shrinking = false,
+  editMode = false,
 }: {
   cluster: TopicDef;
   showKeys?: boolean;
@@ -44,6 +45,7 @@ export function TopicModal({
   fromDir?: TravelDir;
   open: boolean;
   shrinking?: boolean;
+  editMode?: boolean;
 }) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const swipeRef = useRef<{ x: number; y: number } | null>(null);
@@ -192,7 +194,12 @@ export function TopicModal({
                     transition={{ duration: reduced ? 0.01 : 0.22, ease: EASE }}
                   >
                     {page === 0 ? (
-                      <ChapterBody cluster={cluster} showKeys={showKeys} hideTitle />
+                      <ChapterBody
+                        cluster={cluster}
+                        showKeys={showKeys}
+                        hideTitle
+                        editMode={editMode}
+                      />
                     ) : (
                       <SourcesPage cluster={cluster} showKeys={showKeys} />
                     )}

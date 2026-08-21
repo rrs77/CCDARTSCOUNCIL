@@ -741,6 +741,7 @@ export default function App() {
           shrinking={shrinking && !!modalId}
           cluster={panelTopic}
           showKeys={showKeys}
+          editMode={editMode}
           fromDir={fromDir}
           onClose={closeModal}
           footer={

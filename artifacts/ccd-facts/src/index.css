@@ -576,46 +576,100 @@ button {
   color: var(--muted);
 }
 
-/* Two-column story layout inside landscape modals */
+/* Stacked story layout — body first, figures, pull-out last (scrollable) */
 .topic-layout {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 1.5rem;
-  align-items: start;
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  align-items: stretch;
+  max-width: 46rem;
 }
 
-@media (min-width: 820px) {
-  .topic-layout {
-    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
-    gap: 2rem;
-  }
+.topic-layout--stack {
+  max-width: 46rem;
 }
 
 .topic-layout-story {
   min-width: 0;
 }
 
-.topic-layout-side {
+.topic-layout-figures {
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 1rem;
+  gap: 1.15rem;
+}
+
+.topic-layout-why {
+  min-width: 0;
+  margin-top: 0.25rem;
 }
 
 .topic-lead {
-  margin: 0 0 1em;
+  margin: 0 0 1.05em;
   font-size: 1.2rem;
   font-weight: 650;
   line-height: 1.45;
   color: var(--teal);
 }
 
-.topic-story-paras .pitch-body {
-  margin: 0 0 1em;
+/* Each idea is its own block with real air — not a sandwiched blob */
+.topic-story-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
 }
 
-.topic-story-paras .pitch-body:last-child {
-  margin-bottom: 0;
+.topic-story-item {
+  margin: 0;
+  padding: 0;
+}
+
+.topic-story-para,
+.topic-story-list .pitch-body,
+.topic-story-paras .pitch-body {
+  margin: 0 0 1.05em;
+  font-size: 1.125rem;
+  line-height: 1.55;
+  color: #1a332e;
+}
+
+.topic-story-item:last-child .topic-story-para,
+.topic-story-item:last-child .pitch-body {
+  margin-bottom: 0.35em;
+}
+
+.editable-text {
+  display: block;
+  width: 100%;
+  min-height: 1.55em;
+  height: auto;
+  overflow: visible;
+  white-space: pre-wrap;
+  word-break: break-word;
+  outline: none;
+  border-radius: 0.45rem;
+  padding: 0.35rem 0.45rem;
+  margin-left: -0.45rem;
+  margin-right: -0.45rem;
+  box-sizing: border-box;
+  background: rgba(182, 255, 126, 0.12);
+  border: 1px dashed rgba(0, 45, 36, 0.28);
+  cursor: text;
+}
+
+.editable-text:focus {
+  background: rgba(182, 255, 126, 0.22);
+  border-color: var(--forest);
+}
+
+.editable-text:empty::before {
+  content: attr(data-placeholder);
+  color: var(--muted);
+  pointer-events: none;
 }
 
 .topic-sources-page {
@@ -741,7 +795,14 @@ button {
 }
 
 .glance-section {
-  margin-top: 1.25rem;
+  margin-top: 1.35rem;
+}
+
+.glance-section p,
+.glance-caveat {
+  margin: 0.9em 0 0;
+  font-size: 1.125rem;
+  line-height: 1.55;
 }
 
 .glance-section-title {
