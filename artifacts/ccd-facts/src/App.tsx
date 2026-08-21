@@ -1,61 +1,22 @@
 import { animate, motion, useMotionValue } from "framer-motion";
-import { Home, Pencil, ZoomIn, ZoomOut } from "lucide-react";
-import { ZoomIntoIcon } from "@/components/ZoomChrome";
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type PointerEvent as ReactPointerEvent,
-} from "react";
-import { GlanceModal } from "@/components/GlanceModal";
+import { useCallback, useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { LogoMark } from "@/components/LogoMark";
-import { TopicModal, type TravelDir } from "@/components/TopicModal";
-import {
-  getStrandIndex,
-  getStrandItem,
-  getTopic,
-  meta,
-  overview,
-  strand,
-  topicOrder,
-  type StrandItem,
-  type TopicDef,
-} from "@/content/facts.content";
-import { isEditingField } from "@/content/editableStore";
+import { PresentChrome } from "@/components/PresentChrome";
+import { SectionFrame } from "@/components/SectionFrame";
+import { meta } from "@/content/facts.content";
+import { buildPresentation, getFrame, type Presentation } from "@/content/layoutPresentation";
+import { parseContentMarkdown } from "@/content/parseContent";
+import rawContent from "../CONTENT.md?raw";
 
 const EASE_OUT: [number, number, number, number] = [0.16, 1, 0.3, 1];
-const FLY_MS = 0.42;
-const SHRINK_MS = 360;
-const TRAVEL_MS = 480;
-const MAX_ZOOM_MULT = 10;
-/** Same step for header +/- buttons and keyboard +/-/=/_ (repeatable on keydown). */
-const ZOOM_IN_FACTOR = 1.2;
-const ZOOM_OUT_FACTOR = 1 / ZOOM_IN_FACTOR;
-
-function isZoomInKey(e: KeyboardEvent) {
-  return (
-    e.key === "+" ||
-    e.key === "=" ||
-    e.key === "Add" ||
-    e.code === "Equal" ||
-    e.code === "NumpadAdd"
-  );
-}
-
-function isZoomOutKey(e: KeyboardEvent) {
-  return (
-    e.key === "-" ||
-    e.key === "_" ||
-    e.key === "Subtract" ||
-    e.code === "Minus" ||
-    e.code === "NumpadSubtract"
-  );
-}
+const MOVE_MS = 0.48;
+const ZOOM_IN = 1.2;
+const ZOOM_OUT = 1 / ZOOM_IN;
+const FRAME_FIT = 0.86;
+const STORAGE_KEY = "ccd-facts-location";
 
 function useViewport() {
-  const [size, setSize] = useState({ w: 390, h: 844 });
+  const [size, setSize] = useState({ w: 1280, h: 800 });
   useEffect(() => {
     const update = () => setSize({ w: window.innerWidth, h: window.innerHeight });
     update();
@@ -81,54 +42,55 @@ function clamp(n: number, min: number, max: number) {
   return Math.min(max, Math.max(min, n));
 }
 
-function cameFrom(prev: { x: number; y: number } | undefined, next: { x: number; y: number }): TravelDir {
-  if (!prev) return null;
-  const dx = prev.x - next.x;
-  const dy = prev.y - next.y;
-  if (Math.abs(dx) < 40 && Math.abs(dy) < 40) return null;
-  if (Math.abs(dx) >= Math.abs(dy)) return dx > 0 ? "right" : "left";
-  return dy > 0 ? "down" : "up";
+function isZoomInKey(e: KeyboardEvent) {
+  return e.key === "+" || e.key === "=" || e.code === "Equal" || e.code === "NumpadAdd";
+}
+function isZoomOutKey(e: KeyboardEvent) {
+  return e.key === "-" || e.key === "_" || e.code === "Minus" || e.code === "NumpadSubtract";
 }
 
-function heroUrl() {
+function isTypingTarget() {
+  const el = document.activeElement as HTMLElement | null;
+  if (!el) return false;
+  if (el.isContentEditable) return true;
+  const t = el.tagName;
+  return t === "INPUT" || t === "TEXTAREA" || el.getAttribute("role") === "textbox";
+}
+
+function heroUrl(file: string) {
   const base = import.meta.env.BASE_URL || "/";
-  return `${base}${overview.heroImage}`.replace(/\/{2,}/g, "/").replace(":/", "://");
+  return `${base}${file}`.replace(/\/{2,}/g, "/").replace(":/", "://");
 }
 
-function wait(ms: number) {
-  return new Promise<void>((resolve) => window.setTimeout(resolve, ms));
+function buildFromMarkdown(md: string): Presentation {
+  return buildPresentation(parseContentMarkdown(md));
 }
 
 export default function App() {
+  const presentation = useMemo(() => buildFromMarkdown(rawContent), []);
   const { w, h } = useViewport();
   const reduced = useReducedMotion();
-  const [modalId, setModalId] = useState<string | null>(null);
-  const [glanceOpen, setGlanceOpen] = useState(false);
-  const [shrinking, setShrinking] = useState(false);
+
   const [focusId, setFocusId] = useState<string | null>(null);
-  const [fromDir, setFromDir] = useState<TravelDir>(null);
-  const [editMode, setEditMode] = useState(
-    () => new URLSearchParams(window.location.search).get("edit") === "1",
-  );
-  const showKeys = editMode;
-  const lastTopicRef = useRef<TopicDef | null>(null);
+  const [pathIndex, setPathIndex] = useState(0);
+  const [chromeVisible, setChromeVisible] = useState(true);
+  const [fullscreen, setFullscreen] = useState(false);
   const focusIdRef = useRef<string | null>(null);
-  const overviewScaleRef = useRef(0.35);
-  const travelingRef = useRef(false);
+  const pathIndexRef = useRef(0);
+  const overviewScaleRef = useRef(0.2);
+  const idleTimer = useRef<number | null>(null);
 
   const stageRef = useRef<HTMLDivElement>(null);
-  const scaleMv = useMotionValue(0.35);
+  const scaleMv = useMotionValue(0.2);
   const xMv = useMotionValue(0);
   const yMv = useMotionValue(0);
-  const scaleRef = useRef(0.35);
+  const scaleRef = useRef(0.2);
   const xRef = useRef(0);
   const yRef = useRef(0);
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const pinchStart = useRef<{ dist: number; scale: number } | null>(null);
-  const dragStart = useRef<{ x: number; y: number; camX: number; camY: number; t: number } | null>(
-    null,
-  );
-  const moved = useRef(false);
+  const dragStart = useRef<{ x: number; y: number; camX: number; camY: number } | null>(null);
+  const swipeStart = useRef<{ x: number; y: number } | null>(null);
 
   const syncRefs = useCallback(() => {
     scaleRef.current = scaleMv.get();
@@ -137,11 +99,11 @@ export default function App() {
   }, [scaleMv, xMv, yMv]);
 
   const setCamera = useCallback(
-    (scale: number, x: number, y: number, animated: boolean, duration = FLY_MS) => {
-      const minS = overviewScaleRef.current * 0.85;
-      const maxS = overviewScaleRef.current * MAX_ZOOM_MULT;
+    (scale: number, x: number, y: number, animated: boolean) => {
+      const minS = overviewScaleRef.current * 0.7;
+      const maxS = overviewScaleRef.current * 14;
       const s = clamp(scale, minS, maxS);
-      const dur = !animated || reduced ? 0.01 : duration;
+      const dur = !animated || reduced ? 0.01 : MOVE_MS;
       if (animated && !reduced) {
         animate(scaleMv, s, { duration: dur, ease: EASE_OUT });
         animate(xMv, x, { duration: dur, ease: EASE_OUT });
@@ -159,200 +121,197 @@ export default function App() {
   );
 
   const fitOverview = useCallback(() => {
-    const padX = 24;
-    const padTop = w < 640 ? 72 : 64;
-    const padBottom = w < 640 ? 100 : 56;
-    const s = Math.min((w - padX * 2) / overview.width, (h - padTop - padBottom) / overview.height);
+    const padX = 56;
+    const padTop = 80;
+    const padBottom = 100;
+    const s = Math.min(
+      (w - padX * 2) / presentation.world.width,
+      (h - padTop - padBottom) / presentation.world.height,
+    );
     overviewScaleRef.current = s;
-    const cx = overview.width / 2;
-    const cy = overview.height / 2;
-    return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 6 };
-  }, [w, h]);
+    const cx = presentation.world.width / 2;
+    const cy = presentation.world.height / 2;
+    return { s, x: -cx * s, y: -cy * s };
+  }, [h, presentation.world.height, presentation.world.width, w]);
 
-  const cameraForPoint = useCallback(
-    (pt: { x: number; y: number }) => {
-      const base = overviewScaleRef.current || fitOverview().s;
-      const targetScale = clamp(base * 2.65, base * 1.8, base * MAX_ZOOM_MULT);
-      const cx = pt.x + 56;
-      const cy = pt.y + 18;
-      return { s: targetScale, x: -cx * targetScale, y: -cy * targetScale };
+  const cameraForFrameId = useCallback(
+    (id: string) => {
+      const frame = getFrame(presentation, id);
+      if (!frame) return fitOverview();
+      const padTop = 56;
+      const padBottom = 96;
+      const availW = w * FRAME_FIT;
+      const availH = (h - padTop - padBottom) * FRAME_FIT;
+      const s = Math.min(availW / frame.w, availH / frame.h);
+      const cx = frame.x + frame.w / 2;
+      const cy = frame.y + frame.h / 2;
+      return { s, x: -cx * s, y: -cy * s + (padTop - padBottom) / 12 };
     },
-    [fitOverview],
+    [fitOverview, h, presentation, w],
   );
 
-  const goOverview = useCallback(() => {
-    travelingRef.current = false;
-    setShrinking(false);
-    const { s, x, y } = fitOverview();
-    setCamera(s, x, y, true);
-    setModalId(null);
-    setGlanceOpen(false);
-    focusIdRef.current = null;
-    setFocusId(null);
-    const url = new URL(window.location.href);
-    url.searchParams.delete("topic");
-    url.searchParams.delete("glance");
-    if (editMode) url.searchParams.set("edit", "1");
-    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-  }, [editMode, fitOverview, setCamera]);
+  const persist = useCallback((id: string | null, idx: number) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ id, idx }));
+    } catch {
+      /* ignore */
+    }
+  }, []);
 
-  const openGlance = useCallback(
-    (dir: TravelDir = null) => {
-      setFromDir(dir);
-      setShrinking(false);
-      setModalId(null);
-      focusIdRef.current = "situation";
-      setFocusId("situation");
-      const item = getStrandItem("situation");
-      if (item) {
-        const cam = cameraForPoint(item);
-        setCamera(cam.s, cam.x, cam.y, true);
-      }
-      setGlanceOpen(true);
-      const url = new URL(window.location.href);
-      url.searchParams.delete("topic");
-      url.searchParams.set("glance", "1");
-      if (editMode) url.searchParams.set("edit", "1");
-      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
+  const writeUrl = useCallback((id: string | null) => {
+    const url = new URL(window.location.href);
+    if (!id) {
+      url.hash = "";
+      url.searchParams.delete("section");
+    } else {
+      url.hash = `#/${id}`;
+      url.searchParams.set("section", id);
+    }
+    window.history.pushState({ section: id }, "", `${url.pathname}${url.search}${url.hash}`);
+  }, []);
+
+  const goOverview = useCallback(
+    (animated = true) => {
+      const { s, x, y } = fitOverview();
+      setCamera(s, x, y, animated);
+      focusIdRef.current = null;
+      setFocusId(null);
+      const idx = presentation.path.lastIndexOf("overview");
+      pathIndexRef.current = Math.max(0, idx);
+      setPathIndex(pathIndexRef.current);
+      persist(null, pathIndexRef.current);
+      writeUrl(null);
     },
-    [cameraForPoint, editMode, setCamera],
+    [fitOverview, persist, presentation.path, setCamera, writeUrl],
   );
 
-  const closeGlance = useCallback(() => {
-    setGlanceOpen(false);
-    setShrinking(false);
-    const url = new URL(window.location.href);
-    url.searchParams.delete("glance");
-    if (editMode) url.searchParams.set("edit", "1");
-    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-  }, [editMode]);
-
-  const openTopic = useCallback(
-    (id: string, dir: TravelDir = null) => {
-      const topic = getTopic(id);
-      if (!topic) return;
-      setFromDir(dir);
-      setShrinking(false);
+  const openFrame = useCallback(
+    (id: string, animated = true, pathIdx?: number) => {
+      const cam = cameraForFrameId(id);
+      setCamera(cam.s, cam.x, cam.y, animated);
       focusIdRef.current = id;
       setFocusId(id);
-      lastTopicRef.current = topic;
-      const item = getStrandItem(id) ?? topic;
-      const cam = cameraForPoint(item);
-      setCamera(cam.s, cam.x, cam.y, true);
-      setGlanceOpen(false);
-      setModalId(id);
-      const url = new URL(window.location.href);
-      url.searchParams.delete("glance");
-      url.searchParams.set("topic", id);
-      if (editMode) url.searchParams.set("edit", "1");
-      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-    },
-    [cameraForPoint, editMode, setCamera],
-  );
-
-  const closeModal = useCallback(() => {
-    setModalId(null);
-    setShrinking(false);
-    const url = new URL(window.location.href);
-    url.searchParams.delete("topic");
-    if (editMode) url.searchParams.set("edit", "1");
-    window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-  }, [editMode]);
-
-  const openStrandItem = useCallback(
-    (item: StrandItem, dir: TravelDir) => {
-      if (item.kind === "glance") openGlance(dir);
-      else openTopic(item.id, dir);
-    },
-    [openGlance, openTopic],
-  );
-
-  /** Shrink open modal → pan along strand → expand next info */
-  const travelStrand = useCallback(
-    async (delta: 1 | -1) => {
-      if (travelingRef.current || shrinking) return;
-      const openId = glanceOpen ? "situation" : modalId ?? focusIdRef.current;
-      let idx = getStrandIndex(openId);
-      if (idx < 0) idx = delta > 0 ? -1 : 0;
-      const nextIdx = idx + delta;
-      if (nextIdx < 0 || nextIdx >= strand.length) return;
-
-      const fromItem = idx >= 0 ? strand[idx] : null;
-      const toItem = strand[nextIdx];
-      const dir = cameFrom(fromItem ?? undefined, toItem);
-      travelingRef.current = true;
-
-      // 1) Shrink current modal back toward its box
-      if (glanceOpen || modalId) {
-        setShrinking(true);
-        await wait(reduced ? 40 : SHRINK_MS);
-        setGlanceOpen(false);
-        setModalId(null);
-        setShrinking(false);
+      let idx = pathIdx;
+      if (idx == null) {
+        const found = presentation.path.indexOf(id);
+        idx = found >= 0 ? found : pathIndexRef.current;
       }
-
-      // 2) Camera travels along the connector (midpoint on the strand segment)
-      const base = overviewScaleRef.current || fitOverview().s;
-      const travelScale = clamp(base * 1.55, base, base * MAX_ZOOM_MULT);
-      if (fromItem) {
-        const mid = {
-          x: (fromItem.x + toItem.x) / 2 + 56,
-          y: (fromItem.y + toItem.y) / 2 + 18,
-        };
-        setCamera(travelScale, -mid.x * travelScale, -mid.y * travelScale, true, TRAVEL_MS / 1000);
-        await wait(reduced ? 40 : TRAVEL_MS * 0.55);
-      }
-      const cam = cameraForPoint(toItem);
-      setCamera(cam.s, cam.x, cam.y, true, TRAVEL_MS / 1000);
-      await wait(reduced ? 40 : TRAVEL_MS * 0.55);
-
-      // 3) Expand next box into the large modal
-      focusIdRef.current = toItem.id;
-      setFocusId(toItem.id);
-      openStrandItem(toItem, dir);
-      travelingRef.current = false;
+      pathIndexRef.current = idx;
+      setPathIndex(idx);
+      persist(id, idx);
+      writeUrl(id);
     },
-    [
-      cameraForPoint,
-      fitOverview,
-      glanceOpen,
-      modalId,
-      openStrandItem,
-      reduced,
-      setCamera,
-      shrinking,
-    ],
+    [cameraForFrameId, persist, presentation.path, setCamera, writeUrl],
   );
 
+  const goPath = useCallback(
+    (delta: 1 | -1) => {
+      const path = presentation.path;
+      let i = pathIndexRef.current + delta;
+      if (i < 0) i = 0;
+      if (i >= path.length) i = path.length - 1;
+      const id = path[i];
+      pathIndexRef.current = i;
+      setPathIndex(i);
+      if (id === "overview") goOverview(true);
+      else openFrame(id, true, i);
+    },
+    [goOverview, openFrame, presentation.path],
+  );
+
+  const goHome = useCallback(() => {
+    pathIndexRef.current = 1;
+    setPathIndex(1);
+    openFrame("title", true, 1);
+  }, [openFrame]);
+
+  const resume = useCallback(() => {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) {
+        goHome();
+        return;
+      }
+      const saved = JSON.parse(raw) as { id: string | null; idx: number };
+      if (saved.id) openFrame(saved.id, true, saved.idx);
+      else goOverview(true);
+    } catch {
+      goHome();
+    }
+  }, [goHome, goOverview, openFrame]);
+
+  // Boot
   useEffect(() => {
-    const { s, x, y } = fitOverview();
-    setCamera(s, x, y, false);
+    fitOverview();
+    const params = new URLSearchParams(window.location.search);
+    const hash = window.location.hash.replace(/^#\/?/, "");
+    const fromUrl = params.get("section") || hash || null;
+
+    const savedRaw = localStorage.getItem(STORAGE_KEY);
+    let saved: { id: string | null; idx: number } | null = null;
+    try {
+      saved = savedRaw ? JSON.parse(savedRaw) : null;
+    } catch {
+      saved = null;
+    }
+
+    if (fromUrl && getFrame(presentation, fromUrl)) {
+      openFrame(fromUrl, false);
+    } else if (saved?.id && getFrame(presentation, saved.id)) {
+      // Offer resume via chrome; start at overview then user can Resume — or auto-resume
+      openFrame(saved.id, false, saved.idx);
+    } else {
+      goOverview(false);
+    }
     stageRef.current?.focus({ preventScroll: true });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    if (params.get("edit") === "1") setEditMode(true);
-    if (params.get("glance") === "1") {
-      setGlanceOpen(true);
-      setFocusId("situation");
-      focusIdRef.current = "situation";
-      return undefined;
+    const onPop = () => {
+      const params = new URLSearchParams(window.location.search);
+      const hash = window.location.hash.replace(/^#\/?/, "");
+      const id = params.get("section") || hash || null;
+      if (id && getFrame(presentation, id)) openFrame(id, true);
+      else goOverview(true);
+    };
+    window.addEventListener("popstate", onPop);
+    return () => window.removeEventListener("popstate", onPop);
+  }, [goOverview, openFrame, presentation]);
+
+  useEffect(() => {
+    fitOverview();
+    if (focusIdRef.current) {
+      const cam = cameraForFrameId(focusIdRef.current);
+      setCamera(cam.s, cam.x, cam.y, false);
+    } else {
+      const { s, x, y } = fitOverview();
+      setCamera(s, x, y, false);
     }
-    const id = params.get("topic") || params.get("chapter");
-    if (id && getTopic(id)) {
-      const t = window.setTimeout(() => openTopic(id), 40);
-      return () => window.clearTimeout(t);
-    }
-    return undefined;
-  }, [openTopic]);
+  }, [w, h, cameraForFrameId, fitOverview, setCamera]);
+
+  const bumpChrome = useCallback(() => {
+    setChromeVisible(true);
+    if (idleTimer.current) window.clearTimeout(idleTimer.current);
+    idleTimer.current = window.setTimeout(() => setChromeVisible(false), 3200);
+  }, []);
+
+  useEffect(() => {
+    bumpChrome();
+    const onMove = () => bumpChrome();
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("keydown", onMove);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("keydown", onMove);
+    };
+  }, [bumpChrome]);
 
   const zoomAt = useCallback(
     (clientX: number, clientY: number, nextScale: number) => {
       syncRefs();
       const prev = scaleRef.current;
-      const minS = overviewScaleRef.current * 0.85;
-      const maxS = overviewScaleRef.current * MAX_ZOOM_MULT;
+      const minS = overviewScaleRef.current * 0.7;
+      const maxS = overviewScaleRef.current * 14;
       const s = clamp(nextScale, minS, maxS);
       const rectX = clientX - w / 2;
       const rectY = clientY - h / 2;
@@ -363,45 +322,31 @@ export default function App() {
     [h, setCamera, syncRefs, w],
   );
 
-  /** Client point to zoom toward: open/focused strand box, else canvas centre. */
-  const zoomFocusClient = useCallback(() => {
-    syncRefs();
-    const id =
-      modalId ?? (glanceOpen ? "situation" : null) ?? focusIdRef.current ?? focusId;
-    const item = id ? getStrandItem(id) : undefined;
-    if (item) {
-      const wx = item.x + 56;
-      const wy = item.y + 18;
-      return {
-        x: w / 2 + xRef.current + wx * scaleRef.current,
-        y: h / 2 + yRef.current + wy * scaleRef.current,
-      };
-    }
-    return { x: w / 2, y: h / 2 };
-  }, [focusId, glanceOpen, h, modalId, syncRefs, w]);
-
   const zoomByStep = useCallback(
-    (direction: "in" | "out") => {
-      const pt = zoomFocusClient();
-      const factor = direction === "in" ? ZOOM_IN_FACTOR : ZOOM_OUT_FACTOR;
-      zoomAt(pt.x, pt.y, scaleRef.current * factor);
+    (dir: "in" | "out") => {
+      const frame = focusIdRef.current ? getFrame(presentation, focusIdRef.current) : null;
+      let cx = w / 2;
+      let cy = h / 2;
+      if (frame) {
+        syncRefs();
+        const fx = frame.x + frame.w / 2;
+        const fy = frame.y + frame.h / 2;
+        cx = w / 2 + xRef.current + fx * scaleRef.current;
+        cy = h / 2 + yRef.current + fy * scaleRef.current;
+      }
+      zoomAt(cx, cy, scaleRef.current * (dir === "in" ? ZOOM_IN : ZOOM_OUT));
     },
-    [zoomAt, zoomFocusClient],
+    [h, presentation, syncRefs, w, zoomAt],
   );
 
   useEffect(() => {
     const el = stageRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
-      if (modalId || glanceOpen || shrinking) return;
       e.preventDefault();
+      bumpChrome();
       syncRefs();
-      if (e.ctrlKey || e.metaKey) {
-        zoomAt(e.clientX, e.clientY, scaleRef.current * Math.exp(-e.deltaY * 0.01));
-        return;
-      }
-      const mostlyVertical = Math.abs(e.deltaY) > Math.abs(e.deltaX) * 2;
-      if (mostlyVertical && Math.abs(e.deltaX) < 1.2) {
+      if (e.ctrlKey || e.metaKey || Math.abs(e.deltaY) > Math.abs(e.deltaX) * 2) {
         zoomAt(e.clientX, e.clientY, scaleRef.current * Math.exp(-e.deltaY * 0.0018));
         return;
       }
@@ -409,76 +354,62 @@ export default function App() {
     };
     el.addEventListener("wheel", onWheel, { passive: false });
     return () => el.removeEventListener("wheel", onWheel);
-  }, [glanceOpen, modalId, setCamera, shrinking, syncRefs, zoomAt]);
+  }, [bumpChrome, setCamera, syncRefs, zoomAt]);
 
-  // Keyboard zoom — capture so it works with modal open; skip only in editable fields.
-  // Native key-repeat while held drives continuous zoom.
   useEffect(() => {
-    const onZoomKey = (e: KeyboardEvent) => {
-      if (isEditingField()) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (isTypingTarget()) return;
+      bumpChrome();
       if (isZoomInKey(e)) {
         e.preventDefault();
-        e.stopPropagation();
         zoomByStep("in");
         return;
       }
       if (isZoomOutKey(e)) {
         e.preventDefault();
-        e.stopPropagation();
         zoomByStep("out");
+        return;
       }
-    };
-    window.addEventListener("keydown", onZoomKey, true);
-    return () => window.removeEventListener("keydown", onZoomKey, true);
-  }, [zoomByStep]);
-
-  // Keyboard — strand travel (not modal paging). Works without focusing the canvas.
-  useEffect(() => {
-    const onKey = (e: KeyboardEvent) => {
-      if (isEditingField()) return;
-      if (isZoomInKey(e) || isZoomOutKey(e)) return; // handled in capture
       if (e.key === "Escape") {
         e.preventDefault();
-        if (glanceOpen) closeGlance();
-        else if (modalId) closeModal();
-        else goOverview();
+        if (document.fullscreenElement) {
+          void document.exitFullscreen();
+          return;
+        }
+        if (focusIdRef.current) {
+          const frame = getFrame(presentation, focusIdRef.current);
+          if (frame?.parentId) openFrame(frame.parentId, true);
+          else goOverview(true);
+        } else goOverview(true);
         return;
       }
-      const forward = e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === "d" || e.key === "D" || e.key === "s" || e.key === "S";
-      const back = e.key === "ArrowLeft" || e.key === "ArrowUp" || e.key === "a" || e.key === "A" || e.key === "w" || e.key === "W";
-      if (forward) {
+      if (e.key === " " || e.key === "ArrowRight" || e.key === "ArrowDown") {
         e.preventDefault();
-        void travelStrand(1);
+        goPath(1);
         return;
       }
-      if (back) {
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        void travelStrand(-1);
+        goPath(-1);
         return;
       }
       if (e.key === "Home") {
         e.preventDefault();
-        goOverview();
+        goHome();
       }
     };
-    window.addEventListener("keydown", onKey);
-    return () => window.removeEventListener("keydown", onKey);
-  }, [closeGlance, closeModal, glanceOpen, goOverview, modalId, travelStrand]);
+    window.addEventListener("keydown", onKey, true);
+    return () => window.removeEventListener("keydown", onKey, true);
+  }, [bumpChrome, goHome, goOverview, goPath, openFrame, presentation, zoomByStep]);
 
   const onPointerDown = (e: ReactPointerEvent) => {
-    if (modalId || glanceOpen || shrinking) return;
+    bumpChrome();
     (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    moved.current = false;
+    swipeStart.current = { x: e.clientX, y: e.clientY };
     syncRefs();
     if (pointers.current.size === 1) {
-      dragStart.current = {
-        x: e.clientX,
-        y: e.clientY,
-        camX: xRef.current,
-        camY: yRef.current,
-        t: performance.now(),
-      };
+      dragStart.current = { x: e.clientX, y: e.clientY, camX: xRef.current, camY: yRef.current };
       pinchStart.current = null;
     } else if (pointers.current.size === 2) {
       dragStart.current = null;
@@ -491,7 +422,6 @@ export default function App() {
   };
 
   const onPointerMove = (e: ReactPointerEvent) => {
-    if (modalId || glanceOpen || shrinking) return;
     if (!pointers.current.has(e.pointerId)) return;
     pointers.current.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.current.size === 2 && pinchStart.current) {
@@ -500,88 +430,67 @@ export default function App() {
       const midX = (pts[0].x + pts[1].x) / 2;
       const midY = (pts[0].y + pts[1].y) / 2;
       zoomAt(midX, midY, pinchStart.current.scale * (dist / Math.max(1, pinchStart.current.dist)));
-      moved.current = true;
       return;
     }
     if (dragStart.current && pointers.current.size === 1) {
       const dx = e.clientX - dragStart.current.x;
       const dy = e.clientY - dragStart.current.y;
-      if (Math.hypot(dx, dy) > 8) moved.current = true;
-      setCamera(
-        scaleRef.current,
-        dragStart.current.camX + dx,
-        dragStart.current.camY + dy,
-        false,
-      );
+      setCamera(scaleRef.current, dragStart.current.camX + dx, dragStart.current.camY + dy, false);
     }
   };
 
   const onPointerUp = (e: ReactPointerEvent) => {
-    if (modalId || glanceOpen || shrinking) {
-      pointers.current.clear();
-      dragStart.current = null;
-      return;
-    }
-    const start = dragStart.current;
-    pointers.current.delete(e.pointerId);
-    if (pointers.current.size < 2) pinchStart.current = null;
-    if (pointers.current.size === 0 && start) {
+    const start = swipeStart.current;
+    swipeStart.current = null;
+    if (start && pointers.current.size <= 1) {
       const dx = e.clientX - start.x;
       const dy = e.clientY - start.y;
-      const dt = performance.now() - start.t;
-      const dist = Math.hypot(dx, dy);
-      // Swipe along the strand: left-to-right (dx>0) → previous; right-to-left → next
-      if (dist > 56 && dt < 420) {
-        if (Math.abs(dx) >= Math.abs(dy)) void travelStrand(dx < 0 ? 1 : -1);
-        else void travelStrand(dy < 0 ? 1 : -1);
+      if (Math.abs(dx) > 72 && Math.abs(dx) > Math.abs(dy) * 1.3) {
+        // swipe left = forward; swipe right = back
+        goPath(dx < 0 ? 1 : -1);
       }
-      dragStart.current = null;
+    }
+    pointers.current.delete(e.pointerId);
+    if (pointers.current.size < 2) pinchStart.current = null;
+    if (pointers.current.size === 0) dragStart.current = null;
+  };
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      void document.documentElement.requestFullscreen();
+      setFullscreen(true);
+    } else {
+      void document.exitFullscreen();
+      setFullscreen(false);
     }
   };
 
-  const activeTopic = modalId ? getTopic(modalId) : undefined;
   useEffect(() => {
-    if (activeTopic) lastTopicRef.current = activeTopic;
-  }, [activeTopic]);
-  const panelTopic = activeTopic ?? lastTopicRef.current;
-  const topicIndex = modalId ? topicOrder.indexOf(modalId as (typeof topicOrder)[number]) : -1;
-
-  const strandPath = useMemo(() => {
-    if (strand.length < 2) return "";
-    const pts = strand.map((s) => ({ x: s.x + 56, y: s.y + 16 }));
-    let d = `M ${pts[0].x} ${pts[0].y}`;
-    for (let i = 1; i < pts.length; i++) {
-      const prev = pts[i - 1];
-      const cur = pts[i];
-      const c1x = prev.x + (cur.x - prev.x) * 0.4;
-      const c1y = prev.y;
-      const c2x = cur.x - (cur.x - prev.x) * 0.4;
-      const c2y = cur.y;
-      d += ` C ${c1x} ${c1y}, ${c2x} ${c2y}, ${cur.x} ${cur.y}`;
-    }
-    return d;
+    const onFs = () => setFullscreen(!!document.fullscreenElement);
+    document.addEventListener("fullscreenchange", onFs);
+    return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  const toggleEdit = () => {
-    setEditMode((on) => {
-      const next = !on;
-      const url = new URL(window.location.href);
-      if (next) url.searchParams.set("edit", "1");
-      else url.searchParams.delete("edit");
-      window.history.replaceState({}, "", `${url.pathname}${url.search}`);
-      return next;
-    });
-  };
+  const strandPath = useMemo(() => {
+    const mains = presentation.frames.filter((f) => f.level <= 2);
+    if (mains.length < 2) return "";
+    const pts = mains.map((f) => ({ x: f.x + f.w / 2, y: f.y + f.h / 2 }));
+    let d = `M ${pts[0].x} ${pts[0].y}`;
+    for (let i = 1; i < pts.length; i++) {
+      const a = pts[i - 1];
+      const b = pts[i];
+      d += ` C ${a.x + (b.x - a.x) * 0.4} ${a.y}, ${b.x - (b.x - a.x) * 0.4} ${b.y}, ${b.x} ${b.y}`;
+    }
+    return d;
+  }, [presentation.frames]);
 
-  const anyModal = glanceOpen || !!modalId || shrinking;
+  const isOverview = focusId === null;
 
   return (
-    <div className={`facts-app ${editMode ? "facts-app--edit" : ""}`}>
-      <header className="topbar">
+    <div className="facts-app">
+      <header className={`topbar ${chromeVisible ? "is-visible" : "is-dim"}`}>
         <div className="flex items-center gap-2.5">
-          <div className="rounded-full shadow-[0_0_24px_rgba(182,255,126,0.2)]">
-            <LogoMark size={w < 640 ? 34 : 40} />
-          </div>
+          <LogoMark size={w < 640 ? 34 : 40} />
           <div className="leading-tight text-white">
             <div className="text-[0.62rem] font-bold uppercase tracking-[0.14em] text-[var(--lime)]">
               {meta.brand}
@@ -594,49 +503,16 @@ export default function App() {
             </div>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button
-            type="button"
-            className={`icon-btn ${editMode ? "icon-btn-active" : ""}`}
-            aria-label={editMode ? "Exit edit mode" : "Edit mode"}
-            aria-pressed={editMode}
-            onClick={toggleEdit}
-          >
-            <Pencil className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={meta.ui.zoomOut}
-            title={`${meta.ui.zoomOut} (−)`}
-            onClick={() => zoomByStep("out")}
-          >
-            <ZoomOut className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            className="icon-btn"
-            aria-label={meta.ui.zoomIn}
-            title={`${meta.ui.zoomIn} (+)`}
-            onClick={() => zoomByStep("in")}
-          >
-            <ZoomIn className="h-4 w-4" />
-          </button>
-          <button type="button" className="chip-overview" onClick={goOverview}>
-            {meta.ui.overviewChip}
-          </button>
-          <button type="button" className="chip-home" onClick={() => { window.location.href = "/"; }}>
-            <Home className="h-3.5 w-3.5" />
-            {meta.ui.homeLabel}
-          </button>
-        </div>
+        <a className="chip-home" href="/">
+          Site home
+        </a>
       </header>
 
       <div
         ref={stageRef}
         className="canvas-stage"
         tabIndex={0}
-        aria-label="The facts canvas"
+        aria-label={presentation.title}
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
@@ -645,123 +521,72 @@ export default function App() {
         <motion.div className="canvas-world" style={{ scale: scaleMv, x: xMv, y: yMv }}>
           <div
             className="overview-picture"
-            style={{ width: overview.width, height: overview.height }}
+            style={{ width: presentation.world.width, height: presentation.world.height }}
           >
-            <img className="overview-hero" src={heroUrl()} alt="" draggable={false} />
+            <img
+              className="overview-hero"
+              src={heroUrl(presentation.world.heroImage)}
+              alt="Arts education — photography backdrop"
+              draggable={false}
+            />
             <div className="overview-forest" aria-hidden />
             <div className="overview-vignette" aria-hidden />
 
-            <svg className="overview-path" width={overview.width} height={overview.height} aria-hidden>
+            <svg
+              className="overview-path"
+              width={presentation.world.width}
+              height={presentation.world.height}
+              aria-hidden
+            >
               <path
                 d={strandPath}
                 fill="none"
-                stroke="rgba(182,255,126,0.45)"
-                strokeWidth="2.5"
+                stroke="rgba(182,255,126,0.35)"
+                strokeWidth="8"
                 strokeLinecap="round"
-                strokeLinejoin="round"
               />
             </svg>
 
-            <div
-              className="overview-headline"
-              style={{ left: overview.headlineX, top: overview.headlineY }}
-            >
-              <p className="overview-brand">{meta.brand}</p>
-              <h1>
-                {meta.situationHeadline}
-                {showKeys ? <span className="edit-key"> meta.situationHeadline</span> : null}
-              </h1>
-              <p className="overview-support">
-                {meta.situationLine}
-                {showKeys ? <span className="edit-key"> meta.situationLine</span> : null}
-              </p>
-            </div>
-
-            <p
-              className="overview-explore-hint"
-              style={{ left: overview.hintX, top: overview.hintY }}
-            >
-              {meta.ui.exploreHint}
-            </p>
-
-            {strand.map((item) => {
-              const isHot = focusId === item.id || modalId === item.id || (item.id === "situation" && glanceOpen);
+            {presentation.frames.map((frame) => {
+              const focusFrame = focusId ? getFrame(presentation, focusId) : null;
+              const reveal =
+                focusId === frame.id ||
+                (!!focusFrame &&
+                  (focusFrame.id === frame.id ||
+                    focusFrame.parentId === frame.id ||
+                    frame.parentId === focusFrame.id ||
+                    (frame.mainSectionId === focusFrame.mainSectionId && frame.level === 2)));
               return (
-                <button
-                  key={item.id}
-                  type="button"
-                  className={`topic-chip strand-box ${isHot ? "topic-chip-active" : ""}`}
-                  style={{ left: item.x, top: item.y }}
-                  onPointerDown={(e) => {
-                    e.stopPropagation();
-                    moved.current = false;
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    openStrandItem(item, null);
-                  }}
-                >
-                  <span>{item.label}</span>
-                  <ZoomIntoIcon className="topic-chip-zoom" />
-                  {showKeys ? <span className="edit-key"> strand.{item.id}</span> : null}
-                </button>
+                <SectionFrame
+                  key={frame.id}
+                  frame={frame}
+                  active={focusId === frame.id}
+                  overview={isOverview}
+                  revealDetail={reveal}
+                  onOpen={() => openFrame(frame.id)}
+                />
               );
             })}
           </div>
         </motion.div>
       </div>
 
-      {!anyModal ? (
-        <div className="compass-pad" aria-label="Explore the strand">
-          <button type="button" className="compass-btn compass-up" onClick={() => void travelStrand(-1)}>
-            ↑
-          </button>
-          <button type="button" className="compass-btn compass-left" onClick={() => void travelStrand(-1)}>
-            ←
-          </button>
-          <button type="button" className="compass-btn compass-right" onClick={() => void travelStrand(1)}>
-            →
-          </button>
-          <button type="button" className="compass-btn compass-down" onClick={() => void travelStrand(1)}>
-            ↓
-          </button>
-        </div>
-      ) : null}
-
-      <GlanceModal
-        open={glanceOpen}
-        shrinking={shrinking && glanceOpen}
-        onClose={closeGlance}
-        showKeys={showKeys}
+      <PresentChrome
+        presentation={presentation}
+        focusId={focusId}
+        pathIndex={pathIndex}
+        chromeVisible={chromeVisible}
+        fullscreen={fullscreen}
+        onOverview={() => goOverview(true)}
+        onHome={goHome}
+        onPrev={() => goPath(-1)}
+        onNext={() => goPath(1)}
+        onResume={resume}
+        onZoomIn={() => zoomByStep("in")}
+        onZoomOut={() => zoomByStep("out")}
+        onToggleFullscreen={toggleFullscreen}
+        onJump={(id) => openFrame(id)}
       />
-
-      {panelTopic ? (
-        <TopicModal
-          open={!!activeTopic}
-          shrinking={shrinking && !!modalId}
-          cluster={panelTopic}
-          showKeys={showKeys}
-          editMode={editMode}
-          fromDir={fromDir}
-          onClose={closeModal}
-          footer={
-            <>
-              <button type="button" className="chip-outline" onClick={goOverview}>
-                {meta.ui.overviewChip}
-              </button>
-              {topicIndex >= 0 && topicIndex < topicOrder.length - 1 ? (
-                <button
-                  type="button"
-                  className="chip-lime"
-                  onClick={() => void travelStrand(1)}
-                >
-                  {meta.ui.continuePath}
-                </button>
-              ) : null}
-            </>
-          }
-        />
-      ) : null}
     </div>
   );
 }

@@ -1,30 +1,10 @@
-# Editing “The facts”
+# Edit this file
 
-**To change a headline, edit [`facts.content.ts`](./facts.content.ts).**  
-(`content.ts` re-exports the same module.)
+**Open [`../CONTENT.md`](../CONTENT.md)** — that Markdown file is the only authoring surface.
 
-## Shape
+- Change text → presentation text updates  
+- Add a `##` heading → new main section (auto-sized)  
+- Add `###` → nested zoom point on the guided path  
+- See [`../CONTENT.README.md`](../CONTENT.README.md) for the short how-to  
 
-| Export | Purpose |
-| --- | --- |
-| `meta` | Brand, situation headline/line, framing, `ui` chrome |
-| `overview` | Canvas size, hero image, headline/hint positions |
-| `topics` | Four chips: Exams, Primary, Poverty & place, CCDesigner (`markerLabel`, `x`/`y`, modal copy, charts, neighbours) |
-| `strand` | Ordered path for arrow keys: situation → exams → primary → poverty → ccd |
-| `topicOrder` | Topic ring (legacy / next-topic button) |
-| `glanceModal` | **Key findings** two-page modal (page dots only — not arrows) |
-| `stats` / `charts` / `sources` | Shared figures and chart series |
-
-## Key findings modal
-
-Edit `glanceModal.pages` — two pages with clear H2s, not a 9-card grid. Pagination dots live in the UI.
-
-## Optional on-screen keys
-
-`?edit=1` shows content keys. `?glance=1` opens key findings.
-
-## Rules
-
-- Verify numbers against CLA / Ofqual / DfE (or omit)
-- “No entries” ≠ “not taught”
-- Use “aims to”, not “will solve”
+Charts still use series in `facts.content.ts` via `<!-- chart:id -->` markers. No visual editor.
