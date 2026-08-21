@@ -5,6 +5,7 @@ import { ContentChart } from "@/components/charts/Charts";
 import { getChart } from "@/content/facts.content";
 import type { ContentBlock } from "@/content/parseContent";
 import type { FrameNode } from "@/content/layoutPresentation";
+import { modalBackdropTransition, modalBounce, modalPanelTransition } from "@/lib/modalMotion";
 
 function heroUrl(file: string) {
   const base = import.meta.env.BASE_URL || "/";
@@ -180,13 +181,7 @@ export function DetailModal({
 
   const topChart = frame.chartId ? getChart(frame.chartId) : undefined;
   const hasBlocks = frame.blocks.length > 0;
-  const bounce = reduced
-    ? { initial: { opacity: 0 }, animate: { opacity: 1 }, exit: { opacity: 0 } }
-    : {
-        initial: { opacity: 0, scale: 0.92 },
-        animate: { opacity: 1, scale: [0.92, 1.04, 1] },
-        exit: { opacity: 0, scale: 0.96 },
-      };
+  const bounce = modalBounce(reduced);
 
   return (
     <AnimatePresence>
@@ -200,7 +195,7 @@ export function DetailModal({
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: reduced ? 0.01 : 0.16 } }}
-          transition={{ duration: reduced ? 0.01 : 0.2 }}
+          transition={modalBackdropTransition(reduced)}
         >
           <button type="button" className="detail-modal-backdrop" aria-label="Close" onClick={onClose} />
           <motion.div
@@ -208,11 +203,7 @@ export function DetailModal({
             initial={bounce.initial}
             animate={bounce.animate}
             exit={bounce.exit}
-            transition={
-              reduced
-                ? { duration: 0.01 }
-                : { duration: 0.42, times: [0, 0.55, 1], ease: [0.22, 1, 0.36, 1] }
-            }
+            transition={modalPanelTransition(reduced)}
             onPointerDown={stop}
           >
             <header className="detail-modal-header">
