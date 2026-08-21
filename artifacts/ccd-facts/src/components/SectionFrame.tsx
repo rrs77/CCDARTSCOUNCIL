@@ -4,17 +4,18 @@ import { ContentChart } from "@/components/charts/Charts";
 import { LogoMark } from "@/components/LogoMark";
 import { getChart, meta } from "@/content/facts.content";
 import type { FrameNode, Presentation } from "@/content/layoutPresentation";
-
-function heroUrl(file: string) {
-  const base = import.meta.env.BASE_URL || "/";
-  return `${base}${file}`.replace(/\/{2,}/g, "/").replace(":/", "://");
-}
+import {
+  assetUrl,
+  isSituationPhotoSection,
+  sectionIllustration,
+  SITUATION_HERO,
+} from "@/content/sectionIllustrations";
 
 const MAX_VISIBLE_SATS = 2;
 
 /**
  * Opened section / title scene: rounded boxes, eye for detail, no left lime rule.
- * Classroom photo on title (start) and Situation only.
+ * Classroom photo on title (start) / The situation only — other sections use their illustration.
  */
 export function SectionFrame({
   frame,
@@ -36,12 +37,12 @@ export function SectionFrame({
   onOpenChild?: (id: string) => void;
 }) {
   const chart = frame.chartId ? getChart(frame.chartId) : undefined;
-  const showPhoto =
-    (frame.id === "title" || frame.id === "the-situation") &&
-    frame.photoHero &&
-    !frame.heroStat &&
-    !chart;
+  const situationOnly = isSituationPhotoSection(frame.id);
+  const illusFile = situationOnly
+    ? SITUATION_HERO
+    : sectionIllustration(frame.id) ?? sectionIllustration(frame.mainSectionId);
   const showBrand = frame.kind === "title";
+  const showCcdMark = frame.kind === "sources" && !illusFile;
   const allChildren =
     frame.kind === "hub" || frame.kind === "title" || frame.kind === "sources"
       ? frame.childIds
@@ -104,13 +105,26 @@ export function SectionFrame({
           <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
         </button>
 
-        <div className="prezi-hero">
-          {frame.heroStat ? (
+        <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
+          {illusFile ? (
+            <div className="prezi-photo-bubble">
+              <img
+                src={assetUrl(illusFile)}
+                alt=""
+                draggable={false}
+                className={situationOnly ? `crop-${frame.photoCrop}` : undefined}
+              />
+            </div>
+          ) : null}
+
+          {frame.heroStat && !illusFile ? (
             <div className="prezi-stat-bubble" aria-hidden={false}>
               <p className="prezi-stat-value">{frame.heroStat.value}</p>
               <p className="prezi-stat-label">{frame.heroStat.label}</p>
             </div>
-          ) : chart ? (
+          ) : null}
+
+          {chart ? (
             <div className="prezi-chart-bubble">
               <ContentChart chart={chart} density="canvas" />
               <button
@@ -126,20 +140,19 @@ export function SectionFrame({
                 <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
               </button>
             </div>
-          ) : showPhoto ? (
-            <div className="prezi-photo-bubble">
-              <img
-                src={heroUrl("hero-arts.jpg")}
-                alt=""
-                draggable={false}
-                className={`crop-${frame.photoCrop}`}
-              />
-            </div>
-          ) : (
+          ) : null}
+
+          {showCcdMark ? (
             <div className="prezi-stat-bubble prezi-stat-bubble--plain" aria-hidden>
               <p className="prezi-stat-value prezi-stat-value--quiet">CCD</p>
             </div>
-          )}
+          ) : null}
+
+          {!illusFile && !frame.heroStat && !chart && !showCcdMark ? (
+            <div className="prezi-stat-bubble prezi-stat-bubble--plain" aria-hidden>
+              <p className="prezi-stat-value prezi-stat-value--quiet">CCD</p>
+            </div>
+          ) : null}
         </div>
 
         <div className="prezi-copy">

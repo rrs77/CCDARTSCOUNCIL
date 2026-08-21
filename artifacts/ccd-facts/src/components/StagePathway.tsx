@@ -1,13 +1,13 @@
 import { Lightbulb } from "lucide-react";
 import { ContentChart } from "@/components/charts/Charts";
-import { SolutionDiagram } from "@/components/SolutionDiagram";
 import { getChart } from "@/content/facts.content";
 import type { FrameNode } from "@/content/layoutPresentation";
 import { sectionAccent } from "@/content/sectionAccent";
+import { assetUrl, sectionIllustration } from "@/content/sectionIllustrations";
 import { stageComment, stageLabel } from "@/content/stackLabels";
 
 /**
- * Uniform stage zone — title, short comment, visual.
+ * Uniform stage zone — title, short comment, chart and/or circular illustration.
  * Zone click → detail modal. Lightbulb → comments modal.
  */
 function StageZone({
@@ -22,6 +22,7 @@ function StageZone({
   const isSolution = frame.id === "a-solution";
   const chart =
     !isSolution && frame.chartId ? getChart(frame.chartId) : undefined;
+  const illusFile = sectionIllustration(frame.id);
   const accent = sectionAccent(frame.id);
   const comment = stageComment(frame.id, frame.sentence);
   const label = stageLabel(frame.id, frame.title);
@@ -62,23 +63,31 @@ function StageZone({
 
       {comment ? <p className="stage-zone-comment">{comment}</p> : null}
 
-      <div className="stage-zone-visual">
-        {isSolution ? (
-          <SolutionDiagram />
-        ) : chart ? (
+      <div className={`stage-zone-visual${chart && illusFile ? " stage-zone-visual--split" : ""}`}>
+        {illusFile ? (
+          <div className="stage-zone-illus" aria-hidden>
+            <img src={assetUrl(illusFile)} alt="" draggable={false} />
+          </div>
+        ) : null}
+
+        {chart ? (
           <div className="stage-zone-chart">
             <ContentChart chart={chart} density="canvas" />
           </div>
-        ) : frame.heroStat ? (
+        ) : null}
+
+        {!chart && !illusFile && frame.heroStat ? (
           <div className="stage-zone-stat">
             <p className="stage-zone-stat-value">{frame.heroStat.value}</p>
             <p className="stage-zone-stat-label">{frame.heroStat.label}</p>
           </div>
-        ) : (
+        ) : null}
+
+        {!chart && !illusFile && !frame.heroStat ? (
           <div className="stage-zone-stat stage-zone-stat--quiet">
             <p className="stage-zone-stat-value">CCD</p>
           </div>
-        )}
+        ) : null}
       </div>
     </div>
   );

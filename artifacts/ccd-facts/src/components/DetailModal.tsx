@@ -5,12 +5,13 @@ import { ContentChart } from "@/components/charts/Charts";
 import { getChart } from "@/content/facts.content";
 import type { ContentBlock } from "@/content/parseContent";
 import type { FrameNode } from "@/content/layoutPresentation";
+import {
+  assetUrl,
+  isSituationPhotoSection,
+  sectionIllustration,
+  SITUATION_HERO,
+} from "@/content/sectionIllustrations";
 import { modalBackdropTransition, modalBounce, modalPanelTransition } from "@/lib/modalMotion";
-
-function heroUrl(file: string) {
-  const base = import.meta.env.BASE_URL || "/";
-  return `${base}${file}`.replace(/\/{2,}/g, "/").replace(":/", "://");
-}
 
 function linkifyText(
   text: string,
@@ -182,6 +183,11 @@ export function DetailModal({
   const topChart = frame.chartId ? getChart(frame.chartId) : undefined;
   const hasBlocks = frame.blocks.length > 0;
   const bounce = modalBounce(reduced);
+  const situationPhoto = isSituationPhotoSection(frame.id) || isSituationPhotoSection(frame.mainSectionId);
+  const illusFile =
+    sectionIllustration(frame.id) ??
+    sectionIllustration(frame.mainSectionId) ??
+    (situationPhoto ? SITUATION_HERO : undefined);
 
   return (
     <AnimatePresence>
@@ -328,14 +334,9 @@ export function DetailModal({
                   </div>
 
                   <div className="detail-modal-visual">
-                    {frame.photoHero && !frame.heroStat && !topChart ? (
+                    {illusFile ? (
                       <div className="detail-photo-bubble">
-                        <img
-                          src={heroUrl("hero-arts.jpg")}
-                          alt=""
-                          className={`crop-${frame.photoCrop}`}
-                          draggable={false}
-                        />
+                        <img src={assetUrl(illusFile)} alt="" draggable={false} />
                       </div>
                     ) : null}
                     {frame.heroStat && !hasBlocks ? (
