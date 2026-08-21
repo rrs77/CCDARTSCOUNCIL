@@ -288,28 +288,40 @@ export function ContentChart({
   }
 
   if (chart.type === "funding-bars") {
+    const fundLabel = density === "canvas" ? 15 : 14;
+    const fundTick = density === "canvas" ? 13 : 12;
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={chartHFund}>
+        <motion.div {...chartEnter} className={density === "canvas" ? "h-[400px] w-full" : "h-[300px] w-full"}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
               data={chart.series}
               margin={
                 density === "canvas"
-                  ? { top: 28, right: 12, left: 4, bottom: 28 }
-                  : { top: 24, right: 8, left: 0, bottom: 48 }
+                  ? { top: 36, right: 16, left: 8, bottom: 64 }
+                  : { top: 32, right: 12, left: 4, bottom: 72 }
               }
+              barCategoryGap="28%"
             >
               <CartesianGrid stroke="#e8eeea" vertical={false} />
               <XAxis
                 dataKey="label"
-                tick={{ fill: "#0f2a2e", fontSize: tickInk }}
+                tick={{ fill: "#0f2a2e", fontSize: fundTick, fontWeight: 650 }}
                 interval={0}
                 angle={0}
                 textAnchor="middle"
-                height={density === "canvas" ? 42 : 56}
+                height={density === "canvas" ? 64 : 72}
+                tickFormatter={(v: string) => {
+                  const s = String(v);
+                  // Prefer wrapping-friendly short lines for long hub labels
+                  if (s.length <= 14) return s;
+                  const mid = Math.ceil(s.length / 2);
+                  const space = s.lastIndexOf(" ", mid);
+                  if (space > 4) return `${s.slice(0, space)}\n${s.slice(space + 1)}`;
+                  return s;
+                }}
               />
-              <YAxis domain={[0, 80]} tick={{ fill: "#6b7d80", fontSize: tick }} />
+              <YAxis domain={[0, 80]} tick={{ fill: "#6b7d80", fontSize: fundTick }} />
               <Tooltip contentStyle={tip} formatter={(v: number) => [`£${v}m`, "Funding"]} />
               {density === "canvas" ? null : (
                 <Legend
@@ -322,8 +334,15 @@ export function ContentChart({
               )}
               <Bar
                 dataKey="value"
-                radius={[6, 6, 0, 0]}
-                label={{ position: "top", formatter: (v: number) => `£${v}m`, fill: "#0f2a2e", fontWeight: 700, fontSize: labelFs }}
+                barSize={density === "canvas" ? 56 : 48}
+                radius={[8, 8, 0, 0]}
+                label={{
+                  position: "top",
+                  formatter: (v: number) => `£${v}m`,
+                  fill: "#0f2a2e",
+                  fontWeight: 800,
+                  fontSize: fundLabel,
+                }}
                 cursor="pointer"
                 isAnimationActive={!reduced}
                 animationDuration={drawMs}

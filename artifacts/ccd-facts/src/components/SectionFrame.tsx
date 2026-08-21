@@ -1,4 +1,4 @@
-import { Eye } from "lucide-react";
+import { Lightbulb } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ContentChart } from "@/components/charts/Charts";
 import { LogoMark } from "@/components/LogoMark";
@@ -12,6 +12,7 @@ import {
 } from "@/content/sectionIllustrations";
 
 const MAX_VISIBLE_SATS = 2;
+const BULB_HINT = "Tap the lightbulb for more detail.";
 
 /**
  * Opened section / title scene: rounded boxes, eye for detail, no left lime rule.
@@ -96,13 +97,13 @@ export function SectionFrame({
           type="button"
           className="prezi-info"
           aria-label={`More about ${frame.title}`}
-          title="Open full detail"
+          title="Tap the lightbulb for more detail"
           onClick={(e) => {
             e.stopPropagation();
             onOpenDetail();
           }}
         >
-          <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+          <Lightbulb className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
         </button>
 
         <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
@@ -131,13 +132,13 @@ export function SectionFrame({
                 type="button"
                 className="prezi-info prezi-info--chart"
                 aria-label={`Chart detail for ${frame.title}`}
-                title="Open full detail"
+                title="Tap the lightbulb for more detail"
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenDetail();
                 }}
               >
-                <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+                <Lightbulb className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
               </button>
             </div>
           ) : null}
@@ -183,57 +184,60 @@ export function SectionFrame({
           {frame.kind === "sources" ? (
             <div className="prezi-body-card prezi-sources-card">
               <p className="prezi-sources-hint">
-                Full footnotes open via the eye icon — readable in the detail panel.
+                Full footnotes open via the lightbulb — readable in the detail panel.
               </p>
             </div>
           ) : null}
         </div>
 
-        {children.length || overflowCount ? (
-          <ul className="prezi-satellites" aria-label="Inside this section">
-            {children.map((ch, i) =>
-              ch ? (
-                <li
-                  key={ch.id}
-                  style={{ ["--i" as string]: String(i) }}
-                  className={activeChildId === ch.id ? "is-active-sat" : undefined}
-                >
+        <div className="prezi-actions">
+          {children.length || overflowCount ? (
+            <ul className="prezi-satellites" aria-label="Inside this section">
+              {children.map((ch, i) =>
+                ch ? (
+                  <li
+                    key={ch.id}
+                    style={{ ["--i" as string]: String(i) }}
+                    className={activeChildId === ch.id ? "is-active-sat" : undefined}
+                  >
+                    <button
+                      type="button"
+                      className="prezi-sat"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onOpenChild?.(ch.id);
+                      }}
+                    >
+                      <span className="prezi-sat-label">
+                        {ch.heroStat?.value && ch.heroStat.value.length <= 12
+                          ? ch.heroStat.value
+                          : ch.title}
+                      </span>
+                      <Lightbulb className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                    </button>
+                  </li>
+                ) : null,
+              )}
+              {overflowCount > 0 ? (
+                <li>
                   <button
                     type="button"
-                    className="prezi-sat"
+                    className="prezi-sat prezi-sat--more"
                     onClick={(e) => {
                       e.stopPropagation();
-                      onOpenChild?.(ch.id);
+                      onOpenDetail();
                     }}
+                    aria-label={`${overflowCount} more topics — open detail`}
                   >
-                    <span className="prezi-sat-label">
-                      {ch.heroStat?.value && ch.heroStat.value.length <= 12
-                        ? ch.heroStat.value
-                        : ch.title}
-                    </span>
-                    <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                    <span className="prezi-sat-label">+{overflowCount} more</span>
+                    <Lightbulb className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                   </button>
                 </li>
-              ) : null,
-            )}
-            {overflowCount > 0 ? (
-              <li>
-                <button
-                  type="button"
-                  className="prezi-sat prezi-sat--more"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenDetail();
-                  }}
-                  aria-label={`${overflowCount} more topics — open detail`}
-                >
-                  <span className="prezi-sat-label">+{overflowCount} more</span>
-                  <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
-                </button>
-              </li>
-            ) : null}
-          </ul>
-        ) : null}
+              ) : null}
+            </ul>
+          ) : null}
+          <p className="prezi-hint">{BULB_HINT}</p>
+        </div>
       </div>
     </div>
   );

@@ -6,6 +6,8 @@ import { sectionAccent } from "@/content/sectionAccent";
 import { assetUrl, sectionIllustration } from "@/content/sectionIllustrations";
 import { stageComment, stageLabel } from "@/content/stackLabels";
 
+const BULB_HINT = "Tap the lightbulb for more detail.";
+
 /**
  * Uniform stage zone — title, short comment, chart and/or circular illustration.
  * Zone click → detail modal. Lightbulb → comments modal.
@@ -50,7 +52,7 @@ function StageZone({
             type="button"
             className="stage-zone-bulb"
             title="Comments — Why this matters"
-            aria-label={`Comments for ${label}`}
+            aria-label={`More detail for ${label}`}
             onClick={(e) => {
               e.stopPropagation();
               onOpenComments();
@@ -59,6 +61,7 @@ function StageZone({
             <Lightbulb className="stage-zone-bulb-icon" strokeWidth={2.25} />
           </button>
         ) : null}
+        {hasComments ? <p className="stage-zone-hint">{BULB_HINT}</p> : null}
       </div>
 
       {comment ? <p className="stage-zone-comment">{comment}</p> : null}
