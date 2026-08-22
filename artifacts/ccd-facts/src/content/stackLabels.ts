@@ -10,6 +10,21 @@ export const STAGE_ORDER = [
 
 export type StageId = (typeof STAGE_ORDER)[number]
 
+/**
+ * Side-arrow path between main framed sections (not optional top tabs).
+ * Situation → Primary → Secondary → A-level → HE → Hubs → Solution → Sources
+ */
+export const SECTION_PATH = [
+  "title",
+  "primary-eyfs-ks2",
+  "secondary-ks3-ks4",
+  "ks5-a-level",
+  "university-he",
+  "music-hubs-and-national-centre",
+  "a-solution",
+  "sources",
+] as const
+
 export const STAGE_LABELS: Record<StageId, string> = {
   "primary-eyfs-ks2": "Primary / EYFS–KS2",
   "secondary-ks3-ks4": "Secondary / KS3–KS4",

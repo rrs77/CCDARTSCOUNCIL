@@ -192,49 +192,52 @@ export function SectionFrame({
 
         <div className="prezi-actions">
           {children.length || overflowCount ? (
-            <ul className="prezi-satellites" aria-label="Inside this section">
-              {children.map((ch, i) =>
-                ch ? (
-                  <li
-                    key={ch.id}
-                    style={{ ["--i" as string]: String(i) }}
-                    className={activeChildId === ch.id ? "is-active-sat" : undefined}
-                  >
+            <>
+              <p className="prezi-extras-label">Optional extra facts</p>
+              <ul className="prezi-satellites" aria-label="Optional extra facts">
+                {children.map((ch, i) =>
+                  ch ? (
+                    <li
+                      key={ch.id}
+                      style={{ ["--i" as string]: String(i) }}
+                      className={activeChildId === ch.id ? "is-active-sat" : undefined}
+                    >
+                      <button
+                        type="button"
+                        className="prezi-sat"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenChild?.(ch.id);
+                        }}
+                      >
+                        <span className="prezi-sat-label">
+                          {ch.heroStat?.value && ch.heroStat.value.length <= 12
+                            ? ch.heroStat.value
+                            : ch.title}
+                        </span>
+                        <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                      </button>
+                    </li>
+                  ) : null,
+                )}
+                {overflowCount > 0 ? (
+                  <li>
                     <button
                       type="button"
-                      className="prezi-sat"
+                      className="prezi-sat prezi-sat--more"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onOpenChild?.(ch.id);
+                        onOpenDetail();
                       }}
+                      aria-label={`${overflowCount} more topics — open detail`}
                     >
-                      <span className="prezi-sat-label">
-                        {ch.heroStat?.value && ch.heroStat.value.length <= 12
-                          ? ch.heroStat.value
-                          : ch.title}
-                      </span>
+                      <span className="prezi-sat-label">+{overflowCount} more</span>
                       <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                     </button>
                   </li>
-                ) : null,
-              )}
-              {overflowCount > 0 ? (
-                <li>
-                  <button
-                    type="button"
-                    className="prezi-sat prezi-sat--more"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onOpenDetail();
-                    }}
-                    aria-label={`${overflowCount} more topics — open detail`}
-                  >
-                    <span className="prezi-sat-label">+{overflowCount} more</span>
-                    <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
-                  </button>
-                </li>
-              ) : null}
-            </ul>
+                ) : null}
+              </ul>
+            </>
           ) : null}
           <p className="prezi-hint">{EYE_HINT}</p>
         </div>

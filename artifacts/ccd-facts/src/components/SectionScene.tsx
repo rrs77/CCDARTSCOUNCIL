@@ -3,9 +3,13 @@ import { motion } from "framer-motion";
 import { SectionFrame } from "@/components/SectionFrame";
 import type { FrameNode, Presentation } from "@/content/layoutPresentation";
 
+const ARROW_CAPTION =
+  "Arrows move between sections. Tabs are extra — click to open.";
+
 /**
- * Full framed section view after a stack card opens out.
- * Lime side arrows step to the previous / next SECTION (not modal tabs).
+ * Full framed section view.
+ * Lime side arrows step to the previous / next MAIN SECTION only.
+ * Optional top tabs are mouse-click extras (open detail) — never arrow-cycled.
  */
 export function SectionScene({
   frame,
@@ -44,24 +48,27 @@ export function SectionScene({
         <ChevronLeft className="stack-arrow-icon" strokeWidth={2.5} aria-hidden />
       </button>
 
-      <motion.div
-        key={frame.id}
-        className="section-scene-stage"
-        initial={reduced ? false : { opacity: 0, scale: 0.94, y: 24 }}
-        animate={{ opacity: 1, scale: 1, y: 0 }}
-        transition={{ duration: reduced ? 0.01 : 0.4, ease: [0.4, 0, 0.2, 1] }}
-      >
-        <SectionFrame
-          frame={frame}
-          presentation={presentation}
-          highlighted
-          activeChildId={activeChildId}
-          layout="scene"
-          onOpen={onSelect}
-          onOpenDetail={onOpenDetail}
-          onOpenChild={onOpenChild}
-        />
-      </motion.div>
+      <div className="section-scene-main">
+        <motion.div
+          key={frame.id}
+          className="section-scene-stage"
+          initial={reduced ? false : { opacity: 0, scale: 0.94, y: 24 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ duration: reduced ? 0.01 : 0.4, ease: [0.4, 0, 0.2, 1] }}
+        >
+          <SectionFrame
+            frame={frame}
+            presentation={presentation}
+            highlighted
+            activeChildId={activeChildId}
+            layout="scene"
+            onOpen={onSelect}
+            onOpenDetail={onOpenDetail}
+            onOpenChild={onOpenChild}
+          />
+        </motion.div>
+        <p className="section-scene-caption">{ARROW_CAPTION}</p>
+      </div>
 
       <button
         type="button"
