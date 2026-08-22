@@ -256,8 +256,8 @@ button {
   width: 100%;
   height: 100%;
   overflow: visible;
-  /* Reserve room for eye affordance — never sits on type */
-  padding: 48px 56px 40px 48px;
+  /* Reserve room for doubled Info affordance — never sits on type */
+  padding: 4.5rem 7.5rem 2.5rem 3rem;
   box-sizing: border-box;
   display: grid;
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
