@@ -49,26 +49,28 @@ export function SectionFrame({
   onOpenDetail: () => void;
   onOpenChild?: (id: string) => void;
 }) {
-  const chart = frame.chartId ? getChart(frame.chartId) : undefined;
+  const isSources = frame.kind === "sources";
+  const chart = !isSources && frame.chartId ? getChart(frame.chartId) : undefined;
   const situationOnly = isSituationPhotoSection(frame.id);
-  const illusFile = situationOnly
-    ? SITUATION_HERO
-    : sectionIllustration(frame.id) ?? sectionIllustration(frame.mainSectionId);
+  const illusFile = isSources
+    ? undefined
+    : situationOnly
+      ? SITUATION_HERO
+      : sectionIllustration(frame.id) ?? sectionIllustration(frame.mainSectionId);
   const showBrand = frame.kind === "title";
   const hasMore = frameHasMoreDetail(frame);
+  // Sources is a register — never optional-fact pills / meta satellites
   const allChildren =
-    frame.kind === "hub" || frame.kind === "title" || frame.kind === "sources"
+    frame.kind === "hub" || frame.kind === "title"
       ? frame.childIds
           .map((id) => presentation.frames.find((f) => f.id === id))
           .filter(Boolean)
       : [];
   const children = allChildren.slice(0, MAX_VISIBLE_SATS);
   const overflowCount = Math.max(0, allChildren.length - children.length);
-  const sourceNotes =
-    frame.kind === "sources" && frame.footnotes?.length
-      ? frame.footnotes.slice(0, 6)
-      : [];
-  const showHint = layout === "scene" && (hasMore || children.length > 0 || overflowCount > 0);
+  const sourceNotes = isSources && frame.footnotes?.length ? frame.footnotes : [];
+  const showHint =
+    !isSources && layout === "scene" && (hasMore || children.length > 0 || overflowCount > 0);
 
   const style: CSSProperties =
     layout === "scene"
@@ -125,51 +127,47 @@ export function SectionFrame({
           </button>
         ) : null}
 
-        <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
-          {illusFile ? (
-            <div
-              className={`prezi-photo-bubble${situationOnly ? "" : " prezi-photo-bubble--illustration"}`}
-            >
-              <img
-                src={assetUrl(illusFile)}
-                alt=""
-                draggable={false}
-                className={situationOnly ? `crop-${frame.photoCrop}` : "prezi-illustration"}
-              />
-            </div>
-          ) : null}
-
-          {frame.heroStat && !illusFile ? (
-            <div className="prezi-stat-bubble" aria-hidden={false}>
-              <p className="prezi-stat-value">{frame.heroStat.value}</p>
-              <p className="prezi-stat-label">{frame.heroStat.label}</p>
-            </div>
-          ) : null}
-
-          {chart ? (
-            <div className="prezi-chart-bubble">
-              <ContentChart chart={chart} density="canvas" />
-              <button
-                type="button"
-                className="prezi-info prezi-info--chart"
-                aria-label={`More information about ${frame.title} chart`}
-                title={INFO_HINT}
-                onClick={(e) => {
-                  e.stopPropagation();
-                  onOpenDetail();
-                }}
+        {!isSources ? (
+          <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
+            {illusFile ? (
+              <div
+                className={`prezi-photo-bubble${situationOnly ? "" : " prezi-photo-bubble--illustration"}`}
               >
-                <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
-              </button>
-            </div>
-          ) : null}
+                <img
+                  src={assetUrl(illusFile)}
+                  alt=""
+                  draggable={false}
+                  className={situationOnly ? `crop-${frame.photoCrop}` : "prezi-illustration"}
+                />
+              </div>
+            ) : null}
 
-          {!illusFile && !frame.heroStat && !chart && frame.kind !== "sources" ? (
-            <div className="prezi-stat-bubble prezi-stat-bubble--plain" aria-hidden>
-              <p className="prezi-stat-value prezi-stat-value--quiet">CCD</p>
-            </div>
-          ) : null}
-        </div>
+            {frame.heroStat && !illusFile ? (
+              <div className="prezi-stat-bubble" aria-hidden={false}>
+                <p className="prezi-stat-value">{frame.heroStat.value}</p>
+                <p className="prezi-stat-label">{frame.heroStat.label}</p>
+              </div>
+            ) : null}
+
+            {chart ? (
+              <div className="prezi-chart-bubble">
+                <ContentChart chart={chart} density="canvas" />
+                <button
+                  type="button"
+                  className="prezi-info prezi-info--chart"
+                  aria-label={`More information about ${frame.title} chart`}
+                  title={INFO_HINT}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onOpenDetail();
+                  }}
+                >
+                  <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+                </button>
+              </div>
+            ) : null}
+          </div>
+        ) : null}
 
         <div className="prezi-copy">
           {showBrand ? (
@@ -190,14 +188,10 @@ export function SectionFrame({
             <h2 className="prezi-title-giant">{frame.titleGiant}</h2>
           </div>
 
-          {frame.sentence || frame.quote ? (
-            <div className="prezi-body-card">
-              <p>{frame.quote || frame.sentence}</p>
-            </div>
-          ) : null}
-
-          {frame.kind === "sources" && sourceNotes.length ? (
+          {/* Sources: principal footnotes only — no meta body cards, no CCD filler */}
+          {isSources && sourceNotes.length ? (
             <div className="prezi-body-card prezi-sources-card">
+              <p className="prezi-sources-label">Principal sources</p>
               <ol>
                 {sourceNotes.map((fn) => (
                   <li key={fn.id}>
@@ -211,6 +205,12 @@ export function SectionFrame({
                   </li>
                 ))}
               </ol>
+            </div>
+          ) : null}
+
+          {!isSources && (frame.sentence || frame.quote) ? (
+            <div className="prezi-body-card">
+              <p>{frame.quote || frame.sentence}</p>
             </div>
           ) : null}
         </div>

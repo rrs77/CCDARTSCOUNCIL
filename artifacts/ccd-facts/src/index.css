@@ -1182,19 +1182,45 @@ button {
 .prezi-sources-card {
   max-height: none;
   overflow: visible;
+  max-width: 52rem;
 }
 
-.prezi-sources-hint {
-  font-size: clamp(1.25rem, 1.8vw, 1.5rem) !important;
-  font-weight: 600 !important;
+.prezi-sources-label {
+  margin: 0 0 0.75rem;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   color: #1a332e;
+  opacity: 0.75;
+}
+
+.prezi-sources .prezi-frame-stage {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.prezi-sources .prezi-copy {
+  grid-column: 1;
+  grid-row: 2;
+  max-width: 56rem;
 }
 
 .prezi-sources-card ol {
   margin: 0;
-  padding-left: 1.2rem;
-  font-size: 1.25rem;
-  line-height: 1.45;
+  padding-left: 1.35rem;
+  font-size: clamp(1.15rem, 1.7vw, 1.35rem);
+  line-height: 1.5;
+  color: #0f2a2e;
+}
+
+.prezi-sources-card a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 0.15em;
+}
+
+.prezi-sources-card a:hover {
+  color: #002d24;
 }
 
 /* Hero ring — right column only; never invades copy */

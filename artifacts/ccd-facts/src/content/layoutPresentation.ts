@@ -193,19 +193,22 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       level: 2,
       kind: isSources ? "sources" : "hub",
       title: sec.title,
-      sentence: paras[0]
-        ? firstSentence(paras[0].text)
-        : quotes[0]
-          ? firstSentence(quotes[0].text)
-          : "",
+      // Sources: footnotes only on the frame — no closing/meta sentence as a body card
+      sentence: isSources
+        ? ""
+        : paras[0]
+          ? firstSentence(paras[0].text)
+          : quotes[0]
+            ? firstSentence(quotes[0].text)
+            : "",
       heroStat: hubStat,
       chartId: hubChart,
-      quote: quotes[0] ? firstSentence(quotes[0].text) : undefined,
+      quote: isSources ? undefined : quotes[0] ? firstSentence(quotes[0].text) : undefined,
       // Classroom photo ONLY on The situation — unique illustration, not reused
       photoHero: hubId === "the-situation" && !hubStat && !hubChart && !isSources,
       photoCrop: crop,
       footnotes: isSources ? doc.footnotes : undefined,
-      blocks: sec.blocks,
+      blocks: isSources ? [] : sec.blocks,
       subsections: nested
         .filter((n) => n.parentId === sec.id)
         .map((n) => ({ title: n.title, blocks: n.blocks })),
@@ -238,77 +241,80 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       return t;
     };
 
-    for (const kid of nested.filter((n) => n.parentId === sec.id)) {
-      if (children.length >= MAX_CHILDREN) break;
-      const kParas = kid.blocks.filter((b) => b.type === "paragraph") as Extract<
-        ContentBlock,
-        { type: "paragraph" }
-      >[];
-      const kStats = kid.blocks.filter((b) => b.type === "stat") as Extract<
-        ContentBlock,
-        { type: "stat" }
-      >[];
-      const kCharts = kid.blocks.filter((b) => b.type === "chart") as Extract<
-        ContentBlock,
-        { type: "chart" }
-      >[];
-      used.add(kid.id);
-      children.push({
-        id: kid.id,
-        title: takeTitle(kid.title),
-        sentence: kParas[0]
-          ? firstSentence(kParas[0].text)
-          : kStats[0]
-            ? shortLabel(kStats[0].label, 90)
-            : firstSentence(kid.title),
-        heroStat: kStats[0]
-          ? { value: kStats[0].value, label: shortLabel(kStats[0].label, 48) }
-          : undefined,
-        chartId: !kStats[0] ? kCharts[0]?.chartId : undefined,
-        photoHero: false,
-        blocks: kid.blocks,
-      });
-    }
+    // Sources is a footnote register only — no leaf satellites / meta pills
+    if (!isSources) {
+      for (const kid of nested.filter((n) => n.parentId === sec.id)) {
+        if (children.length >= MAX_CHILDREN) break;
+        const kParas = kid.blocks.filter((b) => b.type === "paragraph") as Extract<
+          ContentBlock,
+          { type: "paragraph" }
+        >[];
+        const kStats = kid.blocks.filter((b) => b.type === "stat") as Extract<
+          ContentBlock,
+          { type: "stat" }
+        >[];
+        const kCharts = kid.blocks.filter((b) => b.type === "chart") as Extract<
+          ContentBlock,
+          { type: "chart" }
+        >[];
+        used.add(kid.id);
+        children.push({
+          id: kid.id,
+          title: takeTitle(kid.title),
+          sentence: kParas[0]
+            ? firstSentence(kParas[0].text)
+            : kStats[0]
+              ? shortLabel(kStats[0].label, 90)
+              : firstSentence(kid.title),
+          heroStat: kStats[0]
+            ? { value: kStats[0].value, label: shortLabel(kStats[0].label, 48) }
+            : undefined,
+          chartId: !kStats[0] ? kCharts[0]?.chartId : undefined,
+          photoHero: false,
+          blocks: kid.blocks,
+        });
+      }
 
-    for (let i = 1; i < paras.length && children.length < MAX_CHILDREN; i++) {
-      const sentence = firstSentence(paras[i]!.text);
-      const id = uniqueId(`${hubId}-more-${i}`, used);
-      children.push({
-        id,
-        title: takeTitle(leafTitleFromSentence(sentence, `More ${i}`)),
-        sentence,
-        photoHero: false,
-        blocks: [{ type: "paragraph", text: paras[i]!.text }],
-      });
-    }
+      for (let i = 1; i < paras.length && children.length < MAX_CHILDREN; i++) {
+        const sentence = firstSentence(paras[i]!.text);
+        const id = uniqueId(`${hubId}-more-${i}`, used);
+        children.push({
+          id,
+          title: takeTitle(leafTitleFromSentence(sentence, `More ${i}`)),
+          sentence,
+          photoHero: false,
+          blocks: [{ type: "paragraph", text: paras[i]!.text }],
+        });
+      }
 
-    // Extra stats (beyond hub hero) → leaf stops — not second ovals on the hub
-    const startStat = hubStat ? 1 : 0;
-    for (let i = startStat; i < stats.length && children.length < MAX_CHILDREN; i++) {
-      const st = stats[i]!;
-      const id = uniqueId(`${hubId}-stat-${i}`, used);
-      children.push({
-        id,
-        title: takeTitle(shortLabel(st.label.split(/[—(]/)[0] || st.label, 36)),
-        sentence: shortLabel(st.label, 100),
-        heroStat: { value: st.value, label: shortLabel(st.label, 48) },
-        photoHero: false,
-        blocks: [{ type: "stat", value: st.value, label: st.label }],
-      });
-    }
+      // Extra stats (beyond hub hero) → leaf stops — not second ovals on the hub
+      const startStat = hubStat ? 1 : 0;
+      for (let i = startStat; i < stats.length && children.length < MAX_CHILDREN; i++) {
+        const st = stats[i]!;
+        const id = uniqueId(`${hubId}-stat-${i}`, used);
+        children.push({
+          id,
+          title: takeTitle(shortLabel(st.label.split(/[—(]/)[0] || st.label, 36)),
+          sentence: shortLabel(st.label, 100),
+          heroStat: { value: st.value, label: shortLabel(st.label, 48) },
+          photoHero: false,
+          blocks: [{ type: "stat", value: st.value, label: st.label }],
+        });
+      }
 
-    // Extra charts only if hub didn’t take the first
-    if (!hubChart && charts[0] && children.length < MAX_CHILDREN) {
-      const c = charts[0];
-      const id = uniqueId(`${hubId}-${c.chartId}`, used);
-      children.push({
-        id,
-        title: takeTitle("Chart"),
-        sentence: "Detail from the evidence overview.",
-        chartId: c.chartId,
-        photoHero: false,
-        blocks: [{ type: "chart", chartId: c.chartId }],
-      });
+      // Extra charts only if hub didn’t take the first
+      if (!hubChart && charts[0] && children.length < MAX_CHILDREN) {
+        const c = charts[0];
+        const id = uniqueId(`${hubId}-${c.chartId}`, used);
+        children.push({
+          id,
+          title: takeTitle("Chart"),
+          sentence: "Detail from the evidence overview.",
+          chartId: c.chartId,
+          photoHero: false,
+          blocks: [{ type: "chart", chartId: c.chartId }],
+        });
+      }
     }
 
     for (const ch of children) {

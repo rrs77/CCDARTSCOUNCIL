@@ -98,12 +98,6 @@ export function SourcesPage({
           );
         })}
       </ol>
-      {cluster.id === "ccd" ? (
-        <div className="topic-sources-notes">
-          {meta.verificationNote ? <p>{meta.verificationNote}</p> : null}
-          {meta.closing ? <p>{meta.closing}</p> : null}
-        </div>
-      ) : null}
     </div>
   );
 }
