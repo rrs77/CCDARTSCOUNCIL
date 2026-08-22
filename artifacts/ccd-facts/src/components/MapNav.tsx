@@ -58,8 +58,9 @@ function buildMenu(presentation: Presentation): {
 }
 
 /**
- * Map chip sits in top-left chrome (above the centred prev chevron).
- * List opens on load; mouse leave slides the column away; hover/click brings it back.
+ * Map chip: one “Map” label inside the button only (no second Map heading).
+ * Closed by default — click/tap to open; click again or mouse leave to close.
+ * Does not open on load or on hover.
  */
 export function MapNav({
   presentation,
@@ -72,7 +73,7 @@ export function MapNav({
   onOverview: () => void;
   onJump: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [pinned, setPinned] = useState(false);
   const closeTimer = useRef<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -86,16 +87,13 @@ export function MapNav({
     }
   }, []);
 
-  const openNow = useCallback(() => {
-    clearClose();
-    setOpen(true);
-  }, [clearClose]);
-
   const scheduleClose = useCallback(() => {
-    if (pinned) return;
     clearClose();
-    closeTimer.current = window.setTimeout(() => setOpen(false), 250);
-  }, [clearClose, pinned]);
+    closeTimer.current = window.setTimeout(() => {
+      setPinned(false);
+      setOpen(false);
+    }, 250);
+  }, [clearClose]);
 
   useEffect(() => () => clearClose(), [clearClose]);
 
@@ -138,14 +136,12 @@ export function MapNav({
   const go = (id: string | null) => {
     if (id === null) onOverview();
     else onJump(id);
-    if (pinned) {
-      setPinned(false);
-      setOpen(false);
-    }
+    setPinned(false);
+    setOpen(false);
   };
 
   const onTabClick = () => {
-    if (open && pinned) {
+    if (open) {
       setPinned(false);
       setOpen(false);
       return;
@@ -178,13 +174,14 @@ export function MapNav({
       ref={rootRef}
       className={`map-nav ${open ? "is-open" : "is-collapsed"} ${pinned ? "is-pinned" : ""}`}
       onMouseLeave={scheduleClose}
-      onMouseEnter={openNow}
+      onMouseEnter={clearClose}
     >
       <button
         type="button"
         className="map-nav-tab"
         aria-expanded={open}
         aria-controls={panelId}
+        aria-label="Map"
         title="Map — alternative navigation"
         onClick={onTabClick}
       >
@@ -200,6 +197,7 @@ export function MapNav({
         inert={!open ? true : undefined}
       >
         <div className="map-nav-panel-inner">
+          {/* One Map label lives in the tab only — never repeat a Map heading here */}
           <ul className="map-nav-list">{lone.map(renderLink)}</ul>
 
           {groups.map((g) => (
