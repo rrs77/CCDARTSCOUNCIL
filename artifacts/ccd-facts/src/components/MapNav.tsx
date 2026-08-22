@@ -180,7 +180,6 @@ export function MapNav({
         className="map-nav-tab"
         aria-expanded={open}
         aria-controls={panelId}
-        aria-label="Map"
         title="Map — alternative navigation"
         onClick={onTabClick}
       >
