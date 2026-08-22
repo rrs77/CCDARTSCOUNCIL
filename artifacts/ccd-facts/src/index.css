@@ -180,6 +180,7 @@ button {
 .overview-path {
   position: absolute;
   inset: 0;
+  z-index: 1; /* journey stroke under every section card */
   pointer-events: none;
   overflow: visible;
 }
@@ -302,7 +303,7 @@ button {
 /* —— Section frame: one ring = photo/stat hero only —— */
 .prezi-frame {
   position: absolute;
-  z-index: 4;
+  z-index: 5; /* above journey path (z-index: 1) */
   display: block;
   padding: 0;
   border: 0;
@@ -313,7 +314,7 @@ button {
 }
 
 .prezi-frame.is-highlighted {
-  z-index: 10;
+  z-index: 12;
 }
 
 .section-scene-stage .prezi-frame-stage {
@@ -383,8 +384,10 @@ button {
 }
 
 .prezi-frame.is-peek .prezi-frame-stage {
-  opacity: 0.4;
-  filter: saturate(0.65);
+  /* Dim without opacity — opacity would reveal the path stroke underneath */
+  filter: brightness(0.55) saturate(0.55);
+  background: rgba(0, 22, 18, 0.92);
+  border-color: rgba(255, 250, 247, 0.08);
 }
 
 /* Legacy left lime rule — never show on section frames */

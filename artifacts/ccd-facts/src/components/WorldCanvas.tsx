@@ -129,7 +129,36 @@ export function WorldCanvas({
           style={{ width: presentation.world.width, height: presentation.world.height }}
         >
           {connector ? (
-            <svg className="overview-path" aria-hidden>
+            <svg
+              className="overview-path"
+              aria-hidden
+              width={presentation.world.width}
+              height={presentation.world.height}
+            >
+              <defs>
+                {/* Punch card rects out of the stroke so it never paints over type/charts */}
+                <mask id="path-under-cards">
+                  <rect
+                    x={0}
+                    y={0}
+                    width={presentation.world.width}
+                    height={presentation.world.height}
+                    fill="white"
+                  />
+                  {hubs.map((h) => (
+                    <rect
+                      key={`mask-${h.id}`}
+                      x={h.x - 4}
+                      y={h.y - 4}
+                      width={h.w + 8}
+                      height={h.h + 8}
+                      rx={22}
+                      ry={22}
+                      fill="black"
+                    />
+                  ))}
+                </mask>
+              </defs>
               <path
                 d={connector}
                 fill="none"
@@ -137,6 +166,8 @@ export function WorldCanvas({
                 strokeWidth={6}
                 strokeLinecap="round"
                 strokeLinejoin="round"
+                mask="url(#path-under-cards)"
+                pointerEvents="none"
               />
             </svg>
           ) : null}
