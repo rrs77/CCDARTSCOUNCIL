@@ -337,8 +337,8 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
 function placeHubsOnGrid(hubs: FrameNode[]): void {
   // Pathway bands (story order):
   // 0: title (full width slot)
-  // 1: situation + key stages (primary, secondary, a-level)
-  // 2: after school (HE, hubs) + solution + sources
+  // 1: key stages (primary, secondary, gcse, a-level) + HE
+  // 2: hubs + solution + sources
   const COLS = 3;
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
