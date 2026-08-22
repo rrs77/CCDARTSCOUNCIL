@@ -154,18 +154,17 @@ export const meta = {
   coverFraming: [
     "Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.",
     "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
-    "Not a fix for structural inequality on its own. It aims to shorten the distance between excellent practice and the teacher who needs it. A platform cannot replace specialists, instruments or live culture — it can keep ideas and connections from being confined by postcode.",
+    "It aims to shorten the distance between excellent practice and the teacher who needs it.",
   ],
   earlyYearsPrinciple:
     "Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.",
   closing:
-    "The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to be a practical connection layer — teachers and organisations, day to day — without over-claiming impact.",
-  verificationNote:
-    "Verification note: figures re-checked against CLA, Ofqual, DfE and HESA analyses on 21 August 2026. Primary tables preferred over secondary paraphrase. Unverified national percentages omitted.",
+    "The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner is a practical connection layer for teachers and organisations, day to day.",
+  verificationNote: "",
   partnerDisclaimer:
-    "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships. This is a prototype / demo connection layer.",
+    "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
   fundingCase:
-    "Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. CCD aims to make those connections usable. We don’t need more resources so much as to make the outstanding ones easier to find, connect and build upon.",
+    "Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. CCD aims to make those connections usable.",
   ui: {
     exploreHint: "Use arrows or swipe to explore",
     closeModal: "Close",
@@ -340,11 +339,11 @@ export const glanceModal = {
             },
           ],
           caveat:
-            "Provisional figures, rounded to 5. Short-term movement is mixed — not a long-term reversal. “No entries” does not mean “not taught”.",
+            "Short-term Ofqual movement is mixed — not a long-term reversal. “No entries” does not mean “not taught”.",
         },
       ],
       whyThisMattersForCCD:
-        "These figures set the case for a connection layer: teachers and arts organisations need a practical way to find, adapt and share outstanding work where entitlement is uneven. CCDesigner aims to shorten that distance — not to claim it will solve structural inequality alone.",
+        "These figures set the case for a connection layer: teachers and arts organisations need a practical way to find, adapt and share outstanding work where entitlement is uneven.",
     },
   ] satisfies GlancePage[],
 };
@@ -650,10 +649,9 @@ export const topics: TopicDef[] = [
       "Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.",
       "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report no external artist or cultural organisation.",
       "Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.",
-      "No official national statistic exists for weekly Year 7 music/drama teaching time — so none is quoted here.",
     ],
     whyThisMattersForCCD:
-      "Where generalists carry the arts, reusable activity blocks and Partner Hubs aim to make excellent practice easier to find and adapt — without claiming to replace specialists.",
+      "Where generalists carry the arts, reusable activity blocks and Partner Hubs aim to make excellent practice easier to find and adapt.",
     sourceIds: ["cla2026"],
     statIds: ["hours-gap", "primary-hour"],
     chartIds: ["primaryHours"],
@@ -669,7 +667,7 @@ export const topics: TopicDef[] = [
     body: [
       "54% vs 21% of schools in the most vs least deprived LA fifths have no GCSE Music entries (CLA 2026).",
       "Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths. FSM pupils are under-represented in arts GCSEs and A-level Music, Dance, Drama and Design & Technology.",
-      "West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions. FSM ≠ LA deprivation.",
+      "West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions.",
       "Domestic Creative Arts & Design undergraduates edged down while the wider cohort rose (HESA via CLA 2026).",
     ],
     whyThisMattersForCCD:
@@ -690,11 +688,11 @@ export const topics: TopicDef[] = [
     body: [
       "Connect rather than duplicate — make outstanding practice usable day to day. CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5).",
       "Make partnership measurable — Partner Hubs aim to connect teachers with arts organisations in the same place they plan, so collaboration shows up in everyday work.",
-      "Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Keep Music Hub (£76m annual to AY 2026/27 + £25m capital) and National Centre (up to £13m over three years) streams distinct; do not say hub funding simply “declined”.",
+      "Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Music Hubs: £76m annual to AY 2026/27 + £25m capital. National Centre: up to £13m over three years — separate streams.",
       "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
     ],
     whyThisMattersForCCD:
-      "The evidence shows fragmentation and unequal entitlement. CCD aims to be the practical connection layer — not a claimed fix for structural inequality.",
+      "The evidence shows fragmentation and unequal entitlement. CCD aims to be the practical connection layer for teachers and organisations.",
     sourceIds: ["cla2026", "ofqual2026", "turnItUp", "nationalCentre"],
     neighbors: { left: "exams", down: "exams", right: "exams", up: "poverty" },
   },

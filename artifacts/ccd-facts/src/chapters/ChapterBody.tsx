@@ -100,8 +100,8 @@ export function SourcesPage({
       </ol>
       {cluster.id === "ccd" ? (
         <div className="topic-sources-notes">
-          <p>{meta.verificationNote}</p>
-          <p>{meta.closing}</p>
+          {meta.verificationNote ? <p>{meta.verificationNote}</p> : null}
+          {meta.closing ? <p>{meta.closing}</p> : null}
         </div>
       ) : null}
     </div>

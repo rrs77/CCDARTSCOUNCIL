@@ -18,17 +18,13 @@ Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.
 
 <!-- chart:primaryHours -->
 
-> Why this matters for CCDesigner: Where generalists carry the arts, reusable activity blocks and Partner Hubs aim to make excellent practice easier to find and adapt — without claiming to replace specialists.
+> Why this matters for CCDesigner: Where generalists carry the arts, reusable activity blocks and Partner Hubs aim to make excellent practice easier to find and adapt.
 
 ### Primary hours
 
 - **47% vs 6%** — Independent vs state >2.5 hrs arts / week[^2]
 - **~1 in 4** — Primary teachers under 1 hour arts / week[^2]
 - **43%** — No external artist or cultural organisation[^2]
-
-### Entitlement at primary
-
-- **47% vs 6%** — Independent vs state primary teachers reporting >2.5 hrs arts / week[^2]
 
 ## Secondary
 
@@ -38,13 +34,11 @@ Arts teaching hours fell 21% and arts teacher headcount 14% over the long term r
 
 Access to arts qualifications still tracks disadvantage (DfE Tables 18–19).[^5]
 
-West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions. FSM ≠ LA deprivation.
+West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions.
 
 > Why this matters for CCDesigner: CCDesigner aims to support teachers working inside a system that has already contracted — keeping planning cumulative and partnership reachable where exam pathways thin out.
 
 ### Teachers
-
-DfE School Workforce in England remains the census reference for staffing context.[^6]
 
 - **−21%** — Arts teaching hours (CLA Report Card 2024)[^1]
 - **−14%** — Arts teacher headcount (CLA Report Card 2024)[^1]
@@ -86,8 +80,6 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 - Music **−4.9%**
 - Art **−1.0%**
 
-Provisional figures, rounded to 5.
-
 <!-- chart:alevelIndex -->
 
 > Why this matters for CCDesigner: Where KS5 arts thin out, cumulative planning and Partner Hub resources aim to keep specialist pathways reachable for teachers and students.
@@ -99,13 +91,9 @@ Provisional figures, rounded to 5.
 
 ## University / HE
 
-Domestic Creative Arts & Design undergraduates edged down while the wider cohort rose (HESA via CLA 2026).[^9]
+Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA 2024/25 via CLA 2026 Detailed Analysis).[^9]
 
 <!-- chart:heChange -->
-
-### Creative Arts & Design
-
-Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA 2024/25 via CLA 2026 Detailed Analysis).[^9]
 
 ## A solution
 
@@ -113,13 +101,13 @@ Creative Curriculum Designer is a free national planning and resource platform f
 
 Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs aim to connect teachers with arts organisations — an organisation can add a resource into the teacher’s library while official materials stay on the organisation’s own site.
 
-CCD aims to support generalist and specialist teachers, with differentiation and planning in one place. The intended contribution is to reduce the distance between excellent practice and the teacher who needs it — making outstanding resources easier to find, connect and build upon. It is not a substitute for specialist teachers, instruments, or live culture.
+CCD aims to support generalist and specialist teachers, with differentiation and planning in one place. The intended contribution is to reduce the distance between excellent practice and the teacher who needs it — making outstanding resources easier to find, connect and build upon.
 
 Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.
 
 Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.
 
-> Why this matters for CCDesigner: The evidence shows fragmentation and unequal entitlement across the stages above. CCD aims to be the practical connection layer — not a claimed fix for structural inequality.
+> Why this matters for CCDesigner: The evidence shows fragmentation and unequal entitlement across the stages above. CCD aims to be the practical connection layer for teachers and organisations.
 
 ### How it connects
 
@@ -127,9 +115,7 @@ Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance
 
 ### Music Hubs and National Centre
 
-Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships.
-
-Keep funding streams distinct. Do not say hub funding simply “declined”.
+Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. Music Hubs annual backing and National Centre contract support are separate streams.
 
 - **£76m** — Annual Music Hubs backing to AY 2026/27[^7]
 - **£25m** — Additional capital for instruments / technology[^7]
@@ -139,7 +125,7 @@ Keep funding streams distinct. Do not say hub funding simply “declined”.
 
 ## Sources
 
-The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to be a practical connection layer — teachers and organisations, day to day — without over-claiming impact.
+The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner is a practical connection layer for teachers and organisations, day to day.
 
 [^1]: Cultural Learning Alliance Report Card 2024 — https://www.culturallearningalliance.org.uk/
 [^2]: Cultural Learning Alliance Report Card 2026 — https://www.culturallearningalliance.org.uk/report-card-and-rers-published-today/
