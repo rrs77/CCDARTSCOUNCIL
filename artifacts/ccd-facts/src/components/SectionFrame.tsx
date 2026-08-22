@@ -10,8 +10,9 @@ import {
   sectionIllustration,
   SITUATION_HERO,
 } from "@/content/sectionIllustrations";
+import { sectionAccent } from "@/content/sectionAccent";
 
-const MAX_VISIBLE_SATS = 2;
+const MAX_VISIBLE_SATS = 3;
 const INFO_HINT = "More information";
 
 function frameHasMoreDetail(frame: FrameNode): boolean {
@@ -27,8 +28,9 @@ function frameHasMoreDetail(frame: FrameNode): boolean {
 }
 
 /**
- * Opened section / title scene: rounded boxes, circled Info for detail.
- * Info only where more detail exists — never Eye/lightbulb.
+ * One composed place on the canvas.
+ * Overview: title + visual cue, detail quiet.
+ * Focus: heading → key message → support/chart; one Info; quiet extras.
  */
 export function SectionFrame({
   frame,
@@ -36,6 +38,7 @@ export function SectionFrame({
   highlighted,
   activeChildId,
   layout = "world",
+  density = "focus",
   onOpen,
   onOpenDetail,
   onOpenChild,
@@ -45,41 +48,46 @@ export function SectionFrame({
   highlighted?: boolean;
   activeChildId?: string | null;
   layout?: "world" | "scene";
+  density?: "overview" | "focus";
   onOpen: () => void;
   onOpenDetail: () => void;
   onOpenChild?: (id: string) => void;
 }) {
   const isSources = frame.kind === "sources";
-  const chart = !isSources && frame.chartId ? getChart(frame.chartId) : undefined;
+  const quiet = density === "overview" || (density === "focus" && !highlighted);
+  const isOverview = quiet;
+  const chart = !isSources && !quiet && frame.chartId ? getChart(frame.chartId) : undefined;
   const situationOnly = isSituationPhotoSection(frame.id);
   const illusFile = isSources
     ? undefined
     : situationOnly
       ? SITUATION_HERO
       : sectionIllustration(frame.id) ?? sectionIllustration(frame.mainSectionId);
-  const showBrand = frame.kind === "title";
+  const showBrand = frame.kind === "title" && !isOverview;
   const hasMore = frameHasMoreDetail(frame);
-  // Sources is a register — never optional-fact pills / meta satellites
+  const showInfo = hasMore && !isOverview && !!highlighted;
+  // Sources is a register — never optional-fact pills
   const allChildren =
-    frame.kind === "hub" || frame.kind === "title"
+    !isOverview && (frame.kind === "hub" || frame.kind === "title")
       ? frame.childIds
           .map((id) => presentation.frames.find((f) => f.id === id))
           .filter(Boolean)
       : [];
   const children = allChildren.slice(0, MAX_VISIBLE_SATS);
   const overflowCount = Math.max(0, allChildren.length - children.length);
-  const sourceNotes = isSources && frame.footnotes?.length ? frame.footnotes : [];
-  const showHint =
-    !isSources && layout === "scene" && (hasMore || children.length > 0 || overflowCount > 0);
+  const sourceNotes =
+    !isOverview && isSources && frame.footnotes?.length ? frame.footnotes : [];
+  const accent = sectionAccent(frame.id);
 
   const style: CSSProperties =
     layout === "scene"
-      ? {}
+      ? { ["--frame-accent" as string]: accent }
       : {
           left: frame.x,
           top: frame.y,
           width: frame.w,
           height: frame.h,
+          ["--frame-accent" as string]: accent,
         };
 
   return (
@@ -91,6 +99,8 @@ export function SectionFrame({
         layout === "scene" ? "prezi-frame--scene" : "",
         `prezi-${frame.kind}`,
         highlighted ? "is-highlighted" : "",
+        density === "overview" ? "is-overview" : "is-focus",
+        quiet && density === "focus" ? "is-peek" : "",
         `crop-${frame.photoCrop}`,
       ]
         .filter(Boolean)
@@ -112,7 +122,7 @@ export function SectionFrame({
       aria-current={highlighted ? "true" : undefined}
     >
       <div className="prezi-frame-stage">
-        {hasMore ? (
+        {showInfo ? (
           <button
             type="button"
             className="prezi-info"
@@ -145,25 +155,13 @@ export function SectionFrame({
             {frame.heroStat && !illusFile ? (
               <div className="prezi-stat-bubble" aria-hidden={false}>
                 <p className="prezi-stat-value">{frame.heroStat.value}</p>
-                <p className="prezi-stat-label">{frame.heroStat.label}</p>
+                {!quiet ? <p className="prezi-stat-label">{frame.heroStat.label}</p> : null}
               </div>
             ) : null}
 
             {chart ? (
               <div className="prezi-chart-bubble">
                 <ContentChart chart={chart} density="canvas" />
-                <button
-                  type="button"
-                  className="prezi-info prezi-info--chart"
-                  aria-label={`More information about ${frame.title} chart`}
-                  title={INFO_HINT}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onOpenDetail();
-                  }}
-                >
-                  <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
-                </button>
               </div>
             ) : null}
           </div>
@@ -184,11 +182,12 @@ export function SectionFrame({
           ) : null}
 
           <div className="prezi-title-bubble">
-            {frame.titleSmall ? <p className="prezi-title-small">{frame.titleSmall}</p> : null}
-            <h2 className="prezi-title-giant">{frame.titleGiant}</h2>
+            {frame.titleSmall && !quiet ? (
+              <p className="prezi-title-small">{frame.titleSmall}</p>
+            ) : null}
+            <h2 className="prezi-title-giant">{quiet ? frame.title : frame.titleGiant}</h2>
           </div>
 
-          {/* Sources: principal footnotes only — no meta body cards, no CCD filler */}
           {isSources && sourceNotes.length ? (
             <div className="prezi-body-card prezi-sources-card">
               <p className="prezi-sources-label">Principal sources</p>
@@ -208,68 +207,58 @@ export function SectionFrame({
             </div>
           ) : null}
 
-          {!isSources && (frame.sentence || frame.quote) ? (
+          {!isSources && !quiet && (frame.sentence || frame.quote) ? (
             <div className="prezi-body-card">
               <p>{frame.quote || frame.sentence}</p>
             </div>
           ) : null}
         </div>
 
-        <div className="prezi-actions">
-          {children.length || overflowCount ? (
-            <>
-              <p className="prezi-extras-label">Optional extra facts</p>
-              <ul className="prezi-satellites" aria-label="Optional extra facts">
-                {children.map((ch, i) =>
-                  ch ? (
-                    <li
-                      key={ch.id}
-                      style={{ ["--i" as string]: String(i) }}
-                      className={activeChildId === ch.id ? "is-active-sat" : undefined}
-                    >
-                      <button
-                        type="button"
-                        className="prezi-sat"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onOpenChild?.(ch.id);
-                        }}
-                      >
-                        <span className="prezi-sat-label">
-                          {ch.heroStat?.value && ch.heroStat.value.length <= 12
-                            ? ch.heroStat.value
-                            : ch.title}
-                        </span>
-                        <span className="prezi-sat-info-wrap" aria-hidden>
-                          <Info className="prezi-sat-info" strokeWidth={2.25} />
-                        </span>
-                      </button>
-                    </li>
-                  ) : null,
-                )}
-                {overflowCount > 0 ? (
-                  <li>
+        {!quiet && (children.length || overflowCount) ? (
+          <div className="prezi-actions">
+            <ul className="prezi-satellites" aria-label="Extra facts">
+              {children.map((ch, i) =>
+                ch ? (
+                  <li
+                    key={ch.id}
+                    style={{ ["--i" as string]: String(i) }}
+                    className={activeChildId === ch.id ? "is-active-sat" : undefined}
+                  >
                     <button
                       type="button"
-                      className="prezi-sat prezi-sat--more"
+                      className="prezi-sat"
                       onClick={(e) => {
                         e.stopPropagation();
-                        onOpenDetail();
+                        onOpenChild?.(ch.id);
                       }}
-                      aria-label={`${overflowCount} more topics — open detail`}
                     >
-                      <span className="prezi-sat-label">+{overflowCount} more</span>
-                      <span className="prezi-sat-info-wrap" aria-hidden>
-                        <Info className="prezi-sat-info" strokeWidth={2.25} />
+                      <span className="prezi-sat-label">
+                        {ch.heroStat?.value && ch.heroStat.value.length <= 12
+                          ? ch.heroStat.value
+                          : ch.title}
                       </span>
                     </button>
                   </li>
-                ) : null}
-              </ul>
-            </>
-          ) : null}
-          {showHint ? <p className="prezi-hint">{INFO_HINT}</p> : null}
-        </div>
+                ) : null,
+              )}
+              {overflowCount > 0 ? (
+                <li>
+                  <button
+                    type="button"
+                    className="prezi-sat prezi-sat--more"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onOpenDetail();
+                    }}
+                    aria-label={`${overflowCount} more — open detail`}
+                  >
+                    <span className="prezi-sat-label">+{overflowCount}</span>
+                  </button>
+                </li>
+              ) : null}
+            </ul>
+          </div>
+        ) : null}
       </div>
     </div>
   );

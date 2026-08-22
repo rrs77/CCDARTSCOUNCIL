@@ -2,11 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DetailModal } from "@/components/DetailModal";
 import { LogoMark } from "@/components/LogoMark";
 import { PresentChrome } from "@/components/PresentChrome";
-import { SectionScene } from "@/components/SectionScene";
-import { StagePathway } from "@/components/StagePathway";
+import { WorldCanvas } from "@/components/WorldCanvas";
 import { meta } from "@/content/facts.content";
-import { getFrame, presentationFromMarkdown, type FrameNode } from "@/content/layoutPresentation";
-import { STAGE_ORDER, SECTION_PATH } from "@/content/stackLabels";
+import { getFrame, presentationFromMarkdown } from "@/content/layoutPresentation";
+import { SECTION_PATH } from "@/content/stackLabels";
 import rawContent from "../CONTENT.md?raw";
 
 const STORAGE_KEY = "ccd-facts-location";
@@ -43,32 +42,29 @@ function isTypingTarget() {
 }
 
 /**
- * Title → key-stage pathway overview.
- * Click a zone → framed section. Info → detail modal.
+ * One connected canvas. Overview fits the path; arrows / Map travel with camera zoom.
+ * Info opens the large detail modal (toggle close). Content meaning unchanged.
  */
 export default function App() {
   const presentation = useMemo(() => presentationFromMarkdown(rawContent), []);
-  const { w } = useViewport();
+  const viewport = useViewport();
   const reduced = useReducedMotion();
 
-  const stages = useMemo(() => {
-    const byId = new Map(presentation.frames.filter((f) => !f.parentId).map((f) => [f.id, f]));
-    const ordered: FrameNode[] = [];
-    for (const id of STAGE_ORDER) {
-      const f = byId.get(id);
-      if (f) ordered.push(f);
-    }
-    return ordered;
-  }, [presentation.frames]);
+  const sectionLinks = useMemo(() => {
+    return SECTION_PATH.map((id) => getFrame(presentation, id))
+      .filter(Boolean)
+      .map((f) => ({ id: f!.id, title: f!.title }));
+  }, [presentation]);
 
   const [modalId, setModalId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<"overview" | "frame">("frame");
+  const [viewMode, setViewMode] = useState<"overview" | "frame">("overview");
   const [chromeVisible, setChromeVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
 
   const idleTimer = useRef<number | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
+  const overviewStride = useRef(0);
 
   const persist = useCallback((id: string | null) => {
     try {
@@ -98,7 +94,6 @@ export default function App() {
     if (!focusedId) return -1;
     const exact = sectionPath.indexOf(focusedId as (typeof SECTION_PATH)[number]);
     if (exact >= 0) return exact;
-    // Nested leaf (optional tab) → treat as its hub for side-arrow position
     const f = getFrame(presentation, focusedId);
     if (!f?.mainSectionId) return -1;
     return sectionPath.indexOf(f.mainSectionId as (typeof SECTION_PATH)[number]);
@@ -108,19 +103,11 @@ export default function App() {
     setModalId(null);
     setViewMode("overview");
     setFocusedId(null);
+    overviewStride.current = 0;
     persist(null);
     writeUrl(null);
   }, [persist, writeUrl]);
 
-  const openTitle = useCallback(() => {
-    setModalId(null);
-    setFocusedId("title");
-    setViewMode("frame");
-    persist("title");
-    writeUrl("title");
-  }, [persist, writeUrl]);
-
-  /** Framed main section — side arrows step here. */
   const openSection = useCallback(
     (id: string) => {
       const frame = getFrame(presentation, id);
@@ -128,16 +115,16 @@ export default function App() {
         showOverview();
         return;
       }
+      const hubId = frame.parentId ? frame.mainSectionId : frame.id;
       setModalId(null);
-      setFocusedId(id);
+      setFocusedId(hubId);
       setViewMode("frame");
-      persist(id);
-      writeUrl(id);
+      persist(hubId);
+      writeUrl(hubId);
     },
     [persist, presentation, showOverview, writeUrl],
   );
 
-  /** Info / optional tab → large detail modal (toggle if same id already open). */
   const openDetail = useCallback(
     (id: string) => {
       if (modalId === id) {
@@ -149,19 +136,19 @@ export default function App() {
         showOverview();
         return;
       }
-      // Keep framed section underneath when possible
       const hubId = frame.parentId ? frame.mainSectionId : frame.id;
-      if (viewMode !== "frame" || !focusedId) {
-        setFocusedId(hubId === "title" || sectionPath.includes(hubId as (typeof SECTION_PATH)[number]) ? hubId : id);
+      if (viewMode !== "frame" || focusedId !== hubId) {
+        setFocusedId(hubId);
         setViewMode("frame");
       }
       setModalId(id);
       persist(id);
       writeUrl(id);
     },
-    [focusedId, modalId, persist, presentation, sectionPath, showOverview, viewMode, writeUrl],
+    [focusedId, modalId, persist, presentation, showOverview, viewMode, writeUrl],
   );
 
+  const overviewTimer = useRef<number | null>(null);
 
   const goSection = useCallback(
     (delta: number) => {
@@ -175,18 +162,37 @@ export default function App() {
         showOverview();
         return;
       }
+      overviewStride.current += 1;
+      if (overviewTimer.current) window.clearTimeout(overviewTimer.current);
+      // Every few hops, briefly show how places connect
+      if (overviewStride.current > 0 && overviewStride.current % 4 === 0) {
+        setModalId(null);
+        setViewMode("overview");
+        setFocusedId(null);
+        overviewTimer.current = window.setTimeout(() => {
+          openSection(sectionPath[next]!);
+        }, reduced ? 80 : 900);
+        return;
+      }
       openSection(sectionPath[next]!);
     },
-    [openSection, sectionIndex, sectionPath, showOverview],
+    [openSection, reduced, sectionIndex, sectionPath, showOverview],
   );
 
-  // Boot — title slide, then Overview is the stage pathway
+  useEffect(
+    () => () => {
+      if (overviewTimer.current) window.clearTimeout(overviewTimer.current);
+    },
+    [],
+  );
+
+  // Boot — overview of the full canvas unless a deep link is present
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const hash = window.location.hash.replace(/^#\/?/, "");
     const fromUrl = params.get("section") || hash || null;
-    if (fromUrl === "title" || !fromUrl) {
-      openTitle();
+    if (!fromUrl || fromUrl === "overview") {
+      showOverview();
     } else if (getFrame(presentation, fromUrl)) {
       openSection(fromUrl);
     } else {
@@ -200,13 +206,13 @@ export default function App() {
       const params = new URLSearchParams(window.location.search);
       const hash = window.location.hash.replace(/^#\/?/, "");
       const id = params.get("section") || hash || null;
-      if (!id || id === "title") openTitle();
+      if (!id || id === "overview") showOverview();
       else if (getFrame(presentation, id)) openSection(id);
       else showOverview();
     };
     window.addEventListener("popstate", onPop);
     return () => window.removeEventListener("popstate", onPop);
-  }, [openSection, openTitle, presentation, showOverview]);
+  }, [openSection, presentation, showOverview]);
 
   const bumpChrome = useCallback(() => {
     setChromeVisible(true);
@@ -247,24 +253,28 @@ export default function App() {
       }
       if (e.key === "ArrowRight" || e.key === "ArrowDown" || e.key === " ") {
         e.preventDefault();
-        if (viewMode === "frame") goSection(1);
-        else showOverview();
+        if (viewMode === "overview") {
+          const first = sectionPath[0];
+          if (first) openSection(first);
+        } else {
+          goSection(1);
+        }
         return;
       }
       if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
         e.preventDefault();
-        if (viewMode === "frame") goSection(-1);
-        else openTitle();
+        if (viewMode === "overview") return;
+        goSection(-1);
         return;
       }
       if (e.key === "Home") {
         e.preventDefault();
-        openTitle();
+        showOverview();
       }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [bumpChrome, goSection, modalId, openTitle, showOverview, viewMode]);
+  }, [bumpChrome, goSection, modalId, openSection, sectionPath, showOverview, viewMode]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -282,8 +292,6 @@ export default function App() {
     return () => document.removeEventListener("fullscreenchange", onFs);
   }, []);
 
-  const sceneFrame =
-    viewMode === "frame" && focusedId ? getFrame(presentation, focusedId) ?? null : null;
   const modalFrame = modalId ? getFrame(presentation, modalId) ?? null : null;
   const canPrev = sectionIndex > 0;
   const canNext = sectionIndex >= 0 && sectionIndex < sectionPath.length - 1;
@@ -292,7 +300,7 @@ export default function App() {
     <div className={`facts-app${modalId ? " is-detail-open" : ""}`}>
       <header className={`topbar ${chromeVisible ? "is-visible" : "is-dim"}`}>
         <div className="topbar-brand">
-          <LogoMark size={w < 640 ? 53 : 63} />
+          <LogoMark size={viewport.w < 640 ? 53 : 63} />
           <div className="topbar-brand-text">
             <div className="topbar-brand-name">{meta.brand}</div>
             <div className="topbar-brand-title">
@@ -308,27 +316,26 @@ export default function App() {
 
       <div
         ref={stageRef}
-        className="canvas-stage stack-stage"
+        className="canvas-stage"
         tabIndex={0}
         aria-label={presentation.title}
         onPointerDown={() => bumpChrome()}
       >
-        {viewMode === "overview" ? (
-          <StagePathway stages={stages} onOpen={openSection} onOpenDetail={openDetail} />
-        ) : sceneFrame ? (
-          <SectionScene
-            frame={sceneFrame}
-            presentation={presentation}
-            reduced={reduced}
-            canPrev={canPrev}
-            canNext={canNext}
-            onPrev={() => goSection(-1)}
-            onNext={() => goSection(1)}
-            onSelect={() => openDetail(sceneFrame.id)}
-            onOpenDetail={() => openDetail(sceneFrame.id)}
-            onOpenChild={(id) => openDetail(id)}
-          />
-        ) : null}
+        <WorldCanvas
+          presentation={presentation}
+          focusedId={focusedId}
+          viewMode={viewMode}
+          reduced={reduced}
+          canPrev={canPrev}
+          canNext={canNext}
+          viewport={viewport}
+          onOverview={showOverview}
+          onFocus={openSection}
+          onOpenDetail={openDetail}
+          onOpenChild={openDetail}
+          onPrev={() => goSection(-1)}
+          onNext={() => goSection(1)}
+        />
       </div>
 
       <PresentChrome
@@ -344,13 +351,10 @@ export default function App() {
       <DetailModal
         frame={modalFrame}
         open={!!modalId && !!modalFrame}
-        sectionLinks={stages
-          .filter((f) => f.id !== modalId)
-          .map((f) => ({ id: f.id, title: f.title }))}
+        sectionLinks={sectionLinks.filter((s) => s.id !== modalId)}
         onNavigate={(id) => openDetail(id)}
         onClose={() => setModalId(null)}
       />
-
     </div>
   );
 }

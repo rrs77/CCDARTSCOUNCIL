@@ -55,9 +55,9 @@ const MAX_CHILDREN = 4;
 /** Uniform zone — sized so rest-camera body stays ≥18px; overview uses readable target scale */
 const FRAME_W = 1180;
 const FRAME_H = 780;
-/** Tight gutters so Overview isn’t empty green with postage stamps — still ≥48px clear */
-const GUTTER = 280;
-const PAD = 220;
+/** Tight enough for a readable overview constellation; still ≥48px clear between frames */
+const GUTTER = 200;
+const PAD = 180;
 /** Park leaves well below the hub band */
 const LEAF_BAND_GAP = 4200;
 
@@ -339,38 +339,64 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
   return protos;
 }
 
-/** Quiet pathway grid for hubs — fixed columns, large gutters, no AABB overlap. */
+/** Quiet pathway grid for hubs — story-order bands, large gutters, no AABB overlap. */
 function placeHubsOnGrid(hubs: FrameNode[]): void {
-  // Pathway bands (story order):
-  // 0: title (full width slot)
-  // 1: key stages (primary, secondary, gcse, a-level) + HE
-  // 2: hubs + solution + sources
-  const COLS = 3;
+  // Story path bands (left → right, then down):
+  // 0: title
+  // 1: primary, secondary, gcse
+  // 2: a-level, HE, music hubs
+  // 3: solution, sources
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
 
-  const title = hubs.find((h) => h.kind === "title");
-  const rest = hubs.filter((h) => h.kind !== "title");
+  const byId = new Map(hubs.map((h) => [h.id, h]));
+  const orderedIds = [
+    "title",
+    "primary-eyfs-ks2",
+    "secondary",
+    "gcse",
+    "a-level",
+    "university-he",
+    "music-hubs-and-national-centre",
+    "a-solution",
+    "sources",
+  ];
+  const placed = new Set<string>();
 
-  if (title) {
-    title.x = PAD;
-    title.y = PAD;
-    title.w = FRAME_W;
-    title.h = FRAME_H;
+  const place = (id: string, col: number, row: number) => {
+    const hub = byId.get(id);
+    if (!hub) return;
+    hub.x = PAD + col * cellW;
+    hub.y = PAD + row * cellH;
+    hub.w = FRAME_W;
+    hub.h = hub.chartId ? FRAME_H + 80 : FRAME_H;
+    placed.add(id);
+  };
+
+  place("title", 1, 0);
+  place("primary-eyfs-ks2", 0, 1);
+  place("secondary", 1, 1);
+  place("gcse", 2, 1);
+  place("a-level", 0, 2);
+  place("university-he", 1, 2);
+  place("music-hubs-and-national-centre", 2, 2);
+  place("a-solution", 0, 3);
+  place("sources", 1, 3);
+
+  // Any leftover hubs continue the grid
+  let extra = 0;
+  for (const hub of hubs) {
+    if (placed.has(hub.id)) continue;
+    const col = extra % 3;
+    const row = 4 + Math.floor(extra / 3);
+    hub.x = PAD + col * cellW;
+    hub.y = PAD + row * cellH;
+    hub.w = FRAME_W;
+    hub.h = hub.chartId ? FRAME_H + 80 : FRAME_H;
+    extra += 1;
   }
 
-  // Extra vertical air after title before the stage band
-  const band0Y = PAD + (title ? FRAME_H + GUTTER : 0);
-
-  rest.forEach((hub, i) => {
-    const col = i % COLS;
-    const row = Math.floor(i / COLS);
-    hub.x = PAD + col * cellW;
-    hub.y = band0Y + row * cellH;
-    hub.w = FRAME_W;
-    // Chart hubs need more height so ticks/labels aren’t cropped
-    hub.h = hub.chartId ? FRAME_H + 80 : FRAME_H;
-  });
+  void orderedIds;
 }
 
 function aabbOverlap(
@@ -531,8 +557,24 @@ export function buildPresentation(doc: ParsedDocument): Presentation {
 export function buildHubConnectorPath(frames: FrameNode[]): string {
   const hubs = frames.filter((f) => !f.parentId);
   if (hubs.length < 2) return "";
-  // Story order = sequence order among roots
-  const ordered = [...hubs].sort((a, b) => a.sequence - b.sequence);
+  const byId = new Map(hubs.map((h) => [h.id, h]));
+  const story = [
+    "title",
+    "primary-eyfs-ks2",
+    "secondary",
+    "gcse",
+    "a-level",
+    "university-he",
+    "music-hubs-and-national-centre",
+    "a-solution",
+    "sources",
+  ]
+    .map((id) => byId.get(id))
+    .filter(Boolean) as FrameNode[];
+  const ordered =
+    story.length >= 2
+      ? story
+      : [...hubs].sort((a, b) => a.sequence - b.sequence);
   let d = "";
   for (let i = 0; i < ordered.length - 1; i++) {
     const a = ordered[i]!;
@@ -561,6 +603,8 @@ export function buildHubConnectorPath(frames: FrameNode[]): string {
     const y2 = b.y;
     const midY = (y1 + y2) / 2;
     d += `${d ? " " : ""}M ${x1} ${y1} L ${x1} ${midY} L ${x2} ${midY} L ${x2} ${y2}`;
+    void aCy;
+    void bCy;
   }
   return d;
 }
