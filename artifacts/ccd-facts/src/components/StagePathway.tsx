@@ -50,7 +50,7 @@ function StageZone({
         {hasDetail ? (
           <button
             type="button"
-            className="stage-zone-eye"
+            className="stage-zone-info"
             title={INFO_HINT}
             aria-label={`More information about ${label}`}
             onClick={(e) => {
@@ -58,7 +58,7 @@ function StageZone({
               onOpenDetail();
             }}
           >
-            <Info className="stage-zone-eye-icon" strokeWidth={2.25} />
+            <Info className="stage-zone-info-icon" strokeWidth={2.25} />
           </button>
         ) : null}
         {hasDetail ? <p className="stage-zone-hint">{INFO_HINT}</p> : null}

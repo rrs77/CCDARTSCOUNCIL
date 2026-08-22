@@ -14,9 +14,21 @@ import {
 const MAX_VISIBLE_SATS = 2;
 const INFO_HINT = "More information";
 
+function frameHasMoreDetail(frame: FrameNode): boolean {
+  return (
+    frame.blocks.length > 0 ||
+    !!frame.quote ||
+    !!frame.sentence ||
+    !!frame.chartId ||
+    !!frame.heroStat ||
+    !!(frame.subsections && frame.subsections.length) ||
+    !!(frame.footnotes && frame.footnotes.length)
+  );
+}
+
 /**
- * Opened section / title scene: rounded boxes, Info for detail, no left lime rule.
- * Classroom photo on title (start) / The situation only — other sections use their illustration.
+ * Opened section / title scene: rounded boxes, circled Info for detail.
+ * Info only where more detail exists — never Eye/lightbulb.
  */
 export function SectionFrame({
   frame,
@@ -43,6 +55,7 @@ export function SectionFrame({
     ? SITUATION_HERO
     : sectionIllustration(frame.id) ?? sectionIllustration(frame.mainSectionId);
   const showBrand = frame.kind === "title";
+  const hasMore = frameHasMoreDetail(frame);
   const allChildren =
     frame.kind === "hub" || frame.kind === "title" || frame.kind === "sources"
       ? frame.childIds
@@ -55,6 +68,7 @@ export function SectionFrame({
     frame.kind === "sources" && frame.footnotes?.length
       ? frame.footnotes.slice(0, 6)
       : [];
+  const showHint = layout === "scene" && (hasMore || children.length > 0 || overflowCount > 0);
 
   const style: CSSProperties =
     layout === "scene"
@@ -96,18 +110,20 @@ export function SectionFrame({
       aria-current={highlighted ? "true" : undefined}
     >
       <div className="prezi-frame-stage">
-        <button
-          type="button"
-          className="prezi-info"
-          aria-label={`More about ${frame.title}`}
-          title={INFO_HINT}
-          onClick={(e) => {
-            e.stopPropagation();
-            onOpenDetail();
-          }}
-        >
-          <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
-        </button>
+        {hasMore ? (
+          <button
+            type="button"
+            className="prezi-info"
+            aria-label={`More information about ${frame.title}`}
+            title={INFO_HINT}
+            onClick={(e) => {
+              e.stopPropagation();
+              onOpenDetail();
+            }}
+          >
+            <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+          </button>
+        ) : null}
 
         <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
           {illusFile ? (
@@ -136,7 +152,7 @@ export function SectionFrame({
               <button
                 type="button"
                 className="prezi-info prezi-info--chart"
-                aria-label={`Chart detail for ${frame.title}`}
+                aria-label={`More information about ${frame.title} chart`}
                 title={INFO_HINT}
                 onClick={(e) => {
                   e.stopPropagation();
@@ -224,7 +240,9 @@ export function SectionFrame({
                             ? ch.heroStat.value
                             : ch.title}
                         </span>
-                        <Info className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                        <span className="prezi-sat-info-wrap" aria-hidden>
+                          <Info className="prezi-sat-info" strokeWidth={2.25} />
+                        </span>
                       </button>
                     </li>
                   ) : null,
@@ -241,16 +259,16 @@ export function SectionFrame({
                       aria-label={`${overflowCount} more topics — open detail`}
                     >
                       <span className="prezi-sat-label">+{overflowCount} more</span>
-                      <Info className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                      <span className="prezi-sat-info-wrap" aria-hidden>
+                        <Info className="prezi-sat-info" strokeWidth={2.25} />
+                      </span>
                     </button>
                   </li>
                 ) : null}
               </ul>
-              {layout === "scene" ? <p className="prezi-hint">{INFO_HINT}</p> : null}
             </>
-          ) : layout === "scene" ? (
-            <p className="prezi-hint">{INFO_HINT}</p>
           ) : null}
+          {showHint ? <p className="prezi-hint">{INFO_HINT}</p> : null}
         </div>
       </div>
     </div>
