@@ -31,8 +31,9 @@ function buildMenu(presentation: Presentation): {
 
   const stages = [
     pick("primary-eyfs-ks2", "Primary"),
-    pick("secondary-ks3-ks4", "Secondary and access"),
-    pick("ks5-a-level", "A-level"),
+    pick("secondary", "Secondary"),
+    pick("gcse", "GCSE"),
+    pick("a-level", "A-level"),
   ].filter(Boolean) as NavItem[];
   if (stages.length) groups.push({ heading: "Key stages", items: stages });
 
@@ -45,6 +46,9 @@ function buildMenu(presentation: Presentation): {
   const solution = pick("a-solution", "CCDesigner");
   if (solution) groups.push({ heading: "A solution", items: [solution] });
 
+  const sources = pick("sources", "Sources");
+  if (sources) groups.push({ heading: "Sources", items: [sources] });
+
   const destIds = new Set<string>();
   for (const item of [...lone, ...groups.flatMap((g) => g.items)]) {
     if (item.id) destIds.add(item.id);
@@ -54,9 +58,8 @@ function buildMenu(presentation: Presentation): {
 }
 
 /**
- * Alternative navigation: collapsed Map chip by default (does not cover canvas).
- * Hover/focus expands a narrow panel; mouse leave (≈250ms) closes it.
- * Touch: tap chip to open/pin, tap canvas or chip again to close.
+ * Alternative navigation: Map chip closed by default.
+ * Click/tap to open or close; mouse leave closes when not pinned.
  */
 export function MapNav({
   presentation,
@@ -88,11 +91,6 @@ export function MapNav({
     clearClose();
     closeTimer.current = window.setTimeout(() => setOpen(false), 250);
   }, [clearClose, pinned]);
-
-  const openNow = useCallback(() => {
-    clearClose();
-    setOpen(true);
-  }, [clearClose]);
 
   useEffect(() => () => clearClose(), [clearClose]);
 
@@ -147,6 +145,7 @@ export function MapNav({
       setOpen(false);
       return;
     }
+    clearClose();
     setPinned(true);
     setOpen(true);
   };
@@ -173,15 +172,15 @@ export function MapNav({
     <div
       ref={rootRef}
       className={`map-nav ${open ? "is-open" : "is-collapsed"} ${pinned ? "is-pinned" : ""}`}
-      onMouseEnter={openNow}
       onMouseLeave={scheduleClose}
-      onFocusCapture={openNow}
+      onMouseEnter={clearClose}
     >
       <button
         type="button"
         className="map-nav-tab"
         aria-expanded={open}
         aria-controls={panelId}
+        aria-label="Map"
         title="Map — alternative navigation"
         onClick={onTabClick}
       >
@@ -192,7 +191,7 @@ export function MapNav({
       <nav
         id={panelId}
         className="map-nav-panel"
-        aria-label="Map"
+        aria-label="Sections"
         aria-hidden={!open}
         inert={!open ? true : undefined}
       >

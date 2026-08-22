@@ -1,4 +1,4 @@
-import { Eye } from "lucide-react";
+import { Info } from "lucide-react";
 import { ContentChart } from "@/components/charts/Charts";
 import { getChart } from "@/content/facts.content";
 import type { FrameNode } from "@/content/layoutPresentation";
@@ -6,20 +6,20 @@ import { sectionAccent } from "@/content/sectionAccent";
 import { assetUrl, sectionIllustration } from "@/content/sectionIllustrations";
 import { stageComment, stageLabel } from "@/content/stackLabels";
 
-const EYE_HINT = "Tap the eye for more detail.";
+const INFO_HINT = "More information";
 
 /**
  * Uniform stage zone — title, short comment, chart and/or circular illustration.
- * Zone click → detail modal. Eye → comments modal.
+ * Zone click → framed section. Info → detail modal.
  */
 function StageZone({
   frame,
   onOpen,
-  onOpenComments,
+  onOpenDetail,
 }: {
   frame: FrameNode;
   onOpen: () => void;
-  onOpenComments: () => void;
+  onOpenDetail: () => void;
 }) {
   const isSolution = frame.id === "a-solution";
   const chart =
@@ -28,7 +28,7 @@ function StageZone({
   const accent = sectionAccent(frame.id);
   const comment = stageComment(frame.id, frame.sentence);
   const label = stageLabel(frame.id, frame.title);
-  const hasComments = !!(comment || frame.quote);
+  const hasDetail = frame.blocks.length > 0 || !!frame.quote || !!frame.sentence;
 
   return (
     <div
@@ -47,29 +47,37 @@ function StageZone({
     >
       <div className="stage-zone-head">
         <h2 className="stage-zone-title">{label}</h2>
-        {hasComments ? (
+        {hasDetail ? (
           <button
             type="button"
             className="stage-zone-eye"
-            title="Comments — Why this matters"
-            aria-label={`More detail for ${label}`}
+            title={INFO_HINT}
+            aria-label={`More information about ${label}`}
             onClick={(e) => {
               e.stopPropagation();
-              onOpenComments();
+              onOpenDetail();
             }}
           >
-            <Eye className="stage-zone-eye-icon" strokeWidth={2.25} />
+            <Info className="stage-zone-eye-icon" strokeWidth={2.25} />
           </button>
         ) : null}
-        {hasComments ? <p className="stage-zone-hint">{EYE_HINT}</p> : null}
+        {hasDetail ? <p className="stage-zone-hint">{INFO_HINT}</p> : null}
       </div>
 
       {comment ? <p className="stage-zone-comment">{comment}</p> : null}
 
       <div className={`stage-zone-visual${chart && illusFile ? " stage-zone-visual--split" : ""}`}>
         {illusFile ? (
-          <div className="stage-zone-illus" aria-hidden>
-            <img src={assetUrl(illusFile)} alt="" draggable={false} />
+          <div
+            className={`stage-zone-illus${isSolution ? " stage-zone-illus--illustration" : ""}`}
+            aria-hidden
+          >
+            <img
+              src={assetUrl(illusFile)}
+              alt=""
+              draggable={false}
+              className={isSolution ? "prezi-illustration" : undefined}
+            />
           </div>
         ) : null}
 
@@ -85,12 +93,6 @@ function StageZone({
             <p className="stage-zone-stat-label">{frame.heroStat.label}</p>
           </div>
         ) : null}
-
-        {!chart && !illusFile && !frame.heroStat ? (
-          <div className="stage-zone-stat stage-zone-stat--quiet">
-            <p className="stage-zone-stat-value">CCD</p>
-          </div>
-        ) : null}
       </div>
     </div>
   );
@@ -98,16 +100,16 @@ function StageZone({
 
 /**
  * Overview pathway: distinct key-stage zones, top-to-bottom, uniform template.
- * Spaced so nothing overlaps. Click → detail modal; eye → comments.
+ * Spaced so nothing overlaps. Click → framed section; Info → detail modal.
  */
 export function StagePathway({
   stages,
   onOpen,
-  onOpenComments,
+  onOpenDetail,
 }: {
   stages: FrameNode[];
   onOpen: (id: string) => void;
-  onOpenComments: (id: string) => void;
+  onOpenDetail: (id: string) => void;
 }) {
   return (
     <div className="stage-pathway" aria-label="Key stages pathway">
@@ -119,7 +121,7 @@ export function StagePathway({
             <StageZone
               frame={frame}
               onOpen={() => onOpen(frame.id)}
-              onOpenComments={() => onOpenComments(frame.id)}
+              onOpenDetail={() => onOpenDetail(frame.id)}
             />
           </div>
         ))}

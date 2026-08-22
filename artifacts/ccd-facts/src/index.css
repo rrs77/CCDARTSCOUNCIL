@@ -240,7 +240,7 @@ button {
 }
 
 .section-scene-stage .prezi-frame-stage {
-  border-radius: 1.25rem;
+  border-radius: 1.5rem; /* 24px — generous rounded frame */
   border: 1px solid rgba(255, 250, 247, 0.14); /* neutral, not lime left rule */
   background: rgba(0, 26, 21, 0.35);
   box-shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
@@ -269,8 +269,22 @@ button {
   justify-items: stretch;
 }
 
+/* Legacy left lime rule — never show on section frames */
 .prezi-accent-bar {
-  display: none;
+  display: none !important;
+}
+
+.prezi-copy::before,
+.prezi-title-bubble::before,
+.prezi-body-card::before {
+  content: none !important;
+  display: none !important;
+}
+
+.prezi-copy,
+.prezi-title-bubble,
+.prezi-body-card {
+  border-left: none !important;
 }
 
 .prezi-frame--scene {
@@ -399,10 +413,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.75rem; /* 60px — comfortable tap */
-  height: 3.75rem;
-  min-width: 3.75rem;
-  min-height: 3.75rem;
+  width: 5.5rem; /* match frame Info control */
+  height: 5.5rem;
+  min-width: 5.5rem;
+  min-height: 5.5rem;
   border-radius: 999px;
   border: 2px solid rgba(182, 255, 126, 0.7);
   background: rgba(0, 45, 36, 0.95);
@@ -422,8 +436,8 @@ button {
 }
 
 .stage-zone-eye-icon {
-  width: 1.85rem;
-  height: 1.85rem;
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
 .stage-zone-comment {
@@ -931,16 +945,16 @@ button {
 
 .prezi-info {
   position: absolute;
-  top: 16px;
-  right: 16px;
+  top: 12px;
+  right: 12px;
   z-index: 8;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 4rem; /* 64px */
-  height: 4rem;
-  min-width: 4rem;
-  min-height: 4rem;
+  width: 5.5rem; /* ~88px — large Info control */
+  height: 5.5rem;
+  min-width: 5.5rem;
+  min-height: 5.5rem;
   padding: 0;
   border-radius: 999px;
   border: 2px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 70%, #fffaf7);
@@ -959,18 +973,18 @@ button {
 }
 
 .prezi-info-icon {
-  width: 2rem;
-  height: 2rem;
+  width: 2.75rem;
+  height: 2.75rem;
 }
 
 .prezi-info--chart {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  width: 3.75rem;
-  height: 3.75rem;
-  min-width: 3.75rem;
-  min-height: 3.75rem;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 4.5rem;
+  height: 4.5rem;
+  min-width: 4.5rem;
+  min-height: 4.5rem;
 }
 
 .prezi-extras-label {
@@ -990,7 +1004,7 @@ button {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.55rem;
-  padding: 0 4.5rem 0 0; /* clear large eye control */
+  padding: 0 6.25rem 0 0; /* clear large Info control */
   max-width: 100%;
   pointer-events: none;
 }
@@ -1108,7 +1122,7 @@ button {
 
 .prezi-title-bubble {
   padding: 1.25rem 1.4rem 1.35rem;
-  border-radius: 1.25rem; /* 20px */
+  border-radius: 1.5rem; /* 24px — generous rounded box */
   background: #002d24;
   border: 1px solid rgba(255, 250, 247, 0.28);
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
@@ -1146,7 +1160,7 @@ button {
 
 .prezi-body-card {
   padding: 1.2rem 1.35rem;
-  border-radius: 1.25rem; /* 20px — CCD rounded boxes 16–24px */
+  border-radius: 1.5rem; /* 24px — CCD rounded boxes 16–24px */
   background: #fffaf7;
   color: #0f2a2e;
   border: 1px solid rgba(0, 45, 36, 0.16);
@@ -1221,6 +1235,19 @@ button {
   display: block;
 }
 
+.prezi-photo-bubble--illustration {
+  background: #001f1a;
+}
+
+.prezi-photo-bubble img.prezi-illustration,
+.stage-zone-illus img.prezi-illustration,
+.detail-photo-bubble img.prezi-illustration {
+  object-fit: contain;
+  object-position: center;
+  padding: 4%;
+  box-sizing: border-box;
+}
+
 .prezi-photo-bubble img.crop-classroom {
   object-position: 18% 35%;
 }
@@ -1293,7 +1320,7 @@ button {
   max-width: 18rem;
   min-height: 3.5rem; /* ≥56px tap */
   padding: 0.7rem 0.95rem;
-  border-radius: 1rem;
+  border-radius: 1.25rem; /* 20px — match title/body boxes */
   border: 1px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 45%, transparent);
   background: rgba(0, 45, 36, 0.94);
   color: var(--lime);
@@ -1394,18 +1421,18 @@ button {
   color: var(--lime);
 }
 
-/* —— Map: slim chip default; narrow panel on hover/focus/tap (alt nav) —— */
+/* —— Map: top-left under brand — clears vertically centred prev chevron —— */
 .map-nav {
   position: absolute;
   z-index: 42;
   left: 0.65rem;
-  top: 6.5rem; /* clear larger top-left brand */
+  top: 4.85rem;
   display: flex;
   flex-direction: column;
   align-items: stretch;
   width: auto;
   max-width: 220px;
-  max-height: calc(100% - 10.5rem);
+  max-height: calc(100% - 9rem);
   pointer-events: auto;
 }
 
@@ -1767,6 +1794,10 @@ button {
   overflow: hidden;
   border: 1px solid rgba(182, 255, 126, 0.65);
   background: #002d24;
+}
+
+.detail-photo-bubble--illustration {
+  background: #001f1a;
 }
 
 .detail-photo-bubble img {

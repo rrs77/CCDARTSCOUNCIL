@@ -1,4 +1,4 @@
-import { Eye } from "lucide-react";
+import { Info } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ContentChart } from "@/components/charts/Charts";
 import { LogoMark } from "@/components/LogoMark";
@@ -12,10 +12,10 @@ import {
 } from "@/content/sectionIllustrations";
 
 const MAX_VISIBLE_SATS = 2;
-const EYE_HINT = "Tap the eye for more detail.";
+const INFO_HINT = "More information";
 
 /**
- * Opened section / title scene: rounded boxes, eye for detail, no left lime rule.
+ * Opened section / title scene: rounded boxes, Info for detail, no left lime rule.
  * Classroom photo on title (start) / The situation only — other sections use their illustration.
  */
 export function SectionFrame({
@@ -43,7 +43,6 @@ export function SectionFrame({
     ? SITUATION_HERO
     : sectionIllustration(frame.id) ?? sectionIllustration(frame.mainSectionId);
   const showBrand = frame.kind === "title";
-  const showCcdMark = frame.kind === "sources" && !illusFile;
   const allChildren =
     frame.kind === "hub" || frame.kind === "title" || frame.kind === "sources"
       ? frame.childIds
@@ -52,6 +51,10 @@ export function SectionFrame({
       : [];
   const children = allChildren.slice(0, MAX_VISIBLE_SATS);
   const overflowCount = Math.max(0, allChildren.length - children.length);
+  const sourceNotes =
+    frame.kind === "sources" && frame.footnotes?.length
+      ? frame.footnotes.slice(0, 6)
+      : [];
 
   const style: CSSProperties =
     layout === "scene"
@@ -97,23 +100,25 @@ export function SectionFrame({
           type="button"
           className="prezi-info"
           aria-label={`More about ${frame.title}`}
-          title="Tap the eye for more detail"
+          title={INFO_HINT}
           onClick={(e) => {
             e.stopPropagation();
             onOpenDetail();
           }}
         >
-          <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+          <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
         </button>
 
         <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
           {illusFile ? (
-            <div className="prezi-photo-bubble">
+            <div
+              className={`prezi-photo-bubble${situationOnly ? "" : " prezi-photo-bubble--illustration"}`}
+            >
               <img
                 src={assetUrl(illusFile)}
                 alt=""
                 draggable={false}
-                className={situationOnly ? `crop-${frame.photoCrop}` : undefined}
+                className={situationOnly ? `crop-${frame.photoCrop}` : "prezi-illustration"}
               />
             </div>
           ) : null}
@@ -132,24 +137,18 @@ export function SectionFrame({
                 type="button"
                 className="prezi-info prezi-info--chart"
                 aria-label={`Chart detail for ${frame.title}`}
-                title="Tap the eye for more detail"
+                title={INFO_HINT}
                 onClick={(e) => {
                   e.stopPropagation();
                   onOpenDetail();
                 }}
               >
-                <Eye className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+                <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
               </button>
             </div>
           ) : null}
 
-          {showCcdMark ? (
-            <div className="prezi-stat-bubble prezi-stat-bubble--plain" aria-hidden>
-              <p className="prezi-stat-value prezi-stat-value--quiet">CCD</p>
-            </div>
-          ) : null}
-
-          {!illusFile && !frame.heroStat && !chart && !showCcdMark ? (
+          {!illusFile && !frame.heroStat && !chart && frame.kind !== "sources" ? (
             <div className="prezi-stat-bubble prezi-stat-bubble--plain" aria-hidden>
               <p className="prezi-stat-value prezi-stat-value--quiet">CCD</p>
             </div>
@@ -181,11 +180,21 @@ export function SectionFrame({
             </div>
           ) : null}
 
-          {frame.kind === "sources" ? (
+          {frame.kind === "sources" && sourceNotes.length ? (
             <div className="prezi-body-card prezi-sources-card">
-              <p className="prezi-sources-hint">
-                Full footnotes open via the eye — readable in the detail panel.
-              </p>
+              <ol>
+                {sourceNotes.map((fn) => (
+                  <li key={fn.id}>
+                    {fn.url ? (
+                      <a href={fn.url} target="_blank" rel="noreferrer">
+                        {fn.text}
+                      </a>
+                    ) : (
+                      fn.text
+                    )}
+                  </li>
+                ))}
+              </ol>
             </div>
           ) : null}
         </div>
@@ -215,7 +224,7 @@ export function SectionFrame({
                             ? ch.heroStat.value
                             : ch.title}
                         </span>
-                        <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                        <Info className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                       </button>
                     </li>
                   ) : null,
@@ -232,14 +241,16 @@ export function SectionFrame({
                       aria-label={`${overflowCount} more topics — open detail`}
                     >
                       <span className="prezi-sat-label">+{overflowCount} more</span>
-                      <Eye className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
+                      <Info className="prezi-sat-info" strokeWidth={2.25} aria-hidden />
                     </button>
                   </li>
                 ) : null}
               </ul>
+              {layout === "scene" ? <p className="prezi-hint">{INFO_HINT}</p> : null}
             </>
+          ) : layout === "scene" ? (
+            <p className="prezi-hint">{INFO_HINT}</p>
           ) : null}
-          <p className="prezi-hint">{EYE_HINT}</p>
         </div>
       </div>
     </div>

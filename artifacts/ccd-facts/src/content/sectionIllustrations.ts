@@ -8,8 +8,9 @@ export const SITUATION_HERO = "hero-arts.jpg";
 /** Public paths under BASE_URL — keyed by frame / section id */
 export const SECTION_ILLUSTRATION: Record<string, string> = {
   "primary-eyfs-ks2": "illustrations/primary.png",
-  "secondary-ks3-ks4": "illustrations/secondary.png",
-  "ks5-a-level": "illustrations/a-level.png",
+  secondary: "illustrations/secondary.png",
+  gcse: "illustrations/secondary.png",
+  "a-level": "illustrations/a-level.png",
   "university-he": "illustrations/higher-education.png",
   "a-solution": "illustrations/a-solution.png",
   "music-hubs-and-national-centre": "illustrations/music-hubs.png",

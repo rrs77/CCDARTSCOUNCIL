@@ -19,7 +19,7 @@ function linkifyText(
   onNavigate?: (id: string) => void,
 ): ReactNode {
   if (!onNavigate || !links.length) return text;
-  // Longest titles first so “Secondary and access” wins over shorter matches
+  // Longest titles first so longer section names win over shorter matches
   const sorted = [...links].sort((a, b) => b.title.length - a.title.length);
   const pattern = new RegExp(
     `(${sorted.map((l) => l.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
@@ -210,9 +210,19 @@ export function DetailModal({
             animate={bounce.animate}
             exit={bounce.exit}
             transition={modalPanelTransition(reduced)}
-            onPointerDown={stop}
+            onPointerDown={(e) => {
+              // Chrome click (panel outside scroll body) closes; body selection/scroll does not.
+              if (e.target === e.currentTarget) onClose();
+              else stop(e);
+            }}
           >
-            <header className="detail-modal-header">
+            <header
+              className="detail-modal-header"
+              onClick={(e) => {
+                if ((e.target as HTMLElement).closest("button, a")) return;
+                onClose();
+              }}
+            >
               <div className="detail-modal-header-text">
                 {frame.titleSmall ? <p className="detail-modal-kicker">{frame.titleSmall}</p> : null}
                 <h2 id="detail-modal-title" className="detail-modal-title">
@@ -252,6 +262,7 @@ export function DetailModal({
               ref={bodyRef}
               onWheel={onWheelZoom}
               onPointerDown={stop}
+              onClick={stop}
             >
               <div
                 className="detail-modal-zoom-surface"
@@ -335,8 +346,15 @@ export function DetailModal({
 
                   <div className="detail-modal-visual">
                     {illusFile ? (
-                      <div className="detail-photo-bubble">
-                        <img src={assetUrl(illusFile)} alt="" draggable={false} />
+                      <div
+                        className={`detail-photo-bubble${situationPhoto ? "" : " detail-photo-bubble--illustration"}`}
+                      >
+                        <img
+                          src={assetUrl(illusFile)}
+                          alt=""
+                          draggable={false}
+                          className={situationPhoto ? undefined : "prezi-illustration"}
+                        />
                       </div>
                     ) : null}
                     {frame.heroStat && !hasBlocks ? (

@@ -1,6 +1,6 @@
 # The State of Creative Education in England
 
-A concise evidence overview for funding, partnership and development. Prepared and re-verified 21 August 2026.
+A concise evidence overview for funding, partnership and development.
 
 Creative education in England is at a point of change. Exceptional lessons start with connection.
 
@@ -16,8 +16,6 @@ Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary t
 
 Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.
 
-No official national statistic exists for weekly Year 7 music/drama teaching time — so none is quoted here.
-
 <!-- chart:primaryHours -->
 
 > Why this matters for CCDesigner: Where generalists carry the arts, reusable activity blocks and Partner Hubs aim to make excellent practice easier to find and adapt — without claiming to replace specialists.
@@ -32,21 +30,36 @@ No official national statistic exists for weekly Year 7 music/drama teaching tim
 
 - **47% vs 6%** — Independent vs state primary teachers reporting >2.5 hrs arts / week[^2]
 
-## Secondary / KS3–KS4
+## Secondary
 
 Long-term contraction at KS3–KS4; short-term Ofqual movement is mixed — not a reversal.
 
-Arts GCSE entries fell 42% (2010–2022/23). Teaching hours −21%; arts teachers −14% (CLA Report Card 2024).[^1]
-
-In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance — “no entries” does not mean “not taught”.[^1]
+Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
 
 Access to arts qualifications still tracks disadvantage (DfE Tables 18–19).[^5]
 
-<!-- chart:noGcse -->
+West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions. FSM ≠ LA deprivation.
 
 > Why this matters for CCDesigner: CCDesigner aims to support teachers working inside a system that has already contracted — keeping planning cumulative and partnership reachable where exam pathways thin out.
 
-### GCSE
+### Teachers
+
+DfE School Workforce in England remains the census reference for staffing context.[^6]
+
+- **−21%** — Arts teaching hours (CLA Report Card 2024)[^1]
+- **−14%** — Arts teacher headcount (CLA Report Card 2024)[^1]
+
+## GCSE
+
+Arts GCSE entries fell 42% (2010–2022/23).[^1]
+
+In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance — “no entries” does not mean “not taught”.[^1]
+
+<!-- chart:noGcse -->
+
+> Why this matters for CCDesigner: Where GCSE pathways thin out, cumulative planning and Partner Hub resources aim to keep specialist routes reachable for teachers and students.
+
+### GCSE entries
 
 Ofqual provisional summer 2026 vs 2025:[^4]
 
@@ -61,15 +74,7 @@ Schools with no GCSE entries (2022/23): Music 42%, Drama 41%, Dance 84%.[^1]
 - **42% / 41% / 84%** — Schools with no GCSE Music / Drama / Dance (2022/23)[^1]
 - **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
 
-### Teachers
-
-Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
-
-DfE School Workforce in England remains the census reference for staffing context.[^6]
-
-West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions. FSM ≠ LA deprivation.
-
-## KS5 / A-level
+## A-level
 
 KS5 pathways are thinner; short-term Ofqual movement is mixed — not a long-term reversal.
 
@@ -133,8 +138,6 @@ Keep funding streams distinct. Do not say hub funding simply “declined”.
 <!-- chart:funding -->
 
 ## Sources
-
-Verification note: figures re-checked against CLA, Ofqual, DfE and HESA analyses on 21 August 2026. Primary tables preferred over secondary paraphrase. Unverified national percentages omitted.
 
 The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to be a practical connection layer — teachers and organisations, day to day — without over-claiming impact.
 

@@ -2,8 +2,9 @@
 
 export const STAGE_ORDER = [
   "primary-eyfs-ks2",
-  "secondary-ks3-ks4",
-  "ks5-a-level",
+  "secondary",
+  "gcse",
+  "a-level",
   "university-he",
   "a-solution",
 ] as const
@@ -12,13 +13,14 @@ export type StageId = (typeof STAGE_ORDER)[number]
 
 /**
  * Side-arrow path between main framed sections (not optional top tabs).
- * Situation → Primary → Secondary → A-level → HE → Hubs → Solution → Sources
+ * Situation → Primary → Secondary → GCSE → A-level → HE → Hubs → Solution → Sources
  */
 export const SECTION_PATH = [
   "title",
   "primary-eyfs-ks2",
-  "secondary-ks3-ks4",
-  "ks5-a-level",
+  "secondary",
+  "gcse",
+  "a-level",
   "university-he",
   "music-hubs-and-national-centre",
   "a-solution",
@@ -27,8 +29,9 @@ export const SECTION_PATH = [
 
 export const STAGE_LABELS: Record<StageId, string> = {
   "primary-eyfs-ks2": "Primary / EYFS–KS2",
-  "secondary-ks3-ks4": "Secondary / KS3–KS4",
-  "ks5-a-level": "KS5 / A-level",
+  secondary: "Secondary",
+  gcse: "GCSE",
+  "a-level": "A-level",
   "university-he": "University / HE",
   "a-solution": "A solution",
 }
@@ -37,9 +40,11 @@ export const STAGE_LABELS: Record<StageId, string> = {
 export const STAGE_COMMENTS: Record<StageId, string> = {
   "primary-eyfs-ks2":
     "Music and arts hours falling; specialist teaching scarce in many schools.",
-  "secondary-ks3-ks4":
+  secondary:
+    "Arts teaching hours and teacher headcount down; access still tracks disadvantage.",
+  gcse:
     "Arts GCSE entries down sharply; many schools offer no GCSE arts subjects.",
-  "ks5-a-level":
+  "a-level":
     "A-level arts entries and university applications for creative subjects declining.",
   "university-he":
     "Creative arts undergraduate numbers down; pathways into the sector under pressure.",

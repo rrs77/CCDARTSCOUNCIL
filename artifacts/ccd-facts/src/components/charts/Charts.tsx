@@ -60,7 +60,8 @@ const enter = {
   transition: { duration: 0.28, ease: [0.22, 0.61, 0.36, 1] as const },
 };
 
-const CHART_DRAW_MS = 420;
+const CHART_DRAW_MS = 1500;
+const CHART_BAR_STAGGER_MS = 150;
 
 export function ContentChart({
   chart,
@@ -77,6 +78,7 @@ export function ContentChart({
   const [active, setActive] = useState<string | null>(null);
   const reduced = useReducedMotion() ?? false;
   const drawMs = reduced ? 0 : CHART_DRAW_MS;
+  const stagger = reduced ? 0 : CHART_BAR_STAGGER_MS;
   const chartEnter = reduced
     ? { initial: { opacity: 0 }, animate: { opacity: 1 }, transition: { duration: 0.12 } }
     : enter;
@@ -194,8 +196,8 @@ export function ContentChart({
               />
               <Tooltip contentStyle={tip} />
               <Legend />
-              <Bar dataKey="least" name={leastName} fill="#5B7C99" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
-              <Bar dataKey="most" name={mostName} fill="#E97451" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Bar dataKey="least" name={leastName} fill="#5B7C99" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Bar dataKey="most" name={mostName} fill="#E97451" radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: "#0f2a2e" }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -245,11 +247,11 @@ export function ContentChart({
                   onDrill?.(String(e.value ?? e.dataKey));
                 }}
               />
-              <Line type="monotone" dataKey="art" name={chart.axis?.series?.art ?? "Art & Design"} stroke="#5B7C99" strokeWidth={active && active !== "art" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" />
-              <Line type="monotone" dataKey="drama" name={chart.axis?.series?.drama ?? "Drama"} stroke="#7B6B9C" strokeWidth={active && active !== "drama" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" />
-              <Line type="monotone" dataKey="music" name={chart.axis?.series?.music ?? "Music"} stroke="#2A9D8F" strokeWidth={active && active !== "music" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" />
+              <Line type="monotone" dataKey="art" name={chart.axis?.series?.art ?? "Art & Design"} stroke="#5B7C99" strokeWidth={active && active !== "art" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" />
+              <Line type="monotone" dataKey="drama" name={chart.axis?.series?.drama ?? "Drama"} stroke="#7B6B9C" strokeWidth={active && active !== "drama" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger} animationEasing="ease-out" />
+              <Line type="monotone" dataKey="music" name={chart.axis?.series?.music ?? "Music"} stroke="#2A9D8F" strokeWidth={active && active !== "music" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger * 2} animationEasing="ease-out" />
               {!isAlevel ? (
-                <Line type="monotone" dataKey="performing" name={chart.axis?.series?.performing ?? "Performing / Expressive Arts"} stroke="#E97451" strokeWidth={active && active !== "performing" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" />
+                <Line type="monotone" dataKey="performing" name={chart.axis?.series?.performing ?? "Performing / Expressive Arts"} stroke="#E97451" strokeWidth={active && active !== "performing" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger * 3} animationEasing="ease-out" />
               ) : null}
             </LineChart>
           </ResponsiveContainer>

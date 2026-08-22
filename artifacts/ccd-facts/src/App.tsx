@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { CommentsModal, type CommentsPayload } from "@/components/CommentsModal";
 import { DetailModal } from "@/components/DetailModal";
 import { LogoMark } from "@/components/LogoMark";
 import { PresentChrome } from "@/components/PresentChrome";
@@ -7,7 +6,7 @@ import { SectionScene } from "@/components/SectionScene";
 import { StagePathway } from "@/components/StagePathway";
 import { meta } from "@/content/facts.content";
 import { getFrame, presentationFromMarkdown, type FrameNode } from "@/content/layoutPresentation";
-import { STAGE_ORDER, SECTION_PATH, stageComment, stageLabel } from "@/content/stackLabels";
+import { STAGE_ORDER, SECTION_PATH } from "@/content/stackLabels";
 import rawContent from "../CONTENT.md?raw";
 
 const STORAGE_KEY = "ccd-facts-location";
@@ -43,26 +42,9 @@ function isTypingTarget() {
   return t === "INPUT" || t === "TEXTAREA" || el.getAttribute("role") === "textbox";
 }
 
-function commentsFromFrame(frame: FrameNode): CommentsPayload {
-  const comment = stageComment(frame.id, frame.sentence);
-  const why = frame.quote;
-  const extras = frame.blocks
-    .filter((b): b is Extract<typeof b, { type: "quote" }> => b.type === "quote")
-    .map((b) => b.text)
-    .filter((t) => t && t !== why)
-    .slice(0, 3);
-  return {
-    id: frame.id,
-    title: stageLabel(frame.id, frame.title),
-    comment: comment || undefined,
-    why: why || undefined,
-    extras: extras.length ? extras : undefined,
-  };
-}
-
 /**
  * Title → key-stage pathway overview.
- * Click a zone → detail modal. Next / Prev → overview.
+ * Click a zone → framed section. Info → detail modal.
  */
 export default function App() {
   const presentation = useMemo(() => presentationFromMarkdown(rawContent), []);
@@ -80,7 +62,6 @@ export default function App() {
   }, [presentation.frames]);
 
   const [modalId, setModalId] = useState<string | null>(null);
-  const [commentsId, setCommentsId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"overview" | "frame">("frame");
   const [chromeVisible, setChromeVisible] = useState(true);
@@ -125,7 +106,6 @@ export default function App() {
 
   const showOverview = useCallback(() => {
     setModalId(null);
-    setCommentsId(null);
     setViewMode("overview");
     setFocusedId(null);
     persist(null);
@@ -134,7 +114,6 @@ export default function App() {
 
   const openTitle = useCallback(() => {
     setModalId(null);
-    setCommentsId(null);
     setFocusedId("title");
     setViewMode("frame");
     persist("title");
@@ -149,7 +128,6 @@ export default function App() {
         showOverview();
         return;
       }
-      setCommentsId(null);
       setModalId(null);
       setFocusedId(id);
       setViewMode("frame");
@@ -159,15 +137,18 @@ export default function App() {
     [persist, presentation, showOverview, writeUrl],
   );
 
-  /** Eye / optional tab → large detail modal (does not change section path). */
+  /** Info / optional tab → large detail modal (toggle if same id already open). */
   const openDetail = useCallback(
     (id: string) => {
+      if (modalId === id) {
+        setModalId(null);
+        return;
+      }
       const frame = getFrame(presentation, id);
       if (!frame) {
         showOverview();
         return;
       }
-      setCommentsId(null);
       // Keep framed section underneath when possible
       const hubId = frame.parentId ? frame.mainSectionId : frame.id;
       if (viewMode !== "frame" || !focusedId) {
@@ -178,20 +159,9 @@ export default function App() {
       persist(id);
       writeUrl(id);
     },
-    [focusedId, persist, presentation, sectionPath, showOverview, viewMode, writeUrl],
+    [focusedId, modalId, persist, presentation, sectionPath, showOverview, viewMode, writeUrl],
   );
 
-  const openComments = useCallback(
-    (id: string) => {
-      const frame = getFrame(presentation, id);
-      if (!frame) return;
-      setModalId(null);
-      setCommentsId(id);
-      setViewMode("overview");
-      setFocusedId(id);
-    },
-    [presentation],
-  );
 
   const goSection = useCallback(
     (delta: number) => {
@@ -265,10 +235,6 @@ export default function App() {
           void document.exitFullscreen();
           return;
         }
-        if (commentsId) {
-          setCommentsId(null);
-          return;
-        }
         if (modalId) {
           setModalId(null);
           return;
@@ -298,7 +264,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [bumpChrome, commentsId, goSection, modalId, openTitle, showOverview, viewMode]);
+  }, [bumpChrome, goSection, modalId, openTitle, showOverview, viewMode]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -319,8 +285,6 @@ export default function App() {
   const sceneFrame =
     viewMode === "frame" && focusedId ? getFrame(presentation, focusedId) ?? null : null;
   const modalFrame = modalId ? getFrame(presentation, modalId) ?? null : null;
-  const commentsFrame = commentsId ? getFrame(presentation, commentsId) ?? null : null;
-  const commentsPayload = commentsFrame ? commentsFromFrame(commentsFrame) : null;
   const canPrev = sectionIndex > 0;
   const canNext = sectionIndex >= 0 && sectionIndex < sectionPath.length - 1;
 
@@ -350,7 +314,7 @@ export default function App() {
         onPointerDown={() => bumpChrome()}
       >
         {viewMode === "overview" ? (
-          <StagePathway stages={stages} onOpen={openSection} onOpenComments={openComments} />
+          <StagePathway stages={stages} onOpen={openSection} onOpenDetail={openDetail} />
         ) : sceneFrame ? (
           <SectionScene
             frame={sceneFrame}
@@ -369,7 +333,7 @@ export default function App() {
 
       <PresentChrome
         presentation={presentation}
-        focusId={modalId ?? commentsId ?? (viewMode === "overview" ? null : focusedId)}
+        focusId={modalId ?? (viewMode === "overview" ? null : focusedId)}
         chromeVisible={chromeVisible}
         fullscreen={fullscreen}
         onOverview={showOverview}
@@ -387,11 +351,6 @@ export default function App() {
         onClose={() => setModalId(null)}
       />
 
-      <CommentsModal
-        payload={commentsPayload}
-        open={!!commentsId && !!commentsPayload}
-        onClose={() => setCommentsId(null)}
-      />
     </div>
   );
 }
