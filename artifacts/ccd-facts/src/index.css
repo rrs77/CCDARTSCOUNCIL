@@ -413,10 +413,10 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.25rem; /* ~52px — tap target 44–56px */
-  height: 3.25rem;
-  min-width: 3.25rem;
-  min-height: 3.25rem;
+  width: 6.5rem; /* 2× prior ~52px control */
+  height: 6.5rem;
+  min-width: 6.5rem;
+  min-height: 6.5rem;
   border-radius: 999px;
   border: 2px solid rgba(182, 255, 126, 0.7);
   background: rgba(0, 45, 36, 0.95);
@@ -436,8 +436,8 @@ button {
 }
 
 .stage-zone-info-icon {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 3rem;
+  height: 3rem;
 }
 
 .stage-zone-comment {
@@ -945,19 +945,19 @@ button {
 
 .prezi-info {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   z-index: 8;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 3.25rem; /* ~52px — tap target 44–56px */
-  height: 3.25rem;
-  min-width: 3.25rem;
-  min-height: 3.25rem;
+  width: 6.5rem; /* 2× prior control — lime Info ring */
+  height: 6.5rem;
+  min-width: 6.5rem;
+  min-height: 6.5rem;
   padding: 0;
   border-radius: 999px;
-  border: 2px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 70%, #fffaf7);
+  border: 2.5px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 70%, #fffaf7);
   background: rgba(0, 45, 36, 0.92);
   color: var(--lime);
   cursor: pointer;
@@ -973,18 +973,18 @@ button {
 }
 
 .prezi-info-icon {
-  width: 1.5rem;
-  height: 1.5rem;
+  width: 3rem;
+  height: 3rem;
 }
 
 .prezi-info--chart {
   position: absolute;
-  top: 0.4rem;
-  right: 0.4rem;
-  width: 3rem; /* ~48px on charts */
-  height: 3rem;
-  min-width: 3rem;
-  min-height: 3rem;
+  top: 0.35rem;
+  right: 0.35rem;
+  width: 6rem; /* 2× chart Info */
+  height: 6rem;
+  min-width: 6rem;
+  min-height: 6rem;
 }
 
 .prezi-extras-label {
@@ -1004,7 +1004,7 @@ button {
   flex-direction: column;
   align-items: flex-start;
   gap: 0.55rem;
-  padding: 0 4rem 0 0; /* clear Info control */
+  padding: 0 7.25rem 0 0; /* clear doubled Info — don’t overlap title/tabs */
   max-width: 100%;
   pointer-events: none;
 }
@@ -1343,23 +1343,23 @@ button {
 
 .prezi-sat-info {
   flex: 0 0 auto;
-  width: 1.35rem;
-  height: 1.35rem;
+  width: 2.7rem;
+  height: 2.7rem;
   opacity: 0.95;
 }
 
-/* Circled Info mark inside optional-fact tabs — clear “more” affordance */
+/* Circled Info mark inside optional-fact tabs — 2× prior */
 .prezi-sat-info-wrap {
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 2.75rem; /* ~44px */
-  height: 2.75rem;
-  min-width: 2.75rem;
-  min-height: 2.75rem;
+  width: 5.5rem;
+  height: 5.5rem;
+  min-width: 5.5rem;
+  min-height: 5.5rem;
   border-radius: 999px;
-  border: 1.5px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 55%, transparent);
+  border: 2px solid color-mix(in srgb, var(--frame-accent, var(--lime)) 55%, transparent);
   background: rgba(0, 45, 36, 0.55);
   color: var(--lime);
 }
