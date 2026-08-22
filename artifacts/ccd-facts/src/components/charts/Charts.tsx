@@ -60,8 +60,8 @@ const enter = {
   transition: { duration: 0.28, ease: [0.22, 0.61, 0.36, 1] as const },
 };
 
-const CHART_DRAW_MS = 1500;
-const CHART_BAR_STAGGER_MS = 150;
+const CHART_DRAW_MS = 1650; /* 1.2–1.8s ease-out bar/line draw */
+const CHART_BAR_STAGGER_MS = 150; /* slight delay between series */
 
 export function ContentChart({
   chart,
@@ -87,12 +87,12 @@ export function ContentChart({
   const labelFs = density === "canvas" ? 14 : 12;
   const chartH = density === "canvas" ? "h-[340px] w-full" : "h-[240px] w-full sm:h-[260px]";
   const chartHTall = density === "canvas" ? "h-[360px] w-full" : "h-[280px] w-full";
-  const chartHFund = density === "canvas" ? "h-[380px] w-full" : "h-[260px] w-full";
+  const drawKey = `${chart.id}-${density}-${reduced ? "static" : "draw"}`;
 
   if (chart.type === "horizontal-change") {
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={chartH}>
+        <motion.div key={drawKey} {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart layout="vertical" data={chart.series} margin={{ top: 4, right: 36, left: 8, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
@@ -107,6 +107,7 @@ export function ContentChart({
                 cursor="pointer"
                 isAnimationActive={!reduced}
                 animationDuration={drawMs}
+                animationBegin={0}
                 animationEasing="ease-out"
                 onClick={(e) => onDrill?.(String((e as { name?: string }).name ?? ""))}
               >
@@ -136,15 +137,15 @@ export function ContentChart({
     ];
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={density === "canvas" ? "relative mx-auto h-[300px] w-full max-w-[360px]" : "relative mx-auto h-[250px] w-full max-w-[320px]"}>
+        <motion.div key={drawKey} {...chartEnter} className={density === "canvas" ? "relative mx-auto h-[300px] w-full max-w-[360px]" : "relative mx-auto h-[250px] w-full max-w-[320px]"}>
           <ResponsiveContainer width="100%" height="100%">
             <PieChart>
-              <Pie data={outer} dataKey="value" innerRadius={78} outerRadius={98} startAngle={90} endAngle={-270} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={() => onDrill?.(indepLabel)}>
+              <Pie data={outer} dataKey="value" innerRadius={78} outerRadius={98} startAngle={90} endAngle={-270} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={() => onDrill?.(indepLabel)}>
                 {outer.map((d) => (
                   <Cell key={d.name} fill={d.fill} />
                 ))}
               </Pie>
-              <Pie data={inner} dataKey="value" innerRadius={48} outerRadius={68} startAngle={90} endAngle={-270} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={() => onDrill?.(stateLabel)}>
+              <Pie data={inner} dataKey="value" innerRadius={48} outerRadius={68} startAngle={90} endAngle={-270} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger} animationEasing="ease-out" onClick={() => onDrill?.(stateLabel)}>
                 {inner.map((d) => (
                   <Cell key={d.name} fill={d.fill} />
                 ))}
@@ -180,7 +181,7 @@ export function ContentChart({
     const mostName = chart.axis?.legend?.most ?? "Most disadvantaged fifth";
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={chartHTall}>
+        <motion.div key={drawKey} {...chartEnter} className={chartHTall}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={chart.series} margin={{ top: 18, right: 8, left: 0, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" vertical={false} />
@@ -208,14 +209,14 @@ export function ContentChart({
   if (chart.type === "lollipop") {
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={chartH}>
+        <motion.div key={drawKey} {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 48, left: 8, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tick={{ fill: "#6b7d80", fontSize: tick }} />
               <YAxis type="category" dataKey="subject" width={80} tick={{ fill: "#0f2a2e", fontSize: tickInk }} />
               <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "No GCSE entries"]} />
-              <Bar dataKey="none" barSize={10} background={{ fill: "#e8eeea" }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
+              <Bar dataKey="none" barSize={10} background={{ fill: "#e8eeea" }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
                 {chart.series.map((d) => (
                   <Cell key={String(d.subject)} fill={String(d.fill)} />
                 ))}
@@ -233,7 +234,7 @@ export function ContentChart({
     const yMax = Number(chart.meta?.yMax ?? 112);
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={chartH}>
+        <motion.div key={drawKey} {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
             <LineChart data={chart.series} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
               <CartesianGrid stroke="#e8eeea" />
@@ -263,7 +264,7 @@ export function ContentChart({
   if (chart.type === "divergent-bars") {
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={chartHTall}>
+        <motion.div key={drawKey} {...chartEnter} className={chartHTall}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 36, left: 8, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
@@ -277,7 +278,7 @@ export function ContentChart({
                   { value: chart.axis?.legend?.increase ?? "Increase", type: "square", color: "#2A9D8F" },
                 ]}
               />
-              <Bar dataKey="change" radius={[4, 4, 4, 4]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
+              <Bar dataKey="change" radius={[4, 4, 4, 4]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
                 {chart.series.map((d) => (
                   <Cell key={String(d.subject)} fill={Number(d.change) >= 0 ? "#2A9D8F" : "#E97451"} />
                 ))}
@@ -292,12 +293,20 @@ export function ContentChart({
   if (chart.type === "funding-bars") {
     const fundLabel = density === "canvas" ? 15 : 14;
     const fundTick = density === "canvas" ? 13 : 12;
+    // One series per bar so animationBegin can stagger £76m → £25m → £13m
+    const fundRows = chart.series.map((d, i) => {
+      const row: Record<string, string | number> = { label: String(d.label) };
+      chart.series.forEach((s, j) => {
+        row[`b${j}`] = i === j ? Number(s.value) : 0;
+      });
+      return row;
+    });
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div {...chartEnter} className={density === "canvas" ? "h-[400px] w-full" : "h-[300px] w-full"}>
+        <motion.div key={drawKey} {...chartEnter} className={density === "canvas" ? "h-[400px] w-full" : "h-[300px] w-full"}>
           <ResponsiveContainer width="100%" height="100%">
             <BarChart
-              data={chart.series}
+              data={fundRows}
               margin={
                 density === "canvas"
                   ? { top: 36, right: 16, left: 8, bottom: 64 }
@@ -315,7 +324,6 @@ export function ContentChart({
                 height={density === "canvas" ? 64 : 72}
                 tickFormatter={(v: string) => {
                   const s = String(v);
-                  // Prefer wrapping-friendly short lines for long hub labels
                   if (s.length <= 14) return s;
                   const mid = Math.ceil(s.length / 2);
                   const space = s.lastIndexOf(" ", mid);
@@ -324,7 +332,10 @@ export function ContentChart({
                 }}
               />
               <YAxis domain={[0, 80]} tick={{ fill: "#6b7d80", fontSize: fundTick }} />
-              <Tooltip contentStyle={tip} formatter={(v: number) => [`£${v}m`, "Funding"]} />
+              <Tooltip
+                contentStyle={tip}
+                formatter={(v: number) => (v ? [`£${v}m`, "Funding"] : [null, null])}
+              />
               {density === "canvas" ? null : (
                 <Legend
                   payload={[
@@ -334,27 +345,29 @@ export function ContentChart({
                   ]}
                 />
               )}
-              <Bar
-                dataKey="value"
-                barSize={density === "canvas" ? 56 : 48}
-                radius={[8, 8, 0, 0]}
-                label={{
-                  position: "top",
-                  formatter: (v: number) => `£${v}m`,
-                  fill: "#0f2a2e",
-                  fontWeight: 800,
-                  fontSize: fundLabel,
-                }}
-                cursor="pointer"
-                isAnimationActive={!reduced}
-                animationDuration={drawMs}
-                animationEasing="ease-out"
-                onClick={(e) => onDrill?.(String((e as { label?: string }).label ?? ""))}
-              >
-                {chart.series.map((d) => (
-                  <Cell key={String(d.label)} fill={String(d.fill)} />
-                ))}
-              </Bar>
+              {chart.series.map((d, i) => (
+                <Bar
+                  key={`fund-${i}`}
+                  dataKey={`b${i}`}
+                  stackId="fund"
+                  barSize={density === "canvas" ? 56 : 48}
+                  radius={[8, 8, 0, 0]}
+                  fill={String(d.fill)}
+                  label={{
+                    position: "top",
+                    formatter: (v: number) => (v ? `£${v}m` : ""),
+                    fill: "#0f2a2e",
+                    fontWeight: 800,
+                    fontSize: fundLabel,
+                  }}
+                  cursor="pointer"
+                  isAnimationActive={!reduced}
+                  animationDuration={drawMs}
+                  animationBegin={stagger * i}
+                  animationEasing="ease-out"
+                  onClick={() => onDrill?.(String(d.label))}
+                />
+              ))}
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
