@@ -1,6 +1,6 @@
 import { Minus, Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState, type ReactNode, type SyntheticEvent, type WheelEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent, type WheelEvent } from "react";
 import { ContentChart } from "@/components/charts/Charts";
 import { getChart } from "@/content/facts.content";
 import type { ContentBlock } from "@/content/parseContent";
@@ -109,7 +109,8 @@ function Blocks({
 
 /**
  * Large landscape detail modal (~92vw × 72dvh).
- * Second click from a focused canvas/Map heading. Next/Prev owned by App.
+ * Toggle: second Info click (controls elevated above overlay), backdrop,
+ * or panel chrome closes. Body text selection / scroll does not.
  */
 export function DetailModal({
   frame,
@@ -127,6 +128,7 @@ export function DetailModal({
   const bodyRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion() ?? false;
   const [zoom, setZoom] = useState(1);
+  const selectingRef = useRef(false);
 
   useEffect(() => {
     if (!open) return;
@@ -141,6 +143,7 @@ export function DetailModal({
     if (open) {
       bodyRef.current?.scrollTo({ top: 0 });
       setZoom(1);
+      selectingRef.current = false;
     }
   }, [open, frame?.id]);
 
@@ -178,6 +181,18 @@ export function DetailModal({
   }, []);
 
   const stop = (e: SyntheticEvent) => e.stopPropagation();
+
+  /** Chrome click closes; ignore if the user was selecting text. */
+  const closeChrome = (e: MouseEvent) => {
+    if ((e.target as HTMLElement).closest("button, a, input, textarea, [role='scrollbar']")) {
+      return;
+    }
+    const sel = typeof window !== "undefined" ? window.getSelection()?.toString() : "";
+    if (sel && sel.length > 0) return;
+    if (selectingRef.current) return;
+    onClose();
+  };
+
   if (!frame) return null;
 
   const topChart = frame.chartId ? getChart(frame.chartId) : undefined;
@@ -197,7 +212,6 @@ export function DetailModal({
           role="dialog"
           aria-modal="true"
           aria-labelledby="detail-modal-title"
-          onPointerDown={stop}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0, transition: { duration: reduced ? 0.01 : 0.16 } }}
@@ -211,18 +225,12 @@ export function DetailModal({
             exit={bounce.exit}
             transition={modalPanelTransition(reduced)}
             onPointerDown={(e) => {
-              // Chrome click (panel outside scroll body) closes; body selection/scroll does not.
+              // Empty panel chrome (not header/body children) closes
               if (e.target === e.currentTarget) onClose();
               else stop(e);
             }}
           >
-            <header
-              className="detail-modal-header"
-              onClick={(e) => {
-                if ((e.target as HTMLElement).closest("button, a")) return;
-                onClose();
-              }}
-            >
+            <header className="detail-modal-header" onClick={closeChrome}>
               <div className="detail-modal-header-text">
                 {frame.titleSmall ? <p className="detail-modal-kicker">{frame.titleSmall}</p> : null}
                 <h2 id="detail-modal-title" className="detail-modal-title">
@@ -261,7 +269,16 @@ export function DetailModal({
               className="detail-modal-scroll"
               ref={bodyRef}
               onWheel={onWheelZoom}
-              onPointerDown={stop}
+              onPointerDown={(e) => {
+                stop(e);
+                selectingRef.current = true;
+              }}
+              onPointerUp={() => {
+                // Clear after click cycle so chrome clicks aren't poisoned by prior selection
+                window.setTimeout(() => {
+                  selectingRef.current = false;
+                }, 0);
+              }}
               onClick={stop}
             >
               <div

@@ -289,7 +289,7 @@ export default function App() {
   const canNext = sectionIndex >= 0 && sectionIndex < sectionPath.length - 1;
 
   return (
-    <div className="facts-app">
+    <div className={`facts-app${modalId ? " is-detail-open" : ""}`}>
       <header className={`topbar ${chromeVisible ? "is-visible" : "is-dim"}`}>
         <div className="topbar-brand">
           <LogoMark size={w < 640 ? 53 : 63} />

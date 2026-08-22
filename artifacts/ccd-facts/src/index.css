@@ -1604,6 +1604,20 @@ button {
   align-items: center;
   justify-content: center;
   padding: min(2vh, 1rem) min(2vw, 1rem);
+  box-sizing: border-box;
+}
+
+/* Keep Info / optional-fact controls above the modal so a second click toggles closed */
+.facts-app.is-detail-open .prezi-info,
+.facts-app.is-detail-open .prezi-sat,
+.facts-app.is-detail-open .prezi-satellites li,
+.facts-app.is-detail-open .stage-zone-info {
+  z-index: 70;
+  position: relative;
+}
+
+.facts-app.is-detail-open .prezi-info {
+  position: absolute; /* frame/chart Info stay corner-anchored */
 }
 
 .detail-modal-backdrop {
