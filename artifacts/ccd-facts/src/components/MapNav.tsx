@@ -58,8 +58,8 @@ function buildMenu(presentation: Presentation): {
 }
 
 /**
- * Alternative navigation: Map chip closed by default.
- * Click/tap to open or close; mouse leave closes when not pinned.
+ * Map chip sits in top-left chrome (above the centred prev chevron).
+ * List opens on load; mouse leave slides the column away; hover/click brings it back.
  */
 export function MapNav({
   presentation,
@@ -72,7 +72,7 @@ export function MapNav({
   onOverview: () => void;
   onJump: (id: string) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(true);
   const [pinned, setPinned] = useState(false);
   const closeTimer = useRef<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -85,6 +85,11 @@ export function MapNav({
       closeTimer.current = null;
     }
   }, []);
+
+  const openNow = useCallback(() => {
+    clearClose();
+    setOpen(true);
+  }, [clearClose]);
 
   const scheduleClose = useCallback(() => {
     if (pinned) return;
@@ -140,7 +145,7 @@ export function MapNav({
   };
 
   const onTabClick = () => {
-    if (open) {
+    if (open && pinned) {
       setPinned(false);
       setOpen(false);
       return;
@@ -173,7 +178,7 @@ export function MapNav({
       ref={rootRef}
       className={`map-nav ${open ? "is-open" : "is-collapsed"} ${pinned ? "is-pinned" : ""}`}
       onMouseLeave={scheduleClose}
-      onMouseEnter={clearClose}
+      onMouseEnter={openNow}
     >
       <button
         type="button"
