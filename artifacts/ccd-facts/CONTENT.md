@@ -95,6 +95,16 @@ Domestic Creative Arts & Design undergraduates edged down while the wider underg
 
 <!-- chart:heChange -->
 
+## Music Hubs and National Centre
+
+Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. Music Hubs annual backing and National Centre contract support are separate streams.
+
+- **£76m** — Annual Music Hubs backing to AY 2026/27[^7]
+- **£25m** — Additional capital for instruments / technology[^7]
+- **Up to £13m** — National Centre for Arts and Music Education over three years[^8]
+
+<!-- chart:funding -->
+
 ## A solution
 
 Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, EYFS to A-level / KS5.
@@ -112,16 +122,6 @@ Early-years principle: children should help shape their learning. Creative subje
 ### How it connects
 
 Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance between outstanding practice and the teacher who needs it.
-
-### Music Hubs and National Centre
-
-Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. Music Hubs annual backing and National Centre contract support are separate streams.
-
-- **£76m** — Annual Music Hubs backing to AY 2026/27[^7]
-- **£25m** — Additional capital for instruments / technology[^7]
-- **Up to £13m** — National Centre for Arts and Music Education over three years[^8]
-
-<!-- chart:funding -->
 
 ## Sources
 

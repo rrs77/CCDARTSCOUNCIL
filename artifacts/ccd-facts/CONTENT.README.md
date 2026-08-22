@@ -2,7 +2,7 @@
 
 **Single source of copy:** `artifacts/ccd-facts/CONTENT.md`
 
-The live experience is one connected Prezi-style canvas: Overview shows every section as a place; arrows / Map travel with camera zoom along title → Primary → Secondary → GCSE → A-level → HE → Hubs → Solution → Sources. Nest supporting material under `###`. **A solution** uses its product illustration (not an exam graph); funding charts stay under Music Hubs for the detail modal.
+Canvas path: title → Primary → Secondary → GCSE → A-level → HE → **Music Hubs and National Centre** → A solution → Sources. Nest supporting material under `###`. **A solution** uses its product illustration (not an exam graph); the funding chart lives on the Music Hubs place.
 
 Section circular heroes live in `public/illustrations/` and are mapped in `src/content/sectionIllustrations.ts`. The classroom photo (`hero-arts.jpg`) is **only** for the opening title / The situation. Sources lists principal footnotes on the frame (no filler CCD circle). One Info control per focused place opens the landscape detail modal.
 
