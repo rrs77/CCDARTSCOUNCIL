@@ -1,6 +1,8 @@
 ## Edit this file to change the presentation
 
-**Single source of copy:** `artifacts/ccd-facts/CONTENT.md`
+**Single source of copy:** `CONTENT.md` in this folder (`artifacts/ccd-facts`).
+
+This package is **standalone for Replit** (see `README.md`). It is **not** merged into CCD / `main` yet.
 
 Canvas path: title → Primary → Secondary → GCSE → A-level → HE → **Music Hubs and National Centre** → A solution → Sources. Nest supporting material under `###`. **A solution** uses its product illustration (not an exam graph); the funding chart lives on the Music Hubs place.
 

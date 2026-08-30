@@ -3,11 +3,12 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 import fs from "fs";
+import { fileURLToPath } from "url";
 
 const isReplit = process.env.REPL_ID !== undefined;
-const port = Number(process.env.PORT) || 5175;
+const port = Number(process.env.PORT) || 5173;
 const basePath = process.env.BASE_PATH || "/";
-const rootDir = path.resolve(import.meta.dirname);
+const rootDir = path.dirname(fileURLToPath(import.meta.url));
 
 /** Copy CONTENT.md into the built public folder (and keep it editable in the repo). */
 function copyContentMd(): Plugin {
@@ -57,7 +58,7 @@ export default defineConfig({
             ? [
                 await import("@replit/vite-plugin-cartographer").then((m) =>
                   m.cartographer({
-                    root: path.resolve(import.meta.dirname, ".."),
+                    root: rootDir,
                   }),
                 ),
                 await import("@replit/vite-plugin-dev-banner").then((m) =>
@@ -70,21 +71,22 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(import.meta.dirname, "src"),
+      "@": path.resolve(rootDir, "src"),
     },
   },
   root: rootDir,
   build: {
-    outDir: path.resolve(import.meta.dirname, "dist/public"),
+    outDir: path.resolve(rootDir, "dist/public"),
     emptyOutDir: true,
   },
   server: {
     port,
-    strictPort: true,
+    strictPort: false,
     host: "0.0.0.0",
     allowedHosts: true,
     fs: {
       strict: true,
+      allow: [rootDir],
     },
   },
   preview: {
