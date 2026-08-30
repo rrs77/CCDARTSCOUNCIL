@@ -28,7 +28,7 @@ import { activateDemoMode } from '../utils/demoMode';
 import { seedDemoData } from '../utils/demoSeed';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
 import { PrototypePasswordPrompt, isPrototypeUnlocked } from './PrototypeGate';
-import { LoginHeroPanel } from './login/LoginHeroPanel';
+import { LoginHeroPanel, THE_FACTS_HREF } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
 import { PartnersFundingStartModal } from './login/PartnersFundingStartModal';
 import { PARTNERS_FUNDING_VIDEO_STORAGE_KEY } from './login/prototypeCopy';
@@ -246,6 +246,13 @@ export function LoginForm() {
                     <span className="hidden sm:inline">Install</span>
                   </button>
                 )}
+                <a
+                  href={THE_FACTS_HREF}
+                  className="flex items-center gap-1.5 rounded-lg border border-[#002D24]/25 bg-white px-2.5 py-2 text-sm font-semibold text-[#002D24] transition-colors hover:bg-[#002D24]/5"
+                >
+                  <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
+                  <span>The facts</span>
+                </a>
                 <button
                   type="button"
                   onClick={() => setShowFeatureWalkthrough(true)}
