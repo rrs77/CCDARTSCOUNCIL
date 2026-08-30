@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<title>CCDesigner Product Doc</title>
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></xml>
+<![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 1in; }
+h1 { font-size: 18pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h2 { font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h3 { font-size: 12pt; margin-top: 10pt; margin-bottom: 4pt; page-break-after: avoid; }
+table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 4pt 8pt; text-align: left; }
+th { background: #f0f0f0; font-weight: bold; }
+p { margin: 6pt 0; }
+ul, ol { margin: 6pt 0; padding-left: 24pt; }
+li { margin: 2pt 0; }
+strong { font-weight: bold; }
+code { background: #f5f5f5; padding: 1pt 4pt; font-family: Consolas, monospace; font-size: 10pt; }
+hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
+</style>
+</head>
+<body>
+<h1>CCDesigner – Product Specification &amp; Feature List</h1>
+<p></p>
+<h2>1. Clarifying questions (please complete)</h2>
+<p></p>
+<p>Before locking the roadmap and licensing model, the following will help tailor documentation and prioritisation.</p>
+<p></p>
+<h3>Product &amp; scope</h3>
+<ul>
+<li><strong>Primary audience today:</strong> Music/primary education only, or already including drama (e.g. We Teach Drama) and other subjects? This affects how we describe “curriculum” and “activity bank” in sales materials.</li>
+<li><strong>Multi-tenancy:</strong> Is the plan one Supabase project per licensee (e.g. one for Rhythmstix, one for We Teach Drama), or a single shared project with tenant_id / organisation_id and RLS? This drives architecture and licensing.</li>
+<li><strong>Pilot with We Teach Drama:</strong> Will they get a dedicated instance (separate URL + DB), or a shared app with their branding and data isolated by organisation? This affects the first licensing pilot.</li>
+</ul>
+<p></p>
+<h3>Licensing &amp; commercial</h3>
+<ul>
+<li><strong>Revenue model:</strong> Subscription per organisation, one-off licence fee, per-seat pricing, or a mix? Any target price bands (e.g. £X/month per school)?</li>
+<li><strong>Contract terms:</strong> Minimum term, cancellation, SLA (uptime/support)? Needed for the “sales section” and legal wording.</li>
+<li><strong>Support &amp; onboarding:</strong> Who provides training and support for licensees (you, or they self-serve)? Any tiered support (e.g. email vs dedicated)?</li>
+</ul>
+<p></p>
+<h3>Technical &amp; compliance</h3>
+<ul>
+<li><strong>Data residency:</strong> Any requirement for UK/EU-only data (e.g. Supabase region, Blob storage)?</li>
+<li><strong>Integrations:</strong> Any must-have integrations in the next 12 months (e.g. Google Classroom, MIS, SSO/SAML)?</li>
+<li><strong>Accessibility:</strong> Any formal target (e.g. WCAG 2.1 AA) for public-sector or tender use?</li>
+</ul>
+<p></p>
+<h3>Roadmap priorities</h3>
+<ul>
+<li><strong>Calendar:</strong> How critical is “full” calendar (scheduling, assignments, sync) vs current week/month view and date-based plans?</li>
+<li><strong>Mobile:</strong> PWA-only acceptable, or do you want a native app later?</li>
+<li><strong>Offline:</strong> Should the app work offline with sync, or is “online-first with cache” enough for now?</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<h2>2. Product overview (aligned with your description)</h2>
+<p></p>
+<p>CCDesigner is a <strong>lesson planning platform</strong> built around a <strong>reusable activity bank</strong>. Teachers store activities (with notes, links, and resources), then <strong>combine them into lesson plans</strong> instead of rewriting from scratch. Plans can be <strong>exported as PDFs</strong> (with clickable links), <strong>shared via links</strong>, and organised by <strong>units/half-terms</strong> and <strong>lesson stacks</strong>. Curriculum objectives are <strong>customisable</strong> (EYFS, custom frameworks, exam boards). A <strong>traditional lesson plan</strong> format is also available for formal, section-based plans.</p>
+<p></p>
+<hr>
+<p></p>
+<h2>3. Complete feature list (from product description + codebase)</h2>
+<p></p>
+<h3>3.1 Authentication &amp; users</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Email/password login (Supabase Auth)</td><td>✅</td><td>Optional via <code>VITE_USE_SUPABASE_AUTH</code></td></tr>
+<tr><td>Password reset (email link)</td><td>✅</td><td>Resend SMTP, reset-password route</td></tr>
+<tr><td>Session persistence</td><td>✅</td><td>localStorage, auto-refresh</td></tr>
+<tr><td>User profiles (Supabase)</td><td>✅</td><td>roles, display_name, permissions</td></tr>
+<tr><td>View-only mode</td><td>✅</td><td>Restricts edits</td></tr>
+<tr><td>Admin/superuser roles</td><td>✅</td><td>User management, branding, packs</td></tr>
+<tr><td>(Future) SSO / SAML</td><td>❌</td><td>Not implemented</td></tr>
+</table>
+<p></p>
+<h3>3.2 Activity bank</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Create / edit / delete activities</td><td>✅</td><td>ActivityLibrary, ActivityCreator, ActivityDetailsModal</td></tr>
+<tr><td>Activity fields: name, description, time, category, level, links (video, music, backing, resource, vocals, image, Canva)</td><td>✅</td><td></td></tr>
+<tr><td>Rich-text description</td><td>✅</td><td>RichTextEditor</td></tr>
+<tr><td>Category list (customisable)</td><td>✅</td><td>Settings → Categories</td></tr>
+<tr><td>Category groups</td><td>✅</td><td>Grouping of categories</td></tr>
+<tr><td>Year-group / class assignment for activities</td><td>✅</td><td>custom_categories ↔ year_groups</td></tr>
+<tr><td>Search and filter activities</td><td>✅</td><td>ActivityLibrary, ActivitySearchModal</td></tr>
+<tr><td>Import activities (e.g. CSV/Excel)</td><td>✅</td><td>ActivityImporter, DataSourceSettings</td></tr>
+<tr><td>Activity packs</td><td>✅</td><td>Admin → Manage Packs</td></tr>
+<tr><td>Link resources with thumbnails and labels</td><td>✅</td><td>Settings → Resource links</td></tr>
+</table>
+<p></p>
+<h3>3.3 Lesson plans (activity-based)</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Build lesson from activity bank (drag-and-drop or picker)</td><td>✅</td><td>LessonLibrary, StandaloneLessonCreator, LessonPlanBuilder</td></tr>
+<tr><td>Order activities within lesson</td><td>✅</td><td>categoryOrder, orderedActivities</td></tr>
+<tr><td>Learning goals (EYFS or custom objectives)</td><td>✅</td><td>NestedStandardsBrowser, Custom Objectives</td></tr>
+<tr><td>Lesson notes</td><td>✅</td><td>Per-lesson notes field</td></tr>
+<tr><td>Custom header/footer per lesson</td><td>✅</td><td>PDF and share link</td></tr>
+<tr><td>Duplicate lesson</td><td>✅</td><td>LessonLibrary</td></tr>
+<tr><td>Trash and restore lessons</td><td>✅</td><td>LessonLibrary trash view</td></tr>
+<tr><td>Copy lessons to another class</td><td>✅</td><td>ClassCopyModal</td></tr>
+<tr><td>Academic year filter</td><td>✅</td><td>2025-2026, 2026-2027</td></tr>
+</table>
+<p></p>
+<h3>3.4 Curriculum objectives</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>EYFS statements (stored, selectable)</td><td>✅</td><td>NestedStandardsBrowser, eyfs_statements</td></tr>
+<tr><td>Custom objectives (areas, year groups, statements)</td><td>✅</td><td>CustomObjectivesAdmin, customObjectivesApi</td></tr>
+<tr><td>Attach objectives to lessons</td><td>✅</td><td>Lesson builder, PDF export</td></tr>
+<tr><td>Attach objectives to activities</td><td>✅</td><td>Activity custom objectives</td></tr>
+</table>
+<p></p>
+<h3>3.5 Units, half-terms &amp; lesson stacks</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Half-terms (A1, A2, SP1, SP2, SM1, SM2)</td><td>✅</td><td>UnitViewer, HalfTermView, HalfTermCard</td></tr>
+<tr><td>Assign lessons to half-terms</td><td>✅</td><td>AssignToHalfTermModal, updateHalfTerm</td></tr>
+<tr><td>Lesson stacks (named groups of lessons)</td><td>✅</td><td>useLessonStacks, LessonStackBuilder, StackedLessonCard</td></tr>
+<tr><td>Assign stacks to half-terms</td><td>✅</td><td>AssignStackToTermModal</td></tr>
+<tr><td>Term-specific lesson numbering</td><td>✅</td><td>e.g. “Lesson 3” within Autumn 1</td></tr>
+<tr><td>Copy term to another class</td><td>✅</td><td>TermCopyModal</td></tr>
+</table>
+<p></p>
+<h3>3.6 Year groups / classes</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Configurable year groups (classes)</td><td>✅</td><td>Settings → Year Groups</td></tr>
+<tr><td>Year-group bands (e.g. Year 1 → 1s, 1b, 1d)</td><td>✅</td><td>YearGroupBand</td></tr>
+<tr><td>Switch current class/sheet</td><td>✅</td><td>Header dropdown</td></tr>
+<tr><td>Per-class theme colours</td><td>✅</td><td>getThemeForClass</td></tr>
+<tr><td>Data per class (lessons, half-terms)</td><td>✅</td><td>sheet_name / currentSheetInfo</td></tr>
+</table>
+<p></p>
+<h3>3.7 Export &amp; sharing</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Export lesson plan as PDF (single or unit)</td><td>✅</td><td>LessonPrintModal, PDFBolt or Vercel API fallback</td></tr>
+<tr><td>PDF with clickable resource links</td><td>✅</td><td></td></tr>
+<tr><td>Copy link (shareable URL to lesson PDF)</td><td>✅</td><td>useShareLesson, Vercel Blob</td></tr>
+<tr><td>Share timetable as PDF/link</td><td>✅</td><td>useShareTimetable</td></tr>
+<tr><td>Export calendar view as PDF</td><td>✅</td><td>LessonPlannerCalendar</td></tr>
+</table>
+<p></p>
+<h3>3.8 Traditional lesson plan format</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Structured sections (e.g. Learning outcome, Main activity, Plenary)</td><td>✅</td><td>LessonPlanBuilder, lesson plan details in modal</td></tr>
+<tr><td>Editable templates / sections</td><td>✅</td><td>learningOutcome, successCriteria, introduction, mainActivity, plenary, vocabulary, keyQuestions, resources, differentiation, assessment</td></tr>
+<tr><td>Resource thumbnails and custom links</td><td>✅</td><td>Settings → Resource links, LinkViewer</td></tr>
+</table>
+<p></p>
+<h3>3.9 Calendar</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Week/month calendar view</td><td>✅</td><td>LessonPlannerCalendar</td></tr>
+<tr><td>Assign lesson plans to dates</td><td>✅</td><td>CalendarLessonAssignmentModal, TimeSlotLessonModal</td></tr>
+<tr><td>Create plan from date</td><td>✅</td><td>handleCreateLessonPlan</td></tr>
+<tr><td>Export calendar as PDF</td><td>✅</td><td></td></tr>
+<tr><td>(Future) Recurring events, sync to external calendar</td><td>❌</td><td>Not implemented</td></tr>
+</table>
+<p></p>
+<h3>3.10 Data &amp; backup</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Supabase backend (activities, lessons, half-terms, settings, branding)</td><td>✅</td><td>api.ts, DataContext, SettingsContextNew</td></tr>
+<tr><td>LocalStorage fallback / cache</td><td>✅</td><td>When Supabase unavailable or timeout</td></tr>
+<tr><td>Backup / restore (e.g. Excel export/import)</td><td>✅</td><td>DataSourceSettings</td></tr>
+<tr><td>Data source configuration UI</td><td>✅</td><td>DataSourceSettings</td></tr>
+</table>
+<p></p>
+<h3>3.11 Branding &amp; white-label</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>Login title / product name</td><td>✅</td><td>branding.loginTitle</td></tr>
+<tr><td>Footer company name</td><td>✅</td><td>branding.footerCompanyName</td></tr>
+<tr><td>Copyright year</td><td>✅</td><td>branding.footerCopyrightYear</td></tr>
+<tr><td>Logo (e.g. school/organisation)</td><td>✅</td><td>settings.schoolLogo / branding</td></tr>
+<tr><td>Primary/secondary/accent colours</td><td>✅</td><td>settings (theme)</td></tr>
+<tr><td>Branding persisted in Supabase</td><td>✅</td><td>branding_settings table</td></tr>
+<tr><td>(Future) Full white-label (domain, email, legal)</td><td>Partial</td><td>Structure in place; multi-tenant not yet</td></tr>
+</table>
+<p></p>
+<h3>3.12 Admin</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>User management (list, edit, roles)</td><td>✅</td><td>UserManagement, EditUserModal (Supabase Auth + profiles)</td></tr>
+<tr><td>Manage activity packs</td><td>✅</td><td>ActivityPacksAdmin</td></tr>
+<tr><td>Branding settings</td><td>✅</td><td>UserSettings → Admin → Branding</td></tr>
+<tr><td>View purchases</td><td>✅</td><td>ViewPurchasesModal (if used)</td></tr>
+</table>
+<p></p>
+<h3>3.13 UX &amp; help</h3>
+<table>
+<tr><th>Feature</th><th>Status</th><th>Notes</th></tr>
+<tr><td>In-app help guide</td><td>✅</td><td>HelpGuide (activity, lesson, unit, assign)</td></tr>
+<tr><td>Walkthrough guide</td><td>✅</td><td>WalkthroughGuide</td></tr>
+<tr><td>PWA install prompt</td><td>✅</td><td>PWAInstallPrompt, usePWAInstall</td></tr>
+<tr><td>Responsive layout</td><td>✅</td><td>Tailwind, mobile-friendly tabs</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<h2>4. Document control</h2>
+<p></p>
+<table>
+<tr><th>Version</th><th>Date</th><th>Author</th><th>Changes</th></tr>
+<tr><td>0.1</td><td>2026-03</td><td>—</td><td>Initial spec and feature list from product description and codebase scan</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<p>*Next: [02_ARCHITECTURE_AND_MISSING_FEATURES.md](./02_ARCHITECTURE_AND_MISSING_FEATURES.md) for architecture overview and missing-features analysis.*</p>
+<p></p>
+</body>
+</html>

@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<title>CCDesigner Product Doc</title>
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></xml>
+<![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 1in; }
+h1 { font-size: 18pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h2 { font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h3 { font-size: 12pt; margin-top: 10pt; margin-bottom: 4pt; page-break-after: avoid; }
+table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 4pt 8pt; text-align: left; }
+th { background: #f0f0f0; font-weight: bold; }
+p { margin: 6pt 0; }
+ul, ol { margin: 6pt 0; padding-left: 24pt; }
+li { margin: 2pt 0; }
+strong { font-weight: bold; }
+code { background: #f5f5f5; padding: 1pt 4pt; font-family: Consolas, monospace; font-size: 10pt; }
+hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
+</style>
+</head>
+<body>
+<h1>CCDesigner – Architecture &amp; Missing Features Analysis</h1>
+<p></p>
+<h2>1. Software architecture overview</h2>
+<p></p>
+<h3>1.1 High-level stack</h3>
+<p></p>
+<table>
+<tr><th>Layer</th><th>Technology</th><th>Purpose</th></tr>
+<tr><td>Frontend</td><td>React 18, Vite, TypeScript</td><td>SPA, build, types</td></tr>
+<tr><td>UI</td><td>Tailwind CSS, Lucide icons, react-hot-toast</td><td>Styling, components, notifications</td></tr>
+<tr><td>State</td><td>React context (Auth, Data, Settings)</td><td>Auth, lesson/activity data, user/school settings</td></tr>
+<tr><td>Backend</td><td>Supabase (PostgreSQL, Auth, Storage optional)</td><td>Data, auth, RLS</td></tr>
+<tr><td>PDF</td><td>PDFBolt API + Vercel serverless (generate-pdf)</td><td>Generate PDFs; upload to Vercel Blob for share links</td></tr>
+<tr><td>Hosting</td><td>Vercel</td><td>App + serverless API + Blob storage</td></tr>
+<tr><td>Email</td><td>Resend (via Supabase SMTP)</td><td>Password reset, verification</td></tr>
+</table>
+<p></p>
+<h3>1.2 Frontend structure</h3>
+<p></p>
+<p>```</p>
+<p>src/</p>
+<p>├── App.tsx, main.tsx          # Entry, providers, reset-password route</p>
+<p>├── components/                 # UI (Dashboard, UnitViewer, LessonLibrary, ActivityLibrary, etc.)</p>
+<p>├── contexts/                   # AuthContext, DataContext, SettingsContextNew</p>
+<p>├── config/                     # supabase.ts, api.ts, customObjectivesApi, lessonStacksApi, activityStacksApi</p>
+<p>├── hooks/                      # useShareLesson, useShareTimetable, useLessonStacks, useAuth, useIsViewOnly</p>
+<p>├── types/                      # auth, customObjectives</p>
+<p>├── utils/                      # pdfApi, shareLesson, logger, PWA, etc.</p>
+<p>api/</p>
+<p>├── generate-pdf.js             # Vercel serverless: HTML → PDF (PDFBolt), upload to Blob or return blob</p>
+<p>```</p>
+<p></p>
+<ul>
+<li><strong>No React Router:</strong> Single app; Dashboard uses tabs (Unit Viewer, Lesson Library, Lesson Builder, Activity Library, Calendar).</li>
+<li><strong>Data flow:</strong> DataContext loads/saves lessons, half-terms, activities (Supabase + localStorage fallback). SettingsContextNew handles year groups, categories, branding. AuthContext handles login and profile.</li>
+</ul>
+<p></p>
+<h3>1.3 Data model (Supabase tables, from codebase)</h3>
+<p></p>
+<table>
+<tr><th>Table</th><th>Purpose</th></tr>
+<tr><td>activities</td><td>Activity bank (name, description, category, time, links, etc.)</td></tr>
+<tr><td>lessons</td><td>Lesson data per sheet + academic_year (composite key); JSONB <code>data</code> for lesson content</td></tr>
+<tr><td>lesson_plans</td><td>User-created lesson plan records (e.g. calendar-linked)</td></tr>
+<tr><td>half_terms</td><td>Half-term definitions and lesson lists per sheet + academic_year</td></tr>
+<tr><td>year_groups</td><td>Class/year group list (e.g. for dropdown)</td></tr>
+<tr><td>custom_categories</td><td>Categories + optional year_group assignments</td></tr>
+<tr><td>category_groups</td><td>Group names for categories</td></tr>
+<tr><td>eyfs_statements</td><td>EYFS curriculum statements</td></tr>
+<tr><td>custom_objectives, custom_objective_areas, custom_objective_year_groups</td><td>Custom curriculum framework</td></tr>
+<tr><td>activity_custom_objectives</td><td>Link activities to objectives</td></tr>
+<tr><td>lesson_stacks, activity_stacks</td><td>Stacks (grouped lessons/activities)</td></tr>
+<tr><td>timetable_classes</td><td>Timetable/class data</td></tr>
+<tr><td>branding_settings</td><td>White-label branding (login title, footer, etc.)</td></tr>
+<tr><td>profiles</td><td>User profile (role, display_name, permissions)</td></tr>
+</table>
+<p></p>
+<p>RLS (Row Level Security) is used on lessons, lesson_plans, activities, etc., with policies for <code>auth.uid()</code> and optional <code>user_id</code> for multi-user isolation.</p>
+<p></p>
+<h3>1.4 Suggested architecture for multi-tenant licensing</h3>
+<p></p>
+<p>To support <strong>multiple organisations</strong> (e.g. Rhythmstix, We Teach Drama) with optional white-label:</p>
+<p></p>
+<p><strong>Option A – One project per licensee (recommended for pilot)</strong></p>
+<ul>
+<li>Separate Supabase project (and optionally separate Vercel deployment) per org.</li>
+<li>Full isolation; branding and env vars (e.g. <code>VITE_SUPABASE_URL</code>) set per deployment.</li>
+<li>Easiest to reason about and to comply with data/residency per client.</li>
+<li>Trade-off: more deployments and env management.</li>
+</ul>
+<p></p>
+<p><strong>Option B – Single project, tenant_id + RLS</strong></p>
+<ul>
+<li>Add <code>organisation_id</code> (or <code>tenant_id</code>) to key tables (activities, lessons, profiles, branding_settings).</li>
+<li>RLS policies restrict rows by <code>organisation_id</code> (e.g. from <code>profiles.organisation_id</code> or JWT claim).</li>
+<li>One app URL; org chosen at login or by subdomain (e.g. <code>weteachdrama.ccdesigner.co.uk</code>).</li>
+<li>Branding and “current org” driven by tenant_id; more code and migration work, single codebase.</li>
+</ul>
+<p></p>
+<p><strong>Recommendation for We Teach Drama pilot:</strong> Start with <strong>Option A</strong> (dedicated instance) for simplicity and clear boundaries; document the steps so it’s repeatable for future licensees. Option B can be a later “multi-tenant SaaS” evolution.</p>
+<p></p>
+<hr>
+<p></p>
+<h2>2. Missing product details to document</h2>
+<p></p>
+<p>These are not necessarily missing from the app, but should be written down for consistency, support, and licensing.</p>
+<p></p>
+<table>
+<tr><th>Area</th><th>What to document</th></tr>
+<tr><td><strong>User roles</strong></td><td>Exact list of roles (e.g. admin, superuser, teacher, viewer) and what each can do (edit lessons, manage users, change branding, etc.).</td></tr>
+<tr><td><strong>Data ownership</strong></td><td>Who “owns” data when an org leaves (export, retention, deletion).</td></tr>
+<tr><td><strong>Backup/restore</strong></td><td>How often Supabase is backed up; how orgs can export their data (e.g. DataSourceSettings export).</td></tr>
+<tr><td><strong>Browser support</strong></td><td>Minimum browsers (e.g. Chrome, Safari, Edge last 2 versions).</td></tr>
+<tr><td><strong>Limits</strong></td><td>Max activities, lessons, users per org (if any); Blob/PDF storage limits.</td></tr>
+<tr><td><strong>Calendar</strong></td><td>What “calendar” does today (assign plans to dates, week/month view, PDF export) vs planned (recurring, sync, reminders).</td></tr>
+<tr><td><strong>Offline</strong></td><td>Whether the app is online-only or has any offline/cache behaviour.</td></tr>
+<tr><td><strong>Accessibility</strong></td><td>Any WCAG target and known gaps.</td></tr>
+<tr><td><strong>Security</strong></td><td>Auth method, password policy, optional 2FA later; how RLS is used.</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<h2>3. Missing features analysis (gaps vs ideal)</h2>
+<p></p>
+<table>
+<tr><th>Gap</th><th>Priority</th><th>Notes</th></tr>
+<tr><td><strong>Calendar “full” scheduling</strong></td><td>Medium</td><td>No recurring events, no sync to Google/Outlook; calendar is view + date-based plan assignment. Document as “current” and roadmap as “enhanced calendar”.</td></tr>
+<tr><td><strong>SSO / SAML</strong></td><td>Medium (for schools)</td><td>Many schools expect SSO; not implemented. Add to roadmap if targeting institutional sales.</td></tr>
+<tr><td><strong>Multi-tenant in one deployment</strong></td><td>Low for pilot</td><td>Option A (one project per org) avoids this for We Teach Drama.</td></tr>
+<tr><td><strong>Organisation-level admin</strong></td><td>Medium</td><td>“Org admin” who can manage users and branding for their org only (without seeing other orgs). Depends on Option B.</td></tr>
+<tr><td><strong>Formal accessibility</strong></td><td>Medium</td><td>No stated WCAG level; needed if selling into public sector or tenders.</td></tr>
+<tr><td><strong>Offline-first</strong></td><td>Low</td><td>Current behaviour is online with cache; full offline sync is a larger project.</td></tr>
+<tr><td><strong>Native mobile app</strong></td><td>Low</td><td>PWA covers many use cases; native app can follow if required.</td></tr>
+<tr><td><strong>Audit log</strong></td><td>Low</td><td>No “who changed what when” for compliance; can be added later.</td></tr>
+<tr><td><strong>Billing/subscription in app</strong></td><td>Medium</td><td>For SaaS, need subscription/billing (Stripe, etc.) and possibly usage metering.</td></tr>
+<tr><td><strong>In-app licensing/entitlements</strong></td><td>Medium</td><td>Feature flags or “tiers” (e.g. Activity Library vs full Calendar) if you offer multiple plans.</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<h2>4. Recommended documentation structure</h2>
+<p></p>
+<p>Keep product and licensing docs in one place; keep technical and runbooks separate.</p>
+<p></p>
+<p>```</p>
+<p>docs/</p>
+<p>├── product/                    # Product &amp; commercial (this folder)</p>
+<p>│   ├── 01_PRODUCT_SPEC_AND_FEATURES.md</p>
+<p>│   ├── 02_ARCHITECTURE_AND_MISSING_FEATURES.md  # this file</p>
+<p>│   ├── 03_LICENSING_AND_SALES.md</p>
+<p>│   ├── 04_DEVELOPMENT_ROADMAP.md</p>
+<p>│   └── 05_CODEBASE_ANALYSIS_GUIDE.md</p>
+<p>├── operations/                 # Optional: runbooks, deployment</p>
+<p>│   └── DEPLOYMENT_AND_ENV.md</p>
+<p>├── existing technical docs     # e.g. SUPABASE_RESEND_SMTP.md, LESSON_LIBRARY_EMPTY_AFTER_LOGIN.md</p>
+<p>└── README.md                   # Link to docs/product and key runbooks</p>
+<p>```</p>
+<p></p>
+<ul>
+<li><strong>Sales and partners:</strong> Use <code>01</code> and <code>03</code> (plus a one-pager or web page derived from them).</li>
+<li><strong>Development:</strong> Use <code>02</code>, <code>04</code>, and <code>05</code>.</li>
+<li><strong>Support:</strong> Use <code>01</code> (feature list) and operations docs.</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<p>*Next: [03_LICENSING_AND_SALES.md](./03_LICENSING_AND_SALES.md) for white-label licensing and sales section.*</p>
+<p></p>
+</body>
+</html>

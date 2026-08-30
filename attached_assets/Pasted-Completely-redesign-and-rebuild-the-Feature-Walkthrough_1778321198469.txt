@@ -1,0 +1,258 @@
+Completely redesign and rebuild the “Feature Walkthrough” section into a premium cinematic product experience.
+
+This is NOT a simple slider.
+This is NOT a generic carousel.
+This should feel like an immersive product story — similar to Apple, Linear, Stripe, Framer, Arc Browser, Notion, or modern AI SaaS launch experiences.
+
+The app is an AI-powered creative curriculum designer for education.
+
+The screenshots provided are ONLY visual inspiration for:
+- large typography
+- cinematic composition
+- dark gradients
+- glowing UI
+- elegant scene transitions
+- premium SaaS presentation
+- floating screenshots
+- strong visual hierarchy
+
+DO NOT copy their product, wording, or layouts directly.
+
+GOAL
+Create a visually stunning, emotionally engaging, highly animated Feature Walkthrough with a MINIMUM of 20 cinematic scenes/slides.
+
+The walkthrough must communicate that this platform helps teachers design ambitious, creative, adaptive learning experiences for ALL children.
+
+CORE MESSAGE
+This platform helps educators:
+- design inspiring curriculum experiences
+- save planning time
+- support every learner
+- adapt creatively for different needs
+- connect curriculum thinking across subjects
+- develop richer learning journeys
+- improve inclusion and accessibility
+- encourage creativity and deeper thinking
+- personalise learning pathways
+- bring innovative teaching ideas into classrooms
+
+As the platform evolves, planning approaches and frameworks from different educational organisations, curriculum specialists, and teaching models will become available inside the app.
+
+The walkthrough should communicate ambition, innovation, creativity, accessibility, and future-focused curriculum design.
+
+OVERALL EXPERIENCE
+The walkthrough should feel like:
+- a product film
+- a guided interactive story
+- a modern AI platform reveal
+- premium educational technology
+- cinematic SaaS storytelling
+
+It should feel calm, intelligent, polished, spacious, and beautifully animated.
+
+STYLE DIRECTION
+- Dark premium background
+- Deep gradients
+- Glassmorphism accents
+- Glow effects
+- Large cinematic typography
+- Floating UI panels
+- Smooth transitions
+- Minimal but powerful text
+- Screenshot-led storytelling
+- Depth and layering
+- Elegant motion
+- Spacious layouts
+- Mobile-first responsiveness
+
+TYPOGRAPHY
+Use large bold typography throughout.
+
+Examples:
+- text-5xl to text-7xl desktop
+- text-3xl to text-5xl mobile
+
+Short powerful statements only.
+Never overcrowd scenes with text.
+
+Each slide should feel like a headline moment.
+
+SCENE STRUCTURE
+Build AT LEAST 20 scenes/slides.
+
+Each scene should include:
+- Feature title
+- Short supporting statement
+- Animated screenshot/mockup
+- Motion transitions
+- Visual depth
+- Navigation state
+
+SCENE THEMES
+
+1. Welcome Scene
+“Design Learning That Inspires”
+
+2. Curriculum Mapping
+“Build connected curriculum journeys”
+
+3. Lesson Planning
+“Create rich lessons in minutes”
+
+4. Creative Learning
+“Encourage curiosity and imagination”
+
+5. AI Assistance
+“AI support without losing teacher control”
+
+6. Adaptive Planning
+“Adapt instantly for different learners”
+
+7. SEND Support
+“Support every child meaningfully”
+
+8. Stretch & Challenge
+“Create deeper learning opportunities”
+
+9. Cross-Curricular Design
+“Connect subjects naturally”
+
+10. Assessment Integration
+“Embed assessment into learning”
+
+11. Skills Progression
+“Track growth over time”
+
+12. Knowledge Sequencing
+“Build knowledge intentionally”
+
+13. Resource Organisation
+“Keep everything connected”
+
+14. Teaching Ideas
+“Discover innovative classroom approaches”
+
+15. Collaborative Planning
+“Plan together as a team”
+
+16. Organisation Frameworks
+“Access evolving planning approaches and models”
+
+17. Visual Curriculum Design
+“See the bigger learning picture”
+
+18. Presentation & Export
+“Share beautiful professional plans”
+
+19. Mobile Responsive Workflow
+“Plan anywhere”
+
+20. Future Vision Scene
+“The future of curriculum design”
+
+OPTIONAL ADDITIONAL SCENES
+Add more scenes if needed for pacing and storytelling.
+
+VISUAL COMPOSITION
+Alternate layouts throughout:
+- centered layouts
+- left image / right text
+- right image / left text
+- stacked cards
+- angled screenshots
+- floating layered windows
+- immersive hero scenes
+- full-width screenshot moments
+
+SCREENSHOT PRESENTATION
+Screenshots/mockups should:
+- float subtly
+- use soft shadows
+- use glow accents
+- have rounded corners
+- have depth and layering
+- use perspective transforms carefully
+- animate independently from text
+
+MOTION REQUIREMENTS
+Use Framer Motion / Motion for React.
+
+Animations should include:
+- fade
+- scale
+- parallax
+- staggered entrances
+- subtle rotation
+- smooth crossfades
+- spring easing
+- hover movement
+- progress animations
+
+Animations must feel premium and intentional.
+Never chaotic.
+
+INTERACTION REQUIREMENTS
+Desktop:
+- Previous/next arrows
+- Progress timeline or pills
+- Keyboard navigation
+- Mousewheel support optional
+
+Mobile:
+- Swipe gestures
+- Touch-friendly controls
+- Optimised layout stacking
+- Compact indicators
+
+Autoplay:
+- Optional
+- Pause on hover
+- Pause on focus
+- Respect reduced-motion settings
+
+ACCESSIBILITY
+- Semantic HTML
+- Keyboard navigable
+- ARIA labels
+- Proper focus states
+- Reduced motion support
+- Buttons instead of div-click areas
+- High contrast readability
+
+TECH STACK
+- React
+- TailwindCSS
+- Framer Motion / Motion
+- Responsive image handling
+- Lazy loading
+- GPU-friendly transforms
+- Component architecture
+- Optimised rendering performance
+
+IMPORTANT DESIGN RULES
+DO NOT:
+- create a basic carousel
+- use generic bootstrap styles
+- overload slides with text
+- make animations cheesy
+- make it look corporate or dated
+- create PowerPoint-style transitions
+
+DO:
+- create atmosphere
+- create emotional impact
+- create visual rhythm
+- create cinematic pacing
+- create premium motion design
+- make every scene feel intentional
+- make the experience feel modern and ambitious
+
+FINAL GOAL
+The Feature Walkthrough should become one of the most visually impressive and memorable parts of the entire website.
+
+It should immediately communicate:
+innovation,
+creativity,
+inclusion,
+curriculum intelligence,
+and the future of AI-assisted education planning.

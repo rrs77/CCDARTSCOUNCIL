@@ -1,0 +1,809 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ===========================================================================
+ * Design tokens / motion system
+ * Centralised so timing & easing stay consistent across the app.
+ * ======================================================================== */
+:root {
+  --ccd-ease-out: cubic-bezier(0.22, 0.61, 0.36, 1);
+  --ccd-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ccd-duration-fast: 140ms;
+  --ccd-duration-base: 220ms;
+  --ccd-duration-slow: 360ms;
+  --ccd-teal: #14B8A6;
+  --ccd-teal-deep: #0D9488;
+  /* Login brand — used in Unit Viewer / Half-Term Designer */
+  --ccd-forest: #002D24;
+  --ccd-lime: #B6FF7E;
+  --ccd-sage: #F3F6F3;
+  --ccd-sage-mist: #E8F0EA;
+}
+
+/* Promo walkthrough motion-graphics palette (scoped to the login promo surface) */
+.ccd-promo-surface {
+  --color-primary: #14B8A6;
+  --color-primary-light: #5EEAD4;
+  --color-primary-dark: #008272;
+  --color-accent: #FF6B6B;
+  --color-accent-light: #FFA6A6;
+  --color-accent-dark: #FF5252;
+  --color-bg-light: #fffaf7;
+  --color-bg-dark: #0f2a2e;
+  --color-bg-muted: #f4f6f8;
+  --color-text-primary: #0f2a2e;
+  --color-text-secondary: #6b7d80;
+  --color-text-muted: #94a3b8;
+  --color-text-inverse: #ffffff;
+  font-family: Inter, system-ui, sans-serif;
+}
+
+/* Smoother body rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ---------------------------------------------------------------------------
+ * Focus styles — visible only via keyboard navigation. The previous global
+ * `*:focus { outline: 2px !important }` painted a teal box around every
+ * clickable thing on every mouse click, which felt aggressive and broke
+ * card/tab visual designs. `:focus-visible` keeps full keyboard a11y while
+ * letting mouse interactions stay clean.
+ * ------------------------------------------------------------------------ */
+*:focus {
+  outline: none;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--ccd-teal);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Form-element focus: subtle teal ring (no !important — let components override
+ * when they have their own focus treatment, e.g. the search bar). */
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  border-color: var(--ccd-teal);
+  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
+}
+
+/* Teal ring for focus states */
+.focus\:ring-teal-500:focus {
+  --tw-ring-color: #17a2b8 !important;
+}
+
+.focus\:border-teal-500:focus {
+  border-color: #17a2b8 !important;
+}
+
+@keyframes bounce-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.8);
+  }
+  70% {
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-bounce-in {
+  animation: bounce-in 0.5s ease-out;
+}
+
+/* Brief confirmation flash after a successful drag-and-drop drop. */
+@keyframes ccd-drop-flash {
+  0% {
+    background-color: rgba(20, 184, 166, 0.35);
+    box-shadow: 0 0 0 4px rgba(20, 184, 166, 0.5);
+  }
+  100% {
+    background-color: transparent;
+    box-shadow: 0 0 0 0 rgba(20, 184, 166, 0);
+  }
+}
+.ccd-drop-flash {
+  animation: ccd-drop-flash 600ms ease-out;
+}
+
+/* Hide the native HTML5 drag image. We render our own via CustomDragLayer so
+ * the preview is consistent across desktop and touch devices. The HTML5
+ * backend's default ghost is a near-invisible faded copy that confused users.
+ * NOTE: do NOT set this on touch devices — TouchBackend uses the element to
+ * compose its preview. We rely on the `preview: true` flag in DndRoot and the
+ * CustomDragLayer instead.
+ */
+[data-handler-id]:active {
+  /* nothing — placeholder for future per-handle styling */
+}
+
+/* PWA Install Prompt Animation */
+@keyframes slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-slide-up {
+  animation: slide-up 0.3s ease-out;
+}
+
+/* Modal fade-in and scale-in animations */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s var(--ccd-ease-out);
+}
+
+.animate-scale-in {
+  animation: scale-in 0.3s var(--ccd-ease-out);
+}
+
+/* ---------------------------------------------------------------------------
+ * Reusable motion utilities
+ * ------------------------------------------------------------------------ */
+
+/* Page-section entrance — fade up gently. Use on dashboard sections, modal
+ * bodies, list items that mount after data loads. */
+@keyframes ccd-fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: none; }
+}
+.ccd-fade-in-up {
+  animation: ccd-fade-in-up var(--ccd-duration-slow) var(--ccd-ease-out) both;
+}
+
+/* Card-lift utility — apply to any clickable card. Lifts on hover with a
+ * deeper shadow so term cards “pop out”. */
+.ccd-card-lift {
+  transition:
+    transform var(--ccd-duration-base) var(--ccd-ease-out),
+    box-shadow var(--ccd-duration-base) var(--ccd-ease-out),
+    border-color var(--ccd-duration-base) var(--ccd-ease-out);
+  will-change: transform;
+}
+.ccd-card-lift:hover {
+  transform: translateY(-4px) scale(1.015);
+  box-shadow: 0 18px 36px -12px rgba(0, 45, 36, 0.22),
+              0 8px 16px -6px rgba(0, 45, 36, 0.12);
+}
+
+/* Dashboard main tabs — teal underline under every tab; active is stronger/thicker. */
+.ccd-dash-tabs {
+  background: #F4F7F5 !important;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  padding: 0.15rem 0.15rem 0 !important;
+  gap: 0.25rem;
+  border-bottom: none;
+}
+.ccd-dash-tab {
+  position: relative;
+  border-radius: 0.5rem 0.5rem 0 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  color: #4B5563;
+}
+.ccd-dash-tab::after {
+  content: '';
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  bottom: 0;
+  height: 3px;
+  border-radius: 2px 2px 0 0;
+  background: var(--ccd-teal-deep, #0D9488);
+  opacity: 0.28;
+}
+.ccd-dash-tab:hover {
+  color: var(--ccd-forest);
+  background: rgba(0, 45, 36, 0.04) !important;
+}
+.ccd-dash-tab:hover::after {
+  opacity: 0.55;
+}
+.ccd-dash-tab[data-state='active'] {
+  color: var(--ccd-forest) !important;
+  font-weight: 600;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+.ccd-dash-tab[data-state='active']::after {
+  height: 4px;
+  background: var(--ccd-teal-deep, #0D9488);
+  opacity: 1;
+}
+
+/* Skeleton shimmer for loading states. */
+@keyframes ccd-shimmer {
+  0%   { background-position: -1200px 0; }
+  100% { background-position: 1200px 0; }
+}
+.ccd-skeleton {
+  background: linear-gradient(90deg, #f1f5f9 0%, #e2e8f0 50%, #f1f5f9 100%);
+  background-size: 1200px 100%;
+  animation: ccd-shimmer 1.4s infinite linear;
+  border-radius: 8px;
+}
+
+/* Subtle hover-grow used on small icon buttons. */
+.ccd-icon-button {
+  transition:
+    background-color var(--ccd-duration-fast) var(--ccd-ease-out),
+    color var(--ccd-duration-fast) var(--ccd-ease-out),
+    transform var(--ccd-duration-fast) var(--ccd-ease-out);
+}
+.ccd-icon-button:active {
+  transform: scale(0.94);
+}
+
+/* Custom scrollbar for the main app — slim, brand-tinted, falls back to the
+ * native bar on Firefox via scrollbar-color. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(20, 184, 166, 0.35) transparent;
+}
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background-color: rgba(15, 42, 46, 0.16);
+  border-radius: 999px;
+  border: 2px solid transparent;
+  background-clip: content-box;
+}
+::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(20, 184, 166, 0.55);
+  background-clip: content-box;
+}
+
+/* ---------------------------------------------------------------------------
+ * Login hero — Ken Burns image drift + staggered copy fade-in
+ * Soft, continuous zoom on the arts photo; text enters once on load.
+ * ------------------------------------------------------------------------ */
+@keyframes ccd-login-ken-burns {
+  from {
+    transform: scale(1) translate3d(0, 0, 0);
+  }
+  to {
+    transform: scale(1.07) translate3d(-1.2%, -0.8%, 0);
+  }
+}
+
+.ccd-login-hero-image {
+  animation: ccd-login-ken-burns 32s var(--ccd-ease-in-out) infinite alternate;
+  will-change: transform;
+  transform-origin: 45% 40%;
+}
+
+@keyframes ccd-login-hero-fade {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.ccd-login-hero-fade {
+  animation: ccd-login-hero-fade 0.85s var(--ccd-ease-out) both;
+}
+
+.ccd-login-hero-fade-delay-1 {
+  animation-delay: 0.12s;
+}
+
+.ccd-login-hero-fade-delay-2 {
+  animation-delay: 0.28s;
+}
+
+.ccd-login-hero-fade-delay-3 {
+  animation-delay: 0.44s;
+}
+
+/* Respect users who prefer reduced motion — disables all the entrance,
+ * shimmer, drop-flash, scale-in animations app-wide. Iframes/modals still
+ * function, just no movement. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+
+  .ccd-card-lift:hover {
+    transform: none;
+  }
+
+  .ccd-login-hero-image {
+    animation: none;
+    transform: none;
+    will-change: auto;
+  }
+}
+
+/* Walkthrough guide highlight pulse effect */
+@keyframes highlight-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(23, 162, 184, 0.7);
+  }
+  70% {
+    box-shadow: 0 0 0 10px rgba(23, 162, 184, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(23, 162, 184, 0);
+  }
+}
+
+.highlight-pulse {
+  animation: highlight-pulse 1.5s infinite;
+}
+
+/* Modal animations */
+@keyframes modal-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes modal-slide-in {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.modal-overlay {
+  animation: modal-fade-in 0.3s ease-out;
+}
+
+.modal-content {
+  animation: modal-slide-in 0.3s ease-out;
+}
+
+/* Responsive modal sizing */
+@media (min-width: 640px) {
+  .modal-responsive {
+    max-width: 90%;
+    width: 600px;
+  }
+}
+
+@media (min-width: 768px) {
+  .modal-responsive {
+    max-width: 80%;
+    width: 700px;
+  }
+}
+
+@media (min-width: 1024px) {
+  .modal-responsive {
+    max-width: 70%;
+    width: 800px;
+  }
+}
+
+/* Circular checkbox styling for Rhythmstix design system */
+input[type="checkbox"].rounded-full {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  border: 2px solid #d1d5db;
+  background-color: white;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease-in-out;
+  flex-shrink: 0;
+}
+
+input[type="checkbox"].rounded-full:hover {
+  border-color: #17A697;
+  box-shadow: 0 0 0 2px rgba(23, 166, 151, 0.1);
+}
+
+input[type="checkbox"].rounded-full:checked {
+  background-color: #17A697;
+  border-color: #17A697;
+  box-shadow: 0 0 0 2px rgba(23, 166, 151, 0.15);
+}
+
+input[type="checkbox"].rounded-full:checked::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: 0.3rem;
+  height: 0.5rem;
+  border: solid white;
+  border-width: 0 1.5px 1.5px 0;
+  transform: translate(-50%, -60%) rotate(45deg);
+}
+
+input[type="checkbox"].rounded-full:focus {
+  outline: none;
+  ring: 2px;
+  ring-color: #17A697;
+  ring-offset: 2px;
+}
+
+/* Fix for dropdown menus */
+.z-50 {
+  z-index: 50 !important;
+}
+
+/* Ensure dropdowns are above other elements */
+.dropdown-menu {
+  z-index: 100 !important;
+  position: absolute !important;
+}
+
+/* Fix for assign to half-term dropdown */
+.dropdown-menu {
+  background-color: white;
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  min-width: 12rem;
+  overflow: hidden;
+}
+
+.dropdown-menu h3 {
+  font-weight: 500;
+  color: #374151;
+}
+
+.dropdown-menu button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  transition: all 0.2s;
+}
+
+.dropdown-menu button:hover {
+  background-color: #e6fffa;
+  color: #0d9488;
+}
+
+/* Navigation Tab Border Radius */
+.nav-tabs-container > button:first-child {
+  border-radius: 12px 0 0 12px !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.nav-tabs-container > button:last-child {
+  border-radius: 0 12px 12px 0 !important;
+  border: none !important;
+  outline: none !important;
+}
+
+.nav-tabs-container > button:not(:first-child):not(:last-child) {
+  border-radius: 0 !important;
+  border: none !important;
+  outline: none !important;
+}
+
+/* Remove all borders from navigation tabs */
+.nav-tabs-container {
+  border: none !important;
+  outline: none !important;
+}
+
+.nav-tab-button {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Remove focus outlines/borders from TAB buttons only — they have their own
+ * active-state styling. Previously this selector also matched plain
+ * `button:focus-visible`, which silenced keyboard focus rings across the
+ * entire app. Keep it scoped to tabs so the global :focus-visible teal
+ * outline (defined at the top of this file) still applies elsewhere. */
+button[role="tab"],
+button.nav-tab-button,
+.nav-tab-button:focus,
+.nav-tab-button:focus-visible,
+.nav-tab-button:active {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Remove double borders on active tabs */
+.nav-tab-button.active,
+button[data-state="active"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* ============================================================================
+   ACCENT COLOR SYSTEM - CORAL (#FF6B6B)
+   Use coral for special actions, highlights, and eye-catching elements
+   ============================================================================ */
+
+/* Coral accent button for special actions */
+.btn-accent {
+  background: linear-gradient(to right, #FF6B6B, #FF5252);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 0.75rem;
+  font-size: 14px;
+  font-weight: 500;
+  height: 36px;
+  border: none;
+  cursor: pointer;
+  transition: all 200ms ease-out;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(255, 107, 107, 0.2);
+}
+
+.btn-accent:hover {
+  background: linear-gradient(to right, #FF5252, #FF4444);
+  box-shadow: 0 4px 8px rgba(255, 107, 107, 0.3);
+  transform: translateY(-1px);
+}
+
+/* Coral accent badge/pill */
+.badge-accent {
+  background: linear-gradient(135deg, #FF6B6B, #FF5252);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Coral accent border */
+.border-accent {
+  border-color: #FF6B6B !important;
+}
+
+/* Coral accent text */
+.text-accent {
+  color: #FF6B6B !important;
+}
+
+/* Coral accent background (light) */
+.bg-accent-light {
+  background-color: rgba(255, 107, 107, 0.1) !important;
+}
+
+/* Coral accent hover state */
+.hover-accent:hover {
+  color: #FF6B6B !important;
+  border-color: #FF6B6B !important;
+}
+
+/* Print preview page styling - matches PDF export exactly */
+.print-preview-page {
+  width: 210mm;
+  min-height: 297mm;
+  margin: 0 auto 40px auto;
+  background: white;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2), 0 0 1px rgba(0, 0, 0, 0.1);
+  position: relative;
+  page-break-after: always;
+  break-after: page;
+  padding: 1cm;
+  box-sizing: border-box;
+}
+
+/* Show page boundary indicators within multi-page lessons */
+.print-preview-page::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 10;
+  /* Repeating gradient to show page boundaries at 297mm intervals */
+  /* 297mm ≈ 1122px at 96 DPI, but we use mm for consistency */
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0mm,
+    transparent 295mm,
+    rgba(239, 68, 68, 0.3) 295mm,
+    rgba(239, 68, 68, 0.3) 297mm
+  );
+  background-size: 100% 297mm;
+  background-position: top;
+}
+
+/* Page boundary label overlay */
+.print-preview-page.multi-page::after {
+  content: 'PAGE BREAK';
+  position: absolute;
+  top: calc(297mm - 10px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #ef4444;
+  color: white;
+  padding: 2px 10px;
+  border-radius: 10px;
+  font-size: 10px;
+  font-weight: 600;
+  z-index: 20;
+  pointer-events: none;
+}
+
+.print-preview-page:last-child {
+  margin-bottom: 0;
+  page-break-after: auto;
+  break-after: auto;
+}
+
+.print-preview-container {
+  background: #e5e7eb;
+  padding: 40px 20px;
+}
+
+/* Ensure lesson-page class matches preview exactly */
+.lesson-page {
+  width: 210mm;
+  min-height: 297mm;
+  padding: 1cm;
+  margin: 0 auto 2cm auto;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  page-break-after: always;
+  break-after: always;
+  box-sizing: border-box;
+}
+
+.lesson-page:last-child {
+  margin-bottom: 0;
+  page-break-after: auto;
+  break-after: auto;
+}
+
+/* Print styles for lesson plans */
+@media print {
+  body {
+    background: white !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+  
+  .pageNumber:before {
+    content: counter(page);
+  }
+  
+  .page-break-inside-avoid {
+    page-break-inside: avoid;
+  }
+  
+  /* Make sure the print content is visible */
+  .print-content {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: static !important;
+    overflow: visible !important;
+    max-height: none !important;
+  }
+  
+  /* Hide everything except the print content */
+  body > *:not(.print-content) {
+    display: none !important;
+  }
+  
+  /* Ensure proper page breaks */
+  h2, h3 {
+    page-break-after: avoid;
+  }
+  
+  /* Circular activity boxes */
+  .print-activity {
+    border-radius: 1rem;
+    border: 1px solid #e5e7eb;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    page-break-inside: avoid;
+  }
+  
+  /* Force page breaks between lessons */
+  .lesson-page-break,
+  .print-preview-page {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+  
+  /* Clean up preview styles for actual printing */
+  .print-preview-page {
+    margin: 0 !important;
+    padding: 0 !important;
+    box-shadow: none !important;
+    border: none !important;
+    width: 100% !important;
+    min-height: auto !important;
+  }
+  
+  .print-preview-container {
+    background: white !important;
+    padding: 0 !important;
+  }
+  
+  /* Ensure footer appears on every page */
+  .page-footer {
+    position: fixed;
+    bottom: 0;
+    width: 100%;
+    text-align: center;
+    font-size: 0.75rem;
+    color: #6b7280;
+    border-top: 1px solid #e5e7eb;
+    padding-top: 0.5rem;
+  }
+}
+
+/*
+ * Feature-demo film mode (?ccd-feature-demo=1 → html.ccd-feature-demo / data-ccd-record).
+ * Hides the prototype notice bar + demonstration disclaimer stack so the
+ * login/app hero is clean on camera. Disclaimer still covered by a title slide.
+ */
+html.ccd-feature-demo [data-ccd-prototype-chrome],
+html[data-ccd-record] [data-ccd-prototype-chrome] {
+  display: none !important;
+}

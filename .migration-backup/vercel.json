@@ -1,0 +1,15 @@
+{
+  "buildCommand": "npm run build",
+  "outputDirectory": "dist",
+  "framework": "vite",
+  "rewrites": [
+    { "source": "/reset-password", "destination": "/index.html" },
+    { "source": "/pdf/:id", "destination": "/api/pdf/:id" }
+  ],
+  "crons": [
+    {
+      "path": "/api/keep-alive",
+      "schedule": "0 2 1,7,13,19,25 * *"
+    }
+  ]
+}

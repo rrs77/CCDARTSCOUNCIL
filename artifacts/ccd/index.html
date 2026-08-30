@@ -1,0 +1,77 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+
+    <!-- Google tag (gtag.js) — as early in <head> as possible per Google -->
+    <link rel="preconnect" href="https://www.googletagmanager.com" crossorigin />
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-8EH12L5DEM"></script>
+    <script>
+      window.dataLayer = window.dataLayer || [];
+      function gtag(){dataLayer.push(arguments);}
+      gtag('js', new Date());
+      gtag('config', 'G-8EH12L5DEM');
+    </script>
+
+    <!-- Activate Preview/Demo mode before any module code runs when the page
+         is opened with ?demo=1 *and* the prototype password gate is already
+         unlocked for this tab. The flag must be set before the app bundle
+         evaluates so the mock, local Supabase client is used from the very
+         first import. Cold ?demo=1 visits without the gate are rejected. -->
+    <script>
+      try {
+        var params = new URLSearchParams(location.search);
+        if (params.get('demo') === '1') {
+          var unlocked = sessionStorage.getItem('ccd-prototype-gate') === '1';
+          if (unlocked) {
+            sessionStorage.setItem('ccd-demo-mode', '1');
+          } else {
+            sessionStorage.removeItem('ccd-demo-mode');
+            params.delete('demo');
+            var qs = params.toString();
+            history.replaceState(
+              {},
+              '',
+              location.pathname + (qs ? '?' + qs : '') + location.hash
+            );
+          }
+        }
+      } catch (e) {}
+    </script>
+
+    <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+    <link rel="icon" type="image/png" sizes="32x32" href="./favicon-32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="./favicon-16.png" />
+    <link rel="shortcut icon" href="./favicon.ico" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+
+    <link rel="manifest" href="./manifest.json" />
+    <meta name="theme-color" content="#002D24" />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital@0;1&display=swap"
+      rel="stylesheet"
+    />
+
+    <link rel="apple-touch-icon" href="./apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="./apple-touch-icon.png" />
+    <link rel="apple-touch-icon" sizes="192x192" href="./icon-192.png" />
+    <link rel="apple-touch-icon" sizes="512x512" href="./icon-512.png" />
+
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="CCD" />
+    <meta name="msapplication-TileColor" content="#002D24" />
+    <meta name="msapplication-TileImage" content="./icon-192.png" />
+    <meta name="mobile-web-app-capable" content="yes" />
+
+    <title>Creative Curriculum Designer</title>
+    <meta name="description" content="Plan performing arts lessons from EYFS to A-level. Partner content from ROH and more. Works offline!" />
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

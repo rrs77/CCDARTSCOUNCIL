@@ -1,0 +1,378 @@
+A few things are working:
+
+the colour palette
+the clean UI
+the sense of polish
+the “presentation-ready” concept
+
+But the messaging, pacing, visuals, and structure are currently sending the wrong signal.
+
+Here’s the core issue:
+
+It looks like software for administrators.
+It should feel like a living creative curriculum environment.
+
+Right now the slides are saying:
+
+“professional”
+“planning”
+“systems”
+“documents”
+
+But your real value is:
+
+shared creative practice
+arts education support
+resource ecosystems
+adaptable lesson design
+collaboration between educators and organisations
+high-quality practical teaching content
+visual/music/drama-rich curriculum creation
+
+And most importantly:
+
+You need evidence, not claims.
+
+The promo currently states things.
+It needs to show things.
+
+Main Problems
+1. Text Scale Is Too Aggressive
+
+The oversized typography works for startup landing pages, but not for this audience.
+
+“Beautiful, professional plans.”
+
+feels:
+
+corporate
+vague
+sales-y
+
+Instead:
+
+smaller
+more editorial
+more cinematic
+more purposeful
+
+The audience is educators + arts organisations.
+They respond better to:
+
+authenticity
+practical usefulness
+visible pedagogy
+creative energy
+
+Not “enterprise software” language.
+
+2. Repeated Screenshots Reduce Credibility
+
+Repeated screens instantly make the product feel unfinished.
+
+Especially in a promo trying to build trust.
+
+You need:
+
+lots of unique app moments
+real workflows
+real lesson content
+actual planning examples
+real curriculum materials
+
+Even partially blurred/fake sample data is better than repetition.
+
+3. Missing the “Creative Education” Identity
+
+At the moment:
+
+there’s no music
+no drama
+no visual arts
+no classroom energy
+no student outcomes
+no creative process
+
+It could be:
+
+payroll software
+HR software
+CRM software
+
+You need:
+
+lesson excerpts
+notation
+activity cards
+rehearsal plans
+performance prep
+teacher annotations
+visual curriculum maps
+embedded media
+drag/drop planning
+resource sharing
+arts vocabulary
+progression examples
+4. “AI” Should Be Removed Completely
+
+If you are not using AI yet:
+
+don’t imply it
+don’t visually hint at it
+don’t use trendy AI motion graphics
+
+Arts organisations especially are increasingly sceptical of fake “AI-enhanced” education claims.
+
+You’ll gain more trust by positioning it as:
+
+educator-designed
+curriculum-informed
+practical
+collaborative
+resource-rich
+
+That’s actually stronger.
+
+5. Too Many Generic Business Graphics
+
+These weaken the product.
+
+Things to remove:
+
+floating documents
+generic glowing UI cards
+abstract productivity visuals
+fake dashboards
+meaningless icon animations
+
+Instead show:
+
+real app interaction
+actual lesson editing
+curriculum timelines
+media embedding
+resources opening
+teachers dragging activities
+music/drama/arts examples
+printable outputs
+classroom-ready materials
+6. Need More Motion + Layering
+
+Since this is primarily desktop viewed:
+you can lean much harder into:
+
+cinematic motion
+depth
+layered UI
+parallax
+stacked interfaces
+animated workflows
+
+Especially:
+
+stacked lesson plans
+cascading resources
+expanding curriculum maps
+draggable activity cards
+animated progression pathways
+linked media opening dynamically
+
+Right now the motion feels static.
+
+You want:
+
+creative software energy
+not presentation slides
+7. “Proof” Is Missing
+
+This is the biggest issue.
+
+The promo says:
+
+“professional”
+“beautiful”
+“share confidently”
+
+But doesn’t prove it.
+
+You need sequences like:
+
+BEFORE → AFTER
+
+Messy planning docs
+↓
+RhythmStix organised curriculum map
+↓
+Lesson resources linked
+↓
+Printable polished outcome
+
+OR:
+
+Music activity card
+↓
+Embedded song
+↓
+Rhythm game
+↓
+Printable notation
+↓
+Lesson export
+
+OR:
+
+Arts organisation uploads workshop resources
+↓
+Teachers adapt them
+↓
+Curriculum-linked lessons generated
+↓
+Shared resource ecosystem grows
+
+That tells the real story.
+
+What The Promo SHOULD Feel Like
+
+Not:
+
+“productivity software”
+
+But:
+
+“a creative education platform built by people who understand teaching and the arts.”
+
+That’s a huge tonal difference.
+
+Stronger Direction
+Suggested Tone
+
+Think:
+
+Apple education
+Milanote
+Are.na
+Notion (editorial side)
+Adobe education showcases
+creative curriculum documentary
+
+NOT:
+
+fintech
+SaaS startup
+business dashboard
+AI productivity tool
+What You SHOULD Show
+Real Lesson Material
+
+Use:
+
+Kodály lessons
+drama games
+curriculum maps
+embedded media
+printable notation
+lesson sequencing
+resource cards
+differentiation examples
+performance prep
+
+You already have excellent content.
+Use it visually.
+
+Stronger Slide Ideas
+1. “Build Creative Curriculum”
+
+Animated:
+
+drag activity
+attach media
+reorder sequence
+open printable
+
+This instantly explains the product.
+
+2. “Designed for Arts Education”
+
+Show:
+
+music
+drama
+visual arts
+movement
+performance
+
+Not generic planning.
+
+3. “Shared Resource Ecosystem”
+
+THIS is your differentiator.
+
+Visualise:
+
+organisations contributing resources
+teachers adapting lessons
+schools sharing units
+reusable activity libraries
+
+This is the real exciting concept.
+
+4. “From Workshop to Classroom”
+
+Arts organisations care about impact.
+
+Show:
+
+workshop resources
+→ adapted into lessons
+→ used in schools
+→ reused by teachers
+
+That’s powerful.
+
+Visual Recommendations
+Reduce:
+giant typography
+empty gradients
+floating fake graphics
+excessive whitespace
+Increase:
+real interface density
+layered UI
+movement
+content richness
+curriculum visuals
+interaction
+real examples
+Motion Recommendations
+
+You need:
+
+more staggered animation
+card stacking
+expanding panels
+magnetic motion
+smooth transitions
+interface choreography
+
+Think:
+
+“creative workflow unfolding”
+
+not:
+
+“slide deck”
+
+Most Important Change
+
+Stop telling people the platform is good.
+
+Show:
+
+real curriculum
+real lessons
+real creative planning
+real resources
+real workflows
+real educational value
+
+That creates trust immediately.

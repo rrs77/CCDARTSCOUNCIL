@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<title>CCDesigner Product Doc</title>
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></xml>
+<![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 1in; }
+h1 { font-size: 18pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h2 { font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h3 { font-size: 12pt; margin-top: 10pt; margin-bottom: 4pt; page-break-after: avoid; }
+table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 4pt 8pt; text-align: left; }
+th { background: #f0f0f0; font-weight: bold; }
+p { margin: 6pt 0; }
+ul, ol { margin: 6pt 0; padding-left: 24pt; }
+li { margin: 2pt 0; }
+strong { font-weight: bold; }
+code { background: #f5f5f5; padding: 1pt 4pt; font-family: Consolas, monospace; font-size: 10pt; }
+hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
+</style>
+</head>
+<body>
+<h1>CCDesigner – Development Roadmap</h1>
+<p></p>
+<h2>1. Roadmap overview</h2>
+<p></p>
+<p>The roadmap is organised in <strong>phases</strong> so you can prioritise by business need (e.g. We Teach Drama pilot first, then broader licensing and scale).</p>
+<p></p>
+<hr>
+<p></p>
+<h2>2. Phase 1 – Pilot-ready (We Teach Drama)</h2>
+<p></p>
+<p><strong>Goal:</strong> Solid pilot with one licensee: dedicated instance, branding, and curriculum; no new product features required beyond current app.</p>
+<p></p>
+<table>
+<tr><th>Item</th><th>Effort</th><th>Owner</th><th>Notes</th></tr>
+<tr><td>Document pilot setup (env, Supabase, Vercel, domain)</td><td>S</td><td>Dev</td><td>Runbook so second pilot is repeatable</td></tr>
+<tr><td>Dedicated Supabase + Vercel for We Teach Drama</td><td>M</td><td>Dev</td><td>New project; env vars; optional custom domain</td></tr>
+<tr><td>Pre-load branding (We Teach Drama name, logo, footer)</td><td>S</td><td>Dev / Ops</td><td>Or hand over to their admin</td></tr>
+<tr><td>Custom objectives / curriculum for drama</td><td>S–M</td><td>Dev / Content</td><td>Areas and objectives that match their framework</td></tr>
+<tr><td>Pilot contract (terms, support, data)</td><td>S</td><td>You</td><td>Legal/commercial</td></tr>
+<tr><td>Onboarding and training sessions</td><td>S</td><td>You</td><td>1–2 sessions; use existing Help guide</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<h2>3. Phase 2 – Licensing and operations</h2>
+<p></p>
+<p><strong>Goal:</strong> Repeatable licensing process, clear commercial offer, and basic “organisation” admin.</p>
+<p></p>
+<table>
+<tr><th>Item</th><th>Effort</th><th>Notes</th></tr>
+<tr><td>Sales/landing page (“License CCDesigner”)</td><td>S</td><td>Use [03_LICENSING_AND_SALES.md](./03_LICENSING_AND_SALES.md) copy</td></tr>
+<tr><td>Pricing and packaging (tiers, pilot vs full)</td><td>S</td><td>Commercial decision; document in 03</td></tr>
+<tr><td>Licence agreement template</td><td>M</td><td>Legal; pilot vs annual</td></tr>
+<tr><td>Setup runbook per new licensee (clone/env/branding)</td><td>M</td><td>Reduces time for 2nd, 3rd licensee</td></tr>
+<tr><td>Optional: “Organisation” field in DB + RLS (if moving to Option B later)</td><td>M</td><td>Prep only if you plan shared multi-tenant later</td></tr>
+<tr><td>Billing (e.g. Stripe) for paid licences</td><td>M</td><td>Invoices or self-serve subscription</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<h2>4. Phase 3 – Product enhancements (high value)</h2>
+<p></p>
+<p><strong>Goal:</strong> Features that increase retention and appeal to schools and training providers.</p>
+<p></p>
+<table>
+<tr><th>Feature</th><th>Value</th><th>Effort</th><th>Notes</th></tr>
+<tr><td><strong>Calendar improvements</strong></td><td>High</td><td>M</td><td>Recurring events; clearer “plan per date”; optional sync (e.g. iCal export)</td></tr>
+<tr><td><strong>SSO / SAML</strong></td><td>High (schools)</td><td>L</td><td>Many schools require it; consider Auth0, Supabase Enterprise, or custom</td></tr>
+<tr><td><strong>Templates and sharing</strong></td><td>Medium</td><td>M</td><td>Share lesson/unit templates between teachers or orgs; “copy from template library”</td></tr>
+<tr><td><strong>Mobile-friendly refinements</strong></td><td>Medium</td><td>S–M</td><td>PWA already; improve touch and layout on small screens</td></tr>
+<tr><td><strong>Audit log (who changed what)</strong></td><td>Medium (compliance)</td><td>M</td><td>Log key actions (create/edit lesson, export, user changes)</td></tr>
+<tr><td><strong>Structured onboarding</strong></td><td>Medium</td><td>S</td><td>First-login wizard or checklist (e.g. “Add your first activity”)</td></tr>
+<tr><td><strong>In-app notifications</strong></td><td>Medium</td><td>S–M</td><td>E.g. “Your colleague shared a lesson with you” (if sharing is added)</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<h2>5. Phase 4 – Scale and enterprise</h2>
+<p></p>
+<p><strong>Goal:</strong> Multi-tenant option, larger deployments, and enterprise expectations.</p>
+<p></p>
+<table>
+<tr><th>Feature</th><th>Value</th><th>Effort</th><th>Notes</th></tr>
+<tr><td><strong>Multi-tenant (single deployment)</strong></td><td>High (scale)</td><td>L</td><td>organisation_id, RLS, subdomain or org selector</td></tr>
+<tr><td><strong>Org-level admin role</strong></td><td>High</td><td>M</td><td>Admin sees only their org’s users and data</td></tr>
+<tr><td><strong>Subscription and usage metering</strong></td><td>High</td><td>M</td><td>Per-seat or tiered; Stripe + usage tables</td></tr>
+<tr><td><strong>Data export for licensees</strong></td><td>Medium</td><td>S–M</td><td>Self-serve “export all my data” (GDPR and offboarding)</td></tr>
+<tr><td><strong>SLA and status page</strong></td><td>Medium</td><td>S</td><td>Uptime target; public status page</td></tr>
+<tr><td><strong>WCAG 2.1 AA</strong></td><td>Medium (tenders)</td><td>M</td><td>If targeting public sector</td></tr>
+<tr><td><strong>Self-hosted / on-prem option</strong></td><td>Low (niche)</td><td>L</td><td>Only if required by large customers</td></tr>
+</table>
+<p></p>
+<hr>
+<p></p>
+<h2>6. Future high-value features (ideas)</h2>
+<p></p>
+<ul>
+<li><strong>Collaboration:</strong> Shared editing, comments, or “share lesson with colleague” with permissions.</li>
+<li><strong>Integrations:</strong> Google Classroom, MIS (e.g. Arbor, SIMS), or LTI for VLEs.</li>
+<li><strong>Reporting:</strong> Simple dashboards (e.g. “lessons created this term”, “most used activities”).</li>
+<li><strong>Curriculum mapping:</strong> “Coverage” view (which objectives are covered across the year).</li>
+<li><strong>AI assist:</strong> Suggest activities for a lesson outcome or topic (experimental).</li>
+<li><strong>Native app:</strong> If PWA is not enough for “on the go” planning.</li>
+<li><strong>Marketplace:</strong> Optional “activity packs” or templates that orgs can buy or share.</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<h2>7. How to use this roadmap</h2>
+<p></p>
+<ul>
+<li><strong>Pilot:</strong> Focus on Phase 1; only add Phase 2 items that unblock the first contract (e.g. a simple licence template).</li>
+<li><strong>After pilot:</strong> Phase 2 (sales, runbooks, billing) and selected Phase 3 items based on We Teach Drama feedback.</li>
+<li><strong>Scale:</strong> Phase 4 when you have several licensees and need multi-tenant or enterprise features.</li>
+</ul>
+<p></p>
+<p>Revisit and reprioritise quarterly; keep [01_PRODUCT_SPEC_AND_FEATURES.md](./01_PRODUCT_SPEC_AND_FEATURES.md) and this file in sync when you add or drop features.</p>
+<p></p>
+<hr>
+<p></p>
+<p>*Next: [05_CODEBASE_ANALYSIS_GUIDE.md](./05_CODEBASE_ANALYSIS_GUIDE.md) for how to analyse the Cursor project and document implemented features.*</p>
+<p></p>
+</body>
+</html>

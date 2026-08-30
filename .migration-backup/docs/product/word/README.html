@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<title>CCDesigner Product Doc</title>
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></xml>
+<![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 1in; }
+h1 { font-size: 18pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h2 { font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h3 { font-size: 12pt; margin-top: 10pt; margin-bottom: 4pt; page-break-after: avoid; }
+table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 4pt 8pt; text-align: left; }
+th { background: #f0f0f0; font-weight: bold; }
+p { margin: 6pt 0; }
+ul, ol { margin: 6pt 0; padding-left: 24pt; }
+li { margin: 2pt 0; }
+strong { font-weight: bold; }
+code { background: #f5f5f5; padding: 1pt 4pt; font-family: Consolas, monospace; font-size: 10pt; }
+hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
+</style>
+</head>
+<body>
+<h1>CCDesigner – Product Documentation</h1>
+<p></p>
+<p>This folder contains the <strong>structured product specification, feature list, architecture, licensing model, roadmap, and codebase analysis guide</strong> for CCDesigner.</p>
+<p></p>
+<h2>Documents</h2>
+<p></p>
+<table>
+<tr><th>Document</th><th>Purpose</th></tr>
+<tr><td>[01_PRODUCT_SPEC_AND_FEATURES.md](./01_PRODUCT_SPEC_AND_FEATURES.md)</td><td>Product overview, <strong>clarifying questions</strong>, and <strong>complete feature list</strong> (from product description + codebase).</td></tr>
+<tr><td>[02_ARCHITECTURE_AND_MISSING_FEATURES.md](./02_ARCHITECTURE_AND_MISSING_FEATURES.md)</td><td><strong>Software architecture</strong> (stack, frontend structure, data model), <strong>missing product details</strong> to document, <strong>missing features analysis</strong>, and recommended <strong>documentation structure</strong>.</td></tr>
+<tr><td>[03_LICENSING_AND_SALES.md](./03_LICENSING_AND_SALES.md)</td><td><strong>White-label licensing model</strong>, <strong>customisation framework</strong>, <strong>sales page / “How to license” copy</strong>, and <strong>We Teach Drama pilot checklist</strong>.</td></tr>
+<tr><td>[04_DEVELOPMENT_ROADMAP.md](./04_DEVELOPMENT_ROADMAP.md)</td><td><strong>Development roadmap</strong> (pilot-ready → licensing → product enhancements → scale) and <strong>future high-value features</strong>.</td></tr>
+<tr><td>[05_CODEBASE_ANALYSIS_GUIDE.md](./05_CODEBASE_ANALYSIS_GUIDE.md)</td><td><strong>How to analyse the Cursor project</strong> to extract current features and keep docs in sync.</td></tr>
+<tr><td>[WETEACHDrama_Video_Script.md](./WETEACHDrama_Video_Script.md)</td><td><strong>Video recording script</strong> for a We Teach Drama demo – covers all features and how they help with resources, courses, and webinars.</td></tr>
+</table>
+<p></p>
+<h2>How to use</h2>
+<p></p>
+<ol>
+<li><strong>Answer the clarifying questions</strong> in <code>01_PRODUCT_SPEC_AND_FEATURES.md</code> so roadmap and licensing can be finalised.</li>
+<li><strong>Share with sales/partners:</strong> Use <code>01</code> (feature list) and <code>03</code> (licensing and sales copy).</li>
+<li><strong>Development planning:</strong> Use <code>02</code> (architecture), <code>04</code> (roadmap), and <code>05</code> (codebase analysis).</li>
+<li><strong>Pilot (We Teach Drama):</strong> Use the checklist in <code>03</code> and Phase 1 in <code>04</code>.</li>
+<li><strong>Keeping docs accurate:</strong> Periodically run the analysis in <code>05</code> and update <code>01</code> and <code>02</code>.</li>
+</ol>
+<p></p>
+<h2>Word export</h2>
+<p></p>
+<p>To get Word documents (.docx) of all product docs and the video script:</p>
+<p></p>
+<ol>
+<li>Run: <strong><code>npm run export-product-docs</code></strong> (or <code>node scripts/export-product-docs-to-word.js</code>).</li>
+<li>Open the generated files in **docs/product/word/*.html** with Microsoft Word.</li>
+<li>In Word: <strong>File &gt; Save As &gt; Word Document (.docx)</strong>.</li>
+</ol>
+<p></p>
+<p>See [docs/product/word/README.txt](./word/README.txt) for the file list.</p>
+<p></p>
+<h2>Root docs</h2>
+<p></p>
+<p>Other technical and operational docs (Supabase, Vercel, PDF, login, etc.) live in the parent [docs/](../) folder.</p>
+<p></p>
+</body>
+</html>

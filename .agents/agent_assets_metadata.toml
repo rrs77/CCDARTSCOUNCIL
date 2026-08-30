@@ -1,0 +1,83 @@
+uploads = []
+
+[[generated]]
+id = "2WFAefMTp4O0PyO_FQZQz"
+uri = "file://artifacts/ccd-pitch/public/classroom-hero.png"
+type = "image"
+title = "generated_image"
+
+[[generated]]
+id = "HE81SV2xPb85pT0r0HT-Z"
+uri = "file://artifacts/ccd-pitch/public/planner-illustration.png"
+type = "image"
+title = "generated_image"
+
+[[outputs]]
+id = "2-t1Xk1imqRqBnZAsXJ05"
+uri = "file://artifacts/ccd-promo/public/images/teacher-stressed.jpg"
+type = "image"
+title = "uk primary school teacher planning lessons at desk looking stressed or overwhelmed"
+logical_id = "2c1fd101-e5ab-4e16-af57-b8d640b5c92b"
+
+[[outputs]]
+id = "4mtuiWtgzEF93Q0_H3i2z"
+uri = "file://artifacts/ccd-promo/public/images/kids-learning.jpg"
+type = "image"
+title = "uk primary school children learning in classroom happy"
+logical_id = "d002e307-cb9f-4d4c-ac23-079e1cf7e8fc"
+
+[[outputs]]
+id = "FMTiyz7wvf_fmOg4uFVMR"
+uri = "file://.local/outputs/CCD-Pitch-Deck.pptx"
+type = "slides"
+title = "CCD Pitch Deck (PPTX)"
+logical_id = "103dd4c8-2c95-4a71-a6b6-8c740c65b9fe"
+
+[[outputs]]
+id = "hDVFwYc9QPwbRu3Lhw1mQ"
+uri = "file://ccd-promo-dreamhost.tar.gz"
+type = "unspecified"
+title = "CCD Promo — DreamHost embed (now with thumbnail)"
+logical_id = "8e9d8034-34da-4a31-aa7b-af2551d035b4"
+
+[[outputs]]
+id = "sq9coXuti1rcKeY6Z-Ocy"
+uri = "file://ccd-promo-dreamhost.zip"
+type = "unspecified"
+title = "CCD Promo — DreamHost embed (zip)"
+logical_id = "c3b7efeb-997c-4078-846a-addb33b37012"
+
+[[outputs]]
+id = "0tv3aKRBSc6FIEtpgd4IE"
+uri = "file://artifacts/ccd-promo/dreamhost-embed/index.html.txt"
+type = "text"
+title = "index.html (rename to .html after saving)"
+logical_id = "dfdcd234-8a0b-4c85-a250-9780d5cbed70"
+
+[[outputs]]
+id = "ByysGSE8Fn8A_X6P2YgUK"
+uri = "file://.local/outputs/CCDesigner-Pitch-Deck.pptx"
+type = "slides"
+title = "CCDesigner Pitch Deck (PPTX) — 21 slides"
+logical_id = "9d381df7-48d2-4777-9cc5-f948eaac805b"
+
+[[outputs]]
+id = "79diPR_4BrCNKYG-FeDWx"
+uri = "file://artifacts/ccd-pitch/public/downloads/CCDesigner-Pitch-Deck.pptx"
+type = "slides"
+title = "CCDesigner Pitch Deck (PPTX) — 21 slides"
+logical_id = "8709f2fc-f38a-402a-aeda-9cb3c93bf54f"
+
+[[outputs]]
+id = "ARD9iYIGqhmaycaTR5_DX"
+uri = "file://artifacts/ccd-promo/public/downloads/CCDesigner-Promo.pptx"
+type = "slides"
+title = "CCDesigner Promo — Editable PowerPoint (22 slides)"
+logical_id = "5fff2e8c-19e5-420a-beab-1875f96cb981"
+
+[[outputs]]
+id = "M6VlXV4t4Dfp4LZZZ6_hY"
+uri = "file://exports/CCDesigner-Podcast-Notes.pdf"
+type = "pdf"
+title = "CCDesigner — Podcast Cue Cards"
+logical_id = "2ca8555a-3a53-4ed1-bd35-8183f93e83df"

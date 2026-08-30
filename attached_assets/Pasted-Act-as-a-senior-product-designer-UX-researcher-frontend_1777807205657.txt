@@ -1,0 +1,172 @@
+Act as a senior product designer, UX researcher, frontend engineer, accessibility reviewer, and QA lead.
+
+Study this app carefully before making changes.
+
+Your task is to perform a broad professional quality sweep across the entire app, focused on the features and details users most commonly notice, praise, or complain about in modern apps and websites.
+
+Do not rush.
+Do not redesign blindly.
+Do not remove existing functionality.
+Do not rewrite the app unnecessarily.
+First understand the product, then improve it carefully.
+
+1. Inspect the current app thoroughly
+
+Run the app and explore:
+- Every page and route
+- Navigation menus
+- Dashboards
+- Forms
+- Modals
+- Cards
+- Tables
+- Lists
+- Empty states
+- Loading states
+- Error states
+- Settings pages
+- Mobile layouts
+- Tablet layouts
+- Desktop layouts
+
+Take screenshots where useful and use them to judge layout, spacing, hierarchy, and polish.
+
+2. Identify common quality issues
+
+Look specifically for:
+- Inconsistent spacing
+- Weak typography hierarchy
+- Poor alignment
+- Cluttered layouts
+- Unclear buttons
+- Missing hover states
+- Weak mobile responsiveness
+- Confusing navigation
+- Forms that feel awkward
+- Missing loading feedback
+- Missing success/error feedback
+- Poor empty states
+- Inconsistent cards or containers
+- Hard-to-scan content
+- Low contrast
+- Tiny tap targets
+- Horizontal overflow
+- Unclear primary actions
+- Components that feel unfinished
+
+3. Apply broad professional improvements
+
+Improve the app across these areas:
+
+Visual polish:
+- Standardise spacing, padding, margins, and gaps.
+- Make layouts feel balanced and intentional.
+- Improve cards, containers, borders, shadows, and backgrounds.
+- Use consistent border radius and visual depth.
+- Remove visual clutter.
+
+Typography:
+- Improve heading hierarchy.
+- Improve body text readability.
+- Standardise labels, helper text, metadata, and button text.
+- Use sensible line heights and font weights.
+
+Navigation:
+- Make active states clear.
+- Improve menus, tabs, sidebars, headers, and breadcrumbs where relevant.
+- Make the current location obvious.
+- Ensure navigation works well on mobile.
+
+Buttons and actions:
+- Make primary, secondary, destructive, and subtle actions distinct.
+- Add clear hover, focus, active, disabled, and loading states.
+- Ensure buttons are consistently sized and spaced.
+- Avoid too many competing primary actions.
+
+Forms:
+- Improve labels, placeholders, helper text, and validation.
+- Add inline validation where appropriate.
+- Make error messages clear and helpful.
+- Improve spacing and mobile usability.
+- Use sensible defaults where possible.
+
+Feedback:
+- Add success, error, and warning toasts where appropriate.
+- Add loading states to buttons and actions.
+- Improve empty states with helpful copy and clear next actions.
+- Improve error states so they are calm, clear, and useful.
+
+Responsiveness:
+- Test mobile, tablet, laptop, and large desktop.
+- Fix horizontal scrolling.
+- Ensure grids stack cleanly.
+- Ensure text remains readable.
+- Ensure tap targets are at least 44px where possible.
+- Make complex tables or dense layouts usable on small screens.
+
+Accessibility:
+- Improve colour contrast.
+- Add visible keyboard focus states.
+- Ensure buttons and links are semantic.
+- Ensure form fields have labels.
+- Add ARIA labels where needed.
+- Respect reduced-motion preferences.
+
+Micro-interactions:
+Add subtle, professional animations only where they improve quality:
+- Button transitions
+- Hover effects
+- Card lift effects
+- Modal transitions
+- Dropdown/accordion transitions
+- Page or section fade-ins
+- Loading skeletons
+
+Keep animations fast, subtle, and tasteful. Avoid flashy, bouncy, distracting, or gimmicky animation.
+
+4. Preserve functionality
+
+Before editing, understand existing logic.
+
+Do not break:
+- Routing
+- Authentication
+- Forms
+- APIs
+- State management
+- Data loading
+- Existing user flows
+- Existing business logic
+
+5. Quality target
+
+The final app should feel:
+- Professional
+- Modern
+- Consistent
+- Fast
+- Smooth
+- Accessible
+- Balanced
+- Trustworthy
+- Production-ready
+
+6. Final verification
+
+After changes:
+- Run the app again.
+- Revisit all major screens.
+- Check desktop, tablet, and mobile.
+- Check for console errors.
+- Check forms and buttons.
+- Check loading, empty, and error states.
+- Fix any obvious regressions.
+
+7. Final response
+
+When finished, provide:
+- A concise summary of improvements made.
+- Any issues found.
+- Any recommendations for future improvements.
+
+Be careful, thoughtful, and meticulous. Study the existing app first, then improve it like a professional product team preparing it for public launch.

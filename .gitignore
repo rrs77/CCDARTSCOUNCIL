@@ -10,6 +10,7 @@ out-tsc
 
 # dependencies
 node_modules
+.pnpm-store/
 
 # IDEs and editors
 /.idea
@@ -37,6 +38,16 @@ yarn-error.log
 testem.log
 /typings
 
+# local secrets (PDFBolt, Supabase JWT, etc.)
+.env
+.env.local
+.env.*.local
+artifacts/*/.env
+artifacts/*/.env.local
+
+# Vercel static export (copied from artifacts/ccd/dist/public during build)
+/public
+
 # System Files
 .DS_Store
 Thumbs.db
@@ -47,3 +58,8 @@ Thumbs.db
 # Replit
 .cache/
 .local/
+.vercel
+.env*
+
+# Feature-demo recorder scratch (source webm before encode) — keep out of git
+artifacts/ccd/public/feature-demo/raw-video/

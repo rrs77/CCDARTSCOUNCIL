@@ -1,0 +1,224 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<title>CCDesigner Product Doc</title>
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></xml>
+<![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 1in; }
+h1 { font-size: 18pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h2 { font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h3 { font-size: 12pt; margin-top: 10pt; margin-bottom: 4pt; page-break-after: avoid; }
+table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 4pt 8pt; text-align: left; }
+th { background: #f0f0f0; font-weight: bold; }
+p { margin: 6pt 0; }
+ul, ol { margin: 6pt 0; padding-left: 24pt; }
+li { margin: 2pt 0; }
+strong { font-weight: bold; }
+code { background: #f5f5f5; padding: 1pt 4pt; font-family: Consolas, monospace; font-size: 10pt; }
+hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
+</style>
+</head>
+<body>
+<h1>CCDesigner – Licensing Model &amp; Sales Section</h1>
+<p></p>
+<h2>1. White-label licensing model</h2>
+<p></p>
+<h3>1.1 Principles</h3>
+<p></p>
+<ul>
+<li><strong>Licensee</strong> = organisation (e.g. We Teach Drama) that licenses the platform for its own teachers/trainees.</li>
+<li><strong>White-label</strong> = branding (logo, colours, product name, footer) and optionally domain and curriculum are under the licensee’s control.</li>
+<li><strong>Data isolation</strong> = each licensee’s data is separate (either by separate deployment or by tenant_id in a multi-tenant setup).</li>
+</ul>
+<p></p>
+<h3>1.2 Licensing structure (recommended)</h3>
+<p></p>
+<table>
+<tr><th>Tier</th><th>Description</th><th>Typical use</th></tr>
+<tr><td><strong>Pilot / Partner</strong></td><td>Fixed-term pilot (e.g. 6–12 months); dedicated instance; your support.</td><td>We Teach Drama and early partners.</td></tr>
+<tr><td><strong>Organisation licence</strong></td><td>Annual (or monthly) licence; dedicated or shared instance; SLA and support as agreed.</td><td>Schools, MATs, training companies.</td></tr>
+<tr><td><strong>Enterprise</strong></td><td>Custom terms, SLAs, SSO, data residency, dedicated success manager.</td><td>Large MATs, local authorities.</td></tr>
+</table>
+<p></p>
+<p><strong>Deliverables per licence (suggested):</strong></p>
+<p></p>
+<ol>
+<li><strong>Instance</strong></li>
+</ol>
+<ul>
+<li>Dedicated: own URL (e.g. <code>app.weteachdrama.com</code> or <code>weteachdrama.ccdesigner.co.uk</code>), own Supabase project (and optional Vercel project).</li>
+<li>Shared: subdomain or path + tenant_id; one codebase, RLS by organisation.</li>
+</ul>
+<p></p>
+<ol>
+<li><strong>Branding</strong></li>
+</ol>
+<ul>
+<li>Login screen: logo, product name (e.g. “We Teach Drama – Lesson Planner”).</li>
+<li>Footer and PDFs: company name, copyright.</li>
+<li>Optional: primary/secondary colours, favicon.</li>
+</ul>
+<p></p>
+<ol>
+<li><strong>Curriculum</strong></li>
+</ol>
+<ul>
+<li>Pre-loaded or editable: custom objectives, areas, year groups to match their framework (drama, music, etc.).</li>
+<li>Optional: EYFS or other statutory frameworks if relevant.</li>
+</ul>
+<p></p>
+<ol>
+<li><strong>Activity bank</strong></li>
+</ol>
+<ul>
+<li>Empty, or seeded with your/their activities (by agreement).</li>
+<li>They can import and manage their own.</li>
+</ul>
+<p></p>
+<ol>
+<li><strong>Users</strong></li>
+</ol>
+<ul>
+<li>They create accounts (or you create initial admin).</li>
+<li>Roles: admin (branding, users), teacher (full access), viewer (read-only) – as per current app.</li>
+</ul>
+<p></p>
+<ol>
+<li><strong>Support &amp; training</strong></li>
+</ol>
+<ul>
+<li>Documented in contract: email support, response time, onboarding/training (e.g. 1–2 sessions), help site or in-app guide.</li>
+</ul>
+<p></p>
+<h3>1.3 Customisation framework (what licensees can change)</h3>
+<p></p>
+<table>
+<tr><th>Item</th><th>Where</th><th>Scope</th></tr>
+<tr><td>Login title / product name</td><td>Settings → Admin → Branding</td><td>Text</td></tr>
+<tr><td>Footer company name</td><td>Settings → Admin → Branding</td><td>Text</td></tr>
+<tr><td>Logo</td><td>Settings / Branding</td><td>Image URL or upload</td></tr>
+<tr><td>Theme colours</td><td>Settings (primary, secondary, accent)</td><td>Colours</td></tr>
+<tr><td>Year groups / classes</td><td>Settings → Year Groups</td><td>Add/edit/delete bands and classes</td></tr>
+<tr><td>Categories</td><td>Settings → Categories</td><td>Add/edit/delete, assign to year groups</td></tr>
+<tr><td>Custom objectives</td><td>Settings → Custom Objectives</td><td>Areas, year groups, objectives</td></tr>
+<tr><td>Resource link types</td><td>Settings → Resource Links</td><td>Labels, thumbnails, categories</td></tr>
+<tr><td>Activity bank</td><td>Activity Library</td><td>Their activities only (in their instance)</td></tr>
+<tr><td>Lessons &amp; units</td><td>Lesson Library, Unit Viewer</td><td>Their data only</td></tr>
+</table>
+<p></p>
+<p><strong>What stays with the platform (you):</strong></p>
+<p></p>
+<ul>
+<li>Core product roadmap and feature set.</li>
+<li>Security, backups, infrastructure (unless enterprise self-host).</li>
+<li>Legal terms, privacy policy (you provide template; they may add their own).</li>
+</ul>
+<p></p>
+<h3>1.4 Pricing model (suggested options)</h3>
+<p></p>
+<ul>
+<li><strong>Pilot:</strong> Discounted or free for 6–12 months in return for feedback and case study.</li>
+<li><strong>Per organisation:</strong></li>
+<li><strong>Flat annual fee</strong> (e.g. £X/year per school or training org) – simple.</li>
+<li><strong>Per-seat</strong> (e.g. £Y/teacher/year) – scales with size; requires user count or sync.</li>
+<li><strong>Tiered:</strong> e.g. Starter (up to N teachers), Pro (unlimited teachers, extra support).</li>
+<li><strong>One-off setup fee</strong> for branding, curriculum setup, training (optional).</li>
+<li><strong>Enterprise:</strong> Quote-based; SSO, SLA, data residency, custom work.</li>
+</ul>
+<p></p>
+<p>*You can plug in actual numbers once you decide bands and positioning.*</p>
+<p></p>
+<hr>
+<p></p>
+<h2>2. Sales page / “How to license” section</h2>
+<p></p>
+<p>Below is copy you can use on a <strong>sales or “For organisations”</strong> page (e.g. on the main site or a separate landing page).</p>
+<p></p>
+<hr>
+<p></p>
+<h3>Headline</h3>
+<p></p>
+<p><strong>License CCDesigner for your organisation</strong></p>
+<p></p>
+<p>Use the same lesson-planning platform that helps teachers build lessons from a reusable activity bank—with your branding, your curriculum, and your team.</p>
+<p></p>
+<hr>
+<p></p>
+<h3>Who it’s for</h3>
+<p></p>
+<ul>
+<li><strong>Training providers</strong> (e.g. drama, music, CPD)</li>
+<li><strong>Schools and MATs</strong></li>
+<li><strong>Curriculum or resource publishers</strong> who want to offer planning tools to their customers</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<h3>What you get</h3>
+<p></p>
+<ul>
+<li><strong>Your branding</strong> – Logo, product name, and colours on login, in the app, and on exported PDFs.</li>
+<li><strong>Your curriculum</strong> – Custom objectives and frameworks (EYFS, exam boards, or your own) so teachers plan against the right standards.</li>
+<li><strong>Your activity bank</strong> – A shared library of activities that your team can reuse across lessons and year groups.</li>
+<li><strong>Full lesson planning</strong> – Build lessons from activities, organise by units and half-terms, create lesson stacks, and use a traditional lesson plan format when needed.</li>
+<li><strong>Export and share</strong> – PDF export with clickable links, and shareable links to lesson plans for colleagues and trainees.</li>
+<li><strong>Calendar</strong> – Schedule and assign lesson plans to dates with a week/month view.</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<h3>How it works</h3>
+<p></p>
+<ol>
+<li><strong>Agree terms</strong> – We agree a licence (pilot or full) and support level.</li>
+<li><strong>Setup</strong> – We configure your instance with your branding and, if needed, your curriculum structure.</li>
+<li><strong>Onboarding</strong> – Your admins and teachers get access; we provide training and support as agreed.</li>
+<li><strong>Ongoing</strong> – You manage users and content; we keep the platform secure and up to date.</li>
+</ol>
+<p></p>
+<hr>
+<p></p>
+<h3>Pilot with us</h3>
+<p></p>
+<p>We’re piloting with a small number of organisations (including <strong>We Teach Drama</strong>) to refine the offering. If you’re a training provider or school group interested in licensing CCDesigner for your teachers or trainees, we’d like to hear from you.</p>
+<p></p>
+<p><strong>Contact:</strong> [Your contact – e.g. email or form]</p>
+<p></p>
+<hr>
+<p></p>
+<h3>Technical notes (for procurement or IT)</h3>
+<p></p>
+<ul>
+<li><strong>Hosting:</strong> Vercel (frontend and serverless); Supabase (database and auth).</li>
+<li><strong>Data:</strong> Stored in UK/EU where applicable; isolated per licensee when using dedicated instances.</li>
+<li><strong>Access:</strong> Email/password; optional SSO/SAML in future for enterprise.</li>
+<li><strong>Export:</strong> Users can export data via in-app backup/restore.</li>
+<li><strong>Uptime:</strong> Target 99.5% or as per SLA for licensed tiers.</li>
+</ul>
+<p></p>
+<p>*(Adjust hosting/region and SLA to match your actual setup.)*</p>
+<p></p>
+<hr>
+<p></p>
+<h2>3. We Teach Drama pilot – checklist</h2>
+<p></p>
+<ul>
+<li>[ ] <strong>Instance:</strong> Dedicated Supabase project + Vercel deployment (or subdomain) for We Teach Drama.</li>
+<li>[ ] <strong>Branding:</strong> “We Teach Drama” (or agreed name) on login, footer, PDFs; logo and colours.</li>
+<li>[ ] <strong>Curriculum:</strong> Drama-focused custom objectives/areas (and year groups if they use them).</li>
+<li>[ ] <strong>Users:</strong> Create initial admin account; they invite their team.</li>
+<li>[ ] <strong>Contract:</strong> Pilot duration, fee (if any), support, data ownership, and what happens at end of pilot.</li>
+<li>[ ] <strong>Training:</strong> 1–2 onboarding sessions; link to in-app Help and any written guides.</li>
+<li>[ ] <strong>Feedback:</strong> Regular check-ins to capture feature requests and pain points for roadmap and case study.</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<p>*Next: [04_DEVELOPMENT_ROADMAP.md](./04_DEVELOPMENT_ROADMAP.md) for prioritised roadmap and high-value features.*</p>
+<p></p>
+</body>
+</html>

@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word">
+<head>
+<meta charset="UTF-8">
+<title>CCDesigner Product Doc</title>
+<!--[if gte mso 9]>
+<xml><w:WordDocument><w:View>Print</w:View></xml>
+<![endif]-->
+<style>
+body { font-family: Calibri, Arial, sans-serif; font-size: 11pt; line-height: 1.4; margin: 1in; }
+h1 { font-size: 18pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h2 { font-size: 14pt; margin-top: 12pt; margin-bottom: 6pt; page-break-after: avoid; }
+h3 { font-size: 12pt; margin-top: 10pt; margin-bottom: 4pt; page-break-after: avoid; }
+table { border-collapse: collapse; margin: 8pt 0; width: 100%; }
+th, td { border: 1px solid #ccc; padding: 4pt 8pt; text-align: left; }
+th { background: #f0f0f0; font-weight: bold; }
+p { margin: 6pt 0; }
+ul, ol { margin: 6pt 0; padding-left: 24pt; }
+li { margin: 2pt 0; }
+strong { font-weight: bold; }
+code { background: #f5f5f5; padding: 1pt 4pt; font-family: Consolas, monospace; font-size: 10pt; }
+hr { border: none; border-top: 1px solid #ccc; margin: 12pt 0; }
+</style>
+</head>
+<body>
+<h1>How to Analyse the CCDesigner Codebase (Cursor Project)</h1>
+<p></p>
+<p>This guide helps you (or a developer/AI) <strong>extract current features and architecture</strong> from the Cursor project so that product docs stay aligned with what’s actually implemented.</p>
+<p></p>
+<hr>
+<p></p>
+<h2>1. Best method: layered discovery</h2>
+<p></p>
+<p>Use a <strong>top-down then bottom-up</strong> pass so you don’t miss areas.</p>
+<p></p>
+<h3>Step 1 – Entry and shell</h3>
+<p></p>
+<ul>
+<li><strong>Entry:</strong> <code>src/main.tsx</code> → <code>App.tsx</code>.</li>
+<li><strong>Auth gate:</strong> In <code>App.tsx</code>, see how login and reset-password are handled; which provider wraps the app (e.g. <code>AuthProvider</code>, <code>DataProvider</code>, <code>SettingsProviderNew</code>).</li>
+<li><strong>Main UI:</strong> After login, what is the single root content (e.g. <code>Dashboard</code>). No router → single-page tabs.</li>
+</ul>
+<p></p>
+<p><strong>Search tips:</strong></p>
+<p></p>
+<ul>
+<li><code>pathname</code>, <code>route</code>, <code>Router</code> → confirm there is no React Router; only <code>pathname === '/reset-password'</code> in App.</li>
+<li><code>TabsTrigger</code>, <code>TabsContent</code>, <code>value="..."</code> in <code>Dashboard.tsx</code> → list of main sections (Unit Viewer, Lesson Library, Lesson Builder, Activity Library, Calendar).</li>
+</ul>
+<p></p>
+<h3>Step 2 – Data and config</h3>
+<p></p>
+<ul>
+<li><strong>Data:</strong> <code>src/contexts/DataContext.tsx</code> – what is loaded (lessons, half-terms, activities, etc.), from where (Supabase, localStorage), and key function names (<code>loadData</code>, <code>updateLessonData</code>, etc.).</li>
+<li><strong>Settings:</strong> <code>src/contexts/SettingsContextNew.tsx</code> – year groups, categories, branding, resource links.</li>
+<li><strong>API and tables:</strong> <code>src/config/api.ts</code> and <code>src/config/supabase.ts</code> – list of <code>TABLES</code>, and in api.ts the main <code>*Api</code> objects (e.g. <code>activitiesApi</code>, <code>lessonsApi</code>, <code>halfTermsApi</code>).</li>
+<li><strong>Custom objectives:</strong> <code>src/config/customObjectivesApi.ts</code>, <code>src/types/customObjectives.ts</code>.</li>
+</ul>
+<p></p>
+<p>This gives you the <strong>data model</strong> and <strong>backend surface</strong> (Supabase tables and serverless endpoints like <code>api/generate-pdf.js</code>).</p>
+<p></p>
+<h3>Step 3 – Features by area</h3>
+<p></p>
+<p>For each product area, find the main components and hooks:</p>
+<p></p>
+<table>
+<tr><th>Area</th><th>Where to look</th><th>What to list</th></tr>
+<tr><td>Activities</td><td><code>ActivityLibrary</code>, <code>ActivityCreator</code>, <code>ActivityDetailsModal</code>, <code>api.ts</code> activitiesApi</td><td>CRUD, search, filter, import, categories</td></tr>
+<tr><td>Lessons</td><td><code>LessonLibrary</code>, <code>StandaloneLessonCreator</code>, <code>LessonPlanBuilder</code>, <code>DataContext</code> lessons/half-terms</td><td>Build from activities, half-terms, stacks, copy to class</td></tr>
+<tr><td>Units / half-terms</td><td><code>UnitViewer</code>, <code>HalfTermView</code>, <code>HalfTermCard</code>, <code>AssignToHalfTermModal</code></td><td>Assign lessons, term copy</td></tr>
+<tr><td>Stacks</td><td><code>useLessonStacks</code>, <code>LessonStackBuilder</code>, <code>StackedLessonCard</code>, <code>AssignStackToTermModal</code></td><td>Create stacks, assign to terms</td></tr>
+<tr><td>Calendar</td><td><code>LessonPlannerCalendar</code>, <code>CalendarLessonAssignmentModal</code>, <code>TimeSlotLessonModal</code></td><td>Week/month view, assign plans to dates</td></tr>
+<tr><td>Export / share</td><td><code>useShareLesson</code>, <code>LessonPrintModal</code>, <code>api/generate-pdf.js</code>, <code>pdfApi.ts</code></td><td>PDF export, copy link, share timetable</td></tr>
+<tr><td>Curriculum</td><td><code>NestedStandardsBrowser</code>, <code>CustomObjectivesAdmin</code>, <code>ObjectiveSelector</code>, <code>customObjectivesApi</code></td><td>EYFS, custom objectives, attach to lessons/activities</td></tr>
+<tr><td>Settings</td><td><code>UserSettings</code>, <code>DataSourceSettings</code>, <code>Header</code> (class switcher)</td><td>Year groups, categories, branding, data source, admin</td></tr>
+<tr><td>Auth</td><td><code>AuthContext</code>, <code>LoginForm</code>, <code>ResetPasswordPage</code>, <code>useAuth</code></td><td>Login, reset, roles, view-only</td></tr>
+</table>
+<p></p>
+<p>Grep for <strong>button labels and modal titles</strong> (e.g. “Export PDF”, “Copy Link”, “Custom Objectives”) to cross-check the feature list.</p>
+<p></p>
+<h3>Step 4 – White-label and licensing readiness</h3>
+<p></p>
+<ul>
+<li><strong>Branding:</strong> Grep <code>branding</code>, <code>loginTitle</code>, <code>footerCompanyName</code>, <code>schoolLogo</code>, <code>branding_settings</code>.</li>
+<li><strong>Admin-only UI:</strong> Grep <code>isAdmin</code>, <code>role === 'admin'</code>, <code>showUserManagement</code> and see which tabs or modals are gated.</li>
+<li><strong>Multi-tenant:</strong> Search for <code>organisation_id</code>, <code>tenant_id</code>, <code>user_id</code> in RLS or api; currently likely single-tenant or user-scoped.</li>
+</ul>
+<p></p>
+<h3>Step 5 – External services</h3>
+<p></p>
+<ul>
+<li><strong>Supabase:</strong> <code>config/supabase.ts</code> (URL, anon key, auth toggle).</li>
+<li><strong>PDF:</strong> <code>api/generate-pdf.js</code> (PDFBolt, Blob), <code>utils/pdfApi.ts</code> (getPdfApiUrl).</li>
+<li><strong>Email:</strong> Docs (e.g. <code>SUPABASE_RESEND_SMTP.md</code>) and Supabase dashboard config; not in app code.</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<h2>2. Automating feature extraction (Cursor / scripts)</h2>
+<p></p>
+<h3>Option A – Cursor chat / agent</h3>
+<p></p>
+<ul>
+<li>Ask: “List all main user-facing features in this app, with the component or file that implements each.”</li>
+<li>Then: “List all Supabase tables and the main api.ts endpoints.”</li>
+<li>Use the answers to fill or update <code>01_PRODUCT_SPEC_AND_FEATURES.md</code>.</li>
+</ul>
+<p></p>
+<h3>Option B – Grep and glob</h3>
+<p></p>
+<p>Run from repo root:</p>
+<p></p>
+<p>```bash</p>
+<h1>Main tabs/sections</h1>
+<p>rg -n "TabsTrigger|TabsContent" src/components/Dashboard.tsx</p>
+<p></p>
+<h1>API surfaces</h1>
+<p>rg -n "Api = \{|\.getBySheet|\.getAll|\.create\(" src/config/api.ts</p>
+<p></p>
+<h1>Tables</h1>
+<p>rg -n "TABLES\.|from\('" src/config/supabase.ts src/config/api.ts</p>
+<p></p>
+<h1>Branding</h1>
+<p>rg -n "branding|loginTitle|footerCompanyName" src --type-add 'fe:*.{ts,tsx}' -t fe</p>
+<p>```</p>
+<p></p>
+<p>Use results to build a checklist of “feature → file” for the spec.</p>
+<p></p>
+<h3>Option C – Simple script (optional)</h3>
+<p></p>
+<p>A small Node or script that:</p>
+<p></p>
+<ol>
+<li>Reads <code>src/components/Dashboard.tsx</code> and parses <code>TabsTrigger</code> / <code>TabsContent</code> values.</li>
+<li>Lists <code>src/config/supabase.ts</code> TABLES.</li>
+<li>Lists exports from <code>src/config/api.ts</code> (e.g. <code>lessonsApi</code>, <code>activitiesApi</code>).</li>
+</ol>
+<p></p>
+<p>Output: a minimal “feature shell” (tab names, tables, API names) that you then annotate with descriptions from the product overview.</p>
+<p></p>
+<hr>
+<p></p>
+<h2>3. Keeping docs in sync</h2>
+<p></p>
+<ul>
+<li><strong>After a major feature:</strong> Update the feature list in <code>01_PRODUCT_SPEC_AND_FEATURES.md</code> (add row, set Status ✅/❌/Partial).</li>
+<li><strong>After a new table or API:</strong> Update <code>02_ARCHITECTURE_AND_MISSING_FEATURES.md</code> (data model table).</li>
+<li><strong>After a release:</strong> Bump version/date in the “Document control” section of the relevant doc.</li>
+<li><strong>Roadmap:</strong> When something is shipped, move it from “Planned” to “Done” in <code>04_DEVELOPMENT_ROADMAP.md</code> and add a short “Shipped” note if useful.</li>
+</ul>
+<p></p>
+<hr>
+<p></p>
+<h2>4. Quick reference – key files</h2>
+<p></p>
+<table>
+<tr><th>Purpose</th><th>File(s)</th></tr>
+<tr><td>App entry, auth gate, reset-password</td><td><code>src/App.tsx</code>, <code>src/main.tsx</code></td></tr>
+<tr><td>Main tabs and content</td><td><code>src/components/Dashboard.tsx</code></td></tr>
+<tr><td>Lesson and activity data</td><td><code>src/contexts/DataContext.tsx</code></td></tr>
+<tr><td>Settings, branding, year groups, categories</td><td><code>src/contexts/SettingsContextNew.tsx</code></td></tr>
+<tr><td>Auth and profile</td><td><code>src/contexts/AuthContext.tsx</code>, <code>src/hooks/useAuth.ts</code></td></tr>
+<tr><td>Supabase and table names</td><td><code>src/config/supabase.ts</code></td></tr>
+<tr><td>Backend API (Supabase + serverless)</td><td><code>src/config/api.ts</code>, <code>api/generate-pdf.js</code></td></tr>
+<tr><td>Custom objectives</td><td><code>src/config/customObjectivesApi.ts</code>, <code>src/components/CustomObjectivesAdmin.tsx</code></td></tr>
+<tr><td>Share lesson / PDF</td><td><code>src/hooks/useShareLesson.ts</code>, <code>src/components/LessonPrintModal.tsx</code></td></tr>
+<tr><td>User and admin settings UI</td><td><code>src/components/UserSettings.tsx</code></td></tr>
+</table>
+<p></p>
+<p>Using this guide, you can periodically re-scan the codebase and update the product docs so they stay an accurate reflection of the system for licensing, sales, and development planning.</p>
+<p></p>
+</body>
+</html>

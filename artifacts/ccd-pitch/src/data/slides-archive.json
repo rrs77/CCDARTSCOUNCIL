@@ -1,0 +1,212 @@
+{
+  "note": "Slides removed from the active Feature Walkthrough. Restore by moving the .tsx back to src/pages/slides/ and re-adding to slides-manifest.json.",
+  "slides": [
+    {
+      "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000014",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/LessonPDFExport.tsx",
+      "title": "Feature: Print-ready lesson PDFs",
+      "description": "Sample lesson PDF export with school header, learning objective, and activity sequence.",
+      "speakerNotes": "",
+      "archivedReason": "Feature detail archived to keep walkthrough pace tighter."
+    },
+    {
+      "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000021",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/MeltingPot.tsx",
+      "title": "A melting pot of knowledge",
+      "description": "Schools, universities, arts organisations, practitioners and communities pouring their best into one living archive for children.",
+      "speakerNotes": "",
+      "archivedReason": "Removed from active deck per request — keep CCD connection opener instead of melting-pot narrative."
+    },
+    {
+      "id": "fff1b9a8-567f-425b-850d-360303cc60aa",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoAI.tsx",
+      "title": "Promo: AI that supports, never replaces",
+      "description": "Animated scene on AI assistance that amplifies teacher judgement.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "dc4f0823-5232-481a-b599-e828077ae9f7",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoAdaptive.tsx",
+      "title": "Promo: Adaptive teaching built in",
+      "description": "Animated scene on adapting activities for every learner.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "de2ac443-f3ac-4a3f-9918-b9bbdc3a371a",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoCommunity.tsx",
+      "title": "Promo: A community of creative educators",
+      "description": "Animated scene on sharing practice across a community of arts teachers.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "c3b58873-83b4-487a-9ad9-7a35df7837ee",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoCreative.tsx",
+      "title": "Promo: Designed for creative teaching",
+      "description": "Animated scene on tools shaped around creative classroom practice.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "6762014b-f9ec-419e-a558-3052bd84f4ba",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoCrossCurricular.tsx",
+      "title": "Promo: Cross-curricular connections",
+      "description": "Animated scene linking the arts across the wider curriculum.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "ba146a3a-dd0e-4d93-9730-940c4b0b8d02",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoFuture.tsx",
+      "title": "Promo: The future of creative teaching",
+      "description": "Animated closing scene looking to the future of creative education.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "9e5effec-70b2-4921-b501-9f4ddeed762c",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoInspiration.tsx",
+      "title": "Promo: Inspiration on tap",
+      "description": "Animated scene on discovering fresh activity ideas.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "87eba588-648b-4278-82b3-1982893bc124",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoMapping.tsx",
+      "title": "Promo: Curriculum mapping made visual",
+      "description": "Animated scene on mapping curriculum coverage visually across terms.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "0f1f669c-a3d2-4006-82f5-ed3bb53f3be2",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoMobile.tsx",
+      "title": "Promo: Works wherever you teach",
+      "description": "Animated scene showing mobile and tablet use around school.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "988ee265-8f7c-4775-ae26-204c3a15efd6",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoNeverLose.tsx",
+      "title": "Promo: Never lose a great lesson again",
+      "description": "Animated scene on capturing great lessons so they are never lost.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "1b05f05d-5a7b-4723-bc7e-a0852a7c77e8",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoProgression.tsx",
+      "title": "Promo: Progression you can see",
+      "description": "Animated scene showing skills progression across year groups.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "9b8e1e0d-138a-43c9-ab9b-730b6f5efaa1",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoReflect.tsx",
+      "title": "Promo: Reflect and refine",
+      "description": "Animated scene on reflecting after lessons and improving over time.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "5e1707e6-cda5-4b1b-b1b1-88fc60f2352c",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoSEND.tsx",
+      "title": "Promo: SEND support at the core",
+      "description": "Animated scene on inclusive planning for SEND learners.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "6c697492-690d-4981-be32-415eb9bb0562",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoSequencing.tsx",
+      "title": "Promo: Sequencing that makes sense",
+      "description": "Animated scene on coherent lesson sequencing across a term.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "6f776b28-e06b-41f4-9a0e-0196d2e1570e",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoStretch.tsx",
+      "title": "Promo: Stretch and challenge",
+      "description": "Animated scene on extending high-attaining learners.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "4f03e31d-6980-4053-b287-34a5ef93918f",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/PromoTeacherCreativity.tsx",
+      "title": "Promo: Your creativity is your craft",
+      "description": "Animated scene celebrating the creative work teachers pour into every lesson.",
+      "speakerNotes": "",
+      "archivedReason": "Promo/feature beat archived from active Feature Walkthrough to hone narrative flow and reduce animation noise."
+    },
+    {
+      "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000024",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/ProtectThePipeline.tsx",
+      "title": "Protecting the pipeline — from EYFS to the conservatoire stage",
+      "description": "One continuous arc from a Reception assembly to a university stage, and why every stage of the journey depends on the last.",
+      "speakerNotes": "",
+      "archivedReason": "Honored out of main flow; pipeline story can return later."
+    },
+    {
+      "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000016",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/SchoolHomepageAndPreview.tsx",
+      "title": "Feature: School homepages & preview mode",
+      "description": "Public school landing pages and the one-click read-only preview experience.",
+      "speakerNotes": "",
+      "archivedReason": "Secondary feature — archived to reduce deck length."
+    },
+    {
+      "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000015",
+      "position": 0,
+      "filepath": "src/pages/slides/archive/SettingsHub.tsx",
+      "title": "Feature: Settings",
+      "description": "Settings panel showing year groups, categories, branding, and data tabs.",
+      "speakerNotes": "",
+      "archivedReason": "Superseded by WalkthroughSettings in product-tour section."
+    },
+    {
+      "id": "archived-walkthroughcontact",
+      "filepath": "src/pages/slides/archive/WalkthroughContact.tsx",
+      "title": "WalkthroughContact",
+      "description": "Archived slide (was orphaned or removed from active sequence).",
+      "speakerNotes": "",
+      "position": 0,
+      "archivedReason": "Close handled by CallToAction; contact slide kept for reuse."
+    },
+    {
+      "id": "archived-walkthroughintro",
+      "filepath": "src/pages/slides/archive/WalkthroughIntro.tsx",
+      "title": "WalkthroughIntro",
+      "description": "Archived slide (was orphaned or removed from active sequence).",
+      "speakerNotes": "",
+      "position": 0,
+      "archivedReason": "Superseded by CCDesignerIntro (login connection brand)."
+    }
+  ]
+}

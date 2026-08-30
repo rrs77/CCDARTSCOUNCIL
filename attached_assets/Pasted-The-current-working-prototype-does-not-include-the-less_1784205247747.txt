@@ -1,0 +1,72 @@
+The current working prototype does not include the lessons, activities and stacks from my existing CCDesigner account.
+
+Please use the account associated with:
+
+[rob.reichstorer@gmail.com](mailto:rob.reichstorer@gmail.com)
+
+Import all existing content from this account into the prototype demonstration data, including:
+
+* All activities
+* All lessons and lesson plans
+* All stacks and units
+* All folders and library organisation
+* All year groups, subjects, categories, timings, descriptions, objectives, resources and links
+* Any existing planner or calendar content that is useful for demonstrating the prototype
+
+This must be a copied snapshot of my existing account content, not a live connection to my personal library.
+
+Important:
+
+* Do not alter, delete or overwrite anything in my original account.
+* Do not allow prototype users to make changes to my live account.
+* Keep the imported prototype content completely separate from the production database.
+* Preserve the existing relationships between activities, lessons, stacks, units and folders.
+* Ensure imported lessons retain all of their linked activities.
+* Avoid creating duplicates if the import process is run more than once.
+
+Please also populate any areas that are currently underrepresented, particularly:
+
+* Secondary Music
+* Secondary Drama
+* KS4 Music
+* KS4 Drama
+
+Create realistic example activities, lessons and stacks for these sections, covering a useful range of topics, year groups and teaching approaches.
+
+Populate the prototype planner and calendar with a representative selection of lessons from both the imported content and the additional secondary examples.
+
+Include lessons across different:
+
+* Days and times
+* Subjects
+* Year groups
+* Classes
+* Key stages
+
+Users should be able to open lessons directly from the calendar and use the full prototype workflow.
+
+The prototype should allow users to:
+
+* View, create, edit and duplicate activities
+* View, create, edit and duplicate lessons
+* Build lessons using activities from the library
+* Create and edit stacks or units
+* Search, filter and organise content
+* Add lessons to the planner
+* Open lessons from the planner
+* Move and resize planner entries
+* Access all existing lesson-building and planning features
+
+All changes made by prototype users must remain temporary and isolated.
+
+Please ensure that:
+
+* No visitor changes are written to the production database.
+* Nothing in [rob.reichstorer@gmail.com](mailto:rob.reichstorer@gmail.com) is modified.
+* One visitor’s changes cannot affect another visitor.
+* The original demonstration data is restored when the prototype is reset or a new session begins.
+* Existing temporary prototype storage and reset behaviour continue to work correctly.
+
+Do not add another prototype notice, as this is already present in the application.
+
+The finished prototype should feel like a fully populated working version of CCDesigner, using all of the content already created in my account while keeping my original account completely protected.

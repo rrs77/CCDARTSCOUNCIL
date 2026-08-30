@@ -1,0 +1,28 @@
+
+**Your journey & philosophy**
+- You've been teaching for over 20 years and you're also a founder and builder — how do those two identities feed each other? Does being in the classroom make you a better product designer?
+- You're passionate about arts lessons never becoming passive experiences. What does that look like in practice — what's the worst version of a music or drama lesson, and what's the best?
+
+**The EdTech tools**
+- What problem frustrated you enough that you decided to build Assessify yourself rather than just live with what existed?
+- Assessment in the arts feels inherently tricky — how do you quantify creativity without crushing it? How does Assessify handle that tension?
+- PeriFeedback addresses peripatetic teaching, which is quite niche — tell us about that world and why it needed its own tool.
+
+**CCDesigner & the bigger vision**
+- You've described a gap between organisations like the LSO and Royal Opera House producing brilliant resources, and teachers actually using them. Why does that gap exist, and why hasn't it been solved before?
+- I've been thinking about Stacks almost like wiki pages — living documents that evolve as more teachers use and contribute to them. Is that a fair mental model? And if so, how do you stop them becoming messy or diluted over time, the way wikis sometimes do?
+- Who has editorial control over a Stack — the person who created it, the school, or the community?
+- Do you see teachers actually wanting to share and contribute, or is there a risk of a "free rider" problem where everyone consumes but few build?
+- Is there a Wikipedia moment you're hoping for — where a critical mass of contributions suddenly makes the whole thing dramatically more valuable?
+- You're applying to the Arts Council for support. What does success look like for CCDesigner in five years — is it a free public good, a sustainable business, or something else?
+
+**AI in arts education**
+- There's a lot of anxiety about AI in schools right now. You seem to sit in a specific position — using AI to support teachers without automating the artistry itself. Where exactly is that line for you?
+- What's a use of AI in education that genuinely excites you, and one that genuinely worries you?
+
+**The state of arts education**
+- Drama and music are often the first casualties when schools face budget pressure. Are you optimistic or pessimistic about the next ten years for arts education in the UK?
+- What do you wish school leaders understood about what happens in your department that they currently don't?
+
+**Fun closer**
+- Who was your most influential music teacher?

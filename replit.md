@@ -1,45 +1,62 @@
-# [Project name]
+# Workspace
 
-_Replace the heading above with the project's name, and this line with one sentence describing what this app does for users._
+## Overview
 
-## Run & Operate
-
-- `pnpm --filter @workspace/api-server run dev` — run the API server (port 5000)
-- `pnpm run typecheck` — full typecheck across all packages
-- `pnpm run build` — typecheck + build all packages
-- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from the OpenAPI spec
-- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
-- Required env: `DATABASE_URL` — Postgres connection string
+pnpm workspace monorepo using TypeScript. Each package manages its own dependencies.
 
 ## Stack
 
-- pnpm workspaces, Node.js 24, TypeScript 5.9
-- API: Express 5
-- DB: PostgreSQL + Drizzle ORM
-- Validation: Zod (`zod/v4`), `drizzle-zod`
-- API codegen: Orval (from OpenAPI spec)
-- Build: esbuild (CJS bundle)
+- **Monorepo tool**: pnpm workspaces
+- **Node.js version**: 24
+- **Package manager**: pnpm
+- **TypeScript version**: 5.9
+- **API framework**: Express 5
+- **Database**: PostgreSQL + Drizzle ORM
+- **Validation**: Zod (`zod/v4`), `drizzle-zod`
+- **API codegen**: Orval (from OpenAPI spec)
+- **Build**: esbuild (CJS bundle)
 
-## Where things live
+## Drag-and-Drop Architecture
 
-_Populate as you build — short repo map plus pointers to the source-of-truth file for DB schema, API contracts, theme files, etc._
+- **Single root provider**: `DndRoot` (in `src/components/dnd/DndRoot.tsx`) wraps the entire app with `react-dnd-multi-backend` (HTML5 + Touch backends). No per-component `<DndProvider>` blocks.
+- **Custom drag layer**: `CustomDragLayer` renders ghost previews for all drag types (activity, lesson, pack, objective, year-group).
+- **Drop-zone feedback hooks** (in `src/components/dnd/dropFeedback.ts`):
+  - `useDropZoneStyle({ isOver, canDrop, variant })` — consistent ring/background highlight on hover
+  - `useDropFlash()` — brief green flash on successful drop
+- Both hooks are applied to all drop zones: LessonDropZone, TimetableBuilder, CustomObjectivesAdmin, MinimizableActivityCard, StandaloneLessonCreator, and LessonPlannerCalendar (3 zones: month cell, day slot, week slot).
 
-## Architecture decisions
+## Branding
 
-_Populate as you build — non-obvious choices a reader couldn't infer from the code (3-5 bullets)._
+- Product name is "Creative Curriculum Designer" (never "Planner")
+- Settings normalization auto-replaces "Planner" with "Designer" in saved branding on load (localStorage, Supabase, and refresh paths in SettingsContextNew.tsx)
+- Login page: split-screen layout — dark navy/purple gradient left panel, white right panel with form
+- Login colors: purple/violet accent (#a78bfa, #7c3aed) for Sign In button, title italic, and links
 
-## Product
+## Settings Modal (UserSettings.tsx)
 
-_Describe the high-level user-facing capabilities of this app once they exist._
+- Backdrop blur overlay, mobile bottom-sheet layout (h-[95vh], rounded-t-2xl)
+- Pill-style tab navigation (rounded-lg, bg-teal-600 active state)
+- Responsive content padding (p-4 sm:p-6 lg:p-8)
+- Tabs: Year Groups, Categories, Objectives, Resource Shop, Admin dropdown
 
-## User preferences
+## Demo / Preview Mode
 
-_Populate as you build — explicit user instructions worth remembering across sessions._
+- Activated from the login page "Preview Full App" button or school homepage "Start Demo"
+- `activateDemoMode()` sets `sessionStorage["ccd-demo-mode"]="1"`, `seedDemoLocalStorage()` populates sample Performing Arts content (Drama, Music, Dance)
+- `useDemoMode` hook (`src/hooks/useDemoMode.ts`) provides `isDemo`, `showUpgradePrompt`, `gateFeature`, `truncateForDemo`
+- `PreviewBanner` (indigo/violet gradient) shows at top with "Preview" badge, sign-up CTA, and Exit button
+- DemoWatermark was removed (too distracting)
+- Export/print/share gated: LessonExporter, LessonPrintModal, LessonDetailsModal, TimetableModal all block with upgrade toast in demo mode
+- Activity descriptions truncated (~90-120 chars) with fade-out gradient and sign-up prompt in demo mode
+- Lock icons replace Download/Link icons on export/share buttons in demo mode
+- `AuthContext` injects synthetic `viewer` role user; `useIsViewOnly` hides save/delete/edit controls
 
-## Gotchas
+## Key Commands
 
-_Populate as you build — sharp edges, "always run X before Y" rules._
+- `pnpm run typecheck` — full typecheck across all packages
+- `pnpm run build` — typecheck + build all packages
+- `pnpm --filter @workspace/api-spec run codegen` — regenerate API hooks and Zod schemas from OpenAPI spec
+- `pnpm --filter @workspace/db run push` — push DB schema changes (dev only)
+- `pnpm --filter @workspace/api-server run dev` — run API server locally
 
-## Pointers
-
-- See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details
+See the `pnpm-workspace` skill for workspace structure, TypeScript setup, and package details.

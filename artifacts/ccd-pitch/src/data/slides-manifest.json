@@ -1,0 +1,202 @@
+[
+  {
+    "id": "4f7d6ac4-0b56-447e-8f6c-d935df49eb05",
+    "position": 1,
+    "filepath": "src/pages/slides/CCDesignerIntro.tsx",
+    "title": "Exceptional lessons start with connection",
+    "description": "Opening brand slide matching the app login — CCD circle mark with lime ring, and the connection byline from LoginHeroPanel.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
+    "position": 2,
+    "filepath": "src/pages/slides/Title.tsx",
+    "title": "A living home for creative teaching",
+    "description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music — across every key stage from EYFS to KS5.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000002",
+    "position": 3,
+    "filepath": "src/pages/slides/Problem.tsx",
+    "title": "The problem: arts teachers are working alone",
+    "description": "Why drama, dance and music teachers — and the non-specialists supporting them — are losing creative practice today.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000020",
+    "position": 4,
+    "filepath": "src/pages/slides/WhyNow.tsx",
+    "title": "Why now: the arts in higher education are at a tipping point",
+    "description": "The case for the arts — university course closures, falling GCSE entries, the pipeline that feeds the creative industries.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000003",
+    "position": 5,
+    "filepath": "src/pages/slides/Solution.tsx",
+    "title": "The solution: one living home",
+    "description": "Half-term planner, lesson library, and activity stacks in one workspace — purpose-built for performing arts education across every key stage from EYFS to KS5.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
+    "position": 6,
+    "filepath": "src/pages/slides/WhoItsFor.tsx",
+    "title": "Who it's for: arts educators across every key stage",
+    "description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form (EYFS to KS5), and the arts sector partners contributing alongside them.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000010",
+    "position": 7,
+    "filepath": "src/pages/slides/PerformingArtsCoverage.tsx",
+    "title": "Drama, Music & Dance — one workspace",
+    "description": "Subject coverage breakdown with example units for each performing-arts discipline.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000006",
+    "position": 8,
+    "filepath": "src/pages/slides/LessonLibrary.tsx",
+    "title": "Feature: Lesson library",
+    "description": "Searchable, taggable library of drama, music and dance lessons.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000007",
+    "position": 9,
+    "filepath": "src/pages/slides/ActivityStacks.tsx",
+    "title": "Feature: Activity stacks",
+    "description": "Reusable groups of warm-ups, mains, and plenaries for drama and music.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000012",
+    "position": 10,
+    "filepath": "src/pages/slides/ActivityCardsWithLinks.tsx",
+    "title": "Feature: Activity cards with web links",
+    "description": "Activity cards carry video, music, backing, vocal and web-link resources for one-tap access in the classroom.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000013",
+    "position": 11,
+    "filepath": "src/pages/slides/ActivityCreation.tsx",
+    "title": "Feature: Activity creation flow",
+    "description": "The new-activity form, with dedicated fields for video, web link, backing track and resources.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000011",
+    "position": 12,
+    "filepath": "src/pages/slides/LessonPlannerCalendar.tsx",
+    "title": "Feature: Lesson planner calendar",
+    "description": "Weekly timetable view with drag-and-drop lesson slots across drama, music and dance.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000008",
+    "position": 13,
+    "filepath": "src/pages/slides/HowItWorks.tsx",
+    "title": "How it works",
+    "description": "The four-step flow from empty term to ready-to-teach.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "c454004b-4fa8-433f-8ca6-691d8d5e60e7",
+    "position": 14,
+    "filepath": "src/pages/slides/PartnerAndMarketplace.tsx",
+    "title": "Partner activity packs & marketplace",
+    "description": "Arts-sector partners — Royal Opera House, National Theatre and more — contributing activity packs through a partner marketplace.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "walkthrough-002-music-hubs",
+    "filepath": "src/pages/slides/WalkthroughMusicHubs.tsx",
+    "title": "Music hubs & Partner Hubs",
+    "description": "EMS, Tri-Borough, and Partner Hubs structure on the dashboard.",
+    "speakerNotes": "",
+    "position": 15
+  },
+  {
+    "id": "walkthrough-003-lso",
+    "filepath": "src/pages/slides/WalkthroughLsoHub.tsx",
+    "title": "LSO hub — Add to CCDesigner",
+    "description": "Choose an LSO resource, add it to the library, or select Partner Planning.",
+    "speakerNotes": "",
+    "position": 16
+  },
+  {
+    "id": "walkthrough-004-lesson-flow",
+    "filepath": "src/pages/slides/WalkthroughLessonFlow.tsx",
+    "title": "Activity → Lesson → Term",
+    "description": "Activity Library, Lesson Builder, Lesson Library, then half-term planner.",
+    "speakerNotes": "",
+    "position": 17
+  },
+  {
+    "id": "walkthrough-005-key-dates",
+    "filepath": "src/pages/slides/WalkthroughKeyDates.tsx",
+    "title": "Key dates & Important dates",
+    "description": "Populate calendar with partner key dates and Important dates panel.",
+    "speakerNotes": "",
+    "position": 18
+  },
+  {
+    "id": "walkthrough-006-calendar",
+    "filepath": "src/pages/slides/WalkthroughCalendar.tsx",
+    "title": "Calendar week & timetable",
+    "description": "Week and timetable views with partner and school lesson highlights.",
+    "speakerNotes": "",
+    "position": 19
+  },
+  {
+    "id": "walkthrough-007-paid",
+    "filepath": "src/pages/slides/WalkthroughPaidPartners.tsx",
+    "title": "iCompose & We Teach Drama",
+    "description": "Paid partner hubs and basket with platform cut messaging.",
+    "speakerNotes": "",
+    "position": 20
+  },
+  {
+    "id": "walkthrough-008-settings",
+    "filepath": "src/pages/slides/WalkthroughSettings.tsx",
+    "title": "Settings & key-stage folders",
+    "description": "Customisable library folders, categories, and academic year allocation.",
+    "speakerNotes": "",
+    "position": 21
+  },
+  {
+    "id": "walkthrough-009-org",
+    "filepath": "src/pages/slides/WalkthroughOrgHub.tsx",
+    "title": "Organisation hub & share",
+    "description": "School and partner organisation sharing — free org hubs.",
+    "speakerNotes": "",
+    "position": 22
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000022",
+    "position": 23,
+    "filepath": "src/pages/slides/CelebrateArts.tsx",
+    "title": "Celebrating learning in the arts",
+    "description": "Surfacing the daily craft of arts teaching — to parents, leaders, partner organisations and the wider sector.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000023",
+    "position": 24,
+    "filepath": "src/pages/slides/LifeChanging.tsx",
+    "title": "Inspiring, life-changing arts education",
+    "description": "Why one teacher, one moment, one lesson can change a life — and why CCD is built so those lessons multiply.",
+    "speakerNotes": ""
+  },
+  {
+    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
+    "position": 25,
+    "filepath": "src/pages/slides/CallToAction.tsx",
+    "title": "Grow your creative practice — together",
+    "description": "Closing call to action inviting schools, departments and arts organisations to join the creative ecosystem.",
+    "speakerNotes": ""
+  }
+]
