@@ -8,6 +8,7 @@ export type ProfileRole =
   | 'viewer'
   | 'student'
   | 'superuser'
+  | 'super_admin'
   | 'creator'
   | 'organisation';
 
@@ -28,6 +29,8 @@ export interface Profile {
   can_manage_users: boolean;
   /** Organisation / admin download analytics permission. */
   can_view_download_analytics?: boolean;
+  /** Explicit permission to view hashed IP metadata (super only). */
+  can_view_raw_ip?: boolean;
   organisation_id?: string | null;
   organisation_name?: string | null;
   must_change_password?: boolean;

@@ -1,6 +1,7 @@
 /**
  * Tracked resource download: auth → permission → log → redirect to external URL.
  * GET /api/resources/:resourceId/download
+ * Auth via Authorization Bearer or ?access_token= (for window.location redirects).
  */
 
 import {
@@ -52,7 +53,8 @@ export async function GET(request, context) {
       return jsonResponse({ error: 'Resource not found.' }, 404);
     }
 
-    if (resource.status !== 'published') {
+    const status = resource.status || (resource.is_active === false ? 'unpublished' : 'published');
+    if (status !== 'published') {
       return jsonResponse({ error: 'Resource is not available for download.' }, 404);
     }
 
@@ -60,9 +62,12 @@ export async function GET(request, context) {
       return jsonResponse({ error: 'Forbidden. You cannot download this resource.' }, 403);
     }
 
-    const target = resource.external_url;
-    if (!target || !isAllowListedUrl(target)) {
-      // Still allow HTTPS on org hosts via env allow-list; otherwise block open redirect
+    const target = resource.download_url || resource.external_url;
+    if (!target) {
+      return jsonResponse({ error: 'Download URL missing.' }, 400);
+    }
+
+    if (!isAllowListedUrl(target)) {
       try {
         const u = new URL(target);
         if (u.protocol !== 'https:') {
@@ -71,28 +76,30 @@ export async function GET(request, context) {
       } catch {
         return jsonResponse({ error: 'Invalid download URL.' }, 400);
       }
-      // Non-allowlisted HTTPS: allow only if org-scoped resource (managed link), not arbitrary
-      if (!resource.organisation_id) {
+      if (!resource.organisation_id && !resource.partner_slug) {
         return jsonResponse({ error: 'Download host is not allow-listed.' }, 400);
       }
     }
 
-    // Fire-and-forget analytics
     const ipHash = await hashIpForStorage(ip);
     const geo = await lookupGeo(ip);
     const service = createServiceClient();
+    const organisationId =
+      resource.organisation_id || resource.partner_slug || profile.organisation_id || null;
+
     if (service) {
       service
         .from('download_events')
         .insert({
           resource_id: resource.id,
-          organisation_id: resource.organisation_id,
+          organisation_id: organisationId,
+          partner_slug: resource.partner_slug || null,
           user_id: auth.userId,
           ip_hash: ipHash,
           user_agent: (request.headers.get('user-agent') || '').slice(0, 500),
-          country: geo?.country || null,
-          region: geo?.region || null,
-          city: geo?.city || null,
+          geo_country: geo?.country || null,
+          geo_region: geo?.region || null,
+          geo_city: geo?.city || null,
         })
         .then(({ error }) => {
           if (error) console.warn('download_events insert:', error.message);

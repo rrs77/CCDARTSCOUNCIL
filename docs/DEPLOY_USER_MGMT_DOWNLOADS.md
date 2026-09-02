@@ -1,17 +1,24 @@
 # Deploy: user management + download tracking
 
-## 1. Run SQL migration
+## 1. Run SQL migrations (in order)
 
 In Supabase SQL Editor, run:
 
-`supabase/migrations/20260902_user_mgmt_downloads.sql`
+1. `supabase/migrations/20260902_user_mgmt_downloads.sql`
+2. `supabase/migrations/20260903_hub_administration.sql`
 
-This creates/extends:
+Migration 1 creates profiles extensions, organisations, resources, download_events, audit_log, and Jazz North resource seeds.
 
-- `profiles` columns (consent, org, `must_change_password`, anonymise, analytics flag)
-- `organisation` role (keeps admin/teacher/creator/viewer/student/superuser)
-- `organisations`, `resources`, `download_events`, `audit_log`
-- Jazz North resource seed rows (placeholder Rhythmstix URLs)
+Migration 2 adds `super_admin`, `hub_memberships`, hub pages, resource lifecycle fields, activities/media, and idempotently assigns `super_admin` to the existing verified account `rob.reichstorer@gmail.com` (email is checked **only** in this migration — never at request time).
+
+## Hub administration
+
+After migrations:
+
+- Settings → **Hub admin** for hub members / super admins
+- Sections: Edit page, Resources, Activities, Media, Drafts, Preview, Publish, Hub users, Analytics, Export, Audit
+- Public hub content: `GET /api/hubs/public/:slug`
+- Tracked downloads: `GET /api/resources/:id/download` (Bearer or `?access_token=`)
 
 ## 2. Upload binary files
 

@@ -134,7 +134,16 @@ async function verifyHs256(token, secret) {
  */
 export function getBearerToken(request) {
   const authHeader = request.headers.get('authorization') || '';
-  return authHeader.replace(/^Bearer\s+/i, '').trim();
+  const fromHeader = authHeader.replace(/^Bearer\s+/i, '').trim();
+  if (fromHeader) return fromHeader;
+  try {
+    const url = new URL(request.url);
+    const q = url.searchParams.get('access_token');
+    if (q && q.trim()) return q.trim();
+  } catch {
+    /* ignore */
+  }
+  return '';
 }
 
 /**

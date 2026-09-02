@@ -43,6 +43,11 @@ describe('permissions', () => {
       false,
     );
   });
+
+  it('super_admin can manage users and view global analytics', () => {
+    assert.equal(canManageUsers({ role: 'super_admin', status: 'active' }), true);
+    assert.equal(canViewGlobalAnalytics({ role: 'super_admin', status: 'active' }), true);
+  });
 });
 
 describe('assertRateLimit', () => {

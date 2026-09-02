@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Download, ExternalLink, FileText, Loader2, PlusCircle, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -40,6 +40,8 @@ import {
 } from '../../utils/trackedDownload';
 import { SignInRequiredModal } from '../Auth/SignInRequiredModal';
 import { useAuth } from '../../hooks/useAuth';
+import { fetchPublicHub } from '../../utils/hubAdminApi';
+import { sanitizeHtml } from '../../utils/sanitize';
 
 interface JazzNorthPartnerHubProps {
   onAddedToApp?: (info: { sheetId: string }) => void;
@@ -113,7 +115,35 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
   const [added, setAdded] = useState<Record<string, boolean>>({});
   const [downloadingId, setDownloadingId] = useState<string | null>(null);
   const [signInOpen, setSignInOpen] = useState(false);
+  const [cmsFeatured, setCmsFeatured] = useState<{
+    title?: string;
+    description?: string;
+    href?: string;
+    introHtml?: string;
+  } | null>(null);
   const learningPack = getPaidProduct('jn-learning-resources');
+
+  useEffect(() => {
+    let cancelled = false;
+    void (async () => {
+      const payload = await fetchPublicHub('jazznorth');
+      if (cancelled || !payload?.page) return;
+      const featured = (payload.page.featured || {}) as {
+        title?: string;
+        description?: string;
+        href?: string;
+      };
+      setCmsFeatured({
+        title: featured.title,
+        description: featured.description,
+        href: featured.href,
+        introHtml: payload.page.intro_html || undefined,
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const markAdded = (id: string) => setAdded((prev) => ({ ...prev, [id]: true }));
 
@@ -175,12 +205,21 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
     <div className="space-y-6">
       <PartnerHubFeaturedSection
         eyebrow="Featured · Learning & Participation"
-        title="Learning Resources Area — Improvisation for every classroom"
+        title={
+          cmsFeatured?.title ||
+          'Learning Resources Area — Improvisation for every classroom'
+        }
         description={
           <>
-            Free downloadable pathways for curriculum teachers (KS1–4), instrumental tutors and
-            lifetime learners. Create a free account on jazznorth.org. Showcase seed:{' '}
-            {JN_SHOWCASE.title}.
+            {cmsFeatured?.description ||
+              'Free downloadable pathways for curriculum teachers (KS1–4), instrumental tutors and lifetime learners. Create a free account on jazznorth.org.'}{' '}
+            Showcase seed: {JN_SHOWCASE.title}.
+            {cmsFeatured?.introHtml ? (
+              <span
+                className="mt-2 block text-sm text-gray-700"
+                dangerouslySetInnerHTML={{ __html: sanitizeHtml(cmsFeatured.introHtml) }}
+              />
+            ) : null}
             {learningPack && (
               <span className="mt-1 block font-medium text-pink-800">
                 Demo price {formatPricePence(learningPack.pricePence)} — Add to basket is local only.
@@ -192,7 +231,11 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
         accentClassName="border-pink-200/80 bg-pink-50/70"
         eyebrowClassName="text-pink-800"
         links={[
-          { href: JN_LEARNING_RESOURCES, label: 'Learning Resources Area', icon: 'external' },
+          {
+            href: cmsFeatured?.href || JN_LEARNING_RESOURCES,
+            label: 'Learning Resources Area',
+            icon: 'external',
+          },
           { href: JN_SHOWCASE_LESSON_PDF, label: 'Prototype lesson PDF', icon: 'file' },
           { href: JN_SITE, label: 'jazznorth.org', icon: 'external' },
         ]}
