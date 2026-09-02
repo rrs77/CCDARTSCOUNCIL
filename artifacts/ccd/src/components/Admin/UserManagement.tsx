@@ -1,6 +1,6 @@
-import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
+import React, { useEffect, useState, useRef, useLayoutEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, Edit2, Loader2, Mail, Plus, X, MoreVertical, UserX, Send, Package } from 'lucide-react';
+import { Users, Edit2, Loader2, Mail, Plus, X, MoreVertical, UserX, Send, Package, Search, Eraser } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 import { getVercelApiUrl } from '../../utils/apiUrl';
 import { activityPacksApi } from '../../config/api';
@@ -15,6 +15,8 @@ const BASE_ROLES: { value: ProfileRole; label: string }[] = [
   { value: 'viewer', label: 'Viewer' },
   { value: 'student', label: 'Student' },
   { value: 'teacher', label: 'Teacher' },
+  { value: 'creator', label: 'Creator' },
+  { value: 'organisation', label: 'Organisation' },
   { value: 'admin', label: 'Admin' }
 ];
 
@@ -24,11 +26,22 @@ const STATUS_OPTIONS: { value: ProfileStatus; label: string }[] = [
   { value: 'suspended', label: 'Suspended' }
 ];
 
+const PAGE_SIZE = 25;
+
+async function authHeaders(): Promise<Record<string, string>> {
+  const { data: { session } } = await supabase.auth.getSession();
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (session?.access_token) headers.Authorization = `Bearer ${session.access_token}`;
+  return headers;
+}
+
 function roleLabel(role: ProfileRole): string {
   switch (role) {
     case 'superuser': return 'Superuser';
-    case 'admin': return 'Admin';
+    case 'admin': return 'Administrator';
     case 'teacher': return 'Teacher';
+    case 'creator': return 'Creator';
+    case 'organisation': return 'Organisation';
     case 'viewer': return 'Viewer';
     case 'student': return 'Student';
     default: return role;
@@ -39,6 +52,8 @@ function roleBadgeClass(role: ProfileRole): string {
   switch (role) {
     case 'superuser': return 'bg-purple-100 text-purple-800 border-purple-200';
     case 'admin': return 'bg-teal-100 text-teal-800 border-teal-200';
+    case 'organisation': return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+    case 'creator': return 'bg-orange-100 text-orange-800 border-orange-200';
     case 'teacher': return 'bg-blue-100 text-blue-800 border-blue-200';
     case 'viewer': return 'bg-gray-100 text-gray-700 border-gray-200';
     case 'student': return 'bg-gray-100 text-gray-700 border-gray-200';
@@ -72,6 +87,15 @@ function formatDate(iso: string | undefined): string {
   }
 }
 
+function countActiveAdmins(users: Profile[]): number {
+  return users.filter(
+    (u) =>
+      (u.role === 'admin' || u.role === 'superuser') &&
+      u.status !== 'suspended' &&
+      !u.anonymised_at,
+  ).length;
+}
+
 export function UserManagement() {
   const { customYearGroups, categories } = useSettings();
   const { profile: currentProfile } = useAuth();
@@ -101,11 +125,43 @@ export function UserManagement() {
   const [createPresetCategories, setCreatePresetCategories] = useState<string[]>([]);
   const [createPresetPackIds, setCreatePresetPackIds] = useState<string[]>([]);
   const [createPacks, setCreatePacks] = useState<{ pack_id: string; name: string }[]>([]);
+  const [search, setSearch] = useState('');
+  const [filterRole, setFilterRole] = useState<string>('all');
+  const [filterStatus, setFilterStatus] = useState<string>('all');
+  const [sortKey, setSortKey] = useState<'created_at' | 'email' | 'display_name' | 'role'>('created_at');
+  const [sortAsc, setSortAsc] = useState(false);
+  const [page, setPage] = useState(0);
+  const [anonymiseUser, setAnonymiseUser] = useState<Profile | null>(null);
 
   const yearGroupNames = customYearGroups.map(g => g.name);
   const categoryNames = categories.map(c => c.name);
   const isSuperuser = currentProfile?.role === 'superuser';
   const createUserRoles = isSuperuser ? [...BASE_ROLES, { value: 'superuser' as const, label: 'Superuser' }] : BASE_ROLES;
+
+  const filteredUsers = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    let list = users.filter((u) => {
+      if (filterRole !== 'all' && u.role !== filterRole) return false;
+      if (filterStatus !== 'all' && (u.status || 'active') !== filterStatus) return false;
+      if (!q) return true;
+      const hay = `${u.display_name || ''} ${u.email || ''} ${u.school_or_org || ''}`.toLowerCase();
+      return hay.includes(q);
+    });
+    list = [...list].sort((a, b) => {
+      const av = String(a[sortKey] ?? '');
+      const bv = String(b[sortKey] ?? '');
+      const cmp = av.localeCompare(bv, undefined, { sensitivity: 'base' });
+      return sortAsc ? cmp : -cmp;
+    });
+    return list;
+  }, [users, search, filterRole, filterStatus, sortKey, sortAsc]);
+
+  const pageCount = Math.max(1, Math.ceil(filteredUsers.length / PAGE_SIZE));
+  const pageUsers = filteredUsers.slice(page * PAGE_SIZE, page * PAGE_SIZE + PAGE_SIZE);
+
+  useEffect(() => {
+    setPage(0);
+  }, [search, filterRole, filterStatus]);
 
   const fetchUsers = React.useCallback(async () => {
     const { data, error } = await supabase
@@ -221,7 +277,7 @@ export function UserManagement() {
     try {
       const res = await fetch(getVercelApiUrl('/api/resend-invite'), {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({ email })
       });
       const data = await res.json().catch(() => ({}));
@@ -236,6 +292,15 @@ export function UserManagement() {
 
   const handleSuspendReactivate = async (profile: Profile) => {
     const next: ProfileStatus = profile.status === 'suspended' ? 'active' : 'suspended';
+    if (
+      next === 'suspended' &&
+      (profile.role === 'admin' || profile.role === 'superuser') &&
+      countActiveAdmins(users) <= 1
+    ) {
+      toast.error('Cannot suspend the last active administrator.');
+      setMenuOpenForId(null);
+      return;
+    }
     setMenuOpenForId(null);
     try {
       const { error } = await supabase.from('profiles').update({ status: next, updated_at: new Date().toISOString() }).eq('id', profile.id);
@@ -248,6 +313,13 @@ export function UserManagement() {
   };
 
   const handleDeleteUser = async (profile: Profile) => {
+    if (
+      (profile.role === 'admin' || profile.role === 'superuser') &&
+      countActiveAdmins(users) <= 1
+    ) {
+      toast.error('Cannot delete the last active administrator.');
+      return;
+    }
     setMenuOpenForId(null);
     try {
       const { error } = await supabase.from('profiles').delete().eq('id', profile.id);
@@ -257,6 +329,36 @@ export function UserManagement() {
       toast.success('User removed.');
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to delete. You may need to delete from Auth first.');
+    }
+  };
+
+  const handleAnonymiseUser = async (profile: Profile) => {
+    setMenuOpenForId(null);
+    try {
+      const res = await fetch(getVercelApiUrl('/api/users/anonymise'), {
+        method: 'POST',
+        headers: await authHeaders(),
+        body: JSON.stringify({ user_id: profile.id }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data?.error || 'Anonymise failed');
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === profile.id
+            ? {
+                ...u,
+                display_name: 'Anonymised user',
+                email: `anonymised-${u.id.slice(0, 8)}@deleted.local`,
+                status: 'suspended',
+                anonymised_at: new Date().toISOString(),
+              }
+            : u,
+        ),
+      );
+      setAnonymiseUser(null);
+      toast.success('User anonymised.');
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'Anonymise failed');
     }
   };
 
@@ -273,7 +375,7 @@ export function UserManagement() {
     try {
       const res = await fetch(apiUrl, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: await authHeaders(),
         body: JSON.stringify({
           email: emailTrimmed,
           password: createSendInvite ? undefined : (createPassword.trim() || undefined),
@@ -281,6 +383,7 @@ export function UserManagement() {
           role: createRole,
           status: createStatus,
           send_invite_email: createSendInvite,
+          must_change_password: !createSendInvite && Boolean(createPassword.trim()),
           allowed_year_groups: createAllowedYearGroups.length > 0 ? createAllowedYearGroups : undefined,
           admin_preset_categories: createPresetCategories.length > 0 ? createPresetCategories : undefined,
           admin_preset_activity_pack_ids: createPresetPackIds.length > 0 ? createPresetPackIds : undefined,
@@ -388,8 +491,56 @@ export function UserManagement() {
         </button>
       </div>
       <p className="text-sm text-gray-600">
-        Manage users: edit name and role (including Admin or Superuser), change status (Active / Suspended), send password reset or resend invite, suspend or delete. Use the <strong>⋮ Actions</strong> menu on a row → <strong>Edit</strong> to assign activity packs (e.g. Commedia) or change role. Use Edit → Role to assign Superuser.
+        Manage users: edit name and role (Teacher, Creator, Organisation, Administrator, …), change status,
+        send password reset or resend invite, suspend, anonymise (UK GDPR), or delete. Last active admin is protected.
       </p>
+      <div className="flex flex-wrap items-center gap-2">
+        <div className="relative min-w-[200px] flex-1">
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+          <input
+            type="search"
+            placeholder="Search name, email, school…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 py-2 pl-8 pr-3 text-sm"
+          />
+        </div>
+        <select
+          value={filterRole}
+          onChange={(e) => setFilterRole(e.target.value)}
+          className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+        >
+          <option value="all">All roles</option>
+          {createUserRoles.map((r) => (
+            <option key={r.value} value={r.value}>{r.label}</option>
+          ))}
+        </select>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+        >
+          <option value="all">All statuses</option>
+          {STATUS_OPTIONS.map((s) => (
+            <option key={s.value} value={s.value}>{s.label}</option>
+          ))}
+        </select>
+        <select
+          value={`${sortKey}:${sortAsc ? 'asc' : 'desc'}`}
+          onChange={(e) => {
+            const [k, dir] = e.target.value.split(':') as ['created_at' | 'email' | 'display_name' | 'role', string];
+            setSortKey(k);
+            setSortAsc(dir === 'asc');
+          }}
+          className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+        >
+          <option value="created_at:desc">Newest first</option>
+          <option value="created_at:asc">Oldest first</option>
+          <option value="email:asc">Email A–Z</option>
+          <option value="display_name:asc">Name A–Z</option>
+          <option value="role:asc">Role A–Z</option>
+        </select>
+      </div>
       <div className="border border-gray-200 rounded-lg overflow-x-auto">
         <table className="w-full text-left min-w-[700px]">
           <thead className="bg-gray-50 border-b border-gray-200">
@@ -403,14 +554,14 @@ export function UserManagement() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
-            {users.length === 0 ? (
+            {pageUsers.length === 0 ? (
               <tr>
                 <td colSpan={6} className="px-4 py-8 text-center text-gray-500">
-                  No users found. Use &quot;Create User&quot; to add one, or they appear after signing up.
+                  No users match your filters. Use &quot;Create User&quot; to add one.
                 </td>
               </tr>
             ) : (
-              users.map(user => (
+              pageUsers.map(user => (
                 <tr key={user.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3 text-sm text-gray-900">{user.display_name ?? '—'}</td>
                   <td className="px-4 py-3 text-sm text-gray-700">{user.email ?? '—'}</td>
@@ -444,6 +595,33 @@ export function UserManagement() {
           </tbody>
         </table>
       </div>
+      <div className="flex items-center justify-between text-sm text-gray-600">
+        <span>
+          {filteredUsers.length} user{filteredUsers.length === 1 ? '' : 's'}
+          {filteredUsers.length !== users.length ? ` (filtered from ${users.length})` : ''}
+        </span>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            disabled={page <= 0}
+            onClick={() => setPage((p) => Math.max(0, p - 1))}
+            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+          >
+            Prev
+          </button>
+          <span>
+            Page {page + 1} / {pageCount}
+          </span>
+          <button
+            type="button"
+            disabled={page >= pageCount - 1}
+            onClick={() => setPage((p) => Math.min(pageCount - 1, p + 1))}
+            className="rounded border border-gray-300 px-2 py-1 disabled:opacity-40"
+          >
+            Next
+          </button>
+        </div>
+      </div>
 
       {menuOpenForId && menuPosition && (() => {
         const menuUser = users.find(u => u.id === menuOpenForId);
@@ -471,6 +649,11 @@ export function UserManagement() {
             <button type="button" onClick={() => handleSuspendReactivate(menuUser)} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
               <UserX className="h-4 w-4" /> {menuUser.status === 'suspended' ? 'Reactivate User' : 'Suspend User'}
             </button>
+            {!menuUser.anonymised_at && (
+              <button type="button" onClick={() => { setAnonymiseUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+                <Eraser className="h-4 w-4" /> Anonymise (GDPR)
+              </button>
+            )}
             <button type="button" onClick={() => { setDeleteConfirmUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2">
               <X className="h-4 w-4" /> Delete User
             </button>
@@ -500,6 +683,24 @@ export function UserManagement() {
             <div className="flex justify-end gap-2">
               <button type="button" onClick={() => setDeleteConfirmUser(null)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
               <button type="button" onClick={() => handleDeleteUser(deleteConfirmUser)} className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">Delete</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {anonymiseUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Anonymise user?</h3>
+            <p className="text-sm text-gray-600 mb-4">
+              This clears personal data for{' '}
+              <strong>{anonymiseUser.display_name || anonymiseUser.email}</strong>, suspends the
+              account, and writes an audit log entry. Download history may retain hashed IPs for
+              retention period. This cannot be undone.
+            </p>
+            <div className="flex justify-end gap-2">
+              <button type="button" onClick={() => setAnonymiseUser(null)} className="px-4 py-2 text-gray-700 hover:bg-gray-100 rounded-lg">Cancel</button>
+              <button type="button" onClick={() => void handleAnonymiseUser(anonymiseUser)} className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700">Anonymise</button>
             </div>
           </div>
         </div>

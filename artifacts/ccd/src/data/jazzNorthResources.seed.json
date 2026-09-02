@@ -1,0 +1,202 @@
+{
+  "partnerSlug": "jazznorth",
+  "partnerLabel": "Jazz North",
+  "productIdHint": "jn-learning-resources",
+  "folderName": "Jazz North",
+  "idPrefix": "jn-",
+  "copiedIntoRepo": false,
+  "copyDecision": "Skipped. public/partners/jazznorth/ only hosts tiny generated showcase overviews (~5KB). Official Learning Resources Area packs are intended to stay external (hub copy + DreamHost/Rhythmstix once auth lands). Do not commit these source PDFs/ZIPs.",
+  "localPublicPatternIfEverInlined": "/partners/jazznorth/{filename}",
+  "externalUrlPattern": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/{filename}",
+  "notes": [
+    "Stable filenames use jn- kebab-case to match jn-mr-big-lesson-overview.pdf / jn-playlist-milestones-overview.pdf.",
+    "Source Desktop filenames retain original spelling quirks (e.g. 'activites', trailing spaces before .pdf).",
+    "Audio ZIPs already present beside PDFs on Desktop; include in registry when uploaded. No audio found for improvisation guides.",
+    "Hub currently links official materials to https://www.jazznorth.org/learning-resources-area rather than hosting packs in-repo."
+  ],
+  "existingHubReferences": {
+    "branding": "artifacts/ccd/src/utils/jazzNorthBranding.ts",
+    "hubComponent": "artifacts/ccd/src/components/partners/JazzNorthPartnerHub.tsx",
+    "seedSetup": "artifacts/ccd/src/utils/setupJazzNorthExample.ts",
+    "partnerHubConfig": "artifacts/ccd/src/config/partnerHubs.ts (slug: jazznorth)",
+    "paidProducts": [
+      "jn-learning-resources",
+      "jn-playlist-milestones",
+      "jn-educators-forum"
+    ],
+    "localPrototypePdfs": [
+      "/partners/jazznorth/jn-mr-big-lesson-overview.pdf",
+      "/partners/jazznorth/jn-playlist-milestones-overview.pdf"
+    ]
+  },
+  "collections": [
+    {
+      "id": "jn-can-you-sing-your-song",
+      "title": "Can You Sing Your Song?",
+      "description": "Activities, piano accompaniment, and supporting audio."
+    },
+    {
+      "id": "jn-hello-song",
+      "title": "Hello Song",
+      "description": "Activities, score, and supporting audio."
+    },
+    {
+      "id": "jn-2-and-4-chant",
+      "title": "2 and 4 Chant",
+      "description": "Activities, both score versions, and supporting audio."
+    },
+    {
+      "id": "jn-improvisation",
+      "title": "Improvisation",
+      "description": "Improvisation games and ways-into-improvisation guides (no audio ZIP found)."
+    }
+  ],
+  "resources": [
+    {
+      "id": "jn-can-you-sing-activities",
+      "title": "Can You Sing Your Song? — Activities",
+      "type": "activities PDF",
+      "collection": "jn-can-you-sing-your-song",
+      "filename": "jn-can-you-sing-activities.pdf",
+      "sourceFilename": "Can you sing your song_ activites .pdf",
+      "bytes": 185704,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting/Can you sing your song_ activites .pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-can-you-sing-activities.pdf",
+      "relatedAudioId": "jn-can-you-sing-audio"
+    },
+    {
+      "id": "jn-can-you-sing-piano-accomp",
+      "title": "Can You Sing Your Song? — Piano Accompaniment",
+      "type": "score PDF",
+      "collection": "jn-can-you-sing-your-song",
+      "filename": "jn-can-you-sing-piano-accomp.pdf",
+      "sourceFilename": "Can you sing your song_ piano accomp .pdf",
+      "bytes": 59445,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting/Can you sing your song_ piano accomp .pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-can-you-sing-piano-accomp.pdf",
+      "relatedAudioId": "jn-can-you-sing-audio"
+    },
+    {
+      "id": "jn-hello-song-activities",
+      "title": "Hello Song — Activities",
+      "type": "activities PDF",
+      "collection": "jn-hello-song",
+      "filename": "jn-hello-song-activities.pdf",
+      "sourceFilename": "Hello song activities.pdf",
+      "bytes": 108296,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting/Hello song activities.pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-hello-song-activities.pdf",
+      "relatedAudioId": "jn-hello-song-audio"
+    },
+    {
+      "id": "jn-hello-song-score",
+      "title": "Hello Song — Score",
+      "type": "score PDF",
+      "collection": "jn-hello-song",
+      "filename": "jn-hello-song-score.pdf",
+      "sourceFilename": "Hello song score.pdf",
+      "bytes": 54569,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting/Hello song score.pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-hello-song-score.pdf",
+      "relatedAudioId": "jn-hello-song-audio"
+    },
+    {
+      "id": "jn-2-and-4-chant-activities",
+      "title": "2 and 4 Chant — Activities",
+      "type": "activities PDF",
+      "collection": "jn-2-and-4-chant",
+      "filename": "jn-2-and-4-chant-activities.pdf",
+      "sourceFilename": "2 and 4 chant activities.pdf",
+      "bytes": 81223,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting (1)/2 and 4 chant activities.pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-2-and-4-chant-activities.pdf",
+      "relatedAudioId": "jn-2-and-4-chant-audio"
+    },
+    {
+      "id": "jn-2-and-4-chant-score",
+      "title": "2 and 4 Chant — Score (Both Versions)",
+      "type": "score PDF",
+      "collection": "jn-2-and-4-chant",
+      "filename": "jn-2-and-4-chant-score.pdf",
+      "sourceFilename": "2 and 4 chant score both versions.pdf",
+      "bytes": 161864,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting (1)/2 and 4 chant score both versions.pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-2-and-4-chant-score.pdf",
+      "relatedAudioId": "jn-2-and-4-chant-audio"
+    },
+    {
+      "id": "jn-not-quite-jazz-improv-games",
+      "title": "Not Quite Jazz — Improvisation Games",
+      "type": "improvisation guide",
+      "collection": "jn-improvisation",
+      "filename": "jn-not-quite-jazz-improv-games.pdf",
+      "sourceFilename": "Not quite jazz - improvisation games.pdf",
+      "bytes": 213400,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting (1)/Not quite jazz - improvisation games.pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-not-quite-jazz-improv-games.pdf",
+      "relatedAudioId": null
+    },
+    {
+      "id": "jn-ways-into-improvisation",
+      "title": "Ways into Improvisation",
+      "type": "improvisation guide",
+      "collection": "jn-improvisation",
+      "filename": "jn-ways-into-improvisation.pdf",
+      "sourceFilename": "Ways into Improvisation.pdf",
+      "bytes": 405901,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting (1)/Ways into Improvisation.pdf",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-ways-into-improvisation.pdf",
+      "relatedAudioId": null
+    }
+  ],
+  "audioSupport": [
+    {
+      "id": "jn-can-you-sing-audio",
+      "title": "Can You Sing Your Song? — Audio Files",
+      "type": "audio ZIP",
+      "collection": "jn-can-you-sing-your-song",
+      "filename": "jn-can-you-sing-audio.zip",
+      "sourceFilename": "Can you sing your song_ audio files.zip",
+      "bytes": 6790447,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting/Can you sing your song_ audio files.zip",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-can-you-sing-audio.zip",
+      "status": "present-on-desktop"
+    },
+    {
+      "id": "jn-hello-song-audio",
+      "title": "Hello Song — Audio Files",
+      "type": "audio ZIP",
+      "collection": "jn-hello-song",
+      "filename": "jn-hello-song-audio.zip",
+      "sourceFilename": "Hello song audio files.zip",
+      "bytes": 10447856,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting/Hello song audio files.zip",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-hello-song-audio.zip",
+      "status": "present-on-desktop"
+    },
+    {
+      "id": "jn-2-and-4-chant-audio",
+      "title": "2 and 4 Chant — Audio Files",
+      "type": "audio ZIP",
+      "collection": "jn-2-and-4-chant",
+      "filename": "jn-2-and-4-chant-audio.zip",
+      "sourceFilename": "2 and 4 audio files.zip",
+      "bytes": 6330833,
+      "localSourcePath": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting (1)/2 and 4 audio files.zip",
+      "externalUrlPlaceholder": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/jn-2-and-4-chant-audio.zip",
+      "status": "present-on-desktop"
+    }
+  ],
+  "parentArchivesOnDesktop": [
+    {
+      "path": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting.zip",
+      "bytes": 17580436,
+      "note": "Parent archive of Hello Song + Can You Sing Your Song bundle"
+    },
+    {
+      "path": "/Users/rfreich-storer/Desktop/jazznorth/reccdesignermeeting (1).zip",
+      "bytes": 7129668,
+      "note": "Parent archive of 2 and 4 Chant + improvisation guides"
+    }
+  ]
+}
