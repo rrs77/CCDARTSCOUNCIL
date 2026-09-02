@@ -33,6 +33,7 @@ import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
 import { PartnersFundingStartModal } from './login/PartnersFundingStartModal';
 import { PARTNERS_FUNDING_VIDEO_STORAGE_KEY } from './login/prototypeCopy';
 import { LogoSVG, LOGO_BG } from './Logo';
+import { RegisterForm } from './Auth/RegisterForm';
 
 const LOGIN_GREEN = LOGO_BG;
 
@@ -50,6 +51,7 @@ export function LoginForm() {
   const [authStatus, setAuthStatus] = useState<'checking' | 'ok' | 'fail' | null>(null);
   const [authError, setAuthError] = useState<string | null>(null);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
+  const [showRegister, setShowRegister] = useState(false);
   const [forgotEmail, setForgotEmail] = useState('');
   const [forgotSent, setForgotSent] = useState(false);
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
@@ -276,7 +278,22 @@ export function LoginForm() {
                     <p className="mt-1 text-sm text-gray-500">Sign in to continue to your account.</p>
                   </div>
 
-                  {showForgotPassword ? (
+                  {showRegister ? (
+                    <div className="space-y-3">
+                      <h3 className="text-lg font-semibold text-gray-900">Create an account</h3>
+                      <p className="text-sm text-gray-600">
+                        Email verification is preferred. Check your inbox after registering.
+                      </p>
+                      <RegisterForm compact onCancel={() => setShowRegister(false)} />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegister(false)}
+                        className="text-sm font-medium text-[#008272] hover:underline"
+                      >
+                        Back to sign in
+                      </button>
+                    </div>
+                  ) : showForgotPassword ? (
                     <ForgotPasswordPanel
                       forgotEmail={forgotEmail}
                       setForgotEmail={setForgotEmail}
@@ -422,13 +439,23 @@ export function LoginForm() {
                     </form>
                   )}
 
-                  {!showForgotPassword && (
+                  {!showForgotPassword && !showRegister && (
                     <>
                       <div className="my-5 flex items-center gap-3">
                         <div className="h-px flex-1 bg-gray-200" />
                         <span className="text-xs font-medium uppercase tracking-wide text-gray-400">or</span>
                         <div className="h-px flex-1 bg-gray-200" />
                       </div>
+
+                      {isSupabaseAuthEnabled() && (
+                        <button
+                          type="button"
+                          onClick={() => setShowRegister(true)}
+                          className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#002D24]/30 bg-white px-4 py-3 text-sm font-semibold text-[#002D24] transition-colors hover:bg-[#002D24]/5"
+                        >
+                          Create an account
+                        </button>
+                      )}
 
                       <button
                         type="button"

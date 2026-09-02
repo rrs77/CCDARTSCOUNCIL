@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, FileText, Loader2, PlusCircle, Check } from 'lucide-react';
+import { Download, ExternalLink, FileText, Loader2, PlusCircle, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   JN_CONTACT,
@@ -29,6 +29,17 @@ import {
 } from './PartnerHubLayout';
 import { AddToBasketButton } from './AddToBasketButton';
 import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
+import {
+  JAZZ_NORTH_COLLECTIONS,
+  getJazzNorthResourcesByCollection,
+} from '../../data/resourceRegistry';
+import {
+  currentReturnUrl,
+  stashDownloadIntent,
+  startTrackedDownload,
+} from '../../utils/trackedDownload';
+import { SignInRequiredModal } from '../Auth/SignInRequiredModal';
+import { useAuth } from '../../hooks/useAuth';
 
 interface JazzNorthPartnerHubProps {
   onAddedToApp?: (info: { sheetId: string }) => void;
@@ -97,11 +108,36 @@ const OTHER_PACKS = [
  * Each Add seeds Activity Library activities + a Lesson Library plan via prototypeLocalSeed.
  */
 export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) {
+  const { user } = useAuth();
   const [adding, setAdding] = useState<string | null>(null);
   const [added, setAdded] = useState<Record<string, boolean>>({});
+  const [downloadingId, setDownloadingId] = useState<string | null>(null);
+  const [signInOpen, setSignInOpen] = useState(false);
   const learningPack = getPaidProduct('jn-learning-resources');
 
   const markAdded = (id: string) => setAdded((prev) => ({ ...prev, [id]: true }));
+
+  const handleTrackedDownload = async (resourceId: string) => {
+    if (!user) {
+      stashDownloadIntent(resourceId, currentReturnUrl());
+      setSignInOpen(true);
+      return;
+    }
+    setDownloadingId(resourceId);
+    try {
+      const result = await startTrackedDownload(resourceId);
+      if (!result.ok) {
+        if (result.reason === 'unauthenticated') {
+          stashDownloadIntent(resourceId, currentReturnUrl());
+          setSignInOpen(true);
+        } else {
+          toast.error(result.message || 'Download failed');
+        }
+      }
+    } finally {
+      setDownloadingId(null);
+    }
+  };
 
   const runSeed = async (kind: 'mr-big' | 'playlist') => {
     setAdding(kind);
@@ -194,6 +230,66 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
           After Add: open Year 2 Music → Lesson Library and Activity Library, then export PDF.
         </p>
       </PartnerHubFeaturedSection>
+
+      <section className="space-y-3 rounded-xl border border-pink-200 bg-pink-50/40 p-4">
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-900">
+            Learning resources (tracked downloads)
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Sign in to download. Files are delivered via a secure tracking link — buttons never point
+            directly at external host URLs. Hub browsing stays public.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {JAZZ_NORTH_COLLECTIONS.map((collection) => {
+            const items = getJazzNorthResourcesByCollection(collection.id);
+            return (
+              <div
+                key={collection.id}
+                className="rounded-lg border border-pink-100 bg-white p-3 shadow-sm"
+              >
+                <h4 className="font-semibold text-gray-900">{collection.title}</h4>
+                <p className="mt-0.5 text-xs text-gray-500">{collection.description}</p>
+                <ul className="mt-3 space-y-1.5">
+                  {items.map((res) => (
+                    <li key={res.id} className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate text-sm text-gray-800" title={res.title}>
+                        {res.title}
+                        <span className="ml-1 text-xs text-gray-400">({res.type})</span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => void handleTrackedDownload(res.id)}
+                        disabled={downloadingId === res.id}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-pink-300 bg-pink-50 px-2 py-1 text-xs font-medium text-pink-900 hover:bg-pink-100 disabled:opacity-60"
+                      >
+                        {downloadingId === res.id ? (
+                          <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden />
+                        ) : (
+                          <Download className="h-3.5 w-3.5" aria-hidden />
+                        )}
+                        Download
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-gray-500">
+          Audio ZIPs appear when uploaded to the allow-listed host; registry IDs are already seeded.
+          After sign-in, see <strong>Settings → My Downloads</strong> for your history.
+        </p>
+      </section>
+
+      <SignInRequiredModal
+        open={signInOpen}
+        onClose={() => setSignInOpen(false)}
+        returnUrl={currentReturnUrl()}
+        message="Sign in to download Jazz North learning resources. We will bring you back here afterwards."
+      />
 
       <section className="space-y-2">
         <div className="flex flex-wrap items-end justify-between gap-2">

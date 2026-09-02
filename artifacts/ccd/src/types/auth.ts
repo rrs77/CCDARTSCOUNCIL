@@ -2,7 +2,14 @@
  * Profile row from public.profiles (Supabase Auth).
  * id matches auth.users(id).
  */
-export type ProfileRole = 'admin' | 'teacher' | 'viewer' | 'student' | 'superuser' | 'creator';
+export type ProfileRole =
+  | 'admin'
+  | 'teacher'
+  | 'viewer'
+  | 'student'
+  | 'superuser'
+  | 'creator'
+  | 'organisation';
 
 export type ProfileStatus = 'active' | 'invited' | 'suspended';
 
@@ -10,12 +17,24 @@ export interface Profile {
   id: string;
   email: string | null;
   display_name: string | null;
+  first_name?: string | null;
+  last_name?: string | null;
+  school_or_org?: string | null;
   role: ProfileRole;
   status?: ProfileStatus;
   can_edit_activities: boolean;
   can_edit_lessons: boolean;
   can_manage_year_groups: boolean;
   can_manage_users: boolean;
+  /** Organisation / admin download analytics permission. */
+  can_view_download_analytics?: boolean;
+  organisation_id?: string | null;
+  organisation_name?: string | null;
+  must_change_password?: boolean;
+  privacy_policy_accepted_at?: string | null;
+  marketing_consent?: boolean;
+  marketing_consent_at?: string | null;
+  anonymised_at?: string | null;
   allowed_year_groups: string[] | null;
   /** Category names assigned by admin; user cannot remove these. */
   admin_preset_categories?: string[] | null;
@@ -51,4 +70,15 @@ export interface AppUser {
   token?: string;
   /** Set when logged in via Supabase Auth; used for RLS and permission checks. */
   profile?: Profile;
+}
+
+/** Tracked partner resource (mirrors public.resources). */
+export interface TrackedResource {
+  id: string;
+  title: string;
+  description?: string;
+  type: string;
+  collection: string;
+  filename: string;
+  relatedAudioId?: string | null;
 }

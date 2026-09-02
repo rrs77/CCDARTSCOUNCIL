@@ -15,7 +15,9 @@ const BASE_ROLES: { value: ProfileRole; label: string }[] = [
   { value: 'viewer', label: 'Viewer' },
   { value: 'student', label: 'Student' },
   { value: 'teacher', label: 'Teacher' },
-  { value: 'admin', label: 'Admin' }
+  { value: 'creator', label: 'Creator' },
+  { value: 'organisation', label: 'Organisation' },
+  { value: 'admin', label: 'Administrator' }
 ];
 
 const STATUS_OPTIONS: { value: ProfileStatus; label: string }[] = [
@@ -35,6 +37,10 @@ export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onC
   const [canEditLessons, setCanEditLessons] = useState(user.can_edit_lessons);
   const [canManageYearGroups, setCanManageYearGroups] = useState(user.can_manage_year_groups);
   const [canManageUsers, setCanManageUsers] = useState(user.can_manage_users);
+  const [canViewDownloadAnalytics, setCanViewDownloadAnalytics] = useState(
+    user.can_view_download_analytics ?? false,
+  );
+  const [organisationId, setOrganisationId] = useState(user.organisation_id ?? '');
   const [allowedYearGroups, setAllowedYearGroups] = useState<string[]>(user.allowed_year_groups ?? []);
   const [adminPresetCategories, setAdminPresetCategories] = useState<string[]>(user.admin_preset_categories ?? []);
   const [saving, setSaving] = useState(false);
@@ -58,6 +64,8 @@ export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onC
         can_edit_lessons: canEditLessons,
         can_manage_year_groups: canManageYearGroups,
         can_manage_users: canManageUsers,
+        can_view_download_analytics: canViewDownloadAnalytics,
+        organisation_id: organisationId.trim() || null,
         allowed_year_groups: allowedYearGroups.length > 0 ? allowedYearGroups : null,
         admin_preset_categories: adminPresetCategories.length > 0 ? adminPresetCategories : null,
         updated_at: new Date().toISOString()
@@ -158,6 +166,27 @@ export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onC
               />
               <span className="text-sm">Can manage users</span>
             </label>
+            <label className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                checked={canViewDownloadAnalytics}
+                onChange={e => setCanViewDownloadAnalytics(e.target.checked)}
+              />
+              <span className="text-sm">Can view download analytics</span>
+            </label>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Organisation ID (for Organisation role / scoped analytics)
+            </label>
+            <input
+              type="text"
+              value={organisationId}
+              onChange={e => setOrganisationId(e.target.value)}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2"
+              placeholder="e.g. jazznorth"
+            />
           </div>
 
           {yearGroupNames.length > 0 && (

@@ -3,6 +3,11 @@ import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { AuthProvider } from './contexts/AuthContext';
+import { ForcePasswordChangeGate } from './components/Auth/ForcePasswordChangeGate';
+import {
+  consumeDownloadIntent,
+  startTrackedDownload,
+} from './utils/trackedDownload';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
 import { PaidBasketProvider } from './contexts/PaidBasketContext';
@@ -61,6 +66,19 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
   const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
   const [showTabsExplainer, setShowTabsExplainer] = useState(false);
+
+  // After sign-in from a gated download, resume the pending resource.
+  useEffect(() => {
+    if (!user || loading) return;
+    const { resourceId, returnUrl } = consumeDownloadIntent();
+    if (resourceId) {
+      void startTrackedDownload(resourceId);
+      return;
+    }
+    if (returnUrl && returnUrl.startsWith('/') && returnUrl !== window.location.pathname + window.location.search) {
+      window.history.replaceState({}, '', returnUrl);
+    }
+  }, [user, loading]);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
   // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
@@ -367,7 +385,9 @@ function App() {
           <DataProvider>
             <PaidBasketProvider>
               <DndRoot>
-                <AppContent schoolHomepage={schoolHomepage} />
+                <ForcePasswordChangeGate>
+                  <AppContent schoolHomepage={schoolHomepage} />
+                </ForcePasswordChangeGate>
               </DndRoot>
             </PaidBasketProvider>
           </DataProvider>
