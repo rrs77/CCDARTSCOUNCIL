@@ -38,6 +38,13 @@ export interface Profile {
   marketing_consent?: boolean;
   marketing_consent_at?: string | null;
   anonymised_at?: string | null;
+  /** Forum capability overrides (null = role default). */
+  forum_can_moderate?: boolean | null;
+  forum_can_manage_categories?: boolean | null;
+  forum_can_manage_settings?: boolean | null;
+  forum_email_notifications?: boolean;
+  forum_notify_replies?: boolean;
+  forum_notify_mentions?: boolean;
   allowed_year_groups: string[] | null;
   /** Category names assigned by admin; user cannot remove these. */
   admin_preset_categories?: string[] | null;

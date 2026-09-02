@@ -125,6 +125,36 @@ export function passwordChangedEmail({ displayName }) {
   return { subject, html, text };
 }
 
+/** Forum notification email — sent when RESEND_API_KEY is set; otherwise prefs still saved. */
+export function forumNotificationEmail({ displayName, title, body, topicUrl }) {
+  const name = displayName || 'there';
+  const subject = `${BRAND.name} forum: ${title}`;
+  const html = wrapHtml(
+    subject,
+    `<p style="margin:0 0 12px;font-size:16px;">Hello ${escapeHtml(name)},</p>
+     <p style="margin:0 0 12px;"><strong>${escapeHtml(title)}</strong></p>
+     ${body ? `<p style="margin:0 0 12px;">${escapeHtml(body)}</p>` : ''}
+     ${
+       topicUrl
+         ? `<p style="margin:20px 0;"><a href="${escapeAttr(topicUrl)}" style="display:inline-block;background:${BRAND.accent};color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;">View discussion</a></p>`
+         : ''
+     }
+     <p style="margin:16px 0 0;font-size:12px;color:#666;">Manage forum email preferences in CCDesigner → Forum → Notifications.</p>`,
+  );
+  const text = [
+    `Hello ${name},`,
+    '',
+    title,
+    body || '',
+    topicUrl ? `View: ${topicUrl}` : '',
+    '',
+    `— ${BRAND.name}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return { subject, html, text };
+}
+
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')

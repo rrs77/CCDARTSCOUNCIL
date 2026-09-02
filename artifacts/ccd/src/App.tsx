@@ -59,15 +59,18 @@ import {
   WELCOME_PROTOTYPE_STORAGE_KEY,
   type TabsExplainerTabId,
 } from './components/login/prototypeCopy';
+import { ForumApp, isForumPath } from './components/Forum/ForumApp';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
   const partnerHub =
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+  const onForum =
+    typeof window !== 'undefined' ? isForumPath(window.location.pathname) : false;
   const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
   const [showTabsExplainer, setShowTabsExplainer] = useState(false);
 
-  // After sign-in from a gated download, resume the pending resource.
+  // After sign-in from a gated download or forum prompt, resume return URL.
   useEffect(() => {
     if (!user || loading) return;
     const { resourceId, returnUrl } = consumeDownloadIntent();
@@ -75,8 +78,26 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       void startTrackedDownload(resourceId);
       return;
     }
-    if (returnUrl && returnUrl.startsWith('/') && returnUrl !== window.location.pathname + window.location.search) {
-      window.history.replaceState({}, '', returnUrl);
+    let ret = returnUrl;
+    if (!ret) {
+      try {
+        ret = sessionStorage.getItem('ccd_forum_return') || '';
+        if (ret) sessionStorage.removeItem('ccd_forum_return');
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!ret && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('return');
+      if (q && q.startsWith('/')) ret = q;
+    }
+    if (ret && ret.startsWith('/') && ret !== window.location.pathname + window.location.search) {
+      window.history.replaceState({}, '', ret);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      if (isForumPath(ret.split('?')[0])) {
+        window.location.assign(ret);
+      }
     }
   }, [user, loading]);
 
@@ -176,10 +197,17 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   }
 
   if (!user) {
+    if (onForum) {
+      return <ForumApp />;
+    }
     if (schoolHomepage) {
       return <SchoolHomepage school={schoolHomepage} />;
     }
     return <LoginForm />;
+  }
+
+  if (onForum) {
+    return <ForumApp />;
   }
 
   const handleOpenGuide = (
@@ -374,7 +402,7 @@ function App() {
   // Detect a school-specific public homepage at `/<slug>`. Skip when the path
   // is a partner hub (`/roh`, …) so those routes are not treated as schools.
   const schoolHomepage =
-    typeof window !== 'undefined' && !partnerHub
+    typeof window !== 'undefined' && !partnerHub && !isForumPath(window.location.pathname)
       ? getSchoolForPath(window.location.pathname)
       : null;
 

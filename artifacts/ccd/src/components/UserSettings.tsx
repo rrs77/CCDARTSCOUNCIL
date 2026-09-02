@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, BarChart3, Shield } from 'lucide-react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, BarChart3, Shield, MessageSquare } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -1094,6 +1094,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               <span>Hub admin</span>
             </button>
           )}
+          <a
+            href="/forum/admin"
+            className="px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 flex items-center gap-1.5 min-h-[36px] text-gray-600 hover:text-gray-900 hover:bg-white"
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            <span>Forum</span>
+          </a>
           </div>
 
           <div className="relative flex-shrink-0" ref={adminMenuRef}>
