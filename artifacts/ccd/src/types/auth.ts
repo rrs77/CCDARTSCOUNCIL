@@ -33,6 +33,10 @@ export interface Profile {
   can_view_raw_ip?: boolean;
   organisation_id?: string | null;
   organisation_name?: string | null;
+  /** Hub organisation ids from hub_memberships (list API enrichment). */
+  hub_ids?: string[];
+  /** Hub membership rows (list API enrichment). */
+  hub_memberships?: { organisation_id: string; role: string }[];
   must_change_password?: boolean;
   privacy_policy_accepted_at?: string | null;
   marketing_consent?: boolean;

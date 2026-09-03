@@ -235,6 +235,12 @@ export function isSuperAdminProfile(profile) {
   return SUPER_ADMIN_ROLES.has(profile.role);
 }
 
+/** System admins who may list/manage all users (not hub-scoped). */
+export function isFullUserAdmin(profile) {
+  if (!profile || isSuspended(profile)) return false;
+  return ADMIN_ROLES.has(profile.role);
+}
+
 export function canManageUsers(profile) {
   if (!profile || isSuspended(profile)) return false;
   if (ADMIN_ROLES.has(profile.role)) return true;

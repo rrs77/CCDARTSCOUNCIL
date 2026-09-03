@@ -1,7 +1,12 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { X } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import type { Profile, ProfileRole, ProfileStatus } from '../../types/auth';
+import {
+  grantHubMember,
+  listAdminHubs,
+  revokeHubMember,
+} from '../../utils/hubAdminApi';
 
 interface EditUserModalProps {
   user: Profile;
@@ -27,8 +32,15 @@ const STATUS_OPTIONS: { value: ProfileStatus; label: string }[] = [
 
 export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onClose }: EditUserModalProps) {
   const { profile: currentProfile } = useAuth();
-  const isSuperuser = currentProfile?.role === 'superuser';
-  const roles = isSuperuser ? [...BASE_ROLES, { value: 'superuser' as const, label: 'Superuser' }] : BASE_ROLES;
+  const isSuperuser =
+    currentProfile?.role === 'superuser' || currentProfile?.role === 'super_admin';
+  const roles = isSuperuser
+    ? [
+        ...BASE_ROLES,
+        { value: 'superuser' as const, label: 'Superuser' },
+        { value: 'super_admin' as const, label: 'Super admin' },
+      ]
+    : BASE_ROLES;
 
   const [role, setRole] = useState<ProfileRole>(user.role);
   const [displayName, setDisplayName] = useState(user.display_name ?? '');
@@ -43,12 +55,41 @@ export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onC
   const [organisationId, setOrganisationId] = useState(user.organisation_id ?? '');
   const [allowedYearGroups, setAllowedYearGroups] = useState<string[]>(user.allowed_year_groups ?? []);
   const [adminPresetCategories, setAdminPresetCategories] = useState<string[]>(user.admin_preset_categories ?? []);
+  const [hubOptions, setHubOptions] = useState<{ id: string; label: string }[]>([]);
+  const [selectedHubIds, setSelectedHubIds] = useState<string[]>(user.hub_ids ?? []);
+  const [initialHubIds] = useState<string[]>(user.hub_ids ?? []);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    listAdminHubs()
+      .then(({ hubs }) => {
+        if (cancelled) return;
+        setHubOptions(
+          hubs.map((h) => ({
+            id: h.id,
+            label: h.display_name || h.short_name || h.slug || h.id,
+          })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) setHubOptions([]);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const toggleYearGroup = (name: string) => {
     setAllowedYearGroups(prev =>
       prev.includes(name) ? prev.filter(n => n !== name) : [...prev, name]
+    );
+  };
+
+  const toggleHub = (hubId: string) => {
+    setSelectedHubIds((prev) =>
+      prev.includes(hubId) ? prev.filter((id) => id !== hubId) : [...prev, hubId],
     );
   };
 
@@ -70,6 +111,16 @@ export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onC
         admin_preset_categories: adminPresetCategories.length > 0 ? adminPresetCategories : null,
         updated_at: new Date().toISOString()
       });
+
+      const toAdd = selectedHubIds.filter((id) => !initialHubIds.includes(id));
+      const toRemove = initialHubIds.filter((id) => !selectedHubIds.includes(id));
+      for (const hubId of toAdd) {
+        await grantHubMember(hubId, { user_id: user.id, role: 'hub_viewer' });
+      }
+      for (const hubId of toRemove) {
+        await revokeHubMember(hubId, user.id);
+      }
+
       onClose();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Failed to save');
@@ -188,6 +239,30 @@ export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onC
               placeholder="e.g. jazznorth"
             />
           </div>
+
+          {hubOptions.length > 0 && (
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Hub access</label>
+              <p className="text-xs text-gray-500 mb-2">
+                Grant membership on hubs this user can open. New grants default to hub viewer.
+              </p>
+              <div className="flex flex-wrap gap-2 max-h-28 overflow-y-auto">
+                {hubOptions.map((h) => (
+                  <label
+                    key={h.id}
+                    className="inline-flex items-center gap-1.5 px-2 py-1 rounded border border-gray-200 bg-gray-50"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedHubIds.includes(h.id)}
+                      onChange={() => toggleHub(h.id)}
+                    />
+                    <span className="text-sm">{h.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {yearGroupNames.length > 0 && (
             <div>
