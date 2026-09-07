@@ -106,7 +106,7 @@ const OTHER_PACKS = [
 ] as const;
 
 /**
- * Jazz North hub — Drama Resource–style premium template.
+ * Jazz North hub — free organisation Partner Hub (Organisations grid).
  * Each Add seeds Activity Library activities + a Lesson Library plan via prototypeLocalSeed.
  */
 export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) {
