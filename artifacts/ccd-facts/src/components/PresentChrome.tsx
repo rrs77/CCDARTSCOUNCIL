@@ -1,4 +1,4 @@
-import { Maximize2, Minimize2 } from "lucide-react";
+import { Home, Maximize2, Minimize2 } from "lucide-react";
 import { MapNav } from "@/components/MapNav";
 import type { Presentation } from "@/content/layoutPresentation";
 
@@ -30,25 +30,30 @@ export function PresentChrome({
         onOverview={onOverview}
         onJump={onJump}
       />
+      <a className="facts-nav-home" href="/" aria-label="Home" title="Home">
+        <Home strokeWidth={2.25} aria-hidden />
+      </a>
 
-      <div
-        className={`present-chrome present-chrome--thin ${chromeVisible ? "is-visible" : ""}`}
-        role="toolbar"
-        aria-label="Canvas tools"
-      >
-        <button type="button" className="present-btn" onClick={onOverview} title="Overview — section stack (Esc)">
-          Overview
-        </button>
-        <button
-          type="button"
-          className="present-icon"
-          onClick={onToggleFullscreen}
-          aria-label={fullscreen ? "Exit full screen" : "Full screen"}
-          title="Full screen"
+      {focusId ? (
+        <div
+          className={`present-chrome present-chrome--thin ${chromeVisible ? "is-visible" : ""}`}
+          role="toolbar"
+          aria-label="Canvas tools"
         >
-          {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
-        </button>
-      </div>
+          <button type="button" className="present-btn" onClick={onOverview} title="Overview — section stack (Esc)">
+            Overview
+          </button>
+          <button
+            type="button"
+            className="present-icon"
+            onClick={onToggleFullscreen}
+            aria-label={fullscreen ? "Exit full screen" : "Full screen"}
+            title="Full screen"
+          >
+            {fullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
+          </button>
+        </div>
+      ) : null}
     </>
   );
 }

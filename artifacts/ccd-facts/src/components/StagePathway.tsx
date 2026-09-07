@@ -66,34 +66,60 @@ function StageZone({
 
       {comment ? <p className="stage-zone-comment">{comment}</p> : null}
 
-      <div className={`stage-zone-visual${chart && illusFile ? " stage-zone-visual--split" : ""}`}>
-        {illusFile ? (
-          <div
-            className={`stage-zone-illus${isSolution ? " stage-zone-illus--illustration" : ""}`}
-            aria-hidden
-          >
-            <img
-              src={assetUrl(illusFile)}
-              alt=""
-              draggable={false}
-              className={isSolution ? "prezi-illustration" : undefined}
-            />
-          </div>
-        ) : null}
+      {chart || illusFile || frame.heroStat ? (
+        <div className={`stage-zone-visual${chart && illusFile ? " stage-zone-visual--split" : ""}`}>
+          {illusFile ? (
+            <div
+              className={`stage-zone-illus${isSolution ? " stage-zone-illus--illustration" : ""}`}
+              aria-hidden
+            >
+              <img
+                src={assetUrl(illusFile)}
+                alt=""
+                draggable={false}
+                className={isSolution ? "prezi-illustration" : undefined}
+              />
+            </div>
+          ) : null}
 
-        {chart ? (
-          <div className="stage-zone-chart">
-            <ContentChart chart={chart} density="canvas" />
-          </div>
-        ) : null}
+          {chart ? (
+            <div className="stage-zone-chart">
+              <ContentChart chart={chart} density="canvas" />
+            </div>
+          ) : null}
 
-        {!chart && !illusFile && frame.heroStat ? (
-          <div className="stage-zone-stat">
-            <p className="stage-zone-stat-value">{frame.heroStat.value}</p>
-            <p className="stage-zone-stat-label">{frame.heroStat.label}</p>
-          </div>
-        ) : null}
-      </div>
+          {!chart && !illusFile && frame.heroStat ? (
+            <div className="stage-zone-stat">
+              <p className="stage-zone-stat-value">{frame.heroStat.value}</p>
+              <p className="stage-zone-stat-label">{frame.heroStat.label}</p>
+            </div>
+          ) : null}
+        </div>
+      ) : null}
+
+      {frame.footnotes?.filter((fn) => !!fn.url).length ? (
+        <footer className="stage-zone-references">
+          <p>References</p>
+          <ol>
+            {frame.footnotes.filter((fn) => !!fn.url).map((fn) => (
+              <li key={fn.id} value={Number(fn.id)}>
+                {fn.url ? (
+                  <a
+                    href={fn.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    {fn.text}
+                  </a>
+                ) : (
+                  fn.text
+                )}
+              </li>
+            ))}
+          </ol>
+        </footer>
+      ) : null}
     </div>
   );
 }

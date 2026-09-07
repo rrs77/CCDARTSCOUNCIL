@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { DetailModal } from "@/components/DetailModal";
-import { LogoMark } from "@/components/LogoMark";
 import { PresentChrome } from "@/components/PresentChrome";
 import { WorldCanvas } from "@/components/WorldCanvas";
-import { meta } from "@/content/facts.content";
 import { getFrame, presentationFromMarkdown } from "@/content/layoutPresentation";
 import { SECTION_PATH } from "@/content/stackLabels";
 import rawContent from "../CONTENT.md?raw";
@@ -298,22 +296,6 @@ export default function App() {
 
   return (
     <div className={`facts-app${modalId ? " is-detail-open" : ""}`}>
-      <header className={`topbar ${chromeVisible ? "is-visible" : "is-dim"}`}>
-        <div className="topbar-brand">
-          <LogoMark size={viewport.w < 640 ? 53 : 63} />
-          <div className="topbar-brand-text">
-            <div className="topbar-brand-name">{meta.brand}</div>
-            <div className="topbar-brand-title">
-              {meta.experienceLead}{" "}
-              <span className="topbar-brand-accent">{meta.experienceAccent}</span>
-            </div>
-          </div>
-        </div>
-        <a className="chip-home" href="/">
-          Site home
-        </a>
-      </header>
-
       <div
         ref={stageRef}
         className="canvas-stage"

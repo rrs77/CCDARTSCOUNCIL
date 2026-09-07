@@ -10,6 +10,7 @@ import {
   RefreshCw,
   ArrowRight,
   PlayCircle,
+  BookOpen,
   ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
@@ -233,7 +234,7 @@ export function LoginForm() {
           {/* Login card — below hero on phone/tablet (no overlap); floats over image on desktop */}
           <div className="relative z-20 mx-4 mb-5 mt-4 sm:mx-6 sm:mb-6 sm:mt-5 lg:absolute lg:bottom-auto lg:left-auto lg:right-5 lg:top-1/2 lg:mx-0 lg:mb-0 lg:mt-0 lg:w-[min(320px,30%)] lg:-translate-y-1/2 xl:right-8 xl:w-[340px]">
             <div className="overflow-hidden rounded-2xl border border-transparent bg-white shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:shadow-[0_20px_50px_rgba(0,0,0,0.25)]">
-              <div className="flex items-center justify-end gap-2 px-4 pt-3 sm:px-5 lg:px-5 lg:pt-3">
+              <div className="flex items-center gap-2 px-4 pt-3 sm:px-5 lg:px-5 lg:pt-3">
                 {canInstall && !isInstalled && (
                   <button
                     type="button"
@@ -246,21 +247,23 @@ export function LoginForm() {
                     <span className="hidden sm:inline">Install</span>
                   </button>
                 )}
-                <a
-                  href={THE_FACTS_HREF}
-                  className="flex items-center gap-1.5 rounded-lg border border-[#002D24]/25 bg-white px-2.5 py-2 text-sm font-semibold text-[#002D24] transition-colors hover:bg-[#002D24]/5"
-                >
-                  <ExternalLink className="h-4 w-4 shrink-0" aria-hidden />
-                  <span>The facts</span>
-                </a>
-                <button
-                  type="button"
-                  onClick={() => setShowFeatureWalkthrough(true)}
-                  className="flex items-center gap-2 rounded-lg bg-[#B6FF7E] px-3 py-2 text-sm font-semibold text-black transition-opacity hover:opacity-90"
-                >
-                  <PlayCircle className="h-5 w-5 shrink-0 text-black" />
-                  <span>Feature walkthrough</span>
-                </button>
+                <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
+                  <a
+                    href={THE_FACTS_HREF}
+                    className="flex min-h-14 w-full items-center justify-center gap-2 rounded-lg border border-[#14B8A6]/45 bg-[#E8F0EA] px-3 py-2 text-center text-sm font-semibold leading-tight text-[#002D24] transition-colors hover:bg-[#D9E8DE]"
+                  >
+                    <BookOpen className="h-5 w-5 shrink-0 text-[#0D9488]" aria-hidden />
+                    <span>The facts</span>
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setShowFeatureWalkthrough(true)}
+                    className="flex min-h-14 w-full items-center justify-center gap-2 rounded-lg bg-[#B6FF7E] px-3 py-2 text-center text-sm font-semibold leading-tight text-[#002D24] transition-colors hover:bg-[#A7F46E]"
+                  >
+                    <PlayCircle className="h-5 w-5 shrink-0 text-[#002D24]" />
+                    <span>Feature walkthrough</span>
+                  </button>
+                </div>
               </div>
 
               <div className="px-4 pb-5 pt-1 sm:px-5 sm:pb-6 lg:px-5 lg:pb-6">

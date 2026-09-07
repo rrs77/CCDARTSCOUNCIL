@@ -21,16 +21,13 @@ function buildMenu(presentation: Presentation): {
   const pick = (id: string, label: string): NavItem | null =>
     byId.has(id) ? { id, label } : null;
 
-  // Overview + opening title as “The situation” — not the full # document title
-  const lone: NavItem[] = [
-    { id: null, label: "Overview" },
-    ...(pick("title", "The situation") ? [pick("title", "The situation")!] : []),
-  ];
+  const lone: NavItem[] = [{ id: null, label: "Overview" }];
 
   const groups: NavGroup[] = [];
 
   const stages = [
-    pick("primary-eyfs-ks2", "Primary"),
+    pick("eyfs", "EYFS"),
+    pick("primary-ks1-ks2", "Primary"),
     pick("secondary", "Secondary"),
     pick("gcse", "GCSE"),
     pick("a-level", "A-level"),
@@ -42,12 +39,6 @@ function buildMenu(presentation: Presentation): {
     pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
   ].filter(Boolean) as NavItem[];
   if (after.length) groups.push({ heading: "After school", items: after });
-
-  const solution = pick("a-solution", "CCDesigner");
-  if (solution) groups.push({ heading: "A solution", items: [solution] });
-
-  const sources = pick("sources", "Sources");
-  if (sources) groups.push({ heading: "Sources", items: [sources] });
 
   const destIds = new Set<string>();
   for (const item of [...lone, ...groups.flatMap((g) => g.items)]) {
@@ -186,7 +177,6 @@ export function MapNav({
         onClick={onTabClick}
       >
         <MapIcon className="map-nav-tab-icon" strokeWidth={2.25} aria-hidden />
-        <span className="map-nav-tab-text">Map</span>
       </button>
 
       <nav

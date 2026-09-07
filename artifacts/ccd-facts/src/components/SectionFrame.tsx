@@ -77,6 +77,10 @@ export function SectionFrame({
   const overflowCount = Math.max(0, allChildren.length - children.length);
   const sourceNotes =
     !isOverview && isSources && frame.footnotes?.length ? frame.footnotes : [];
+  const slideNotes =
+    !isOverview && !isSources && frame.footnotes?.length
+      ? frame.footnotes.filter((fn) => !!fn.url)
+      : [];
   const accent = sectionAccent(frame.id);
 
   const style: CSSProperties =
@@ -137,7 +141,7 @@ export function SectionFrame({
           </button>
         ) : null}
 
-        {!isSources ? (
+        {!isSources && (illusFile || chart || frame.heroStat) ? (
           <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
             {illusFile ? (
               <div
@@ -211,6 +215,30 @@ export function SectionFrame({
             <div className="prezi-body-card">
               <p>{frame.quote || frame.sentence}</p>
             </div>
+          ) : null}
+
+          {slideNotes.length ? (
+            <footer className="prezi-reference-footer">
+              <p>References</p>
+              <ol>
+                {slideNotes.map((fn) => (
+                  <li key={fn.id} value={Number(fn.id)}>
+                    {fn.url ? (
+                      <a
+                        href={fn.url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {fn.text}
+                      </a>
+                    ) : (
+                      fn.text
+                    )}
+                  </li>
+                ))}
+              </ol>
+            </footer>
           ) : null}
         </div>
 

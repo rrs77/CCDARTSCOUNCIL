@@ -2,6 +2,7 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { animate, motion, useMotionValue } from "framer-motion";
 import { useEffect, useMemo, useRef } from "react";
 import { SectionFrame } from "@/components/SectionFrame";
+import { StageOverview } from "@/components/StageOverview";
 import {
   CAMERA_EASE,
   CAMERA_TRAVEL_S,
@@ -110,6 +111,17 @@ export function WorldCanvas({
     }
     onFocus(frame.id);
   };
+
+  if (viewMode === "overview") {
+    return (
+      <div className="world-stage world-stage--overview-grid">
+        <StageOverview
+          stages={hubs}
+          onOpen={onFocus}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="world-stage" aria-label={presentation.title}>

@@ -16,6 +16,7 @@ export type ContentSection = {
   title: string;
   parentId: string | null;
   blocks: ContentBlock[];
+  footnoteIds: string[];
 };
 
 export type ParsedDocument = {
@@ -114,7 +115,7 @@ export function parseContentMarkdown(md: string): ParsedDocument {
       const t = trimmed.replace(/^##\s+/, "").trim();
       const id = uniqueId(slugify(t), used);
       mainId = id;
-      current = { id, level: 2, title: t, parentId: null, blocks: [] };
+      current = { id, level: 2, title: t, parentId: null, blocks: [], footnoteIds: [] };
       sections.push(current);
       continue;
     }
@@ -123,7 +124,7 @@ export function parseContentMarkdown(md: string): ParsedDocument {
       flushList();
       const t = trimmed.replace(/^###\s+/, "").trim();
       const id = uniqueId(slugify(t), used);
-      current = { id, level: 3, title: t, parentId: mainId, blocks: [] };
+      current = { id, level: 3, title: t, parentId: mainId, blocks: [], footnoteIds: [] };
       sections.push(current);
       continue;
     }
@@ -133,6 +134,13 @@ export function parseContentMarkdown(md: string): ParsedDocument {
       flushList();
       current.blocks.push({ type: "chart", chartId: chart[1] });
       continue;
+    }
+
+    if (current) {
+      for (const match of trimmed.matchAll(/\[\^(\d+)\]/g)) {
+        const id = match[1]!;
+        if (!current.footnoteIds.includes(id)) current.footnoteIds.push(id);
+      }
     }
 
     if (/^>\s?/.test(trimmed)) {

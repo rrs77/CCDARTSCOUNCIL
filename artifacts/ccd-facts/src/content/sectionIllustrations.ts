@@ -1,20 +1,9 @@
-/**
- * Per-section circular hero illustrations.
- * Classroom photo (`hero-arts.jpg`) is ONLY for the opening title / The situation.
- */
+/** Classroom photography is reserved for the opening situation only. */
 
 export const SITUATION_HERO = "hero-arts.jpg";
 
-/** Public paths under BASE_URL — keyed by frame / section id */
-export const SECTION_ILLUSTRATION: Record<string, string> = {
-  "primary-eyfs-ks2": "illustrations/primary.png",
-  secondary: "illustrations/secondary.png",
-  gcse: "illustrations/secondary.png",
-  "a-level": "illustrations/a-level.png",
-  "university-he": "illustrations/higher-education.png",
-  "a-solution": "illustrations/a-solution.png",
-  "music-hubs-and-national-centre": "illustrations/music-hubs.png",
-};
+/** Decorative section symbols were removed so evidence leads the design. */
+export const SECTION_ILLUSTRATION: Record<string, string> = {};
 
 export function assetUrl(file: string): string {
   const base = import.meta.env.BASE_URL || "/";

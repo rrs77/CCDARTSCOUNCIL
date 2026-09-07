@@ -137,24 +137,13 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
   let cropIdx = 0;
   const nextCrop = (): PhotoCrop => CROPS[cropIdx++ % CROPS.length]!;
 
-  protos.push({
-    id: "title",
-    parentId: null,
-    mainSectionId: "title",
-    level: 1,
-    kind: "title",
-    title: doc.title,
-    sentence: doc.lead[0] ? firstSentence(doc.lead[0]) : "",
-    photoHero: true,
-    photoCrop: nextCrop(),
-    blocks: doc.lead.map((text) => ({ type: "paragraph" as const, text })),
-  });
-
   const mains = doc.sections.filter((s) => s.level === 2);
   const nested = doc.sections.filter((s) => s.level === 3);
 
   for (const sec of mains) {
     const isSources = /^sources$/i.test(sec.title);
+    const isSolution = sec.id === "a-solution";
+    if (isSources || isSolution) continue;
     const paras = sec.blocks.filter((b) => b.type === "paragraph") as Extract<
       ContentBlock,
       { type: "paragraph" }
@@ -175,10 +164,15 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
     const hubId = sec.id;
     used.add(hubId);
     const crop = nextCrop();
+    const nestedSections = nested.filter((n) => n.parentId === sec.id);
+    const applicableIds = new Set([
+      ...sec.footnoteIds,
+      ...nestedSections.flatMap((n) => n.footnoteIds),
+    ]);
+    const applicableFootnotes = doc.footnotes.filter((fn) => applicableIds.has(fn.id));
 
     // One hero only: prefer chart OR one stat OR photo — never stack competing ovals.
     // “A solution” is a product zone: no exam/funding graph on the pathway surface.
-    const isSolution = hubId === "a-solution";
     const hubChart =
       !isSources && !isSolution && charts[0] ? charts[0].chartId : undefined;
     const hubStat =
@@ -191,26 +185,23 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       parentId: null,
       mainSectionId: hubId,
       level: 2,
-      kind: isSources ? "sources" : "hub",
+      kind: "hub",
       title: sec.title,
       // Sources: footnotes only on the frame — no closing/meta sentence as a body card
-      sentence: isSources
-        ? ""
-        : paras[0]
+      sentence: paras[0]
           ? firstSentence(paras[0].text)
           : quotes[0]
             ? firstSentence(quotes[0].text)
             : "",
       heroStat: hubStat,
       chartId: hubChart,
-      quote: isSources ? undefined : quotes[0] ? firstSentence(quotes[0].text) : undefined,
+      quote: quotes[0] ? firstSentence(quotes[0].text) : undefined,
       // Classroom photo ONLY on The situation — unique illustration, not reused
       photoHero: hubId === "the-situation" && !hubStat && !hubChart && !isSources,
       photoCrop: crop,
-      footnotes: isSources ? doc.footnotes : undefined,
-      blocks: isSources ? [] : sec.blocks,
-      subsections: nested
-        .filter((n) => n.parentId === sec.id)
+      footnotes: applicableFootnotes.filter((fn) => !!fn.url),
+      blocks: sec.blocks,
+      subsections: nestedSections
         .map((n) => ({ title: n.title, blocks: n.blocks })),
     });
 
@@ -241,8 +232,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       return t;
     };
 
-    // Sources is a footnote register only — no leaf satellites / meta pills
-    if (!isSources) {
+    {
       for (const kid of nested.filter((n) => n.parentId === sec.id)) {
         if (children.length >= MAX_CHILDREN) break;
         const kParas = kid.blocks.filter((b) => b.type === "paragraph") as Extract<
@@ -331,6 +321,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
         chartId: ch.chartId,
         photoHero: ch.photoHero,
         photoCrop: crop,
+        footnotes: applicableFootnotes,
         blocks: ch.blocks,
       });
     }
@@ -342,24 +333,21 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
 /** Quiet pathway grid for hubs — story-order bands, large gutters, no AABB overlap. */
 function placeHubsOnGrid(hubs: FrameNode[]): void {
   // Story path bands (left → right, then down):
-  // 0: title
-  // 1: primary, secondary, gcse
-  // 2: a-level, HE, music hubs
-  // 3: solution, sources
+  // 0: EYFS, primary, secondary
+  // 1: GCSE, A-level, HE
+  // 2: music hubs
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
 
   const byId = new Map(hubs.map((h) => [h.id, h]));
   const orderedIds = [
-    "title",
-    "primary-eyfs-ks2",
+    "eyfs",
+    "primary-ks1-ks2",
     "secondary",
     "gcse",
     "a-level",
     "university-he",
     "music-hubs-and-national-centre",
-    "a-solution",
-    "sources",
   ];
   const placed = new Set<string>();
 
@@ -373,15 +361,13 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
     placed.add(id);
   };
 
-  place("title", 1, 0);
-  place("primary-eyfs-ks2", 0, 1);
-  place("secondary", 1, 1);
-  place("gcse", 2, 1);
-  place("a-level", 0, 2);
-  place("university-he", 1, 2);
-  place("music-hubs-and-national-centre", 2, 2);
-  place("a-solution", 0, 3);
-  place("sources", 1, 3);
+  place("eyfs", 0, 0);
+  place("primary-ks1-ks2", 1, 0);
+  place("secondary", 2, 0);
+  place("gcse", 0, 1);
+  place("a-level", 1, 1);
+  place("university-he", 2, 1);
+  place("music-hubs-and-national-centre", 1, 2);
 
   // Any leftover hubs continue the grid
   let extra = 0;
@@ -559,15 +545,13 @@ export function buildHubConnectorPath(frames: FrameNode[]): string {
   if (hubs.length < 2) return "";
   const byId = new Map(hubs.map((h) => [h.id, h]));
   const story = [
-    "title",
-    "primary-eyfs-ks2",
+    "eyfs",
+    "primary-ks1-ks2",
     "secondary",
     "gcse",
     "a-level",
     "university-he",
     "music-hubs-and-national-centre",
-    "a-solution",
-    "sources",
   ]
     .map((id) => byId.get(id))
     .filter(Boolean) as FrameNode[];

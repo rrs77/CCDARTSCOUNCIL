@@ -2,6 +2,7 @@ import { Minus, Plus, X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent, type WheelEvent } from "react";
 import { ContentChart } from "@/components/charts/Charts";
+import { StageIconBadge } from "@/components/StageIconBadge";
 import { getChart } from "@/content/facts.content";
 import type { ContentBlock } from "@/content/parseContent";
 import type { FrameNode } from "@/content/layoutPresentation";
@@ -203,6 +204,13 @@ export function DetailModal({
     sectionIllustration(frame.id) ??
     sectionIllustration(frame.mainSectionId) ??
     (situationPhoto ? SITUATION_HERO : undefined);
+  const chartAlreadyInBlocks = frame.blocks.some(
+    (b) => b.type === "chart" && b.chartId === frame.chartId,
+  );
+  const hasVisual =
+    !!illusFile ||
+    (!!frame.heroStat && !hasBlocks) ||
+    (!!topChart && !chartAlreadyInBlocks);
 
   return (
     <AnimatePresence>
@@ -231,11 +239,17 @@ export function DetailModal({
             }}
           >
             <header className="detail-modal-header" onClick={closeChrome}>
-              <div className="detail-modal-header-text">
-                {frame.titleSmall ? <p className="detail-modal-kicker">{frame.titleSmall}</p> : null}
-                <h2 id="detail-modal-title" className="detail-modal-title">
-                  {frame.title}
-                </h2>
+              <div className="detail-modal-heading">
+                <StageIconBadge
+                  id={frame.mainSectionId || frame.id}
+                  className="detail-modal-stage-icon"
+                />
+                <div className="detail-modal-header-text">
+                  {frame.titleSmall ? <p className="detail-modal-kicker">{frame.titleSmall}</p> : null}
+                  <h2 id="detail-modal-title" className="detail-modal-title">
+                    {frame.title}
+                  </h2>
+                </div>
               </div>
               <div className="detail-modal-tools">
                 <button
@@ -289,7 +303,9 @@ export function DetailModal({
                   width: `${100 / zoom}%`,
                 }}
               >
-                <div className="detail-modal-layout">
+                <div
+                  className={`detail-modal-layout${hasVisual ? "" : " detail-modal-layout--text-only"}`}
+                >
                   <div className="detail-modal-copy">
                     {!hasBlocks && frame.heroStat ? (
                       <div className="detail-stat">
@@ -325,9 +341,9 @@ export function DetailModal({
                       </section>
                     ))}
 
-                    {frame.footnotes?.length ? (
+                    {frame.footnotes?.filter((fn) => !!fn.url).length ? (
                       <ol className="detail-footnotes">
-                        {frame.footnotes.map((fn) => (
+                        {frame.footnotes.filter((fn) => !!fn.url).map((fn) => (
                           <li key={fn.id}>
                             {fn.url ? (
                               <a href={fn.url} target="_blank" rel="noopener noreferrer">
@@ -361,7 +377,7 @@ export function DetailModal({
                     ) : null}
                   </div>
 
-                  <div className="detail-modal-visual">
+                  {hasVisual ? <div className="detail-modal-visual">
                     {illusFile ? (
                       <div
                         className={`detail-photo-bubble${situationPhoto ? "" : " detail-photo-bubble--illustration"}`}
@@ -380,12 +396,12 @@ export function DetailModal({
                         <p className="detail-stat-label">{frame.heroStat.label}</p>
                       </div>
                     ) : null}
-                    {topChart && !frame.blocks.some((b) => b.type === "chart" && b.chartId === frame.chartId) ? (
+                    {topChart && !chartAlreadyInBlocks ? (
                       <div className="detail-chart">
                         <ContentChart chart={topChart} />
                       </div>
                     ) : null}
-                  </div>
+                  </div> : null}
                 </div>
                 <div className="detail-modal-end" aria-hidden />
               </div>
