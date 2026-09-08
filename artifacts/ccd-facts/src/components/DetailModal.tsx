@@ -1,6 +1,6 @@
-import { Minus, Plus, X } from "lucide-react";
+import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import { useCallback, useEffect, useRef, useState, type MouseEvent, type ReactNode, type SyntheticEvent, type WheelEvent } from "react";
+import { useEffect, useRef, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import { ContentChart } from "@/components/charts/Charts";
 import { StageIconBadge } from "@/components/StageIconBadge";
 import { getChart } from "@/content/facts.content";
@@ -128,7 +128,6 @@ export function DetailModal({
 }) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion() ?? false;
-  const [zoom, setZoom] = useState(1);
   const selectingRef = useRef(false);
 
   useEffect(() => {
@@ -143,7 +142,6 @@ export function DetailModal({
   useEffect(() => {
     if (open) {
       bodyRef.current?.scrollTo({ top: 0 });
-      setZoom(1);
       selectingRef.current = false;
     }
   }, [open, frame?.id]);
@@ -157,29 +155,10 @@ export function DetailModal({
         onClose();
         return;
       }
-      if (e.key === "+" || e.key === "=") {
-        e.preventDefault();
-        e.stopPropagation();
-        setZoom((z) => Math.min(2.2, z * 1.15));
-        return;
-      }
-      if (e.key === "-" || e.key === "_") {
-        e.preventDefault();
-        e.stopPropagation();
-        setZoom((z) => Math.max(0.7, z / 1.15));
-      }
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
   }, [onClose, open]);
-
-  const onWheelZoom = useCallback((e: WheelEvent) => {
-    if (!(e.ctrlKey || e.metaKey)) return;
-    e.preventDefault();
-    e.stopPropagation();
-    const factor = Math.exp(-e.deltaY * 0.0015);
-    setZoom((z) => Math.min(2.2, Math.max(0.7, z * factor)));
-  }, []);
 
   const stop = (e: SyntheticEvent) => e.stopPropagation();
 
@@ -252,27 +231,6 @@ export function DetailModal({
                 </div>
               </div>
               <div className="detail-modal-tools">
-                <button
-                  type="button"
-                  className="detail-modal-zoom"
-                  aria-label="Zoom out"
-                  title="Zoom out (−)"
-                  onClick={() => setZoom((z) => Math.max(0.7, z / 1.15))}
-                >
-                  <Minus className="h-4 w-4" strokeWidth={2.5} />
-                </button>
-                <span className="detail-modal-zoom-label" aria-hidden>
-                  {Math.round(zoom * 100)}%
-                </span>
-                <button
-                  type="button"
-                  className="detail-modal-zoom"
-                  aria-label="Zoom in"
-                  title="Zoom in (+)"
-                  onClick={() => setZoom((z) => Math.min(2.2, z * 1.15))}
-                >
-                  <Plus className="h-4 w-4" strokeWidth={2.5} />
-                </button>
                 <button type="button" className="detail-modal-close" aria-label="Close" onClick={onClose}>
                   <X className="h-6 w-6" strokeWidth={2.5} />
                 </button>
@@ -282,7 +240,6 @@ export function DetailModal({
             <div
               className="detail-modal-scroll"
               ref={bodyRef}
-              onWheel={onWheelZoom}
               onPointerDown={(e) => {
                 stop(e);
                 selectingRef.current = true;
@@ -295,14 +252,7 @@ export function DetailModal({
               }}
               onClick={stop}
             >
-              <div
-                className="detail-modal-zoom-surface"
-                style={{
-                  transform: `scale(${zoom})`,
-                  transformOrigin: "top left",
-                  width: `${100 / zoom}%`,
-                }}
-              >
+              <div className="detail-modal-zoom-surface">
                 <div
                   className={`detail-modal-layout${hasVisual ? "" : " detail-modal-layout--text-only"}`}
                 >

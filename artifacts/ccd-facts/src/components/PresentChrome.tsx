@@ -1,4 +1,4 @@
-import { Home, Maximize2, Minimize2 } from "lucide-react";
+import { Grid2X2, Home, Maximize2, Minimize2 } from "lucide-react";
 import { MapNav } from "@/components/MapNav";
 import type { Presentation } from "@/content/layoutPresentation";
 
@@ -40,8 +40,14 @@ export function PresentChrome({
           role="toolbar"
           aria-label="Canvas tools"
         >
-          <button type="button" className="present-btn" onClick={onOverview} title="Overview — section stack (Esc)">
-            Overview
+          <button
+            type="button"
+            className="present-icon"
+            onClick={onOverview}
+            aria-label="Choose a stage"
+            title="Choose a stage (Esc)"
+          >
+            <Grid2X2 className="h-4 w-4" aria-hidden />
           </button>
           <button
             type="button"

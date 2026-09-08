@@ -17,8 +17,6 @@ import {
   type Presentation,
 } from "@/content/layoutPresentation";
 
-const ARROW_CAPTION = "Arrows travel the path. Extra facts open on click.";
-
 /**
  * Connected world canvas: hubs live in one plane; the camera zooms/pans between them.
  * Overview = fit all places (titles readable, detail quiet). Focus = settle on one section.
@@ -58,6 +56,7 @@ export function WorldCanvas({
   );
   const connector = useMemo(() => buildHubConnectorPath(hubs), [hubs]);
   const focusFrame = focusedId ? getFrame(presentation, focusedId) : null;
+  const activeHubId = focusFrame?.mainSectionId || focusFrame?.id;
   const density = viewMode === "overview" ? "overview" : "focus";
 
   const targetPose = useMemo((): CameraPose => {
@@ -119,6 +118,56 @@ export function WorldCanvas({
           stages={hubs}
           onOpen={onFocus}
         />
+      </div>
+    );
+  }
+
+  if (focusFrame && viewport.w <= 720) {
+    return (
+      <div className="world-stage mobile-slide-stage" aria-label={presentation.title}>
+        <SectionFrame
+          frame={focusFrame}
+          presentation={presentation}
+          highlighted
+          density="focus"
+          activeChildId={null}
+          layout="scene"
+          onOpen={() => onOpenDetail(focusFrame.id)}
+          onOpenDetail={() => onOpenDetail(focusFrame.id)}
+          onOpenChild={onOpenChild}
+        />
+        <div className="world-chrome" aria-hidden={false}>
+          <button
+            type="button"
+            className="stack-arrow stack-arrow--left world-arrow"
+            aria-label="Previous section"
+            disabled={!canPrev}
+            onClick={onPrev}
+          >
+            <ChevronLeft className="stack-arrow-icon" strokeWidth={2.5} aria-hidden />
+          </button>
+          <button
+            type="button"
+            className="stack-arrow stack-arrow--right world-arrow"
+            aria-label="Next section"
+            disabled={!canNext}
+            onClick={onNext}
+          >
+            <ChevronRight className="stack-arrow-icon" strokeWidth={2.5} aria-hidden />
+          </button>
+          <nav className="slide-progress" aria-label="Slideshow position">
+            {hubs.map((hub, index) => (
+              <button
+                key={hub.id}
+                type="button"
+                className={`slide-progress-dot${hub.id === activeHubId ? " is-active" : ""}`}
+                aria-label={`Go to slide ${index + 1}: ${hub.title}`}
+                aria-current={hub.id === activeHubId ? "step" : undefined}
+                onClick={() => onFocus(hub.id)}
+              />
+            ))}
+          </nav>
+        </div>
       </div>
     );
   }
@@ -221,10 +270,18 @@ export function WorldCanvas({
           >
             <ChevronRight className="stack-arrow-icon" strokeWidth={2.5} aria-hidden />
           </button>
-          <p className="world-caption">{ARROW_CAPTION}</p>
-          <button type="button" className="world-overview-chip" onClick={onOverview}>
-            See the path
-          </button>
+          <nav className="slide-progress" aria-label="Slideshow position">
+            {hubs.map((hub, index) => (
+              <button
+                key={hub.id}
+                type="button"
+                className={`slide-progress-dot${hub.id === activeHubId ? " is-active" : ""}`}
+                aria-label={`Go to slide ${index + 1}: ${hub.title}`}
+                aria-current={hub.id === activeHubId ? "step" : undefined}
+                onClick={() => onFocus(hub.id)}
+              />
+            ))}
+          </nav>
         </div>
       ) : (
         <p className="world-overview-hint">Click a place to travel there</p>
