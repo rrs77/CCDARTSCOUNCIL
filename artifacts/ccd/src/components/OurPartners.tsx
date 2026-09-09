@@ -27,7 +27,7 @@ function hubBySlug(slug: string): PartnerHubConfig | undefined {
   return PARTNER_HUBS.find((h) => h.slug === slug);
 }
 
-const PREMIUM_SLUGS = new Set(['weteachdrama', 'icompose', 'dramaresource']);
+const PREMIUM_SLUGS = new Set(['weteachdrama', 'icompose', 'dramaresource', 'jazznorth']);
 
 /** Demo packs shown when a premium partner row is expanded. */
 function PremiumPartnerResources({ slug }: { slug: string }) {
@@ -129,12 +129,9 @@ function PremiumPartnerResources({ slug }: { slug: string }) {
 
 /**
  * Free organisation card — original tall branded split design.
- * Plate logos (e.g. Jazz North) sit on a white tile inside the shared strip
- * so full-colour / black-field marks match Sadler's Wells–style tile sizing.
  */
 function FreeOrgHubCard({ hub }: { hub: PartnerHubConfig }) {
-  const invertClass = !hub.logoOnPlate && hub.logoInvert ? 'brightness-0 invert' : '';
-  const plateBg = hub.logoOnPlate ? hub.logoPanelColor || '#FFFFFF' : undefined;
+  const invertClass = hub.logoInvert ? 'brightness-0 invert' : '';
 
   return (
     <li className="h-full">
@@ -148,28 +145,13 @@ function FreeOrgHubCard({ hub }: { hub: PartnerHubConfig }) {
           className="flex h-20 w-full shrink-0 items-center justify-center px-4"
           style={{ backgroundColor: FREE_LOGO_STRIP_BG }}
         >
-          {hub.logoOnPlate ? (
-            <span
-              className="flex h-12 w-full max-w-[11rem] items-center justify-center rounded-lg border border-white/20 px-2.5 sm:h-[3.25rem]"
-              style={{ backgroundColor: plateBg }}
-            >
-              <img
-                src={hub.logoSrc}
-                alt=""
-                className="h-8 w-auto max-h-9 max-w-[9.5rem] object-contain object-center sm:h-9 sm:max-w-[10rem]"
-                loading="lazy"
-                decoding="async"
-              />
-            </span>
-          ) : (
-            <img
-              src={hub.logoSrc}
-              alt=""
-              className={`h-10 w-auto max-w-[11rem] object-contain sm:h-11 ${invertClass}`}
-              loading="lazy"
-              decoding="async"
-            />
-          )}
+          <img
+            src={hub.logoSrc}
+            alt=""
+            className={`h-10 w-auto max-w-[11rem] object-contain sm:h-11 ${invertClass}`}
+            loading="lazy"
+            decoding="async"
+          />
         </div>
         <div className="flex flex-1 flex-col items-center justify-center gap-1 px-4 py-4 text-center">
           <span className="text-sm font-medium leading-snug text-gray-800">{hub.displayName}</span>
@@ -326,8 +308,8 @@ function PartnerHubAccordion({
 /**
  * Partner Hubs tab (exact order):
  * 1. Music hubs — EMS + Tri-Borough (collapsed)
- * 2. Premium partners — WTD / iCompose / Drama Resource (collapsed)
- * 3. Organisations — free resources (4-up branded cards; includes Jazz North)
+ * 2. Premium partners — WTD + iCompose (collapsed)
+ * 3. Organisations — free resources (4-up branded cards)
  */
 export function OurPartners() {
   const musicHubs = MUSIC_HUB_SLUGS.map(hubBySlug).filter(Boolean) as PartnerHubConfig[];
@@ -394,7 +376,7 @@ export function OurPartners() {
               id="premium-partners-heading"
               className="mt-1 text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl"
             >
-              We Teach Drama, iCompose &amp; Drama Resource
+              We Teach Drama, iCompose, Drama Resource &amp; Jazz North
             </h3>
             <p className="mt-1 text-sm text-[#002D24]/70">
               Expand a row for details, then open the hub for paid pack Add to basket (demo).

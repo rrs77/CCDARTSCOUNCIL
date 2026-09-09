@@ -42,7 +42,7 @@ export interface PartnerHubConfig {
   logoOnPlate?: boolean;
   /**
    * Paid / premium partner — shown in a separate Partner Hubs section with
-   * Add to basket demo. We Teach Drama, iCompose, Drama Resource.
+   * Add to basket demo. We Teach Drama, iCompose, Drama Resource, Jazz North.
    */
   paid?: boolean;
 }
@@ -192,17 +192,15 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     siteUrl: 'https://www.jazznorth.org/',
     logoSrc: '/partners/jazz-north.png',
     interactive: true,
+    paid: true,
     tagline: 'Strategic development agency for jazz in the North',
     description: [
       'Jazz North is the strategic development agency for jazz in the North of England — Artist Development, Sector Support and Learning & Participation, including free classroom improvisation resources, the Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
-      'This hub lists free Learning & Participation pathways with showcase lessons that seed Activity Library activities and Lesson Library plans. Official downloads stay on jazznorth.org (Learning Resources Area account).',
+      'This hub follows the premium Partner Hub template: Add to basket (demo) plus showcase lessons that seed Activity Library activities and Lesson Library plans. Official downloads stay on jazznorth.org (Learning Resources Area account).',
     ],
     primaryColor: '#1A0A14',
     accentColor: '#FF53B6',
-    /**
-     * Official mark (pink JN + wordmark) sits on a baked black field —
-     * use a light plate so it reads cleanly on the shared org strip / hub band.
-     */
+    /** Official pink logo on light plate */
     logoOnPlate: true,
     logoPanelColor: '#FFFFFF',
   },
