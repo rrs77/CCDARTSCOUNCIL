@@ -112,7 +112,8 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     name: 'Jazz North',
     src: '/partners/jazz-north.png',
     href: 'https://www.jazznorth.org/',
-    heightClass: 'h-6 sm:h-7',
+    /** Slightly tighter than wide hub marks so it sits with ROH / Sadler's Wells peers */
+    heightClass: 'h-5 sm:h-6',
     onPlate: true,
   },
 ];

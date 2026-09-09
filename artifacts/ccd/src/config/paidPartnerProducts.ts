@@ -1,6 +1,9 @@
 /**
- * Dummy paid products for We Teach Drama, iCompose, Drama Resource, Jazz North
- * (and music-hub) basket demos. Prices are placeholders — no real payment is processed.
+ * Dummy basket products for premium partners (We Teach Drama, iCompose, Drama Resource),
+ * free-org Jazz North hub demos, and music-hub basket demos.
+ * Prices are placeholders — no real payment is processed.
+ * Note: Jazz North products here do NOT place the partner in Premium Partners;
+ * placement is driven by PARTNER_HUBS[].paid (jazznorth must remain unpaid).
  */
 
 export type PaidPartnerSlug =
