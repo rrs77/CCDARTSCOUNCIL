@@ -3,6 +3,11 @@ import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { AuthProvider } from './contexts/AuthContext';
+import { ForcePasswordChangeGate } from './components/Auth/ForcePasswordChangeGate';
+import {
+  consumeDownloadIntent,
+  startTrackedDownload,
+} from './utils/trackedDownload';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
 import { PaidBasketProvider } from './contexts/PaidBasketContext';
@@ -54,13 +59,47 @@ import {
   WELCOME_PROTOTYPE_STORAGE_KEY,
   type TabsExplainerTabId,
 } from './components/login/prototypeCopy';
+import { ForumApp, isForumPath } from './components/Forum/ForumApp';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
   const partnerHub =
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+  const onForum =
+    typeof window !== 'undefined' ? isForumPath(window.location.pathname) : false;
   const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
   const [showTabsExplainer, setShowTabsExplainer] = useState(false);
+
+  // After sign-in from a gated download or forum prompt, resume return URL.
+  useEffect(() => {
+    if (!user || loading) return;
+    const { resourceId, returnUrl } = consumeDownloadIntent();
+    if (resourceId) {
+      void startTrackedDownload(resourceId);
+      return;
+    }
+    let ret = returnUrl;
+    if (!ret) {
+      try {
+        ret = sessionStorage.getItem('ccd_forum_return') || '';
+        if (ret) sessionStorage.removeItem('ccd_forum_return');
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!ret && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('return');
+      if (q && q.startsWith('/')) ret = q;
+    }
+    if (ret && ret.startsWith('/') && ret !== window.location.pathname + window.location.search) {
+      window.history.replaceState({}, '', ret);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      if (isForumPath(ret.split('?')[0])) {
+        window.location.assign(ret);
+      }
+    }
+  }, [user, loading]);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
   // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
@@ -158,10 +197,17 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   }
 
   if (!user) {
+    if (onForum) {
+      return <ForumApp />;
+    }
     if (schoolHomepage) {
       return <SchoolHomepage school={schoolHomepage} />;
     }
     return <LoginForm />;
+  }
+
+  if (onForum) {
+    return <ForumApp />;
   }
 
   const handleOpenGuide = (
@@ -356,7 +402,7 @@ function App() {
   // Detect a school-specific public homepage at `/<slug>`. Skip when the path
   // is a partner hub (`/roh`, …) so those routes are not treated as schools.
   const schoolHomepage =
-    typeof window !== 'undefined' && !partnerHub
+    typeof window !== 'undefined' && !partnerHub && !isForumPath(window.location.pathname)
       ? getSchoolForPath(window.location.pathname)
       : null;
 
@@ -367,7 +413,9 @@ function App() {
           <DataProvider>
             <PaidBasketProvider>
               <DndRoot>
-                <AppContent schoolHomepage={schoolHomepage} />
+                <ForcePasswordChangeGate>
+                  <AppContent schoolHomepage={schoolHomepage} />
+                </ForcePasswordChangeGate>
               </DndRoot>
             </PaidBasketProvider>
           </DataProvider>

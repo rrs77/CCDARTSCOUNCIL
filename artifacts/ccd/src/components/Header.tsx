@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, User, LogOut, BookOpen, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check } from 'lucide-react';
+import { Menu, X, User, LogOut, BookOpen, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useData } from '../contexts/DataContext';
@@ -349,6 +349,16 @@ export function Header() {
                   <span className="hidden lg:inline text-sm font-medium">Install</span>
                 </button>
               )}
+
+              {/* Community Forum */}
+              <a
+                href="/forum"
+                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
+                title="Community Forum"
+                aria-label="Open community forum"
+              >
+                <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5" />
+              </a>
 
               {/* Help Button — opens the Help Guide (topic list + step-by-step). */}
               <button
