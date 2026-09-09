@@ -1,6 +1,8 @@
 /** Jazz North partner branding helpers. */
 
 export const JN_LOGO_SRC = '/partners/jazz-north.png';
+/** White lockup for dark green org-card strips (transparent background). */
+export const JN_LOGO_WHITE_SRC = '/partners/jazz-north-white.png';
 export const JN_SITE = 'https://www.jazznorth.org/';
 export const JN_LEARNING_RESOURCES = 'https://www.jazznorth.org/learning-resources-area';
 export const JN_MR_BIG = 'https://www.jazznorth.org/mr-big-scheme-of-work';

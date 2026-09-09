@@ -18,6 +18,12 @@ export interface PartnerHubConfig {
   shortName: string;
   siteUrl: string;
   logoSrc: string;
+  /**
+   * Optional white / monochrome asset for dark green org-card strips.
+   * When set, FreeOrgHubCard uses this directly on the strip (no plate),
+   * while hub chrome can keep `logoSrc` + `logoOnPlate` for colour marks.
+   */
+  logoSrcOnDark?: string;
   /** Whether the hub has interactive content in CCDesigner yet */
   interactive: boolean;
   /** Optional short tagline under the name */
@@ -40,6 +46,11 @@ export interface PartnerHubConfig {
    * wordmarks for WTD / iCompose site logos).
    */
   logoOnPlate?: boolean;
+  /**
+   * Extra Tailwind classes for the logo `<img>` (e.g. enlarge wide plate marks).
+   * Merged after the shared size classes.
+   */
+  logoImgClassName?: string;
   /**
    * Paid / premium partner — shown in a separate Partner Hubs section with
    * Add to basket demo. We Teach Drama, iCompose, Drama Resource.
@@ -191,20 +202,24 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     shortName: 'Jazz North',
     siteUrl: 'https://www.jazznorth.org/',
     logoSrc: '/partners/jazz-north.png',
+    /** White lockup for Organisations free-resource cards (matches ROH / LSO). */
+    logoSrcOnDark: '/partners/jazz-north-white.png',
     interactive: true,
     tagline: 'Strategic development agency for jazz in the North',
     description: [
       'Jazz North is the strategic development agency for jazz in the North of England — Artist Development, Sector Support and Learning & Participation, including free classroom improvisation resources, the Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
-      'This hub lists free Learning & Participation pathways with showcase lessons that seed Activity Library activities and Lesson Library plans. Official downloads stay on jazznorth.org (Learning Resources Area account).',
+      'This hub lists classroom worksheets (Hello Song, Can You Sing Your Song?, 2 and 4 Chant, Improvisation) plus showcase lessons that seed Activity Library activities and Lesson Library plans. Official Learning Resources Area packs also stay on jazznorth.org.',
     ],
     primaryColor: '#1A0A14',
     accentColor: '#FF53B6',
     /**
-     * Official mark (pink JN + wordmark) sits on a baked black field —
-     * use a light plate so it reads cleanly on the shared org strip / hub band.
+     * Colour mark (pink JN + wordmark) on hub band — keep light plate.
+     * Org cards use logoSrcOnDark (white) with no plate.
      */
     logoOnPlate: true,
     logoPanelColor: '#FFFFFF',
+    /** Wide landscape mark — fill the plate more like ROH / other hubs. */
+    logoImgClassName: 'h-12 max-h-[90%] w-auto max-w-[94%] sm:h-14',
   },
   {
     slug: 'sadlerswells',

@@ -129,12 +129,16 @@ function PremiumPartnerResources({ slug }: { slug: string }) {
 
 /**
  * Free organisation card — original tall branded split design.
- * Plate logos (e.g. Jazz North) sit on a white tile inside the shared strip
- * so full-colour / black-field marks match Sadler's Wells–style tile sizing.
+ * Prefer `logoSrcOnDark` (white lockup) directly on the green strip like ROH / LSO.
+ * Plate logos only when there is no dark-strip asset (e.g. full-colour WTD-style marks).
  */
 function FreeOrgHubCard({ hub }: { hub: PartnerHubConfig }) {
-  const invertClass = !hub.logoOnPlate && hub.logoInvert ? 'brightness-0 invert' : '';
-  const plateBg = hub.logoOnPlate ? hub.logoPanelColor || '#FFFFFF' : undefined;
+  const darkStripLogo = hub.logoSrcOnDark;
+  const usePlate = !darkStripLogo && hub.logoOnPlate;
+  const invertClass =
+    !darkStripLogo && !hub.logoOnPlate && hub.logoInvert ? 'brightness-0 invert' : '';
+  const plateBg = usePlate ? hub.logoPanelColor || '#FFFFFF' : undefined;
+  const cardLogoSrc = darkStripLogo || hub.logoSrc;
 
   return (
     <li className="h-full">
@@ -148,13 +152,13 @@ function FreeOrgHubCard({ hub }: { hub: PartnerHubConfig }) {
           className="flex h-20 w-full shrink-0 items-center justify-center px-4"
           style={{ backgroundColor: FREE_LOGO_STRIP_BG }}
         >
-          {hub.logoOnPlate ? (
+          {usePlate ? (
             <span
               className="flex h-12 w-full max-w-[11rem] items-center justify-center rounded-lg border border-white/20 px-2.5 sm:h-[3.25rem]"
               style={{ backgroundColor: plateBg }}
             >
               <img
-                src={hub.logoSrc}
+                src={cardLogoSrc}
                 alt=""
                 className="h-8 w-auto max-h-9 max-w-[9.5rem] object-contain object-center sm:h-9 sm:max-w-[10rem]"
                 loading="lazy"
@@ -163,7 +167,7 @@ function FreeOrgHubCard({ hub }: { hub: PartnerHubConfig }) {
             </span>
           ) : (
             <img
-              src={hub.logoSrc}
+              src={cardLogoSrc}
               alt=""
               className={`h-10 w-auto max-w-[11rem] object-contain sm:h-11 ${invertClass}`}
               loading="lazy"

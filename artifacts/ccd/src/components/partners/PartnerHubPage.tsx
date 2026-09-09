@@ -59,17 +59,23 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
           <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between sm:gap-8">
             <div className="flex min-w-0 flex-col gap-4 sm:flex-row sm:items-center sm:gap-6">
               <div
-                className={`flex h-16 w-52 shrink-0 items-center justify-center rounded-xl px-3 sm:h-[4.5rem] sm:w-56 ${
-                  hub.logoOnPlate ? 'border border-black/10 shadow-sm' : ''
+                className={`flex shrink-0 items-center justify-center rounded-xl ${
+                  hub.logoOnPlate
+                    ? 'h-[4.75rem] w-60 border border-black/10 px-2 shadow-sm sm:h-20 sm:w-64 sm:px-2.5'
+                    : 'h-16 w-52 px-3 sm:h-[4.5rem] sm:w-56'
                 }`}
                 style={{ backgroundColor: logoPlateBg }}
               >
                 <img
                   src={hub.logoSrc}
                   alt={`${hub.displayName} logo`}
-                  className={`h-10 w-auto max-w-full object-contain sm:h-11 ${
-                    invertLogo ? 'brightness-0 invert' : ''
-                  }`}
+                  className={`w-auto max-w-full object-contain ${
+                    hub.logoImgClassName
+                      ? hub.logoImgClassName
+                      : hub.logoOnPlate
+                        ? 'h-12 max-h-[88%] sm:h-[3.25rem]'
+                        : 'h-10 sm:h-11'
+                  } ${invertLogo ? 'brightness-0 invert' : ''}`}
                   loading="eager"
                   decoding="async"
                 />
