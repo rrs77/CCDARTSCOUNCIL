@@ -360,7 +360,7 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
     ],
     resourcesHeading: 'Teacher & learning resources',
     resourcesIntro:
-      'Learning Resources Area, Mr Big scheme, Playlist Project, Jazz Camp for Girls and Educators’ Forums. Prototype Add seeds activities + lesson plans on the interactive hub.',
+      'Classroom worksheets on the interactive hub, plus Learning Resources Area, Mr Big, Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
     resources: [
       {
         title: 'Learning Resources Area',
@@ -368,6 +368,30 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
         description:
           'Free downloadable improvisation pathways for KS1–4 teachers, instrumental tutors and lifetime learners (account required).',
         kind: 'Library',
+      },
+      {
+        title: 'Can You Sing Your Song? — Activities',
+        href: '/partners/jazznorth/jn-can-you-sing-activities.pdf',
+        description: 'Classroom activities worksheet (hub demo pack).',
+        kind: 'PDF',
+      },
+      {
+        title: 'Hello Song — Activities',
+        href: '/partners/jazznorth/jn-hello-song-activities.pdf',
+        description: 'Hello Song activities worksheet (hub demo pack).',
+        kind: 'PDF',
+      },
+      {
+        title: '2 and 4 Chant — Activities',
+        href: '/partners/jazznorth/jn-2-and-4-chant-activities.pdf',
+        description: '2 and 4 Chant activities worksheet (hub demo pack).',
+        kind: 'PDF',
+      },
+      {
+        title: 'Ways into Improvisation',
+        href: '/partners/jazznorth/jn-ways-into-improvisation.pdf',
+        description: 'Improvisation guide for classroom use (hub demo pack).',
+        kind: 'PDF',
       },
       {
         title: 'Mr Big scheme of work',

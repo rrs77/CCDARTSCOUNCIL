@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { ExternalLink, FileText, Loader2, PlusCircle, Check } from 'lucide-react';
+import { Download, ExternalLink, FileText, Loader2, PlusCircle, Check } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   JN_CONTACT,
@@ -29,6 +29,10 @@ import {
 } from './PartnerHubLayout';
 import { AddToBasketButton } from './AddToBasketButton';
 import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
+import {
+  JAZZ_NORTH_COLLECTIONS,
+  getJazzNorthResourcesByCollection,
+} from '../../data/resourceRegistry';
 
 interface JazzNorthPartnerHubProps {
   onAddedToApp?: (info: { sheetId: string }) => void;
@@ -194,6 +198,69 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
           After Add: open Year 2 Music → Lesson Library and Activity Library, then export PDF.
         </p>
       </PartnerHubFeaturedSection>
+
+      <section className="space-y-3 rounded-xl border border-pink-200 bg-pink-50/40 p-4">
+        <div>
+          <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-900">
+            Classroom worksheets &amp; scores
+          </h3>
+          <p className="mt-1 text-sm text-gray-600">
+            Jazz North teaching packs for the hub demo — open PDFs and audio ZIPs directly. Full
+            Learning Resources Area packs still live on jazznorth.org.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-2">
+          {JAZZ_NORTH_COLLECTIONS.map((collection) => {
+            const items = getJazzNorthResourcesByCollection(collection.id);
+            return (
+              <div
+                key={collection.id}
+                className="rounded-lg border border-pink-100 bg-white p-3 shadow-sm"
+              >
+                <h4 className="font-semibold text-gray-900">{collection.title}</h4>
+                <p className="mt-0.5 text-xs text-gray-500">{collection.description}</p>
+                <ul className="mt-3 space-y-1.5">
+                  {items.map((res) => (
+                    <li key={res.id} className="flex items-center justify-between gap-2">
+                      <span className="min-w-0 truncate text-sm text-gray-800" title={res.title}>
+                        {res.title}
+                        <span className="ml-1 text-xs text-gray-400">({res.type})</span>
+                      </span>
+                      <a
+                        href={res.publicUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        download={res.filename}
+                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-pink-300 bg-pink-50 px-2 py-1 text-xs font-medium text-pink-900 hover:bg-pink-100"
+                      >
+                        {res.type.toLowerCase().includes('audio') ? (
+                          <Download className="h-3.5 w-3.5" aria-hidden />
+                        ) : (
+                          <FileText className="h-3.5 w-3.5" aria-hidden />
+                        )}
+                        Open
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            );
+          })}
+        </div>
+        <p className="text-xs text-gray-500">
+          Collections: Can You Sing Your Song?, Hello Song, 2 and 4 Chant, and Improvisation guides.
+          Official account downloads:{' '}
+          <a
+            href={JN_LEARNING_RESOURCES}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="font-medium text-pink-800 hover:underline"
+          >
+            Learning Resources Area
+          </a>
+          .
+        </p>
+      </section>
 
       <section className="space-y-2">
         <div className="flex flex-wrap items-end justify-between gap-2">
