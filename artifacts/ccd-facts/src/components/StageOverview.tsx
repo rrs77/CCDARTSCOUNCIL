@@ -116,9 +116,9 @@ export function StageOverview({
                 style={{ ["--stage-accent" as string]: accent }}
                 onClick={() => onOpen(frame.id)}
                 aria-label={`Open ${label}`}
-                whileHover={reduced ? undefined : { y: -4 }}
+                whileHover={reduced ? undefined : { y: -6, scale: 1.01 }}
                 whileTap={reduced ? undefined : { scale: 0.985 }}
-                transition={{ type: "spring", stiffness: 380, damping: 28 }}
+                transition={{ type: "spring", stiffness: 420, damping: 26 }}
               >
                 <span className="stage-launcher-item-index" aria-hidden>
                   {index}
