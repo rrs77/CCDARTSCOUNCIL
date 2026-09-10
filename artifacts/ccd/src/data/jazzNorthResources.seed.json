@@ -7,12 +7,13 @@
   "copiedIntoRepo": true,
   "copyDecision": "Copied worksheet PDFs and audio ZIPs into public/partners/jazznorth/ so the main-branch hub can list and open them without the auth download stack.",
   "localPublicPatternIfEverInlined": "/partners/jazznorth/{filename}",
-  "dreamHostBaseDefault": "https://www.rhythmstix.co.uk/ccdesignerdocs/",
+  "dreamHostBaseDefault": "https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz North/",
   "dreamHostBaseEnv": "VITE_JN_DREAMHOST_BASE",
-  "externalUrlPattern": "https://www.rhythmstix.co.uk/ccdesignerdocs/{dreamHostFilename}",
+  "externalUrlPattern": "https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz%20North/{dreamHostFilename}",
   "notes": [
     "Hub Open/Download uses exact DreamHost File Manager filenames via jazzNorthDreamHost.ts.",
-    "Override folder with VITE_JN_DREAMHOST_BASE if files sit under a subpath (e.g. .../ccdesignerdocs/partners/jazznorth/).",
+    "Live folder is Organisations/Jazz North/ under /ccdesignerdocs/ (flat filenames at /ccdesignerdocs/ 404).",
+    "Override with VITE_JN_DREAMHOST_BASE if the folder path changes.",
     "Local public/partners/jazznorth/ copies remain as offline fallback only.",
     "Auth/tracked-download path remains on feature/user-mgmt-download-tracking for later."
   ],

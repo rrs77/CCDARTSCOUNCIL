@@ -4,9 +4,8 @@
  * Exact filenames match the user’s File Manager listing. Change ONE string
  * (`JN_DREAMHOST_BASE` or env `VITE_JN_DREAMHOST_BASE`) if the folder path differs.
  *
- * Default assumes files live flat under `/ccdesignerdocs/` on the public site.
- * If they sit in a subfolder (e.g. `ccdesignerdocs/partners/jazznorth/`), set the
- * base to that path including a trailing slash.
+ * Live files sit under `/ccdesignerdocs/Organisations/Jazz North/` (apex host;
+ * www redirects from rhythmstix.co.uk). Flat `/ccdesignerdocs/{file}` returns 404.
  */
 
 /** Override with VITE_JN_DREAMHOST_BASE when the live folder path is confirmed. */
@@ -14,13 +13,29 @@ export const JN_DREAMHOST_BASE = normalizeBase(
   (typeof import.meta !== 'undefined' &&
     (import.meta as ImportMeta & { env?: Record<string, string> }).env
       ?.VITE_JN_DREAMHOST_BASE) ||
-    'https://www.rhythmstix.co.uk/ccdesignerdocs/',
+    'https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz North/',
 );
 
 function normalizeBase(raw: string): string {
   const trimmed = String(raw || '').trim();
-  if (!trimmed) return 'https://www.rhythmstix.co.uk/ccdesignerdocs/';
-  return trimmed.endsWith('/') ? trimmed : `${trimmed}/`;
+  const fallback = 'https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz North/';
+  if (!trimmed) return encodeBasePath(fallback);
+  return encodeBasePath(trimmed.endsWith('/') ? trimmed : `${trimmed}/`);
+}
+
+/** Encode path segments (spaces etc.) while leaving scheme/host untouched. */
+function encodeBasePath(base: string): string {
+  try {
+    const url = new URL(base);
+    url.pathname = url.pathname
+      .split('/')
+      .map((segment) => (segment ? encodeURIComponent(decodeURIComponent(segment)) : ''))
+      .join('/');
+    if (!url.pathname.endsWith('/')) url.pathname += '/';
+    return url.toString();
+  } catch {
+    return base.endsWith('/') ? base : `${base}/`;
+  }
 }
 
 /** Exact DreamHost filenames (spaces and spelling preserved). */
