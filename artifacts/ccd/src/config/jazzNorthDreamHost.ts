@@ -51,6 +51,9 @@ export const JN_DREAMHOST_FILES = {
   helloAudio: 'Hello-song-audio-files.zip',
   improvGames: 'Not-quite-jazz-improvisation-games.pdf',
   waysIntoImprov: 'Ways-into-Improvisation.pdf',
+  /** Upload these overview PDFs to the same DreamHost folder when ready. */
+  mrBigOverview: 'Mr-Big-scheme-overview.pdf',
+  playlistMilestonesOverview: 'Playlist-Project-Milestones-overview.pdf',
 } as const;
 
 export type JnDreamHostFileKey = keyof typeof JN_DREAMHOST_FILES;

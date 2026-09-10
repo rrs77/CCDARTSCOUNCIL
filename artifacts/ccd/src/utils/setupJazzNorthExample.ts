@@ -33,6 +33,7 @@ import {
   JN_PLAYLIST_PROJECT,
   JN_SITE,
 } from './jazzNorthBranding';
+import { jnDreamHostFileUrl } from '../config/jazzNorthDreamHost';
 import { highlightPaidHubActivities } from './recentlyAddedActivities';
 
 const SHEET_ID = 'Year 2 Music';
@@ -46,7 +47,7 @@ const SEED_NOTE = 'JN_SEED:MrBigShowcase';
 const COLOR = '#FF53B6';
 const LEVEL = 'KS1';
 
-const PDF_OVERVIEW = '/partners/jazznorth/jn-mr-big-lesson-overview.pdf';
+const PDF_OVERVIEW = jnDreamHostFileUrl('mrBigOverview');
 
 const CAT = {
   warmUp: 'Jazz North — Warm-ups',
@@ -337,14 +338,28 @@ export const JN_SHOWCASE = {
     'Full CCDesigner lesson plan demo inspired by Jazz North’s Mr Big active-listening scheme — timed activities, outcomes, differentiation and assessment ready for PDF export.',
 };
 
+export type JazzNorthSeedMode = 'all' | 'activities' | 'lesson';
+
+function markerForMode(base: string, mode: JazzNorthSeedMode): string {
+  if (mode === 'activities') return `${base}:activities`;
+  if (mode === 'lesson') return `${base}:lesson`;
+  return base;
+}
+
 export async function setupJazzNorthExample(options?: {
   force?: boolean;
   registerPartnerPlanning?: boolean;
+  /** Separate hub buttons: activities library only, lesson plan only, or both. */
+  mode?: JazzNorthSeedMode;
 }) {
   const force = Boolean(options?.force);
   const shouldRegister = Boolean(options?.registerPartnerPlanning);
+  const mode: JazzNorthSeedMode = options?.mode || 'all';
+  const modeMarker = markerForMode(MARKER_KEY, mode);
+  const wantActivities = mode === 'all' || mode === 'activities';
+  const wantLesson = mode === 'all' || mode === 'lesson';
 
-  if (!force && localStorage.getItem(MARKER_KEY) === '1') {
+  if (!force && localStorage.getItem(modeMarker) === '1') {
     if (shouldRegister) {
       try {
         const existing = readJson<Activity[]>('library-activities', []).filter((a) =>
@@ -355,7 +370,7 @@ export async function setupJazzNorthExample(options?: {
         /* ignore */
       }
     }
-    return { skipped: true as const, sheetId: SHEET_ID };
+    return { skipped: true as const, sheetId: SHEET_ID, mode };
   }
 
   seedLocalCurriculumObjectives(CURRICULUM);
@@ -384,58 +399,85 @@ export async function setupJazzNorthExample(options?: {
         level: LEVEL,
       }) as any,
   );
-  const activities = mergeActivitiesLocal(seeded, isOwnedActivity);
 
-  const lessons = {
-    [lessonNum]: buildShowcaseLesson(activities, lessonNum),
-  };
-  const lessonPayload = mergeLessonsLocal(SHEET_ID, lessons, SEED_NOTE, LESSON_KEYS_KEY, UNIT);
+  let activities: Activity[] = [];
+  if (wantActivities) {
+    activities = mergeActivitiesLocal(seeded, isOwnedActivity);
+  } else {
+    // Lesson-only still embeds activity copies inside the lesson plan payload.
+    activities = seeded.map(
+      (a, i) =>
+        ({
+          ...a,
+          _id: `jn-mrb-lesson-only-${i}`,
+          id: `jn-mrb-lesson-only-${i}`,
+        }) as Activity,
+    );
+  }
 
-  const lessonStack: StackedLesson = {
-    id: newStackId('jn-mrb'),
-    name: STACK_NAME,
-    description:
-      'Full showcase lesson for Jazz North — export to PDF to demonstrate CCDesigner lesson-plan depth.',
-    color: COLOR,
-    lessons: lessonPayload.writtenNumbers,
-    totalTime: activities.reduce((s, a) => s + (a.time || 0), 0),
-    totalActivities: activities.length,
-    created_at: new Date().toISOString(),
-  };
-  mergeStackLocal(lessonStack, STACK_ID_KEY, STACK_NAME);
+  let writtenNumbers: string[] = [];
+  let stackId = '';
+  if (wantLesson) {
+    const lessons = {
+      [lessonNum]: buildShowcaseLesson(activities, lessonNum),
+    };
+    const lessonPayload = mergeLessonsLocal(SHEET_ID, lessons, SEED_NOTE, LESSON_KEYS_KEY, UNIT);
+    writtenNumbers = lessonPayload.writtenNumbers;
+
+    const lessonStack: StackedLesson = {
+      id: newStackId('jn-mrb'),
+      name: STACK_NAME,
+      description:
+        'Full showcase lesson for Jazz North — export to PDF to demonstrate CCDesigner lesson-plan depth.',
+      color: COLOR,
+      lessons: lessonPayload.writtenNumbers,
+      totalTime: activities.reduce((s, a) => s + (a.time || 0), 0),
+      totalActivities: activities.length,
+      created_at: new Date().toISOString(),
+    };
+    mergeStackLocal(lessonStack, STACK_ID_KEY, STACK_NAME);
+    stackId = lessonStack.id;
+  }
 
   finishPrototypeSeed({
-    activities,
+    activities: wantActivities ? activities : [],
     categories: ALL_CATEGORIES,
     categoryMerge,
-    source: 'jazz-north-mr-big-seed',
-    markerKey: MARKER_KEY,
+    source: `jazz-north-mr-big-seed-${mode}`,
+    markerKey: modeMarker,
     starActivities: false,
   });
+  if (mode === 'all') {
+    localStorage.setItem(markerForMode(MARKER_KEY, 'activities'), '1');
+    localStorage.setItem(markerForMode(MARKER_KEY, 'lesson'), '1');
+  }
 
-  highlightPaidHubActivities(activities, {
-    partnerSlug: 'jazznorth',
-    partnerLabel: 'Jazz North',
-    pickTitles: [
-      'Meet Mr Big — story hook',
-      'Contrast detective listening',
-      'Percussion improvisation — jazz contrasts',
-      'Perform, reflect, next listening',
-    ],
-    fallbackCount: 4,
-    categories: ALL_CATEGORIES,
-  });
+  if (wantActivities) {
+    highlightPaidHubActivities(activities, {
+      partnerSlug: 'jazznorth',
+      partnerLabel: 'Jazz North',
+      pickTitles: [
+        'Meet Mr Big — story hook',
+        'Contrast detective listening',
+        'Percussion improvisation — jazz contrasts',
+        'Perform, reflect, next listening',
+      ],
+      fallbackCount: 4,
+      categories: ALL_CATEGORIES,
+    });
+  }
 
   if (shouldRegister) {
-    registerJnPlanning(activities, lessonPayload.writtenNumbers);
+    registerJnPlanning(activities, writtenNumbers);
   }
 
   return {
     skipped: false as const,
-    activities: activities.length,
-    lessons: lessonPayload.writtenNumbers.length,
-    stackId: lessonStack.id,
+    activities: wantActivities ? activities.length : 0,
+    lessons: writtenNumbers.length,
+    stackId,
     sheetId: SHEET_ID,
+    mode,
   };
 }
 
@@ -449,7 +491,7 @@ const PL_MARKER_KEY = 'ccd-jn-playlist-milestones-seeded-v1';
 const PL_STACK_ID_KEY = 'ccd-jn-playlist-milestones-stack-id';
 const PL_LESSON_KEYS_KEY = 'ccd-jn-playlist-milestones-lesson-keys';
 const PL_SEED_NOTE = 'JN_SEED:PlaylistMilestonesShowcase';
-const PL_PDF = '/partners/jazznorth/jn-playlist-milestones-overview.pdf';
+const PL_PDF = jnDreamHostFileUrl('playlistMilestonesOverview');
 
 const PL_CAT = {
   warmUp: 'Jazz North — Playlist warm-ups',
@@ -736,11 +778,16 @@ export const JN_PLAYLIST_SHOWCASE = {
 export async function setupJazzNorthPlaylistExample(options?: {
   force?: boolean;
   registerPartnerPlanning?: boolean;
+  mode?: JazzNorthSeedMode;
 }) {
   const force = Boolean(options?.force);
   const shouldRegister = Boolean(options?.registerPartnerPlanning);
+  const mode: JazzNorthSeedMode = options?.mode || 'all';
+  const modeMarker = markerForMode(PL_MARKER_KEY, mode);
+  const wantActivities = mode === 'all' || mode === 'activities';
+  const wantLesson = mode === 'all' || mode === 'lesson';
 
-  if (!force && localStorage.getItem(PL_MARKER_KEY) === '1') {
+  if (!force && localStorage.getItem(modeMarker) === '1') {
     if (shouldRegister) {
       try {
         const existing = readJson<Activity[]>('library-activities', []).filter((a) =>
@@ -751,7 +798,7 @@ export async function setupJazzNorthPlaylistExample(options?: {
         /* ignore */
       }
     }
-    return { skipped: true as const, sheetId: PL_SHEET_ID };
+    return { skipped: true as const, sheetId: PL_SHEET_ID, mode };
   }
 
   seedLocalCurriculumObjectives(PL_CURRICULUM);
@@ -780,64 +827,90 @@ export async function setupJazzNorthPlaylistExample(options?: {
         level: 'KS2',
       }) as any,
   );
-  const activities = mergeActivitiesLocal(seeded, isPlaylistOwnedActivity);
 
-  const lessons = {
-    [lessonNum]: buildPlaylistLesson(activities),
-  };
-  const lessonPayload = mergeLessonsLocal(
-    PL_SHEET_ID,
-    lessons,
-    PL_SEED_NOTE,
-    PL_LESSON_KEYS_KEY,
-    PL_UNIT,
-  );
+  let activities: Activity[] = [];
+  if (wantActivities) {
+    activities = mergeActivitiesLocal(seeded, isPlaylistOwnedActivity);
+  } else {
+    activities = seeded.map(
+      (a, i) =>
+        ({
+          ...a,
+          _id: `jn-pl-lesson-only-${i}`,
+          id: `jn-pl-lesson-only-${i}`,
+        }) as Activity,
+    );
+  }
 
-  const lessonStack: StackedLesson = {
-    id: newStackId('jn-pl'),
-    name: PL_STACK_NAME,
-    description:
-      'Playlist Project showcase for Jazz North — activities + lesson plan for Lesson Library / PDF export.',
-    color: COLOR,
-    lessons: lessonPayload.writtenNumbers,
-    totalTime: activities.reduce((s, a) => s + (a.time || 0), 0),
-    totalActivities: activities.length,
-    created_at: new Date().toISOString(),
-  };
-  mergeStackLocal(lessonStack, PL_STACK_ID_KEY, PL_STACK_NAME);
+  let writtenNumbers: string[] = [];
+  let stackId = '';
+  if (wantLesson) {
+    const lessons = {
+      [lessonNum]: buildPlaylistLesson(activities),
+    };
+    const lessonPayload = mergeLessonsLocal(
+      PL_SHEET_ID,
+      lessons,
+      PL_SEED_NOTE,
+      PL_LESSON_KEYS_KEY,
+      PL_UNIT,
+    );
+    writtenNumbers = lessonPayload.writtenNumbers;
+
+    const lessonStack: StackedLesson = {
+      id: newStackId('jn-pl'),
+      name: PL_STACK_NAME,
+      description:
+        'Playlist Project showcase for Jazz North — activities + lesson plan for Lesson Library / PDF export.',
+      color: COLOR,
+      lessons: lessonPayload.writtenNumbers,
+      totalTime: activities.reduce((s, a) => s + (a.time || 0), 0),
+      totalActivities: activities.length,
+      created_at: new Date().toISOString(),
+    };
+    mergeStackLocal(lessonStack, PL_STACK_ID_KEY, PL_STACK_NAME);
+    stackId = lessonStack.id;
+  }
 
   finishPrototypeSeed({
-    activities,
+    activities: wantActivities ? activities : [],
     categories: PL_ALL_CATEGORIES,
     categoryMerge,
-    source: 'jazz-north-playlist-milestones-seed',
-    markerKey: PL_MARKER_KEY,
+    source: `jazz-north-playlist-milestones-seed-${mode}`,
+    markerKey: modeMarker,
     starActivities: false,
   });
+  if (mode === 'all') {
+    localStorage.setItem(markerForMode(PL_MARKER_KEY, 'activities'), '1');
+    localStorage.setItem(markerForMode(PL_MARKER_KEY, 'lesson'), '1');
+  }
 
-  highlightPaidHubActivities(activities, {
-    partnerSlug: 'jazznorth',
-    partnerLabel: 'Jazz North',
-    pickTitles: [
-      'Milestones hook — why repeated listening works',
-      'Focus listen — find the hook',
-      'Active listening stations',
-      'Call-and-response improvisation taste',
-    ],
-    fallbackCount: 4,
-    categories: PL_ALL_CATEGORIES,
-  });
+  if (wantActivities) {
+    highlightPaidHubActivities(activities, {
+      partnerSlug: 'jazznorth',
+      partnerLabel: 'Jazz North',
+      pickTitles: [
+        'Milestones hook — why repeated listening works',
+        'Focus listen — find the hook',
+        'Active listening stations',
+        'Call-and-response improvisation taste',
+      ],
+      fallbackCount: 4,
+      categories: PL_ALL_CATEGORIES,
+    });
+  }
 
   if (shouldRegister) {
-    registerPlaylistPlanning(activities, lessonPayload.writtenNumbers);
+    registerPlaylistPlanning(activities, writtenNumbers);
   }
 
   return {
     skipped: false as const,
-    activities: activities.length,
-    lessons: lessonPayload.writtenNumbers.length,
-    stackId: lessonStack.id,
+    activities: wantActivities ? activities.length : 0,
+    lessons: writtenNumbers.length,
+    stackId,
     sheetId: PL_SHEET_ID,
+    mode,
   };
 }
 

@@ -1,5 +1,7 @@
 /** Jazz North partner branding helpers. */
 
+import { jnDreamHostFileUrl } from '../config/jazzNorthDreamHost';
+
 export const JN_LOGO_SRC = '/partners/jazz-north.png';
 /** White lockup for dark green org-card strips (transparent background). */
 export const JN_LOGO_WHITE_SRC = '/partners/jazz-north-white.png';
@@ -16,11 +18,9 @@ export const JN_WHAT_WE_DO = 'https://www.jazznorth.org/what-we-do';
 export const JN_CONTACT = 'https://www.jazznorth.org/contact';
 export const JN_TEAM = 'https://www.jazznorth.org/meet-the-team';
 
-/** Prototype showcase lesson PDF (generated; not an official pack). */
-export const JN_SHOWCASE_LESSON_PDF =
-  '/partners/jazznorth/jn-mr-big-lesson-overview.pdf';
-export const JN_PLAYLIST_PDF =
-  '/partners/jazznorth/jn-playlist-milestones-overview.pdf';
+/** Scheme overview PDFs on DreamHost (upload if missing — see docs/JAZZ_NORTH_RHYTHMSTIX_FILES.md). */
+export const JN_SHOWCASE_LESSON_PDF = jnDreamHostFileUrl('mrBigOverview');
+export const JN_PLAYLIST_PDF = jnDreamHostFileUrl('playlistMilestonesOverview');
 export const JN_FOLDER_NAME = 'Jazz North';
 
 /** Brand pink sampled from official Jazz North logo asset. */
