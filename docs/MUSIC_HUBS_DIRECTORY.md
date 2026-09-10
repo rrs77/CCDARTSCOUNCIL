@@ -16,6 +16,10 @@ Branch: `feature/uk-music-hubs-directory`
 - Content approval workflow (draft → pending → published / changes requested / rejected)
 - Hub area assignment via Settings → Users → **Manage Access** (extends existing users; no Hub login accounts)
 
+## Demo / prototype visitors
+
+Demo mode uses the same Music Hubs UI. Featured **Open Hub** opens `/ems` with an **Other hubs in East of England** panel (Greater Essex, EMS, Music-on-Sea, Thurrock, districts). East of England / Greater Essex hierarchy pages expand children with real `/music-hubs/…` and `/ems` links. England → East of England accordion opens by default in demo mode.
+
 ## Routes
 
 | URL | Who | What |

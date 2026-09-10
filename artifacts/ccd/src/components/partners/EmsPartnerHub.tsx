@@ -23,8 +23,9 @@ import {
 } from './PartnerHubLayout';
 import { AddToBasketButton } from './AddToBasketButton';
 import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
-import { openMusicHubPath } from '../../config/musicHubsDirectory';
+import { musicHubPublicHref, openMusicHubPath } from '../../config/musicHubsDirectory';
 import type { EssexDistrictSlug } from '../../config/musicHubsDirectory';
+import { GreaterEssexRegionNav } from '../musicHubs/GreaterEssexRegionNav';
 
 const EssexDistrictMap = lazy(() =>
   import('../musicHubs/EssexDistrictMap').then((m) => ({ default: m.EssexDistrictMap })),
@@ -133,6 +134,13 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
         </a>
         <span aria-hidden> · </span>
         <a
+          href="/music-hubs/england/east-of-england"
+          className="hover:underline"
+        >
+          East of England
+        </a>
+        <span aria-hidden> · </span>
+        <a
           href="/music-hubs/england/east-of-england/greater-essex"
           className="hover:underline"
         >
@@ -141,6 +149,8 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
         <span aria-hidden> · </span>
         Essex Music Service
       </p>
+
+      <GreaterEssexRegionNav current="ems" title="Other hubs in East of England" />
 
       <PartnerHubFeaturedSection
         eyebrow="Featured workshop · mock product"
@@ -340,10 +350,22 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
         </ul>
       </section>
 
-      <section className="rounded-xl border border-[#002D24]/12 bg-white px-4 py-4 shadow-sm sm:px-5">
+      <section
+        id="essex-districts"
+        className="scroll-mt-6 rounded-xl border border-[#002D24]/12 bg-white px-4 py-4 shadow-sm sm:px-5"
+      >
         <h3 className="text-lg font-semibold text-gray-900">In your area</h3>
         <p className="mt-1 text-sm text-gray-600">
-          Explore Essex districts. District pages use the shared local-area template.
+          Explore Essex districts on the map, or open the{' '}
+          <a
+            href={musicHubPublicHref(
+              'england/east-of-england/greater-essex/essex-music-service/chelmsford',
+            )}
+            className="font-semibold text-[#330968] hover:underline"
+          >
+            Chelmsford sample page
+          </a>
+          .
         </p>
         <div className="mt-4">
           <Suspense fallback={<p className="text-sm text-gray-500">Loading map…</p>}>

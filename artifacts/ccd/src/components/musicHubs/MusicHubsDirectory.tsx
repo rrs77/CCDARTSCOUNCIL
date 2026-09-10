@@ -4,12 +4,14 @@ import {
   getFeaturedMusicHub,
   getMusicHubsDirectory,
   musicHubPageHref,
+  musicHubPublicHref,
   openMusicHubPath,
   searchMusicHubs,
   visibleChildren,
 } from '../../config/musicHubsDirectory';
 import type { MusicHubDirectoryNode } from '../../types/musicHubsDirectory';
 import { openPartnerHub } from '../../config/partnerHubs';
+import { isAuthorizedDemoMode } from '../../utils/demoMode';
 
 /**
  * Main Music Hubs directory — featured EMS card + country accordions + search.
@@ -18,8 +20,13 @@ import { openPartnerHub } from '../../config/partnerHubs';
 export function MusicHubsDirectory() {
   const directory = useMemo(() => getMusicHubsDirectory(), []);
   const featured = useMemo(() => getFeaturedMusicHub(), []);
-  const [expandedCountry, setExpandedCountry] = useState<string | null>(null);
-  const [expandedRegion, setExpandedRegion] = useState<string | null>(null);
+  const demoDefaults = typeof window !== 'undefined' && isAuthorizedDemoMode();
+  const [expandedCountry, setExpandedCountry] = useState<string | null>(
+    demoDefaults ? 'england' : null,
+  );
+  const [expandedRegion, setExpandedRegion] = useState<string | null>(
+    demoDefaults ? 'east-of-england' : null,
+  );
   const [query, setQuery] = useState('');
 
   const searchHits = useMemo(() => searchMusicHubs(query), [query]);
@@ -38,7 +45,9 @@ export function MusicHubsDirectory() {
           MUSIC HUBS
         </h2>
         <p className="mt-1 text-sm text-[#002D24]/70">
-          Explore Music Hubs, local music services, resources and opportunities across the UK.
+          Prototype directory of UK Music Hubs — East of England (Greater Essex) is the working
+          example with EMS, district pages and sample resources. Other nations and regions are
+          light placeholders for now.
         </p>
       </div>
 
@@ -295,39 +304,54 @@ function RegionAccordionRow({
             <p className="py-1 text-xs text-[#002D24]/60">Hub page coming soon</p>
           ) : (
             <ul className="space-y-1.5">
-              {children.map((child) => (
-                <li key={child.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (child.partnerHubSlug === 'ems' || child.partnerHubSlug === 'triborough') {
-                        openPartnerHub(child.partnerHubSlug);
-                        return;
-                      }
-                      // Prefer partner hub for nested service with partnerHubSlug
-                      const service = child.partnerHubSlug
-                        ? child
-                        : visibleChildren(child).find((c) => c.partnerHubSlug);
-                      if (service?.partnerHubSlug) {
-                        openPartnerHub(service.partnerHubSlug);
-                        return;
-                      }
-                      openMusicHubPath(child.path);
-                    }}
-                    className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm text-[#002D24] hover:bg-[#E8F0EA]"
-                  >
-                    <span>
-                      <span className="font-medium">{child.name}</span>
-                      {child.status === 'coming-soon' && (
-                        <span className="mt-0.5 block text-xs text-[#002D24]/55">
-                          Hub page coming soon
-                        </span>
-                      )}
-                    </span>
-                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#002D24]/40" aria-hidden />
-                  </button>
-                </li>
-              ))}
+              {children.map((child) => {
+                // Music hubs with multiple services (e.g. Greater Essex) open the
+                // hub page so siblings stay listed — do not skip straight to EMS.
+                const openHref =
+                  child.partnerHubSlug === 'ems' || child.partnerHubSlug === 'triborough'
+                    ? `/${child.partnerHubSlug}`
+                    : musicHubPublicHref(child.path);
+                const nested = visibleChildren(child);
+                return (
+                  <li key={child.id}>
+                    <a
+                      href={openHref}
+                      className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left text-sm text-[#002D24] hover:bg-[#E8F0EA]"
+                    >
+                      <span>
+                        <span className="font-medium">{child.name}</span>
+                        {child.status === 'coming-soon' && (
+                          <span className="mt-0.5 block text-xs text-[#002D24]/55">
+                            Hub page coming soon
+                          </span>
+                        )}
+                      </span>
+                      <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#002D24]/40" aria-hidden />
+                    </a>
+                    {nested.length > 0 && child.kind === 'music-hub' && (
+                      <ul className="mb-1 ml-3 space-y-0.5 border-l border-[#002D24]/10 pl-2">
+                        {nested.map((svc) => {
+                          const svcHref =
+                            svc.partnerHubSlug === 'ems' || svc.partnerHubSlug === 'triborough'
+                              ? `/${svc.partnerHubSlug}`
+                              : musicHubPublicHref(svc.path);
+                          return (
+                            <li key={svc.id}>
+                              <a
+                                href={svcHref}
+                                className="block rounded-md px-2 py-1.5 text-xs font-medium text-[#002D24]/85 hover:bg-[#E8F0EA]"
+                              >
+                                {svc.name}
+                                {svc.status === 'coming-soon' ? ' · soon' : ''}
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    )}
+                  </li>
+                );
+              })}
             </ul>
           )}
           <a

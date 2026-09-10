@@ -5,6 +5,7 @@ import {
   getMusicHubBreadcrumbs,
   musicHubAdminHref,
   musicHubPageHref,
+  musicHubPublicHref,
   openMusicHubPath,
   visibleChildren,
 } from '../../config/musicHubsDirectory';
@@ -26,6 +27,7 @@ import {
   submitRevisionForApproval,
 } from '../../utils/musicHubContentStore';
 import { HubEditModal, HubEditPencil } from './HubEditModal';
+import { GreaterEssexRegionNav } from './GreaterEssexRegionNav';
 
 const EssexDistrictMap = lazy(() =>
   import('./EssexDistrictMap').then((m) => ({ default: m.EssexDistrictMap })),
@@ -555,27 +557,38 @@ export function HubPageTemplate({
         </Section>
       )}
 
+      {(node.id === 'east-of-england' ||
+        node.id === 'greater-essex' ||
+        node.id === 'music-on-sea' ||
+        node.id === 'thurrock-music-service' ||
+        node.path.startsWith('england/east-of-england')) &&
+        node.kind !== 'district' && (
+          <GreaterEssexRegionNav
+            current={
+              node.id === 'east-of-england'
+                ? 'east-of-england'
+                : node.id === 'greater-essex'
+                  ? 'greater-essex'
+                  : node.id === 'music-on-sea'
+                    ? 'music-on-sea'
+                    : node.id === 'thurrock-music-service'
+                      ? 'thurrock'
+                      : node.id === 'ems'
+                        ? 'ems'
+                        : 'greater-essex'
+            }
+            title={
+              node.id === 'east-of-england' || node.id === 'greater-essex'
+                ? 'Hubs in East of England'
+                : 'Other hubs in East of England'
+            }
+            showDistrictEntry={node.id !== 'music-on-sea' && node.id !== 'thurrock-music-service'}
+          />
+        )}
+
       {childNodes.length > 0 && (
         <Section title="Explore">
-          <ul className="space-y-2" aria-label={`Children of ${node.name}`}>
-            {childNodes.map((child) => (
-              <li key={child.id}>
-                <button
-                  type="button"
-                  onClick={() => openMusicHubPath(child.path)}
-                  className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#002D24]/15 bg-[#E8F0EA]/40 px-3 py-2.5 text-left transition-colors hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
-                >
-                  <span>
-                    <span className="block text-sm font-semibold text-[#002D24]">{child.name}</span>
-                    {child.status === 'coming-soon' && (
-                      <span className="text-xs text-[#002D24]/55">Hub page coming soon</span>
-                    )}
-                  </span>
-                  <ChevronRight className="h-4 w-4 shrink-0 text-[#002D24]/50" aria-hidden />
-                </button>
-              </li>
-            ))}
-          </ul>
+          <ExpandedExploreTree nodes={childNodes} depth={0} />
         </Section>
       )}
 
@@ -589,5 +602,51 @@ export function HubPageTemplate({
         />
       )}
     </div>
+  );
+}
+
+/** Always-expanded child list with real hrefs (no JS-only navigation to `/`). */
+function ExpandedExploreTree({
+  nodes,
+  depth,
+}: {
+  nodes: MusicHubDirectoryNode[];
+  depth: number;
+}) {
+  return (
+    <ul
+      className={depth === 0 ? 'space-y-2' : 'mt-2 space-y-1.5 border-l border-[#002D24]/10 pl-3'}
+      aria-label={depth === 0 ? 'Hubs and areas' : undefined}
+    >
+      {nodes.map((child) => {
+        const kids = visibleChildren(child);
+        const href =
+          child.partnerHubSlug === 'ems' || child.partnerHubSlug === 'triborough'
+            ? `/${child.partnerHubSlug}`
+            : musicHubPublicHref(child.path);
+        return (
+          <li key={child.id}>
+            <a
+              href={href}
+              className="flex w-full items-center justify-between gap-3 rounded-xl border border-[#002D24]/15 bg-[#E8F0EA]/40 px-3 py-2.5 text-left transition-colors hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
+            >
+              <span>
+                <span className="block text-sm font-semibold text-[#002D24]">{child.name}</span>
+                {child.status === 'coming-soon' && (
+                  <span className="text-xs text-[#002D24]/55">Hub page coming soon</span>
+                )}
+                {child.tagline && child.status !== 'coming-soon' && (
+                  <span className="text-xs text-[#002D24]/60">{child.tagline}</span>
+                )}
+              </span>
+              <ChevronRight className="h-4 w-4 shrink-0 text-[#002D24]/50" aria-hidden />
+            </a>
+            {kids.length > 0 && depth < 2 && (
+              <ExpandedExploreTree nodes={kids} depth={depth + 1} />
+            )}
+          </li>
+        );
+      })}
+    </ul>
   );
 }

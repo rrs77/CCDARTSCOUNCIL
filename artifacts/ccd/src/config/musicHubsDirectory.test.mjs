@@ -123,6 +123,19 @@ test('EMS and Tri-Borough use real logos under music-hubs/logos', () => {
   }
 });
 
+test('Music-on-Sea and Thurrock are published directory entries with websites', () => {
+  const mos = findByPath('england/east-of-england/greater-essex/music-on-sea');
+  const thurrock = findByPath('england/east-of-england/greater-essex/thurrock-music-service');
+  assert.ok(mos);
+  assert.ok(thurrock);
+  assert.equal(mos.node.status, 'published');
+  assert.equal(thurrock.node.status, 'published');
+  assert.ok(mos.node.siteUrl);
+  assert.ok(thurrock.node.siteUrl);
+  assert.equal(mos.node.logoSrc, undefined);
+  assert.equal(thurrock.node.logoSrc, undefined);
+});
+
 test('Wales NMS and coming-soon nations stay text-only (no fabricated logos)', () => {
   const nmsw = findByPath('wales/national-music-service-wales');
   const glasgow = findByPath('scotland/glasgow');

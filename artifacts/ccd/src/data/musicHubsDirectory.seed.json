@@ -10,7 +10,7 @@
       "path": "england",
       "status": "published",
       "description": [
-        "Explore Music Hubs and local music services across the English regions."
+        "Browse English regions. East of England (Greater Essex / EMS) is the working prototype example; other regions are mostly coming soon."
       ],
       "children": [
         {
@@ -20,6 +20,27 @@
           "slug": "east-of-england",
           "path": "england/east-of-england",
           "status": "published",
+          "tagline": "Prototype focus region",
+          "description": [
+            "East of England is the polished demo region for this Music Hubs prototype — start with Greater Essex Music Hub, Essex Music Service, and the district map.",
+            "Other English regions below remain light placeholders until hub partners populate them."
+          ],
+          "content": {
+            "about": [
+              "This prototype concentrates real structure and sample resources in East of England so demos can walk Featured EMS → Greater Essex → districts without claiming UK-wide completeness.",
+              "Greater Essex Music Hub includes Essex Music Service, Music-on-Sea (Southend) and Thurrock Music Service."
+            ],
+            "links": [
+              {
+                "label": "Greater Essex Music Hub",
+                "href": "/music-hubs/england/east-of-england/greater-essex"
+              },
+              {
+                "label": "Essex Music Service partner hub",
+                "href": "/ems"
+              }
+            ]
+          },
           "children": [
             {
               "id": "greater-essex",
@@ -362,12 +383,37 @@
                   "name": "Music-on-Sea (Southend)",
                   "slug": "music-on-sea",
                   "path": "england/east-of-england/greater-essex/music-on-sea",
-                  "status": "coming-soon",
+                  "status": "published",
                   "organisationId": "ems",
+                  "tagline": "Music education in Southend-on-Sea",
                   "description": [
-                    "Music-on-Sea delivers music education in Southend-on-Sea as part of Greater Essex Music Hub.",
-                    "Hub page coming soon."
-                  ]
+                    "Music-on-Sea is the music education hub for Southend-on-Sea, working as part of Greater Essex Music Hub alongside Essex Music Service and Thurrock Music Service."
+                  ],
+                  "siteUrl": "https://www.musiconsea.co.uk/",
+                  "content": {
+                    "about": [
+                      "Music-on-Sea supports schools, families and young people in Southend-on-Sea with music education pathways within Greater Essex Music Hub.",
+                      "Full programme listings, booking and the latest offer live on the Music-on-Sea website — this CCDesigner page is a short directory entry for the East of England prototype, not a full resource catalogue."
+                    ],
+                    "schoolsEducation": [
+                      "School and community music education in Southend is coordinated through Music-on-Sea — see their website for current programmes."
+                    ],
+                    "links": [
+                      {
+                        "label": "Music-on-Sea website",
+                        "href": "https://www.musiconsea.co.uk/"
+                      },
+                      {
+                        "label": "Greater Essex Music Hub",
+                        "href": "/music-hubs/england/east-of-england/greater-essex"
+                      },
+                      {
+                        "label": "Essex Music Service",
+                        "href": "/ems"
+                      }
+                    ],
+                    "resources": []
+                  }
                 },
                 {
                   "id": "thurrock-music-service",
@@ -375,12 +421,37 @@
                   "name": "Thurrock Music Service",
                   "slug": "thurrock-music-service",
                   "path": "england/east-of-england/greater-essex/thurrock-music-service",
-                  "status": "coming-soon",
+                  "status": "published",
                   "organisationId": "ems",
+                  "tagline": "Music education in Thurrock",
                   "description": [
-                    "Thurrock Music Service supports schools and young people in Thurrock as part of Greater Essex Music Hub.",
-                    "Hub page coming soon."
-                  ]
+                    "Thurrock Music Service supports schools and young people in Thurrock as part of Greater Essex Music Hub."
+                  ],
+                  "siteUrl": "https://www.thurrock.gov.uk/",
+                  "content": {
+                    "about": [
+                      "Thurrock Music Service works within Greater Essex Music Hub to support music education for schools and young people in Thurrock.",
+                      "Official local offer and contacts are published by Thurrock Council / the music service — this page is a short directory entry for the East of England prototype without fabricated courses or events."
+                    ],
+                    "schoolsEducation": [
+                      "Ask Thurrock Music Service or your school music lead for the current instrumental, curriculum and ensemble pathways available locally."
+                    ],
+                    "links": [
+                      {
+                        "label": "Thurrock Council",
+                        "href": "https://www.thurrock.gov.uk/"
+                      },
+                      {
+                        "label": "Greater Essex Music Hub",
+                        "href": "/music-hubs/england/east-of-england/greater-essex"
+                      },
+                      {
+                        "label": "Essex Music Service",
+                        "href": "/ems"
+                      }
+                    ],
+                    "resources": []
+                  }
                 }
               ]
             }
