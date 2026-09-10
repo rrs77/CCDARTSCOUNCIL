@@ -1,89 +1,31 @@
 /**
- * Interactive Essex districts map — schematic SVG paths (no external asset found).
+ * Interactive Essex districts map — ONS LAD boundaries as SVG paths.
  * Hover highlight, click → district path, keyboard + aria, list fallback for mobile.
  */
 
 import { useId, useState } from 'react';
 import type { EssexDistrictSlug } from '../../config/musicHubsDirectory';
 import { ESSEX_DISTRICT_SLUGS } from '../../config/musicHubsDirectory';
+import {
+  ESSEX_DISTRICT_PATHS,
+  ESSEX_MAP_VIEWBOX,
+  type EssexDistrictPath,
+} from './essexDistrictPaths';
 
-export type EssexDistrictMeta = {
-  slug: EssexDistrictSlug;
-  name: string;
-  /** SVG path in viewBox 0 0 400 320 */
-  d: string;
-};
+export type EssexDistrictMeta = EssexDistrictPath;
 
-/**
- * Approximate district shapes arranged geographically (NW Uttlesford → SE Castle Point).
- * Clean schematic for interaction — not Ordnance Survey accuracy.
- */
-export const ESSEX_DISTRICTS: EssexDistrictMeta[] = [
-  {
-    slug: 'uttlesford',
-    name: 'Uttlesford',
-    d: 'M40 20 L140 18 L145 70 L95 95 L35 75 Z',
-  },
-  {
-    slug: 'braintree',
-    name: 'Braintree',
-    d: 'M145 18 L230 22 L235 85 L175 100 L145 70 Z',
-  },
-  {
-    slug: 'colchester',
-    name: 'Colchester',
-    d: 'M230 22 L310 30 L320 95 L250 105 L235 85 Z',
-  },
-  {
-    slug: 'tendring',
-    name: 'Tendring',
-    d: 'M310 30 L385 45 L380 120 L325 125 L320 95 Z',
-  },
-  {
-    slug: 'harlow',
-    name: 'Harlow',
-    d: 'M35 75 L95 95 L90 130 L40 125 Z',
-  },
-  {
-    slug: 'epping-forest',
-    name: 'Epping Forest',
-    d: 'M40 125 L90 130 L100 175 L45 180 Z',
-  },
-  {
-    slug: 'chelmsford',
-    name: 'Chelmsford',
-    d: 'M95 95 L175 100 L185 160 L110 165 L90 130 Z',
-  },
-  {
-    slug: 'maldon',
-    name: 'Maldon',
-    d: 'M175 100 L250 105 L255 165 L185 160 Z',
-  },
-  {
-    slug: 'brentwood',
-    name: 'Brentwood',
-    d: 'M45 180 L110 165 L120 210 L55 220 Z',
-  },
-  {
-    slug: 'basildon',
-    name: 'Basildon',
-    d: 'M110 165 L185 160 L195 215 L125 225 L120 210 Z',
-  },
-  {
-    slug: 'rochford',
-    name: 'Rochford',
-    d: 'M185 160 L255 165 L270 220 L200 230 L195 215 Z',
-  },
-  {
-    slug: 'castle-point',
-    name: 'Castle Point',
-    d: 'M125 225 L200 230 L205 275 L140 280 L125 250 Z',
-  },
-];
+/** @deprecated Prefer ESSEX_DISTRICT_PATHS — kept as alias for callers. */
+export const ESSEX_DISTRICTS = ESSEX_DISTRICT_PATHS;
 
 const NAME_BY_SLUG = Object.fromEntries(
-  ESSEX_DISTRICTS.map((d) => [d.slug, d.name]),
+  ESSEX_DISTRICT_PATHS.map((d) => [d.slug, d.name]),
 ) as Record<EssexDistrictSlug, string>;
+
+function shortLabel(name: string): string {
+  if (name === 'Epping Forest') return 'Epping F.';
+  if (name === 'Castle Point') return 'Castle Pt';
+  return name;
+}
 
 export function EssexDistrictMap({
   onSelect,
@@ -108,25 +50,32 @@ export function EssexDistrictMap({
           In your area — choose a district
         </p>
         <svg
-          viewBox="0 0 400 300"
-          className="mx-auto h-auto w-full max-w-xl touch-manipulation"
+          viewBox={ESSEX_MAP_VIEWBOX}
+          className="mx-auto h-auto w-full max-w-2xl touch-manipulation"
           role="img"
           aria-labelledby={labelId}
         >
           <title>Interactive map of Essex districts</title>
-          <rect width="400" height="300" fill="#E8F0EA" rx="8" />
-          {ESSEX_DISTRICTS.map((district) => {
+          <desc>
+            Boundaries from ONS Local Authority Districts December 2024 (BGC, simplified), Open
+            Government Licence.
+          </desc>
+          <rect width="720" height="560" fill="#E8F0EA" rx="8" />
+          {ESSEX_DISTRICT_PATHS.map((district) => {
             const active = hovered === district.slug || selectedSlug === district.slug;
             return (
               <path
                 key={district.slug}
+                id={district.slug}
+                data-district={district.slug}
                 d={district.d}
                 tabIndex={0}
                 role="button"
                 aria-label={`${district.name} district`}
                 fill={active ? '#330968' : '#FFFFFF'}
                 stroke="#002D24"
-                strokeWidth={active ? 2.2 : 1.4}
+                strokeWidth={active ? 2.4 : 1.3}
+                strokeLinejoin="round"
                 className="cursor-pointer outline-none transition-[fill,stroke-width] duration-150 focus-visible:stroke-[#7a00df] focus-visible:stroke-[3]"
                 onMouseEnter={() => setHovered(district.slug)}
                 onMouseLeave={() => setHovered(null)}
@@ -142,26 +91,30 @@ export function EssexDistrictMap({
               />
             );
           })}
-          {ESSEX_DISTRICTS.map((district) => {
-            const match = district.d.match(/M([\d.]+)\s+([\d.]+)/);
-            const x = match ? Number(match[1]) + 18 : 0;
-            const y = match ? Number(match[2]) + 28 : 0;
+          {ESSEX_DISTRICT_PATHS.map((district) => {
             const active = hovered === district.slug || selectedSlug === district.slug;
+            const fontSize = district.slug === 'harlow' || district.slug === 'castle-point' ? 9 : 11;
             return (
               <text
                 key={`${district.slug}-label`}
-                x={x}
-                y={y}
+                x={district.labelX}
+                y={district.labelY}
+                textAnchor="middle"
+                dominantBaseline="middle"
                 className="pointer-events-none select-none"
                 fill={active ? '#FFFFFF' : '#002D24'}
-                fontSize="9"
+                fontSize={fontSize}
                 fontWeight="600"
               >
-                {district.name.length > 10 ? district.name.slice(0, 9) + '…' : district.name}
+                {shortLabel(district.name)}
               </text>
             );
           })}
         </svg>
+        <p className="mt-2 text-[10px] leading-snug text-[#002D24]/55">
+          District boundaries: ONS Local Authority Districts (December 2024) BGC · Contains OS data ©
+          Crown copyright and database right · OGL v3.0
+        </p>
       </div>
 
       <div>

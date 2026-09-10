@@ -8,6 +8,8 @@ Branch: `feature/uk-music-hubs-directory`
 - Hierarchical seed: `artifacts/ccd/src/data/musicHubsDirectory.seed.json`
 - Routes: `/music-hubs`, `/music-hubs/*`, legacy `/ems` + `/triborough` preserved
 - EMS: interactive Essex district map (lazy-loaded) + district pages
+  - Paths from **ONS Local Authority Districts (December 2024) Boundaries UK BGC** (simplified for SVG; Open Geography / OGL v3.0; contains OS data © Crown copyright). BUC GeoJSON kept as offline fallback.
+  - Assets: `artifacts/ccd/public/music-hubs/essex/essex-districts.svg` (+ per-district SVGs); rebuild via `node artifacts/ccd/scripts/build-essex-districts-svg.mjs`
 - Resource access: FREE / EXTERNAL / SUBSCRIBER with server unlock APIs
 - Admin overlay panel (admins) + password hash API
 

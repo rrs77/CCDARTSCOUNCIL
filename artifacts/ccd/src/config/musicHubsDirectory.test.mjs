@@ -70,3 +70,27 @@ test('subscriber example resource has no client href', () => {
   assert.ok(sub);
   assert.equal(sub.href, undefined);
 });
+
+test('Essex districts SVG has twelve district paths with stable ids', () => {
+  const svg = readFileSync(
+    join(__dirname, '../../public/music-hubs/essex/essex-districts.svg'),
+    'utf8',
+  );
+  const ids = [...svg.matchAll(/\bid="([^"]+)"/g)].map((m) => m[1]);
+  const expected = [
+    'basildon',
+    'braintree',
+    'brentwood',
+    'castle-point',
+    'chelmsford',
+    'colchester',
+    'epping-forest',
+    'harlow',
+    'maldon',
+    'rochford',
+    'tendring',
+    'uttlesford',
+  ];
+  assert.deepEqual(ids, expected);
+  assert.match(svg, /Open Government Licence|OGL|ONS Local Authority/);
+});
