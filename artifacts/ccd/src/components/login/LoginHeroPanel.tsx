@@ -47,12 +47,6 @@ export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
       <div className="relative z-10 flex min-h-[300px] flex-col justify-between gap-8 px-5 py-6 pb-8 sm:min-h-[340px] sm:px-8 sm:py-8 sm:pb-10 lg:h-full lg:min-h-full lg:max-w-[58%] lg:px-12 lg:py-12 lg:pb-12 xl:px-14">
         <div className="flex flex-wrap items-center gap-3 ccd-login-hero-fade">
           <LogoSVG size="lg" showText={false} letters={logoLetters} className="!space-x-0" />
-          <a
-            href={THE_FACTS_HREF}
-            className="inline-flex items-center rounded-lg border border-[#B6FF7E]/55 bg-black/20 px-3 py-2 text-sm font-semibold text-[#B6FF7E] backdrop-blur-sm transition-colors hover:bg-black/35 hover:text-white"
-          >
-            The facts
-          </a>
         </div>
 
         <div className="flex flex-col gap-6 lg:gap-8">

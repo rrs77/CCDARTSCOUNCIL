@@ -137,11 +137,18 @@ const DEMO_OWNED_PREFIXES = [
   'ccd-roh-',
   'ccd-lso-',
   'ccd-wtd-',
+  'ccd-jn-',
+  'ccd-ems-',
+  'ccd-tbmh-',
+  'ccd-icc-',
+  'ccd-dr-',
   'ccd-ks3-',
   'ccd-ocr-',
   'ccd-starred-',
   'ccd-partner-planning-',
   'ccd-important-dates-',
+  // Org hub layout drafts — wipe so demo always hits live PartnerOrgHubTemplate defaults
+  'ccd-partner-org-hub-layout-v1:',
   'prototype-objectives-',
 ];
 

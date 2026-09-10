@@ -108,9 +108,7 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
         </h3>
         <p className="mt-1 text-sm text-[#002D24]/70">
           Greater Essex Music Hub brings together Essex Music Service, Music-on-Sea (Southend) and
-          Thurrock Music Service. Full Music Hubs directory navigation ships on the{' '}
-          <code className="text-xs">feature/uk-music-hubs-directory</code> branch; links below use
-          live partner/external sites so nothing sends you back to the app home by mistake.
+          Thurrock Music Service. Open sibling hubs below, or return to Partner Hubs for EMS.
         </p>
         <ul className="mt-3 space-y-1.5" aria-label="Greater Essex hubs">
           <li>
@@ -167,7 +165,7 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
                   Greater Essex / Partner Hubs
                 </span>
                 <span className="mt-0.5 block text-xs text-[#002D24]/60">
-                  Back to Partner Hubs (EMS card) · full UK directory on feature branch
+                  Back to Partner Hubs (EMS card)
                 </span>
               </span>
               <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
