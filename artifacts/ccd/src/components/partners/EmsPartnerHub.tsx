@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Download, ExternalLink, FileText, Youtube } from 'lucide-react';
+import { ChevronRight, Download, ExternalLink, FileText, Youtube } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   EMS_CONTACT_PAGE,
@@ -121,6 +121,86 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
 
   return (
     <div className="space-y-6">
+      <section
+        className="rounded-xl border border-[#002D24]/15 bg-white px-4 py-4 shadow-sm sm:px-5"
+        aria-labelledby="eoe-other-hubs-heading"
+      >
+        <h3
+          id="eoe-other-hubs-heading"
+          className="text-base font-semibold tracking-tight text-[#002D24] sm:text-lg"
+        >
+          Other hubs in East of England
+        </h3>
+        <p className="mt-1 text-sm text-[#002D24]/70">
+          Greater Essex Music Hub brings together Essex Music Service, Music-on-Sea (Southend) and
+          Thurrock Music Service. Full Music Hubs directory navigation ships on the{' '}
+          <code className="text-xs">feature/uk-music-hubs-directory</code> branch; links below use
+          live partner/external sites so nothing sends you back to the app home by mistake.
+        </p>
+        <ul className="mt-3 space-y-1.5" aria-label="Greater Essex hubs">
+          <li>
+            <div className="rounded-xl border border-[#330968]/35 bg-[#F5F0FF] px-3 py-2.5">
+              <p className="text-sm font-semibold text-[#330968]">Essex Music Service</p>
+              <p className="mt-0.5 text-xs text-[#330968]/75">
+                Lead delivery partner · you are here
+              </p>
+            </div>
+          </li>
+          <li>
+            <a
+              href="https://www.musiconsea.co.uk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start justify-between gap-3 rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/35 px-3 py-2.5 hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
+            >
+              <span>
+                <span className="block text-sm font-semibold text-[#002D24]">
+                  Music-on-Sea (Southend)
+                </span>
+                <span className="mt-0.5 block text-xs text-[#002D24]/60">
+                  Southend-on-Sea music education · official site
+                </span>
+              </span>
+              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
+            </a>
+          </li>
+          <li>
+            <a
+              href="https://www.thurrock.gov.uk/"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-start justify-between gap-3 rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/35 px-3 py-2.5 hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
+            >
+              <span>
+                <span className="block text-sm font-semibold text-[#002D24]">
+                  Thurrock Music Service
+                </span>
+                <span className="mt-0.5 block text-xs text-[#002D24]/60">
+                  Thurrock schools and young people · Thurrock Council
+                </span>
+              </span>
+              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
+            </a>
+          </li>
+          <li>
+            <a
+              href="/?tab=our-partners"
+              className="flex items-start justify-between gap-3 rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/35 px-3 py-2.5 hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
+            >
+              <span>
+                <span className="block text-sm font-semibold text-[#002D24]">
+                  Greater Essex / Partner Hubs
+                </span>
+                <span className="mt-0.5 block text-xs text-[#002D24]/60">
+                  Back to Partner Hubs (EMS card) · full UK directory on feature branch
+                </span>
+              </span>
+              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
+            </a>
+          </li>
+        </ul>
+      </section>
+
       <PartnerHubFeaturedSection
         eyebrow="Featured workshop · mock product"
         title={dj.title}
