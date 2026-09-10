@@ -131,6 +131,54 @@ export const sources: Record<string, SourceRef> = {
     label: "Ofqual provisional entries methodology (collected by 15 Apr 2026, rounded to 5)",
     year: "2026",
   },
+  eyfs2026: {
+    id: "eyfs2026",
+    label: "DfE Early Years Foundation Stage statutory framework (effective September 2026)",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/early-years-foundation-stage-framework--2",
+  },
+  enrichmentFramework: {
+    id: "enrichmentFramework",
+    label: "DfE Enrichment Framework for schools and colleges",
+    year: "June 2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges",
+  },
+  enrichmentBenchmarks: {
+    id: "enrichmentBenchmarks",
+    label: "Enrichment benchmarks and case studies",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/enrichment-benchmarks",
+  },
+  enrichmentBackground: {
+    id: "enrichmentBackground",
+    label: "Background, definition and five enrichment areas",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/background-supporting-the-enrichment-framework-for-schools-and-colleges",
+  },
+  enrichmentResources: {
+    id: "enrichmentResources",
+    label: "Resources, Music Hubs and future government support",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/resources-to-support-schools-and-colleges-with-enrichment",
+  },
+  enrichmentEvidence: {
+    id: "enrichmentEvidence",
+    label: "DfE Evidence on enrichment in schools and colleges (PDF)",
+    year: "2026",
+    url: "https://assets.publishing.service.gov.uk/media/6a2a5da31f6fa5c3377e5d43/Evidence_on_enrichment_in_schools_and_colleges.pdf",
+  },
+  enrichmentWorkingGroup: {
+    id: "enrichmentWorkingGroup",
+    label: "Enrichment framework expert working group",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/enrichment-framework-expert-working-group",
+  },
+  musicMarkEnrichment: {
+    id: "musicMarkEnrichment",
+    label: "Music Mark — DfE Enrichment Benchmarks: a Reflection",
+    year: "2026",
+    url: "https://www.musicmark.org.uk/news/dfe-enrichment-benchmarks-a-reflection/",
+  },
 };
 
 
@@ -583,7 +631,7 @@ export const charts: Record<string, ChartDef> = {
     type: "funding-bars",
     caption: "Current national commitments: different funding purposes",
     sourceNote:
-      "Not additive like-for-like funding: £76m is annual Music Hubs backing; £25m is additional capital; National Centre is backed by up to £13m over 3 years. Source: DCMS/DfE, Turn It Up, July 2026.",
+      "Not additive like-for-like funding: £76m is annual Music Hubs backing; £25m is additional capital; National Centre is backed by up to £13m over 3 years; enrichment expansion is £22.5m over 3 years for up to 400 schools. Sources: DCMS/DfE Turn It Up; DfE Enrichment Framework resources.",
     axis: {
       y: "£ million",
       legend: {
@@ -611,6 +659,19 @@ export const charts: Record<string, ChartDef> = {
         kind: "Centre contract support",
         fill: "#7B6B9C",
       },
+    ],
+  },
+  enrichmentParticipation: {
+    id: "enrichmentParticipation",
+    type: "lollipop",
+    caption: "Reported enrichment participation, summer term 2024–25",
+    sourceNote:
+      "Parent/pupil-reported participation in at least one extracurricular activity. KS1–2 and KS3 both 72%; KS4 60%; special schools (primary and secondary) 45%. Musical performance was offered by 75% of schools. Source: DfE Evidence on enrichment in schools and colleges.",
+    axis: { x: "% of pupils reported taking part" },
+    series: [
+      { subject: "KS1–3", value: 72, fill: "#2A9D8F" },
+      { subject: "KS4", value: 60, fill: "#5B7C99" },
+      { subject: "Special", value: 45, fill: "#E97451" },
     ],
   },
 };
@@ -721,6 +782,14 @@ export const principalSourceIds = [
   "nationalCentre",
   "hesaCla",
   "ofqualBackground",
+  "eyfs2026",
+  "enrichmentFramework",
+  "enrichmentBenchmarks",
+  "enrichmentBackground",
+  "enrichmentResources",
+  "enrichmentEvidence",
+  "enrichmentWorkingGroup",
+  "musicMarkEnrichment",
 ] as const;
 
 /** @deprecated alias — prefer getTopic */

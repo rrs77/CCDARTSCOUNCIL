@@ -17,6 +17,7 @@ export type StageId = (typeof STAGE_ORDER)[number]
  */
 export const SECTION_PATH = [
   "eyfs",
+  "enrichment-framework",
   "primary-ks1-ks2",
   "secondary",
   "gcse",
@@ -37,7 +38,7 @@ export const STAGE_LABELS: Record<StageId, string> = {
 /** One-line summary under the zone title on the pathway. */
 export const STAGE_COMMENTS: Record<StageId, string> = {
   eyfs:
-    "Child-shaped, exploratory creative learning — kept separate from primary statistics.",
+    "Child-shaped Expressive Arts and Design — the entitlement gap can start before KS1.",
   "primary-ks1-ks2":
     "Music and arts hours falling; specialist teaching scarce in many schools.",
   secondary:

@@ -2,6 +2,7 @@ import {
   Award,
   Blocks,
   BookOpen,
+  Compass,
   FileText,
   GitBranch,
   GraduationCap,
@@ -9,12 +10,12 @@ import {
   Music2,
   Network,
   PencilRuler,
-  Sparkles,
   type LucideIcon,
 } from "lucide-react";
 
 const STAGE_ICONS: Record<string, LucideIcon> = {
   eyfs: Blocks,
+  "enrichment-framework": Compass,
   "primary-ks1-ks2": PencilRuler,
   secondary: BookOpen,
   gcse: Award,
