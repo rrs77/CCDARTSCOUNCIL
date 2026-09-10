@@ -207,6 +207,10 @@ export function ContentChart({
   }
 
   if (chart.type === "lollipop") {
+    const valueKey =
+      chart.series.some((d) => "value" in d && d.value != null) ? "value" : "none";
+    const valueLabel = chart.axis?.x ?? (valueKey === "none" ? "No GCSE entries" : "Value");
+    const yWidth = density === "canvas" ? 100 : 88;
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
         <motion.div key={drawKey} {...chartEnter} className={chartH}>
@@ -214,9 +218,9 @@ export function ContentChart({
             <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 48, left: 8, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
               <XAxis type="number" domain={[0, 100]} tick={{ fill: "#6b7d80", fontSize: tick }} />
-              <YAxis type="category" dataKey="subject" width={80} tick={{ fill: "#0f2a2e", fontSize: tickInk }} />
-              <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "No GCSE entries"]} />
-              <Bar dataKey="none" barSize={10} background={{ fill: "#e8eeea" }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
+              <YAxis type="category" dataKey="subject" width={yWidth} tick={{ fill: "#0f2a2e", fontSize: tickInk }} />
+              <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, valueLabel]} />
+              <Bar dataKey={valueKey} barSize={10} background={{ fill: "#e8eeea" }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: "#0f2a2e", fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
                 {chart.series.map((d) => (
                   <Cell key={String(d.subject)} fill={String(d.fill)} />
                 ))}

@@ -27,6 +27,7 @@ function buildMenu(presentation: Presentation): {
 
   const stages = [
     pick("eyfs", "EYFS"),
+    pick("enrichment-framework", "Enrichment"),
     pick("primary-ks1-ks2", "Primary"),
     pick("secondary", "Secondary"),
     pick("gcse", "GCSE"),

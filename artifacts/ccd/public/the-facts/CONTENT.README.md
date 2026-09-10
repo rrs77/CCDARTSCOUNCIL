@@ -4,9 +4,9 @@
 
 This package is **standalone for Replit** (see `README.md`). It is **not** merged into CCD / `main` yet.
 
-Canvas path: title → Primary → Secondary → GCSE → A-level → HE → **Music Hubs and National Centre** → A solution → Sources. Nest supporting material under `###`. **A solution** uses its product illustration (not an exam graph); the funding chart lives on the Music Hubs place.
+Canvas path: title → EYFS → Enrichment Framework → Primary → Secondary → GCSE → A-level → HE → **Music Hubs and National Centre** → Sources. Nest supporting material under `###`.
 
-Section circular heroes live in `public/illustrations/` and are mapped in `src/content/sectionIllustrations.ts`. The classroom photo (`hero-arts.jpg`) is **only** for the opening title / The situation. Sources lists principal footnotes on the frame (no filler CCD circle). One Info control per focused place opens the landscape detail modal.
+Section circular heroes live in `public/illustrations/` and are mapped in `src/content/sectionIllustrations.ts`. The classroom photo (`hero-arts.jpg`) is **only** for the opening title / The situation. Sources lists principal footnotes on the frame (no filler CCD circle). One Info control per focused place opens the landscape detail modal. The Enrichment Framework place opens an interactive five-areas / eight-benchmarks panel in that modal.
 
 1. Change any heading or paragraph → that text updates after rebuild / `pnpm dev` save.
 2. Add a new `## Heading` → a new place on the canvas (sized to its content).

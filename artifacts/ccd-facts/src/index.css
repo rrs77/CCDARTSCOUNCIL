@@ -3173,3 +3173,201 @@ button {
     max-height: none;
   }
 }
+
+/* —— Enrichment Framework interactive panel —— */
+.enrich-visual {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+  min-width: 0;
+  padding: 0.35rem 0.15rem 0.5rem;
+}
+
+.enrich-visual--canvas {
+  gap: 0.55rem;
+  padding: 0;
+}
+
+.enrich-visual-kicker {
+  margin: 0;
+  font-size: 0.78rem;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #5a6f68;
+}
+
+.enrich-visual-kicker--bench {
+  margin-top: 0.35rem;
+}
+
+.enrich-areas {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.enrich-area {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.45rem 0.7rem;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--area-tint) 14%, #fffaf7);
+  border: 1px solid color-mix(in srgb, var(--area-tint) 35%, transparent);
+  color: #0f2a2e;
+  font-size: 0.92rem;
+  font-weight: 650;
+  line-height: 1.2;
+}
+
+.enrich-area-dot {
+  width: 0.55rem;
+  height: 0.55rem;
+  border-radius: 999px;
+  background: var(--area-tint);
+  flex-shrink: 0;
+}
+
+.enrich-bench-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.45rem;
+}
+
+@media (min-width: 720px) {
+  .enrich-bench-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+.enrich-bench {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 0.2rem;
+  margin: 0;
+  padding: 0.65rem 0.7rem;
+  border-radius: 0.85rem;
+  border: 1px solid rgba(0, 45, 36, 0.12);
+  background: #fffaf7;
+  color: #0f2a2e;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.enrich-bench:hover {
+  border-color: rgba(245, 158, 11, 0.55);
+  background: #fff7ed;
+}
+
+.enrich-bench.is-active {
+  border-color: #f59e0b;
+  background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 100%);
+  box-shadow: 0 8px 22px rgba(245, 158, 11, 0.18);
+}
+
+.enrich-bench-n {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: #b45309;
+}
+
+.enrich-bench-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.enrich-bench-detail {
+  margin: 0.15rem 0 0;
+  padding: 0.95rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  background: linear-gradient(165deg, rgba(255, 247, 237, 0.95), rgba(255, 237, 213, 0.65));
+}
+
+.enrich-bench-detail-label {
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #b45309;
+}
+
+.enrich-bench-detail-title {
+  margin: 0.25rem 0 0.4rem;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f2a2e;
+  line-height: 1.2;
+}
+
+.enrich-bench-detail-body {
+  margin: 0 0 0.65rem;
+  font-size: 0.98rem;
+  line-height: 1.45;
+  color: #1a332e;
+}
+
+.enrich-bench-detail-ccd {
+  margin: 0;
+  padding-top: 0.55rem;
+  border-top: 1px dashed rgba(180, 83, 9, 0.35);
+  font-size: 0.95rem;
+  line-height: 1.45;
+  color: #33443e;
+}
+
+.enrich-bench-detail-ccd span {
+  display: block;
+  margin-bottom: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 750;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #0f766e;
+}
+
+.detail-modal-visual:has(.enrich-visual) {
+  align-self: stretch;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .enrich-bench,
+  .enrich-area {
+    transition: none;
+  }
+}
+
+.prezi-enrich-bubble {
+  width: 100%;
+  min-width: 0;
+  max-height: 100%;
+  overflow: auto;
+  padding: 0.35rem 0.15rem;
+  border-radius: 1.15rem;
+  background: rgba(255, 250, 247, 0.72);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  box-sizing: border-box;
+}
+
+.prezi-enrich-bubble .enrich-bench-detail {
+  padding: 0.75rem 0.85rem;
+}
+
+.prezi-enrich-bubble .enrich-bench-detail-title {
+  font-size: 1rem;
+}
+
+.prezi-enrich-bubble .enrich-bench-detail-body,
+.prezi-enrich-bubble .enrich-bench-detail-ccd {
+  font-size: 0.88rem;
+}

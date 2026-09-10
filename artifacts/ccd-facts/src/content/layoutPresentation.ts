@@ -333,15 +333,16 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
 /** Quiet pathway grid for hubs — story-order bands, large gutters, no AABB overlap. */
 function placeHubsOnGrid(hubs: FrameNode[]): void {
   // Story path bands (left → right, then down):
-  // 0: EYFS, primary, secondary
-  // 1: GCSE, A-level, HE
-  // 2: music hubs
+  // 0: EYFS, Enrichment Framework, primary
+  // 1: secondary, GCSE, A-level
+  // 2: HE, music hubs
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
 
   const byId = new Map(hubs.map((h) => [h.id, h]));
   const orderedIds = [
     "eyfs",
+    "enrichment-framework",
     "primary-ks1-ks2",
     "secondary",
     "gcse",
@@ -362,11 +363,12 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   };
 
   place("eyfs", 0, 0);
-  place("primary-ks1-ks2", 1, 0);
-  place("secondary", 2, 0);
-  place("gcse", 0, 1);
-  place("a-level", 1, 1);
-  place("university-he", 2, 1);
+  place("enrichment-framework", 1, 0);
+  place("primary-ks1-ks2", 2, 0);
+  place("secondary", 0, 1);
+  place("gcse", 1, 1);
+  place("a-level", 2, 1);
+  place("university-he", 0, 2);
   place("music-hubs-and-national-centre", 1, 2);
 
   // Any leftover hubs continue the grid
@@ -546,6 +548,7 @@ export function buildHubConnectorPath(frames: FrameNode[]): string {
   const byId = new Map(hubs.map((h) => [h.id, h]));
   const story = [
     "eyfs",
+    "enrichment-framework",
     "primary-ks1-ks2",
     "secondary",
     "gcse",

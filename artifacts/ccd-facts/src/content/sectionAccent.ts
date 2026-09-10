@@ -5,6 +5,7 @@ export const SECTION_ACCENT: Record<string, string> = {
   overview: "#B6FF7E",
   title: "#B6FF7E",
   eyfs: "#B6FF7E",
+  "enrichment-framework": "#f59e0b",
   "primary-ks1-ks2": "#14b8a6",
   secondary: "#14b8a6",
   gcse: "#14b8a6",
