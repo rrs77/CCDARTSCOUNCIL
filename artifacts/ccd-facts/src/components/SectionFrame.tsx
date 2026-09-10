@@ -1,6 +1,7 @@
 import { Info } from "lucide-react";
 import type { CSSProperties } from "react";
 import { ContentChart } from "@/components/charts/Charts";
+import { EnrichmentFrameworkVisual } from "@/components/EnrichmentFrameworkVisual";
 import { LogoMark } from "@/components/LogoMark";
 import { getChart, meta } from "@/content/facts.content";
 import type { FrameNode, Presentation } from "@/content/layoutPresentation";
@@ -56,7 +57,9 @@ export function SectionFrame({
   const isSources = frame.kind === "sources";
   const quiet = density === "overview" || (density === "focus" && !highlighted);
   const isOverview = quiet;
+  const isEnrichment = frame.id === "enrichment-framework";
   const chart = !isSources && !quiet && frame.chartId ? getChart(frame.chartId) : undefined;
+  const showEnrichVisual = isEnrichment && !quiet && !!highlighted;
   const situationOnly = isSituationPhotoSection(frame.id);
   const illusFile = isSources
     ? undefined
@@ -141,8 +144,8 @@ export function SectionFrame({
           </button>
         ) : null}
 
-        {!isSources && (illusFile || chart || frame.heroStat) ? (
-          <div className={`prezi-hero${chart && illusFile ? " prezi-hero--split" : ""}`}>
+        {!isSources && (illusFile || chart || frame.heroStat || showEnrichVisual) ? (
+          <div className={`prezi-hero${(chart || showEnrichVisual) && illusFile ? " prezi-hero--split" : ""}`}>
             {illusFile ? (
               <div
                 className={`prezi-photo-bubble${situationOnly ? "" : " prezi-photo-bubble--illustration"}`}
@@ -156,14 +159,18 @@ export function SectionFrame({
               </div>
             ) : null}
 
-            {frame.heroStat && !illusFile ? (
+            {frame.heroStat && !illusFile && !showEnrichVisual ? (
               <div className="prezi-stat-bubble" aria-hidden={false}>
                 <p className="prezi-stat-value">{frame.heroStat.value}</p>
                 {!quiet ? <p className="prezi-stat-label">{frame.heroStat.label}</p> : null}
               </div>
             ) : null}
 
-            {chart ? (
+            {showEnrichVisual ? (
+              <div className="prezi-enrich-bubble">
+                <EnrichmentFrameworkVisual density="canvas" />
+              </div>
+            ) : chart ? (
               <div className="prezi-chart-bubble">
                 <ContentChart chart={chart} density="canvas" />
               </div>
