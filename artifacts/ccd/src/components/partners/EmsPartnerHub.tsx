@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { lazy, Suspense, useState } from 'react';
 import { Download, ExternalLink, FileText, Youtube } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
@@ -23,6 +23,12 @@ import {
 } from './PartnerHubLayout';
 import { AddToBasketButton } from './AddToBasketButton';
 import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
+import { openMusicHubPath } from '../../config/musicHubsDirectory';
+import type { EssexDistrictSlug } from '../../config/musicHubsDirectory';
+
+const EssexDistrictMap = lazy(() =>
+  import('../musicHubs/EssexDistrictMap').then((m) => ({ default: m.EssexDistrictMap })),
+);
 
 interface EmsPartnerHubProps {
   onAddedToApp?: (info: { sheetId: string }) => void;
@@ -121,6 +127,21 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-[#002D24]/70">
+        <a href="/music-hubs" className="font-semibold text-[#002D24] hover:underline">
+          Music Hubs
+        </a>
+        <span aria-hidden> · </span>
+        <a
+          href="/music-hubs/england/east-of-england/greater-essex"
+          className="hover:underline"
+        >
+          Greater Essex
+        </a>
+        <span aria-hidden> · </span>
+        Essex Music Service
+      </p>
+
       <PartnerHubFeaturedSection
         eyebrow="Featured workshop · mock product"
         title={dj.title}
@@ -317,6 +338,20 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section className="rounded-xl border border-[#002D24]/12 bg-white px-4 py-4 shadow-sm sm:px-5">
+        <h3 className="text-lg font-semibold text-gray-900">In your area</h3>
+        <p className="mt-1 text-sm text-gray-600">
+          Explore Essex districts. District pages use the shared local-area template.
+        </p>
+        <div className="mt-4">
+          <Suspense fallback={<p className="text-sm text-gray-500">Loading map…</p>}>
+            <EssexDistrictMap
+              onSelect={(_slug: EssexDistrictSlug, path: string) => openMusicHubPath(path)}
+            />
+          </Suspense>
+        </div>
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-white px-5 py-4">

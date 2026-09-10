@@ -18,6 +18,8 @@ import { SchoolHomepage } from './components/SchoolHomepage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
 import { getPartnerHubForPath } from './config/partnerHubs';
+import { parseMusicHubsPathname } from './config/musicHubsDirectory';
+import { MusicHubsPage } from './components/musicHubs/MusicHubsPage';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
 import { isAuthorizedDemoMode, shouldShowPreviewBanner } from './utils/demoMode';
 import './utils/setupKS1Maths'; // Make setupKS1MathsExample available in browser console
@@ -60,22 +62,25 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   const { user, loading } = useAuth();
   const partnerHub =
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+  const musicHubsPath =
+    typeof window !== 'undefined' ? parseMusicHubsPathname(window.location.pathname) : null;
   const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
   const [showTabsExplainer, setShowTabsExplainer] = useState(false);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
-  // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
+  // (`/roh`, `/lso`, …) and Music Hubs directory stay on their path.
   useEffect(() => {
     if (
       user &&
       schoolHomepage &&
       !partnerHub &&
+      musicHubsPath === null &&
       typeof window !== 'undefined' &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
     }
-  }, [user, schoolHomepage, partnerHub]);
+  }, [user, schoolHomepage, partnerHub, musicHubsPath]);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
@@ -85,7 +90,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   // explicit click near the Dashboard tabs (not chained after welcome).
   // Real teacher logins must not see these popups.
   useEffect(() => {
-    if (!user || partnerHub || !isAuthorizedDemoMode()) return;
+    if (!user || partnerHub || musicHubsPath !== null || !isAuthorizedDemoMode()) return;
     let welcomeSeen = false;
     try {
       welcomeSeen = sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1';
@@ -95,7 +100,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     if (!welcomeSeen) {
       setShowPrototypeWelcome(true);
     }
-  }, [user, partnerHub]);
+  }, [user, partnerHub, musicHubsPath]);
 
   // Demo-only: Dashboard "About these tabs" button re-opens the explainer anytime.
   useEffect(() => {
@@ -173,6 +178,28 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   };
 
   const showPreviewBanner = shouldShowPreviewBanner();
+
+  // UK Music Hubs directory + hierarchy pages
+  if (musicHubsPath !== null) {
+    const goHomeAfterAdd = (sheetId: string) => {
+      try {
+        sessionStorage.setItem(
+          'ccd-open-after-partner',
+          JSON.stringify({ sheetId, tab: 'lesson-library' }),
+        );
+      } catch {
+        /* ignore */
+      }
+      window.location.assign('/');
+    };
+    return (
+      <>
+        <Toaster position="top-right" />
+        {showPreviewBanner && <PreviewBanner />}
+        <MusicHubsPage path={musicHubsPath} onAddedToApp={({ sheetId }) => goHomeAfterAdd(sheetId)} />
+      </>
+    );
+  }
 
   // Mini partner hubs at /roh, /lso, /ems, etc. (signed-in) — school-homepage style chrome
   if (partnerHub) {
