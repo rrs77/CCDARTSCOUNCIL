@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="480" viewBox="0 0 1200 480" role="img" aria-label="Music hub placeholder image">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#E8F0EA"/>
+      <stop offset="100%" stop-color="#C5D9CC"/>
+    </linearGradient>
+  </defs>
+  <rect width="1200" height="480" fill="url(#g)"/>
+  <circle cx="220" cy="240" r="120" fill="#002D24" opacity="0.08"/>
+  <circle cx="980" cy="120" r="90" fill="#002D24" opacity="0.06"/>
+  <path d="M520 300c40-80 120-120 200-100s140 80 160 140" fill="none" stroke="#002D24" stroke-opacity="0.25" stroke-width="8"/>
+  <text x="600" y="250" text-anchor="middle" font-family="Georgia, serif" font-size="36" fill="#002D24">Image placeholder</text>
+</svg>

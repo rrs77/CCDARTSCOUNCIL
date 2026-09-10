@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="320" height="160" viewBox="0 0 320 160" role="img" aria-label="Music hub placeholder logo">
+  <rect width="320" height="160" rx="16" fill="#E8F0EA"/>
+  <rect x="16" y="16" width="288" height="128" rx="12" fill="#002D24" opacity="0.08"/>
+  <circle cx="88" cy="80" r="36" fill="#002D24" opacity="0.18"/>
+  <path d="M78 96 V64 h8 v22 l18-6 v8 z" fill="#002D24"/>
+  <text x="140" y="78" font-family="Georgia, serif" font-size="22" fill="#002D24">Music Hub</text>
+  <text x="140" y="102" font-family="system-ui, sans-serif" font-size="12" fill="#002D24" opacity="0.65">Logo placeholder</text>
+</svg>

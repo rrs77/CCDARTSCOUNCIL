@@ -1,15 +1,30 @@
-import { lazy, Suspense, type ReactNode } from 'react';
-import { ChevronRight, ExternalLink } from 'lucide-react';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { ChevronRight, ExternalLink, Send } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   getMusicHubBreadcrumbs,
+  musicHubAdminHref,
   musicHubPageHref,
   openMusicHubPath,
   visibleChildren,
 } from '../../config/musicHubsDirectory';
 import type { MusicHubDirectoryNode, MusicHubResource } from '../../types/musicHubsDirectory';
+import type { HubEditFieldKey, HubEditableContent } from '../../types/musicHubContent';
 import { MusicHubResourceList } from './MusicHubResourceList';
 import type { EssexDistrictSlug } from '../../config/musicHubsDirectory';
+import { useAuth } from '../../hooks/useAuth';
+import { canEditMusicHubNode } from '../../utils/musicHubAdminAccess';
+import {
+  countPendingForNode,
+  ensurePlaceholderMedia,
+  getEditorPreviewContent,
+  getWorkingRevision,
+  mergeNodeWithPublished,
+  MUSIC_HUB_PLACEHOLDER_CARD,
+  saveDraftRevision,
+  submitRevisionForApproval,
+} from '../../utils/musicHubContentStore';
+import { HubEditModal, HubEditPencil } from './HubEditModal';
 
 const EssexDistrictMap = lazy(() =>
   import('./EssexDistrictMap').then((m) => ({ default: m.EssexDistrictMap })),
@@ -18,13 +33,20 @@ const EssexDistrictMap = lazy(() =>
 function Section({
   title,
   children,
+  editLabel,
+  onEdit,
 }: {
   title: string;
   children: ReactNode;
+  editLabel?: string;
+  onEdit?: () => void;
 }) {
   return (
     <section className="rounded-xl border border-[#002D24]/12 bg-white px-4 py-4 shadow-sm sm:px-5 sm:py-5">
-      <h2 className="text-base font-semibold tracking-tight text-[#002D24] sm:text-lg">{title}</h2>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="text-base font-semibold tracking-tight text-[#002D24] sm:text-lg">{title}</h2>
+        {onEdit && editLabel && <HubEditPencil label={editLabel} onClick={onEdit} />}
+      </div>
       <div className="mt-3 text-sm leading-relaxed text-[#002D24]/80">{children}</div>
     </section>
   );
@@ -40,9 +62,52 @@ function Paragraphs({ lines }: { lines: string[] }) {
   );
 }
 
+function ItemCards({
+  items,
+}: {
+  items: { id: string; title: string; description?: string; href?: string; imageUrl?: string }[];
+}) {
+  if (!items.length) {
+    return <p className="text-sm text-[#002D24]/55">Nothing listed yet.</p>;
+  }
+  return (
+    <ul className="grid gap-3 sm:grid-cols-2">
+      {items.map((item) => (
+        <li
+          key={item.id}
+          className="overflow-hidden rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/25"
+        >
+          <img
+            src={item.imageUrl || MUSIC_HUB_PLACEHOLDER_CARD}
+            alt=""
+            className="h-28 w-full object-cover"
+          />
+          <div className="p-3">
+            <p className="text-sm font-semibold text-[#002D24]">{item.title}</p>
+            {item.description && (
+              <p className="mt-1 text-xs text-[#002D24]/70">{item.description}</p>
+            )}
+            {item.href && (
+              <a
+                href={item.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-[#330968] hover:underline"
+              >
+                Open
+                <ExternalLink className="h-3 w-3" />
+              </a>
+            )}
+          </div>
+        </li>
+      ))}
+    </ul>
+  );
+}
+
 /**
  * Data-driven hub / service / borough / district page.
- * Empty sections auto-hide. EMS uses this as the master template (+ optional legacy body).
+ * Hub admins see pencil icons → modal drafts; public viewers see published only.
  */
 export function HubPageTemplate({
   node,
@@ -56,13 +121,71 @@ export function HubPageTemplate({
   children?: ReactNode;
   onAddedToApp?: (info: { sheetId: string }) => void;
 }) {
+  const { user, profile } = useAuth();
+  const [tick, setTick] = useState(0);
+  const [editField, setEditField] = useState<HubEditFieldKey | null>(null);
+
+  useEffect(() => {
+    const bump = () => setTick((t) => t + 1);
+    window.addEventListener('ccd:music-hub-content-changed', bump);
+    window.addEventListener('ccd:music-hub-admin-changed', bump);
+    return () => {
+      window.removeEventListener('ccd:music-hub-content-changed', bump);
+      window.removeEventListener('ccd:music-hub-admin-changed', bump);
+    };
+  }, []);
+
+  const canEdit = canEditMusicHubNode(user, profile, node.id);
+
+  const publishedMerged = useMemo(() => {
+    void tick;
+    return mergeNodeWithPublished(node);
+  }, [node, tick]);
+
+  const displayContent = useMemo(() => {
+    void tick;
+    if (canEdit) return ensurePlaceholderMedia(getEditorPreviewContent(node));
+    return ensurePlaceholderMedia(publishedMerged.editable);
+  }, [node, canEdit, publishedMerged, tick]);
+
+  const working = canEdit ? getWorkingRevision(node.id) : null;
+  const pendingCount = canEdit ? countPendingForNode(node.id) : 0;
+
   const crumbs = getMusicHubBreadcrumbs(node, parents);
-  const content = node.content;
   const childNodes = visibleChildren(node);
-  const isComingSoon = node.status === 'coming-soon';
+  const isComingSoon = (canEdit ? node.status : publishedMerged.status) === 'coming-soon';
+  const displayName = displayContent.title || node.name;
+
+  const actor = useMemo(
+    () => ({
+      userId: user?.id || 'anonymous',
+      email: user?.email,
+      name: user?.name || profile?.display_name || undefined,
+    }),
+    [user, profile],
+  );
+
+  const persist = useCallback(
+    (next: HubEditableContent) => {
+      if (!canEdit) return;
+      saveDraftRevision(node.id, ensurePlaceholderMedia(next), actor);
+      toast.success('Saved as draft');
+      setTick((t) => t + 1);
+    },
+    [canEdit, node.id, actor],
+  );
+
+  const submit = () => {
+    const rev = submitRevisionForApproval(node.id, actor);
+    if (!rev) {
+      toast.error('Save a draft before submitting');
+      return;
+    }
+    toast.success('Submitted for admin approval');
+    setTick((t) => t + 1);
+  };
 
   const handleAdd = async (resource: MusicHubResource) => {
-    // Prefer existing EMS/TBMH seeders when packId matches known demos.
     try {
       if (resource.packId === 'ems-schools-brochure') {
         const { setupEMSSchoolsExample } = await import('../../utils/setupEMSSchoolsExample');
@@ -106,6 +229,18 @@ export function HubPageTemplate({
     }
   };
 
+  const resources = displayContent.resources || [];
+  const about = displayContent.about || [];
+  const schools = displayContent.schoolsEducation || [];
+  const training = displayContent.training || [];
+  const events = displayContent.events || [];
+  const links = displayContent.links || [];
+  const courses = displayContent.courses || [];
+  const activities = displayContent.activities || [];
+  const lessonPlans = displayContent.lessonPlans || [];
+
+  const showPlaceholderSection = (hasItems: boolean) => canEdit || hasItems;
+
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
       <nav aria-label="Breadcrumb" className="overflow-x-auto">
@@ -131,81 +266,229 @@ export function HubPageTemplate({
         </ol>
       </nav>
 
-      <header className="rounded-xl border border-[#002D24]/12 bg-white px-4 py-5 shadow-sm sm:px-6">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-          <div className="min-w-0">
-            {isComingSoon && (
-              <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#002D24]/55">
-                Hub page coming soon
-              </p>
+      {canEdit &&
+        (working?.status === 'draft' ||
+          working?.status === 'rejected' ||
+          pendingCount > 0) && (
+          <div className="flex flex-col gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="text-sm text-amber-950">
+              {pendingCount > 0 ? (
+                <p>
+                  You have <strong>{pendingCount}</strong> change
+                  {pendingCount === 1 ? '' : 's'} awaiting approval.
+                </p>
+              ) : working?.status === 'rejected' ? (
+                <p>Last submission was rejected. Edit and resubmit.</p>
+              ) : (
+                <p>Draft changes are not live until approved.</p>
+              )}
+              <a
+                href={musicHubAdminHref(node.path)}
+                className="mt-1 inline-block text-xs font-semibold text-amber-950 underline"
+              >
+                Open hub admin dashboard
+              </a>
+            </div>
+            {(working?.status === 'draft' || working?.status === 'rejected') && (
+              <button
+                type="button"
+                onClick={submit}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-[#002D24] px-3 py-2 text-sm font-semibold text-white"
+              >
+                <Send className="h-3.5 w-3.5" />
+                Submit for approval
+              </button>
             )}
-            <h1 className="text-xl font-semibold tracking-tight text-[#002D24] sm:text-2xl">
-              {node.name}
-            </h1>
-            {node.tagline && (
-              <p className="mt-1 text-sm text-[#002D24]/70">{node.tagline}</p>
-            )}
-            {(node.description || []).map((p) => (
-              <p key={p.slice(0, 40)} className="mt-2 max-w-3xl text-sm leading-relaxed text-[#002D24]/75">
-                {p}
-              </p>
-            ))}
           </div>
-          {node.siteUrl && (
-            <a
-              href={node.siteUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#002D24]/20 bg-white px-4 py-2.5 text-sm font-semibold text-[#002D24] hover:bg-[#E8F0EA]"
-            >
-              Visit website
-              <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-            </a>
+        )}
+
+      <header className="overflow-hidden rounded-xl border border-[#002D24]/12 bg-white shadow-sm">
+        <div className="relative">
+          <img
+            src={displayContent.heroImageUrl}
+            alt=""
+            className="h-36 w-full object-cover sm:h-44"
+          />
+          {canEdit && (
+            <div className="absolute right-3 top-3">
+              <HubEditPencil label="Edit hero image" onClick={() => setEditField('hero')} />
+            </div>
           )}
+        </div>
+        <div className="px-4 py-5 sm:px-6">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+            <div className="flex min-w-0 gap-3">
+              <div className="relative shrink-0">
+                <img
+                  src={displayContent.logoUrl}
+                  alt=""
+                  className="h-16 w-28 rounded-lg border border-[#002D24]/10 bg-[#E8F0EA] object-contain p-1"
+                />
+                {canEdit && (
+                  <div className="absolute -right-2 -top-2">
+                    <HubEditPencil label="Edit logo" onClick={() => setEditField('logo')} />
+                  </div>
+                )}
+              </div>
+              <div className="min-w-0">
+                {isComingSoon && (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#002D24]/55">
+                    Hub page coming soon
+                  </p>
+                )}
+                <div className="flex items-start gap-2">
+                  <h1 className="text-xl font-semibold tracking-tight text-[#002D24] sm:text-2xl">
+                    {displayName}
+                  </h1>
+                  {canEdit && (
+                    <HubEditPencil label="Edit title & description" onClick={() => setEditField('header')} />
+                  )}
+                </div>
+                {displayContent.tagline && (
+                  <p className="mt-1 text-sm text-[#002D24]/70">{displayContent.tagline}</p>
+                )}
+                {(displayContent.description || []).map((p) => (
+                  <p
+                    key={p.slice(0, 40)}
+                    className="mt-2 max-w-3xl text-sm leading-relaxed text-[#002D24]/75"
+                  >
+                    {p}
+                  </p>
+                ))}
+              </div>
+            </div>
+            {node.siteUrl && (
+              <a
+                href={node.siteUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-lg border border-[#002D24]/20 bg-white px-4 py-2.5 text-sm font-semibold text-[#002D24] hover:bg-[#E8F0EA]"
+              >
+                Visit website
+                <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+              </a>
+            )}
+          </div>
         </div>
       </header>
 
-      {isComingSoon && !children && !content?.resources?.length && (
-        <Section title="Coming soon">
-          <p>Hub page coming soon. No fabricated resources are listed here yet.</p>
+      {isComingSoon &&
+        !children &&
+        !resources.length &&
+        !courses.length &&
+        !activities.length &&
+        !lessonPlans.length &&
+        !canEdit && (
+          <Section title="Coming soon">
+            <p>Hub page coming soon. No fabricated resources are listed here yet.</p>
+          </Section>
+        )}
+
+      {showPlaceholderSection(about.length > 0) && (
+        <Section
+          title="About"
+          editLabel="Edit about"
+          onEdit={canEdit ? () => setEditField('about') : undefined}
+        >
+          {about.length ? (
+            <Paragraphs lines={about} />
+          ) : (
+            <p className="text-[#002D24]/55">Add an about section (placeholder).</p>
+          )}
         </Section>
       )}
 
-      {content?.about?.length ? (
-        <Section title="About">
-          <Paragraphs lines={content.about} />
+      {showPlaceholderSection(schools.length > 0) && (
+        <Section
+          title="Schools / Music Education"
+          editLabel="Edit schools section"
+          onEdit={canEdit ? () => setEditField('schoolsEducation') : undefined}
+        >
+          {schools.length ? (
+            <Paragraphs lines={schools} />
+          ) : (
+            <p className="text-[#002D24]/55">Schools content placeholder.</p>
+          )}
         </Section>
-      ) : null}
-
-      {content?.schoolsEducation?.length ? (
-        <Section title="Schools / Music Education">
-          <Paragraphs lines={content.schoolsEducation} />
-        </Section>
-      ) : null}
+      )}
 
       {children}
 
-      {content?.resources?.length ? (
-        <Section title="Resources">
-          <MusicHubResourceList
-            resources={content.resources}
-            organisationId={node.organisationId}
-            onAddToLibrary={handleAdd}
-          />
+      {showPlaceholderSection(resources.length > 0) && (
+        <Section
+          title="Resources"
+          editLabel="Edit resources"
+          onEdit={canEdit ? () => setEditField('resources') : undefined}
+        >
+          {resources.length ? (
+            <MusicHubResourceList
+              resources={resources}
+              organisationId={node.organisationId}
+              onAddToLibrary={handleAdd}
+            />
+          ) : (
+            <p className="text-[#002D24]/55">No resources yet — add placeholders from the pencil.</p>
+          )}
         </Section>
-      ) : null}
+      )}
 
-      {content?.training?.length ? (
-        <Section title="Training / CPD">
-          <Paragraphs lines={content.training} />
+      {showPlaceholderSection(courses.length > 0) && (
+        <Section
+          title="Courses"
+          editLabel="Edit courses"
+          onEdit={canEdit ? () => setEditField('courses') : undefined}
+        >
+          <ItemCards items={courses} />
         </Section>
-      ) : null}
+      )}
 
-      {content?.events?.length ? (
-        <Section title="Events / Opportunities">
-          <Paragraphs lines={content.events} />
+      {showPlaceholderSection(activities.length > 0) && (
+        <Section
+          title="Activities"
+          editLabel="Edit activities"
+          onEdit={canEdit ? () => setEditField('activities') : undefined}
+        >
+          <ItemCards items={activities} />
         </Section>
-      ) : null}
+      )}
+
+      {showPlaceholderSection(lessonPlans.length > 0) && (
+        <Section
+          title="Full lesson plans"
+          editLabel="Edit lesson plans"
+          onEdit={canEdit ? () => setEditField('lessonPlans') : undefined}
+        >
+          <ItemCards items={lessonPlans} />
+        </Section>
+      )}
+
+      {showPlaceholderSection(training.length > 0) && (
+        <Section
+          title="Training / CPD"
+          editLabel="Edit training"
+          onEdit={canEdit ? () => setEditField('training') : undefined}
+        >
+          {training.length ? (
+            <Paragraphs lines={training} />
+          ) : (
+            <p className="text-[#002D24]/55">Training placeholder.</p>
+          )}
+        </Section>
+      )}
+
+      {showPlaceholderSection(events.length > 0) && (
+        <Section
+          title="Events / Opportunities"
+          editLabel="Edit events"
+          onEdit={canEdit ? () => setEditField('events') : undefined}
+        >
+          {events.length ? (
+            <Paragraphs lines={events} />
+          ) : (
+            <p className="text-[#002D24]/55">Events placeholder.</p>
+          )}
+        </Section>
+      )}
 
       {node.showEssexMap ? (
         <Section title="In your area">
@@ -221,25 +504,33 @@ export function HubPageTemplate({
         </Section>
       ) : null}
 
-      {content?.links?.length ? (
-        <Section title="Links">
-          <ul className="space-y-2">
-            {content.links.map((link) => (
-              <li key={link.href + link.label}>
-                <a
-                  href={link.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1.5 font-medium text-[#330968] hover:underline"
-                >
-                  {link.label}
-                  <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-                </a>
-              </li>
-            ))}
-          </ul>
+      {showPlaceholderSection(links.length > 0) && (
+        <Section
+          title="Links"
+          editLabel="Edit links"
+          onEdit={canEdit ? () => setEditField('links') : undefined}
+        >
+          {links.length ? (
+            <ul className="space-y-2">
+              {links.map((link) => (
+                <li key={link.href + link.label}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1.5 font-medium text-[#330968] hover:underline"
+                  >
+                    {link.label}
+                    <ExternalLink className="h-3.5 w-3.5" aria-hidden />
+                  </a>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="text-[#002D24]/55">No links yet.</p>
+          )}
         </Section>
-      ) : null}
+      )}
 
       {childNodes.length > 0 && (
         <Section title="Explore">
@@ -263,6 +554,16 @@ export function HubPageTemplate({
             ))}
           </ul>
         </Section>
+      )}
+
+      {editField && (
+        <HubEditModal
+          field={editField}
+          content={displayContent}
+          nodeName={node.name}
+          onClose={() => setEditField(null)}
+          onSave={persist}
+        />
       )}
     </div>
   );

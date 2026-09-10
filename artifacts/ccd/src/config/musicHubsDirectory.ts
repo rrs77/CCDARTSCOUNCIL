@@ -187,3 +187,108 @@ export const ESSEX_DISTRICT_SLUGS = [
 ] as const;
 
 export type EssexDistrictSlug = (typeof ESSEX_DISTRICT_SLUGS)[number];
+
+const EMS_SERVICE_PATH = 'england/east-of-england/greater-essex/essex-music-service';
+
+/**
+ * Clean public aliases → full directory path.
+ * Prefer `/essex/chelmsford` and `/ems` over long `/music-hubs/...` URLs.
+ * Note: bare `/ems` and `/triborough` stay on Partner Hub chrome; aliases
+ * below are used for `/essex/...` and for admin path resolution.
+ */
+export function buildMusicHubPathAliases(): Record<string, string> {
+  const aliases: Record<string, string> = {
+    ...LEGACY_PARTNER_TO_MUSIC_HUB_PATH,
+    essex: EMS_SERVICE_PATH,
+  };
+  for (const slug of ESSEX_DISTRICT_SLUGS) {
+    aliases[`essex/${slug}`] = `${EMS_SERVICE_PATH}/${slug}`;
+  }
+  return aliases;
+}
+
+export function resolveMusicHubDirectoryPath(rawPath: string): string | null {
+  const normalised = rawPath.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (!normalised) return '';
+  const aliases = buildMusicHubPathAliases();
+  if (aliases[normalised]) return aliases[normalised];
+  if (findMusicHubNodeByPath(normalised)) return normalised;
+  return null;
+}
+
+export type MusicHubResolvedRoute =
+  | { kind: 'directory' }
+  | { kind: 'page'; path: string; admin: false }
+  | { kind: 'admin'; path: string; admin: true; nodeId: string };
+
+/**
+ * Resolve `/music-hubs…`, `/essex/chelmsford`, `/essex/chelmsford/admin`, `/ems/admin`.
+ * Bare partner slugs (`/ems`) are left to Partner Hub routing (returns null).
+ */
+export function resolveMusicHubRoute(pathname: string): MusicHubResolvedRoute | null {
+  const trimmed = pathname.replace(/^\/+|\/+$/g, '').toLowerCase();
+  if (!trimmed) return null;
+
+  const isAdminSuffix = trimmed.endsWith('/admin') || trimmed === 'admin';
+  const withoutAdmin = isAdminSuffix
+    ? trimmed === 'admin'
+      ? ''
+      : trimmed.slice(0, -'/admin'.length).replace(/\/$/, '')
+    : trimmed;
+
+  // /music-hubs and /music-hubs/*
+  if (withoutAdmin === 'music-hubs' || withoutAdmin.startsWith('music-hubs/')) {
+    const inner =
+      withoutAdmin === 'music-hubs' ? '' : withoutAdmin.slice('music-hubs/'.length);
+    if (!inner) {
+      return isAdminSuffix ? null : { kind: 'directory' };
+    }
+    const path = resolveMusicHubDirectoryPath(inner);
+    if (path === null) return null;
+    if (isAdminSuffix) {
+      const match = findMusicHubNodeByPath(path);
+      if (!match) return null;
+      return { kind: 'admin', path, admin: true, nodeId: match.node.id };
+    }
+    return { kind: 'page', path, admin: false };
+  }
+
+  // Clean aliases: /essex/chelmsford[/admin], /ems/admin (not bare /ems)
+  const aliases = buildMusicHubPathAliases();
+  if (isAdminSuffix) {
+    const path = aliases[withoutAdmin] || resolveMusicHubDirectoryPath(withoutAdmin);
+    if (!path) return null;
+    const match = findMusicHubNodeByPath(path);
+    if (!match) return null;
+    return { kind: 'admin', path, admin: true, nodeId: match.node.id };
+  }
+
+  // Public clean paths with a slash (e.g. essex/chelmsford) — not partner single segments
+  if (trimmed.includes('/') && aliases[trimmed]) {
+    return { kind: 'page', path: aliases[trimmed], admin: false };
+  }
+
+  return null;
+}
+
+export function musicHubAdminHref(path: string): string {
+  const aliases = buildMusicHubPathAliases();
+  const entry = Object.entries(aliases).find(([, full]) => full === path);
+  if (entry) {
+    // Prefer short essex/* and ems aliases for admin URLs
+    const short = entry[0];
+    if (short === 'ems' || short.startsWith('essex/')) {
+      return `/${short}/admin`;
+    }
+  }
+  return `/music-hubs/${path}/admin`;
+}
+
+export function musicHubPublicHref(path: string): string {
+  const aliases = buildMusicHubPathAliases();
+  const essexAlias = Object.entries(aliases).find(
+    ([alias, full]) => full === path && alias.startsWith('essex/'),
+  );
+  if (essexAlias) return `/${essexAlias[0]}`;
+  return musicHubPageHref(path);
+}
