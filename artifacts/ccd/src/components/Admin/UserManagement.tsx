@@ -1,6 +1,6 @@
 import React, { useEffect, useState, useRef, useLayoutEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { Users, Edit2, Loader2, Mail, Plus, X, MoreVertical, UserX, Send, Package } from 'lucide-react';
+import { Users, Edit2, Loader2, Mail, Plus, X, MoreVertical, UserX, Send, Package, MapPin } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 import { getVercelApiUrl } from '../../utils/apiUrl';
 import { activityPacksApi } from '../../config/api';
@@ -9,6 +9,7 @@ import { useAuth } from '../../hooks/useAuth';
 import type { Profile, ProfileRole, ProfileStatus } from '../../types/auth';
 import { EditUserModal } from './EditUserModal';
 import { AssignPacksModal } from './AssignPacksModal';
+import { ManageMusicHubAccessModal } from './ManageMusicHubAccessModal';
 import toast from 'react-hot-toast';
 
 const BASE_ROLES: { value: ProfileRole; label: string }[] = [
@@ -84,6 +85,7 @@ export function UserManagement() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [editingUser, setEditingUser] = useState<Profile | null>(null);
   const [assignPacksUser, setAssignPacksUser] = useState<Profile | null>(null);
+  const [manageAccessUser, setManageAccessUser] = useState<Profile | null>(null);
   const [deleteConfirmUser, setDeleteConfirmUser] = useState<Profile | null>(null);
   const [menuOpenForId, setMenuOpenForId] = useState<string | null>(null);
   const [sendingResetFor, setSendingResetFor] = useState<string | null>(null);
@@ -457,6 +459,9 @@ export function UserManagement() {
             <button type="button" onClick={() => { setEditingUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
               <Edit2 className="h-4 w-4" /> Edit User
             </button>
+            <button type="button" onClick={() => { setManageAccessUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
+              <MapPin className="h-4 w-4" /> Manage Access
+            </button>
             <button type="button" onClick={() => { setAssignPacksUser(menuUser); setMenuOpenForId(null); }} className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2">
               <Package className="h-4 w-4" /> Assign packs
             </button>
@@ -487,6 +492,12 @@ export function UserManagement() {
           user={assignPacksUser}
           onSave={handleAssignPacksSave}
           onClose={() => setAssignPacksUser(null)}
+        />
+      )}
+      {manageAccessUser && (
+        <ManageMusicHubAccessModal
+          user={manageAccessUser}
+          onClose={() => setManageAccessUser(null)}
         />
       )}
 

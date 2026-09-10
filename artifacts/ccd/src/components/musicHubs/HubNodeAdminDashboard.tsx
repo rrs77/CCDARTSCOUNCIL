@@ -11,6 +11,7 @@ import type { HubEditFieldKey, HubEditableContent } from '../../types/musicHubCo
 import {
   canApproveMusicHubContent,
   canEditMusicHubNode,
+  HUB_ADMIN_PERMISSION_DENIED,
 } from '../../utils/musicHubAdminAccess';
 import {
   countPendingForNode,
@@ -147,9 +148,11 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
   if (!canEdit) {
     return (
       <div className="mx-auto max-w-3xl px-4 py-16 text-center">
-        <h1 className="text-xl font-semibold text-[#002D24]">Hub admin access required</h1>
+        <h1 className="text-xl font-semibold text-[#002D24]">
+          {HUB_ADMIN_PERMISSION_DENIED}
+        </h1>
         <p className="mt-2 text-sm text-[#002D24]/70">
-          Ask a CCDesigner admin to assign you as hub admin for this area in User Settings → Users.
+          Ask a CCDesigner admin to assign you this area under Settings → Users → Manage Access.
         </p>
         <button
           type="button"
@@ -220,13 +223,20 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
 
         {(working?.status === 'draft' ||
           working?.status === 'rejected' ||
+          working?.status === 'changes_requested' ||
           pendingCount > 0) && (
           <div className="flex flex-col gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-amber-950">
               {pendingCount > 0 ? (
                 <p>
                   You have <strong>{pendingCount}</strong> change
-                  {pendingCount === 1 ? '' : 's'} awaiting approval.
+                  {pendingCount === 1 ? '' : 's'} awaiting approval. Live page is unchanged until
+                  Approve &amp; Publish.
+                </p>
+              ) : working?.status === 'changes_requested' ? (
+                <p>
+                  Changes requested
+                  {working.reviewNote ? `: ${working.reviewNote}` : ''}. Edit and resubmit.
                 </p>
               ) : working?.status === 'rejected' ? (
                 <p>
@@ -238,11 +248,13 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
               )}
               {canApprove && (
                 <p className="mt-1 text-xs text-amber-900/80">
-                  System admins approve in Settings → Hub content.
+                  System admins approve in Settings → Hub content (not your own submissions).
                 </p>
               )}
             </div>
-            {working?.status === 'draft' || working?.status === 'rejected' ? (
+            {working?.status === 'draft' ||
+            working?.status === 'rejected' ||
+            working?.status === 'changes_requested' ? (
               <button
                 type="button"
                 onClick={submit}

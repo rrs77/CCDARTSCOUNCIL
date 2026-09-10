@@ -1,10 +1,12 @@
 /**
  * Music Hub content store (published + draft/pending revisions).
  * Persist in localStorage; migrate to Supabase hub_pages later.
+ * Live (published) is unchanged until Approve & Publish.
  */
 
 import type {
   HubContentActor,
+  HubContentAuditEvent,
   HubContentRevision,
   HubContentStore,
   HubEditableContent,
@@ -18,7 +20,7 @@ export const MUSIC_HUB_PLACEHOLDER_HERO = '/music-hubs/placeholder-hero.svg';
 export const MUSIC_HUB_PLACEHOLDER_CARD = '/music-hubs/placeholder-card.svg';
 
 function emptyStore(): HubContentStore {
-  return { version: 1, published: {}, revisions: [] };
+  return { version: 1, published: {}, revisions: [], audit: [] };
 }
 
 function readStore(): HubContentStore {
@@ -32,6 +34,7 @@ function readStore(): HubContentStore {
       version: 1,
       published: parsed.published && typeof parsed.published === 'object' ? parsed.published : {},
       revisions: parsed.revisions,
+      audit: Array.isArray(parsed.audit) ? parsed.audit : [],
     };
   } catch {
     return emptyStore();
@@ -48,6 +51,16 @@ function writeStore(store: HubContentStore): void {
   }
 }
 
+function pushAudit(
+  store: HubContentStore,
+  event: Omit<HubContentAuditEvent, 'id'>,
+): void {
+  store.audit = [
+    ...store.audit,
+    { ...event, id: `aud_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}` },
+  ].slice(-500);
+}
+
 export function getHubContentStore(): HubContentStore {
   return readStore();
 }
@@ -60,7 +73,6 @@ export function newItemId(prefix: string): string {
   return `${prefix}_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`;
 }
 
-/** Seed-derived editable baseline for a node (placeholders for empty media). */
 export function contentFromNode(node: MusicHubDirectoryNode): HubEditableContent {
   const c = node.content;
   return {
@@ -81,15 +93,11 @@ export function contentFromNode(node: MusicHubDirectoryNode): HubEditableContent
     training: c?.training ? [...c.training] : [],
     events: c?.events ? [...c.events] : [],
     links: c?.links ? c.links.map((l) => ({ ...l })) : [],
-    resources: c?.resources
-      ? c.resources.map((r) => ({
-          ...r,
-          ...(r.href ? {} : {}),
-        }))
-      : [],
+    resources: c?.resources ? c.resources.map((r) => ({ ...r })) : [],
     courses: [],
     activities: [],
     lessonPlans: [],
+    proposedRemovals: [],
   };
 }
 
@@ -101,7 +109,7 @@ export function getPublishedContent(nodeId: string): HubEditableContent | null {
   return getPublishedSnapshot(nodeId)?.content || null;
 }
 
-/** Active working revision: draft, pending, or latest rejected (for re-edit). */
+/** Active working revision: draft, pending, changes_requested, or rejected. */
 export function getWorkingRevision(nodeId: string): HubContentRevision | null {
   const { revisions } = readStore();
   const forNode = revisions
@@ -111,6 +119,8 @@ export function getWorkingRevision(nodeId: string): HubContentRevision | null {
   if (draft) return draft;
   const pending = forNode.find((r) => r.status === 'pending_approval');
   if (pending) return pending;
+  const changes = forNode.find((r) => r.status === 'changes_requested');
+  if (changes) return changes;
   const rejected = forNode.find((r) => r.status === 'rejected');
   return rejected || null;
 }
@@ -118,7 +128,13 @@ export function getWorkingRevision(nodeId: string): HubContentRevision | null {
 export function listPendingRevisions(): HubContentRevision[] {
   return readStore()
     .revisions.filter((r) => r.status === 'pending_approval')
-    .sort((a, b) => (a.submittedAt || a.editedAt) < (b.submittedAt || b.editedAt) ? 1 : -1);
+    .sort((a, b) => ((a.submittedAt || a.editedAt) < (b.submittedAt || b.editedAt) ? 1 : -1));
+}
+
+export function listAuditForNode(nodeId: string): HubContentAuditEvent[] {
+  return readStore()
+    .audit.filter((a) => a.nodeId === nodeId)
+    .sort((a, b) => (a.at < b.at ? 1 : -1));
 }
 
 export function countPendingForNode(nodeId: string): number {
@@ -171,11 +187,12 @@ export function mergeNodeWithPublished(
   };
 }
 
-/** Content editors see: published merged with working draft when present. */
 export function getEditorPreviewContent(node: MusicHubDirectoryNode): HubEditableContent {
   const merged = mergeNodeWithPublished(node).editable;
   const working = getWorkingRevision(node.id);
-  if (!working || working.status === 'published') return merged;
+  if (!working || working.status === 'published' || working.status === 'archived') {
+    return merged;
+  }
   return {
     ...merged,
     ...working.content,
@@ -184,6 +201,12 @@ export function getEditorPreviewContent(node: MusicHubDirectoryNode): HubEditabl
   };
 }
 
+const EDITABLE_STATUSES = new Set([
+  'draft',
+  'rejected',
+  'changes_requested',
+]);
+
 export function saveDraftRevision(
   nodeId: string,
   content: HubEditableContent,
@@ -191,7 +214,7 @@ export function saveDraftRevision(
 ): HubContentRevision {
   const store = readStore();
   const existing = store.revisions.find(
-    (r) => r.nodeId === nodeId && (r.status === 'draft' || r.status === 'rejected'),
+    (r) => r.nodeId === nodeId && EDITABLE_STATUSES.has(r.status),
   );
   const now = new Date().toISOString();
   let revision: HubContentRevision;
@@ -218,6 +241,13 @@ export function saveDraftRevision(
     };
     store.revisions = [...store.revisions, revision];
   }
+  pushAudit(store, {
+    revisionId: revision.id,
+    nodeId,
+    action: existing ? 'saved_draft' : 'created',
+    actor,
+    at: now,
+  });
   writeStore(store);
   return revision;
 }
@@ -228,7 +258,9 @@ export function submitRevisionForApproval(
 ): HubContentRevision | null {
   const store = readStore();
   const draft = store.revisions.find(
-    (r) => r.nodeId === nodeId && (r.status === 'draft' || r.status === 'rejected'),
+    (r) =>
+      r.nodeId === nodeId &&
+      (r.status === 'draft' || r.status === 'rejected' || r.status === 'changes_requested'),
   );
   if (!draft) return null;
   const now = new Date().toISOString();
@@ -240,6 +272,13 @@ export function submitRevisionForApproval(
     submittedAt: now,
   };
   store.revisions = store.revisions.map((r) => (r.id === draft.id ? revision : r));
+  pushAudit(store, {
+    revisionId: revision.id,
+    nodeId,
+    action: 'submitted',
+    actor,
+    at: now,
+  });
   writeStore(store);
   return revision;
 }
@@ -252,9 +291,24 @@ export function approveRevision(
   const store = readStore();
   const rev = store.revisions.find((r) => r.id === revisionId);
   if (!rev || rev.status !== 'pending_approval') return null;
+  // Hub admin cannot approve own submissions
+  if (rev.editedBy.userId && rev.editedBy.userId === actor.userId) return null;
   const now = new Date().toISOString();
+  let content = { ...rev.content };
+  if (content.proposedRemovals?.length) {
+    const remove = new Set(content.proposedRemovals);
+    content = {
+      ...content,
+      resources: (content.resources || []).filter((r) => !remove.has(r.id)),
+      courses: (content.courses || []).filter((c) => !remove.has(c.id) && !c.proposedRemoval),
+      activities: (content.activities || []).filter((c) => !remove.has(c.id) && !c.proposedRemoval),
+      lessonPlans: (content.lessonPlans || []).filter((c) => !remove.has(c.id) && !c.proposedRemoval),
+      proposedRemovals: [],
+    };
+  }
   const published: HubContentRevision = {
     ...rev,
+    content,
     status: 'published',
     reviewedBy: actor,
     reviewedAt: now,
@@ -263,12 +317,57 @@ export function approveRevision(
   store.revisions = store.revisions.map((r) => (r.id === revisionId ? published : r));
   store.published[rev.nodeId] = {
     revisionId: rev.id,
-    content: rev.content,
+    content,
     publishedAt: now,
     publishedBy: actor,
   };
+  pushAudit(store, {
+    revisionId: rev.id,
+    nodeId: rev.nodeId,
+    action: 'approved',
+    actor,
+    at: now,
+    note,
+  });
+  pushAudit(store, {
+    revisionId: rev.id,
+    nodeId: rev.nodeId,
+    action: 'published',
+    actor,
+    at: now,
+  });
   writeStore(store);
   return published;
+}
+
+export function requestChangesRevision(
+  revisionId: string,
+  actor: HubContentActor,
+  note?: string,
+): HubContentRevision | null {
+  const store = readStore();
+  const rev = store.revisions.find((r) => r.id === revisionId);
+  if (!rev || rev.status !== 'pending_approval') return null;
+  if (rev.editedBy.userId && rev.editedBy.userId === actor.userId) return null;
+  const now = new Date().toISOString();
+  const updated: HubContentRevision = {
+    ...rev,
+    status: 'changes_requested',
+    reviewedBy: actor,
+    reviewedAt: now,
+    reviewNote: note || 'Changes requested',
+  };
+  store.revisions = store.revisions.map((r) => (r.id === revisionId ? updated : r));
+  pushAudit(store, {
+    revisionId: rev.id,
+    nodeId: rev.nodeId,
+    action: 'changes_requested',
+    actor,
+    at: now,
+    note,
+  });
+  writeStore(store);
+  return updated;
 }
 
 export function rejectRevision(
@@ -279,6 +378,7 @@ export function rejectRevision(
   const store = readStore();
   const rev = store.revisions.find((r) => r.id === revisionId);
   if (!rev || rev.status !== 'pending_approval') return null;
+  if (rev.editedBy.userId && rev.editedBy.userId === actor.userId) return null;
   const now = new Date().toISOString();
   const rejected: HubContentRevision = {
     ...rev,
@@ -288,6 +388,14 @@ export function rejectRevision(
     reviewNote: note || 'Rejected',
   };
   store.revisions = store.revisions.map((r) => (r.id === revisionId ? rejected : r));
+  pushAudit(store, {
+    revisionId: rev.id,
+    nodeId: rev.nodeId,
+    action: 'rejected',
+    actor,
+    at: now,
+    note,
+  });
   writeStore(store);
   return rejected;
 }

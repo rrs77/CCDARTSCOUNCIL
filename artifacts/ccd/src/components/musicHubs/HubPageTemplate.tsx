@@ -269,14 +269,18 @@ export function HubPageTemplate({
       {canEdit &&
         (working?.status === 'draft' ||
           working?.status === 'rejected' ||
+          working?.status === 'changes_requested' ||
           pendingCount > 0) && (
           <div className="flex flex-col gap-3 rounded-xl border border-amber-300/60 bg-amber-50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between">
             <div className="text-sm text-amber-950">
               {pendingCount > 0 ? (
                 <p>
                   You have <strong>{pendingCount}</strong> change
-                  {pendingCount === 1 ? '' : 's'} awaiting approval.
+                  {pendingCount === 1 ? '' : 's'} awaiting approval. Live page unchanged until
+                  approved.
                 </p>
+              ) : working?.status === 'changes_requested' ? (
+                <p>Changes requested. Edit and resubmit.</p>
               ) : working?.status === 'rejected' ? (
                 <p>Last submission was rejected. Edit and resubmit.</p>
               ) : (
@@ -289,7 +293,9 @@ export function HubPageTemplate({
                 Open hub admin dashboard
               </a>
             </div>
-            {(working?.status === 'draft' || working?.status === 'rejected') && (
+            {(working?.status === 'draft' ||
+              working?.status === 'rejected' ||
+              working?.status === 'changes_requested') && (
               <button
                 type="button"
                 onClick={submit}
