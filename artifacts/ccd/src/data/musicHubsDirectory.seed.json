@@ -1,0 +1,909 @@
+{
+  "version": 1,
+  "updatedAt": "2026-09-10",
+  "countries": [
+    {
+      "id": "england",
+      "kind": "country",
+      "name": "England",
+      "slug": "england",
+      "path": "england",
+      "status": "published",
+      "description": [
+        "Browse English regions. East of England (Greater Essex / EMS) is the working prototype example; other regions are mostly coming soon."
+      ],
+      "children": [
+        {
+          "id": "east-of-england",
+          "kind": "region",
+          "name": "East of England",
+          "slug": "east-of-england",
+          "path": "england/east-of-england",
+          "status": "published",
+          "tagline": "Prototype focus region",
+          "description": [
+            "East of England is the polished demo region for this Music Hubs prototype — start with Greater Essex Music Hub, Essex Music Service, and the district map.",
+            "Other English regions below remain light placeholders until hub partners populate them."
+          ],
+          "content": {
+            "about": [
+              "This prototype concentrates real structure and sample resources in East of England so demos can walk Featured EMS → Greater Essex → districts without claiming UK-wide completeness.",
+              "Greater Essex Music Hub includes Essex Music Service, Music-on-Sea (Southend) and Thurrock Music Service."
+            ],
+            "links": [
+              {
+                "label": "Greater Essex Music Hub",
+                "href": "/music-hubs/england/east-of-england/greater-essex"
+              },
+              {
+                "label": "Essex Music Service partner hub",
+                "href": "/ems"
+              }
+            ]
+          },
+          "children": [
+            {
+              "id": "greater-essex",
+              "kind": "music-hub",
+              "name": "Greater Essex Music Hub",
+              "slug": "greater-essex",
+              "path": "england/east-of-england/greater-essex",
+              "status": "published",
+              "featured": true,
+              "organisationId": "ems",
+              "tagline": "Music education across Greater Essex",
+              "description": [
+                "Greater Essex Music Hub brings together Essex Music Service, Music-on-Sea (Southend) and Thurrock Music Service to support schools, young people and communities."
+              ],
+              "siteUrl": "https://www.essexmusicservice.org.uk/site/",
+              "logoSrc": "/music-hubs/logos/essex-music-service.svg",
+              "primaryColor": "#330968",
+              "accentColor": "#7a00df",
+              "logoPanelColor": "#330968",
+              "children": [
+                {
+                  "id": "ems",
+                  "kind": "service",
+                  "name": "Essex Music Service",
+                  "slug": "essex-music-service",
+                  "path": "england/east-of-england/greater-essex/essex-music-service",
+                  "status": "published",
+                  "featured": true,
+                  "organisationId": "ems",
+                  "partnerHubSlug": "ems",
+                  "showEssexMap": true,
+                  "tagline": "Curriculum, CPD, workshops and instrumental learning",
+                  "description": [
+                    "Essex Music Service is the lead delivery partner for Greater Essex Music Hub, supporting schools with curriculum platforms, instrumental learning, singing programmes, workshops and CPD across the county.",
+                    "Use the map below to explore district pages. Featured workshops and the schools brochure can be added to your CCDesigner library (local prototype copies)."
+                  ],
+                  "siteUrl": "https://www.essexmusicservice.org.uk/site/",
+                  "logoSrc": "/music-hubs/logos/essex-music-service.svg",
+                  "primaryColor": "#330968",
+                  "accentColor": "#7a00df",
+                  "logoPanelColor": "#330968",
+                  "content": {
+                    "about": [
+                      "Essex Music Service delivers music education across Essex local-authority districts on behalf of Greater Essex Music Hub.",
+                      "Official programmes, booking and the latest guidance live on the Essex Music Service website."
+                    ],
+                    "schoolsEducation": [
+                      "Curriculum platforms including Charanga, YuStudio and Focus on Sound.",
+                      "Instrumental and vocal pathways, singing programmes and school workshops."
+                    ],
+                    "training": [
+                      "CPD and teacher support — see the EMS website for current courses and networks."
+                    ],
+                    "events": [],
+                    "links": [
+                      {
+                        "label": "Essex Music Service website",
+                        "href": "https://www.essexmusicservice.org.uk/site/"
+                      },
+                      {
+                        "label": "Workshops",
+                        "href": "https://www.essexmusicservice.org.uk/site/workshops/"
+                      },
+                      {
+                        "label": "Curriculum",
+                        "href": "https://www.essexmusicservice.org.uk/site/curriculum/"
+                      }
+                    ],
+                    "resources": [
+                      {
+                        "id": "ems-schools-brochure",
+                        "title": "Schools brochure",
+                        "description": "Overview of EMS school services (prototype Add to library).",
+                        "access": "FREE",
+                        "href": "/partners/ems/ems-schools-brochure.pdf",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-schools-brochure"
+                      },
+                      {
+                        "id": "ems-dj-workshop",
+                        "title": "DJ Workshop",
+                        "description": "Featured workshop showcase — Add demo lesson for PDF export.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/workshops/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-dj-workshop"
+                      },
+                      {
+                        "id": "ems-rap-it",
+                        "title": "Rap-It!",
+                        "description": "Featured workshop showcase — Add demo lesson for PDF export.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/workshops/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-rap-it-workshop"
+                      },
+                      {
+                        "id": "ems-charanga",
+                        "title": "Charanga",
+                        "description": "Online music platform for curriculum and extra-curricular learning.",
+                        "access": "EXTERNAL",
+                        "href": "https://charanga.com/",
+                        "providedBy": "Essex Music Service"
+                      },
+                      {
+                        "id": "ems-subscriber-example",
+                        "title": "EMS subscriber collection (example)",
+                        "description": "Locked until your organisation unlocks with the EMS subscriber password. URL never exposed before unlock.",
+                        "access": "SUBSCRIBER",
+                        "organisationId": "ems",
+                        "providedBy": "Essex Music Service"
+                      }
+                    ]
+                  },
+                  "children": [
+                    {
+                      "id": "ems-basildon",
+                      "kind": "district",
+                      "name": "Basildon",
+                      "slug": "basildon",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/basildon",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Basildon. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-braintree",
+                      "kind": "district",
+                      "name": "Braintree",
+                      "slug": "braintree",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/braintree",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Braintree. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-brentwood",
+                      "kind": "district",
+                      "name": "Brentwood",
+                      "slug": "brentwood",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/brentwood",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Brentwood. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-castle-point",
+                      "kind": "district",
+                      "name": "Castle Point",
+                      "slug": "castle-point",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/castle-point",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Castle Point. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-chelmsford",
+                      "kind": "district",
+                      "name": "Chelmsford",
+                      "slug": "chelmsford",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/chelmsford",
+                      "status": "published",
+                      "organisationId": "ems",
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg",
+                      "primaryColor": "#330968",
+                      "accentColor": "#7a00df",
+                      "logoPanelColor": "#330968",
+                      "tagline": "Essex Music Service in Chelmsford",
+                      "description": [
+                        "Chelmsford district page for Greater Essex Music Hub / Essex Music Service — schools, workshops and local music education pathways.",
+                        "Sample resources below mirror the EMS schools brochure and featured workshops already available in the prototype."
+                      ],
+                      "siteUrl": "https://www.essexmusicservice.org.uk/site/",
+                      "content": {
+                        "about": [
+                          "Chelmsford sits within the Essex Music Service delivery area for Greater Essex Music Hub.",
+                          "This district template shows how local hub pages will present about copy, schools offer and free sample resources for teachers exploring the prototype."
+                        ],
+                        "schoolsEducation": [
+                          "Curriculum platforms (Charanga, YuStudio, Focus on Sound) and instrumental / vocal pathways are coordinated through Essex Music Service.",
+                          "Schools in Chelmsford can explore EMS workshops, singing programmes and CPD via the county service — use Add to library for local prototype copies."
+                        ],
+                        "training": [
+                          "Teacher CPD and networks are listed on the Essex Music Service website."
+                        ],
+                        "events": [],
+                        "links": [
+                          {
+                            "label": "Essex Music Service website",
+                            "href": "https://www.essexmusicservice.org.uk/site/"
+                          },
+                          {
+                            "label": "EMS workshops",
+                            "href": "https://www.essexmusicservice.org.uk/site/workshops/"
+                          },
+                          {
+                            "label": "EMS curriculum",
+                            "href": "https://www.essexmusicservice.org.uk/site/curriculum/"
+                          }
+                        ],
+                        "resources": [
+                          {
+                            "id": "chelmsford-ems-schools-brochure",
+                            "title": "Schools brochure",
+                            "description": "EMS schools overview — Add to library (same free prototype pack as the EMS hub).",
+                            "access": "FREE",
+                            "href": "/partners/ems/ems-schools-brochure.pdf",
+                            "providedBy": "Essex Music Service",
+                            "packId": "ems-schools-brochure"
+                          },
+                          {
+                            "id": "chelmsford-ems-dj-workshop",
+                            "title": "DJ Workshop",
+                            "description": "Featured EMS workshop showcase — Add demo lesson for PDF export.",
+                            "access": "FREE",
+                            "href": "https://www.essexmusicservice.org.uk/site/workshops/",
+                            "providedBy": "Essex Music Service",
+                            "packId": "ems-dj-workshop"
+                          },
+                          {
+                            "id": "chelmsford-ems-rap-it",
+                            "title": "Rap-It!",
+                            "description": "Featured EMS workshop showcase — Add demo lesson for PDF export.",
+                            "access": "FREE",
+                            "href": "https://www.essexmusicservice.org.uk/site/workshops/",
+                            "providedBy": "Essex Music Service",
+                            "packId": "ems-rap-it-workshop"
+                          }
+                        ]
+                      }
+                    },
+                    {
+                      "id": "ems-colchester",
+                      "kind": "district",
+                      "name": "Colchester",
+                      "slug": "colchester",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/colchester",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Colchester. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-epping-forest",
+                      "kind": "district",
+                      "name": "Epping Forest",
+                      "slug": "epping-forest",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/epping-forest",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Epping Forest. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-harlow",
+                      "kind": "district",
+                      "name": "Harlow",
+                      "slug": "harlow",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/harlow",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Harlow. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-maldon",
+                      "kind": "district",
+                      "name": "Maldon",
+                      "slug": "maldon",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/maldon",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Maldon. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-rochford",
+                      "kind": "district",
+                      "name": "Rochford",
+                      "slug": "rochford",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/rochford",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Rochford. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-tendring",
+                      "kind": "district",
+                      "name": "Tendring",
+                      "slug": "tendring",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/tendring",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Tendring. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    },
+                    {
+                      "id": "ems-uttlesford",
+                      "kind": "district",
+                      "name": "Uttlesford",
+                      "slug": "uttlesford",
+                      "path": "england/east-of-england/greater-essex/essex-music-service/uttlesford",
+                      "status": "coming-soon",
+                      "organisationId": "ems",
+                      "description": [
+                        "Local area page for Uttlesford. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
+                    }
+                  ]
+                },
+                {
+                  "id": "music-on-sea",
+                  "kind": "service",
+                  "name": "Music-on-Sea (Southend)",
+                  "slug": "music-on-sea",
+                  "path": "england/east-of-england/greater-essex/music-on-sea",
+                  "status": "published",
+                  "organisationId": "ems",
+                  "tagline": "Music education in Southend-on-Sea",
+                  "description": [
+                    "Music-on-Sea is the music education hub for Southend-on-Sea, working as part of Greater Essex Music Hub alongside Essex Music Service and Thurrock Music Service."
+                  ],
+                  "siteUrl": "https://www.musiconsea.co.uk/",
+                  "content": {
+                    "about": [
+                      "Music-on-Sea supports schools, families and young people in Southend-on-Sea with music education pathways within Greater Essex Music Hub.",
+                      "Full programme listings, booking and the latest offer live on the Music-on-Sea website — this CCDesigner page is a short directory entry for the East of England prototype, not a full resource catalogue."
+                    ],
+                    "schoolsEducation": [
+                      "School and community music education in Southend is coordinated through Music-on-Sea — see their website for current programmes."
+                    ],
+                    "links": [
+                      {
+                        "label": "Music-on-Sea website",
+                        "href": "https://www.musiconsea.co.uk/"
+                      },
+                      {
+                        "label": "Greater Essex Music Hub",
+                        "href": "/music-hubs/england/east-of-england/greater-essex"
+                      },
+                      {
+                        "label": "Essex Music Service",
+                        "href": "/ems"
+                      }
+                    ],
+                    "resources": []
+                  }
+                },
+                {
+                  "id": "thurrock-music-service",
+                  "kind": "service",
+                  "name": "Thurrock Music Service",
+                  "slug": "thurrock-music-service",
+                  "path": "england/east-of-england/greater-essex/thurrock-music-service",
+                  "status": "published",
+                  "organisationId": "ems",
+                  "tagline": "Music education in Thurrock",
+                  "description": [
+                    "Thurrock Music Service supports schools and young people in Thurrock as part of Greater Essex Music Hub."
+                  ],
+                  "siteUrl": "https://www.thurrock.gov.uk/",
+                  "content": {
+                    "about": [
+                      "Thurrock Music Service works within Greater Essex Music Hub to support music education for schools and young people in Thurrock.",
+                      "Official local offer and contacts are published by Thurrock Council / the music service — this page is a short directory entry for the East of England prototype without fabricated courses or events."
+                    ],
+                    "schoolsEducation": [
+                      "Ask Thurrock Music Service or your school music lead for the current instrumental, curriculum and ensemble pathways available locally."
+                    ],
+                    "links": [
+                      {
+                        "label": "Thurrock Council",
+                        "href": "https://www.thurrock.gov.uk/"
+                      },
+                      {
+                        "label": "Greater Essex Music Hub",
+                        "href": "/music-hubs/england/east-of-england/greater-essex"
+                      },
+                      {
+                        "label": "Essex Music Service",
+                        "href": "/ems"
+                      }
+                    ],
+                    "resources": []
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "london",
+          "kind": "region",
+          "name": "London",
+          "slug": "london",
+          "path": "england/london",
+          "status": "published",
+          "children": [
+            {
+              "id": "london-west",
+              "kind": "music-hub",
+              "name": "London West Music Hub",
+              "slug": "london-west",
+              "path": "england/london/london-west",
+              "status": "published",
+              "tagline": "Music education in west London",
+              "description": [
+                "London West Music Hub includes Tri-Borough Music Hub serving Hammersmith & Fulham, Kensington & Chelsea, and Westminster."
+              ],
+              "children": [
+                {
+                  "id": "triborough",
+                  "kind": "service",
+                  "name": "Tri-Borough Music Hub",
+                  "slug": "tri-borough",
+                  "path": "england/london/london-west/tri-borough",
+                  "status": "published",
+                  "organisationId": "triborough",
+                  "partnerHubSlug": "triborough",
+                  "tagline": "Music education across three London boroughs",
+                  "description": [
+                    "Tri-Borough Music Hub (TBMH) supports music education for children and young people across Kensington & Chelsea, Hammersmith & Fulham and Westminster.",
+                    "Featured programmes can be added to your CCDesigner library as local prototype copies."
+                  ],
+                  "siteUrl": "https://www.triboroughmusichub.org/",
+                  "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png",
+                  "primaryColor": "#111111",
+                  "accentColor": "#F5E827",
+                  "logoOnPlate": true,
+                  "logoPanelColor": "#FFFFFF",
+                  "content": {
+                    "about": [
+                      "Tri-Borough Music Hub delivers music education across three central London boroughs.",
+                      "Official programmes and booking live on the Tri-Borough Music Hub website."
+                    ],
+                    "schoolsEducation": [
+                      "School services, tuition, singing resources and inclusive music programmes."
+                    ],
+                    "links": [
+                      {
+                        "label": "Tri-Borough Music Hub website",
+                        "href": "https://www.triboroughmusichub.org/"
+                      }
+                    ],
+                    "resources": [
+                      {
+                        "id": "tbmh-groove-n-play",
+                        "title": "Groove'n'Play",
+                        "description": "Featured programme showcase — Add demo lesson for PDF export.",
+                        "access": "FREE",
+                        "href": "https://www.triboroughmusichub.org/",
+                        "providedBy": "Tri-Borough Music Hub",
+                        "packId": "tbmh-groove-n-play"
+                      },
+                      {
+                        "id": "tbmh-music-makes-me",
+                        "title": "Music Makes Me",
+                        "description": "Featured programme showcase — Add demo lesson for PDF export.",
+                        "access": "FREE",
+                        "href": "https://www.triboroughmusichub.org/",
+                        "providedBy": "Tri-Borough Music Hub",
+                        "packId": "tbmh-music-makes-me"
+                      }
+                    ]
+                  },
+                  "children": [
+                    {
+                      "id": "tbmh-hf",
+                      "kind": "borough",
+                      "name": "Hammersmith & Fulham",
+                      "slug": "hammersmith-fulham",
+                      "path": "england/london/london-west/tri-borough/hammersmith-fulham",
+                      "status": "coming-soon",
+                      "organisationId": "triborough",
+                      "description": [
+                        "Borough page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png"
+                    },
+                    {
+                      "id": "tbmh-kc",
+                      "kind": "borough",
+                      "name": "Kensington & Chelsea",
+                      "slug": "kensington-chelsea",
+                      "path": "england/london/london-west/tri-borough/kensington-chelsea",
+                      "status": "coming-soon",
+                      "organisationId": "triborough",
+                      "description": [
+                        "Borough page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png"
+                    },
+                    {
+                      "id": "tbmh-westminster",
+                      "kind": "borough",
+                      "name": "Westminster",
+                      "slug": "westminster",
+                      "path": "england/london/london-west/tri-borough/westminster",
+                      "status": "coming-soon",
+                      "organisationId": "triborough",
+                      "description": [
+                        "Borough page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png"
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "south-east",
+          "kind": "region",
+          "name": "South East",
+          "slug": "south-east",
+          "path": "england/south-east",
+          "status": "coming-soon",
+          "description": [
+            "Music Hub listings for the South East. Hub pages coming soon."
+          ]
+        },
+        {
+          "id": "south-west",
+          "kind": "region",
+          "name": "South West",
+          "slug": "south-west",
+          "path": "england/south-west",
+          "status": "published",
+          "children": [
+            {
+              "id": "west-of-england",
+              "kind": "music-hub",
+              "name": "West of England Music Hub",
+              "slug": "west-of-england",
+              "path": "england/south-west/west-of-england",
+              "status": "coming-soon",
+              "description": [
+                "West of England Music Hub covers Bristol, Bath & North East Somerset, North Somerset and South Gloucestershire.",
+                "Hub page coming soon."
+              ],
+              "children": [
+                {
+                  "id": "bristol",
+                  "kind": "borough",
+                  "name": "Bristol",
+                  "slug": "bristol",
+                  "path": "england/south-west/west-of-england/bristol",
+                  "status": "coming-soon",
+                  "description": [
+                    "Local area page coming soon."
+                  ]
+                },
+                {
+                  "id": "banes",
+                  "kind": "borough",
+                  "name": "Bath & North East Somerset",
+                  "slug": "bath-nes",
+                  "path": "england/south-west/west-of-england/bath-nes",
+                  "status": "coming-soon",
+                  "description": [
+                    "Local area page coming soon."
+                  ]
+                },
+                {
+                  "id": "north-somerset",
+                  "kind": "borough",
+                  "name": "North Somerset",
+                  "slug": "north-somerset",
+                  "path": "england/south-west/west-of-england/north-somerset",
+                  "status": "coming-soon",
+                  "description": [
+                    "Local area page coming soon."
+                  ]
+                },
+                {
+                  "id": "south-glos",
+                  "kind": "borough",
+                  "name": "South Gloucestershire",
+                  "slug": "south-gloucestershire",
+                  "path": "england/south-west/west-of-england/south-gloucestershire",
+                  "status": "coming-soon",
+                  "description": [
+                    "Local area page coming soon."
+                  ]
+                },
+                {
+                  "id": "bristol-beacon",
+                  "kind": "delivery-partner",
+                  "name": "Bristol Beacon",
+                  "slug": "bristol-beacon",
+                  "path": "england/south-west/west-of-england/bristol-beacon",
+                  "status": "coming-soon",
+                  "description": [
+                    "Delivery partner page coming soon."
+                  ]
+                },
+                {
+                  "id": "wema",
+                  "kind": "delivery-partner",
+                  "name": "WEMA",
+                  "slug": "wema",
+                  "path": "england/south-west/west-of-england/wema",
+                  "status": "coming-soon",
+                  "description": [
+                    "Delivery partner page coming soon."
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "east-midlands",
+          "kind": "region",
+          "name": "East Midlands",
+          "slug": "east-midlands",
+          "path": "england/east-midlands",
+          "status": "published",
+          "children": [
+            {
+              "id": "derby-derbyshire",
+              "kind": "music-hub",
+              "name": "Derby & Derbyshire Music Hub",
+              "slug": "derby-derbyshire",
+              "path": "england/east-midlands/derby-derbyshire",
+              "status": "coming-soon",
+              "description": [
+                "Placeholder structure for Derby City and Derbyshire music education partners.",
+                "Hub page coming soon."
+              ],
+              "children": [
+                {
+                  "id": "derby-city",
+                  "kind": "borough",
+                  "name": "Derby",
+                  "slug": "derby",
+                  "path": "england/east-midlands/derby-derbyshire/derby",
+                  "status": "coming-soon",
+                  "description": [
+                    "Local area page coming soon."
+                  ]
+                },
+                {
+                  "id": "derbyshire",
+                  "kind": "borough",
+                  "name": "Derbyshire",
+                  "slug": "derbyshire",
+                  "path": "england/east-midlands/derby-derbyshire/derbyshire",
+                  "status": "coming-soon",
+                  "description": [
+                    "Local area page coming soon."
+                  ]
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "west-midlands",
+          "kind": "region",
+          "name": "West Midlands",
+          "slug": "west-midlands",
+          "path": "england/west-midlands",
+          "status": "coming-soon",
+          "description": [
+            "Music Hub listings for the West Midlands. Hub pages coming soon."
+          ]
+        },
+        {
+          "id": "north-west",
+          "kind": "region",
+          "name": "North West",
+          "slug": "north-west",
+          "path": "england/north-west",
+          "status": "coming-soon",
+          "description": [
+            "Music Hub listings for the North West. Hub pages coming soon."
+          ]
+        },
+        {
+          "id": "north-east",
+          "kind": "region",
+          "name": "North East",
+          "slug": "north-east",
+          "path": "england/north-east",
+          "status": "coming-soon",
+          "description": [
+            "Music Hub listings for the North East. Hub pages coming soon."
+          ]
+        },
+        {
+          "id": "yorkshire-humber",
+          "kind": "region",
+          "name": "Yorkshire & the Humber",
+          "slug": "yorkshire-humber",
+          "path": "england/yorkshire-humber",
+          "status": "coming-soon",
+          "description": [
+            "Music Hub listings for Yorkshire & the Humber. Hub pages coming soon."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "wales",
+      "kind": "country",
+      "name": "Wales",
+      "slug": "wales",
+      "path": "wales",
+      "status": "published",
+      "description": [
+        "National Music Service Wales and local music service placeholders."
+      ],
+      "children": [
+        {
+          "id": "nmsw",
+          "kind": "national-service",
+          "name": "National Music Service Wales",
+          "slug": "national-music-service-wales",
+          "path": "wales/national-music-service-wales",
+          "status": "coming-soon",
+          "description": [
+            "National Music Service Wales — hub page coming soon.",
+            "Local authority music service pages can be added beneath this national entry."
+          ],
+          "children": [
+            {
+              "id": "wales-local-placeholder",
+              "kind": "service",
+              "name": "Local music services (Wales)",
+              "slug": "local-services",
+              "path": "wales/national-music-service-wales/local-services",
+              "status": "coming-soon",
+              "description": [
+                "Local service placeholders. Hub pages coming soon."
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scotland",
+      "kind": "country",
+      "name": "Scotland",
+      "slug": "scotland",
+      "path": "scotland",
+      "status": "published",
+      "description": [
+        "Local authority instrumental and music service placeholders across Scotland."
+      ],
+      "children": [
+        {
+          "id": "scotland-glasgow",
+          "kind": "service",
+          "name": "Glasgow instrumental / music service",
+          "slug": "glasgow",
+          "path": "scotland/glasgow",
+          "status": "coming-soon",
+          "description": [
+            "Placeholder. Hub page coming soon."
+          ]
+        },
+        {
+          "id": "scotland-edinburgh",
+          "kind": "service",
+          "name": "Edinburgh instrumental / music service",
+          "slug": "edinburgh",
+          "path": "scotland/edinburgh",
+          "status": "coming-soon",
+          "description": [
+            "Placeholder. Hub page coming soon."
+          ]
+        },
+        {
+          "id": "scotland-highland",
+          "kind": "service",
+          "name": "Highland instrumental / music service",
+          "slug": "highland",
+          "path": "scotland/highland",
+          "status": "coming-soon",
+          "description": [
+            "Placeholder. Hub page coming soon."
+          ]
+        },
+        {
+          "id": "scotland-more",
+          "kind": "service",
+          "name": "More local authority services",
+          "slug": "more-local-authorities",
+          "path": "scotland/more-local-authorities",
+          "status": "coming-soon",
+          "description": [
+            "Additional Scottish local-authority instrumental and music services can be listed here.",
+            "Hub pages coming soon."
+          ]
+        }
+      ]
+    },
+    {
+      "id": "northern-ireland",
+      "kind": "country",
+      "name": "Northern Ireland",
+      "slug": "northern-ireland",
+      "path": "northern-ireland",
+      "status": "published",
+      "description": [
+        "Education Authority Music Service and room for further local listings."
+      ],
+      "children": [
+        {
+          "id": "ea-music-service",
+          "kind": "national-service",
+          "name": "EA Music Service",
+          "slug": "ea-music-service",
+          "path": "northern-ireland/ea-music-service",
+          "status": "coming-soon",
+          "description": [
+            "Education Authority Music Service — hub page coming soon.",
+            "Child area pages can be added under this entry."
+          ],
+          "children": [
+            {
+              "id": "ni-area-placeholder",
+              "kind": "borough",
+              "name": "Local area pages",
+              "slug": "local-areas",
+              "path": "northern-ireland/ea-music-service/local-areas",
+              "status": "coming-soon",
+              "description": [
+                "Placeholder for area-level listings. Hub pages coming soon."
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Check, ChevronDown, ChevronRight, Handshake, Loader2, Music2, PlusCircle, ShoppingBag } from 'lucide-react';
+import { Check, ChevronDown, ChevronRight, Handshake, Loader2, PlusCircle, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PARTNER_HUBS, openPartnerHub, type PartnerHubConfig } from '../config/partnerHubs';
 import {
@@ -13,19 +13,18 @@ import {
 } from '../utils/seedPaidPartnerProduct';
 import { AddToBasketButton } from './partners/AddToBasketButton';
 import { PaidBasketDrawer } from './partners/PaidBasketDrawer';
+import { MusicHubsDirectory } from './musicHubs/MusicHubsDirectory';
+import { MusicHubAdminPanel } from './musicHubs/MusicHubAdminPanel';
+import { useAuth } from '../hooks/useAuth';
 
-/** Music hubs section — EMS + Tri-Borough only (user-specified). */
-const MUSIC_HUB_SLUGS = ['ems', 'triborough'] as const;
+/** Music hubs section — UK directory (EMS featured; Tri-Borough under London). */
+const MUSIC_HUB_LEGACY_SLUGS = ['ems', 'triborough'] as const;
 
 /**
  * Original Partner Hubs card strip — shared forest green for white wordmarks
  * on free organisation cards (ROH, LSO, National Theatre, Tate, etc.).
  */
 const FREE_LOGO_STRIP_BG = '#002D24';
-
-function hubBySlug(slug: string): PartnerHubConfig | undefined {
-  return PARTNER_HUBS.find((h) => h.slug === slug);
-}
 
 const PREMIUM_SLUGS = new Set(['weteachdrama', 'icompose', 'dramaresource']);
 
@@ -329,15 +328,19 @@ function PartnerHubAccordion({
 
 /**
  * Partner Hubs tab (exact order):
- * 1. Music hubs — EMS + Tri-Borough (collapsed)
+ * 1. Music hubs — UK directory (featured EMS + explore by country)
  * 2. Premium partners — WTD / iCompose / Drama Resource (collapsed)
  * 3. Organisations — free resources (4-up branded cards; includes Jazz North)
  */
 export function OurPartners() {
-  const musicHubs = MUSIC_HUB_SLUGS.map(hubBySlug).filter(Boolean) as PartnerHubConfig[];
+  const { user } = useAuth();
   const paidHubs = PARTNER_HUBS.filter((h) => h.paid);
-  const musicSlugSet = new Set<string>(MUSIC_HUB_SLUGS);
+  const musicSlugSet = new Set<string>(MUSIC_HUB_LEGACY_SLUGS);
   const freeOrgs = PARTNER_HUBS.filter((h) => !h.paid && !musicSlugSet.has(h.slug));
+  const showMusicAdmin =
+    user?.role === 'admin' ||
+    user?.role === 'superuser' ||
+    user?.role === 'super_admin';
 
   return (
     <div className="space-y-8">
@@ -359,29 +362,10 @@ export function OurPartners() {
         </div>
       </div>
 
-      {musicHubs.length > 0 && (
-        <section aria-labelledby="music-hubs-heading">
-          <div className="mb-3">
-            <p className="inline-flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
-              <Music2 className="h-3.5 w-3.5" aria-hidden />
-              Music hubs
-            </p>
-            <h3
-              id="music-hubs-heading"
-              className="mt-1 text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl"
-            >
-              Local music hubs
-            </h3>
-            <p className="mt-1 text-sm text-[#002D24]/70">
-              Expand a hub for details, then open its page for school services and planning links.
-            </p>
-          </div>
-          <PartnerHubAccordion
-            hubs={musicHubs}
-            variant="music"
-            listLabel="Music hubs"
-          />
-        </section>
+      <MusicHubsDirectory />
+
+      {showMusicAdmin && (
+        <MusicHubAdminPanel organisationFilter={null} />
       )}
 
       {paidHubs.length > 0 && (

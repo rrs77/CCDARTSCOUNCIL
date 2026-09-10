@@ -18,6 +18,9 @@ import { SchoolHomepage } from './components/SchoolHomepage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
 import { getPartnerHubForPath } from './config/partnerHubs';
+import { resolveMusicHubRoute } from './config/musicHubsDirectory';
+import { MusicHubsPage } from './components/musicHubs/MusicHubsPage';
+import { HubNodeAdminDashboard } from './components/musicHubs/HubNodeAdminDashboard';
 import { initializeSupabaseKeepAlive } from './utils/supabaseKeepAlive';
 import { isAuthorizedDemoMode, shouldShowPreviewBanner } from './utils/demoMode';
 import './utils/setupKS1Maths'; // Make setupKS1MathsExample available in browser console
@@ -60,22 +63,25 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   const { user, loading } = useAuth();
   const partnerHub =
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
+  const musicHubRoute =
+    typeof window !== 'undefined' ? resolveMusicHubRoute(window.location.pathname) : null;
   const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
   const [showTabsExplainer, setShowTabsExplainer] = useState(false);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
-  // (`/roh`, `/lso`, …) stay on their path so hubs are bookmarkable.
+  // (`/roh`, `/lso`, …) and Music Hubs directory stay on their path.
   useEffect(() => {
     if (
       user &&
       schoolHomepage &&
       !partnerHub &&
+      musicHubRoute === null &&
       typeof window !== 'undefined' &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
     }
-  }, [user, schoolHomepage, partnerHub]);
+  }, [user, schoolHomepage, partnerHub, musicHubRoute]);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
@@ -85,7 +91,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   // explicit click near the Dashboard tabs (not chained after welcome).
   // Real teacher logins must not see these popups.
   useEffect(() => {
-    if (!user || partnerHub || !isAuthorizedDemoMode()) return;
+    if (!user || partnerHub || musicHubRoute !== null || !isAuthorizedDemoMode()) return;
     let welcomeSeen = false;
     try {
       welcomeSeen = sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1';
@@ -95,7 +101,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     if (!welcomeSeen) {
       setShowPrototypeWelcome(true);
     }
-  }, [user, partnerHub]);
+  }, [user, partnerHub, musicHubRoute]);
 
   // Demo-only: Dashboard "About these tabs" button re-opens the explainer anytime.
   useEffect(() => {
@@ -173,6 +179,35 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   };
 
   const showPreviewBanner = shouldShowPreviewBanner();
+
+  // UK Music Hubs directory, slug pages (`/essex/chelmsford`), and hub admin (`…/admin`)
+  if (musicHubRoute !== null) {
+    const goHomeAfterAdd = (sheetId: string) => {
+      try {
+        sessionStorage.setItem(
+          'ccd-open-after-partner',
+          JSON.stringify({ sheetId, tab: 'lesson-library' }),
+        );
+      } catch {
+        /* ignore */
+      }
+      window.location.assign('/');
+    };
+    return (
+      <>
+        <Toaster position="top-right" />
+        {showPreviewBanner && <PreviewBanner />}
+        {musicHubRoute.kind === 'admin' ? (
+          <HubNodeAdminDashboard path={musicHubRoute.path} />
+        ) : (
+          <MusicHubsPage
+            path={musicHubRoute.kind === 'directory' ? '' : musicHubRoute.path}
+            onAddedToApp={({ sheetId }) => goHomeAfterAdd(sheetId)}
+          />
+        )}
+      </>
+    );
+  }
 
   // Mini partner hubs at /roh, /lso, /ems, etc. (signed-in) — school-homepage style chrome
   if (partnerHub) {

@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { ChevronRight, Download, ExternalLink, FileText, Youtube } from 'lucide-react';
+import { lazy, Suspense, useState } from 'react';
+import { Download, ExternalLink, FileText, Youtube } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   EMS_CONTACT_PAGE,
@@ -22,6 +22,13 @@ import {
 } from './PartnerHubLayout';
 import { AddToBasketButton } from './AddToBasketButton';
 import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
+import { musicHubPublicHref, openMusicHubPath } from '../../config/musicHubsDirectory';
+import type { EssexDistrictSlug } from '../../config/musicHubsDirectory';
+import { GreaterEssexRegionNav } from '../musicHubs/GreaterEssexRegionNav';
+
+const EssexDistrictMap = lazy(() =>
+  import('../musicHubs/EssexDistrictMap').then((m) => ({ default: m.EssexDistrictMap })),
+);
 
 interface EmsPartnerHubProps {
   onAddedToApp?: (info: { sheetId: string }) => void;
@@ -70,6 +77,7 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
 
   const markAdded = (id: string) => setAdded((prev) => ({ ...prev, [id]: true }));
 
+
   const handleAddWorkshop = async (id: EmsWorkshopId) => {
     setAdding(id);
     try {
@@ -96,83 +104,29 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
 
   return (
     <div className="space-y-6">
-      <section
-        className="rounded-xl border border-[#002D24]/15 bg-white px-4 py-4 shadow-sm sm:px-5"
-        aria-labelledby="eoe-other-hubs-heading"
-      >
-        <h3
-          id="eoe-other-hubs-heading"
-          className="text-base font-semibold tracking-tight text-[#002D24] sm:text-lg"
+      <p className="text-sm text-[#002D24]/70">
+        <a href="/music-hubs" className="font-semibold text-[#002D24] hover:underline">
+          Music Hubs
+        </a>
+        <span aria-hidden> · </span>
+        <a
+          href="/music-hubs/england/east-of-england"
+          className="hover:underline"
         >
-          Other hubs in East of England
-        </h3>
-        <p className="mt-1 text-sm text-[#002D24]/70">
-          Greater Essex Music Hub brings together Essex Music Service, Music-on-Sea (Southend) and
-          Thurrock Music Service. Open sibling hubs below, or return to Partner Hubs for EMS.
-        </p>
-        <ul className="mt-3 space-y-1.5" aria-label="Greater Essex hubs">
-          <li>
-            <div className="rounded-xl border border-[#330968]/35 bg-[#F5F0FF] px-3 py-2.5">
-              <p className="text-sm font-semibold text-[#330968]">Essex Music Service</p>
-              <p className="mt-0.5 text-xs text-[#330968]/75">
-                Lead delivery partner · you are here
-              </p>
-            </div>
-          </li>
-          <li>
-            <a
-              href="https://www.musiconsea.co.uk/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start justify-between gap-3 rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/35 px-3 py-2.5 hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
-            >
-              <span>
-                <span className="block text-sm font-semibold text-[#002D24]">
-                  Music-on-Sea (Southend)
-                </span>
-                <span className="mt-0.5 block text-xs text-[#002D24]/60">
-                  Southend-on-Sea music education · official site
-                </span>
-              </span>
-              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
-            </a>
-          </li>
-          <li>
-            <a
-              href="https://www.thurrock.gov.uk/"
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-start justify-between gap-3 rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/35 px-3 py-2.5 hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
-            >
-              <span>
-                <span className="block text-sm font-semibold text-[#002D24]">
-                  Thurrock Music Service
-                </span>
-                <span className="mt-0.5 block text-xs text-[#002D24]/60">
-                  Thurrock schools and young people · Thurrock Council
-                </span>
-              </span>
-              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
-            </a>
-          </li>
-          <li>
-            <a
-              href="/?tab=our-partners"
-              className="flex items-start justify-between gap-3 rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/35 px-3 py-2.5 hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
-            >
-              <span>
-                <span className="block text-sm font-semibold text-[#002D24]">
-                  Greater Essex / Partner Hubs
-                </span>
-                <span className="mt-0.5 block text-xs text-[#002D24]/60">
-                  Back to Partner Hubs (EMS card)
-                </span>
-              </span>
-              <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
-            </a>
-          </li>
-        </ul>
-      </section>
+          East of England
+        </a>
+        <span aria-hidden> · </span>
+        <a
+          href="/music-hubs/england/east-of-england/greater-essex"
+          className="hover:underline"
+        >
+          Greater Essex
+        </a>
+        <span aria-hidden> · </span>
+        Essex Music Service
+      </p>
+
+      <GreaterEssexRegionNav current="ems" title="Other hubs in East of England" />
 
       <PartnerHubFeaturedSection
         eyebrow="Featured workshop · mock product"
@@ -363,6 +317,32 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
             </li>
           ))}
         </ul>
+      </section>
+
+      <section
+        id="essex-districts"
+        className="scroll-mt-6 rounded-xl border border-[#002D24]/12 bg-white px-4 py-4 shadow-sm sm:px-5"
+      >
+        <h3 className="text-lg font-semibold text-gray-900">In your area</h3>
+        <p className="mt-1 text-sm text-gray-600">
+          Explore Essex districts on the map, or open the{' '}
+          <a
+            href={musicHubPublicHref(
+              'england/east-of-england/greater-essex/essex-music-service/chelmsford',
+            )}
+            className="font-semibold text-[#330968] hover:underline"
+          >
+            Chelmsford sample page
+          </a>
+          .
+        </p>
+        <div className="mt-4">
+          <Suspense fallback={<p className="text-sm text-gray-500">Loading map…</p>}>
+            <EssexDistrictMap
+              onSelect={(_slug: EssexDistrictSlug, path: string) => openMusicHubPath(path)}
+            />
+          </Suspense>
+        </div>
       </section>
 
       <section className="rounded-xl border border-gray-200 bg-white px-5 py-4">

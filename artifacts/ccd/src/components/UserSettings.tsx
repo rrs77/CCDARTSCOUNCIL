@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2 } from 'lucide-react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -9,6 +9,8 @@ import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { isSupabaseConfigured, isSupabaseAuthEnabled } from '../config/supabase';
 import { AuthGuard } from './Auth/AuthGuard';
 import { UserManagement } from './Admin/UserManagement';
+import { HubContentApprovalQueue } from './musicHubs/HubContentApprovalQueue';
+import { MyHubAdministration } from './musicHubs/MyHubAdministration';
 import { customCategoriesApi, activityPacksApi } from '../config/api';
 import type { ActivityPack } from '../config/api';
 import { useDrag, useDrop } from 'react-dnd';
@@ -154,7 +156,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   tempCategoriesRef.current = tempCategories;
   tempYearGroupsRef.current = tempYearGroups;
   const [tempResourceLinks, setTempResourceLinks] = useState(resourceLinks);
-  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding'>('yeargroups');
+  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content'>('yeargroups');
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
   const adminTriggerRef = useRef<HTMLButtonElement>(null);
@@ -204,6 +206,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       return;
     }
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
+    if (activeTab === 'hub-content' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
     if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
@@ -1048,7 +1051,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               type="button"
               onClick={() => setAdminMenuOpen(prev => !prev)}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 transition-all duration-150 focus:outline-none min-h-[36px] ${
-                (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding')
+                (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding' || activeTab === 'hub-content')
                   ? 'text-white bg-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white'
               }`}
@@ -1080,6 +1083,16 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   >
                     <Package className="h-4 w-4" />
                     Manage Packs
+                  </button>
+                )}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('hub-content'); setAdminMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'hub-content' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <MapPin className="h-4 w-4" />
+                    Hub content
                   </button>
                 )}
                 {isAdmin && (
@@ -1132,6 +1145,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'yeargroups' && (
             <div className="space-y-4">
+              <MyHubAdministration />
+              <div className="space-y-4">
               {/* Class Management */}
               <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 sm:p-6">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
@@ -1593,6 +1608,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   </div>
                 </div>
               </div>
+            </div>
             </div>
           )}
 
@@ -2777,12 +2793,22 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {activeTab === 'users' && showUserManagement && (
             <AuthGuard requireCanManageUsers fallback={<div className="p-4 text-gray-600">You don’t have permission to manage users.</div>}>
               <div className="space-y-3">
-                <p className="text-sm text-gray-600">User information, user types (roles), and password reset. Manage who can access the app and send reset emails from here.</p>
+                <p className="text-sm text-gray-600">User information, user types (roles), and password reset. Use Actions → Manage Access to assign Music Hub areas.</p>
+                <MyHubAdministration />
                 <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
                   <UserManagement />
                 </div>
               </div>
             </AuthGuard>
+          )}
+
+          {activeTab === 'hub-content' && isAdmin && (
+            <div className="space-y-4">
+              <MyHubAdministration />
+              <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
+                <HubContentApprovalQueue />
+              </div>
+            </div>
           )}
 
           {activeTab === 'branding' && isAdmin && (

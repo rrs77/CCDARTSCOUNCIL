@@ -90,6 +90,18 @@ export function TriBoroughPartnerHub({ onAddedToApp }: TriBoroughPartnerHubProps
 
   return (
     <div className="space-y-6">
+      <p className="text-sm text-[#002D24]/70">
+        <a href="/music-hubs" className="font-semibold text-[#002D24] hover:underline">
+          Music Hubs
+        </a>
+        <span aria-hidden> · </span>
+        <a href="/music-hubs/england/london/london-west" className="hover:underline">
+          London West
+        </a>
+        <span aria-hidden> · </span>
+        Tri-Borough Music Hub
+      </p>
+
       <PartnerHubFeaturedSection
         eyebrow="Featured programme · mock product"
         title={gnp.title}
@@ -201,6 +213,37 @@ export function TriBoroughPartnerHub({ onAddedToApp }: TriBoroughPartnerHubProps
           After Add: Year 5 Music → Lesson Library → export the Music Makes Me lesson to PDF.
         </p>
       </PartnerHubFeaturedSection>
+
+      <section className="rounded-xl border border-[#002D24]/12 bg-white px-4 py-4">
+        <h3 className="text-lg font-semibold text-gray-900">In your area</h3>
+        <p className="mt-1 text-sm text-gray-600">Borough pages use the shared local-area template.</p>
+        <ul className="mt-3 grid gap-2 sm:grid-cols-3">
+          {[
+            {
+              name: 'Hammersmith & Fulham',
+              path: 'england/london/london-west/tri-borough/hammersmith-fulham',
+            },
+            {
+              name: 'Kensington & Chelsea',
+              path: 'england/london/london-west/tri-borough/kensington-chelsea',
+            },
+            {
+              name: 'Westminster',
+              path: 'england/london/london-west/tri-borough/westminster',
+            },
+          ].map((b) => (
+            <li key={b.path}>
+              <a
+                href={`/music-hubs/${b.path}`}
+                className="flex w-full items-center justify-between rounded-lg border border-[#002D24]/15 px-3 py-2.5 text-sm font-semibold text-[#002D24] hover:bg-[#E8F0EA]"
+              >
+                {b.name}
+                <span className="text-xs font-medium text-[#002D24]/50">Soon</span>
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section>
         <h3 className="text-lg font-semibold text-gray-900">More free TBMH links</h3>
