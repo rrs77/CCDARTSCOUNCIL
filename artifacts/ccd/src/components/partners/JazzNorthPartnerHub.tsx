@@ -199,7 +199,8 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
               done={!!added.showcase || !!added['mr-big']}
               onClick={() => void runSeed('mr-big')}
               className="bg-[#1A0A14] text-white hover:opacity-95"
-              label="Add showcase lesson to CCDesigner"
+              label="Add lesson to your planner"
+              doneLabel="Lesson added to your planner"
             />
           </div>
         }
@@ -234,7 +235,7 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
             </h3>
             <p className="mt-1 text-sm text-gray-600">
               Direct downloads from Jazz North files on Rhythmstix hosting. Open or download each
-              file, or add every pack to CCDesigner as lessons plus separate Activity Library
+              file, or add every pack to your planner as lessons plus separate Activity Library
               entries (with worksheet, lesson and audio links where applicable).
             </p>
           </div>
@@ -243,8 +244,8 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
             done={!!added.worksheets}
             onClick={() => void runAddAllWorksheets()}
             className="shrink-0 bg-[#1A0A14] text-white hover:opacity-95"
-            label="Add all lessons and activities to CCDesigner"
-            doneLabel="Worksheets added to CCDesigner"
+            label="Add activities to your planner"
+            doneLabel="Activities added to your planner"
           />
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
@@ -388,7 +389,7 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
                 <h4 className="mt-0.5 font-semibold text-gray-900">{pack.title}</h4>
                 <p className="mt-1 text-sm text-gray-600">
                   {pack.seed
-                    ? 'Seeds activities + a full lesson plan into CCDesigner (local prototype).'
+                    ? 'Seeds activities + a full lesson plan into your planner (local prototype).'
                     : 'Opens the official Jazz North page — materials stay on their site.'}
                 </p>
               </div>
@@ -431,8 +432,8 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
                       <PlusCircle className="h-3.5 w-3.5" aria-hidden />
                     )}
                     {added[pack.seed] || (pack.seed === 'mr-big' && added.showcase)
-                      ? 'Added'
-                      : 'Add to CCDesigner'}
+                      ? 'Lesson added to your planner'
+                      : 'Add lesson to your planner'}
                   </button>
                 ) : (
                   <button

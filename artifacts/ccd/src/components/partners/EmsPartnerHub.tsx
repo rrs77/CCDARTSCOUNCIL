@@ -10,7 +10,6 @@ import {
   EMS_WORKSHOPS_PAGE,
   EMS_YOUTUBE,
 } from '../../utils/emsBranding';
-import { setupEMSSchoolsExample } from '../../utils/setupEMSSchoolsExample';
 import {
   EMS_WORKSHOP_SHOWCASES,
   setupEMSWorkshop,
@@ -65,8 +64,8 @@ const OTHER_WORKSHOPS = [
 ] as const;
 
 /**
- * Essex Music Service hub — brochure plus Drama Resource–style mock product pages
- * for DJ Workshop and Rap-It! (course notes PDF + Add showcase lesson).
+ * Essex Music Service hub — brochure PDF plus Drama Resource–style mock product pages
+ * for DJ Workshop and Rap-It! (course notes PDF + add lesson to planner).
  */
 export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
   const [adding, setAdding] = useState<string | null>(null);
@@ -78,29 +77,6 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
 
   const markAdded = (id: string) => setAdded((prev) => ({ ...prev, [id]: true }));
 
-  const handleAddBrochure = async () => {
-    setAdding('brochure');
-    try {
-      const result = await setupEMSSchoolsExample({
-        force: true,
-        registerPartnerPlanning: true,
-      });
-      if (result.skipped) {
-        toast.success('Essex Music Service brochure example is already in your library');
-      } else {
-        toast.success(
-          `Added ${result.lessons} lessons and ${result.activities} activities (local prototype only)`,
-        );
-      }
-      markAdded('brochure');
-      onAddedToApp?.({ sheetId: result.sheetId });
-    } catch (e) {
-      console.error(e);
-      toast.error('Could not add EMS prototype. Please try again.');
-    } finally {
-      setAdding(null);
-    }
-  };
 
   const handleAddWorkshop = async (id: EmsWorkshopId) => {
     setAdding(id);
@@ -180,7 +156,8 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
               done={!!added.dj}
               onClick={() => void handleAddWorkshop('dj')}
               className="bg-[#330968] text-white hover:opacity-95"
-              label="Add DJ showcase lesson"
+              label="Add lesson to your planner"
+              doneLabel="Lesson added to your planner"
             />
           </div>
         }
@@ -236,7 +213,8 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
               done={!!added['rap-it']}
               onClick={() => void handleAddWorkshop('rap-it')}
               className="bg-[#7a00df] text-white hover:opacity-95"
-              label="Add Rap-It! showcase lesson"
+              label="Add lesson to your planner"
+              doneLabel="Lesson added to your planner"
             />
           </div>
         }
@@ -274,15 +252,6 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
           { href: EMS_SCHOOLS_BROCHURE_PDF, label: 'Open brochure PDF', icon: 'file' },
           { href: EMS_CURRICULUM_PAGE, label: 'Curriculum & CPD page', icon: 'external' },
         ]}
-        action={
-          <PartnerHubAddButton
-            busy={adding === 'brochure'}
-            done={!!added.brochure}
-            onClick={() => void handleAddBrochure()}
-            className="bg-[#330968] text-white hover:opacity-95"
-            label="Add brochure planner"
-          />
-        }
       >
         <div className="mt-3 flex flex-wrap gap-2">
           <button
