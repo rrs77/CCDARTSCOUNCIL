@@ -14,7 +14,7 @@ import {
   JN_PLAYLIST_PROJECT,
   JN_SITE,
 } from '../utils/jazzNorthBranding';
-import type { PartnerOrgHubLayout } from '../types/partnerOrgHub';
+import type { PartnerOrgHubCard, PartnerOrgHubLayout } from '../types/partnerOrgHub';
 import {
   JAZZ_NORTH_COLLECTIONS,
   getJazzNorthResourcesByCollection,
@@ -37,6 +37,7 @@ function jnWorksheetCards() {
       downloadFilename: res.dreamHostFilename,
       openLabel: 'Open',
       downloadLabel: 'Download',
+      plannerAction: 'none' as const,
     }));
   });
 }
@@ -71,28 +72,28 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
             title: 'Mr Big scheme of work',
             meta: 'KS1 · Active listening · Optional PSHE',
             description:
-              'Add classroom activities and/or a full lesson plan inspired by Jazz North’s Mr Big scheme. Overview PDF from DreamHost when uploaded.',
+              'Add a full lesson plan inspired by Jazz North’s Mr Big scheme. Overview PDF from DreamHost when uploaded.',
             siteUrl: JN_MR_BIG,
             openUrl: jnDreamHostUrl(JN_MR_BIG_OVERVIEW_FILE),
             downloadUrl: jnDreamHostUrl(JN_MR_BIG_OVERVIEW_FILE),
             downloadFilename: JN_MR_BIG_OVERVIEW_FILE,
             openLabel: 'Open overview',
             seedKey: 'mr-big',
-            seedable: true,
+            plannerAction: 'lesson',
           },
           {
             id: 'playlist',
             title: 'Playlist Project — Milestones',
             meta: 'KS2 · Listening pathway · No jazz experience needed',
             description:
-              'Add listening activities and/or a Milestones lesson plan. Overview PDF from DreamHost when uploaded.',
+              'Add a Milestones lesson plan. Overview PDF from DreamHost when uploaded.',
             siteUrl: JN_PLAYLIST_PROJECT,
             openUrl: jnDreamHostUrl(JN_PLAYLIST_OVERVIEW_FILE),
             downloadUrl: jnDreamHostUrl(JN_PLAYLIST_OVERVIEW_FILE),
             downloadFilename: JN_PLAYLIST_OVERVIEW_FILE,
             openLabel: 'Open overview',
             seedKey: 'playlist',
-            seedable: true,
+            plannerAction: 'lesson',
           },
         ],
       },
@@ -111,6 +112,7 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
             siteUrl: JN_JAZZ_CAMP,
             openUrl: JN_JAZZ_CAMP,
             openLabel: 'Open',
+            plannerAction: 'none',
           },
           {
             id: 'educators',
@@ -120,6 +122,7 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
             siteUrl: JN_EDUCATORS_FORUM,
             openUrl: JN_EDUCATORS_FORUM,
             openLabel: 'Open',
+            plannerAction: 'none',
           },
           {
             id: 'northern-line',
@@ -129,6 +132,7 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
             siteUrl: JN_NORTHERN_LINE,
             openUrl: JN_NORTHERN_LINE,
             openLabel: 'Open',
+            plannerAction: 'none',
           },
           {
             id: 'new-northern',
@@ -138,6 +142,7 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
             siteUrl: JN_NEW_NORTHERN,
             openUrl: JN_NEW_NORTHERN,
             openLabel: 'Open',
+            plannerAction: 'none',
           },
         ],
       },
@@ -161,7 +166,7 @@ const LSO_SCHOOLS =
   'https://www.lso.co.uk/learn-and-discover/activities-for-schools-and-teachers/';
 const LSO_TES = 'https://www.tes.com/member/lsodiscovery';
 
-const LSO_RESOURCE_PROJECTS = [
+const LSO_RESOURCE_PROJECTS: PartnerOrgHubCard[] = [
   {
     id: 'htbao',
     title: 'How to Build an Orchestra',
@@ -171,7 +176,7 @@ const LSO_RESOURCE_PROJECTS = [
     siteUrl: HTBAO_PAGE,
     openUrl: HTBAO_PAGE,
     seedKey: 'htbao',
-    seedable: true,
+    plannerAction: 'lesson',
   },
   {
     id: 'planets',
@@ -308,11 +313,11 @@ export function getLsoDefaultLayout(): PartnerOrgHubLayout {
             id: 'htbao-featured',
             title: 'How to Build an Orchestra',
             meta: 'KS2 · Seed into CCDesigner',
-            description: 'Add activities and/or the full unit lesson plans to your library.',
+            description: 'Add the full unit lesson plans to your library.',
             siteUrl: HTBAO_PAGE,
             openUrl: HTBAO_PAGE,
             seedKey: 'htbao',
-            seedable: true,
+            plannerAction: 'lesson',
           },
         ],
       },

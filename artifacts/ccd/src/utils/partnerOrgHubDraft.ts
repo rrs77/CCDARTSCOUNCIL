@@ -3,12 +3,35 @@
  * Prefer this on main until a cloud hub-admin store is available.
  */
 
-import type { PartnerOrgHubLayout, PartnerOrgHubSection } from '../types/partnerOrgHub';
+import type {
+  PartnerOrgHubCard,
+  PartnerOrgHubLayout,
+  PartnerOrgHubSection,
+} from '../types/partnerOrgHub';
+import { resolvePartnerOrgPlannerAction } from '../types/partnerOrgHub';
 
 const STORAGE_PREFIX = 'ccd-partner-org-hub-layout-v1:';
 
 export function partnerOrgHubDraftKey(orgSlug: string): string {
   return `${STORAGE_PREFIX}${String(orgSlug || '').toLowerCase()}`;
+}
+
+function normalizeCard(card: PartnerOrgHubCard): PartnerOrgHubCard {
+  const plannerAction = resolvePartnerOrgPlannerAction(card);
+  const next: PartnerOrgHubCard = { ...card, plannerAction };
+  delete next.seedable;
+  return next;
+}
+
+function normalizeLayout(layout: PartnerOrgHubLayout): PartnerOrgHubLayout {
+  return {
+    ...layout,
+    version: 1,
+    sections: (layout.sections || []).map((section) => ({
+      ...section,
+      cards: section.cards?.map(normalizeCard),
+    })),
+  };
 }
 
 export function readPartnerOrgHubDraft(orgSlug: string): PartnerOrgHubLayout | null {
@@ -17,7 +40,7 @@ export function readPartnerOrgHubDraft(orgSlug: string): PartnerOrgHubLayout | n
     if (!raw) return null;
     const parsed = JSON.parse(raw) as PartnerOrgHubLayout;
     if (!parsed || parsed.version !== 1 || !Array.isArray(parsed.sections)) return null;
-    return parsed;
+    return normalizeLayout(parsed);
   } catch {
     return null;
   }
@@ -54,15 +77,15 @@ export function resolvePartnerOrgHubLayout(
   defaults: PartnerOrgHubLayout,
 ): PartnerOrgHubLayout {
   const draft = readPartnerOrgHubDraft(defaults.orgSlug);
-  if (!draft) return defaults;
-  return {
+  if (!draft) return normalizeLayout(defaults);
+  return normalizeLayout({
     ...defaults,
     ...draft,
     orgSlug: defaults.orgSlug,
     orgDisplayName: draft.orgDisplayName || defaults.orgDisplayName,
     version: 1,
     sections: Array.isArray(draft.sections) ? draft.sections : defaults.sections,
-  };
+  });
 }
 
 export function newSectionId(type: string): string {

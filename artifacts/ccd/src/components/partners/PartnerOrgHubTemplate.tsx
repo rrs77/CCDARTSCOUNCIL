@@ -24,9 +24,14 @@ import type {
   PartnerOrgHubCard,
   PartnerOrgHubLayout,
   PartnerOrgHubSection,
+  PartnerOrgPlannerAction,
   PartnerOrgSectionType,
 } from '../../types/partnerOrgHub';
-import { PARTNER_ORG_SECTION_PALETTE } from '../../types/partnerOrgHub';
+import {
+  PARTNER_ORG_PLANNER_ACTION_OPTIONS,
+  PARTNER_ORG_SECTION_PALETTE,
+  resolvePartnerOrgPlannerAction,
+} from '../../types/partnerOrgHub';
 import {
   clearPartnerOrgHubDraft,
   createBlankSection,
@@ -157,38 +162,97 @@ export function PartnerOrgHubTemplate({
     });
   };
 
+  const updateCardPlannerAction = (
+    sectionId: string,
+    cardId: string,
+    plannerAction: PartnerOrgPlannerAction,
+  ) => {
+    persist({
+      ...layout,
+      sections: layout.sections.map((s) => {
+        if (s.id !== sectionId || !s.cards) return s;
+        return {
+          ...s,
+          cards: s.cards.map((c) => {
+            if (c.id !== cardId) return c;
+            const next: PartnerOrgHubCard = { ...c, plannerAction };
+            delete next.seedable;
+            return next;
+          }),
+        };
+      }),
+    });
+  };
+
   const resetDraft = () => {
     clearPartnerOrgHubDraft(defaults.orgSlug);
     setLayout(resolvePartnerOrgHubLayout(defaults));
     toast.success('Reset to default layout');
   };
 
-  const renderCard = (card: PartnerOrgHubCard) => {
-    const seedable = Boolean(card.seedable && card.seedKey && onSeed);
+  const renderCard = (card: PartnerOrgHubCard, sectionId: string) => {
+    const plannerAction = resolvePartnerOrgPlannerAction(card);
+    const canSeed = Boolean(card.seedKey && onSeed && plannerAction !== 'none');
+    const showActivities = canSeed && plannerAction === 'activities';
+    const showLesson = canSeed && plannerAction === 'lesson';
+
     return (
-      <PartnerHubResourceCard
-        key={card.id}
-        title={card.title}
-        meta={card.meta}
-        description={card.description}
-        accentBorderClassName={accentBorderClassName}
-        linkClassName={linkClassName}
-        siteUrl={card.siteUrl}
-        openUrl={card.openUrl}
-        openLabel={card.openLabel || 'Open'}
-        downloadUrl={card.downloadUrl}
-        downloadFilename={card.downloadFilename}
-        downloadLabel={card.downloadLabel || 'Download'}
-        onAddActivities={
-          seedable ? () => void runSeed(card.seedKey!, 'activities') : undefined
-        }
-        onAddLessonPlan={seedable ? () => void runSeed(card.seedKey!, 'lesson') : undefined}
-        addingActivities={addingSeed === `${card.seedKey}:activities`}
-        addingLesson={addingSeed === `${card.seedKey}:lesson`}
-        addedActivities={!!addedSeed[`${card.seedKey}:activities`]}
-        addedLesson={!!addedSeed[`${card.seedKey}:lesson`]}
-        disabled={addingSeed !== null}
-      />
+      <li key={card.id} className="flex h-full flex-col gap-2">
+        <PartnerHubResourceCard
+          title={card.title}
+          meta={card.meta}
+          description={card.description}
+          accentBorderClassName={accentBorderClassName}
+          linkClassName={linkClassName}
+          siteUrl={card.siteUrl}
+          openUrl={card.openUrl}
+          openLabel={card.openLabel || 'Open'}
+          downloadUrl={card.downloadUrl}
+          downloadFilename={card.downloadFilename}
+          downloadLabel={card.downloadLabel || 'Download'}
+          onAddActivities={
+            showActivities ? () => void runSeed(card.seedKey!, 'activities') : undefined
+          }
+          onAddLessonPlan={
+            showLesson ? () => void runSeed(card.seedKey!, 'lesson') : undefined
+          }
+          addingActivities={addingSeed === `${card.seedKey}:activities`}
+          addingLesson={addingSeed === `${card.seedKey}:lesson`}
+          addedActivities={!!addedSeed[`${card.seedKey}:activities`]}
+          addedLesson={!!addedSeed[`${card.seedKey}:lesson`]}
+          disabled={addingSeed !== null}
+        />
+        {editMode && (
+          <label className="flex flex-col gap-1 rounded-lg border border-dashed border-gray-300 bg-gray-50 px-3 py-2 text-xs text-gray-600">
+            <span className="font-semibold uppercase tracking-wide text-gray-500">
+              Planner action
+            </span>
+            <select
+              value={plannerAction}
+              onChange={(e) =>
+                updateCardPlannerAction(
+                  sectionId,
+                  card.id,
+                  e.target.value as PartnerOrgPlannerAction,
+                )
+              }
+              className="rounded-md border border-gray-300 bg-white px-2 py-1.5 text-sm text-gray-900"
+              aria-label={`Planner action for ${card.title}`}
+            >
+              {PARTNER_ORG_PLANNER_ACTION_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+            {plannerAction !== 'none' && !card.seedKey && (
+              <span className="text-amber-700">
+                Needs a seed key in defaults before the button can run.
+              </span>
+            )}
+          </label>
+        )}
+      </li>
     );
   };
 
@@ -287,7 +351,9 @@ export function PartnerOrgHubTemplate({
             </div>
           )}
           {cards.length > 0 && (
-            <ul className="mt-4 grid gap-3 sm:grid-cols-2">{cards.map(renderCard)}</ul>
+            <ul className="mt-4 grid gap-3 sm:grid-cols-2">
+              {cards.map((c) => renderCard(c, section.id))}
+            </ul>
           )}
         </section>
       );
@@ -337,7 +403,9 @@ export function PartnerOrgHubTemplate({
         <section key={section.id} className="space-y-3">
           {headingRow}
           {open && (
-            <ul className="grid gap-3 sm:grid-cols-2">{cards.map(renderCard)}</ul>
+            <ul className="grid gap-3 sm:grid-cols-2">
+              {cards.map((c) => renderCard(c, section.id))}
+            </ul>
           )}
         </section>
       );
@@ -347,7 +415,9 @@ export function PartnerOrgHubTemplate({
     return (
       <section key={section.id} className="space-y-3">
         {headingRow}
-        <ul className="grid gap-3 sm:grid-cols-2">{cards.map(renderCard)}</ul>
+        <ul className="grid gap-3 sm:grid-cols-2">
+          {cards.map((c) => renderCard(c, section.id))}
+        </ul>
       </section>
     );
   };

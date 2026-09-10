@@ -90,8 +90,8 @@ export function PartnerHubAddButton({
   busy,
   done,
   onClick,
-  label = 'Add to CCDesigner',
-  doneLabel = 'Added to CCDesigner',
+  label = 'Add lesson to your planner',
+  doneLabel = 'Lesson added to your planner',
   className,
   variant = 'primary',
 }: {

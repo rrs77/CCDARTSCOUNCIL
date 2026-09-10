@@ -125,8 +125,8 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
                 done={addedWorksheets}
                 onClick={() => void runAddAllWorksheets()}
                 className="shrink-0 bg-[#1A0A14] text-white hover:opacity-95"
-                label="Add all lessons and activities"
-                doneLabel="Worksheets added"
+                label="Add activities to your planner"
+                doneLabel="Activities added to your planner"
               />
             </div>
           </section>
