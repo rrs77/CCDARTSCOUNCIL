@@ -208,7 +208,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     tagline: 'Strategic development agency for jazz in the North',
     description: [
       'Jazz North is the strategic development agency for jazz in the North of England — Artist Development, Sector Support and Learning & Participation, including free classroom improvisation resources, the Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
-      'This hub lists classroom worksheets (Hello Song, Can You Sing Your Song?, 2 and 4 Chant, Improvisation) plus showcase lessons that seed Activity Library activities and Lesson Library plans. Official Learning Resources Area packs also stay on jazznorth.org.',
+      'This hub lists classroom worksheets with DreamHost Open/Download links (Hello Song, Can You Sing Your Song?, 2 and 4 Chant, Improvisation) plus Add all lessons and activities into CCDesigner. Official Learning Resources Area packs also stay on jazznorth.org.',
     ],
     primaryColor: '#1A0A14',
     accentColor: '#FF53B6',

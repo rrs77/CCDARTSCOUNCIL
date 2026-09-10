@@ -3,6 +3,8 @@
  * Prefer real organisation URLs. Leave `resources` empty when none are verified yet.
  */
 
+import { jnDreamHostFileUrl } from './jazzNorthDreamHost';
+
 export interface PartnerHubResourceLink {
   title: string;
   href: string;
@@ -360,7 +362,7 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
     ],
     resourcesHeading: 'Teacher & learning resources',
     resourcesIntro:
-      'Classroom worksheets on the interactive hub, plus Learning Resources Area, Mr Big, Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
+      'Classroom worksheets download from Rhythmstix/DreamHost on the interactive hub, plus Learning Resources Area, Mr Big, Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
     resources: [
       {
         title: 'Learning Resources Area',
@@ -371,26 +373,26 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
       },
       {
         title: 'Can You Sing Your Song? — Activities',
-        href: '/partners/jazznorth/jn-can-you-sing-activities.pdf',
-        description: 'Classroom activities worksheet (hub demo pack).',
+        href: jnDreamHostFileUrl('canYouSingActivities'),
+        description: 'Classroom activities worksheet (DreamHost direct download).',
         kind: 'PDF',
       },
       {
         title: 'Hello Song — Activities',
-        href: '/partners/jazznorth/jn-hello-song-activities.pdf',
-        description: 'Hello Song activities worksheet (hub demo pack).',
+        href: jnDreamHostFileUrl('helloActivities'),
+        description: 'Hello Song activities worksheet (DreamHost direct download).',
         kind: 'PDF',
       },
       {
         title: '2 and 4 Chant — Activities',
-        href: '/partners/jazznorth/jn-2-and-4-chant-activities.pdf',
-        description: '2 and 4 Chant activities worksheet (hub demo pack).',
+        href: jnDreamHostFileUrl('chantActivities'),
+        description: '2 and 4 Chant activities worksheet (DreamHost direct download).',
         kind: 'PDF',
       },
       {
         title: 'Ways into Improvisation',
-        href: '/partners/jazznorth/jn-ways-into-improvisation.pdf',
-        description: 'Improvisation guide for classroom use (hub demo pack).',
+        href: jnDreamHostFileUrl('waysIntoImprov'),
+        description: 'Improvisation guide for classroom use (DreamHost direct download).',
         kind: 'PDF',
       },
       {

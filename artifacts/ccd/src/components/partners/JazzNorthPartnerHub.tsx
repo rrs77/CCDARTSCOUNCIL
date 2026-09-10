@@ -22,6 +22,7 @@ import {
   setupJazzNorthExample,
   setupJazzNorthPlaylistExample,
 } from '../../utils/setupJazzNorthExample';
+import { setupJazzNorthWorksheetPacks } from '../../utils/setupJazzNorthWorksheetPacks';
 import { openActivityResource } from '../../utils/openActivityResource';
 import {
   PartnerHubAddButton,
@@ -31,6 +32,7 @@ import { AddToBasketButton } from './AddToBasketButton';
 import { formatPricePence, getPaidProduct } from '../../config/paidPartnerProducts';
 import {
   JAZZ_NORTH_COLLECTIONS,
+  JAZZ_NORTH_DREAMHOST_BASE_USED,
   getJazzNorthResourcesByCollection,
 } from '../../data/resourceRegistry';
 
@@ -98,7 +100,8 @@ const OTHER_PACKS = [
 
 /**
  * Jazz North hub — free organisation Partner Hub (Organisations grid).
- * Each Add seeds Activity Library activities + a Lesson Library plan via prototypeLocalSeed.
+ * Worksheet Open/Download → DreamHost direct URLs.
+ * “Add all lessons and activities” seeds Lesson Library + Activity Library via shared pack util.
  */
 export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) {
   const [adding, setAdding] = useState<string | null>(null);
@@ -134,6 +137,30 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
     } catch (e) {
       console.error(e);
       toast.error('Could not add Jazz North prototype. Please try again.');
+    } finally {
+      setAdding(null);
+    }
+  };
+
+  const runAddAllWorksheets = async () => {
+    setAdding('worksheets');
+    try {
+      const result = await setupJazzNorthWorksheetPacks({
+        force: true,
+        registerPartnerPlanning: true,
+      });
+      if (result.skipped) {
+        toast.success('Jazz North worksheet packs are already in your library');
+      } else {
+        toast.success(
+          `Added ${result.lessons} lessons · ${result.activities} activities from Jazz North packs`,
+        );
+      }
+      markAdded('worksheets');
+      onAddedToApp?.({ sheetId: result.sheetIds[0] || 'Year 3 Music' });
+    } catch (e) {
+      console.error(e);
+      toast.error('Could not add Jazz North worksheets. Please try again.');
     } finally {
       setAdding(null);
     }
@@ -200,14 +227,25 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
       </PartnerHubFeaturedSection>
 
       <section className="space-y-3 rounded-xl border border-pink-200 bg-pink-50/40 p-4">
-        <div>
-          <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-900">
-            Classroom worksheets &amp; scores
-          </h3>
-          <p className="mt-1 text-sm text-gray-600">
-            Jazz North teaching packs for the hub demo — open PDFs and audio ZIPs directly. Full
-            Learning Resources Area packs still live on jazznorth.org.
-          </p>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div>
+            <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-900">
+              Classroom worksheets &amp; scores
+            </h3>
+            <p className="mt-1 text-sm text-gray-600">
+              Direct downloads from Jazz North files on Rhythmstix hosting. Open or download each
+              file, or add every pack to CCDesigner as lessons plus separate Activity Library
+              entries (with worksheet, lesson and audio links where applicable).
+            </p>
+          </div>
+          <PartnerHubAddButton
+            busy={adding === 'worksheets'}
+            done={!!added.worksheets}
+            onClick={() => void runAddAllWorksheets()}
+            className="shrink-0 bg-[#1A0A14] text-white hover:opacity-95"
+            label="Add all lessons and activities to CCDesigner"
+            doneLabel="Worksheets added to CCDesigner"
+          />
         </div>
         <div className="grid gap-4 lg:grid-cols-2">
           {JAZZ_NORTH_COLLECTIONS.map((collection) => {
@@ -219,27 +257,40 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
               >
                 <h4 className="font-semibold text-gray-900">{collection.title}</h4>
                 <p className="mt-0.5 text-xs text-gray-500">{collection.description}</p>
-                <ul className="mt-3 space-y-1.5">
+                <ul className="mt-3 space-y-2">
                   {items.map((res) => (
-                    <li key={res.id} className="flex items-center justify-between gap-2">
-                      <span className="min-w-0 truncate text-sm text-gray-800" title={res.title}>
+                    <li
+                      key={res.id}
+                      className="flex flex-wrap items-center justify-between gap-2 border-b border-pink-50 pb-2 last:border-0 last:pb-0"
+                    >
+                      <span
+                        className="min-w-0 flex-1 truncate text-sm text-gray-800"
+                        title={res.title}
+                      >
                         {res.title}
                         <span className="ml-1 text-xs text-gray-400">({res.type})</span>
                       </span>
-                      <a
-                        href={res.publicUrl}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        download={res.filename}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-md border border-pink-300 bg-pink-50 px-2 py-1 text-xs font-medium text-pink-900 hover:bg-pink-100"
-                      >
-                        {res.type.toLowerCase().includes('audio') ? (
-                          <Download className="h-3.5 w-3.5" aria-hidden />
-                        ) : (
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <a
+                          href={res.publicUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border border-pink-300 bg-white px-2 py-1 text-xs font-medium text-pink-900 hover:bg-pink-50"
+                        >
                           <FileText className="h-3.5 w-3.5" aria-hidden />
-                        )}
-                        Open
-                      </a>
+                          Open
+                        </a>
+                        <a
+                          href={res.publicUrl}
+                          download={res.dreamHostFilename}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-md border border-pink-400 bg-pink-50 px-2 py-1 text-xs font-medium text-pink-950 hover:bg-pink-100"
+                        >
+                          <Download className="h-3.5 w-3.5" aria-hidden />
+                          Download
+                        </a>
+                      </div>
                     </li>
                   ))}
                 </ul>
@@ -248,8 +299,11 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
           })}
         </div>
         <p className="text-xs text-gray-500">
-          Collections: Can You Sing Your Song?, Hello Song, 2 and 4 Chant, and Improvisation guides.
-          Official account downloads:{' '}
+          Hosted at{' '}
+          <code className="rounded bg-white/80 px-1 text-[11px] text-gray-700">
+            {JAZZ_NORTH_DREAMHOST_BASE_USED}
+          </code>
+          . Official account downloads:{' '}
           <a
             href={JN_LEARNING_RESOURCES}
             target="_blank"
@@ -258,7 +312,7 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
           >
             Learning Resources Area
           </a>
-          .
+          . After Add all: open Year 3 Music → Lesson Library &amp; Activity Library.
         </p>
       </section>
 

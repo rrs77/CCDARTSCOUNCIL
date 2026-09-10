@@ -38,6 +38,7 @@ import './utils/setupICCGettingStarted'; // iCompose Getting Started seed
 import './utils/setupICCFanfare'; // iCompose Fanfare paid course seed
 import './utils/setupDramaResourceExample'; // Drama Resource Ten Second Objects seed
 import './utils/setupJazzNorthExample'; // Jazz North Mr Big + Playlist Project seeds
+import './utils/setupJazzNorthWorksheetPacks'; // Jazz North DreamHost worksheet packs
 import { RohPartnerHub } from './components/partners/RohPartnerHub';
 import { WtdPartnerHub } from './components/partners/WtdPartnerHub';
 import { EmsPartnerHub } from './components/partners/EmsPartnerHub';
