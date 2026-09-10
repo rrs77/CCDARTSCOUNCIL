@@ -9,21 +9,20 @@ export function modalBounce(reduced: boolean) {
     };
   }
   return {
-    initial: { opacity: 0, scale: 0.92 },
-    animate: { opacity: 1, scale: [0.92, 1.04, 1] },
-    exit: { opacity: 0, scale: 0.94 },
+    initial: { opacity: 0, y: 18, scale: 0.985 },
+    animate: { opacity: 1, y: 0, scale: 1 },
+    exit: { opacity: 0, y: 10, scale: 0.99 },
   };
 }
 
 export function modalBackdropTransition(reduced: boolean) {
-  return { duration: reduced ? 0.01 : 0.2 };
+  return { duration: reduced ? 0.01 : 0.22 };
 }
 
 export function modalPanelTransition(reduced: boolean) {
   if (reduced) return { duration: 0.01 };
   return {
-    duration: 0.44,
-    times: [0, 0.55, 1] as number[],
+    duration: 0.42,
     ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
   };
 }
