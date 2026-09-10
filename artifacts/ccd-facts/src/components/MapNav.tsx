@@ -1,5 +1,5 @@
 import { Map as MapIcon } from "lucide-react";
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import type { Presentation } from "@/content/layoutPresentation";
 import { SECTION_ACCENT } from "@/content/sectionAccent";
 
@@ -10,7 +10,7 @@ const ACCENT = SECTION_ACCENT;
 
 /**
  * Nested Map menu — short labels only (never the long document title).
- * Overview → The situation → Key stages → After school → A solution
+ * Overview → Key stages → After school
  */
 function buildMenu(presentation: Presentation): {
   lone: NavItem[];
@@ -50,9 +50,9 @@ function buildMenu(presentation: Presentation): {
 }
 
 /**
- * Map chip: one “Map” label inside the button only (no second Map heading).
- * Closed by default — click/tap to open; click again or mouse leave to close.
- * Does not open on load or on hover.
+ * Map chip: one “Map” label inside the button only.
+ * Closed by default — click/tap to open; click again, Escape, or outside click to close.
+ * No mouse-leave close (panel sits outside the tab hitbox).
  */
 export function MapNav({
   presentation,
@@ -66,35 +66,15 @@ export function MapNav({
   onJump: (id: string) => void;
 }) {
   const [open, setOpen] = useState(false);
-  const [pinned, setPinned] = useState(false);
-  const closeTimer = useRef<number | null>(null);
   const rootRef = useRef<HTMLDivElement>(null);
   const panelId = useId();
   const { lone, groups, destIds } = buildMenu(presentation);
-
-  const clearClose = useCallback(() => {
-    if (closeTimer.current) {
-      window.clearTimeout(closeTimer.current);
-      closeTimer.current = null;
-    }
-  }, []);
-
-  const scheduleClose = useCallback(() => {
-    clearClose();
-    closeTimer.current = window.setTimeout(() => {
-      setPinned(false);
-      setOpen(false);
-    }, 250);
-  }, [clearClose]);
-
-  useEffect(() => () => clearClose(), [clearClose]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === "Escape" && open) {
         e.preventDefault();
         e.stopPropagation();
-        setPinned(false);
         setOpen(false);
       }
     };
@@ -106,7 +86,6 @@ export function MapNav({
     if (!open) return;
     const onDown = (e: PointerEvent) => {
       if (rootRef.current?.contains(e.target as Node)) return;
-      setPinned(false);
       setOpen(false);
     };
     window.addEventListener("pointerdown", onDown);
@@ -119,28 +98,14 @@ export function MapNav({
     if (!focusId) return false;
     const focused = presentation.frames.find((x) => x.id === focusId);
     if (!focused) return false;
-    // Dedicated Map row (e.g. Music Hubs) owns its own highlight — don’t light the parent
     if (destIds.has(focusId)) return false;
-    // Unlisted leaf → highlight its hub row
     return focused.mainSectionId === id;
   };
 
   const go = (id: string | null) => {
     if (id === null) onOverview();
     else onJump(id);
-    setPinned(false);
     setOpen(false);
-  };
-
-  const onTabClick = () => {
-    if (open) {
-      setPinned(false);
-      setOpen(false);
-      return;
-    }
-    clearClose();
-    setPinned(true);
-    setOpen(true);
   };
 
   const renderLink = (item: NavItem) => {
@@ -162,12 +127,7 @@ export function MapNav({
   };
 
   return (
-    <div
-      ref={rootRef}
-      className={`map-nav ${open ? "is-open" : "is-collapsed"} ${pinned ? "is-pinned" : ""}`}
-      onMouseLeave={scheduleClose}
-      onMouseEnter={clearClose}
-    >
+    <div ref={rootRef} className={`map-nav ${open ? "is-open" : "is-collapsed"}`}>
       <button
         type="button"
         className="map-nav-tab"
@@ -175,7 +135,7 @@ export function MapNav({
         aria-controls={panelId}
         aria-label="Map"
         title="Map — alternative navigation"
-        onClick={onTabClick}
+        onClick={() => setOpen((was) => !was)}
       >
         <MapIcon className="map-nav-tab-icon" strokeWidth={2.25} aria-hidden />
       </button>
@@ -188,7 +148,6 @@ export function MapNav({
         inert={!open ? true : undefined}
       >
         <div className="map-nav-panel-inner">
-          {/* One Map label lives in the tab only — never repeat a Map heading here */}
           <ul className="map-nav-list">{lone.map(renderLink)}</ul>
 
           {groups.map((g) => (
