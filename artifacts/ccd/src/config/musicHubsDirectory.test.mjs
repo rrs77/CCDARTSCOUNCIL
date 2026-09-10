@@ -57,6 +57,19 @@ test('Essex Music Service has twelve districts and map flag', () => {
   assert.equal(ems.node.partnerHubSlug, 'ems');
 });
 
+test('Chelmsford district is published with demo template content', () => {
+  const chelmsford = findByPath(
+    'england/east-of-england/greater-essex/essex-music-service/chelmsford',
+  );
+  assert.ok(chelmsford);
+  assert.equal(chelmsford.node.status, 'published');
+  assert.ok(chelmsford.node.content?.about?.length);
+  assert.ok(chelmsford.node.content?.schoolsEducation?.length);
+  const free = (chelmsford.node.content?.resources || []).filter((r) => r.access === 'FREE');
+  assert.ok(free.length >= 2);
+  assert.ok(free.some((r) => r.packId === 'ems-schools-brochure'));
+});
+
 test('Tri-Borough reparented under London West with three boroughs', () => {
   const tbmh = findByPath('england/london/london-west/tri-borough');
   assert.ok(tbmh);
@@ -93,4 +106,28 @@ test('Essex districts SVG has twelve district paths with stable ids', () => {
   ];
   assert.deepEqual(ids, expected);
   assert.match(svg, /Open Government Licence|OGL|ONS Local Authority/);
+});
+
+test('EMS and Tri-Borough use real logos under music-hubs/logos', () => {
+  const ems = findByPath('england/east-of-england/greater-essex/essex-music-service');
+  const greater = findByPath('england/east-of-england/greater-essex');
+  const tbmh = findByPath('england/london/london-west/tri-borough');
+  assert.equal(ems.node.logoSrc, '/music-hubs/logos/essex-music-service.svg');
+  assert.equal(greater.node.logoSrc, '/music-hubs/logos/essex-music-service.svg');
+  assert.equal(tbmh.node.logoSrc, '/music-hubs/logos/tri-borough-music-hub.png');
+  for (const child of ems.node.children || []) {
+    assert.equal(child.logoSrc, '/music-hubs/logos/essex-music-service.svg');
+  }
+  for (const child of tbmh.node.children || []) {
+    assert.equal(child.logoSrc, '/music-hubs/logos/tri-borough-music-hub.png');
+  }
+});
+
+test('Wales NMS and coming-soon nations stay text-only (no fabricated logos)', () => {
+  const nmsw = findByPath('wales/national-music-service-wales');
+  const glasgow = findByPath('scotland/glasgow');
+  assert.ok(nmsw);
+  assert.equal(nmsw.node.logoSrc, undefined);
+  assert.equal(nmsw.node.heroSrc, undefined);
+  assert.equal(glasgow.node.logoSrc, undefined);
 });

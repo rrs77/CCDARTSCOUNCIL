@@ -60,6 +60,8 @@ export interface MusicHubDirectoryNode {
   description?: string[];
   siteUrl?: string;
   logoSrc?: string;
+  /** Optional hero/banner image; omit when no verified asset (text-only header). */
+  heroSrc?: string;
   primaryColor?: string;
   accentColor?: string;
   logoOnPlate?: boolean;

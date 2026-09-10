@@ -21,6 +21,7 @@ import {
   getWorkingRevision,
   mergeNodeWithPublished,
   MUSIC_HUB_PLACEHOLDER_CARD,
+  realHubMediaUrl,
   saveDraftRevision,
   submitRevisionForApproval,
 } from '../../utils/musicHubContentStore';
@@ -155,6 +156,8 @@ export function HubPageTemplate({
   const childNodes = visibleChildren(node);
   const isComingSoon = (canEdit ? node.status : publishedMerged.status) === 'coming-soon';
   const displayName = displayContent.title || node.name;
+  const logoUrl = realHubMediaUrl(displayContent.logoUrl);
+  const heroUrl = realHubMediaUrl(displayContent.heroImageUrl);
 
   const actor = useMemo(
     () => ({
@@ -309,33 +312,47 @@ export function HubPageTemplate({
         )}
 
       <header className="overflow-hidden rounded-xl border border-[#002D24]/12 bg-white shadow-sm">
-        <div className="relative">
-          <img
-            src={displayContent.heroImageUrl}
-            alt=""
-            className="h-36 w-full object-cover sm:h-44"
-          />
-          {canEdit && (
-            <div className="absolute right-3 top-3">
-              <HubEditPencil label="Edit hero image" onClick={() => setEditField('hero')} />
-            </div>
-          )}
-        </div>
+        {heroUrl ? (
+          <div className="relative">
+            <img src={heroUrl} alt="" className="h-36 w-full object-cover sm:h-44" />
+            {canEdit && (
+              <div className="absolute right-3 top-3">
+                <HubEditPencil label="Edit hero image" onClick={() => setEditField('hero')} />
+              </div>
+            )}
+          </div>
+        ) : canEdit ? (
+          <div className="flex items-center justify-between gap-2 border-b border-[#002D24]/08 bg-[#E8F0EA]/35 px-4 py-2 sm:px-6">
+            <p className="text-xs text-[#002D24]/60">No hero image — public page stays text-only.</p>
+            <HubEditPencil label="Add hero image" onClick={() => setEditField('hero')} />
+          </div>
+        ) : null}
         <div className="px-4 py-5 sm:px-6">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
             <div className="flex min-w-0 gap-3">
-              <div className="relative shrink-0">
-                <img
-                  src={displayContent.logoUrl}
-                  alt=""
-                  className="h-16 w-28 rounded-lg border border-[#002D24]/10 bg-[#E8F0EA] object-contain p-1"
-                />
-                {canEdit && (
+              {logoUrl ? (
+                <div className="relative shrink-0">
+                  <img
+                    src={logoUrl}
+                    alt=""
+                    className="h-16 w-28 rounded-lg border border-[#002D24]/10 bg-[#E8F0EA] object-contain p-1"
+                  />
+                  {canEdit && (
+                    <div className="absolute -right-2 -top-2">
+                      <HubEditPencil label="Edit logo" onClick={() => setEditField('logo')} />
+                    </div>
+                  )}
+                </div>
+              ) : canEdit ? (
+                <div className="relative flex h-16 w-28 shrink-0 items-center justify-center rounded-lg border border-dashed border-[#002D24]/25 bg-[#E8F0EA]/40">
+                  <span className="px-2 text-center text-[10px] font-medium text-[#002D24]/50">
+                    No logo
+                  </span>
                   <div className="absolute -right-2 -top-2">
-                    <HubEditPencil label="Edit logo" onClick={() => setEditField('logo')} />
+                    <HubEditPencil label="Add logo" onClick={() => setEditField('logo')} />
                   </div>
-                )}
-              </div>
+                </div>
+              ) : null}
               <div className="min-w-0">
                 {isComingSoon && (
                   <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-[#002D24]/55">

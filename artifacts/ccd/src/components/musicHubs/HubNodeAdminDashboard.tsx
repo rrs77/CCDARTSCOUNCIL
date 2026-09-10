@@ -18,6 +18,7 @@ import {
   ensurePlaceholderMedia,
   getEditorPreviewContent,
   getWorkingRevision,
+  realHubMediaUrl,
   saveDraftRevision,
   submitRevisionForApproval,
 } from '../../utils/musicHubContentStore';
@@ -202,11 +203,17 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
           </p>
           <div className="mt-1 flex flex-wrap items-start justify-between gap-3">
             <div className="flex min-w-0 items-start gap-3">
-              <img
-                src={content.logoUrl}
-                alt=""
-                className="h-14 w-28 rounded-lg border border-[#002D24]/10 bg-[#E8F0EA] object-contain p-1"
-              />
+              {realHubMediaUrl(content.logoUrl) ? (
+                <img
+                  src={content.logoUrl}
+                  alt=""
+                  className="h-14 w-28 rounded-lg border border-[#002D24]/10 bg-[#E8F0EA] object-contain p-1"
+                />
+              ) : (
+                <div className="flex h-14 w-28 items-center justify-center rounded-lg border border-dashed border-[#002D24]/25 bg-[#E8F0EA]/40">
+                  <span className="text-[10px] font-medium text-[#002D24]/50">No logo</span>
+                </div>
+              )}
               <div>
                 <h1 className="text-xl font-semibold text-[#002D24] sm:text-2xl">
                   {content.title || node.name}

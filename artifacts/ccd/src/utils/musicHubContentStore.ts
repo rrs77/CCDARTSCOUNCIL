@@ -19,6 +19,24 @@ export const MUSIC_HUB_PLACEHOLDER_LOGO = '/music-hubs/placeholder-logo.svg';
 export const MUSIC_HUB_PLACEHOLDER_HERO = '/music-hubs/placeholder-hero.svg';
 export const MUSIC_HUB_PLACEHOLDER_CARD = '/music-hubs/placeholder-card.svg';
 
+/** Fake branding SVGs — never show these on public hub pages. */
+const BRANDING_PLACEHOLDER_URLS = new Set([
+  MUSIC_HUB_PLACEHOLDER_LOGO,
+  MUSIC_HUB_PLACEHOLDER_HERO,
+]);
+
+export function isMusicHubBrandingPlaceholder(url?: string | null): boolean {
+  if (!url) return true;
+  if (BRANDING_PLACEHOLDER_URLS.has(url)) return true;
+  return /\/music-hubs\/placeholder-(logo|hero)(\.svg)?$/i.test(url);
+}
+
+/** Returns a real media URL, or undefined when missing / branding placeholder. */
+export function realHubMediaUrl(url?: string | null): string | undefined {
+  if (!url || isMusicHubBrandingPlaceholder(url)) return undefined;
+  return url;
+}
+
 function emptyStore(): HubContentStore {
   return { version: 1, published: {}, revisions: [], audit: [] };
 }
@@ -75,19 +93,17 @@ export function newItemId(prefix: string): string {
 
 export function contentFromNode(node: MusicHubDirectoryNode): HubEditableContent {
   const c = node.content;
+  const logoUrl = realHubMediaUrl(node.logoSrc);
+  const heroImageUrl = realHubMediaUrl(node.heroSrc);
   return {
     title: node.name,
     tagline: node.tagline,
     description: node.description ? [...node.description] : [],
-    logoUrl: node.logoSrc || MUSIC_HUB_PLACEHOLDER_LOGO,
-    heroImageUrl: MUSIC_HUB_PLACEHOLDER_HERO,
-    images: [
-      {
-        id: 'img-hero',
-        url: MUSIC_HUB_PLACEHOLDER_HERO,
-        alt: `${node.name} image`,
-      },
-    ],
+    logoUrl,
+    heroImageUrl,
+    images: heroImageUrl
+      ? [{ id: 'img-hero', url: heroImageUrl, alt: `${node.name} image` }]
+      : [],
     about: c?.about ? [...c.about] : [],
     schoolsEducation: c?.schoolsEducation ? [...c.schoolsEducation] : [],
     training: c?.training ? [...c.training] : [],
@@ -163,8 +179,9 @@ export function mergeNodeWithPublished(
         activities: published.activities ?? base.activities,
         lessonPlans: published.lessonPlans ?? base.lessonPlans,
         images: published.images ?? base.images,
-        logoUrl: published.logoUrl || base.logoUrl || MUSIC_HUB_PLACEHOLDER_LOGO,
-        heroImageUrl: published.heroImageUrl || base.heroImageUrl || MUSIC_HUB_PLACEHOLDER_HERO,
+        logoUrl: realHubMediaUrl(published.logoUrl) || realHubMediaUrl(base.logoUrl),
+        heroImageUrl:
+          realHubMediaUrl(published.heroImageUrl) || realHubMediaUrl(base.heroImageUrl),
       }
     : base;
 
@@ -173,7 +190,8 @@ export function mergeNodeWithPublished(
     name: editable.title || node.name,
     tagline: editable.tagline ?? node.tagline,
     description: editable.description?.length ? editable.description : node.description,
-    logoSrc: editable.logoUrl || node.logoSrc || MUSIC_HUB_PLACEHOLDER_LOGO,
+    logoSrc: realHubMediaUrl(editable.logoUrl) || realHubMediaUrl(node.logoSrc),
+    heroSrc: realHubMediaUrl(editable.heroImageUrl) || realHubMediaUrl(node.heroSrc),
     content: {
       ...node.content,
       about: editable.about,
@@ -196,8 +214,9 @@ export function getEditorPreviewContent(node: MusicHubDirectoryNode): HubEditabl
   return {
     ...merged,
     ...working.content,
-    logoUrl: working.content.logoUrl || merged.logoUrl || MUSIC_HUB_PLACEHOLDER_LOGO,
-    heroImageUrl: working.content.heroImageUrl || merged.heroImageUrl || MUSIC_HUB_PLACEHOLDER_HERO,
+    logoUrl: realHubMediaUrl(working.content.logoUrl) || realHubMediaUrl(merged.logoUrl),
+    heroImageUrl:
+      realHubMediaUrl(working.content.heroImageUrl) || realHubMediaUrl(merged.heroImageUrl),
   };
 }
 
@@ -400,29 +419,36 @@ export function rejectRevision(
   return rejected;
 }
 
+/**
+ * Content-item placeholders (cards) are OK; branding placeholders are not.
+ * Strips fake logo/hero URLs so public pages stay text-only when unset.
+ */
 export function ensurePlaceholderMedia(content: HubEditableContent): HubEditableContent {
+  const logoUrl = realHubMediaUrl(content.logoUrl);
+  const heroImageUrl = realHubMediaUrl(content.heroImageUrl);
+  const images = (content.images || [])
+    .map((img) => ({
+      ...img,
+      url: realHubMediaUrl(img.url) || '',
+    }))
+    .filter((img) => Boolean(img.url));
+
   return {
     ...content,
-    logoUrl: content.logoUrl || MUSIC_HUB_PLACEHOLDER_LOGO,
-    heroImageUrl: content.heroImageUrl || MUSIC_HUB_PLACEHOLDER_HERO,
-    images:
-      content.images && content.images.length > 0
-        ? content.images.map((img) => ({
-            ...img,
-            url: img.url || MUSIC_HUB_PLACEHOLDER_CARD,
-          }))
-        : [{ id: 'img-hero', url: MUSIC_HUB_PLACEHOLDER_HERO, alt: 'Hub image' }],
+    logoUrl,
+    heroImageUrl,
+    images,
     courses: (content.courses || []).map((c) => ({
       ...c,
-      imageUrl: c.imageUrl || MUSIC_HUB_PLACEHOLDER_CARD,
+      imageUrl: realHubMediaUrl(c.imageUrl) || MUSIC_HUB_PLACEHOLDER_CARD,
     })),
     activities: (content.activities || []).map((c) => ({
       ...c,
-      imageUrl: c.imageUrl || MUSIC_HUB_PLACEHOLDER_CARD,
+      imageUrl: realHubMediaUrl(c.imageUrl) || MUSIC_HUB_PLACEHOLDER_CARD,
     })),
     lessonPlans: (content.lessonPlans || []).map((c) => ({
       ...c,
-      imageUrl: c.imageUrl || MUSIC_HUB_PLACEHOLDER_CARD,
+      imageUrl: realHubMediaUrl(c.imageUrl) || MUSIC_HUB_PLACEHOLDER_CARD,
     })),
   };
 }

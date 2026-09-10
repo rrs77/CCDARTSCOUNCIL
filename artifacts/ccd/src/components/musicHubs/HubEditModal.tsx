@@ -7,6 +7,7 @@ import {
   MUSIC_HUB_PLACEHOLDER_HERO,
   MUSIC_HUB_PLACEHOLDER_LOGO,
   newItemId,
+  realHubMediaUrl,
 } from '../../utils/musicHubContentStore';
 
 function linesToText(lines?: string[]): string {
@@ -237,11 +238,20 @@ export function HubEditModal({
               Logo URL
               <input
                 className="mt-1 w-full rounded-md border border-[#002D24]/20 px-3 py-2 text-sm"
-                value={draft.logoUrl || MUSIC_HUB_PLACEHOLDER_LOGO}
-                onChange={(e) => setDraft({ ...draft, logoUrl: e.target.value })}
+                placeholder="/music-hubs/logos/example.svg"
+                value={realHubMediaUrl(draft.logoUrl) || ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    logoUrl: e.target.value.trim() || undefined,
+                  })
+                }
               />
+              <p className="mt-1 text-xs font-normal text-[#002D24]/55">
+                Leave blank for a text-only identity on the public page (no fake logo box).
+              </p>
               <img
-                src={draft.logoUrl || MUSIC_HUB_PLACEHOLDER_LOGO}
+                src={realHubMediaUrl(draft.logoUrl) || MUSIC_HUB_PLACEHOLDER_LOGO}
                 alt=""
                 className="mt-3 h-20 w-auto max-w-full rounded-lg border border-[#002D24]/10 bg-[#E8F0EA] object-contain p-2"
               />
@@ -253,11 +263,20 @@ export function HubEditModal({
               Hero image URL
               <input
                 className="mt-1 w-full rounded-md border border-[#002D24]/20 px-3 py-2 text-sm"
-                value={draft.heroImageUrl || MUSIC_HUB_PLACEHOLDER_HERO}
-                onChange={(e) => setDraft({ ...draft, heroImageUrl: e.target.value })}
+                placeholder="/music-hubs/… or https://"
+                value={realHubMediaUrl(draft.heroImageUrl) || ''}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    heroImageUrl: e.target.value.trim() || undefined,
+                  })
+                }
               />
+              <p className="mt-1 text-xs font-normal text-[#002D24]/55">
+                Leave blank to hide the hero banner on the public page.
+              </p>
               <img
-                src={draft.heroImageUrl || MUSIC_HUB_PLACEHOLDER_HERO}
+                src={realHubMediaUrl(draft.heroImageUrl) || MUSIC_HUB_PLACEHOLDER_HERO}
                 alt=""
                 className="mt-3 max-h-40 w-full rounded-lg object-cover"
               />

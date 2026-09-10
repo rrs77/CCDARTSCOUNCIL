@@ -35,7 +35,7 @@
                 "Greater Essex Music Hub brings together Essex Music Service, Music-on-Sea (Southend) and Thurrock Music Service to support schools, young people and communities."
               ],
               "siteUrl": "https://www.essexmusicservice.org.uk/site/",
-              "logoSrc": "/partners/essex-music-service.svg",
+              "logoSrc": "/music-hubs/logos/essex-music-service.svg",
               "primaryColor": "#330968",
               "accentColor": "#7a00df",
               "logoPanelColor": "#330968",
@@ -57,7 +57,7 @@
                     "Use the map below to explore district pages. Featured workshops and the schools brochure can be added to your CCDesigner library (local prototype copies)."
                   ],
                   "siteUrl": "https://www.essexmusicservice.org.uk/site/",
-                  "logoSrc": "/partners/essex-music-service.svg",
+                  "logoSrc": "/music-hubs/logos/essex-music-service.svg",
                   "primaryColor": "#330968",
                   "accentColor": "#7a00df",
                   "logoPanelColor": "#330968",
@@ -143,7 +143,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/basildon",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Basildon. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Basildon. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-braintree",
@@ -153,7 +156,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/braintree",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Braintree. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Braintree. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-brentwood",
@@ -163,7 +169,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/brentwood",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Brentwood. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Brentwood. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-castle-point",
@@ -173,7 +182,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/castle-point",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Castle Point. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Castle Point. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-chelmsford",
@@ -181,9 +193,75 @@
                       "name": "Chelmsford",
                       "slug": "chelmsford",
                       "path": "england/east-of-england/greater-essex/essex-music-service/chelmsford",
-                      "status": "coming-soon",
+                      "status": "published",
                       "organisationId": "ems",
-                      "description": ["Local area page for Chelmsford. Hub page coming soon."]
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg",
+                      "primaryColor": "#330968",
+                      "accentColor": "#7a00df",
+                      "logoPanelColor": "#330968",
+                      "tagline": "Essex Music Service in Chelmsford",
+                      "description": [
+                        "Chelmsford district page for Greater Essex Music Hub / Essex Music Service — schools, workshops and local music education pathways.",
+                        "Sample resources below mirror the EMS schools brochure and featured workshops already available in the prototype."
+                      ],
+                      "siteUrl": "https://www.essexmusicservice.org.uk/site/",
+                      "content": {
+                        "about": [
+                          "Chelmsford sits within the Essex Music Service delivery area for Greater Essex Music Hub.",
+                          "This district template shows how local hub pages will present about copy, schools offer and free sample resources for teachers exploring the prototype."
+                        ],
+                        "schoolsEducation": [
+                          "Curriculum platforms (Charanga, YuStudio, Focus on Sound) and instrumental / vocal pathways are coordinated through Essex Music Service.",
+                          "Schools in Chelmsford can explore EMS workshops, singing programmes and CPD via the county service — use Add to library for local prototype copies."
+                        ],
+                        "training": [
+                          "Teacher CPD and networks are listed on the Essex Music Service website."
+                        ],
+                        "events": [],
+                        "links": [
+                          {
+                            "label": "Essex Music Service website",
+                            "href": "https://www.essexmusicservice.org.uk/site/"
+                          },
+                          {
+                            "label": "EMS workshops",
+                            "href": "https://www.essexmusicservice.org.uk/site/workshops/"
+                          },
+                          {
+                            "label": "EMS curriculum",
+                            "href": "https://www.essexmusicservice.org.uk/site/curriculum/"
+                          }
+                        ],
+                        "resources": [
+                          {
+                            "id": "chelmsford-ems-schools-brochure",
+                            "title": "Schools brochure",
+                            "description": "EMS schools overview — Add to library (same free prototype pack as the EMS hub).",
+                            "access": "FREE",
+                            "href": "/partners/ems/ems-schools-brochure.pdf",
+                            "providedBy": "Essex Music Service",
+                            "packId": "ems-schools-brochure"
+                          },
+                          {
+                            "id": "chelmsford-ems-dj-workshop",
+                            "title": "DJ Workshop",
+                            "description": "Featured EMS workshop showcase — Add demo lesson for PDF export.",
+                            "access": "FREE",
+                            "href": "https://www.essexmusicservice.org.uk/site/workshops/",
+                            "providedBy": "Essex Music Service",
+                            "packId": "ems-dj-workshop"
+                          },
+                          {
+                            "id": "chelmsford-ems-rap-it",
+                            "title": "Rap-It!",
+                            "description": "Featured EMS workshop showcase — Add demo lesson for PDF export.",
+                            "access": "FREE",
+                            "href": "https://www.essexmusicservice.org.uk/site/workshops/",
+                            "providedBy": "Essex Music Service",
+                            "packId": "ems-rap-it-workshop"
+                          }
+                        ]
+                      }
                     },
                     {
                       "id": "ems-colchester",
@@ -193,7 +271,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/colchester",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Colchester. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Colchester. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-epping-forest",
@@ -203,7 +284,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/epping-forest",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Epping Forest. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Epping Forest. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-harlow",
@@ -213,7 +297,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/harlow",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Harlow. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Harlow. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-maldon",
@@ -223,7 +310,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/maldon",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Maldon. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Maldon. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-rochford",
@@ -233,7 +323,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/rochford",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Rochford. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Rochford. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-tendring",
@@ -243,7 +336,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/tendring",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Tendring. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Tendring. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     },
                     {
                       "id": "ems-uttlesford",
@@ -253,7 +349,10 @@
                       "path": "england/east-of-england/greater-essex/essex-music-service/uttlesford",
                       "status": "coming-soon",
                       "organisationId": "ems",
-                      "description": ["Local area page for Uttlesford. Hub page coming soon."]
+                      "description": [
+                        "Local area page for Uttlesford. Hub page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/essex-music-service.svg"
                     }
                   ]
                 },
@@ -322,7 +421,7 @@
                     "Featured programmes can be added to your CCDesigner library as local prototype copies."
                   ],
                   "siteUrl": "https://www.triboroughmusichub.org/",
-                  "logoSrc": "/partners/tri-borough-music-hub.png",
+                  "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png",
                   "primaryColor": "#111111",
                   "accentColor": "#F5E827",
                   "logoOnPlate": true,
@@ -371,7 +470,10 @@
                       "path": "england/london/london-west/tri-borough/hammersmith-fulham",
                       "status": "coming-soon",
                       "organisationId": "triborough",
-                      "description": ["Borough page coming soon."]
+                      "description": [
+                        "Borough page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png"
                     },
                     {
                       "id": "tbmh-kc",
@@ -381,7 +483,10 @@
                       "path": "england/london/london-west/tri-borough/kensington-chelsea",
                       "status": "coming-soon",
                       "organisationId": "triborough",
-                      "description": ["Borough page coming soon."]
+                      "description": [
+                        "Borough page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png"
                     },
                     {
                       "id": "tbmh-westminster",
@@ -391,7 +496,10 @@
                       "path": "england/london/london-west/tri-borough/westminster",
                       "status": "coming-soon",
                       "organisationId": "triborough",
-                      "description": ["Borough page coming soon."]
+                      "description": [
+                        "Borough page coming soon."
+                      ],
+                      "logoSrc": "/music-hubs/logos/tri-borough-music-hub.png"
                     }
                   ]
                 }
@@ -406,7 +514,9 @@
           "slug": "south-east",
           "path": "england/south-east",
           "status": "coming-soon",
-          "description": ["Music Hub listings for the South East. Hub pages coming soon."]
+          "description": [
+            "Music Hub listings for the South East. Hub pages coming soon."
+          ]
         },
         {
           "id": "south-west",
@@ -435,7 +545,9 @@
                   "slug": "bristol",
                   "path": "england/south-west/west-of-england/bristol",
                   "status": "coming-soon",
-                  "description": ["Local area page coming soon."]
+                  "description": [
+                    "Local area page coming soon."
+                  ]
                 },
                 {
                   "id": "banes",
@@ -444,7 +556,9 @@
                   "slug": "bath-nes",
                   "path": "england/south-west/west-of-england/bath-nes",
                   "status": "coming-soon",
-                  "description": ["Local area page coming soon."]
+                  "description": [
+                    "Local area page coming soon."
+                  ]
                 },
                 {
                   "id": "north-somerset",
@@ -453,7 +567,9 @@
                   "slug": "north-somerset",
                   "path": "england/south-west/west-of-england/north-somerset",
                   "status": "coming-soon",
-                  "description": ["Local area page coming soon."]
+                  "description": [
+                    "Local area page coming soon."
+                  ]
                 },
                 {
                   "id": "south-glos",
@@ -462,7 +578,9 @@
                   "slug": "south-gloucestershire",
                   "path": "england/south-west/west-of-england/south-gloucestershire",
                   "status": "coming-soon",
-                  "description": ["Local area page coming soon."]
+                  "description": [
+                    "Local area page coming soon."
+                  ]
                 },
                 {
                   "id": "bristol-beacon",
@@ -471,7 +589,9 @@
                   "slug": "bristol-beacon",
                   "path": "england/south-west/west-of-england/bristol-beacon",
                   "status": "coming-soon",
-                  "description": ["Delivery partner page coming soon."]
+                  "description": [
+                    "Delivery partner page coming soon."
+                  ]
                 },
                 {
                   "id": "wema",
@@ -480,7 +600,9 @@
                   "slug": "wema",
                   "path": "england/south-west/west-of-england/wema",
                   "status": "coming-soon",
-                  "description": ["Delivery partner page coming soon."]
+                  "description": [
+                    "Delivery partner page coming soon."
+                  ]
                 }
               ]
             }
@@ -513,7 +635,9 @@
                   "slug": "derby",
                   "path": "england/east-midlands/derby-derbyshire/derby",
                   "status": "coming-soon",
-                  "description": ["Local area page coming soon."]
+                  "description": [
+                    "Local area page coming soon."
+                  ]
                 },
                 {
                   "id": "derbyshire",
@@ -522,7 +646,9 @@
                   "slug": "derbyshire",
                   "path": "england/east-midlands/derby-derbyshire/derbyshire",
                   "status": "coming-soon",
-                  "description": ["Local area page coming soon."]
+                  "description": [
+                    "Local area page coming soon."
+                  ]
                 }
               ]
             }
@@ -535,7 +661,9 @@
           "slug": "west-midlands",
           "path": "england/west-midlands",
           "status": "coming-soon",
-          "description": ["Music Hub listings for the West Midlands. Hub pages coming soon."]
+          "description": [
+            "Music Hub listings for the West Midlands. Hub pages coming soon."
+          ]
         },
         {
           "id": "north-west",
@@ -544,7 +672,9 @@
           "slug": "north-west",
           "path": "england/north-west",
           "status": "coming-soon",
-          "description": ["Music Hub listings for the North West. Hub pages coming soon."]
+          "description": [
+            "Music Hub listings for the North West. Hub pages coming soon."
+          ]
         },
         {
           "id": "north-east",
@@ -553,7 +683,9 @@
           "slug": "north-east",
           "path": "england/north-east",
           "status": "coming-soon",
-          "description": ["Music Hub listings for the North East. Hub pages coming soon."]
+          "description": [
+            "Music Hub listings for the North East. Hub pages coming soon."
+          ]
         },
         {
           "id": "yorkshire-humber",
@@ -562,7 +694,9 @@
           "slug": "yorkshire-humber",
           "path": "england/yorkshire-humber",
           "status": "coming-soon",
-          "description": ["Music Hub listings for Yorkshire & the Humber. Hub pages coming soon."]
+          "description": [
+            "Music Hub listings for Yorkshire & the Humber. Hub pages coming soon."
+          ]
         }
       ]
     },
@@ -596,7 +730,9 @@
               "slug": "local-services",
               "path": "wales/national-music-service-wales/local-services",
               "status": "coming-soon",
-              "description": ["Local service placeholders. Hub pages coming soon."]
+              "description": [
+                "Local service placeholders. Hub pages coming soon."
+              ]
             }
           ]
         }
@@ -620,7 +756,9 @@
           "slug": "glasgow",
           "path": "scotland/glasgow",
           "status": "coming-soon",
-          "description": ["Placeholder. Hub page coming soon."]
+          "description": [
+            "Placeholder. Hub page coming soon."
+          ]
         },
         {
           "id": "scotland-edinburgh",
@@ -629,7 +767,9 @@
           "slug": "edinburgh",
           "path": "scotland/edinburgh",
           "status": "coming-soon",
-          "description": ["Placeholder. Hub page coming soon."]
+          "description": [
+            "Placeholder. Hub page coming soon."
+          ]
         },
         {
           "id": "scotland-highland",
@@ -638,7 +778,9 @@
           "slug": "highland",
           "path": "scotland/highland",
           "status": "coming-soon",
-          "description": ["Placeholder. Hub page coming soon."]
+          "description": [
+            "Placeholder. Hub page coming soon."
+          ]
         },
         {
           "id": "scotland-more",
@@ -684,7 +826,9 @@
               "slug": "local-areas",
               "path": "northern-ireland/ea-music-service/local-areas",
               "status": "coming-soon",
-              "description": ["Placeholder for area-level listings. Hub pages coming soon."]
+              "description": [
+                "Placeholder for area-level listings. Hub pages coming soon."
+              ]
             }
           ]
         }

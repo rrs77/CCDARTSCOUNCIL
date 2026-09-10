@@ -138,7 +138,7 @@ export function HubContentApprovalQueue() {
                   <li>Courses: {(rev.content.courses || []).length}</li>
                   <li>Activities: {(rev.content.activities || []).length}</li>
                   <li>Lesson plans: {(rev.content.lessonPlans || []).length}</li>
-                  <li>Logo: {rev.content.logoUrl ? 'set' : 'placeholder'}</li>
+                  <li>Logo: {rev.content.logoUrl ? 'set' : 'unset (text-only)'}</li>
                 </ul>
                 <label className="mt-3 block text-xs font-medium text-gray-700">
                   Review note (optional)
