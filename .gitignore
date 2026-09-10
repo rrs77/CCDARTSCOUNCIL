@@ -45,8 +45,8 @@ testem.log
 artifacts/*/.env
 artifacts/*/.env.local
 
-# Vercel static export (copied from artifacts/ccd/dist/public during build)
-/public
+# public/ is Vercel build output (scripts/vercel-build.sh). Do not commit it.
+# Must NOT be gitignored — Vercel refuses Output Directory paths listed in .gitignore.
 
 # System Files
 .DS_Store
