@@ -413,51 +413,46 @@ importers:
         version: 3.25.76
 
   artifacts/ccd-facts:
-    devDependencies:
-      '@replit/vite-plugin-cartographer':
-        specifier: 'catalog:'
-        version: 0.5.1
-      '@replit/vite-plugin-dev-banner':
-        specifier: 'catalog:'
-        version: 0.1.2
-      '@replit/vite-plugin-runtime-error-modal':
-        specifier: 'catalog:'
-        version: 0.0.6
-      '@tailwindcss/vite':
-        specifier: 'catalog:'
-        version: 4.2.1(vite@7.3.2(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.4))
-      '@types/node':
-        specifier: 'catalog:'
-        version: 25.3.5
-      '@types/react':
-        specifier: 'catalog:'
-        version: 19.2.14
-      '@types/react-dom':
-        specifier: 'catalog:'
-        version: 19.2.3(@types/react@19.2.14)
-      '@vitejs/plugin-react':
-        specifier: 'catalog:'
-        version: 5.1.4(vite@7.3.2(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.4))
+    dependencies:
       framer-motion:
-        specifier: 'catalog:'
+        specifier: ^12.23.24
         version: 12.35.1(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
       lucide-react:
-        specifier: 'catalog:'
+        specifier: ^0.545.0
         version: 0.545.0(react@19.1.0)
       react:
-        specifier: 'catalog:'
+        specifier: 19.1.0
         version: 19.1.0
       react-dom:
-        specifier: 'catalog:'
+        specifier: 19.1.0
         version: 19.1.0(react@19.1.0)
       recharts:
         specifier: ^2.15.2
         version: 2.15.4(react-dom@19.1.0(react@19.1.0))(react@19.1.0)
+    devDependencies:
+      '@tailwindcss/vite':
+        specifier: ^4.1.14
+        version: 4.2.1(vite@7.3.2(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.4))
+      '@types/node':
+        specifier: ^25.3.3
+        version: 25.3.5
+      '@types/react':
+        specifier: ^19.2.0
+        version: 19.2.14
+      '@types/react-dom':
+        specifier: ^19.2.0
+        version: 19.2.3(@types/react@19.2.14)
+      '@vitejs/plugin-react':
+        specifier: ^5.0.4
+        version: 5.1.4(vite@7.3.2(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.4))
       tailwindcss:
-        specifier: 'catalog:'
+        specifier: ^4.1.14
         version: 4.2.1
+      typescript:
+        specifier: ^5.9.2
+        version: 5.9.3
       vite:
-        specifier: 'catalog:'
+        specifier: ^7.3.2
         version: 7.3.2(@types/node@25.3.5)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.4)
 
   artifacts/ccd-pitch:

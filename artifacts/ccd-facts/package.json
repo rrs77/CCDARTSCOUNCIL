@@ -3,7 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "type": "module",
-  "description": "The facts — standalone Prezi-style evidence canvas for Creative Curriculum Designer (not merged into CCD main yet).",
+  "description": "The facts — Prezi-style evidence canvas for Creative Curriculum Designer (shipped at /the-facts/ on Cursor/Vercel).",
   "scripts": {
     "dev": "vite --config vite.config.ts --host 0.0.0.0 --port 5173",
     "build": "vite build --config vite.config.ts",
@@ -18,9 +18,6 @@
     "recharts": "^2.15.2"
   },
   "devDependencies": {
-    "@replit/vite-plugin-cartographer": "^0.5.1",
-    "@replit/vite-plugin-dev-banner": "^0.1.1",
-    "@replit/vite-plugin-runtime-error-modal": "^0.0.6",
     "@tailwindcss/vite": "^4.1.14",
     "@types/node": "^25.3.3",
     "@types/react": "^19.2.0",

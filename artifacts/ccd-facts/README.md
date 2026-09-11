@@ -1,8 +1,16 @@
-# The facts — standalone evidence canvas
+# The facts — evidence canvas for Creative Curriculum Designer
 
-Self-contained Prezi-style “The facts” app for **Creative Curriculum Designer**.
+Prezi-style evidence overview shipped as part of the **CCD Cursor / Vercel** deployment at `/the-facts/`.
 
-**Not merged into CCD / `main` yet.** Work here on branch `cursor/the-facts-interactive-c544`, then fold into CCDesigner later when ready.
+Edit here in the monorepo; the CCD build copies the production bundle into the live site. **No separate Replit project.**
+
+## Live URL
+
+After Vercel / Cursor deploy of this repo:
+
+`https://ccdesigner.co.uk/the-facts/index.html`
+
+(Use `index.html` so the SPA rewrite does not swallow the path.)
 
 ## Folder
 
@@ -10,34 +18,41 @@ Self-contained Prezi-style “The facts” app for **Creative Curriculum Designe
 artifacts/ccd-facts
 ```
 
-## Open in Replit
+## Develop (Cursor / monorepo)
 
-1. In Replit: **Import from GitHub** → repo `rrs77/CCDARTSCOUNCIL`
-2. Branch: `cursor/the-facts-interactive-c544`
-3. Set the Repl **root / working directory** to `artifacts/ccd-facts` (this folder)
-4. Run (or let `.replit` run): `npm install && npm run dev`
-5. App listens on `0.0.0.0:5173`
+From the repo root:
 
-Import shortcut (GitHub → Replit):  
-https://replit.com/github/rrs77/CCDARTSCOUNCIL
+```bash
+pnpm install
+pnpm --filter ccd-facts run dev
+```
 
-After import, switch to branch `cursor/the-facts-interactive-c544` and open `artifacts/ccd-facts` as the project root.
+Or rebuild into CCD’s static tree (what production uses):
+
+```bash
+pnpm --filter @workspace/ccd run build:facts
+```
+
+Full production static export (includes Facts):
+
+```bash
+pnpm -w run build:vercel
+```
 
 ## Edit content
 
 - **Copy source:** `CONTENT.md` (headings, stats, footnotes, chart markers)
-- Notes for editors: `CONTENT.README.md`
-- No monorepo install required — this package pins its own npm versions
+- Editor notes: `CONTENT.README.md`
+- Chart series: `src/content/facts.content.ts`
 
 ## Scripts
 
 | Command | What it does |
 |--------|----------------|
-| `npm run dev` | Vite dev server (host `0.0.0.0`, port `5173`) |
-| `npm run build` | Production build → `dist/public` |
-| `npm run serve` | Preview the production build |
-| `npm run typecheck` | TypeScript check |
+| `pnpm run dev` | Vite dev server (port `5173`) |
+| `pnpm run build` | Production build → `dist/public` |
+| `pnpm run typecheck` | TypeScript check |
 
-## Later: into CCDesigner
+## How it reaches production
 
-When you are ready to ship into the main CCD app, copy/build this package into CCD (e.g. static `/the-facts/`) on a deliberate merge — **do not merge this PR into `main` until then**.
+`artifacts/ccd` `prebuild` / `build:facts` builds this package with `BASE_PATH=/the-facts/` and copies it to `artifacts/ccd/public/the-facts`. Root `scripts/vercel-build.sh` then publishes CCD (including `/the-facts/`) to Vercel’s `public/` output.

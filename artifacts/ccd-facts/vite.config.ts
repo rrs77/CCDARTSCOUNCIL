@@ -5,7 +5,6 @@ import path from "path";
 import fs from "fs";
 import { fileURLToPath } from "url";
 
-const isReplit = process.env.REPL_ID !== undefined;
 const port = Number(process.env.PORT) || 5173;
 const basePath = process.env.BASE_PATH || "/";
 const rootDir = path.dirname(fileURLToPath(import.meta.url));
@@ -47,28 +46,7 @@ function copyContentMd(): Plugin {
 
 export default defineConfig({
   base: basePath,
-  plugins: [
-    react(),
-    tailwindcss(),
-    copyContentMd(),
-    ...(isReplit
-      ? [
-          (await import("@replit/vite-plugin-runtime-error-modal")).default(),
-          ...(process.env.NODE_ENV !== "production"
-            ? [
-                await import("@replit/vite-plugin-cartographer").then((m) =>
-                  m.cartographer({
-                    root: rootDir,
-                  }),
-                ),
-                await import("@replit/vite-plugin-dev-banner").then((m) =>
-                  m.devBanner(),
-                ),
-              ]
-            : []),
-        ]
-      : []),
-  ],
+  plugins: [react(), tailwindcss(), copyContentMd()],
   resolve: {
     alias: {
       "@": path.resolve(rootDir, "src"),
