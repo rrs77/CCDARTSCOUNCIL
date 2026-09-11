@@ -576,6 +576,9 @@ export const charts: Record<string, ChartDef> = {
       { subject: "Dance", change: -0.7 },
       { subject: "Design Studies", change: -1.1 },
       { subject: "Drama", change: 1.6 },
+      { subject: "Music", change: 1.1 },
+      { subject: "Others in Creative Arts & Design", change: -15.4 },
+      { subject: "Performing Arts (non-specific)", change: -2.9 },
     ],
   },
   funding: {
