@@ -11,7 +11,7 @@ export const SECTION_ILLUSTRATION: Record<string, string> = {
   secondary: "illustrations/secondary.png",
   gcse: "illustrations/secondary.png",
   "a-level": "illustrations/a-level.png",
-  "cold-spots-place-income": "illustrations/secondary.png",
+  "cold-spots-place-and-income": "illustrations/secondary.png",
   "university-he": "illustrations/higher-education.png",
   "a-solution": "illustrations/a-solution.png",
   "music-hubs-and-national-centre": "illustrations/music-hubs.png",

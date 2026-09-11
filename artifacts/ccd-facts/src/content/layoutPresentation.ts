@@ -357,7 +357,7 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
     "secondary",
     "gcse",
     "a-level",
-    "cold-spots-place-income",
+    "cold-spots-place-and-income",
     "university-he",
     "music-hubs-and-national-centre",
     "a-solution",
@@ -380,7 +380,7 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   place("secondary", 1, 1);
   place("gcse", 2, 1);
   place("a-level", 0, 2);
-  place("cold-spots-place-income", 1, 2);
+  place("cold-spots-place-and-income", 1, 2);
   place("university-he", 2, 2);
   place("music-hubs-and-national-centre", 0, 3);
   place("a-solution", 1, 3);
@@ -567,7 +567,7 @@ export function buildHubConnectorPath(frames: FrameNode[]): string {
     "secondary",
     "gcse",
     "a-level",
-    "cold-spots-place-income",
+    "cold-spots-place-and-income",
     "university-he",
     "music-hubs-and-national-centre",
     "a-solution",

@@ -38,7 +38,7 @@ function buildMenu(presentation: Presentation): {
   if (stages.length) groups.push({ heading: "Key stages", items: stages });
 
   const after = [
-    pick("cold-spots-place-income", "Cold spots · place & income"),
+    pick("cold-spots-place-and-income", "Cold spots · place & income"),
     pick("university-he", "Higher education"),
     pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
   ].filter(Boolean) as NavItem[];
