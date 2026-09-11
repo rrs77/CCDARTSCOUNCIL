@@ -46,9 +46,9 @@ export const STAGE_COMMENTS: Record<StageId, string> = {
   gcse:
     "Arts GCSE entries down sharply; many schools offer no GCSE arts subjects.",
   "a-level":
-    "A-level arts entries and university applications for creative subjects declining.",
+    "A-level arts entries thinner still; arts share lower in the most deprived areas.",
   "university-he":
-    "Creative arts undergraduate numbers down; pathways into the sector under pressure.",
+    "Courses closing or combining; take-up down; modern universities and deprived areas hit hardest.",
   "a-solution":
     "A free national platform to plan, share and connect creative teaching — EYFS to KS5.",
 }

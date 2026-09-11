@@ -155,6 +155,17 @@ export const sources: Record<string, SourceRef> = {
     label: "HESA 2024/25 via CLA Report Card 2026 Detailed Analysis",
     year: "2024/25",
   },
+  ismArtsFunding2026: {
+    id: "ismArtsFunding2026",
+    label: "ISM — university arts funding cut / music course closures",
+    year: "July 2026",
+    url: "https://www.ism.org/news/university-arts-funding-cut-ism-response/",
+  },
+  ofsSpg2026: {
+    id: "ofsSpg2026",
+    label: "OfS / DfE Strategic Priorities Grant 2026–27 — creative arts high-cost support to zero",
+    year: "2026/27",
+  },
   ofqualBackground: {
     id: "ofqualBackground",
     label: "Ofqual provisional entries methodology (collected by 15 Apr 2026, rounded to 5)",
@@ -591,9 +602,9 @@ export const charts: Record<string, ChartDef> = {
   heChange: {
     id: "heChange",
     type: "divergent-bars",
-    caption: "Higher education: change within Creative Arts & Design",
+    caption: "University take-up: Creative Arts & Design subjects still shifting — decline bites beyond the averages",
     sourceNote:
-      "Domestic undergraduate student numbers. HESA 2024/25 as analysed in CLA Report Card 2026 Detailed Analysis.",
+      "Domestic undergraduate student numbers. HESA 2024/25 as analysed in CLA Report Card 2026 Detailed Analysis. CLA also reports steep provider-level falls concentrated in modern universities serving low-participation neighbourhoods.",
     axis: {
       x: "% change, 2023/24 to 2024/25",
       legend: { decrease: "Decrease", increase: "Increase" },
@@ -775,6 +786,8 @@ export const principalSourceIds = [
   "turnItUp",
   "demosMusicMark2025",
   "musicMark2026",
+  "ismArtsFunding2026",
+  "ofsSpg2026",
   "nationalCentre",
   "hesaCla",
   "ofqualBackground",

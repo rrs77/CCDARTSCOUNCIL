@@ -30,15 +30,15 @@ Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.
 
 ## Secondary
 
-First impression: the secondary system has already contracted — fewer arts hours and teachers — while access still tracks disadvantage.
+First impression: for more than a decade the school system narrowed around a core academic suite — arts pathways were devalued, hours and teachers fell, and take-up still tracks who can afford to stay in.
 
-Long-term contraction at KS3–KS4; short-term Ofqual movement is mixed — not a reversal.
+Long-term contraction at KS3–KS4; short-term Ofqual movement is mixed — not a reversal. CLA links the long decline to policy focus (2010–2024) on a narrow range of subject areas that systematically devalued Arts in the state sector.[^1][^2]
 
 Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
 
-Access to arts qualifications still tracks disadvantage (DfE Tables 18–19).[^5]
+Access to arts qualifications still tracks disadvantage (DfE Tables 18–19) — economically deprived areas feel the curriculum squeeze first.[^5]
 
-> Why this matters for CCDesigner: CCDesigner aims to support teachers inside a contracted system — keeping planning cumulative and partnership reachable where specialist capacity and exam pathways thin out.
+> Why this matters for CCDesigner: CCDesigner aims to support teachers inside a narrowed curriculum — keeping planning cumulative and partnership reachable where specialist capacity and exam pathways thin out, including in higher-need schools.
 
 ### Teachers
 
@@ -94,11 +94,11 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 
 ## Cold spots · place & income
 
-First impression: creative entitlement tracks where a student lives and household resources — association, not proven causation. These are England’s creative “cold spots”: higher FSM / deprivation, thinner arts qualification pathways, and a harder route into university arts.
+First impression: if you grow up in a higher-FSM region or a more deprived local authority, you are less likely to meet a full arts pathway — and that gap still shows at university.
 
 CLA’s arts entitlement gap starts early and travels upwards. Regions with the highest FSM rates — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries (London is an A-level outlier).[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%).[^2]
 
-FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That pipeline shape matters for university take-up: domestic Creative Arts & Design numbers edged down while the wider undergraduate cohort rose, with the steepest falls concentrated in modern universities that educate a large share of students from low-participation neighbourhoods.[^2][^9] CLA also notes disadvantaged students are more likely to live at home while studying — so geography and household income keep shaping arts opportunity after 18.[^2]
+Lack of take-up is not evenly spread: FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Domestic Creative Arts & Design numbers edged down while the wider undergraduate cohort rose, with the steepest falls concentrated in modern universities that educate a large share of students from low-participation neighbourhoods.[^2][^9] CLA also notes disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
 
 Access to arts qualifications still tracks disadvantage in DfE Tables 18–19.[^5]
 
@@ -111,17 +111,28 @@ Access to arts qualifications still tracks disadvantage in DfE Tables 18–19.[^
 - **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
 - **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
 - **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
-- **Modern universities** — Steepest Creative Arts & Design undergraduate falls; outsized role for low-participation neighbourhoods[^2][^9]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls are at modern universities (low-participation neighbourhoods)[^2][^9]
 
 ## University / HE
 
-First impression: creative arts at university are under pressure — and the decline bites hardest where disadvantaged students are more likely to study.
+First impression: creative arts degrees are being closed to new students, suspended, or folded into larger faculties to stay alive — while take-up falls and the squeeze hits economically deprived areas hardest.
 
-Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA 2024/25 via CLA 2026 Detailed Analysis).[^9] CLA highlights particularly large falls at several modern universities — providers that educate a large share of students from low-participation neighbourhoods — linking school-level place and income gaps to who reaches creative HE.[^2]
+Lack of take-up is now colliding with a febrile HE environment. Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA via CLA 2026).[^9] CLA finds steep collapses at individual providers — University College Birmingham −85%, Wolverhampton −58%, St Mary’s −51% (2020/21–2024/25) — and nine of the ten universities with the largest Creative Arts & Design undergraduate falls are modern universities, which educate most students from low-participation neighbourhoods.[^2] Some providers have lost around two-thirds of Creative Arts & Design academic staff (including Roehampton, Kent and Cumbria).[^2]
+
+Sector reporting points to music and other creative courses closed or halted for new entrants (including Kent, Nottingham, Northumbria and Oxford Brookes), with further programmes combining into broader faculties under financial pressure.[^13] From 2026/27, OfS high-cost teaching-grant support for creative and performing arts is cut to zero — adding pressure on provision that already serves many disadvantaged and home-based students.[^14]
+
+That sits on top of a school curriculum era that narrowed accountability toward a core academic suite and devalued arts pathways from 14 — so lower GCSE and A-level take-up feeds thinner university demand, especially where place and parental income already limit access.[^1][^2]
 
 <!-- chart:heChange -->
 
-> Why this matters for CCDesigner: To support the decline upstream, CCDesigner aims to keep specialist planning and Partner Hub resources in teachers’ hands earlier — so geography and household resources are less decisive before students ever apply. Usage signals from signed-in libraries and lesson plans aim to show whether materials are reaching colder areas, not only high-capacity schools.
+> Why this matters for CCDesigner: To support the decline upstream — before courses close or combine — CCDesigner aims to keep specialist planning and Partner Hub resources in teachers’ hands earlier, so geography and household resources are less decisive before students apply. Usage signals from signed-in libraries and lesson plans aim to show whether materials are reaching colder and more deprived areas, not only high-capacity schools.
+
+### HE markers
+
+- **−0.5% vs +0.6%** — Creative Arts & Design domestic undergrads vs wider undergraduate cohort (2023/24→2024/25)[^9]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls at modern universities[^2]
+- **UCB / Wolverhampton / St Mary’s** — −85% / −58% / −51% Creative Arts & Design domestic undergrads (2020/21–2024/25)[^2]
+- **OfS 2026/27** — High-cost teaching grant for creative & performing arts cut to zero[^14]
 
 ## Music Hubs and National Centre
 
@@ -179,3 +190,5 @@ The long-term picture is contraction and unequal entitlement by place and disadv
 [^10]: Ofqual provisional entries methodology (collected by 15 Apr 2026, rounded to 5)
 [^11]: Demos / Music Mark — Facing the Music (Feb 2025) — https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf
 [^12]: Music Mark — Music Hubs funding cuts response (June 2026) — https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/
+[^13]: Independent Society of Musicians — university arts funding cut response (July 2026); notes recent music course closures including Kent, Nottingham, Northumbria and Oxford Brookes — https://www.ism.org/news/university-arts-funding-cut-ism-response/
+[^14]: Office for Students / DfE Strategic Priorities Grant 2026–27 — high-cost support for creative and performing arts removed (Price Group C1.2); reported e.g. Times Higher Education, July 2026
