@@ -38,10 +38,11 @@ function buildMenu(presentation: Presentation): {
   if (stages.length) groups.push({ heading: "Key stages", items: stages });
 
   const after = [
+    pick("cold-spots-place-income", "Cold spots · place & income"),
     pick("university-he", "Higher education"),
     pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
   ].filter(Boolean) as NavItem[];
-  if (after.length) groups.push({ heading: "After school", items: after });
+  if (after.length) groups.push({ heading: "Place & after school", items: after });
 
   const solution = pick("a-solution", "CCDesigner");
   if (solution) groups.push({ heading: "A solution", items: [solution] });

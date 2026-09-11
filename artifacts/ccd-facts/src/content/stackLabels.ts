@@ -21,6 +21,7 @@ export const SECTION_PATH = [
   "secondary",
   "gcse",
   "a-level",
+  "cold-spots-place-income",
   "university-he",
   "music-hubs-and-national-centre",
   "a-solution",

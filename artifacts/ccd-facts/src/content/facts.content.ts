@@ -166,12 +166,12 @@ export const sources: Record<string, SourceRef> = {
 export const meta = {
   brand: "CCDESIGNER",
   productName: "Creative Curriculum Designer",
-  title: "The State of Creative Education in England",
-  titleLead: "The State of Creative Education in",
-  titleAccent: "England",
+  title: "The Creative Curriculum Designer",
+  titleLead: "The Creative Curriculum",
+  titleAccent: "Designer",
   date: "21 August 2026",
   subtitle:
-    "A concise evidence overview for funding, partnership and development. Prepared and re-verified 21 August 2026.",
+    "The facts on creative education in England — for funding, partnership and development. Prepared and re-verified 21 August 2026.",
   heroLineBefore: "Exceptional lessons start with",
   heroLineAccent: "connection",
   heroSupport:
@@ -181,19 +181,19 @@ export const meta = {
   situationHeadline: "The situation",
   situationLine: "Creative education in England is at a point of change.",
   coverFraming: [
-    "Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.",
-    "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
-    "It aims to shorten the distance between excellent practice and the teacher who needs it.",
+    "Creative education in England has contracted over the long term, with a clear entitlement gap linked to place and disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.",
+    "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — reach cold spots — and connect teachers with arts organisations through Partner Hubs.",
+    "It aims to shorten the distance between excellent practice and the teacher who needs it, and to evidence how materials are used.",
   ],
   earlyYearsPrinciple:
     "Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.",
   closing:
-    "The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner is a practical connection layer for teachers and organisations, day to day.",
+    "The long-term picture is contraction and unequal entitlement by place and disadvantage. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to widen reach, share resources into cold spots, and evidence how teachers use materials day to day.",
   verificationNote: "",
   partnerDisclaimer:
     "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
   fundingCase:
-    "Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. CCD aims to make those connections usable.",
+    "Strongest funding case: fragmentation, cold spots, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. CCD aims to make those connections usable and evidencable.",
   ui: {
     exploreHint: "Use arrows or swipe to explore",
     closeModal: "Close",
