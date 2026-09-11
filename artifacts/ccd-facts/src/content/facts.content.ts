@@ -38,7 +38,8 @@ export type ChartDef = {
     | "lollipop"
     | "indexed-line"
     | "divergent-bars"
-    | "funding-bars";
+    | "funding-bars"
+    | "funding-trend";
   caption: string;
   sourceNote: string;
   colours?: string[];
@@ -114,6 +115,34 @@ export const sources: Record<string, SourceRef> = {
     id: "turnItUp",
     label: "DCMS/DfE Turn It Up",
     year: "July 2026",
+  },
+  musicMark2026: {
+    id: "musicMark2026",
+    label: "Music Mark — Music Hubs funding cuts response",
+    year: "June 2026",
+    url: "https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/",
+  },
+  demosMusicMark2025: {
+    id: "demosMusicMark2025",
+    label: "Demos / Music Mark — Facing the Music",
+    year: "Feb 2025",
+    url: "https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf",
+  },
+  aceMeh2013: {
+    id: "aceMeh2013",
+    label: "Key Data on Music Education Hubs 2013 (ACE / NFER)",
+    year: "2013/14",
+  },
+  govUkMusic2014: {
+    id: "govUkMusic2014",
+    label: "GOV.UK — More funding for music education hubs",
+    year: "July 2014",
+    url: "https://www.gov.uk/government/news/more-funding-to-help-thousands-of-extra-children-enjoy-music",
+  },
+  aceMehFramework2018: {
+    id: "aceMehFramework2018",
+    label: "ACE — Relationship framework with Music Education Hubs (2018–20)",
+    year: "2018",
   },
   nationalCentre: {
     id: "nationalCentre",
@@ -581,6 +610,29 @@ export const charts: Record<string, ChartDef> = {
       { subject: "Performing Arts (non-specific)", change: -2.9 },
     ],
   },
+  hubRevenueTrend: {
+    id: "hubRevenueTrend",
+    type: "funding-trend",
+    caption: "Music Hubs revenue grant over time — cash flat; real-terms support fell",
+    sourceNote:
+      "Cash revenue grant (not capital). 2012/13 ≈ £63m (ACE Key Data). Mid-2010s uplift to £75m (GOV.UK 2014; ACE 2015–16 / 2018–20). ≈ £76.1m cash since 2019 (Demos/Music Mark 2025); £76m confirmed to AY 2026/27 (Turn It Up; Music Mark June 2026). Dashed line: cash needed to hold 2019 purchasing power — Music Mark cites Bank of England (£76m in 2019 ≈ £100m today).",
+    axis: {
+      y: "£ million",
+      legend: {
+        cash: "Cash revenue grant",
+        keep2019: "To hold 2019 purchasing power",
+      },
+    },
+    series: [
+      { year: "2012/13", cash: 63 },
+      { year: "2015/16", cash: 75 },
+      { year: "2018/19", cash: 75 },
+      { year: "2019/20", cash: 76, keep2019: 76 },
+      { year: "2024/25", cash: 76 },
+      { year: "2026/27", cash: 76, keep2019: 100 },
+    ],
+    meta: { yMax: 110 },
+  },
   funding: {
     id: "funding",
     type: "funding-bars",
@@ -691,12 +743,12 @@ export const topics: TopicDef[] = [
     body: [
       "Connect rather than duplicate — make outstanding practice usable day to day. CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5).",
       "Make partnership measurable — Partner Hubs aim to connect teachers with arts organisations in the same place they plan, so collaboration shows up in everyday work.",
-      "Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Music Hubs: £76m annual to AY 2026/27 + £25m capital. National Centre: up to £13m over three years — separate streams.",
+      "Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Music Hubs revenue has been cash-flat near £76m since 2019 (real-terms cut); plus £25m capital and National Centre up to £13m over three years — separate streams.",
       "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
     ],
     whyThisMattersForCCD:
       "The evidence shows fragmentation and unequal entitlement. CCD aims to be the practical connection layer for teachers and organisations.",
-    sourceIds: ["cla2026", "ofqual2026", "turnItUp", "nationalCentre"],
+    sourceIds: ["cla2026", "ofqual2026", "turnItUp", "musicMark2026", "demosMusicMark2025", "nationalCentre"],
     neighbors: { left: "exams", down: "exams", right: "exams", up: "poverty" },
   },
 ];
@@ -721,6 +773,8 @@ export const principalSourceIds = [
   "dfeAnnex",
   "dfeWorkforce",
   "turnItUp",
+  "demosMusicMark2025",
+  "musicMark2026",
   "nationalCentre",
   "hesaCla",
   "ofqualBackground",

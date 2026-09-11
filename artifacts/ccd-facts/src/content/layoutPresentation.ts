@@ -302,9 +302,10 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
         });
       }
 
-      // Extra charts only if hub didn’t take the first
-      if (!hubChart && charts[0] && children.length < MAX_CHILDREN) {
-        const c = charts[0];
+      // Extra charts beyond the hub surface chart → leaf stops
+      const chartStart = hubChart ? 1 : 0;
+      for (let i = chartStart; i < charts.length && children.length < MAX_CHILDREN; i++) {
+        const c = charts[i]!;
         const id = uniqueId(`${hubId}-${c.chartId}`, used);
         children.push({
           id,

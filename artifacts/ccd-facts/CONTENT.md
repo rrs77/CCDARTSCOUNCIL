@@ -97,11 +97,17 @@ Domestic Creative Arts & Design undergraduates edged down while the wider underg
 
 ## Music Hubs and National Centre
 
-Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. Music Hubs annual backing and National Centre contract support are separate streams.
+Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. The Music Hubs revenue grant rose into the mid-£70ms in the mid-2010s, then has been held near £76m in cash since 2019 — a significant real-terms cut (Music Mark cites Bank of England: £76m in 2019 ≈ £100m today).[^11][^12] Capital and National Centre support are separate streams, not a like-for-like uplift to that revenue line.
 
 - **£76m** — Annual Music Hubs backing to AY 2026/27[^7]
 - **£25m** — Additional capital for instruments / technology[^7]
 - **Up to £13m** — National Centre for Arts and Music Education over three years[^8]
+
+<!-- chart:hubRevenueTrend -->
+
+### Current commitments
+
+Different funding purposes — annual Hub revenue, one-off capital, and National Centre contract support are not additive like-for-like.
 
 <!-- chart:funding -->
 
@@ -137,3 +143,5 @@ The long-term picture is contraction and unequal entitlement. Short-term Ofqual 
 [^8]: DfE Find a Tender — National Centre for Arts and Music Education — https://www.find-tender.service.gov.uk/Notice/014795-2026
 [^9]: HESA 2024/25 via CLA Report Card 2026 Detailed Analysis
 [^10]: Ofqual provisional entries methodology (collected by 15 Apr 2026, rounded to 5)
+[^11]: Demos / Music Mark — Facing the Music (Feb 2025) — https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf
+[^12]: Music Mark — Music Hubs funding cuts response (June 2026) — https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/
