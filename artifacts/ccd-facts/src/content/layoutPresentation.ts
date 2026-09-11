@@ -346,7 +346,8 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   // 0: title
   // 1: primary, secondary, gcse
   // 2: a-level, cold spots, HE
-  // 3: music hubs, solution, sources
+  // 3: music hubs, what's changing, solution
+  // 4: sources
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
 
@@ -360,6 +361,7 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
     "cold-spots-place-and-income",
     "university-he",
     "music-hubs-and-national-centre",
+    "national-plans-and-free-resources",
     "a-solution",
     "sources",
   ];
@@ -383,8 +385,9 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   place("cold-spots-place-and-income", 1, 2);
   place("university-he", 2, 2);
   place("music-hubs-and-national-centre", 0, 3);
-  place("a-solution", 1, 3);
-  place("sources", 2, 3);
+  place("national-plans-and-free-resources", 1, 3);
+  place("a-solution", 2, 3);
+  place("sources", 1, 4);
 
   // Any leftover hubs continue the grid
   let extra = 0;
@@ -570,6 +573,7 @@ export function buildHubConnectorPath(frames: FrameNode[]): string {
     "cold-spots-place-and-income",
     "university-he",
     "music-hubs-and-national-centre",
+    "national-plans-and-free-resources",
     "a-solution",
     "sources",
   ]

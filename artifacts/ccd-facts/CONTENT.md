@@ -4,7 +4,7 @@ The facts on creative education in England — for funding, partnership and deve
 
 Creative education in England is at a point of change. Exceptional lessons start with connection — and CCDesigner aims to make that connection usable day to day.
 
-Creative education has contracted over the long term, with a clear entitlement gap linked to place and disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership. CCDesigner is the practical layer: plan, share resources, reach cold spots, and evidence how materials are used.
+Creative education has contracted over the long term, with a clear entitlement gap linked to place and disadvantage. New government plans — curriculum reform, Turn It Up, the National Centre — and free national resources create space to rebuild. CCDesigner is the practical layer: plan, share resources, reach cold spots, and evidence how materials are used.
 
 ## Primary / EYFS–KS2
 
@@ -154,6 +154,34 @@ Different funding purposes — annual Hub revenue, one-off capital, and National
 
 <!-- chart:funding -->
 
+## National plans & free resources
+
+First impression: it is not only contraction — new government plans and funded free resources aim to widen reach again. The evidence still matters; so does what is already available to use.
+
+**New government plans.** The Curriculum and Assessment Review response treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^15][^7] **Turn It Up** (July 2026) sets national action on music education and skills.[^7] The **National Centre for Arts and Music Education** is due to launch September 2026 (up to £13m over three years) with online teacher CPD, equitable-access leadership, and oversight of Music Hubs from 2027.[^8][^7] Music Hubs continue with £76m annual revenue to AY 2026/27 plus £25m capital for instruments and technology.[^7] A four-year SEND / disadvantage music pilot (£2m government, matched by ACE and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
+
+**Free education resources with national reach** — publicly funded or free to schools (open the links):
+
+- **Oak National Academy — Music** (free sequenced curriculum & lessons, primary–GCSE) — https://www.thenational.academy/teachers/key-stages/key-stage-1/subjects/music
+- **Oak primary music units** — https://www.thenational.academy/teachers/programmes/music-primary/units
+- **BBC Teach — Primary Music** — https://www.bbc.co.uk/teach/topics/cmjp647k3e8t
+- **BBC Ten Pieces** (classical music creative responses for schools) — https://www.bbc.co.uk/teach/ten-pieces
+- **Arts Council England — Music Hubs guidance & hub finder** — https://www.artscouncil.org.uk/MusicHubs/Guidance
+- **Youth Music** (funded youth music projects & practice) — https://youthmusic.org.uk/
+- **Turn It Up: Our plan for music** (GOV.UK) — https://www.gov.uk/government/publications/turn-it-up-our-plan-for-music/turn-it-up-our-plan-for-music
+- **Curriculum and Assessment Review — government response** — https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report
+
+These programmes fund or publish materials so individual teachers can use free arts education resources without waiting for local specialist capacity. CCDesigner aims to sit alongside them — helping teachers capture, adapt and share what reaches their libraries and lessons.
+
+> Why this matters for CCDesigner: Policy is creating space again. CCD aims to turn national plans and free resources into day-to-day classroom use — especially in cold spots — and to evidence that greater reach is real, not only announced.
+
+### Plan markers
+
+- **EBacc measures** — Removed for schools from 2025/26; arts choices less constrained[^7][^15]
+- **National Curriculum** — Reformed music entitlement to be taught from September 2028[^7]
+- **National Centre** — Launch Sept 2026; online CPD; Hubs oversight from 2027[^8]
+- **£76m + £25m** — Hub revenue to AY 2026/27 + capital instruments / tech[^7]
+
 ## A solution
 
 Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, EYFS to A-level / KS5.
@@ -176,7 +204,7 @@ Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance
 
 ## Sources
 
-The long-term picture is contraction and unequal entitlement by place and disadvantage. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to widen reach, share resources into cold spots, and evidence how teachers use materials day to day.
+The long-term picture is contraction and unequal entitlement by place and disadvantage — but new plans and free national resources create space to rebuild. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to widen reach, share resources into cold spots, and evidence how teachers use materials day to day.
 
 [^1]: Cultural Learning Alliance Report Card 2024 — https://www.culturallearningalliance.org.uk/
 [^2]: Cultural Learning Alliance Report Card 2026 — https://www.culturallearningalliance.org.uk/report-card-and-rers-published-today/
@@ -184,7 +212,7 @@ The long-term picture is contraction and unequal entitlement by place and disadv
 [^4]: Ofqual provisional entries, summer 2026 exam series — https://www.gov.uk/government/statistics/provisional-entries-for-gcse-as-and-a-level-summer-2026-exam-series
 [^5]: DfE Curriculum & Assessment Review analytical annex (Tables 18–19) — https://assets.publishing.service.gov.uk/media/68f663272f0fc56403a3d11b/Curriculum_and_Assessment_Review_final_report_analytical_annex.pdf
 [^6]: DfE School Workforce in England (November 2025 census)
-[^7]: DCMS/DfE Turn It Up (July 2026)
+[^7]: DCMS/DfE Turn It Up: Our plan for music (July 2026) — https://www.gov.uk/government/publications/turn-it-up-our-plan-for-music/turn-it-up-our-plan-for-music
 [^8]: DfE Find a Tender — National Centre for Arts and Music Education — https://www.find-tender.service.gov.uk/Notice/014795-2026
 [^9]: HESA 2024/25 via CLA Report Card 2026 Detailed Analysis
 [^10]: Ofqual provisional entries methodology (collected by 15 Apr 2026, rounded to 5)
@@ -192,3 +220,4 @@ The long-term picture is contraction and unequal entitlement by place and disadv
 [^12]: Music Mark — Music Hubs funding cuts response (June 2026) — https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/
 [^13]: Independent Society of Musicians — university arts funding cut response (July 2026); notes recent music course closures including Kent, Nottingham, Northumbria and Oxford Brookes — https://www.ism.org/news/university-arts-funding-cut-ism-response/
 [^14]: Office for Students / DfE Strategic Priorities Grant 2026–27 — high-cost support for creative and performing arts removed (Price Group C1.2); reported e.g. Times Higher Education, July 2026
+[^15]: Curriculum and Assessment Review Final Report / government response (DfE, Nov 2025) — https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report

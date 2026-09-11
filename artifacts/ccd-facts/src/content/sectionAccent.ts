@@ -11,6 +11,7 @@ export const SECTION_ACCENT: Record<string, string> = {
   "cold-spots-place-and-income": "#E97451",
   "university-he": "#B6FF7E",
   "music-hubs-and-national-centre": "#5eead4",
+  "national-plans-and-free-resources": "#B6FF7E",
   "a-solution": "#B6FF7E",
   sources: "#6b7d80",
 };

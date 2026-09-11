@@ -2002,6 +2002,11 @@ button {
   cursor: pointer;
 }
 
+a.detail-external-link {
+  word-break: break-all;
+  overflow-wrap: anywhere;
+}
+
 .detail-see-also {
   margin-top: 1.5rem;
   padding-top: 1rem;

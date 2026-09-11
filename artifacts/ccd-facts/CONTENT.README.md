@@ -4,7 +4,7 @@
 
 This package ships on the **CCD Cursor / Vercel** deployment at `/the-facts/` (built via `pnpm --filter @workspace/ccd run build:facts`). There is **no separate Replit host**.
 
-Canvas path: title (CCDesigner) → Primary → Secondary → GCSE → A-level → **Cold spots · place & income** → HE → **Music Hubs and National Centre** → A solution → Sources. Nest supporting material under `###`. **A solution** uses its product illustration (not an exam graph); the funding chart lives on the Music Hubs place; disadvantage chart on Cold spots.
+Canvas path: title (CCDesigner) → Primary → Secondary → GCSE → A-level → **Cold spots** → HE → **Music Hubs** → **National plans & free resources** → A solution → Sources. Nest supporting material under `###`. **A solution** uses its product illustration (not an exam graph); the funding chart lives on the Music Hubs place; disadvantage chart on Cold spots.
 
 Section circular heroes live in `public/illustrations/` and are mapped in `src/content/sectionIllustrations.ts`. The classroom photo (`hero-arts.jpg`) is **only** for the opening title / The situation. Sources lists principal footnotes on the frame (no filler CCD circle). One Info control per focused place opens the landscape detail modal.
 

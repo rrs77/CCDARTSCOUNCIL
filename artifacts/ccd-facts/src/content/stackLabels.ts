@@ -24,6 +24,7 @@ export const SECTION_PATH = [
   "cold-spots-place-and-income",
   "university-he",
   "music-hubs-and-national-centre",
+  "national-plans-and-free-resources",
   "a-solution",
   "sources",
 ] as const

@@ -41,6 +41,7 @@ function buildMenu(presentation: Presentation): {
     pick("cold-spots-place-and-income", "Cold spots · place & income"),
     pick("university-he", "Higher education"),
     pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
+    pick("national-plans-and-free-resources", "Plans & free resources"),
   ].filter(Boolean) as NavItem[];
   if (after.length) groups.push({ heading: "Place & after school", items: after });
 

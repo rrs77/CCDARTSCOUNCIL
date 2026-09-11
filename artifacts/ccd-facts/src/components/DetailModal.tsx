@@ -18,32 +18,59 @@ function linkifyText(
   links: { id: string; title: string }[],
   onNavigate?: (id: string) => void,
 ): ReactNode {
-  if (!onNavigate || !links.length) return text;
-  // Longest titles first so longer section names win over shorter matches
-  const sorted = [...links].sort((a, b) => b.title.length - a.title.length);
-  const pattern = new RegExp(
-    `(${sorted.map((l) => l.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
-    "gi",
-  );
-  const parts = text.split(pattern);
-  if (parts.length === 1) return text;
-  return parts.map((part, i) => {
-    const hit = sorted.find((l) => l.title.toLowerCase() === part.toLowerCase());
-    if (!hit) return <span key={i}>{part}</span>;
-    return (
-      <button
-        key={i}
-        type="button"
-        className="detail-inline-link"
-        onClick={(e) => {
-          e.stopPropagation();
-          onNavigate(hit.id);
-        }}
-      >
-        {part}
-      </button>
+  const urlParts = text.split(/(https?:\/\/[^\s)]+)/g);
+  const nodes: ReactNode[] = [];
+
+  urlParts.forEach((chunk, ui) => {
+    if (/^https?:\/\//.test(chunk)) {
+      nodes.push(
+        <a
+          key={`u-${ui}`}
+          href={chunk}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="detail-inline-link detail-external-link"
+          onClick={(e) => e.stopPropagation()}
+        >
+          {chunk}
+        </a>,
+      );
+      return;
+    }
+    if (!chunk) return;
+    if (!onNavigate || !links.length) {
+      nodes.push(<span key={`t-${ui}`}>{chunk}</span>);
+      return;
+    }
+    const sorted = [...links].sort((a, b) => b.title.length - a.title.length);
+    const pattern = new RegExp(
+      `(${sorted.map((l) => l.title.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|")})`,
+      "gi",
     );
+    const parts = chunk.split(pattern);
+    parts.forEach((part, i) => {
+      const hit = sorted.find((l) => l.title.toLowerCase() === part.toLowerCase());
+      if (!hit) {
+        nodes.push(<span key={`t-${ui}-${i}`}>{part}</span>);
+        return;
+      }
+      nodes.push(
+        <button
+          key={`t-${ui}-${i}`}
+          type="button"
+          className="detail-inline-link"
+          onClick={(e) => {
+            e.stopPropagation();
+            onNavigate(hit.id);
+          }}
+        >
+          {part}
+        </button>,
+      );
+    });
   });
+
+  return nodes.length === 1 ? nodes[0]! : <>{nodes}</>;
 }
 
 function Blocks({

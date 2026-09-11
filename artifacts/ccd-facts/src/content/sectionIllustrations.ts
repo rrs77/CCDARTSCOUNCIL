@@ -15,6 +15,7 @@ export const SECTION_ILLUSTRATION: Record<string, string> = {
   "university-he": "illustrations/higher-education.png",
   "a-solution": "illustrations/a-solution.png",
   "music-hubs-and-national-centre": "illustrations/music-hubs.png",
+  "national-plans-and-free-resources": "illustrations/a-solution.png",
 };
 
 export function assetUrl(file: string): string {
