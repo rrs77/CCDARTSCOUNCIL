@@ -241,6 +241,57 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
     ],
   },
 
+  omnimusic: {
+    slug: 'omnimusic',
+    headerBg: '#0B1F4A',
+    siteLabel: 'omnimusic.org.uk',
+    about: [
+      'OmniMusic delivers inclusive music-making with Assistive Music Technology.',
+      'Free Resource Zone downloads for teachers, TAs and families — official PDFs on omnimusic.org.uk.',
+    ],
+    resourcesHeading: 'Resource Zone',
+    resourcesIntro:
+      'Free downloadable resources to continue music making outside sessions and at home.',
+    resources: [
+      {
+        title: 'AMT Resource Hub',
+        href: 'https://omnimusic.org.uk/wiki/',
+        description: 'Equipment and software quick start guides.',
+        kind: 'Hub',
+      },
+      {
+        title: 'Follow the Leader Session 1',
+        href: 'https://omnimusic.org.uk/wp-content/uploads/2025/05/Follow-the-Leader-Session-1.pdf',
+        description: 'Call and response games with percussion and voice.',
+        kind: 'PDF',
+      },
+      {
+        title: 'Follow the Leader Session 2',
+        href: 'https://omnimusic.org.uk/wp-content/uploads/2025/05/Follow-the-Leader-Session-2.pdf',
+        description: 'Listening and responding with participant-led turns.',
+        kind: 'PDF',
+      },
+      {
+        title: 'Nature Soundscape',
+        href: 'https://omnimusic.org.uk/wp-content/uploads/2025/05/Nature-Soundscape-Session.pdf',
+        description: 'Calming nature listening and soundscape session.',
+        kind: 'PDF',
+      },
+      {
+        title: 'Our Perfect Song',
+        href: 'https://omnimusic.org.uk/wp-content/uploads/2026/08/Our-Perfect-Song-Poppys-ThumbJam-Exercise.pdf',
+        description: 'Create original music with ThumbJam.',
+        kind: 'PDF',
+      },
+      {
+        title: 'Teacher and TA Guide',
+        href: 'https://omnimusic.org.uk/wp-content/uploads/2025/05/Teacher-TA-Guide-One-Sheet-3.pdf',
+        description: 'Inclusive music-making guide for teachers and TAs.',
+        kind: 'PDF',
+      },
+    ],
+  },
+
   nationalgallery: {
     slug: 'nationalgallery',
     headerBg: '#0c2340',

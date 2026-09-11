@@ -94,6 +94,14 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     heightClass: 'h-6 sm:h-7',
   },
   {
+    id: 'omnimusic',
+    name: 'OmniMusic',
+    src: '/partners/omnimusic/logo.png',
+    href: 'https://omnimusic.org.uk/',
+    heightClass: 'h-6 sm:h-7',
+    onPlate: true,
+  },
+  {
     id: 'icompose',
     name: 'iCompose',
     src: '/partners/icompose.svg',

@@ -15,7 +15,7 @@ import { AddToBasketButton } from './partners/AddToBasketButton';
 import { PaidBasketDrawer } from './partners/PaidBasketDrawer';
 
 /** Music hubs section — EMS + Tri-Borough only (user-specified). */
-const MUSIC_HUB_SLUGS = ['ems', 'triborough'] as const;
+const MUSIC_HUB_SLUGS = ['ems', 'triborough', 'omnimusic'] as const;
 
 /**
  * Original Partner Hubs card strip — shared forest green for white wordmarks

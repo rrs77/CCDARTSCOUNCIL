@@ -58,6 +58,13 @@ export const PARTNER_CONTACTS: Record<string, PartnerContactInfo> = {
     webLabel: 'triboroughmusichub.org',
     sourceUrl: 'https://www.triboroughmusichub.org/about-us/',
   },
+  omnimusic: {
+    orgId: 'omnimusic',
+    lines: ['OmniMusic', 'Inclusive music · Assistive Music Technology'],
+    web: 'https://omnimusic.org.uk/',
+    webLabel: 'omnimusic.org.uk',
+    sourceUrl: 'https://omnimusic.org.uk/contact/',
+  },
   icompose: {
     orgId: 'icompose',
     lines: ['iCompose'],

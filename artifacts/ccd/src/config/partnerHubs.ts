@@ -144,6 +144,26 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     logoPanelColor: '#FFFFFF',
   },
   {
+    slug: 'omnimusic',
+    aliases: ['omni-music', 'omni'],
+    partnerLogoId: 'omnimusic',
+    displayName: 'OmniMusic',
+    shortName: 'OmniMusic',
+    siteUrl: 'https://omnimusic.org.uk/',
+    logoSrc: '/partners/omnimusic/logo.png',
+    interactive: true,
+    tagline: 'Inclusive music · free Resource Zone downloads',
+    description: [
+      'OmniMusic delivers inclusive music-making with Assistive Music Technology, supporting Disabled people and their communities to create, play and perform.',
+      'This Partner Hub follows OmniMusic’s Resource Zone template: free downloadable session resources (Follow the Leader, Nature Soundscape, Our Perfect Song, Teacher & TA Guide) plus the AMT Resource Hub — official PDFs stay on omnimusic.org.uk.',
+    ],
+    /** OmniMusic site navy */
+    primaryColor: '#0B1F4A',
+    accentColor: '#C8F542',
+    logoOnPlate: true,
+    logoPanelColor: '#FFFFFF',
+  },
+  {
     slug: 'icompose',
     aliases: ['icancompose'],
     partnerLogoId: 'icompose',

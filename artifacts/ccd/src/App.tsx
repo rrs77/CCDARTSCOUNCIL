@@ -47,6 +47,7 @@ import { JazzNorthPartnerHub } from './components/partners/JazzNorthPartnerHub';
 import { TriBoroughPartnerHub } from './components/partners/TriBoroughPartnerHub';
 import { PartnerHubPage } from './components/partners/PartnerHubPage';
 import { PartnerResourcesHub } from './components/partners/PartnerResourcesHub';
+import { OmniMusicPartnerHub } from './components/partners/OmniMusicPartnerHub';
 import { LsoPartnerHub } from './components/partners/LsoPartnerHub';
 import { PrototypeWelcomeModal } from './components/login/PrototypeWelcomeModal';
 import { TabsExplainerModal } from './components/login/TabsExplainerModal';
@@ -265,6 +266,17 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
           />
         );
         break;
+      case 'omnimusic':
+      case 'omni-music':
+      case 'omni':
+        // Resource Zone template — full page (skip default PartnerHubPage chrome)
+        return (
+          <>
+            <Toaster position="top-right" />
+            {showPreviewBanner && <PreviewBanner />}
+            <OmniMusicPartnerHub hub={partnerHub} />
+          </>
+        );
       default:
         body = <PartnerResourcesHub hub={partnerHub} />;
     }
