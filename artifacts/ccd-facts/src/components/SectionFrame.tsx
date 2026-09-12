@@ -221,7 +221,7 @@ export function SectionFrame({
 
           {!isSources && !quiet && (frame.sentence || frame.quote) ? (
             <div className="prezi-body-card">
-              <p>{frame.quote || frame.sentence}</p>
+              <p>{frame.sentence || frame.quote}</p>
             </div>
           ) : null}
 

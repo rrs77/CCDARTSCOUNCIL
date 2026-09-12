@@ -83,7 +83,7 @@ export function StackOverview({
                   <p className="stack-card-kicker">The facts</p>
                   <h2 className="stack-card-title">{stageLabel(frame.id, frame.title)}</h2>
                   {isFront && (frame.sentence || frame.quote) ? (
-                    <p className="stack-card-blurb">{frame.quote || frame.sentence}</p>
+                    <p className="stack-card-blurb">{frame.sentence || frame.quote}</p>
                   ) : null}
                   {isFront ? (
                     <span className="stack-card-hint">Open section</span>

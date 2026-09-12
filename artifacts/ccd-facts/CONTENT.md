@@ -32,9 +32,9 @@ The DfE Enrichment Framework applies from age 5, but the habits of access start 
 
 ## Enrichment Framework
 
-Published by the Department for Education on 15 June 2026, the Enrichment Framework is explicitly non-statutory guidance for England — and that capacity gap is exactly where practical digital infrastructure can help.[^12]
+After the bell, music, drama and dance are often how a child first finds a place they want to stay. The Enrichment Framework (June 2026) asks every school and college to treat that offer as part of a good education — not a nice extra if the timetable allows.[^12]
 
-It applies to primary, secondary, special and alternative provision, sixth forms and colleges, and to organisations delivering enrichment. Enrichment covers co-curricular and extra-curricular experiences, in or beyond the school day, by staff or external partners.[^12][^14]
+It is non-statutory guidance for England. It applies to primary, secondary, special and alternative provision, sixth forms and colleges, and to organisations delivering enrichment. Enrichment covers co-curricular and extra-curricular experiences, in or beyond the school day, by staff or external partners.[^12][^14]
 
 The five areas are civic engagement; arts and culture; nature, outdoors and adventure; sport and physical activity; and wider life and future skills. Schools use a 1–4 self-assessment scale (identifying → sustaining and stretching) plus an action-planning template for targets, responsibility, monitoring, success criteria, timings and resources.[^12][^13]
 
@@ -78,7 +78,7 @@ CCDesigner aims to provide practical digital infrastructure through which school
 
 ## Primary / KS1–KS2
 
-Arts time is already unequal before secondary — independent schools report far more hours than state schools, and higher-FSM schools are more likely to have cut hours.[^2]
+Arts time is already unequal before secondary — independent schools report far more hours than state schools, and schools with more pupils on free school meals are more likely to have cut hours.[^2]
 
 Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.[^2]
 
@@ -138,7 +138,7 @@ Ofqual provisional summer 2026 vs 2025:[^4]
 
 ## A-level
 
-KS5 arts are thinner still — and arts’ share of A-levels is lower in the most deprived areas.[^1][^2]
+After GCSE, the arts pathway thins again — and in the most deprived areas it is a smaller share of A-levels.[^1][^2]
 
 Arts A-level entries fell 21% (2010/11–2022/23).[^1] Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths.[^2]
 
@@ -150,7 +150,7 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 
 <!-- chart:alevelIndex -->
 
-> Where KS5 arts thin out, cumulative planning and shared Partner Hub resources aim to keep specialist pathways reachable — so place and income are less decisive for what teachers can offer.
+> Where A-level arts thin out, cumulative planning and shared Partner Hub resources aim to keep specialist pathways reachable — so place and income are less decisive for what teachers can offer.
 
 ### A-level entries
 
@@ -159,7 +159,7 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 
 ## Cold spots · place & income
 
-CLA’s arts entitlement gap starts early and travels upwards. Regions with the highest FSM rates — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%).[^2]
+Where you live, and what your school can spend, still decides how much art you get. That gap starts early and travels upwards. Regions with the highest rates of free school meals — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%).[^2]
 
 FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
 
@@ -197,7 +197,7 @@ That sits on top of a school curriculum era that narrowed accountability toward 
 
 ## Music Hubs and National Centre
 
-The strongest funding case is fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. The Music Hubs revenue grant rose into the mid-£70ms in the mid-2010s, then has been held near £76m in cash since 2019 — a significant real-terms cut (Music Mark cites Bank of England: £76m in 2019 ≈ £100m today).[^21][^22] Capital and National Centre support are separate streams, not a like-for-like uplift to that revenue line.
+Music Hubs are the local backbone for schools that cannot staff a full music offer alone. Their revenue grant rose into the mid-£70ms in the mid-2010s, then has been held near £76m in cash since 2019 — a significant real-terms cut (Music Mark cites Bank of England: £76m in 2019 ≈ £100m today).[^21][^22] Capital and National Centre support are separate streams, not a like-for-like uplift to that revenue line.
 
 The National Centre is intended to launch by September 2026 and to boost in-school arts enrichment alongside curriculum reform. A separate £22.5 million, three-year enrichment expansion programme targets up to 400 schools — useful evidence of priority, not universal school funding.[^8][^15]
 
@@ -218,7 +218,7 @@ Annual Hub revenue, one-off capital, and National Centre contract support are no
 
 ## National plans & free resources
 
-It is not only contraction — new government plans and funded free resources aim to widen reach again.
+The same years that entries fell are also the years government started writing the arts back into national plans.
 
 The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, plus £3.85m from Arts Council England and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
 
@@ -245,7 +245,9 @@ These programmes fund or publish materials so teachers can use free arts educati
 
 ## A solution
 
-Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, EYFS to A-level.
+The picture is uneven, but it is not hopeless — what has been missing is a shared place for the good work, so it can travel.
+
+Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, from early years to A-level.
 
 Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs aim to connect teachers with arts organisations.
 

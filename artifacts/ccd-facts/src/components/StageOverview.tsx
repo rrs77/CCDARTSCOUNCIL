@@ -26,13 +26,13 @@ function overviewLabel(frame: FrameNode): string {
 
 function overviewBlurb(frame: FrameNode): string {
   if (frame.id === "enrichment-framework") {
-    return "Non-statutory guidance into usable partnership, access and evidence.";
+    return "After the bell — a national ask that the arts offer is part of a good education.";
   }
   if (frame.id === "cold-spots-place-and-income") {
-    return "Entitlement still tracks place, FSM and parental income.";
+    return "Where you live, and what a school can spend, still decides the offer.";
   }
   if (frame.id === "music-hubs-and-national-centre") {
-    return "National funding streams and the infrastructure for arts partnership.";
+    return "The local backbone for schools that cannot staff music alone — and the money around it.";
   }
   if (frame.id === "national-plans-and-free-resources") {
     return "Curriculum reform, Turn It Up, and free national resources already in motion.";

@@ -49,7 +49,7 @@ export const STAGE_COMMENTS: Record<StageId, string> = {
   gcse:
     "Arts GCSE entries down sharply; many schools show no Music, Drama or Dance entries.",
   "a-level":
-    "KS5 arts thinner still — and a smaller share of A-levels in the most deprived areas.",
+    "After GCSE the arts pathway thins again — and a smaller share of A-levels in the most deprived areas.",
   "university-he":
     "Courses closing or combining; take-up falling hardest where participation is already low.",
 }
