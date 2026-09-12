@@ -181,7 +181,9 @@ Creative arts degrees are being closed to new students, suspended, or folded int
 
 Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA via CLA 2026).[^9] In that same university year, Drama (+1.6%) and Music (+1.1%) ticked up — that is not the school-exam fall (A-level Drama −9.5%, Music −4.9%).[^4][^9] CLA finds steep collapses at individual providers — University College Birmingham −85%, Wolverhampton −58%, St Mary’s −51% (2020/21–2024/25) — concentrated in modern universities that educate students from low-participation neighbourhoods.[^2] Some providers have lost around two-thirds of Creative Arts & Design academic staff (including Roehampton, Kent and Cumbria).[^2]
 
-Sector reporting points to music and other creative courses closed or halted for new entrants (including Kent, Nottingham, Northumbria and Oxford Brookes).[^23] From 2026/27, OfS high-cost teaching-grant support for creative and performing arts is cut to zero.[^24]
+Several universities have closed or paused music degrees for new students. Kent, Northumbria and Oxford Brookes have closed courses or stopped new intake; Nottingham has suspended 2026/27 recruitment pending a closure decision.[^23]
+
+OfS high-cost subject funding for creative and performing arts falls from £12.9 million to £0 in 2026/27 — a 100% cut to Price Group C1.2. That is not all OfS or government support: the Performing Arts Specialist Initiative remains at £9.6 million, and world-leading specialist-provider funding continues.[^24]
 
 That sits on top of a school curriculum era that narrowed accountability toward a core academic suite and devalued arts pathways from 14 — so lower GCSE and A-level take-up feeds thinner university demand.[^1][^2]
 
@@ -194,7 +196,8 @@ That sits on top of a school curriculum era that narrowed accountability toward 
 - **−0.5% vs +0.6%** — Creative Arts & Design domestic undergrads vs wider undergraduate cohort (2023/24→2024/25)[^9]
 - **Nine of ten** — Largest Creative Arts & Design undergraduate falls at modern universities[^2]
 - **UCB / Wolverhampton / St Mary’s** — −85% / −58% / −51% Creative Arts & Design domestic undergrads (2020/21–2024/25)[^2]
-- **OfS 2026/27** — High-cost teaching grant for creative & performing arts cut to zero[^24]
+- **£12.9m → £0** — OfS high-cost subject funding for creative and performing arts (2025/26→2026/27) — a 100% cut; specialist and initiative funding continues[^24]
+- **£9.6m** — Performing Arts Specialist Initiative still allocated in 2026/27[^24]
 
 ## Music Hubs and National Centre
 
@@ -221,7 +224,7 @@ Annual Hub revenue, one-off capital, and National Centre contract support are no
 
 The same years that entries fell are also the years government started writing the arts back into national plans.
 
-The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from August 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, plus £3.85m from Arts Council England and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
+The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc headline and additional KS4 performance measures from 2025/26 after the Review found they constrained arts and vocational choice.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from August 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, plus £3.85m from Arts Council England and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
 
 Free education resources with national reach — publicly funded or free to schools:
 
@@ -239,7 +242,7 @@ These programmes fund or publish materials so teachers can use free arts educati
 
 ### Plan markers
 
-- **EBacc measures** — Removed for schools from 2025/26; arts choices less constrained[^7][^25]
+- **EBacc measures** — Headline and additional KS4 measures removed from 2025/26[^7][^25]
 - **National Curriculum** — Reformed music entitlement to be taught from September 2028[^7]
 - **National Centre** — Launch Sept 2026; online CPD; Hubs oversight from August 2027[^8]
 - **£76m + £25m** — Hub revenue to AY 2026/27 + capital instruments / tech[^7]
@@ -294,5 +297,5 @@ Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance
 [^21]: Demos / Music Mark — Facing the Music (Feb 2025) — https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf
 [^22]: Music Mark — Music Hubs funding cuts response (June 2026) — https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/
 [^23]: Independent Society of Musicians — university arts funding cut response (July 2026) — https://www.ism.org/news/university-arts-funding-cut-ism-response/
-[^24]: Office for Students — Funding for 2026–27: decisions and allocations — high-cost support for price group C1.2 (creative and performing arts) set to zero — https://www.officeforstudents.org.uk/media/4srekubm/funding-for-2026-27-decisions-allocations.pdf
+[^24]: Office for Students — Funding for 2026–27: decisions and allocations — Price Group C1.2 high-cost subject funding £12.9m (2025/26) to £0 (2026/27); rate £130.54 per FTE to £0. Performing Arts Specialist Initiative £9.6m continues. World-leading specialist-provider funding £56.8m. — https://www.officeforstudents.org.uk/media/4srekubm/funding-for-2026-27-decisions-allocations.pdf
 [^25]: Curriculum and Assessment Review Final Report / government response (DfE, Nov 2025) — https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report
