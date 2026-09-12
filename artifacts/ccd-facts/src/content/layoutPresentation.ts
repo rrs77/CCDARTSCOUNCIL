@@ -477,4 +477,112 @@ export function buildPresentation(doc: ParsedDocument): Presentation {
       y: 0,
       w: FRAME_W,
       h: FRAME_H,
-      sentence: p.sente
+      sentence: p.sentence,
+      heroStat: p.heroStat,
+      quote: p.quote,
+      chartId: p.chartId,
+      photoHero: p.photoHero,
+      photoCrop: p.photoCrop,
+      footnotes: p.footnotes,
+      childIds: [],
+      blocks: p.blocks,
+      subsections: p.subsections,
+    };
+    hubFrames.push(node);
+    frames.push(node);
+  }
+
+  placeHubsOnGrid(hubFrames);
+
+  // Assert / resolve hub overlaps by pushing down
+  for (let i = 0; i < hubFrames.length; i++) {
+    for (let j = i + 1; j < hubFrames.length; j++) {
+      const a = hubFrames[i]!;
+      const b = hubFrames[j]!;
+      let guard = 0;
+      while (aabbOverlap(a, b, 48) && guard < 40) {
+        b.y += GUTTER;
+        guard += 1;
+      }
+    }
+  }
+
+  let hubMaxY = 0;
+  for (const h of hubFrames) hubMaxY = Math.max(hubMaxY, h.y + h.h);
+
+  // Leaves parked in a distant band — never on the overview constellation
+  const leafProtos = protos.filter((p) => p.parentId);
+  leafProtos.forEach((p, i) => {
+    let { small, giant } = splitTitle(p.title);
+    if (usedGiants.has(giant.toLowerCase())) {
+      const alt = splitTitle(`${p.title} detail`);
+      small = alt.small || small;
+      giant = alt.giant;
+    }
+    usedGiants.add(giant.toLowerCase());
+
+    const col = i % 4;
+    const row = Math.floor(i / 4);
+    const node: FrameNode = {
+      id: p.id,
+      parentId: p.parentId,
+      mainSectionId: p.mainSectionId,
+      sequence: sequence++,
+      level: 3,
+      kind: "leaf",
+      title: p.title,
+      titleSmall: small,
+      titleGiant: giant,
+      navLabel: p.heroStat ? p.heroStat.value : p.title,
+      x: PAD + col * (FRAME_W + GUTTER),
+      y: hubMaxY + LEAF_BAND_GAP + row * (FRAME_H + GUTTER),
+      w: FRAME_W,
+      h: p.chartId ? FRAME_H + 40 : FRAME_H,
+      sentence: p.sentence,
+      heroStat: p.heroStat,
+      quote: p.quote,
+      chartId: p.chartId,
+      photoHero: p.photoHero,
+      photoCrop: p.photoCrop,
+      childIds: [],
+      blocks: p.blocks,
+    };
+    frames.push(node);
+  });
+
+  for (const f of frames) {
+    if (f.parentId) continue;
+    f.childIds = frames.filter((c) => c.parentId === f.id).map((c) => c.id);
+  }
+
+  // World bounds = hub constellation only (leaves are off-canvas / modal).
+  // Including the leaf band made Overview a postage-stamp cluster in empty green.
+  let maxX = 0;
+  let maxY = 0;
+  for (const f of hubFrames) {
+    maxX = Math.max(maxX, f.x + f.w);
+    maxY = Math.max(maxY, f.y + f.h);
+  }
+
+  // Path: overview → each hub then its children → overview
+  const path: string[] = ["overview"];
+  for (const hub of hubFrames) {
+    path.push(hub.id);
+    for (const cid of hub.childIds) path.push(cid);
+  }
+  path.push("overview");
+
+  return {
+    title: doc.title,
+    world: {
+      width: Math.max(4200, maxX + PAD),
+      height: Math.max(2800, maxY + PAD),
+      heroImage: "hero-arts.jpg",
+    },
+    frames,
+    path,
+    mainSectionIds: hubFrames.filter((h) => h.kind !== "title").map((h) => h.id),
+  };
+}
+
+/** Edge-to-edge connector that stays in gutters (never through f
