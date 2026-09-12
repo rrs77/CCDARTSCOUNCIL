@@ -585,4 +585,131 @@ export function buildPresentation(doc: ParsedDocument): Presentation {
   };
 }
 
-/** Edge-to-edge connector that stays in gutters (never through f
+/** Edge-to-edge connector that stays in gutters (never through frame centres). */
+export function buildHubConnectorPath(frames: FrameNode[]): string {
+  const hubs = frames.filter((f) => !f.parentId);
+  if (hubs.length < 2) return "";
+  const byId = new Map(hubs.map((h) => [h.id, h]));
+  const story = [
+    "eyfs",
+    "primary-ks1-ks2",
+    "secondary",
+    "gcse",
+    "a-level",
+    "university-he",
+    "cold-spots-place-and-income",
+    "enrichment-framework",
+    "music-hubs-and-national-centre",
+    "national-plans-and-free-resources",
+    "a-solution",
+  ]
+    .map((id) => byId.get(id))
+    .filter(Boolean) as FrameNode[];
+  const ordered =
+    story.length >= 2
+      ? story
+      : [...hubs].sort((a, b) => a.sequence - b.sequence);
+
+  const pad = 24;
+  /** True if segment (axis-aligned) intersects any hub interior (except endpoints). */
+  const hitsHub = (
+    x1: number,
+    y1: number,
+    x2: number,
+    y2: number,
+    skip: Set<string>,
+  ): boolean => {
+    const minX = Math.min(x1, x2);
+    const maxX = Math.max(x1, x2);
+    const minY = Math.min(y1, y2);
+    const maxY = Math.max(y1, y2);
+    for (const h of hubs) {
+      if (skip.has(h.id)) continue;
+      const hx1 = h.x + pad;
+      const hy1 = h.y + pad;
+      const hx2 = h.x + h.w - pad;
+      const hy2 = h.y + h.h - pad;
+      if (maxX < hx1 || minX > hx2 || maxY < hy1 || minY > hy2) continue;
+      // Degenerate point touch at edge is ok; interior overlap is not
+      const overlapX = Math.min(maxX, hx2) - Math.max(minX, hx1);
+      const overlapY = Math.min(maxY, hy2) - Math.max(minY, hy1);
+      if (overlapX > 2 && overlapY > 2) return true;
+    }
+    return false;
+  };
+
+  /** Vertical gutter Y between two rows of hubs (midpoint of clear band). */
+  const gutterYBetween = (top: FrameNode, bottom: FrameNode): number => {
+    const y1 = top.y + top.h;
+    const y2 = bottom.y;
+    return (y1 + y2) / 2;
+  };
+
+  let d = "";
+  for (let i = 0; i < ordered.length - 1; i++) {
+    const a = ordered[i]!;
+    const b = ordered[i + 1]!;
+    const skip = new Set([a.id, b.id]);
+    const aRight = a.x + a.w;
+    const aCx = a.x + a.w / 2;
+    const aBottom = a.y + a.h;
+    const bLeft = b.x;
+    const bCx = b.x + b.w / 2;
+    const bTop = b.y;
+
+    // Same row → horizontal gutter connector (edge midpoints)
+    if (Math.abs(a.y - b.y) < 80) {
+      const y = a.y + a.h / 2;
+      const x1 = aRight;
+      const x2 = bLeft;
+      const mid = (x1 + x2) / 2;
+      d += `${d ? " " : ""}M ${x1} ${y} C ${mid} ${y}, ${mid} ${y}, ${x2} ${y}`;
+      continue;
+    }
+
+    // Different row → route in the vertical gutter, then across in that band only
+    const midY = gutterYBetween(a.y < b.y ? a : b, a.y < b.y ? b : a);
+    const xDown = aCx;
+    const xAcross = bCx;
+
+    // Prefer: down/up into gutter, across gutter, into target — if across hits a hub, jog via side gutter
+    const acrossHits = hitsHub(xDown, midY, xAcross, midY, skip);
+    if (!acrossHits) {
+      d += `${d ? " " : ""}M ${xDown} ${aBottom} L ${xDown} ${midY} L ${xAcross} ${midY} L ${xAcross} ${bTop}`;
+      continue;
+    }
+
+    // Detour: go to a clear x in the side gutter (min/max of the two centres ± half cell)
+    const sideX =
+      Math.min(a.x, b.x) - GUTTER / 2 > PAD
+        ? Math.min(a.x, b.x) - GUTTER / 2
+        : Math.max(a.x + a.w, b.x + b.w) + GUTTER / 2;
+    d += `${d ? " " : ""}M ${aCx} ${aBottom} L ${aCx} ${midY} L ${sideX} ${midY} L ${bCx} ${midY} L ${bCx} ${bTop}`;
+  }
+  return d;
+}
+
+export function framesOverlap(
+  frames: FrameNode[],
+  pad = 48,
+): { a: string; b: string }[] {
+  const hits: { a: string; b: string }[] = [];
+  const roots = frames.filter((f) => !f.parentId);
+  for (let i = 0; i < roots.length; i++) {
+    for (let j = i + 1; j < roots.length; j++) {
+      const a = roots[i]!;
+      const b = roots[j]!;
+      if (aabbOverlap(a, b, pad)) hits.push({ a: a.id, b: b.id });
+    }
+  }
+  return hits;
+}
+
+export function getFrame(pres: Presentation, id: string | null | undefined): FrameNode | undefined {
+  if (!id || id === "overview") return undefined;
+  return pres.frames.find((f) => f.id === id);
+}
+
+export function presentationFromMarkdown(md: string): Presentation {
+  return buildPresentation(parseContentMarkdown(md));
+}
