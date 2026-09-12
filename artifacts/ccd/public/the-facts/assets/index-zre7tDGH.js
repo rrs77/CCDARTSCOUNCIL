@@ -1,15 +1,28 @@
 const PARTS = 28;
+const SUB_FROM = 13;
 const base = new URL("./.bundle-parts/", import.meta.url);
+
+async function loadPart(i) {
+  const name = String(i).padStart(2, "0");
+  if (i < SUB_FROM) {
+    const r = await fetch(new URL(name + ".b64", base));
+    if (!r.ok) throw new Error("bundle part " + name + " " + r.status);
+    return (await r.text()).replace(/\s+/g, "");
+  }
+  const chunks = [];
+  for (let s = 0; s < 8; s++) {
+    const r = await fetch(new URL(name + "." + s + ".b64", base));
+    if (!r.ok) {
+      if (s === 0) throw new Error("bundle part " + name + ".0 " + r.status);
+      break;
+    }
+    chunks.push((await r.text()).replace(/\s+/g, ""));
+  }
+  return chunks.join("");
+}
+
 const [chunkList, patchJson] = await Promise.all([
-  Promise.all(
-    Array.from({ length: PARTS }, (_, i) => {
-      const name = String(i).padStart(2, "0") + ".b64";
-      return fetch(new URL(name, base)).then(async (r) => {
-        if (!r.ok) throw new Error("bundle part " + name + " " + r.status);
-        return (await r.text()).replace(/\s+/g, "");
-      });
-    })
-  ),
+  Promise.all(Array.from({ length: PARTS }, (_, i) => loadPart(i))),
   fetch(new URL("patches.json", base)).then(async (r) => (r.ok ? r.json() : {})),
 ]);
 const chunks = chunkList.map((text, i) => {
