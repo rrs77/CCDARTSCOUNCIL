@@ -48,15 +48,21 @@ function overviewBlurb(frame: FrameNode): string {
 
 const easeOut = [0.22, 0.61, 0.36, 1] as const;
 
+const CARD_STAGGER = 0.32;
+const CARD_START = 0.45;
+const CARD_DROP = 0.95;
+
 /**
  * Opening index — brand lockup, byline, then a quiet grid into the evidence.
  */
 export function StageOverview({
   stages,
   onOpen,
+  onOpenPdf,
 }: {
   stages: FrameNode[];
   onOpen: (id: string) => void;
+  onOpenPdf?: () => void;
 }) {
   const reduced = useReducedMotion() ?? false;
 
@@ -115,11 +121,11 @@ export function StageOverview({
           return (
             <motion.li
               key={frame.id}
-              initial={reduced ? false : { opacity: 0, y: 14 }}
+              initial={reduced ? false : { opacity: 0, y: -56 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{
-                duration: reduced ? 0.01 : 0.4,
-                delay: reduced ? 0 : 0.16 + i * 0.035,
+                duration: reduced ? 0.01 : CARD_DROP,
+                delay: reduced ? 0 : CARD_START + i * CARD_STAGGER,
                 ease: easeOut,
               }}
             >
@@ -153,23 +159,26 @@ export function StageOverview({
         className="stage-launcher-doc"
         initial={reduced ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0.01 : 0.4, delay: reduced ? 0 : 0.52, ease: easeOut }}
+        transition={{
+          duration: reduced ? 0.01 : 0.5,
+          delay: reduced ? 0 : CARD_START + stages.length * CARD_STAGGER,
+          ease: easeOut,
+        }}
       >
-        <a
+        <button
+          type="button"
           className="stage-launcher-doc-link"
-          href={assetUrl("the-facts-briefing.pdf")}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Open The facts briefing as a PDF"
+          onClick={onOpenPdf}
+          aria-label="Open The facts as a PDF"
         >
           <span className="stage-launcher-doc-mark" aria-hidden>
             PDF
           </span>
           <span className="stage-launcher-doc-copy">
-            <span className="stage-launcher-doc-label">The full briefing</span>
-            <span className="stage-launcher-doc-hint">Every section, figure and source</span>
+            <span className="stage-launcher-doc-label">Open The facts as a PDF</span>
+            <span className="stage-launcher-doc-hint">Print or save from the briefing</span>
           </span>
-        </a>
+        </button>
       </motion.footer>
     </div>
   );
