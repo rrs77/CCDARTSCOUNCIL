@@ -61,10 +61,72 @@ const PAD = 180;
 /** Park leaves well below the hub band */
 const LEAF_BAND_GAP = 4200;
 
-function uniqueId(base: string, used: Set[string]): string {
+function uniqueId(base: string, used: Set<string>): string {
   let id = base;
   let n = 2;
   while (used.has(id)) id = `${base}-${n++}`;
   used.add(id);
   return id;
+}
+
+/**
+ * Two-tier title. Prefer wrapping-friendly giants (≤2 words) and keep
+ * the rest as the small line so “MUSIC EDUCATION” isn’t cropped.
+ */
+const ARTICLE = /^(the|a|an)$/i;
+
+export function splitTitle(title: string): { small: string; giant: string } {
+  const trimmed = title.trim();
+  const words = trimmed.split(/\s+/);
+  if (words.length <= 1) return { small: "", giant: trimmed.toUpperCase() };
+
+  // Keep “A solution” / “The facts” together — never a stray article kicker.
+  if (ARTICLE.test(words[0]!) && words.length <= 3) {
+    return { small: "", giant: trimmed.toUpperCase() };
+  }
+
+  if (words.length === 2) {
+    return { small: words[0]!, giant: words[1]!.toUpperCase() };
+  }
+
+  const giantCount = words.length >= 5 ? 2 : 1;
+  const small = words.slice(0, -giantCount).join(" ");
+  const giant = words.slice(-giantCount).join(" ").toUpperCase();
+  if (ARTICLE.test(small) || small.length <= 2) {
+    return { small: "", giant: trimmed.toUpperCase() };
+  }
+  return { small, giant };
+}
+
+function firstSentence(text: string): string {
+  const t = text.trim();
+  const m = t.match(/^(.+?[.!?])(?:\s|$)/);
+  if (m && m[1]!.length >= 28) return m[1]!;
+  if (t.length <= 140) return t;
+  return t.slice(0, 137).replace(/\s+\S*$/, "") + "…";
+}
+
+function shortLabel(text: string, max = 28): string {
+  const t = text.replace(/\s+/g, " ").trim();
+  if (t.length <= max) return t;
+  return t.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
+}
+
+const HANGING = /^(and|or|the|a|an|of|to|for|with|from|into|on|in|at|by|as|also)$/i;
+
+function leafTitleFromSentence(sentence: string, fallback: string): string {
+  const t = sentence.replace(/\s+/g, " ").trim();
+  let candidate = t.split(/\s+[—–]\s+/)[0]!.replace(/[:.!?…]+$/, "").trim();
+  if (candidate.length > 44) {
+    candidate = candidate.slice(0, 44).replace(/\s+\S*$/, "").trim();
+  }
+  const words = candidate.split(/\s+/).filter(Boolean);
+  while (words.length > 2 && HANGING.test(words[words.length - 1]!)) words.pop();
+  const title = words.join(" ");
+  if (title.length >= 8) return title;
+  return fallback;
+}
+
+function isFigureStat(value: string): boolean {
+  return /[%£]/.test(value) || /^[−~≈-]?\s*\d/.test(value);
 }
