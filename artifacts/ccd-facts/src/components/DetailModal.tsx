@@ -2,6 +2,7 @@ import { X } from "lucide-react";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, type MouseEvent, type ReactNode, type SyntheticEvent } from "react";
 import { ContentChart } from "@/components/charts/Charts";
+import { EnrichmentFrameworkVisual } from "@/components/EnrichmentFrameworkVisual";
 import { StageIconBadge } from "@/components/StageIconBadge";
 import { getChart } from "@/content/facts.content";
 import type { ContentBlock } from "@/content/parseContent";
@@ -179,6 +180,8 @@ export function DetailModal({
   const hasBlocks = frame.blocks.length > 0;
   const bounce = modalBounce(reduced);
   const situationPhoto = isSituationPhotoSection(frame.id) || isSituationPhotoSection(frame.mainSectionId);
+  const isEnrichment =
+    frame.id === "enrichment-framework" || frame.mainSectionId === "enrichment-framework";
   const illusFile =
     sectionIllustration(frame.id) ??
     sectionIllustration(frame.mainSectionId) ??
@@ -187,6 +190,7 @@ export function DetailModal({
     (b) => b.type === "chart" && b.chartId === frame.chartId,
   );
   const hasVisual =
+    isEnrichment ||
     !!illusFile ||
     (!!frame.heroStat && !hasBlocks) ||
     (!!topChart && !chartAlreadyInBlocks);
@@ -318,7 +322,7 @@ export function DetailModal({
                                 className="detail-see-also-link"
                                 onClick={() => onNavigate(s.id)}
                               >
-                                See {s.title}
+                                {s.title}
                               </button>
                             </li>
                           ))}
@@ -328,7 +332,8 @@ export function DetailModal({
                   </div>
 
                   {hasVisual ? <div className="detail-modal-visual">
-                    {illusFile ? (
+                    {isEnrichment ? <EnrichmentFrameworkVisual density="detail" /> : null}
+                    {!isEnrichment && illusFile ? (
                       <div
                         className={`detail-photo-bubble${situationPhoto ? "" : " detail-photo-bubble--illustration"}`}
                       >

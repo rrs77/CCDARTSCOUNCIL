@@ -38,7 +38,8 @@ export type ChartDef = {
     | "lollipop"
     | "indexed-line"
     | "divergent-bars"
-    | "funding-bars";
+    | "funding-bars"
+    | "funding-trend";
   caption: string;
   sourceNote: string;
   colours?: string[];
@@ -131,6 +132,84 @@ export const sources: Record<string, SourceRef> = {
     label: "Ofqual provisional entries methodology (collected by 15 Apr 2026, rounded to 5)",
     year: "2026",
   },
+  eyfs2026: {
+    id: "eyfs2026",
+    label: "DfE Early Years Foundation Stage statutory framework (effective September 2026)",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/early-years-foundation-stage-framework--2",
+  },
+  enrichmentFramework: {
+    id: "enrichmentFramework",
+    label: "DfE Enrichment Framework for schools and colleges",
+    year: "June 2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges",
+  },
+  enrichmentBenchmarks: {
+    id: "enrichmentBenchmarks",
+    label: "Enrichment benchmarks and case studies",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/enrichment-benchmarks",
+  },
+  enrichmentBackground: {
+    id: "enrichmentBackground",
+    label: "Background, definition and five enrichment areas",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/background-supporting-the-enrichment-framework-for-schools-and-colleges",
+  },
+  enrichmentResources: {
+    id: "enrichmentResources",
+    label: "Resources, Music Hubs and future government support",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/resources-to-support-schools-and-colleges-with-enrichment",
+  },
+  enrichmentEvidence: {
+    id: "enrichmentEvidence",
+    label: "DfE Evidence on enrichment in schools and colleges (PDF)",
+    year: "2026",
+    url: "https://assets.publishing.service.gov.uk/media/6a2a5da31f6fa5c3377e5d43/Evidence_on_enrichment_in_schools_and_colleges.pdf",
+  },
+  enrichmentWorkingGroup: {
+    id: "enrichmentWorkingGroup",
+    label: "Enrichment framework expert working group",
+    year: "2026",
+    url: "https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/enrichment-framework-expert-working-group",
+  },
+  musicMarkEnrichment: {
+    id: "musicMarkEnrichment",
+    label: "Music Mark — DfE Enrichment Benchmarks: a Reflection",
+    year: "2026",
+    url: "https://www.musicmark.org.uk/news/dfe-enrichment-benchmarks-a-reflection/",
+  },
+  musicMarkDemos: {
+    id: "musicMarkDemos",
+    label: "Demos / Music Mark — Facing the Music",
+    year: "Feb 2025",
+    url: "https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf",
+  },
+  musicMarkHubs: {
+    id: "musicMarkHubs",
+    label: "Music Mark — Music Hubs funding cuts response",
+    year: "June 2026",
+    url: "https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/",
+  },
+  ismHe: {
+    id: "ismHe",
+    label: "ISM — university arts funding cut / music course closures",
+    year: "July 2026",
+    url: "https://www.ism.org/news/university-arts-funding-cut-ism-response/",
+  },
+  ofsGrant: {
+    id: "ofsGrant",
+    label: "OfS — Funding for 2026–27: decisions and allocations",
+    year: "2026",
+    url: "https://www.officeforstudents.org.uk/media/4srekubm/funding-for-2026-27-decisions-allocations.pdf",
+  },
+  curriculumReview: {
+    id: "curriculumReview",
+    label: "Curriculum and Assessment Review — government response",
+    year: "Nov 2025",
+    url: "https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report",
+  },
 };
 
 
@@ -152,19 +231,19 @@ export const meta = {
   situationHeadline: "The situation",
   situationLine: "Creative education in England is at a point of change.",
   coverFraming: [
-    "Creative education in England has contracted over the long term, with a clear entitlement gap linked to disadvantage. Curriculum reform and the National Centre create space to strengthen access and partnership.",
+    "Creative education in England has contracted over the long term, with a clear entitlement gap linked to place and disadvantage. Curriculum reform, Turn It Up and the National Centre create space to rebuild.",
     "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
-    "It aims to shorten the distance between excellent practice and the teacher who needs it.",
+    "It aims to shorten the distance between outstanding practice and the teacher who needs it — and to show that colder areas and higher-need schools are part of that reach.",
   ],
   earlyYearsPrinciple:
     "Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.",
   closing:
-    "The long-term picture is contraction and unequal entitlement. Short-term Ofqual movement is mixed, not a reversal. CCDesigner is a practical connection layer for teachers and organisations, day to day.",
+    "The long-term picture is contraction and unequal entitlement by place and disadvantage — but new plans and free national resources create space to rebuild. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to widen reach, share resources into cold spots, and evidence how teachers use materials day to day.",
   verificationNote: "",
   partnerDisclaimer:
     "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
   fundingCase:
-    "Strongest funding case: fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. CCD aims to make those connections usable.",
+    "Strongest funding case: fragmentation, cold spots, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. Music Hubs revenue has been cash-flat near £76m since 2019 (a real-terms cut). CCD aims to make those connections usable and evidencable.",
   ui: {
     exploreHint: "Use arrows or swipe to explore",
     closeModal: "Close",
@@ -441,10 +520,10 @@ export const charts: Record<string, ChartDef> = {
       "Baselines: GCSE 2010; A level 2010/11; teaching hours 2011/12; teacher headcount reported by CLA against 2010. End point 2022/23. Source: CLA Report Card 2024.",
     axis: { x: "Percentage change" },
     series: [
-      { name: "Arts GCSE entries", change: -42, baseline: "2010", fill: "#E97451" },
-      { name: "Arts A-level entries", change: -21, baseline: "2010/11", fill: "#C9A227" },
-      { name: "Arts teaching hours", change: -21, baseline: "2011/12 (excl. Dance)", fill: "#2A9D8F" },
-      { name: "Arts teachers", change: -14, baseline: "vs 2010", fill: "#5B7C99" },
+      { name: "Arts GCSE entries", change: -42, baseline: "2010", fill: "#FF6B6B" },
+      { name: "Arts A-level entries", change: -21, baseline: "2010/11", fill: "#0D9488" },
+      { name: "Arts teaching hours", change: -21, baseline: "2011/12 (excl. Dance)", fill: "#14B8A6" },
+      { name: "Arts teachers", change: -14, baseline: "vs 2010", fill: "#002D24" },
     ],
   },
   primaryHours: {
@@ -460,8 +539,8 @@ export const charts: Record<string, ChartDef> = {
       },
     },
     series: [
-      { name: "Independent", value: 47, fill: "#7B6B9C" },
-      { name: "State", value: 6, fill: "#2A9D8F" },
+      { name: "Independent", value: 47, fill: "#002D24" },
+      { name: "State", value: 6, fill: "#14B8A6" },
     ],
   },
   disadvantage: {
@@ -493,9 +572,9 @@ export const charts: Record<string, ChartDef> = {
       'Source: Cultural Learning Alliance Report Card 2024. “No GCSE entries” does not mean “subject not taught”.',
     axis: { x: "% of schools" },
     series: [
-      { subject: "Music", none: 42, fill: "#2A9D8F" },
-      { subject: "Drama", none: 41, fill: "#7B6B9C" },
-      { subject: "Dance", none: 84, fill: "#E97451" },
+      { subject: "Music", none: 42, fill: "#0D9488" },
+      { subject: "Drama", none: 41, fill: "#14B8A6" },
+      { subject: "Dance", none: 84, fill: "#FF6B6B" },
     ],
   },
   gcseIndex: {
@@ -562,9 +641,9 @@ export const charts: Record<string, ChartDef> = {
   heChange: {
     id: "heChange",
     type: "divergent-bars",
-    caption: "Higher education: change within Creative Arts & Design",
+    caption: "University take-up: Creative Arts & Design subjects still shifting",
     sourceNote:
-      "Domestic undergraduate student numbers. HESA 2024/25 as analysed in CLA Report Card 2026 Detailed Analysis.",
+      "Domestic undergraduate student numbers. HESA 2024/25 as analysed in CLA Report Card 2026 Detailed Analysis. CLA also reports steep provider-level falls concentrated in modern universities serving low-participation neighbourhoods.",
     axis: {
       x: "% change, 2023/24 to 2024/25",
       legend: { decrease: "Decrease", increase: "Increase" },
@@ -576,14 +655,38 @@ export const charts: Record<string, ChartDef> = {
       { subject: "Dance", change: -0.7 },
       { subject: "Design Studies", change: -1.1 },
       { subject: "Drama", change: 1.6 },
+      { subject: "Music", change: 1.1 },
+      { subject: "Others in Creative Arts & Design", change: -15.4 },
+      { subject: "Performing Arts (non-specific)", change: -2.9 },
     ],
+  },
+  hubRevenueTrend: {
+    id: "hubRevenueTrend",
+    type: "funding-trend",
+    caption: "Music Hubs revenue grant over time — cash flat; real-terms support fell",
+    sourceNote:
+      "Cash revenue grant (not capital). Arts Council reported £75m in 2018/19; ≈ £76m cash since 2019 (Demos/Music Mark 2025); £76m confirmed to AY 2026/27 (Turn It Up). Dashed line: cash needed to hold 2019 purchasing power — Music Mark cites Bank of England (£76m in 2019 ≈ £100m today).",
+    axis: {
+      y: "£ million",
+      legend: {
+        cash: "Cash revenue grant",
+        keep2019: "To hold 2019 purchasing power",
+      },
+    },
+    series: [
+      { year: "2018/19", cash: 75 },
+      { year: "2019/20", cash: 76, keep2019: 76 },
+      { year: "2024/25", cash: 76 },
+      { year: "2026/27", cash: 76, keep2019: 100 },
+    ],
+    meta: { yMax: 110 },
   },
   funding: {
     id: "funding",
     type: "funding-bars",
     caption: "Current national commitments: different funding purposes",
     sourceNote:
-      "Not additive like-for-like funding: £76m is annual Music Hubs backing; £25m is additional capital; National Centre is backed by up to £13m over 3 years. Source: DCMS/DfE, Turn It Up, July 2026.",
+      "Not additive like-for-like funding: £76m is annual Music Hubs backing; £25m is additional capital; National Centre is backed by up to £13m over 3 years; enrichment expansion is £22.5m over 3 years for up to 400 schools. Sources: DCMS/DfE Turn It Up; DfE Enrichment Framework resources.",
     axis: {
       y: "£ million",
       legend: {
@@ -597,20 +700,33 @@ export const charts: Record<string, ChartDef> = {
         label: "Hubs (annual)",
         value: 76,
         kind: "Annual revenue backing",
-        fill: "#2A9D8F",
+        fill: "#0D9488",
       },
       {
         label: "Capital",
         value: 25,
         kind: "Additional capital investment",
-        fill: "#C9A227",
+        fill: "#14B8A6",
       },
       {
         label: "National Centre",
         value: 13,
         kind: "Centre contract support",
-        fill: "#7B6B9C",
+        fill: "#002D24",
       },
+    ],
+  },
+  enrichmentParticipation: {
+    id: "enrichmentParticipation",
+    type: "lollipop",
+    caption: "Reported enrichment participation, summer term 2024–25",
+    sourceNote:
+      "Parent/pupil-reported participation in at least one extracurricular activity. KS1–2 and KS3 both 72%; KS4 60%; special schools (primary and secondary) 45%. Musical performance was offered by 75% of schools. Source: DfE Evidence on enrichment in schools and colleges.",
+    axis: { x: "% of pupils reported taking part" },
+    series: [
+      { subject: "KS1–3", value: 72, fill: "#0D9488" },
+      { subject: "KS4", value: 60, fill: "#14B8A6" },
+      { subject: "Special", value: 45, fill: "#FF6B6B" },
     ],
   },
 };
@@ -647,7 +763,7 @@ export const topics: TopicDef[] = [
     investorLine: "The hours gap is stark — and partnerships are thin.",
     body: [
       "Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.",
-      "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report no external artist or cultural organisation.",
+      "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report that their school works with no external partners to deliver the arts curriculum.",
       "Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.",
     ],
     whyThisMattersForCCD:
@@ -721,6 +837,14 @@ export const principalSourceIds = [
   "nationalCentre",
   "hesaCla",
   "ofqualBackground",
+  "eyfs2026",
+  "enrichmentFramework",
+  "enrichmentBenchmarks",
+  "enrichmentBackground",
+  "enrichmentResources",
+  "enrichmentEvidence",
+  "enrichmentWorkingGroup",
+  "musicMarkEnrichment",
 ] as const;
 
 /** @deprecated alias — prefer getTopic */

@@ -2,6 +2,9 @@ import { LogoSVG } from '../Logo';
 import { PartnerLogoStrip } from './PartnerLogoStrip';
 
 const HERO_IMAGE = '/login/hero-arts.jpg?v=ages-3';
+const HERO_KICKER = 'Arts education';
+const HERO_HEADING = 'At a tipping point — with ambitious plans ahead.';
+const HERO_DECK = 'What’s needed now is shared expertise and connection.';
 const HERO_VALUE =
   'Capture ideas. Build lessons. Connect with the best arts organisations — EYFS to A-level.';
 
@@ -51,8 +54,21 @@ export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
 
         <div className="flex flex-col gap-6 lg:gap-8">
           <div className="max-w-xl">
+            <p className="ccd-login-hero-fade text-[0.7rem] font-semibold uppercase tracking-[0.16em] text-[#B6FF7E] sm:text-[0.74rem]">
+              {HERO_KICKER}
+            </p>
+            <p
+              className="ccd-login-hero-fade ccd-login-hero-fade-delay-1 mt-2 text-[1.15rem] font-medium leading-snug tracking-tight text-white sm:text-[1.35rem] lg:text-[1.5rem]"
+              style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+            >
+              {HERO_HEADING}
+            </p>
+            <p className="ccd-login-hero-fade ccd-login-hero-fade-delay-1 mt-1.5 text-sm leading-relaxed text-white/80 sm:text-[0.95rem] lg:max-w-md">
+              {HERO_DECK}
+            </p>
+
             <h1
-              className="ccd-login-hero-fade ccd-login-hero-fade-delay-1 text-[1.65rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2rem] lg:text-[2.45rem] xl:text-[2.7rem]"
+              className="ccd-login-hero-fade ccd-login-hero-fade-delay-2 mt-5 text-[1.65rem] font-semibold leading-[1.12] tracking-tight text-white sm:text-[2rem] lg:text-[2.45rem] xl:text-[2.7rem]"
               style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
             >
               Exceptional lessons start with{' '}
@@ -64,7 +80,7 @@ export function LoginHeroPanel({ logoLetters = 'CCD' }: LoginHeroPanelProps) {
               </span>
             </h1>
 
-            <p className="ccd-login-hero-fade ccd-login-hero-fade-delay-2 mt-3 text-sm leading-relaxed text-white/90 sm:text-base lg:max-w-md lg:text-lg">
+            <p className="ccd-login-hero-fade ccd-login-hero-fade-delay-3 mt-3 text-sm leading-relaxed text-white/90 sm:text-base lg:max-w-md lg:text-lg">
               {HERO_VALUE}
             </p>
           </div>

@@ -143,7 +143,7 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
   for (const sec of mains) {
     const isSources = /^sources$/i.test(sec.title);
     const isSolution = sec.id === "a-solution";
-    if (isSources || isSolution) continue;
+    if (isSources) continue;
     const paras = sec.blocks.filter((b) => b.type === "paragraph") as Extract<
       ContentBlock,
       { type: "paragraph" }
@@ -333,21 +333,26 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
 /** Quiet pathway grid for hubs — story-order bands, large gutters, no AABB overlap. */
 function placeHubsOnGrid(hubs: FrameNode[]): void {
   // Story path bands (left → right, then down):
-  // 0: EYFS, primary, secondary
-  // 1: GCSE, A-level, HE
-  // 2: music hubs
+  // 0: EYFS, Enrichment Framework, primary
+  // 1: secondary, GCSE, A-level
+  // 2: cold spots, HE, music hubs
+  // 3: national plans, a solution
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
 
   const byId = new Map(hubs.map((h) => [h.id, h]));
   const orderedIds = [
     "eyfs",
+    "enrichment-framework",
     "primary-ks1-ks2",
     "secondary",
     "gcse",
     "a-level",
+    "cold-spots-place-and-income",
     "university-he",
     "music-hubs-and-national-centre",
+    "national-plans-and-free-resources",
+    "a-solution",
   ];
   const placed = new Set<string>();
 
@@ -362,12 +367,16 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   };
 
   place("eyfs", 0, 0);
-  place("primary-ks1-ks2", 1, 0);
-  place("secondary", 2, 0);
-  place("gcse", 0, 1);
-  place("a-level", 1, 1);
-  place("university-he", 2, 1);
-  place("music-hubs-and-national-centre", 1, 2);
+  place("enrichment-framework", 1, 0);
+  place("primary-ks1-ks2", 2, 0);
+  place("secondary", 0, 1);
+  place("gcse", 1, 1);
+  place("a-level", 2, 1);
+  place("cold-spots-place-and-income", 0, 2);
+  place("university-he", 1, 2);
+  place("music-hubs-and-national-centre", 2, 2);
+  place("national-plans-and-free-resources", 0, 3);
+  place("a-solution", 1, 3);
 
   // Any leftover hubs continue the grid
   let extra = 0;
@@ -546,12 +555,16 @@ export function buildHubConnectorPath(frames: FrameNode[]): string {
   const byId = new Map(hubs.map((h) => [h.id, h]));
   const story = [
     "eyfs",
+    "enrichment-framework",
     "primary-ks1-ks2",
     "secondary",
     "gcse",
     "a-level",
+    "cold-spots-place-and-income",
     "university-he",
     "music-hubs-and-national-centre",
+    "national-plans-and-free-resources",
+    "a-solution",
   ]
     .map((id) => byId.get(id))
     .filter(Boolean) as FrameNode[];

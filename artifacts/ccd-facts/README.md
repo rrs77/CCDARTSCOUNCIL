@@ -1,43 +1,27 @@
-# The facts — standalone evidence canvas
+# The facts
 
-Self-contained Prezi-style “The facts” app for **Creative Curriculum Designer**.
+Evidence canvas for **Creative Curriculum Designer**. It is part of the main CCD app — not a separate product or deploy branch.
 
-**Not merged into CCD / `main` yet.** Work here on branch `cursor/the-facts-interactive-c544`, then fold into CCDesigner later when ready.
+## How it ships
 
-## Folder
+A GitHub push that builds CCD also builds this package and copies it to `/the-facts/`:
 
 ```
-artifacts/ccd-facts
+pnpm --filter @workspace/ccd run build
 ```
 
-## Open in Replit
+`prebuild` runs `build:facts`, which compiles `artifacts/ccd-facts` with `BASE_PATH=/the-facts/` into `artifacts/ccd/public/the-facts`. Vercel (`pnpm -w run build:vercel`) then publishes the CCD app, including The facts.
 
-1. In Replit: **Import from GitHub** → repo `rrs77/CCDARTSCOUNCIL`
-2. Branch: `cursor/the-facts-interactive-c544`
-3. Set the Repl **root / working directory** to `artifacts/ccd-facts` (this folder)
-4. Run (or let `.replit` run): `npm install && npm run dev`
-5. App listens on `0.0.0.0:5173`
-
-Import shortcut (GitHub → Replit):  
-https://replit.com/github/rrs77/CCDARTSCOUNCIL
-
-After import, switch to branch `cursor/the-facts-interactive-c544` and open `artifacts/ccd-facts` as the project root.
+Live path after deploy: `/the-facts/index.html` (linked from the login hero).
 
 ## Edit content
 
-- **Copy source:** `CONTENT.md` (headings, stats, footnotes, chart markers)
-- Notes for editors: `CONTENT.README.md`
-- No monorepo install required — this package pins its own npm versions
+- **Copy source:** `CONTENT.md`
+- Editor notes: `CONTENT.README.md`
+- Then rebuild the app (`pnpm --filter @workspace/ccd run build`) so `/the-facts/` updates.
 
-## Scripts
+## Local
 
-| Command | What it does |
-|--------|----------------|
-| `npm run dev` | Vite dev server (host `0.0.0.0`, port `5173`) |
-| `npm run build` | Production build → `dist/public` |
-| `npm run serve` | Preview the production build |
-| `npm run typecheck` | TypeScript check |
-
-## Later: into CCDesigner
-
-When you are ready to ship into the main CCD app, copy/build this package into CCD (e.g. static `/the-facts/`) on a deliberate merge — **do not merge this PR into `main` until then**.
+```
+pnpm --filter ccd-facts run dev
+```
