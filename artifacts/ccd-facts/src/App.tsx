@@ -156,9 +156,11 @@ export default function App() {
         showOverview();
         return;
       }
-      openSection(sectionPath[next]!);
+      const nextId = sectionPath[next]!;
+      if (modalId) openDetail(nextId);
+      else openSection(nextId);
     },
-    [openSection, sectionIndex, sectionPath, showOverview],
+    [modalId, openDetail, openSection, sectionIndex, sectionPath, showOverview],
   );
 
   // Boot — overview of the full canvas unless a deep link is present
@@ -289,7 +291,7 @@ export default function App() {
         fullscreen={fullscreen}
         onOverview={showOverview}
         onToggleFullscreen={toggleFullscreen}
-        onJump={(id) => openSection(id)}
+        onJump={(id) => (modalId ? openDetail(id) : openSection(id))}
         onOpenPdf={() => setPdfOpen(true)}
       />
 
@@ -299,6 +301,11 @@ export default function App() {
         frame={modalFrame}
         open={!!modalId && !!modalFrame}
         sectionLinks={sectionLinks.filter((s) => s.id !== modalId)}
+        stages={sectionLinks}
+        canPrev={canPrev}
+        canNext={canNext}
+        onPrev={() => goSection(-1)}
+        onNext={() => goSection(1)}
         onNavigate={(id) => openDetail(id)}
         onClose={() => setModalId(null)}
       />

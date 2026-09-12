@@ -2,7 +2,7 @@
 
 The facts on creative education in England — for funding, partnership and development.
 
-Creative education in England is at a tipping point. Exceptional lessons start with connection — and CCDesigner aims to make that connection usable day to day.
+Creative education in England is at a tipping point. Exceptional lessons start with connection — and CCDesigner makes that connection usable day to day.
 
 Creative education has contracted over the long term, with a clear entitlement gap linked to place and disadvantage.[^1][^5] New government plans — curriculum reform, Turn It Up, the National Centre — and free national resources create space to rebuild. CCDesigner is the practical layer: plan, share resources, reach cold spots, and evidence how materials are used.
 
@@ -14,7 +14,7 @@ The Early Years Foundation Stage statutory framework places Expressive Arts and 
 
 When early arts experiences are thin or adult-directed only, the entitlement gap starts before Key Stage 1. Strong EYFS practice builds the confidence, belonging and creative habits that later enrichment and arts pathways depend on.[^11][^16]
 
-> CCDesigner aims to give early-years and primary teachers reusable creative blocks, partner resources and planning that respects child-led learning — without forcing a secondary classroom model onto Reception.
+> CCDesigner will give early-years and primary teachers reusable creative blocks, partner resources and planning that respects child-led learning — without forcing a secondary classroom model onto Reception.
 
 ### Child-shaped creative learning
 
@@ -68,13 +68,13 @@ CCDesigner also has a credible contribution to Benchmarks 1 (curriculum intent),
 
 ### Product direction
 
-An optional Enrichment Framework layer — not a separate system — could tag activities against the five areas and eight benchmarks; capture outcomes, barriers, adaptations, cost, timing, student voice and partner review; show a simple gaps dashboard; export evidence summaries for leaders and governors; and track participation by cohort with privacy and safeguarding controls.[^12]
+An optional Enrichment Framework layer — not a separate system — will tag activities against the five areas and eight benchmarks; capture outcomes, barriers, adaptations, cost, timing, student voice and partner review; show a simple gaps dashboard; export evidence summaries for leaders and governors; and track participation by cohort with privacy and safeguarding controls.[^12]
 
-CCDesigner should reduce workload and improve access — never claim to replace safeguarding checks or professional due diligence on providers.[^15]
+CCDesigner reduces workload and improves access. It does not replace safeguarding checks or professional due diligence on providers.[^15]
 
 ### Arts Council case wording
 
-CCDesigner aims to provide practical digital infrastructure through which schools can turn the Department for Education’s non-statutory Enrichment Framework into consistent action. It aims to connect teachers with trusted arts organisations and Music Hubs, allow high-quality opportunities and resources to be added directly to planning, and support schools to evidence access, partnership working, intended outcomes and continuous improvement without creating unnecessary workload.[^12][^15][^19]
+CCDesigner provides the practical digital infrastructure through which schools turn the Department for Education’s non-statutory Enrichment Framework into consistent action. It connects teachers with trusted arts organisations and Music Hubs, lets high-quality opportunities and resources be added directly to planning, and gives schools a way to evidence access, partnership working, intended outcomes and continuous improvement without creating unnecessary workload.[^12][^15][^19]
 
 ## Primary / KS1–KS2
 
@@ -88,7 +88,7 @@ Teachers in the highest-FSM vs lowest-FSM schools reporting reduced arts hours: 
 
 <!-- chart:primaryHours -->
 
-> Where generalists carry the arts — especially in higher-need schools — reusable activity blocks and Partner Hubs aim to put excellent practice within reach without waiting for local specialist capacity.
+> Where generalists carry the arts — especially in higher-need schools — reusable activity blocks and Partner Hubs put excellent practice within reach, without waiting for local specialist capacity.
 
 ### Primary hours
 
@@ -104,7 +104,7 @@ CLA links the long decline to policy focus (2010–2024) on a narrow range of su
 
 Access to arts qualifications still tracks disadvantage (DfE Tables 18–19) — economically deprived areas feel the curriculum squeeze first.[^5]
 
-> CCDesigner aims to support teachers inside a narrowed curriculum — keeping planning cumulative and partnership reachable where specialist capacity and exam pathways thin out, including in higher-need schools.
+> CCDesigner will support teachers inside a narrowed curriculum — keeping planning cumulative and partnership reachable where specialist capacity and exam pathways thin out, including in higher-need schools.
 
 ### Teachers
 
@@ -121,7 +121,7 @@ In 2024/25, 36% of schools had no GCSE Music entries, 36% no Drama, and 83% no D
 
 <!-- chart:noGcse -->
 
-> Where GCSE pathways thin out, cumulative planning and Partner Hub resources aim to keep specialist routes reachable for teachers and students — including in schools that no longer enter exams.
+> Where GCSE pathways thin out, cumulative planning and Partner Hub resources keep specialist routes reachable for teachers and students — including in schools that no longer enter exams.
 
 ### GCSE entries
 
@@ -150,7 +150,7 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 
 <!-- chart:alevelIndex -->
 
-> Where A-level arts thin out, cumulative planning and shared Partner Hub resources aim to keep specialist pathways reachable — so place and income are less decisive for what teachers can offer.
+> Where A-level arts thin out, cumulative planning and shared Partner Hub resources keep specialist pathways reachable — so place and income are less decisive for what teachers can offer.
 
 ### A-level entries
 
@@ -165,7 +165,7 @@ FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-le
 
 <!-- chart:disadvantage -->
 
-> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
+> CCDesigner will widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
 
 ### Cold-spot markers
 
@@ -189,7 +189,7 @@ That sits on top of a school curriculum era that narrowed accountability toward 
 
 <!-- chart:heChange -->
 
-> To support the decline upstream — before courses close or combine — CCDesigner aims to keep specialist planning and Partner Hub resources in teachers’ hands earlier, so geography and household resources are less decisive before students apply.
+> To meet the decline upstream — before courses close or combine — CCDesigner will keep specialist planning and Partner Hub resources in teachers’ hands earlier, so geography and household resources are less decisive before students apply.
 
 ### HE markers
 
@@ -212,7 +212,7 @@ The National Centre is intended to launch by September 2026 and to boost in-scho
 
 <!-- chart:hubRevenueTrend -->
 
-> When Hub and partner funding is under pressure, CCDesigner aims to make shared resources go further — improving communication between organisations and teachers, and making use more transparent so funders can see materials reaching cold spots and higher-need schools.
+> When Hub and partner funding is under pressure, CCDesigner makes shared resources go further — improving communication between organisations and teachers, and making use more transparent so funders can see materials reaching cold spots and higher-need schools.
 
 ### Current commitments
 
@@ -238,9 +238,9 @@ Publicly funded or free to schools — each link opens the source:
 - **Turn It Up: Our plan for music** — https://www.gov.uk/government/publications/turn-it-up-our-plan-for-music/turn-it-up-our-plan-for-music
 - **Curriculum and Assessment Review** — https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report
 
-These programmes fund or publish materials so teachers can use free arts education resources without waiting for local specialist capacity. CCDesigner aims to sit alongside them — helping teachers capture, adapt and share what reaches their libraries and lessons.
+These programmes fund or publish materials so teachers can use free arts education resources without waiting for local specialist capacity. CCDesigner sits alongside them — helping teachers capture, adapt and share what reaches their libraries and lessons.
 
-> Policy is creating space again. CCD aims to turn national plans and free resources into day-to-day classroom use — especially in cold spots — and to evidence that greater reach is real, not only announced.
+> Policy is creating space again. CCD turns national plans and free resources into day-to-day classroom use — especially in cold spots — and evidences that greater reach is real, not only announced.
 
 ### Plan markers
 
@@ -255,26 +255,26 @@ The picture is uneven, but it is not hopeless — what has been missing is a sha
 
 Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, from early years to A-level.
 
-Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs aim to connect teachers with arts organisations.
+Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs connect teachers with arts organisations.
 
-CCD aims to support the decline by putting shared practice in teachers’ hands earlier: greater reach into cold spots, fairer opportunity in lower-participation areas, and clearer communication between schools and cultural partners.
+CCD puts shared practice in teachers’ hands earlier: greater reach into cold spots, fairer opportunity in lower-participation areas, and clearer communication between schools and cultural partners.
 
-CCD also aims to make funding more transparent by evidencing use of materials. Signed-in accounts can show which Partner Hub resources are added to libraries, when activities are built into lessons, and which resources teachers return to.
+CCD makes funding more transparent by evidencing use of materials. Signed-in accounts show which Partner Hub resources are added to libraries, when activities are built into lessons, and which resources teachers return to.
 
-Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.
+Music Hubs and arts organisations will be able to track how their resources are being used and where — through IP addresses and login information linked to the signed-in teacher, not a pupil.
 
 Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.
 
-> The evidence shows fragmentation, cold spots and unequal entitlement. CCD aims to be the practical connection layer — wider reach, shared resources, stronger school–organisation communication, and clearer proof of use so support can follow need.
+> The evidence shows fragmentation, cold spots and unequal entitlement. CCD is the practical connection layer — wider reach, shared resources, stronger school–organisation communication, and clearer proof of use so support can follow need.
 
 ### How it connects
 
 - **Capture** — Reusable activity blocks instead of one-off plans
 - **Plan** — Lessons, half-terms and schemes of work in one place
 - **Connect** — Partner Hubs put organisations next to the teacher’s library
-- **Evidence** — Signed-in use can show what actually reaches lessons
+- **Evidence** — Signed-in teacher use shows what reaches lessons; Music Hubs and organisations can track how their resources are used and where, through IP address and login linked to that teacher
 
-Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance between outstanding practice and the teacher who needs it — and to show that colder areas and higher-need schools are part of that reach.
+Capture → plan → calendar → Partner Hubs. CCD shortens the distance between outstanding practice and the teacher who needs it — and shows that colder areas and higher-need schools are part of that reach.
 
 [^1]: Cultural Learning Alliance Report Card 2024 — https://www.culturallearningalliance.org.uk/wp-content/uploads/2024/05/CLA-2024-Annual-Report-Card.pdf
 [^2]: Cultural Learning Alliance Report Card 2026 — https://www.culturallearningalliance.org.uk/wp-content/uploads/2026/05/CLA-2026-Report-Card-final.pdf

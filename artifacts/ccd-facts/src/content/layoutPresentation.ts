@@ -75,6 +75,14 @@ function uniqueId(base: string, used: Set<string>): string {
  */
 const ARTICLE = /^(the|a|an)$/i;
 
+/** Hide a kicker that already appears in the full title. */
+export function visibleTitleKicker(small: string | undefined, title: string): string | null {
+  const s = (small || "").trim();
+  if (!s || ARTICLE.test(s)) return null;
+  if (title.toLowerCase().includes(s.toLowerCase())) return null;
+  return s;
+}
+
 export function splitTitle(title: string): { small: string; giant: string } {
   const trimmed = title.trim();
   const words = trimmed.split(/\s+/);
@@ -85,8 +93,14 @@ export function splitTitle(title: string): { small: string; giant: string } {
     return { small: "", giant: trimmed.toUpperCase() };
   }
 
+  // Keep slashed / dotted titles together so “University / HE” is not cropped to “HE”.
+  if (/[·/]/.test(trimmed) && words.length <= 5) {
+    return { small: "", giant: trimmed };
+  }
+
+  // Two-word titles stay as one heading — never “Enrichment” + “Enrichment Framework”.
   if (words.length === 2) {
-    return { small: words[0]!, giant: words[1]!.toUpperCase() };
+    return { small: "", giant: trimmed };
   }
 
   const giantCount = words.length >= 5 ? 2 : 1;

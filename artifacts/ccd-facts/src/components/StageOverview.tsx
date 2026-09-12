@@ -176,7 +176,7 @@ export function StageOverview({
           </span>
           <span className="stage-launcher-doc-copy">
             <span className="stage-launcher-doc-label">Open The facts as a PDF</span>
-            <span className="stage-launcher-doc-hint">Print or save from the briefing</span>
+            <span className="stage-launcher-doc-hint">Print or save The facts</span>
           </span>
         </button>
       </motion.footer>

@@ -1,4 +1,16 @@
-/** Official Facts chart series — drawn in the briefing, same figures as the live index. */
+/** Official Facts chart series — drawn in The facts PDF, same figures as the live index. */
+
+function pdfSafe(s) {
+  return String(s)
+    .replace(/[\u2212\u2010\u2011\u2012\u2013\u2014\u2015]/g, "-")
+    .replace(/[\u2018\u2019\u201A\u201B\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F\u00AB\u00BB]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/[\u2192\u21D2]/g, "->")
+    .replace(/[\u00A0\u202F\u2007\u2009\u200A\u2000-\u200B]/g, " ")
+    .replace(/\u00D7/g, "x")
+    .replace(/\u2248/g, "~");
+}
 
 export const FOREST = [0, 45, 36];
 export const TEAL = [20, 184, 166];
@@ -126,7 +138,7 @@ function captionBlock(doc, x, y, w, caption, source) {
   doc.setFont("helvetica", "bold");
   doc.setFontSize(8);
   doc.setTextColor(...FOREST);
-  const cap = doc.splitTextToSize(caption, w);
+  const cap = doc.splitTextToSize(pdfSafe(caption), w);
   doc.text(cap, x, y);
   let yy = y + cap.length * 3.5 + 1.2;
   return yy;
@@ -136,7 +148,7 @@ function sourceLine(doc, x, y, w, source) {
   doc.setFont("helvetica", "normal");
   doc.setFontSize(6.6);
   doc.setTextColor(...MUTED);
-  const lines = doc.splitTextToSize(source, w);
+  const lines = doc.splitTextToSize(pdfSafe(source), w);
   doc.text(lines, x, y);
   return y + lines.length * 2.9;
 }
@@ -165,7 +177,7 @@ function lollipop(doc, chart, x, y, w) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7.4);
     doc.setTextColor(...INK);
-    doc.text(row.label, x, yy + 2.4);
+    doc.text(pdfSafe(row.label), x, yy + 2.4);
     const len = (row.value / chart.max) * barW;
     doc.setDrawColor(...rgb(row.fill));
     doc.setLineWidth(0.7);
@@ -192,7 +204,7 @@ function pairRings(doc, chart, x, y, w) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...MUTED);
-    doc.text(row.label, cx, cy + r + 5.2, { align: "center" });
+    doc.text(pdfSafe(row.label), cx, cy + r + 5.2, { align: "center" });
   });
   return 34;
 }
@@ -208,7 +220,7 @@ function groupedBars(doc, chart, x, y, w) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...INK);
-    doc.text(row.label, x, yy + 4.2);
+    doc.text(pdfSafe(row.label), x, yy + 4.2);
     const h = 3.2;
     const wa = (row.a / max) * barW;
     const wb = (row.b / max) * barW;
@@ -288,7 +300,7 @@ function divergent(doc, chart, x, y, w) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.6);
     doc.setTextColor(...INK);
-    doc.text(row.label, x, yy + 2.2);
+    doc.text(pdfSafe(row.label), x, yy + 2.2);
     const len = (Math.abs(row.value) / max) * half;
     if (row.value < 0) {
       doc.setFillColor(...CORAL);
@@ -344,7 +356,7 @@ function fundingTrend(doc, chart, x, y, w) {
   });
   doc.setFontSize(6.4);
   doc.setTextColor(...MUTED);
-  doc.text("Cash grant   ·   dotted = 2019 £76m in today’s money", x, y + h + 8);
+  doc.text("Cash grant   ·   dotted = 2019 £76m in today's money", x, y + h + 8);
   return h + 11;
 }
 
@@ -366,7 +378,7 @@ function fundingBars(doc, chart, x, y, w) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(6.4);
     doc.setTextColor(...MUTED);
-    doc.text(row.label, xx + barW / 2, y + h + 3.8, { align: "center" });
+    doc.text(pdfSafe(row.label), xx + barW / 2, y + h + 3.8, { align: "center" });
   });
   return h + 8;
 }
@@ -382,7 +394,7 @@ function changeBars(doc, chart, x, y, w) {
     doc.setFont("helvetica", "normal");
     doc.setFontSize(7);
     doc.setTextColor(...INK);
-    doc.text(row.label, x, yy + 3);
+    doc.text(pdfSafe(row.label), x, yy + 3);
     const len = (Math.abs(row.value) / max) * barW;
     doc.setFillColor(...rgb(row.fill));
     doc.rect(barX, yy, len, 4.2, "F");

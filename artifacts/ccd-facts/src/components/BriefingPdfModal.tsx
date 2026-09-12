@@ -90,7 +90,7 @@ export function BriefingPdfModal({
             <iframe
               ref={frameRef}
               className="briefing-modal-frame"
-              title="The facts briefing PDF"
+              title="The facts PDF"
               src={PDF_HREF}
             />
           </motion.div>

@@ -6,7 +6,7 @@
  *
  * Prezi model: one overview picture + quiet topic chips → scrollable modal scenes.
  * Do not invent numbers. Prefer CLA / Ofqual / DfE primary sources.
- * “No entries” ≠ “not taught”. Use “aims to”, not “will solve”.
+ * “No entries” ≠ “not taught”. Present CCDesigner as a real solution — present tense or “will”, not “aims to”.
  */
 
 export type SourceRef = {
@@ -228,7 +228,7 @@ export const meta = {
   purposeHeading: "At a tipping point — with ambitious plans ahead.",
   purposeDeck: "What’s needed now is shared expertise and connection.",
   purposeLine:
-    "A shared evidence briefing on creative education in England — official figures for teachers, funders and arts organisations.",
+    "A shared evidence overview on creative education in England — official figures for teachers, funders and arts organisations.",
   heroSupport:
     "Capture ideas. Build lessons. Connect with arts organisations — EYFS to A-level.",
   experienceLead: "The",
@@ -237,18 +237,16 @@ export const meta = {
   situationLine: "Creative education in England is at a point of change.",
   coverFraming: [
     "Creative education in England has contracted over the long term, with a clear entitlement gap linked to place and disadvantage. Curriculum reform, Turn It Up and the National Centre create space to rebuild.",
-    "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS to A-level). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
-    "It aims to shorten the distance between outstanding practice and the teacher who needs it — and to show that colder areas and higher-need schools are part of that reach.",
+    "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS to A-level). It brings planning, activity blocks and resources into one place — and connects teachers with arts organisations through Partner Hubs.",
+    "It shortens the distance between outstanding practice and the teacher who needs it — and shows that colder areas and higher-need schools are part of that reach.",
   ],
   earlyYearsPrinciple:
     "Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.",
   closing:
-    "The long-term picture is contraction and unequal entitlement by place and disadvantage — but new plans and free national resources create space to rebuild. Short-term Ofqual movement is mixed, not a reversal. CCDesigner aims to widen reach, share resources into cold spots, and evidence how teachers use materials day to day.",
+    "The long-term picture is contraction and unequal entitlement by place and disadvantage — but new plans and free national resources create space to rebuild. Short-term Ofqual movement is mixed, not a reversal. CCDesigner widens reach, shares resources into cold spots, and evidences how teachers use materials day to day.",
   verificationNote: "",
-  partnerDisclaimer:
-    "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
   fundingCase:
-    "Strongest funding case: fragmentation, cold spots, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. Music Hubs revenue has been cash-flat near £76m since 2019 (a real-terms cut). CCD aims to make those connections usable and evidencable.",
+    "Strongest funding case: fragmentation, cold spots, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. Music Hubs revenue has been cash-flat near £76m since 2019 (a real-terms cut). CCD makes those connections usable and evidencable. Music Hubs and arts organisations will be able to track how their resources are being used and where — through IP addresses and login information linked to the signed-in teacher, not a pupil.",
   ui: {
     exploreHint: "Use arrows or swipe to explore",
     closeModal: "Close",
@@ -751,7 +749,7 @@ export const topics: TopicDef[] = [
       "Access to arts qualifications still tracks disadvantage (DfE Tables 18–19).",
     ],
     whyThisMattersForCCD:
-      "CCDesigner aims to support teachers working inside a system that has already contracted — keeping planning cumulative and partnership reachable where exam pathways thin out.",
+      "CCDesigner will support teachers working inside a system that has already contracted — keeping planning cumulative and partnership reachable where exam pathways thin out.",
     sourceIds: ["cla2024", "cla2026", "ofqual2026", "ofqualBackground", "dfeAnnex"],
     statIds: ["gcse-fall", "alevel-fall", "no-entry", "ofqual-gcse-2026", "ofqual-alevel-2026"],
     chartIds: ["longterm", "noGcse"],
@@ -771,7 +769,7 @@ export const topics: TopicDef[] = [
       "Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.",
     ],
     whyThisMattersForCCD:
-      "Where generalists carry the arts, reusable activity blocks and Partner Hubs aim to make excellent practice easier to find and adapt.",
+      "Where generalists carry the arts, reusable activity blocks and Partner Hubs make excellent practice easier to find and adapt.",
     sourceIds: ["cla2026"],
     statIds: ["hours-gap", "primary-hour"],
     chartIds: ["primaryHours"],
@@ -791,7 +789,7 @@ export const topics: TopicDef[] = [
       "Domestic Creative Arts & Design undergraduates edged down while the wider cohort rose (HESA via CLA 2026).",
     ],
     whyThisMattersForCCD:
-      "CCD aims to prioritise underserved areas in how hubs and resources are surfaced — helping teachers reach beyond postcode limits for ideas and partners.",
+      "CCD prioritises underserved areas in how hubs and resources are surfaced — helping teachers reach beyond postcode limits for ideas and partners.",
     sourceIds: ["cla2026", "hesaCla", "cla2024"],
     statIds: ["deprivation-music", "alevel-share", "hours-gap"],
     chartIds: ["disadvantage"],
@@ -807,12 +805,12 @@ export const topics: TopicDef[] = [
     investorLine: "",
     body: [
       "Connect rather than duplicate — make outstanding practice usable day to day. CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS to A-level).",
-      "Make partnership measurable — Partner Hubs aim to connect teachers with arts organisations in the same place they plan, so collaboration shows up in everyday work.",
+      "Make partnership measurable — Partner Hubs connect teachers with arts organisations in the same place they plan, so collaboration shows up in everyday work.",
+      "Music Hubs and arts organisations will be able to track how their resources are being used and where — through IP addresses and login information linked to the signed-in teacher, not a pupil.",
       "Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Music Hubs: £76m annual to AY 2026/27 + £25m capital. National Centre: up to £13m over three years — separate streams.",
-      "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",
     ],
     whyThisMattersForCCD:
-      "The evidence shows fragmentation and unequal entitlement. CCD aims to be the practical connection layer for teachers and organisations.",
+      "The evidence shows fragmentation and unequal entitlement. CCD is the practical connection layer for teachers and organisations.",
     sourceIds: ["cla2026", "ofqual2026", "turnItUp", "nationalCentre"],
     neighbors: { left: "exams", down: "exams", right: "exams", up: "poverty" },
   },

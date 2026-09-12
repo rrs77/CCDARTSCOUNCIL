@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
- * Branded A4 briefing — two columns, footnote marks in the copy,
- * full references at the end, CCD mark on the opening page, page numbers throughout.
+ * A4 The facts PDF — magazine measure (full width + columns), CCD logo,
+ * in-text footnote marks, full sources at the end, clickable contents
+ * and bookmarks. Print-ready: no underlines or screen-only chrome.
  */
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { createRequire } from "node:module";
@@ -32,16 +33,47 @@ const CONTENT_W = PAGE.w - M.l - M.r;
 const COL_W = (CONTENT_W - GUTTER) / 2;
 const NOTE_SIZE = 6.1;
 
-const SECTION_PHOTO = {
-  EYFS: "briefing-eyfs.jpg",
-  "Enrichment Framework": "briefing-music.jpg",
-  GCSE: "briefing-drama.jpg",
-  "Music Hubs and National Centre": "briefing-music.jpg",
-};
+/** Helvetica is WinAnsi — fold Unicode punctuation so glyphs do not become quotes. */
+function pdfSafe(s) {
+  return String(s)
+    .replace(/[\u2212\u2010\u2011\u2012\u2013\u2014\u2015]/g, "-")
+    .replace(/[\u2018\u2019\u201A\u201B\u2032]/g, "'")
+    .replace(/[\u201C\u201D\u201E\u201F\u00AB\u00BB]/g, '"')
+    .replace(/\u2026/g, "...")
+    .replace(/[\u2192\u21D2]/g, "->")
+    .replace(/[\u00A0\u202F\u2007\u2009\u200A\u2000-\u200B\u2060]/g, " ")
+    .replace(/\u00D7/g, "x")
+    .replace(/\u2248/g, "~")
+    .replace(/\u2264/g, "<=")
+    .replace(/\u2265/g, ">=")
+    .replace(/\u00B1/g, "+/-");
+}
 
 function jpeg(name) {
   const file = join(root, "public", "briefing", name);
   return `data:image/jpeg;base64,${readFileSync(file).toString("base64")}`;
+}
+
+function pageNo(doc) {
+  return doc.internal.getCurrentPageInfo().pageNumber;
+}
+
+function addPageLink(doc, x, y, w, h, pageNumber) {
+  if (!pageNumber) return;
+  try {
+    doc.link(x, y, w, h, { pageNumber });
+  } catch {
+    /* print still works without the jump */
+  }
+}
+
+function addUrlLink(doc, x, y, w, h, url) {
+  if (!url) return;
+  try {
+    doc.link(x, y, w, h, { url });
+  } catch {
+    /* visible URL remains for print */
+  }
 }
 
 function loadDocument() {
@@ -66,23 +98,24 @@ function loadDocument() {
     return { heading: (lines[0] || "").trim(), body: lines.slice(1).join("\n").trim() };
   });
 
-  return { longTitle, paras, sections, footnotes };
+  return { longTitle: pdfSafe(longTitle), paras, sections, footnotes };
 }
 
 /** Keep [^n] so the writer can turn them into superscript marks. */
 function stripMd(s) {
-  return String(s)
-    .replace(/\*\*(.+?)\*\*/g, "$1")
-    .replace(/\*(.+?)\*/g, "$1")
-    .replace(/`(.+?)`/g, "$1")
-    .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
-    .replace(/^>\s*/gm, "")
-    .replace(/^#{1,6}\s+/gm, "")
-    .replace(/^[-*]\s+/gm, "")
-    .replace(/\s+\n/g, "\n")
-    .replace(/[ \t]+/g, " ")
-    .replace(/[−–]/g, "-")
-    .trim();
+  return pdfSafe(
+    String(s)
+      .replace(/\*\*(.+?)\*\*/g, "$1")
+      .replace(/\*(.+?)\*/g, "$1")
+      .replace(/`(.+?)`/g, "$1")
+      .replace(/\[([^\]]+)\]\(([^)]+)\)/g, "$1")
+      .replace(/^>\s*/gm, "")
+      .replace(/^#{1,6}\s+/gm, "")
+      .replace(/^[-*]\s+/gm, "")
+      .replace(/\s+\n/g, "\n")
+      .replace(/[ \t]+/g, " ")
+      .trim(),
+  );
 }
 
 function isDisplayStat(value, label) {
@@ -199,29 +232,63 @@ function wrapRich(doc, text, maxW, fontSize) {
   return lines;
 }
 
-function drawRichLine(doc, units, x, y, fontSize, color, font) {
+function drawRichLine(doc, units, x, y, fontSize, color, font, opts = {}) {
   doc.setFont(font[0], font[1]);
   doc.setFontSize(fontSize);
   doc.setTextColor(...color);
-  const space = doc.getTextWidth(" ");
+  const naturalSpace = doc.getTextWidth(" ");
+  const wordW = (unit) =>
+    doc.getTextWidth(unit.word || "") + unit.notes.reduce((sum, n) => sum + noteWidth(doc, n), 0);
+  const natural =
+    units.reduce((sum, u) => sum + wordW(u), 0) + Math.max(0, units.length - 1) * naturalSpace;
+  const extra =
+    opts.justify && opts.maxW && units.length > 1 ? Math.max(0, opts.maxW - natural) / (units.length - 1) : 0;
+  const space = naturalSpace + extra;
   let cx = x;
   units.forEach((unit, i) => {
-    if (i) cx += space;
     doc.setFont(font[0], font[1]);
     doc.setFontSize(fontSize);
     doc.setTextColor(...color);
+    if (i) {
+      doc.text(" ", cx, y);
+      cx += space;
+    }
     if (unit.word) {
       doc.text(unit.word, cx, y);
       cx += doc.getTextWidth(unit.word);
     }
     for (const n of unit.notes) {
+      const nw = noteWidth(doc, n);
       doc.setFont("helvetica", "bold");
       doc.setFontSize(NOTE_SIZE);
       doc.setTextColor(...FOREST);
       doc.text(n, cx + 0.2, y - 1.55);
-      cx += noteWidth(doc, n);
+      if (opts.nav) {
+        opts.nav.noteHits.push({
+          page: pageNo(doc),
+          x: cx,
+          y: y - 3.2,
+          w: Math.max(nw, 2.6),
+          h: 3.6,
+        });
+      }
+      cx += nw;
     }
   });
+}
+
+/** Circular CCD mark — lime ring, forest fill, white letters. */
+function drawLogo(doc, cx, cy, d, onDark) {
+  const r = d / 2;
+  doc.setFillColor(...(onDark ? [10, 61, 50] : FOREST));
+  doc.circle(cx, cy, r * 0.9, "F");
+  doc.setDrawColor(...LIME);
+  doc.setLineWidth(Math.max(0.55, d * 0.028));
+  doc.circle(cx, cy, r * 0.9, "S");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(d * 0.34);
+  doc.setTextColor(...WHITE);
+  doc.text("CCD", cx, cy + d * 0.055, { align: "center" });
 }
 
 function washPage(doc) {
@@ -229,18 +296,6 @@ function washPage(doc) {
   doc.rect(0, 0, PAGE.w, PAGE.h, "F");
   doc.setFillColor(...FOREST);
   doc.rect(0, 0, 3.6, PAGE.h, "F");
-}
-
-function drawCcdMark(doc, x, y, r, onForest) {
-  doc.setFillColor(...(onForest ? [10, 61, 50] : FOREST));
-  doc.circle(x, y, r, "F");
-  doc.setDrawColor(...LIME);
-  doc.setLineWidth(0.7);
-  doc.circle(x, y, r, "S");
-  doc.setFont("helvetica", "bold");
-  doc.setFontSize(r >= 7 ? 8.2 : 6.4);
-  doc.setTextColor(...WHITE);
-  doc.text("CCD", x, y + (r >= 7 ? 1.15 : 0.9), { align: "center" });
 }
 
 function footer(doc, page, total, onForest) {
@@ -256,32 +311,44 @@ function footer(doc, page, total, onForest) {
   doc.text(`${page}  /  ${total}`, PAGE.w - M.r, PAGE.h - 7, { align: "right" });
 }
 
-function runningHead(doc, label) {
-  drawCcdMark(doc, M.l + 4.2, 10.2, 4.4, false);
+function runningHead(doc, label, nav) {
+  drawLogo(doc, M.l + 5.2, 10.4, 10.4, false);
+  addPageLink(doc, M.l, 5.2, 10.4, 10.4, 1);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.2);
   doc.setTextColor(...FOREST);
-  doc.text("CREATIVE CURRICULUM DESIGNER", M.l + 10.5, 9.2);
+  doc.text("CREATIVE CURRICULUM DESIGNER", M.l + 12.4, 9.2);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(...MUTED);
-  doc.text("The facts", M.l + 10.5, 12.6);
+  doc.text("The facts", M.l + 12.4, 12.6);
+  addPageLink(doc, M.l + 12.4, 10.2, 22, 4, nav.contents);
   if (label) {
-    doc.text(label.toUpperCase(), PAGE.w - M.r, 11.2, { align: "right" });
+    doc.text(pdfSafe(label).toUpperCase(), PAGE.w - M.r, 11.2, { align: "right" });
   }
 }
 
-function makeFlow(doc, y0, label) {
+function makeFlow(doc, y0, label, nav) {
   return {
     doc,
     label,
+    nav,
+    full: true,
     col: 0,
-    y: y0,
+    spanY: y0,
+    colY: [y0, y0],
     top: y0,
     get x() {
-      return M.l + this.col * (COL_W + GUTTER);
+      return this.full ? M.l : M.l + this.col * (COL_W + GUTTER);
     },
     get width() {
-      return COL_W;
+      return this.full ? CONTENT_W : COL_W;
+    },
+    get y() {
+      return this.full ? this.spanY : this.colY[this.col];
+    },
+    set y(v) {
+      if (this.full) this.spanY = v;
+      else this.colY[this.col] = v;
     },
     remaining() {
       return PAGE.h - M.b - this.y;
@@ -289,50 +356,73 @@ function makeFlow(doc, y0, label) {
     newPage() {
       doc.addPage();
       washPage(doc);
-      runningHead(doc, this.label);
+      runningHead(doc, this.label, this.nav);
       this.col = 0;
       this.top = M.t + 4;
-      this.y = this.top;
+      this.spanY = this.top;
+      this.colY = [this.top, this.top];
     },
     nextColumn() {
+      if (this.full) {
+        this.newPage();
+        return;
+      }
       if (this.col === 0) {
         this.col = 1;
-        this.y = this.top;
         return;
       }
       this.newPage();
+    },
+    useFull() {
+      if (this.full) return;
+      this.spanY = Math.max(this.colY[0], this.colY[1]);
+      this.full = true;
+      this.col = 0;
+    },
+    useColumns() {
+      if (!this.full) return;
+      this.full = false;
+      this.col = 0;
+      this.top = this.spanY;
+      this.colY = [this.spanY, this.spanY];
     },
     need(mm) {
       if (this.y + mm < PAGE.h - M.b) return;
       this.nextColumn();
     },
     writeRich(text, opts = {}) {
-      const size = opts.size ?? 9;
-      const leading = opts.leading ?? 3.95;
+      const size = opts.size ?? 9.15;
+      const leading = opts.leading ?? 4.25;
       const color = opts.color ?? INK;
       const font = opts.font ?? ["helvetica", "normal"];
-      const gapAfter = opts.gapAfter ?? 2.4;
+      const gapAfter = opts.gapAfter ?? 2.8;
+      const justify = opts.justify !== false && font[1] !== "italic";
       this.doc.setFont(font[0], font[1]);
       const lines = wrapRich(this.doc, text, this.width, size);
-      for (const line of lines) {
+      lines.forEach((line, i) => {
         this.need(leading + 0.6);
-        drawRichLine(this.doc, line, this.x, this.y, size, color, font);
+        const last = i === lines.length - 1;
+        drawRichLine(this.doc, line, this.x, this.y, size, color, font, {
+          maxW: this.width,
+          justify: justify && !last,
+          nav: this.nav,
+        });
         this.y += leading;
-      }
+      });
       this.y += gapAfter;
     },
     spanNeed(h) {
-      if (this.col === 1 || this.remaining() < h + 3) this.newPage();
+      this.useFull();
+      if (this.remaining() < h + 3) this.newPage();
     },
     placeSpan(h) {
-      this.top = this.y + h;
-      this.col = 0;
-      this.y = this.top;
+      this.useFull();
+      this.y += h;
     },
   };
 }
 
-function cover(doc, meta) {
+function cover(doc, meta, nav) {
   doc.addImage(jpeg("hero-arts.jpg"), "JPEG", 0, 0, PAGE.w, 172, undefined, "FAST");
   try {
     const g = new doc.GState({ opacity: 0.38 });
@@ -350,15 +440,15 @@ function cover(doc, meta) {
   doc.setFillColor(...LIME);
   doc.rect(0, 0, 3.6, PAGE.h, "F");
 
-  drawCcdMark(doc, M.l + 12, 22, 8.2, true);
+  drawLogo(doc, M.l + 14, 26, 22, true);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.2);
+  doc.setFontSize(8.4);
   doc.setTextColor(...LIME);
-  doc.text("CREATIVE CURRICULUM DESIGNER", M.l + 24, 20);
+  doc.text("CREATIVE CURRICULUM DESIGNER", M.l + 28, 23.6);
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(214, 224, 218);
-  doc.text("ccdesigner.co.uk", M.l + 24, 25.4);
+  doc.text("ccdesigner.co.uk", M.l + 28, 28.8);
 
   doc.setFont("times", "bold");
   doc.setFontSize(40);
@@ -380,36 +470,26 @@ function cover(doc, meta) {
   doc.setTextColor(...LIME);
   doc.text("Exceptional lessons start with connection", M.l + 6, 168);
 
-  const flow = makeFlow(doc, 180, "The facts");
-  flow.newPage = function newPage() {
-    doc.addPage();
-    washPage(doc);
-    runningHead(doc, "The facts");
-    this.col = 0;
-    this.top = M.t + 4;
-    this.y = this.top;
+  const flow = makeFlow(doc, 180, "The facts", nav);
+  flow.newPage = function stayOnCover() {
+    /* keep the opening on one print page */
   };
 
   for (const para of meta.paras) {
     flow.writeRich(para, {
       size: 8.8,
-      leading: 3.85,
+      leading: 3.95,
       color: [230, 236, 228],
-      gapAfter: 2.6,
+      gapAfter: 2.4,
     });
   }
 }
 
-function contentsPage(doc, sections) {
+function contentsPage(doc, sections, nav) {
   doc.addPage();
   washPage(doc);
-  runningHead(doc, "Contents");
-
-  try {
-    doc.addImage(jpeg("briefing-eyfs.jpg"), "JPEG", PAGE.w - M.r - 62, M.t + 2, 62, 44, undefined, "FAST");
-  } catch {
-    /* photo optional */
-  }
+  runningHead(doc, "Contents", nav);
+  nav.contents = pageNo(doc);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
@@ -419,70 +499,69 @@ function contentsPage(doc, sections) {
   doc.setFont("times", "bold");
   doc.setFontSize(20);
   doc.setTextColor(...INK);
-  doc.text("How this briefing is arranged", M.l, M.t + 14);
+  doc.text("What's inside", M.l, M.t + 14);
 
-  const flow = makeFlow(doc, M.t + 50, "Contents");
-  flow.writeRich("Eleven stages, matching the live index. Superscript numbers in the text point to the official sources listed at the end.", {
-    size: 8.6,
-    leading: 3.8,
-    color: MUTED,
-    gapAfter: 4,
-  });
+  const flow = makeFlow(doc, M.t + 22, "Contents", nav);
+  flow.writeRich(
+    "Eleven stages, matching the live index. On screen, tap a stage to jump there. Superscript numbers in the text point to the official sources at the end. The same pages print cleanly.",
+    { size: 8.8, leading: 4, color: MUTED, gapAfter: 6 },
+  );
 
-  const mid = Math.ceil(sections.length / 2);
+  flow.useColumns();
   const startTop = flow.y;
+  const mid = Math.ceil(sections.length / 2);
   sections.forEach((s, i) => {
     if (i === mid) {
       flow.col = 1;
-      flow.y = startTop;
+      flow.colY[1] = startTop;
     }
     const n = String(i + 1).padStart(2, "0");
-    flow.writeRich(`${n}   ${s.heading}`, {
+    const y0 = flow.y;
+    const x0 = flow.x;
+    flow.writeRich(`${n}   ${pdfSafe(s.heading)}`, {
       size: 11,
       leading: 5,
       font: ["times", "bold"],
-      gapAfter: 4.2,
+      gapAfter: 4.4,
+      justify: false,
+    });
+    nav.tocHits.push({
+      heading: s.heading,
+      page: pageNo(doc),
+      x: x0,
+      y: y0 - 4.2,
+      w: flow.width,
+      h: Math.max(8, flow.y - y0 + 1),
     });
   });
 }
 
-function writeSection(doc, section, index) {
+function writeSection(doc, section, index, nav) {
   const label = section.heading;
   doc.addPage();
   washPage(doc);
-  runningHead(doc, label);
-  const flow = makeFlow(doc, M.t + 6, label);
+  runningHead(doc, label, nav);
+  nav.section[label] = pageNo(doc);
+  const flow = makeFlow(doc, M.t + 6, label, nav);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
   doc.setTextColor(...FOREST);
   doc.text(String(index + 1).padStart(2, "0"), flow.x, flow.y);
-  flow.y += 6.5;
+  flow.y += 7;
 
   doc.setFont("times", "bold");
-  const titleLines = wrapRich(doc, section.heading, flow.width, 15);
+  const titleLines = wrapRich(doc, pdfSafe(section.heading), flow.width, 22);
   for (const line of titleLines) {
-    flow.need(7.2);
-    drawRichLine(doc, line, flow.x, flow.y, 15, INK, ["times", "bold"]);
-    flow.y += 6.6;
+    flow.need(9);
+    drawRichLine(doc, line, flow.x, flow.y, 22, INK, ["times", "bold"]);
+    flow.y += 8.2;
   }
-  flow.y += 1.5;
+  flow.y += 1.2;
   doc.setDrawColor(...LIME);
   doc.setLineWidth(0.9);
   doc.line(flow.x, flow.y, flow.x + 16, flow.y);
-  flow.y += 6;
-
-  const photo = SECTION_PHOTO[section.heading];
-  if (photo) {
-    const ph = 46;
-    flow.spanNeed(ph + 4);
-    try {
-      doc.addImage(jpeg(photo), "JPEG", M.l, flow.y, CONTENT_W, ph, undefined, "FAST");
-    } catch {
-      /* skip */
-    }
-    flow.placeSpan(ph + 4);
-  }
+  flow.y += 7;
 
   const bodyBlocks = blocks(section.body);
   if (section.heading === "Secondary" && !bodyBlocks.some((b) => b.kind === "chart")) {
@@ -491,29 +570,32 @@ function writeSection(doc, section, index) {
 
   for (const b of bodyBlocks) {
     if (b.kind === "h") {
+      flow.useFull();
       flow.need(12);
       flow.y += 1.5;
-      flow.writeRich(b.text.toUpperCase(), {
-        size: 7.4,
-        leading: 3.4,
+      flow.writeRich(b.text, {
+        size: 13,
+        leading: 5.2,
         color: FOREST,
-        font: ["helvetica", "bold"],
-        gapAfter: 2.2,
+        font: ["times", "bold"],
+        gapAfter: 3.2,
+        justify: false,
       });
       continue;
     }
     if (b.kind === "quote") {
-      const lines = wrapRich(doc, `“${b.text}”`, flow.width - 4, 9);
-      const boxH = lines.length * 4 + 5;
+      flow.useFull();
+      const lines = wrapRich(doc, `"${b.text}"`, flow.width - 6, 10);
+      const boxH = lines.length * 4.4 + 5;
       flow.need(boxH + 3);
       doc.setFillColor(...FOREST);
-      doc.rect(flow.x, flow.y - 2.4, 1.2, boxH, "F");
+      doc.rect(flow.x, flow.y - 2.4, 1.4, boxH, "F");
       const startY = flow.y;
       for (const line of lines) {
-        drawRichLine(doc, line, flow.x + 3.2, flow.y, 9, FOREST, ["times", "italic"]);
-        flow.y += 4;
+        drawRichLine(doc, line, flow.x + 4, flow.y, 10, FOREST, ["times", "italic"], { nav });
+        flow.y += 4.4;
       }
-      flow.y = startY + boxH + 2.5;
+      flow.y = startY + boxH + 2.8;
       continue;
     }
     if (b.kind === "stat") {
@@ -528,6 +610,7 @@ function writeSection(doc, section, index) {
         leading: 3.4,
         color: MUTED,
         gapAfter: 3.2,
+        justify: false,
       });
       continue;
     }
@@ -539,35 +622,41 @@ function writeSection(doc, section, index) {
       continue;
     }
     if (b.kind === "list") {
+      flow.useColumns();
       for (const item of b.items) {
         const lines = wrapRich(doc, item.text, flow.width - 4, 8.6);
         flow.need(lines.length * 3.8 + (item.href ? 3.6 : 0) + 2.4);
         doc.setFillColor(...FOREST);
         doc.circle(flow.x + 1.1, flow.y - 1.05, 0.55, "F");
         for (const line of lines) {
-          drawRichLine(doc, line, flow.x + 3.4, flow.y, 8.6, INK, ["helvetica", "normal"]);
+          drawRichLine(doc, line, flow.x + 3.4, flow.y, 8.6, INK, ["helvetica", "normal"], { nav });
           flow.y += 3.8;
         }
         if (item.href) {
           const hrefLines = wrapRich(doc, item.href, flow.width - 4, 6.8);
+          const hx = flow.x + 3.4;
+          const hy = flow.y;
           for (const line of hrefLines) {
-            drawRichLine(doc, line, flow.x + 3.4, flow.y, 6.8, MUTED, ["helvetica", "normal"]);
+            drawRichLine(doc, line, hx, flow.y, 6.8, MUTED, ["helvetica", "normal"]);
             flow.y += 3.2;
           }
+          addUrlLink(doc, hx, hy - 3, flow.width - 4, flow.y - hy + 3, item.href);
         }
         flow.y += 2.1;
       }
       flow.y += 1.2;
       continue;
     }
-    flow.writeRich(b.text, { size: 9, leading: 3.95, gapAfter: 2.8 });
+    flow.useFull();
+    flow.writeRich(b.text, { size: 9.2, leading: 4.3, gapAfter: 3.1 });
   }
 }
 
-function writeSources(doc, footnotes) {
+function writeSources(doc, footnotes, nav) {
   doc.addPage();
   washPage(doc);
-  runningHead(doc, "References");
+  runningHead(doc, "References", nav);
+  nav.refs = pageNo(doc);
 
   doc.setFont("helvetica", "normal");
   doc.setFontSize(8);
@@ -581,9 +670,9 @@ function writeSources(doc, footnotes) {
   doc.setLineWidth(0.9);
   doc.line(M.l, M.t + 17, M.l + 16, M.t + 17);
 
-  const flow = makeFlow(doc, M.t + 24, "References");
+  const flow = makeFlow(doc, M.t + 24, "References", nav);
   flow.writeRich(
-    "Numbers in the text are footnotes. Each mark matches a source below. Official CLA, Ofqual and DfE documents only — read as published.",
+    "Numbers in the text are footnotes. Each mark matches a source below. Official CLA, Ofqual and DfE documents only - read as published.",
     { size: 8.4, leading: 3.7, color: MUTED, gapAfter: 4.2 },
   );
 
@@ -599,17 +688,40 @@ function writeSources(doc, footnotes) {
     doc.text(note.n, flow.x, flow.y);
     const indent = 5.2;
     const savedX = flow.x;
-    const writeIndented = (text, size, color) => {
+    const writeIndented = (text, size, color, asUrl) => {
       const lines = wrapRich(doc, text, flow.width - indent, size);
+      const y0 = flow.y;
       for (const line of lines) {
         flow.need(size * 0.42 + 1.6);
         drawRichLine(doc, line, savedX + indent, flow.y, size, color, ["helvetica", "normal"]);
         flow.y += size * 0.42 + 1.15;
       }
+      if (asUrl) addUrlLink(doc, savedX + indent, y0 - 3, flow.width - indent, flow.y - y0 + 3, text);
     };
-    writeIndented(label, 8.2, INK);
-    if (href) writeIndented(href, 6.8, MUTED);
+    writeIndented(label, 8.2, INK, false);
+    if (href) writeIndented(href, 6.8, MUTED, true);
     flow.y += 3.1;
+  }
+}
+
+function applyNav(doc, nav) {
+  for (const hit of nav.tocHits) {
+    doc.setPage(hit.page);
+    addPageLink(doc, hit.x, hit.y, hit.w, hit.h, nav.section[hit.heading]);
+  }
+  for (const hit of nav.noteHits) {
+    doc.setPage(hit.page);
+    addPageLink(doc, hit.x, hit.y, hit.w, hit.h, nav.refs);
+  }
+  try {
+    doc.outline.add(null, "The facts", { pageNumber: 1 });
+    doc.outline.add(null, "What's inside", { pageNumber: nav.contents });
+    for (const [heading, page] of Object.entries(nav.section)) {
+      doc.outline.add(null, pdfSafe(heading), { pageNumber: page });
+    }
+    if (nav.refs) doc.outline.add(null, "Sources", { pageNumber: nav.refs });
+  } catch {
+    /* bookmarks optional */
   }
 }
 
@@ -623,11 +735,24 @@ function stampFooters(doc) {
 
 function main() {
   const meta = loadDocument();
+  const nav = { cover: 1, contents: 2, section: {}, refs: 0, tocHits: [], noteHits: [] };
   const doc = new jsPDF({ unit: "mm", format: "a4", compress: true });
-  cover(doc, meta);
-  contentsPage(doc, meta.sections);
-  meta.sections.forEach((s, i) => writeSection(doc, s, i));
-  writeSources(doc, meta.footnotes);
+  try {
+    doc.setProperties({
+      title: "The facts - Creative Curriculum Designer",
+      subject: "Official figures on creative education in England",
+      author: "Creative Curriculum Designer",
+      creator: "CCDesigner",
+    });
+    doc.setDisplayMode("fullwidth", "continuous", "UseOutlines");
+  } catch {
+    /* older jsPDF */
+  }
+  cover(doc, meta, nav);
+  contentsPage(doc, meta.sections, nav);
+  meta.sections.forEach((s, i) => writeSection(doc, s, i, nav));
+  writeSources(doc, meta.footnotes, nav);
+  applyNav(doc, nav);
   stampFooters(doc);
   mkdirSync(dirname(outPath), { recursive: true });
   writeFileSync(outPath, Buffer.from(doc.output("arraybuffer")));
