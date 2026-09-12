@@ -10,7 +10,7 @@ Creative education has contracted over the long term, with a clear entitlement g
 
 Creative learning in the early years should be child-shaped, exploratory and not limited to a typical classroom model.[^11]
 
-The Early Years Foundation Stage (statutory from September 2026) places Expressive Arts and Design at the heart of how young children invent, communicate and make sense of the world — through music, movement, role-play, materials and stories.[^11]
+The Early Years Foundation Stage statutory framework places Expressive Arts and Design at the heart of how young children invent, communicate and make sense of the world — through music, movement, role-play, materials and stories.[^11]
 
 When early arts experiences are thin or adult-directed only, the entitlement gap starts before Key Stage 1. Strong EYFS practice builds the confidence, belonging and creative habits that later enrichment and arts pathways depend on.[^11][^16]
 
@@ -80,7 +80,7 @@ CCDesigner aims to provide practical digital infrastructure through which school
 
 Arts time is already unequal before secondary — independent schools report far more hours than state schools, and schools with more pupils on free school meals are more likely to have cut hours.[^2]
 
-Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.[^2]
+Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report less than an hour.[^2]
 
 Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report that their school works with no external partners to deliver the arts curriculum.[^2]
 
@@ -93,7 +93,7 @@ Teachers in the highest-FSM vs lowest-FSM schools reporting reduced arts hours: 
 ### Primary hours
 
 - **47% vs 6%** — Independent vs state >2.5 hrs arts / week[^2]
-- **~1 in 4** — Primary teachers under 1 hour arts / week[^2]
+- **~1 in 4** — Primary teachers with less than an hour of arts / week[^2]
 - **43%** — No external partners to deliver the arts curriculum[^2]
 
 ## Secondary
@@ -115,9 +115,9 @@ Access to arts qualifications still tracks disadvantage (DfE Tables 18–19) —
 
 Many schools show no GCSE Music, Drama or Dance entries — “no entries” does not mean “not taught”, but pathways are thinner where disadvantage is higher.[^1]
 
-Arts GCSE entries fell 42% (2010–2022/23).[^1]
+Arts GCSE entries were 41.7% lower in 2024/25 than in 2009/10.[^2]
 
-In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance.[^1]
+In 2024/25, 36% of schools had no GCSE Music entries, 36% no Drama, and 83% no Dance. In 2022/23 those figures were 42%, 41% and 84%.[^1][^2]
 
 <!-- chart:noGcse -->
 
@@ -132,15 +132,15 @@ Ofqual provisional summer 2026 vs 2025:[^4]
 - Music **−1.3%**
 - Performing / Expressive Arts **+1.2%**
 
-- **−42%** — Arts GCSE entries (CLA Report Card 2024 · 2010–2022/23)[^1]
-- **42% / 41% / 84%** — Schools with no GCSE Music / Drama / Dance (2022/23)[^1]
+- **−41.7%** — Arts GCSE entries (CLA Report Card 2026 · 2009/10–2024/25)[^2]
+- **36% / 36% / 83%** — Schools with no GCSE Music / Drama / Dance (2024/25)[^2]
 - **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
 
 ## A-level
 
 After GCSE, the arts pathway thins again — and in the most deprived areas it is a smaller share of A-levels.[^1][^2]
 
-Arts A-level entries fell 21% (2010/11–2022/23).[^1] Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths.[^2]
+Arts A-level entries have fallen 25% between 2011/12 and 2024/25.[^2] Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths.[^2]
 
 Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 
@@ -154,7 +154,7 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 
 ### A-level entries
 
-- **−21%** — Arts A-level entries (CLA Report Card 2024 · 2010/11–2022/23)[^1]
+- **−25%** — Arts A-level entries (CLA Report Card 2026 · 2011/12–2024/25)[^2]
 - **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
 
 ## Cold spots · place & income
@@ -179,7 +179,7 @@ FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-le
 
 Creative arts degrees are being closed to new students, suspended, or folded into larger faculties — while take-up falls and the squeeze hits economically deprived areas hardest.
 
-Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA via CLA 2026).[^9] CLA finds steep collapses at individual providers — University College Birmingham −85%, Wolverhampton −58%, St Mary’s −51% (2020/21–2024/25) — concentrated in modern universities that educate students from low-participation neighbourhoods.[^2] Some providers have lost around two-thirds of Creative Arts & Design academic staff (including Roehampton, Kent and Cumbria).[^2]
+Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA via CLA 2026).[^9] In that same university year, Drama (+1.6%) and Music (+1.1%) ticked up — that is not the school-exam fall (A-level Drama −9.5%, Music −4.9%).[^4][^9] CLA finds steep collapses at individual providers — University College Birmingham −85%, Wolverhampton −58%, St Mary’s −51% (2020/21–2024/25) — concentrated in modern universities that educate students from low-participation neighbourhoods.[^2] Some providers have lost around two-thirds of Creative Arts & Design academic staff (including Roehampton, Kent and Cumbria).[^2]
 
 Sector reporting points to music and other creative courses closed or halted for new entrants (including Kent, Nottingham, Northumbria and Oxford Brookes).[^23] From 2026/27, OfS high-cost teaching-grant support for creative and performing arts is cut to zero.[^24]
 
@@ -221,7 +221,7 @@ Annual Hub revenue, one-off capital, and National Centre contract support are no
 
 The same years that entries fell are also the years government started writing the arts back into national plans.
 
-The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, plus £3.85m from Arts Council England and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
+The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from August 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, plus £3.85m from Arts Council England and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
 
 Free education resources with national reach — publicly funded or free to schools:
 
@@ -241,7 +241,7 @@ These programmes fund or publish materials so teachers can use free arts educati
 
 - **EBacc measures** — Removed for schools from 2025/26; arts choices less constrained[^7][^25]
 - **National Curriculum** — Reformed music entitlement to be taught from September 2028[^7]
-- **National Centre** — Launch Sept 2026; online CPD; Hubs oversight from 2027[^8]
+- **National Centre** — Launch Sept 2026; online CPD; Hubs oversight from August 2027[^8]
 - **£76m + £25m** — Hub revenue to AY 2026/27 + capital instruments / tech[^7]
 
 ## A solution

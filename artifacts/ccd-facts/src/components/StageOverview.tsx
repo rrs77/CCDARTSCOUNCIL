@@ -75,21 +75,33 @@ export function StageOverview({
           <LogoMark size={52} title={meta.productName} />
           <p className="stage-launcher-brand">{meta.productName}</p>
         </motion.div>
-        <motion.h1
-          initial={reduced ? false : { opacity: 0, y: 12 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.5, delay: reduced ? 0 : 0.04, ease: easeOut }}
-        >
-          {meta.experienceLead} <em>{meta.experienceAccent}</em>
-        </motion.h1>
-        <motion.p
-          className="stage-launcher-byline"
-          initial={reduced ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.1, ease: easeOut }}
-        >
-          {meta.heroLineBefore} <em>{meta.heroLineAccent}</em>
-        </motion.p>
+        <div className="stage-launcher-intro-row">
+          <div className="stage-launcher-titles">
+            <motion.h1
+              initial={reduced ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduced ? 0.01 : 0.5, delay: reduced ? 0 : 0.04, ease: easeOut }}
+            >
+              {meta.experienceLead} <em>{meta.experienceAccent}</em>
+            </motion.h1>
+            <motion.p
+              className="stage-launcher-byline"
+              initial={reduced ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.1, ease: easeOut }}
+            >
+              {meta.heroLineBefore} <em>{meta.heroLineAccent}</em>
+            </motion.p>
+          </div>
+          <motion.p
+            className="stage-launcher-purpose"
+            initial={reduced ? false : { opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.12, ease: easeOut }}
+          >
+            {meta.purposeLine}
+          </motion.p>
+        </div>
       </header>
 
       <ul className="stage-launcher-list" aria-label="Evidence stages">
@@ -134,6 +146,29 @@ export function StageOverview({
           );
         })}
       </ul>
+
+      <motion.footer
+        className="stage-launcher-doc"
+        initial={reduced ? false : { opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: reduced ? 0.01 : 0.4, delay: reduced ? 0 : 0.52, ease: easeOut }}
+      >
+        <a
+          className="stage-launcher-doc-link"
+          href={assetUrl("the-facts-briefing.pdf")}
+          target="_blank"
+          rel="noopener noreferrer"
+          aria-label="Open The facts briefing as a PDF"
+        >
+          <span className="stage-launcher-doc-mark" aria-hidden>
+            PDF
+          </span>
+          <span className="stage-launcher-doc-copy">
+            <span className="stage-launcher-doc-label">The full briefing</span>
+            <span className="stage-launcher-doc-hint">Every section, figure and source</span>
+          </span>
+        </a>
+      </motion.footer>
     </div>
   );
 }

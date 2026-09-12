@@ -35,6 +35,11 @@ const CCD_CORAL = "#FF6B6B";
 const CCD_INK = "#0f2a2e";
 const CCD_MUTED = "#5c6f72";
 const CCD_GRID = "#e8eeea";
+/** Indexed lines: hue + luminance far enough apart to read without the legend. */
+const LINE_ART = "#002D24";
+const LINE_DRAMA = "#E23D3D";
+const LINE_MUSIC = "#0B8A9A";
+const LINE_PERFORMING = "#D97706";
 
 function ChartFrame({
   caption,
@@ -262,11 +267,11 @@ export function ContentChart({
                   onDrill?.(String(e.value ?? e.dataKey));
                 }}
               />
-              <Line type="monotone" dataKey="art" name={chart.axis?.series?.art ?? "Art & Design"} stroke={CCD_FOREST} strokeWidth={active && active !== "art" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" />
-              <Line type="monotone" dataKey="drama" name={chart.axis?.series?.drama ?? "Drama"} stroke={CCD_TEAL_DEEP} strokeWidth={active && active !== "drama" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger} animationEasing="ease-out" />
-              <Line type="monotone" dataKey="music" name={chart.axis?.series?.music ?? "Music"} stroke={CCD_TEAL} strokeWidth={active && active !== "music" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger * 2} animationEasing="ease-out" />
+              <Line type="monotone" dataKey="art" name={chart.axis?.series?.art ?? "Art & Design"} stroke={LINE_ART} strokeWidth={active && active !== "art" ? 1.5 : 2.75} dot={{ r: 5, fill: LINE_ART, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" />
+              <Line type="monotone" dataKey="drama" name={chart.axis?.series?.drama ?? "Drama"} stroke={LINE_DRAMA} strokeWidth={active && active !== "drama" ? 1.5 : 2.75} dot={{ r: 5, fill: LINE_DRAMA, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger} animationEasing="ease-out" />
+              <Line type="monotone" dataKey="music" name={chart.axis?.series?.music ?? "Music"} stroke={LINE_MUSIC} strokeWidth={active && active !== "music" ? 1.5 : 2.75} dot={{ r: 5, fill: LINE_MUSIC, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger * 2} animationEasing="ease-out" />
               {!isAlevel ? (
-                <Line type="monotone" dataKey="performing" name={chart.axis?.series?.performing ?? "Performing / Expressive Arts"} stroke={CCD_CORAL} strokeWidth={active && active !== "performing" ? 1.5 : 2.75} dot={{ r: 4 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger * 3} animationEasing="ease-out" />
+                <Line type="monotone" dataKey="performing" name={chart.axis?.series?.performing ?? "Performing / Expressive Arts"} stroke={LINE_PERFORMING} strokeWidth={active && active !== "performing" ? 1.5 : 2.75} dot={{ r: 5, fill: LINE_PERFORMING, strokeWidth: 0 }} activeDot={{ r: 6 }} isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger * 3} animationEasing="ease-out" />
               ) : null}
             </LineChart>
           </ResponsiveContainer>
@@ -285,7 +290,7 @@ export function ContentChart({
               <XAxis type="number" domain={[-16, 3]} tickFormatter={(v) => `${v}%`} tick={{ fill: CCD_MUTED, fontSize: tick }} />
               <YAxis type="category" dataKey="subject" width={density === "canvas" ? 170 : 150} tick={{ fill: CCD_INK, fontSize: tickInk }} />
               <ReferenceLine x={0} stroke={CCD_MUTED} />
-              <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "Change"]} />
+              <Tooltip contentStyle={tip} formatter={(v: number) => [`${v > 0 ? "+" : ""}${v}%`, "University students"]} />
               <Legend
                 payload={[
                   { value: chart.axis?.legend?.decrease ?? "Decrease", type: "square", color: CCD_CORAL },
@@ -370,6 +375,13 @@ export function ContentChart({
                 strokeDasharray="6 4"
                 connectNulls
                 dot={{ r: 5, fill: CCD_FOREST, strokeWidth: 0 }}
+                label={{
+                  position: "right",
+                  formatter: (v: number) => (v === 100 ? "£100m today" : ""),
+                  fill: CCD_FOREST,
+                  fontSize: fundLabel,
+                  fontWeight: 700,
+                }}
                 isAnimationActive={!reduced}
                 animationDuration={drawMs}
                 animationBegin={stagger}

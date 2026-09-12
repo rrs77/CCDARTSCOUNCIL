@@ -224,6 +224,8 @@ export const meta = {
     "A concise evidence overview for funding, partnership and development. Prepared and re-verified 21 August 2026.",
   heroLineBefore: "Exceptional lessons start with",
   heroLineAccent: "connection",
+  purposeLine:
+    "A shared evidence briefing on creative education in England — official figures for teachers, funders and arts organisations.",
   heroSupport:
     "Capture ideas. Build lessons. Connect with arts organisations — EYFS to A-level.",
   experienceLead: "The",
@@ -232,7 +234,7 @@ export const meta = {
   situationLine: "Creative education in England is at a point of change.",
   coverFraming: [
     "Creative education in England has contracted over the long term, with a clear entitlement gap linked to place and disadvantage. Curriculum reform, Turn It Up and the National Centre create space to rebuild.",
-    "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
+    "CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS to A-level). It aims to bring planning, activity blocks and resources into one place — and connect teachers with arts organisations through Partner Hubs.",
     "It aims to shorten the distance between outstanding practice and the teacher who needs it — and to show that colder areas and higher-need schools are part of that reach.",
   ],
   earlyYearsPrinciple:
@@ -358,23 +360,23 @@ export const glanceModal = {
         "Creative education has contracted over a decade-plus — fewer entries, thinner pathways, and uneven school provision.",
       figures: [
         {
-          value: "−42%",
+          value: "−41.7%",
           label: "Arts GCSE entries",
-          source: "CLA Report Card 2024 · 2010–2022/23",
+          source: "CLA Report Card 2026 · 2009/10–2024/25",
         },
         {
-          value: "−21%",
+          value: "−25%",
           label: "Arts A-level entries",
-          source: "CLA Report Card 2024 · 2010/11–2022/23",
+          source: "CLA Report Card 2026 · 2011/12–2024/25",
         },
         {
-          value: "42% / 41% / 84%",
+          value: "36% / 36% / 83%",
           label: "Schools with no GCSE Music / Drama / Dance",
-          source: "CLA Report Card 2024 · 2022/23 · “no entries” ≠ “not taught”",
+          source: "CLA Report Card 2026 · 2024/25 · “no entries” ≠ “not taught”",
         },
         {
           value: "~1 in 4",
-          label: "Primary teachers under 1 hour arts / week",
+          label: "Primary teachers with less than an hour of arts / week",
           source: "Teacher Tapp / CLA Report Card 2026",
         },
       ],
@@ -432,33 +434,33 @@ export const stats: StatTile[] = [
   {
     id: "gcse-fall",
     label: "Arts GCSE entries",
-    value: "−42%",
+    value: "−41.7%",
     unit: "%",
-    footnote: "2010–2022/23",
-    sourceId: "cla2024",
+    footnote: "2009/10–2024/25",
+    sourceId: "cla2026",
     zoomClusterId: "exams",
   },
   {
     id: "alevel-fall",
     label: "Arts A-level entries",
-    value: "−21%",
+    value: "−25%",
     unit: "%",
-    footnote: "2010/11–2022/23",
-    sourceId: "cla2024",
+    footnote: "2011/12–2024/25",
+    sourceId: "cla2026",
     zoomClusterId: "exams",
   },
   {
     id: "no-entry",
     label: "Schools with no GCSE Music / Drama / Dance",
-    value: "42% / 41% / 84%",
+    value: "36% / 36% / 83%",
     unit: "% of schools",
-    footnote: "2022/23 — “no entries” ≠ “not taught”",
-    sourceId: "cla2024",
+    footnote: "2024/25 — “no entries” ≠ “not taught”",
+    sourceId: "cla2026",
     zoomClusterId: "exams",
   },
   {
     id: "primary-hour",
-    label: "Primary teachers under 1 hour arts / week",
+    label: "Primary teachers with less than an hour of arts / week",
     value: "~1 in 4",
     footnote: "Teacher Tapp / CLA 2026",
     sourceId: "cla2026",
@@ -517,11 +519,11 @@ export const charts: Record<string, ChartDef> = {
     type: "horizontal-change",
     caption: "Long-term contraction in arts education",
     sourceNote:
-      "Baselines: GCSE 2010; A level 2010/11; teaching hours 2011/12; teacher headcount reported by CLA against 2010. End point 2022/23. Source: CLA Report Card 2024.",
+      "GCSE −41.7% (2009/10–2024/25) and A-level −25% (2011/12–2024/25): CLA Report Card 2026. Teaching hours −21% (2011/12–2022/23, excl. Dance) and teacher headcount −14% vs 2010: CLA Report Card 2024.",
     axis: { x: "Percentage change" },
     series: [
-      { name: "Arts GCSE entries", change: -42, baseline: "2010", fill: "#FF6B6B" },
-      { name: "Arts A-level entries", change: -21, baseline: "2010/11", fill: "#0D9488" },
+      { name: "Arts GCSE entries", change: -41.7, baseline: "2009/10", fill: "#FF6B6B" },
+      { name: "Arts A-level entries", change: -25, baseline: "2011/12", fill: "#0D9488" },
       { name: "Arts teaching hours", change: -21, baseline: "2011/12 (excl. Dance)", fill: "#14B8A6" },
       { name: "Arts teachers", change: -14, baseline: "vs 2010", fill: "#002D24" },
     ],
@@ -566,14 +568,14 @@ export const charts: Record<string, ChartDef> = {
   noGcse: {
     id: "noGcse",
     type: "lollipop",
-    caption: "Schools with no GCSE entries, 2022/23",
+    caption: "Schools with no GCSE entries, 2024/25",
     sourceNote:
-      'Source: Cultural Learning Alliance Report Card 2024. “No GCSE entries” does not mean “subject not taught”.',
+      'Source: Cultural Learning Alliance Report Card 2026. In 2022/23 the figures were 42% / 41% / 84%. “No GCSE entries” does not mean “subject not taught”.',
     axis: { x: "% of schools" },
     series: [
-      { subject: "Music", none: 42, fill: "#0D9488" },
-      { subject: "Drama", none: 41, fill: "#14B8A6" },
-      { subject: "Dance", none: 84, fill: "#FF6B6B" },
+      { subject: "Music", none: 36, fill: "#0D9488" },
+      { subject: "Drama", none: 36, fill: "#14B8A6" },
+      { subject: "Dance", none: 83, fill: "#FF6B6B" },
     ],
   },
   gcseIndex: {
@@ -640,12 +642,12 @@ export const charts: Record<string, ChartDef> = {
   heChange: {
     id: "heChange",
     type: "divergent-bars",
-    caption: "University take-up: Creative Arts & Design subjects still shifting",
+    caption: "University students only, 2023/24 to 2024/25 — not GCSE or A-level entries",
     sourceNote:
-      "Domestic undergraduate student numbers. HESA 2024/25 as analysed in CLA Report Card 2026 Detailed Analysis. CLA also reports steep provider-level falls concentrated in modern universities serving low-participation neighbourhoods.",
+      "HESA domestic undergraduate numbers (CLA 2026 Detailed Analysis, Table 7). Drama +1.6% and Music +1.1% at university that year; CLA notes Drama had fallen 9.5% from 2019/20 to 2023/24 before this one-year rise. School exams are a different series: A-level Drama −9.5% and Music −4.9% (Ofqual 2026 vs 2025). Across all Creative Arts & Design, domestic undergrads fell 0.5% while the wider undergraduate cohort rose 0.6%.",
     axis: {
-      x: "% change, 2023/24 to 2024/25",
-      legend: { decrease: "Decrease", increase: "Increase" },
+      x: "% change in domestic undergraduates, 2023/24 to 2024/25",
+      legend: { decrease: "Fewer university students", increase: "More university students" },
     },
     series: [
       { subject: "Art", change: -1.5 },
@@ -662,14 +664,14 @@ export const charts: Record<string, ChartDef> = {
   hubRevenueTrend: {
     id: "hubRevenueTrend",
     type: "funding-trend",
-    caption: "Music Hubs revenue grant over time — cash flat; real-terms support fell",
+    caption: "Music Hubs cash grant stayed near £76m — the dotted line is 2019 money in today’s prices",
     sourceNote:
-      "Cash revenue grant (not capital). Arts Council reported £75m in 2018/19; ≈ £76m cash since 2019 (Demos/Music Mark 2025); £76m confirmed to AY 2026/27 (Turn It Up). Dashed line: cash needed to hold 2019 purchasing power — Music Mark cites Bank of England (£76m in 2019 ≈ £100m today).",
+      "Bars are the cash revenue grant (not capital): £75m in 2018/19; ≈ £76m since 2019; £76m confirmed to AY 2026/27 (Turn It Up). The dotted line is not extra funding — it shows what £76m in 2019 is worth now. Music Mark cites Bank of England: £76m in 2019 ≈ £100m today.",
     axis: {
       y: "£ million",
       legend: {
         cash: "Cash revenue grant",
-        keep2019: "To hold 2019 purchasing power",
+        keep2019: "What £76m in 2019 is worth today",
       },
     },
     series: [
@@ -740,8 +742,8 @@ export const topics: TopicDef[] = [
     title: "Exams · GCSE & A level",
     investorLine: "Long-term contraction; short-term Ofqual movement is mixed — not a reversal.",
     body: [
-      "Arts GCSE entries fell 42% (2010–2022/23) and arts A-level entries 21% (2010/11–2022/23). Teaching hours −21%; arts teachers −14% (CLA Report Card 2024).",
-      "In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance — “no entries” does not mean “not taught”.",
+      "Arts GCSE entries were 41.7% lower in 2024/25 than in 2009/10; arts A-level entries have fallen 25% since 2011/12 (CLA Report Card 2026). Teaching hours −21%; arts teachers −14% (CLA Report Card 2024).",
+      "In 2024/25, 36% of schools had no GCSE Music entries, 36% no Drama, 83% no Dance — “no entries” does not mean “not taught”.",
       "Ofqual provisional summer 2026 vs 2025: GCSE Art +2.7%, Drama −0.9%, Music −1.3%, Performing/Expressive Arts +1.2%. A level: Drama −9.5%, Music −4.9%, Art −1.0% (all A-levels +2.9%).",
       "Access to arts qualifications still tracks disadvantage (DfE Tables 18–19).",
     ],
@@ -761,7 +763,7 @@ export const topics: TopicDef[] = [
     title: "Primary · entitlement starts early",
     investorLine: "The hours gap is stark — and partnerships are thin.",
     body: [
-      "Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.",
+      "Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report less than an hour.",
       "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report that their school works with no external partners to deliver the arts curriculum.",
       "Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.",
     ],
@@ -801,7 +803,7 @@ export const topics: TopicDef[] = [
     title: "What this means for CCDesigner",
     investorLine: "",
     body: [
-      "Connect rather than duplicate — make outstanding practice usable day to day. CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS–KS5).",
+      "Connect rather than duplicate — make outstanding practice usable day to day. CCDesigner is a free national planning platform for performing and creative arts teachers (EYFS to A-level).",
       "Make partnership measurable — Partner Hubs aim to connect teachers with arts organisations in the same place they plan, so collaboration shows up in everyday work.",
       "Strongest funding case — fragmentation, unequal entitlement and teacher-capacity pressure, while policy seeks school–cultural partnerships. Music Hubs: £76m annual to AY 2026/27 + £25m capital. National Centre: up to £13m over three years — separate streams.",
       "Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.",

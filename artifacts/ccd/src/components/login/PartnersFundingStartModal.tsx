@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
-import { PlayCircle, X } from 'lucide-react';
+import { BookOpen, PlayCircle, X } from 'lucide-react';
+import { THE_FACTS_HREF } from './LoginHeroPanel';
 import {
   PARTNER_DISCLAIMER_FRAMING,
   PARTNERS_FUNDING_CONTINUE_CTA,
+  PARTNERS_FUNDING_FACTS_BYLINE,
+  PARTNERS_FUNDING_FACTS_CTA,
   PARTNERS_FUNDING_START_TITLE,
   PARTNERS_FUNDING_VIDEO_CTA,
   PARTNERS_FUNDING_VIDEO_INTRO,
@@ -78,6 +81,21 @@ export function PartnersFundingStartModal({
           <p className="text-xs leading-relaxed text-gray-500">
             {PARTNERS_FUNDING_VIDEO_NOTICE}
           </p>
+
+          <a
+            href={THE_FACTS_HREF}
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-[#14B8A6]/40 bg-[#E8F0EA] px-4 py-3 text-[#002D24] transition-colors hover:bg-[#D9E8DE]"
+          >
+            <BookOpen className="h-5 w-5 shrink-0 text-[#0D9488]" aria-hidden />
+            <span className="min-w-0 text-left">
+              <span className="block text-sm font-semibold leading-tight">
+                {PARTNERS_FUNDING_FACTS_CTA}
+              </span>
+              <span className="mt-0.5 block text-xs font-medium leading-snug text-[#002D24]/70">
+                {PARTNERS_FUNDING_FACTS_BYLINE}
+              </span>
+            </span>
+          </a>
 
           <button
             type="button"

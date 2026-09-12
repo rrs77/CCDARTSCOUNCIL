@@ -49,13 +49,25 @@ function stripFootnoteRefs(text: string): string {
   return text.replace(/\[\^\d+\]/g, "").trim();
 }
 
-/** Parse `- **−42%** — label` or `- **value** label` into a stat tile when possible. */
+/** True figures only — not resource names, short labels, or URLs. */
+function looksLikeFigure(value: string): boolean {
+  if (value.length > 36) return false;
+  if (/^https?:/i.test(value)) return false;
+  return (
+    /[%£]/.test(value) ||
+    /^[−~≈-]?\s*\d/.test(value) ||
+    /\d\s*(%|vs|in)\b/i.test(value) ||
+    /^up to\s*[£\d]/i.test(value)
+  );
+}
+
+/** Parse `- **−42%** — label` into a display stat when the lead is a figure. */
 function tryStat(item: string): ContentBlock | null {
   const m = item.match(/^\*\*(.+?)\*\*\s*[—–\-:]?\s*(.+)$/);
   if (!m) return null;
   const value = m[1].trim();
   const label = stripFootnoteRefs(m[2]);
-  if (value.length > 48) return null;
+  if (/^https?:/i.test(label) || !looksLikeFigure(value)) return null;
   return { type: "stat", value, label };
 }
 

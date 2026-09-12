@@ -14,7 +14,6 @@ import {
 import { sectionAccent } from "@/content/sectionAccent";
 
 const MAX_VISIBLE_SATS = 3;
-const INFO_HINT = "Read more";
 
 function frameHasMoreDetail(frame: FrameNode): boolean {
   return (
@@ -106,6 +105,7 @@ export function SectionFrame({
         layout === "scene" ? "prezi-frame--scene" : "",
         `prezi-${frame.kind}`,
         highlighted ? "is-highlighted" : "",
+        showInfo ? "is-openable" : "",
         density === "overview" ? "is-overview" : "is-focus",
         quiet && density === "focus" ? "is-peek" : "",
         `crop-${frame.photoCrop}`,
@@ -116,16 +116,22 @@ export function SectionFrame({
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => {
         e.stopPropagation();
-        onOpen();
+        if (showInfo) onOpenDetail();
+        else onOpen();
       }}
       onKeyDown={(e) => {
         if (e.key === "Enter" || e.key === " ") {
           e.preventDefault();
           e.stopPropagation();
-          onOpen();
+          if (showInfo) onOpenDetail();
+          else onOpen();
         }
       }}
-      aria-label={highlighted ? `${frame.title}. Click to read more` : `Open ${frame.title}`}
+      aria-label={
+        showInfo
+          ? `${frame.title}. Press to open the full note`
+          : `Open ${frame.title}`
+      }
       aria-current={highlighted ? "true" : undefined}
     >
       <div className="prezi-frame-stage">
@@ -133,15 +139,15 @@ export function SectionFrame({
           <button
             type="button"
             className="prezi-info"
-            aria-label={`Read more about ${frame.title}`}
-            title={INFO_HINT}
+            aria-label={`View ${frame.title} in full — opens a larger note`}
+            title="View in full"
             onClick={(e) => {
               e.stopPropagation();
               onOpenDetail();
             }}
           >
             <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
-            <span className="prezi-info-label">Read more</span>
+            <span className="prezi-info-label">View in full</span>
           </button>
         ) : null}
 

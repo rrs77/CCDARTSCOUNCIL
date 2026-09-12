@@ -47,6 +47,12 @@ export const PARTNERS_FUNDING_VIDEO_NOTICE =
 export const PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS =
   'This is an early prototype.';
 
+/** Shortcut into The facts — sits above the walkthrough in the start popup. */
+export const PARTNERS_FUNDING_FACTS_CTA = 'The facts';
+
+export const PARTNERS_FUNDING_FACTS_BYLINE =
+  'Exceptional lessons start with connection.';
+
 /** Primary CTA opens the animated Feature Walkthrough (ccd-pitch) in the old video-modal slot. */
 export const PARTNERS_FUNDING_VIDEO_CTA = 'Watch walkthrough';
 
