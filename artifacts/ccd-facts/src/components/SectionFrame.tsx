@@ -14,7 +14,7 @@ import {
 import { sectionAccent } from "@/content/sectionAccent";
 
 const MAX_VISIBLE_SATS = 3;
-const INFO_HINT = "More information";
+const INFO_HINT = "Read more";
 
 function frameHasMoreDetail(frame: FrameNode): boolean {
   return (
@@ -125,7 +125,7 @@ export function SectionFrame({
           onOpen();
         }
       }}
-      aria-label={frame.title}
+      aria-label={highlighted ? `${frame.title}. Click to read more` : `Open ${frame.title}`}
       aria-current={highlighted ? "true" : undefined}
     >
       <div className="prezi-frame-stage">
@@ -133,7 +133,7 @@ export function SectionFrame({
           <button
             type="button"
             className="prezi-info"
-            aria-label={`More information about ${frame.title}`}
+            aria-label={`Read more about ${frame.title}`}
             title={INFO_HINT}
             onClick={(e) => {
               e.stopPropagation();
@@ -141,6 +141,7 @@ export function SectionFrame({
             }}
           >
             <Info className="prezi-info-icon" strokeWidth={2.25} aria-hidden />
+            <span className="prezi-info-label">Read more</span>
           </button>
         ) : null}
 

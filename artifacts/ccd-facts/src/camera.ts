@@ -48,5 +48,5 @@ export function cameraTransform(pose: CameraPose, viewport: { w: number; h: numb
   return `translate(${tx}px, ${ty}px) scale(${pose.scale})`;
 }
 
-export const CAMERA_TRAVEL_S = 0.85;
-export const CAMERA_EASE: [number, number, number, number] = [0.4, 0, 0.2, 1];
+export const CAMERA_TRAVEL_S = 0.48;
+export const CAMERA_EASE: [number, number, number, number] = [0.22, 0.61, 0.36, 1];

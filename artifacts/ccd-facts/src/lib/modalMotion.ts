@@ -22,7 +22,7 @@ export function modalBackdropTransition(reduced: boolean) {
 export function modalPanelTransition(reduced: boolean) {
   if (reduced) return { duration: 0.01 };
   return {
-    duration: 0.42,
-    ease: [0.22, 1, 0.36, 1] as [number, number, number, number],
+    duration: 0.28,
+    ease: [0.22, 0.61, 0.36, 1] as [number, number, number, number],
   };
 }

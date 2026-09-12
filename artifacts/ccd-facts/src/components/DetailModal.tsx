@@ -322,7 +322,7 @@ export function DetailModal({
                                 className="detail-see-also-link"
                                 onClick={() => onNavigate(s.id)}
                               >
-                                See {s.title}
+                                {s.title}
                               </button>
                             </li>
                           ))}

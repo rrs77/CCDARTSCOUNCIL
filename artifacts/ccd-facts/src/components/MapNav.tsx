@@ -141,10 +141,11 @@ export function MapNav({
         aria-expanded={open}
         aria-controls={panelId}
         aria-label="Map"
-        title="Map — alternative navigation"
+        title="Map"
         onClick={() => setOpen((was) => !was)}
       >
         <MapIcon className="map-nav-tab-icon" strokeWidth={2.25} aria-hidden />
+        <span className="map-nav-tab-text">Map</span>
       </button>
 
       <nav

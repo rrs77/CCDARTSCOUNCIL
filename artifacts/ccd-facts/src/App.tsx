@@ -57,12 +57,9 @@ export default function App() {
   const [modalId, setModalId] = useState<string | null>(null);
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"overview" | "frame">("overview");
-  const [chromeVisible, setChromeVisible] = useState(true);
   const [fullscreen, setFullscreen] = useState(false);
 
-  const idleTimer = useRef<number | null>(null);
   const stageRef = useRef<HTMLDivElement>(null);
-  const overviewStride = useRef(0);
 
   const persist = useCallback((id: string | null) => {
     try {
@@ -101,7 +98,6 @@ export default function App() {
     setModalId(null);
     setViewMode("overview");
     setFocusedId(null);
-    overviewStride.current = 0;
     persist(null);
     writeUrl(null);
   }, [persist, writeUrl]);
@@ -146,8 +142,6 @@ export default function App() {
     [focusedId, modalId, persist, presentation, showOverview, viewMode, writeUrl],
   );
 
-  const overviewTimer = useRef<number | null>(null);
-
   const goSection = useCallback(
     (delta: number) => {
       if (!sectionPath.length) {
@@ -160,28 +154,9 @@ export default function App() {
         showOverview();
         return;
       }
-      overviewStride.current += 1;
-      if (overviewTimer.current) window.clearTimeout(overviewTimer.current);
-      // Every few hops, briefly show how places connect
-      if (overviewStride.current > 0 && overviewStride.current % 4 === 0) {
-        setModalId(null);
-        setViewMode("overview");
-        setFocusedId(null);
-        overviewTimer.current = window.setTimeout(() => {
-          openSection(sectionPath[next]!);
-        }, reduced ? 80 : 900);
-        return;
-      }
       openSection(sectionPath[next]!);
     },
-    [openSection, reduced, sectionIndex, sectionPath, showOverview],
-  );
-
-  useEffect(
-    () => () => {
-      if (overviewTimer.current) window.clearTimeout(overviewTimer.current);
-    },
-    [],
+    [openSection, sectionIndex, sectionPath, showOverview],
   );
 
   // Boot — overview of the full canvas unless a deep link is present
@@ -212,27 +187,9 @@ export default function App() {
     return () => window.removeEventListener("popstate", onPop);
   }, [openSection, presentation, showOverview]);
 
-  const bumpChrome = useCallback(() => {
-    setChromeVisible(true);
-    if (idleTimer.current) window.clearTimeout(idleTimer.current);
-    idleTimer.current = window.setTimeout(() => setChromeVisible(false), 3200);
-  }, []);
-
-  useEffect(() => {
-    bumpChrome();
-    const onMove = () => bumpChrome();
-    window.addEventListener("pointermove", onMove);
-    window.addEventListener("keydown", onMove);
-    return () => {
-      window.removeEventListener("pointermove", onMove);
-      window.removeEventListener("keydown", onMove);
-    };
-  }, [bumpChrome]);
-
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (isTypingTarget()) return;
-      bumpChrome();
       if (e.key === "Escape") {
         e.preventDefault();
         if (document.fullscreenElement) {
@@ -272,7 +229,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [bumpChrome, goSection, modalId, openSection, sectionPath, showOverview, viewMode]);
+  }, [goSection, modalId, openSection, sectionPath, showOverview, viewMode]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -301,7 +258,6 @@ export default function App() {
         className="canvas-stage"
         tabIndex={0}
         aria-label={presentation.title}
-        onPointerDown={() => bumpChrome()}
       >
         <WorldCanvas
           presentation={presentation}
@@ -323,7 +279,6 @@ export default function App() {
       <PresentChrome
         presentation={presentation}
         focusId={modalId ?? (viewMode === "overview" ? null : focusedId)}
-        chromeVisible={chromeVisible}
         fullscreen={fullscreen}
         onOverview={showOverview}
         onToggleFullscreen={toggleFullscreen}
