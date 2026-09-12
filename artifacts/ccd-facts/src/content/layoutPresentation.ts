@@ -73,21 +73,29 @@ function uniqueId(base: string, used: Set<string>): string {
  * Two-tier title. Prefer wrapping-friendly giants (≤2 words) and keep
  * the rest as the small line so “MUSIC EDUCATION” isn’t cropped.
  */
+const ARTICLE = /^(the|a|an)$/i;
+
 export function splitTitle(title: string): { small: string; giant: string } {
-  const words = title.trim().split(/\s+/);
-  if (words.length === 1) return { small: "", giant: words[0]!.toUpperCase() };
-  if (/^(the|a|an)\b/i.test(words[0]!)) {
-    return { small: words[0]!, giant: words.slice(1).join(" ").toUpperCase() };
+  const trimmed = title.trim();
+  const words = trimmed.split(/\s+/);
+  if (words.length <= 1) return { small: "", giant: trimmed.toUpperCase() };
+
+  // Keep “A solution” / “The facts” together — never a stray article kicker.
+  if (ARTICLE.test(words[0]!) && words.length <= 3) {
+    return { small: "", giant: trimmed.toUpperCase() };
   }
+
   if (words.length === 2) {
     return { small: words[0]!, giant: words[1]!.toUpperCase() };
   }
-  // Long titles: small = lead phrase, giant = last 1–2 words (wraps inside card)
+
   const giantCount = words.length >= 5 ? 2 : 1;
-  return {
-    small: words.slice(0, -giantCount).join(" "),
-    giant: words.slice(-giantCount).join(" ").toUpperCase(),
-  };
+  const small = words.slice(0, -giantCount).join(" ");
+  const giant = words.slice(-giantCount).join(" ").toUpperCase();
+  if (ARTICLE.test(small) || small.length <= 2) {
+    return { small: "", giant: trimmed.toUpperCase() };
+  }
+  return { small, giant };
 }
 
 function firstSentence(text: string): string {

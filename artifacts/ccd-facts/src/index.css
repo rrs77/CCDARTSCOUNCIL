@@ -2899,6 +2899,43 @@ button:focus-visible {
   margin-top: 0.35rem;
 }
 
+.detail-resource-link {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+  margin: 0 0 0.65rem;
+  padding: 0.85rem 1rem;
+  border-radius: 0.9rem;
+  border: 1px solid rgba(0, 45, 36, 0.12);
+  background: color-mix(in srgb, var(--paper) 70%, white);
+  color: var(--forest);
+  text-decoration: none;
+  pointer-events: auto;
+}
+
+.detail-resource-link:hover,
+.detail-resource-link:focus-visible {
+  border-color: color-mix(in srgb, var(--teal-deep) 45%, transparent);
+  background: color-mix(in srgb, var(--accent) 8%, white);
+  text-decoration: none;
+}
+
+.detail-resource-title {
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.25;
+  letter-spacing: -0.02em;
+}
+
+.detail-resource-url {
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.35;
+  color: var(--teal-deep);
+  overflow-wrap: anywhere;
+  word-break: break-all;
+}
+
 .detail-quote {
   margin: 0 0 1rem;
   padding: 0.85rem 1rem;

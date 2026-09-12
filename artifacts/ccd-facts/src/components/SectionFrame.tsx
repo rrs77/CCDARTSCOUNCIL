@@ -200,7 +200,7 @@ export function SectionFrame({
           ) : null}
 
           <div className="prezi-title-bubble">
-            {frame.titleSmall && !quiet ? (
+            {frame.titleSmall && !quiet && !/^(the|a|an)$/i.test(frame.titleSmall) ? (
               <p className="prezi-title-small">{frame.titleSmall}</p>
             ) : null}
             <h2 className="prezi-title-giant">{quiet ? frame.title : frame.titleGiant}</h2>
