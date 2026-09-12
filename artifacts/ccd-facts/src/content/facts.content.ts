@@ -548,7 +548,7 @@ export const charts: Record<string, ChartDef> = {
     type: "grouped-bars",
     caption: "Access to arts qualifications differs by disadvantage",
     sourceNote:
-      "GCSE entries for Art & Design, Dance, Music and Speech & Drama (Table 19). *Photography is any exam entry by subject discount group (Table 18), not GCSE-only. DfE Curriculum & Assessment Review analytical annex, 2024/25.",
+      "Share of state-funded mainstream schools with GCSE entries in Art & Design, Dance and Music, by school disadvantage fifth (DfE Curriculum & Assessment Review analytical annex, Table 19, 2024/25). *Photography is any exam entry by subject discount group (Table 18), not GCSE-only.",
     axis: {
       y: "% of state-funded mainstream schools",
       legend: {
@@ -560,7 +560,6 @@ export const charts: Record<string, ChartDef> = {
       { subject: "Art & Design", least: 99, most: 97 },
       { subject: "Dance", least: 27, most: 6 },
       { subject: "Music", least: 90, most: 39 },
-      { subject: "Speech & Drama", least: 83, most: 42 },
       { subject: "Photography*", least: 32, most: 43 },
     ],
   },
@@ -781,7 +780,7 @@ export const topics: TopicDef[] = [
     title: "Poverty & place",
     investorLine: "Entitlement tracks place and disadvantage — association, not proven causation.",
     body: [
-      "54% vs 21% of schools in the most vs least deprived LA fifths have no GCSE Music entries (CLA 2026).",
+      "54% vs 21% of schools in the most vs least deprived LA fifths have no GCSE Music entries; 59% vs 17% have no GCSE Drama entries (CLA 2026).",
       "Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths. FSM pupils are under-represented in arts GCSEs and A-level Music, Dance, Drama and Design & Technology.",
       "West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions.",
       "Domestic Creative Arts & Design undergraduates edged down while the wider cohort rose (HESA via CLA 2026).",
