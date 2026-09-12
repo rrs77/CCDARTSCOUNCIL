@@ -48,25 +48,9 @@ function overviewBlurb(frame: FrameNode): string {
 
 const easeOut = [0.22, 0.61, 0.36, 1] as const;
 
-const CARD_STAGGER = 0.2;
-const CARD_START = 0.34;
-const CARD_DROP = 0.78;
-
-const listVariants = {
-  hidden: {},
-  show: {
-    transition: { staggerChildren: CARD_STAGGER, delayChildren: CARD_START },
-  },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: -42 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: CARD_DROP, ease: easeOut },
-  },
-};
+const CARD_STAGGER = 0.32;
+const CARD_START = 0.45;
+const CARD_DROP = 0.95;
 
 /**
  * Opening index — brand lockup, byline, then a quiet grid into the evidence.
@@ -128,13 +112,7 @@ export function StageOverview({
         </div>
       </header>
 
-      <motion.ul
-        className="stage-launcher-list"
-        aria-label="Evidence stages"
-        variants={reduced ? undefined : listVariants}
-        initial={reduced ? false : "hidden"}
-        animate="show"
-      >
+      <ul className="stage-launcher-list" aria-label="Evidence stages">
         {stages.map((frame, i) => {
           const label = overviewLabel(frame);
           const blurb = overviewBlurb(frame);
@@ -143,8 +121,13 @@ export function StageOverview({
           return (
             <motion.li
               key={frame.id}
-              variants={reduced ? undefined : cardVariants}
-              initial={reduced ? false : undefined}
+              initial={reduced ? false : { opacity: 0, y: -56 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{
+                duration: reduced ? 0.01 : CARD_DROP,
+                delay: reduced ? 0 : CARD_START + i * CARD_STAGGER,
+                ease: easeOut,
+              }}
             >
               <button
                 type="button"
@@ -170,7 +153,7 @@ export function StageOverview({
             </motion.li>
           );
         })}
-      </motion.ul>
+      </ul>
 
       <motion.footer
         className="stage-launcher-doc"
