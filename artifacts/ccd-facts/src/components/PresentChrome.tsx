@@ -1,6 +1,5 @@
 import { FileDown, Grid2X2, Home, Maximize2, Minimize2 } from "lucide-react";
 import { MapNav } from "@/components/MapNav";
-import { assetUrl } from "@/content/sectionIllustrations";
 import type { Presentation } from "@/content/layoutPresentation";
 
 /**
@@ -13,6 +12,7 @@ export function PresentChrome({
   onOverview,
   onToggleFullscreen,
   onJump,
+  onOpenPdf,
 }: {
   presentation: Presentation;
   focusId: string | null;
@@ -20,6 +20,7 @@ export function PresentChrome({
   onOverview: () => void;
   onToggleFullscreen: () => void;
   onJump: (id: string) => void;
+  onOpenPdf: () => void;
 }) {
   return (
     <>
@@ -37,16 +38,16 @@ export function PresentChrome({
       </div>
 
       <div className="facts-toolbar" role="toolbar" aria-label="The facts tools">
-        <a
+        <button
+          type="button"
           className="facts-nav-pdf"
-          href={assetUrl("the-facts-briefing.pdf")}
-          download="the-facts-briefing.pdf"
-          aria-label="Download The facts as a PDF"
+          onClick={onOpenPdf}
+          aria-label="Open The facts as a PDF"
         >
           <FileDown strokeWidth={2.25} aria-hidden />
-          <span className="facts-nav-pdf-full">Download The facts as a PDF</span>
-          <span className="facts-nav-pdf-short">Download PDF</span>
-        </a>
+          <span className="facts-nav-pdf-full">The facts PDF</span>
+          <span className="facts-nav-pdf-short">PDF</span>
+        </button>
         {focusId ? (
           <>
             <button

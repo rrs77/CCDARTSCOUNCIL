@@ -74,9 +74,11 @@ const cardVariants = {
 export function StageOverview({
   stages,
   onOpen,
+  onOpenPdf,
 }: {
   stages: FrameNode[];
   onOpen: (id: string) => void;
+  onOpenPdf?: () => void;
 }) {
   const reduced = useReducedMotion() ?? false;
 
@@ -180,22 +182,20 @@ export function StageOverview({
           ease: easeOut,
         }}
       >
-        <a
+        <button
+          type="button"
           className="stage-launcher-doc-link"
-          href={assetUrl("the-facts-briefing.pdf")}
-          target="_blank"
-          rel="noopener noreferrer"
-          aria-label="Download The facts as a PDF"
-          download="the-facts-briefing.pdf"
+          onClick={onOpenPdf}
+          aria-label="Open The facts as a PDF"
         >
           <span className="stage-launcher-doc-mark" aria-hidden>
             PDF
           </span>
           <span className="stage-launcher-doc-copy">
-            <span className="stage-launcher-doc-label">Download The facts as a PDF</span>
-            <span className="stage-launcher-doc-hint">Every section, figure and source</span>
+            <span className="stage-launcher-doc-label">Open The facts as a PDF</span>
+            <span className="stage-launcher-doc-hint">Print or save from the briefing</span>
           </span>
-        </a>
+        </button>
       </motion.footer>
     </div>
   );
