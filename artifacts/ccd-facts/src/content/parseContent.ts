@@ -8,6 +8,7 @@ export type ContentBlock =
   | { type: "list"; items: string[] }
   | { type: "quote"; text: string }
   | { type: "stat"; value: string; label: string }
+  | { type: "link"; title: string; url: string }
   | { type: "chart"; chartId: string };
 
 export type ContentSection = {
@@ -49,13 +50,47 @@ function stripFootnoteRefs(text: string): string {
   return text.replace(/\[\^\d+\]/g, "").trim();
 }
 
-/** Parse `- **−42%** — label` or `- **value** label` into a stat tile when possible. */
+/** True figures only — not resource names, short labels, or URLs. */
+function looksLikeFigure(value: string): boolean {
+  if (value.length > 36) return false;
+  if (/^https?:/i.test(value)) return false;
+  return (
+    /[%£]/.test(value) ||
+    /^[−~≈-]?\s*\d/.test(value) ||
+    /\d\s*(%|vs|in)\b/i.test(value) ||
+    /^up to\s*[£\d]/i.test(value)
+  );
+}
+
+function stripMdBold(text: string): string {
+  return text.replace(/\*\*(.+?)\*\*/g, "$1").trim();
+}
+
+/** Parse `- **Title** — https://…` into a tappable resource. */
+function tryLink(item: string): ContentBlock | null {
+  const stripped = stripFootnoteRefs(item);
+  const md = stripped.match(/^\*\*(.+?)\*\*\s*[—–\-:]?\s*(https?:\/\/\S+)\s*$/i);
+  if (md) return { type: "link", title: md[1].trim(), url: md[2].replace(/[),.;]+$/, "") };
+  const plain = stripped.match(/^(.+?)\s+[—–\-]\s+(https?:\/\/\S+)\s*$/i);
+  if (plain) return { type: "link", title: stripMdBold(plain[1]), url: plain[2].replace(/[),.;]+$/, "") };
+  const bare = stripped.match(/^(https?:\/\/\S+)\s*$/i);
+  if (bare) {
+    try {
+      return { type: "link", title: new URL(bare[1]).hostname.replace(/^www\./, ""), url: bare[1] };
+    } catch {
+      return { type: "link", title: bare[1], url: bare[1] };
+    }
+  }
+  return null;
+}
+
+/** Parse `- **−42%** — label` into a display stat when the lead is a figure. */
 function tryStat(item: string): ContentBlock | null {
   const m = item.match(/^\*\*(.+?)\*\*\s*[—–\-:]?\s*(.+)$/);
   if (!m) return null;
   const value = m[1].trim();
   const label = stripFootnoteRefs(m[2]);
-  if (value.length > 48) return null;
+  if (/^https?:/i.test(label) || !looksLikeFigure(value)) return null;
   return { type: "stat", value, label };
 }
 
@@ -73,14 +108,19 @@ export function parseContentMarkdown(md: string): ParsedDocument {
 
   const flushList = () => {
     if (!listBuf.length || !current) return;
-    const stats: ContentBlock[] = [];
+    const extras: ContentBlock[] = [];
     const plain: string[] = [];
     for (const item of listBuf) {
+      const link = tryLink(item);
+      if (link) {
+        extras.push(link);
+        continue;
+      }
       const st = tryStat(item);
-      if (st) stats.push(st);
+      if (st) extras.push(st);
       else plain.push(stripFootnoteRefs(item));
     }
-    for (const s of stats) current.blocks.push(s);
+    for (const block of extras) current.blocks.push(block);
     if (plain.length) current.blocks.push({ type: "list", items: plain });
     listBuf = [];
   };

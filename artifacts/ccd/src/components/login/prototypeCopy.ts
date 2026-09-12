@@ -28,7 +28,7 @@ export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen-v4';
 
 /** Session-scoped key for the partners/funding start popup.
  * Bump suffix when the first-open flow changes so returning visitors see it again. */
-export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-walkthrough-seen-v3';
+export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-walkthrough-seen-v4';
 
 /** Title for the first-open start popup. */
 export const PARTNERS_FUNDING_START_TITLE = 'Welcome to the prototype';
@@ -46,6 +46,12 @@ export const PARTNERS_FUNDING_VIDEO_NOTICE =
 /** Clear prototype awareness before the user continues. */
 export const PARTNERS_FUNDING_VIDEO_PROTOTYPE_AWARENESS =
   'This is an early prototype.';
+
+/** Shortcut into The facts — sits above the walkthrough in the start popup. */
+export const PARTNERS_FUNDING_FACTS_CTA = 'The facts';
+
+export const PARTNERS_FUNDING_FACTS_BYLINE =
+  'Exceptional lessons start with connection.';
 
 /** Primary CTA opens the animated Feature Walkthrough (ccd-pitch) in the old video-modal slot. */
 export const PARTNERS_FUNDING_VIDEO_CTA = 'Watch walkthrough';

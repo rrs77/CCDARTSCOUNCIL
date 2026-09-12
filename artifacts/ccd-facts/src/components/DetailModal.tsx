@@ -15,12 +15,38 @@ import {
 } from "@/content/sectionIllustrations";
 import { modalBackdropTransition, modalBounce, modalPanelTransition } from "@/lib/modalMotion";
 
+function isArticleKicker(text: string): boolean {
+  return /^(the|a|an)$/i.test(text.trim());
+}
+
+function linkifyUrls(text: string): ReactNode {
+  const parts = text.split(/(https?:\/\/[^\s]+)/g);
+  if (parts.length === 1) return text;
+  return parts.map((part, i) => {
+    if (!/^https?:\/\//i.test(part)) return <span key={i}>{part}</span>;
+    const href = part.replace(/[),.;]+$/, "");
+    return (
+      <a
+        key={i}
+        className="detail-inline-link"
+        href={href}
+        target="_blank"
+        rel="noopener noreferrer"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {href}
+      </a>
+    );
+  });
+}
+
 function linkifyText(
   text: string,
   links: { id: string; title: string }[],
   onNavigate?: (id: string) => void,
 ): ReactNode {
-  if (!onNavigate || !links.length) return text;
+  const withUrls = (chunk: string) => linkifyUrls(chunk);
+  if (!onNavigate || !links.length) return withUrls(text);
   // Longest titles first so longer section names win over shorter matches
   const sorted = [...links].sort((a, b) => b.title.length - a.title.length);
   const pattern = new RegExp(
@@ -28,10 +54,10 @@ function linkifyText(
     "gi",
   );
   const parts = text.split(pattern);
-  if (parts.length === 1) return text;
+  if (parts.length === 1) return withUrls(text);
   return parts.map((part, i) => {
     const hit = sorted.find((l) => l.title.toLowerCase() === part.toLowerCase());
-    if (!hit) return <span key={i}>{part}</span>;
+    if (!hit) return <span key={i}>{withUrls(part)}</span>;
     return (
       <button
         key={i}
@@ -84,6 +110,21 @@ function Blocks({
             <aside key={i} className="detail-quote">
               <p>{linkifyText(b.text, links, onNavigate)}</p>
             </aside>
+          );
+        }
+        if (b.type === "link") {
+          return (
+            <a
+              key={i}
+              className="detail-resource-link"
+              href={b.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <span className="detail-resource-title">{b.title}</span>
+              <span className="detail-resource-url">{b.url}</span>
+            </a>
           );
         }
         if (b.type === "stat") {
@@ -228,7 +269,9 @@ export function DetailModal({
                   className="detail-modal-stage-icon"
                 />
                 <div className="detail-modal-header-text">
-                  {frame.titleSmall ? <p className="detail-modal-kicker">{frame.titleSmall}</p> : null}
+                  {frame.titleSmall && !isArticleKicker(frame.titleSmall) ? (
+                    <p className="detail-modal-kicker">{frame.titleSmall}</p>
+                  ) : null}
                   <h2 id="detail-modal-title" className="detail-modal-title">
                     {frame.title}
                   </h2>

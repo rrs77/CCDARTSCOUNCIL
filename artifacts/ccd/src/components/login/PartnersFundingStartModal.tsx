@@ -1,8 +1,11 @@
 import { useEffect } from 'react';
-import { PlayCircle, X } from 'lucide-react';
+import { BookOpen, PlayCircle, X } from 'lucide-react';
+import { THE_FACTS_HREF } from './LoginHeroPanel';
 import {
   PARTNER_DISCLAIMER_FRAMING,
   PARTNERS_FUNDING_CONTINUE_CTA,
+  PARTNERS_FUNDING_FACTS_BYLINE,
+  PARTNERS_FUNDING_FACTS_CTA,
   PARTNERS_FUNDING_START_TITLE,
   PARTNERS_FUNDING_VIDEO_CTA,
   PARTNERS_FUNDING_VIDEO_INTRO,
@@ -79,10 +82,25 @@ export function PartnersFundingStartModal({
             {PARTNERS_FUNDING_VIDEO_NOTICE}
           </p>
 
+          <a
+            href={THE_FACTS_HREF}
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#B6FF7E] px-4 py-3.5 text-[#002D24] transition-colors hover:bg-[#A7F46E]"
+          >
+            <BookOpen className="h-5 w-5 shrink-0" aria-hidden />
+            <span className="min-w-0 text-left">
+              <span className="block text-sm font-semibold leading-tight">
+                {PARTNERS_FUNDING_FACTS_CTA}
+              </span>
+              <span className="mt-0.5 block text-xs font-medium leading-snug text-[#002D24]/75">
+                {PARTNERS_FUNDING_FACTS_BYLINE}
+              </span>
+            </span>
+          </a>
+
           <button
             type="button"
             onClick={onStartWalkthrough}
-            className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#B6FF7E] px-4 py-3.5 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-[#002D24]/15 bg-white px-4 py-3.5 text-sm font-semibold text-[#002D24] transition-colors hover:bg-[#F4F7F5]"
           >
             <PlayCircle className="h-5 w-5 shrink-0" aria-hidden />
             <span>{PARTNERS_FUNDING_VIDEO_CTA}</span>

@@ -73,21 +73,29 @@ function uniqueId(base: string, used: Set<string>): string {
  * Two-tier title. Prefer wrapping-friendly giants (≤2 words) and keep
  * the rest as the small line so “MUSIC EDUCATION” isn’t cropped.
  */
+const ARTICLE = /^(the|a|an)$/i;
+
 export function splitTitle(title: string): { small: string; giant: string } {
-  const words = title.trim().split(/\s+/);
-  if (words.length === 1) return { small: "", giant: words[0]!.toUpperCase() };
-  if (/^(the|a|an)\b/i.test(words[0]!)) {
-    return { small: words[0]!, giant: words.slice(1).join(" ").toUpperCase() };
+  const trimmed = title.trim();
+  const words = trimmed.split(/\s+/);
+  if (words.length <= 1) return { small: "", giant: trimmed.toUpperCase() };
+
+  // Keep “A solution” / “The facts” together — never a stray article kicker.
+  if (ARTICLE.test(words[0]!) && words.length <= 3) {
+    return { small: "", giant: trimmed.toUpperCase() };
   }
+
   if (words.length === 2) {
     return { small: words[0]!, giant: words[1]!.toUpperCase() };
   }
-  // Long titles: small = lead phrase, giant = last 1–2 words (wraps inside card)
+
   const giantCount = words.length >= 5 ? 2 : 1;
-  return {
-    small: words.slice(0, -giantCount).join(" "),
-    giant: words.slice(-giantCount).join(" ").toUpperCase(),
-  };
+  const small = words.slice(0, -giantCount).join(" ");
+  const giant = words.slice(-giantCount).join(" ").toUpperCase();
+  if (ARTICLE.test(small) || small.length <= 2) {
+    return { small: "", giant: trimmed.toUpperCase() };
+  }
+  return { small, giant };
 }
 
 function firstSentence(text: string): string {
@@ -104,11 +112,38 @@ function shortLabel(text: string, max = 28): string {
   return t.slice(0, max - 1).replace(/\s+\S*$/, "") + "…";
 }
 
+const HANGING = /^(and|or|the|a|an|of|to|for|with|from|into|on|in|at|by|as|also)$/i;
+
 function leafTitleFromSentence(sentence: string, fallback: string): string {
   const t = sentence.replace(/\s+/g, " ").trim();
-  const words = t.split(/\s+/).slice(0, 4).join(" ");
-  if (words.length >= 8) return shortLabel(words.replace(/[.!?…]+$/, ""), 36);
+  let candidate = t.split(/\s+[—–]\s+/)[0]!.replace(/[:.!?…]+$/, "").trim();
+  if (candidate.length > 44) {
+    candidate = candidate.slice(0, 44).replace(/\s+\S*$/, "").trim();
+  }
+  const words = candidate.split(/\s+/).filter(Boolean);
+  while (words.length > 2 && HANGING.test(words[words.length - 1]!)) words.pop();
+  const title = words.join(" ");
+  if (title.length >= 8) return title;
   return fallback;
+}
+
+function isFigureStat(value: string): boolean {
+  return /[%£]/.test(value) || /^[−~≈-]?\s*\d/.test(value);
+}
+
+function blocksWithFollowingMatter(
+  sectionBlocks: ContentBlock[],
+  paraText: string,
+): ContentBlock[] {
+  const idx = sectionBlocks.findIndex((b) => b.type === "paragraph" && b.text === paraText);
+  if (idx < 0) return [{ type: "paragraph", text: paraText }];
+  const out: ContentBlock[] = [sectionBlocks[idx]!];
+  for (let j = idx + 1; j < sectionBlocks.length; j++) {
+    const b = sectionBlocks[j]!;
+    if (b.type === "list" || b.type === "link") out.push(b);
+    else break;
+  }
+  return out;
 }
 
 const CROPS: PhotoCrop[] = ["classroom", "drama", "dance", "wide"];
@@ -175,9 +210,10 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
     // “A solution” is a product zone: no exam/funding graph on the pathway surface.
     const hubChart =
       !isSources && !isSolution && charts[0] ? charts[0].chartId : undefined;
+    const figureStats = stats.filter((s) => isFigureStat(s.value));
     const hubStat =
-      !isSources && !hubChart && stats[0]
-        ? { value: stats[0].value, label: shortLabel(stats[0].label, 48) }
+      !isSources && !hubChart && figureStats[0]
+        ? { value: figureStats[0].value, label: shortLabel(figureStats[0].label, 48) }
         : undefined;
 
     protos.push({
@@ -268,19 +304,20 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       for (let i = 1; i < paras.length && children.length < MAX_CHILDREN; i++) {
         const sentence = firstSentence(paras[i]!.text);
         const id = uniqueId(`${hubId}-more-${i}`, used);
+        const leafBlocks = blocksWithFollowingMatter(sec.blocks, paras[i]!.text);
         children.push({
           id,
           title: takeTitle(leafTitleFromSentence(sentence, `More ${i}`)),
           sentence,
           photoHero: false,
-          blocks: [{ type: "paragraph", text: paras[i]!.text }],
+          blocks: leafBlocks,
         });
       }
 
       // Extra stats (beyond hub hero) → leaf stops — not second ovals on the hub
-      const startStat = hubStat ? 1 : 0;
-      for (let i = startStat; i < stats.length && children.length < MAX_CHILDREN; i++) {
+      for (let i = 0; i < stats.length && children.length < MAX_CHILDREN; i++) {
         const st = stats[i]!;
+        if (hubStat && st.value === hubStat.value) continue;
         const id = uniqueId(`${hubId}-stat-${i}`, used);
         children.push({
           id,
