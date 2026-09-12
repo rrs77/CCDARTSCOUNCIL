@@ -2,6 +2,7 @@
  * Same-repo The Facts loader.
  * Fetches gzip+base64 bundle parts from this repo, concatenates, gunzips, and evals.
  * Does not fetch from any external repository.
+ * Optional partN.fix files (lines "index:char") correct known MCP transcription errors.
  */
 (async function loadTheFactsBundle() {
   const PART_COUNT = 112;
@@ -13,6 +14,28 @@
       throw new Error("Failed to fetch " + url + ": " + res.status);
     }
     return res.text();
+  }
+
+  async function fetchOptionalText(url) {
+    const res = await fetch(url, { cache: "no-cache" });
+    if (!res.ok) return null;
+    return res.text();
+  }
+
+  function applyFixes(text, fixText) {
+    if (!fixText) return text;
+    const chars = text.split("");
+    for (const line of fixText.split(/\n+/)) {
+      const t = line.trim();
+      if (!t) continue;
+      const colon = t.indexOf(":");
+      if (colon < 0) continue;
+      const idx = Number(t.slice(0, colon));
+      const ch = t.slice(colon + 1);
+      if (!Number.isFinite(idx) || ch.length !== 1) continue;
+      chars[idx] = ch;
+    }
+    return chars.join("");
   }
 
   function base64ToUint8Array(b64) {
@@ -34,7 +57,10 @@
   try {
     const parts = [];
     for (let i = 0; i < PART_COUNT; i++) {
-      parts.push(await fetchText(PART_BASE + i + ".b64"));
+      let text = await fetchText(PART_BASE + i + ".b64");
+      const fix = await fetchOptionalText(PART_BASE + i + ".fix");
+      text = applyFixes(text, fix);
+      parts.push(text);
     }
     const b64 = parts.join("");
     const compressed = base64ToUint8Array(b64);
