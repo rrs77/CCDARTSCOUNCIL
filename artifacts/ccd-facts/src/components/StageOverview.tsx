@@ -76,30 +76,34 @@ export function StageOverview({
           <p className="stage-launcher-brand">{meta.productName}</p>
         </motion.div>
         <div className="stage-launcher-intro-row">
-          <motion.h1
-            initial={reduced ? false : { opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: reduced ? 0.01 : 0.5, delay: reduced ? 0 : 0.04, ease: easeOut }}
-          >
-            {meta.experienceLead} <em>{meta.experienceAccent}</em>
-          </motion.h1>
-          <motion.p
+          <div className="stage-launcher-titles">
+            <motion.h1
+              initial={reduced ? false : { opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduced ? 0.01 : 0.5, delay: reduced ? 0 : 0.04, ease: easeOut }}
+            >
+              {meta.experienceLead} <em>{meta.experienceAccent}</em>
+            </motion.h1>
+            <motion.p
+              className="stage-launcher-byline"
+              initial={reduced ? false : { opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.1, ease: easeOut }}
+            >
+              {meta.heroLineBefore} <em>{meta.heroLineAccent}</em>
+            </motion.p>
+          </div>
+          <motion.div
             className="stage-launcher-purpose"
             initial={reduced ? false : { opacity: 0, y: 8 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.08, ease: easeOut }}
           >
-            {meta.purposeLine}
-          </motion.p>
+            <p className="stage-launcher-purpose-kicker">{meta.purposeKicker}</p>
+            <p className="stage-launcher-purpose-heading">{meta.purposeHeading}</p>
+            <p className="stage-launcher-purpose-deck">{meta.purposeDeck}</p>
+          </motion.div>
         </div>
-        <motion.p
-          className="stage-launcher-byline"
-          initial={reduced ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.1, ease: easeOut }}
-        >
-          {meta.heroLineBefore} <em>{meta.heroLineAccent}</em>
-        </motion.p>
       </header>
 
       <ul className="stage-launcher-list" aria-label="Evidence stages">

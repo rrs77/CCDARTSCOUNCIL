@@ -224,6 +224,9 @@ export const meta = {
     "A concise evidence overview for funding, partnership and development. Prepared and re-verified 21 August 2026.",
   heroLineBefore: "Exceptional lessons start with",
   heroLineAccent: "connection",
+  purposeKicker: "Arts education",
+  purposeHeading: "At a tipping point — with ambitious plans ahead.",
+  purposeDeck: "What’s needed now is shared expertise and connection.",
   purposeLine:
     "A shared evidence briefing on creative education in England — official figures for teachers, funders and arts organisations.",
   heroSupport:
