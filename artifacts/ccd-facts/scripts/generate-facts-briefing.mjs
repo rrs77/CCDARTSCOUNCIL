@@ -423,21 +423,31 @@ function makeFlow(doc, y0, label, nav) {
   };
 }
 
+/** hero-arts.jpg is 1536×1024 (3:2). Never stretch it into the cover band. */
+const HERO_ASPECT = 1536 / 1024;
+
+function coverPhotoBand() {
+  const nativeH = PAGE.w / HERO_ASPECT;
+  return { w: PAGE.w, nativeH, h: nativeH };
+}
+
 function cover(doc, meta, nav) {
-  doc.addImage(jpeg("hero-arts.jpg"), "JPEG", 0, 0, PAGE.w, 172, undefined, "FAST");
+  const photo = coverPhotoBand();
+  // Top-align the true 3:2 image, then let the forest panel cover the
+  // jumper-heavy bottom so type never sits on dark clothing.
+  doc.addImage(jpeg("hero-arts.jpg"), "JPEG", 0, 0, photo.w, photo.nativeH, undefined, "FAST");
   try {
-    const g = new doc.GState({ opacity: 0.38 });
+    const g = new doc.GState({ opacity: 0.16 });
     doc.saveGraphicsState();
     doc.setGState(g);
     doc.setFillColor(...FOREST);
-    doc.rect(0, 0, PAGE.w, 172, "F");
+    doc.rect(0, photo.h - 22, PAGE.w, 22, "F");
     doc.restoreGraphicsState();
   } catch {
-    doc.setFillColor(...FOREST);
-    doc.rect(0, 132, PAGE.w, 40, "F");
+    /* fade optional */
   }
   doc.setFillColor(...FOREST);
-  doc.rect(0, 156, PAGE.w, PAGE.h - 156, "F");
+  doc.rect(0, photo.h, PAGE.w, PAGE.h - photo.h, "F");
   doc.setFillColor(...LIME);
   doc.rect(0, 0, 3.6, PAGE.h, "F");
 
@@ -445,7 +455,7 @@ function cover(doc, meta, nav) {
   const logoCx = M.l + 5 + logoD / 2;
   const logoCy = 18 + logoD / 2;
   try {
-    const g = new doc.GState({ opacity: 0.42 });
+    const g = new doc.GState({ opacity: 0.55 });
     doc.saveGraphicsState();
     doc.setGState(g);
     doc.setFillColor(...FOREST);
@@ -469,22 +479,23 @@ function cover(doc, meta, nav) {
   doc.setTextColor(214, 224, 218);
   doc.text("ccdesigner.co.uk", lockX, logoCy + 9.2);
 
+  const titleY = photo.h + 16;
   doc.setFont("times", "bold");
   doc.setFontSize(40);
   doc.setTextColor(...WHITE);
-  doc.text("The facts", M.l + 6, 128);
+  doc.text("The facts", M.l + 6, titleY);
 
   doc.setFont("times", "italic");
   doc.setFontSize(13);
   doc.setTextColor(230, 236, 228);
   const sub = doc.splitTextToSize(meta.longTitle, CONTENT_W - 6);
-  doc.text(sub, M.l + 6, 140);
+  doc.text(sub, M.l + 6, titleY + 12);
 
   doc.setDrawColor(...LIME);
   doc.setLineWidth(0.9);
-  doc.line(M.l + 6, 152, M.l + 28, 152);
+  doc.line(M.l + 6, titleY + 24, M.l + 28, titleY + 24);
 
-  const flow = makeFlow(doc, 168, "The facts", nav);
+  const flow = makeFlow(doc, titleY + 32, "The facts", nav);
   flow.newPage = function stayOnCover() {
     /* keep the opening on one print page */
   };
