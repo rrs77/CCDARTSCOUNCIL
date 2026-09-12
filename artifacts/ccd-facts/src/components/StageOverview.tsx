@@ -185,13 +185,14 @@ export function StageOverview({
           href={assetUrl("the-facts-briefing.pdf")}
           target="_blank"
           rel="noopener noreferrer"
-          aria-label="Open The facts briefing as a PDF"
+          aria-label="Download The facts as a PDF"
+          download="the-facts-briefing.pdf"
         >
           <span className="stage-launcher-doc-mark" aria-hidden>
             PDF
           </span>
           <span className="stage-launcher-doc-copy">
-            <span className="stage-launcher-doc-label">The full briefing</span>
+            <span className="stage-launcher-doc-label">Download The facts as a PDF</span>
             <span className="stage-launcher-doc-hint">Every section, figure and source</span>
           </span>
         </a>

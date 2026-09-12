@@ -2235,6 +2235,56 @@ button:focus-visible {
 }
 
 /* —— Present chrome —— */
+.facts-toolbar {
+  position: absolute;
+  z-index: 60;
+  top: 0.75rem;
+  right: 0.65rem;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.4rem;
+  max-width: min(28rem, calc(100vw - 7.5rem));
+  pointer-events: auto;
+}
+
+.facts-nav-pdf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 2.7rem;
+  padding: 0 0.85rem;
+  border-radius: 0.8rem;
+  border: 1px solid rgba(182, 255, 126, 0.45);
+  background: #b6ff7e;
+  color: #002d24;
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.28);
+  text-decoration: none;
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+  line-height: 1.15;
+}
+
+.facts-nav-pdf svg {
+  width: 1.05rem;
+  height: 1.05rem;
+  flex-shrink: 0;
+}
+
+.facts-nav-pdf-short {
+  display: none;
+}
+
+.facts-nav-pdf:hover,
+.facts-nav-pdf:focus-visible {
+  background: #a7f46e;
+  color: #002d24;
+  outline: 2px solid var(--lime);
+  outline-offset: 2px;
+}
+
 .present-chrome {
   position: absolute;
   z-index: 40;
@@ -2453,6 +2503,18 @@ button:focus-visible {
     border-radius: 0.75rem;
   }
 
+  .facts-toolbar {
+    top: 0.6rem;
+    right: 0.5rem;
+    max-width: min(22rem, calc(100vw - 6.8rem));
+  }
+
+  .facts-nav-pdf {
+    min-height: 2.55rem;
+    padding: 0 0.7rem;
+    border-radius: 0.75rem;
+  }
+
   .map-nav-tab-text {
     font-size: 0.7rem;
   }
@@ -2505,6 +2567,19 @@ button:focus-visible {
     min-height: 2.45rem;
     height: 2.45rem;
     padding: 0 0.6rem;
+  }
+
+  .facts-nav-pdf-full {
+    display: none;
+  }
+
+  .facts-nav-pdf-short {
+    display: inline;
+  }
+
+  .facts-nav-pdf {
+    min-height: 2.45rem;
+    height: 2.45rem;
   }
 
   .world-overview-hint {
@@ -3493,6 +3568,11 @@ button:focus-visible {
   background: rgba(0, 61, 50, 0.9);
   outline: 2px solid var(--focus-ring);
   outline-offset: 3px;
+}
+
+.facts-toolbar {
+  top: 0.75rem;
+  right: 0.75rem;
 }
 
 .present-chrome {
