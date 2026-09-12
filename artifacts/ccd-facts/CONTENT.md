@@ -121,4 +121,44 @@ Several universities have closed or paused music degrees for new students. Kent,
 
 OfS high-cost subject funding for creative and performing arts falls from £12.9 million to £0 in 2026/27 — a 100% cut to Price Group C1.2. That is not all OfS or government support: the Performing Arts Specialist Initiative remains at £9.6 million, and world-leading specialist-provider funding continues.[^24]
 
-That sits on top of a 
+That sits on top of a school curriculum era that narrowed accountability toward a core academic suite and devalued arts pathways from 14 — so lower GCSE and A-level take-up feeds thinner university demand.[^1][^2]
+
+<!-- chart:heChange -->
+
+> To support the decline upstream — before courses close or combine — CCDesigner aims to keep specialist planning and Partner Hub resources in teachers’ hands earlier, so geography and household resources are less decisive before students apply.
+
+### HE markers
+
+- **−0.5% vs +0.6%** — Creative Arts & Design domestic undergrads vs wider undergraduate cohort (2023/24→2024/25)[^9]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls at modern universities[^2]
+- **UCB / Wolverhampton / St Mary’s** — −85% / −58% / −51% Creative Arts & Design domestic undergrads (2020/21–2024/25)[^2]
+- **£12.9m → £0** — OfS high-cost subject funding for creative and performing arts (2025/26→2026/27) — a 100% cut; specialist and initiative funding continues[^24]
+- **£9.6m** — Performing Arts Specialist Initiative still allocated in 2026/27[^24]
+
+## Cold spots · place & income
+
+Where you live, and what your school can spend, still decides how much art you get. That gap starts early and travels upwards. Regions with the highest rates of free school meals — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%), and no GCSE Drama entries (59% vs 17%).[^2]
+
+FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
+
+<!-- chart:disadvantage -->
+
+> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
+
+### Cold-spot markers
+
+- **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
+- **59% vs 17%** — No GCSE Drama — most vs least deprived LA fifth[^2]
+- **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
+- **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls are at modern universities[^2][^9]
+
+## Enrichment Framework
+
+After the bell, music, drama and dance are often how a child first finds a place they want to stay. The Enrichment Framework (June 2026) asks every school and college to treat that offer as part of a good education — not a nice extra if the timetable allows.[^12]
+
+It is non-statutory guidance for England. It applies to primary, secondary, special and alternative provision, sixth forms and colleges, and to organisations delivering enrichment. Enrichment covers co-curricular and extra-curricular experiences, in or beyond the school day, by staff or external partners.[^12][^14]
+
+The five areas are civic engagement; arts and culture; nature, outdoors and adventure; sport and physical activity; and wider life and future skills. Schools use a 1–4 self-assessment scale (identifying → sustaining and stretching) plus an action-planning template for targets, responsibility, monitoring, success criteria, timings and resources.[^12][^13]
+
+In 2024–25, 75% of schools offered musical performance (orchestra, choir and similar). Separately, parent- and pupil-reported participation in at least one extracurricular activity was 72% at KS1–3, 60% at KS4, and 45% in special schools. Evidence links enrichment with belonging, confidence, wellbeing and social connection, while remaining cautious about cau
