@@ -231,4 +231,64 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
             : "",
       heroStat: hubStat,
       chartId: hubChart,
-      quote: quotes[0] ? firstSentence(quotes[0].text) : undefin
+      quote: quotes[0] ? firstSentence(quotes[0].text) : undefined,
+      // Classroom photo ONLY on The situation — unique illustration, not reused
+      photoHero: hubId === "the-situation" && !hubStat && !hubChart && !isSources,
+      photoCrop: crop,
+      footnotes: applicableFootnotes.filter((fn) => !!fn.url),
+      blocks: sec.blocks,
+      subsections: nestedSections
+        .map((n) => ({ title: n.title, blocks: n.blocks })),
+    });
+
+    type ChildSpec = {
+      id: string;
+      title: string;
+      sentence: string;
+      heroStat?: { value: string; label: string };
+      chartId?: string;
+      quote?: string;
+      photoHero: boolean;
+      blocks: ContentBlock[];
+    };
+    const children: ChildSpec[] = [];
+    const usedChildTitles = new Set<string>([sec.title.trim().toLowerCase()]);
+
+    const takeTitle = (raw: string): string => {
+      let t = raw.trim();
+      const key = t.toLowerCase();
+      if (!usedChildTitles.has(key)) {
+        usedChildTitles.add(key);
+        return t;
+      }
+      let n = 2;
+      while (usedChildTitles.has(`${key} ${n}`)) n += 1;
+      t = `${raw.trim()} ${n}`;
+      usedChildTitles.add(t.toLowerCase());
+      return t;
+    };
+
+    {
+      for (const kid of nested.filter((n) => n.parentId === sec.id)) {
+        if (children.length >= MAX_CHILDREN) break;
+        const kParas = kid.blocks.filter((b) => b.type === "paragraph") as Extract<
+          ContentBlock,
+          { type: "paragraph" }
+        >[];
+        const kStats = kid.blocks.filter((b) => b.type === "stat") as Extract<
+          ContentBlock,
+          { type: "stat" }
+        >[];
+        const kCharts = kid.blocks.filter((b) => b.type === "chart") as Extract<
+          ContentBlock,
+          { type: "chart" }
+        >[];
+        used.add(kid.id);
+        children.push({
+          id: kid.id,
+          title: takeTitle(kid.title),
+          sentence: kParas[0]
+            ? firstSentence(kParas[0].text)
+            : kStats[0]
+              ? shortLabel(kStats[0].label, 90)
+              : firstSentence(kid.title),
