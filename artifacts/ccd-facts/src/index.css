@@ -1954,16 +1954,17 @@ button:focus-visible {
 }
 
 .prezi-reference-footer li {
-  font-size: 0.88rem;
-  line-height: 1.45;
-  color: #1a332e;
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #002d24;
+  font-weight: 600;
 }
 
 .prezi-reference-footer a,
 .stage-zone-references a {
-  color: inherit;
+  color: #002d24;
   text-decoration: underline;
-  text-decoration-color: rgba(26, 51, 46, 0.4);
+  text-decoration-color: rgba(0, 45, 36, 0.45);
   text-underline-offset: 0.15em;
 }
 
@@ -2994,9 +2995,10 @@ button:focus-visible {
 .detail-footnotes {
   margin: 1.25rem 0 0;
   padding-left: 1.2rem;
-  font-size: 0.95rem;
-  line-height: 1.5;
-  color: #33443e;
+  font-size: 1rem;
+  line-height: 1.55;
+  color: #002d24;
+  font-weight: 550;
 }
 
 .detail-photo-bubble {
@@ -3343,16 +3345,29 @@ button:focus-visible {
   justify-self: center;
 }
 
+.prezi-frame.is-focus .prezi-reference-footer,
+.prezi-frame--scene .prezi-reference-footer,
 .prezi-reference-footer {
   margin-top: 0.75rem;
-  color: #1a332e;
+  color: #002d24;
 }
 
-.prezi-reference-footer a {
-  color: #0f2a2e;
+.prezi-frame.is-focus .prezi-reference-footer li,
+.prezi-frame--scene .prezi-reference-footer li,
+.prezi-reference-footer li {
+  font-size: 1rem;
+  line-height: 1.5;
+  color: #002d24;
   font-weight: 600;
+}
+
+.prezi-frame.is-focus .prezi-reference-footer a,
+.prezi-frame--scene .prezi-reference-footer a,
+.prezi-reference-footer a {
+  color: #002d24;
+  font-weight: 650;
   text-decoration: underline;
-  text-decoration-color: rgba(15, 42, 46, 0.38);
+  text-decoration-color: rgba(0, 45, 36, 0.45);
 }
 
 .prezi-reference-footer a:hover {
@@ -3641,13 +3656,15 @@ button:focus-visible {
 }
 
 .detail-footnotes {
-  color: var(--muted);
+  color: #002d24;
+  font-size: 1rem;
 }
 
 .detail-footnotes a {
-  color: var(--accent);
-  font-weight: 500;
-  text-decoration: none;
+  color: #002d24;
+  font-weight: 650;
+  text-decoration: underline;
+  text-decoration-color: rgba(0, 45, 36, 0.4);
 }
 
 .detail-footnotes a:hover {

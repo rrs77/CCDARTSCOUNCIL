@@ -226,7 +226,9 @@ The same years that entries fell are also the years government started writing t
 
 The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc headline and additional KS4 performance measures from 2025/26 after the Review found they constrained arts and vocational choice.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from August 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, plus £3.85m from Arts Council England and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
 
-Free education resources with national reach — publicly funded or free to schools:
+### Free education resources
+
+Publicly funded or free to schools — each link opens the source:
 
 - **Oak National Academy — Music** — https://www.thenational.academy/teachers/key-stages/key-stage-1/subjects/music
 - **BBC Teach — Primary Music** — https://www.bbc.co.uk/teach/topics/cmjp647k3e8t
