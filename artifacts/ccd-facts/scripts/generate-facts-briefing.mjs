@@ -280,15 +280,16 @@ function drawRichLine(doc, units, x, y, fontSize, color, font, opts = {}) {
 /** Circular CCD mark — lime ring, forest fill, white letters. */
 function drawLogo(doc, cx, cy, d, onDark) {
   const r = d / 2;
-  doc.setFillColor(...(onDark ? [10, 61, 50] : FOREST));
-  doc.circle(cx, cy, r * 0.9, "F");
+  const inner = r * 0.92;
+  doc.setFillColor(...(onDark ? [8, 52, 44] : FOREST));
+  doc.circle(cx, cy, inner, "F");
   doc.setDrawColor(...LIME);
-  doc.setLineWidth(Math.max(0.55, d * 0.028));
-  doc.circle(cx, cy, r * 0.9, "S");
+  doc.setLineWidth(Math.max(0.7, d * 0.034));
+  doc.circle(cx, cy, inner, "S");
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(d * 0.34);
+  doc.setFontSize(d * 0.4);
   doc.setTextColor(...WHITE);
-  doc.text("CCD", cx, cy + d * 0.055, { align: "center" });
+  doc.text("CCD", cx, cy + d * 0.05, { align: "center", charSpace: d >= 28 ? 0.35 : 0 });
 }
 
 function washPage(doc) {
@@ -312,7 +313,7 @@ function footer(doc, page, total, onForest) {
 }
 
 function runningHead(doc, label, nav) {
-  drawLogo(doc, M.l + 5.2, 10.4, 10.4, false);
+  drawLogo(doc, M.l + 6, 10.4, 12.4, false);
   addPageLink(doc, M.l, 5.2, 10.4, 10.4, 1);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(7.2);
@@ -440,15 +441,33 @@ function cover(doc, meta, nav) {
   doc.setFillColor(...LIME);
   doc.rect(0, 0, 3.6, PAGE.h, "F");
 
-  drawLogo(doc, M.l + 14, 26, 22, true);
+  const logoD = 34;
+  const logoCx = M.l + 5 + logoD / 2;
+  const logoCy = 18 + logoD / 2;
+  try {
+    const g = new doc.GState({ opacity: 0.42 });
+    doc.saveGraphicsState();
+    doc.setGState(g);
+    doc.setFillColor(...FOREST);
+    doc.roundedRect(M.l - 1, 11, 118, 44, 8, 8, "F");
+    doc.restoreGraphicsState();
+  } catch {
+    /* plate optional */
+  }
+  drawLogo(doc, logoCx, logoCy, logoD, true);
+  const lockX = logoCx + logoD / 2 + 5;
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(8.4);
+  doc.setFontSize(14);
   doc.setTextColor(...LIME);
-  doc.text("CREATIVE CURRICULUM DESIGNER", M.l + 28, 23.6);
+  doc.text("Creative Curriculum Designer", lockX, logoCy - 4.6);
+  doc.setFont("times", "italic");
+  doc.setFontSize(12.4);
+  doc.setTextColor(...WHITE);
+  doc.text("Exceptional lessons start with connection", lockX, logoCy + 2.4);
   doc.setFont("helvetica", "normal");
-  doc.setFontSize(8);
+  doc.setFontSize(8.6);
   doc.setTextColor(214, 224, 218);
-  doc.text("ccdesigner.co.uk", M.l + 28, 28.8);
+  doc.text("ccdesigner.co.uk", lockX, logoCy + 9.2);
 
   doc.setFont("times", "bold");
   doc.setFontSize(40);
@@ -465,12 +484,7 @@ function cover(doc, meta, nav) {
   doc.setLineWidth(0.9);
   doc.line(M.l + 6, 152, M.l + 28, 152);
 
-  doc.setFont("times", "italic");
-  doc.setFontSize(12.5);
-  doc.setTextColor(...LIME);
-  doc.text("Exceptional lessons start with connection", M.l + 6, 168);
-
-  const flow = makeFlow(doc, 180, "The facts", nav);
+  const flow = makeFlow(doc, 168, "The facts", nav);
   flow.newPage = function stayOnCover() {
     /* keep the opening on one print page */
   };
