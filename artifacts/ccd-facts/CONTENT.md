@@ -149,24 +149,93 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 - **−21%** — Arts A-level entries (CLA Report Card 2024 · 2010/11–2022/23)[^1]
 - **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
 
+## Cold spots · place & income
+
+CLA’s arts entitlement gap starts early and travels upwards. Regions with the highest FSM rates — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%).[^2]
+
+FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
+
+<!-- chart:disadvantage -->
+
+> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need areas, so outstanding materials are shared beyond postcode.
+
+### Cold-spot markers
+
+- **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
+- **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
+- **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
+
 ## University / HE
 
-Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA 2024/25 via CLA 2026 Detailed Analysis).[^9]
+Creative arts degrees are being closed to new students, suspended, or folded into larger faculties — while take-up falls and the squeeze hits economically deprived areas hardest.
+
+Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA via CLA 2026).[^9] CLA finds steep collapses at individual providers — University College Birmingham −85%, Wolverhampton −58%, St Mary’s −51% (2020/21–2024/25) — concentrated in modern universities that educate students from low-participation neighbourhoods.[^2]
+
+From 2026/27, OfS high-cost teaching-grant support for creative and performing arts is cut to zero.[^24]
 
 <!-- chart:heChange -->
 
+> CCDesigner aims to keep specialist planning and Partner Hub resources in teachers’ hands earlier, so geography and household resources are less decisive before students apply.
+
+### HE markers
+
+- **−0.5% vs +0.6%** — Creative Arts & Design domestic undergrads vs wider undergraduate cohort (2023/24→2024/25)[^9]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls at modern universities[^2]
+- **OfS 2026/27** — High-cost teaching grant for creative & performing arts cut to zero[^24]
+
 ## Music Hubs and National Centre
 
-Music Hubs annual backing and National Centre contract support are separate funding streams.[^7][^8]
+Hub revenue support has been cash-flat near £76m since 2019 while costs rose — a real-terms squeeze — with capital and the National Centre as separate streams.[^21][^22]
 
-The National Centre is intended to be established by September 2026 and to boost in-school arts enrichment alongside curriculum reform. A separate £22.5 million, three-year enrichment expansion programme targets up to 400 schools — useful evidence of priority, not universal school funding.[^8][^15]
+The National Centre is intended to launch by September 2026 and to boost in-school arts enrichment alongside curriculum reform. A separate £22.5 million, three-year enrichment expansion programme targets up to 400 schools — useful evidence of priority, not universal school funding.[^8][^15]
 
 - **£76m** — Annual Music Hubs backing to AY 2026/27[^7]
 - **£25m** — Additional capital for instruments / technology[^7]
 - **Up to £13m** — National Centre for Arts and Music Education over three years[^8]
 - **£22.5m** — Enrichment expansion · up to 400 schools · three years[^15]
 
+<!-- chart:hubRevenueTrend -->
+
+> When Hub and partner funding is under pressure, CCDesigner aims to make shared resources go further — and make use more transparent so funders can see materials reaching cold spots.
+
+### Current commitments
+
 <!-- chart:funding -->
+
+## National plans & free resources
+
+It is not only contraction — new government plans and funded free resources aim to widen reach again.
+
+The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026.[^8][^7]
+
+Free education resources with national reach — publicly funded or free to schools:
+
+- **Oak National Academy** — free sequenced music curriculum and lessons, primary–GCSE
+- **BBC Ten Pieces** — classical music creative responses for schools
+- **Arts Council England** — Music Hubs guidance and hub finder
+- **Youth Music** — funded youth music projects and practice
+- **Turn It Up** — DCMS/DfE plan for music (GOV.UK)
+
+> Policy is creating space again. CCD aims to turn national plans and free resources into day-to-day classroom use — especially in cold spots.
+
+### Plan markers
+
+- **EBacc measures** — Removed for schools from 2025/26; arts choices less constrained[^7][^25]
+- **National Curriculum** — Reformed music entitlement to be taught from September 2028[^7]
+- **National Centre** — Launch Sept 2026; online CPD; Hubs oversight from 2027[^8]
+- **£76m + £25m** — Hub revenue to AY 2026/27 + capital instruments / tech[^7]
+
+## A solution
+
+Creative Curriculum Designer is a free national planning and resource platform for performing and creative arts teachers, EYFS to A-level.
+
+Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs aim to connect teachers with arts organisations.
+
+Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.
+
+Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.
+
+> The evidence shows fragmentation, cold spots and unequal entitlement. CCD aims to be the practical connection layer — wider reach, shared resources, and clearer proof of use so support can follow need.
 
 [^1]: Cultural Learning Alliance Report Card 2024 — https://www.culturallearningalliance.org.uk/wp-content/uploads/2024/05/CLA-2024-Annual-Report-Card.pdf
 [^2]: Cultural Learning Alliance Report Card 2026 — https://www.culturallearningalliance.org.uk/wp-content/uploads/2026/05/CLA-2026-Report-Card-final.pdf
@@ -188,3 +257,8 @@ The National Centre is intended to be established by September 2026 and to boost
 [^18]: Enrichment provision action-planning tool — https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges
 [^19]: Enrichment framework expert working group — https://www.gov.uk/government/publications/the-enrichment-framework-for-schools-and-colleges/enrichment-framework-expert-working-group
 [^20]: Music Mark — DfE Enrichment Benchmarks: a Reflection — https://www.musicmark.org.uk/news/dfe-enrichment-benchmarks-a-reflection/
+[^21]: Demos / Music Mark — Facing the Music (Feb 2025) — https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf
+[^22]: Music Mark — Music Hubs funding cuts response (June 2026) — https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/
+[^23]: Independent Society of Musicians — university arts funding cut response (July 2026) — https://www.ism.org/news/university-arts-funding-cut-ism-response/
+[^24]: Office for Students / DfE Strategic Priorities Grant 2026–27 — high-cost support for creative and performing arts removed
+[^25]: Curriculum and Assessment Review Final Report / government response (DfE, Nov 2025) — https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report

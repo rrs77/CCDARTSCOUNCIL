@@ -35,9 +35,16 @@ function buildMenu(presentation: Presentation): {
   ].filter(Boolean) as NavItem[];
   if (stages.length) groups.push({ heading: "Key stages", items: stages });
 
-  const after = [
+  const place = [
+    pick("cold-spots-place-and-income", "Cold spots"),
     pick("university-he", "Higher education"),
+  ].filter(Boolean) as NavItem[];
+  if (place.length) groups.push({ heading: "Place and HE", items: place });
+
+  const after = [
     pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
+    pick("national-plans-and-free-resources", "National plans"),
+    pick("a-solution", "A solution"),
   ].filter(Boolean) as NavItem[];
   if (after.length) groups.push({ heading: "After school", items: after });
 

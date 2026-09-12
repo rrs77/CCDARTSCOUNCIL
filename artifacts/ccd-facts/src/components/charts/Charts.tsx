@@ -5,6 +5,7 @@ import {
   BarChart,
   CartesianGrid,
   Cell,
+  ComposedChart,
   Legend,
   Line,
   LineChart,
@@ -288,6 +289,84 @@ export function ContentChart({
                 ))}
               </Bar>
             </BarChart>
+          </ResponsiveContainer>
+        </motion.div>
+      </ChartFrame>
+    );
+  }
+
+  if (chart.type === "funding-trend") {
+    const fundLabel = density === "canvas" ? 14 : 12;
+    const fundTick = density === "canvas" ? 13 : 11;
+    const yMax = Number(chart.meta?.yMax ?? 110);
+    const cashName = chart.axis?.legend?.cash ?? "Cash revenue grant";
+    const keepName = chart.axis?.legend?.keep2019 ?? "To hold 2019 purchasing power";
+    return (
+      <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
+        <motion.div key={drawKey} {...chartEnter} className={density === "canvas" ? "h-[400px] w-full" : "h-[300px] w-full"}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart
+              data={chart.series}
+              margin={
+                density === "canvas"
+                  ? { top: 28, right: 16, left: 8, bottom: 16 }
+                  : { top: 24, right: 12, left: 4, bottom: 8 }
+              }
+            >
+              <CartesianGrid stroke="#e8eeea" vertical={false} />
+              <XAxis dataKey="year" tick={{ fill: "#0f2a2e", fontSize: fundTick, fontWeight: 650 }} interval={0} />
+              <YAxis
+                domain={[0, yMax]}
+                tick={{ fill: "#6b7d80", fontSize: fundTick }}
+                tickFormatter={(v: number) => `£${v}m`}
+              />
+              <Tooltip
+                contentStyle={tip}
+                formatter={(v: number, name: string) => [`£${v}m`, name]}
+              />
+              {density === "canvas" ? null : (
+                <Legend
+                  payload={[
+                    { value: cashName, type: "square", color: "#2A9D8F" },
+                    { value: keepName, type: "line", color: "#C45C26" },
+                  ]}
+                />
+              )}
+              <Bar
+                dataKey="cash"
+                name={cashName}
+                fill="#2A9D8F"
+                barSize={density === "canvas" ? 36 : 28}
+                radius={[6, 6, 0, 0]}
+                label={{
+                  position: "top",
+                  formatter: (v: number) => (v ? `£${v}m` : ""),
+                  fill: "#0f2a2e",
+                  fontWeight: 800,
+                  fontSize: fundLabel,
+                }}
+                isAnimationActive={!reduced}
+                animationDuration={drawMs}
+                animationBegin={0}
+                animationEasing="ease-out"
+                cursor="pointer"
+                onClick={(e) => onDrill?.(String((e as { year?: string }).year ?? ""))}
+              />
+              <Line
+                type="linear"
+                dataKey="keep2019"
+                name={keepName}
+                stroke="#C45C26"
+                strokeWidth={2.75}
+                strokeDasharray="6 4"
+                connectNulls
+                dot={{ r: 5, fill: "#C45C26", strokeWidth: 0 }}
+                isAnimationActive={!reduced}
+                animationDuration={drawMs}
+                animationBegin={stagger}
+                animationEasing="ease-out"
+              />
+            </ComposedChart>
           </ResponsiveContainer>
         </motion.div>
       </ChartFrame>

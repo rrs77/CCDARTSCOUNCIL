@@ -12,6 +12,15 @@ function overviewLabel(frame: FrameNode): string {
   if (frame.id === "enrichment-framework") {
     return "Enrichment Framework";
   }
+  if (frame.id === "cold-spots-place-and-income") {
+    return "Cold spots";
+  }
+  if (frame.id === "national-plans-and-free-resources") {
+    return "National plans";
+  }
+  if (frame.id === "a-solution") {
+    return "A solution";
+  }
   return stageLabel(frame.id, frame.title);
 }
 
@@ -19,8 +28,17 @@ function overviewBlurb(frame: FrameNode): string {
   if (frame.id === "enrichment-framework") {
     return "Non-statutory guidance into usable partnership, access and evidence.";
   }
+  if (frame.id === "cold-spots-place-and-income") {
+    return "Entitlement still tracks place, FSM and parental income.";
+  }
   if (frame.id === "music-hubs-and-national-centre") {
     return "National funding streams and the infrastructure for arts partnership.";
+  }
+  if (frame.id === "national-plans-and-free-resources") {
+    return "Curriculum reform, Turn It Up, and free national resources already in motion.";
+  }
+  if (frame.id === "a-solution") {
+    return "A practical connection layer for teachers and arts organisations.";
   }
   return stageComment(frame.id, frame.sentence || "Open this stage to explore the evidence.");
 }
@@ -83,13 +101,28 @@ export function StageOverview({
           The <em>facts</em>
         </motion.h1>
         <motion.p
+          className="stage-launcher-kicker"
+          initial={reduced ? false : { opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduced ? 0.01 : 0.45, delay: reduced ? 0 : 0.14, ease: easeOut }}
+        >
+          Arts education
+        </motion.p>
+        <motion.p
+          className="stage-launcher-heading"
+          initial={reduced ? false : { opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: reduced ? 0.01 : 0.5, delay: reduced ? 0 : 0.18, ease: easeOut }}
+        >
+          At a tipping point — with ambitious plans ahead.
+        </motion.p>
+        <motion.p
           className="stage-launcher-lead"
           initial={reduced ? false : { opacity: 0, y: 14 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.55, delay: reduced ? 0 : 0.16, ease: easeOut }}
+          transition={{ duration: reduced ? 0.01 : 0.55, delay: reduced ? 0 : 0.22, ease: easeOut }}
         >
-          Evidence for creative education in England — from early years to higher education,
-          partnership and enrichment.
+          What’s needed now is shared expertise and connection.
         </motion.p>
       </header>
 

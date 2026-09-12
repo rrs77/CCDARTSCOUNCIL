@@ -10,8 +10,10 @@ export const SECTION_ACCENT: Record<string, string> = {
   secondary: "#14B8A6",
   gcse: "#5EEAD4",
   "a-level": "#14B8A6",
+  "cold-spots-place-and-income": "#E97451",
   "university-he": "#B6FF7E",
   "music-hubs-and-national-centre": "#5EEAD4",
+  "national-plans-and-free-resources": "#14B8A6",
   "a-solution": "#B6FF7E",
   sources: "#94A3B8",
 };

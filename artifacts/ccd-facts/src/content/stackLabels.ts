@@ -22,8 +22,11 @@ export const SECTION_PATH = [
   "secondary",
   "gcse",
   "a-level",
+  "cold-spots-place-and-income",
   "university-he",
   "music-hubs-and-national-centre",
+  "national-plans-and-free-resources",
+  "a-solution",
 ] as const
 
 export const STAGE_LABELS: Record<StageId, string> = {

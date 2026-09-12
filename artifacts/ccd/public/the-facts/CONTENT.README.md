@@ -2,16 +2,12 @@
 
 **Single source of copy:** `CONTENT.md` in this folder (`artifacts/ccd-facts`).
 
-This package is **standalone for Replit** (see `README.md`). It is **not** merged into CCD / `main` yet.
+This package ships **inside the CCD app**. A GitHub push that builds CCD also rebuilds The facts into `/the-facts/`.
 
-Canvas path: title → EYFS → Enrichment Framework → Primary → Secondary → GCSE → A-level → HE → **Music Hubs and National Centre** → Sources. Nest supporting material under `###`.
+Canvas path: EYFS → Enrichment Framework → Primary → Secondary → GCSE → A-level → Cold spots → HE → Music Hubs → National plans → A solution. Nest supporting material under `###`.
 
-Section circular heroes live in `public/illustrations/` and are mapped in `src/content/sectionIllustrations.ts`. The classroom photo (`hero-arts.jpg`) is **only** for the opening title / The situation. Sources lists principal footnotes on the frame (no filler CCD circle). One Info control per focused place opens the landscape detail modal. The Enrichment Framework place opens an interactive five-areas / eight-benchmarks panel in that modal.
-
-1. Change any heading or paragraph → that text updates after rebuild / `pnpm dev` save.
-2. Add a new `## Heading` → a new place on the canvas (sized to its content).
+1. Change any heading or paragraph → that text updates after `pnpm --filter @workspace/ccd run build`.
+2. Add a new `## Heading` → a new place on the overview.
 3. Add `### Nested` under a section → subsection in the detail modal.
-4. Use `> quote` for the stage “Why this matters” pull-out (once per stage), `- **stat** — label` for figure tiles, `<!-- chart:id -->` for charts defined in `src/content/facts.content.ts` (prefer one chart comment at the `##` level).
-5. Put footnotes under `## Sources` as `[^n]: …`.
-
-No code changes are required to add a section — edit `CONTENT.md`, then rebuild.
+4. Use `> quote` for the stage pull-out, `- **stat** — label` for figure tiles, `<!-- chart:id -->` for charts in `src/content/facts.content.ts`.
+5. Put footnotes as `[^n]: …` at the end of `CONTENT.md`.

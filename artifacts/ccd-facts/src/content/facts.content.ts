@@ -38,7 +38,8 @@ export type ChartDef = {
     | "lollipop"
     | "indexed-line"
     | "divergent-bars"
-    | "funding-bars";
+    | "funding-bars"
+    | "funding-trend";
   caption: string;
   sourceNote: string;
   colours?: string[];
@@ -178,6 +179,35 @@ export const sources: Record<string, SourceRef> = {
     label: "Music Mark — DfE Enrichment Benchmarks: a Reflection",
     year: "2026",
     url: "https://www.musicmark.org.uk/news/dfe-enrichment-benchmarks-a-reflection/",
+  },
+  musicMarkDemos: {
+    id: "musicMarkDemos",
+    label: "Demos / Music Mark — Facing the Music",
+    year: "Feb 2025",
+    url: "https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf",
+  },
+  musicMarkHubs: {
+    id: "musicMarkHubs",
+    label: "Music Mark — Music Hubs funding cuts response",
+    year: "June 2026",
+    url: "https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/",
+  },
+  ismHe: {
+    id: "ismHe",
+    label: "ISM — university arts funding cut / music course closures",
+    year: "July 2026",
+    url: "https://www.ism.org/news/university-arts-funding-cut-ism-response/",
+  },
+  ofsGrant: {
+    id: "ofsGrant",
+    label: "OfS / DfE Strategic Priorities Grant 2026–27",
+    year: "2026",
+  },
+  curriculumReview: {
+    id: "curriculumReview",
+    label: "Curriculum and Assessment Review — government response",
+    year: "Nov 2025",
+    url: "https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report",
   },
 };
 
@@ -610,9 +640,9 @@ export const charts: Record<string, ChartDef> = {
   heChange: {
     id: "heChange",
     type: "divergent-bars",
-    caption: "Higher education: change within Creative Arts & Design",
+    caption: "University take-up: Creative Arts & Design subjects still shifting",
     sourceNote:
-      "Domestic undergraduate student numbers. HESA 2024/25 as analysed in CLA Report Card 2026 Detailed Analysis.",
+      "Domestic undergraduate student numbers. HESA 2024/25 as analysed in CLA Report Card 2026 Detailed Analysis. CLA also reports steep provider-level falls concentrated in modern universities serving low-participation neighbourhoods.",
     axis: {
       x: "% change, 2023/24 to 2024/25",
       legend: { decrease: "Decrease", increase: "Increase" },
@@ -624,7 +654,33 @@ export const charts: Record<string, ChartDef> = {
       { subject: "Dance", change: -0.7 },
       { subject: "Design Studies", change: -1.1 },
       { subject: "Drama", change: 1.6 },
+      { subject: "Music", change: 1.1 },
+      { subject: "Others in Creative Arts & Design", change: -15.4 },
+      { subject: "Performing Arts (non-specific)", change: -2.9 },
     ],
+  },
+  hubRevenueTrend: {
+    id: "hubRevenueTrend",
+    type: "funding-trend",
+    caption: "Music Hubs revenue grant over time — cash flat; real-terms support fell",
+    sourceNote:
+      "Cash revenue grant (not capital). ≈ £76m cash since 2019 (Demos/Music Mark 2025); £76m confirmed to AY 2026/27 (Turn It Up). Dashed line: cash needed to hold 2019 purchasing power — Music Mark cites Bank of England (£76m in 2019 ≈ £100m today).",
+    axis: {
+      y: "£ million",
+      legend: {
+        cash: "Cash revenue grant",
+        keep2019: "To hold 2019 purchasing power",
+      },
+    },
+    series: [
+      { year: "2012/13", cash: 63 },
+      { year: "2015/16", cash: 75 },
+      { year: "2018/19", cash: 75 },
+      { year: "2019/20", cash: 76, keep2019: 76 },
+      { year: "2024/25", cash: 76 },
+      { year: "2026/27", cash: 76, keep2019: 100 },
+    ],
+    meta: { yMax: 110 },
   },
   funding: {
     id: "funding",
