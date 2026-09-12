@@ -200,8 +200,9 @@ export const sources: Record<string, SourceRef> = {
   },
   ofsGrant: {
     id: "ofsGrant",
-    label: "OfS / DfE Strategic Priorities Grant 2026–27",
+    label: "OfS — Funding for 2026–27: decisions and allocations",
     year: "2026",
+    url: "https://www.officeforstudents.org.uk/media/4srekubm/funding-for-2026-27-decisions-allocations.pdf",
   },
   curriculumReview: {
     id: "curriculumReview",
@@ -519,10 +520,10 @@ export const charts: Record<string, ChartDef> = {
       "Baselines: GCSE 2010; A level 2010/11; teaching hours 2011/12; teacher headcount reported by CLA against 2010. End point 2022/23. Source: CLA Report Card 2024.",
     axis: { x: "Percentage change" },
     series: [
-      { name: "Arts GCSE entries", change: -42, baseline: "2010", fill: "#E97451" },
-      { name: "Arts A-level entries", change: -21, baseline: "2010/11", fill: "#C9A227" },
-      { name: "Arts teaching hours", change: -21, baseline: "2011/12 (excl. Dance)", fill: "#2A9D8F" },
-      { name: "Arts teachers", change: -14, baseline: "vs 2010", fill: "#5B7C99" },
+      { name: "Arts GCSE entries", change: -42, baseline: "2010", fill: "#FF6B6B" },
+      { name: "Arts A-level entries", change: -21, baseline: "2010/11", fill: "#0D9488" },
+      { name: "Arts teaching hours", change: -21, baseline: "2011/12 (excl. Dance)", fill: "#14B8A6" },
+      { name: "Arts teachers", change: -14, baseline: "vs 2010", fill: "#002D24" },
     ],
   },
   primaryHours: {
@@ -538,8 +539,8 @@ export const charts: Record<string, ChartDef> = {
       },
     },
     series: [
-      { name: "Independent", value: 47, fill: "#7B6B9C" },
-      { name: "State", value: 6, fill: "#2A9D8F" },
+      { name: "Independent", value: 47, fill: "#002D24" },
+      { name: "State", value: 6, fill: "#14B8A6" },
     ],
   },
   disadvantage: {
@@ -571,9 +572,9 @@ export const charts: Record<string, ChartDef> = {
       'Source: Cultural Learning Alliance Report Card 2024. “No GCSE entries” does not mean “subject not taught”.',
     axis: { x: "% of schools" },
     series: [
-      { subject: "Music", none: 42, fill: "#2A9D8F" },
-      { subject: "Drama", none: 41, fill: "#7B6B9C" },
-      { subject: "Dance", none: 84, fill: "#E97451" },
+      { subject: "Music", none: 42, fill: "#0D9488" },
+      { subject: "Drama", none: 41, fill: "#14B8A6" },
+      { subject: "Dance", none: 84, fill: "#FF6B6B" },
     ],
   },
   gcseIndex: {
@@ -664,7 +665,7 @@ export const charts: Record<string, ChartDef> = {
     type: "funding-trend",
     caption: "Music Hubs revenue grant over time — cash flat; real-terms support fell",
     sourceNote:
-      "Cash revenue grant (not capital). ≈ £76m cash since 2019 (Demos/Music Mark 2025); £76m confirmed to AY 2026/27 (Turn It Up). Dashed line: cash needed to hold 2019 purchasing power — Music Mark cites Bank of England (£76m in 2019 ≈ £100m today).",
+      "Cash revenue grant (not capital). Arts Council reported £75m in 2018/19; ≈ £76m cash since 2019 (Demos/Music Mark 2025); £76m confirmed to AY 2026/27 (Turn It Up). Dashed line: cash needed to hold 2019 purchasing power — Music Mark cites Bank of England (£76m in 2019 ≈ £100m today).",
     axis: {
       y: "£ million",
       legend: {
@@ -673,8 +674,6 @@ export const charts: Record<string, ChartDef> = {
       },
     },
     series: [
-      { year: "2012/13", cash: 63 },
-      { year: "2015/16", cash: 75 },
       { year: "2018/19", cash: 75 },
       { year: "2019/20", cash: 76, keep2019: 76 },
       { year: "2024/25", cash: 76 },
@@ -701,19 +700,19 @@ export const charts: Record<string, ChartDef> = {
         label: "Hubs (annual)",
         value: 76,
         kind: "Annual revenue backing",
-        fill: "#2A9D8F",
+        fill: "#0D9488",
       },
       {
         label: "Capital",
         value: 25,
         kind: "Additional capital investment",
-        fill: "#C9A227",
+        fill: "#14B8A6",
       },
       {
         label: "National Centre",
         value: 13,
         kind: "Centre contract support",
-        fill: "#7B6B9C",
+        fill: "#002D24",
       },
     ],
   },
@@ -725,9 +724,9 @@ export const charts: Record<string, ChartDef> = {
       "Parent/pupil-reported participation in at least one extracurricular activity. KS1–2 and KS3 both 72%; KS4 60%; special schools (primary and secondary) 45%. Musical performance was offered by 75% of schools. Source: DfE Evidence on enrichment in schools and colleges.",
     axis: { x: "% of pupils reported taking part" },
     series: [
-      { subject: "KS1–3", value: 72, fill: "#2A9D8F" },
-      { subject: "KS4", value: 60, fill: "#5B7C99" },
-      { subject: "Special", value: 45, fill: "#E97451" },
+      { subject: "KS1–3", value: 72, fill: "#0D9488" },
+      { subject: "KS4", value: 60, fill: "#14B8A6" },
+      { subject: "Special", value: 45, fill: "#FF6B6B" },
     ],
   },
 };
@@ -764,7 +763,7 @@ export const topics: TopicDef[] = [
     investorLine: "The hours gap is stark — and partnerships are thin.",
     body: [
       "Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.",
-      "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report no external artist or cultural organisation.",
+      "Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report that their school works with no external partners to deliver the arts curriculum.",
       "Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.",
     ],
     whyThisMattersForCCD:
