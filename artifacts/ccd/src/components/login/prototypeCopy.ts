@@ -28,7 +28,7 @@ export const WELCOME_PROTOTYPE_STORAGE_KEY = 'ccd-prototype-welcome-seen-v4';
 
 /** Session-scoped key for the partners/funding start popup.
  * Bump suffix when the first-open flow changes so returning visitors see it again. */
-export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-walkthrough-seen-v3';
+export const PARTNERS_FUNDING_VIDEO_STORAGE_KEY = 'ccd-partners-funding-walkthrough-seen-v4';
 
 /** Title for the first-open start popup. */
 export const PARTNERS_FUNDING_START_TITLE = 'Welcome to the prototype';
