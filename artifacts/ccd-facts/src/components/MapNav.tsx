@@ -27,7 +27,6 @@ function buildMenu(presentation: Presentation): {
 
   const stages = [
     pick("eyfs", "EYFS"),
-    pick("enrichment-framework", "Enrichment"),
     pick("primary-ks1-ks2", "Primary"),
     pick("secondary", "Secondary"),
     pick("gcse", "GCSE"),
@@ -42,6 +41,7 @@ function buildMenu(presentation: Presentation): {
   if (place.length) groups.push({ heading: "Place and HE", items: place });
 
   const after = [
+    pick("enrichment-framework", "Enrichment"),
     pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
     pick("national-plans-and-free-resources", "National plans"),
     pick("a-solution", "A solution"),
