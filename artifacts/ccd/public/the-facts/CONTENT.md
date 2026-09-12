@@ -30,52 +30,6 @@ The DfE Enrichment Framework applies from age 5, but the habits of access start 
 - **Arts & culture** — One of five enrichment areas: music, dance, theatre, museums and galleries[^14]
 - **Access** — Special-school participation already lags mainstream — inclusive early practice matters[^16]
 
-## Enrichment Framework
-
-After the bell, music, drama and dance are often how a child first finds a place they want to stay. The Enrichment Framework (June 2026) asks every school and college to treat that offer as part of a good education — not a nice extra if the timetable allows.[^12]
-
-It is non-statutory guidance for England. It applies to primary, secondary, special and alternative provision, sixth forms and colleges, and to organisations delivering enrichment. Enrichment covers co-curricular and extra-curricular experiences, in or beyond the school day, by staff or external partners.[^12][^14]
-
-The five areas are civic engagement; arts and culture; nature, outdoors and adventure; sport and physical activity; and wider life and future skills. Schools use a 1–4 self-assessment scale (identifying → sustaining and stretching) plus an action-planning template for targets, responsibility, monitoring, success criteria, timings and resources.[^12][^13]
-
-In 2024–25, 75% of schools offered musical performance (orchestra, choir and similar). Separately, parent- and pupil-reported participation in at least one extracurricular activity was 72% at KS1–3, 60% at KS4, and 45% in special schools. Evidence links enrichment with belonging, confidence, wellbeing and social connection, while remaining cautious about causation.[^16]
-
-> A framework can set expectations, but change depends on capacity, connections and usable systems — not another compliance burden.
-
-<!-- chart:enrichmentParticipation -->
-
-### The eight benchmarks
-
-1. Strategically aligned — connect enrichment to curriculum intent and school priorities[^13]
-2. Broad and well-rounded — cover the five enrichment areas[^13]
-3. Well communicated — celebrate participation and achievement[^13]
-4. Shaped by community and student voice[^13]
-5. Accessible and engaging for all — including SEND and disadvantaged pupils[^13]
-6. Works with external partners — local, national and virtual[^13]
-7. Focused on intended outcomes and their measurement[^13]
-8. Continuously reviewed and improved[^13]
-
-### Why this matters for CCDesigner
-
-Benchmark 6 is an unusually close match: find partners; use expertise beyond school staff; review partnership work; signpost opportunities beyond the school. Music Hub and arts-organisation pages, trusted resources, CPD, events, calendar and “add to planning” can provide that infrastructure.[^15][^20]
-
-CCDesigner also has a credible contribution to Benchmarks 1 (curriculum intent), 3 (clear communication), 5 (access barriers and adaptations), 7 (outcomes and proportionate evidence) and 8 (feedback and improvement over time).[^12]
-
-- **75%** — Schools offering musical performance (2024–25)[^16]
-- **72% / 60% / 45%** — Reported participation — KS1–3 / KS4 / special schools[^16]
-- **£22.5m** — Enrichment expansion programme · up to 400 schools · 3 years[^15]
-- **Up to £13m** — National Centre for Arts and Music Education · 3 years[^8][^15]
-
-### Product direction
-
-An optional Enrichment Framework layer — not a separate system — could tag activities against the five areas and eight benchmarks; capture outcomes, barriers, adaptations, cost, timing, student voice and partner review; show a simple gaps dashboard; export evidence summaries for leaders and governors; and track participation by cohort with privacy and safeguarding controls.[^12]
-
-CCDesigner should reduce workload and improve access — never claim to replace safeguarding checks or professional due diligence on providers.[^15]
-
-### Arts Council case wording
-
-CCDesigner aims to provide practical digital infrastructure through which schools can turn the Department for Education’s non-statutory Enrichment Framework into consistent action. It aims to connect teachers with trusted arts organisations and Music Hubs, allow high-quality opportunities and resources to be added directly to planning, and support schools to evidence access, partnership working, intended outcomes and continuous improvement without creating unnecessary workload.[^12][^15][^19]
-
 ## Primary / KS1–KS2
 
 Arts time is already unequal before secondary — independent schools report far more hours than state schools, and schools with more pupils on free school meals are more likely to have cut hours.[^2]
@@ -157,24 +111,6 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 - **−25%** — Arts A-level entries (CLA Report Card 2026 · 2011/12–2024/25)[^2]
 - **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
 
-## Cold spots · place & income
-
-Where you live, and what your school can spend, still decides how much art you get. That gap starts early and travels upwards. Regions with the highest rates of free school meals — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%), and no GCSE Drama entries (59% vs 17%).[^2]
-
-FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
-
-<!-- chart:disadvantage -->
-
-> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
-
-### Cold-spot markers
-
-- **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
-- **59% vs 17%** — No GCSE Drama — most vs least deprived LA fifth[^2]
-- **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
-- **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
-- **Nine of ten** — Largest Creative Arts & Design undergraduate falls are at modern universities[^2][^9]
-
 ## University / HE
 
 Creative arts degrees are being closed to new students, suspended, or folded into larger faculties — while take-up falls and the squeeze hits economically deprived areas hardest.
@@ -198,6 +134,70 @@ That sits on top of a school curriculum era that narrowed accountability toward 
 - **UCB / Wolverhampton / St Mary’s** — −85% / −58% / −51% Creative Arts & Design domestic undergrads (2020/21–2024/25)[^2]
 - **£12.9m → £0** — OfS high-cost subject funding for creative and performing arts (2025/26→2026/27) — a 100% cut; specialist and initiative funding continues[^24]
 - **£9.6m** — Performing Arts Specialist Initiative still allocated in 2026/27[^24]
+
+## Cold spots · place & income
+
+Where you live, and what your school can spend, still decides how much art you get. That gap starts early and travels upwards. Regions with the highest rates of free school meals — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%), and no GCSE Drama entries (59% vs 17%).[^2]
+
+FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
+
+<!-- chart:disadvantage -->
+
+> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
+
+### Cold-spot markers
+
+- **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
+- **59% vs 17%** — No GCSE Drama — most vs least deprived LA fifth[^2]
+- **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
+- **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls are at modern universities[^2][^9]
+
+## Enrichment Framework
+
+After the bell, music, drama and dance are often how a child first finds a place they want to stay. The Enrichment Framework (June 2026) asks every school and college to treat that offer as part of a good education — not a nice extra if the timetable allows.[^12]
+
+It is non-statutory guidance for England. It applies to primary, secondary, special and alternative provision, sixth forms and colleges, and to organisations delivering enrichment. Enrichment covers co-curricular and extra-curricular experiences, in or beyond the school day, by staff or external partners.[^12][^14]
+
+The five areas are civic engagement; arts and culture; nature, outdoors and adventure; sport and physical activity; and wider life and future skills. Schools use a 1–4 self-assessment scale (identifying → sustaining and stretching) plus an action-planning template for targets, responsibility, monitoring, success criteria, timings and resources.[^12][^13]
+
+In 2024–25, 75% of schools offered musical performance (orchestra, choir and similar). Separately, parent- and pupil-reported participation in at least one extracurricular activity was 72% at KS1–3, 60% at KS4, and 45% in special schools. Evidence links enrichment with belonging, confidence, wellbeing and social connection, while remaining cautious about causation.[^16]
+
+> A framework can set expectations, but change depends on capacity, connections and usable systems — not another compliance burden.
+
+<!-- chart:enrichmentParticipation -->
+
+### The eight benchmarks
+
+1. Strategically aligned — connect enrichment to curriculum intent and school priorities[^13]
+2. Broad and well-rounded — cover the five enrichment areas[^13]
+3. Well communicated — celebrate participation and achievement[^13]
+4. Shaped by community and student voice[^13]
+5. Accessible and engaging for all — including SEND and disadvantaged pupils[^13]
+6. Works with external partners — local, national and virtual[^13]
+7. Focused on intended outcomes and their measurement[^13]
+8. Continuously reviewed and improved[^13]
+
+### Why this matters for CCDesigner
+
+Benchmark 6 is an unusually close match: find partners; use expertise beyond school staff; review partnership work; signpost opportunities beyond the school. Music Hub and arts-organisation pages, trusted resources, CPD, events, calendar and “add to planning” can provide that infrastructure.[^15][^20]
+
+CCDesigner also has a credible contribution to Benchmarks 1 (curriculum intent), 3 (clear communication), 5 (access barriers and adaptations), 7 (outcomes and proportionate evidence) and 8 (feedback and improvement over time).[^12]
+
+- **75%** — Schools offering musical performance (2024–25)[^16]
+- **72% / 60% / 45%** — Reported participation — KS1–3 / KS4 / special schools[^16]
+- **£22.5m** — Enrichment expansion programme · up to 400 schools · 3 years[^15]
+- **Up to £13m** — National Centre for Arts and Music Education · 3 years[^8][^15]
+
+### Product direction
+
+An optional Enrichment Framework layer — not a separate system — could tag activities against the five areas and eight benchmarks; capture outcomes, barriers, adaptations, cost, timing, student voice and partner review; show a simple gaps dashboard; export evidence summaries for leaders and governors; and track participation by cohort with privacy and safeguarding controls.[^12]
+
+CCDesigner should reduce workload and improve access — never claim to replace safeguarding checks or professional due diligence on providers.[^15]
+
+### Arts Council case wording
+
+CCDesigner aims to provide practical digital infrastructure through which schools can turn the Department for Education’s non-statutory Enrichment Framework into consistent action. It aims to connect teachers with trusted arts organisations and Music Hubs, allow high-quality opportunities and resources to be added directly to planning, and support schools to evidence access, partnership working, intended outcomes and continuous improvement without creating unnecessary workload.[^12][^15][^19]
 
 ## Music Hubs and National Centre
 
