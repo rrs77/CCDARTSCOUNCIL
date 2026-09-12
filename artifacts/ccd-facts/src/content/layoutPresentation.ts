@@ -114,4 +114,103 @@ function shortLabel(text: string, max = 28): string {
 
 const HANGING = /^(and|or|the|a|an|of|to|for|with|from|into|on|in|at|by|as|also)$/i;
 
-function leafTitleFromSentence(sentence: strin
+function leafTitleFromSentence(sentence: string, fallback: string): string {
+  const t = sentence.replace(/\s+/g, " ").trim();
+  let candidate = t.split(/\s+[—–]\s+/)[0]!.replace(/[:.!?…]+$/, "").trim();
+  if (candidate.length > 44) {
+    candidate = candidate.slice(0, 44).replace(/\s+\S*$/, "").trim();
+  }
+  const words = candidate.split(/\s+/).filter(Boolean);
+  while (words.length > 2 && HANGING.test(words[words.length - 1]!)) words.pop();
+  const title = words.join(" ");
+  if (title.length >= 8) return title;
+  return fallback;
+}
+
+function isFigureStat(value: string): boolean {
+  return /[%£]/.test(value) || /^[−~≈-]?\s*\d/.test(value);
+}
+
+function blocksWithFollowingMatter(
+  sectionBlocks: ContentBlock[],
+  paraText: string,
+): ContentBlock[] {
+  const idx = sectionBlocks.findIndex((b) => b.type === "paragraph" && b.text === paraText);
+  if (idx < 0) return [{ type: "paragraph", text: paraText }];
+  const out: ContentBlock[] = [sectionBlocks[idx]!];
+  for (let j = idx + 1; j < sectionBlocks.length; j++) {
+    const b = sectionBlocks[j]!;
+    if (b.type === "list" || b.type === "link") out.push(b);
+    else break;
+  }
+  return out;
+}
+
+const CROPS: PhotoCrop[] = ["classroom", "drama", "dance", "wide"];
+
+type Proto = {
+  id: string;
+  parentId: string | null;
+  mainSectionId: string;
+  level: 1 | 2 | 3;
+  kind: SceneKind;
+  title: string;
+  sentence: string;
+  heroStat?: { value: string; label: string };
+  quote?: string;
+  chartId?: string;
+  photoHero: boolean;
+  photoCrop: PhotoCrop;
+  footnotes?: ParsedDocument["footnotes"];
+  blocks: ContentBlock[];
+  subsections?: { title: string; blocks: ContentBlock[] }[];
+};
+
+export function expandToProtos(doc: ParsedDocument): Proto[] {
+  const used = new Set<string>(["title", "overview"]);
+  const protos: Proto[] = [];
+  let cropIdx = 0;
+  const nextCrop = (): PhotoCrop => CROPS[cropIdx++ % CROPS.length]!;
+
+  const mains = doc.sections.filter((s) => s.level === 2);
+  const nested = doc.sections.filter((s) => s.level === 3);
+
+  for (const sec of mains) {
+    const isSources = /^sources$/i.test(sec.title);
+    const isSolution = sec.id === "a-solution";
+    if (isSources) continue;
+    const paras = sec.blocks.filter((b) => b.type === "paragraph") as Extract<
+      ContentBlock,
+      { type: "paragraph" }
+    >[];
+    const stats = sec.blocks.filter((b) => b.type === "stat") as Extract<
+      ContentBlock,
+      { type: "stat" }
+    >[];
+    const quotes = sec.blocks.filter((b) => b.type === "quote") as Extract<
+      ContentBlock,
+      { type: "quote" }
+    >[];
+    const charts = sec.blocks.filter((b) => b.type === "chart") as Extract<
+      ContentBlock,
+      { type: "chart" }
+    >[];
+
+    const hubId = sec.id;
+    used.add(hubId);
+    const crop = nextCrop();
+    const nestedSections = nested.filter((n) => n.parentId === sec.id);
+    const applicableIds = new Set([
+      ...sec.footnoteIds,
+      ...nestedSections.flatMap((n) => n.footnoteIds),
+    ]);
+    const applicableFootnotes = doc.footnotes.filter((fn) => applicableIds.has(fn.id));
+
+    // One hero only: prefer chart OR one stat OR photo — never stack competing ovals.
+    // “A solution” is a product zone: no exam/funding graph on the pathway surface.
+    const hubChart =
+      !isSources && !isSolution && charts[0] ? charts[0].chartId : undefined;
+    const figureStats = stats.filter((s) => isFigureStat(s.value));
+    const hubStat =
+      !isSources && !hubChart && figureStats[0]
+        ? { value: figureStats[0].value, label: shortLabel(figureStats[0].
