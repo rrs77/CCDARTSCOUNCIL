@@ -1,4 +1,4 @@
-const PARTS = 17;
+const PARTS = 28;
 const base = new URL("./.bundle-parts/", import.meta.url);
 const chunks = await Promise.all(
   Array.from({ length: PARTS }, (_, i) => {
