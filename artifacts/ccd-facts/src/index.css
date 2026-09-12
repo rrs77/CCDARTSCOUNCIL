@@ -4277,28 +4277,26 @@ button:focus-visible {
 .enrich-bench-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 0.45rem;
-}
-
-@media (min-width: 720px) {
-  .enrich-bench-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-  }
+  gap: 0.5rem;
 }
 
 .enrich-bench {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 0.2rem;
+  justify-content: flex-start;
+  gap: 0.25rem;
   margin: 0;
-  padding: 0.65rem 0.7rem;
+  min-width: 0;
+  min-height: 5.25rem;
+  padding: 0.7rem 0.75rem 0.8rem;
   border-radius: 0.85rem;
   border: 1px solid rgba(0, 45, 36, 0.12);
   background: #fffaf7;
   color: #0f2a2e;
   text-align: left;
   cursor: pointer;
+  box-sizing: border-box;
   transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
@@ -4321,9 +4319,12 @@ button:focus-visible {
 }
 
 .enrich-bench-title {
-  font-size: 0.82rem;
+  font-size: 0.86rem;
   font-weight: 650;
   line-height: 1.25;
+  overflow-wrap: break-word;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .enrich-bench-detail {
