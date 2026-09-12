@@ -103,6 +103,7 @@ button:focus-visible {
 .canvas-stage {
   position: absolute;
   inset: 0;
+  z-index: 1;
   overflow: hidden;
   cursor: grab;
   touch-action: none;
@@ -2243,7 +2244,7 @@ button:focus-visible {
 /* —— Present chrome —— */
 .facts-toolbar {
   position: absolute;
-  z-index: 60;
+  z-index: 80;
   top: 0.75rem;
   right: 0.65rem;
   display: flex;
@@ -2493,7 +2494,7 @@ button:focus-visible {
 /* Minimal navigation: Map and Home stacked at top-left. */
 .facts-nav {
   position: absolute;
-  z-index: 60;
+  z-index: 80;
   left: 0.65rem;
   top: 0.75rem;
   display: flex;

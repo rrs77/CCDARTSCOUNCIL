@@ -41,7 +41,11 @@ export function PresentChrome({
         <button
           type="button"
           className="facts-nav-pdf"
-          onClick={onOpenPdf}
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onOpenPdf();
+          }}
           aria-label="Open The facts as a PDF"
         >
           <FileDown strokeWidth={2.25} aria-hidden />
