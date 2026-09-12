@@ -1,6 +1,8 @@
 import { ArrowUpRight } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
+import { LogoMark } from "@/components/LogoMark";
 import { StageIconBadge } from "@/components/StageIconBadge";
+import { meta } from "@/content/facts.content";
 import type { FrameNode } from "@/content/layoutPresentation";
 import { stageComment, stageLabel } from "@/content/stackLabels";
 import { sectionAccent } from "@/content/sectionAccent";
@@ -46,7 +48,7 @@ function overviewBlurb(frame: FrameNode): string {
 const easeOut = [0.22, 0.61, 0.36, 1] as const;
 
 /**
- * Opening index — brand, editorial line, then a quiet grid into the evidence.
+ * Opening index — brand lockup, byline, then a quiet grid into the evidence.
  */
 export function StageOverview({
   stages,
@@ -60,44 +62,29 @@ export function StageOverview({
   return (
     <div className="stage-launcher">
       <header className="stage-launcher-intro">
-        <motion.p
-          className="stage-launcher-brand"
+        <motion.div
+          className="stage-launcher-lockup"
           initial={reduced ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduced ? 0.01 : 0.4, ease: easeOut }}
         >
-          Creative Curriculum Designer
-        </motion.p>
+          <LogoMark size={52} title={meta.productName} />
+          <p className="stage-launcher-brand">{meta.productName}</p>
+        </motion.div>
         <motion.h1
           initial={reduced ? false : { opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduced ? 0.01 : 0.5, delay: reduced ? 0 : 0.04, ease: easeOut }}
         >
-          The <em>facts</em>
+          {meta.experienceLead} <em>{meta.experienceAccent}</em>
         </motion.h1>
         <motion.p
-          className="stage-launcher-kicker"
+          className="stage-launcher-byline"
           initial={reduced ? false : { opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.4, delay: reduced ? 0 : 0.1, ease: easeOut }}
+          transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.1, ease: easeOut }}
         >
-          Arts education
-        </motion.p>
-        <motion.p
-          className="stage-launcher-heading"
-          initial={reduced ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.14, ease: easeOut }}
-        >
-          At a tipping point — with ambitious plans ahead.
-        </motion.p>
-        <motion.p
-          className="stage-launcher-lead"
-          initial={reduced ? false : { opacity: 0, y: 8 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: reduced ? 0.01 : 0.42, delay: reduced ? 0 : 0.18, ease: easeOut }}
-        >
-          What’s needed now is shared expertise and connection.
+          {meta.heroLineBefore} <em>{meta.heroLineAccent}</em>
         </motion.p>
       </header>
 
