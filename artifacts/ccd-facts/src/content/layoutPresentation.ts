@@ -346,4 +346,156 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
 
     for (const ch of children) {
       protos.push({
-        id: c
+        id: ch.id,
+        parentId: hubId,
+        mainSectionId: hubId,
+        level: 3,
+        kind: "leaf",
+        title: ch.title,
+        sentence: ch.sentence,
+        heroStat: ch.heroStat,
+        quote: ch.quote,
+        chartId: ch.chartId,
+        photoHero: ch.photoHero,
+        photoCrop: crop,
+        footnotes: applicableFootnotes,
+        blocks: ch.blocks,
+      });
+    }
+  }
+
+  return protos;
+}
+
+/** Quiet pathway grid for hubs — story-order bands, large gutters, no AABB overlap. */
+function placeHubsOnGrid(hubs: FrameNode[]): void {
+  // Story path bands (left → right, then down):
+  // 0: EYFS, primary, secondary (continuous pathway)
+  // 1: GCSE, A-level, HE
+  // 2: cold spots, Enrichment Framework, music hubs
+  // 3: national plans, a solution
+  const cellW = FRAME_W + GUTTER;
+  const cellH = FRAME_H + GUTTER;
+
+  const byId = new Map(hubs.map((h) => [h.id, h]));
+  const orderedIds = [
+    "eyfs",
+    "primary-ks1-ks2",
+    "secondary",
+    "gcse",
+    "a-level",
+    "university-he",
+    "cold-spots-place-and-income",
+    "enrichment-framework",
+    "music-hubs-and-national-centre",
+    "national-plans-and-free-resources",
+    "a-solution",
+  ];
+  const placed = new Set<string>();
+
+  const place = (id: string, col: number, row: number) => {
+    const hub = byId.get(id);
+    if (!hub) return;
+    hub.x = PAD + col * cellW;
+    hub.y = PAD + row * cellH;
+    hub.w = FRAME_W;
+    hub.h = hub.chartId ? FRAME_H + 80 : FRAME_H;
+    placed.add(id);
+  };
+
+  place("eyfs", 0, 0);
+  place("primary-ks1-ks2", 1, 0);
+  place("secondary", 2, 0);
+  place("gcse", 0, 1);
+  place("a-level", 1, 1);
+  place("university-he", 2, 1);
+  place("cold-spots-place-and-income", 0, 2);
+  place("enrichment-framework", 1, 2);
+  place("music-hubs-and-national-centre", 2, 2);
+  place("national-plans-and-free-resources", 0, 3);
+  place("a-solution", 1, 3);
+
+  // Any leftover hubs continue the grid
+  let extra = 0;
+  for (const hub of hubs) {
+    if (placed.has(hub.id)) continue;
+    const col = extra % 3;
+    const row = 4 + Math.floor(extra / 3);
+    hub.x = PAD + col * cellW;
+    hub.y = PAD + row * cellH;
+    hub.w = FRAME_W;
+    hub.h = hub.chartId ? FRAME_H + 80 : FRAME_H;
+    extra += 1;
+  }
+
+  void orderedIds;
+}
+
+function aabbOverlap(
+  a: { x: number; y: number; w: number; h: number },
+  b: { x: number; y: number; w: number; h: number },
+  pad = 48,
+): boolean {
+  return !(
+    a.x + a.w + pad <= b.x ||
+    b.x + b.w + pad <= a.x ||
+    a.y + a.h + pad <= b.y ||
+    b.y + b.h + pad <= a.y
+  );
+}
+
+export function buildPresentation(doc: ParsedDocument): Presentation {
+  const protos = expandToProtos(doc);
+  const frames: FrameNode[] = [];
+  let sequence = 0;
+  const usedGiants = new Set<string>();
+
+  const roots = protos.filter((p) => !p.parentId);
+  const hubFrames: FrameNode[] = [];
+
+  for (const p of roots) {
+    let { small, giant } = splitTitle(p.title);
+    if (usedGiants.has(giant.toLowerCase())) {
+      const alt = splitTitle(`${p.title} detail`);
+      small = alt.small || small;
+      giant = alt.giant;
+    }
+    usedGiants.add(giant.toLowerCase());
+
+    const node: FrameNode = {
+      id: p.id,
+      parentId: null,
+      mainSectionId: p.mainSectionId,
+      sequence: sequence++,
+      level: p.level,
+      kind: p.kind,
+      title: p.title,
+      titleSmall: small,
+      titleGiant: giant,
+      navLabel: p.title,
+      x: 0,
+      y: 0,
+      w: FRAME_W,
+      h: FRAME_H,
+      sentence: p.sentence,
+      heroStat: p.heroStat,
+      quote: p.quote,
+      chartId: p.chartId,
+      photoHero: p.photoHero,
+      photoCrop: p.photoCrop,
+      footnotes: p.footnotes,
+      childIds: [],
+      blocks: p.blocks,
+      subsections: p.subsections,
+    };
+    hubFrames.push(node);
+    frames.push(node);
+  }
+
+  placeHubsOnGrid(hubFrames);
+
+  // Assert / resolve hub overlaps by pushing down
+  for (let i = 0; i < hubFrames.length; i++) {
+    for (let j = i + 1; j < hubFrames.length; j++) {
+      const a = hubFrames[i]!;
+      const b = hubFrame
