@@ -4,6 +4,7 @@ import { LogoMark } from "@/components/LogoMark";
 import { StageIconBadge } from "@/components/StageIconBadge";
 import { meta } from "@/content/facts.content";
 import type { FrameNode } from "@/content/layoutPresentation";
+import { assetUrl, SITUATION_HERO } from "@/content/sectionIllustrations";
 import { stageComment, stageLabel } from "@/content/stackLabels";
 import { sectionAccent } from "@/content/sectionAccent";
 
@@ -61,6 +62,9 @@ export function StageOverview({
 
   return (
     <div className="stage-launcher">
+      <div className="stage-launcher-art" aria-hidden>
+        <img src={assetUrl(SITUATION_HERO)} alt="" />
+      </div>
       <header className="stage-launcher-intro">
         <motion.div
           className="stage-launcher-lockup"
