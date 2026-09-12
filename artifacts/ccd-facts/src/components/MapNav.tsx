@@ -10,7 +10,7 @@ const ACCENT = SECTION_ACCENT;
 
 /**
  * Nested Map menu — short labels only (never the long document title).
- * Overview → Key stages → After school
+ * Overview → Key stages (incl. HE) → Place and after school
  */
 function buildMenu(presentation: Presentation): {
   lone: NavItem[];
@@ -27,26 +27,22 @@ function buildMenu(presentation: Presentation): {
 
   const stages = [
     pick("eyfs", "EYFS"),
-    pick("enrichment-framework", "Enrichment"),
     pick("primary-ks1-ks2", "Primary"),
     pick("secondary", "Secondary"),
     pick("gcse", "GCSE"),
     pick("a-level", "A-level"),
+    pick("university-he", "Higher education"),
   ].filter(Boolean) as NavItem[];
   if (stages.length) groups.push({ heading: "Key stages", items: stages });
 
-  const place = [
-    pick("cold-spots-place-and-income", "Cold spots"),
-    pick("university-he", "Higher education"),
-  ].filter(Boolean) as NavItem[];
-  if (place.length) groups.push({ heading: "Place and HE", items: place });
-
   const after = [
+    pick("cold-spots-place-and-income", "Cold spots"),
+    pick("enrichment-framework", "Enrichment"),
     pick("music-hubs-and-national-centre", "Music Hubs and National Centre"),
     pick("national-plans-and-free-resources", "National plans"),
     pick("a-solution", "A solution"),
   ].filter(Boolean) as NavItem[];
-  if (after.length) groups.push({ heading: "After school", items: after });
+  if (after.length) groups.push({ heading: "Place and after school", items: after });
 
   const destIds = new Set<string>();
   for (const item of [...lone, ...groups.flatMap((g) => g.items)]) {

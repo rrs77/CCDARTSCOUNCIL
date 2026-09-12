@@ -13,17 +13,18 @@ export type StageId = (typeof STAGE_ORDER)[number]
 
 /**
  * Side-arrow path between main framed sections (not optional top tabs).
- * Situation → Primary → Secondary → GCSE → A-level → HE → Hubs → Solution → Sources
+ * Pathway first (EYFS → Primary → Secondary → GCSE → A-level → HE), then
+ * cross-cutting place/after-school (Cold spots → Enrichment → Hubs → Plans → Solution).
  */
 export const SECTION_PATH = [
   "eyfs",
-  "enrichment-framework",
   "primary-ks1-ks2",
   "secondary",
   "gcse",
   "a-level",
-  "cold-spots-place-and-income",
   "university-he",
+  "cold-spots-place-and-income",
+  "enrichment-framework",
   "music-hubs-and-national-centre",
   "national-plans-and-free-resources",
   "a-solution",
