@@ -370,9 +370,9 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
 /** Quiet pathway grid for hubs — story-order bands, large gutters, no AABB overlap. */
 function placeHubsOnGrid(hubs: FrameNode[]): void {
   // Story path bands (left → right, then down):
-  // 0: EYFS, primary, secondary (continuous key stages)
-  // 1: GCSE, A-level, cold spots
-  // 2: HE, Enrichment Framework, music hubs
+  // 0: EYFS, primary, secondary (continuous pathway)
+  // 1: GCSE, A-level, HE
+  // 2: cold spots, Enrichment Framework, music hubs
   // 3: national plans, a solution
   const cellW = FRAME_W + GUTTER;
   const cellH = FRAME_H + GUTTER;
@@ -384,8 +384,8 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
     "secondary",
     "gcse",
     "a-level",
-    "cold-spots-place-and-income",
     "university-he",
+    "cold-spots-place-and-income",
     "enrichment-framework",
     "music-hubs-and-national-centre",
     "national-plans-and-free-resources",
@@ -408,8 +408,8 @@ function placeHubsOnGrid(hubs: FrameNode[]): void {
   place("secondary", 2, 0);
   place("gcse", 0, 1);
   place("a-level", 1, 1);
-  place("cold-spots-place-and-income", 2, 1);
-  place("university-he", 0, 2);
+  place("university-he", 2, 1);
+  place("cold-spots-place-and-income", 0, 2);
   place("enrichment-framework", 1, 2);
   place("music-hubs-and-national-centre", 2, 2);
   place("national-plans-and-free-resources", 0, 3);
@@ -596,8 +596,8 @@ export function buildHubConnectorPath(frames: FrameNode[]): string {
     "secondary",
     "gcse",
     "a-level",
-    "cold-spots-place-and-income",
     "university-he",
+    "cold-spots-place-and-income",
     "enrichment-framework",
     "music-hubs-and-national-centre",
     "national-plans-and-free-resources",

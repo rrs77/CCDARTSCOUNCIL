@@ -111,24 +111,6 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 - **−25%** — Arts A-level entries (CLA Report Card 2026 · 2011/12–2024/25)[^2]
 - **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
 
-## Cold spots · place & income
-
-Where you live, and what your school can spend, still decides how much art you get. That gap starts early and travels upwards. Regions with the highest rates of free school meals — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%), and no GCSE Drama entries (59% vs 17%).[^2]
-
-FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
-
-<!-- chart:disadvantage -->
-
-> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
-
-### Cold-spot markers
-
-- **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
-- **59% vs 17%** — No GCSE Drama — most vs least deprived LA fifth[^2]
-- **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
-- **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
-- **Nine of ten** — Largest Creative Arts & Design undergraduate falls are at modern universities[^2][^9]
-
 ## University / HE
 
 Creative arts degrees are being closed to new students, suspended, or folded into larger faculties — while take-up falls and the squeeze hits economically deprived areas hardest.
@@ -152,6 +134,24 @@ That sits on top of a school curriculum era that narrowed accountability toward 
 - **UCB / Wolverhampton / St Mary’s** — −85% / −58% / −51% Creative Arts & Design domestic undergrads (2020/21–2024/25)[^2]
 - **£12.9m → £0** — OfS high-cost subject funding for creative and performing arts (2025/26→2026/27) — a 100% cut; specialist and initiative funding continues[^24]
 - **£9.6m** — Performing Arts Specialist Initiative still allocated in 2026/27[^24]
+
+## Cold spots · place & income
+
+Where you live, and what your school can spend, still decides how much art you get. That gap starts early and travels upwards. Regions with the highest rates of free school meals — the West Midlands and the North East — have among the lowest arts shares of GCSE and A-level entries.[^2] Schools in the most deprived fifth of local authorities are far more likely to have no GCSE Music entries (54% vs 21%), and no GCSE Drama entries (59% vs 17%).[^2]
+
+FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-levels (including Music, Dance and Drama).[^2][^3] That school pipeline feeds university demand. Disadvantaged students are more likely to live at home while studying — so geography and parental income keep shaping arts opportunity after 18.[^2]
+
+<!-- chart:disadvantage -->
+
+> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
+
+### Cold-spot markers
+
+- **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
+- **59% vs 17%** — No GCSE Drama — most vs least deprived LA fifth[^2]
+- **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
+- **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls are at modern universities[^2][^9]
 
 ## Enrichment Framework
 
