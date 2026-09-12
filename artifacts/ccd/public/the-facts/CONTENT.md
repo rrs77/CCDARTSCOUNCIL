@@ -38,7 +38,7 @@ It applies to primary, secondary, special and alternative provision, sixth forms
 
 The five areas are civic engagement; arts and culture; nature, outdoors and adventure; sport and physical activity; and wider life and future skills. Schools use a 1–4 self-assessment scale (identifying → sustaining and stretching) plus an action-planning template for targets, responsibility, monitoring, success criteria, timings and resources.[^12][^13]
 
-In 2024–25 musical performance was offered by 75% of schools, but reported participation was only 45% for pupils in special schools — against 72% at KS1–3 and 60% at KS4. Evidence links enrichment with belonging, confidence, wellbeing and social connection, while remaining cautious about causation.[^16]
+In 2024–25, 75% of schools offered musical performance (orchestra, choir and similar). Separately, parent- and pupil-reported participation in at least one extracurricular activity was 72% at KS1–3, 60% at KS4, and 45% in special schools. Evidence links enrichment with belonging, confidence, wellbeing and social connection, while remaining cautious about causation.[^16]
 
 > A framework can set expectations, but change depends on capacity, connections and usable systems — not another compliance burden.
 
@@ -74,7 +74,7 @@ CCDesigner should reduce workload and improve access — never claim to replace 
 
 ### Arts Council case wording
 
-CCDesigner will provide practical digital infrastructure through which schools can turn the Department for Education’s non-statutory Enrichment Framework into consistent action. It will connect teachers with trusted arts organisations and Music Hubs, allow high-quality opportunities and resources to be added directly to planning, and support schools to evidence access, partnership working, intended outcomes and continuous improvement without creating unnecessary workload.[^12][^15][^19]
+CCDesigner aims to provide practical digital infrastructure through which schools can turn the Department for Education’s non-statutory Enrichment Framework into consistent action. It aims to connect teachers with trusted arts organisations and Music Hubs, allow high-quality opportunities and resources to be added directly to planning, and support schools to evidence access, partnership working, intended outcomes and continuous improvement without creating unnecessary workload.[^12][^15][^19]
 
 ## Primary / KS1–KS2
 
@@ -82,9 +82,9 @@ Arts time is already unequal before secondary — independent schools report far
 
 Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.[^2]
 
-Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report no external artist or cultural organisation.[^2]
+Subject leads: Art & Design 89%, Music 84%, Drama 9%, Dance 5%. 43% of primary teachers report that their school works with no external partners to deliver the arts curriculum.[^2]
 
-Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.[^2]
+Teachers in the highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.[^2]
 
 <!-- chart:primaryHours -->
 
@@ -94,13 +94,13 @@ Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.[^2]
 
 - **47% vs 6%** — Independent vs state >2.5 hrs arts / week[^2]
 - **~1 in 4** — Primary teachers under 1 hour arts / week[^2]
-- **43%** — No external artist or cultural organisation[^2]
+- **43%** — No external partners to deliver the arts curriculum[^2]
 
 ## Secondary
 
 For more than a decade the school system narrowed around a core academic suite — arts pathways were devalued, hours and teachers fell, and take-up still tracks who can afford to stay in.[^1][^2]
 
-CLA links the long decline to policy focus (2010–2024) on a narrow range of subject areas that systematically devalued arts in the state sector.[^1][^2] Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
+CLA links the long decline to policy focus (2010–2024) on a narrow range of subject areas that systematically devalued arts in the state sector.[^1][^2] Arts teaching hours fell 21% between 2011/12 and 2022/23 (excluding Dance, which CLA notes is not consistently reported). Arts teacher headcount was 14% lower than in 2010.[^1]
 
 Access to arts qualifications still tracks disadvantage (DfE Tables 18–19) — economically deprived areas feel the curriculum squeeze first.[^5]
 
@@ -220,7 +220,7 @@ Annual Hub revenue, one-off capital, and National Centre contract support are no
 
 It is not only contraction — new government plans and funded free resources aim to widen reach again.
 
-The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, matched by ACE and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
+The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, plus £3.85m from Arts Council England and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
 
 Free education resources with national reach — publicly funded or free to schools:
 
@@ -291,5 +291,5 @@ Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance
 [^21]: Demos / Music Mark — Facing the Music (Feb 2025) — https://demos.co.uk/wp-content/uploads/2025/02/Music-Mark_Report_2025_Feb-2025.pdf
 [^22]: Music Mark — Music Hubs funding cuts response (June 2026) — https://www.musicmark.org.uk/news/music-hubs-funding-cuts-music-mark-responds/
 [^23]: Independent Society of Musicians — university arts funding cut response (July 2026) — https://www.ism.org/news/university-arts-funding-cut-ism-response/
-[^24]: Office for Students / DfE Strategic Priorities Grant 2026–27 — high-cost support for creative and performing arts removed
+[^24]: Office for Students — Funding for 2026–27: decisions and allocations — high-cost support for price group C1.2 (creative and performing arts) set to zero — https://www.officeforstudents.org.uk/media/4srekubm/funding-for-2026-27-decisions-allocations.pdf
 [^25]: Curriculum and Assessment Review Final Report / government response (DfE, Nov 2025) — https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report
