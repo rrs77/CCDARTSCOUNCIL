@@ -554,8 +554,8 @@ export const charts: Record<string, ChartDef> = {
     axis: {
       y: "% of state-funded mainstream schools",
       legend: {
-        least: "Least disadvantaged fifth",
-        most: "Most disadvantaged fifth",
+        least: "Least disadvantaged",
+        most: "Most disadvantaged",
       },
     },
     series: [
@@ -590,7 +590,7 @@ export const charts: Record<string, ChartDef> = {
         art: "Art & Design",
         drama: "Drama",
         music: "Music",
-        performing: "Performing / Expressive Arts",
+        performing: "Performing / EA",
       },
     },
     series: [
@@ -642,29 +642,29 @@ export const charts: Record<string, ChartDef> = {
   heChange: {
     id: "heChange",
     type: "divergent-bars",
-    caption: "University students only, 2023/24 to 2024/25 — not GCSE or A-level entries",
+    caption: "University students, 2023/24–2024/25 — not school exams",
     sourceNote:
-      "HESA domestic undergraduate numbers (CLA 2026 Detailed Analysis, Table 7). Drama +1.6% and Music +1.1% at university that year; CLA notes Drama had fallen 9.5% from 2019/20 to 2023/24 before this one-year rise. School exams are a different series: A-level Drama −9.5% and Music −4.9% (Ofqual 2026 vs 2025). Across all Creative Arts & Design, domestic undergrads fell 0.5% while the wider undergraduate cohort rose 0.6%.",
+      "HESA domestic undergraduate numbers (CLA 2026 Detailed Analysis, Table 7). Full names: Art; Cinematics & Photography; Creative Arts & Design (non-specific); Dance; Design Studies; Drama; Music; Others in Creative Arts & Design; Performing Arts (non-specific). Drama +1.6% and Music +1.1% at university that year; CLA notes Drama had fallen 9.5% from 2019/20 to 2023/24 before this one-year rise. School exams are a different series: A-level Drama −9.5% and Music −4.9% (Ofqual 2026 vs 2025). Across all Creative Arts & Design, domestic undergrads fell 0.5% while the wider undergraduate cohort rose 0.6%.",
     axis: {
       x: "% change in domestic undergraduates, 2023/24 to 2024/25",
-      legend: { decrease: "Fewer university students", increase: "More university students" },
+      legend: { decrease: "Fewer students", increase: "More students" },
     },
     series: [
-      { subject: "Art", change: -1.5 },
-      { subject: "Cinematics & Photography", change: -1.4 },
-      { subject: "Creative Arts & Design (non-specific)", change: -2.9 },
-      { subject: "Dance", change: -0.7 },
-      { subject: "Design Studies", change: -1.1 },
-      { subject: "Drama", change: 1.6 },
-      { subject: "Music", change: 1.1 },
-      { subject: "Others in Creative Arts & Design", change: -15.4 },
-      { subject: "Performing Arts (non-specific)", change: -2.9 },
+      { subject: "Art", label: "Art", change: -1.5 },
+      { subject: "Cinematics & Photography", label: "Film & photo", change: -1.4 },
+      { subject: "Creative Arts & Design (non-specific)", label: "Creative arts", change: -2.9 },
+      { subject: "Dance", label: "Dance", change: -0.7 },
+      { subject: "Design Studies", label: "Design", change: -1.1 },
+      { subject: "Drama", label: "Drama", change: 1.6 },
+      { subject: "Music", label: "Music", change: 1.1 },
+      { subject: "Others in Creative Arts & Design", label: "Other creative", change: -15.4 },
+      { subject: "Performing Arts (non-specific)", label: "Performing arts", change: -2.9 },
     ],
   },
   hubRevenueTrend: {
     id: "hubRevenueTrend",
     type: "funding-trend",
-    caption: "Music Hubs cash grant stayed near £76m — the dotted line is 2019 money in today’s prices",
+    caption: "Music Hubs cash stayed near £76m — dotted line is 2019 money today",
     sourceNote:
       "Bars are the cash revenue grant (not capital): £75m in 2018/19; ≈ £76m since 2019; £76m confirmed to AY 2026/27 (Turn It Up). The dotted line is not extra funding — it shows what £76m in 2019 is worth now. Music Mark cites Bank of England: £76m in 2019 ≈ £100m today.",
     axis: {
@@ -784,7 +784,7 @@ export const topics: TopicDef[] = [
     body: [
       "54% vs 21% of schools in the most vs least deprived LA fifths have no GCSE Music entries; 59% vs 17% have no GCSE Drama entries (CLA 2026).",
       "Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths. FSM pupils are under-represented in arts GCSEs and A-level Music, Dance, Drama and Design & Technology.",
-      "West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions.",
+      "West Midlands and North East: highest FSM rates, and among the lowest regional arts GCSE / A-level shares.",
       "Domestic Creative Arts & Design undergraduates edged down while the wider cohort rose (HESA via CLA 2026).",
     ],
     whyThisMattersForCCD:

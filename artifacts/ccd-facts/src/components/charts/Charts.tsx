@@ -78,6 +78,60 @@ const enter = {
 const CHART_DRAW_MS = 1650; /* 1.2–1.8s ease-out bar/line draw */
 const CHART_BAR_STAGGER_MS = 150; /* slight delay between series */
 
+function formatSignedPct(value: number): string {
+  return value > 0 ? `+${value}` : String(value);
+}
+
+type BarLabelProps = {
+  x?: number;
+  y?: number;
+  width?: number;
+  height?: number;
+  value?: number | string;
+};
+
+/** Place % labels beside bars — never on top of the category names. */
+function SignedPctBarLabel({
+  x = 0,
+  y = 0,
+  width = 0,
+  height = 0,
+  value,
+  fontSize,
+}: BarLabelProps & { fontSize: number }) {
+  const n = Number(value);
+  if (!Number.isFinite(n)) return null;
+  const left = width < 0 ? x + width : x;
+  const right = width < 0 ? x : x + width;
+  const midY = y + height / 2 + fontSize * 0.35;
+  const text = formatSignedPct(n);
+  const barPx = Math.abs(width);
+  if (n >= 0) {
+    return (
+      <text x={right + 6} y={midY} textAnchor="start" fill={CCD_INK} fontSize={fontSize} fontWeight={700}>
+        {text}
+      </text>
+    );
+  }
+  // Long negative bars: sit the figure inside so it cannot collide with the axis.
+  if (barPx > 64) {
+    return (
+      <text x={left + 8} y={midY} textAnchor="start" fill="#fffaf7" fontSize={fontSize} fontWeight={700}>
+        {text}
+      </text>
+    );
+  }
+  return (
+    <text x={left - 6} y={midY} textAnchor="end" fill={CCD_INK} fontSize={fontSize} fontWeight={700}>
+      {text}
+    </text>
+  );
+}
+
+function displayName(row: { label?: string | number; subject?: string | number; name?: string | number }): string {
+  return String(row.label ?? row.subject ?? row.name ?? "");
+}
+
 export function ContentChart({
   chart,
   showKeys,
@@ -100,8 +154,8 @@ export function ContentChart({
   const tick = density === "canvas" ? 14 : 11;
   const tickInk = density === "canvas" ? 15 : 12;
   const labelFs = density === "canvas" ? 14 : 12;
-  const chartH = density === "canvas" ? "h-[340px] w-full" : "h-[240px] w-full sm:h-[260px]";
-  const chartHTall = density === "canvas" ? "h-[360px] w-full" : "h-[280px] w-full";
+  const chartH = density === "canvas" ? "h-full min-h-[260px] w-full" : "h-[240px] w-full sm:h-[260px]";
+  const chartHTall = density === "canvas" ? "h-full min-h-[300px] w-full" : "h-[280px] w-full";
   const drawKey = `${chart.id}-${density}-${reduced ? "static" : "draw"}`;
 
   if (chart.type === "horizontal-change") {
@@ -109,16 +163,16 @@ export function ContentChart({
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
         <motion.div key={drawKey} {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart layout="vertical" data={chart.series} margin={{ top: 4, right: 36, left: 8, bottom: 8 }}>
+            <BarChart layout="vertical" data={chart.series} margin={{ top: 4, right: 28, left: 4, bottom: 8 }}>
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
               <XAxis type="number" domain={[-50, 0]} tickFormatter={(v) => `${v}%`} tick={{ fill: CCD_MUTED, fontSize: tick }} />
-              <YAxis type="category" dataKey="name" width={density === "canvas" ? 140 : 120} tick={{ fill: CCD_INK, fontSize: tickInk }} />
+              <YAxis type="category" dataKey="name" width={density === "canvas" ? 148 : 128} tick={{ fill: CCD_INK, fontSize: tickInk }} interval={0} />
               <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, "Change"]} />
               <ReferenceLine x={0} stroke={CCD_MUTED} />
               <Bar
                 dataKey="change"
                 radius={[6, 0, 0, 6]}
-                label={{ position: "left", fill: CCD_INK, fontSize: labelFs, fontWeight: 700 }}
+                label={<SignedPctBarLabel fontSize={labelFs} />}
                 cursor="pointer"
                 isAnimationActive={!reduced}
                 animationDuration={drawMs}
@@ -198,22 +252,19 @@ export function ContentChart({
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
         <motion.div key={drawKey} {...chartEnter} className={chartHTall}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={chart.series} margin={{ top: 18, right: 8, left: 0, bottom: 8 }}>
+            <BarChart data={chart.series} margin={{ top: 28, right: 8, left: 4, bottom: 12 }}>
               <CartesianGrid stroke={CCD_GRID} vertical={false} />
-              <XAxis dataKey="subject" tick={{ fill: CCD_INK, fontSize: tick }} interval={0} angle={-15} textAnchor="end" height={56} />
+              <XAxis dataKey="subject" tick={{ fill: CCD_INK, fontSize: tickInk, fontWeight: 650 }} interval={0} height={36} />
               <YAxis
                 domain={[0, 100]}
                 tick={{ fill: CCD_MUTED, fontSize: tick }}
-                label={
-                  chart.axis?.y
-                    ? { value: chart.axis.y, angle: -90, position: "insideLeft", fill: "#6b7d80", fontSize: tick }
-                    : undefined
-                }
+                width={42}
+                tickFormatter={(v: number) => `${v}%`}
               />
-              <Tooltip contentStyle={tip} />
-              <Legend />
-              <Bar dataKey="least" name={leastName} fill={CCD_TEAL_DEEP} radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: CCD_INK }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
-              <Bar dataKey="most" name={mostName} fill={CCD_CORAL} radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: tick, fill: CCD_INK }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Tooltip contentStyle={tip} formatter={(v: number, name: string) => [`${v}%`, name]} />
+              <Legend wrapperStyle={{ fontSize: tick, color: CCD_INK }} />
+              <Bar dataKey="least" name={leastName} fill={CCD_TEAL_DEEP} radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: labelFs, fill: CCD_INK, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
+              <Bar dataKey="most" name={mostName} fill={CCD_CORAL} radius={[4, 4, 0, 0]} label={{ position: "top", fontSize: labelFs, fill: CCD_INK, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={stagger} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))} />
             </BarChart>
           </ResponsiveContainer>
         </motion.div>
@@ -230,12 +281,12 @@ export function ContentChart({
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
         <motion.div key={drawKey} {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 48, left: 8, bottom: 8 }}>
+            <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 56, left: 4, bottom: 8 }}>
               <CartesianGrid stroke={CCD_GRID} horizontal={false} />
-              <XAxis type="number" domain={[0, 100]} tick={{ fill: CCD_MUTED, fontSize: tick }} />
-              <YAxis type="category" dataKey="subject" width={yWidth} tick={{ fill: CCD_INK, fontSize: tickInk }} />
+              <XAxis type="number" domain={[0, 100]} tick={{ fill: CCD_MUTED, fontSize: tick }} tickFormatter={(v) => `${v}%`} />
+              <YAxis type="category" dataKey="subject" width={yWidth} tick={{ fill: CCD_INK, fontSize: tickInk, fontWeight: 650 }} interval={0} />
               <Tooltip contentStyle={tip} formatter={(v: number) => [`${v}%`, valueLabel]} />
-              <Bar dataKey={valueKey} barSize={10} background={{ fill: CCD_GRID }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: CCD_INK, fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
+              <Bar dataKey={valueKey} barSize={10} background={{ fill: CCD_GRID }} radius={[0, 99, 99, 0]} label={{ position: "right", fill: CCD_INK, fontSize: labelFs, fontWeight: 700, formatter: (v: number) => `${v}%` }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
                 {chart.series.map((d) => (
                   <Cell key={String(d.subject)} fill={String(d.fill)} />
                 ))}
@@ -255,13 +306,14 @@ export function ContentChart({
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
         <motion.div key={drawKey} {...chartEnter} className={chartH}>
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chart.series} margin={{ top: 8, right: 12, left: 0, bottom: 4 }}>
+            <LineChart data={chart.series} margin={{ top: 8, right: 16, left: 0, bottom: 4 }}>
               <CartesianGrid stroke={CCD_GRID} />
-              <XAxis dataKey="year" tick={{ fill: CCD_INK, fontSize: tickInk }} />
-              <YAxis domain={[yMin, yMax]} tick={{ fill: CCD_MUTED, fontSize: tick }} />
+              <XAxis dataKey="year" tick={{ fill: CCD_INK, fontSize: tickInk, fontWeight: 650 }} />
+              <YAxis domain={[yMin, yMax]} tick={{ fill: CCD_MUTED, fontSize: tick }} width={40} />
               <ReferenceLine y={100} stroke={CCD_MUTED} strokeDasharray="4 4" />
               <Tooltip contentStyle={tip} />
               <Legend
+                wrapperStyle={{ fontSize: tick, color: CCD_INK }}
                 onClick={(e) => {
                   setActive(String(e.dataKey));
                   onDrill?.(String(e.value ?? e.dataKey));
@@ -281,24 +333,51 @@ export function ContentChart({
   }
 
   if (chart.type === "divergent-bars") {
+    const heRows = chart.series.map((d) => ({
+      subject: String(d.subject ?? d.name ?? ""),
+      label: displayName(d),
+      change: Number(d.change),
+    }));
+    const heH = density === "canvas" ? "h-full min-h-[340px] w-full" : "h-[340px] w-full";
     return (
       <ChartFrame caption={chart.caption} source={chart.sourceNote} contentKey={chart.id} showKeys={showKeys} density={density}>
-        <motion.div key={drawKey} {...chartEnter} className={chartHTall}>
+        <motion.div key={drawKey} {...chartEnter} className={heH}>
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart layout="vertical" data={chart.series} margin={{ top: 8, right: 36, left: 8, bottom: 8 }}>
+            <BarChart layout="vertical" data={heRows} margin={{ top: 4, right: 36, left: 4, bottom: 4 }} barCategoryGap="18%">
               <CartesianGrid stroke="#e8eeea" horizontal={false} />
-              <XAxis type="number" domain={[-16, 3]} tickFormatter={(v) => `${v}%`} tick={{ fill: CCD_MUTED, fontSize: tick }} />
-              <YAxis type="category" dataKey="subject" width={density === "canvas" ? 170 : 150} tick={{ fill: CCD_INK, fontSize: tickInk }} />
+              <XAxis type="number" domain={[-18, 5]} tickFormatter={(v) => `${v}%`} tick={{ fill: CCD_MUTED, fontSize: tick }} />
+              <YAxis
+                type="category"
+                dataKey="label"
+                width={density === "canvas" ? 118 : 108}
+                tick={{ fill: CCD_INK, fontSize: tickInk, fontWeight: 650 }}
+                interval={0}
+              />
               <ReferenceLine x={0} stroke={CCD_MUTED} />
-              <Tooltip contentStyle={tip} formatter={(v: number) => [`${v > 0 ? "+" : ""}${v}%`, "University students"]} />
+              <Tooltip
+                contentStyle={tip}
+                formatter={(v: number) => [`${v > 0 ? "+" : ""}${v}%`, "University students"]}
+                labelFormatter={(_, payload) => String(payload?.[0]?.payload?.subject ?? "")}
+              />
               <Legend
+                wrapperStyle={{ fontSize: tick, color: CCD_INK }}
                 payload={[
                   { value: chart.axis?.legend?.decrease ?? "Decrease", type: "square", color: CCD_CORAL },
                   { value: chart.axis?.legend?.increase ?? "Increase", type: "square", color: CCD_TEAL },
                 ]}
               />
-              <Bar dataKey="change" radius={[4, 4, 4, 4]} label={{ position: "right", fill: CCD_INK, fontSize: labelFs, fontWeight: 700 }} cursor="pointer" isAnimationActive={!reduced} animationDuration={drawMs} animationBegin={0} animationEasing="ease-out" onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}>
-                {chart.series.map((d) => (
+              <Bar
+                dataKey="change"
+                radius={[4, 4, 4, 4]}
+                label={<SignedPctBarLabel fontSize={labelFs} />}
+                cursor="pointer"
+                isAnimationActive={!reduced}
+                animationDuration={drawMs}
+                animationBegin={0}
+                animationEasing="ease-out"
+                onClick={(e) => onDrill?.(String((e as { subject?: string }).subject ?? ""))}
+              >
+                {heRows.map((d) => (
                   <Cell key={String(d.subject)} fill={Number(d.change) >= 0 ? CCD_TEAL : CCD_CORAL} />
                 ))}
               </Bar>
