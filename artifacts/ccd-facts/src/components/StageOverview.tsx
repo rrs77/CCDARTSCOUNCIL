@@ -48,6 +48,26 @@ function overviewBlurb(frame: FrameNode): string {
 
 const easeOut = [0.22, 0.61, 0.36, 1] as const;
 
+const CARD_STAGGER = 0.2;
+const CARD_START = 0.34;
+const CARD_DROP = 0.78;
+
+const listVariants = {
+  hidden: {},
+  show: {
+    transition: { staggerChildren: CARD_STAGGER, delayChildren: CARD_START },
+  },
+};
+
+const cardVariants = {
+  hidden: { opacity: 0, y: -42 },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: CARD_DROP, ease: easeOut },
+  },
+};
+
 /**
  * Opening index — brand lockup, byline, then a quiet grid into the evidence.
  */
@@ -106,7 +126,13 @@ export function StageOverview({
         </div>
       </header>
 
-      <ul className="stage-launcher-list" aria-label="Evidence stages">
+      <motion.ul
+        className="stage-launcher-list"
+        aria-label="Evidence stages"
+        variants={reduced ? undefined : listVariants}
+        initial={reduced ? false : "hidden"}
+        animate="show"
+      >
         {stages.map((frame, i) => {
           const label = overviewLabel(frame);
           const blurb = overviewBlurb(frame);
@@ -115,13 +141,8 @@ export function StageOverview({
           return (
             <motion.li
               key={frame.id}
-              initial={reduced ? false : { opacity: 0, y: 14 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{
-                duration: reduced ? 0.01 : 0.4,
-                delay: reduced ? 0 : 0.16 + i * 0.035,
-                ease: easeOut,
-              }}
+              variants={reduced ? undefined : cardVariants}
+              initial={reduced ? false : undefined}
             >
               <button
                 type="button"
@@ -147,13 +168,17 @@ export function StageOverview({
             </motion.li>
           );
         })}
-      </ul>
+      </motion.ul>
 
       <motion.footer
         className="stage-launcher-doc"
         initial={reduced ? false : { opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: reduced ? 0.01 : 0.4, delay: reduced ? 0 : 0.52, ease: easeOut }}
+        transition={{
+          duration: reduced ? 0.01 : 0.5,
+          delay: reduced ? 0 : CARD_START + stages.length * CARD_STAGGER,
+          ease: easeOut,
+        }}
       >
         <a
           className="stage-launcher-doc-link"
