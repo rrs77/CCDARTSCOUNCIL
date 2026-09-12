@@ -4,7 +4,7 @@
  * Does not fetch from any external repository.
  */
 (async function loadTheFactsBundle() {
-  const PART_COUNT = 8;
+  const PART_COUNT = 112;
   const PART_BASE = "./bundle-parts/part";
 
   async function fetchText(url) {
