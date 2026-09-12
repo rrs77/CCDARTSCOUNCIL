@@ -1,8 +1,10 @@
 # The State of Creative Education in England
 
-A concise evidence overview for funding, partnership and development.
+The facts on creative education in England — for funding, partnership and development.
 
-Creative education has contracted over the long term, with an entitlement gap linked to disadvantage.[^1][^5]
+Creative education in England is at a tipping point. Exceptional lessons start with connection — and CCDesigner aims to make that connection usable day to day.
+
+Creative education has contracted over the long term, with a clear entitlement gap linked to place and disadvantage.[^1][^5] New government plans — curriculum reform, Turn It Up, the National Centre — and free national resources create space to rebuild. CCDesigner is the practical layer: plan, share resources, reach cold spots, and evidence how materials are used.
 
 ## EYFS
 
@@ -76,7 +78,7 @@ CCDesigner will provide practical digital infrastructure through which schools c
 
 ## Primary / KS1–KS2
 
-Primary arts provision differs substantially between state and independent schools.[^2]
+Arts time is already unequal before secondary — independent schools report far more hours than state schools, and higher-FSM schools are more likely to have cut hours.[^2]
 
 Primary Teacher Tapp / CLA 2026: 47% of independent vs 6% of state primary teachers report more than 2.5 hours of arts per week. About one in four report under an hour.[^2]
 
@@ -86,6 +88,8 @@ Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.[^2]
 
 <!-- chart:primaryHours -->
 
+> Where generalists carry the arts — especially in higher-need schools — reusable activity blocks and Partner Hubs aim to put excellent practice within reach without waiting for local specialist capacity.
+
 ### Primary hours
 
 - **47% vs 6%** — Independent vs state >2.5 hrs arts / week[^2]
@@ -94,13 +98,13 @@ Highest-FSM vs lowest-FSM schools reporting reduced arts hours: 31% vs 22%.[^2]
 
 ## Secondary
 
-Long-term arts participation and provision have contracted at KS3–KS4; the latest short-term Ofqual movement is mixed.[^1][^4]
+For more than a decade the school system narrowed around a core academic suite — arts pathways were devalued, hours and teachers fell, and take-up still tracks who can afford to stay in.[^1][^2]
 
-Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
+CLA links the long decline to policy focus (2010–2024) on a narrow range of subject areas that systematically devalued arts in the state sector.[^1][^2] Arts teaching hours fell 21% and arts teacher headcount 14% over the long term reported by CLA (against early-2010s baselines).[^1]
 
-Access to arts qualifications still tracks disadvantage (DfE Tables 18–19).[^5]
+Access to arts qualifications still tracks disadvantage (DfE Tables 18–19) — economically deprived areas feel the curriculum squeeze first.[^5]
 
-West Midlands and North East: highest FSM rates and lowest arts GCSE entry share among regions.[^5]
+> CCDesigner aims to support teachers inside a narrowed curriculum — keeping planning cumulative and partnership reachable where specialist capacity and exam pathways thin out, including in higher-need schools.
 
 ### Teachers
 
@@ -109,11 +113,15 @@ West Midlands and North East: highest FSM rates and lowest arts GCSE entry share
 
 ## GCSE
 
+Many schools show no GCSE Music, Drama or Dance entries — “no entries” does not mean “not taught”, but pathways are thinner where disadvantage is higher.[^1]
+
 Arts GCSE entries fell 42% (2010–2022/23).[^1]
 
-In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance — “no entries” does not mean “not taught”.[^1]
+In 2022/23, 42% of schools had no GCSE Music entries, 41% no Drama, 84% no Dance.[^1]
 
 <!-- chart:noGcse -->
+
+> Where GCSE pathways thin out, cumulative planning and Partner Hub resources aim to keep specialist routes reachable for teachers and students — including in schools that no longer enter exams.
 
 ### GCSE entries
 
@@ -124,15 +132,13 @@ Ofqual provisional summer 2026 vs 2025:[^4]
 - Music **−1.3%**
 - Performing / Expressive Arts **+1.2%**
 
-Schools with no GCSE entries (2022/23): Music 42%, Drama 41%, Dance 84%.[^1]
-
 - **−42%** — Arts GCSE entries (CLA Report Card 2024 · 2010–2022/23)[^1]
 - **42% / 41% / 84%** — Schools with no GCSE Music / Drama / Dance (2022/23)[^1]
 - **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
 
 ## A-level
 
-Arts participation at KS5 has contracted over the long term; the latest short-term Ofqual movement is mixed.[^1][^4]
+KS5 arts are thinner still — and arts’ share of A-levels is lower in the most deprived areas.[^1][^2]
 
 Arts A-level entries fell 21% (2010/11–2022/23).[^1] Arts share of A-levels: 3.8% vs 5.9% in most vs least deprived fifths.[^2]
 
@@ -143,6 +149,8 @@ Ofqual provisional summer 2026 vs 2025 (all A-levels **+2.9%**):[^4]
 - Art **−1.0%**
 
 <!-- chart:alevelIndex -->
+
+> Where KS5 arts thin out, cumulative planning and shared Partner Hub resources aim to keep specialist pathways reachable — so place and income are less decisive for what teachers can offer.
 
 ### A-level entries
 
@@ -157,35 +165,39 @@ FSM-eligible pupils are under-represented in arts GCSEs and in several arts A-le
 
 <!-- chart:disadvantage -->
 
-> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need areas, so outstanding materials are shared beyond postcode.
+> CCDesigner aims to widen reach into cold spots — surfacing Partner Hub resources and reusable practice for teachers in higher-need and lower-participation areas, so outstanding materials are shared beyond postcode and parental income.
 
 ### Cold-spot markers
 
 - **54% vs 21%** — No GCSE Music — most vs least deprived LA fifth[^2]
 - **3.8% vs 5.9%** — Arts share of A-levels — most vs least deprived[^2]
 - **West Midlands / North East** — Highest FSM rates; among lowest regional arts GCSE / A-level shares[^2]
+- **Nine of ten** — Largest Creative Arts & Design undergraduate falls are at modern universities[^2][^9]
 
 ## University / HE
 
 Creative arts degrees are being closed to new students, suspended, or folded into larger faculties — while take-up falls and the squeeze hits economically deprived areas hardest.
 
-Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA via CLA 2026).[^9] CLA finds steep collapses at individual providers — University College Birmingham −85%, Wolverhampton −58%, St Mary’s −51% (2020/21–2024/25) — concentrated in modern universities that educate students from low-participation neighbourhoods.[^2]
+Domestic Creative Arts & Design undergraduates edged down while the wider undergraduate cohort rose (HESA via CLA 2026).[^9] CLA finds steep collapses at individual providers — University College Birmingham −85%, Wolverhampton −58%, St Mary’s −51% (2020/21–2024/25) — concentrated in modern universities that educate students from low-participation neighbourhoods.[^2] Some providers have lost around two-thirds of Creative Arts & Design academic staff (including Roehampton, Kent and Cumbria).[^2]
 
-From 2026/27, OfS high-cost teaching-grant support for creative and performing arts is cut to zero.[^24]
+Sector reporting points to music and other creative courses closed or halted for new entrants (including Kent, Nottingham, Northumbria and Oxford Brookes).[^23] From 2026/27, OfS high-cost teaching-grant support for creative and performing arts is cut to zero.[^24]
+
+That sits on top of a school curriculum era that narrowed accountability toward a core academic suite and devalued arts pathways from 14 — so lower GCSE and A-level take-up feeds thinner university demand.[^1][^2]
 
 <!-- chart:heChange -->
 
-> CCDesigner aims to keep specialist planning and Partner Hub resources in teachers’ hands earlier, so geography and household resources are less decisive before students apply.
+> To support the decline upstream — before courses close or combine — CCDesigner aims to keep specialist planning and Partner Hub resources in teachers’ hands earlier, so geography and household resources are less decisive before students apply.
 
 ### HE markers
 
 - **−0.5% vs +0.6%** — Creative Arts & Design domestic undergrads vs wider undergraduate cohort (2023/24→2024/25)[^9]
 - **Nine of ten** — Largest Creative Arts & Design undergraduate falls at modern universities[^2]
+- **UCB / Wolverhampton / St Mary’s** — −85% / −58% / −51% Creative Arts & Design domestic undergrads (2020/21–2024/25)[^2]
 - **OfS 2026/27** — High-cost teaching grant for creative & performing arts cut to zero[^24]
 
 ## Music Hubs and National Centre
 
-Hub revenue support has been cash-flat near £76m since 2019 while costs rose — a real-terms squeeze — with capital and the National Centre as separate streams.[^21][^22]
+The strongest funding case is fragmentation, unequal entitlement and teacher-capacity pressure — while policy seeks school–cultural partnerships. The Music Hubs revenue grant rose into the mid-£70ms in the mid-2010s, then has been held near £76m in cash since 2019 — a significant real-terms cut (Music Mark cites Bank of England: £76m in 2019 ≈ £100m today).[^21][^22] Capital and National Centre support are separate streams, not a like-for-like uplift to that revenue line.
 
 The National Centre is intended to launch by September 2026 and to boost in-school arts enrichment alongside curriculum reform. A separate £22.5 million, three-year enrichment expansion programme targets up to 400 schools — useful evidence of priority, not universal school funding.[^8][^15]
 
@@ -196,9 +208,11 @@ The National Centre is intended to launch by September 2026 and to boost in-scho
 
 <!-- chart:hubRevenueTrend -->
 
-> When Hub and partner funding is under pressure, CCDesigner aims to make shared resources go further — and make use more transparent so funders can see materials reaching cold spots.
+> When Hub and partner funding is under pressure, CCDesigner aims to make shared resources go further — improving communication between organisations and teachers, and making use more transparent so funders can see materials reaching cold spots and higher-need schools.
 
 ### Current commitments
+
+Annual Hub revenue, one-off capital, and National Centre contract support are not additive like-for-like.
 
 <!-- chart:funding -->
 
@@ -206,17 +220,21 @@ The National Centre is intended to launch by September 2026 and to boost in-scho
 
 It is not only contraction — new government plans and funded free resources aim to widen reach again.
 
-The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026.[^8][^7]
+The Curriculum and Assessment Review treats music as an essential entitlement, commits to a reformed National Curriculum from September 2028, and removes EBacc school measures from 2025/26 so arts choices are less squeezed.[^25][^7] Turn It Up (July 2026) sets national action on music education. The National Centre for Arts and Music Education is due to launch September 2026, with online teacher CPD and oversight of Music Hubs from 2027.[^8][^7] A four-year SEND / disadvantage music pilot (£2m government, matched by ACE and Youth Music) offers free lessons for up to 1,000 pupils; Discover Creative Careers is refreshed with £9m over three years.[^7]
 
 Free education resources with national reach — publicly funded or free to schools:
 
-- **Oak National Academy** — free sequenced music curriculum and lessons, primary–GCSE
-- **BBC Ten Pieces** — classical music creative responses for schools
-- **Arts Council England** — Music Hubs guidance and hub finder
-- **Youth Music** — funded youth music projects and practice
-- **Turn It Up** — DCMS/DfE plan for music (GOV.UK)
+- **Oak National Academy — Music** — https://www.thenational.academy/teachers/key-stages/key-stage-1/subjects/music
+- **BBC Teach — Primary Music** — https://www.bbc.co.uk/teach/topics/cmjp647k3e8t
+- **BBC Ten Pieces** — https://www.bbc.co.uk/teach/ten-pieces
+- **Arts Council England — Music Hubs** — https://www.artscouncil.org.uk/MusicHubs/Guidance
+- **Youth Music** — https://youthmusic.org.uk/
+- **Turn It Up: Our plan for music** — https://www.gov.uk/government/publications/turn-it-up-our-plan-for-music/turn-it-up-our-plan-for-music
+- **Curriculum and Assessment Review** — https://www.gov.uk/government/publications/curriculum-and-assessment-review-final-report
 
-> Policy is creating space again. CCD aims to turn national plans and free resources into day-to-day classroom use — especially in cold spots.
+These programmes fund or publish materials so teachers can use free arts education resources without waiting for local specialist capacity. CCDesigner aims to sit alongside them — helping teachers capture, adapt and share what reaches their libraries and lessons.
+
+> Policy is creating space again. CCD aims to turn national plans and free resources into day-to-day classroom use — especially in cold spots — and to evidence that greater reach is real, not only announced.
 
 ### Plan markers
 
@@ -231,11 +249,24 @@ Creative Curriculum Designer is a free national planning and resource platform f
 
 Teachers can capture ideas as reusable activity blocks, build lessons, organise into half-term and term plans, and work from a calendar. Partner Hubs aim to connect teachers with arts organisations.
 
+CCD aims to support the decline by putting shared practice in teachers’ hands earlier: greater reach into cold spots, fairer opportunity in lower-participation areas, and clearer communication between schools and cultural partners.
+
+CCD also aims to make funding more transparent by evidencing use of materials. Signed-in accounts can show which Partner Hub resources are added to libraries, when activities are built into lessons, and which resources teachers return to.
+
 Organisation logos on the live site are for demonstration only — not endorsements or signed partnerships.
 
 Early-years principle: children should help shape their learning. Creative subjects need not always sit in a typical classroom.
 
-> The evidence shows fragmentation, cold spots and unequal entitlement. CCD aims to be the practical connection layer — wider reach, shared resources, and clearer proof of use so support can follow need.
+> The evidence shows fragmentation, cold spots and unequal entitlement. CCD aims to be the practical connection layer — wider reach, shared resources, stronger school–organisation communication, and clearer proof of use so support can follow need.
+
+### How it connects
+
+- **Capture** — Reusable activity blocks instead of one-off plans
+- **Plan** — Lessons, half-terms and schemes of work in one place
+- **Connect** — Partner Hubs put organisations next to the teacher’s library
+- **Evidence** — Signed-in use can show what actually reaches lessons
+
+Capture → plan → calendar → Partner Hubs. CCD aims to shorten the distance between outstanding practice and the teacher who needs it — and to show that colder areas and higher-need schools are part of that reach.
 
 [^1]: Cultural Learning Alliance Report Card 2024 — https://www.culturallearningalliance.org.uk/wp-content/uploads/2024/05/CLA-2024-Annual-Report-Card.pdf
 [^2]: Cultural Learning Alliance Report Card 2026 — https://www.culturallearningalliance.org.uk/wp-content/uploads/2026/05/CLA-2026-Report-Card-final.pdf
