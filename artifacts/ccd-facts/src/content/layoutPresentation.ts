@@ -191,4 +191,44 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
       ContentBlock,
       { type: "quote" }
     >[];
-    
+    const charts = sec.blocks.filter((b) => b.type === "chart") as Extract<
+      ContentBlock,
+      { type: "chart" }
+    >[];
+
+    const hubId = sec.id;
+    used.add(hubId);
+    const crop = nextCrop();
+    const nestedSections = nested.filter((n) => n.parentId === sec.id);
+    const applicableIds = new Set([
+      ...sec.footnoteIds,
+      ...nestedSections.flatMap((n) => n.footnoteIds),
+    ]);
+    const applicableFootnotes = doc.footnotes.filter((fn) => applicableIds.has(fn.id));
+
+    // One hero only: prefer chart OR one stat OR photo — never stack competing ovals.
+    // “A solution” is a product zone: no exam/funding graph on the pathway surface.
+    const hubChart =
+      !isSources && !isSolution && charts[0] ? charts[0].chartId : undefined;
+    const figureStats = stats.filter((s) => isFigureStat(s.value));
+    const hubStat =
+      !isSources && !hubChart && figureStats[0]
+        ? { value: figureStats[0].value, label: shortLabel(figureStats[0].label, 48) }
+        : undefined;
+
+    protos.push({
+      id: hubId,
+      parentId: null,
+      mainSectionId: hubId,
+      level: 2,
+      kind: "hub",
+      title: sec.title,
+      // Sources: footnotes only on the frame — no closing/meta sentence as a body card
+      sentence: paras[0]
+          ? firstSentence(paras[0].text)
+          : quotes[0]
+            ? firstSentence(quotes[0].text)
+            : "",
+      heroStat: hubStat,
+      chartId: hubChart,
+      quote: quotes[0] ? firstSentence(quotes[0].text) : undefin
