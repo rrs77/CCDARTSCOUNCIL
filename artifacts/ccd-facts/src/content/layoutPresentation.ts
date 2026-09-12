@@ -275,4 +275,96 @@ export function expandToProtos(doc: ParsedDocument): Proto[] {
           ContentBlock,
           { type: "paragraph" }
         >[];
-        const kStats = kid.blocks.filter((b) => b.ty
+        const kStats = kid.blocks.filter((b) => b.type === "stat") as Extract<
+          ContentBlock,
+          { type: "stat" }
+        >[];
+        const kCharts = kid.blocks.filter((b) => b.type === "chart") as Extract<
+          ContentBlock,
+          { type: "chart" }
+        >[];
+        used.add(kid.id);
+        children.push({
+          id: kid.id,
+          title: takeTitle(kid.title),
+          sentence: kParas[0]
+            ? firstSentence(kParas[0].text)
+            : kStats[0]
+              ? shortLabel(kStats[0].label, 90)
+              : firstSentence(kid.title),
+          heroStat: kStats[0]
+            ? { value: kStats[0].value, label: shortLabel(kStats[0].label, 48) }
+            : undefined,
+          chartId: !kStats[0] ? kCharts[0]?.chartId : undefined,
+          photoHero: false,
+          blocks: kid.blocks,
+        });
+      }
+
+      for (let i = 1; i < paras.length && children.length < MAX_CHILDREN; i++) {
+        const sentence = firstSentence(paras[i]!.text);
+        const id = uniqueId(`${hubId}-more-${i}`, used);
+        const leafBlocks = blocksWithFollowingMatter(sec.blocks, paras[i]!.text);
+        children.push({
+          id,
+          title: takeTitle(leafTitleFromSentence(sentence, `More ${i}`)),
+          sentence,
+          photoHero: false,
+          blocks: leafBlocks,
+        });
+      }
+
+      // Extra stats (beyond hub hero) → leaf stops — not second ovals on the hub
+      for (let i = 0; i < stats.length && children.length < MAX_CHILDREN; i++) {
+        const st = stats[i]!;
+        if (hubStat && st.value === hubStat.value) continue;
+        const id = uniqueId(`${hubId}-stat-${i}`, used);
+        children.push({
+          id,
+          title: takeTitle(shortLabel(st.label.split(/[—(]/)[0] || st.label, 36)),
+          sentence: shortLabel(st.label, 100),
+          heroStat: { value: st.value, label: shortLabel(st.label, 48) },
+          photoHero: false,
+          blocks: [{ type: "stat", value: st.value, label: st.label }],
+        });
+      }
+
+      // Extra charts only if hub didn’t take the first
+      if (!hubChart && charts[0] && children.length < MAX_CHILDREN) {
+        const c = charts[0];
+        const id = uniqueId(`${hubId}-${c.chartId}`, used);
+        children.push({
+          id,
+          title: takeTitle("Chart"),
+          sentence: "Detail from the evidence overview.",
+          chartId: c.chartId,
+          photoHero: false,
+          blocks: [{ type: "chart", chartId: c.chartId }],
+        });
+      }
+    }
+
+    for (const ch of children) {
+      protos.push({
+        id: ch.id,
+        parentId: hubId,
+        mainSectionId: hubId,
+        level: 3,
+        kind: "leaf",
+        title: ch.title,
+        sentence: ch.sentence,
+        heroStat: ch.heroStat,
+        quote: ch.quote,
+        chartId: ch.chartId,
+        photoHero: ch.photoHero,
+        photoCrop: crop,
+        footnotes: applicableFootnotes,
+        blocks: ch.blocks,
+      });
+    }
+  }
+
+  return protos;
+}
+
+/** Quiet pathway grid for hubs — story-order b
