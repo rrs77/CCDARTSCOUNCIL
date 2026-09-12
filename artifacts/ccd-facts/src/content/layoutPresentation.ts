@@ -140,3 +140,55 @@ function blocksWithFollowingMatter(
   const out: ContentBlock[] = [sectionBlocks[idx]!];
   for (let j = idx + 1; j < sectionBlocks.length; j++) {
     const b = sectionBlocks[j]!;
+    if (b.type === "list" || b.type === "link") out.push(b);
+    else break;
+  }
+  return out;
+}
+
+const CROPS: PhotoCrop[] = ["classroom", "drama", "dance", "wide"];
+
+type Proto = {
+  id: string;
+  parentId: string | null;
+  mainSectionId: string;
+  level: 1 | 2 | 3;
+  kind: SceneKind;
+  title: string;
+  sentence: string;
+  heroStat?: { value: string; label: string };
+  quote?: string;
+  chartId?: string;
+  photoHero: boolean;
+  photoCrop: PhotoCrop;
+  footnotes?: ParsedDocument["footnotes"];
+  blocks: ContentBlock[];
+  subsections?: { title: string; blocks: ContentBlock[] }[];
+};
+
+export function expandToProtos(doc: ParsedDocument): Proto[] {
+  const used = new Set<string>(["title", "overview"]);
+  const protos: Proto[] = [];
+  let cropIdx = 0;
+  const nextCrop = (): PhotoCrop => CROPS[cropIdx++ % CROPS.length]!;
+
+  const mains = doc.sections.filter((s) => s.level === 2);
+  const nested = doc.sections.filter((s) => s.level === 3);
+
+  for (const sec of mains) {
+    const isSources = /^sources$/i.test(sec.title);
+    const isSolution = sec.id === "a-solution";
+    if (isSources) continue;
+    const paras = sec.blocks.filter((b) => b.type === "paragraph") as Extract<
+      ContentBlock,
+      { type: "paragraph" }
+    >[];
+    const stats = sec.blocks.filter((b) => b.type === "stat") as Extract<
+      ContentBlock,
+      { type: "stat" }
+    >[];
+    const quotes = sec.blocks.filter((b) => b.type === "quote") as Extract<
+      ContentBlock,
+      { type: "quote" }
+    >[];
+    
