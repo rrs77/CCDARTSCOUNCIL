@@ -2,7 +2,7 @@
  * GET/PATCH /api/forum/categories/[categoryId]
  */
 
-import { createServiceClient } from '../../_authShared.js';
+import { createServiceClient } from '../../../../api/_authShared.js';
 import {
   canReadCategory,
   forumJson,
@@ -11,7 +11,7 @@ import {
   optionalForumAuth,
   requireForumAuth,
   slugify,
-} from '../../_forumShared.js';
+} from '../../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

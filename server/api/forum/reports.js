@@ -3,14 +3,14 @@
  * GET  /api/forum/reports — moderation queue
  */
 
-import { createServiceClient, assertRateLimit } from '../_authShared.js';
+import { createServiceClient, assertRateLimit } from '../../../api/_authShared.js';
 import {
   forumJson,
   forumOptions,
   hasForumCap,
   requireForumAuth,
   enqueueNotification,
-} from '../_forumShared.js';
+} from '../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

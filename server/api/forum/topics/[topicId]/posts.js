@@ -2,7 +2,7 @@
  * POST /api/forum/topics/[topicId]/posts — reply
  */
 
-import { createServiceClient, assertRateLimit } from '../../../_authShared.js';
+import { createServiceClient, assertRateLimit } from '../../../../../api/_authShared.js';
 import {
   canContributeCategory,
   canReadCategory,
@@ -11,7 +11,7 @@ import {
   forumOptions,
   markdownToSafeHtml,
   requireForumAuth,
-} from '../../../_forumShared.js';
+} from '../../../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

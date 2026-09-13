@@ -13,7 +13,7 @@ import {
   optionsResponse,
   requireAuth,
   isSuspended,
-} from '../_authShared.js';
+} from '../../../api/_authShared.js';
 
 export async function OPTIONS() {
   return optionsResponse();

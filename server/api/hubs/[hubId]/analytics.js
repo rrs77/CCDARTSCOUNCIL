@@ -9,8 +9,8 @@ import {
   isSuperAdminProfile,
   jsonResponse,
   optionsResponse,
-} from '../../_authShared.js';
-import { requireHubAccess } from '../../_hubShared.js';
+} from '../../../../api/_authShared.js';
+import { requireHubAccess } from '../../../../api/_hubShared.js';
 
 export async function OPTIONS() {
   return optionsResponse();

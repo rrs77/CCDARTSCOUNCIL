@@ -6,10 +6,10 @@
 import {
   createServiceClient,
   optionsResponse,
-} from '../../_authShared.js';
-import { toCsv } from '../../_downloadShared.js';
-import { corsHeaders } from '../../_authShared.js';
-import { requireHubAccess } from '../../_hubShared.js';
+} from '../../../../api/_authShared.js';
+import { toCsv } from '../../../../api/_downloadShared.js';
+import { corsHeaders } from '../../../../api/_authShared.js';
+import { requireHubAccess } from '../../../../api/_hubShared.js';
 
 export async function OPTIONS() {
   return optionsResponse();

@@ -7,8 +7,8 @@ import {
   createServiceClient,
   jsonResponse,
   optionsResponse,
-} from '../../_authShared.js';
-import { resolveOrganisation } from '../../_hubShared.js';
+} from '../../../../api/_authShared.js';
+import { resolveOrganisation } from '../../../../api/_hubShared.js';
 
 export async function OPTIONS() {
   return optionsResponse();

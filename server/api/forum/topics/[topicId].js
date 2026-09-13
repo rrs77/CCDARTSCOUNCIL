@@ -2,7 +2,7 @@
  * GET/PATCH /api/forum/topics/[topicId]
  */
 
-import { createServiceClient, assertRateLimit } from '../../_authShared.js';
+import { createServiceClient, assertRateLimit } from '../../../../api/_authShared.js';
 import {
   canReadCategory,
   forumJson,
@@ -16,7 +16,7 @@ import {
   pageParams,
   publicAuthor,
   requireForumAuth,
-} from '../../_forumShared.js';
+} from '../../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

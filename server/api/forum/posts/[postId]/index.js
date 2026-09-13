@@ -3,7 +3,7 @@
  * POST  /api/forum/posts/[postId]/react — toggle reaction
  */
 
-import { createServiceClient, assertRateLimit } from '../../_authShared.js';
+import { createServiceClient, assertRateLimit } from '../../../../../api/_authShared.js';
 import {
   forumJson,
   forumOptions,
@@ -11,7 +11,7 @@ import {
   logForumModAction,
   markdownToSafeHtml,
   requireForumAuth,
-} from '../../_forumShared.js';
+} from '../../../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

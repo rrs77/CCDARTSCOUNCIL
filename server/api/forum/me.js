@@ -3,12 +3,12 @@
  * POST /api/forum/me — subscribe / mark read
  */
 
-import { createServiceClient } from '../_authShared.js';
+import { createServiceClient } from '../../../api/_authShared.js';
 import {
   forumJson,
   forumOptions,
   requireForumAuth,
-} from '../_forumShared.js';
+} from '../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

@@ -3,13 +3,13 @@
  * GET  /api/forum/moderation — recent moderation actions
  */
 
-import { createServiceClient } from '../_authShared.js';
+import { createServiceClient } from '../../../api/_authShared.js';
 import {
   forumJson,
   forumOptions,
   logForumModAction,
   requireForumAuth,
-} from '../_forumShared.js';
+} from '../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

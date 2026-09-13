@@ -3,7 +3,7 @@
  * POST /api/forum/topics — create topic + starter post
  */
 
-import { createServiceClient } from '../../_authShared.js';
+import { createServiceClient } from '../../../../api/_authShared.js';
 import {
   canContributeCategory,
   canReadCategory,
@@ -18,7 +18,7 @@ import {
   requireForumAuth,
   slugify,
   enqueueNotification,
-} from '../../_forumShared.js';
+} from '../../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();
@@ -133,7 +133,7 @@ export async function POST(request) {
     });
     if (!auth.ok) return auth.response;
 
-    const rl = await import('../../_authShared.js').then((m) =>
+    const rl = await import('../../../../api/_authShared.js').then((m) =>
       m.assertRateLimit(`forum-topic:${auth.userId}`, { limit: 10, windowMs: 60_000 }),
     );
     if (!rl.ok) return rl.response;
