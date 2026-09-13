@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronRight, ChevronLeft, HelpCircle, Home, Info, BookOpen, Calendar, Edit3, FolderOpen, Tag, Search, Filter, Download, Plus, Save, Check, Clock, Users, Link2, Layers } from 'lucide-react';
+import { X, ChevronRight, ChevronLeft, HelpCircle, Home, Info, BookOpen, Calendar, Edit3, FolderOpen, Tag, Search, Filter, Download, Plus, Save, Check, Clock, Users, Link2, Layers, MessageSquare, Globe } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 
 interface GuideStep {
@@ -9,7 +9,17 @@ interface GuideStep {
   highlightSelector?: string;
 }
 
-export type HelpGuideSection = 'activity' | 'lesson' | 'unit' | 'assign' | 'print' | 'share';
+export type HelpGuideSection =
+  | 'activity'
+  | 'lesson'
+  | 'unit'
+  | 'assign'
+  | 'print'
+  | 'share'
+  | 'facts'
+  | 'account'
+  | 'forum'
+  | 'partners';
 
 interface HelpGuideProps {
   isOpen: boolean;
@@ -470,6 +480,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li>Open a lesson from the Lesson Library or Calendar and use the print option</li>
             <li>From the Unit Designer you can export a half-term or unit plan</li>
             <li>Printed plans include activities, notes, and curriculum objectives</li>
+            <li><strong>The Facts:</strong> Use the in-page PDF viewer on /the-facts/ for Print or Save — see the The Facts help topic</li>
+            <li><strong>Partner files:</strong> Downloads through CCDesigner appear under Settings → My Downloads</li>
           </ul>
         </div>
       )
@@ -522,6 +534,161 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
     }
   ];
 
+  const factsSteps: GuideStep[] = [
+    {
+      title: "Open The Facts",
+      content: (
+        <div className="space-y-3">
+          <p>The Facts is the evidence briefing for Creative Curriculum Designer — stages, cold spots, enrichment, and the proposed solution.</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>From the login screen, use the <strong>The facts</strong> button</li>
+            <li>Or open <strong>/the-facts/</strong> in your browser</li>
+          </ul>
+          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
+            <p className="text-sm text-teal-900"><strong>What’s new:</strong> The briefing is a magazine-style PDF with a cover, photos, and charts. Index cards drop in one by one, and a jump bar lets you move between stages.</p>
+          </div>
+        </div>
+      )
+    },
+    {
+      title: "Navigate the slides",
+      content: (
+        <div className="space-y-3">
+          <p>Use the stage <strong>Previous / Next</strong> controls and the <strong>jump bar</strong> to move from EYFS through to the Solution. Enrichment sits after Cold spots.</p>
+          <p>Copy now states what the programme <strong>will give</strong> and <strong>provides</strong> — not what it “aims to” do.</p>
+        </div>
+      )
+    },
+    {
+      title: "Print or save the PDF",
+      content: (
+        <div className="space-y-3">
+          <p>Use the top-right <strong>The facts PDF</strong> button to open the in-page viewer.</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Print</strong> — send the 17-page briefing to a printer</li>
+            <li><strong>Save</strong> — download the PDF</li>
+          </ul>
+          <div className="bg-amber-50 border-l-4 border-amber-500 p-3 rounded">
+            <p className="text-sm text-amber-900"><strong>Tracking:</strong> Resource use is recorded at teacher level (login + IP). It is not pupil tracking.</p>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const accountSteps: GuideStep[] = [
+    {
+      title: "Create an account or sign in",
+      content: (
+        <div className="space-y-3">
+          <p>On the login screen you can <strong>Create an account</strong> or sign in with an existing email and password.</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Invited users may be asked to <strong>Choose a new password</strong> the first time they sign in</li>
+            <li>Use <strong>Remember me</strong> if you want to stay signed in on this device</li>
+            <li>If you arrived from Forum or a download, you are returned to that page after sign-in</li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "Roles and user management",
+      content: (
+        <div className="space-y-3">
+          <p>Admins open <strong>Settings → Users</strong> (or Admin → Users) to invite people and set roles.</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Teacher / creator</strong> — plan lessons and use the forum</li>
+            <li><strong>Organisation</strong> — school or partner organisation account</li>
+            <li><strong>Admin / Super admin</strong> — manage users, hub admin, and forum categories</li>
+          </ul>
+        </div>
+      )
+    },
+    {
+      title: "My Downloads and analytics",
+      content: (
+        <div className="space-y-3">
+          <p>Partner and hub resources are downloaded through CCDesigner so use can be recorded.</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Settings → My Downloads</strong> — your own download history</li>
+            <li><strong>Settings → Download analytics</strong> — organisation or global totals (admins)</li>
+          </ul>
+          <div className="p-3 rounded" style={{backgroundColor: '#E6F7F5', borderLeft: '4px solid #0BA596'}}>
+            <p className="text-sm" style={{color: '#0BA596'}}><strong>Note:</strong> You may be asked to sign in before a gated file opens. Your place on the page is remembered.</p>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const forumSteps: GuideStep[] = [
+    {
+      title: "Open the Community Forum",
+      content: (
+        <div className="space-y-3">
+          <p>Click the <strong>speech-bubble</strong> icon in the header, or go to <strong>/forum</strong>.</p>
+          <p>Anyone can browse <strong>published</strong> categories (for example Introductions) without signing in.</p>
+        </div>
+      )
+    },
+    {
+      title: "Post, reply, and react",
+      content: (
+        <div className="space-y-3">
+          <p>To start a topic or reply, sign in with your CCDesigner account.</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li><strong>Sign in</strong> — opens the main login page, then brings you back here</li>
+            <li><strong>Sign in here</strong> — enter email and password in the modal without leaving the forum</li>
+          </ul>
+          <p>Teachers can create topics and replies. Viewers can read published categories.</p>
+        </div>
+      )
+    },
+    {
+      title: "Forum admin",
+      content: (
+        <div className="space-y-3">
+          <p>Owners and moderators use <strong>/forum/admin</strong>, the shield icon on the forum header (when signed in), or <strong>Settings → Admin → Forum</strong>.</p>
+          <ul className="list-disc pl-5 space-y-2">
+            <li>Publish or unpublish categories (seeded categories start as drafts)</li>
+            <li>Lock a category, review reports, and set notification preferences</li>
+          </ul>
+          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
+            <p className="text-sm text-teal-900"><strong>Guidelines:</strong> Read <strong>/forum/guidelines</strong> before posting. Safeguarding reports are flagged for moderators.</p>
+          </div>
+        </div>
+      )
+    }
+  ];
+
+  const partnersSteps: GuideStep[] = [
+    {
+      title: "Partner hubs",
+      content: (
+        <div className="space-y-3">
+          <p>Open a partner from the dashboard partners area or a short URL such as <strong>/omnimusic</strong>, <strong>/jazznorth</strong>, or <strong>/ems</strong>.</p>
+          <p><strong>OmniMusic</strong> uses the Resource Zone: the AMT hub link plus free session PDFs. Other partners (Jazz North, LSO, ROH, We Teach Drama, and more) have their own resource cards and planner actions.</p>
+        </div>
+      )
+    },
+    {
+      title: "Music Hubs directory",
+      content: (
+        <div className="space-y-3">
+          <p>The <strong>Music Hubs</strong> directory lists UK hubs. Open a hub page for local resources. Some hubs need a subscriber password to unlock files.</p>
+        </div>
+      )
+    },
+    {
+      title: "Hub administration",
+      content: (
+        <div className="space-y-3">
+          <p>Organisation owners and super admins open <strong>Settings → Admin → Hub admin</strong> to manage members, resources, and the public hub page.</p>
+          <p>Use this when your school or partner organisation publishes its own resource zone.</p>
+        </div>
+      )
+    }
+  ];
+
   // Get the current steps based on active section
   const getCurrentSteps = () => {
     switch (activeSection) {
@@ -537,6 +704,14 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         return printSteps;
       case 'share':
         return shareSteps;
+      case 'facts':
+        return factsSteps;
+      case 'account':
+        return accountSteps;
+      case 'forum':
+        return forumSteps;
+      case 'partners':
+        return partnersSteps;
       default:
         return activitySteps;
     }
@@ -590,7 +765,18 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
 
   if (!isOpen) return null;
 
-  const sectionOrder: HelpGuideSection[] = ['activity', 'lesson', 'unit', 'assign', 'print', 'share'];
+  const sectionOrder: HelpGuideSection[] = [
+    'activity',
+    'lesson',
+    'unit',
+    'assign',
+    'print',
+    'share',
+    'facts',
+    'account',
+    'forum',
+    'partners',
+  ];
 
   const handleNext = () => {
     if (currentStep < currentSteps.length - 1) {
@@ -614,6 +800,10 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       case 'assign': return assignSteps;
       case 'print': return printSteps;
       case 'share': return shareSteps;
+      case 'facts': return factsSteps;
+      case 'account': return accountSteps;
+      case 'forum': return forumSteps;
+      case 'partners': return partnersSteps;
       default: return activitySteps;
     }
   };
@@ -646,6 +836,14 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         return <Download className="h-5 w-5" />;
       case 'share':
         return <Link2 className="h-5 w-5" />;
+      case 'facts':
+        return <BookOpen className="h-5 w-5" />;
+      case 'account':
+        return <Users className="h-5 w-5" />;
+      case 'forum':
+        return <MessageSquare className="h-5 w-5" />;
+      case 'partners':
+        return <Globe className="h-5 w-5" />;
       default:
         return <Tag className="h-5 w-5" />;
     }
@@ -708,7 +906,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           <div className="flex-1 overflow-y-auto bg-gradient-to-r from-teal-50 to-blue-50 border-b border-gray-200">
             <div className="p-6 max-w-4xl mx-auto">
               <p className="text-sm text-gray-700 leading-relaxed mb-4">
-                A comprehensive planning platform to streamline your curriculum development. Build reusable activities, organise them into structured lessons, group lessons into units and stacks, schedule everything on the calendar, and print or share your plans.
+                A comprehensive planning platform to streamline your curriculum development. Build reusable activities, organise them into structured lessons, group lessons into units and stacks, schedule everything on the calendar, and print or share your plans. You can also open The Facts briefing, use the Community Forum, download partner resources, and manage your account from Settings.
               </p>
               <p className="text-xs text-gray-500 mb-3">Click a topic to open that section:</p>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
@@ -770,6 +968,46 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                   <div className="flex items-center space-x-1.5 text-orange-600">
                     <Link2 className="h-3.5 w-3.5" />
                     <h4 className="font-semibold text-xs">Share Plans & Multi-Class</h4>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSection('facts'); setCurrentStep(0); setIsHomeView(false); }}
+                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-emerald-400"
+                >
+                  <div className="flex items-center space-x-1.5 text-emerald-700">
+                    <BookOpen className="h-3.5 w-3.5" />
+                    <h4 className="font-semibold text-xs">The Facts</h4>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSection('account'); setCurrentStep(0); setIsHomeView(false); }}
+                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-slate-400"
+                >
+                  <div className="flex items-center space-x-1.5 text-slate-700">
+                    <Users className="h-3.5 w-3.5" />
+                    <h4 className="font-semibold text-xs">Accounts &amp; Downloads</h4>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSection('forum'); setCurrentStep(0); setIsHomeView(false); }}
+                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-cyan-400"
+                >
+                  <div className="flex items-center space-x-1.5 text-cyan-700">
+                    <MessageSquare className="h-3.5 w-3.5" />
+                    <h4 className="font-semibold text-xs">Community Forum</h4>
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setActiveSection('partners'); setCurrentStep(0); setIsHomeView(false); }}
+                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-rose-400"
+                >
+                  <div className="flex items-center space-x-1.5 text-rose-700">
+                    <Globe className="h-3.5 w-3.5" />
+                    <h4 className="font-semibold text-xs">Partners &amp; Hubs</h4>
                   </div>
                 </button>
               </div>
@@ -866,6 +1104,50 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <Link2 className="h-4 w-4 flex-shrink-0" />
             <span className="whitespace-nowrap">6. Share & Classes</span>
           </button>
+          <button
+            onClick={() => { setActiveSection('facts'); setCurrentStep(0); }}
+            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
+              activeSection === 'facts'
+                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <BookOpen className="h-4 w-4 flex-shrink-0" />
+            <span className="whitespace-nowrap">7. The Facts</span>
+          </button>
+          <button
+            onClick={() => { setActiveSection('account'); setCurrentStep(0); }}
+            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
+              activeSection === 'account'
+                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Users className="h-4 w-4 flex-shrink-0" />
+            <span className="whitespace-nowrap">8. Accounts</span>
+          </button>
+          <button
+            onClick={() => { setActiveSection('forum'); setCurrentStep(0); }}
+            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
+              activeSection === 'forum'
+                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <MessageSquare className="h-4 w-4 flex-shrink-0" />
+            <span className="whitespace-nowrap">9. Forum</span>
+          </button>
+          <button
+            onClick={() => { setActiveSection('partners'); setCurrentStep(0); }}
+            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
+              activeSection === 'partners'
+                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                : 'text-gray-600 hover:text-gray-900'
+            }`}
+          >
+            <Globe className="h-4 w-4 flex-shrink-0" />
+            <span className="whitespace-nowrap">10. Partners</span>
+          </button>
         </div>
 
         {/* Content */}
@@ -883,6 +1165,10 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                 {activeSection === 'assign' && 'Calendar & Half-Terms'}
                 {activeSection === 'print' && 'Print & Export'}
                 {activeSection === 'share' && 'Share Plans & Multi-Class'}
+                {activeSection === 'facts' && 'The Facts briefing'}
+                {activeSection === 'account' && 'Accounts & Downloads'}
+                {activeSection === 'forum' && 'Community Forum'}
+                {activeSection === 'partners' && 'Partners & Hubs'}
               </h3>
             </div>
 
@@ -948,7 +1234,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={handleNext}
             className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
           >
-            <span>{currentStep < currentSteps.length - 1 || activeSection !== 'share' ? 'Next' : 'Finish'}</span>
+            <span>{currentStep < currentSteps.length - 1 || activeSection !== 'partners' ? 'Next' : 'Finish'}</span>
             <ChevronRight className="h-5 w-5" />
           </button>
         </div>

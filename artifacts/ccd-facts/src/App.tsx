@@ -279,7 +279,6 @@ export default function App() {
           onFocus={openSection}
           onOpenDetail={openDetail}
           onOpenChild={openDetail}
-          onOpenPdf={() => setPdfOpen(true)}
           onPrev={() => goSection(-1)}
           onNext={() => goSection(1)}
         />

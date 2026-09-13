@@ -58,11 +58,9 @@ const CARD_DROP = 0.95;
 export function StageOverview({
   stages,
   onOpen,
-  onOpenPdf,
 }: {
   stages: FrameNode[];
   onOpen: (id: string) => void;
-  onOpenPdf?: () => void;
 }) {
   const reduced = useReducedMotion() ?? false;
 
@@ -154,32 +152,6 @@ export function StageOverview({
           );
         })}
       </ul>
-
-      <motion.footer
-        className="stage-launcher-doc"
-        initial={reduced ? false : { opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{
-          duration: reduced ? 0.01 : 0.5,
-          delay: reduced ? 0 : CARD_START + stages.length * CARD_STAGGER,
-          ease: easeOut,
-        }}
-      >
-        <button
-          type="button"
-          className="stage-launcher-doc-link"
-          onClick={onOpenPdf}
-          aria-label="Open The facts as a PDF"
-        >
-          <span className="stage-launcher-doc-mark" aria-hidden>
-            PDF
-          </span>
-          <span className="stage-launcher-doc-copy">
-            <span className="stage-launcher-doc-label">Open The facts as a PDF</span>
-            <span className="stage-launcher-doc-hint">Print or save The facts</span>
-          </span>
-        </button>
-      </motion.footer>
     </div>
   );
 }

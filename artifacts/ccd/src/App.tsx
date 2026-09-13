@@ -23,7 +23,7 @@ import { LoginForm } from './components/LoginForm';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { Footer } from './components/Footer';
 import { useAuth } from './hooks/useAuth';
-import { HelpGuide } from './components/HelpGuide';
+import { HelpGuide, type HelpGuideSection } from './components/HelpGuide';
 import { SchoolHomepage } from './components/SchoolHomepage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
@@ -123,9 +123,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     }
   }, [user, schoolHomepage, partnerHub, onForum, musicHubRoute]);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
-  const [helpGuideSection, setHelpGuideSection] = useState<
-    'activity' | 'lesson' | 'unit' | 'assign' | undefined
-  >(undefined);
+  const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
 
   // Demo / prototype entry only — welcome modal. Tabs explainer opens on
   // explicit click near the Dashboard tabs (not chained after welcome).
