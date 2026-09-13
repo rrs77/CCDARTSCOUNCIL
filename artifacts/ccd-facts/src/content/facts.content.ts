@@ -228,7 +228,7 @@ export const meta = {
   purposeHeading: "At a tipping point — with ambitious plans ahead.",
   purposeDeck: "What’s needed now is shared expertise and connection.",
   purposeLine:
-    "A shared evidence briefing on creative education in England — official figures for teachers, funders and arts organisations.",
+    "The facts on creative education in England — official figures for teachers, funders and arts organisations.",
   heroSupport:
     "Capture ideas. Build lessons. Connect with arts organisations — EYFS to A-level.",
   experienceLead: "The",

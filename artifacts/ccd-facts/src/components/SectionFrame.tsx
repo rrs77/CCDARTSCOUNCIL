@@ -4,7 +4,7 @@ import { ContentChart } from "@/components/charts/Charts";
 import { EnrichmentFrameworkVisual } from "@/components/EnrichmentFrameworkVisual";
 import { LogoMark } from "@/components/LogoMark";
 import { getChart, meta } from "@/content/facts.content";
-import type { FrameNode, Presentation } from "@/content/layoutPresentation";
+import { visibleTitleKicker, type FrameNode, type Presentation } from "@/content/layoutPresentation";
 import {
   assetUrl,
   isSituationPhotoSection,
@@ -84,6 +84,8 @@ export function SectionFrame({
       ? frame.footnotes.filter((fn) => !!fn.url)
       : [];
   const accent = sectionAccent(frame.id);
+  const displayTitle = quiet ? frame.title : frame.titleGiant;
+  const kicker = quiet ? null : visibleTitleKicker(frame.titleSmall, displayTitle);
 
   const style: CSSProperties =
     layout === "scene"
@@ -200,10 +202,8 @@ export function SectionFrame({
           ) : null}
 
           <div className="prezi-title-bubble">
-            {frame.titleSmall && !quiet && !/^(the|a|an)$/i.test(frame.titleSmall) ? (
-              <p className="prezi-title-small">{frame.titleSmall}</p>
-            ) : null}
-            <h2 className="prezi-title-giant">{quiet ? frame.title : frame.titleGiant}</h2>
+            {kicker ? <p className="prezi-title-small">{kicker}</p> : null}
+            <h2 className="prezi-title-giant">{displayTitle}</h2>
           </div>
 
           {isSources && sourceNotes.length ? (

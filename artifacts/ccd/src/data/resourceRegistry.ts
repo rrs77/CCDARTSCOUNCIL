@@ -1,10 +1,14 @@
 /**
  * Client-side Jazz North resource registry (stable IDs).
+ *
  * Hub Open/Download buttons use DreamHost direct URLs (exact File Manager names).
  * Local `/partners/jazznorth/` copies remain as offline fallback only.
+ * Authenticated / analytics downloads go through /api/resources/:id/download
+ * (never wire those buttons to raw DreamHost URLs).
  */
 import seed from './jazzNorthResources.seed.json';
 import { JN_DREAMHOST_BASE, jnDreamHostUrl } from '../config/jazzNorthDreamHost';
+import { getTrackedDownloadPath } from '../utils/trackedDownload';
 
 export interface RegistryResource {
   id: string;
@@ -15,10 +19,13 @@ export interface RegistryResource {
   /** Exact DreamHost File Manager filename (may include spaces). */
   dreamHostFilename: string;
   relatedAudioId?: string | null;
-  /** Direct DreamHost download URL — preferred Open/Download target. */
+  /** Direct DreamHost download URL — preferred Open/Download target on the hub. */
   publicUrl: string;
   /** Local Vite public path fallback. */
   localPublicUrl: string;
+  /** Tracked-download API path for auth + analytics (user-mgmt registry). */
+  trackedDownloadPath: string;
+  /** Placeholder only — never used as a button href. */
   externalUrlPlaceholder?: string;
 }
 
@@ -56,6 +63,7 @@ function toRegistry(
 ): RegistryResource[] {
   return items.map((r) => {
     const dreamHostFilename = DREAMHOST_FILENAME_BY_ID[r.id] || r.filename;
+    const publicUrl = jnDreamHostUrl(dreamHostFilename);
     return {
       id: r.id,
       title: r.title,
@@ -64,9 +72,10 @@ function toRegistry(
       filename: r.filename,
       dreamHostFilename,
       relatedAudioId: r.relatedAudioId ?? null,
-      publicUrl: jnDreamHostUrl(dreamHostFilename),
+      publicUrl,
       localPublicUrl: `/partners/jazznorth/${r.filename}`,
-      externalUrlPlaceholder: r.externalUrlPlaceholder || jnDreamHostUrl(dreamHostFilename),
+      trackedDownloadPath: getTrackedDownloadPath(r.id),
+      externalUrlPlaceholder: r.externalUrlPlaceholder || publicUrl,
     };
   });
 }
@@ -83,7 +92,7 @@ export const JAZZ_NORTH_COLLECTIONS: ResourceCollection[] = seed.collections || 
 
 export const JAZZ_NORTH_RESOURCES: RegistryResource[] = [...pdfResources, ...audioResources];
 
-/** Documented base for ops / user correction. */
+/** Documented base for ops / user correction (Jazz North hub footer). */
 export const JAZZ_NORTH_DREAMHOST_BASE_USED = JN_DREAMHOST_BASE;
 
 export function getJazzNorthResourcesByCollection(collectionId: string): RegistryResource[] {

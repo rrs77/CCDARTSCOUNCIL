@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { BriefingPdfModal } from "@/components/BriefingPdfModal";
 import { DetailModal } from "@/components/DetailModal";
 import { PresentChrome } from "@/components/PresentChrome";
 import { WorldCanvas } from "@/components/WorldCanvas";
@@ -58,6 +59,7 @@ export default function App() {
   const [focusedId, setFocusedId] = useState<string | null>(null);
   const [viewMode, setViewMode] = useState<"overview" | "frame">("overview");
   const [fullscreen, setFullscreen] = useState(false);
+  const [pdfOpen, setPdfOpen] = useState(false);
 
   const stageRef = useRef<HTMLDivElement>(null);
 
@@ -154,9 +156,11 @@ export default function App() {
         showOverview();
         return;
       }
-      openSection(sectionPath[next]!);
+      const nextId = sectionPath[next]!;
+      if (modalId) openDetail(nextId);
+      else openSection(nextId);
     },
-    [openSection, sectionIndex, sectionPath, showOverview],
+    [modalId, openDetail, openSection, sectionIndex, sectionPath, showOverview],
   );
 
   // Boot — overview of the full canvas unless a deep link is present
@@ -196,6 +200,10 @@ export default function App() {
           void document.exitFullscreen();
           return;
         }
+        if (pdfOpen) {
+          setPdfOpen(false);
+          return;
+        }
         if (modalId) {
           setModalId(null);
           return;
@@ -229,7 +237,7 @@ export default function App() {
     };
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
-  }, [goSection, modalId, openSection, sectionPath, showOverview, viewMode]);
+  }, [goSection, modalId, openSection, pdfOpen, sectionPath, showOverview, viewMode]);
 
   const toggleFullscreen = () => {
     if (!document.fullscreenElement) {
@@ -271,6 +279,7 @@ export default function App() {
           onFocus={openSection}
           onOpenDetail={openDetail}
           onOpenChild={openDetail}
+          onOpenPdf={() => setPdfOpen(true)}
           onPrev={() => goSection(-1)}
           onNext={() => goSection(1)}
         />
@@ -282,13 +291,21 @@ export default function App() {
         fullscreen={fullscreen}
         onOverview={showOverview}
         onToggleFullscreen={toggleFullscreen}
-        onJump={(id) => openSection(id)}
+        onJump={(id) => (modalId ? openDetail(id) : openSection(id))}
+        onOpenPdf={() => setPdfOpen(true)}
       />
+
+      <BriefingPdfModal open={pdfOpen} onClose={() => setPdfOpen(false)} />
 
       <DetailModal
         frame={modalFrame}
         open={!!modalId && !!modalFrame}
         sectionLinks={sectionLinks.filter((s) => s.id !== modalId)}
+        stages={sectionLinks}
+        canPrev={canPrev}
+        canNext={canNext}
+        onPrev={() => goSection(-1)}
+        onNext={() => goSection(1)}
         onNavigate={(id) => openDetail(id)}
         onClose={() => setModalId(null)}
       />

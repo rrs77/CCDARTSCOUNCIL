@@ -7,6 +7,8 @@ import { StageIconBadge } from "@/components/StageIconBadge";
 import { getChart } from "@/content/facts.content";
 import type { ContentBlock } from "@/content/parseContent";
 import type { FrameNode } from "@/content/layoutPresentation";
+import { visibleTitleKicker } from "@/content/layoutPresentation";
+import { SlideNav, type SlideNavItem } from "@/components/SlideNav";
 import {
   assetUrl,
   isSituationPhotoSection,
@@ -14,10 +16,6 @@ import {
   SITUATION_HERO,
 } from "@/content/sectionIllustrations";
 import { modalBackdropTransition, modalBounce, modalPanelTransition } from "@/lib/modalMotion";
-
-function isArticleKicker(text: string): boolean {
-  return /^(the|a|an)$/i.test(text.trim());
-}
 
 function linkifyUrls(text: string): ReactNode {
   const parts = text.split(/(https?:\/\/[^\s]+)/g);
@@ -161,12 +159,22 @@ export function DetailModal({
   onClose,
   sectionLinks = [],
   onNavigate,
+  stages = [],
+  canPrev = false,
+  canNext = false,
+  onPrev,
+  onNext,
 }: {
   frame: FrameNode | null;
   open: boolean;
   onClose: () => void;
   sectionLinks?: { id: string; title: string }[];
   onNavigate?: (id: string) => void;
+  stages?: SlideNavItem[];
+  canPrev?: boolean;
+  canNext?: boolean;
+  onPrev?: () => void;
+  onNext?: () => void;
 }) {
   const bodyRef = useRef<HTMLDivElement>(null);
   const reduced = useReducedMotion() ?? false;
@@ -206,7 +214,7 @@ export function DetailModal({
 
   /** Chrome click closes; ignore if the user was selecting text. */
   const closeChrome = (e: MouseEvent) => {
-    if ((e.target as HTMLElement).closest("button, a, input, textarea, [role='scrollbar']")) {
+    if ((e.target as HTMLElement).closest("button, a, input, textarea, nav, [role='scrollbar']")) {
       return;
     }
     const sel = typeof window !== "undefined" ? window.getSelection()?.toString() : "";
@@ -217,6 +225,7 @@ export function DetailModal({
 
   if (!frame) return null;
 
+  const kicker = visibleTitleKicker(frame.titleSmall, frame.title);
   const topChart = frame.chartId ? getChart(frame.chartId) : undefined;
   const hasBlocks = frame.blocks.length > 0;
   const bounce = modalBounce(reduced);
@@ -269,9 +278,7 @@ export function DetailModal({
                   className="detail-modal-stage-icon"
                 />
                 <div className="detail-modal-header-text">
-                  {frame.titleSmall && !isArticleKicker(frame.titleSmall) ? (
-                    <p className="detail-modal-kicker">{frame.titleSmall}</p>
-                  ) : null}
+                  {kicker ? <p className="detail-modal-kicker">{kicker}</p> : null}
                   <h2 id="detail-modal-title" className="detail-modal-title">
                     {frame.title}
                   </h2>
@@ -404,6 +411,20 @@ export function DetailModal({
                 <div className="detail-modal-end" aria-hidden />
               </div>
             </div>
+            {stages.length && onPrev && onNext && onNavigate ? (
+              <div className="detail-modal-pager" onClick={stop}>
+                <SlideNav
+                  items={stages}
+                  currentId={frame.id}
+                  canPrev={canPrev}
+                  canNext={canNext}
+                  onPrev={onPrev}
+                  onNext={onNext}
+                  onJump={onNavigate}
+                  tone="light"
+                />
+              </div>
+            ) : null}
           </motion.div>
         </motion.div>
       ) : null}
