@@ -13,17 +13,47 @@
     {
       "source": "/service-worker.js",
       "headers": [
-        { "key": "Cache-Control", "value": "no-cache, no-store, must-revalidate" }
+        {
+          "key": "Cache-Control",
+          "value": "no-cache, no-store, must-revalidate"
+        }
       ]
     },
     {
       "source": "/feature-demo/(.*)",
       "headers": [
-        { "key": "Cache-Control", "value": "public, max-age=3600" }
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=3600"
+        }
       ]
     }
   ],
   "rewrites": [
+    {
+      "source": "/api/forum",
+      "destination": "/api/router?__route=forum"
+    },
+    {
+      "source": "/api/forum/:path*",
+      "destination": "/api/router?__route=forum/:path*"
+    },
+    {
+      "source": "/api/hubs",
+      "destination": "/api/router?__route=hubs"
+    },
+    {
+      "source": "/api/hubs/:path*",
+      "destination": "/api/router?__route=hubs/:path*"
+    },
+    {
+      "source": "/api/music-hubs",
+      "destination": "/api/router?__route=music-hubs"
+    },
+    {
+      "source": "/api/music-hubs/:path*",
+      "destination": "/api/router?__route=music-hubs/:path*"
+    },
     {
       "source": "/((?!api/|partners/|assets/|ccd-pitch/|the-facts/|.*\\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|pdf|zip|woff2?|ttf|map)$).*)",
       "destination": "/index.html"
