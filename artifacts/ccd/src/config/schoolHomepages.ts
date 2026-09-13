@@ -63,6 +63,7 @@ const RESERVED_SLUGS = new Set<string>([
   'api',
   'auth',
   'admin',
+  'forum',
   'login',
   'logout',
   'signup',

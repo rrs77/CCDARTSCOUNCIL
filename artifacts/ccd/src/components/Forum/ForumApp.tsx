@@ -2,6 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { MessageSquare, ArrowLeft, Search, Shield } from 'lucide-react';
 import { useAuth } from '../../hooks/useAuth';
 import { SignInRequiredModal } from '../Auth/SignInRequiredModal';
+import { persistForumReturn } from '../../utils/authReturn';
 import { ForumHome } from './ForumHome';
 import { ForumCategoryPage } from './ForumCategoryPage';
 import { ForumTopicPage } from './ForumTopicPage';
@@ -66,15 +67,13 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
     return () => window.removeEventListener('popstate', onPop);
   }, []);
 
+  useEffect(() => {
+    if (user) setSignInOpen(false);
+  }, [user]);
+
   const requireSignIn = (returnPath?: string) => {
     if (user) return false;
-    if (returnPath) {
-      try {
-        sessionStorage.setItem('ccd_forum_return', returnPath);
-      } catch {
-        /* ignore */
-      }
-    }
+    persistForumReturn(returnPath || `${window.location.pathname}${window.location.search}`);
     setSignInOpen(true);
     return true;
   };

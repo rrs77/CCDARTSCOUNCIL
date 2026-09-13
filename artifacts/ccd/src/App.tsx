@@ -8,6 +8,11 @@ import {
   consumeDownloadIntent,
   startTrackedDownload,
 } from './utils/trackedDownload';
+import {
+  consumeForumReturn,
+  resolvePostAuthReturn,
+  shouldNavigateToReturn,
+} from './utils/authReturn';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
 import { PaidBasketProvider } from './contexts/PaidBasketContext';
@@ -78,28 +83,22 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   const [showTabsExplainer, setShowTabsExplainer] = useState(false);
 
   // After sign-in from a gated download or forum prompt, resume return URL.
+  // `?return=` (this navigation) wins over a stale download return.
   useEffect(() => {
-    if (!user || loading) return;
-    const { resourceId, returnUrl } = consumeDownloadIntent();
+    if (!user || loading || typeof window === 'undefined') return;
+    const { resourceId, returnUrl: downloadReturn } = consumeDownloadIntent();
+    const forumReturn = consumeForumReturn();
+    const ret = resolvePostAuthReturn({
+      search: window.location.search,
+      forumReturn,
+      downloadReturn: resourceId ? downloadReturn : null,
+    });
     if (resourceId) {
       void startTrackedDownload(resourceId);
-      return;
+      if (!ret || !isForumPath(ret.split('?')[0] || '')) return;
     }
-    let ret = returnUrl;
-    if (!ret) {
-      try {
-        ret = sessionStorage.getItem('ccd_forum_return') || '';
-        if (ret) sessionStorage.removeItem('ccd_forum_return');
-      } catch {
-        /* ignore */
-      }
-    }
-    if (!ret && typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search);
-      const q = params.get('return');
-      if (q && q.startsWith('/')) ret = q;
-    }
-    if (ret && ret.startsWith('/') && ret !== window.location.pathname + window.location.search) {
+    const current = `${window.location.pathname}${window.location.search}`;
+    if (shouldNavigateToReturn(ret, current) && ret) {
       window.history.replaceState({}, '', ret);
       window.dispatchEvent(new PopStateEvent('popstate'));
       if (isForumPath(ret.split('?')[0] || '')) {

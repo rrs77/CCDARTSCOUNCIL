@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { X, Lock } from 'lucide-react';
-import { LoginForm } from '../LoginForm';
+import { CompactSignInForm } from './CompactSignInForm';
+import { buildSignInHref } from '../../utils/authReturn';
 
 interface SignInRequiredModalProps {
   open: boolean;
@@ -8,16 +9,16 @@ interface SignInRequiredModalProps {
   /** Shown under the title */
   message?: string;
   /**
-   * When true, render a compact prompt that navigates to login with return URL
-   * instead of embedding the full LoginForm (avoids nested full-page layout).
+   * Path to return to after the full-page Sign in flow
+   * (`/?return=…&signin=1`). Same-origin relative; works on Preview and production.
    */
   returnUrl?: string;
 }
 
 /**
- * Modal prompting sign-in before a protected download.
- * Preserves return URL via query `?return=` and optional pending resource in sessionStorage
- * (caller should call stashDownloadIntent before opening).
+ * Modal prompting sign-in before a protected action.
+ * Sign in → full CCDesigner login, preserving return URL.
+ * Sign in here → compact in-place form (no marketing shell / welcome modal).
  */
 export function SignInRequiredModal({
   open,
@@ -25,32 +26,17 @@ export function SignInRequiredModal({
   message = 'Sign in to download this resource. Your place on this page will be remembered.',
   returnUrl,
 }: SignInRequiredModalProps) {
-  const [showFullLogin, setShowFullLogin] = useState(false);
+  const [showHere, setShowHere] = useState(false);
 
   if (!open) return null;
 
-  if (showFullLogin) {
-    return (
-      <div className="fixed inset-0 z-[80] overflow-y-auto bg-black/50">
-        <button
-          type="button"
-          onClick={onClose}
-          className="absolute right-4 top-4 z-[81] rounded-full bg-white p-2 shadow"
-          aria-label="Close"
-        >
-          <X className="h-5 w-5" />
-        </button>
-        <LoginForm />
-      </div>
-    );
-  }
-
   const goLogin = () => {
-    const ret = returnUrl || `${window.location.pathname}${window.location.search}`;
-    const params = new URLSearchParams();
-    params.set('return', ret);
-    params.set('signin', '1');
-    window.location.assign(`/?${params.toString()}`);
+    const ret =
+      returnUrl ||
+      (typeof window !== 'undefined'
+        ? `${window.location.pathname}${window.location.search}`
+        : '/forum');
+    window.location.assign(buildSignInHref(ret));
   };
 
   return (
@@ -70,7 +56,10 @@ export function SignInRequiredModal({
           </div>
           <button
             type="button"
-            onClick={onClose}
+            onClick={() => {
+              setShowHere(false);
+              onClose();
+            }}
             className="rounded-lg p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             aria-label="Close"
           >
@@ -78,29 +67,39 @@ export function SignInRequiredModal({
           </button>
         </div>
         <p className="text-sm text-gray-600">{message}</p>
-        <div className="mt-6 flex flex-wrap justify-end gap-2">
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
-          >
-            Cancel
-          </button>
-          <button
-            type="button"
-            onClick={goLogin}
-            className="rounded-lg bg-[#002D24] px-4 py-2 text-sm font-medium text-white hover:opacity-95"
-          >
-            Sign in
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowFullLogin(true)}
-            className="rounded-lg px-4 py-2 text-sm font-medium text-[#008272] hover:underline"
-          >
-            Sign in here
-          </button>
-        </div>
+
+        {showHere ? (
+          <CompactSignInForm
+            onSuccess={() => {
+              setShowHere(false);
+              onClose();
+            }}
+          />
+        ) : (
+          <div className="mt-6 flex flex-wrap justify-end gap-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={goLogin}
+              className="rounded-lg bg-[#002D24] px-4 py-2 text-sm font-medium text-white hover:opacity-95"
+            >
+              Sign in
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowHere(true)}
+              className="rounded-lg px-4 py-2 text-sm font-medium text-[#008272] hover:underline"
+            >
+              Sign in here
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );

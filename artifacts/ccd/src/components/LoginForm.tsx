@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getAppBaseUrl } from '../utils/apiUrl';
+import { isMidFlowSignIn, queryReturnPath } from '../utils/authReturn';
 import { LoadingSpinner } from './LoadingSpinner';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { useSettings } from '../contexts/SettingsContextNew';
@@ -63,6 +64,8 @@ export function LoginForm() {
 
   const branding = settings.branding || {};
   const logoLetters = branding.logoLetters || 'CCD';
+  const midFlowSignIn =
+    typeof window !== 'undefined' && isMidFlowSignIn(window.location.search);
 
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -87,6 +90,12 @@ export function LoginForm() {
           ),
         ),
       ]);
+      if (midFlowSignIn) {
+        const ret = queryReturnPath(window.location.search);
+        if (ret) {
+          window.location.assign(ret);
+        }
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Login failed';
       setError(message || 'Email or password incorrect. Please try again.');
@@ -113,13 +122,16 @@ export function LoginForm() {
   }, []);
 
   useEffect(() => {
+    // Mid-flow returns (`?return=/forum/admin&signin=1`) must not be blocked
+    // by the first-visit Partners / funding welcome modal.
+    if (midFlowSignIn) return;
     try {
       if (sessionStorage.getItem(PARTNERS_FUNDING_VIDEO_STORAGE_KEY) === '1') return;
     } catch {
       // sessionStorage may be unavailable; still show the notice
     }
     setShowPartnersFundingStart(true);
-  }, []);
+  }, [midFlowSignIn]);
 
   const dismissPartnersFundingStart = () => {
     try {
