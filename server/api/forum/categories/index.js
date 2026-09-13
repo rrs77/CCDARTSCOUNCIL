@@ -3,7 +3,7 @@
  * POST /api/forum/categories — create (manage_categories)
  */
 
-import { createServiceClient } from '../../../../api/forum/_authShared.js';
+import { createServiceClient } from '../../../../api/_authShared.js';
 import {
   canReadCategory,
   forumJson,
@@ -11,7 +11,7 @@ import {
   optionalForumAuth,
   requireForumAuth,
   slugify,
-} from '../../../../api/forum/_forumShared.js';
+} from '../../../../api/_forumShared.js';
 
 export async function OPTIONS() {
   return forumOptions();

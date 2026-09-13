@@ -7,14 +7,14 @@ import {
   createServiceClient,
   jsonResponse,
   optionsResponse,
-} from '../../../../../api/hubs/_authShared.js';
+} from '../../../../../api/_authShared.js';
 import {
   auditHubAction,
   probeExternalUrl,
   requireHubAccess,
   snapshotResourceRevision,
   validateExternalUrl,
-} from '../../../../../api/hubs/_hubShared.js';
+} from '../../../../../api/_hubShared.js';
 
 export async function OPTIONS() {
   return optionsResponse();
