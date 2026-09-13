@@ -30,6 +30,21 @@ export const SECTION_PATH = [
   "a-solution",
 ] as const
 
+/** Short jump-bar labels — one or two words so every stage stays tappable. */
+export const STAGE_SHORT: Record<string, string> = {
+  eyfs: "EYFS",
+  "primary-ks1-ks2": "Primary",
+  secondary: "Secondary",
+  gcse: "GCSE",
+  "a-level": "A-level",
+  "university-he": "HE",
+  "cold-spots-place-and-income": "Cold spots",
+  "enrichment-framework": "Enrichment",
+  "music-hubs-and-national-centre": "Hubs",
+  "national-plans-and-free-resources": "Plans",
+  "a-solution": "Solution",
+};
+
 export const STAGE_LABELS: Record<StageId, string> = {
   eyfs: "EYFS",
   "primary-ks1-ks2": "Primary / KS1–KS2",

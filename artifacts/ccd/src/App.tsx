@@ -3,6 +3,11 @@ import { Toaster } from 'react-hot-toast';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { ResetPasswordPage } from './components/ResetPasswordPage';
 import { AuthProvider } from './contexts/AuthContext';
+import { ForcePasswordChangeGate } from './components/Auth/ForcePasswordChangeGate';
+import {
+  consumeDownloadIntent,
+  startTrackedDownload,
+} from './utils/trackedDownload';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
 import { PaidBasketProvider } from './contexts/PaidBasketContext';
@@ -58,6 +63,8 @@ import {
   WELCOME_PROTOTYPE_STORAGE_KEY,
   type TabsExplainerTabId,
 } from './components/login/prototypeCopy';
+import { ForumApp, isForumPath } from './components/Forum/ForumApp';
+import { OmniMusicPartnerHub } from './components/partners/OmniMusicPartnerHub';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
@@ -65,23 +72,57 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
   const musicHubRoute =
     typeof window !== 'undefined' ? resolveMusicHubRoute(window.location.pathname) : null;
+  const onForum =
+    typeof window !== 'undefined' ? isForumPath(window.location.pathname) : false;
   const [showPrototypeWelcome, setShowPrototypeWelcome] = useState(false);
   const [showTabsExplainer, setShowTabsExplainer] = useState(false);
 
+  // After sign-in from a gated download or forum prompt, resume return URL.
+  useEffect(() => {
+    if (!user || loading) return;
+    const { resourceId, returnUrl } = consumeDownloadIntent();
+    if (resourceId) {
+      void startTrackedDownload(resourceId);
+      return;
+    }
+    let ret = returnUrl;
+    if (!ret) {
+      try {
+        ret = sessionStorage.getItem('ccd_forum_return') || '';
+        if (ret) sessionStorage.removeItem('ccd_forum_return');
+      } catch {
+        /* ignore */
+      }
+    }
+    if (!ret && typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search);
+      const q = params.get('return');
+      if (q && q.startsWith('/')) ret = q;
+    }
+    if (ret && ret.startsWith('/') && ret !== window.location.pathname + window.location.search) {
+      window.history.replaceState({}, '', ret);
+      window.dispatchEvent(new PopStateEvent('popstate'));
+      if (isForumPath(ret.split('?')[0] || '')) {
+        window.location.assign(ret);
+      }
+    }
+  }, [user, loading]);
+
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
-  // (`/roh`, `/lso`, …) and Music Hubs directory stay on their path.
+  // (`/roh`, `/lso`, …), Music Hubs, and the forum stay on their path.
   useEffect(() => {
     if (
       user &&
       schoolHomepage &&
       !partnerHub &&
+      !onForum &&
       musicHubRoute === null &&
       typeof window !== 'undefined' &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
     }
-  }, [user, schoolHomepage, partnerHub, musicHubRoute]);
+  }, [user, schoolHomepage, partnerHub, onForum, musicHubRoute]);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<
     'activity' | 'lesson' | 'unit' | 'assign' | undefined
@@ -91,7 +132,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   // explicit click near the Dashboard tabs (not chained after welcome).
   // Real teacher logins must not see these popups.
   useEffect(() => {
-    if (!user || partnerHub || musicHubRoute !== null || !isAuthorizedDemoMode()) return;
+    if (!user || partnerHub || onForum || musicHubRoute !== null || !isAuthorizedDemoMode()) return;
     let welcomeSeen = false;
     try {
       welcomeSeen = sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1';
@@ -101,7 +142,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     if (!welcomeSeen) {
       setShowPrototypeWelcome(true);
     }
-  }, [user, partnerHub, musicHubRoute]);
+  }, [user, partnerHub, onForum, musicHubRoute]);
 
   // Demo-only: Dashboard "About these tabs" button re-opens the explainer anytime.
   useEffect(() => {
@@ -165,10 +206,17 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   }
 
   if (!user) {
+    if (onForum) {
+      return <ForumApp />;
+    }
     if (schoolHomepage) {
       return <SchoolHomepage school={schoolHomepage} />;
     }
     return <LoginForm />;
+  }
+
+  if (onForum) {
+    return <ForumApp />;
   }
 
   const handleOpenGuide = (
@@ -274,6 +322,11 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
             onAddedToApp={({ sheetId }) => goHomeAfterAdd('ccd-open-after-partner', sheetId)}
           />
         );
+        break;
+      case 'omnimusic':
+      case 'omni-music':
+      case 'omni':
+        body = <OmniMusicPartnerHub hub={partnerHub} />;
         break;
       case 'jazznorth':
       case 'jazz-north':
@@ -392,7 +445,7 @@ function App() {
   // Detect a school-specific public homepage at `/<slug>`. Skip when the path
   // is a partner hub (`/roh`, …) so those routes are not treated as schools.
   const schoolHomepage =
-    typeof window !== 'undefined' && !partnerHub
+    typeof window !== 'undefined' && !partnerHub && !isForumPath(window.location.pathname)
       ? getSchoolForPath(window.location.pathname)
       : null;
 
@@ -403,7 +456,9 @@ function App() {
           <DataProvider>
             <PaidBasketProvider>
               <DndRoot>
-                <AppContent schoolHomepage={schoolHomepage} />
+                <ForcePasswordChangeGate>
+                  <AppContent schoolHomepage={schoolHomepage} />
+                </ForcePasswordChangeGate>
               </DndRoot>
             </PaidBasketProvider>
           </DataProvider>

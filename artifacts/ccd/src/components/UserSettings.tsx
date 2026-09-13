@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin } from 'lucide-react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -11,6 +11,9 @@ import { AuthGuard } from './Auth/AuthGuard';
 import { UserManagement } from './Admin/UserManagement';
 import { HubContentApprovalQueue } from './musicHubs/HubContentApprovalQueue';
 import { MyHubAdministration } from './musicHubs/MyHubAdministration';
+import { DownloadAnalytics } from './Admin/DownloadAnalytics';
+import { HubAdminDashboard } from './Admin/HubAdminDashboard';
+import { MyDownloads } from './Downloads/MyDownloads';
 import { customCategoriesApi, activityPacksApi } from '../config/api';
 import type { ActivityPack } from '../config/api';
 import { useDrag, useDrop } from 'react-dnd';
@@ -156,7 +159,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   tempCategoriesRef.current = tempCategories;
   tempYearGroupsRef.current = tempYearGroups;
   const [tempResourceLinks, setTempResourceLinks] = useState(resourceLinks);
-  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content'>('yeargroups');
+  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'hub-admin'>('yeargroups');
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
   const adminTriggerRef = useRef<HTMLButtonElement>(null);
@@ -197,7 +200,17 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
                   profile?.role === 'admin' ||
                   profile?.role === 'superuser';
   const isCreator = profile?.role === 'creator';
-  const showUserManagement = (isSupabaseAuthEnabled() || isSupabaseConfigured()) && (isAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.can_manage_users === true);
+  const showUserManagement = (isSupabaseAuthEnabled() || isSupabaseConfigured()) && (isAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.role === 'super_admin' || profile?.can_manage_users === true);
+  const showDownloadAnalytics =
+    isAdmin ||
+    profile?.role === 'organisation' ||
+    profile?.role === 'super_admin' ||
+    profile?.can_view_download_analytics === true;
+  const showHubAdmin =
+    isAdmin ||
+    profile?.role === 'organisation' ||
+    profile?.role === 'super_admin' ||
+    (profile?.hub_memberships?.some((m) => m.role === 'admin' || m.role === 'owner') ?? false);
 
   // When modal opens or permissions change, ensure active tab is one we can show (avoid blank content)
   React.useEffect(() => {
@@ -206,12 +219,14 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       return;
     }
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
+    if (activeTab === 'download-analytics' && !showDownloadAnalytics) setActiveTab('my-downloads');
+    if (activeTab === 'hub-admin' && !showHubAdmin) setActiveTab('resource-links');
     if (activeTab === 'hub-content' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
     if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
     // general, resource-links, data are under Admin for all users – no redirect
-  }, [isOpen, activeTab, showUserManagement, isAdmin, isCreator]);
+  }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, isAdmin, isCreator]);
 
   // Keep undo/redo history for year-group sections (key stages).
   React.useEffect(() => {
@@ -1030,6 +1045,30 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             </button>
           ))}
 
+          <button
+            onClick={() => setActiveTab('my-downloads')}
+            className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
+              activeTab === 'my-downloads'
+                ? 'text-white bg-teal-600 shadow-sm'
+                : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+            }`}
+          >
+            <Download className="h-3.5 w-3.5" />
+            <span>My Downloads</span>
+          </button>
+          {showDownloadAnalytics && (
+            <button
+              onClick={() => setActiveTab('download-analytics')}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
+                activeTab === 'download-analytics'
+                  ? 'text-white bg-teal-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+              }`}
+            >
+              <BarChart3 className="h-3.5 w-3.5" />
+              <span>Download analytics</span>
+            </button>
+          )}
           {showUserManagement && (
             <button
               onClick={() => setActiveTab('users')}
@@ -1075,6 +1114,23 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     Users
                   </button>
                 )}
+                {showHubAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('hub-admin'); setAdminMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'hub-admin' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Hub admin
+                  </button>
+                )}
+                <a
+                  href="/forum/admin"
+                  className="w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 text-gray-700 hover:bg-gray-50"
+                >
+                  <MessageSquare className="h-4 w-4" />
+                  Forum
+                </a>
                 {(isAdmin || isCreator) && (
                   <button
                     type="button"
@@ -2788,6 +2844,18 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             <div ref={adminTabContentRef} className="min-h-[620px] w-full flex flex-col">
               <CustomObjectivesAdmin embedded={true} />
             </div>
+          )}
+
+          {activeTab === 'my-downloads' && (
+            <MyDownloads />
+          )}
+
+          {activeTab === 'download-analytics' && showDownloadAnalytics && (
+            <DownloadAnalytics />
+          )}
+
+          {activeTab === 'hub-admin' && showHubAdmin && (
+            <HubAdminDashboard embedded />
           )}
 
           {activeTab === 'users' && showUserManagement && (

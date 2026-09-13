@@ -4,18 +4,15 @@
   "productIdHint": "jn-learning-resources",
   "folderName": "Jazz North",
   "idPrefix": "jn-",
-  "copiedIntoRepo": true,
-  "copyDecision": "Copied worksheet PDFs and audio ZIPs into public/partners/jazznorth/ so the main-branch hub can list and open them without the auth download stack.",
+  "copiedIntoRepo": false,
+  "copyDecision": "Skipped. public/partners/jazznorth/ only hosts tiny generated showcase overviews (~5KB). Official Learning Resources Area packs are intended to stay external (hub copy + DreamHost/Rhythmstix once auth lands). Do not commit these source PDFs/ZIPs.",
   "localPublicPatternIfEverInlined": "/partners/jazznorth/{filename}",
-  "dreamHostBaseDefault": "https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz North/",
-  "dreamHostBaseEnv": "VITE_JN_DREAMHOST_BASE",
-  "externalUrlPattern": "https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz%20North/{dreamHostFilename}",
+  "externalUrlPattern": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/{filename}",
   "notes": [
-    "Hub Open/Download uses exact DreamHost File Manager filenames via jazzNorthDreamHost.ts.",
-    "Live folder is Organisations/Jazz North/ under /ccdesignerdocs/ (flat filenames at /ccdesignerdocs/ 404).",
-    "Override with VITE_JN_DREAMHOST_BASE if the folder path changes.",
-    "Local public/partners/jazznorth/ copies remain as offline fallback only.",
-    "Auth/tracked-download path remains on feature/user-mgmt-download-tracking for later."
+    "Stable filenames use jn- kebab-case to match jn-mr-big-lesson-overview.pdf / jn-playlist-milestones-overview.pdf.",
+    "Source Desktop filenames retain original spelling quirks (e.g. 'activites', trailing spaces before .pdf).",
+    "Audio ZIPs already present beside PDFs on Desktop; include in registry when uploaded. No audio found for improvisation guides.",
+    "Hub currently links official materials to https://www.jazznorth.org/learning-resources-area rather than hosting packs in-repo."
   ],
   "existingHubReferences": {
     "branding": "artifacts/ccd/src/utils/jazzNorthBranding.ts",
@@ -57,7 +54,7 @@
   "resources": [
     {
       "id": "jn-can-you-sing-activities",
-      "title": "Can You Sing Your Song? \u2014 Activities",
+      "title": "Can You Sing Your Song? — Activities",
       "type": "activities PDF",
       "collection": "jn-can-you-sing-your-song",
       "filename": "jn-can-you-sing-activities.pdf",
@@ -69,7 +66,7 @@
     },
     {
       "id": "jn-can-you-sing-piano-accomp",
-      "title": "Can You Sing Your Song? \u2014 Piano Accompaniment",
+      "title": "Can You Sing Your Song? — Piano Accompaniment",
       "type": "score PDF",
       "collection": "jn-can-you-sing-your-song",
       "filename": "jn-can-you-sing-piano-accomp.pdf",
@@ -81,7 +78,7 @@
     },
     {
       "id": "jn-hello-song-activities",
-      "title": "Hello Song \u2014 Activities",
+      "title": "Hello Song — Activities",
       "type": "activities PDF",
       "collection": "jn-hello-song",
       "filename": "jn-hello-song-activities.pdf",
@@ -93,7 +90,7 @@
     },
     {
       "id": "jn-hello-song-score",
-      "title": "Hello Song \u2014 Score",
+      "title": "Hello Song — Score",
       "type": "score PDF",
       "collection": "jn-hello-song",
       "filename": "jn-hello-song-score.pdf",
@@ -105,7 +102,7 @@
     },
     {
       "id": "jn-2-and-4-chant-activities",
-      "title": "2 and 4 Chant \u2014 Activities",
+      "title": "2 and 4 Chant — Activities",
       "type": "activities PDF",
       "collection": "jn-2-and-4-chant",
       "filename": "jn-2-and-4-chant-activities.pdf",
@@ -117,7 +114,7 @@
     },
     {
       "id": "jn-2-and-4-chant-score",
-      "title": "2 and 4 Chant \u2014 Score (Both Versions)",
+      "title": "2 and 4 Chant — Score (Both Versions)",
       "type": "score PDF",
       "collection": "jn-2-and-4-chant",
       "filename": "jn-2-and-4-chant-score.pdf",
@@ -129,7 +126,7 @@
     },
     {
       "id": "jn-not-quite-jazz-improv-games",
-      "title": "Not Quite Jazz \u2014 Improvisation Games",
+      "title": "Not Quite Jazz — Improvisation Games",
       "type": "improvisation guide",
       "collection": "jn-improvisation",
       "filename": "jn-not-quite-jazz-improv-games.pdf",
@@ -155,7 +152,7 @@
   "audioSupport": [
     {
       "id": "jn-can-you-sing-audio",
-      "title": "Can You Sing Your Song? \u2014 Audio Files",
+      "title": "Can You Sing Your Song? — Audio Files",
       "type": "audio ZIP",
       "collection": "jn-can-you-sing-your-song",
       "filename": "jn-can-you-sing-audio.zip",
@@ -167,7 +164,7 @@
     },
     {
       "id": "jn-hello-song-audio",
-      "title": "Hello Song \u2014 Audio Files",
+      "title": "Hello Song — Audio Files",
       "type": "audio ZIP",
       "collection": "jn-hello-song",
       "filename": "jn-hello-song-audio.zip",
@@ -179,7 +176,7 @@
     },
     {
       "id": "jn-2-and-4-chant-audio",
-      "title": "2 and 4 Chant \u2014 Audio Files",
+      "title": "2 and 4 Chant — Audio Files",
       "type": "audio ZIP",
       "collection": "jn-2-and-4-chant",
       "filename": "jn-2-and-4-chant-audio.zip",
