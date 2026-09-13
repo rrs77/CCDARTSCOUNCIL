@@ -13,6 +13,7 @@ import {
   Settings as SettingsIcon,
   Layers,
   Sparkles,
+  MessageSquare,
 } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 
@@ -139,15 +140,23 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
       {
         title: 'Settings',
         description:
-          'Manage year groups, categories, objectives, and branding from Settings. This is also where you tweak which categories appear for each class.',
+          'Manage year groups, categories, objectives, and branding from Settings. You can also open My Downloads, Download analytics, Hub admin, Users, and a link to Forum admin.',
         target: '[data-walkthrough="settings"]',
         position: 'left',
         icon: <SettingsIcon className="h-7 w-7 text-slate-500" />,
       },
       {
+        title: 'Community Forum',
+        description:
+          'The speech-bubble opens the Community Forum. Browse published categories without signing in; sign in to post, reply, or open Forum admin.',
+        target: '[data-walkthrough="forum"]',
+        position: 'left',
+        icon: <MessageSquare className="h-7 w-7 text-cyan-600" />,
+      },
+      {
         title: 'Help & Restart Tour',
         description:
-          'Click this button at any time to bring up help. You can also restart this tour from the same place whenever you need a refresher.',
+          'Open the Help Guide for step-by-step topics, including The Facts, accounts, the forum, and partner hubs. You can restart this tour from the same place.',
         target: '[data-help-button]',
         position: 'left',
         icon: <HelpCircle className="h-7 w-7 text-blue-500" />,

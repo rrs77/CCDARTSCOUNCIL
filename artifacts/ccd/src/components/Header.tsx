@@ -6,7 +6,7 @@ import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { UserSettings } from './UserSettings';
 import { WalkthroughGuide } from './WalkthroughGuide';
-import { HelpGuide } from './HelpGuide';
+import { HelpGuide, type HelpGuideSection } from './HelpGuide';
 import { LogoSVG } from './Logo';
 import { usePWAInstall } from '../hooks/usePWAInstall';
 import { isDemoModeActive, shouldShowPreviewBanner } from '../utils/demoMode';
@@ -32,7 +32,7 @@ export function Header() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
-  const [helpGuideSection, setHelpGuideSection] = useState<'activity' | 'lesson' | 'unit' | 'assign' | undefined>(undefined);
+  const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
 
   // Auto-open the walkthrough when the user arrived via the login page's
   // "Feature Walkthrough" button (which sets a one-shot session flag and
@@ -355,6 +355,7 @@ export function Header() {
                 className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
                 title="Community Forum"
                 aria-label="Open community forum"
+                data-walkthrough="forum"
               >
                 <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5" />
               </a>

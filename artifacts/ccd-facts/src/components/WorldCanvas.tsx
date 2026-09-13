@@ -15,7 +15,6 @@ export function WorldCanvas({
   onFocus,
   onOpenDetail,
   onOpenChild,
-  onOpenPdf,
   onPrev,
   onNext,
 }: {
@@ -30,7 +29,6 @@ export function WorldCanvas({
   onFocus: (id: string) => void;
   onOpenDetail: (id: string) => void;
   onOpenChild?: (id: string) => void;
-  onOpenPdf?: () => void;
   onPrev: () => void;
   onNext: () => void;
 }) {
@@ -42,7 +40,7 @@ export function WorldCanvas({
   if (viewMode === "overview" || !focusFrame) {
     return (
       <div className="world-stage world-stage--overview-grid">
-        <StageOverview stages={hubs} onOpen={onFocus} onOpenPdf={onOpenPdf} />
+        <StageOverview stages={hubs} onOpen={onFocus} />
       </div>
     );
   }
