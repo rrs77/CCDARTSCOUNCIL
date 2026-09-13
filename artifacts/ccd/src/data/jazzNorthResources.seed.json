@@ -7,12 +7,18 @@
   "copiedIntoRepo": false,
   "copyDecision": "Skipped. public/partners/jazznorth/ only hosts tiny generated showcase overviews (~5KB). Official Learning Resources Area packs are intended to stay external (hub copy + DreamHost/Rhythmstix once auth lands). Do not commit these source PDFs/ZIPs.",
   "localPublicPatternIfEverInlined": "/partners/jazznorth/{filename}",
-  "externalUrlPattern": "https://www.rhythmstix.co.uk/uploads/ccd/partners/jazznorth/{filename}",
+  "dreamHostBaseDefault": "https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz North/",
+  "dreamHostBaseEnv": "VITE_JN_DREAMHOST_BASE",
+  "externalUrlPattern": "https://rhythmstix.co.uk/ccdesignerdocs/Organisations/Jazz%20North/{dreamHostFilename}",
   "notes": [
+    "Hub Open/Download uses exact DreamHost File Manager filenames via jazzNorthDreamHost.ts.",
+    "Live folder is Organisations/Jazz North/ under /ccdesignerdocs/ (flat filenames at /ccdesignerdocs/ 404).",
+    "Override with VITE_JN_DREAMHOST_BASE if the folder path changes.",
+    "Local public/partners/jazznorth/ copies remain as offline fallback only.",
+    "Authenticated / analytics downloads use /api/resources/:id/download (user-mgmt registry IDs).",
     "Stable filenames use jn- kebab-case to match jn-mr-big-lesson-overview.pdf / jn-playlist-milestones-overview.pdf.",
     "Source Desktop filenames retain original spelling quirks (e.g. 'activites', trailing spaces before .pdf).",
-    "Audio ZIPs already present beside PDFs on Desktop; include in registry when uploaded. No audio found for improvisation guides.",
-    "Hub currently links official materials to https://www.jazznorth.org/learning-resources-area rather than hosting packs in-repo."
+    "Audio ZIPs already present beside PDFs on Desktop; include in registry when uploaded. No audio found for improvisation guides."
   ],
   "existingHubReferences": {
     "branding": "artifacts/ccd/src/utils/jazzNorthBranding.ts",

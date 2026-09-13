@@ -1,8 +1,14 @@
 /**
  * Client-side Jazz North resource registry (stable IDs).
- * Downloads MUST go through /api/resources/:id/download — never raw DreamHost URLs.
+ *
+ * Hub Open/Download buttons use DreamHost direct URLs (exact File Manager names).
+ * Local `/partners/jazznorth/` copies remain as offline fallback only.
+ * Authenticated / analytics downloads go through /api/resources/:id/download
+ * (never wire those buttons to raw DreamHost URLs).
  */
-import seed from '../data/jazzNorthResources.seed.json';
+import seed from './jazzNorthResources.seed.json';
+import { JN_DREAMHOST_BASE, jnDreamHostUrl } from '../config/jazzNorthDreamHost';
+import { getTrackedDownloadPath } from '../utils/trackedDownload';
 
 export interface RegistryResource {
   id: string;
@@ -10,7 +16,15 @@ export interface RegistryResource {
   type: string;
   collection: string;
   filename: string;
+  /** Exact DreamHost File Manager filename (may include spaces). */
+  dreamHostFilename: string;
   relatedAudioId?: string | null;
+  /** Direct DreamHost download URL — preferred Open/Download target on the hub. */
+  publicUrl: string;
+  /** Local Vite public path fallback. */
+  localPublicUrl: string;
+  /** Tracked-download API path for auth + analytics (user-mgmt registry). */
+  trackedDownloadPath: string;
   /** Placeholder only — never used as a button href. */
   externalUrlPlaceholder?: string;
 }
@@ -21,29 +35,65 @@ export interface ResourceCollection {
   description: string;
 }
 
-const pdfResources: RegistryResource[] = (seed.resources || []).map((r) => ({
-  id: r.id,
-  title: r.title,
-  type: r.type,
-  collection: r.collection,
-  filename: r.filename,
-  relatedAudioId: r.relatedAudioId ?? null,
-  externalUrlPlaceholder: r.externalUrlPlaceholder,
-}));
+/** Map stable registry ids → exact DreamHost filenames. */
+const DREAMHOST_FILENAME_BY_ID: Record<string, string> = {
+  'jn-can-you-sing-activities': 'Can-you-sing-your-song-activites.pdf',
+  'jn-can-you-sing-piano-accomp': 'Can-you-sing-your-song-piano-accomp.pdf',
+  'jn-can-you-sing-audio': 'Can-you-sing-your-song-audio-files.zip',
+  'jn-hello-song-activities': 'Hello-song-activities.pdf',
+  'jn-hello-song-score': 'Hello song score.pdf',
+  'jn-hello-song-audio': 'Hello-song-audio-files.zip',
+  'jn-2-and-4-chant-activities': '2-and 4-chant-activities.pdf',
+  'jn-2-and-4-chant-score': '2-and-4-chant-score-both-versions.pdf',
+  'jn-2-and-4-chant-audio': '2-and-4-audio-files.zip',
+  'jn-not-quite-jazz-improv-games': 'Not-quite-jazz-improvisation-games.pdf',
+  'jn-ways-into-improvisation': 'Ways-into-Improvisation.pdf',
+};
 
-const audioResources: RegistryResource[] = (seed.audioSupport || []).map((r) => ({
-  id: r.id,
-  title: r.title,
-  type: r.type,
-  collection: r.collection,
-  filename: r.filename,
-  relatedAudioId: null,
-  externalUrlPlaceholder: r.externalUrlPlaceholder,
-}));
+function toRegistry(
+  items: Array<{
+    id: string;
+    title: string;
+    type: string;
+    collection: string;
+    filename: string;
+    relatedAudioId?: string | null;
+    externalUrlPlaceholder?: string;
+  }>,
+): RegistryResource[] {
+  return items.map((r) => {
+    const dreamHostFilename = DREAMHOST_FILENAME_BY_ID[r.id] || r.filename;
+    const publicUrl = jnDreamHostUrl(dreamHostFilename);
+    return {
+      id: r.id,
+      title: r.title,
+      type: r.type,
+      collection: r.collection,
+      filename: r.filename,
+      dreamHostFilename,
+      relatedAudioId: r.relatedAudioId ?? null,
+      publicUrl,
+      localPublicUrl: `/partners/jazznorth/${r.filename}`,
+      trackedDownloadPath: getTrackedDownloadPath(r.id),
+      externalUrlPlaceholder: r.externalUrlPlaceholder || publicUrl,
+    };
+  });
+}
+
+const pdfResources = toRegistry(seed.resources || []);
+const audioResources = toRegistry(
+  (seed.audioSupport || []).map((r) => ({
+    ...r,
+    relatedAudioId: null,
+  })),
+);
 
 export const JAZZ_NORTH_COLLECTIONS: ResourceCollection[] = seed.collections || [];
 
 export const JAZZ_NORTH_RESOURCES: RegistryResource[] = [...pdfResources, ...audioResources];
+
+/** Documented base for ops / user correction (Jazz North hub footer). */
+export const JAZZ_NORTH_DREAMHOST_BASE_USED = JN_DREAMHOST_BASE;
 
 export function getJazzNorthResourcesByCollection(collectionId: string): RegistryResource[] {
   return JAZZ_NORTH_RESOURCES.filter((r) => r.collection === collectionId);
