@@ -29,7 +29,7 @@ export function sanitizeSearchQuery(raw) {
   if (typeof raw !== 'string') return '';
   return raw
     .trim()
-    .replace(/[%_,.()"'\\]/g, ' ')
+    .replace(/[%_,()"'\\]/g, ' ')
     .replace(/\s+/g, ' ')
     .trim()
     .slice(0, 100);

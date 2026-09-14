@@ -123,68 +123,53 @@ export async function POST(request) {
     const perms = defaultPermissionsForRole(roleVal);
 
     let user = null;
-    let actionLink = null;
     let emailSent = false;
     let emailWarning = null;
 
-    const resendKey = process.env.RESEND_API_KEY;
-    if (resendKey) {
-      const generated = await generateAuthLink(supabase, {
-        type: 'invite',
-        email: emailTrimmed,
-        redirectTo,
-        data: { display_name: displayName, role: roleVal },
-      });
-      if (generated.error) {
-        if (isAlreadyRegisteredError(generated.error)) {
-          return safeJson(
-            {
-              error: 'A user with this email already exists.',
-              code: 'email_exists',
-            },
-            409,
-          );
-        }
-        return safeJson({ error: generated.error.message }, 400);
+    const generated = await generateAuthLink(supabase, {
+      type: 'invite',
+      email: emailTrimmed,
+      redirectTo,
+      data: { display_name: displayName, role: roleVal },
+    });
+    if (generated.error) {
+      if (isAlreadyRegisteredError(generated.error)) {
+        return safeJson(
+          {
+            error: 'A user with this email already exists.',
+            code: 'email_exists',
+          },
+          409,
+        );
       }
-      user = generated.user;
-      actionLink = generated.actionLink;
-      if (actionLink) {
-        const mail = activateAccountEmail({
-          displayName,
-          activateUrl: actionLink,
-        });
-        const sent = await sendResendEmail({ to: emailTrimmed, ...mail });
-        emailSent = sent.sent === true;
-        if (!emailSent) {
-          emailWarning =
-            sent.error ||
-            sent.skipped ||
-            'The account was created but the invitation email could not be sent. Use Resend invite.';
-        }
-      } else {
+      return safeJson({ error: generated.error.message }, 400);
+    }
+    user = generated.user;
+
+    if (process.env.RESEND_API_KEY && generated.actionLink) {
+      const mail = activateAccountEmail({
+        displayName,
+        activateUrl: generated.actionLink,
+      });
+      const sent = await sendResendEmail({ to: emailTrimmed, ...mail });
+      emailSent = sent.sent === true;
+      if (!emailSent) {
         emailWarning =
-          'The account was created but no setup link was issued. Use Resend invite.';
+          sent.error ||
+          sent.skipped ||
+          'The account was created but the invitation email could not be sent. Use Resend invite.';
       }
     } else {
-      const { data, error } = await supabase.auth.admin.inviteUserByEmail(emailTrimmed, {
-        data: { display_name: displayName, role: roleVal },
+      const { error: smtpError } = await supabase.auth.resetPasswordForEmail(emailTrimmed, {
         redirectTo,
       });
-      if (error) {
-        if (isAlreadyRegisteredError(error)) {
-          return safeJson(
-            {
-              error: 'A user with this email already exists.',
-              code: 'email_exists',
-            },
-            409,
-          );
-        }
-        return safeJson({ error: error.message }, 400);
+      if (smtpError) {
+        emailWarning =
+          smtpError.message ||
+          'The account was created but the invitation email could not be sent. Use Resend invite.';
+      } else {
+        emailSent = true;
       }
-      user = data?.user;
-      emailSent = true;
     }
 
     if (!user?.id) {
