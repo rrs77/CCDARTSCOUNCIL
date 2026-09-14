@@ -45,9 +45,10 @@ const MANUAL_SECTIONS: ManualSection[] = [
     icon: Users,
     steps: [
       'Open Settings (cog icon) → Year Groups tab to see all your classes.',
-      'To add a class: enter an ID, display name and colour, then click Add Year Group.',
-      'To edit or delete a class: use the pencil and trash icons on its row.',
-      'To group classes into sections (EYFS, KS1, KS2, ...) use the dropdown on each row, or drag the row into a different section.',
+      'To add a class: enter an ID, display name, colour and section, then click Add.',
+      'To edit or delete a class: use the pencil and trash icons on its row. Existing IDs stay read-only so lesson links remain intact.',
+      'To group classes into sections (EYFS, KS1, KS2, ...) use the Section dropdown on each row. Search and bulk-assign from Other when the list is long.',
+      'Use Add year group inside a section to create a class already in that section. Drag only to reorder within a section.',
       'Use "Add section" to create a new section, and the pencil icon on a section to rename it.',
       'Section assignments are saved automatically and remembered across devices.',
     ],
@@ -58,7 +59,8 @@ const MANUAL_SECTIONS: ManualSection[] = [
     icon: Folder,
     steps: [
       'Categories (e.g. "Welcome", "Kodaly Songs") control which activities appear in the sidebar for each class.',
-      'In Settings → Categories, click a category, then tick the year groups that should see it.',
+      'In Settings → Categories, use the Folder dropdown on each category (or search and bulk-assign Uncategorised) instead of dragging into a folder.',
+      'Click a category, then tick the year groups that should see it.',
       'Tip: use Bulk Assignment to assign many categories to many year groups in two clicks.',
       'A category with no year groups assigned will not appear anywhere in the sidebar.',
     ],
