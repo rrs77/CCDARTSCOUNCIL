@@ -276,7 +276,7 @@ export function CategoryFoldersPanel({
     <div className="mb-4 space-y-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm text-gray-600">
-          Organise categories into folders. Drag categories onto a folder to assign them.
+          Organise categories with the Folder dropdown. Drag only to reorder within a folder.
         </p>
         <button
           type="button"

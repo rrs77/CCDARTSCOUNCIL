@@ -255,6 +255,57 @@ export function sectionContainsCanonicalId<T extends YearGroupLike>(
   );
 }
 
+/** Section id that currently holds this canonical year-group id, if any. */
+export function findSectionIdForYearGroup<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(sections: S[], yearGroupId: string, groups: T[]): string | undefined {
+  for (const section of sections) {
+    if (sectionContainsCanonicalId(section.yearGroupIds || [], yearGroupId, groups)) {
+      return section.id;
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Move one or more year groups into a target section, keeping canonical ids.
+ * Does not recreate groups — lesson/activity associations stay on the same ids.
+ * Target section is expanded so the move is visible.
+ */
+export function moveYearGroupsToSection<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(sections: S[], yearGroupIds: string[], targetSectionId: string, groups: T[]): S[] {
+  const idsToMove = normalizeSectionYearGroupIdList(yearGroupIds, groups);
+  if (idsToMove.length === 0) return sections;
+  if (!sections.some((s) => s.id === targetSectionId)) return sections;
+  const moveSet = new Set(idsToMove);
+
+  return sections.map((s) => {
+    if (s.id === targetSectionId) {
+      const base = normalizeSectionYearGroupIdList([...(s.yearGroupIds || [])], groups);
+      const seen = new Set(base);
+      const extra = idsToMove.filter((id) => {
+        if (seen.has(id)) return false;
+        seen.add(id);
+        return true;
+      });
+      return { ...s, yearGroupIds: [...base, ...extra], collapsed: false };
+    }
+    return {
+      ...s,
+      yearGroupIds: normalizeSectionYearGroupIdList(
+        (s.yearGroupIds || []).filter((token) => {
+          const g = resolveYearGroupFromToken(groups, token);
+          return !g || !moveSet.has(g.id);
+        }),
+        groups
+      ),
+    };
+  });
+}
+
 /**
  * True when section nesting matches name-based heuristic bucketing exactly
  * (same section id per class). Used to detect the old v2 auto-migration so we
