@@ -1,41 +1,45 @@
 /**
  * POST /api/create-user
- * Admin-only: create user with password or invite by email (Supabase Auth).
+ * Admin-only: invite a user. They set their own password via a one-time link.
+ * Never accepts, stores, or returns a password.
  *
  * Env: SUPABASE_SERVICE_ROLE_KEY, SUPABASE_URL | VITE_SUPABASE_URL,
- *      SUPABASE_JWT_SECRET (recommended), RESEND_API_KEY (optional branded email)
+ *      SUPABASE_JWT_SECRET (recommended), RESEND_API_KEY (branded email)
  */
 
 import {
   assertRateLimit,
   createServiceClient,
-  getAppOrigin,
   getClientIp,
   hashIpForStorage,
   jsonResponse,
   optionsResponse,
   requireAdmin,
+  SUPER_ADMIN_ROLES,
   writeAuditLog,
 } from './_authShared.js';
+import { activateAccountEmail, sendResendEmail } from './_emailTemplates.js';
 import {
-  accountCreatedEmail,
-  activateAccountEmail,
-  sendResendEmail,
-} from './_emailTemplates.js';
-
-const ROLES = [
-  'viewer',
-  'student',
-  'teacher',
-  'admin',
-  'superuser',
-  'creator',
-  'organisation',
-];
-const STATUSES = ['active', 'invited', 'suspended'];
+  CREATE_USER_ROLES,
+  defaultPermissionsForRole,
+  generateAuthLink,
+  inviteRedirectUrl,
+  inviteTimestamps,
+  isAlreadyRegisteredError,
+  payloadContainsSecrets,
+  upsertProfileRow,
+} from './_inviteShared.js';
 
 export async function OPTIONS() {
   return optionsResponse();
+}
+
+function safeJson(body, status) {
+  if (payloadContainsSecrets(body)) {
+    console.error('create-user refused to return secrets in JSON');
+    return jsonResponse({ error: 'Internal server error.' }, 500);
+  }
+  return jsonResponse(body, status);
 }
 
 export async function POST(request) {
@@ -53,47 +57,38 @@ export async function POST(request) {
     const body = await request.json().catch(() => ({}));
     const {
       email,
-      password,
       display_name,
       first_name,
       last_name,
       school_or_org,
       role,
-      status,
-      send_invite_email,
       allowed_year_groups,
       admin_preset_categories,
       admin_preset_activity_pack_ids,
       organisation_id,
       organisation_name,
-      must_change_password,
       marketing_consent,
     } = body || {};
 
     const emailTrimmed = typeof email === 'string' ? email.trim().toLowerCase() : '';
     if (!emailTrimmed || !emailTrimmed.includes('@')) {
-      return jsonResponse({ error: 'A valid email is required.' }, 400);
+      return safeJson({ error: 'A valid email is required.' }, 400);
     }
 
-    const roleVal = role && ROLES.includes(role) ? role : 'viewer';
-    if (roleVal === 'superuser' && admin.profile?.role !== 'superuser') {
-      return jsonResponse({ error: 'Only a superuser can create another superuser.' }, 403);
+    const roleVal = role && CREATE_USER_ROLES.includes(role) ? role : 'teacher';
+    const actorIsSuper = SUPER_ADMIN_ROLES.has(admin.profile?.role);
+    if ((roleVal === 'superuser' || roleVal === 'super_admin') && !actorIsSuper) {
+      return safeJson({ error: 'Only a super admin can create another super admin.' }, 403);
     }
 
-    const statusVal = status && STATUSES.includes(status) ? status : 'invited';
     const displayName =
       (typeof display_name === 'string' && display_name.trim()) ||
       [first_name, last_name].filter(Boolean).join(' ').trim() ||
       null;
-    const useInvite =
-      send_invite_email === true || (!password && statusVal === 'invited');
-    const forcePwChange =
-      must_change_password === true ||
-      (!useInvite && typeof password === 'string' && password.length >= 6);
 
     const supabase = createServiceClient();
     if (!supabase) {
-      return jsonResponse(
+      return safeJson(
         {
           error:
             'Server configuration error: SUPABASE_SERVICE_ROLE_KEY is not set. Add it in Vercel Project Settings → Environment Variables.',
@@ -102,36 +97,98 @@ export async function POST(request) {
       );
     }
 
-    const origin = getAppOrigin(request);
-    const redirectTo = origin ? `${origin}/reset-password` : undefined;
-    let user;
-    let temporaryPassword = null;
-
-    if (!useInvite && password && typeof password === 'string' && password.length >= 6) {
-      temporaryPassword = password;
-      const { data, error } = await supabase.auth.admin.createUser({
-        email: emailTrimmed,
-        password,
-        email_confirm: true,
-        user_metadata: {
-          display_name: displayName,
-          role: roleVal,
-          must_change_password: forcePwChange,
+    const { data: existingProfiles, error: existingErr } = await supabase
+      .from('profiles')
+      .select('id, email, status, role')
+      .ilike('email', emailTrimmed)
+      .limit(5);
+    if (existingErr) {
+      return safeJson({ error: existingErr.message }, 400);
+    }
+    const duplicate = (existingProfiles || []).find(
+      (row) => String(row.email || '').trim().toLowerCase() === emailTrimmed,
+    );
+    if (duplicate) {
+      return safeJson(
+        {
+          error: 'A user with this email already exists.',
+          code: 'email_exists',
         },
+        409,
+      );
+    }
+
+    const redirectTo = inviteRedirectUrl(request);
+    const timestamps = inviteTimestamps();
+    const perms = defaultPermissionsForRole(roleVal);
+
+    let user = null;
+    let actionLink = null;
+    let emailSent = false;
+    let emailWarning = null;
+
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+      const generated = await generateAuthLink(supabase, {
+        type: 'invite',
+        email: emailTrimmed,
+        redirectTo,
+        data: { display_name: displayName, role: roleVal },
       });
-      if (error) return jsonResponse({ error: error.message }, 400);
-      user = data?.user;
+      if (generated.error) {
+        if (isAlreadyRegisteredError(generated.error)) {
+          return safeJson(
+            {
+              error: 'A user with this email already exists.',
+              code: 'email_exists',
+            },
+            409,
+          );
+        }
+        return safeJson({ error: generated.error.message }, 400);
+      }
+      user = generated.user;
+      actionLink = generated.actionLink;
+      if (actionLink) {
+        const mail = activateAccountEmail({
+          displayName,
+          activateUrl: actionLink,
+        });
+        const sent = await sendResendEmail({ to: emailTrimmed, ...mail });
+        emailSent = sent.sent === true;
+        if (!emailSent) {
+          emailWarning =
+            sent.error ||
+            sent.skipped ||
+            'The account was created but the invitation email could not be sent. Use Resend invite.';
+        }
+      } else {
+        emailWarning =
+          'The account was created but no setup link was issued. Use Resend invite.';
+      }
     } else {
       const { data, error } = await supabase.auth.admin.inviteUserByEmail(emailTrimmed, {
         data: { display_name: displayName, role: roleVal },
         redirectTo,
       });
-      if (error) return jsonResponse({ error: error.message }, 400);
+      if (error) {
+        if (isAlreadyRegisteredError(error)) {
+          return safeJson(
+            {
+              error: 'A user with this email already exists.',
+              code: 'email_exists',
+            },
+            409,
+          );
+        }
+        return safeJson({ error: error.message }, 400);
+      }
       user = data?.user;
+      emailSent = true;
     }
 
     if (!user?.id) {
-      return jsonResponse({ error: 'User could not be created.' }, 500);
+      return safeJson({ error: 'User could not be created.' }, 500);
     }
 
     const profileRow = {
@@ -142,14 +199,16 @@ export async function POST(request) {
       last_name: typeof last_name === 'string' ? last_name.trim() || null : null,
       school_or_org: typeof school_or_org === 'string' ? school_or_org.trim() || null : null,
       role: roleVal,
-      status: statusVal,
-      must_change_password: forcePwChange,
+      status: 'invited',
+      must_change_password: true,
+      ...perms,
       organisation_id: typeof organisation_id === 'string' ? organisation_id.trim() || null : null,
       organisation_name:
         typeof organisation_name === 'string' ? organisation_name.trim() || null : null,
       marketing_consent: marketing_consent === true,
       marketing_consent_at: marketing_consent === true ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),
+      ...timestamps,
       ...(Array.isArray(allowed_year_groups) &&
         allowed_year_groups.length > 0 && { allowed_year_groups }),
       ...(Array.isArray(admin_preset_categories) &&
@@ -160,53 +219,44 @@ export async function POST(request) {
         }),
     };
 
-    const { error: profileError } = await supabase
-      .from('profiles')
-      .upsert(profileRow, { onConflict: 'id' });
+    const profileError = await upsertProfileRow(supabase, profileRow);
     if (profileError) {
       console.warn('Profile upsert warning:', profileError.message);
-    }
-
-    const loginUrl = origin || 'https://www.ccdesigner.co.uk';
-    if (useInvite) {
-      const mail = activateAccountEmail({
-        displayName,
-        activateUrl: redirectTo || `${loginUrl}/reset-password`,
-      });
-      await sendResendEmail({ to: emailTrimmed, ...mail });
-    } else if (temporaryPassword) {
-      const mail = accountCreatedEmail({
-        displayName,
-        email: emailTrimmed,
-        temporaryPassword,
-        loginUrl,
-      });
-      await sendResendEmail({ to: emailTrimmed, ...mail });
     }
 
     const ipHash = await hashIpForStorage(ip);
     await writeAuditLog({
       actorId: admin.userId,
-      action: useInvite ? 'user.invite' : 'user.create',
+      action: 'user.invite',
       targetType: 'profile',
       targetId: user.id,
-      meta: { email: emailTrimmed, role: roleVal, status: statusVal },
+      meta: {
+        email: emailTrimmed,
+        role: roleVal,
+        status: 'invited',
+        email_sent: emailSent,
+      },
       ipHash,
     });
 
-    return jsonResponse({
+    const responseBody = {
       success: true,
+      invited: true,
+      emailSent,
+      invitation_status: 'pending',
       user: {
         id: user.id,
         email: user.email ?? emailTrimmed,
         display_name: displayName,
         role: roleVal,
+        status: 'invited',
       },
-      invited: useInvite,
-    });
+    };
+    if (emailWarning) responseBody.warning = emailWarning;
+    return safeJson(responseBody, 201);
   } catch (e) {
     console.error('create-user error:', e);
-    return jsonResponse(
+    return safeJson(
       { error: e instanceof Error ? e.message : 'Failed to create user' },
       500,
     );
