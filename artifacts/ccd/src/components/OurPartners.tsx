@@ -437,8 +437,12 @@ export function OurPartners() {
     setActiveLetter(letter);
     const el = document.querySelector<HTMLElement>(`[data-org-letter-index="${letter}"]`);
     if (!el) return;
-    /* Keep short single-card groups (e.g. K → Kneehigh) below sticky app chrome */
-    const offset = Math.max(168, Math.round(window.innerHeight * 0.22));
+    const bannerRaw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--preview-banner-height')
+      .trim();
+    const bannerH = Number.parseFloat(bannerRaw) || 0;
+    const headerH = document.querySelector('header')?.getBoundingClientRect().height ?? 64;
+    const offset = bannerH + headerH + 32;
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   };
