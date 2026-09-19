@@ -343,6 +343,9 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       case 'rsc':
       case 'rsceducation':
       case 'royalshakespeare':
+      case 'bristololdvic':
+      case 'bov':
+      case 'kneehigh':
         body = <PartnerResourcesHub hub={partnerHub} />;
         break;
       case 'triborough':

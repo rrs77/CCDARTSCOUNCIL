@@ -665,8 +665,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       title: "Partner hubs",
       content: (
         <div className="space-y-3">
-          <p>Open a partner from the dashboard partners area or a short URL such as <strong>/omnimusic</strong>, <strong>/jazznorth</strong>, or <strong>/ems</strong>.</p>
-          <p><strong>OmniMusic</strong> uses the Resource Zone: the AMT hub link plus free session PDFs. Other partners (Jazz North, LSO, ROH, We Teach Drama, and more) have their own resource cards and planner actions.</p>
+          <p>Open a partner from the dashboard partners area or a short URL such as <strong>/omnimusic</strong>, <strong>/rsc</strong>, <strong>/bristololdvic</strong>, <strong>/kneehigh</strong>, <strong>/jazznorth</strong>, or <strong>/ems</strong>.</p>
+          <p><strong>OmniMusic</strong> uses the Resource Zone: the AMT hub link plus free session PDFs. Drama education hubs include <strong>RSC Education</strong>, <strong>Bristol Old Vic</strong>, and <strong>Kneehigh</strong>. Other partners (Jazz North, LSO, ROH, We Teach Drama, and more) have their own resource cards and planner actions. Organisations are listed A–Z with a letter browser on the right.</p>
         </div>
       )
     },
