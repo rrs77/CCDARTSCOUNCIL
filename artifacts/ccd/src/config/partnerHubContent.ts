@@ -521,6 +521,12 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
         kind: 'KS1–3',
       },
       {
+        title: 'First Encounters',
+        href: 'https://www.rsc.org.uk/learn/first-encounters',
+        description: 'First Encounters programme — early Shakespeare experiences for schools.',
+        kind: 'Programme',
+      },
+      {
         title: 'First Encounters · King Lear pack (PDF)',
         href: 'https://cdn2.rsc.org.uk/sitefinity/education-pdfs/teacher-packs/first-encounters-king-lear-learning-pack-2025.pdf',
         description: '2025 First Encounters King Lear learning pack (downloadable PDF).',
