@@ -433,6 +433,120 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
       },
     ],
   },
+
+  rsc: {
+    slug: 'rsc',
+    headerBg: '#111111',
+    logoInvert: true,
+    siteLabel: 'rsc.org.uk/learn/schools-and-teachers',
+    about: [
+      'RSC Education supports schools and teachers with rehearsal-room approaches to Shakespeare — from Key Stage 1 to A-Level — including teacher packs, activity toolkits, Associate Schools and the Shakespeare Curriculum platform.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open official RSC pages for the latest packs, events and booking details.',
+    ],
+    resourcesHeading: 'Teacher & school resources',
+    resourcesIntro:
+      'Explore free teacher packs, activity toolkits, literacy resources and the Shakespeare Curriculum platform for KS3–4.',
+    resources: [
+      {
+        title: 'Schools and teachers hub',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/',
+        description: 'Events, workshops, lesson plans, CPD and partnerships overview.',
+        kind: 'Hub',
+      },
+      {
+        title: 'Teacher resources',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources',
+        description: 'Lesson plans, teacher packs, videos and production images from KS1 to A-Level.',
+        kind: 'Library',
+      },
+      {
+        title: 'Activity toolkits',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/activity-toolkits',
+        description: 'Short creative activities for classroom, remote and blended learning.',
+        kind: 'Activities',
+      },
+      {
+        title: 'Shakespeare Curriculum',
+        href: 'https://www.rsc.org.uk/learn/shakespeare-curriculum',
+        description: 'KS3–4 platform with lesson plans, films, Digital Playtext and assessments (free for UK state schools).',
+        kind: 'Platform',
+      },
+      {
+        title: 'Shakespeare Curriculum (sign up)',
+        href: 'https://www.shakespearecurriculum.com/',
+        description: 'Open the curriculum platform to explore and register.',
+        kind: 'Sign up',
+      },
+    ],
+  },
+
+  bristololdvic: {
+    slug: 'bristololdvic',
+    headerBg: '#111111',
+    logoInvert: true,
+    siteLabel: 'bristololdvic.org.uk/teacher-resources',
+    about: [
+      'Bristol Old Vic’s Learning team supports schools with free RE:SOURCES heritage packs, production education packs, school visits, workshops and Young Company programmes at Britain’s oldest continually working theatre.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open official Bristol Old Vic pages for the latest packs and school bookings.',
+    ],
+    resourcesHeading: 'Teacher & school resources',
+    resourcesIntro:
+      'Download heritage RE:SOURCES packs and production education packs, or book a school visit with workshops and post-show talks.',
+    resources: [
+      {
+        title: 'Teacher resources (RE:SOURCES)',
+        href: 'https://bristololdvic.org.uk/teacher-resources',
+        description: 'Heritage classroom packs developed with Lighting Up Learning, University of Bristol Theatre Collection and Bristol Archives.',
+        kind: 'Library',
+      },
+      {
+        title: 'Take part · teacher resources',
+        href: 'https://bristololdvic.org.uk/take-part/teacher-resources',
+        description: 'RE:SOURCES packs plus production education packs (primary to post-16).',
+        kind: 'Packs',
+      },
+      {
+        title: 'Schools visits',
+        href: 'https://bristololdvic.org.uk/your-visit/schools',
+        description: 'School ticket rates, workshops, post-show talks and booking support.',
+        kind: 'Visits',
+      },
+    ],
+  },
+
+  kneehigh: {
+    slug: 'kneehigh',
+    headerBg: '#1a0a0a',
+    logoInvert: true,
+    siteLabel: 'thisiskneehigh.co.uk/item-categories/education',
+    about: [
+      'Kneehigh created joyful, anarchic theatre for over 40 years. Their education Cookbook and archive — study guides, interviews, design notes and devising exercises — are preserved by Falmouth University at This is Kneehigh.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open the official archive for the latest digitised items.',
+    ],
+    resourcesHeading: 'Education archive',
+    resourcesIntro:
+      'Browse This is Kneehigh education holdings for KS4/KS5 practitioner study — Cookbook-style teaching materials, production notes and devising kits.',
+    resources: [
+      {
+        title: 'Education archive',
+        href: 'https://thisiskneehigh.co.uk/item-categories/education/',
+        description: 'Study guides, Shadow Kit exercises, memory notes and education programme materials.',
+        kind: 'Archive',
+      },
+      {
+        title: 'This is Kneehigh home',
+        href: 'https://thisiskneehigh.co.uk/',
+        description: 'Full digital archive of shows, photographs, interviews and devising records.',
+        kind: 'Hub',
+      },
+      {
+        title: 'Shows index',
+        href: 'https://thisiskneehigh.co.uk/',
+        description: 'Explore productions such as Tristan & Yseult, Brief Encounter and Dead Dog in a Suitcase.',
+        kind: 'Shows',
+      },
+    ],
+  },
 };
 
 export function getPartnerHubContent(slug: string): PartnerHubPageContent | null {

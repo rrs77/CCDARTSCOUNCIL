@@ -124,6 +124,27 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     heightClass: 'h-5 sm:h-6',
     onPlate: true,
   },
+  {
+    id: 'rsc-education',
+    name: 'RSC Education',
+    src: '/partners/rsc-education.svg',
+    href: 'https://www.rsc.org.uk/learn/schools-and-teachers/',
+    heightClass: 'h-5 sm:h-6',
+  },
+  {
+    id: 'bristol-old-vic',
+    name: 'Bristol Old Vic',
+    src: '/partners/bristol-old-vic.svg',
+    href: 'https://bristololdvic.org.uk/teacher-resources',
+    heightClass: 'h-5 sm:h-6',
+  },
+  {
+    id: 'kneehigh',
+    name: 'Kneehigh',
+    src: '/partners/kneehigh.svg',
+    href: 'https://thisiskneehigh.co.uk/',
+    heightClass: 'h-5 sm:h-6',
+  },
 ];
 
 const LOGIN_PARTNER_IDS = [
