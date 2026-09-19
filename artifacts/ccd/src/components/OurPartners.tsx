@@ -437,24 +437,22 @@ export function OurPartners() {
     setActiveLetter(letter);
     const el = document.querySelector<HTMLElement>(`[data-org-letter-index="${letter}"]`);
     if (!el) return;
-    const offset = 112; /* sticky app chrome + section breathing room */
+    /* Keep short single-card groups (e.g. K → Kneehigh) below sticky app chrome */
+    const offset = Math.max(168, Math.round(window.innerHeight * 0.22));
     const top = el.getBoundingClientRect().top + window.scrollY - offset;
     window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   };
 
-  /** Group sorted orgs under first-letter markers for the grid. */
-  const freeOrgRows: Array<
-    | { type: 'letter'; letter: string }
-    | { type: 'hub'; hub: PartnerHubConfig }
-  > = [];
-  let lastLetter = '';
+  /** Alphabetical letter → hubs for sectioned grid + A–Z jumps. */
+  const freeOrgGroups: { letter: string; hubs: PartnerHubConfig[] }[] = [];
   for (const hub of freeOrgs) {
     const letter = orgSortLetter(hub);
-    if (letter !== lastLetter) {
-      freeOrgRows.push({ type: 'letter', letter });
-      lastLetter = letter;
+    const last = freeOrgGroups[freeOrgGroups.length - 1];
+    if (last && last.letter === letter) {
+      last.hubs.push(hub);
+    } else {
+      freeOrgGroups.push({ letter, hubs: [hub] });
     }
-    freeOrgRows.push({ type: 'hub', hub });
   }
 
   return (
@@ -549,26 +547,29 @@ export function OurPartners() {
           </div>
 
           <div className="flex items-start gap-3 sm:gap-4">
-            <ul
-              className="grid min-w-0 flex-1 grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4"
+            <div
+              className="min-w-0 flex-1 space-y-5"
               aria-label="Organisations with free resources"
             >
-              {freeOrgRows.map((row) =>
-                row.type === 'letter' ? (
-                  <li
-                    key={`letter-${row.letter}`}
-                    data-org-letter-index={row.letter}
-                    className="col-span-full scroll-mt-28 border-b border-[#002D24]/10 pb-1.5 pt-1 first:pt-0"
-                  >
+              {freeOrgGroups.map((group) => (
+                <div
+                  key={group.letter}
+                  data-org-letter-index={group.letter}
+                  className="scroll-mt-40"
+                >
+                  <div className="mb-2 border-b border-[#002D24]/10 pb-1.5">
                     <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#002D24]/45">
-                      {row.letter}
+                      {group.letter}
                     </span>
-                  </li>
-                ) : (
-                  <FreeOrgHubCard key={row.hub.slug} hub={row.hub} />
-                ),
-              )}
-            </ul>
+                  </div>
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {group.hubs.map((hub) => (
+                      <FreeOrgHubCard key={hub.slug} hub={hub} />
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
 
             <OrgsAzBrowser
               availableLetters={availableLetters}
