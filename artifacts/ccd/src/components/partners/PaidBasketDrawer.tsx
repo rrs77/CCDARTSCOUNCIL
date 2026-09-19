@@ -3,7 +3,8 @@ import { formatPricePence } from '../../config/paidPartnerProducts';
 import { usePaidBasket } from '../../contexts/PaidBasketContext';
 
 /**
- * Sliding demo basket for We Teach Drama + iCompose paid resources.
+ * Basket drawer for hub / partner products. Checkout uses Stripe when live;
+ * otherwise records a demo sale on each hub’s independent Sales dashboard.
  */
 export function PaidBasketDrawer() {
   const {
@@ -14,13 +15,14 @@ export function PaidBasketDrawer() {
     setDrawerOpen,
     removeItem,
     clearBasket,
-    checkoutDemo,
+    checkout,
+    checkingOut,
   } = usePaidBasket();
 
   if (!drawerOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Demo basket">
+    <div className="fixed inset-0 z-[80]" role="dialog" aria-modal="true" aria-label="Shop basket">
       <button
         type="button"
         className="absolute inset-0 bg-black/40"
@@ -31,10 +33,10 @@ export function PaidBasketDrawer() {
         <header className="flex items-center justify-between border-b border-[#002D24]/10 px-4 py-4 sm:px-5">
           <div>
             <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/55">
-              Demo basket
+              Hub shop
             </p>
             <h2 className="text-lg font-semibold text-[#002D24]">
-              Paid resources ({itemCount})
+              Basket ({itemCount})
             </h2>
           </div>
           <button
@@ -48,9 +50,10 @@ export function PaidBasketDrawer() {
         </header>
 
         <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-5">
-          <p className="mb-4 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900">
-            Prototype only — no payment is taken. Items are placeholders for partner and music-hub
-            demo products (We Teach Drama, iCompose, Drama Resource, Jazz North, EMS, Tri-Borough).
+          <p className="mb-4 rounded-lg border border-[#002D24]/15 bg-[#E8F0EA]/60 px-3 py-2 text-xs leading-relaxed text-[#002D24]">
+            Pay with Stripe when keys are configured. Without Stripe, checkout still records the
+            sale on each hub’s <strong>Sales</strong> dashboard so partners can track their own
+            customers.
           </p>
 
           {lines.length === 0 ? (
@@ -58,7 +61,7 @@ export function PaidBasketDrawer() {
               <ShoppingBag className="h-10 w-10 text-gray-300" aria-hidden />
               <p className="text-sm">Your basket is empty.</p>
               <p className="max-w-xs text-xs">
-                Open a partner or music-hub mock product and use Add to basket.
+                Open a partner or music hub and use Add to basket on a course or resource.
               </p>
             </div>
           ) : (
@@ -99,7 +102,7 @@ export function PaidBasketDrawer() {
 
         <footer className="border-t border-[#002D24]/10 bg-[#E8F0EA]/50 px-4 py-4 sm:px-5">
           <div className="mb-3 flex items-baseline justify-between">
-            <span className="text-sm text-gray-600">Demo total</span>
+            <span className="text-sm text-gray-600">Total</span>
             <span className="text-lg font-semibold text-[#002D24]">
               {formatPricePence(totalPence)}
             </span>
@@ -107,16 +110,16 @@ export function PaidBasketDrawer() {
           <div className="flex flex-col gap-2 sm:flex-row">
             <button
               type="button"
-              onClick={checkoutDemo}
-              disabled={lines.length === 0}
+              onClick={() => void checkout()}
+              disabled={lines.length === 0 || checkingOut}
               className="inline-flex flex-1 items-center justify-center rounded-lg bg-[#002D24] px-4 py-2.5 text-sm font-semibold text-white hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Checkout (demo)
+              {checkingOut ? 'Processing…' : 'Checkout'}
             </button>
             <button
               type="button"
               onClick={clearBasket}
-              disabled={lines.length === 0}
+              disabled={lines.length === 0 || checkingOut}
               className="inline-flex items-center justify-center rounded-lg border border-[#002D24]/20 px-4 py-2.5 text-sm font-medium text-[#002D24] hover:bg-white disabled:cursor-not-allowed disabled:opacity-50"
             >
               Clear
@@ -137,7 +140,7 @@ export function PaidBasketButton({ className = '' }: { className?: string }) {
       type="button"
       onClick={() => setDrawerOpen(true)}
       className={`relative inline-flex items-center gap-2 rounded-lg border border-[#002D24]/20 bg-white px-3 py-2 text-sm font-semibold text-[#002D24] shadow-sm transition-colors hover:border-[#002D24]/40 hover:bg-[#E8F0EA] ${className}`}
-      aria-label={`Open demo basket${itemCount ? `, ${itemCount} items` : ''}`}
+      aria-label={`Open basket${itemCount ? `, ${itemCount} items` : ''}`}
     >
       <ShoppingBag className="h-4 w-4" aria-hidden />
       Basket

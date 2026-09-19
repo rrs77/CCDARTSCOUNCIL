@@ -140,3 +140,26 @@ describe('music hub routes', () => {
     assert.notEqual(status, 404, JSON.stringify(body));
   });
 });
+
+describe('shop routes', () => {
+  it('dispatches GET /api/shop/products', async () => {
+    const { status, body } = await jsonStatus(await routed('GET', 'shop/products'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('dispatches OPTIONS /api/shop/checkout', async () => {
+    const res = await routed('OPTIONS', 'shop/checkout');
+    assert.ok(res.status === 204 || res.status === 200, `unexpected ${res.status}`);
+  });
+
+  it('dispatches GET /api/hubs/:hubId/sales', async () => {
+    const { status, body } = await jsonStatus(await routed('GET', 'hubs/ems/sales'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+  });
+
+  it('dispatches GET /api/hubs/:hubId/products', async () => {
+    const { status, body } = await jsonStatus(await routed('GET', 'hubs/ems/products'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+  });
+});
