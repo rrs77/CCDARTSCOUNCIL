@@ -435,8 +435,11 @@ export function OurPartners() {
 
   const scrollToLetter = (letter: string) => {
     setActiveLetter(letter);
-    const el = document.querySelector(`[data-org-letter-index="${letter}"]`);
-    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const el = document.querySelector<HTMLElement>(`[data-org-letter-index="${letter}"]`);
+    if (!el) return;
+    const offset = 112; /* sticky app chrome + section breathing room */
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
   };
 
   /** Group sorted orgs under first-letter markers for the grid. */
@@ -555,7 +558,7 @@ export function OurPartners() {
                   <li
                     key={`letter-${row.letter}`}
                     data-org-letter-index={row.letter}
-                    className="col-span-full scroll-mt-24 border-b border-[#002D24]/10 pb-1.5 pt-1 first:pt-0"
+                    className="col-span-full scroll-mt-28 border-b border-[#002D24]/10 pb-1.5 pt-1 first:pt-0"
                   >
                     <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#002D24]/45">
                       {row.letter}
