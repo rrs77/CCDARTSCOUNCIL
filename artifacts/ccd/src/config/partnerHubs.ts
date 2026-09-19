@@ -161,7 +161,10 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'OmniMusic',
     shortName: 'OmniMusic',
     siteUrl: 'https://omnimusic.org.uk/',
-    logoSrc: '/partners/omnimusic/logo.png',
+    /** Colour lockup on white plate in hub chrome */
+    logoSrc: '/partners/omnimusic/logo-colour.svg',
+    /** White lockup for forest-green org cards (matches LSO / Jazz North strip) */
+    logoSrcOnDark: '/partners/omnimusic/logo-white.svg',
     interactive: true,
     tagline: 'Inclusive music · free Resource Zone downloads',
     description: [
