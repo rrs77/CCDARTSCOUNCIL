@@ -674,7 +674,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       title: "Music Hubs directory",
       content: (
         <div className="space-y-3">
-          <p>The <strong>Music Hubs</strong> directory lists UK hubs. Open a hub page for local resources. Some hubs need a subscriber password to unlock files.</p>
+          <p>The <strong>Music Hubs</strong> directory lists UK hubs. East of England focuses on Greater Essex: Essex Music Service, Music-on-Sea and Thurrock.</p>
+          <p>On the EMS hub, use the hubs list and district map first. <strong>Resources</strong> (brochure, workshops) open on <em>district / borough</em> pages such as Chelmsford — not on the EMS landing page.</p>
         </div>
       )
     },
@@ -683,7 +684,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       content: (
         <div className="space-y-3">
           <p>Organisation owners and super admins open <strong>Settings → Admin → Hub admin</strong> to manage members, resources, and the public hub page.</p>
-          <p>Use this when your school or partner organisation publishes its own resource zone.</p>
+          <p><strong>Royal Ballet and Opera (/roh)</strong> and <strong>RSC Education (/rsc)</strong> each have organisation hubs so editors can update their pages after being granted hub membership (or as super admin).</p>
         </div>
       )
     }
