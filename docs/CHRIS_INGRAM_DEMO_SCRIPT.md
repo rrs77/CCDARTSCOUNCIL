@@ -83,16 +83,20 @@ Preview mode is **view-only**. If Users / Hub admin panels are empty or gated, f
 
 ---
 
-## Clip checklist
+## Clip checklist (captured)
 
-- [ ] `01-hook-the-facts` (~18s)
-- [ ] `02-teacher-workflow` (~22s)
-- [ ] `03-partner-hubs` (~18s)
-- [ ] `04-music-hubs` (~17s)
-- [ ] `05-settings-roles` (~23s)
-- [ ] `06-hub-admin-close` (~22s)
+| # | File | Status | Notes for assembly |
+|---|------|--------|--------------------|
+| 01 | `chris_ingram_01_hook_the_facts.mp4` | Done | Login → The Facts stages (EYFS→GCSE) |
+| 02 | `chris_ingram_02_teacher_workflow.mp4` | Done | HT Planner → Activity Library → Lesson Builder → Calendar |
+| 03 | `chris_ingram_03_partner_hubs.mp4` | Done | Free org cards → OmniMusic Resource Zone |
+| 04 | `chris_ingram_04_music_hubs.mp4` | Done | EMS featured → Essex map → Chelmsford district |
+| 05 | `chris_ingram_05_settings_roles.mp4` | Done | Year Groups, Categories, Objectives, Resource Library, My Downloads; Admin dropdown (Forum / Resource Links). Users/Hub admin **not** in Preview |
+| 06 | `chris_ingram_06_hub_admin_close.mp4` | Done | `/ems/admin` permission gate (proves governance) → branded dashboard close |
+| 06b | `chris_ingram_06b_help_hub_admin_roles.mp4` | Optional B-roll | Help → Hub administration + Roles (teacher / organisation / admin / super admin). **Splice into beat 06** under VO about drafts/approval & roles |
 
 Target total picture: **~2:00**. Trim silence; do not add new sections — cut first if over.
 
-Recorded files for this package live under `/opt/cursor/artifacts/` as  
-`chris_ingram_01_…` through `chris_ingram_06_…` (plus this script in `docs/`).
+**Suggested cut for 1:38–2:00:** open with 2–3s of `06b` (Help Hub admin + roles text), cut to `06` permission gate, end on dashboard logo.
+
+Recorded files: agent artifacts `chris_ingram_01_…` through `chris_ingram_06b_…` (this script in `docs/`).
