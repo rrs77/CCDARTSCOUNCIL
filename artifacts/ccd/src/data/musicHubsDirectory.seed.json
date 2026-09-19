@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "updatedAt": "2026-09-10",
+  "updatedAt": "2026-09-19",
   "countries": [
     {
       "id": "england",
@@ -10,7 +10,7 @@
       "path": "england",
       "status": "published",
       "description": [
-        "Browse English regions. East of England (Greater Essex / EMS) is the working prototype example; other regions are mostly coming soon."
+        "Browse English regions. East of England (Greater Essex / EMS) is the polished prototype; South West includes the West of England Music Hub (former Bristol Music Hub, now Bristol Beacon + WEMA). Other regions are mostly coming soon."
       ],
       "children": [
         {
@@ -596,6 +596,31 @@
           "slug": "south-west",
           "path": "england/south-west",
           "status": "published",
+          "tagline": "West of England Music Hub (Bristol Beacon + WEMA)",
+          "description": [
+            "South West listings start with the West of England Music Hub — the combined hub for Bristol and the surrounding authorities (formerly Bristol Music Hub plus partner LA services).",
+            "Hub Lead: Bristol Beacon. Delivery partner for Bath & North East Somerset, North Somerset and South Gloucestershire: West of England Music and Arts (WEMA)."
+          ],
+          "content": {
+            "about": [
+              "From September 2024, Arts Council England appointed Bristol Beacon as Hub Lead Organisation for the West of England Music Hub, in partnership with WEMA.",
+              "This succeeds the former Bristol-only Music Hub and brings Bath & North East Somerset, North Somerset and South Gloucestershire into one regional hub under the National Plan for Music Education."
+            ],
+            "links": [
+              {
+                "label": "West of England Music Hub",
+                "href": "/music-hubs/england/south-west/west-of-england"
+              },
+              {
+                "label": "Bristol Beacon",
+                "href": "https://bristolbeacon.org/"
+              },
+              {
+                "label": "WEMA Music Hub",
+                "href": "https://wema.org.uk/music-hub/"
+              }
+            ]
+          },
           "children": [
             {
               "id": "west-of-england",
@@ -603,76 +628,297 @@
               "name": "West of England Music Hub",
               "slug": "west-of-england",
               "path": "england/south-west/west-of-england",
-              "status": "coming-soon",
+              "status": "published",
+              "featured": true,
+              "organisationId": "west-of-england",
+              "tagline": "Former Bristol Music Hub — now regional across four LAs",
               "description": [
                 "West of England Music Hub covers Bristol, Bath & North East Somerset, North Somerset and South Gloucestershire.",
-                "Hub page coming soon."
+                "Bristol Beacon (Hub Lead) works with West of England Music and Arts (WEMA), who continue to deliver music education in the three authorities around Bristol."
               ],
+              "siteUrl": "https://bristolbeacon.org/blog/bristol-beacon-chosen-to-lead-music-education-hub/",
+              "logoSrc": "/music-hubs/logos/west-of-england-meh-white.png",
+              "primaryColor": "#0B3D3A",
+              "accentColor": "#2A9D8F",
+              "logoPanelColor": "#0B3D3A",
+              "content": {
+                "about": [
+                  "Bristol Beacon has led music education for Bristol since 2011 (formerly Bristol Music Hub). From September 2024 it leads the wider West of England Music Hub under the National Plan for Music Education.",
+                  "WEMA remains the delivery partner for Bath & North East Somerset, North Somerset and South Gloucestershire — the organisations work as one regional hub, not a single merged service brand."
+                ],
+                "schoolsEducation": [
+                  "School curriculum support, instrumental and vocal pathways, ensembles, workshops and inclusive music programmes across the four local authorities.",
+                  "Bristol schools connect via Bristol Beacon Creative Learning; BANES, North Somerset and South Gloucestershire schools via WEMA Music Hub services."
+                ],
+                "training": [
+                  "Teacher CPD and networking through Bristol Beacon and WEMA — see each partner’s website for current courses."
+                ],
+                "links": [
+                  {
+                    "label": "Bristol Beacon — hub announcement",
+                    "href": "https://bristolbeacon.org/blog/bristol-beacon-chosen-to-lead-music-education-hub/"
+                  },
+                  {
+                    "label": "WEMA Music Hub",
+                    "href": "https://wema.org.uk/music-hub/"
+                  },
+                  {
+                    "label": "WEMA services for schools",
+                    "href": "https://wema.org.uk/music-hub/services-for-schools/curriculum-music/"
+                  }
+                ],
+                "resources": [
+                  {
+                    "id": "woe-inclusion-strategy",
+                    "title": "Inclusion strategy (Bristol Beacon)",
+                    "description": "Hub commitment to equitable, diverse and inclusive opportunities for children and young people across the region.",
+                    "access": "EXTERNAL",
+                    "href": "https://bristolbeacon.org/blog/bristol-beacon-chosen-to-lead-music-education-hub/",
+                    "providedBy": "Bristol Beacon"
+                  },
+                  {
+                    "id": "wema-at-a-glance",
+                    "title": "WEMA Music Hub at a glance",
+                    "description": "Summary of WEMA school and family services by key stage.",
+                    "access": "EXTERNAL",
+                    "href": "https://wema.org.uk/music-hub/at-a-glance/",
+                    "providedBy": "WEMA"
+                  }
+                ]
+              },
               "children": [
                 {
-                  "id": "bristol",
-                  "kind": "borough",
-                  "name": "Bristol",
-                  "slug": "bristol",
-                  "path": "england/south-west/west-of-england/bristol",
-                  "status": "coming-soon",
-                  "description": [
-                    "Local area page coming soon."
-                  ]
-                },
-                {
-                  "id": "banes",
-                  "kind": "borough",
-                  "name": "Bath & North East Somerset",
-                  "slug": "bath-nes",
-                  "path": "england/south-west/west-of-england/bath-nes",
-                  "status": "coming-soon",
-                  "description": [
-                    "Local area page coming soon."
-                  ]
-                },
-                {
-                  "id": "north-somerset",
-                  "kind": "borough",
-                  "name": "North Somerset",
-                  "slug": "north-somerset",
-                  "path": "england/south-west/west-of-england/north-somerset",
-                  "status": "coming-soon",
-                  "description": [
-                    "Local area page coming soon."
-                  ]
-                },
-                {
-                  "id": "south-glos",
-                  "kind": "borough",
-                  "name": "South Gloucestershire",
-                  "slug": "south-gloucestershire",
-                  "path": "england/south-west/west-of-england/south-gloucestershire",
-                  "status": "coming-soon",
-                  "description": [
-                    "Local area page coming soon."
-                  ]
-                },
-                {
                   "id": "bristol-beacon",
-                  "kind": "delivery-partner",
+                  "kind": "service",
                   "name": "Bristol Beacon",
                   "slug": "bristol-beacon",
                   "path": "england/south-west/west-of-england/bristol-beacon",
-                  "status": "coming-soon",
+                  "status": "published",
+                  "organisationId": "bristol-beacon",
+                  "tagline": "Hub Lead Organisation — former Bristol Music Hub",
                   "description": [
-                    "Delivery partner page coming soon."
+                    "Bristol Beacon (Bristol Music Trust) is the Arts Council England Hub Lead Organisation for the West of England Music Hub.",
+                    "It previously operated as the Music Education Hub for Bristol alone; the regional role now connects creative learning at the Beacon and Beacon Music Centre with partners across the West of England."
+                  ],
+                  "siteUrl": "https://bristolbeacon.org/",
+                  "logoSrc": "/music-hubs/logos/bristol-beacon.svg",
+                  "primaryColor": "#0B3D3A",
+                  "accentColor": "#2A9D8F",
+                  "logoPanelColor": "#0B3D3A",
+                  "content": {
+                    "about": [
+                      "Bristol Beacon leads strategic coordination of the West of England Music Hub and continues city-wide music education and creative learning programmes in Bristol.",
+                      "Official events, learning programmes and contacts are published on the Bristol Beacon website."
+                    ],
+                    "schoolsEducation": [
+                      "Creative Learning and Engagement programmes for schools and young people in Bristol, with regional hub leadership across the four LAs."
+                    ],
+                    "links": [
+                      {
+                        "label": "Bristol Beacon website",
+                        "href": "https://bristolbeacon.org/"
+                      },
+                      {
+                        "label": "West of England Music Hub announcement",
+                        "href": "https://bristolbeacon.org/blog/bristol-beacon-chosen-to-lead-music-education-hub/"
+                      }
+                    ],
+                    "resources": []
+                  },
+                  "children": [
+                    {
+                      "id": "bristol",
+                      "kind": "borough",
+                      "name": "Bristol",
+                      "slug": "bristol",
+                      "path": "england/south-west/west-of-england/bristol-beacon/bristol",
+                      "status": "published",
+                      "organisationId": "bristol-beacon",
+                      "tagline": "City of Bristol — West of England Music Hub",
+                      "description": [
+                        "Bristol area page for the West of England Music Hub (formerly the Bristol Music Hub).",
+                        "Schools and families connect with Bristol Beacon Creative Learning for local pathways; the wider hub also covers BANES, North Somerset and South Gloucestershire via WEMA."
+                      ],
+                      "siteUrl": "https://bristolbeacon.org/",
+                      "logoSrc": "/music-hubs/logos/bristol-beacon.svg",
+                      "primaryColor": "#0B3D3A",
+                      "accentColor": "#2A9D8F",
+                      "logoPanelColor": "#0B3D3A",
+                      "content": {
+                        "about": [
+                          "Bristol sits at the centre of the West of England Music Hub. Bristol Beacon remains the Hub Lead and the main city delivery partner.",
+                          "This CCDesigner page is a directory entry for teachers — programmes and booking live on Bristol Beacon and WEMA sites."
+                        ],
+                        "schoolsEducation": [
+                          "Curriculum and co-curricular music, ensembles and inclusive pathways for Bristol schools and settings."
+                        ],
+                        "links": [
+                          {
+                            "label": "Bristol Beacon",
+                            "href": "https://bristolbeacon.org/"
+                          },
+                          {
+                            "label": "West of England Music Hub",
+                            "href": "/music-hubs/england/south-west/west-of-england"
+                          }
+                        ],
+                        "resources": []
+                      }
+                    }
                   ]
                 },
                 {
                   "id": "wema",
-                  "kind": "delivery-partner",
-                  "name": "WEMA",
+                  "kind": "service",
+                  "name": "West of England Music and Arts (WEMA)",
                   "slug": "wema",
                   "path": "england/south-west/west-of-england/wema",
-                  "status": "coming-soon",
+                  "status": "published",
+                  "organisationId": "wema",
+                  "tagline": "Delivery partner — BANES, North Somerset & South Gloucestershire",
                   "description": [
-                    "Delivery partner page coming soon."
+                    "WEMA delivers music education services for Bath & North East Somerset, North Somerset and South Gloucestershire under the West of England Music Hub arrangement with Bristol Beacon.",
+                    "Offer includes instrumental and vocal tuition, ensembles, school workshops, curriculum support, Creative Health / inclusion, CPD and events."
+                  ],
+                  "siteUrl": "https://wema.org.uk/music-hub/",
+                  "logoSrc": "/music-hubs/logos/wema.svg",
+                  "primaryColor": "#1A3A5C",
+                  "accentColor": "#4A90A4",
+                  "logoPanelColor": "#1A3A5C",
+                  "content": {
+                    "about": [
+                      "West of England Music and Arts (WEMA) is the delivery partner for the three local authorities surrounding Bristol within the West of England Music Hub.",
+                      "Full programme listings, booking and CPD live on the WEMA Music Hub website."
+                    ],
+                    "schoolsEducation": [
+                      "In-school curriculum music / PPA cover, whole-class ensemble teaching, instrumental and vocal lessons, workshops and resource packs.",
+                      "Creative Health and inclusion programmes for vulnerable children and whole-school work."
+                    ],
+                    "training": [
+                      "Teacher CPD and networking for music leads — see WEMA for current opportunities."
+                    ],
+                    "links": [
+                      {
+                        "label": "WEMA Music Hub",
+                        "href": "https://wema.org.uk/music-hub/"
+                      },
+                      {
+                        "label": "Services for schools — curriculum music",
+                        "href": "https://wema.org.uk/music-hub/services-for-schools/curriculum-music/"
+                      },
+                      {
+                        "label": "At a glance PDF summary",
+                        "href": "https://wema.org.uk/music-hub/at-a-glance/"
+                      }
+                    ],
+                    "resources": [
+                      {
+                        "id": "wema-curriculum-music",
+                        "title": "In-school curriculum music",
+                        "description": "WEMA classroom and co-curricular music services for BANES, North Somerset and South Gloucestershire schools.",
+                        "access": "EXTERNAL",
+                        "href": "https://wema.org.uk/music-hub/services-for-schools/curriculum-music/",
+                        "providedBy": "WEMA"
+                      }
+                    ]
+                  },
+                  "children": [
+                    {
+                      "id": "banes",
+                      "kind": "borough",
+                      "name": "Bath & North East Somerset",
+                      "slug": "bath-nes",
+                      "path": "england/south-west/west-of-england/wema/bath-nes",
+                      "status": "published",
+                      "organisationId": "wema",
+                      "tagline": "WEMA delivery — West of England Music Hub",
+                      "description": [
+                        "Bath & North East Somerset area page within the West of England Music Hub.",
+                        "Music education services are delivered by WEMA in partnership with Hub Lead Bristol Beacon."
+                      ],
+                      "siteUrl": "https://wema.org.uk/music-hub/",
+                      "logoSrc": "/music-hubs/logos/wema.svg",
+                      "primaryColor": "#1A3A5C",
+                      "accentColor": "#4A90A4",
+                      "logoPanelColor": "#1A3A5C",
+                      "content": {
+                        "about": [
+                          "BANES schools and families access West of England Music Hub provision primarily through WEMA.",
+                          "This page is a CCDesigner directory entry — book and browse programmes on the WEMA site."
+                        ],
+                        "links": [
+                          {
+                            "label": "WEMA Music Hub",
+                            "href": "https://wema.org.uk/music-hub/"
+                          },
+                          {
+                            "label": "West of England Music Hub",
+                            "href": "/music-hubs/england/south-west/west-of-england"
+                          }
+                        ],
+                        "resources": []
+                      }
+                    },
+                    {
+                      "id": "north-somerset",
+                      "kind": "borough",
+                      "name": "North Somerset",
+                      "slug": "north-somerset",
+                      "path": "england/south-west/west-of-england/wema/north-somerset",
+                      "status": "published",
+                      "organisationId": "wema",
+                      "tagline": "WEMA delivery — West of England Music Hub",
+                      "description": [
+                        "North Somerset area page within the West of England Music Hub (WEMA delivery)."
+                      ],
+                      "siteUrl": "https://wema.org.uk/music-hub/",
+                      "logoSrc": "/music-hubs/logos/wema.svg",
+                      "primaryColor": "#1A3A5C",
+                      "accentColor": "#4A90A4",
+                      "logoPanelColor": "#1A3A5C",
+                      "content": {
+                        "about": [
+                          "North Somerset provision sits under the West of England Music Hub with WEMA as delivery partner."
+                        ],
+                        "links": [
+                          {
+                            "label": "WEMA Music Hub",
+                            "href": "https://wema.org.uk/music-hub/"
+                          }
+                        ],
+                        "resources": []
+                      }
+                    },
+                    {
+                      "id": "south-glos",
+                      "kind": "borough",
+                      "name": "South Gloucestershire",
+                      "slug": "south-gloucestershire",
+                      "path": "england/south-west/west-of-england/wema/south-gloucestershire",
+                      "status": "published",
+                      "organisationId": "wema",
+                      "tagline": "WEMA delivery — West of England Music Hub",
+                      "description": [
+                        "South Gloucestershire area page within the West of England Music Hub (WEMA delivery)."
+                      ],
+                      "siteUrl": "https://wema.org.uk/music-hub/",
+                      "logoSrc": "/music-hubs/logos/wema.svg",
+                      "primaryColor": "#1A3A5C",
+                      "accentColor": "#4A90A4",
+                      "logoPanelColor": "#1A3A5C",
+                      "content": {
+                        "about": [
+                          "South Gloucestershire provision sits under the West of England Music Hub with WEMA as delivery partner."
+                        ],
+                        "links": [
+                          {
+                            "label": "WEMA Music Hub",
+                            "href": "https://wema.org.uk/music-hub/"
+                          }
+                        ],
+                        "resources": []
+                      }
+                    }
                   ]
                 }
               ]
