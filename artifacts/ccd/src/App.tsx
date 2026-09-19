@@ -340,6 +340,9 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       case 'nationaltheatre':
       case 'bbctenpieces':
       case 'nationalgallery':
+      case 'rsc':
+      case 'rsceducation':
+      case 'royalshakespeare':
         body = <PartnerResourcesHub hub={partnerHub} />;
         break;
       case 'triborough':

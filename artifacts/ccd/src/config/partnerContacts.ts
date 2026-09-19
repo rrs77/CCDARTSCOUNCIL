@@ -89,4 +89,11 @@ export const PARTNER_CONTACTS: Record<string, PartnerContactInfo> = {
     webLabel: 'jazznorth.org/contact',
     sourceUrl: 'https://www.jazznorth.org/contact',
   },
+  rsc: {
+    orgId: 'rsc',
+    lines: ['Royal Shakespeare Company', 'Waterside, Stratford-upon-Avon, Warwickshire CV37 6BB'],
+    web: 'https://www.rsc.org.uk/learn/schools-and-teachers/',
+    webLabel: 'rsc.org.uk/learn/schools-and-teachers',
+    sourceUrl: 'https://www.rsc.org.uk/contact-us',
+  },
 };

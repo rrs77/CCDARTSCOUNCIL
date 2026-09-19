@@ -62,6 +62,16 @@ export function Header() {
     return () => window.removeEventListener('ccd:start-walkthrough', handler);
   }, []);
 
+  useEffect(() => {
+    try {
+      if (sessionStorage.getItem('ccd-open-settings-tab')) {
+        setSettingsOpen(true);
+      }
+    } catch {
+      /* ignore */
+    }
+  }, []);
+
   // Sections that have at least one year group the user can access.
   // Resolve section tokens by id OR name so renamed classes still map correctly.
   const normalizeToken = (value: string | undefined | null) => (value || '').trim().toLowerCase();

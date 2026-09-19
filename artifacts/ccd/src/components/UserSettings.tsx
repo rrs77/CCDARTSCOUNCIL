@@ -218,6 +218,15 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       setAdminMenuOpen(false);
       return;
     }
+    try {
+      const pending = sessionStorage.getItem('ccd-open-settings-tab');
+      if (pending === 'hub-admin' && showHubAdmin) {
+        setActiveTab('hub-admin');
+        sessionStorage.removeItem('ccd-open-settings-tab');
+      }
+    } catch {
+      /* ignore */
+    }
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
     if (activeTab === 'download-analytics' && !showDownloadAnalytics) setActiveTab('my-downloads');
     if (activeTab === 'hub-admin' && !showHubAdmin) setActiveTab('resource-links');

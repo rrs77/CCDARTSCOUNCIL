@@ -107,53 +107,13 @@
                       {
                         "label": "Curriculum",
                         "href": "https://www.essexmusicservice.org.uk/site/curriculum/"
+                      },
+                      {
+                        "label": "Chelmsford district (resources)",
+                        "href": "/essex/chelmsford"
                       }
                     ],
-                    "resources": [
-                      {
-                        "id": "ems-schools-brochure",
-                        "title": "Schools brochure",
-                        "description": "Overview of EMS school services (prototype Add to library).",
-                        "access": "FREE",
-                        "href": "/partners/ems/ems-schools-brochure.pdf",
-                        "providedBy": "Essex Music Service",
-                        "packId": "ems-schools-brochure"
-                      },
-                      {
-                        "id": "ems-dj-workshop",
-                        "title": "DJ Workshop",
-                        "description": "Featured workshop showcase — Add demo lesson for PDF export.",
-                        "access": "FREE",
-                        "href": "https://www.essexmusicservice.org.uk/site/workshops/",
-                        "providedBy": "Essex Music Service",
-                        "packId": "ems-dj-workshop"
-                      },
-                      {
-                        "id": "ems-rap-it",
-                        "title": "Rap-It!",
-                        "description": "Featured workshop showcase — Add demo lesson for PDF export.",
-                        "access": "FREE",
-                        "href": "https://www.essexmusicservice.org.uk/site/workshops/",
-                        "providedBy": "Essex Music Service",
-                        "packId": "ems-rap-it-workshop"
-                      },
-                      {
-                        "id": "ems-charanga",
-                        "title": "Charanga",
-                        "description": "Online music platform for curriculum and extra-curricular learning.",
-                        "access": "EXTERNAL",
-                        "href": "https://charanga.com/",
-                        "providedBy": "Essex Music Service"
-                      },
-                      {
-                        "id": "ems-subscriber-example",
-                        "title": "EMS subscriber collection (example)",
-                        "description": "Locked until your organisation unlocks with the EMS subscriber password. URL never exposed before unlock.",
-                        "access": "SUBSCRIBER",
-                        "organisationId": "ems",
-                        "providedBy": "Essex Music Service"
-                      }
-                    ]
+                    "resources": []
                   },
                   "children": [
                     {
