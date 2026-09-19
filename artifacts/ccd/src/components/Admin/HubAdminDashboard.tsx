@@ -41,6 +41,7 @@ import {
 } from '../../utils/hubAdminApi';
 import { sanitizeHtml } from '../../utils/sanitize';
 import { supabase } from '../../config/supabase';
+import { HubSalesSection, HubShopSection } from './HubShopSections';
 
 type Section =
   | 'edit-page'
@@ -51,6 +52,8 @@ type Section =
   | 'preview'
   | 'publish'
   | 'hub-users'
+  | 'shop'
+  | 'sales'
   | 'analytics'
   | 'export'
   | 'audit';
@@ -58,13 +61,15 @@ type Section =
 const SECTIONS: { id: Section; label: string; minRole: string }[] = [
   { id: 'edit-page', label: 'Edit page', minRole: 'hub_editor' },
   { id: 'resources', label: 'Resources', minRole: 'hub_editor' },
+  { id: 'shop', label: 'Shop', minRole: 'hub_editor' },
+  { id: 'sales', label: 'Sales', minRole: 'hub_administrator' },
   { id: 'activities', label: 'Activities', minRole: 'hub_viewer' },
   { id: 'media', label: 'Media', minRole: 'hub_viewer' },
   { id: 'drafts', label: 'Drafts', minRole: 'hub_editor' },
   { id: 'preview', label: 'Preview', minRole: 'hub_viewer' },
   { id: 'publish', label: 'Publish', minRole: 'hub_publisher' },
   { id: 'hub-users', label: 'Hub users', minRole: 'hub_administrator' },
-  { id: 'analytics', label: 'Analytics', minRole: 'hub_administrator' },
+  { id: 'analytics', label: 'Downloads', minRole: 'hub_administrator' },
   { id: 'export', label: 'Export', minRole: 'hub_administrator' },
   { id: 'audit', label: 'Audit', minRole: 'hub_administrator' },
 ];
@@ -418,6 +423,8 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
                 {section === 'hub-users' && selectedId && (
                   <MembersSection hubId={selectedId} />
                 )}
+                {section === 'shop' && selectedId && <HubShopSection hubId={selectedId} />}
+                {section === 'sales' && selectedId && <HubSalesSection hubId={selectedId} />}
                 {section === 'analytics' && selectedId && (
                   <AnalyticsSection hubId={selectedId} />
                 )}

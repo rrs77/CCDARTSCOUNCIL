@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield } from 'lucide-react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield, ShoppingBag } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -12,6 +12,7 @@ import { UserManagement } from './Admin/UserManagement';
 import { HubContentApprovalQueue } from './musicHubs/HubContentApprovalQueue';
 import { MyHubAdministration } from './musicHubs/MyHubAdministration';
 import { DownloadAnalytics } from './Admin/DownloadAnalytics';
+import { ShopCustomersAdmin } from './Admin/ShopCustomersAdmin';
 import { HubAdminDashboard } from './Admin/HubAdminDashboard';
 import { MyDownloads } from './Downloads/MyDownloads';
 import { customCategoriesApi, activityPacksApi } from '../config/api';
@@ -159,7 +160,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   tempCategoriesRef.current = tempCategories;
   tempYearGroupsRef.current = tempYearGroups;
   const [tempResourceLinks, setTempResourceLinks] = useState(resourceLinks);
-  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'hub-admin'>('yeargroups');
+  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'shop-customers' | 'hub-admin'>('yeargroups');
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
   const adminTriggerRef = useRef<HTMLButtonElement>(null);
@@ -220,6 +221,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     }
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
     if (activeTab === 'download-analytics' && !showDownloadAnalytics) setActiveTab('my-downloads');
+    if (activeTab === 'shop-customers' && !isAdmin) setActiveTab('my-downloads');
     if (activeTab === 'hub-admin' && !showHubAdmin) setActiveTab('resource-links');
     if (activeTab === 'hub-content' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
@@ -1067,6 +1069,19 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             >
               <BarChart3 className="h-3.5 w-3.5" />
               <span>Download analytics</span>
+            </button>
+          )}
+          {isAdmin && (
+            <button
+              onClick={() => setActiveTab('shop-customers')}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
+                activeTab === 'shop-customers'
+                  ? 'text-white bg-teal-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+              }`}
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              <span>Shop customers</span>
             </button>
           )}
           {showUserManagement && (
@@ -2852,6 +2867,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'download-analytics' && showDownloadAnalytics && (
             <DownloadAnalytics />
+          )}
+
+          {activeTab === 'shop-customers' && isAdmin && (
+            <ShopCustomersAdmin />
           )}
 
           {activeTab === 'hub-admin' && showHubAdmin && (

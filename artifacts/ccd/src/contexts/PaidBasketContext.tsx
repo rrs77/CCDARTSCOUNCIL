@@ -1,6 +1,6 @@
 /**
- * Demo basket for We Teach Drama, iCompose and Drama Resource paid resources.
- * Persists to localStorage; checkout is a prototype toast only.
+ * Paid / hub-shop basket. Checkout uses Stripe when configured; otherwise demo
+ * fulfilment + per-hub local sales tracking so Preview still works.
  */
 
 import React, {
@@ -21,6 +21,9 @@ import {
   canSeedPaidProduct,
   seedPaidPartnerProduct,
 } from '../utils/seedPaidPartnerProduct';
+import { recordLocalDemoCheckout } from '../utils/hubShopLocalStore';
+import { startShopCheckout } from '../utils/shopApi';
+import { useAuth } from '../hooks/useAuth';
 
 const STORAGE_KEY = 'ccd-paid-partner-basket-v1';
 
@@ -35,12 +38,15 @@ interface PaidBasketContextValue {
   itemCount: number;
   totalPence: number;
   drawerOpen: boolean;
+  checkingOut: boolean;
   setDrawerOpen: (open: boolean) => void;
   addItem: (productId: string) => void;
   removeItem: (productId: string) => void;
   clearBasket: () => void;
   isInBasket: (productId: string) => boolean;
+  /** @deprecated use checkout */
   checkoutDemo: () => void;
+  checkout: () => Promise<void>;
 }
 
 const PaidBasketContext = createContext<PaidBasketContextValue | null>(null);
@@ -65,9 +71,25 @@ function readStored(): BasketLine[] {
   }
 }
 
+async function seedLines(productIds: string[]) {
+  let seeded = 0;
+  for (const id of productIds) {
+    if (!canSeedPaidProduct(id)) continue;
+    try {
+      const result = await seedPaidPartnerProduct(id, { force: true });
+      if (result && !result.skipped) seeded += 1;
+    } catch (e) {
+      console.error(e);
+    }
+  }
+  return seeded;
+}
+
 export function PaidBasketProvider({ children }: { children: React.ReactNode }) {
+  const { user, profile } = useAuth();
   const [items, setItems] = useState<BasketLine[]>(() => readStored());
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [checkingOut, setCheckingOut] = useState(false);
 
   useEffect(() => {
     try {
@@ -106,24 +128,10 @@ export function PaidBasketProvider({ children }: { children: React.ReactNode }) 
         toast.success(`${product.title} is already in your basket`);
         return prev;
       }
-      toast.success(`Added to basket · ${formatPricePence(product.pricePence)} (demo)`);
+      toast.success(`Added to basket · ${formatPricePence(product.pricePence)}`);
       return [...prev, { productId, quantity: 1 }];
     });
     setDrawerOpen(true);
-    // Also seed lesson + activities so basket Add matches hub Add behaviour.
-    if (canSeedPaidProduct(productId)) {
-      void seedPaidPartnerProduct(productId, { force: true })
-        .then((result) => {
-          if (!result || result.skipped) return;
-          toast.success(
-            `Also added ${result.lessons ?? 1} lesson · ${result.activities ?? 0} activities to your library`,
-            { duration: 4000 },
-          );
-        })
-        .catch((e) => {
-          console.error(e);
-        });
-    }
   }, []);
 
   const removeItem = useCallback((productId: string) => {
@@ -137,49 +145,84 @@ export function PaidBasketProvider({ children }: { children: React.ReactNode }) 
     [items],
   );
 
-  const checkoutDemo = useCallback(() => {
+  const finishLocalDemo = useCallback(
+    async (message?: string) => {
+      const buyerEmail =
+        profile?.email || user?.email || 'demo@ccd.preview';
+      recordLocalDemoCheckout({
+        buyerEmail,
+        lines: lines.map((l) => ({ product: l.product, quantity: l.quantity })),
+      });
+      const seeded = await seedLines(lines.map((l) => l.productId));
+      toast.success(
+        message ||
+          `Checkout complete (demo). ${formatPricePence(totalPence)} recorded for hub sales tracking.${
+            seeded ? ` Seeded ${seeded} pack(s) into your library.` : ''
+          }`,
+        { duration: 7000 },
+      );
+      clearBasket();
+      setDrawerOpen(false);
+    },
+    [lines, profile?.email, user?.email, totalPence, clearBasket],
+  );
+
+  const checkout = useCallback(async () => {
     if (lines.length === 0) {
       toast.error('Your basket is empty');
       return;
     }
-    const productIds = lines.map((l) => l.productId);
-    void (async () => {
-      let seeded = 0;
-      for (const id of productIds) {
-        if (!canSeedPaidProduct(id)) continue;
-        try {
-          const result = await seedPaidPartnerProduct(id, { force: true });
-          if (result && !result.skipped) seeded += 1;
-        } catch (e) {
-          console.error(e);
-        }
-      }
-      toast(
-        (t) => (
-          <div className="space-y-1 text-sm">
-            <p className="font-semibold text-[#002D24]">Demo checkout only</p>
-            <p className="text-gray-600">
-              No payment is taken. This basket ({formatPricePence(totalPence)}) is a prototype
-              for premium partner resources.
-              {seeded > 0
-                ? ` Seeded ${seeded} pack${seeded === 1 ? '' : 's'} into Activity Library and Lesson Library.`
-                : ''}
-            </p>
-            <button
-              type="button"
-              className="mt-1 text-xs font-medium text-teal-700 underline"
-              onClick={() => toast.dismiss(t.id)}
-            >
-              Dismiss
-            </button>
-          </div>
+    setCheckingOut(true);
+    try {
+      // Catalogue ids from paidPartnerProducts are not DB UUIDs — use local
+      // hub sales tracking + optional Stripe path once hub_products are linked.
+      const looksLikeUuid = lines.every((l) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          l.productId,
         ),
-        { duration: 8000 },
       );
-      clearBasket();
-      setDrawerOpen(false);
-    })();
-  }, [lines, totalPence, clearBasket]);
+
+      if (!looksLikeUuid) {
+        await finishLocalDemo(
+          'Demo checkout — sale recorded on each hub’s Sales dashboard. Connect Stripe + hub_products for live card payments.',
+        );
+        return;
+      }
+
+      const result = await startShopCheckout({
+        items: lines.map((l) => ({ productId: l.productId, quantity: l.quantity })),
+        successUrl: `${window.location.origin}/?shop=success`,
+        cancelUrl: `${window.location.origin}/?shop=cancel`,
+      });
+
+      if (result.mode === 'stripe' && result.checkout_url) {
+        window.location.assign(result.checkout_url);
+        return;
+      }
+
+      if (result.mode === 'demo') {
+        const seedIds = result.seed_product_ids?.length
+          ? result.seed_product_ids
+          : lines.map((l) => l.productId);
+        await seedLines(seedIds);
+        recordLocalDemoCheckout({
+          buyerEmail: profile?.email || user?.email || 'demo@ccd.preview',
+          lines: lines.map((l) => ({ product: l.product, quantity: l.quantity })),
+        });
+        toast.success(result.message || 'Demo checkout complete — hubs can see this sale.');
+        clearBasket();
+        setDrawerOpen(false);
+        return;
+      }
+    } catch (e) {
+      console.warn('Shop checkout API unavailable, using local demo path', e);
+      await finishLocalDemo(
+        'Checkout saved locally for hub sales tracking (API/Stripe not available in this session).',
+      );
+    } finally {
+      setCheckingOut(false);
+    }
+  }, [lines, finishLocalDemo, clearBasket, profile?.email, user?.email]);
 
   const value = useMemo(
     () => ({
@@ -188,12 +231,16 @@ export function PaidBasketProvider({ children }: { children: React.ReactNode }) 
       itemCount,
       totalPence,
       drawerOpen,
+      checkingOut,
       setDrawerOpen,
       addItem,
       removeItem,
       clearBasket,
       isInBasket,
-      checkoutDemo,
+      checkoutDemo: () => {
+        void checkout();
+      },
+      checkout,
     }),
     [
       items,
@@ -201,11 +248,12 @@ export function PaidBasketProvider({ children }: { children: React.ReactNode }) 
       itemCount,
       totalPence,
       drawerOpen,
+      checkingOut,
       addItem,
       removeItem,
       clearBasket,
       isInBasket,
-      checkoutDemo,
+      checkout,
     ],
   );
 
