@@ -96,10 +96,10 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
   {
     id: 'omnimusic',
     name: 'OmniMusic',
-    src: '/partners/omnimusic/logo.png',
+    /** White lockup — sits with other wordmarks on the dark green hero strip */
+    src: '/partners/omnimusic/logo-white.svg',
     href: 'https://omnimusic.org.uk/',
     heightClass: 'h-6 sm:h-7',
-    onPlate: true,
   },
   {
     id: 'icompose',
