@@ -1,4 +1,4 @@
-import { ChevronRight, ExternalLink, MapPinned } from 'lucide-react';
+import { ChevronRight, MapPinned } from 'lucide-react';
 import { musicHubPageHref, musicHubPublicHref } from '../../config/musicHubsDirectory';
 
 /** Canonical Greater Essex / East of England prototype paths. */
@@ -21,45 +21,33 @@ type HubLink = {
   label: string;
   href: string;
   note?: string;
-  external?: boolean;
   current?: boolean;
+  map?: boolean;
 };
 
 /**
- * Always-expanded list of Greater Essex / East of England hub links.
- * Used on EMS Partner Hub and Music Hubs hierarchy pages so sibling hubs
- * are visible without collapsed accordions or dead home redirects.
+ * Always-expanded list of East of England / Greater Essex hubs.
+ * When hubsOnly is set, only the three delivery hubs are listed (EMS, Music-on-Sea, Thurrock).
  */
 export function GreaterEssexRegionNav({
   current = 'ems',
-  title = 'Other hubs in East of England',
+  title = 'Hubs in East of England',
   showDistrictEntry = true,
+  hubsOnly = false,
 }: {
   current?: GreaterEssexNavCurrent;
   title?: string;
   /** Link to Essex district map / Chelmsford sample. */
   showDistrictEntry?: boolean;
+  /** Only EMS + Music-on-Sea + Thurrock (no region parents). */
+  hubsOnly?: boolean;
 }) {
-  const hubs: HubLink[] = [
-    {
-      id: 'eoe',
-      label: 'East of England',
-      href: musicHubPageHref(EOE_REGION_PATH),
-      note: 'Region directory (prototype focus)',
-      current: current === 'east-of-england',
-    },
-    {
-      id: 'greater-essex',
-      label: 'Greater Essex Music Hub',
-      href: musicHubPageHref(GREATER_ESSEX_PATH),
-      note: 'Lead hub for Essex, Southend and Thurrock',
-      current: current === 'greater-essex',
-    },
+  const deliveryHubs: HubLink[] = [
     {
       id: 'ems',
       label: 'Essex Music Service',
       href: '/ems',
-      note: 'Lead delivery partner · workshops, curriculum, map',
+      note: 'Lead delivery partner · district map',
       current: current === 'ems',
     },
     {
@@ -78,48 +66,65 @@ export function GreaterEssexRegionNav({
     },
   ];
 
+  const hubs: HubLink[] = hubsOnly
+    ? [...deliveryHubs]
+    : [
+        {
+          id: 'greater-essex',
+          label: 'Greater Essex Music Hub',
+          href: musicHubPageHref(GREATER_ESSEX_PATH),
+          note: 'Covers Essex, Southend and Thurrock',
+          current: current === 'greater-essex',
+        },
+        ...deliveryHubs,
+      ];
+
   if (showDistrictEntry) {
     hubs.push({
       id: 'districts',
       label: 'Essex districts map',
       href: '/ems#essex-districts',
-      note: 'Interactive map on the EMS hub · open a district page',
+      note: 'Open a borough / district for local resources',
       current: current === 'district',
+      map: true,
     });
     hubs.push({
       id: 'chelmsford',
       label: 'Chelmsford (sample district)',
       href: musicHubPublicHref(`${EMS_SERVICE_PATH}/chelmsford`),
-      note: 'Published district template with free sample resources',
+      note: 'Resources live on district pages',
     });
   }
 
   return (
     <section
-      className="rounded-xl border border-[#002D24]/15 bg-white px-4 py-4 shadow-sm sm:px-5"
+      className="rounded-2xl border border-[#002D24]/15 bg-white px-4 py-5 shadow-sm sm:px-6"
       aria-labelledby="greater-essex-region-nav-heading"
     >
       <h3
         id="greater-essex-region-nav-heading"
-        className="text-base font-semibold tracking-tight text-[#002D24] sm:text-lg"
+        className="text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl"
       >
         {title}
       </h3>
-      <p className="mt-1 text-sm text-[#002D24]/70">
-        This prototype focuses on East of England — Greater Essex hubs are listed here so you can
-        move between EMS, Music-on-Sea and Thurrock without leaving the Music Hubs flow.
+      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#002D24]/75 sm:text-base">
+        {hubsOnly
+          ? 'These are the hubs within Greater Essex (East of England). Open any hub below — resources are on district pages after you pick an area on the map.'
+          : 'East of England prototype: Greater Essex hubs are listed here so you can move between EMS, Music-on-Sea and Thurrock. Resources sit under district / borough pages.'}
       </p>
-      <ul className="mt-3 space-y-1.5" aria-label="Greater Essex and East of England hubs">
+      <ul className="mt-4 space-y-2" aria-label="East of England hubs">
         {hubs.map((hub) => (
           <li key={hub.id}>
             {hub.current ? (
-              <div className="flex items-start justify-between gap-3 rounded-xl border border-[#330968]/35 bg-[#F5F0FF] px-3 py-2.5">
+              <div className="flex items-start justify-between gap-3 rounded-xl border-2 border-[#330968] bg-[#F5F0FF] px-4 py-3">
                 <span>
-                  <span className="block text-sm font-semibold text-[#330968]">{hub.label}</span>
+                  <span className="block text-base font-semibold text-[#330968]">{hub.label}</span>
                   {hub.note && (
-                    <span className="mt-0.5 block text-xs text-[#330968]/75">{hub.note}</span>
+                    <span className="mt-1 block text-sm leading-snug text-[#330968]/80">
+                      {hub.note}
+                    </span>
                   )}
-                  <span className="mt-1 inline-block text-[10px] font-semibold uppercase tracking-wide text-[#330968]/60">
+                  <span className="mt-2 inline-block rounded-md bg-[#330968]/10 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide text-[#330968]">
                     You are here
                   </span>
                 </span>
@@ -127,20 +132,20 @@ export function GreaterEssexRegionNav({
             ) : (
               <a
                 href={hub.href}
-                className="flex w-full items-start justify-between gap-3 rounded-xl border border-[#002D24]/12 bg-[#E8F0EA]/35 px-3 py-2.5 text-left transition-colors hover:border-[#002D24]/35 hover:bg-[#E8F0EA]"
+                className="flex w-full items-start justify-between gap-3 rounded-xl border border-[#002D24]/15 bg-[#E8F0EA]/50 px-4 py-3 text-left transition-colors hover:border-[#330968]/40 hover:bg-[#E8F0EA]"
               >
                 <span>
-                  <span className="block text-sm font-semibold text-[#002D24]">{hub.label}</span>
+                  <span className="block text-base font-semibold text-[#002D24]">{hub.label}</span>
                   {hub.note && (
-                    <span className="mt-0.5 block text-xs text-[#002D24]/60">{hub.note}</span>
+                    <span className="mt-1 block text-sm leading-snug text-[#002D24]/65">
+                      {hub.note}
+                    </span>
                   )}
                 </span>
-                {hub.id === 'districts' ? (
-                  <MapPinned className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
-                ) : hub.external ? (
-                  <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
+                {hub.map ? (
+                  <MapPinned className="mt-1 h-5 w-5 shrink-0 text-[#002D24]/45" aria-hidden />
                 ) : (
-                  <ChevronRight className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/45" aria-hidden />
+                  <ChevronRight className="mt-1 h-5 w-5 shrink-0 text-[#002D24]/45" aria-hidden />
                 )}
               </a>
             )}

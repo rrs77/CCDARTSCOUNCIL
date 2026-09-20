@@ -1,4 +1,5 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   getMusicHubOverlay,
@@ -7,29 +8,65 @@ import {
   getMusicHubsDirectory,
 } from '../../config/musicHubsDirectory';
 import type { MusicHubPublishStatus } from '../../types/musicHubsDirectory';
+import {
+  addCustomSubscriberOrgId,
+  isCustomSubscriberOrgId,
+  listSubscriberOrgIds,
+  removeCustomSubscriberOrgId,
+} from '../../utils/musicHubSubscriberOrgs';
 
 /**
  * Lightweight Music Hubs admin — local overlay for status/featured.
  * Subscriber password set/clear via API (hash never displayed after save).
  * Org-scoped editing: filter by organisationId when profile org is known.
+ * Super admins can add organisation keys to the subscriber-password list.
+ * Intended for Settings → Admin → Hub content (not Partner Hubs).
  */
 export function MusicHubAdminPanel({
   organisationFilter,
   adminToken,
+  canAddOrganisations = false,
 }: {
   /** When set, only nodes for this org are editable (org admins). */
   organisationFilter?: string | null;
   /** Optional MUSIC_HUB_ADMIN_TOKEN for password API. */
   adminToken?: string;
+  /** Super admin / superuser: add custom org keys to the password dropdown. */
+  canAddOrganisations?: boolean;
 }) {
   const [overlay, setOverlay] = useState(() => getMusicHubOverlay());
-  const [passwordOrg, setPasswordOrg] = useState('ems');
+  const [nodesExpanded, setNodesExpanded] = useState(false);
+  const [orgListVersion, setOrgListVersion] = useState(0);
+  const orgOptions = useMemo(
+    () => listSubscriberOrgIds(organisationFilter),
+    [organisationFilter, orgListVersion],
+  );
+  const [passwordOrg, setPasswordOrg] = useState(() => orgOptions[0] || 'ems');
   const [newPassword, setNewPassword] = useState('');
+  const [newOrgId, setNewOrgId] = useState('');
   const [busy, setBusy] = useState(false);
 
+  useEffect(() => {
+    const refresh = () => setOrgListVersion((v) => v + 1);
+    window.addEventListener('ccd:music-hub-subscriber-orgs-changed', refresh);
+    return () => window.removeEventListener('ccd:music-hub-subscriber-orgs-changed', refresh);
+  }, []);
+
+  useEffect(() => {
+    if (!orgOptions.includes(passwordOrg) && orgOptions.length > 0) {
+      setPasswordOrg(orgOptions[0]);
+    }
+  }, [orgOptions, passwordOrg]);
+
   const nodes = useMemo(() => {
-    const list: { id: string; name: string; path: string; organisationId?: string; status: string; featured?: boolean }[] =
-      [];
+    const list: {
+      id: string;
+      name: string;
+      path: string;
+      organisationId?: string;
+      status: string;
+      featured?: boolean;
+    }[] = [];
     walkMusicHubNodes(getMusicHubsDirectory().countries, (node) => {
       if (organisationFilter && node.organisationId !== organisationFilter) return;
       if (!['music-hub', 'service', 'national-service', 'district', 'borough'].includes(node.kind)) {
@@ -54,9 +91,36 @@ export function MusicHubAdminPanel({
     toast.success('Saved locally (seed overlay)');
   };
 
+  const addOrganisation = () => {
+    const result = addCustomSubscriberOrgId(newOrgId);
+    if (!result.ok) {
+      toast.error(result.error);
+      return;
+    }
+    setNewOrgId('');
+    setOrgListVersion((v) => v + 1);
+    setPasswordOrg(result.id);
+    toast.success(`Added organisation “${result.id}”`);
+  };
+
+  const removeSelectedCustomOrg = () => {
+    if (!isCustomSubscriberOrgId(passwordOrg)) {
+      toast.error('Only organisations you added can be removed.');
+      return;
+    }
+    if (!removeCustomSubscriberOrgId(passwordOrg)) {
+      toast.error('Could not remove organisation.');
+      return;
+    }
+    setOrgListVersion((v) => v + 1);
+    toast.success(`Removed “${passwordOrg}” from the list`);
+  };
+
   const setPassword = async (action: 'set' | 'clear') => {
     if (!adminToken) {
-      toast.error('Set MUSIC_HUB_ADMIN_TOKEN in the environment and pass it to this panel for API calls.');
+      toast.error(
+        'Set MUSIC_HUB_ADMIN_TOKEN in the environment and pass it to this panel for API calls.',
+      );
       return;
     }
     setBusy(true);
@@ -84,7 +148,9 @@ export function MusicHubAdminPanel({
       }
       setNewPassword('');
       if (data.hash) {
-        toast.success('Hash generated — store in MUSIC_HUB_SUBSCRIBER_HASHES (password not shown again)');
+        toast.success(
+          'Hash generated — store in MUSIC_HUB_SUBSCRIBER_HASHES (password not shown again)',
+        );
         console.info('[music-hubs] subscriber hash for', passwordOrg, data.hash);
       } else {
         toast.success(data.note || 'Password cleared');
@@ -107,45 +173,6 @@ export function MusicHubAdminPanel({
         </p>
       </div>
 
-      <ul className="max-h-80 space-y-2 overflow-auto" aria-label="Music hub nodes">
-        {nodes.map((node) => (
-          <li
-            key={node.id}
-            className="flex flex-col gap-2 rounded-lg border border-[#002D24]/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#002D24]">{node.name}</p>
-              <p className="truncate text-xs text-[#002D24]/55">{node.path}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="sr-only" htmlFor={`status-${node.id}`}>
-                Status for {node.name}
-              </label>
-              <select
-                id={`status-${node.id}`}
-                value={overlay[node.id]?.status || node.status}
-                onChange={(e) =>
-                  patchNode(node.id, { status: e.target.value as MusicHubPublishStatus })
-                }
-                className="rounded-md border border-[#002D24]/20 bg-white px-2 py-1.5 text-xs"
-              >
-                <option value="published">published</option>
-                <option value="draft">draft</option>
-                <option value="coming-soon">coming soon</option>
-              </select>
-              <label className="inline-flex items-center gap-1.5 text-xs text-[#002D24]">
-                <input
-                  type="checkbox"
-                  checked={Boolean(overlay[node.id]?.featured ?? node.featured)}
-                  onChange={(e) => patchNode(node.id, { featured: e.target.checked })}
-                />
-                Featured
-              </label>
-            </div>
-          </li>
-        ))}
-      </ul>
-
       <div className="rounded-lg border border-[#002D24]/10 bg-[#E8F0EA]/40 px-3 py-3">
         <p className="text-sm font-semibold text-[#002D24]">Subscriber password</p>
         <p className="mt-1 text-xs text-[#002D24]/65">
@@ -163,8 +190,11 @@ export function MusicHubAdminPanel({
               onChange={(e) => setPasswordOrg(e.target.value)}
               className="mt-1 block rounded-md border border-[#002D24]/20 bg-white px-2 py-1.5 text-sm"
             >
-              <option value="ems">ems</option>
-              <option value="triborough">triborough</option>
+              {orgOptions.map((id) => (
+                <option key={id} value={id}>
+                  {id}
+                </option>
+              ))}
             </select>
           </div>
           <div className="min-w-0 flex-1">
@@ -198,6 +228,112 @@ export function MusicHubAdminPanel({
             Clear
           </button>
         </div>
+
+        {canAddOrganisations && (
+          <div className="mt-3 border-t border-[#002D24]/10 pt-3">
+            <p className="text-xs font-medium text-[#002D24]">Add organisation</p>
+            <p className="mt-0.5 text-xs text-[#002D24]/60">
+              Super admin only. Adds a key for subscriber passwords (also store the hash under that
+              key in MUSIC_HUB_SUBSCRIBER_HASHES).
+            </p>
+            <div className="mt-2 flex flex-col gap-2 sm:flex-row sm:items-end">
+              <div className="min-w-0 flex-1">
+                <label className="sr-only" htmlFor="mh-pw-add-org">
+                  New organisation id
+                </label>
+                <input
+                  id="mh-pw-add-org"
+                  type="text"
+                  value={newOrgId}
+                  onChange={(e) => setNewOrgId(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      addOrganisation();
+                    }
+                  }}
+                  className="w-full rounded-md border border-[#002D24]/20 bg-white px-2 py-1.5 text-sm"
+                  placeholder="e.g. music-on-sea"
+                  autoComplete="off"
+                  spellCheck={false}
+                />
+              </div>
+              <button
+                type="button"
+                onClick={addOrganisation}
+                className="rounded-lg bg-[#002D24] px-3 py-2 text-sm font-semibold text-white"
+              >
+                Add organisation
+              </button>
+              {isCustomSubscriberOrgId(passwordOrg) && (
+                <button
+                  type="button"
+                  onClick={removeSelectedCustomOrg}
+                  className="rounded-lg border border-[#002D24]/20 bg-white px-3 py-2 text-sm font-semibold text-[#002D24]"
+                >
+                  Remove selected
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+
+      <div>
+        <button
+          type="button"
+          onClick={() => setNodesExpanded((v) => !v)}
+          className="flex w-full items-center gap-2 rounded-lg border border-[#002D24]/10 bg-white px-3 py-2 text-left text-sm font-semibold text-[#002D24] hover:bg-[#E8F0EA]/40"
+          aria-expanded={nodesExpanded}
+        >
+          {nodesExpanded ? (
+            <ChevronDown className="h-4 w-4 shrink-0" aria-hidden />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+          )}
+          Hub publish status
+          <span className="ml-auto text-xs font-normal text-[#002D24]/55">{nodes.length} hubs</span>
+        </button>
+        {nodesExpanded && (
+          <ul className="mt-2 max-h-80 space-y-2 overflow-auto" aria-label="Music hub nodes">
+            {nodes.map((node) => (
+              <li
+                key={node.id}
+                className="flex flex-col gap-2 rounded-lg border border-[#002D24]/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#002D24]">{node.name}</p>
+                  <p className="truncate text-xs text-[#002D24]/55">{node.path}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="sr-only" htmlFor={`status-${node.id}`}>
+                    Status for {node.name}
+                  </label>
+                  <select
+                    id={`status-${node.id}`}
+                    value={overlay[node.id]?.status || node.status}
+                    onChange={(e) =>
+                      patchNode(node.id, { status: e.target.value as MusicHubPublishStatus })
+                    }
+                    className="rounded-md border border-[#002D24]/20 bg-white px-2 py-1.5 text-xs"
+                  >
+                    <option value="published">published</option>
+                    <option value="draft">draft</option>
+                    <option value="coming-soon">coming soon</option>
+                  </select>
+                  <label className="inline-flex items-center gap-1.5 text-xs text-[#002D24]">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(overlay[node.id]?.featured ?? node.featured)}
+                      onChange={(e) => patchNode(node.id, { featured: e.target.checked })}
+                    />
+                    Featured
+                  </label>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
     </div>
   );

@@ -169,6 +169,13 @@ export const LEGACY_PARTNER_TO_MUSIC_HUB_PATH: Record<string, string> = {
   triborough: 'england/london/london-west/tri-borough',
   tbmh: 'england/london/london-west/tri-borough',
   'tri-borough': 'england/london/london-west/tri-borough',
+  /** Former Bristol Music Hub → West of England (Bristol Beacon + WEMA). */
+  bristol: 'england/south-west/west-of-england/bristol-beacon/bristol',
+  'bristol-beacon': 'england/south-west/west-of-england/bristol-beacon',
+  'bristol-music-hub': 'england/south-west/west-of-england',
+  'west-of-england': 'england/south-west/west-of-england',
+  woe: 'england/south-west/west-of-england',
+  wema: 'england/south-west/west-of-england/wema',
 };
 
 export const ESSEX_DISTRICT_SLUGS = [
@@ -268,6 +275,19 @@ export function resolveMusicHubRoute(pathname: string): MusicHubResolvedRoute | 
     return { kind: 'page', path: aliases[trimmed], admin: false };
   }
 
+  // Music-Hub-only short slugs (no Partner Hub chrome): West of England / Bristol / WEMA
+  const musicHubOnlyShortSlugs = new Set([
+    'west-of-england',
+    'woe',
+    'wema',
+    'bristol-beacon',
+    'bristol-music-hub',
+    'bristol',
+  ]);
+  if (musicHubOnlyShortSlugs.has(trimmed) && aliases[trimmed]) {
+    return { kind: 'page', path: aliases[trimmed], admin: false };
+  }
+
   return null;
 }
 
@@ -290,5 +310,12 @@ export function musicHubPublicHref(path: string): string {
     ([alias, full]) => full === path && alias.startsWith('essex/'),
   );
   if (essexAlias) return `/${essexAlias[0]}`;
+
+  // Prefer readable short slugs for West of England (former Bristol Music Hub)
+  const preferredShort = ['west-of-england', 'wema', 'bristol-beacon', 'bristol', 'woe'];
+  for (const slug of preferredShort) {
+    if (aliases[slug] === path) return `/${slug}`;
+  }
+
   return musicHubPageHref(path);
 }

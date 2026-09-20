@@ -245,6 +245,9 @@ export function HubPageTemplate({
   const lessonPlans = displayContent.lessonPlans || [];
 
   const showPlaceholderSection = (hasItems: boolean) => canEdit || hasItems;
+  /** Resources / courses / activities only on district & borough pages — not region/hub/service landings. */
+  const showLocalResources =
+    node.kind === 'district' || node.kind === 'borough';
 
   return (
     <div className="mx-auto w-full max-w-6xl space-y-5 px-4 py-6 sm:px-6 lg:px-8">
@@ -439,7 +442,7 @@ export function HubPageTemplate({
 
       {children}
 
-      {showPlaceholderSection(resources.length > 0) && (
+      {showLocalResources && showPlaceholderSection(resources.length > 0) && (
         <Section
           title="Resources"
           editLabel="Edit resources"
@@ -457,7 +460,7 @@ export function HubPageTemplate({
         </Section>
       )}
 
-      {showPlaceholderSection(courses.length > 0) && (
+      {showLocalResources && showPlaceholderSection(courses.length > 0) && (
         <Section
           title="Courses"
           editLabel="Edit courses"
@@ -467,7 +470,7 @@ export function HubPageTemplate({
         </Section>
       )}
 
-      {showPlaceholderSection(activities.length > 0) && (
+      {showLocalResources && showPlaceholderSection(activities.length > 0) && (
         <Section
           title="Activities"
           editLabel="Edit activities"
@@ -477,7 +480,7 @@ export function HubPageTemplate({
         </Section>
       )}
 
-      {showPlaceholderSection(lessonPlans.length > 0) && (
+      {showLocalResources && showPlaceholderSection(lessonPlans.length > 0) && (
         <Section
           title="Full lesson plans"
           editLabel="Edit lesson plans"
@@ -577,16 +580,15 @@ export function HubPageTemplate({
                         ? 'ems'
                         : 'greater-essex'
             }
-            title={
-              node.id === 'east-of-england' || node.id === 'greater-essex'
-                ? 'Hubs in East of England'
-                : 'Other hubs in East of England'
-            }
-            showDistrictEntry={node.id !== 'music-on-sea' && node.id !== 'thurrock-music-service'}
+            title="Hubs in East of England"
+            showDistrictEntry={node.id === 'greater-essex' || node.id === 'east-of-england'}
+            hubsOnly
           />
         )}
 
-      {childNodes.length > 0 && (
+      {childNodes.length > 0 &&
+        node.id !== 'east-of-england' &&
+        node.id !== 'greater-essex' && (
         <Section title="Explore">
           <ExpandedExploreTree nodes={childNodes} depth={0} />
         </Section>

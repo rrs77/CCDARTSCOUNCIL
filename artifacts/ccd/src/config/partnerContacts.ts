@@ -89,4 +89,31 @@ export const PARTNER_CONTACTS: Record<string, PartnerContactInfo> = {
     webLabel: 'jazznorth.org/contact',
     sourceUrl: 'https://www.jazznorth.org/contact',
   },
+  rsc: {
+    orgId: 'rsc',
+    lines: ['Royal Shakespeare Company', 'Waterside, Stratford-upon-Avon, Warwickshire CV37 6BB'],
+    web: 'https://www.rsc.org.uk/learn/schools-and-teachers/',
+    webLabel: 'rsc.org.uk/learn/schools-and-teachers',
+    sourceUrl: 'https://www.rsc.org.uk/contact-us',
+  },
+  bristololdvic: {
+    orgId: 'bristololdvic',
+    lines: ['Bristol Old Vic', 'King Street, Bristol BS1 4ED'],
+    phone: '0117 987 7877',
+    email: 'groupbookings@bristololdvic.org.uk',
+    web: 'https://bristololdvic.org.uk/teacher-resources',
+    webLabel: 'bristololdvic.org.uk/teacher-resources',
+    sourceUrl: 'https://bristololdvic.org.uk/about/contact',
+  },
+  kneehigh: {
+    orgId: 'kneehigh',
+    lines: [
+      'This is Kneehigh',
+      'Kneehigh Archive · Falmouth University',
+      'Penryn Campus, Cornwall',
+    ],
+    web: 'https://thisiskneehigh.co.uk/',
+    webLabel: 'thisiskneehigh.co.uk',
+    sourceUrl: 'https://thisiskneehigh.co.uk/',
+  },
 };
