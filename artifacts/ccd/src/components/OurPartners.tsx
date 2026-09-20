@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronRight, Handshake, Loader2, PlusCircle, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PARTNER_HUBS, openPartnerHub, type PartnerHubConfig } from '../config/partnerHubs';
@@ -404,6 +404,7 @@ export function OurPartners() {
   const [activeLetter, setActiveLetter] = useState<string | null>(
     () => freeOrgs[0] ? orgSortLetter(freeOrgs[0]) : null,
   );
+  const azLockUntilRef = useRef(0);
   const showMusicAdmin =
     user?.role === 'admin' ||
     user?.role === 'superuser' ||
@@ -419,23 +420,24 @@ export function OurPartners() {
 
     const observer = new IntersectionObserver(
       (entries) => {
+        if (Date.now() < azLockUntilRef.current) return;
         const visible = entries
           .filter((e) => e.isIntersecting)
           .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
         const letter = visible[0]?.target.getAttribute('data-org-letter-index');
         if (letter) setActiveLetter(letter);
       },
-      { rootMargin: '-20% 0px -60% 0px', threshold: [0, 0.25, 0.5] },
+      { rootMargin: '-15% 0px -55% 0px', threshold: [0, 0.2, 0.4] },
     );
 
     nodes.forEach((node) => observer.observe(node));
     return () => observer.disconnect();
-    // freeOrgKey tracks membership; freeOrgs is rebuilt each render from static config.
     // eslint-disable-next-line react-hooks/exhaustive-deps -- stable slug key
   }, [freeOrgKey]);
 
   const scrollToLetter = (letter: string) => {
     setActiveLetter(letter);
+    azLockUntilRef.current = Date.now() + 900;
     const el = document.querySelector<HTMLElement>(`[data-org-letter-index="${letter}"]`);
     if (!el) return;
     const bannerRaw = getComputedStyle(document.documentElement)
