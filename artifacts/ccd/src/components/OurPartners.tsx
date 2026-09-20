@@ -200,7 +200,7 @@ function PartnerHubAccordion({
   const isPremium = variant === 'premium';
 
   return (
-    <ul className="space-y-2" aria-label={listLabel}>
+    <ul className="space-y-1" aria-label={listLabel}>
       {hubs.map((hub) => {
         const open = expandedSlug === hub.slug;
         const panel = hub.logoOnPlate
@@ -215,11 +215,11 @@ function PartnerHubAccordion({
                 ? 'brightness-0 invert'
                 : '';
         const borderIdle = isPremium
-          ? 'border-[#A3E635]/70 bg-white/90 hover:border-[#65A30D]'
-          : 'border-[#002D24]/20 bg-white hover:border-[#002D24]/40';
+          ? 'border-[#A3E635]/60 bg-white/90 hover:border-[#65A30D]'
+          : 'border-[#002D24]/15 bg-white hover:border-[#002D24]/35';
         const borderOpen = isPremium
-          ? 'border-[#65A30D] bg-white shadow-md ring-1 ring-[#A3E635]/50'
-          : 'border-[#002D24]/35 bg-white shadow-md ring-1 ring-[#002D24]/15';
+          ? 'border-[#65A30D] bg-white shadow-sm ring-1 ring-[#A3E635]/40'
+          : 'border-[#002D24]/30 bg-white shadow-sm ring-1 ring-[#002D24]/10';
         const expandBg = isPremium
           ? 'border-[#A3E635]/40 bg-gradient-to-b from-[#F7FEE7]/80 to-white'
           : 'border-[#002D24]/10 bg-gradient-to-b from-[#E8F0EA]/70 to-white';
@@ -231,24 +231,24 @@ function PartnerHubAccordion({
         return (
           <li
             key={hub.slug}
-            className={`overflow-hidden rounded-xl border transition-shadow ${
+            className={`overflow-hidden rounded-lg border transition-shadow ${
               open ? borderOpen : borderIdle
             }`}
           >
             <button
               type="button"
               onClick={() => setExpandedSlug(open ? null : hub.slug)}
-              className={`flex w-full items-center gap-3 px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 ${focusRing} sm:gap-4 sm:px-4`}
+              className={`flex w-full items-center gap-2 px-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 ${focusRing} sm:gap-2.5 sm:px-2.5`}
               aria-expanded={open}
               aria-controls={`${variant}-hub-${hub.slug}`}
             >
               {open ? (
-                <ChevronDown className={`h-4 w-4 shrink-0 ${chevron}`} aria-hidden />
+                <ChevronDown className={`h-3.5 w-3.5 shrink-0 ${chevron}`} aria-hidden />
               ) : (
-                <ChevronRight className={`h-4 w-4 shrink-0 ${chevron}`} aria-hidden />
+                <ChevronRight className={`h-3.5 w-3.5 shrink-0 ${chevron}`} aria-hidden />
               )}
               <span
-                className={`flex h-12 w-36 shrink-0 items-center justify-center rounded-lg px-2.5 sm:w-40 ${
+                className={`flex h-8 w-24 shrink-0 items-center justify-center rounded-md px-1.5 sm:w-28 ${
                   hub.logoOnPlate || panel === '#FFFFFF' ? 'border border-[#002D24]/10' : ''
                 }`}
                 style={{ backgroundColor: panel }}
@@ -256,18 +256,13 @@ function PartnerHubAccordion({
                 <img
                   src={hub.logoSrc}
                   alt=""
-                  className={`h-8 w-auto max-h-9 max-w-[8.5rem] object-contain object-center sm:h-9 sm:max-w-[9.5rem] ${invertLogo}`}
+                  className={`h-5 w-auto max-h-6 max-w-[5.5rem] object-contain object-center sm:h-6 sm:max-w-[6.5rem] ${invertLogo}`}
                   loading="lazy"
                   decoding="async"
                 />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-[#002D24] sm:text-base">
-                  {hub.displayName}
-                </span>
-                {!open && hub.tagline && (
-                  <span className="mt-0.5 block truncate text-xs text-[#002D24]/65">{hub.tagline}</span>
-                )}
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[#002D24]">
+                {hub.displayName}
               </span>
             </button>
 

@@ -105,17 +105,17 @@ export function MusicHubsDirectory() {
         <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-[#002D24]/65">
           Explore by area
         </p>
-        <ul className="space-y-2" aria-label="UK countries">
+        <ul className="space-y-1" aria-label="UK countries">
           {directory.countries.map((country) => {
             const open = expandedCountry === country.id;
             const regions = visibleChildren(country);
             return (
               <li
                 key={country.id}
-                className={`overflow-hidden rounded-xl border transition-shadow ${
+                className={`overflow-hidden rounded-lg border transition-shadow ${
                   open
-                    ? 'border-[#002D24]/35 bg-white shadow-md ring-1 ring-[#002D24]/15'
-                    : 'border-[#002D24]/20 bg-white hover:border-[#002D24]/40'
+                    ? 'border-[#002D24]/35 bg-white shadow-sm ring-1 ring-[#002D24]/10'
+                    : 'border-[#002D24]/15 bg-white hover:border-[#002D24]/30'
                 }`}
               >
                 <button
@@ -124,24 +124,17 @@ export function MusicHubsDirectory() {
                     setExpandedCountry(open ? null : country.id);
                     setExpandedRegion(null);
                   }}
-                  className="flex w-full items-center gap-3 px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002D24]/40 sm:gap-4 sm:px-4"
+                  className="flex w-full items-center gap-2 px-2.5 py-1.5 text-left focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002D24]/40 sm:gap-2.5 sm:px-3"
                   aria-expanded={open}
                   aria-controls={`country-${country.id}`}
                 >
                   {open ? (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-[#002D24]/70" aria-hidden />
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#002D24]/70" aria-hidden />
                   ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[#002D24]/70" aria-hidden />
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#002D24]/70" aria-hidden />
                   )}
-                  <span className="min-w-0 flex-1">
-                    <span className="block text-sm font-semibold text-[#002D24] sm:text-base">
-                      {country.name}
-                    </span>
-                    {!open && country.description?.[0] && (
-                      <span className="mt-0.5 block truncate text-xs text-[#002D24]/65">
-                        {country.description[0]}
-                      </span>
-                    )}
+                  <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[#002D24]">
+                    {country.name}
                   </span>
                 </button>
 
