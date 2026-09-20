@@ -22,6 +22,10 @@
 import { DEMO_SEED_MARKER_KEY, clearDemoLocalStorage } from './demoMode';
 import { writeDemoTable } from './demoDb';
 import {
+  getKeyDateSuggestionsForOrg,
+  upsertImportantDatesFromSuggestions,
+} from './partnerKeyDates';
+import {
   buildDemoYearGroupSections,
   demoteSecondarySectionsToOther,
   mergeSectionsWithYearGroups,
@@ -702,7 +706,7 @@ export async function seedDemoData(): Promise<void> {
         week: spec.dayOffset < 7 ? 1 : 2,
         className: spec.sheet,
         activities: lesson.orderedActivities || [],
-        duration: Math.max(30, Number(lesson.totalTime) || 45),
+        duration: Math.min(60, Math.max(30, Number(lesson.totalTime) || 45)),
         notes: '',
         status: 'planned',
         unitId: '',
@@ -739,13 +743,23 @@ export async function seedDemoData(): Promise<void> {
       })),
     );
 
-    // ---- 8. Current sheet ----
+    // ---- 8. Partner key dates (so calendar / Important dates are never empty) ----
+    const pitchKeyDates = [
+      ...getKeyDateSuggestionsForOrg('lso').slice(0, 3),
+      ...getKeyDateSuggestionsForOrg('ems').slice(0, 2),
+      ...getKeyDateSuggestionsForOrg('roh').slice(0, 2),
+    ];
+    if (pitchKeyDates.length) {
+      upsertImportantDatesFromSuggestions(pitchKeyDates, { attendReminder: true });
+    }
+
+    // ---- 9. Current sheet (Year 6 Music — has seeded plans + hub narrative) ----
     localStorage.setItem(
       'currentSheetInfo',
       JSON.stringify({
-        sheet: 'Lower Kindergarten Music',
-        display: 'Lower Kindergarten Music',
-        eyfs: 'Lower Kindergarten Music Statements',
+        sheet: 'Year 6 Music',
+        display: 'Year 6 Music',
+        eyfs: '',
       }),
     );
 

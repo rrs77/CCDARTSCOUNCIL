@@ -8,6 +8,8 @@ export const SlideEntrySchema = z
     title: z.string().trim().min(1, "title is required"),
     description: z.string().trim().min(1, "description is required"),
     speakerNotes: z.string().trim().optional(),
+    /** Autoplay dwell time in milliseconds (funding pitch timings). */
+    durationMs: z.number().int().min(2000).max(60000).optional(),
   })
   .strict();
 

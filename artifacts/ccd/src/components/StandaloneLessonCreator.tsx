@@ -279,7 +279,13 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setLesson((prev) => ({ ...prev, [name]: name === 'duration' ? parseInt(value) || 0 : value }));
+    if (name === 'duration') {
+      const n = parseInt(value, 10);
+      const clamped = Number.isNaN(n) ? 0 : Math.min(60, Math.max(0, n));
+      setLesson((prev) => ({ ...prev, duration: clamped }));
+    } else {
+      setLesson((prev) => ({ ...prev, [name]: value }));
+    }
     if (errors[name]) {
       setErrors((prev) => {
         const newErrors = { ...prev };
@@ -348,6 +354,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
     if (!lesson.lessonTitle.trim()) newErrors.lessonTitle = 'Lesson title is required';
     if (!lesson.lessonName.trim()) newErrors.lessonName = 'Lesson name is required';
     if (!lesson.duration || lesson.duration <= 0) newErrors.duration = 'Duration must be greater than 0';
+    if (lesson.duration > 60) newErrors.duration = 'Lessons must be 60 minutes or less';
 
     setErrors(newErrors);
     
@@ -715,10 +722,12 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
                       placeholder="60"
                       min="0"
+                      max="60"
                     />
                     {errors.duration && (
                       <p className="mt-1 text-xs text-red-500">{errors.duration}</p>
                     )}
+                    <p className="mt-1 text-[11px] text-gray-500">Maximum 60 minutes (1 hour).</p>
                   </div>
 
                   <div>

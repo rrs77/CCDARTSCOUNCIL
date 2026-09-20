@@ -206,8 +206,9 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = parseInt(e.target.value);
-    setActivity(prev => ({ ...prev, time: isNaN(value) ? 0 : value }));
+    const value = parseInt(e.target.value, 10);
+    const clamped = Number.isNaN(value) ? 0 : Math.min(60, Math.max(0, value));
+    setActivity((prev) => ({ ...prev, time: clamped }));
   };
 
   const handleYearGroupChange = (yearGroup: string, checked: boolean) => {
@@ -517,13 +518,15 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                   value={activity.time}
                   onChange={handleTimeChange}
                   min="0"
+                  max="60"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
                   style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
                   onFocus={(e) => e.target.style.borderColor = '#0BA596'}
                   onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
-                  placeholder="Enter duration in minutes"
+                  placeholder="Enter duration in minutes (max 60)"
                   dir="ltr"
                 />
+                <p className="mt-1 text-xs text-gray-500">Activities are capped at 60 minutes.</p>
               </div>
 
               {/* Topics (stored in unitName as comma-separated values) */}

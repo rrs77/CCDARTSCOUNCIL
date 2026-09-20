@@ -12,6 +12,14 @@ const CHROME_HIDE_MS = 2200;
 /** Reveal chrome when the pointer is within this many px of the bottom edge. */
 const BOTTOM_HOTZONE_PX = 72;
 
+function slideDurationMs(index: number): number {
+  const entry = slides[index];
+  const custom = entry && typeof (entry as { durationMs?: number }).durationMs === "number"
+    ? (entry as { durationMs?: number }).durationMs
+    : undefined;
+  return custom && custom >= 2000 ? custom : SLIDE_MS;
+}
+
 function leaveWalkthrough() {
   // When embedded in the CCD login modal iframe, ask the parent to close
   // instead of navigating the whole app away to the marketing site.
@@ -166,14 +174,15 @@ export function PitchAutoplayViewer() {
     };
   }, []);
 
-  // Autoplay.
+  // Autoplay — per-slide duration from manifest (funding pitch timings).
   useEffect(() => {
     if (!playing) return;
-    const id = window.setInterval(() => {
+    const ms = slideDurationMs(indexRef.current);
+    const id = window.setTimeout(() => {
       jumpTo(indexRef.current + 1);
-    }, SLIDE_MS);
-    return () => window.clearInterval(id);
-  }, [playing, tick, jumpTo]);
+    }, ms);
+    return () => window.clearTimeout(id);
+  }, [playing, tick, jumpTo, index]);
 
   // Fit a 16:9 stage into the available area (recomputes on resize/rotation).
   useEffect(() => {
