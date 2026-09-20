@@ -341,6 +341,8 @@ export function OurPartners() {
     user?.role === 'admin' ||
     user?.role === 'superuser' ||
     user?.role === 'super_admin';
+  const canAddSubscriberOrgs =
+    user?.role === 'superuser' || user?.role === 'super_admin';
 
   return (
     <div className="space-y-8">
@@ -365,7 +367,10 @@ export function OurPartners() {
       <MusicHubsDirectory />
 
       {showMusicAdmin && (
-        <MusicHubAdminPanel organisationFilter={null} />
+        <MusicHubAdminPanel
+          organisationFilter={null}
+          canAddOrganisations={canAddSubscriberOrgs}
+        />
       )}
 
       {paidHubs.length > 0 && (
