@@ -665,8 +665,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       title: "Partner hubs",
       content: (
         <div className="space-y-3">
-          <p>Open a partner from the dashboard partners area or a short URL such as <strong>/omnimusic</strong>, <strong>/jazznorth</strong>, or <strong>/ems</strong>.</p>
-          <p><strong>OmniMusic</strong> uses the Resource Zone: the AMT hub link plus free session PDFs. Other partners (Jazz North, LSO, ROH, We Teach Drama, and more) have their own resource cards and planner actions.</p>
+          <p>Open a partner from the dashboard partners area or a short URL such as <strong>/omnimusic</strong>, <strong>/rsc</strong>, <strong>/bristololdvic</strong>, <strong>/kneehigh</strong>, <strong>/jazznorth</strong>, or <strong>/ems</strong>.</p>
+          <p><strong>OmniMusic</strong> uses the Resource Zone: the AMT hub link plus free session PDFs. Drama education hubs include <strong>RSC Education</strong>, <strong>Bristol Old Vic</strong>, and <strong>Kneehigh</strong>. Other partners (Jazz North, LSO, ROH, We Teach Drama, and more) have their own resource cards and planner actions. Organisations are listed A–Z with a letter browser on the right.</p>
         </div>
       )
     },
@@ -675,7 +675,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       content: (
         <div className="space-y-3">
           <p>The <strong>Music Hubs</strong> directory lists UK hubs. Open a hub page for local resources. Some hubs need a subscriber password to unlock files.</p>
-          <p>Polished examples: <strong>Greater Essex</strong> (EMS) in East of England, and <strong>West of England Music Hub</strong> in the South West — the combined hub that succeeded Bristol Music Hub, led by Bristol Beacon with WEMA for Bath &amp; North East Somerset, North Somerset and South Gloucestershire.</p>
+          <p>East of England focuses on Greater Essex: Essex Music Service, Music-on-Sea and Thurrock. On the EMS hub, use the hubs list and district map first. <strong>Resources</strong> (brochure, workshops) open on <em>district / borough</em> pages such as Chelmsford — not on the EMS landing page.</p>
+          <p>South West includes <strong>West of England Music Hub</strong> — the combined hub that succeeded Bristol Music Hub, led by Bristol Beacon with WEMA for Bath &amp; North East Somerset, North Somerset and South Gloucestershire.</p>
         </div>
       )
     },
@@ -684,7 +685,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       content: (
         <div className="space-y-3">
           <p>Organisation owners and super admins open <strong>Settings → Admin → Hub admin</strong> to manage members, resources, and the public hub page.</p>
-          <p>Use this when your school or partner organisation publishes its own resource zone.</p>
+          <p><strong>Royal Ballet and Opera (/roh)</strong> and <strong>RSC Education (/rsc)</strong> each have organisation hubs so editors can update their pages after being granted hub membership (or as super admin).</p>
         </div>
       )
     }
