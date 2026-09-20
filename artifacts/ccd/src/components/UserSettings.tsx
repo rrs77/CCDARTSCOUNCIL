@@ -1,5 +1,5 @@
-import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield, ShoppingBag } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -12,6 +12,7 @@ import { UserManagement } from './Admin/UserManagement';
 import { HubContentApprovalQueue } from './musicHubs/HubContentApprovalQueue';
 import { MyHubAdministration } from './musicHubs/MyHubAdministration';
 import { DownloadAnalytics } from './Admin/DownloadAnalytics';
+import { ShopCustomersAdmin } from './Admin/ShopCustomersAdmin';
 import { HubAdminDashboard } from './Admin/HubAdminDashboard';
 import { MyDownloads } from './Downloads/MyDownloads';
 import { customCategoriesApi, activityPacksApi } from '../config/api';
@@ -26,6 +27,12 @@ import {
   normalizeYearGroupToken,
   resolveYearGroupFromToken,
 } from '../utils/yearGroupSectionOrder';
+import {
+  profileHasHubAnalyticsAccess,
+  profileHasHubSettingsAccess,
+} from '../utils/hubAdminAccess';
+import { listAdminHubs } from '../utils/hubAdminApi';
+import { isAuthorizedDemoMode } from '../utils/demoMode';
 
 // Draggable Category Item Component
 interface DraggableCategoryProps {
@@ -159,7 +166,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   tempCategoriesRef.current = tempCategories;
   tempYearGroupsRef.current = tempYearGroups;
   const [tempResourceLinks, setTempResourceLinks] = useState(resourceLinks);
-  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'hub-admin'>('yeargroups');
+  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'shop-customers' | 'hub-admin'>('yeargroups');
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
   const adminTriggerRef = useRef<HTMLButtonElement>(null);
@@ -200,17 +207,52 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
                   profile?.role === 'admin' ||
                   profile?.role === 'superuser';
   const isCreator = profile?.role === 'creator';
+  const isPrototype = isAuthorizedDemoMode();
+  const [hubAccessProbe, setHubAccessProbe] = useState<{
+    settings: boolean;
+    analytics: boolean;
+  } | null>(null);
   const showUserManagement = (isSupabaseAuthEnabled() || isSupabaseConfigured()) && (isAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.role === 'super_admin' || profile?.can_manage_users === true);
   const showDownloadAnalytics =
-    isAdmin ||
-    profile?.role === 'organisation' ||
-    profile?.role === 'super_admin' ||
-    profile?.can_view_download_analytics === true;
+    !isPrototype &&
+    (profileHasHubAnalyticsAccess(profile) || hubAccessProbe?.analytics === true);
   const showHubAdmin =
-    isAdmin ||
-    profile?.role === 'organisation' ||
-    profile?.role === 'super_admin' ||
-    (profile?.hub_memberships?.some((m) => m.role === 'admin' || m.role === 'owner') ?? false);
+    !isPrototype &&
+    (profileHasHubSettingsAccess(profile) || hubAccessProbe?.settings === true);
+  const showShopCustomers =
+    !isPrototype &&
+    (isAdmin || profile?.role === 'super_admin' || profile?.role === 'admin');
+
+  // Real Sign-in: probe /api/hubs so membership-only hub admins see Hub admin / analytics
+  // even before AuthContext enrichment finishes (or if profile cache lacked memberships).
+  useEffect(() => {
+    if (!isOpen || isPrototype || !isSupabaseAuthEnabled()) return;
+    let cancelled = false;
+    void (async () => {
+      try {
+        const data = await listAdminHubs();
+        if (cancelled) return;
+        const hubs = data.hubs || [];
+        setHubAccessProbe({
+          settings: hubs.some((h) =>
+            ['hub_administrator', 'hub_publisher', 'hub_editor', 'admin', 'owner'].includes(
+              h.hub_role || '',
+            ),
+          ) || data.is_super_admin,
+          analytics:
+            data.is_super_admin ||
+            hubs.some((h) =>
+              ['hub_administrator', 'admin', 'owner'].includes(h.hub_role || ''),
+            ),
+        });
+      } catch {
+        if (!cancelled) setHubAccessProbe(null);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isOpen, isPrototype]);
 
   // When modal opens or permissions change, ensure active tab is one we can show (avoid blank content)
   React.useEffect(() => {
@@ -218,15 +260,25 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       setAdminMenuOpen(false);
       return;
     }
+    try {
+      const pending = sessionStorage.getItem('ccd-open-settings-tab');
+      if (pending === 'hub-admin' && showHubAdmin) {
+        setActiveTab('hub-admin');
+        sessionStorage.removeItem('ccd-open-settings-tab');
+      }
+    } catch {
+      /* ignore */
+    }
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
     if (activeTab === 'download-analytics' && !showDownloadAnalytics) setActiveTab('my-downloads');
+    if (activeTab === 'shop-customers' && !showShopCustomers) setActiveTab('my-downloads');
     if (activeTab === 'hub-admin' && !showHubAdmin) setActiveTab('resource-links');
     if (activeTab === 'hub-content' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
     if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
     // general, resource-links, data are under Admin for all users – no redirect
-  }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, isAdmin, isCreator]);
+  }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, showShopCustomers, isAdmin, isCreator]);
 
   // Keep undo/redo history for year-group sections (key stages).
   React.useEffect(() => {
@@ -1069,6 +1121,19 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               <span>Download analytics</span>
             </button>
           )}
+          {showShopCustomers && (
+            <button
+              onClick={() => setActiveTab('shop-customers')}
+              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
+                activeTab === 'shop-customers'
+                  ? 'text-white bg-teal-600 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
+              }`}
+            >
+              <ShoppingBag className="h-3.5 w-3.5" />
+              <span>Shop customers</span>
+            </button>
+          )}
           {showUserManagement && (
             <button
               onClick={() => setActiveTab('users')}
@@ -1196,6 +1261,17 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
               <span className="text-sm font-medium">Settings saved successfully!</span>
+            </div>
+          )}
+
+          {isPrototype && (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              <p className="font-semibold">Hub download &amp; purchase tracking needs Sign in</p>
+              <p className="mt-1 text-amber-900/90">
+                The working prototype is a visitor preview. To test <strong>Hub admin → Downloads</strong>,{' '}
+                <strong>Sales</strong>, and platform <strong>Shop customers</strong>, sign out of Preview and
+                use <strong>Sign in</strong> with a hub administrator or organisation account.
+              </p>
             </div>
           )}
 
@@ -2852,6 +2928,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'download-analytics' && showDownloadAnalytics && (
             <DownloadAnalytics />
+          )}
+
+          {activeTab === 'shop-customers' && showShopCustomers && (
+            <ShopCustomersAdmin />
           )}
 
           {activeTab === 'hub-admin' && showHubAdmin && (

@@ -41,6 +41,7 @@ import {
 } from '../../utils/hubAdminApi';
 import { sanitizeHtml } from '../../utils/sanitize';
 import { supabase } from '../../config/supabase';
+import { HubSalesSection, HubShopSection } from './HubShopSections';
 
 type Section =
   | 'edit-page'
@@ -51,6 +52,8 @@ type Section =
   | 'preview'
   | 'publish'
   | 'hub-users'
+  | 'shop'
+  | 'sales'
   | 'analytics'
   | 'export'
   | 'audit';
@@ -58,13 +61,15 @@ type Section =
 const SECTIONS: { id: Section; label: string; minRole: string }[] = [
   { id: 'edit-page', label: 'Edit page', minRole: 'hub_editor' },
   { id: 'resources', label: 'Resources', minRole: 'hub_editor' },
+  { id: 'shop', label: 'Shop', minRole: 'hub_editor' },
+  { id: 'sales', label: 'Sales', minRole: 'hub_administrator' },
   { id: 'activities', label: 'Activities', minRole: 'hub_viewer' },
   { id: 'media', label: 'Media', minRole: 'hub_viewer' },
   { id: 'drafts', label: 'Drafts', minRole: 'hub_editor' },
   { id: 'preview', label: 'Preview', minRole: 'hub_viewer' },
   { id: 'publish', label: 'Publish', minRole: 'hub_publisher' },
   { id: 'hub-users', label: 'Hub users', minRole: 'hub_administrator' },
-  { id: 'analytics', label: 'Analytics', minRole: 'hub_administrator' },
+  { id: 'analytics', label: 'Downloads', minRole: 'hub_administrator' },
   { id: 'export', label: 'Export', minRole: 'hub_administrator' },
   { id: 'audit', label: 'Audit', minRole: 'hub_administrator' },
 ];
@@ -121,7 +126,12 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
         setSelectedId(data.hubs[0].id);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not load hubs');
+      const msg = e instanceof Error ? e.message : 'Could not load hubs';
+      toast.error(
+        /forbidden|unauthorized|401|403/i.test(msg)
+          ? 'Sign in with a hub administrator account to manage Downloads and Sales.'
+          : msg,
+      );
     } finally {
       setLoadingList(false);
     }
@@ -287,10 +297,10 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
               </div>
             ) : hubs.length === 0 ? (
               <p className="p-4 text-sm text-gray-500">
-                No hubs assigned.
+                No hubs assigned for this signed-in account.
                 {(profile?.role as string) === 'super_admin' || profile?.role === 'superuser'
-                  ? ' Run the hub administration migration to seed Jazz North.'
-                  : ' Ask a super admin to grant hub membership.'}
+                  ? ' Run the hub administration migration to seed organisations.'
+                  : ' Ask a super admin to grant hub membership, or Sign in with an organisation / hub administrator account (not the working prototype).'}
               </p>
             ) : (
               hubs.map((h) => (
@@ -418,6 +428,8 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
                 {section === 'hub-users' && selectedId && (
                   <MembersSection hubId={selectedId} />
                 )}
+                {section === 'shop' && selectedId && <HubShopSection hubId={selectedId} />}
+                {section === 'sales' && selectedId && <HubSalesSection hubId={selectedId} />}
                 {section === 'analytics' && selectedId && (
                   <AnalyticsSection hubId={selectedId} />
                 )}

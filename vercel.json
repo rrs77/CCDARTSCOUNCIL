@@ -55,6 +55,14 @@
       "destination": "/api/router?__route=music-hubs/:path*"
     },
     {
+      "source": "/api/shop",
+      "destination": "/api/router?__route=shop"
+    },
+    {
+      "source": "/api/shop/:path*",
+      "destination": "/api/router?__route=shop/:path*"
+    },
+    {
       "source": "/((?!api/|partners/|assets/|ccd-pitch/|the-facts/|.*\\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|pdf|zip|woff2?|ttf|map)$).*)",
       "destination": "/index.html"
     }

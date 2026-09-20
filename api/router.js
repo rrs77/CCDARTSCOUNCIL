@@ -28,6 +28,15 @@ import * as hubExport from '../server/api/hubs/[hubId]/export.js';
 import * as hubMembers from '../server/api/hubs/[hubId]/members.js';
 import * as hubResources from '../server/api/hubs/[hubId]/resources/index.js';
 import * as hubResource from '../server/api/hubs/[hubId]/resources/[resourceId].js';
+import * as hubProducts from '../server/api/hubs/[hubId]/products/index.js';
+import * as hubSales from '../server/api/hubs/[hubId]/sales.js';
+
+/* Hub shop (Stripe checkout + catalogue) — routed to stay within Hobby function limit */
+import * as shopCheckout from '../server/api/shop/checkout.js';
+import * as shopWebhook from '../server/api/shop/webhook.js';
+import * as shopProducts from '../server/api/shop/products.js';
+import * as shopMine from '../server/api/shop/mine.js';
+import * as shopAdminCustomers from '../server/api/shop/admin-customers.js';
 
 /* Music Hub subscriber/admin routes */
 import * as musicHubPassword from '../server/api/music-hubs/admin/password.js';
@@ -123,6 +132,8 @@ function targetFor(pathname) {
       if (rest[1] === 'export') return hubExport;
       if (rest[1] === 'members') return hubMembers;
       if (rest[1] === 'resources') return hubResources;
+      if (rest[1] === 'products') return hubProducts;
+      if (rest[1] === 'sales') return hubSales;
     }
 
     if (
@@ -132,6 +143,30 @@ function targetFor(pathname) {
       return hubResource;
     }
 
+    if (
+      rest.length === 3 &&
+      rest[1] === 'products'
+    ) {
+      return hubProducts;
+    }
+
+    return null;
+  }
+
+  /* ---------- Shop (Stripe + catalogue) ---------- */
+
+  if (area === 'shop') {
+    if (rest.length === 1 && rest[0] === 'checkout') return shopCheckout;
+    if (rest.length === 1 && rest[0] === 'webhook') return shopWebhook;
+    if (rest.length === 1 && rest[0] === 'products') return shopProducts;
+    if (rest.length === 1 && rest[0] === 'mine') return shopMine;
+    if (
+      rest.length === 2 &&
+      rest[0] === 'admin' &&
+      rest[1] === 'customers'
+    ) {
+      return shopAdminCustomers;
+    }
     return null;
   }
 
@@ -176,7 +211,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|shop)(\/|$)/.test(route) ||
     route.includes('..')
   ) {
     return null;

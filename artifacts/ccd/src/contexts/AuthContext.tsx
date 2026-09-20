@@ -8,6 +8,7 @@ import {
   clearDemoMode,
   getDemoOriginSchool,
 } from '../utils/demoMode';
+import { enrichProfileWithHubMemberships } from '../utils/hubAdminAccess';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -203,11 +204,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const revalidateProfile = useCallback(async (sessionUserId: string) => {
     const result = await fetchProfileSafe(sessionUserId, 8000);
     if (result.kind === 'error') return; // Keep cached/optimistic data – do not blow it away on transient failure
-    const fresh = result.profile;
+    let fresh = result.profile;
     if (fresh === null) {
       // Profile row is genuinely gone – purge cache and reset to a safe non-privileged baseline.
       clearProfileCache();
     } else {
+      fresh = await enrichProfileWithHubMemberships(fresh);
       writeProfileCache(sessionUserId, fresh);
     }
     setProfile(fresh);
@@ -359,7 +361,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
   const refreshProfile = useCallback(async () => {
     if (!isSupabaseAuthEnabled() || !user?.id) return;
-    const p = await fetchSupabaseProfile(user.id);
+    let p = await fetchSupabaseProfile(user.id);
+    p = await enrichProfileWithHubMemberships(p);
     writeProfileCache(user.id, p);
     setProfile(p);
     setUser(prev => prev ? { ...prev, profile: p ?? undefined } : null);

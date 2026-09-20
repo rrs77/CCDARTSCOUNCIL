@@ -682,8 +682,10 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       title: "Hub administration",
       content: (
         <div className="space-y-3">
-          <p>Organisation owners and super admins open <strong>Settings → Admin → Hub admin</strong> to manage members, resources, and the public hub page.</p>
-          <p>Use this when your school or partner organisation publishes its own resource zone.</p>
+          <p><strong>Use Sign in</strong> (hub administrator or organisation account) — not the working prototype — to test download and purchase tracking.</p>
+          <p>Open <strong>Settings → Admin → Hub admin</strong> for members, resources, Shop, Sales, and Downloads on your hubs.</p>
+          <p>Use <strong>Shop</strong> to list courses and resources with a price, and <strong>Sales</strong> to see customers and revenue for <em>this hub only</em> (separate from other hubs and from Download analytics).</p>
+          <p>Platform admins use <strong>Settings → Shop customers</strong> for cross-hub purchase tracking and <strong>Download analytics</strong> for tracked resource usage. Stripe Checkout runs when <code>STRIPE_SECRET_KEY</code> is set; otherwise signed-in demo checkout still records sales in the database.</p>
         </div>
       )
     }
