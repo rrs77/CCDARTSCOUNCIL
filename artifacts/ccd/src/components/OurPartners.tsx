@@ -43,9 +43,9 @@ function OrgsAzBrowser({
   return (
     <nav
       aria-label="Organisations A to Z"
-      className="sticky top-24 z-10 hidden w-8 shrink-0 self-start lg:block"
+      className="sticky top-28 z-10 hidden w-9 shrink-0 self-start lg:block"
     >
-      <div className="flex flex-col items-center gap-0.5 rounded-full border border-[#002D24]/10 bg-white/90 py-2 shadow-[0_1px_0_rgba(0,45,36,0.04)] backdrop-blur-sm">
+      <div className="flex flex-col items-center gap-px rounded-full border border-[#002D24]/10 bg-white/95 py-1.5 shadow-[0_1px_0_rgba(0,45,36,0.04)] backdrop-blur-sm">
         {AZ_LETTERS.map((letter) => {
           const hasOrgs = availableLetters.has(letter);
           const isActive = activeLetter === letter;
@@ -54,14 +54,15 @@ function OrgsAzBrowser({
               key={letter}
               type="button"
               disabled={!hasOrgs}
+              data-org-az={letter}
               onClick={() => onSelect(letter)}
               aria-label={
                 hasOrgs ? `Jump to organisations starting with ${letter}` : `${letter} — none`
               }
               aria-current={isActive ? 'true' : undefined}
-              className={`flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-semibold leading-none tracking-wide transition-colors ${
+              className={`flex h-6 w-7 items-center justify-center rounded-full text-[11px] font-semibold leading-none tracking-wide transition-colors ${
                 !hasOrgs
-                  ? 'cursor-default text-[#002D24]/20'
+                  ? 'cursor-default text-[#002D24]/18'
                   : isActive
                     ? 'bg-[#002D24] text-white'
                     : 'text-[#002D24]/55 hover:bg-[#002D24]/08 hover:text-[#002D24]'
