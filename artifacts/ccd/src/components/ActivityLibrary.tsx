@@ -61,8 +61,6 @@ import {
 import { readHubSeededActivitiesFromLocal } from '../utils/hubSeedLocal';
 import { PartnerPlanningPanel } from './partners/PartnerPlanningPanel';
 import { partnerPlanningProjectKey } from '../utils/partnerPlanning';
-import { ActivityLibraryWelcomeModal } from './ActivityLibraryWelcomeModal';
-import { ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY } from './login/prototypeCopy';
 
 /**
  * True when curated demo/hub seed packs are present in the session store.
@@ -212,28 +210,8 @@ export function ActivityLibrary({
   const [historyUndoStack, setHistoryUndoStack] = useState<ActivityHistoryAction[]>([]);
   const [historyRedoStack, setHistoryRedoStack] = useState<ActivityHistoryAction[]>([]);
   const [isApplyingHistory, setIsApplyingHistory] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [partnerSelectedActivityKeys, setPartnerSelectedActivityKeys] = useState<string[]>([]);
   const [partnerSelectedProjectKeys, setPartnerSelectedProjectKeys] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem(ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY) === '1') return;
-    } catch {
-      // still show
-    }
-    setShowWelcomeModal(true);
-  }, []);
-
-  const dismissWelcomeModal = () => {
-    try {
-      sessionStorage.setItem(ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY, '1');
-    } catch {
-      // ignore
-    }
-    setShowWelcomeModal(false);
-  };
-
   const [starredIds, setStarredIds] = useState<Set<string>>(() => new Set(readLocalStarPrefs().starredIds));
   const [globalStarredFirst, setGlobalStarredFirst] = useState(() => readLocalStarPrefs().globalStarredFirst);
   const [starredFirstCategories, setStarredFirstCategories] = useState<Set<string>>(
@@ -1588,11 +1566,6 @@ export function ActivityLibrary({
           setShowActivityModal(false);
           setSelectedActivityForModal(null);
         }}
-      />
-
-      <ActivityLibraryWelcomeModal
-        isOpen={showWelcomeModal}
-        onClose={dismissWelcomeModal}
       />
 
     </div>

@@ -76,7 +76,6 @@ const WELCOME_DISMISS = [
   'button:has-text("I understand")',
   'button:has-text("Got it")',
   'button:has-text("Continue")',
-  '[aria-labelledby="activity-library-welcome-title"] button',
 ];
 
 function ensureDirs() {
@@ -191,7 +190,6 @@ async function enterPrototypeFast(page) {
         sessionStorage.setItem('ccd-feature-demo', '1');
         sessionStorage.setItem('ccd-prototype-welcome-seen', '1');
         sessionStorage.setItem('ccd-partners-funding-video-seen-v2', '1');
-        sessionStorage.setItem('ccd-activity-library-welcome-seen', '1');
         document.documentElement.classList.add('ccd-feature-demo');
       } catch {
         /* ignore */
@@ -1110,7 +1108,6 @@ async function main() {
       sessionStorage.setItem('ccd-feature-demo', '1');
       sessionStorage.setItem('ccd-prototype-welcome-seen', '1');
       sessionStorage.setItem('ccd-partners-funding-video-seen-v2', '1');
-      sessionStorage.setItem('ccd-activity-library-welcome-seen', '1');
       document.documentElement.classList.add('ccd-feature-demo');
       document.documentElement.setAttribute('data-ccd-record', '1');
     } catch { /* ignore */ }
