@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { ChevronDown, ChevronRight } from 'lucide-react';
 import toast from 'react-hot-toast';
 import {
   getMusicHubOverlay,
@@ -19,6 +20,7 @@ import {
  * Subscriber password set/clear via API (hash never displayed after save).
  * Org-scoped editing: filter by organisationId when profile org is known.
  * Super admins can add organisation keys to the subscriber-password list.
+ * Intended for Settings → Admin → Hub content (not Partner Hubs).
  */
 export function MusicHubAdminPanel({
   organisationFilter,
@@ -33,6 +35,7 @@ export function MusicHubAdminPanel({
   canAddOrganisations?: boolean;
 }) {
   const [overlay, setOverlay] = useState(() => getMusicHubOverlay());
+  const [nodesExpanded, setNodesExpanded] = useState(false);
   const [orgListVersion, setOrgListVersion] = useState(0);
   const orgOptions = useMemo(
     () => listSubscriberOrgIds(organisationFilter),
@@ -56,8 +59,14 @@ export function MusicHubAdminPanel({
   }, [orgOptions, passwordOrg]);
 
   const nodes = useMemo(() => {
-    const list: { id: string; name: string; path: string; organisationId?: string; status: string; featured?: boolean }[] =
-      [];
+    const list: {
+      id: string;
+      name: string;
+      path: string;
+      organisationId?: string;
+      status: string;
+      featured?: boolean;
+    }[] = [];
     walkMusicHubNodes(getMusicHubsDirectory().countries, (node) => {
       if (organisationFilter && node.organisationId !== organisationFilter) return;
       if (!['music-hub', 'service', 'national-service', 'district', 'borough'].includes(node.kind)) {
@@ -109,7 +118,9 @@ export function MusicHubAdminPanel({
 
   const setPassword = async (action: 'set' | 'clear') => {
     if (!adminToken) {
-      toast.error('Set MUSIC_HUB_ADMIN_TOKEN in the environment and pass it to this panel for API calls.');
+      toast.error(
+        'Set MUSIC_HUB_ADMIN_TOKEN in the environment and pass it to this panel for API calls.',
+      );
       return;
     }
     setBusy(true);
@@ -137,7 +148,9 @@ export function MusicHubAdminPanel({
       }
       setNewPassword('');
       if (data.hash) {
-        toast.success('Hash generated — store in MUSIC_HUB_SUBSCRIBER_HASHES (password not shown again)');
+        toast.success(
+          'Hash generated — store in MUSIC_HUB_SUBSCRIBER_HASHES (password not shown again)',
+        );
         console.info('[music-hubs] subscriber hash for', passwordOrg, data.hash);
       } else {
         toast.success(data.note || 'Password cleared');
@@ -159,45 +172,6 @@ export function MusicHubAdminPanel({
           hub-admin APIs are merged.
         </p>
       </div>
-
-      <ul className="max-h-80 space-y-2 overflow-auto" aria-label="Music hub nodes">
-        {nodes.map((node) => (
-          <li
-            key={node.id}
-            className="flex flex-col gap-2 rounded-lg border border-[#002D24]/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
-          >
-            <div className="min-w-0">
-              <p className="truncate text-sm font-semibold text-[#002D24]">{node.name}</p>
-              <p className="truncate text-xs text-[#002D24]/55">{node.path}</p>
-            </div>
-            <div className="flex flex-wrap items-center gap-2">
-              <label className="sr-only" htmlFor={`status-${node.id}`}>
-                Status for {node.name}
-              </label>
-              <select
-                id={`status-${node.id}`}
-                value={overlay[node.id]?.status || node.status}
-                onChange={(e) =>
-                  patchNode(node.id, { status: e.target.value as MusicHubPublishStatus })
-                }
-                className="rounded-md border border-[#002D24]/20 bg-white px-2 py-1.5 text-xs"
-              >
-                <option value="published">published</option>
-                <option value="draft">draft</option>
-                <option value="coming-soon">coming soon</option>
-              </select>
-              <label className="inline-flex items-center gap-1.5 text-xs text-[#002D24]">
-                <input
-                  type="checkbox"
-                  checked={Boolean(overlay[node.id]?.featured ?? node.featured)}
-                  onChange={(e) => patchNode(node.id, { featured: e.target.checked })}
-                />
-                Featured
-              </label>
-            </div>
-          </li>
-        ))}
-      </ul>
 
       <div className="rounded-lg border border-[#002D24]/10 bg-[#E8F0EA]/40 px-3 py-3">
         <p className="text-sm font-semibold text-[#002D24]">Subscriber password</p>
@@ -302,6 +276,63 @@ export function MusicHubAdminPanel({
               )}
             </div>
           </div>
+        )}
+      </div>
+
+      <div>
+        <button
+          type="button"
+          onClick={() => setNodesExpanded((v) => !v)}
+          className="flex w-full items-center gap-2 rounded-lg border border-[#002D24]/10 bg-white px-3 py-2 text-left text-sm font-semibold text-[#002D24] hover:bg-[#E8F0EA]/40"
+          aria-expanded={nodesExpanded}
+        >
+          {nodesExpanded ? (
+            <ChevronDown className="h-4 w-4 shrink-0" aria-hidden />
+          ) : (
+            <ChevronRight className="h-4 w-4 shrink-0" aria-hidden />
+          )}
+          Hub publish status
+          <span className="ml-auto text-xs font-normal text-[#002D24]/55">{nodes.length} hubs</span>
+        </button>
+        {nodesExpanded && (
+          <ul className="mt-2 max-h-80 space-y-2 overflow-auto" aria-label="Music hub nodes">
+            {nodes.map((node) => (
+              <li
+                key={node.id}
+                className="flex flex-col gap-2 rounded-lg border border-[#002D24]/10 px-3 py-2 sm:flex-row sm:items-center sm:justify-between"
+              >
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-[#002D24]">{node.name}</p>
+                  <p className="truncate text-xs text-[#002D24]/55">{node.path}</p>
+                </div>
+                <div className="flex flex-wrap items-center gap-2">
+                  <label className="sr-only" htmlFor={`status-${node.id}`}>
+                    Status for {node.name}
+                  </label>
+                  <select
+                    id={`status-${node.id}`}
+                    value={overlay[node.id]?.status || node.status}
+                    onChange={(e) =>
+                      patchNode(node.id, { status: e.target.value as MusicHubPublishStatus })
+                    }
+                    className="rounded-md border border-[#002D24]/20 bg-white px-2 py-1.5 text-xs"
+                  >
+                    <option value="published">published</option>
+                    <option value="draft">draft</option>
+                    <option value="coming-soon">coming soon</option>
+                  </select>
+                  <label className="inline-flex items-center gap-1.5 text-xs text-[#002D24]">
+                    <input
+                      type="checkbox"
+                      checked={Boolean(overlay[node.id]?.featured ?? node.featured)}
+                      onChange={(e) => patchNode(node.id, { featured: e.target.checked })}
+                    />
+                    Featured
+                  </label>
+                </div>
+              </li>
+            ))}
+          </ul>
         )}
       </div>
     </div>

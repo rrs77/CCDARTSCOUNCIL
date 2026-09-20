@@ -10,6 +10,7 @@ import { isSupabaseConfigured, isSupabaseAuthEnabled } from '../config/supabase'
 import { AuthGuard } from './Auth/AuthGuard';
 import { UserManagement } from './Admin/UserManagement';
 import { HubContentApprovalQueue } from './musicHubs/HubContentApprovalQueue';
+import { MusicHubAdminPanel } from './musicHubs/MusicHubAdminPanel';
 import { MyHubAdministration } from './musicHubs/MyHubAdministration';
 import { DownloadAnalytics } from './Admin/DownloadAnalytics';
 import { HubAdminDashboard } from './Admin/HubAdminDashboard';
@@ -197,8 +198,10 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
 
   const isAdmin = user?.role === 'admin' ||
                   user?.role === 'superuser' ||
+                  user?.role === 'super_admin' ||
                   profile?.role === 'admin' ||
-                  profile?.role === 'superuser';
+                  profile?.role === 'superuser' ||
+                  profile?.role === 'super_admin';
   const isCreator = profile?.role === 'creator';
   const showUserManagement = (isSupabaseAuthEnabled() || isSupabaseConfigured()) && (isAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.role === 'super_admin' || profile?.can_manage_users === true);
   const showDownloadAnalytics =
@@ -211,6 +214,11 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     profile?.role === 'organisation' ||
     profile?.role === 'super_admin' ||
     (profile?.hub_memberships?.some((m) => m.role === 'admin' || m.role === 'owner') ?? false);
+  const canAddSubscriberOrgs =
+    user?.role === 'superuser' ||
+    user?.role === 'super_admin' ||
+    profile?.role === 'superuser' ||
+    profile?.role === 'super_admin';
 
   // When modal opens or permissions change, ensure active tab is one we can show (avoid blank content)
   React.useEffect(() => {
@@ -2873,6 +2881,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {activeTab === 'hub-content' && isAdmin && (
             <div className="space-y-4">
               <MyHubAdministration />
+              <MusicHubAdminPanel
+                organisationFilter={null}
+                canAddOrganisations={canAddSubscriberOrgs}
+              />
               <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
                 <HubContentApprovalQueue />
               </div>

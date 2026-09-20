@@ -14,8 +14,6 @@ import {
 import { AddToBasketButton } from './partners/AddToBasketButton';
 import { PaidBasketDrawer } from './partners/PaidBasketDrawer';
 import { MusicHubsDirectory } from './musicHubs/MusicHubsDirectory';
-import { MusicHubAdminPanel } from './musicHubs/MusicHubAdminPanel';
-import { useAuth } from '../hooks/useAuth';
 
 /** Music hubs section — UK directory (EMS featured; Tri-Borough under London). */
 const MUSIC_HUB_LEGACY_SLUGS = ['ems', 'triborough'] as const;
@@ -333,16 +331,9 @@ function PartnerHubAccordion({
  * 3. Organisations — free resources (4-up branded cards; includes Jazz North)
  */
 export function OurPartners() {
-  const { user } = useAuth();
   const paidHubs = PARTNER_HUBS.filter((h) => h.paid);
   const musicSlugSet = new Set<string>(MUSIC_HUB_LEGACY_SLUGS);
   const freeOrgs = PARTNER_HUBS.filter((h) => !h.paid && !musicSlugSet.has(h.slug));
-  const showMusicAdmin =
-    user?.role === 'admin' ||
-    user?.role === 'superuser' ||
-    user?.role === 'super_admin';
-  const canAddSubscriberOrgs =
-    user?.role === 'superuser' || user?.role === 'super_admin';
 
   return (
     <div className="space-y-8">
@@ -365,13 +356,6 @@ export function OurPartners() {
       </div>
 
       <MusicHubsDirectory />
-
-      {showMusicAdmin && (
-        <MusicHubAdminPanel
-          organisationFilter={null}
-          canAddOrganisations={canAddSubscriberOrgs}
-        />
-      )}
 
       {paidHubs.length > 0 && (
         <section
