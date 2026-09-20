@@ -2,21 +2,35 @@
 
 Sell courses and resources on partner / music hubs, track customers at platform level, and keep **per-hub sales** independent of other hubs (and separate from download analytics).
 
+## Login test (required for full product)
+
+**Do not use the working prototype Preview visitor** for hub admin download / purchase tracking. That path uses a synthetic teacher with no `hub_memberships`.
+
+1. **Sign in** with an organisation, hub administrator, or platform admin account (Supabase email/password).
+2. Open **Settings → Admin → Hub admin**.
+3. Confirm sections: **Shop**, **Sales**, **Downloads** (analytics), plus page/resources/members as your role allows.
+4. Platform admins also open **Settings → Shop customers** and **Download analytics**.
+5. As a teacher account, buy a published hub product via the basket; as hub admin, refresh **Sales** to see the order (and **Shop customers** at platform level).
+
+Hub memberships load after Sign in via `GET /api/hubs` and are attached to the session profile so Settings gates match API roles (`hub_editor`, `hub_administrator`, …).
+
 ## What hubs get
 
 | Surface | Who | Purpose |
 |---------|-----|---------|
 | **Hub admin → Shop** | Hub editor+ | Create / publish products (title, GBP price, label) |
 | **Hub admin → Sales** | Hub administrator | Orders, units, gross, customers **for this hub only** |
-| **Basket checkout** | Teachers | Stripe Checkout when keys set; otherwise demo checkout that still writes sales |
+| **Hub admin → Downloads** | Hub administrator | Tracked free-resource download analytics for this hub |
+| **Basket checkout** | Teachers (signed in) | Stripe Checkout when keys set; otherwise demo checkout that still writes sales |
 
 ## What platform admins get
 
 | Surface | Purpose |
 |---------|---------|
 | **Settings → Shop customers** | Cross-hub customers, spend, last purchase, breakdown by hub |
+| **Settings → Download analytics** | Cross-org download usage |
 
-Download analytics remain unchanged (usage of free/tracked files). Shop sales are purchase revenue.
+Download analytics = usage of free/tracked files. Shop sales = purchase revenue.
 
 ## Env vars (Vercel)
 
@@ -27,7 +41,7 @@ APP_ORIGIN=https://your-domain.com   # success/cancel URLs
 SUPABASE_SERVICE_ROLE_KEY=…          # already used by hub APIs
 ```
 
-Without `STRIPE_SECRET_KEY`, checkout completes in **demo** mode: order marked `demo`, entitlements granted, hub Sales populated. Use this for ACE demos; switch on Stripe for live card payments.
+Without `STRIPE_SECRET_KEY`, signed-in checkout completes in **demo** mode: order marked `demo`, entitlements granted, hub Sales populated. Switch on Stripe for live card payments.
 
 ## Deploy steps
 
@@ -50,6 +64,6 @@ Without `STRIPE_SECRET_KEY`, checkout completes in **demo** mode: order marked `
 | GET | `/api/shop/mine` | Buyer orders + entitlements |
 | GET | `/api/shop/admin/customers` | Super/admin global customers |
 
-## Prototype fallback
+## Offline fallback
 
-If shop tables are not migrated, Preview uses `localStorage` (`ccd-hub-shop-products-v1`, `ccd-hub-shop-orders-v1`) so Shop / Sales / Shop customers still demonstrate the flow after a basket checkout.
+If shop tables are not migrated, the UI may fall back to `localStorage` so editors can still sketch products. Treat that as a temporary fallback — the **login test** with migration applied is the product path.

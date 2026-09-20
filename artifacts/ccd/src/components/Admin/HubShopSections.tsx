@@ -68,7 +68,7 @@ export function HubShopSection({ hubId }: { hubId: string }) {
           price_pence,
           meta_label: meta.trim() || undefined,
         });
-        toast.success('Product added (local prototype store)');
+        toast.success('Product added (local fallback — sign in + migration for live shop)');
       } else {
         await createHubProduct(hubId, {
           title: trimmed,
@@ -122,8 +122,8 @@ export function HubShopSection({ hubId }: { hubId: string }) {
           </p>
           {usingLocal && (
             <p className="mt-1 text-xs text-amber-800">
-              Using prototype local store (migration / API not available). Behaviour matches live
-              shop for demos.
+              Shop API unavailable — using a local fallback. Sign in as a hub administrator with the
+              shop migration applied for live product + sales tracking (not the working prototype).
             </p>
           )}
         </div>
@@ -275,7 +275,8 @@ export function HubSalesSection({ hubId }: { hubId: string }) {
           </p>
           {usingLocal && (
             <p className="mt-1 text-xs text-amber-800">
-              Showing prototype local sales (complete a basket checkout to populate).
+              Showing local fallback sales. Sign in and apply the shop migration for live hub Sales
+              tracking after teacher checkouts.
             </p>
           )}
         </div>

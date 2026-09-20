@@ -126,7 +126,12 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
         setSelectedId(data.hubs[0].id);
       }
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : 'Could not load hubs');
+      const msg = e instanceof Error ? e.message : 'Could not load hubs';
+      toast.error(
+        /forbidden|unauthorized|401|403/i.test(msg)
+          ? 'Sign in with a hub administrator account to manage Downloads and Sales.'
+          : msg,
+      );
     } finally {
       setLoadingList(false);
     }
@@ -292,10 +297,10 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
               </div>
             ) : hubs.length === 0 ? (
               <p className="p-4 text-sm text-gray-500">
-                No hubs assigned.
+                No hubs assigned for this signed-in account.
                 {(profile?.role as string) === 'super_admin' || profile?.role === 'superuser'
-                  ? ' Run the hub administration migration to seed Jazz North.'
-                  : ' Ask a super admin to grant hub membership.'}
+                  ? ' Run the hub administration migration to seed organisations.'
+                  : ' Ask a super admin to grant hub membership, or Sign in with an organisation / hub administrator account (not the working prototype).'}
               </p>
             ) : (
               hubs.map((h) => (

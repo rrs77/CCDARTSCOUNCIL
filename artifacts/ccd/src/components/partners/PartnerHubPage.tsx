@@ -1,10 +1,13 @@
 import React from 'react';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Shield } from 'lucide-react';
 import type { PartnerHubConfig } from '../../config/partnerHubs';
 import { backToCCDesigner } from '../../config/partnerHubs';
 import { PartnerHubContactFooter } from './PartnerHubContactFooter';
 import { PARTNER_CONTACTS } from '../../config/partnerContacts';
 import { PaidBasketButton, PaidBasketDrawer } from './PaidBasketDrawer';
+import { useAuth } from '../../hooks/useAuth';
+import { profileHasHubSettingsAccess } from '../../utils/hubAdminAccess';
+import { isAuthorizedDemoMode } from '../../utils/demoMode';
 
 interface PartnerHubPageProps {
   hub: PartnerHubConfig;
@@ -18,6 +21,9 @@ interface PartnerHubPageProps {
  * Each org keeps its own palette + logo; layout is shared across all hubs.
  */
 export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
+  const { profile } = useAuth();
+  const canManageHub = !isAuthorizedDemoMode() && profileHasHubSettingsAccess(profile);
+
   /** Brand band uses org colour; plate logos (WTD/iCompose) sit on a white tile inside. */
   const bandColor = hub.logoOnPlate
     ? hub.primaryColor
@@ -92,7 +98,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
                 )}
                 {hub.paid && (
                   <p className="mt-2 inline-flex rounded bg-[#A3E635] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide text-[#002D24]">
-                    Paid resources · demo basket
+                    Paid resources · basket checkout
                   </p>
                 )}
               </div>
@@ -113,6 +119,33 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
       </div>
 
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {canManageHub && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#002D24]/15 bg-white px-4 py-3 shadow-sm">
+            <p className="flex items-center gap-2 text-sm text-[#002D24]">
+              <Shield className="h-4 w-4 shrink-0" aria-hidden />
+              <span>
+                Track downloads and purchases for this hub in{' '}
+                <strong>Settings → Hub admin</strong> (Downloads + Sales). Platform admins also see{' '}
+                <strong>Shop customers</strong>.
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  sessionStorage.setItem('ccd-open-settings-tab', 'hub-admin');
+                } catch {
+                  /* ignore */
+                }
+                window.location.assign('/');
+              }}
+              className="inline-flex items-center rounded-lg bg-[#002D24] px-3 py-2 text-sm font-semibold text-white hover:opacity-95"
+            >
+              Open Hub admin
+            </button>
+          </div>
+        )}
+
         <section className="rounded-2xl border border-gray-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-sm sm:p-6 lg:p-7">
           <div className="max-w-3xl space-y-2.5 text-sm leading-relaxed text-gray-700 sm:text-[0.95rem]">
             {hub.description.slice(0, 2).map((para) => (
@@ -122,7 +155,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
               Organisation logos and linked materials are shown for demonstration and planning only —
               they do not imply endorsement.
               {hub.paid
-                ? ' Add to basket is a local demo — no payment is processed in this prototype.'
+                ? ' Basket checkout records sales for hub admins when you are signed in.'
                 : ''}
             </p>
           </div>
@@ -140,41 +173,11 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
   );
 }
 
-interface PartnerHubComingSoonProps {
-  hub: PartnerHubConfig;
-}
-
-/** Placeholder body for hubs without interactive content yet — same shell via PartnerHubPage. */
-export function PartnerHubComingSoon({ hub }: PartnerHubComingSoonProps) {
-  return (
-    <div className="rounded-2xl border border-dashed border-gray-300 bg-white px-6 py-10 text-center sm:px-10">
-      <p className="text-sm font-semibold uppercase tracking-wide text-gray-500">Coming soon</p>
-      <h2 className="mt-2 text-xl font-semibold text-gray-900">
-        Planning examples for {hub.shortName}
-      </h2>
-      <p className="mx-auto mt-2 max-w-lg text-sm leading-relaxed text-gray-600">
-        Example activities and Add to CCDesigner for this organisation are not in the prototype yet.
-        Visit the official website for current classroom resources.
-      </p>
-      <a
-        href={hub.siteUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-5 inline-flex items-center gap-1.5 text-sm font-medium hover:underline"
-        style={{ color: hub.primaryColor }}
-      >
-        Visit {hub.shortName} website
-        <ExternalLink className="h-3.5 w-3.5" aria-hidden />
-      </a>
-    </div>
-  );
-}
-
-function isDarkHex(color: string): boolean {
-  const hex = color.replace('#', '');
-  if (hex.length !== 6) return true;
-  const r = parseInt(hex.slice(0, 2), 16);
-  const g = parseInt(hex.slice(2, 4), 16);
-  const b = parseInt(hex.slice(4, 6), 16);
-  return (0.299 * r + 0.587 * g + 0.114 * b) / 255 < 0.55;
+function isDarkHex(hex: string): boolean {
+  const h = hex.replace('#', '');
+  if (h.length !== 6) return true;
+  const r = parseInt(h.slice(0, 2), 16);
+  const g = parseInt(h.slice(2, 4), 16);
+  const b = parseInt(h.slice(4, 6), 16);
+  return (r * 299 + g * 587 + b * 114) / 1000 < 140;
 }
