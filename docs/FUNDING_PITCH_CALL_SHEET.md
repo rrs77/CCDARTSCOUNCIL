@@ -1,20 +1,20 @@
 # CCDesigner funding pitch — timed voiceover call sheet
 
 **Purpose:** Persuasive, classy Arts Council / partner funding pitch.  
-**Picture:** Autoplay walkthrough at `/ccd-pitch/index.html?autoplay=1` (no music — VO only).  
-**Total runtime:** **~2:50** (170 seconds).  
-**Tone:** Minimal, clear, confident. Marketing agency for a public-good product — not a feature dump.
+**Picture:** Autoplay at `/ccd-pitch/index.html?autoplay=1` (no music — VO only).  
+**Total runtime:** **~3:14** (194 seconds).  
+**Tone:** Minimal, clear, confident. Marketing agency for a public-good product.
 
 ---
 
 ## How to record
 
-1. Build pitch: `pnpm --filter @workspace/ccd run build:pitch`
-2. Open `https://www.ccdesigner.co.uk/ccd-pitch/index.html?autoplay=1` (or local `/ccd-pitch/index.html?autoplay=1`)
-3. Mute any ambient audio; record screen + separate VO track
-4. Follow **IN / OUT** times below; speak the **VO** column (or paraphrase to timing)
+1. `pnpm --filter @workspace/ccd run build:pitch`
+2. Open `/ccd-pitch/index.html?autoplay=1`
+3. Mute ambient audio; record screen + separate VO
+4. Follow **IN / OUT**; speak **VO** (or paraphrase to timing)
 
-Optional product B-roll (same VO): Partner Hubs → LSO Add → Lesson Builder → Unit → Calendar → PDF Print.
+**Optional live B-roll (same VO):** Partner Hubs → LSO / Jazz North Add → Create activity → Settings year groups → Lesson Builder → Unit → Calendar → Print PDF (show live link) → Hub admin / analytics.
 
 ---
 
@@ -22,35 +22,51 @@ Optional product B-roll (same VO): Partner Hubs → LSO Add → Lesson Builder �
 
 | # | IN | OUT | Dur | On screen | VO (read aloud) |
 |---|----|-----|-----|-----------|-----------------|
-| 1 | 0:00 | 0:08 | 8s | CCD brand — “Exceptional lessons start with connection” | Open on the CCD mark. Calm and confident. *Exceptional lessons start with connection.* Pause. Let the brand land. |
-| 2 | 0:08 | 0:22 | 14s | Problem — arts teachers working alone | Arts teachers — drama, dance, music — are still stitching years from PDFs, drives and last year’s tabs. Often the only specialist in the building. Great practice gets lost. Non-specialists are left guessing. This is the gap funding must close. |
-| 3 | 0:22 | 0:38 | 16s | Connection layer — hubs / partners / craft | CCDesigner is the connection layer. Music Hubs. National arts partners. Classroom craft. One workspace so sector expertise reaches the teacher who needs it on Tuesday morning — not as another website to remember, but as planning they already do. |
-| 4 | 0:38 | 0:54 | 16s | Partner Hubs / Music Hubs | Partner Hubs puts Music Hubs and organisations in one place. Essex Music Service for Greater Essex. Tri-Borough pathways. LSO packs teachers can open and add. Regional delivery and national excellence — side by side. |
-| 5 | 0:54 | 1:09 | 15s | LSO hub → Add to CCDesigner | Open a hub. Choose a resource. Add to CCDesigner. That is the moment funding buys: sector content landing inside the teacher’s living library — not a dead download on a desktop. |
-| 6 | 1:09 | 1:23 | 14s | Personal resources + Add to library | Teachers also add their own. Video. Links. Backing tracks. Notes. Partner packs and personal resources sit together — so the scheme is both sector-backed and school-owned. |
-| 7 | 1:23 | 1:41 | 18s | Starter / main / plenary — 60 min cap | Then they build the lesson. Starter. Main. Plenary. Example activities dragged into place. Cap: sixty minutes. One hour. Real timetable. No three-hour fantasy plans — teachable craft for a real day. |
-| 8 | 1:41 | 1:57 | 16s | Whole unit on half-term planner | Lessons stack into a whole unit. Assign to a half-term. See the arc across six weeks. How to Build an Orchestra. Romeo and Juliet. Whatever the hub and the teacher invent together — visible as a journey, not a pile of files. |
-| 9 | 1:57 | 2:12 | 15s | Calendar + partner key dates | The calendar holds it. Lessons on the week. Partner key dates — concerts, workshops, inset — teal on the same grid. The living timetable where hubs and schools meet. |
-| 10 | 2:12 | 2:24 | 12s | PDF export & share | Then leave with the work intact. PDF export for the room. Share a link with a colleague. Calendar export for cover and leaders. Proof that the arts were planned — and delivered. |
-| 11 | 2:24 | 2:36 | 12s | Celebrating learning in the arts | This is how we celebrate learning in the arts — not as a one-off showcase, but as daily craft made visible to parents, leaders, hubs and the wider sector. |
-| 12 | 2:36 | 2:50 | 14s | Funding ask + contacts | The ask: fund the connection layer between hubs and classrooms. Support CCDesigner so Music Hubs and arts organisations put practice where teachers already plan. Visit ccdesigner.co.uk. Contact rob@rhythmstix.co.uk. Book a thirty-minute funder walkthrough. End clean. Hold the brand. |
+| 1 | 0:00 | 0:08 | 8s | CCD brand | Open on the CCD mark. *Exceptional lessons start with connection.* Pause. Let the brand land. |
+| 2 | 0:08 | 0:20 | 12s | Problem | Arts teachers stitch years from PDFs and drives — often the only specialist in the building. Great practice gets lost. This is the gap funding must close. |
+| 3 | 0:20 | 0:34 | 14s | Connection layer | CCDesigner is the connection layer. Music Hubs. Arts partners. Classroom craft. Sector expertise where teachers already plan. |
+| 4 | 0:34 | 0:48 | 14s | Music Hubs / Partner Hubs | Partner Hubs puts Music Hubs and organisations in one place. EMS. Tri-Borough. LSO. Regional and national — side by side. |
+| 5 | 0:48 | 1:00 | 12s | LSO → Add to library | Open a hub. Choose a resource. Add to CCDesigner. Sector content lands in the living library — not a dead download. |
+| 6 | 1:00 | 1:12 | 12s | **Jazz North** | Same for organisations. Jazz North — Mr Big, Playlist Project, free worksheet packs. Add to CCDesigner; practice seeds into Year 2 Music and beyond. |
+| 7 | 1:12 | 1:22 | 10s | Personal resources | Teachers also bring their own. Partner packs and personal resources sit together — sector-backed and school-owned. |
+| 8 | 1:22 | 1:34 | 12s | **Create activity + year tags** | Create an activity. Name it. Attach video, backing, worksheet. Tag the year groups that teach it — so it appears where planning happens. |
+| 9 | 1:34 | 1:44 | 10s | **Name year groups** | Every school names its own years. Settings fit the school — activities and lessons attach to real class names. |
+| 10 | 1:44 | 2:00 | 16s | Starter / main / plenary ≤ 60 | Build the lesson. Starter. Main. Plenary. Cap: sixty minutes. One hour. Real timetable. |
+| 11 | 2:00 | 2:14 | 14s | Whole unit | Lessons stack into a whole unit. Assign to a half-term. See the six-week arc — a journey, not a pile of files. |
+| 12 | 2:14 | 2:26 | 12s | Calendar + key dates | Calendar holds it. Lessons plus partner key dates on one grid. Hubs and schools meet on the living timetable. |
+| 13 | 2:26 | 2:40 | 14s | **PDF live links + share** | Print the PDF — links stay live: video, audio, worksheets. Share planning with a colleague in one link. |
+| 14 | 2:40 | 2:52 | 12s | **Hub backend + hashed IPs** | Behind the hubs: organisation backend. Partners publish and change resources. Download tracking shows reach. IPs hashed — impact without exposing teachers. |
+| 15 | 2:52 | 3:02 | 10s | Celebrate arts | Daily craft made visible to parents, leaders, hubs and the sector. |
+| 16 | 3:02 | 3:14 | 12s | Funding ask | Fund the connection layer between hubs and classrooms. ccdesigner.co.uk · rob@rhythmstix.co.uk · Book a 30-minute funder walkthrough. |
 
-**End:** 2:50
+**End:** 3:14
 
 ---
 
-## Timing notes for VO
+## Feature coverage checklist
 
-- Prefer slightly under duration; leave 0.5–1s air at slide changes.
-- Slide 7 (lesson hour) and slide 3 (connection) carry the thesis — don’t rush.
-- Slide 12: read contact once, clearly; no music bed.
+| Feature | Slide |
+|---------|-------|
+| Creating activities | 8 |
+| Building a lesson (starter / main / plenary) | 10 |
+| Naming year groups | 9 |
+| Adding activities to year groups | 8 |
+| Printing PDFs | 13 |
+| Live / clickable links on PDFs | 13 |
+| Sharing planning | 13 |
+| Tracking IPs (hashed) / download analytics | 14 |
+| Hub backend & resource changes | 14 |
+| Jazz North activity examples | 6 |
 
-## Product proof (if cutting live UI B-roll)
+---
 
-After demo login, calendar should show **Year 6 Music** lessons for the current week plus seeded LSO / EMS / ROH **key dates**. Lessons are capped at **60 minutes**. Demo PDF: use **Print → Save as PDF**.
+## Timing notes
+
+- Leave 0.5–1s air at slide changes.
+- Slides 6, 8, 13, 14 are the new proof points — don’t rush.
+- No music bed; VO only.
 
 ## Files
 
-- Manifest + speaker notes: `artifacts/ccd-pitch/src/data/slides-manifest.json`
-- Autoplay: `artifacts/ccd-pitch/src/PitchAutoplayViewer.tsx` (per-slide `durationMs`)
+- Manifest: `artifacts/ccd-pitch/src/data/slides-manifest.json`
 - This call sheet: `docs/FUNDING_PITCH_CALL_SHEET.md`

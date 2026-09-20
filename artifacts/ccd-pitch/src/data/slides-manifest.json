@@ -14,8 +14,8 @@
     "filepath": "src/pages/slides/Problem.tsx",
     "title": "Arts teachers are working alone",
     "description": "The funding problem — fragmented practice and invisible arcs.",
-    "durationMs": 14000,
-    "speakerNotes": "Arts teachers — drama, dance, music — are still stitching years from PDFs, drives and last year's tabs. Often the only specialist in the building. Great practice gets lost. Non-specialists are left guessing. This is the gap funding must close."
+    "durationMs": 12000,
+    "speakerNotes": "Arts teachers — drama, dance, music — are still stitching years from PDFs, drives and last year's tabs. Often the only specialist in the building. Great practice gets lost. This is the gap funding must close."
   },
   {
     "id": "funding-03-connection",
@@ -23,8 +23,8 @@
     "filepath": "src/pages/slides/FundingConnection.tsx",
     "title": "A connection layer for the arts",
     "description": "Why CCD: hubs, national partners, classroom craft.",
-    "durationMs": 16000,
-    "speakerNotes": "CCDesigner is the connection layer. Music Hubs. National arts partners. Classroom craft. One workspace so sector expertise reaches the teacher who needs it on Tuesday morning — not as another website to remember, but as planning they already do."
+    "durationMs": 14000,
+    "speakerNotes": "CCDesigner is the connection layer. Music Hubs. National and regional arts partners. Classroom craft. One workspace so sector expertise reaches the teacher who needs it on Tuesday morning."
   },
   {
     "id": "funding-04-hubs",
@@ -32,8 +32,8 @@
     "filepath": "src/pages/slides/WalkthroughMusicHubs.tsx",
     "title": "Music hubs in Partner Hubs",
     "description": "EMS, Tri-Borough, LSO — regional and national music in one home.",
-    "durationMs": 16000,
-    "speakerNotes": "Partner Hubs puts Music Hubs and organisations in one place. Essex Music Service for Greater Essex. Tri-Borough pathways. LSO packs teachers can open and add. Regional delivery and national excellence — side by side."
+    "durationMs": 14000,
+    "speakerNotes": "Partner Hubs puts Music Hubs and organisations in one place. Essex Music Service. Tri-Borough. LSO. Regional delivery and national excellence — side by side."
   },
   {
     "id": "funding-05-lso",
@@ -41,70 +41,106 @@
     "filepath": "src/pages/slides/WalkthroughLsoHub.tsx",
     "title": "From hub to library",
     "description": "LSO Add to CCDesigner — trusted content into the teacher's library.",
-    "durationMs": 15000,
-    "speakerNotes": "Open a hub. Choose a resource. Add to CCDesigner. That is the moment funding buys: sector content landing inside the teacher's living library — not a dead download on a desktop."
+    "durationMs": 12000,
+    "speakerNotes": "Open a hub. Choose a resource. Add to CCDesigner. Sector content lands inside the teacher's living library — not a dead download on a desktop."
   },
   {
-    "id": "funding-06-personal",
+    "id": "funding-06-jazznorth",
     "position": 6,
+    "filepath": "src/pages/slides/JazzNorthHub.tsx",
+    "title": "Jazz North — Add to CCDesigner",
+    "description": "Organisation hub example: Mr Big, Playlist Project, worksheet packs.",
+    "durationMs": 12000,
+    "speakerNotes": "Same moment for organisations. Jazz North — Mr Big, Playlist Project, free worksheet packs. Open the hub, Add to CCDesigner, and sector practice seeds into Year 2 Music and beyond."
+  },
+  {
+    "id": "funding-07-personal",
+    "position": 7,
     "filepath": "src/pages/slides/PersonalResources.tsx",
     "title": "Partner packs and personal resources",
     "description": "Add from hubs and create personal resources.",
-    "durationMs": 14000,
-    "speakerNotes": "Teachers also add their own. Video. Links. Backing tracks. Notes. Partner packs and personal resources sit together — so the scheme is both sector-backed and school-owned."
+    "durationMs": 10000,
+    "speakerNotes": "Teachers also bring their own materials. Partner packs and personal resources sit together — sector-backed and school-owned."
   },
   {
-    "id": "funding-07-lesson",
-    "position": 7,
+    "id": "funding-08-create-activity",
+    "position": 8,
+    "filepath": "src/pages/slides/CreateActivityYears.tsx",
+    "title": "Create an activity — tagged to years",
+    "description": "Activity creator with year-group tagging and resource links.",
+    "durationMs": 12000,
+    "speakerNotes": "Create an activity. Name it. Attach video, backing track, worksheet. Tag the year groups that teach it — Year 2 Music, KS1, Assembly — so it appears where planning happens."
+  },
+  {
+    "id": "funding-09-yeargroups",
+    "position": 9,
+    "filepath": "src/pages/slides/YearGroupsSettings.tsx",
+    "title": "Name your year groups",
+    "description": "Settings year groups named to match the school.",
+    "durationMs": 10000,
+    "speakerNotes": "Every school names its own years. Lower Kindergarten Music. Year 6 Music. Settings fit the school — so activities and lessons attach to real class names, not a generic list."
+  },
+  {
+    "id": "funding-10-lesson",
+    "position": 10,
     "filepath": "src/pages/slides/LessonHour.tsx",
     "title": "Starter, main, plenary — one hour",
     "description": "Lesson builder with 60-minute maximum.",
-    "durationMs": 18000,
-    "speakerNotes": "Then they build the lesson. Starter. Main. Plenary. Example activities dragged into place. Cap: sixty minutes. One hour. Real timetable. No three-hour fantasy plans — teachable craft for a real day."
+    "durationMs": 16000,
+    "speakerNotes": "Then build the lesson. Starter. Main. Plenary. Drag example activities into place. Cap: sixty minutes. One hour. Real timetable. Teachable craft for a real day."
   },
   {
-    "id": "funding-08-unit",
-    "position": 8,
+    "id": "funding-11-unit",
+    "position": 11,
     "filepath": "src/pages/slides/WholeUnit.tsx",
     "title": "Lessons become a whole unit",
     "description": "Scheme of work / half-term unit on the planner.",
-    "durationMs": 16000,
-    "speakerNotes": "Lessons stack into a whole unit. Assign to a half-term. See the arc across six weeks. How to Build an Orchestra. Romeo and Juliet. Whatever the hub and the teacher invent together — visible as a journey, not a pile of files."
+    "durationMs": 14000,
+    "speakerNotes": "Lessons stack into a whole unit. Assign to a half-term. See the arc across six weeks — visible as a journey, not a pile of files."
   },
   {
-    "id": "funding-09-calendar",
-    "position": 9,
+    "id": "funding-12-calendar",
+    "position": 12,
     "filepath": "src/pages/slides/WalkthroughCalendar.tsx",
     "title": "Calendar and key dates",
     "description": "Week view with lessons and partner key dates.",
-    "durationMs": 15000,
-    "speakerNotes": "The calendar holds it. Lessons on the week. Partner key dates — concerts, workshops, inset — teal on the same grid. The living timetable where hubs and schools meet."
-  },
-  {
-    "id": "funding-10-share",
-    "position": 10,
-    "filepath": "src/pages/slides/ShareAndExport.tsx",
-    "title": "PDF export and share",
-    "description": "Printable lessons and shareable links.",
     "durationMs": 12000,
-    "speakerNotes": "Then leave with the work intact. PDF export for the room. Share a link with a colleague. Calendar export for cover and leaders. Proof that the arts were planned — and delivered."
+    "speakerNotes": "The calendar holds it. Lessons on the week. Partner key dates — concerts, workshops, inset — on the same grid. The living timetable where hubs and schools meet."
   },
   {
-    "id": "funding-11-celebrate",
-    "position": 11,
+    "id": "funding-13-share",
+    "position": 13,
+    "filepath": "src/pages/slides/ShareAndExport.tsx",
+    "title": "PDFs with live links — and share planning",
+    "description": "Print PDFs with clickable resource links; share planning links.",
+    "durationMs": 14000,
+    "speakerNotes": "Print the PDF. The links stay live — video, audio, worksheets still clickable in the classroom. Share planning with a colleague in one link. Cover staff get the craft, not a scavenger hunt."
+  },
+  {
+    "id": "funding-14-hub-backend",
+    "position": 14,
+    "filepath": "src/pages/slides/HubBackendAnalytics.tsx",
+    "title": "Hub backend and reach — hashed IPs",
+    "description": "Organisation hub admin, download tracking, privacy-preserving analytics.",
+    "durationMs": 12000,
+    "speakerNotes": "Behind the hubs: organisation backend. Partners publish and change resources. Download tracking shows reach. IPs are hashed — impact evidence for hubs and funders, without exposing teachers."
+  },
+  {
+    "id": "funding-15-celebrate",
+    "position": 15,
     "filepath": "src/pages/slides/CelebrateArts.tsx",
     "title": "Celebrating learning in the arts",
     "description": "Surfacing craft for parents, leaders and the sector.",
-    "durationMs": 12000,
-    "speakerNotes": "This is how we celebrate learning in the arts — not as a one-off showcase, but as daily craft made visible to parents, leaders, hubs and the wider sector."
+    "durationMs": 10000,
+    "speakerNotes": "This is how we celebrate learning in the arts — daily craft made visible to parents, leaders, hubs and the wider sector."
   },
   {
-    "id": "funding-12-ask",
-    "position": 12,
+    "id": "funding-16-ask",
+    "position": 16,
     "filepath": "src/pages/slides/FundingAsk.tsx",
     "title": "Fund the connection layer",
     "description": "Closing funding ask and contact.",
-    "durationMs": 14000,
-    "speakerNotes": "The ask: fund the connection layer between hubs and classrooms. Support CCDesigner so Music Hubs and arts organisations put practice where teachers already plan. Visit ccdesigner.co.uk. Contact rob at rhythmstix.co.uk. Book a thirty-minute funder walkthrough. End clean. Hold the brand."
+    "durationMs": 12000,
+    "speakerNotes": "The ask: fund the connection layer between hubs and classrooms. Visit ccdesigner.co.uk. Contact rob at rhythmstix.co.uk. Book a thirty-minute funder walkthrough. End clean."
   }
 ]
