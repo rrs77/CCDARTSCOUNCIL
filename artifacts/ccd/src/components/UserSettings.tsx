@@ -26,6 +26,13 @@ import {
   normalizeYearGroupToken,
   resolveYearGroupFromToken,
 } from '../utils/yearGroupSectionOrder';
+import {
+  categoryHasYearGroupAssignment,
+  isSystemCategory,
+  isUserCategory,
+} from '../utils/systemCategories';
+import { CategoriesCloudAuthError } from '../config/api';
+import { SystemCategoriesAdmin } from './Admin/SystemCategoriesAdmin';
 
 // Draggable Category Item Component
 interface DraggableCategoryProps {
@@ -147,7 +154,7 @@ interface UserSettingsProps {
 export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const { user, profile } = useAuth();
   const isViewOnly = useIsViewOnly();
-  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
+  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, restoreSystemCategoryDefaults, clearUserCreatedCategories, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [yearGroupsExpanded, setYearGroupsExpanded] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
@@ -159,7 +166,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   tempCategoriesRef.current = tempCategories;
   tempYearGroupsRef.current = tempYearGroups;
   const [tempResourceLinks, setTempResourceLinks] = useState(resourceLinks);
-  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'hub-admin'>('yeargroups');
+  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'hub-admin' | 'system-categories'>('yeargroups');
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
   const adminTriggerRef = useRef<HTMLButtonElement>(null);
@@ -197,8 +204,16 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
 
   const isAdmin = user?.role === 'admin' ||
                   user?.role === 'superuser' ||
+                  user?.role === 'super_admin' ||
                   profile?.role === 'admin' ||
-                  profile?.role === 'superuser';
+                  profile?.role === 'superuser' ||
+                  profile?.role === 'super_admin';
+  const isSuperAdmin =
+    user?.role === 'super_admin' ||
+    profile?.role === 'super_admin' ||
+    user?.role === 'superuser' ||
+    profile?.role === 'superuser';
+  const canEditSystemCategories = isAdmin || isSuperAdmin;
   const isCreator = profile?.role === 'creator';
   const showUserManagement = (isSupabaseAuthEnabled() || isSupabaseConfigured()) && (isAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.role === 'super_admin' || profile?.can_manage_users === true);
   const showDownloadAnalytics =
@@ -224,9 +239,10 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     if (activeTab === 'hub-content' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
+    if (activeTab === 'system-categories' && !canEditSystemCategories) setActiveTab('resource-links');
     if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
     // general, resource-links, data are under Admin for all users – no redirect
-  }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, isAdmin, isCreator]);
+  }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, isAdmin, isCreator, canEditSystemCategories]);
 
   // Keep undo/redo history for year-group sections (key stages).
   React.useEffect(() => {
@@ -492,47 +508,68 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   };
 
   const handleAddCategory = async () => {
+    if (isViewOnly) {
+      alert('View-only mode: Cannot create categories.');
+      return;
+    }
     if (!newCategoryName.trim()) return;
-    
-    // Check if category already exists
+
     if (tempCategories.some(cat => cat.name.toLowerCase() === newCategoryName.toLowerCase())) {
       alert('A category with this name already exists.');
       return;
     }
-    
+
+    if (!categoryHasYearGroupAssignment({
+      name: newCategoryName,
+      color: newCategoryColor,
+      position: 0,
+      yearGroups: newCategoryYearGroups,
+    })) {
+      alert('Select at least one year group so this category appears in the Activity Library (e.g. EYFS classes).');
+      setShowYearGroupsModal(true);
+      return;
+    }
+
     try {
-      // Start user change to pause real-time sync
       startUserChange();
-      
-      // Create new category with year group assignments using actual IDs/names
+
       const newCategory: Category = {
-        name: newCategoryName,
+        name: newCategoryName.trim(),
         color: newCategoryColor,
         position: tempCategories.length,
-        yearGroups: { ...newCategoryYearGroups } // Use actual year group IDs/names as keys
+        yearGroups: { ...newCategoryYearGroups },
+        source: 'user',
       };
-      
-      // Add new category to both temp state and persist it
+
       const updatedCategories = [...tempCategories, newCategory];
       setTempCategories(updatedCategories);
-      
-      // Immediately persist to global state and Supabase
-      console.log('🔄 Adding category and persisting immediately:', newCategory);
-      await updateCategories(updatedCategories);
-    
-    // Reset form
-    setNewCategoryName('');
-    setNewCategoryColor('#6B7280');
-    setNewCategoryYearGroups({}); // Reset to empty object
-      
-      console.log('✅ Category added and persisted:', newCategory.name);
-      
-      // End user change after a delay to allow persistence
+
+      console.log('🔄 Adding user category and persisting immediately:', newCategory);
+      updateCategories(updatedCategories);
+
+      try {
+        const synced = await forceSyncToSupabase({ categories: updatedCategories });
+        if (!synced) {
+          toast.error('Saved on this device. Cloud sync needs a signed-in account with a valid user ID.');
+        } else {
+          toast.success(`Category “${newCategory.name}” created`);
+        }
+      } catch (syncErr) {
+        if (syncErr instanceof CategoriesCloudAuthError) {
+          toast.error('Saved locally only — sign in with a cloud account to sync across devices.');
+        } else {
+          throw syncErr;
+        }
+      }
+
+      setNewCategoryName('');
+      setNewCategoryColor('#6B7280');
+      setNewCategoryYearGroups({});
+
       endUserChange();
     } catch (error: unknown) {
       console.error('❌ Failed to add category:', error);
       alert('Failed to add category. Please try again.');
-      // End user change even on error
       endUserChange();
     }
   };
@@ -546,6 +583,10 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     const categoryToDelete = tempCategories[index];
     if (categoryToDelete && profile?.admin_preset_categories?.includes(categoryToDelete.name)) {
       alert('This category was assigned by an admin and cannot be removed.');
+      return;
+    }
+    if (categoryToDelete && isSystemCategory(categoryToDelete)) {
+      alert('App categories cannot be deleted. Hide them or clear year-group assignments instead. Super admins can edit the system catalog under Admin → System categories.');
       return;
     }
     if (confirm('Are you sure you want to delete this category? This may affect existing activities.')) {
@@ -564,16 +605,8 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       });
       setTempCategories(updatedCategories);
         
-        // Check if this is a custom category (not in FIXED_CATEGORIES)
-        // FIXED_CATEGORIES are: Welcome, Kodaly Songs, Kodaly Action Songs, Action/Games Songs, 
-        // Rhythm Sticks, Scarf Songs, General Game, Core Songs, Parachute Games, Percussion Games,
-        // Teaching Units, Goodbye, Kodaly Rhythms, Kodaly Games, IWB Games
-        const FIXED_CATEGORY_NAMES = [
-          'Welcome', 'Kodaly Songs', 'Kodaly Action Songs', 'Action/Games Songs', 'Rhythm Sticks',
-          'Scarf Songs', 'General Game', 'Core Songs', 'Parachute Games', 'Percussion Games',
-          'Teaching Units', 'Goodbye', 'Kodaly Rhythms', 'Kodaly Games', 'IWB Games'
-        ];
-        const isCustomCategory = !FIXED_CATEGORY_NAMES.includes(categoryToDelete.name);
+        // User-created only — system catalog rows are never deleted here
+        const isCustomCategory = isUserCategory(categoryToDelete);
         
         // CRITICAL: Delete from Supabase FIRST before updating local state
         // This ensures the deletion completes before any reloads can happen
@@ -688,9 +721,26 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   };
 
   const handleResetCategories = () => {
-    if (confirm('Are you sure you want to reset categories to defaults? This cannot be undone.')) {
-      resetCategoriesToDefaults();
-      setTempCategories(categories);
+    const choice = window.prompt(
+      'Reset categories:\n' +
+        '1 = Restore app category defaults (keeps your custom categories & year-group ticks)\n' +
+        '2 = Remove only my custom categories\n' +
+        '3 = Full reset (app defaults only — removes custom categories)\n' +
+        'Cancel = do nothing\n\nType 1, 2, or 3:'
+    );
+    if (choice === '1') {
+      restoreSystemCategoryDefaults();
+      toast.success('App categories restored (your customs kept)');
+    } else if (choice === '2') {
+      if (confirm('Remove all categories you created? App categories stay.')) {
+        clearUserCreatedCategories();
+        toast.success('Custom categories removed');
+      }
+    } else if (choice === '3') {
+      if (confirm('Full reset to app defaults? Your custom categories will be removed. Activities are not deleted.')) {
+        resetCategoriesToDefaults();
+        toast.success('Categories reset to app defaults');
+      }
     }
   };
 
@@ -1090,7 +1140,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               type="button"
               onClick={() => setAdminMenuOpen(prev => !prev)}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 transition-all duration-150 focus:outline-none min-h-[36px] ${
-                (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding' || activeTab === 'hub-content')
+                (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding' || activeTab === 'hub-content' || activeTab === 'system-categories')
                   ? 'text-white bg-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white'
               }`}
@@ -1139,6 +1189,16 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   >
                     <Package className="h-4 w-4" />
                     Manage Packs
+                  </button>
+                )}
+                {canEditSystemCategories && (
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('system-categories'); setAdminMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'system-categories' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <Palette className="h-4 w-4" />
+                    System categories
                   </button>
                 )}
                 {isAdmin && (
@@ -1676,20 +1736,33 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
                     <Palette className="h-6 w-6 text-teal-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Activity Categories</h3>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Activity Categories</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        App categories are shared defaults. Create your own below — assign year groups so they show in EYFS / other classes.
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={handleResetCategories}
                     className="px-3 py-1.5 bg-teal-100 hover:bg-teal-200 text-teal-700 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-1"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
-                    <span>Reset to Default</span>
+                    <span>Reset options…</span>
                   </button>
                 </div>
 
-                {/* Add New Category */}
+                {/* Create My Category */}
                 <div className="bg-white rounded-lg border border-teal-200 p-4 mb-6">
-                  <h4 className="font-medium text-gray-900 mb-3">Add New Category</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">+ New category (yours)</h4>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Creates a personal category for your account. Choose year groups so it appears in the Activity Library.
+                  </p>
+                  {isViewOnly ? (
+                    <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      View-only mode — you cannot create categories.
+                    </p>
+                  ) : (
                   <div className="space-y-4">
                   <div className="flex flex-wrap gap-3">
                     <div className="flex-1 min-w-[200px]">
@@ -1727,7 +1800,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     {/* Year Groups Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Available for Year Groups
+                        Available for Year Groups <span className="text-red-500">*</span>
                       </label>
                       <button
                         type="button"
@@ -1738,11 +1811,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         <span>
                           {Object.values(newCategoryYearGroups).some(v => v) 
                             ? `${Object.values(newCategoryYearGroups).filter(v => v).length} year group(s) selected`
-                            : 'Select year groups'}
+                            : 'Select year groups (required)'}
                         </span>
                       </button>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Year Groups Selection Modal */}
@@ -2314,7 +2388,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               style={{ backgroundColor: category.color }}
                             ></div>
                             <div className="flex-1 min-w-0">
-                                <div className="font-semibold text-gray-900 mb-2" dir="ltr">{category.name}</div>
+                                <div className="font-semibold text-gray-900 mb-2 flex items-center gap-2 flex-wrap" dir="ltr">
+                                  <span>{category.name}</span>
+                                  {isSystemCategory(category) ? (
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">App</span>
+                                  ) : (
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">Mine</span>
+                                  )}
+                                </div>
                                 
                                 {/* Year Groups Display */}
                                 <div className="flex flex-wrap items-center gap-1.5">
@@ -2470,6 +2551,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               >
                                 <Edit3 className="h-4 w-4" />
                               </button>
+                              {!isSystemCategory(category) && (
                               <button
                                 onClick={() => handleDeleteCategory(index)}
                                 disabled={profile?.admin_preset_categories?.includes(category.name) === true}
@@ -2478,6 +2560,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
+                              )}
                                 </>
                               )}
                             </div>
@@ -2714,6 +2797,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 
                 <ActivityPacksAdmin userEmail={user?.email || ''} isCreator={isCreator} isAdmin={isAdmin} />
               </div>
+            </div>
+          )}
+
+          {activeTab === 'system-categories' && canEditSystemCategories && (
+            <div className="space-y-6">
+              <SystemCategoriesAdmin />
             </div>
           )}
 

@@ -154,6 +154,8 @@ export function ActivityLibrary({
     
     const filteredCategories = categories.filter((category) => {
       if (!category?.name) return false;
+      if (category.hidden) return false;
+      if (category.yearGroupMode === 'all') return true;
       const isAssigned = categoryAssignedToYearGroupKeys(category.yearGroups, keysToCheck);
       if (import.meta.env.DEV) {
         if (isAssigned) console.log(`✅ Category "${category.name}" assigned for`, currentYearGroupKey);
@@ -393,10 +395,14 @@ export function ActivityLibrary({
     }
   };
 
-  // Get unique categories — Settings year-group assignment is authoritative.
+  // Get unique categories — include Settings categories assigned to this year group
+  // even when no activities use them yet (so newly created user categories appear).
   const uniqueCategories = useMemo(() => {
     if (availableCategoriesForYearGroup === null) {
       const cats = new Set(allActivities.map(a => a.category));
+      categories.forEach((c) => {
+        if (c?.name && !c.hidden) cats.add(c.name);
+      });
       return Array.from(cats).sort();
     }
     const ygKeys = getCurrentYearGroupKeys();
@@ -411,7 +417,10 @@ export function ActivityLibrary({
         normalizeKey,
       }),
     );
-    const cats = new Set(filteredActivities.map(a => a.category));
+    const cats = new Set<string>([
+      ...filteredActivities.map((a) => a.category).filter(Boolean),
+      ...availableCategoriesForYearGroup,
+    ]);
     return Array.from(cats).sort();
   }, [allActivities, availableCategoriesForYearGroup, categories, getCurrentYearGroupKeys, normalizeKey]);
 

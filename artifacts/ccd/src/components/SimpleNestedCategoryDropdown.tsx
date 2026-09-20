@@ -75,6 +75,8 @@ export function SimpleNestedCategoryDropdown({
 
     // Filter categories to only show those enabled for the current year group (any alias key)
     const filtered = categories.filter(category => {
+      if (category.hidden) return false;
+      if (category.yearGroupMode === 'all') return true;
       if (!category.yearGroups || Object.keys(category.yearGroups).length === 0) {
         return false;
       }

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
-import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError } from '../config/api';
+import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError, systemCategoriesApi } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
 import {
   buildDefaultYearGroupSections,
@@ -11,6 +11,18 @@ import {
   sectionsHaveResolvableGroups,
   sectionsMatchHeuristicAssignment,
 } from '../utils/yearGroupSectionOrder';
+import {
+  DEFAULT_SYSTEM_CATEGORIES,
+  LEGACY_CATEGORIES_STORAGE_KEY,
+  REQUIRED_SYSTEM_CATEGORY_NAMES,
+  categoriesStorageKey,
+  isSystemCategoryName,
+  mergeCategoryLayers,
+  tagCategoriesSource,
+  tagCategorySource,
+  type CategorySource,
+  type CategoryYearGroupMode,
+} from '../utils/systemCategories';
 
 // Safari detection for enhanced sync handling
 const isSafari = () => {
@@ -37,6 +49,10 @@ export interface Category {
     Reception?: boolean;
     [key: string]: boolean | undefined; // Allow dynamic year group IDs
   };
+  /** system = app catalog; user = created in Settings by this account */
+  source?: CategorySource;
+  hidden?: boolean;
+  yearGroupMode?: CategoryYearGroupMode;
 }
 
 export interface ResourceLinkConfig {
@@ -200,6 +216,13 @@ interface SettingsContextType {
   mapYearGroupToActivityLevel: (yearGroupName: string) => string;
   resetToDefaults: () => void;
   resetCategoriesToDefaults: () => void;
+  /** Restore system category names/colours without deleting user-created categories. */
+  restoreSystemCategoryDefaults: () => void;
+  /** Remove only user-created categories (keeps system + their year-group ticks). */
+  clearUserCreatedCategories: () => void;
+  /** Super-admin: replace global system category catalog (additive branding_settings). */
+  updateSystemCategoryCatalog: (cats: Category[]) => Promise<void>;
+  systemCategoryCatalog: Category[];
   resetYearGroupsToDefaults: () => void;
   /** Put any year group that exists in the list but is not in any section into Other (recovers e.g. renamed year groups that disappeared). */
   ensureYearGroupsInSections: () => void;
@@ -229,110 +252,44 @@ interface SettingsContextType {
   resetResourceLinksToDefaults: () => void;
 }
 
-const FIXED_CATEGORIES: Category[] = [
-  {
-    name: 'Welcome',
-    color: '#10b981',
-    position: 0,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Kodaly Songs',
-    color: '#3b82f6',
-    position: 1,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Kodaly Action Songs',
-    color: '#f97316',
-    position: 2,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Action/Games Songs',
-    color: '#f59e0b',
-    position: 3,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Rhythm Sticks',
-    color: '#d97706',
-    position: 4,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Scarf Songs',
-    color: '#10b981',
-    position: 5,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'General Game',
-    color: '#06b6d4',
-    position: 6,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Core Songs',
-    color: '#84cc16',
-    position: 7,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Parachute Games',
-    color: '#ef4444',
-    position: 8,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Percussion Games',
-    color: '#06b6d4',
-    position: 9,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Teaching Units',
-    color: '#6366f1',
-    position: 10,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Goodbye',
-    color: '#14b8a6',
-    position: 11,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Kodaly Rhythms',
-    color: '#8b5cf6',
-    position: 12,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Kodaly Games',
-    color: '#ec4899',
-    position: 13,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'IWB Games',
-    color: '#f59e0b',
-    position: 14,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Drama Games',
-    color: '#8b5cf6',
-    position: 15,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-  {
-    name: 'Vocal Warmups',
-    color: '#ec4899',
-    position: 16,
-    yearGroups: {}, // Empty - must be explicitly assigned in settings
-  },
-];
+/** @deprecated Prefer DEFAULT_SYSTEM_CATEGORIES — kept as alias for existing call sites. */
+const FIXED_CATEGORIES: Category[] = DEFAULT_SYSTEM_CATEGORIES.map((c) => ({
+  name: c.name,
+  color: c.color,
+  position: c.position,
+  yearGroups: { ...(c.yearGroups || {}) },
+  source: 'system' as const,
+}));
+
+const readLocalCategories = (userId?: string | null): Category[] => {
+  const keys = [categoriesStorageKey(userId), LEGACY_CATEGORIES_STORAGE_KEY];
+  for (const key of keys) {
+    try {
+      const raw = localStorage.getItem(key);
+      if (!raw) continue;
+      const parsed = JSON.parse(raw);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return tagCategoriesSource(parsed as Category[]);
+      }
+    } catch (_) {
+      /* ignore */
+    }
+  }
+  return [];
+};
+
+const writeLocalCategories = (cats: Category[], userId?: string | null) => {
+  const tagged = tagCategoriesSource(cats);
+  const key = categoriesStorageKey(userId);
+  try {
+    localStorage.setItem(key, JSON.stringify(tagged));
+    // Keep legacy key in sync for seeds/events that still read it
+    localStorage.setItem(LEGACY_CATEGORIES_STORAGE_KEY, JSON.stringify(tagged));
+  } catch (_) {
+    /* quota */
+  }
+  return tagged;
+};
 
 // Default branding settings
 const DEFAULT_BRANDING: BrandingSettings = {
@@ -466,6 +423,10 @@ export const useSettings = () => {
       mapYearGroupToActivityLevel: () => '',
       resetToDefaults: () => {},
       resetCategoriesToDefaults: () => {},
+      restoreSystemCategoryDefaults: () => {},
+      clearUserCreatedCategories: () => {},
+      updateSystemCategoryCatalog: async () => {},
+      systemCategoryCatalog: [],
       resetYearGroupsToDefaults: () => {},
       ensureYearGroupsInSections: () => {},
       categoryGroups: { groups: [] },
@@ -499,7 +460,20 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
   const userRef = useRef(user);
   userRef.current = user;
 
+  const authUserId = React.useMemo(() => {
+    const fromUser = user?.id && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(user.id)
+      ? user.id
+      : null;
+    if (fromUser) return fromUser;
+    try {
+      const ls = localStorage.getItem('rhythmstix_user_id');
+      if (ls && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(ls)) return ls;
+    } catch (_) {}
+    return null;
+  }, [user?.id]);
+
   const [categories, setCategories] = useState<Category[]>(FIXED_CATEGORIES);
+  const [systemCategoryCatalog, setSystemCategoryCatalog] = useState<Category[]>(FIXED_CATEGORIES);
   const [deletedFixedCategories, setDeletedFixedCategories] = useState<Set<string>>(new Set());
   const [settings, setSettings] = useState<UserSettings>(DEFAULT_SETTINGS);
   const [yearGroupBands, setYearGroupBands] = useState<YearGroupBand[]>(DEFAULT_YEAR_GROUP_BANDS);
@@ -854,10 +828,8 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
 
     // Load any saved categories from localStorage (always merge in Drama Games, Vocal Warmups if missing)
     try {
-      const savedCategories = localStorage.getItem('saved-categories');
-      if (savedCategories) {
-        const parsed = JSON.parse(savedCategories);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+      const parsed = readLocalCategories(authUserId);
+      if (parsed.length > 0) {
           const deletedCats = new Set<string>();
           try {
             const deletedStr = localStorage.getItem('deleted-fixed-categories');
@@ -867,22 +839,20 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             }
           } catch (_) {}
           const namesInSaved = new Set(parsed.map((c: any) => c.name));
-          const requiredFixedNames = new Set(['Drama Games', 'Vocal Warmups']);
           const missingFixed = FIXED_CATEGORIES.filter(f =>
             !namesInSaved.has(f.name) &&
-            (requiredFixedNames.has(f.name) || !deletedCats.has(f.name))
+            (REQUIRED_SYSTEM_CATEGORY_NAMES.has(f.name) || !deletedCats.has(f.name))
           );
           const merged = missingFixed.length > 0
             ? (() => {
                 const combined = [...parsed];
                 missingFixed.forEach(f => combined.push({ ...f }));
                 combined.sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
-                return combined;
+                return tagCategoriesSource(combined);
               })()
-            : parsed;
+            : tagCategoriesSource(parsed);
           setCategories(merged);
           if (import.meta.env.DEV) console.log('📦 Loading saved categories from localStorage:', merged.length, missingFixed.length ? `(added ${missingFixed.map(c => c.name).join(', ')})` : '');
-        }
       }
       
       // Load list of deleted fixed categories
@@ -909,127 +879,42 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         try {
           // Load categories FIRST so activities show immediately on refresh (don't wait for year groups retries)
           if (import.meta.env.DEV) console.log('🔄 Loading categories from Supabase first...');
-          const supabaseCategories = await customCategoriesApi.getAll();
+          const [supabaseCategories, systemFromCloud] = await Promise.all([
+            customCategoriesApi.getAll(),
+            systemCategoriesApi.getAll(),
+          ]);
           if (import.meta.env.DEV) console.log('📦 Raw categories from Supabase:', supabaseCategories);
 
-          if (supabaseCategories && supabaseCategories.length > 0) {
-            isCurrentlyLoading.current = true;
-            const formattedCategories = supabaseCategories.map((cat: any) => {
-              // Keep yearGroups as stored. LKG+UKG+Reception alone is a valid EYFS
-              // assignment, not legacy junk — wiping it emptied the Activity Library
-              // for Reception and all EYFS classes.
-              const yearGroups = cat.yearGroups || {};
-              return {
-                id: cat.id,
-                name: cat.name,
-                color: cat.color,
-                position: cat.position || 0,
-                group: cat.group,
-                groups: cat.groups || (cat.group ? [cat.group] : []),
-                yearGroups: yearGroups
-              };
-            });
-            // Merge with localStorage so seed / unsynced year-group ticks are not lost
-            // when cloud is stale or a prior LSO-only upsert wiped assignments.
-            let localByName = new Map<string, any>();
-            try {
-              const localRaw = localStorage.getItem('saved-categories');
-              if (localRaw) {
-                const localCats = JSON.parse(localRaw);
-                if (Array.isArray(localCats)) {
-                  localCats.forEach((c: any) => {
-                    if (c?.name) localByName.set(c.name, c);
-                  });
-                }
-              }
-            } catch (_) {}
+          const systemCatalog =
+            systemFromCloud && systemFromCloud.length > 0
+              ? (tagCategoriesSource(systemFromCloud as Category[]) as Category[])
+              : FIXED_CATEGORIES;
+          setSystemCategoryCatalog(systemCatalog);
 
-            const mergedCloud = formattedCategories.map((cat: any) => {
-              const local = localByName.get(cat.name);
-              if (!local?.yearGroups) return cat;
-              const cloudHas =
-                cat.yearGroups && Object.values(cat.yearGroups).some((v: any) => v === true);
-              const localHas =
-                local.yearGroups && Object.values(local.yearGroups).some((v: any) => v === true);
-              if (!cloudHas && localHas) {
-                return { ...cat, yearGroups: { ...local.yearGroups } };
-              }
-              if (cloudHas && localHas) {
-                return {
-                  ...cat,
-                  yearGroups: { ...local.yearGroups, ...cat.yearGroups },
-                };
-              }
-              return cat;
-            });
-            // Keep local-only categories (e.g. freshly seeded LSO) that cloud does not have yet
-            localByName.forEach((local, name) => {
-              if (!mergedCloud.some((c: any) => c.name === name)) {
-                mergedCloud.push(local);
-              }
-            });
+          const localCats = readLocalCategories(authUserId);
+          const cloudCats = tagCategoriesSource((supabaseCategories || []) as Category[]);
+          const merged = mergeCategoryLayers({
+            systemCatalog,
+            cloudOrUser: cloudCats,
+            local: localCats,
+            deletedSystemNames: deletedFixedCategories,
+          }) as Category[];
 
-            const namesInSupabase = new Set(mergedCloud.map((c: any) => c.name));
-            const requiredNames = new Set(['Drama Games', 'Vocal Warmups']);
-            const missingFixed = FIXED_CATEGORIES.filter((f: any) => {
-              if (namesInSupabase.has(f.name)) return false;
-              if (f.name === 'Vocal Warmups' && namesInSupabase.has('Vocal Warm-Ups')) return false;
-              return requiredNames.has(f.name) || !deletedFixedCategories.has(f.name);
+          isCurrentlyLoading.current = true;
+          setCategories(merged);
+          writeLocalCategories(merged, authUserId);
+          setTimeout(() => { isCurrentlyLoading.current = false; }, 1000);
+          console.log('📦 Loaded categories (system + user merge):', merged.length);
+
+          // One-time migrate: local had assignments but cloud empty
+          if ((!supabaseCategories || supabaseCategories.length === 0) && merged.some((c) =>
+            c.yearGroups && Object.values(c.yearGroups).some((v) => v === true)
+          )) {
+            void customCategoriesApi.upsert(merged).then(() => {
+              console.log('☁️ Migrated local category year-group links to cloud');
+            }).catch((err) => {
+              console.warn('Failed to migrate local categories to cloud:', err);
             });
-            const merged = [...mergedCloud];
-            if (missingFixed.length > 0) {
-              missingFixed.forEach((f: any) => merged.push({ ...f }));
-              merged.sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
-            }
-            setCategories(merged);
-            localStorage.setItem('saved-categories', JSON.stringify(merged));
-            setTimeout(() => { isCurrentlyLoading.current = false; }, 1000);
-            console.log('📦 Loaded categories from Supabase (first):', merged.length, 'categories');
-          } else {
-            const requiredFixedNames = new Set(['Drama Games', 'Vocal Warmups']);
-            const localStorageCategories = localStorage.getItem('saved-categories');
-            if (localStorageCategories) {
-              try {
-                const localCategories = JSON.parse(localStorageCategories);
-                const namesInLocal = new Set(localCategories.map((c: any) => c.name));
-                const missingFixed = FIXED_CATEGORIES.filter((f: any) =>
-                  !namesInLocal.has(f.name) &&
-                  (requiredFixedNames.has(f.name) || !deletedFixedCategories.has(f.name))
-                );
-                const merged = missingFixed.length > 0
-                  ? (() => {
-                      const combined = [...localCategories];
-                      missingFixed.forEach((f: any) => combined.push({ ...f }));
-                      combined.sort((a: any, b: any) => (a.position ?? 0) - (b.position ?? 0));
-                      return combined;
-                    })()
-                  : localCategories;
-                setCategories(merged);
-                // One-time migrate: this browser had category year-group links in
-                // localStorage only — push them to the per-user cloud store so other
-                // devices can load them.
-                const hasAssignments = merged.some((c: any) =>
-                  c.yearGroups && Object.values(c.yearGroups).some((v: any) => v === true)
-                );
-                if (hasAssignments) {
-                  void customCategoriesApi.upsert(merged).then(() => {
-                    console.log('☁️ Migrated local category year-group links to cloud');
-                  }).catch((err) => {
-                    console.warn('Failed to migrate local categories to cloud:', err);
-                  });
-                }
-              } catch (_) {
-                const activeFixed = FIXED_CATEGORIES.filter((f: any) =>
-                  requiredFixedNames.has(f.name) || !deletedFixedCategories.has(f.name)
-                );
-                setCategories(activeFixed);
-              }
-            } else {
-              const activeFixed = FIXED_CATEGORIES.filter((f: any) =>
-                requiredFixedNames.has(f.name) || !deletedFixedCategories.has(f.name)
-              );
-              setCategories(activeFixed);
-            }
           }
 
           // Then load year groups (retries can take several seconds; categories already applied above)
@@ -1620,21 +1505,24 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       console.log('💾 Saved deleted fixed categories:', Array.from(newDeleted));
     }
     
-    // Save to localStorage immediately
-    localStorage.setItem('saved-categories', JSON.stringify(categories));
+    // Save to localStorage immediately (user-scoped when UUID available)
+    writeLocalCategories(categories, authUserId);
     console.log('💾 Categories saved to localStorage');
     
     // Upsert the FULL category list to the per-user cloud document.
     // Filtering to a subset previously wiped unassigned fixed categories from cloud
     // on every save (wholesale replace), which broke Activity Library after reload.
-    const categoriesForSupabase = categories.map(cat => ({
+    const categoriesForSupabase = tagCategoriesSource(categories).map(cat => ({
       id: cat.id,
       name: cat.name,
       color: cat.color,
       position: cat.position,
       group: cat.group,
       groups: cat.groups || [],
-      yearGroups: cat.yearGroups || {}
+      yearGroups: cat.yearGroups || {},
+      source: cat.source,
+      hidden: cat.hidden === true,
+      yearGroupMode: cat.yearGroupMode,
     }));
     
     console.log('💾 Queueing full categories save to Supabase:', {
@@ -1646,7 +1534,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     });
 
     queueSave('categories', categoriesForSupabase);
-  }, [categories]);
+  }, [categories, authUserId]);
 
   // Save category groups using queue-based system to prevent race conditions
   useEffect(() => {
@@ -1805,7 +1693,7 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
   };
   
   const updateCategories = (newCategories: Category[]) => {
-    setCategories(newCategories);
+    setCategories(tagCategoriesSource(newCategories));
     // Supabase save is now handled automatically in the useEffect hook
   };
 
@@ -1990,10 +1878,76 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
   };
   
   const resetCategoriesToDefaults = () => {
-    setCategories(FIXED_CATEGORIES);
-    setDeletedFixedCategories(new Set()); // Clear deleted list on reset
-    localStorage.removeItem('saved-categories');
-    localStorage.removeItem('deleted-fixed-categories');
+    // Full reset of organisation: system catalog + wipe user customs.
+    // Prefer restoreSystemCategoryDefaults / clearUserCreatedCategories for safer ops.
+    const restored = tagCategoriesSource(
+      systemCategoryCatalog.length > 0 ? systemCategoryCatalog : FIXED_CATEGORIES
+    ).map((c) => ({ ...c, source: 'system' as const, yearGroups: { ...(c.yearGroups || {}) } }));
+    setCategories(restored);
+    setDeletedFixedCategories(new Set());
+    writeLocalCategories(restored, authUserId);
+    try {
+      localStorage.removeItem('deleted-fixed-categories');
+    } catch (_) {}
+  };
+
+  const restoreSystemCategoryDefaults = () => {
+    const catalog = systemCategoryCatalog.length > 0 ? systemCategoryCatalog : FIXED_CATEGORIES;
+    setCategories((prev) => {
+      const userCustoms = prev.filter((c) => !isSystemCategoryName(c.name) && c.source !== 'system');
+      const byName = new Map(prev.map((c) => [c.name, c]));
+      const restoredSystem = catalog.map((sys) => {
+        const existing = byName.get(sys.name);
+        return {
+          ...sys,
+          source: 'system' as const,
+          // Keep user's year-group ticks / colour customisation
+          yearGroups: existing?.yearGroups || {},
+          color: existing?.color || sys.color,
+          group: existing?.group,
+          groups: existing?.groups,
+          hidden: existing?.hidden,
+          yearGroupMode: existing?.yearGroupMode,
+          position: existing?.position ?? sys.position,
+        } as Category;
+      });
+      const merged = [...restoredSystem, ...userCustoms].sort(
+        (a, b) => (a.position ?? 0) - (b.position ?? 0)
+      );
+      writeLocalCategories(merged, authUserId);
+      return merged;
+    });
+    setDeletedFixedCategories(new Set());
+    try {
+      localStorage.removeItem('deleted-fixed-categories');
+    } catch (_) {}
+  };
+
+  const clearUserCreatedCategories = () => {
+    setCategories((prev) => {
+      const next = prev.filter((c) => isSystemCategoryName(c.name) || c.source === 'system');
+      writeLocalCategories(next, authUserId);
+      return next;
+    });
+  };
+
+  const updateSystemCategoryCatalog = async (cats: Category[]) => {
+    const normalised = tagCategoriesSource(cats).map((c, i) => ({
+      ...c,
+      source: 'system' as const,
+      position: typeof c.position === 'number' ? c.position : i,
+    }));
+    setSystemCategoryCatalog(normalised);
+    await systemCategoriesApi.upsert(normalised);
+    // Merge into current user view without wiping user customs or year ticks
+    setCategories((prev) =>
+      mergeCategoryLayers({
+        systemCatalog: normalised,
+        cloudOrUser: prev,
+        local: prev,
+        deletedSystemNames: deletedFixedCategories,
+      }) as Category[]
+    );
   };
   
   const resetYearGroupsToDefaults = () => {
@@ -2262,31 +2216,28 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         console.log('✅ Year groups refreshed from Supabase:', deduplicated.length);
       }
 
-      // Refresh categories
+      // Refresh categories — MERGE with local so Refresh never wipes unsynced customs
       const supabaseCategories = await customCategoriesApi.getAll();
-      if (supabaseCategories && supabaseCategories.length > 0) {
-        const formattedCategories = supabaseCategories.map((cat: any) => {
-          // Keep yearGroups as stored. LKG+UKG+Reception alone is a valid EYFS
-          // assignment — do not clear it as "old defaults".
-          const yearGroups = cat.yearGroups || {};
-          
-          return {
-            id: cat.id,  // Preserve Supabase PK
-            name: cat.name,
-            color: cat.color,
-            position: cat.position || 0,
-            group: cat.group, // Single group (backward compatibility)
-            groups: cat.groups || (cat.group ? [cat.group] : []), // Multiple groups
-            yearGroups: yearGroups
-          };
-        });
-        
-        // Use categories from Supabase directly - deleted categories stay deleted
-        if (formattedCategories.length > 0) {
-          setCategories(formattedCategories);
-          localStorage.setItem('saved-categories', JSON.stringify(formattedCategories));
-          console.log('✅ Categories refreshed from Supabase:', formattedCategories.length);
-        }
+      const systemFromCloud = await systemCategoriesApi.getAll();
+      const systemCatalog =
+        systemFromCloud && systemFromCloud.length > 0
+          ? (tagCategoriesSource(systemFromCloud as Category[]) as Category[])
+          : FIXED_CATEGORIES;
+      setSystemCategoryCatalog(systemCatalog);
+
+      const localCats = readLocalCategories(authUserId);
+      const cloudCats = tagCategoriesSource((supabaseCategories || []) as Category[]);
+      const merged = mergeCategoryLayers({
+        systemCatalog,
+        cloudOrUser: cloudCats,
+        local: localCats,
+        deletedSystemNames: deletedFixedCategories,
+      }) as Category[];
+
+      if (merged.length > 0) {
+        setCategories(merged);
+        writeLocalCategories(merged, authUserId);
+        console.log('✅ Categories refreshed (merged):', merged.length);
       }
 
       // Refresh category groups
@@ -2776,6 +2727,10 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     mapYearGroupToActivityLevel,
     resetToDefaults,
     resetCategoriesToDefaults,
+    restoreSystemCategoryDefaults,
+    clearUserCreatedCategories,
+    updateSystemCategoryCatalog,
+    systemCategoryCatalog,
     resetYearGroupsToDefaults,
     ensureYearGroupsInSections,
     // Simple Category Groups
