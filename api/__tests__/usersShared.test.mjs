@@ -17,6 +17,13 @@ describe('sanitizeSearchQuery', () => {
   it('trims and strips PostgREST-sensitive chars', () => {
     assert.equal(sanitizeSearchQuery('  jane,doe%_  '), 'jane doe');
   });
+
+  it('keeps dots and @ so email search works', () => {
+    assert.equal(
+      sanitizeSearchQuery('ada.lovelace@school.co.uk'),
+      'ada.lovelace@school.co.uk',
+    );
+  });
 });
 
 describe('parseUsersListParams', () => {
