@@ -675,6 +675,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       content: (
         <div className="space-y-3">
           <p>The <strong>Music Hubs</strong> directory lists UK hubs. Open a hub page for local resources. Some hubs need a subscriber password to unlock files.</p>
+          <p>Polished examples: <strong>Greater Essex</strong> (EMS) in East of England, and <strong>West of England Music Hub</strong> in the South West — the combined hub that succeeded Bristol Music Hub, led by Bristol Beacon with WEMA for Bath &amp; North East Somerset, North Somerset and South Gloucestershire.</p>
         </div>
       )
     },
