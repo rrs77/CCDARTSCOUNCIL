@@ -1564,25 +1564,24 @@ export function LessonPrintModal({
   };
 
   const demoActive = isDemoModeActive();
+  // Demo: keep print modal open so visitors can use browser Print → Save as PDF.
+  // Cloud PDFBolt + share links still require a full account.
   useEffect(() => {
-    if (demoActive) {
-      toast(
-        'PDF export is available with a full account. Sign up free to unlock exporting, printing, and sharing.',
-        {
-          duration: 5000,
-          style: {
-            background: '#312e81',
-            color: '#e0e7ff',
-            borderRadius: '12px',
-            padding: '14px 18px',
-            fontSize: '14px',
-            maxWidth: '420px',
-            border: '1px solid #4338ca',
-          },
-        }
-      );
-      onClose();
-    }
+    if (!demoActive) return;
+    toast(
+      'Demo tip: use Print → Save as PDF. Cloud export links unlock with a full account.',
+      {
+        duration: 4500,
+        style: {
+          background: '#002D24',
+          color: '#F2F7F4',
+          borderRadius: '12px',
+          padding: '14px 18px',
+          fontSize: '14px',
+          maxWidth: '420px',
+        },
+      },
+    );
   }, [demoActive]);
 
   const autoDownloadDone = useRef(false);

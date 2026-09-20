@@ -1,202 +1,110 @@
 [
   {
-    "id": "4f7d6ac4-0b56-447e-8f6c-d935df49eb05",
+    "id": "funding-01-intro",
     "position": 1,
     "filepath": "src/pages/slides/CCDesignerIntro.tsx",
     "title": "Exceptional lessons start with connection",
-    "description": "Opening brand slide matching the app login — CCD circle mark with lime ring, and the connection byline from LoginHeroPanel.",
-    "speakerNotes": ""
+    "description": "Opening brand lockup for the funding pitch.",
+    "durationMs": 8000,
+    "speakerNotes": "Open on the CCD mark. Calm and confident. Line: Exceptional lessons start with connection. Pause. Let the brand land before the case."
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000001",
+    "id": "funding-02-problem",
     "position": 2,
-    "filepath": "src/pages/slides/Title.tsx",
-    "title": "A living home for creative teaching",
-    "description": "Title slide introducing Creative Curriculum Designer as a long-term home for drama, dance and music — across every key stage from EYFS to KS5.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000002",
-    "position": 3,
     "filepath": "src/pages/slides/Problem.tsx",
-    "title": "The problem: arts teachers are working alone",
-    "description": "Why drama, dance and music teachers — and the non-specialists supporting them — are losing creative practice today.",
-    "speakerNotes": ""
+    "title": "Arts teachers are working alone",
+    "description": "The funding problem — fragmented practice and invisible arcs.",
+    "durationMs": 14000,
+    "speakerNotes": "Arts teachers — drama, dance, music — are still stitching years from PDFs, drives and last year's tabs. Often the only specialist in the building. Great practice gets lost. Non-specialists are left guessing. This is the gap funding must close."
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000020",
+    "id": "funding-03-connection",
+    "position": 3,
+    "filepath": "src/pages/slides/FundingConnection.tsx",
+    "title": "A connection layer for the arts",
+    "description": "Why CCD: hubs, national partners, classroom craft.",
+    "durationMs": 16000,
+    "speakerNotes": "CCDesigner is the connection layer. Music Hubs. National arts partners. Classroom craft. One workspace so sector expertise reaches the teacher who needs it on Tuesday morning — not as another website to remember, but as planning they already do."
+  },
+  {
+    "id": "funding-04-hubs",
     "position": 4,
-    "filepath": "src/pages/slides/WhyNow.tsx",
-    "title": "Why now: the arts in higher education are at a tipping point",
-    "description": "The case for the arts — university course closures, falling GCSE entries, the pipeline that feeds the creative industries.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000003",
-    "position": 5,
-    "filepath": "src/pages/slides/Solution.tsx",
-    "title": "The solution: one living home",
-    "description": "Half-term planner, lesson library, and activity stacks in one workspace — purpose-built for performing arts education across every key stage from EYFS to KS5.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000004",
-    "position": 6,
-    "filepath": "src/pages/slides/WhoItsFor.tsx",
-    "title": "Who it's for: arts educators across every key stage",
-    "description": "Audience overview spanning Early Years & Primary, Secondary & Sixth Form (EYFS to KS5), and the arts sector partners contributing alongside them.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000010",
-    "position": 7,
-    "filepath": "src/pages/slides/PerformingArtsCoverage.tsx",
-    "title": "Drama, Music & Dance — one workspace",
-    "description": "Subject coverage breakdown with example units for each performing-arts discipline.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000006",
-    "position": 8,
-    "filepath": "src/pages/slides/LessonLibrary.tsx",
-    "title": "Feature: Lesson library",
-    "description": "Searchable, taggable library of drama, music and dance lessons.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000007",
-    "position": 9,
-    "filepath": "src/pages/slides/ActivityStacks.tsx",
-    "title": "Feature: Activity stacks",
-    "description": "Reusable groups of warm-ups, mains, and plenaries for drama and music.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000012",
-    "position": 10,
-    "filepath": "src/pages/slides/ActivityCardsWithLinks.tsx",
-    "title": "Feature: Activity cards with web links",
-    "description": "Activity cards carry video, music, backing, vocal and web-link resources for one-tap access in the classroom.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000013",
-    "position": 11,
-    "filepath": "src/pages/slides/ActivityCreation.tsx",
-    "title": "Feature: Activity creation flow",
-    "description": "The new-activity form, with dedicated fields for video, web link, backing track and resources.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000011",
-    "position": 12,
-    "filepath": "src/pages/slides/LessonPlannerCalendar.tsx",
-    "title": "Feature: Lesson planner calendar",
-    "description": "Weekly timetable view with drag-and-drop lesson slots across drama, music and dance.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000008",
-    "position": 13,
-    "filepath": "src/pages/slides/HowItWorks.tsx",
-    "title": "How it works",
-    "description": "The four-step flow from empty term to ready-to-teach.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "c454004b-4fa8-433f-8ca6-691d8d5e60e7",
-    "position": 14,
-    "filepath": "src/pages/slides/PartnerAndMarketplace.tsx",
-    "title": "Partner activity packs & marketplace",
-    "description": "Arts-sector partners — Royal Opera House, National Theatre and more — contributing activity packs through a partner marketplace.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "walkthrough-002-music-hubs",
     "filepath": "src/pages/slides/WalkthroughMusicHubs.tsx",
-    "title": "Music hubs & Partner Hubs",
-    "description": "EMS, Tri-Borough, and Partner Hubs structure on the dashboard.",
-    "speakerNotes": "",
-    "position": 15
+    "title": "Music hubs in Partner Hubs",
+    "description": "EMS, Tri-Borough, LSO — regional and national music in one home.",
+    "durationMs": 16000,
+    "speakerNotes": "Partner Hubs puts Music Hubs and organisations in one place. Essex Music Service for Greater Essex. Tri-Borough pathways. LSO packs teachers can open and add. Regional delivery and national excellence — side by side."
   },
   {
-    "id": "walkthrough-003-lso",
+    "id": "funding-05-lso",
+    "position": 5,
     "filepath": "src/pages/slides/WalkthroughLsoHub.tsx",
-    "title": "LSO hub — Add to CCDesigner",
-    "description": "Choose an LSO resource, add it to the library, or select Partner Planning.",
-    "speakerNotes": "",
-    "position": 16
+    "title": "From hub to library",
+    "description": "LSO Add to CCDesigner — trusted content into the teacher's library.",
+    "durationMs": 15000,
+    "speakerNotes": "Open a hub. Choose a resource. Add to CCDesigner. That is the moment funding buys: sector content landing inside the teacher's living library — not a dead download on a desktop."
   },
   {
-    "id": "walkthrough-004-lesson-flow",
-    "filepath": "src/pages/slides/WalkthroughLessonFlow.tsx",
-    "title": "Activity → Lesson → Term",
-    "description": "Activity Library, Lesson Builder, Lesson Library, then half-term planner.",
-    "speakerNotes": "",
-    "position": 17
+    "id": "funding-06-personal",
+    "position": 6,
+    "filepath": "src/pages/slides/PersonalResources.tsx",
+    "title": "Partner packs and personal resources",
+    "description": "Add from hubs and create personal resources.",
+    "durationMs": 14000,
+    "speakerNotes": "Teachers also add their own. Video. Links. Backing tracks. Notes. Partner packs and personal resources sit together — so the scheme is both sector-backed and school-owned."
   },
   {
-    "id": "walkthrough-005-key-dates",
-    "filepath": "src/pages/slides/WalkthroughKeyDates.tsx",
-    "title": "Key dates & Important dates",
-    "description": "Populate calendar with partner key dates and Important dates panel.",
-    "speakerNotes": "",
-    "position": 18
+    "id": "funding-07-lesson",
+    "position": 7,
+    "filepath": "src/pages/slides/LessonHour.tsx",
+    "title": "Starter, main, plenary — one hour",
+    "description": "Lesson builder with 60-minute maximum.",
+    "durationMs": 18000,
+    "speakerNotes": "Then they build the lesson. Starter. Main. Plenary. Example activities dragged into place. Cap: sixty minutes. One hour. Real timetable. No three-hour fantasy plans — teachable craft for a real day."
   },
   {
-    "id": "walkthrough-006-calendar",
+    "id": "funding-08-unit",
+    "position": 8,
+    "filepath": "src/pages/slides/WholeUnit.tsx",
+    "title": "Lessons become a whole unit",
+    "description": "Scheme of work / half-term unit on the planner.",
+    "durationMs": 16000,
+    "speakerNotes": "Lessons stack into a whole unit. Assign to a half-term. See the arc across six weeks. How to Build an Orchestra. Romeo and Juliet. Whatever the hub and the teacher invent together — visible as a journey, not a pile of files."
+  },
+  {
+    "id": "funding-09-calendar",
+    "position": 9,
     "filepath": "src/pages/slides/WalkthroughCalendar.tsx",
-    "title": "Calendar week & timetable",
-    "description": "Week and timetable views with partner and school lesson highlights.",
-    "speakerNotes": "",
-    "position": 19
+    "title": "Calendar and key dates",
+    "description": "Week view with lessons and partner key dates.",
+    "durationMs": 15000,
+    "speakerNotes": "The calendar holds it. Lessons on the week. Partner key dates — concerts, workshops, inset — teal on the same grid. The living timetable where hubs and schools meet."
   },
   {
-    "id": "walkthrough-007-paid",
-    "filepath": "src/pages/slides/WalkthroughPaidPartners.tsx",
-    "title": "iCompose & We Teach Drama",
-    "description": "Paid partner hubs and basket with platform cut messaging.",
-    "speakerNotes": "",
-    "position": 20
+    "id": "funding-10-share",
+    "position": 10,
+    "filepath": "src/pages/slides/ShareAndExport.tsx",
+    "title": "PDF export and share",
+    "description": "Printable lessons and shareable links.",
+    "durationMs": 12000,
+    "speakerNotes": "Then leave with the work intact. PDF export for the room. Share a link with a colleague. Calendar export for cover and leaders. Proof that the arts were planned — and delivered."
   },
   {
-    "id": "walkthrough-008-settings",
-    "filepath": "src/pages/slides/WalkthroughSettings.tsx",
-    "title": "Settings & key-stage folders",
-    "description": "Customisable library folders, categories, and academic year allocation.",
-    "speakerNotes": "",
-    "position": 21
-  },
-  {
-    "id": "walkthrough-009-org",
-    "filepath": "src/pages/slides/WalkthroughOrgHub.tsx",
-    "title": "Organisation hub & share",
-    "description": "School and partner organisation sharing — free org hubs.",
-    "speakerNotes": "",
-    "position": 22
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000022",
-    "position": 23,
+    "id": "funding-11-celebrate",
+    "position": 11,
     "filepath": "src/pages/slides/CelebrateArts.tsx",
     "title": "Celebrating learning in the arts",
-    "description": "Surfacing the daily craft of arts teaching — to parents, leaders, partner organisations and the wider sector.",
-    "speakerNotes": ""
+    "description": "Surfacing craft for parents, leaders and the sector.",
+    "durationMs": 12000,
+    "speakerNotes": "This is how we celebrate learning in the arts — not as a one-off showcase, but as daily craft made visible to parents, leaders, hubs and the wider sector."
   },
   {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000023",
-    "position": 24,
-    "filepath": "src/pages/slides/LifeChanging.tsx",
-    "title": "Inspiring, life-changing arts education",
-    "description": "Why one teacher, one moment, one lesson can change a life — and why CCD is built so those lessons multiply.",
-    "speakerNotes": ""
-  },
-  {
-    "id": "0a4f9b1d-1e92-4c3a-9f6f-001000000009",
-    "position": 25,
-    "filepath": "src/pages/slides/CallToAction.tsx",
-    "title": "Grow your creative practice — together",
-    "description": "Closing call to action inviting schools, departments and arts organisations to join the creative ecosystem.",
-    "speakerNotes": ""
+    "id": "funding-12-ask",
+    "position": 12,
+    "filepath": "src/pages/slides/FundingAsk.tsx",
+    "title": "Fund the connection layer",
+    "description": "Closing funding ask and contact.",
+    "durationMs": 14000,
+    "speakerNotes": "The ask: fund the connection layer between hubs and classrooms. Support CCDesigner so Music Hubs and arts organisations put practice where teachers already plan. Visit ccdesigner.co.uk. Contact rob at rhythmstix.co.uk. Book a thirty-minute funder walkthrough. End clean. Hold the brand."
   }
 ]

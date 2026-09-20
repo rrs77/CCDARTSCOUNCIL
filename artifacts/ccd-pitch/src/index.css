@@ -15,18 +15,18 @@
 }
 
 :root {
-  /* CCD pitch palette — dark green / off-white / lime ring */
+  /* CCD funding pitch — forest / off-white / lime; classy serif display */
   --slide-primary: #14b8a6;
   --slide-primary-dark: #002d24;
-  --slide-accent: #ff6b6b;
-  --slide-accent-dark: #ff5252;
-  --slide-bg: #fffaf7;
+  --slide-accent: #c45c26;
+  --slide-accent-dark: #a3481c;
+  --slide-bg: #f7f4ef;
   --slide-surface: #ffffff;
   --slide-text: #0f2a2e;
-  --slide-muted: #6b7d80;
+  --slide-muted: #5c6d70;
   --slide-lime: #b6ff7e;
-  --font-display-family: "Inter", system-ui, sans-serif;
-  --font-body-family: "Inter", system-ui, sans-serif;
+  --font-display-family: "Playfair Display", Georgia, "Times New Roman", serif;
+  --font-body-family: "Inter", "Segoe UI", sans-serif;
   --font-mono-family: "JetBrains Mono", monospace;
   color-scheme: light;
 }
