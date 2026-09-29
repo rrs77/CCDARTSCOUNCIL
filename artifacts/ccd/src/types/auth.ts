@@ -14,6 +14,8 @@ export type ProfileRole =
 
 export type ProfileStatus = 'active' | 'invited' | 'suspended';
 
+export type InvitationStatus = 'pending' | 'expired' | 'complete' | 'suspended';
+
 export interface Profile {
   id: string;
   email: string | null;
@@ -38,6 +40,12 @@ export interface Profile {
   /** Hub membership rows (list API enrichment). */
   hub_memberships?: { organisation_id: string; role: string }[];
   must_change_password?: boolean;
+  /** When the latest setup invitation was sent. */
+  invite_sent_at?: string | null;
+  /** When the latest setup invitation expires. */
+  invite_expires_at?: string | null;
+  /** Derived by GET /api/users/list. */
+  invitation_status?: InvitationStatus;
   privacy_policy_accepted_at?: string | null;
   marketing_consent?: boolean;
   marketing_consent_at?: string | null;

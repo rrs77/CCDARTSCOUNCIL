@@ -61,8 +61,6 @@ import {
 import { readHubSeededActivitiesFromLocal } from '../utils/hubSeedLocal';
 import { PartnerPlanningPanel } from './partners/PartnerPlanningPanel';
 import { partnerPlanningProjectKey } from '../utils/partnerPlanning';
-import { ActivityLibraryWelcomeModal } from './ActivityLibraryWelcomeModal';
-import { ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY } from './login/prototypeCopy';
 
 /**
  * True when curated demo/hub seed packs are present in the session store.
@@ -154,6 +152,8 @@ export function ActivityLibrary({
     
     const filteredCategories = categories.filter((category) => {
       if (!category?.name) return false;
+      if (category.hidden) return false;
+      if (category.yearGroupMode === 'all') return true;
       const isAssigned = categoryAssignedToYearGroupKeys(category.yearGroups, keysToCheck);
       if (import.meta.env.DEV) {
         if (isAssigned) console.log(`✅ Category "${category.name}" assigned for`, currentYearGroupKey);
@@ -210,28 +210,8 @@ export function ActivityLibrary({
   const [historyUndoStack, setHistoryUndoStack] = useState<ActivityHistoryAction[]>([]);
   const [historyRedoStack, setHistoryRedoStack] = useState<ActivityHistoryAction[]>([]);
   const [isApplyingHistory, setIsApplyingHistory] = useState(false);
-  const [showWelcomeModal, setShowWelcomeModal] = useState(false);
   const [partnerSelectedActivityKeys, setPartnerSelectedActivityKeys] = useState<string[]>([]);
   const [partnerSelectedProjectKeys, setPartnerSelectedProjectKeys] = useState<string[]>([]);
-
-  useEffect(() => {
-    try {
-      if (sessionStorage.getItem(ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY) === '1') return;
-    } catch {
-      // still show
-    }
-    setShowWelcomeModal(true);
-  }, []);
-
-  const dismissWelcomeModal = () => {
-    try {
-      sessionStorage.setItem(ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY, '1');
-    } catch {
-      // ignore
-    }
-    setShowWelcomeModal(false);
-  };
-
   const [starredIds, setStarredIds] = useState<Set<string>>(() => new Set(readLocalStarPrefs().starredIds));
   const [globalStarredFirst, setGlobalStarredFirst] = useState(() => readLocalStarPrefs().globalStarredFirst);
   const [starredFirstCategories, setStarredFirstCategories] = useState<Set<string>>(
@@ -393,10 +373,14 @@ export function ActivityLibrary({
     }
   };
 
-  // Get unique categories — Settings year-group assignment is authoritative.
+  // Get unique categories — include Settings categories assigned to this year group
+  // even when no activities use them yet (so newly created user categories appear).
   const uniqueCategories = useMemo(() => {
     if (availableCategoriesForYearGroup === null) {
       const cats = new Set(allActivities.map(a => a.category));
+      categories.forEach((c) => {
+        if (c?.name && !c.hidden) cats.add(c.name);
+      });
       return Array.from(cats).sort();
     }
     const ygKeys = getCurrentYearGroupKeys();
@@ -411,7 +395,10 @@ export function ActivityLibrary({
         normalizeKey,
       }),
     );
-    const cats = new Set(filteredActivities.map(a => a.category));
+    const cats = new Set<string>([
+      ...filteredActivities.map((a) => a.category).filter(Boolean),
+      ...availableCategoriesForYearGroup,
+    ]);
     return Array.from(cats).sort();
   }, [allActivities, availableCategoriesForYearGroup, categories, getCurrentYearGroupKeys, normalizeKey]);
 
@@ -1579,11 +1566,6 @@ export function ActivityLibrary({
           setShowActivityModal(false);
           setSelectedActivityForModal(null);
         }}
-      />
-
-      <ActivityLibraryWelcomeModal
-        isOpen={showWelcomeModal}
-        onClose={dismissWelcomeModal}
       />
 
     </div>

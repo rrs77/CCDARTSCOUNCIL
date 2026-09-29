@@ -3,6 +3,25 @@ import { Lock, Eye, EyeOff } from 'lucide-react';
 import { LogoSVG } from './Logo';
 import { supabase, isSupabaseConfigured, isSupabaseAuthEnabled } from '../config/supabase';
 
+const SETUP_TYPES = new Set(['recovery', 'invite', 'signup', 'magiclink', 'email']);
+
+type SetupOtpType = 'recovery' | 'invite' | 'signup' | 'magiclink' | 'email';
+
+function parseHashParams(hash: string): Record<string, string> {
+  const trimmed = hash.startsWith('#') ? hash.slice(1) : hash;
+  if (!trimmed) return {};
+  const params = new URLSearchParams(trimmed);
+  const out: Record<string, string> = {};
+  params.forEach((value, key) => {
+    out[key] = value;
+  });
+  return out;
+}
+
+function isOtpType(value: string | null | undefined): value is SetupOtpType {
+  return Boolean(value && SETUP_TYPES.has(value));
+}
+
 export function ResetPasswordPage() {
   const loginBgColor = 'rgb(77, 181, 168)';
   const loginButtonColor = '#008272';
@@ -18,37 +37,82 @@ export function ResetPasswordPage() {
   const [sessionReady, setSessionReady] = useState(false);
 
   useEffect(() => {
-    const hash = window.location.hash || '';
-    const hasHash = hash.includes('type=recovery') || hash.includes('access_token');
-    if (!hasHash) {
-      setHasRecoveryToken(false);
-      setSessionReady(true);
-      return;
-    }
-    setHasRecoveryToken(true);
+    let cancelled = false;
 
-    const applySession = (session: { user: unknown } | null) => {
+    const applyReady = (ok: boolean) => {
+      if (cancelled) return;
+      setHasRecoveryToken(ok);
       setSessionReady(true);
-      if (!session && hasHash) setHasRecoveryToken(false);
     };
 
-    let timeoutId: ReturnType<typeof setTimeout> | null = null;
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) {
-        applySession(session);
+    const consumeSetupSession = async () => {
+      if (!isSupabaseConfigured() || !isSupabaseAuthEnabled()) {
+        applyReady(false);
         return;
       }
-      timeoutId = setTimeout(() => {
-        supabase.auth.getSession().then(({ data: { session: s } }) => applySession(s));
-      }, 800);
+
+      const url = new URL(window.location.href);
+      const code = url.searchParams.get('code');
+      const tokenHash = url.searchParams.get('token_hash');
+      const typeParam = url.searchParams.get('type');
+      const hash = parseHashParams(window.location.hash || '');
+      const accessToken = hash.access_token;
+      const refreshToken = hash.refresh_token || '';
+      const looksLikeSetup =
+        Boolean(code) ||
+        Boolean(tokenHash) ||
+        Boolean(accessToken) ||
+        isOtpType(hash.type) ||
+        isOtpType(typeParam);
+
+      try {
+        if (code) {
+          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          if (exchangeError) throw exchangeError;
+        } else if (tokenHash && isOtpType(typeParam)) {
+          const { error: otpError } = await supabase.auth.verifyOtp({
+            token_hash: tokenHash,
+            type: typeParam,
+          });
+          if (otpError) throw otpError;
+        } else if (accessToken) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken,
+          });
+          if (sessionError) throw sessionError;
+        }
+
+        let {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!session && looksLikeSetup) {
+          await new Promise((resolve) => setTimeout(resolve, 800));
+          ({
+            data: { session },
+          } = await supabase.auth.getSession());
+        }
+        applyReady(Boolean(session));
+      } catch {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        applyReady(Boolean(session));
+      }
+    };
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || session) {
+        applyReady(true);
+      }
     });
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'PASSWORD_RECOVERY' || session) applySession(session);
-    });
+    void consumeSetupSession();
 
     return () => {
-      if (timeoutId) clearTimeout(timeoutId);
+      cancelled = true;
       subscription.unsubscribe();
     };
   }, []);
@@ -126,7 +190,7 @@ export function ResetPasswordPage() {
     return (
       <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: loginBgColor }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
-          <p className="text-gray-600">Checking reset link…</p>
+          <p className="text-gray-600">Checking setup link…</p>
         </div>
       </div>
     );
@@ -137,7 +201,7 @@ export function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: loginBgColor }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Invalid or expired link</h2>
-          <p className="text-gray-600 mb-4">Please request a new password reset from the login screen.</p>
+          <p className="text-gray-600 mb-4">Ask your administrator to resend the invitation, or request a new password reset from the login screen.</p>
           <a href="/" className="text-teal-600 hover:underline font-medium">Back to sign in</a>
         </div>
       </div>
@@ -154,7 +218,7 @@ export function ResetPasswordPage() {
           {success ? (
             <div className="space-y-3 text-center">
               <p className="text-green-700 bg-green-50 p-4 rounded-lg">
-                Password updated successfully.
+                Password set successfully.
               </p>
               <p className="text-sm text-gray-600">
                 You will be taken to the sign-in page. Use your new password to log in.
@@ -162,7 +226,10 @@ export function ResetPasswordPage() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-6">
-              <h2 className="text-lg font-semibold text-gray-900">Set new password</h2>
+              <h2 className="text-lg font-semibold text-gray-900">Set your password</h2>
+              <p className="text-sm text-gray-600">
+                Choose a password for your CCDesigner account. You will use it to sign in.
+              </p>
               <div>
                 <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-2">New password</label>
                 <div className="relative">
@@ -178,6 +245,7 @@ export function ResetPasswordPage() {
                     minLength={6}
                     className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
                     placeholder="Enter new password"
+                    autoComplete="new-password"
                   />
                   <button
                     type="button"
@@ -198,6 +266,7 @@ export function ResetPasswordPage() {
                   required
                   className="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
                   placeholder="Confirm new password"
+                  autoComplete="new-password"
                 />
               </div>
               {error && <p className="text-sm text-red-600">{error}</p>}

@@ -1,10 +1,14 @@
 import React from 'react';
-import { ArrowLeft, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ExternalLink, Shield } from 'lucide-react';
 import type { PartnerHubConfig } from '../../config/partnerHubs';
 import { backToCCDesigner } from '../../config/partnerHubs';
 import { PartnerHubContactFooter } from './PartnerHubContactFooter';
 import { PARTNER_CONTACTS } from '../../config/partnerContacts';
 import { PaidBasketButton, PaidBasketDrawer } from './PaidBasketDrawer';
+import { useAuth } from '../../hooks/useAuth';
+
+/** Partner hubs that have organisation rows for Settings → Hub admin editing. */
+const HUB_ADMIN_ORGS = new Set(['roh', 'rsc', 'jazznorth', 'ems', 'triborough']);
 
 interface PartnerHubPageProps {
   hub: PartnerHubConfig;
@@ -18,6 +22,14 @@ interface PartnerHubPageProps {
  * Each org keeps its own palette + logo; layout is shared across all hubs.
  */
 export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
+  const { profile } = useAuth();
+  const canManageHub =
+    HUB_ADMIN_ORGS.has(hub.slug) &&
+    (profile?.role === 'super_admin' ||
+      profile?.role === 'superuser' ||
+      profile?.role === 'admin' ||
+      profile?.role === 'organisation');
+
   /** Brand band uses org colour; plate logos (WTD/iCompose) sit on a white tile inside. */
   const bandColor = hub.logoOnPlate
     ? hub.primaryColor
@@ -113,6 +125,32 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
       </div>
 
       <div className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8 lg:px-8">
+        {canManageHub && (
+          <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#002D24]/15 bg-white px-4 py-3 shadow-sm">
+            <p className="flex items-center gap-2 text-sm text-[#002D24]">
+              <Shield className="h-4 w-4 shrink-0" aria-hidden />
+              <span>
+                You can edit this hub’s public page, resources and members in{' '}
+                <strong>Settings → Hub admin</strong> (organisation <code>/{hub.slug}</code>).
+              </span>
+            </p>
+            <button
+              type="button"
+              onClick={() => {
+                try {
+                  sessionStorage.setItem('ccd-open-settings-tab', 'hub-admin');
+                } catch {
+                  /* ignore */
+                }
+                window.location.assign('/');
+              }}
+              className="inline-flex items-center rounded-lg bg-[#002D24] px-3 py-2 text-sm font-semibold text-white hover:opacity-95"
+            >
+              Open Hub admin
+            </button>
+          </div>
+        )}
+
         <section className="rounded-2xl border border-gray-200/80 bg-white/90 p-5 shadow-sm backdrop-blur-sm sm:p-6 lg:p-7">
           <div className="max-w-3xl space-y-2.5 text-sm leading-relaxed text-gray-700 sm:text-[0.95rem]">
             {hub.description.slice(0, 2).map((para) => (

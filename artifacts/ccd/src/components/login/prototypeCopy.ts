@@ -66,13 +66,6 @@ export const FEATURE_DEMO_VIDEO_MP4 = 'feature-demo/ccdesigner-feature-demo.mp4'
 export const FEATURE_DEMO_VIDEO_WEBM = 'feature-demo/ccdesigner-feature-demo.webm';
 export const FEATURE_DEMO_VIDEO_POSTER = 'feature-demo/frames/04-disclaimer.png';
 
-export const ACTIVITY_LIBRARY_WELCOME_TITLE = 'About these activities';
-
-export const ACTIVITY_LIBRARY_WELCOME_BODY =
-  'Example activities — customise them in Settings, and share with colleagues.';
-
-export const ACTIVITY_LIBRARY_WELCOME_STORAGE_KEY = 'ccd-activity-library-welcome-seen';
-
 export const TABS_EXPLAINER_TITLE = 'About these tabs';
 
 export const TABS_EXPLAINER_INTRO =

@@ -59,8 +59,7 @@ export function ForcePasswordChangeGate({ children }: { children: React.ReactNod
           <h1 className="text-lg font-semibold text-gray-900">Choose a new password</h1>
         </div>
         <p className="mb-4 text-sm text-gray-600">
-          Your account was set up with a temporary password. Please choose a new one before
-          continuing.
+        Your account needs a password before you continue. Choose one now.
         </p>
         <form onSubmit={handleSubmit} className="space-y-3">
           <div>

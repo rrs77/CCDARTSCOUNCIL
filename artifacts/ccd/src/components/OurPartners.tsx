@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Check, ChevronDown, ChevronRight, Handshake, Loader2, PlusCircle, ShoppingBag } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { PARTNER_HUBS, openPartnerHub, type PartnerHubConfig } from '../config/partnerHubs';
@@ -14,8 +14,66 @@ import {
 import { AddToBasketButton } from './partners/AddToBasketButton';
 import { PaidBasketDrawer } from './partners/PaidBasketDrawer';
 import { MusicHubsDirectory } from './musicHubs/MusicHubsDirectory';
-import { MusicHubAdminPanel } from './musicHubs/MusicHubAdminPanel';
-import { useAuth } from '../hooks/useAuth';
+
+const AZ_LETTERS = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'.split('');
+
+function orgSortLetter(hub: PartnerHubConfig): string {
+  const ch = hub.displayName.trim().charAt(0).toUpperCase();
+  return /[A-Z]/.test(ch) ? ch : '#';
+}
+
+function sortFreeOrgs(hubs: PartnerHubConfig[]): PartnerHubConfig[] {
+  return [...hubs].sort((a, b) =>
+    a.displayName.localeCompare(b.displayName, 'en', { sensitivity: 'base' }),
+  );
+}
+
+/** Minimal sticky A–Z rail — only letters with orgs are active. */
+function OrgsAzBrowser({
+  availableLetters,
+  activeLetter,
+  onSelect,
+}: {
+  availableLetters: Set<string>;
+  activeLetter: string | null;
+  onSelect: (letter: string) => void;
+}) {
+  return (
+    <nav
+      aria-label="Organisations A to Z"
+      className="sticky top-28 z-10 hidden w-9 shrink-0 self-start lg:block"
+    >
+      <div className="flex flex-col items-center gap-px rounded-full border border-[#002D24]/10 bg-white/95 py-1.5 shadow-[0_1px_0_rgba(0,45,36,0.04)] backdrop-blur-sm">
+        {AZ_LETTERS.map((letter) => {
+          const hasOrgs = availableLetters.has(letter);
+          const isActive = activeLetter === letter;
+          return (
+            <button
+              key={letter}
+              type="button"
+              disabled={!hasOrgs}
+              data-org-az={letter}
+              onClick={() => onSelect(letter)}
+              aria-label={
+                hasOrgs ? `Jump to organisations starting with ${letter}` : `${letter} — none`
+              }
+              aria-current={isActive ? 'true' : undefined}
+              className={`flex h-6 w-7 items-center justify-center rounded-full text-[11px] font-semibold leading-none tracking-wide transition-colors ${
+                !hasOrgs
+                  ? 'cursor-default text-[#002D24]/18'
+                  : isActive
+                    ? 'bg-[#002D24] text-white'
+                    : 'text-[#002D24]/55 hover:bg-[#002D24]/08 hover:text-[#002D24]'
+              }`}
+            >
+              {letter}
+            </button>
+          );
+        })}
+      </div>
+    </nav>
+  );
+}
 
 /** Music hubs section — UK directory (EMS featured; Tri-Borough under London). */
 const MUSIC_HUB_LEGACY_SLUGS = ['ems', 'triborough'] as const;
@@ -202,7 +260,7 @@ function PartnerHubAccordion({
   const isPremium = variant === 'premium';
 
   return (
-    <ul className="space-y-2" aria-label={listLabel}>
+    <ul className="space-y-1" aria-label={listLabel}>
       {hubs.map((hub) => {
         const open = expandedSlug === hub.slug;
         const panel = hub.logoOnPlate
@@ -217,11 +275,11 @@ function PartnerHubAccordion({
                 ? 'brightness-0 invert'
                 : '';
         const borderIdle = isPremium
-          ? 'border-[#A3E635]/70 bg-white/90 hover:border-[#65A30D]'
-          : 'border-[#002D24]/20 bg-white hover:border-[#002D24]/40';
+          ? 'border-[#A3E635]/60 bg-white/90 hover:border-[#65A30D]'
+          : 'border-[#002D24]/15 bg-white hover:border-[#002D24]/35';
         const borderOpen = isPremium
-          ? 'border-[#65A30D] bg-white shadow-md ring-1 ring-[#A3E635]/50'
-          : 'border-[#002D24]/35 bg-white shadow-md ring-1 ring-[#002D24]/15';
+          ? 'border-[#65A30D] bg-white shadow-sm ring-1 ring-[#A3E635]/40'
+          : 'border-[#002D24]/30 bg-white shadow-sm ring-1 ring-[#002D24]/10';
         const expandBg = isPremium
           ? 'border-[#A3E635]/40 bg-gradient-to-b from-[#F7FEE7]/80 to-white'
           : 'border-[#002D24]/10 bg-gradient-to-b from-[#E8F0EA]/70 to-white';
@@ -233,24 +291,24 @@ function PartnerHubAccordion({
         return (
           <li
             key={hub.slug}
-            className={`overflow-hidden rounded-xl border transition-shadow ${
+            className={`overflow-hidden rounded-lg border transition-shadow ${
               open ? borderOpen : borderIdle
             }`}
           >
             <button
               type="button"
               onClick={() => setExpandedSlug(open ? null : hub.slug)}
-              className={`flex w-full items-center gap-3 px-3 py-2.5 text-left focus:outline-none focus-visible:ring-2 ${focusRing} sm:gap-4 sm:px-4`}
+              className={`flex w-full items-center gap-2 px-2 py-1.5 text-left focus:outline-none focus-visible:ring-2 ${focusRing} sm:gap-2.5 sm:px-2.5`}
               aria-expanded={open}
               aria-controls={`${variant}-hub-${hub.slug}`}
             >
               {open ? (
-                <ChevronDown className={`h-4 w-4 shrink-0 ${chevron}`} aria-hidden />
+                <ChevronDown className={`h-3.5 w-3.5 shrink-0 ${chevron}`} aria-hidden />
               ) : (
-                <ChevronRight className={`h-4 w-4 shrink-0 ${chevron}`} aria-hidden />
+                <ChevronRight className={`h-3.5 w-3.5 shrink-0 ${chevron}`} aria-hidden />
               )}
               <span
-                className={`flex h-12 w-36 shrink-0 items-center justify-center rounded-lg px-2.5 sm:w-40 ${
+                className={`flex h-8 w-24 shrink-0 items-center justify-center rounded-md px-1.5 sm:w-28 ${
                   hub.logoOnPlate || panel === '#FFFFFF' ? 'border border-[#002D24]/10' : ''
                 }`}
                 style={{ backgroundColor: panel }}
@@ -258,18 +316,13 @@ function PartnerHubAccordion({
                 <img
                   src={hub.logoSrc}
                   alt=""
-                  className={`h-8 w-auto max-h-9 max-w-[8.5rem] object-contain object-center sm:h-9 sm:max-w-[9.5rem] ${invertLogo}`}
+                  className={`h-5 w-auto max-h-6 max-w-[5.5rem] object-contain object-center sm:h-6 sm:max-w-[6.5rem] ${invertLogo}`}
                   loading="lazy"
                   decoding="async"
                 />
               </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-[#002D24] sm:text-base">
-                  {hub.displayName}
-                </span>
-                {!open && hub.tagline && (
-                  <span className="mt-0.5 block truncate text-xs text-[#002D24]/65">{hub.tagline}</span>
-                )}
+              <span className="min-w-0 flex-1 truncate text-sm font-semibold text-[#002D24]">
+                {hub.displayName}
               </span>
             </button>
 
@@ -330,17 +383,72 @@ function PartnerHubAccordion({
  * Partner Hubs tab (exact order):
  * 1. Music hubs — UK directory (featured EMS + explore by country)
  * 2. Premium partners — WTD / iCompose / Drama Resource (collapsed)
- * 3. Organisations — free resources (4-up branded cards; includes Jazz North)
+ * 3. Organisations — free resources A–Z (branded cards + right-hand letter rail)
  */
 export function OurPartners() {
-  const { user } = useAuth();
   const paidHubs = PARTNER_HUBS.filter((h) => h.paid);
   const musicSlugSet = new Set<string>(MUSIC_HUB_LEGACY_SLUGS);
-  const freeOrgs = PARTNER_HUBS.filter((h) => !h.paid && !musicSlugSet.has(h.slug));
-  const showMusicAdmin =
-    user?.role === 'admin' ||
-    user?.role === 'superuser' ||
-    user?.role === 'super_admin';
+  const freeOrgs = sortFreeOrgs(
+    PARTNER_HUBS.filter((h) => !h.paid && !musicSlugSet.has(h.slug)),
+  );
+  const freeOrgKey = freeOrgs.map((h) => h.slug).join('|');
+  const availableLetters = new Set(freeOrgs.map(orgSortLetter).filter((l) => l !== '#'));
+  const [activeLetter, setActiveLetter] = useState<string | null>(
+    () => freeOrgs[0] ? orgSortLetter(freeOrgs[0]) : null,
+  );
+  const azLockUntilRef = useRef(0);
+
+  useEffect(() => {
+    if (typeof window === 'undefined' || freeOrgs.length === 0) return;
+
+    const nodes = Array.from(
+      document.querySelectorAll<HTMLElement>('[data-org-letter-index]'),
+    );
+    if (nodes.length === 0) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (Date.now() < azLockUntilRef.current) return;
+        const visible = entries
+          .filter((e) => e.isIntersecting)
+          .sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        const letter = visible[0]?.target.getAttribute('data-org-letter-index');
+        if (letter) setActiveLetter(letter);
+      },
+      { rootMargin: '-15% 0px -55% 0px', threshold: [0, 0.2, 0.4] },
+    );
+
+    nodes.forEach((node) => observer.observe(node));
+    return () => observer.disconnect();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- stable slug key
+  }, [freeOrgKey]);
+
+  const scrollToLetter = (letter: string) => {
+    setActiveLetter(letter);
+    azLockUntilRef.current = Date.now() + 900;
+    const el = document.querySelector<HTMLElement>(`[data-org-letter-index="${letter}"]`);
+    if (!el) return;
+    const bannerRaw = getComputedStyle(document.documentElement)
+      .getPropertyValue('--preview-banner-height')
+      .trim();
+    const bannerH = Number.parseFloat(bannerRaw) || 0;
+    const headerH = document.querySelector('header')?.getBoundingClientRect().height ?? 64;
+    const offset = bannerH + headerH + 32;
+    const top = el.getBoundingClientRect().top + window.scrollY - offset;
+    window.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+  };
+
+  /** Alphabetical letter → hubs for sectioned grid + A–Z jumps. */
+  const freeOrgGroups: { letter: string; hubs: PartnerHubConfig[] }[] = [];
+  for (const hub of freeOrgs) {
+    const letter = orgSortLetter(hub);
+    const last = freeOrgGroups[freeOrgGroups.length - 1];
+    if (last && last.letter === letter) {
+      last.hubs.push(hub);
+    } else {
+      freeOrgGroups.push({ letter, hubs: [hub] });
+    }
+  }
 
   return (
     <div className="space-y-8">
@@ -363,10 +471,6 @@ export function OurPartners() {
       </div>
 
       <MusicHubsDirectory />
-
-      {showMusicAdmin && (
-        <MusicHubAdminPanel organisationFilter={null} />
-      )}
 
       {paidHubs.length > 0 && (
         <section
@@ -398,25 +502,72 @@ export function OurPartners() {
 
       {freeOrgs.length > 0 && (
         <section aria-labelledby="free-orgs-heading">
-          <div className="mb-3">
-            <h3
-              id="free-orgs-heading"
-              className="text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl"
+          <div className="mb-3 flex items-end justify-between gap-3">
+            <div className="min-w-0">
+              <h3
+                id="free-orgs-heading"
+                className="text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl"
+              >
+                Organisations — free resources
+              </h3>
+              <p className="mt-1 text-sm text-[#002D24]/70">
+                National arts organisations with free classroom and learning resources — listed A–Z.
+              </p>
+            </div>
+            {/* Compact mobile A–Z strip (desktop uses the right rail) */}
+            <div
+              className="flex max-w-[55%] flex-wrap justify-end gap-0.5 lg:hidden"
+              aria-label="Jump to letter"
             >
-              Organisations — free resources
-            </h3>
-            <p className="mt-1 text-sm text-[#002D24]/70">
-              National arts organisations with free classroom and learning resources.
-            </p>
+              {[...availableLetters].sort().map((letter) => (
+                <button
+                  key={letter}
+                  type="button"
+                  onClick={() => scrollToLetter(letter)}
+                  className={`flex h-6 min-w-[1.35rem] items-center justify-center rounded px-1 text-[11px] font-semibold transition-colors ${
+                    activeLetter === letter
+                      ? 'bg-[#002D24] text-white'
+                      : 'text-[#002D24]/60 hover:bg-[#002D24]/08 hover:text-[#002D24]'
+                  }`}
+                  aria-label={`Jump to ${letter}`}
+                >
+                  {letter}
+                </button>
+              ))}
+            </div>
           </div>
-          <ul
-            className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4"
-            aria-label="Organisations with free resources"
-          >
-            {freeOrgs.map((hub) => (
-              <FreeOrgHubCard key={hub.slug} hub={hub} />
-            ))}
-          </ul>
+
+          <div className="flex items-start gap-3 sm:gap-4">
+            <div
+              className="min-w-0 flex-1 space-y-5"
+              aria-label="Organisations with free resources"
+            >
+              {freeOrgGroups.map((group) => (
+                <div
+                  key={group.letter}
+                  data-org-letter-index={group.letter}
+                  className="scroll-mt-40"
+                >
+                  <div className="mb-2 border-b border-[#002D24]/10 pb-1.5">
+                    <span className="text-xs font-semibold uppercase tracking-[0.18em] text-[#002D24]/45">
+                      {group.letter}
+                    </span>
+                  </div>
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {group.hubs.map((hub) => (
+                      <FreeOrgHubCard key={hub.slug} hub={hub} />
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+
+            <OrgsAzBrowser
+              availableLetters={availableLetters}
+              activeLetter={activeLetter}
+              onSelect={scrollToLetter}
+            />
+          </div>
         </section>
       )}
 

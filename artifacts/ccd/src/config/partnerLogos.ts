@@ -96,10 +96,10 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
   {
     id: 'omnimusic',
     name: 'OmniMusic',
-    src: '/partners/omnimusic/logo.png',
+    /** White lockup — sits with other wordmarks on the dark green hero strip */
+    src: '/partners/omnimusic/logo-white.svg',
     href: 'https://omnimusic.org.uk/',
     heightClass: 'h-6 sm:h-7',
-    onPlate: true,
   },
   {
     id: 'icompose',
@@ -123,6 +123,27 @@ export const PARTNER_LOGOS: PartnerLogo[] = [
     /** Slightly tighter than wide hub marks so it sits with ROH / Sadler's Wells peers */
     heightClass: 'h-5 sm:h-6',
     onPlate: true,
+  },
+  {
+    id: 'rsc-education',
+    name: 'RSC Education',
+    src: '/partners/rsc-education.svg',
+    href: 'https://www.rsc.org.uk/learn/schools-and-teachers/',
+    heightClass: 'h-5 sm:h-6',
+  },
+  {
+    id: 'bristol-old-vic',
+    name: 'Bristol Old Vic',
+    src: '/partners/bristol-old-vic.svg',
+    href: 'https://bristololdvic.org.uk/teacher-resources',
+    heightClass: 'h-5 sm:h-6',
+  },
+  {
+    id: 'kneehigh',
+    name: 'Kneehigh',
+    src: '/partners/kneehigh.svg',
+    href: 'https://thisiskneehigh.co.uk/',
+    heightClass: 'h-5 sm:h-6',
   },
 ];
 

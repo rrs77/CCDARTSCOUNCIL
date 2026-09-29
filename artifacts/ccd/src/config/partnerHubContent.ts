@@ -433,6 +433,211 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
       },
     ],
   },
+
+  rsc: {
+    slug: 'rsc',
+    headerBg: '#111111',
+    logoInvert: true,
+    siteLabel: 'rsc.org.uk/learn/schools-and-teachers',
+    about: [
+      'RSC Education supports schools and teachers with rehearsal-room approaches to Shakespeare — from Key Stage 1 to A-Level — including teacher packs, activity toolkits, Associate Schools and the Shakespeare Curriculum platform.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open official RSC pages for the latest packs, events and booking details.',
+    ],
+    resourcesHeading: 'Teacher & school resources',
+    resourcesIntro:
+      'Official RSC Education links: the Shakespeare Curriculum platform, free teacher packs for set texts, activity toolkits, inclusive Signing Shakespeare resources, literacy packs, and school visit / Associate Schools programmes.',
+    resources: [
+      {
+        title: 'Shakespeare Curriculum',
+        href: 'https://www.rsc.org.uk/learn/shakespeare-curriculum',
+        description:
+          'KS3–4 platform with lesson plans, films, Digital Playtext and assessments — free for UK state-funded secondary schools. Macbeth live now; Romeo and Juliet suite launching Autumn 2026.',
+        kind: 'Platform',
+      },
+      {
+        title: 'Shakespeare Curriculum (sign up)',
+        href: 'https://www.shakespearecurriculum.com/',
+        description: 'Open the curriculum platform to explore plays and register your school.',
+        kind: 'Sign up',
+      },
+      {
+        title: 'Teacher resources library',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources',
+        description: 'Search lesson plans, teacher packs, videos and production images from KS1 to A-Level.',
+        kind: 'Library',
+      },
+      {
+        title: 'Macbeth Teacher Pack 2023',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/macbeth-teacher-pack-2023',
+        description: 'KS3–4 rehearsal-room activities, edited scenes and printable PDFs for the 2023 production.',
+        kind: 'KS3–4',
+      },
+      {
+        title: 'Romeo and Juliet Pack 2024',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/romeo-and-juliet-pack-2024',
+        description: 'Teacher pack supporting classroom study of Romeo and Juliet.',
+        kind: 'KS3–4',
+      },
+      {
+        title: 'Othello Teacher Pack 2024',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/othello-teacher-pack-2024',
+        description: 'Classroom activities and production context for Othello.',
+        kind: 'KS4–5',
+      },
+      {
+        title: 'Hamlet Teacher Pack 2025',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/hamlet-teacher-pack-2025',
+        description: 'Latest Hamlet teacher pack for secondary classrooms.',
+        kind: 'KS4–5',
+      },
+      {
+        title: 'The Tempest Teacher Pack 2025',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/the-tempest-teacher-pack-2025',
+        description: '2025 Tempest pack with rehearsal-room approaches.',
+        kind: 'KS3–4',
+      },
+      {
+        title: 'Twelfth Night Teacher Pack 2024',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/twelfth-night-teacher-pack-2024',
+        description: 'Teacher pack for Twelfth Night study and performance visits.',
+        kind: 'KS3–4',
+      },
+      {
+        title: 'Activity toolkits',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/activity-toolkits',
+        description: 'Short 15-minute creative activities (e.g. Macbeth toolkit) for classroom, remote and blended learning.',
+        kind: 'Activities',
+      },
+      {
+        title: 'Signing Shakespeare: Macbeth',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/signing-shakespeare-for-deaf-students',
+        description: 'Scheme of work and films for KS3–4 Deaf and hard-of-hearing students — adaptable for all learners.',
+        kind: 'Inclusive',
+      },
+      {
+        title: 'Tales From Shakespeare literacy packs',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/teacher-resources/shakespeare-and-literacy-resources',
+        description: 'KS1–3 writing activities inspired by Michael Morpurgo’s Tales from Shakespeare.',
+        kind: 'KS1–3',
+      },
+      {
+        title: 'First Encounters',
+        href: 'https://www.rsc.org.uk/learn/first-encounters',
+        description: 'First Encounters programme — early Shakespeare experiences for schools.',
+        kind: 'Programme',
+      },
+      {
+        title: 'First Encounters · King Lear pack (PDF)',
+        href: 'https://cdn2.rsc.org.uk/sitefinity/education-pdfs/teacher-packs/first-encounters-king-lear-learning-pack-2025.pdf',
+        description: '2025 First Encounters King Lear learning pack (downloadable PDF).',
+        kind: 'PDF',
+      },
+      {
+        title: 'Schools and teachers hub',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/',
+        description: 'Events, workshops, CPD, partnerships and programmes overview.',
+        kind: 'Hub',
+      },
+      {
+        title: 'Events and workshops for students',
+        href: 'https://www.rsc.org.uk/learn/schools-and-teachers/events-and-workshops-for-students',
+        description: 'Student workshops, events and creative engagement opportunities.',
+        kind: 'Workshops',
+      },
+      {
+        title: 'Planning an education visit',
+        href: 'https://www.rsc.org.uk/learn/planning-an-education-visit',
+        description: 'How to bring a group to Stratford — visits, tours and practical planning.',
+        kind: 'Visits',
+      },
+      {
+        title: 'Associate Schools Programme',
+        href: 'https://www.rsc.org.uk/learn/associate-schools-programme',
+        description: 'In-depth partnership programme for schools embedding RSC approaches.',
+        kind: 'Partnership',
+      },
+      {
+        title: 'Young people',
+        href: 'https://www.rsc.org.uk/learn/young-people',
+        description: 'RSC programmes and opportunities for young people beyond the classroom.',
+        kind: 'Youth',
+      },
+      {
+        title: 'Matilda The Musical · school resources',
+        href: 'https://uk.matildathemusical.com/schools/#Performance-Rights',
+        description: 'Official Matilda school resources and performance-rights information.',
+        kind: 'Musical',
+      },
+    ],
+  },
+
+  bristololdvic: {
+    slug: 'bristololdvic',
+    headerBg: '#111111',
+    logoInvert: true,
+    siteLabel: 'bristololdvic.org.uk/teacher-resources',
+    about: [
+      'Bristol Old Vic’s Learning team supports schools with free RE:SOURCES heritage packs, production education packs, school visits, workshops and Young Company programmes at Britain’s oldest continually working theatre.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open official Bristol Old Vic pages for the latest packs and school bookings.',
+    ],
+    resourcesHeading: 'Teacher & school resources',
+    resourcesIntro:
+      'Download heritage RE:SOURCES packs and production education packs, or book a school visit with workshops and post-show talks.',
+    resources: [
+      {
+        title: 'Teacher resources (RE:SOURCES)',
+        href: 'https://bristololdvic.org.uk/teacher-resources',
+        description: 'Heritage classroom packs developed with Lighting Up Learning, University of Bristol Theatre Collection and Bristol Archives.',
+        kind: 'Library',
+      },
+      {
+        title: 'Take part · teacher resources',
+        href: 'https://bristololdvic.org.uk/take-part/teacher-resources',
+        description: 'RE:SOURCES packs plus production education packs (primary to post-16).',
+        kind: 'Packs',
+      },
+      {
+        title: 'Schools visits',
+        href: 'https://bristololdvic.org.uk/your-visit/schools',
+        description: 'School ticket rates, workshops, post-show talks and booking support.',
+        kind: 'Visits',
+      },
+    ],
+  },
+
+  kneehigh: {
+    slug: 'kneehigh',
+    headerBg: '#1a0a0a',
+    logoInvert: true,
+    siteLabel: 'thisiskneehigh.co.uk/item-categories/education',
+    about: [
+      'Kneehigh created joyful, anarchic theatre for over 40 years. Their education Cookbook and archive — study guides, interviews, design notes and devising exercises — are preserved by Falmouth University at This is Kneehigh.',
+      'Organisation logos and linked materials are shown for planning only — they do not imply endorsement. Always open the official archive for the latest digitised items.',
+    ],
+    resourcesHeading: 'Education archive',
+    resourcesIntro:
+      'Browse This is Kneehigh education holdings for KS4/KS5 practitioner study — Cookbook-style teaching materials, production notes and devising kits.',
+    resources: [
+      {
+        title: 'Education archive',
+        href: 'https://thisiskneehigh.co.uk/item-categories/education/',
+        description: 'Study guides, Shadow Kit exercises, memory notes and education programme materials.',
+        kind: 'Archive',
+      },
+      {
+        title: 'This is Kneehigh home',
+        href: 'https://thisiskneehigh.co.uk/',
+        description: 'Full digital archive of shows, photographs, interviews and devising records.',
+        kind: 'Hub',
+      },
+      {
+        title: 'Shows index',
+        href: 'https://thisiskneehigh.co.uk/',
+        description: 'Explore productions such as Tristan & Yseult, Brief Encounter and Dead Dog in a Suitcase.',
+        kind: 'Shows',
+      },
+    ],
+  },
 };
 
 export function getPartnerHubContent(slug: string): PartnerHubPageContent | null {

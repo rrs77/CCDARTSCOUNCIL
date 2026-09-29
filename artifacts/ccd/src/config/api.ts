@@ -1265,6 +1265,10 @@ export class CategoriesCloudAuthError extends Error {
 }
 
 function normaliseCategoryRecord(cat: any) {
+  const source =
+    cat.source === 'user' || cat.source === 'system'
+      ? cat.source
+      : undefined;
   return {
     id: cat.id,
     name: cat.name,
@@ -1273,8 +1277,63 @@ function normaliseCategoryRecord(cat: any) {
     group: cat.group,
     groups: Array.isArray(cat.groups) ? cat.groups : (cat.group ? [cat.group] : []),
     yearGroups: normaliseYearGroups(cat.yearGroups ?? cat.year_groups ?? {}),
+    source,
+    hidden: cat.hidden === true,
+    yearGroupMode: (cat.yearGroupMode === 'all' ? 'all' : cat.yearGroupMode === 'selected' ? 'selected' : undefined) as
+      | 'all'
+      | 'selected'
+      | undefined,
   };
 }
+
+const SYSTEM_CATEGORIES_KEY = 'system:categories';
+
+/** Global app category catalog (super-admin). Additive branding_settings doc — no table drop. */
+export const systemCategoriesApi = {
+  getAll: async () => {
+    try {
+      const { data, error } = await supabase
+        .from(TABLES.BRANDING_SETTINGS)
+        .select('data')
+        .eq('key', SYSTEM_CATEGORIES_KEY)
+        .maybeSingle();
+      if (error) throw error;
+      const categories = (data?.data as { categories?: unknown[] } | null)?.categories;
+      if (!Array.isArray(categories) || categories.length === 0) return [];
+      return categories.map((cat) => ({
+        ...normaliseCategoryRecord(cat),
+        source: 'system' as const,
+      }));
+    } catch (error) {
+      console.warn('Failed to load system categories:', error);
+      return [];
+    }
+  },
+
+  upsert: async (categories: any[]) => {
+    try {
+      const normalised = (categories || []).map((cat) => ({
+        ...normaliseCategoryRecord(cat),
+        source: 'system' as const,
+      }));
+      const { error } = await supabase
+        .from(TABLES.BRANDING_SETTINGS)
+        .upsert(
+          {
+            key: SYSTEM_CATEGORIES_KEY,
+            data: { categories: normalised },
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'key' },
+        );
+      if (error) throw error;
+      return normalised;
+    } catch (error) {
+      console.error('Failed to save system categories:', error);
+      throw error;
+    }
+  },
+};
 
 export const customCategoriesApi = {
   getAll: async () => {

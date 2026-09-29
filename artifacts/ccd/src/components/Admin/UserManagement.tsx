@@ -19,7 +19,7 @@ import { getVercelApiUrl } from '../../utils/apiUrl';
 import { activityPacksApi } from '../../config/api';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import { useAuth } from '../../hooks/useAuth';
-import type { Profile, ProfileRole, ProfileStatus } from '../../types/auth';
+import type { InvitationStatus, Profile, ProfileRole, ProfileStatus } from '../../types/auth';
 import { EditUserModal } from './EditUserModal';
 import { AssignPacksModal } from './AssignPacksModal';
 import { listAdminHubs } from '../../utils/hubAdminApi';
@@ -92,24 +92,50 @@ function roleBadgeClass(role: ProfileRole): string {
   }
 }
 
-function statusLabel(status: ProfileStatus | undefined): string {
-  if (!status) return 'Active';
-  switch (status) {
-    case 'active':
-      return 'Active';
-    case 'invited':
-      return 'Invited';
+function invitationStatusOf(user: Profile): InvitationStatus {
+  if (user.invitation_status) return user.invitation_status;
+  if (user.status === 'suspended' || user.anonymised_at) return 'suspended';
+  if (user.status === 'active' && user.must_change_password !== true) return 'complete';
+  if (user.invite_expires_at) {
+    const exp = new Date(user.invite_expires_at).getTime();
+    if (!Number.isNaN(exp) && exp <= Date.now()) return 'expired';
+  }
+  return 'pending';
+}
+
+function invitationLabel(user: Profile): string {
+  switch (invitationStatusOf(user)) {
     case 'suspended':
       return 'Suspended';
+    case 'expired':
+      return 'Invitation expired';
+    case 'pending':
+      return 'Invitation pending';
+    case 'complete':
+      return 'Setup complete';
     default:
-      return status;
+      return 'Invitation pending';
   }
 }
 
-function statusBadgeClass(status: ProfileStatus | undefined): string {
-  if (!status || status === 'active') return 'bg-green-100 text-green-800 border-green-200';
-  if (status === 'invited') return 'bg-amber-100 text-amber-800 border-amber-200';
-  return 'bg-red-100 text-red-800 border-red-200';
+function invitationBadgeClass(user: Profile): string {
+  switch (invitationStatusOf(user)) {
+    case 'suspended':
+      return 'bg-red-100 text-red-800 border-red-200';
+    case 'expired':
+      return 'bg-orange-100 text-orange-800 border-orange-200';
+    case 'pending':
+      return 'bg-amber-100 text-amber-800 border-amber-200';
+    case 'complete':
+      return 'bg-green-100 text-green-800 border-green-200';
+    default:
+      return 'bg-amber-100 text-amber-800 border-amber-200';
+  }
+}
+
+function canResendInviteFor(user: Profile): boolean {
+  const status = invitationStatusOf(user);
+  return status === 'pending' || status === 'expired';
 }
 
 function formatDate(iso: string | undefined): string {
@@ -157,10 +183,7 @@ export function UserManagement() {
   const [showCreateUserModal, setShowCreateUserModal] = useState(false);
   const [createName, setCreateName] = useState('');
   const [createEmail, setCreateEmail] = useState('');
-  const [createPassword, setCreatePassword] = useState('');
-  const [createRole, setCreateRole] = useState<ProfileRole>('viewer');
-  const [createStatus, setCreateStatus] = useState<ProfileStatus>('invited');
-  const [createSendInvite, setCreateSendInvite] = useState(true);
+  const [createRole, setCreateRole] = useState<ProfileRole>('teacher');
   const [createSending, setCreateSending] = useState(false);
   const [createError, setCreateError] = useState('');
   const [createAllowedYearGroups, setCreateAllowedYearGroups] = useState<string[]>([]);
@@ -399,7 +422,12 @@ export function UserManagement() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data?.error || 'Failed to resend');
-      toast.success(`Invite resent to ${email}.`);
+      toast.success(
+        data.emailSent === false
+          ? `Account is ready for ${email}, but the email may not have sent. Try again if they did not receive it.`
+          : `Invite resent to ${email}.`,
+      );
+      await reload();
     } catch (e) {
       toast.error(e instanceof Error ? e.message : 'Failed to resend invite');
     } finally {
@@ -532,9 +560,9 @@ export function UserManagement() {
   };
 
   const handleBulkResendInvite = async () => {
-    const invited = selectedUsers.filter((u) => u.status === 'invited' && u.email?.trim());
+    const invited = selectedUsers.filter((u) => canResendInviteFor(u) && u.email?.trim());
     if (invited.length === 0) {
-      toast.error('No invited users with email selected.');
+      toast.error('No pending or expired invitations selected.');
       return;
     }
     setBulkBusy(true);
@@ -572,12 +600,8 @@ export function UserManagement() {
         headers: await authHeaders(),
         body: JSON.stringify({
           email: emailTrimmed,
-          password: createSendInvite ? undefined : createPassword.trim() || undefined,
           display_name: createName.trim() || undefined,
           role: createRole,
-          status: createStatus,
-          send_invite_email: createSendInvite,
-          must_change_password: !createSendInvite && Boolean(createPassword.trim()),
           allowed_year_groups:
             createAllowedYearGroups.length > 0 ? createAllowedYearGroups : undefined,
           admin_preset_categories:
@@ -589,28 +613,27 @@ export function UserManagement() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         let msg = data?.error || `Request failed (${res.status})`;
-        if (res.status === 404) {
-          const isDev = import.meta.env.DEV;
-          msg = isDev
-            ? 'Create-user API not available locally. Add VITE_VERCEL_URL=https://your-app.vercel.app to .env (your real Vercel URL), restart the dev server, then try again. Or add users on the deployed site.'
-            : 'Create-user API not found. On Vercel: ensure the api/ folder is deployed and SUPABASE_SERVICE_ROLE_KEY is set in Project Settings → Environment Variables. If the frontend is hosted elsewhere, set VITE_API_BASE_URL to your Vercel app URL.';
-        } else if (res.status === 500 && msg.includes('SUPABASE_SERVICE_ROLE_KEY')) {
+        if (res.status === 409) {
+          msg = data?.error || 'A user with this email already exists.';
+        } else if (res.status === 404) {
           msg =
-            'Server misconfigured: SUPABASE_SERVICE_ROLE_KEY is not set. Add it in Vercel → Project Settings → Environment Variables.';
+            'Create-user API was not found. Confirm the API server is running and that /api/create-user is available.';
+        } else if (res.status === 500 && String(msg).includes('SUPABASE_SERVICE_ROLE_KEY')) {
+          msg =
+            'Server misconfigured: SUPABASE_SERVICE_ROLE_KEY is not set. Add it for the API server or Vercel environment.';
         }
         setCreateError(msg);
         return;
       }
       toast.success(
-        data.invited ? `Invite sent to ${emailTrimmed}.` : `User ${emailTrimmed} created.`,
+        data.emailSent === false
+          ? `Account created for ${emailTrimmed}. The invitation email may not have sent — use Resend invite.`
+          : `Invite sent to ${emailTrimmed}. They will set their own password from the link.`,
       );
       setShowCreateUserModal(false);
       setCreateName('');
       setCreateEmail('');
-      setCreatePassword('');
-      setCreateRole('viewer');
-      setCreateStatus('invited');
-      setCreateSendInvite(true);
+      setCreateRole('teacher');
       setCreateAllowedYearGroups([]);
       setCreatePresetCategories([]);
       setCreatePresetPackIds([]);
@@ -620,7 +643,7 @@ export function UserManagement() {
       const isNetwork = err.message === 'Failed to fetch' || err.name === 'TypeError';
       setCreateError(
         isNetwork
-          ? 'Cannot reach the Create User API. In dev set VITE_VERCEL_URL in .env and restart. On production ensure the API is deployed (Vercel api/ folder) and SUPABASE_SERVICE_ROLE_KEY is set.'
+          ? 'Cannot reach the Create User API. Confirm the local API server is running on the Vite proxy target.'
           : err.message,
       );
     } finally {
@@ -669,10 +692,7 @@ export function UserManagement() {
             setCreateError('');
             setCreateName('');
             setCreateEmail('');
-            setCreatePassword('');
-            setCreateRole('viewer');
-            setCreateStatus('invited');
-            setCreateSendInvite(true);
+            setCreateRole('teacher');
           }}
           className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
         >
@@ -681,8 +701,9 @@ export function UserManagement() {
         </button>
       </div>
       <p className="text-sm text-gray-600">
-        Search and filter users server-side. Edit role and hub access, send password reset or
-        resend invite, suspend, anonymise (UK GDPR), or remove access.
+        Search and filter users server-side. Create a teacher with an invitation to set their
+        own password, then edit role and hub access, resend expired invites, suspend, anonymise
+        (UK GDPR), or remove access. Passwords are never stored in admin settings.
       </p>
 
       <div className="flex flex-wrap items-center gap-2">
@@ -836,9 +857,9 @@ export function UserManagement() {
                   </td>
                   <td className="px-4 py-3">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium border ${statusBadgeClass(user.status)}`}
+                      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium border ${invitationBadgeClass(user)}`}
                     >
-                      {statusLabel(user.status)}
+                      {invitationLabel(user)}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-500">
@@ -947,7 +968,7 @@ export function UserManagement() {
                 )}{' '}
                 Send Password Reset Email
               </button>
-              {menuUser.status === 'invited' && (
+              {canResendInviteFor(menuUser) && (
                 <button
                   type="button"
                   onClick={() => handleResendInvite(menuUser)}
@@ -959,7 +980,9 @@ export function UserManagement() {
                   ) : (
                     <Send className="h-4 w-4" />
                   )}{' '}
-                  Resend Invite
+                  {invitationStatusOf(menuUser) === 'expired'
+                    ? 'Resend expired invite'
+                    : 'Resend Invite'}
                 </button>
               )}
               <button
@@ -1097,18 +1120,15 @@ export function UserManagement() {
             </div>
             <form onSubmit={handleCreateUser} className="flex flex-col flex-1 min-h-0">
               <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-                {import.meta.env.DEV && !import.meta.env.VITE_VERCEL_URL && (
-                  <p className="text-sm text-amber-800 bg-amber-50 border border-amber-200 px-3 py-2 rounded-lg">
-                    Local dev: Create User uses the Vercel API. Add{' '}
-                    <code className="text-xs bg-amber-100 px-1 rounded">VITE_VERCEL_URL</code> to
-                    .env and restart, or add users on the deployed site.
-                  </p>
-                )}
                 {createError && (
                   <p className="text-sm text-red-600 bg-red-50 px-3 py-2 rounded-lg">
                     {createError}
                   </p>
                 )}
+                <p className="text-sm text-gray-600">
+                  We will email them a one-time link to set their own password before they sign in.
+                  Passwords are never stored or shown in admin settings.
+                </p>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
@@ -1147,44 +1167,7 @@ export function UserManagement() {
                       ))}
                     </select>
                   </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
-                    <select
-                      value={createStatus}
-                      onChange={(e) => setCreateStatus(e.target.value as ProfileStatus)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                    >
-                      {STATUS_OPTIONS.map((s) => (
-                        <option key={s.value} value={s.value}>
-                          {s.label}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
                 </div>
-                {!createSendInvite && (
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Password (min 6 characters)
-                    </label>
-                    <input
-                      type="password"
-                      value={createPassword}
-                      onChange={(e) => setCreatePassword(e.target.value)}
-                      className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      minLength={6}
-                      autoComplete="new-password"
-                    />
-                  </div>
-                )}
-                <label className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    checked={createSendInvite}
-                    onChange={(e) => setCreateSendInvite(e.target.checked)}
-                  />
-                  <span className="text-sm text-gray-700">Send invite email</span>
-                </label>
                 {yearGroupNames.length > 0 && (
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">

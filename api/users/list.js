@@ -26,6 +26,7 @@ import {
   intersectIdLists,
   parseUsersListParams,
 } from '../_usersShared.js';
+import { invitationStatus } from '../_inviteShared.js';
 
 export async function OPTIONS() {
   return optionsResponse();
@@ -178,6 +179,7 @@ export async function GET(request) {
       ...u,
       hub_memberships: membershipsByUser[u.id] || [],
       hub_ids: (membershipsByUser[u.id] || []).map((m) => m.organisation_id),
+      invitation_status: invitationStatus(u),
     }));
 
     const { count: activeAdminCount, error: adminCountErr } = await service

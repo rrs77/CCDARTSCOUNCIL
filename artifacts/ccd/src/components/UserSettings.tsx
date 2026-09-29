@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield } from 'lucide-react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield, Search } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -10,6 +10,7 @@ import { isSupabaseConfigured, isSupabaseAuthEnabled } from '../config/supabase'
 import { AuthGuard } from './Auth/AuthGuard';
 import { UserManagement } from './Admin/UserManagement';
 import { HubContentApprovalQueue } from './musicHubs/HubContentApprovalQueue';
+import { MusicHubAdminPanel } from './musicHubs/MusicHubAdminPanel';
 import { MyHubAdministration } from './musicHubs/MyHubAdministration';
 import { DownloadAnalytics } from './Admin/DownloadAnalytics';
 import { HubAdminDashboard } from './Admin/HubAdminDashboard';
@@ -22,10 +23,104 @@ import toast from 'react-hot-toast';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
 import { CategoryFoldersPanel } from './CategoryFoldersPanel';
 import {
+  findSectionIdForYearGroup,
+  moveYearGroupsToSection,
   normalizeSectionYearGroupIdList,
   normalizeYearGroupToken,
   resolveYearGroupFromToken,
 } from '../utils/yearGroupSectionOrder';
+import {
+  categoryHasYearGroupAssignment,
+  isSystemCategory,
+  isUserCategory,
+} from '../utils/systemCategories';
+import { CategoriesCloudAuthError } from '../config/api';
+import { SystemCategoriesAdmin } from './Admin/SystemCategoriesAdmin';
+
+function YearGroupSectionSelect({
+  id,
+  value,
+  onChange,
+  sections,
+  className,
+  labelledBy,
+  emptyLabel,
+}: {
+  id?: string;
+  value: string;
+  onChange: (sectionId: string) => void;
+  sections: YearGroupSection[];
+  className?: string;
+  labelledBy?: string;
+  emptyLabel?: string;
+}) {
+  const sorted = [...sections].sort((a, b) => a.sortOrder - b.sortOrder);
+  const known = sorted.some((s) => s.id === value);
+  const selectValue = known ? value : emptyLabel ? '' : (sorted.find((s) => s.id === 'other')?.id ?? sorted[0]?.id ?? '');
+  return (
+    <select
+      id={id}
+      aria-labelledby={labelledBy}
+      aria-label={labelledBy ? undefined : 'Section'}
+      value={selectValue}
+      onChange={(e) => onChange(e.target.value)}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      className={
+        className ??
+        'h-10 min-w-[8.5rem] max-w-full px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none'
+      }
+    >
+      {emptyLabel ? <option value="">{emptyLabel}</option> : null}
+      {sorted.map((s) => (
+        <option key={s.id} value={s.id}>
+          {s.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+function CategoryFolderSelect({
+  id,
+  value,
+  folders,
+  onChange,
+  className,
+  emptyLabel,
+}: {
+  id?: string;
+  value: string;
+  folders: { id: string; name: string; position: number }[];
+  onChange: (folderName: string) => void;
+  className?: string;
+  emptyLabel?: string;
+}) {
+  const sorted = [...folders].sort((a, b) => a.position - b.position);
+  return (
+    <select
+      id={id}
+      aria-label="Folder"
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      onMouseDown={(e) => e.stopPropagation()}
+      onPointerDown={(e) => e.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
+      className={
+        className ??
+        'h-10 min-w-[8.5rem] max-w-full px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none'
+      }
+    >
+      <option value="">{emptyLabel || 'Uncategorised'}</option>
+      {sorted.map((folder) => (
+        <option key={folder.id} value={folder.name}>
+          {folder.name}
+        </option>
+      ))}
+    </select>
+  );
+}
 
 // Draggable Category Item Component
 interface DraggableCategoryProps {
@@ -147,7 +242,7 @@ interface UserSettingsProps {
 export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const { user, profile } = useAuth();
   const isViewOnly = useIsViewOnly();
-  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
+  const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, restoreSystemCategoryDefaults, clearUserCreatedCategories, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [yearGroupsExpanded, setYearGroupsExpanded] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
@@ -159,7 +254,7 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   tempCategoriesRef.current = tempCategories;
   tempYearGroupsRef.current = tempYearGroups;
   const [tempResourceLinks, setTempResourceLinks] = useState(resourceLinks);
-  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'hub-admin'>('yeargroups');
+  const [activeTab, setActiveTab] = useState<'general' | 'yeargroups' | 'categories' | 'purchases' | 'manage-packs' | 'data' | 'admin' | 'resource-links' | 'users' | 'branding' | 'hub-content' | 'my-downloads' | 'download-analytics' | 'hub-admin' | 'system-categories'>('yeargroups');
   const [adminMenuOpen, setAdminMenuOpen] = useState(false);
   const adminMenuRef = useRef<HTMLDivElement>(null);
   const adminTriggerRef = useRef<HTMLButtonElement>(null);
@@ -181,6 +276,21 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const [newYearGroupId, setNewYearGroupId] = useState('');
   const [newYearGroupName, setNewYearGroupName] = useState('');
   const [newYearGroupColor, setNewYearGroupColor] = useState('#3B82F6');
+  const [newYearGroupSectionId, setNewYearGroupSectionId] = useState('other');
+  const [otherYearGroupQuery, setOtherYearGroupQuery] = useState('');
+  const [selectedOtherYearGroupIds, setSelectedOtherYearGroupIds] = useState<Set<string>>(new Set());
+  const [bulkOtherTargetSectionId, setBulkOtherTargetSectionId] = useState('');
+  const [addInSectionId, setAddInSectionId] = useState<string | null>(null);
+  const [inlineNewYearGroupId, setInlineNewYearGroupId] = useState('');
+  const [inlineNewYearGroupName, setInlineNewYearGroupName] = useState('');
+  const [inlineNewYearGroupColor, setInlineNewYearGroupColor] = useState('#3B82F6');
+  const [newCategoryFolder, setNewCategoryFolder] = useState('');
+  const [uncategorisedQuery, setUncategorisedQuery] = useState('');
+  const [selectedUncategorisedNames, setSelectedUncategorisedNames] = useState<Set<string>>(new Set());
+  const [bulkFolderTarget, setBulkFolderTarget] = useState('');
+  const [addInFolderName, setAddInFolderName] = useState<string | null>(null);
+  const [inlineNewCategoryName, setInlineNewCategoryName] = useState('');
+  const [inlineNewCategoryColor, setInlineNewCategoryColor] = useState('#6B7280');
   const [editingYearGroup, setEditingYearGroup] = useState<string | null>(null);
   const [editingYearGroupDraft, setEditingYearGroupDraft] = useState<{ id: string; name: string; color: string } | null>(null);
   const [draggedYearGroup, setDraggedYearGroup] = useState<string | null>(null);
@@ -197,8 +307,16 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
 
   const isAdmin = user?.role === 'admin' ||
                   user?.role === 'superuser' ||
+                  user?.role === 'super_admin' ||
                   profile?.role === 'admin' ||
-                  profile?.role === 'superuser';
+                  profile?.role === 'superuser' ||
+                  profile?.role === 'super_admin';
+  const isSuperAdmin =
+    user?.role === 'super_admin' ||
+    profile?.role === 'super_admin' ||
+    user?.role === 'superuser' ||
+    profile?.role === 'superuser';
+  const canEditSystemCategories = isAdmin || isSuperAdmin;
   const isCreator = profile?.role === 'creator';
   const showUserManagement = (isSupabaseAuthEnabled() || isSupabaseConfigured()) && (isAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.role === 'super_admin' || profile?.can_manage_users === true);
   const showDownloadAnalytics =
@@ -211,6 +329,11 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     profile?.role === 'organisation' ||
     profile?.role === 'super_admin' ||
     (profile?.hub_memberships?.some((m) => m.role === 'admin' || m.role === 'owner') ?? false);
+  const canAddSubscriberOrgs =
+    user?.role === 'superuser' ||
+    user?.role === 'super_admin' ||
+    profile?.role === 'superuser' ||
+    profile?.role === 'super_admin';
 
   // When modal opens or permissions change, ensure active tab is one we can show (avoid blank content)
   React.useEffect(() => {
@@ -218,15 +341,25 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       setAdminMenuOpen(false);
       return;
     }
+    try {
+      const pending = sessionStorage.getItem('ccd-open-settings-tab');
+      if (pending === 'hub-admin' && showHubAdmin) {
+        setActiveTab('hub-admin');
+        sessionStorage.removeItem('ccd-open-settings-tab');
+      }
+    } catch {
+      /* ignore */
+    }
     if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
     if (activeTab === 'download-analytics' && !showDownloadAnalytics) setActiveTab('my-downloads');
     if (activeTab === 'hub-admin' && !showHubAdmin) setActiveTab('resource-links');
     if (activeTab === 'hub-content' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
     if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
+    if (activeTab === 'system-categories' && !canEditSystemCategories) setActiveTab('resource-links');
     if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
     // general, resource-links, data are under Admin for all users – no redirect
-  }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, isAdmin, isCreator]);
+  }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, isAdmin, isCreator, canEditSystemCategories]);
 
   // Keep undo/redo history for year-group sections (key stages).
   React.useEffect(() => {
@@ -491,50 +624,120 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     }));
   };
 
-  const handleAddCategory = async () => {
-    if (!newCategoryName.trim()) return;
-    
-    // Check if category already exists
-    if (tempCategories.some(cat => cat.name.toLowerCase() === newCategoryName.toLowerCase())) {
-      alert('A category with this name already exists.');
-      return;
+  const persistNewCategory = async (opts: {
+    name: string;
+    color: string;
+    folderName: string;
+    yearGroups?: Category['yearGroups'];
+  }) => {
+    if (isViewOnly) {
+      alert('View-only mode: Cannot create categories.');
+      return false;
     }
-    
+    const name = opts.name.trim();
+    if (!name) return false;
+    if (tempCategories.some((cat) => cat.name.toLowerCase() === name.toLowerCase())) {
+      alert('A category with this name already exists.');
+      return false;
+    }
+
+    startUserChange();
     try {
-      // Start user change to pause real-time sync
-      startUserChange();
-      
-      // Create new category with year group assignments using actual IDs/names
       const newCategory: Category = {
-        name: newCategoryName,
-        color: newCategoryColor,
+        name,
+        color: opts.color,
         position: tempCategories.length,
-        yearGroups: { ...newCategoryYearGroups } // Use actual year group IDs/names as keys
+        yearGroups: { ...(opts.yearGroups || {}) },
+        group: opts.folderName || undefined,
+        source: 'user',
       };
-      
-      // Add new category to both temp state and persist it
       const updatedCategories = [...tempCategories, newCategory];
+      tempCategoriesRef.current = updatedCategories;
       setTempCategories(updatedCategories);
-      
-      // Immediately persist to global state and Supabase
-      console.log('🔄 Adding category and persisting immediately:', newCategory);
-      await updateCategories(updatedCategories);
-    
-    // Reset form
-    setNewCategoryName('');
-    setNewCategoryColor('#6B7280');
-    setNewCategoryYearGroups({}); // Reset to empty object
-      
-      console.log('✅ Category added and persisted:', newCategory.name);
-      
-      // End user change after a delay to allow persistence
+      console.log('🔄 Adding user category and persisting immediately:', newCategory);
+      updateCategories(updatedCategories);
+
+      try {
+        const synced = await forceSyncToSupabase({ categories: updatedCategories });
+        if (!synced) {
+          toast.error('Saved on this device. Cloud sync needs a signed-in account with a valid user ID.');
+        } else {
+          toast.success(`Category “${newCategory.name}” created`);
+        }
+      } catch (syncErr) {
+        if (syncErr instanceof CategoriesCloudAuthError) {
+          toast.error('Saved locally only — sign in with a cloud account to sync across devices.');
+        } else {
+          throw syncErr;
+        }
+      }
+
       endUserChange();
+      return true;
     } catch (error: unknown) {
       console.error('❌ Failed to add category:', error);
       alert('Failed to add category. Please try again.');
-      // End user change even on error
       endUserChange();
+      return false;
     }
+  };
+
+  const handleAddCategory = async () => {
+    if (!categoryHasYearGroupAssignment({
+      name: newCategoryName,
+      color: newCategoryColor,
+      position: 0,
+      yearGroups: newCategoryYearGroups,
+    })) {
+      alert('Select at least one year group so this category appears in the Activity Library (e.g. EYFS classes).');
+      setShowYearGroupsModal(true);
+      return;
+    }
+    const added = await persistNewCategory({
+      name: newCategoryName,
+      color: newCategoryColor,
+      folderName: newCategoryFolder,
+      yearGroups: newCategoryYearGroups,
+    });
+    if (!added) return;
+    setNewCategoryName('');
+    setNewCategoryColor('#6B7280');
+    setNewCategoryYearGroups({});
+    setNewCategoryFolder('');
+  };
+
+  const handleAddCategoryInFolder = async (folderName: string) => {
+    const added = await persistNewCategory({
+      name: inlineNewCategoryName,
+      color: inlineNewCategoryColor,
+      folderName,
+    });
+    if (!added) return;
+    setInlineNewCategoryName('');
+    setInlineNewCategoryColor('#6B7280');
+    setAddInFolderName(null);
+  };
+
+  const assignCategoriesToFolder = (categoryNames: string[], folderName: string | null) => {
+    if (categoryNames.length === 0) return;
+    const nameSet = new Set(categoryNames);
+    const updated = tempCategoriesRef.current.map((c) =>
+      nameSet.has(c.name) ? { ...c, group: folderName || undefined, groups: undefined } : c
+    );
+    tempCategoriesRef.current = updated;
+    setTempCategories(updated);
+    updateCategories(updated);
+    setSelectedUncategorisedNames((prev) => {
+      const next = new Set(prev);
+      categoryNames.forEach((n) => next.delete(n));
+      return next;
+    });
+  };
+
+  const handleBulkAssignUncategorised = () => {
+    if (selectedUncategorisedNames.size === 0) return;
+    assignCategoriesToFolder([...selectedUncategorisedNames], bulkFolderTarget || null);
+    setBulkFolderTarget('');
   };
 
 
@@ -546,6 +749,10 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     const categoryToDelete = tempCategories[index];
     if (categoryToDelete && profile?.admin_preset_categories?.includes(categoryToDelete.name)) {
       alert('This category was assigned by an admin and cannot be removed.');
+      return;
+    }
+    if (categoryToDelete && isSystemCategory(categoryToDelete)) {
+      alert('App categories cannot be deleted. Hide them or clear year-group assignments instead. Super admins can edit the system catalog under Admin → System categories.');
       return;
     }
     if (confirm('Are you sure you want to delete this category? This may affect existing activities.')) {
@@ -564,16 +771,8 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       });
       setTempCategories(updatedCategories);
         
-        // Check if this is a custom category (not in FIXED_CATEGORIES)
-        // FIXED_CATEGORIES are: Welcome, Kodaly Songs, Kodaly Action Songs, Action/Games Songs, 
-        // Rhythm Sticks, Scarf Songs, General Game, Core Songs, Parachute Games, Percussion Games,
-        // Teaching Units, Goodbye, Kodaly Rhythms, Kodaly Games, IWB Games
-        const FIXED_CATEGORY_NAMES = [
-          'Welcome', 'Kodaly Songs', 'Kodaly Action Songs', 'Action/Games Songs', 'Rhythm Sticks',
-          'Scarf Songs', 'General Game', 'Core Songs', 'Parachute Games', 'Percussion Games',
-          'Teaching Units', 'Goodbye', 'Kodaly Rhythms', 'Kodaly Games', 'IWB Games'
-        ];
-        const isCustomCategory = !FIXED_CATEGORY_NAMES.includes(categoryToDelete.name);
+        // User-created only — system catalog rows are never deleted here
+        const isCustomCategory = isUserCategory(categoryToDelete);
         
         // CRITICAL: Delete from Supabase FIRST before updating local state
         // This ensures the deletion completes before any reloads can happen
@@ -688,36 +887,55 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   };
 
   const handleResetCategories = () => {
-    if (confirm('Are you sure you want to reset categories to defaults? This cannot be undone.')) {
-      resetCategoriesToDefaults();
-      setTempCategories(categories);
+    const choice = window.prompt(
+      'Reset categories:\n' +
+        '1 = Restore app category defaults (keeps your custom categories & year-group ticks)\n' +
+        '2 = Remove only my custom categories\n' +
+        '3 = Full reset (app defaults only — removes custom categories)\n' +
+        'Cancel = do nothing\n\nType 1, 2, or 3:'
+    );
+    if (choice === '1') {
+      restoreSystemCategoryDefaults();
+      toast.success('App categories restored (your customs kept)');
+    } else if (choice === '2') {
+      if (confirm('Remove all categories you created? App categories stay.')) {
+        clearUserCreatedCategories();
+        toast.success('Custom categories removed');
+      }
+    } else if (choice === '3') {
+      if (confirm('Full reset to app defaults? Your custom categories will be removed. Activities are not deleted.')) {
+        resetCategoriesToDefaults();
+        toast.success('Categories reset to app defaults');
+      }
     }
   };
 
   // Class Management
-  const handleAddYearGroup = async () => {
-    if (!newYearGroupId.trim() || !newYearGroupName.trim()) return;
-    
-    // Check if year group already exists
-    if (tempYearGroups.some(group => group.id.toLowerCase() === newYearGroupId.toLowerCase())) {
+  const persistNewYearGroup = async (opts: {
+    id: string;
+    name: string;
+    color: string;
+    sectionId: string;
+  }) => {
+    const id = opts.id.trim();
+    const name = opts.name.trim();
+    if (!id || !name) return false;
+
+    if (tempYearGroups.some((group) => group.id.toLowerCase() === id.toLowerCase())) {
       alert('A year group with this ID already exists.');
-      return;
+      return false;
     }
-    
-    const newYearGroup = {
-        id: newYearGroupId,
-        name: newYearGroupName,
-        color: newYearGroupColor
-    };
-    
-    // Add new year group to temp state
+
+    const newYearGroup = { id, name, color: opts.color };
     const updatedYearGroups = [...tempYearGroups, newYearGroup];
     setTempYearGroups(updatedYearGroups);
 
-    console.log('🔄 Adding year group and persisting immediately:', newYearGroup);
+    const targetSectionId =
+      yearGroupSections.some((s) => s.id === opts.sectionId) ? opts.sectionId : 'other';
+
     updateYearGroups(updatedYearGroups);
     updateYearGroupSections(
-      (prev) => prev.map((s) => (s.id === 'other' ? { ...s, yearGroupIds: [...(s.yearGroupIds || []), newYearGroup.id] } : s)),
+      (prev) => moveYearGroupsToSection(prev, [newYearGroup.id], targetSectionId, updatedYearGroups),
       updatedYearGroups
     );
     try {
@@ -725,39 +943,71 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     } catch (e) {
       console.warn('Year group added locally; Supabase sync will retry.', e);
     }
-    // Reset form
+    setNewlyAddedYearGroup({ id: newYearGroup.id, name: newYearGroup.name });
+    return true;
+  };
+
+  const handleAddYearGroup = async () => {
+    const added = await persistNewYearGroup({
+      id: newYearGroupId,
+      name: newYearGroupName,
+      color: newYearGroupColor,
+      sectionId: newYearGroupSectionId || 'other',
+    });
+    if (!added) return;
     setNewYearGroupId('');
     setNewYearGroupName('');
     setNewYearGroupColor('#3B82F6');
-    
-    // Set newly added year group to show notification
-    setNewlyAddedYearGroup({ id: newYearGroup.id, name: newYearGroup.name });
-    
-    console.log('✅ Year group added and persisted:', newYearGroup.name);
+    setNewYearGroupSectionId('other');
+  };
+
+  const handleAddYearGroupInSection = async (sectionId: string) => {
+    const added = await persistNewYearGroup({
+      id: inlineNewYearGroupId,
+      name: inlineNewYearGroupName,
+      color: inlineNewYearGroupColor,
+      sectionId,
+    });
+    if (!added) return;
+    setInlineNewYearGroupId('');
+    setInlineNewYearGroupName('');
+    setInlineNewYearGroupColor('#3B82F6');
+    setAddInSectionId(null);
+  };
+
+  const handleAssignYearGroupSection = (yearGroupId: string, sectionId: string) => {
+    const groups = tempYearGroups;
+    const currentId = findSectionIdForYearGroup(yearGroupSections, yearGroupId, groups);
+    if (currentId === sectionId) return;
+    updateYearGroupSections((prev) => moveYearGroupsToSection(prev, [yearGroupId], sectionId, groups));
+    setSelectedOtherYearGroupIds((prev) => {
+      if (!prev.has(yearGroupId)) return prev;
+      const next = new Set(prev);
+      next.delete(yearGroupId);
+      return next;
+    });
+  };
+
+  const handleBulkAssignOtherYearGroups = () => {
+    if (!bulkOtherTargetSectionId || selectedOtherYearGroupIds.size === 0) return;
+    const ids = [...selectedOtherYearGroupIds];
+    updateYearGroupSections((prev) =>
+      moveYearGroupsToSection(prev, ids, bulkOtherTargetSectionId, tempYearGroups)
+    );
+    setSelectedOtherYearGroupIds(new Set());
+    setBulkOtherTargetSectionId('');
   };
 
   const handleUpdateYearGroup = async (index: number, id: string, name: string, color: string) => {
     const updatedYearGroups = [...tempYearGroups];
     const oldYearGroup = updatedYearGroups[index];
-    const oldId = oldYearGroup?.id ?? '';
-    updatedYearGroups[index] = { ...oldYearGroup, id, name, color };
+    const lockedId = oldYearGroup?.id || id;
+    updatedYearGroups[index] = { ...oldYearGroup, id: lockedId, name, color };
     setTempYearGroups(updatedYearGroups);
     setEditingYearGroup(null);
 
-    console.log('🔄 Updating year group and persisting immediately:', { id, name, color });
+    console.log('🔄 Updating year group and persisting immediately:', { id: lockedId, name, color });
     updateYearGroups(updatedYearGroups);
-
-    // If the id changed, update sections so the year group still appears in the same section (it was disappearing because sections still referenced the old id)
-    if (oldId && oldId !== id) {
-      updateYearGroupSections(
-        (prev) =>
-          prev.map((s) => ({
-            ...s,
-            yearGroupIds: (s.yearGroupIds || []).map((mid) => (mid === oldId ? id : mid)),
-          })),
-        updatedYearGroups
-      );
-    }
     try {
       await forceSyncToSupabase({ yearGroups: updatedYearGroups });
     } catch (e) {
@@ -878,70 +1128,23 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   };
 
   const handleYearGroupDropInSection = (draggedId: string, targetId: string, sectionId: string) => {
-    if (!draggedId) return;
+    if (!draggedId || draggedId === targetId) return;
     const groups = tempYearGroups;
-    const targetSection = yearGroupSections.find(s => s.id === sectionId);
-    const sourceSection = yearGroupSections.find(s =>
-      s.yearGroupIds.some(t => resolveYearGroupFromToken(groups, t)?.id === draggedId)
+    const sourceSectionId = findSectionIdForYearGroup(yearGroupSections, draggedId, groups);
+    // Drag only reorders within the same section; section changes use the dropdown.
+    if (!sourceSectionId || sourceSectionId !== sectionId) return;
+    updateYearGroupSections((prev) =>
+      prev.map((s) => {
+        if (s.id !== sectionId) return s;
+        const ids = normalizeSectionYearGroupIdList([...s.yearGroupIds], groups);
+        const dragIdx = ids.indexOf(draggedId);
+        const insertIdx = ids.indexOf(targetId);
+        if (dragIdx < 0 || insertIdx < 0) return s;
+        ids.splice(dragIdx, 1);
+        ids.splice(insertIdx, 0, draggedId);
+        return { ...s, yearGroupIds: ids };
+      })
     );
-    if (!targetSection) return;
-    updateYearGroupSections(prev => {
-      return prev.map(s => {
-        if (s.id === sectionId) {
-          const ids = normalizeSectionYearGroupIdList([...s.yearGroupIds], groups);
-          if (ids.includes(draggedId)) {
-            const dragIdx = ids.indexOf(draggedId);
-            ids.splice(dragIdx, 1);
-            const insertIdx = ids.indexOf(targetId);
-            ids.splice(insertIdx >= 0 ? insertIdx : ids.length, 0, draggedId);
-          } else {
-            const insertIdx = ids.indexOf(targetId);
-            ids.splice(insertIdx >= 0 ? insertIdx : ids.length, 0, draggedId);
-          }
-          return { ...s, yearGroupIds: ids };
-        }
-        if (sourceSection && s.id === sourceSection.id) {
-          return {
-            ...s,
-            yearGroupIds: normalizeSectionYearGroupIdList(
-              s.yearGroupIds.filter(t => resolveYearGroupFromToken(groups, t)?.id !== draggedId),
-              groups
-            ),
-          };
-        }
-        return s;
-      });
-    });
-  };
-
-  /** Drop a year group onto a key stage section (header or empty area) to move it into that section. */
-  const handleYearGroupDropOnSection = (draggedId: string, sectionId: string) => {
-    if (!draggedId) return;
-    const groups = tempYearGroups;
-    const targetSection = yearGroupSections.find(s => s.id === sectionId);
-    const sourceSection = yearGroupSections.find(s =>
-      s.yearGroupIds.some(t => resolveYearGroupFromToken(groups, t)?.id === draggedId)
-    );
-    if (!targetSection) return;
-    if (sourceSection?.id === sectionId) return;
-    updateYearGroupSections(prev => prev.map(s => {
-      if (s.id === sectionId) {
-        const base = normalizeSectionYearGroupIdList([...(s.yearGroupIds || [])], groups);
-        if (!base.includes(draggedId)) base.push(draggedId);
-        return { ...s, yearGroupIds: base, collapsed: false };
-      }
-      if (sourceSection && s.id === sourceSection.id) {
-        return {
-          ...s,
-          yearGroupIds: normalizeSectionYearGroupIdList(
-            s.yearGroupIds.filter(t => resolveYearGroupFromToken(groups, t)?.id !== draggedId),
-            groups
-          ),
-        };
-      }
-      return s;
-    }));
-    setDraggedYearGroup(null);
   };
 
   const handleYearGroupDrop = async (e: React.DragEvent, targetId: string) => {
@@ -1090,7 +1293,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               type="button"
               onClick={() => setAdminMenuOpen(prev => !prev)}
               className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 transition-all duration-150 focus:outline-none min-h-[36px] ${
-                (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding' || activeTab === 'hub-content')
+                (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding' || activeTab === 'hub-content' || activeTab === 'system-categories')
                   ? 'text-white bg-teal-600 shadow-sm'
                   : 'text-gray-600 hover:text-gray-900 hover:bg-white'
               }`}
@@ -1139,6 +1342,16 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   >
                     <Package className="h-4 w-4" />
                     Manage Packs
+                  </button>
+                )}
+                {canEditSystemCategories && (
+                  <button
+                    type="button"
+                    onClick={() => { setActiveTab('system-categories'); setAdminMenuOpen(false); }}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'system-categories' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <Palette className="h-4 w-4" />
+                    System categories
                   </button>
                 )}
                 {isAdmin && (
@@ -1233,7 +1446,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   >
                     Add New Year Group
                   </h4>
-                  <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                       <label htmlFor="newYearGroupId" className="block text-xs font-medium text-gray-600 mb-1.5">
                         ID (used in system)
@@ -1263,6 +1476,18 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         placeholder="e.g., Year 1"
                         className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
                         style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+                      />
+                    </div>
+                    <div>
+                      <label htmlFor="newYearGroupSection" className="block text-xs font-medium text-gray-600 mb-1.5">
+                        Section
+                      </label>
+                      <YearGroupSectionSelect
+                        id="newYearGroupSection"
+                        value={newYearGroupSectionId}
+                        onChange={setNewYearGroupSectionId}
+                        sections={yearGroupSections}
+                        className="w-full h-10 px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
                       />
                     </div>
                     <div>
@@ -1416,7 +1641,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     </div>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">
-                    Group year groups into collapsible sections (e.g. EYFS, KS1, KS2). Drag to reorder within a section. Sections are customisable.
+                    Assign each class with the Section dropdown. Drag only to reorder within a section. Search and bulk-move the Other list when it is long. Section changes use Undo/Redo below and are saved automatically.
                   </p>
                   <div className="mb-3 flex flex-wrap items-center justify-start gap-2">
                     <button
@@ -1468,27 +1693,29 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       const yearGroupsInSection = section.yearGroupIds
                         .map(token => resolveYearGroupFromToken(tempYearGroups, token))
                         .filter(Boolean) as typeof tempYearGroups;
+                      const otherQuery = otherYearGroupQuery.trim().toLowerCase();
+                      const visibleYearGroups =
+                        section.id === 'other' && otherQuery
+                          ? yearGroupsInSection.filter(
+                              (yg) =>
+                                yg.name.toLowerCase().includes(otherQuery) ||
+                                yg.id.toLowerCase().includes(otherQuery)
+                            )
+                          : yearGroupsInSection;
+                      const isOther = section.id === 'other';
+                      const sectionOpen = !section.collapsed || (isOther && Boolean(otherQuery));
                       return (
                         <div key={section.id} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                          <div
-                            onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-                            onDrop={(e) => {
-                              e.preventDefault();
-                              const id = draggedYearGroup || e.dataTransfer.getData('text/plain') || null;
-                              if (id) handleYearGroupDropOnSection(id, section.id);
-                              handleYearGroupDragEnd();
-                            }}
-                            className="w-full"
-                          >
+                          <div className="w-full">
                           <button
                             type="button"
                             onClick={() => updateYearGroupSections(prev => prev.map(s => s.id === section.id ? { ...s, collapsed: !s.collapsed } : s))}
                             className="w-full flex items-center gap-2 px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-left"
                           >
-                            {section.collapsed ? (
-                              <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
-                            ) : (
+                            {sectionOpen ? (
                               <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
                             )}
                             {editingSectionId === section.id ? (
                               <input
@@ -1548,29 +1775,90 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             <span className="text-xs text-gray-500">({yearGroupsInSection.length})</span>
                           </button>
                           </div>
-                          {!section.collapsed && (
+                          {isOther && (
+                            <div className="p-2 space-y-2 border-t border-gray-100">
+                              <label htmlFor="other-year-group-search" className="sr-only">Search Other year groups</label>
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                <input
+                                  id="other-year-group-search"
+                                  type="search"
+                                  value={otherYearGroupQuery}
+                                  onChange={(e) => setOtherYearGroupQuery(e.target.value)}
+                                  placeholder="Search Other year groups"
+                                  className="w-full h-10 pl-8 pr-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                                />
+                              </div>
+                              {sectionOpen && visibleYearGroups.length > 0 && (
+                                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const allVisible = visibleYearGroups.every((yg) => selectedOtherYearGroupIds.has(yg.id));
+                                      setSelectedOtherYearGroupIds((prev) => {
+                                        const next = new Set(prev);
+                                        if (allVisible) {
+                                          visibleYearGroups.forEach((yg) => next.delete(yg.id));
+                                        } else {
+                                          visibleYearGroups.forEach((yg) => next.add(yg.id));
+                                        }
+                                        return next;
+                                      });
+                                    }}
+                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                  >
+                                    {visibleYearGroups.every((yg) => selectedOtherYearGroupIds.has(yg.id))
+                                      ? 'Clear visible'
+                                      : 'Select visible'}
+                                  </button>
+                                  <label htmlFor="bulk-other-section" className="text-xs font-medium text-gray-600">
+                                    Move selected to
+                                  </label>
+                                  <YearGroupSectionSelect
+                                    id="bulk-other-section"
+                                    value={bulkOtherTargetSectionId || ''}
+                                    onChange={setBulkOtherTargetSectionId}
+                                    sections={yearGroupSections.filter((s) => s.id !== 'other')}
+                                    emptyLabel="Choose section"
+                                    className="h-10 min-w-[8.5rem] flex-1 sm:flex-none px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleBulkAssignOtherYearGroups}
+                                    disabled={selectedOtherYearGroupIds.size === 0 || !bulkOtherTargetSectionId}
+                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 disabled:cursor-not-allowed rounded-lg"
+                                  >
+                                    Assign {selectedOtherYearGroupIds.size > 0 ? `(${selectedOtherYearGroupIds.size})` : ''}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {sectionOpen && (
                             <div className="p-2 pt-0 space-y-1.5 border-t border-gray-100">
-                              {yearGroupsInSection.length === 0 ? (
-                                <div
-                                  onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-                                  onDrop={(e) => {
-                                    e.preventDefault();
-                                    const id = draggedYearGroup || e.dataTransfer.getData('text/plain') || null;
-                                    if (id) handleYearGroupDropOnSection(id, section.id);
-                                    handleYearGroupDragEnd();
-                                  }}
-                                  className="min-h-[3rem] rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center py-3 px-2"
-                                >
-                                  <p className="text-sm text-gray-500 text-center">Drop year groups here, or drag from Other above.</p>
+                              {visibleYearGroups.length === 0 ? (
+                                <div className="min-h-[3rem] rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center py-3 px-2">
+                                  <p className="text-sm text-gray-500 text-center">
+                                    {isOther && otherQuery
+                                      ? 'No year groups match your search.'
+                                      : 'No year groups in this section. Use Add year group below, or assign a class with the Section dropdown.'}
+                                  </p>
                                 </div>
                               ) : (
-                                yearGroupsInSection.map((yearGroup) => {
-                                  const index = resolveYearGroupIndex(yearGroup);
+                                visibleYearGroups.map((yearGroup) => {
+                                  const isSelectedOther = selectedOtherYearGroupIds.has(yearGroup.id);
                                   return (
                                     <div
                                       key={yearGroup.id}
                                       draggable
-                                      onDragStart={(e) => handleYearGroupDragStart(e, yearGroup.id)}
+                                      onDragStart={(e) => {
+                                        const target = e.target as HTMLElement;
+                                        if (target.closest('select, input, button, label, a')) {
+                                          e.preventDefault();
+                                          return;
+                                        }
+                                        handleYearGroupDragStart(e, yearGroup.id);
+                                      }}
                                       onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
                                       onDrop={(e) => {
                                         e.preventDefault();
@@ -1579,22 +1867,46 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         handleYearGroupDragEnd();
                                       }}
                                       onDragEnd={handleYearGroupDragEnd}
-                                      className={`p-3 rounded-lg transition-colors duration-200 cursor-move ${
+                                      className={`p-3 rounded-lg transition-colors duration-200 ${
                                         draggedYearGroup === yearGroup.id ? 'bg-teal-50 border-2 border-teal-300 opacity-50' : 'bg-gray-50 hover:bg-gray-100'
                                       }`}
                                     >
                                       {editingYearGroup === yearGroup.id ? (
-                                        <div className="flex items-center space-x-3">
-                                          <div className="flex-shrink-0 cursor-move"><GripVertical className="h-5 w-5 text-gray-400" /></div>
-                                          <div className="flex-1 grid grid-cols-3 gap-3">
-                                            <input type="text" value={editingYearGroupDraft?.id ?? yearGroup.id} onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, id: e.target.value } : null)} className="w-full px-2 py-1 border border-gray-300 rounded text-sm" dir="ltr" />
-                                            <input type="text" value={editingYearGroupDraft?.name ?? yearGroup.name} onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, name: e.target.value } : null)} className="w-full px-2 py-1 border border-gray-300 rounded text-sm" />
-                                            <ColorPickerWithFavorites
-                                              value={editingYearGroupDraft?.color ?? yearGroup.color ?? '#14B8A6'}
-                                              onChange={(color) => setEditingYearGroupDraft(prev => prev ? { ...prev, color } : null)}
-                                              className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
-                                            />
-                                          </div>
+                                        <div className="flex flex-col gap-2">
+                                          <div className="flex items-start gap-3">
+                                            <div className="flex-shrink-0 cursor-move pt-1" title="Drag to reorder within this section" aria-hidden>
+                                              <GripVertical className="h-5 w-5 text-gray-400" />
+                                            </div>
+                                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">ID (read-only)</label>
+                                                <input
+                                                  type="text"
+                                                  value={yearGroup.id}
+                                                  readOnly
+                                                  aria-readonly="true"
+                                                  className="w-full px-2 py-1 border border-gray-200 rounded text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                                                  dir="ltr"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Display name</label>
+                                                <input
+                                                  type="text"
+                                                  value={editingYearGroupDraft?.name ?? yearGroup.name}
+                                                  onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, name: e.target.value } : null)}
+                                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                                                />
+                                              </div>
+                                              <div>
+                                                <label className="block text-xs font-medium text-gray-600 mb-1">Colour</label>
+                                                <ColorPickerWithFavorites
+                                                  value={editingYearGroupDraft?.color ?? yearGroup.color ?? '#14B8A6'}
+                                                  onChange={(color) => setEditingYearGroupDraft(prev => prev ? { ...prev, color } : null)}
+                                                  className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
+                                                />
+                                              </div>
+                                            </div>
                                             <button
                                               type="button"
                                               onClick={() => {
@@ -1609,7 +1921,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                                 }
                                                 handleUpdateYearGroup(
                                                   idx,
-                                                  editingYearGroupDraft.id,
+                                                  yearGroup.id,
                                                   editingYearGroupDraft.name,
                                                   editingYearGroupDraft.color
                                                 );
@@ -1617,21 +1929,67 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                                 setEditingYearGroup(null);
                                               }}
                                               className="p-1.5 text-teal-600 hover:bg-teal-50 rounded"
+                                              title="Save display name and colour"
                                             >
                                               <Save className="h-5 w-5" />
                                             </button>
+                                          </div>
+                                          <div className="ml-8">
+                                            <label htmlFor={`edit-section-${yearGroup.id}`} className="block text-xs font-medium text-gray-600 mb-1">Section</label>
+                                            <YearGroupSectionSelect
+                                              id={`edit-section-${yearGroup.id}`}
+                                              value={section.id}
+                                              onChange={(next) => handleAssignYearGroupSection(yearGroup.id, next)}
+                                              sections={yearGroupSections}
+                                            />
+                                          </div>
                                         </div>
                                       ) : (
-                                        <div className="flex items-center space-x-3">
-                                          <div className="flex-shrink-0 cursor-move"><GripVertical className="h-5 w-5 text-gray-400" /></div>
-                                          <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: yearGroup.color }} />
-                                          <div className="flex-1 min-w-0 font-medium text-gray-900 truncate">{yearGroup.name}</div>
-                                          <div className="flex items-center gap-1">
-                                            <button type="button" onClick={() => { setEditingYearGroup(yearGroup.id); setEditingYearGroupDraft({ id: yearGroup.id, name: yearGroup.name, color: yearGroup.color || '#14B8A6' }); }} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded"><Edit3 className="h-4 w-4" /></button>
+                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
+                                          <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            {isOther && (
+                                              <label className="flex-shrink-0 inline-flex items-center" onMouseDown={(e) => e.stopPropagation()}>
+                                                <span className="sr-only">Select {yearGroup.name}</span>
+                                                <input
+                                                  type="checkbox"
+                                                  checked={isSelectedOther}
+                                                  onChange={(e) => {
+                                                    setSelectedOtherYearGroupIds((prev) => {
+                                                      const next = new Set(prev);
+                                                      if (e.target.checked) next.add(yearGroup.id);
+                                                      else next.delete(yearGroup.id);
+                                                      return next;
+                                                    });
+                                                  }}
+                                                  className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                                />
+                                              </label>
+                                            )}
+                                            <div className="flex-shrink-0 cursor-grab active:cursor-grabbing" title="Drag to reorder within this section">
+                                              <GripVertical className="h-5 w-5 text-gray-400" />
+                                            </div>
+                                            <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: yearGroup.color }} />
+                                            <div className="flex-1 min-w-0">
+                                              <div className="font-medium text-gray-900 truncate">{yearGroup.name}</div>
+                                              <div className="text-xs text-gray-500 truncate">ID: {yearGroup.id}</div>
+                                            </div>
+                                          </div>
+                                          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
+                                            <label htmlFor={`section-${yearGroup.id}`} className="text-xs font-medium text-gray-600">
+                                              Section
+                                            </label>
+                                            <YearGroupSectionSelect
+                                              id={`section-${yearGroup.id}`}
+                                              value={section.id}
+                                              onChange={(next) => handleAssignYearGroupSection(yearGroup.id, next)}
+                                              sections={yearGroupSections}
+                                            />
+                                            <button type="button" onClick={() => { setEditingYearGroup(yearGroup.id); setEditingYearGroupDraft({ id: yearGroup.id, name: yearGroup.name, color: yearGroup.color || '#14B8A6' }); }} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded min-h-[36px] min-w-[36px] inline-flex items-center justify-center" aria-label={`Edit ${yearGroup.name}`}><Edit3 className="h-4 w-4" /></button>
                                             <button
                                               type="button"
                                               onClick={() => void handleDeleteYearGroup(yearGroup)}
-                                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded"
+                                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded min-h-[36px] min-w-[36px] inline-flex items-center justify-center"
+                                              aria-label={`Delete ${yearGroup.name}`}
                                             >
                                               <Trash2 className="h-4 w-4" />
                                             </button>
@@ -1641,6 +1999,74 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     </div>
                                   );
                                 })
+                              )}
+                              {addInSectionId === section.id ? (
+                                <div className="p-3 rounded-lg border border-teal-200 bg-teal-50/60 space-y-3">
+                                  <p className="text-sm font-medium text-gray-900">Add year group to {section.label}</p>
+                                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                    <div>
+                                      <label htmlFor={`inline-yg-id-${section.id}`} className="block text-xs font-medium text-gray-600 mb-1">ID (used in system)</label>
+                                      <input
+                                        id={`inline-yg-id-${section.id}`}
+                                        value={inlineNewYearGroupId}
+                                        onChange={(e) => setInlineNewYearGroupId(e.target.value)}
+                                        placeholder="e.g., Year1"
+                                        className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label htmlFor={`inline-yg-name-${section.id}`} className="block text-xs font-medium text-gray-600 mb-1">Display name</label>
+                                      <input
+                                        id={`inline-yg-name-${section.id}`}
+                                        value={inlineNewYearGroupName}
+                                        onChange={(e) => setInlineNewYearGroupName(e.target.value)}
+                                        placeholder="e.g., Year 1"
+                                        className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                      />
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-medium text-gray-600 mb-1">Colour</label>
+                                      <ColorPickerWithFavorites
+                                        value={inlineNewYearGroupColor}
+                                        onChange={setInlineNewYearGroupColor}
+                                        className="h-10 w-12 rounded-lg border border-gray-300 cursor-pointer"
+                                      />
+                                    </div>
+                                  </div>
+                                  <div className="flex flex-wrap gap-2">
+                                    <button
+                                      type="button"
+                                      onClick={() => void handleAddYearGroupInSection(section.id)}
+                                      disabled={!inlineNewYearGroupId.trim() || !inlineNewYearGroupName.trim()}
+                                      className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 rounded-lg"
+                                    >
+                                      <Plus className="h-4 w-4" /> Add
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setAddInSectionId(null);
+                                        setInlineNewYearGroupId('');
+                                        setInlineNewYearGroupName('');
+                                        setInlineNewYearGroupColor('#3B82F6');
+                                      }}
+                                      className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setAddInSectionId(section.id);
+                                    setNewYearGroupSectionId(section.id);
+                                  }}
+                                  className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
+                                >
+                                  <Plus className="h-4 w-4" /> Add year group
+                                </button>
                               )}
                             </div>
                           )}
@@ -1656,10 +2082,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 <div className="flex items-start space-x-3">
                   <div className="text-yellow-600 flex-shrink-0 mt-0.5">⚠️</div>
                   <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Important Note About Year Group IDs</h4>
+                    <h4 className="font-medium text-gray-900 mb-1">Year group IDs are locked</h4>
                     <p className="text-sm text-gray-600">
-                      Changing the ID of an existing year group will break existing lesson assignments and activities.
-                      Only modify IDs for newly created year groups.
+                      Existing system IDs stay read-only so lesson and activity links remain intact. You can still change the display name, colour, and section.
                     </p>
                   </div>
                 </div>
@@ -1676,20 +2101,33 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 <div className="flex items-center justify-between mb-6">
                   <div className="flex items-center space-x-3">
                     <Palette className="h-6 w-6 text-teal-600" />
-                    <h3 className="text-lg font-semibold text-gray-900">Activity Categories</h3>
+                    <div>
+                      <h3 className="text-lg font-semibold text-gray-900">Activity Categories</h3>
+                      <p className="text-xs text-gray-500 mt-0.5">
+                        App categories are shared defaults. Create your own below — assign year groups so they show in EYFS / other classes.
+                      </p>
+                    </div>
                   </div>
                   <button
                     onClick={handleResetCategories}
                     className="px-3 py-1.5 bg-teal-100 hover:bg-teal-200 text-teal-700 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-1"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
-                    <span>Reset to Default</span>
+                    <span>Reset options…</span>
                   </button>
                 </div>
 
-                {/* Add New Category */}
+                {/* Create My Category */}
                 <div className="bg-white rounded-lg border border-teal-200 p-4 mb-6">
-                  <h4 className="font-medium text-gray-900 mb-3">Add New Category</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">+ New category (yours)</h4>
+                  <p className="text-xs text-gray-500 mb-3">
+                    Creates a personal category for your account. Choose year groups so it appears in the Activity Library.
+                  </p>
+                  {isViewOnly ? (
+                    <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                      View-only mode — you cannot create categories.
+                    </p>
+                  ) : (
                   <div className="space-y-4">
                   <div className="flex flex-wrap gap-3">
                     <div className="flex-1 min-w-[200px]">
@@ -1714,6 +2152,16 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         className="w-full h-10 rounded-lg border border-gray-300 cursor-pointer"
                       />
                     </div>
+                    <div className="w-full sm:w-auto min-w-[10rem]">
+                      <label htmlFor="newCategoryFolder" className="sr-only">Folder</label>
+                      <CategoryFolderSelect
+                        id="newCategoryFolder"
+                        value={newCategoryFolder}
+                        folders={categoryFolders}
+                        onChange={setNewCategoryFolder}
+                        className="w-full h-10 px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                      />
+                    </div>
                     <button
                       onClick={handleAddCategory}
                       disabled={!newCategoryName.trim()}
@@ -1727,7 +2175,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     {/* Year Groups Selection */}
                     <div>
                       <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Available for Year Groups
+                        Available for Year Groups <span className="text-red-500">*</span>
                       </label>
                       <button
                         type="button"
@@ -1738,11 +2186,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         <span>
                           {Object.values(newCategoryYearGroups).some(v => v) 
                             ? `${Object.values(newCategoryYearGroups).filter(v => v).length} year group(s) selected`
-                            : 'Select year groups'}
+                            : 'Select year groups (required)'}
                         </span>
                       </button>
                     </div>
                   </div>
+                  )}
                 </div>
 
                 {/* Year Groups Selection Modal */}
@@ -1857,7 +2306,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     </button>
                   </div>
                   <p className="text-sm text-gray-600 mb-4">
-                    Drag categories to reorder, or drop them onto a folder to organise. Changes affect how categories appear throughout the application.
+                    Use the Folder dropdown on each category to assign it. Search and bulk-move Uncategorised when the list is long. Drag only to reorder within a folder.
                   </p>
 
                   {/* Bulk Year Group Assignment Section */}
@@ -2116,13 +2565,95 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       setTempCategories(updated);
                       updateCategories(updated);
                     }}
-                    renderFolderCategories={(folderName) =>
-                      tempCategories
+                    renderFolderCategories={(folderName) => {
+                      const inFolder = tempCategories
                         .map((category, index) => ({ category, index }))
                         .filter(({ category }) =>
                           folderName ? category.group === folderName : !category.group
-                        )
-                        .map(({ category, index }) => {
+                        );
+                      const uncategorisedQueryNorm = uncategorisedQuery.trim().toLowerCase();
+                      const visible =
+                        !folderName && uncategorisedQueryNorm
+                          ? inFolder.filter(({ category }) =>
+                              category.name.toLowerCase().includes(uncategorisedQueryNorm)
+                            )
+                          : inFolder;
+                      const folderKey = folderName ?? '';
+                      return (
+                        <>
+                          {!folderName && (
+                            <div className="space-y-2 pb-1">
+                              <label htmlFor="uncategorised-category-search" className="sr-only">
+                                Search uncategorised categories
+                              </label>
+                              <div className="relative">
+                                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400 pointer-events-none" />
+                                <input
+                                  id="uncategorised-category-search"
+                                  type="search"
+                                  value={uncategorisedQuery}
+                                  onChange={(e) => setUncategorisedQuery(e.target.value)}
+                                  placeholder="Search Uncategorised"
+                                  className="w-full h-10 pl-8 pr-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                />
+                              </div>
+                              {visible.length > 0 && (
+                                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      const allVisible = visible.every(({ category }) =>
+                                        selectedUncategorisedNames.has(category.name)
+                                      );
+                                      setSelectedUncategorisedNames((prev) => {
+                                        const next = new Set(prev);
+                                        if (allVisible) {
+                                          visible.forEach(({ category }) => next.delete(category.name));
+                                        } else {
+                                          visible.forEach(({ category }) => next.add(category.name));
+                                        }
+                                        return next;
+                                      });
+                                    }}
+                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                  >
+                                    {visible.every(({ category }) => selectedUncategorisedNames.has(category.name))
+                                      ? 'Clear visible'
+                                      : 'Select visible'}
+                                  </button>
+                                  <label htmlFor="bulk-uncategorised-folder" className="text-xs font-medium text-gray-600">
+                                    Move selected to
+                                  </label>
+                                  <CategoryFolderSelect
+                                    id="bulk-uncategorised-folder"
+                                    value={bulkFolderTarget}
+                                    folders={categoryFolders}
+                                    onChange={setBulkFolderTarget}
+                                    emptyLabel="Choose folder"
+                                    className="h-10 min-w-[8.5rem] flex-1 sm:flex-none px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={handleBulkAssignUncategorised}
+                                    disabled={selectedUncategorisedNames.size === 0 || !bulkFolderTarget}
+                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 disabled:cursor-not-allowed rounded-lg"
+                                  >
+                                    Assign {selectedUncategorisedNames.size > 0 ? `(${selectedUncategorisedNames.size})` : ''}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {visible.length === 0 ? (
+                            <div className="min-h-[3rem] rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center py-3 px-2">
+                              <p className="text-sm text-gray-500 text-center">
+                                {!folderName && uncategorisedQueryNorm
+                                  ? 'No categories match your search.'
+                                  : 'No categories here. Use Add category below, or assign one with the Folder dropdown.'}
+                              </p>
+                            </div>
+                          ) : (
+                            visible.map(({ category, index }) => {
                       const isEditing = editingCategory === `category-index-${index}`;
                       
                       return (
@@ -2132,6 +2663,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         index={index}
                         onReorder={(dragIndex, hoverIndex) => {
                           if (dragIndex === hoverIndex) return;
+                          const current = tempCategoriesRef.current;
+                          if ((current[dragIndex]?.group || '') !== (current[hoverIndex]?.group || '')) return;
                           setTempCategories((prev) => {
                             const newCategories = [...prev];
                             const [removed] = newCategories.splice(dragIndex, 1);
@@ -2314,7 +2847,43 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               style={{ backgroundColor: category.color }}
                             ></div>
                             <div className="flex-1 min-w-0">
-                                <div className="font-semibold text-gray-900 mb-2" dir="ltr">{category.name}</div>
+                                <div className="font-semibold text-gray-900 mb-2 flex items-center gap-2 flex-wrap" dir="ltr">
+                                  <span>{category.name}</span>
+                                  {isSystemCategory(category) ? (
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">App</span>
+                                  ) : (
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">Mine</span>
+                                  )}
+                                </div>
+                                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center mb-2">
+                                  {!folderName && (
+                                    <label className="inline-flex items-center gap-2 text-xs text-gray-600">
+                                      <input
+                                        type="checkbox"
+                                        checked={selectedUncategorisedNames.has(category.name)}
+                                        onChange={(e) => {
+                                          setSelectedUncategorisedNames((prev) => {
+                                            const next = new Set(prev);
+                                            if (e.target.checked) next.add(category.name);
+                                            else next.delete(category.name);
+                                            return next;
+                                          });
+                                        }}
+                                        className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                      />
+                                      <span>Select</span>
+                                    </label>
+                                  )}
+                                  <label htmlFor={`view-folder-${index}`} className="text-xs font-medium text-gray-600">
+                                    Folder
+                                  </label>
+                                  <CategoryFolderSelect
+                                    id={`view-folder-${index}`}
+                                    value={category.group || ''}
+                                    folders={categoryFolders}
+                                    onChange={(next) => assignCategoriesToFolder([category.name], next || null)}
+                                  />
+                                </div>
                                 
                                 {/* Year Groups Display */}
                                 <div className="flex flex-wrap items-center gap-1.5">
@@ -2470,6 +3039,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               >
                                 <Edit3 className="h-4 w-4" />
                               </button>
+                              {!isSystemCategory(category) && (
                               <button
                                 onClick={() => handleDeleteCategory(index)}
                                 disabled={profile?.admin_preset_categories?.includes(category.name) === true}
@@ -2478,6 +3048,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               >
                                 <Trash2 className="h-4 w-4" />
                               </button>
+                              )}
                                 </>
                               )}
                             </div>
@@ -2487,7 +3058,68 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       </DraggableCategory>
                       );
                     })
-                    }
+                          )}
+                          {addInFolderName === folderKey ? (
+                            <div className="p-3 rounded-lg border border-teal-200 bg-teal-50/60 space-y-3">
+                              <p className="text-sm font-medium text-gray-900">
+                                Add category{folderName ? ` to ${folderName}` : ' to Uncategorised'}
+                              </p>
+                              <div className="flex flex-col sm:flex-row sm:items-end gap-3">
+                                <div className="flex-1">
+                                  <label htmlFor={`inline-cat-name-${folderKey || 'uncategorised'}`} className="block text-xs font-medium text-gray-600 mb-1">
+                                    Category name
+                                  </label>
+                                  <input
+                                    id={`inline-cat-name-${folderKey || 'uncategorised'}`}
+                                    value={inlineNewCategoryName}
+                                    onChange={(e) => setInlineNewCategoryName(e.target.value)}
+                                    placeholder="Category name"
+                                    className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                  />
+                                </div>
+                                <ColorPickerWithFavorites
+                                  value={inlineNewCategoryColor}
+                                  onChange={setInlineNewCategoryColor}
+                                  className="h-10 w-12 rounded-lg border border-gray-300 cursor-pointer"
+                                />
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <button
+                                  type="button"
+                                  onClick={() => void handleAddCategoryInFolder(folderKey)}
+                                  disabled={!inlineNewCategoryName.trim()}
+                                  className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 rounded-lg"
+                                >
+                                  <Plus className="h-4 w-4" /> Add
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    setAddInFolderName(null);
+                                    setInlineNewCategoryName('');
+                                    setInlineNewCategoryColor('#6B7280');
+                                  }}
+                                  className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setAddInFolderName(folderKey);
+                                setNewCategoryFolder(folderKey);
+                              }}
+                              className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
+                            >
+                              <Plus className="h-4 w-4" /> Add category
+                            </button>
+                          )}
+                        </>
+                      );
+                    }}
                   />
                 </div>
               </div>
@@ -2717,6 +3349,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             </div>
           )}
 
+          {activeTab === 'system-categories' && canEditSystemCategories && (
+            <div className="space-y-6">
+              <SystemCategoriesAdmin />
+            </div>
+          )}
+
           {activeTab === 'resource-links' && (
             <div className="space-y-6">
               {/* General option (merged here – only one setting) */}
@@ -2873,6 +3511,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {activeTab === 'hub-content' && isAdmin && (
             <div className="space-y-4">
               <MyHubAdministration />
+              <MusicHubAdminPanel
+                organisationFilter={null}
+                canAddOrganisations={canAddSubscriberOrgs}
+              />
               <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
                 <HubContentApprovalQueue />
               </div>
