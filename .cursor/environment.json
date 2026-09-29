@@ -1,0 +1,21 @@
+{
+  "name": "CCD Arts Council",
+  "user": "ubuntu",
+  "install": "pnpm install --frozen-lockfile && pnpm --filter @workspace/ccd run build:pitch && pnpm --filter @workspace/ccd run build:facts && pnpm --filter @workspace/api-server run build",
+  "terminals": [
+    {
+      "name": "api-server",
+      "command": "cd artifacts/api-server && NODE_ENV=development PORT=8080 pnpm run start",
+      "description": "Express API server (health check + PDF export). The frontend proxies /api requests here."
+    },
+    {
+      "name": "frontend",
+      "command": "cd artifacts/ccd && PORT=5173 pnpm exec vite --config vite.config.ts --host 0.0.0.0",
+      "description": "Creative Curriculum Designer frontend (Vite + React) served on port 5173."
+    }
+  ],
+  "ports": [
+    { "name": "frontend", "port": 5173 },
+    { "name": "api", "port": 8080 }
+  ]
+}
