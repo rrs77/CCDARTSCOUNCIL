@@ -11,7 +11,7 @@
  *
  * The builder implements the small subset of the PostgREST query API the app
  * actually uses: select (incl. the nested embeds in customObjectivesApi), eq,
- * neq, in, contains, or, match, order, limit, single, maybeSingle, insert,
+ * neq, in, gte, lte, contains, or, match, order, limit, single, maybeSingle, insert,
  * update, upsert, delete.
  */
 
@@ -201,6 +201,17 @@ class DemoQueryBuilder implements PromiseLike<{ data: unknown; error: null | { m
 
   in(column: string, values: unknown[]) {
     this.filters.push((row) => values.includes(row[column]));
+    return this;
+  }
+
+  // Values are compared as strings, which orders ISO dates and timestamps correctly.
+  gte(column: string, value: unknown) {
+    this.filters.push((row) => row[column] != null && String(row[column]) >= String(value));
+    return this;
+  }
+
+  lte(column: string, value: unknown) {
+    this.filters.push((row) => row[column] != null && String(row[column]) <= String(value));
     return this;
   }
 

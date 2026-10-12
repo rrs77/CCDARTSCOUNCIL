@@ -5,9 +5,10 @@ import { LessonPlanBuilder } from "./LessonPlanBuilder";
 import { LessonPlannerCalendar } from "./LessonPlannerCalendar";
 import { ActivityLibrary } from "./ActivityLibrary";
 import { LessonLibrary } from "./LessonLibrary";
-import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake, Mail, CircleHelp } from 'lucide-react';
+import { Calendar, Edit3, FolderOpen, Tag, Handshake, Mail, CircleHelp } from 'lucide-react';
 import { OurPartners } from './OurPartners';
 import { ContactUsPanel } from './ContactUsPanel';
+import { Planner } from './planner/Planner';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
@@ -51,7 +52,9 @@ export function Dashboard() {
     deleteUserLessonPlan,
   } = useData();
   const { getThemeForClass } = useSettings();
-  const [activeTab, setActiveTab] = useState('unit-viewer');
+  const [activeTab, setActiveTabRaw] = useState('unit-viewer');
+  // The Planner tab replaces both the HT Planner and the Calendar; old "calendar" links open it too.
+  const setActiveTab = (tab: string) => setActiveTabRaw(tab === 'calendar' ? 'unit-viewer' : tab);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [units, setUnits] = useState<Unit[]>([]);
@@ -342,15 +345,15 @@ export function Dashboard() {
                 </button>
               </div>
             )}
-            {/* 7 tabs — 3-col wrap on mobile; sm+ uses 7 so Partner Hubs + Contact fit */}
-            <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-7 gap-1 auto-rows-auto">
+            {/* 6 tabs — 3-col wrap on mobile; sm+ uses 6 so Partner Hubs + Contact fit */}
+            <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-6 gap-1 auto-rows-auto">
               <TabsTrigger
                 value="unit-viewer"
                 data-tab="unit-viewer"
                 className={dashTabClass}
               >
-                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                <span className="whitespace-nowrap">HT Planner</span>
+                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="whitespace-nowrap">Planner</span>
               </TabsTrigger>
 
               <TabsTrigger
@@ -384,16 +387,6 @@ export function Dashboard() {
               </TabsTrigger>
 
               <TabsTrigger
-                value="calendar"
-                data-tab="calendar"
-                className={dashTabClass}
-              >
-                <Calendar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
-                <span className="hidden sm:inline">Calendar</span>
-                <span className="sm:hidden">Calendar</span>
-              </TabsTrigger>
-
-              <TabsTrigger
                 value="our-partners"
                 data-tab="our-partners"
                 className={dashTabClass}
@@ -421,7 +414,20 @@ export function Dashboard() {
                 underlying components manage their own state via context, so
                 remounting the wrapper is purely a visual concern. */}
             <TabsContent value="unit-viewer" className="mt-6 ccd-fade-in-up" key={`uv-${activeTab}`}>
-              <UnitViewer />
+              <Planner
+                renderTerm={() => <UnitViewer />}
+                renderClassic={() => (
+                  <LessonPlannerCalendar
+                    onDateSelect={handleDateSelect}
+                    selectedDate={selectedDate}
+                    lessonPlans={userCreatedLessonPlans}
+                    onUpdateLessonPlan={handleUpdateLessonPlan}
+                    onDeleteLessonPlan={handleDeleteLessonPlan}
+                    onCreateLessonPlan={handleCreateLessonPlan}
+                    className={currentSheetInfo.sheet}
+                  />
+                )}
+              />
             </TabsContent>
 
             <TabsContent value="lesson-library" className="mt-6 ccd-fade-in-up" key={`ll-${activeTab}`}>
@@ -445,18 +451,6 @@ export function Dashboard() {
                 className={currentSheetInfo.sheet}
                 selectedCategory={selectedCategory}
                 onCategoryChange={setSelectedCategory}
-              />
-            </TabsContent>
-
-            <TabsContent value="calendar" className="mt-6 ccd-fade-in-up" key={`cal-${activeTab}`}>
-              <LessonPlannerCalendar
-                onDateSelect={handleDateSelect}
-                selectedDate={selectedDate}
-                lessonPlans={userCreatedLessonPlans}
-                onUpdateLessonPlan={handleUpdateLessonPlan}
-                onDeleteLessonPlan={handleDeleteLessonPlan}
-                onCreateLessonPlan={handleCreateLessonPlan}
-                className={currentSheetInfo.sheet}
               />
             </TabsContent>
 

@@ -334,7 +334,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         </div>
       ),
       image: "/manual/calendar.png",
-      highlightSelector: '[data-tab="calendar"]'
+      highlightSelector: '[data-tab="unit-viewer"]'
     },
     {
       title: "Select a Unit to Schedule",
@@ -452,7 +452,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         </div>
       ),
       image: "/manual/export-print.png",
-      highlightSelector: '[data-tab="calendar"]'
+      highlightSelector: '[data-tab="unit-viewer"]'
     },
     {
       title: "Exporting the Calendar",

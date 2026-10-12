@@ -6,7 +6,6 @@ import {
   HelpCircle,
   Info,
   BookOpen,
-  Calendar,
   Edit3,
   FolderOpen,
   Tag,
@@ -98,9 +97,9 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
         icon: <Tag className="h-7 w-7 text-pink-500" />,
       },
       {
-        title: 'HT Planner',
+        title: 'Planner',
         description:
-          'Browse units of work for the selected class. Open a unit to see its lessons, objectives, and how it sits across the school year.',
+          'See every class in one place by day, week or month. Open a lesson to mark it taught, add a reflection, move it or teach it to another class. Term and Units show how lessons sit across the year.',
         target: '[data-tab="unit-viewer"]',
         position: 'bottom',
         icon: <BookOpen className="h-7 w-7 text-indigo-500" />,
@@ -116,7 +115,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
       {
         title: 'Lesson Builder',
         description:
-          'Build a new lesson by dragging activities in from the library. Re-order, edit, and save — your lesson then shows up in the Lesson Library and on the Calendar.',
+          'Build a new lesson by dragging activities in from the library. Re-order, edit, and save — your lesson then shows up in the Lesson Library, ready to schedule in the Planner.',
         target: '[data-tab="lesson-builder"]',
         position: 'bottom',
         icon: <Edit3 className="h-7 w-7 text-teal-500" />,
@@ -128,14 +127,6 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
         target: '[data-tab="activity-library"]',
         position: 'bottom',
         icon: <Layers className="h-7 w-7 text-purple-500" />,
-      },
-      {
-        title: 'Calendar',
-        description:
-          'Plan the year by dropping units or individual lessons onto specific dates. Switch between month, week, and day views to map out your teaching at a glance.',
-        target: '[data-tab="calendar"]',
-        position: 'bottom',
-        icon: <Calendar className="h-7 w-7 text-cyan-500" />,
       },
       {
         title: 'Settings',
@@ -164,7 +155,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
       {
         title: "You're all set",
         description:
-          "That's the whirlwind tour. Pick a class, open the Activity Library or Calendar, and start designing — you can reopen this tour any time from the Help button.",
+          "That's the whirlwind tour. Pick a class, open the Activity Library or Planner, and start designing — you can reopen this tour any time from the Help button.",
         target: 'body',
         position: 'center',
         icon: <Sparkles className="h-7 w-7 text-teal-500" />,

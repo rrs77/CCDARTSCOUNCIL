@@ -63,3 +63,6 @@ Thumbs.db
 
 # Feature-demo recorder scratch (source webm before encode) — keep out of git
 artifacts/ccd/public/feature-demo/raw-video/
+
+# Supabase CLI link state
+supabase/.temp/

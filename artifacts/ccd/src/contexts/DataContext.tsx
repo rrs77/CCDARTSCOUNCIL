@@ -211,6 +211,8 @@ interface DataContextType {
   addOrUpdateUserLessonPlan: (plan: LessonPlan) => void; // New function to add/update user lesson plans
   updateLessonData?: (lessonNumber: string, updatedData: any) => Promise<void>;
   deleteUserLessonPlan: (planId: string) => void; // New function to delete user lesson plans
+  /** Re-read the current class's scheduled lessons after another view wrote to lesson_plans. */
+  reloadUserLessonPlans: () => void;
   deleteLesson: (lessonNumber: string) => void; // Move lesson to trash
   trashLessons: Record<string, LessonData>; // Lessons in trash
   restoreLesson: (lessonNumber: string) => void; // Restore lesson from trash
@@ -4199,6 +4201,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
     addOrUpdateUserLessonPlan,
     updateLessonData,
     deleteUserLessonPlan,
+    reloadUserLessonPlans: loadUserCreatedLessonPlans,
     deleteLesson,
     trashLessons,
     restoreLesson,

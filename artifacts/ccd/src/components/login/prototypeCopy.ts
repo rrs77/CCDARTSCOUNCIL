@@ -89,8 +89,8 @@ export const TABS_EXPLAINER_ITEMS: ReadonlyArray<{
 }> = [
   {
     id: 'unit-viewer',
-    label: 'HT Planner',
-    description: 'See your term plan and units at a glance.',
+    label: 'Planner',
+    description: 'Your week, month and half-terms for every class in one place.',
   },
   {
     id: 'lesson-library',
@@ -107,11 +107,6 @@ export const TABS_EXPLAINER_ITEMS: ReadonlyArray<{
     label: 'Activity Library',
     description:
       "Where a teacher's personal activities live, plus any they've selected or added from Partner Hubs.",
-  },
-  {
-    id: 'calendar',
-    label: 'Calendar',
-    description: 'Schedule lessons and keep track of key dates.',
   },
   {
     id: 'our-partners',

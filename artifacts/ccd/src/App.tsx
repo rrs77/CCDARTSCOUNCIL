@@ -397,7 +397,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       />
       {showPreviewBanner && <PreviewBanner />}
       <Header />
-      <main className={`flex-1 pb-20 ${showPreviewBanner ? 'pt-[calc(3.5rem+var(--preview-banner-height,0px))] sm:pt-[calc(4rem+var(--preview-banner-height,0px))]' : 'pt-14 sm:pt-16'}`}>
+      <main className={`flex-1 pb-44 md:pb-24 ${showPreviewBanner ? 'pt-[calc(3.5rem+var(--preview-banner-height,0px))] sm:pt-[calc(4rem+var(--preview-banner-height,0px))]' : 'pt-14 sm:pt-16'}`}>
         <Dashboard />
       </main>
       <Footer />
