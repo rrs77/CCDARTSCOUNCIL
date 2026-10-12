@@ -3921,62 +3921,77 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
       if (Object.keys(lessonsToCopy).length === 0) {
         throw new Error('No valid lessons to copy');
       }
-      
-      // Load target class data
-      const targetLocalStorageKey = `${targetClassId}-lessonsData`;
-      const targetData = localStorage.getItem(targetLocalStorageKey);
-      let targetLessonsData: Record<string, LessonData> = {};
-      let targetLessonNumbers: string[] = [];
-      let targetTeachingUnits: string[] = [];
-      let targetLessonStandards: Record<string, string[]> = {};
-      
-      if (targetData) {
-        try {
-          const parsed = JSON.parse(targetData);
-          targetLessonsData = parsed.allLessonsData || {};
-          targetLessonNumbers = parsed.lessonNumbers || [];
-          targetTeachingUnits = parsed.teachingUnits || [];
-          targetLessonStandards = parsed.lessonStandards || {};
-        } catch (e) {
-          console.warn('Failed to parse target class data:', e);
-        }
+      if (targetClassId === currentSheetInfo.sheet) {
+        throw new Error('Choose a different class to copy to');
       }
-      
-      // Merge lessons into target class
-      targetLessonsData = { ...targetLessonsData, ...lessonsToCopy };
-      
-      // Add lesson numbers if they don't exist
-      lessonNumbers.forEach(num => {
-        if (!targetLessonNumbers.includes(num)) {
-          targetLessonNumbers.push(num);
-        }
-      });
-      
-      // Sort lesson numbers
-      targetLessonNumbers.sort((a, b) => parseInt(a) - parseInt(b));
-      
-      // Save to localStorage
-      const dataToSave = {
-        allLessonsData: targetLessonsData,
-        lessonNumbers: targetLessonNumbers,
-        teachingUnits: targetTeachingUnits,
-        lessonStandards: targetLessonStandards
+
+      // Read the target class's existing lessons. If that read fails we stop here: writing
+      // without them would replace the class's lessons with only the copied ones.
+      const targetLocalStorageKey = `lesson-data-${targetClassId}`;
+      type SheetData = {
+        allLessonsData: Record<string, LessonData>;
+        lessonNumbers: string[];
+        teachingUnits: string[];
+        lessonStandards?: Record<string, string[]>;
+        notes?: string;
       };
-      
-      localStorage.setItem(targetLocalStorageKey, JSON.stringify(dataToSave));
-      console.log(`💾 Saved ${lessonNumbers.length} lessons to ${targetClassId} localStorage`);
-      
-      // Save to Supabase if configured
+      let target: SheetData | null = null;
+      // Lesson numbers already shown for the target class. lessonsApi.getBySheet merges the
+      // previous year into 2026-2027, so copies must avoid those numbers too or they'd be hidden.
+      const shownNumbers = new Set<string>();
       if (isSupabaseConfigured()) {
-        try {
-          await lessonsApi.updateSheet(targetClassId, dataToSave, currentAcademicYear);
-          console.log(`✅ Saved ${lessonNumbers.length} lessons to ${targetClassId} Supabase`);
-        } catch (error) {
-          console.warn('Failed to save to Supabase:', error);
+        target = await lessonsApi.getSheetRowStrict(targetClassId, currentAcademicYear);
+        if (currentAcademicYear === '2026-2027') {
+          const previous = await lessonsApi.getSheetRowStrict(targetClassId, '2025-2026');
+          if (previous) {
+            [...previous.lessonNumbers, ...Object.keys(previous.allLessonsData)].forEach((n) => shownNumbers.add(n));
+          }
         }
       }
-      
-      console.log('✅ Lessons copied successfully');
+      if (!target && !isSupabaseConfigured()) {
+        const local = localStorage.getItem(targetLocalStorageKey);
+        if (local) {
+          const parsed = JSON.parse(local);
+          target = {
+            allLessonsData: parsed.allLessonsData || {},
+            lessonNumbers: parsed.lessonNumbers || [],
+            teachingUnits: parsed.teachingUnits || [],
+            lessonStandards: parsed.lessonStandards || {},
+            notes: parsed.notes,
+          };
+        }
+      }
+      const existing: SheetData = target || { allLessonsData: {}, lessonNumbers: [], teachingUnits: [] };
+
+      // Copies are added after the target's last lesson, so no existing lesson is ever replaced.
+      const used = new Set([...existing.lessonNumbers, ...Object.keys(existing.allLessonsData), ...shownNumbers]);
+      let next = Math.max(0, ...[...used].map((n) => parseInt(n, 10)).filter((n) => Number.isFinite(n))) + 1;
+      const merged = { ...existing.allLessonsData };
+      const mergedNumbers = [...existing.lessonNumbers];
+      lessonNumbers.forEach((sourceNumber) => {
+        const lesson = lessonsToCopy[sourceNumber];
+        if (!lesson) return;
+        while (used.has(String(next))) next++;
+        const newNumber = String(next++);
+        used.add(newNumber);
+        merged[newNumber] = JSON.parse(JSON.stringify(lesson));
+        mergedNumbers.push(newNumber);
+      });
+
+      const dataToSave = {
+        allLessonsData: merged,
+        lessonNumbers: mergedNumbers,
+        teachingUnits: existing.teachingUnits,
+        lessonStandards: existing.lessonStandards || {},
+        notes: existing.notes ?? '',
+      };
+
+      if (isSupabaseConfigured()) {
+        await lessonsApi.updateSheet(targetClassId, dataToSave, currentAcademicYear);
+      } else {
+        localStorage.setItem(targetLocalStorageKey, JSON.stringify(dataToSave));
+      }
+      console.log(`✅ Copied ${lessonNumbers.length} lessons to ${targetClassId}`);
     } catch (error) {
       console.error('❌ Failed to copy lessons:', error);
       throw error;

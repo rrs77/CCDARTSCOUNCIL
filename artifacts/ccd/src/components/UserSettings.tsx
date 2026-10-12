@@ -1706,18 +1706,24 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       const sectionOpen = !section.collapsed || (isOther && Boolean(otherQuery));
                       return (
                         <div key={section.id} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                          <div className="w-full">
+                          <div className="w-full flex items-center gap-2 px-3 py-2.5 bg-gray-100 hover:bg-gray-200">
                           <button
                             type="button"
                             onClick={() => updateYearGroupSections(prev => prev.map(s => s.id === section.id ? { ...s, collapsed: !s.collapsed } : s))}
-                            className="w-full flex items-center gap-2 px-3 py-2.5 bg-gray-100 hover:bg-gray-200 text-left"
+                            aria-expanded={sectionOpen}
+                            aria-label={editingSectionId === section.id ? `Expand or collapse ${section.label}` : undefined}
+                            className={`flex items-center gap-2 text-left ${editingSectionId === section.id ? 'flex-shrink-0' : 'flex-1 min-w-0'}`}
                           >
                             {sectionOpen ? (
                               <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
                             ) : (
                               <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
                             )}
-                            {editingSectionId === section.id ? (
+                            {editingSectionId !== section.id && (
+                              <span className="font-medium text-gray-900 flex-1">{section.label}</span>
+                            )}
+                          </button>
+                            {editingSectionId === section.id && (
                               <input
                                 type="text"
                                 value={editingSectionLabel}
@@ -1741,8 +1747,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 className="flex-1 min-w-0 px-2 py-0.5 border border-teal-300 rounded text-sm"
                                 autoFocus
                               />
-                            ) : (
-                              <span className="font-medium text-gray-900 flex-1">{section.label}</span>
                             )}
                             {editingSectionId !== section.id && (
                               <>
@@ -1773,7 +1777,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               </>
                             )}
                             <span className="text-xs text-gray-500">({yearGroupsInSection.length})</span>
-                          </button>
                           </div>
                           {isOther && (
                             <div className="p-2 space-y-2 border-t border-gray-100">

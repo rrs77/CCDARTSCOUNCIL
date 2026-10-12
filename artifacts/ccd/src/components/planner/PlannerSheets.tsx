@@ -334,7 +334,8 @@ function ReuseForm({ plan, title, data, onDone }: { plan: LessonPlan; title: str
       time: time || undefined,
       title,
       lessonNumber: undefined,
-      notes: '',
+      unitId: undefined,
+      notes: `Copied from ${data.classById.get(plan.className)?.name || plan.className}, ${fmtDate(new Date(plan.date))}.`,
       status: 'planned',
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -366,7 +367,7 @@ function ReuseForm({ plan, title, data, onDone }: { plan: LessonPlan; title: str
       <ul className="space-y-1.5 rounded-2xl border border-[#D6EBC9] bg-[#F6FBF3] px-4 py-3 text-[13px] text-[#1E6B3E]">
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" />A new session for {targetName} with the same activities.</li>
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" />The original lesson and its reflection are not changed.</li>
-        <li className="flex gap-2 text-[#8A5300]"><CalendarClock className="mt-0.5 h-4 w-4 shrink-0" />Later edits to one copy won’t update the other yet.</li>
+        <li className="flex gap-2"><CalendarClock className="mt-0.5 h-4 w-4 shrink-0" />Each class keeps its own copy, so you can adapt it for {targetName} without affecting the original.</li>
       </ul>
       <div className="flex gap-2 pt-1">
         <button type="button" className={btn} onClick={onDone}>Cancel</button>

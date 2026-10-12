@@ -406,6 +406,30 @@ export const lessonsApi = {
     }
   },
   
+  /**
+   * The user's own lessons row for one sheet and year, read strictly: throws on any error
+   * instead of returning null, so callers never mistake a failed read for an empty class.
+   */
+  getSheetRowStrict: async (sheet: string, academicYear: string) => {
+    const userId = getCurrentUserId();
+    if (!isAuthUserId(userId)) throw new Error('Unauthenticated: cannot read lessons without a scoped user ID');
+    const { data, error } = await supabase
+      .from(TABLES.LESSONS)
+      .select('data, lesson_numbers, teaching_units, notes')
+      .eq('sheet_name', sheet)
+      .eq('academic_year', academicYear)
+      .eq('user_id', userId)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+    return {
+      allLessonsData: (data.data || {}) as Record<string, any>,
+      lessonNumbers: (data.lesson_numbers || []) as string[],
+      teachingUnits: (data.teaching_units || []) as string[],
+      notes: (data.notes || '') as string,
+    };
+  },
+
   updateSheet: async (sheet: string, data: any, academicYear?: string) => {
     try {
       const year = academicYear || '2025-2026';

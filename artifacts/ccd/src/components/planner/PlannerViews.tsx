@@ -15,6 +15,7 @@ import {
   startOfWeek,
   tint,
   ymd,
+  academicYearFor,
   type DayEntry,
   type PlannerEvent,
 } from './plannerModel';
@@ -282,11 +283,13 @@ export function UnitsView({
   classId,
   academicYear,
   onOpenTimetable,
+  onChangeYear,
 }: {
   data: PlannerData;
   classId: string;
   academicYear: string;
   onOpenTimetable: () => void;
+  onChangeYear: (academicYear: string) => void;
 }) {
   const { ensureLessons } = data;
   useEffect(() => {
@@ -294,6 +297,17 @@ export function UnitsView({
   }, [classId, academicYear, ensureLessons]);
   const cls = data.classById.get(classId);
   const cache = data.lessonCache[data.lessonKey(classId, academicYear)];
+  const startYear = Number(academicYear.split('-')[0]);
+  const prevYear = `${startYear - 1}-${startYear}`;
+  const isPastYear = startYear < Number(academicYearFor(new Date()).split('-')[0]);
+  const hasTerms = (c: typeof cache) =>
+    !!c && c !== 'loading' && c.halfTerms.some((t) => t.lessons.some((n) => c.lessons[n]));
+  const prevCache = data.lessonCache[data.lessonKey(classId, prevYear)];
+  const cacheLoaded = !!cache && cache !== 'loading';
+  const thisYearEmpty = cacheLoaded && !hasTerms(cache);
+  useEffect(() => {
+    if (classId && thisYearEmpty) ensureLessons(classId, prevYear);
+  }, [classId, thisYearEmpty, prevYear, ensureLessons]);
   const [preview, setPreview] = useState<{ termId: string; items: { n: string; date: Date; time: string }[]; skipped: string[] } | null>(null);
 
   const planByLesson = useMemo(() => {
@@ -350,16 +364,24 @@ export function UnitsView({
   };
 
   if (!terms.length) {
+    const label = (y: string) => y.replace('-', '–');
     return (
-      <p className="rounded-2xl border border-dashed border-[#D5E0D8] px-4 py-8 text-center text-sm text-[#4B5563]">
-        {cls.name} has no lessons in a half-term yet. Add lessons to a half-term in the Term view.
-      </p>
+      <div className="rounded-2xl border border-dashed border-[#D5E0D8] px-4 py-8 text-center text-sm text-[#4B5563]">
+        <p>
+          {cls.name} has no lessons in a half-term for {label(academicYear)} yet. Add lessons to a half-term in the Term view.
+        </p>
+        {hasTerms(prevCache) && (
+          <button type="button" className="mt-3 inline-flex min-h-[40px] items-center rounded-xl border border-[#D5E0D8] bg-white px-3 font-semibold text-[#002D24] hover:bg-[#F7FAF8]" onClick={() => onChangeYear(prevYear)}>
+            See {cls.name}’s {label(prevYear)} units
+          </button>
+        )}
+      </div>
     );
   }
 
   return (
     <div className="space-y-4">
-      {!hasSlots && (
+      {!hasSlots && !isPastYear && (
         <div className="flex flex-col gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-sm text-[#8A5300] sm:flex-row sm:items-center">
           <AlertTriangle className="h-5 w-5 shrink-0" />
           <span className="flex-1">Add {cls.name}’s regular lesson times to the timetable so remaining lessons can be scheduled automatically.</span>
@@ -381,7 +403,7 @@ export function UnitsView({
                   <b className={remaining ? 'text-[#8A5300]' : 'text-[#1E6B3E]'}>{remaining} not scheduled</b>
                 </p>
               </div>
-              {remaining > 0 && hasSlots && (
+              {remaining > 0 && hasSlots && !isPastYear && (
                 <button
                   type="button"
                   onClick={() => planRemaining(t.id, t.lessons)}

@@ -580,7 +580,7 @@ export function LessonLibrary({
     try {
       await copyLessonsToClass(lessonNumbers, targetClassId);
       const targetClassName = customYearGroups.find(g => g.id === targetClassId)?.name || targetClassId;
-      alert(`✅ Successfully copied ${lessonNumbers.length} ${lessonNumbers.length === 1 ? 'lesson' : 'lessons'} to ${targetClassName}!`);
+      alert(`✅ Copied ${lessonNumbers.length} ${lessonNumbers.length === 1 ? 'lesson' : 'lessons'} to ${targetClassName}. They were added after its existing lessons; nothing in ${targetClassName} was replaced.`);
     } catch (error) {
       console.error('Failed to copy lessons:', error);
       alert(`❌ Failed to copy lessons: ${error instanceof Error ? error.message : 'Unknown error'}`);

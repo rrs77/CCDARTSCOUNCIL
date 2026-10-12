@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
+import { toast } from 'react-hot-toast';
 import {
   CalendarCog,
   ChevronDown,
@@ -319,7 +320,13 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           {view === 'units' && (
             <>
               <ClassSelect data={data} value={focusedClassId} onChange={setFocus} />
-              <UnitsView data={data} classId={focusedClassId} academicYear={academicYear} onOpenTimetable={() => changeView('classic')} />
+              <UnitsView
+                data={data}
+                classId={focusedClassId}
+                academicYear={academicYear}
+                onOpenTimetable={() => changeView('classic')}
+                onChangeYear={(y) => setAnchor(new Date(Number(y.split('-')[0]), 9, 1))}
+              />
             </>
           )}
           {view === 'term' && (
@@ -574,10 +581,29 @@ h1{font-family:"Playfair Display",Georgia,serif;color:#002D24;font-size:22px;mar
 .l{border-left:3px solid;padding:3px 0 3px 7px;margin-top:8px;break-inside:avoid}.a{font-size:10.5px;font-weight:700}.b{font-size:12px;font-weight:600}
 .n{color:#9CA3AF;margin-top:8px}</style></head><body>
 <h1>Week of ${mon.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}</h1>
-<small>Weekly overview · private reflections are not included</small><div class="g">${cols}</div>
-<script>window.onload=()=>{window.print()}</script></body></html>`;
-  const w = window.open('', '_blank');
-  if (!w) return;
-  w.document.write(html);
-  w.document.close();
+<small>Weekly overview · private reflections are not included</small><div class="g">${cols}</div></body></html>`;
+  const frame = document.createElement('iframe');
+  frame.setAttribute('aria-hidden', 'true');
+  frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
+  document.body.appendChild(frame);
+  const win = frame.contentWindow;
+  if (!win) {
+    frame.remove();
+    toast.error('Printing is not available in this browser.');
+    return;
+  }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  const cleanUp = () => setTimeout(() => frame.remove(), 1000);
+  win.addEventListener('afterprint', cleanUp, { once: true });
+  setTimeout(() => {
+    try {
+      win.focus();
+      win.print();
+    } catch {
+      toast.error('Printing is not available in this browser.');
+    }
+    setTimeout(() => frame.isConnected && frame.remove(), 60000);
+  }, 250);
 }

@@ -1,6 +1,6 @@
 -- =============================================================================
 -- ROH + RSC organisation hubs (admin editing via HubAdminDashboard)
--- Idempotent. Grants public pages editable under Settings → Hub admin when a
+-- Idempotent and additive only: existing rows are never overwritten. Grants public pages editable under Settings → Hub admin when a
 -- user has hub_memberships (or is super_admin).
 -- =============================================================================
 
@@ -21,22 +21,7 @@ INSERT INTO public.organisations (
     '#111111', '#C8102E', true, false, '#111111',
     false, true, 'active', ARRAY['rsceducation', 'royalshakespeare', 'royal-shakespeare-company']
   )
-ON CONFLICT (id) DO UPDATE SET
-  slug = EXCLUDED.slug,
-  display_name = EXCLUDED.display_name,
-  short_name = EXCLUDED.short_name,
-  site_url = EXCLUDED.site_url,
-  logo_src = EXCLUDED.logo_src,
-  primary_color = EXCLUDED.primary_color,
-  accent_color = EXCLUDED.accent_color,
-  logo_invert = EXCLUDED.logo_invert,
-  logo_panel_color = EXCLUDED.logo_panel_color,
-  interactive = true,
-  status = 'active',
-  aliases = EXCLUDED.aliases,
-  partner_slug = EXCLUDED.partner_slug,
-  name = EXCLUDED.name,
-  updated_at = NOW();
+ON CONFLICT DO NOTHING;
 
 INSERT INTO public.hub_pages (
   organisation_id, tagline, description, intro_html, published_revision, published_at, updated_at
@@ -65,7 +50,4 @@ INSERT INTO public.hub_pages (
     NOW(),
     NOW()
   )
-ON CONFLICT (organisation_id) DO UPDATE SET
-  tagline = EXCLUDED.tagline,
-  description = EXCLUDED.description,
-  updated_at = NOW();
+ON CONFLICT DO NOTHING;
