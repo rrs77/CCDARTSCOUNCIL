@@ -33,6 +33,9 @@ import * as hubResource from '../server/api/hubs/[hubId]/resources/[resourceId].
 import * as musicHubPassword from '../server/api/music-hubs/admin/password.js';
 import * as musicHubResource from '../server/api/music-hubs/resource.js';
 import * as musicHubUnlock from '../server/api/music-hubs/unlock.js';
+import * as musicHubAccessCodes from '../server/api/music-hubs/access-codes.js';
+import * as musicHubRedeemCode from '../server/api/music-hubs/redeem-code.js';
+import * as musicHubResourceAccess from '../server/api/music-hubs/resource-access.js';
 
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -159,6 +162,10 @@ function targetFor(pathname) {
     ) {
       return musicHubUnlock;
     }
+
+    if (rest.length === 1 && rest[0] === 'access-codes') return musicHubAccessCodes;
+    if (rest.length === 1 && rest[0] === 'redeem-code') return musicHubRedeemCode;
+    if (rest.length === 1 && rest[0] === 'resource-access') return musicHubResourceAccess;
 
     return null;
   }
