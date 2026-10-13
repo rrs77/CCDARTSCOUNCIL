@@ -337,6 +337,25 @@ textarea:focus-visible {
   animation-delay: 0.44s;
 }
 
+/* Partner Hubs: Aptos where installed (Microsoft 365 schools), Inter otherwise. */
+.ccd-partner-hubs {
+  font-family: Aptos, 'Aptos Display', Inter, system-ui, sans-serif;
+}
+
+@keyframes ccd-sheet-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.ccd-sheet-up {
+  animation: ccd-sheet-up var(--ccd-duration-base) var(--ccd-ease-out) both;
+}
+
 /* Respect users who prefer reduced motion — disables all the entrance,
  * shimmer, drop-flash, scale-in animations app-wide. Iframes/modals still
  * function, just no movement. */

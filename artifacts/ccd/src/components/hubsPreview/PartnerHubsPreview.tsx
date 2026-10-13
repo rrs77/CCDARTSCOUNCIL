@@ -1,26 +1,32 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import {
   ArrowRight,
   BookOpen,
-  CalendarDays,
   Check,
   ChevronRight,
   ExternalLink,
   FileText,
   Info,
+  KeyRound,
   Library,
+  Lock,
   Mail,
   MapPin,
   Music2,
+  Pencil,
   Phone,
   Search,
   Sparkles,
   X,
 } from 'lucide-react';
 import { openPartnerHub } from '../../config/partnerHubs';
+import { useData } from '../../contexts/DataContext';
+import { useSettings } from '../../contexts/SettingsContextNew';
+import { getDefaultSectionIdForYearGroup } from '../../utils/yearGroupSectionOrder';
 import { UkHubMap } from './UkHubMap';
+import { ManageHubDialog } from './ManageHubDialog';
 import {
   ENGLAND,
   type MapFocus,
@@ -31,27 +37,48 @@ import {
   focusName,
   focusPath,
   hubLabel,
-  indexMap,
-  loadUkHubMap,
   parentFocus,
 } from './ukHubMapData';
+import { DISCIPLINES, type Discipline, NATION_NOTES, ORGANISATIONS, organisationBrand } from './hubsPreviewContent';
 import {
-  DISCIPLINES,
-  type Discipline,
-  HUB_IDENTITY,
+  ACCESS_LABEL,
+  type Directory,
   type HubResource,
-  NATION_NOTES,
-  ORGANISATIONS,
+  type HubRole,
+  type HubService,
   PHASES,
   type Phase,
-  hubRelationship,
-  resourcesForArea,
-  resourcesForHub,
-  serviceForLad,
-} from './hubsPreviewContent';
+  RELATIONSHIP_LABEL,
+  atLeast,
+  canUseAccessCodes,
+  isLocked,
+  loadPartnerData,
+  logEngagement,
+  myHubRole,
+  openLockedResource,
+  paragraphs,
+  redeemAccessCode,
+  reloadPartnerData,
+} from './partnerDirectory';
+
+const LOADING_DIRECTORY: Directory = {
+  source: 'bundled',
+  hub: (id) => ({ id, relationship: 'directory_listing' }),
+  services: () => [],
+  serviceFor: () => undefined,
+  area: () => undefined,
+  resources: [],
+  resourcesForHub: () => [],
+  resourcesForArea: () => ({ local: [], shared: [] }),
+};
+const DirectoryContext = createContext<Directory>(LOADING_DIRECTORY);
+const useDirectory = () => useContext(DirectoryContext);
+
+const serviceRole = (s: HubService) => (s.role === 'lead' ? 'Hub Lead Organisation' : 'Music service');
+const shortHubName = (hub: MapHub) => hubLabel(hub).replace(/ Music( Education)? Hub$/, '');
 
 // ---------------------------------------------------------------------------
-// URL state: ?hubs=preview&page=browse|hub|area&at=england/east-of-england/...
+// URL state: ?page=browse|hub|area&at=england/east-of-england/...&section=&view=
 // ---------------------------------------------------------------------------
 
 type Page = 'browse' | 'hub' | 'area';
@@ -73,7 +100,7 @@ function readRoute(): Route {
     page: ['browse', 'hub', 'area'].includes(page) ? page : 'browse',
     at: (p.get('at') || '').split('/').filter(Boolean),
     section: p.get('section') === 'organisations' ? 'organisations' : 'music-hubs',
-    tab: (['resources', 'events', 'about', 'contact'].includes(p.get('tab') || '') ? p.get('tab') : 'resources') as HubTab,
+    tab: (['resources', 'events', 'about', 'contact'].includes(p.get('view') || '') ? p.get('view') : 'resources') as HubTab,
   };
 }
 
@@ -81,14 +108,14 @@ function writeRoute(r: Partial<Route>, replace = false) {
   const cur = readRoute();
   const next = { ...cur, ...r };
   const p = new URLSearchParams(window.location.search);
-  p.set('hubs', 'preview');
+  p.delete('hubs');
   p.set('page', next.page);
   if (next.at.length) p.set('at', next.at.join('/'));
   else p.delete('at');
   if (next.section === 'organisations') p.set('section', 'organisations');
   else p.delete('section');
-  if (next.page === 'hub' && next.tab !== 'resources') p.set('tab', next.tab);
-  else p.delete('tab');
+  if (next.page === 'hub' && next.tab !== 'resources') p.set('view', next.tab);
+  else p.delete('view');
   const url = `${window.location.pathname}?${p.toString()}`;
   if (replace) window.history.replaceState(null, '', url);
   else window.history.pushState(null, '', url);
@@ -109,8 +136,22 @@ function useRoute() {
   return route;
 }
 
-export const isHubsPreview = () =>
-  typeof window !== 'undefined' && new URLSearchParams(window.location.search).get('hubs') === 'preview';
+/**
+ * The redesigned Partner Hubs page is on unless switched off with
+ * VITE_PARTNER_HUBS=classic (deployment) or ?hubs=classic (one visit).
+ */
+export const newPartnerHubsEnabled = () => {
+  if (typeof window === 'undefined') return true;
+  if (import.meta.env.VITE_PARTNER_HUBS === 'classic') return false;
+  return new URLSearchParams(window.location.search).get('hubs') !== 'classic';
+};
+
+/** True when the URL is a Partner Hubs deep link, so the Dashboard opens that tab. */
+export const isPartnerHubsLink = () => {
+  if (typeof window === 'undefined') return false;
+  const p = new URLSearchParams(window.location.search);
+  return p.get('hubs') === 'preview' || ['browse', 'hub', 'area'].includes(p.get('page') ?? '');
+};
 
 // ---------------------------------------------------------------------------
 
@@ -152,10 +193,20 @@ function Crumbs({ items }: { items: { label: string; onClick?: () => void }[] })
   );
 }
 
-function PrimaryButton({ children, onClick, className = '' }: { children: React.ReactNode; onClick?: () => void; className?: string }) {
+function PrimaryButton({
+  children,
+  onClick,
+  className = '',
+  type = 'button',
+}: {
+  children: React.ReactNode;
+  onClick?: () => void;
+  className?: string;
+  type?: 'button' | 'submit';
+}) {
   return (
     <button
-      type="button"
+      type={type}
       onClick={onClick}
       className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#002D24] px-4 text-[15px] font-medium text-white shadow-[0_1px_2px_rgba(0,45,36,0.2)] transition hover:bg-[#0B3B30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14B8A6] ${className}`}
     >
@@ -215,6 +266,7 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
   const [open, setOpen] = useState(false);
   const [active, setActive] = useState(0);
   const boxRef = useRef<HTMLDivElement>(null);
+  const dir = useContext(DirectoryContext);
 
   const hits = useMemo<SearchHit[]>(() => {
     const term = q.trim().toLowerCase();
@@ -264,21 +316,28 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
           go: () => openPartnerHub(o.hub.slug),
         })),
     );
-    if (ix) {
+    if (ix && dir) {
       out.push(
-        ...resourcesForHub('greater-essex')
+        ...dir.resources
           .filter((r) => starts(r.title) || starts(r.subject) || starts(r.provider))
           .slice(0, 3)
-          .map<SearchHit>((r) => ({
-            group: 'Resources',
-            label: r.title,
-            detail: `${r.type} · ${r.provider} · ${r.phaseLabel}`,
-            go: () => onFocusMap({ level: 'hub', id: 'greater-essex' }, 'hub'),
-          })),
+          .flatMap<SearchHit>((r) => {
+            const scope = r.scopes.find((s) => s.type === 'hub' || s.type === 'area');
+            if (!scope) return [];
+            const f: MapFocus = scope.type === 'hub' ? { level: 'hub', id: scope.id } : { level: 'lad', id: scope.id };
+            return [
+              {
+                group: 'Resources',
+                label: r.title,
+                detail: `${r.type} · ${r.provider} · ${r.phaseLabel}`,
+                go: () => onFocusMap(f, scope.type === 'hub' ? 'hub' : 'area'),
+              },
+            ];
+          }),
       );
     }
     return out;
-  }, [q, ix, onFocusMap]);
+  }, [q, ix, dir, onFocusMap]);
 
   useEffect(() => setActive(0), [q]);
   useEffect(() => {
@@ -388,7 +447,7 @@ function HubCard({ ix, hub, onOpen, onHover, hovered, regionCode }: {
   hovered: boolean;
   regionCode?: string;
 }) {
-  const rel = hubRelationship(hub.id);
+  const rel = useDirectory().hub(hub.id).relationship;
   const crossNote = regionCode && hub.region !== regionCode ? `Based in ${ix.region(hub.region)?.name}; covers part of this region.` : hub.regionNote;
   return (
     <button
@@ -414,7 +473,7 @@ function HubCard({ ix, hub, onOpen, onHover, hovered, regionCode }: {
       <p className={`mt-2 text-[14px] leading-snug ${muted}`}>{hub.authorities.join(' · ')}</p>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
         <Badge>{hub.lads.length} local areas</Badge>
-        {rel === 'Working example' && <Badge tone="teal">Working example</Badge>}
+        {rel !== 'directory_listing' && <Badge tone="teal">{RELATIONSHIP_LABEL[rel]}</Badge>}
       </div>
       {crossNote && <p className="mt-2 text-[13px] text-[#8A5300]">{crossNote}</p>}
     </button>
@@ -463,6 +522,57 @@ function AreaList({ lads, selected, hover, onHover, onSelect, filter }: {
   );
 }
 
+/**
+ * The selected area's summary. On large screens it sits in the side panel;
+ * on phones and tablets it docks to the bottom of the screen so it is visible
+ * straight after tapping the map.
+ */
+function AreaPreview({ hub, lad, onExplore, onClose }: { hub: MapHub; lad: MapLad; onExplore: () => void; onClose: () => void }) {
+  const dir = useDirectory();
+  const svc = dir.serviceFor(lad);
+  const shared = dir.resourcesForHub(hub.id).length;
+  const body = (
+    <>
+      <p className={`text-[17px] font-semibold ${ink}`}>{lad.name}</p>
+      <p className={`mt-0.5 text-[14px] ${muted}`}>{svc ? `Served by ${svc.name}` : `Part of ${hubLabel(hub)}`}</p>
+      {shared > 0 && (
+        <p className={`mt-2 text-[14px] ${ink}`}>
+          {shared} shared {shortHubName(hub)} resource{shared === 1 ? '' : 's'}
+        </p>
+      )}
+      <PrimaryButton className="mt-3 w-full" onClick={onExplore}>
+        Explore {lad.name} <ArrowRight className="h-4 w-4" />
+      </PrimaryButton>
+    </>
+  );
+  return (
+    <>
+      <div className="hidden rounded-2xl border border-[#14B8A6]/30 bg-[#F2FBF9] p-4 lg:block" aria-live="polite">
+        {body}
+      </div>
+      {createPortal(
+        <div
+          role="region"
+          aria-label={`${lad.name} selected`}
+          className="ccd-partner-hubs ccd-sheet-up fixed inset-x-0 bottom-0 z-[70] rounded-t-3xl border-t border-[#002D24]/10 bg-white px-5 pb-[max(1.25rem,env(safe-area-inset-bottom))] pt-3 shadow-[0_-16px_40px_-16px_rgba(0,45,36,0.35)] lg:hidden"
+        >
+          <div className="mx-auto mb-2 h-1 w-10 rounded-full bg-[#002D24]/15" aria-hidden />
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Clear selection"
+            className="absolute right-3 top-3 rounded-full p-2 text-[#002D24]/55 hover:bg-[#002D24]/5"
+          >
+            <X className="h-5 w-5" />
+          </button>
+          {body}
+        </div>,
+        document.body,
+      )}
+    </>
+  );
+}
+
 function FindArea({ value, onChange, label = 'Find your area' }: { value: string; onChange: (v: string) => void; label?: string }) {
   return (
     <label className="flex h-11 items-center gap-2 rounded-xl border border-[#002D24]/10 bg-white px-3 focus-within:border-[#14B8A6]/60 focus-within:ring-4 focus-within:ring-[#14B8A6]/10">
@@ -485,6 +595,7 @@ function BrowsePanel({ ix, focus, hover, onHover, go }: {
   onHover: (id: string | null) => void;
   go: (f: MapFocus, page?: Page) => void;
 }) {
+  const dir = useDirectory();
   const [filter, setFilter] = useState('');
   useEffect(() => setFilter(''), [focus.level]);
 
@@ -598,14 +709,13 @@ function BrowsePanel({ ix, focus, hover, onHover, go }: {
   const lad = focus.level === 'lad' ? ix.lad(focus.id) : undefined;
   const hub = ix.hub(focus.level === 'hub' ? focus.id : lad!.hub!)!;
   const lads = ix.ladsInHub(hub.id);
-  const svc = lad ? serviceForLad(hub, lad) : undefined;
-  const shared = resourcesForHub(hub.id).length;
+  const rel = dir.hub(hub.id).relationship;
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-[#002D24]/[0.08] bg-white p-4">
         <div className="flex flex-wrap items-center gap-1.5">
           <Badge>Music Hub</Badge>
-          {hubRelationship(hub.id) === 'Working example' && <Badge tone="teal">Working example</Badge>}
+          {rel !== 'directory_listing' && <Badge tone="teal">{RELATIONSHIP_LABEL[rel]}</Badge>}
         </div>
         <p className={`mt-2 text-[17px] font-semibold leading-snug ${ink}`}>{hub.name}</p>
         <p className={`mt-1 text-[14px] ${muted}`}>
@@ -617,14 +727,12 @@ function BrowsePanel({ ix, focus, hover, onHover, go }: {
       </div>
 
       {lad && (
-        <div className="rounded-2xl border border-[#14B8A6]/30 bg-[#F2FBF9] p-4" aria-live="polite">
-          <p className={`text-[17px] font-semibold ${ink}`}>{lad.name}</p>
-          <p className={`mt-0.5 text-[14px] ${muted}`}>{svc ? `Served by ${svc.name}` : `Part of ${hubLabel(hub)}`}</p>
-          {shared > 0 && <p className={`mt-2 text-[14px] ${ink}`}>{shared} shared {hubLabel(hub).replace(/ Music Hub$/, '')} resources</p>}
-          <PrimaryButton className="mt-3 w-full" onClick={() => go({ level: 'lad', id: lad.code }, 'area')}>
-            Explore {lad.name} <ArrowRight className="h-4 w-4" />
-          </PrimaryButton>
-        </div>
+        <AreaPreview
+          hub={hub}
+          lad={lad}
+          onExplore={() => go({ level: 'lad', id: lad.code }, 'area')}
+          onClose={() => go({ level: 'hub', id: hub.id })}
+        />
       )}
 
       <div>
@@ -719,7 +827,7 @@ function OrganisationsSection() {
                     <p className={`mt-0.5 text-[14px] ${muted}`}>{o.disciplines.join(' · ') || 'Arts'}</p>
                     <p className={`mt-2 line-clamp-2 text-[14px] leading-snug ${muted}`}>{h.tagline}</p>
                     <div className="mt-auto flex items-center justify-between gap-2 pt-4">
-                      <Badge tone={o.access === 'Free' ? 'teal' : 'amber'}>{o.access}</Badge>
+                      <Badge tone={o.access === 'free' ? 'teal' : 'amber'}>{ACCESS_LABEL[o.access]}</Badge>
                       <button
                         type="button"
                         onClick={() => openPartnerHub(h.slug)}
@@ -747,7 +855,8 @@ function OrganisationsSection() {
 // Resources and the planning workflow
 // ---------------------------------------------------------------------------
 
-const PACK_SETUP: Record<HubResource['packId'], () => Promise<{ skipped?: boolean }>> = {
+/** Resources with an existing CCDesigner import; others offer Preview and Source only. */
+const PACK_SETUP: Record<string, () => Promise<{ skipped?: boolean }>> = {
   'ems-schools-brochure': async () => (await import('../../utils/setupEMSSchoolsExample')).setupEMSSchoolsExample({ force: true, registerPartnerPlanning: true }),
   'ems-dj-workshop': async () => (await import('../../utils/setupEMSWorkshops')).setupEMSWorkshop('dj', { force: true, registerPartnerPlanning: true }),
   'ems-rap-it-workshop': async () => (await import('../../utils/setupEMSWorkshops')).setupEMSWorkshop('rap-it', { force: true, registerPartnerPlanning: true }),
@@ -769,10 +878,15 @@ const openTab = (tab: string) => {
 
 function ResourceCard({ r, scopeLabel, onOpen }: { r: HubResource; scopeLabel?: string; onOpen: () => void }) {
   const Icon = r.type === 'PDF' ? FileText : Music2;
+  const brand = organisationBrand(r.organisationId)?.color ?? '#002D24';
+  const locked = isLocked(r.access);
   return (
     <article className="flex h-full flex-col rounded-2xl border border-[#002D24]/[0.08] bg-white p-5 transition hover:border-[#002D24]/20 hover:shadow-[0_16px_32px_-24px_rgba(0,45,36,0.4)]">
       <div className="flex items-start gap-3">
-        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-[#330968]/[0.07] text-[#330968]">
+        <span
+          className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl"
+          style={{ backgroundColor: `${brand}12`, color: brand }}
+        >
           <Icon className="h-5 w-5" aria-hidden />
         </span>
         <div className="min-w-0">
@@ -784,38 +898,105 @@ function ResourceCard({ r, scopeLabel, onOpen }: { r: HubResource; scopeLabel?: 
       </div>
       <p className={`mt-3 text-[15px] leading-relaxed ${muted}`}>{r.description}</p>
       <div className="mt-3 flex flex-wrap gap-1.5">
-        <Badge tone="teal">{r.access}</Badge>
+        <Badge tone={locked ? 'amber' : 'teal'}>
+          {locked && <Lock className="h-3 w-3" aria-hidden />}
+          {ACCESS_LABEL[r.access]}
+        </Badge>
         <Badge>By {r.provider}</Badge>
         {scopeLabel && <Badge>{scopeLabel}</Badge>}
       </div>
       <div className="mt-auto flex flex-wrap gap-2 pt-4">
         <PrimaryButton onClick={onOpen}>
-          View and add <ArrowRight className="h-4 w-4" />
+          {r.libraryPack && PACK_SETUP[r.libraryPack] ? 'View and add' : 'View resource'} <ArrowRight className="h-4 w-4" />
         </PrimaryButton>
       </div>
     </article>
   );
 }
 
+/** Enter an organisation access code; the server checks it and records the grant. */
+function AccessCodeForm({ r, onUnlocked }: { r: HubResource; onUnlocked: () => void }) {
+  const [code, setCode] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  if (!canUseAccessCodes()) {
+    return (
+      <p className={`flex gap-2 text-[15px] leading-snug ${muted}`}>
+        <Lock className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+        Sign in with your CCDesigner account to enter the access code {r.provider} gave your school.
+      </p>
+    );
+  }
+  return (
+    <form
+      className="space-y-2"
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!r.organisationId) return;
+        setBusy(true);
+        setError(null);
+        const res = await redeemAccessCode(r.organisationId, code);
+        setBusy(false);
+        if (res.ok) {
+          toast.success(`Access confirmed for ${r.provider} resources`);
+          onUnlocked();
+        } else setError(res.error);
+      }}
+    >
+      <label htmlFor={`code-${r.id}`} className={`block text-[15px] font-medium ${ink}`}>
+        Organisation access code
+      </label>
+      <div className="flex gap-2">
+        <input
+          id={`code-${r.id}`}
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          autoComplete="off"
+          autoCapitalize="characters"
+          placeholder="e.g. K7QM-4XHP-2RTA"
+          aria-describedby={error ? `code-err-${r.id}` : undefined}
+          className="h-11 min-w-0 flex-1 rounded-xl border border-[#002D24]/15 bg-white px-3 font-mono text-[15px] tracking-wider text-[#002D24] outline-none focus:border-[#14B8A6]/60 focus:ring-4 focus:ring-[#14B8A6]/10"
+        />
+        <PrimaryButton type="submit" className={busy || code.trim().length < 6 ? 'pointer-events-none opacity-60' : ''}>
+          <KeyRound className="h-4 w-4" /> {busy ? 'Checking…' : 'Unlock'}
+        </PrimaryButton>
+      </div>
+      {error && (
+        <p id={`code-err-${r.id}`} role="alert" className="text-[14px] text-[#B42318]">
+          {error}
+        </p>
+      )}
+      <p className={`text-[14px] ${muted}`}>Codes come from {r.provider}. Ask them if your school doesn’t have one.</p>
+    </form>
+  );
+}
+
 const STEPS = ['Preview', 'Add to my library', 'Use in a lesson', 'Place in Planner', 'Reflect after teaching'];
 
-function ResourceSheet({ r, onClose }: { r: HubResource; onClose: () => void }) {
+function ResourceSheet({ r, onClose, hubId, areaCode }: { r: HubResource; onClose: () => void; hubId: string; areaCode?: string }) {
+  const dir = useDirectory();
   const [added, setAdded] = useState(() => readAdded().includes(r.id));
   const [busy, setBusy] = useState(false);
+  const [needsCode, setNeedsCode] = useState(false);
   const closeRef = useRef<HTMLButtonElement>(null);
+  const setup = r.libraryPack ? PACK_SETUP[r.libraryPack] : undefined;
+  const locked = isLocked(r.access);
   useEffect(() => {
     closeRef.current?.focus();
     const esc = (e: KeyboardEvent) => e.key === 'Escape' && onClose();
     window.addEventListener('keydown', esc);
     return () => window.removeEventListener('keydown', esc);
   }, [onClose]);
+  useEffect(() => logEngagement(dir, r, 'viewed', { hubId, areaCode }), [dir, r, hubId, areaCode]);
 
   const add = async () => {
+    if (!setup) return;
     setBusy(true);
     try {
-      const res = await PACK_SETUP[r.packId]();
+      const res = await setup();
       localStorage.setItem(ADDED_KEY, JSON.stringify([...new Set([...readAdded(), r.id])]));
       setAdded(true);
+      logEngagement(dir, r, 'added_to_library', { hubId, areaCode });
       toast.success(res?.skipped ? 'Already in your library' : `Added to your library · Originally provided by ${r.provider}`);
     } catch (e) {
       console.error(e);
@@ -823,6 +1004,15 @@ function ResourceSheet({ r, onClose }: { r: HubResource; onClose: () => void }) 
     } finally {
       setBusy(false);
     }
+  };
+
+  const openLocked = async () => {
+    const res = await openLockedResource(r.id);
+    if ('url' in res) {
+      window.open(res.url, '_blank', 'noopener,noreferrer');
+      setNeedsCode(false);
+    } else if (res.needsCode || !canUseAccessCodes()) setNeedsCode(true);
+    else toast.error(res.error);
   };
 
   const step = added ? 2 : 1;
@@ -848,25 +1038,49 @@ function ResourceSheet({ r, onClose }: { r: HubResource; onClose: () => void }) 
               ['Type', r.type],
               ['Phase', r.phaseLabel],
               ['Subject', r.subject],
-              ['Access', r.access],
+              ['Access', ACCESS_LABEL[r.access]],
               ['Provided by', r.provider],
-              ['Terms', 'As published by the provider'],
             ].map(([k, v]) => (
               <div key={k}>
                 <dt className="text-[13px] text-[#002D24]/55">{k}</dt>
                 <dd className={`font-medium ${ink}`}>{v}</dd>
               </div>
             ))}
+            <div className="col-span-2">
+              <dt className="text-[13px] text-[#002D24]/55">Licence</dt>
+              <dd className={`text-[14px] leading-snug ${ink}`}>{r.licence ?? 'As published by the provider'}</dd>
+            </div>
           </dl>
           <div className="flex flex-wrap gap-2">
-            <SecondaryButton href={r.previewHref}>
-              <FileText className="h-4 w-4" /> Preview {r.type === 'PDF' ? 'PDF' : 'course notes'}
-            </SecondaryButton>
-            <SecondaryButton href={r.sourceHref}>
-              <ExternalLink className="h-4 w-4" /> Source
-            </SecondaryButton>
+            {locked ? (
+              <SecondaryButton onClick={openLocked}>
+                <Lock className="h-4 w-4" /> Open resource
+              </SecondaryButton>
+            ) : (
+              r.previewHref && (
+                <SecondaryButton href={r.previewHref}>
+                  <FileText className="h-4 w-4" /> Preview {r.type === 'PDF' ? 'PDF' : 'course notes'}
+                </SecondaryButton>
+              )
+            )}
+            {r.sourceHref && (
+              <SecondaryButton href={r.sourceHref}>
+                <ExternalLink className="h-4 w-4" /> Source
+              </SecondaryButton>
+            )}
           </div>
+          {locked && needsCode && (
+            <div className="rounded-2xl border border-[#F59E0B]/30 bg-[#FFFBF2] p-4">
+              <AccessCodeForm r={r} onUnlocked={openLocked} />
+            </div>
+          )}
 
+          {!setup ? (
+            <p className={`flex gap-2 text-[15px] leading-snug ${muted}`}>
+              <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
+              This resource opens from {r.provider}. It can’t be copied into your library automatically yet.
+            </p>
+          ) : (
           <section aria-labelledby="flow-title" className="rounded-2xl border border-[#002D24]/[0.08] bg-white p-5">
             <h3 id="flow-title" className={`text-[16px] font-semibold ${ink}`}>
               Bring it into your planning
@@ -912,6 +1126,7 @@ function ResourceSheet({ r, onClose }: { r: HubResource; onClose: () => void }) 
               You get your own copy to adapt. It keeps “Originally provided by {r.provider}” and a link to the source; the provider’s original is never changed.
             </p>
           </section>
+          )}
         </div>
       </div>
     </div>,
@@ -919,7 +1134,44 @@ function ResourceSheet({ r, onClose }: { r: HubResource; onClose: () => void }) 
   );
 }
 
+/** Key stage of the class chosen in the header: its Settings section, else a name-based guess. */
+function useClassPhase(): { phase: Phase; className: string } | null {
+  const { currentSheetInfo } = useData();
+  const { yearGroupSections } = useSettings();
+  return useMemo(() => {
+    const id = currentSheetInfo?.sheet ?? '';
+    const name = currentSheetInfo?.display || id;
+    if (!id && !name) return null;
+    const section = yearGroupSections.find((s) => s.yearGroupIds?.includes(id));
+    const asPhase = (s?: string) => PHASES.find((p) => p === (s ?? '').toUpperCase().replace(/\s+/g, ''));
+    const phase = asPhase(section?.label) ?? asPhase(getDefaultSectionIdForYearGroup(id, name));
+    return phase ? { phase, className: name } : null;
+  }, [currentSheetInfo?.sheet, currentSheetInfo?.display, yearGroupSections]);
+}
+
 function PhaseFilter({ value, onChange }: { value: Phase | 'All'; onChange: (p: Phase | 'All') => void }) {
+  const mine = useClassPhase();
+  return (
+    <div className="flex flex-wrap items-center gap-1.5">
+      {mine && (
+        <button
+          type="button"
+          aria-pressed={value === mine.phase}
+          onClick={() => onChange(value === mine.phase ? 'All' : mine.phase)}
+          className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3.5 text-[14px] font-medium transition ${
+            value === mine.phase ? 'bg-[#14B8A6] text-white' : 'bg-[#14B8A6]/10 text-[#0B6B5F] hover:bg-[#14B8A6]/15'
+          }`}
+        >
+          <Sparkles className="h-3.5 w-3.5" aria-hidden />
+          For {mine.className} · {mine.phase}
+        </button>
+      )}
+      <PhaseRadios value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+function PhaseRadios({ value, onChange }: { value: Phase | 'All'; onChange: (p: Phase | 'All') => void }) {
   return (
     <div role="radiogroup" aria-label="Filter by phase" className="flex flex-wrap gap-1.5">
       {(['All', ...PHASES] as const).map((p) => (
@@ -944,17 +1196,28 @@ function PhaseFilter({ value, onChange }: { value: Phase | 'All'; onChange: (p: 
 // Pages
 // ---------------------------------------------------------------------------
 
-function HubHeader({ hub, crumbs }: { hub: MapHub; crumbs: { label: string; onClick?: () => void }[] }) {
-  const id = HUB_IDENTITY[hub.id];
-  const rel = hubRelationship(hub.id);
+function HubHeader({ ix, hub, crumbs }: { ix: MapIndex; hub: MapHub; crumbs: { label: string; onClick?: () => void }[] }) {
+  const dir = useDirectory();
+  const detail = dir.hub(hub.id);
+  const brand = organisationBrand(detail.organisationId);
+  const rel = detail.relationship;
+  const [role, setRole] = useState<HubRole | null>(null);
+  const [managing, setManaging] = useState(false);
+  useEffect(() => {
+    let live = true;
+    myHubRole(dir, hub.id).then((r) => live && setRole(r));
+    return () => {
+      live = false;
+    };
+  }, [dir, hub.id]);
   return (
     <header className="space-y-4">
       <Crumbs items={crumbs} />
       <div className="flex flex-col gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6">
         <div className="flex min-w-0 items-center gap-4">
-          {id?.logoSrc ? (
-            <span className="flex h-16 w-28 shrink-0 items-center justify-center rounded-2xl px-4" style={{ backgroundColor: id.brandColor }}>
-              <img src={id.logoSrc} alt="" className="max-h-10 w-full object-contain" />
+          {brand?.logoSrc ? (
+            <span className="flex h-16 w-28 shrink-0 items-center justify-center rounded-2xl px-4" style={{ backgroundColor: brand.color }}>
+              <img src={brand.logoSrc} alt={brand.name} className="max-h-10 w-full object-contain" />
             </span>
           ) : (
             <span className="flex h-16 w-16 shrink-0 items-center justify-center rounded-2xl bg-[#E8F0EA] text-[20px] font-semibold text-[#002D24]">
@@ -970,7 +1233,7 @@ function HubHeader({ hub, crumbs }: { hub: MapHub; crumbs: { label: string; onCl
           <div className="min-w-0">
             <div className="flex flex-wrap items-center gap-2">
               <h1 className={`text-[26px] font-semibold leading-tight tracking-tight sm:text-[30px] ${ink}`}>{hub.name}</h1>
-              {rel === 'Working example' && <Badge tone="teal">Working example</Badge>}
+              {rel !== 'directory_listing' && <Badge tone="teal">{RELATIONSHIP_LABEL[rel]}</Badge>}
             </div>
             <p className={`mt-1 text-[16px] ${ink}`}>{hub.authorities.join(' · ')}</p>
             <p className={`mt-0.5 text-[14px] ${muted}`}>
@@ -978,13 +1241,32 @@ function HubHeader({ hub, crumbs }: { hub: MapHub; crumbs: { label: string; onCl
             </p>
           </div>
         </div>
-        {hub.siteUrl && (
-          <SecondaryButton href={hub.siteUrl} className="shrink-0">
-            Official website <ExternalLink className="h-4 w-4" />
-          </SecondaryButton>
-        )}
+        <div className="flex shrink-0 flex-wrap gap-2">
+          {hub.siteUrl && (
+            <SecondaryButton href={hub.siteUrl}>
+              Official website <ExternalLink className="h-4 w-4" />
+            </SecondaryButton>
+          )}
+          {atLeast(role, 'hub_editor') && (
+            <SecondaryButton onClick={() => setManaging(true)}>
+              <Pencil className="h-4 w-4" /> Manage hub
+            </SecondaryButton>
+          )}
+        </div>
       </div>
       {hub.regionNote && <p className="text-[14px] text-[#8A5300]">{hub.regionNote}</p>}
+      {managing && role && (
+        <ManageHubDialog
+          ix={ix}
+          hub={hub}
+          detail={detail}
+          role={role}
+          onClose={() => setManaging(false)}
+          onPublished={() => {
+            void reloadPartnerData().then(() => window.dispatchEvent(new Event('ccd:hubs-data')));
+          }}
+        />
+      )}
     </header>
   );
 }
@@ -1002,18 +1284,26 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
   const [open, setOpen] = useState<HubResource | null>(null);
   const [phase, setPhase] = useState<Phase | 'All'>('All');
   const tabsRef = useRef<HTMLDivElement>(null);
+  const dir = useDirectory();
+  const detail = dir.hub(hub.id);
+  const services = dir.services(hub.id);
   const lads = ix.ladsInHub(hub.id);
-  const id = HUB_IDENTITY[hub.id];
-  const resources = resourcesForHub(hub.id).filter((r) => phase === 'All' || r.phases.includes(phase));
-  const short = hubLabel(hub).replace(/ Music( Education)? Hub$/, '');
+  const allResources = dir.resourcesForHub(hub.id);
+  const resources = allResources.filter((r) => phase === 'All' || r.phases.includes(phase));
+  const short = shortHubName(hub);
   const focus: MapFocus = area ? { level: 'lad', id: area.code } : { level: 'hub', id: hub.id };
-  const svc = area ? serviceForLad(hub, area) : undefined;
+  const about = paragraphs(detail.about);
+  const contact = detail.contact;
+  const covers = (s: HubService) => {
+    const names = lads.filter((l) => dir.serviceFor(l)?.id === s.id).map((l) => l.name);
+    return names.length > 3 ? `${names.length} local areas` : names.join(', ');
+  };
 
   const setTab = (t: HubTab) => writeRoute({ tab: t }, true);
 
   return (
-    <div className="space-y-6">
-      <HubHeader hub={hub} crumbs={[...regionCrumbs, { label: short }]} />
+    <div className={`space-y-6 ${area ? 'pb-56 lg:pb-0' : ''}`}>
+      <HubHeader ix={ix} hub={hub} crumbs={[...regionCrumbs, { label: short }]} />
 
       <section aria-labelledby="areas-heading" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_360px]">
         <h2 id="areas-heading" className="sr-only">
@@ -1051,13 +1341,12 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
             />
           </div>
           {area ? (
-            <div className="rounded-2xl border border-[#14B8A6]/30 bg-[#F2FBF9] p-4" aria-live="polite">
-              <p className={`text-[17px] font-semibold ${ink}`}>{area.name}</p>
-              <p className={`text-[14px] ${muted}`}>{svc ? `Served by ${svc.name}` : `Part of ${short}`}</p>
-              <PrimaryButton className="mt-3 w-full" onClick={() => go({ level: 'lad', id: area.code }, 'area')}>
-                Explore {area.name} <ArrowRight className="h-4 w-4" />
-              </PrimaryButton>
-            </div>
+            <AreaPreview
+              hub={hub}
+              lad={area}
+              onExplore={() => go({ level: 'lad', id: area.code }, 'area')}
+              onClose={() => go({ level: 'hub', id: hub.id }, 'hub')}
+            />
           ) : (
             <SecondaryButton
               onClick={() => {
@@ -1097,7 +1386,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
         </div>
         <div role="tabpanel" className="pt-6">
           {tab === 'resources' &&
-            (resourcesForHub(hub.id).length === 0 ? (
+            (allResources.length === 0 ? (
               <EmptyState
                 title={`No resources published for ${short} yet.`}
                 body="When the hub publishes resources in CCDesigner they will appear here and on every local area page."
@@ -1127,20 +1416,25 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
           {tab === 'about' && (
             <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px]">
               <div className={`max-w-[68ch] space-y-3 text-[16px] leading-relaxed ${ink}`}>
-                {(id?.about ?? [
-                  `${hub.name} is the Arts Council England Music Hub for ${hub.authorities.join(', ')}.`,
-                  hub.leadOrganisation ? `${hub.leadOrganisation} is the Hub Lead Organisation.` : 'The Hub Lead Organisation is listed by Arts Council England.',
-                ]).map((p, i) => (
+                {(about.length
+                  ? about
+                  : [
+                      `${hub.name} is the Arts Council England Music Hub for ${hub.authorities.join(', ')}.`,
+                      hub.leadOrganisation
+                        ? `${hub.leadOrganisation} is the Hub Lead Organisation.`
+                        : 'The Hub Lead Organisation is listed by Arts Council England.',
+                    ]
+                ).map((p, i) => (
                   <p key={i}>{p}</p>
                 ))}
                 <p className={`text-[14px] ${muted}`}>Hub area: Arts Council England, Music Hub Investment Programme.</p>
               </div>
-              {id?.services && (
+              {services.length > 0 && (
                 <div className="rounded-2xl border border-[#002D24]/[0.08] bg-white p-5">
                   <h3 className={`text-[16px] font-semibold ${ink}`}>Music services in this hub</h3>
                   <ul className="mt-3 space-y-3">
-                    {id.services.map((s) => (
-                      <li key={s.name} className="text-[15px]">
+                    {services.map((s) => (
+                      <li key={s.id} className="text-[15px]">
                         <p className={`font-medium ${ink}`}>
                           {s.siteUrl ? (
                             <a href={s.siteUrl} target="_blank" rel="noreferrer" className="hover:underline">
@@ -1151,7 +1445,8 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
                           )}
                         </p>
                         <p className={muted}>
-                          {s.role} · {s.covers}
+                          {serviceRole(s)}
+                          {covers(s) && ` · ${covers(s)}`}
                         </p>
                       </li>
                     ))}
@@ -1161,23 +1456,23 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
             </div>
           )}
           {tab === 'contact' &&
-            (id?.contact ? (
+            (contact ? (
               <div className="max-w-md space-y-3 rounded-2xl border border-[#002D24]/[0.08] bg-white p-5 text-[15px]">
-                <p className={`font-semibold ${ink}`}>{id.contact.lines.join(' · ')}</p>
-                {id.contact.phone && (
-                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`tel:${id.contact.phone.replace(/\s/g, '')}`}>
-                    <Phone className="h-4 w-4 text-[#002D24]/50" /> {id.contact.phone}
+                {contact.lines?.length ? <p className={`font-semibold ${ink}`}>{contact.lines.join(' · ')}</p> : null}
+                {contact.phone && (
+                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`tel:${contact.phone.replace(/\s/g, '')}`}>
+                    <Phone className="h-4 w-4 text-[#002D24]/50" /> {contact.phone}
                   </a>
                 )}
-                {id.contact.email && (
-                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`mailto:${id.contact.email}`}>
-                    <Mail className="h-4 w-4 text-[#002D24]/50" /> {id.contact.email}
+                {contact.email && (
+                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`mailto:${contact.email}`}>
+                    <Mail className="h-4 w-4 text-[#002D24]/50" /> {contact.email}
                   </a>
                 )}
-                {id.contact.sourceUrl && (
+                {contact.sourceUrl && (
                   <p className={`text-[13px] ${muted}`}>
                     From the{' '}
-                    <a href={id.contact.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+                    <a href={contact.sourceUrl} target="_blank" rel="noreferrer" className="underline">
                       official contact page
                     </a>
                     .
@@ -1192,7 +1487,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
             ))}
         </div>
       </section>
-      {open && <ResourceSheet r={open} onClose={() => setOpen(null)} />}
+      {open && <ResourceSheet r={open} hubId={hub.id} onClose={() => setOpen(null)} />}
     </div>
   );
 }
@@ -1234,9 +1529,11 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
   const [phase, setPhase] = useState<Phase | 'All'>('All');
   const [q, setQ] = useState('');
   const [open, setOpen] = useState<HubResource | null>(null);
-  const short = hubLabel(hub).replace(/ Music( Education)? Hub$/, '');
-  const svc = serviceForLad(hub, lad);
-  const { local, shared } = resourcesForArea(hub.id, lad.code);
+  const dir = useDirectory();
+  const short = shortHubName(hub);
+  const svc = dir.serviceFor(lad);
+  const areaDetail = dir.area(lad.code);
+  const { local, shared } = dir.resourcesForArea(hub.id, lad.code);
   const match = (r: HubResource) =>
     (phase === 'All' || r.phases.includes(phase)) &&
     (!q.trim() || `${r.title} ${r.description} ${r.subject}`.toLowerCase().includes(q.trim().toLowerCase()));
@@ -1259,10 +1556,20 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
           {svc && (
             <p className={`mt-0.5 text-[15px] ${muted}`}>
               Local music service: {svc.name}
-              {svc.role === 'Hub Lead Organisation' ? ' (Hub Lead Organisation)' : ''}
+              {svc.role === 'lead' ? ' (Hub Lead Organisation)' : ''}
             </p>
           )}
+          {paragraphs(areaDetail?.about).map((p, i) => (
+            <p key={i} className={`mt-3 max-w-[60ch] text-[15px] leading-relaxed ${ink}`}>
+              {p}
+            </p>
+          ))}
           <div className="mt-4 flex flex-wrap gap-2">
+            {areaDetail?.siteUrl && (
+              <SecondaryButton href={areaDetail.siteUrl}>
+                Local website <ExternalLink className="h-4 w-4" />
+              </SecondaryButton>
+            )}
             {svc?.siteUrl && (
               <SecondaryButton href={svc.siteUrl}>
                 {svc.name} website <ExternalLink className="h-4 w-4" />
@@ -1320,28 +1627,88 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
           </div>
         )}
       </section>
-      {open && <ResourceSheet r={open} onClose={() => setOpen(null)} />}
+      {open && <ResourceSheet r={open} hubId={hub.id} areaCode={lad.code} onClose={() => setOpen(null)} />}
     </div>
+  );
+}
+
+function FeaturedHubs({ ix, go }: { ix: MapIndex; go: (f: MapFocus, page?: Page) => void }) {
+  const dir = useDirectory();
+  const featured = ix.data.hubs.filter((h) => dir.hub(h.id).relationship !== 'directory_listing');
+  return (
+    <>
+      {featured.map((hub) => {
+        const detail = dir.hub(hub.id);
+        const brand = organisationBrand(detail.organisationId);
+        const short = shortHubName(hub);
+        const areas = ix.ladsInHub(hub.id).length;
+        const count = dir.resourcesForHub(hub.id).length;
+        return (
+          <section
+            key={hub.id}
+            aria-labelledby={`featured-${hub.id}`}
+            className="grid items-center gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:p-6"
+          >
+            {brand?.logoSrc && (
+              <span className="flex h-16 w-28 items-center justify-center rounded-2xl px-4" style={{ backgroundColor: brand.color }}>
+                <img src={brand.logoSrc} alt={brand.name} className="max-h-10 w-full object-contain" />
+              </span>
+            )}
+            <div>
+              <div className="flex flex-wrap items-center gap-2">
+                <h2 id={`featured-${hub.id}`} className={`text-[18px] font-semibold ${ink}`}>
+                  {hub.name}
+                </h2>
+                <Badge tone="teal">
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden /> {RELATIONSHIP_LABEL[detail.relationship]}
+                </Badge>
+              </div>
+              <p className={`mt-1 text-[15px] ${muted}`}>
+                {areas} local areas{count ? `, ${count} shared ${count === 1 ? 'resource' : 'resources'}` : ''} and a direct route into your planning.
+              </p>
+            </div>
+            <PrimaryButton onClick={() => go({ level: 'hub', id: hub.id }, 'hub')}>
+              Explore {short} <ArrowRight className="h-4 w-4" />
+            </PrimaryButton>
+          </section>
+        );
+      })}
+    </>
   );
 }
 
 // ---------------------------------------------------------------------------
 
 export function PartnerHubsPreview() {
-  const route = useRoute();
-  const [ix, setIx] = useState<MapIndex | null>(null);
+  const [data, setData] = useState<{ ix: MapIndex; dir: Directory } | null>(null);
   const [error, setError] = useState(false);
-  const [hover, setHover] = useState<string | null>(null);
 
   useEffect(() => {
     let live = true;
-    loadUkHubMap()
-      .then((d) => live && setIx(indexMap(d)))
-      .catch(() => live && setError(true));
+    const load = () =>
+      loadPartnerData()
+        .then((d) => live && setData(d))
+        .catch(() => live && setError(true));
+    load();
+    window.addEventListener('ccd:hubs-data', load);
     return () => {
       live = false;
+      window.removeEventListener('ccd:hubs-data', load);
     };
   }, []);
+
+  return (
+    <DirectoryContext.Provider value={data?.dir ?? LOADING_DIRECTORY}>
+      <div className="ccd-partner-hubs">
+        <PartnerHubsPage ix={data?.ix ?? null} error={error} />
+      </div>
+    </DirectoryContext.Provider>
+  );
+}
+
+function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean }) {
+  const route = useRoute();
+  const [hover, setHover] = useState<string | null>(null);
 
   const focus = useMemo<MapFocus>(() => (ix ? focusFromPath(ix, route.at) : { level: 'uk' }), [ix, route.at]);
 
@@ -1398,7 +1765,7 @@ export function PartnerHubsPreview() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className={`space-y-8 ${focus.level === 'lad' ? 'pb-56 lg:pb-0' : ''}`}>
       <header className="space-y-5">
         {atUk ? (
           <div className="max-w-3xl">
@@ -1474,29 +1841,7 @@ export function PartnerHubsPreview() {
             )}
           </section>
 
-          {atUk && ix && (
-            <section aria-labelledby="example-heading" className="grid items-center gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:p-6">
-              <span className="flex h-16 w-28 items-center justify-center rounded-2xl bg-[#330968] px-4">
-                <img src="/music-hubs/logos/essex-music-service.svg" alt="" className="max-h-10 w-full object-contain" />
-              </span>
-              <div>
-                <div className="flex flex-wrap items-center gap-2">
-                  <h2 id="example-heading" className={`text-[18px] font-semibold ${ink}`}>
-                    Greater Essex Music Hub
-                  </h2>
-                  <Badge tone="teal">
-                    <Sparkles className="h-3.5 w-3.5" aria-hidden /> Working example
-                  </Badge>
-                </div>
-                <p className={`mt-1 text-[15px] ${muted}`}>
-                  See how a hub page works: 14 local areas, shared resources and a direct route into your planning.
-                </p>
-              </div>
-              <PrimaryButton onClick={() => go({ level: 'hub', id: 'greater-essex' }, 'hub')}>
-                Explore Greater Essex <ArrowRight className="h-4 w-4" />
-              </PrimaryButton>
-            </section>
-          )}
+          {atUk && ix && <FeaturedHubs ix={ix} go={go} />}
           {atUk && (
             <p className={`flex items-center gap-2 text-[13px] ${muted}`}>
               <Info className="h-4 w-4" aria-hidden />
