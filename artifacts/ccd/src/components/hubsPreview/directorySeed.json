@@ -1,0 +1,108 @@
+{
+  "$comment": "Verified directory content beyond the ACE/ONS map data. Read by the app (offline fallback) AND by scripts/build-hub-directory-seed.mjs (database seed), so both stay identical. Only add facts confirmed on the organisation's own site.",
+  "hubs": {
+    "greater-essex": {
+      "organisationId": "ems",
+      "relationship": "demonstration",
+      "sourceUrl": "https://www.greateressexmusichub.org.uk/site/",
+      "about": "Greater Essex Music Hub is a partnership of organisations, including the music services of Essex, Southend-on-Sea and Thurrock, and schools. It helps children and young people from all backgrounds and every part of the hub’s area to deepen their engagement with music.\n\nEssex Music Service (Essex County Council) is the Hub Lead Organisation.",
+      "contact": {
+        "lines": ["Essex Music Service", "Greater Essex Music Hub"],
+        "phone": "0333 013 8953",
+        "email": "musichub@essex.gov.uk",
+        "sourceUrl": "https://www.essexmusicservice.org.uk/site/contact/"
+      }
+    }
+  },
+  "services": [
+    {
+      "id": "essex-music-service",
+      "hubId": "greater-essex",
+      "name": "Essex Music Service",
+      "role": "lead",
+      "organisationId": "ems",
+      "siteUrl": "https://www.essexmusicservice.org.uk/site/",
+      "covers": { "county": "Essex" }
+    },
+    {
+      "id": "music-on-sea",
+      "hubId": "greater-essex",
+      "name": "Music-on-Sea",
+      "role": "partner",
+      "siteUrl": "https://www.musiconsea.co.uk/",
+      "covers": { "name": "Southend-on-Sea" }
+    },
+    {
+      "id": "thurrock-music-service",
+      "hubId": "greater-essex",
+      "name": "Thurrock Music Service",
+      "role": "partner",
+      "covers": { "name": "Thurrock" }
+    }
+  ],
+  "organisations": [
+    {
+      "id": "ems",
+      "name": "Essex Music Service",
+      "shortName": "EMS",
+      "siteUrl": "https://www.essexmusicservice.org.uk/site/",
+      "logoSrc": "/partners/essex-music-service.svg",
+      "primaryColor": "#330968",
+      "accentColor": "#7a00df",
+      "aliases": ["essex-music-service", "greater-essex"]
+    }
+  ],
+  "resources": [
+    {
+      "id": "ems-schools-brochure",
+      "organisationId": "ems",
+      "title": "Schools brochure",
+      "description": "Essex Music Service’s offer to schools: curriculum platforms, instrumental and vocal pathways, workshops and CPD.",
+      "type": "PDF",
+      "keyStages": ["KS3"],
+      "phaseLabel": "KS3 (set up for Years 7–8)",
+      "subjects": ["Music"],
+      "contributor": "Essex Music Service",
+      "access": "free",
+      "previewHref": "/demo-resources/ems-schools-brochure.pdf",
+      "sourceHref": "https://www.essexmusicservice.org.uk/site/",
+      "licence": "Shared by Essex Music Service for planning. © Essex Music Service.",
+      "libraryPack": "ems-schools-brochure",
+      "scopes": [{ "type": "hub", "id": "greater-essex" }]
+    },
+    {
+      "id": "ems-dj-workshop",
+      "organisationId": "ems",
+      "title": "DJ Workshop",
+      "description": "Featured EMS workshop: beat-matching, structure and performance. Course notes plus a ready-made lesson sequence.",
+      "type": "Workshop",
+      "keyStages": ["KS2", "KS3"],
+      "phaseLabel": "KS2–KS3",
+      "subjects": ["Music technology"],
+      "contributor": "Essex Music Service",
+      "access": "free",
+      "previewHref": "/demo-resources/ems-dj-workshop-course-notes.pdf",
+      "sourceHref": "https://www.essexmusicservice.org.uk/site/workshops/",
+      "licence": "Shared by Essex Music Service for planning. © Essex Music Service.",
+      "libraryPack": "ems-dj-workshop",
+      "scopes": [{ "type": "hub", "id": "greater-essex" }]
+    },
+    {
+      "id": "ems-rap-it-workshop",
+      "organisationId": "ems",
+      "title": "Rap-It!",
+      "description": "Literacy-linked rap writing and performance workshop from Essex Music Service, with course notes and lessons.",
+      "type": "Workshop",
+      "keyStages": ["KS2", "KS3", "KS4"],
+      "phaseLabel": "KS2–KS4",
+      "subjects": ["Music", "English"],
+      "contributor": "Essex Music Service",
+      "access": "free",
+      "previewHref": "/demo-resources/ems-rap-it-workshop-course-notes.pdf",
+      "sourceHref": "https://www.essexmusicservice.org.uk/site/workshops/",
+      "licence": "Shared by Essex Music Service for planning. © Essex Music Service.",
+      "libraryPack": "ems-rap-it-workshop",
+      "scopes": [{ "type": "hub", "id": "greater-essex" }]
+    }
+  ]
+}
