@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
 import * as XLSX from '@e965/xlsx';
 import { activitiesApi, lessonsApi, eyfsApi } from '../config/api';
-import { halfTermsApi } from '../config/api';
+import { halfTermsApi, hasScopedUser, isNavigationAbort } from '../config/api';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import { activityStacksApi } from '../config/activityStacksApi';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
@@ -1232,6 +1232,8 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
         
         // Also save to localStorage for offline access with academic year in key
         localStorage.setItem(`half-terms-${currentSheetInfo.sheet}-${currentAcademicYear}`, JSON.stringify(formattedHalfTerms));
+      } else if (!hasScopedUser()) {
+        loadHalfTerms();
       } else {
         // If no data in Supabase, initialize default half-terms
         console.log('No half-terms in Supabase, initializing default half-terms...');
@@ -1618,7 +1620,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
           }
           console.warn('⚠️ No activities returned from Supabase API');
         } catch (error) {
-          console.error('❌ Failed to load activities from Supabase:', error);
+          if (!isNavigationAbort(error)) console.error('❌ Failed to load activities from Supabase:', error);
           // Use stale cache or localStorage so UI isn't stuck
           try {
             const cached = localStorage.getItem(ACTIVITIES_CACHE_KEY);

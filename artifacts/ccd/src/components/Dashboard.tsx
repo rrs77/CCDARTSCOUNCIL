@@ -7,6 +7,7 @@ import { ActivityLibrary } from "./ActivityLibrary";
 import { LessonLibrary } from "./LessonLibrary";
 import { Calendar, Edit3, FolderOpen, Tag, Handshake, Mail, CircleHelp } from 'lucide-react';
 import { OurPartners } from './OurPartners';
+import { PartnerHubsPreview, isHubsPreview } from './hubsPreview/PartnerHubsPreview';
 import { ContactUsPanel } from './ContactUsPanel';
 import { Planner } from './planner/Planner';
 import { useData } from '../contexts/DataContext';
@@ -52,7 +53,7 @@ export function Dashboard() {
     deleteUserLessonPlan,
   } = useData();
   const { getThemeForClass } = useSettings();
-  const [activeTab, setActiveTabRaw] = useState('unit-viewer');
+  const [activeTab, setActiveTabRaw] = useState(() => (isHubsPreview() ? 'our-partners' : 'unit-viewer'));
   // The Planner tab replaces both the HT Planner and the Calendar; old "calendar" links open it too.
   const setActiveTab = (tab: string) => setActiveTabRaw(tab === 'calendar' ? 'unit-viewer' : tab);
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -455,7 +456,7 @@ export function Dashboard() {
             </TabsContent>
 
             <TabsContent value="our-partners" className="mt-6 ccd-fade-in-up" key={`op-${activeTab}`}>
-              <OurPartners />
+              {isHubsPreview() ? <PartnerHubsPreview /> : <OurPartners />}
             </TabsContent>
 
             <TabsContent value="contact-us" className="mt-6 ccd-fade-in-up" key={`cu-${activeTab}`}>

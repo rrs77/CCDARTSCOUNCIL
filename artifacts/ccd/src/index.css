@@ -807,3 +807,19 @@ html.ccd-feature-demo [data-ccd-prototype-chrome],
 html[data-ccd-record] [data-ccd-prototype-chrome] {
   display: none !important;
 }
+/* UK Music Hub map */
+.ukmap-ctl {
+  display: flex;
+  height: 2.75rem;
+  width: 2.75rem;
+  align-items: center;
+  justify-content: center;
+  color: rgba(0, 45, 36, 0.75);
+  transition: background-color 120ms, color 120ms;
+}
+.ukmap-ctl:hover { background: rgba(0, 45, 36, 0.05); color: #002d24; }
+.ukmap-ctl:focus-visible { outline: 2px solid #14b8a6; outline-offset: -3px; border-radius: 0.6rem; }
+.ukmap-item:focus-visible path { stroke: #0d9488; stroke-width: 2.5px; }
+@media (prefers-reduced-motion: reduce) {
+  .ukmap path, .ukmap g { transition: none !important; }
+}

@@ -24,6 +24,20 @@ const getCurrentUserId = () => {
 /** True if id looks like a Supabase auth UUID (used for RLS user_id). */
 const isAuthUserId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
 
+/** Whether user-scoped Supabase reads and writes can run (signed in, or demo). */
+export const hasScopedUser = () => isAuthUserId(getCurrentUserId());
+
+let pageUnloading = false;
+if (typeof window !== 'undefined') {
+  window.addEventListener('beforeunload', () => {
+    pageUnloading = true;
+  });
+}
+
+/** A fetch aborted because the page is navigating away is not an application error. */
+export const isNavigationAbort = (error: unknown) =>
+  pageUnloading && /Failed to fetch/i.test(String((error as { message?: string })?.message ?? error));
+
 export const activitiesApi = {
   getAll: async () => {
     try {
@@ -39,9 +53,10 @@ export const activitiesApi = {
         .select('*');
       
       if (error) {
-        console.error('❌ Error loading activities:', error);
-        // Log the full error for debugging
-        console.error('Error details:', JSON.stringify(error, null, 2));
+        if (!isNavigationAbort(error)) {
+          console.error('❌ Error loading activities:', error);
+          console.error('Error details:', JSON.stringify(error, null, 2));
+        }
         throw error;
       }
       
