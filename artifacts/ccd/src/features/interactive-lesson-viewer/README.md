@@ -22,10 +22,23 @@ Self-contained module for Google Vids–style interactive lessons inside CCDesig
    - Transcription is routed through `/api/router` (not a separate Vercel function) to stay within the Hobby 12-function limit.
 3. Without a key, Tap to sync + paste/auto-align still work.
 
-### Open Lesson Viewer (demo)
+### Open Lesson Viewer (normal login — preferred)
 
-Password gate: `artscouncil26`  
-Then: `/?demo=1&tab=lesson-viewer` → **Play** or **Edit** on *CCDesigner Interactive Demo*.
+1. Sign in to CCDesigner with an **admin**, **super_admin**, **superuser**, **organisation**, or hub **admin/owner** account (or a profile with `can_edit_lessons`).
+2. Open the **Lesson Viewer** tab (or `/?tab=lesson-viewer`).
+3. **Play** / **Edit** the shipped *CCDesigner Interactive Demo*, or create a new lesson.
+
+Teachers/viewers see the tab and can **Play** published lessons; they cannot open the editor.
+
+No prototype password and no `?demo=1` required. Demo content is seeded in localStorage even before the Supabase migration is applied.
+
+### Profile check (Supabase)
+
+In Supabase → `profiles` for Rob’s user id, confirm:
+
+- `role` in `admin` | `super_admin` | `superuser` | `organisation`, **or**
+- a `hub_memberships` row with `role` `admin`/`owner`, **or**
+- `can_edit_lessons = true`
 
 ## Demo content
 

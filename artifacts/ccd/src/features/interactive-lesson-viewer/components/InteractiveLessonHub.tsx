@@ -137,8 +137,8 @@ export function InteractiveLessonHub() {
           <p className="mt-1 text-[13px] text-[var(--ss-muted)]">
             Interactive classroom lessons with timeline scenes, karaoke lyrics, and embeds.
             {canEdit
-              ? ' You can create, edit and publish.'
-              : ' Play published lessons attached to your CCDesigner lessons.'}
+              ? ' Signed in with editor rights — create, edit and publish.'
+              : ' Play published lessons (attach them from any CCDesigner lesson).'}
           </p>
         </div>
         {canEdit ? (
@@ -149,7 +149,7 @@ export function InteractiveLessonHub() {
         ) : (
           <span className="ilv-chip inline-flex items-center gap-1.5">
             <Lock className="h-3.5 w-3.5" />
-            Player only · editor is admin / hub admin
+            Player only · editor needs admin / hub admin
           </span>
         )}
       </div>

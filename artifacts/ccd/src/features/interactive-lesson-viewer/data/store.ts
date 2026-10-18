@@ -6,7 +6,12 @@ import type { InteractiveLesson, InteractiveLessonSummary } from '../types';
 const LOCAL_KEY = 'ccd-interactive-lessons-v1';
 const TABLE = 'interactive_lessons';
 
-/** Prefer localStorage when migration isn't applied yet, or in prototype demo. */
+/**
+ * Prefer localStorage when:
+ * - prototype demo is active, or
+ * - we want a guaranteed click-through before the Supabase migration is applied.
+ * Remote sync still runs for normal logins; failures fall back to local quietly.
+ */
 function useRemoteSync(): boolean {
   if (isDemoModeActive() || isAuthorizedDemoMode()) return false;
   return isSupabaseAuthEnabled();
