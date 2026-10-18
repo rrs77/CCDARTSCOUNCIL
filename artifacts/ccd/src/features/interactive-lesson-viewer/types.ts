@@ -139,9 +139,9 @@ export const TEXT_PRESET_DEFAULTS: Record<
   TextPreset,
   { fontSize: number; fontWeight: number; label: string }
 > = {
-  headline: { fontSize: 48, fontWeight: 800, label: 'Headline' },
-  subtitle: { fontSize: 28, fontWeight: 600, label: 'Subtitle' },
-  body: { fontSize: 20, fontWeight: 500, label: 'Body' },
+  headline: { fontSize: 36, fontWeight: 800, label: 'Headline' },
+  subtitle: { fontSize: 22, fontWeight: 600, label: 'Subtitle' },
+  body: { fontSize: 18, fontWeight: 500, label: 'Body' },
 };
 
 export const TRANSITION_OPTIONS: { type: TransitionType; label: string }[] = [

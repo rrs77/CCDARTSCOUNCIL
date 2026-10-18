@@ -7,6 +7,7 @@ import {
   Image as ImageIcon,
   Square,
   Play,
+  Pause,
   Share2,
   Plus,
   Video,
@@ -20,6 +21,7 @@ import {
   ZoomIn,
   Trash2,
   ChevronDown,
+  ArrowLeft,
 } from 'lucide-react';
 import type {
   InteractiveLesson,
@@ -31,8 +33,6 @@ import type {
 } from '../../types';
 import {
   BRAND_TEXT_COLORS,
-  SCENE_TYPE_COLORS,
-  SCENE_TYPE_LABELS,
   TRANSITION_OPTIONS,
   createId,
   emptyScene,
@@ -43,6 +43,8 @@ import { SceneRenderer } from '../SceneRenderer';
 import { LyricsPanel } from './LyricsPanel';
 import { InteractiveLessonPlayer } from '../player/InteractiveLessonPlayer';
 import { saveInteractiveLesson } from '../../data/store';
+import { SceneThumb } from './SceneThumb';
+import { isCanvaUrl, normalizeCanvaEmbedUrl } from '../../utils/canvaEmbed';
 
 type RailPanel =
   | 'video'
@@ -91,7 +93,7 @@ export function InteractiveLessonEditor({
 }: InteractiveLessonEditorProps) {
   const [sceneIndex, setSceneIndex] = useState(0);
   const [selectedOverlayId, setSelectedOverlayId] = useState<string | null>(null);
-  const [rail, setRail] = useState<RailPanel>('uploads');
+  const [rail, setRail] = useState<RailPanel>(null);
   const [tool, setTool] = useState<ToolMode>('select');
   const [zoom, setZoom] = useState(1);
   const [timelineZoom, setTimelineZoom] = useState(1);
@@ -103,6 +105,14 @@ export function InteractiveLessonEditor({
   const [urlDraft, setUrlDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+
+  useEffect(() => {
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prev;
+    };
+  }, []);
 
   const scene = lesson.scenes[sceneIndex];
   const totalMs = lessonDurationMs(lesson);
@@ -169,18 +179,8 @@ export function InteractiveLessonEditor({
   const addScene = (type: SceneType) => {
     const sc = emptyScene(type);
     if (type === 'title') {
-      sc.overlays = [
-        {
-          id: createId('ov'),
-          text: 'Add title',
-          style: 'headline',
-          x: 10,
-          y: 36,
-          width: 80,
-          color: '#FFFFFF',
-          fontSize: 48,
-        },
-      ];
+      // Empty title stage — faint helper text is shown until the teacher adds content.
+      sc.overlays = [];
     }
     if (type === 'lyrics') {
       sc.lyrics = [];
@@ -220,12 +220,13 @@ export function InteractiveLessonEditor({
   const addTextOverlay = (style: TextOverlay['style'] = 'headline') => {
     const ov: TextOverlay = {
       id: createId('ov'),
-      text: style === 'headline' ? 'Add title' : style === 'subtitle' ? 'Add subtitle' : 'Add text',
+      text: style === 'headline' ? 'Lesson title' : style === 'subtitle' ? 'Subtitle' : 'Body text',
       style,
-      x: 12,
-      y: 20 + (scene?.overlays.length || 0) * 12,
-      width: 76,
+      x: 8,
+      y: style === 'headline' ? 34 : style === 'subtitle' ? 52 : 20 + (scene?.overlays.length || 0) * 10,
+      width: 84,
       color: scene?.backgroundColor === '#1F1B4D' ? '#FFFFFF' : '#1F1B4D',
+      fontSize: style === 'headline' ? 36 : style === 'subtitle' ? 22 : 18,
     };
     updateScene({ overlays: [...(scene?.overlays || []), ov] });
     setSelectedOverlayId(ov.id);
@@ -241,20 +242,27 @@ export function InteractiveLessonEditor({
       kind === 'canva' ||
       kind === 'powerpoint' ||
       kind === 'embed';
+    let finalUrl = url.trim();
+    if (kind === 'canva' || isCanvaUrl(finalUrl)) {
+      finalUrl = normalizeCanvaEmbedUrl(finalUrl);
+    }
     const item: MediaLibraryItem = {
       id: createId('media'),
-      name: url.split('/').pop() || 'Media',
-      kind,
-      url: url.trim(),
+      name: finalUrl.split('/').pop() || 'Media',
+      kind: kind === 'canva' || isCanvaUrl(url) ? 'canva' : kind,
+      url: finalUrl,
       addedAt: new Date().toISOString(),
     };
     const mediaLibrary = [...lesson.mediaLibrary, item];
-    const patched = lesson.scenes.map((s, i) =>
+    const resolvedKind: SceneType = kind === 'canva' || isCanvaUrl(url) ? 'canva' : kind;
+    const patched: Scene[] = lesson.scenes.map((s, i) =>
       i === sceneIndex
         ? {
             ...s,
-            type: kind,
-            ...(isEmbed ? { embedUrl: url.trim() } : { mediaUrl: url.trim() }),
+            type: resolvedKind,
+            ...(isEmbed || resolvedKind === 'canva'
+              ? { embedUrl: finalUrl }
+              : { mediaUrl: finalUrl }),
           }
         : s,
     );
@@ -274,6 +282,38 @@ export function InteractiveLessonEditor({
 
   const clipWidth = useMemo(() => 96 + timelineZoom * 40, [timelineZoom]);
 
+  const elapsedMs =
+    lesson.scenes.slice(0, sceneIndex).reduce((s, sc) => s + sc.durationMs, 0) + sceneTimeMs;
+
+  const seekLessonMs = (ms: number) => {
+    let remaining = Math.max(0, Math.min(ms, totalMs));
+    for (let i = 0; i < lesson.scenes.length; i++) {
+      const dur = lesson.scenes[i].durationMs;
+      if (remaining <= dur || i === lesson.scenes.length - 1) {
+        setSceneIndex(i);
+        setSceneTimeMs(Math.min(remaining, dur));
+        return;
+      }
+      remaining -= dur;
+    }
+  };
+
+  const transitionClass = (type: string) => {
+    switch (type) {
+      case 'fade':
+        return 'ilv-tr-fade-enter';
+      case 'slide':
+        return 'ilv-tr-slide-enter';
+      case 'zoom':
+        return 'ilv-tr-zoom-enter';
+      case 'dissolve':
+        return 'ilv-tr-dissolve-enter';
+      default:
+        return '';
+    }
+  };
+
+
   if (!scene) {
     return (
       <div className="ilv-root p-6">
@@ -286,13 +326,16 @@ export function InteractiveLessonEditor({
   }
 
   return (
-    <div className="ilv-root">
-      <div className="ilv-editor">
-        {/* Header */}
-        <header className="ilv-editor-header">
-          <div className="min-w-0">
+    <div className="ilv-root ilv-editor" role="dialog" aria-modal="true" aria-label="Interactive lesson editor">
+      <header className="ilv-editor-header">
+        <div className="ilv-editor-header-left">
+          <button type="button" className="ilv-btn ilv-btn-secondary" onClick={onClose} aria-label="Back">
+            <ArrowLeft className="h-4 w-4" />
+            Back
+          </button>
+          <div className="min-w-0 flex-1">
             <input
-              className="ilv-input border-0 bg-transparent px-0 text-lg font-extrabold tracking-tight"
+              className="ilv-input border-0 bg-transparent px-0 text-base font-extrabold tracking-tight"
               value={lesson.title}
               onChange={(e) => pushHistory({ ...lesson, title: e.target.value })}
               aria-label="Lesson title"
@@ -305,483 +348,481 @@ export function InteractiveLessonEditor({
               {saveMsg && <span className="text-xs text-[var(--ss-indigo)]">{saveMsg}</span>}
             </div>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            <button type="button" className="ilv-btn ilv-btn-secondary" onClick={onClose}>
-              Close
-            </button>
-            <button type="button" className="ilv-btn ilv-btn-secondary" onClick={() => setShowPlayer(true)}>
-              <Play className="h-4 w-4" />
-              Play
+        </div>
+        <div className="ilv-editor-header-right">
+          <button type="button" className="ilv-tool-btn" title="Undo" onClick={undo} disabled={!past.length}>
+            <Undo2 className="h-4 w-4" />
+          </button>
+          <button type="button" className="ilv-tool-btn" title="Redo" onClick={redo} disabled={!future.length}>
+            <Redo2 className="h-4 w-4" />
+          </button>
+          <label className="flex items-center gap-1 text-xs text-[var(--ss-muted)]">
+            <ZoomIn className="h-3.5 w-3.5" />
+            <select
+              className="ilv-select min-h-[32px] w-[88px] py-1"
+              value={zoom}
+              onChange={(e) => setZoom(Number(e.target.value))}
+            >
+              <option value={0.75}>75%</option>
+              <option value={1}>Fit</option>
+              <option value={1.25}>125%</option>
+              <option value={1.5}>150%</option>
+            </select>
+          </label>
+          <button type="button" className="ilv-btn ilv-btn-secondary" onClick={() => setShowPlayer(true)}>
+            <Play className="h-4 w-4" />
+            Play
+          </button>
+          <button
+            type="button"
+            className="ilv-btn ilv-btn-primary"
+            disabled={saving}
+            onClick={() => void publish(lesson.status === 'published' ? 'draft' : 'published')}
+          >
+            <Share2 className="h-4 w-4" />
+            {lesson.status === 'published' ? 'Unpublish' : 'Publish'}
+          </button>
+        </div>
+      </header>
+
+      <div className={`ilv-editor-body ${rail ? 'has-panel' : ''}`}>
+        <div className="ilv-stage-wrap">
+          <div className="ilv-toolbar">
+            <button
+              type="button"
+              className={`ilv-tool-btn ${tool === 'select' ? 'is-active' : ''}`}
+              title="Select"
+              onClick={() => setTool('select')}
+            >
+              <MousePointer2 className="h-4 w-4" />
             </button>
             <button
               type="button"
-              className="ilv-btn ilv-btn-primary"
-              disabled={saving}
-              onClick={() => void publish(lesson.status === 'published' ? 'draft' : 'published')}
+              className={`ilv-tool-btn ${tool === 'text' ? 'is-active' : ''}`}
+              title="Add text"
+              onClick={() => {
+                setTool('text');
+                setRail('text');
+                addTextOverlay('headline');
+              }}
             >
-              <Share2 className="h-4 w-4" />
-              {lesson.status === 'published' ? 'Unpublish' : 'Publish'}
+              <Type className="h-4 w-4" />
             </button>
-          </div>
-        </header>
-
-        <div className="ilv-editor-body relative">
-          <div className="ilv-stage-wrap">
-            {/* Compact top toolbar */}
-            <div className="ilv-toolbar">
-              <button type="button" className="ilv-tool-btn" title="Undo" onClick={undo} disabled={!past.length}>
-                <Undo2 className="h-4 w-4" />
-              </button>
-              <button type="button" className="ilv-tool-btn" title="Redo" onClick={redo} disabled={!future.length}>
-                <Redo2 className="h-4 w-4" />
-              </button>
-              <span className="mx-1 h-5 w-px bg-[var(--ss-line)]" />
-              <label className="flex items-center gap-1 text-xs text-[var(--ss-muted)]">
-                <ZoomIn className="h-3.5 w-3.5" />
-                <select
-                  className="ilv-select min-h-[32px] w-[88px] py-1"
-                  value={zoom}
-                  onChange={(e) => setZoom(Number(e.target.value))}
-                >
-                  <option value={0.75}>75%</option>
-                  <option value={1}>Fit</option>
-                  <option value={1.25}>125%</option>
-                  <option value={1.5}>150%</option>
-                </select>
-              </label>
-              <span className="mx-1 h-5 w-px bg-[var(--ss-line)]" />
-              <button
-                type="button"
-                className={`ilv-tool-btn ${tool === 'select' ? 'is-active' : ''}`}
-                title="Select"
-                onClick={() => setTool('select')}
-              >
-                <MousePointer2 className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                className={`ilv-tool-btn ${tool === 'text' ? 'is-active' : ''}`}
-                title="Add text"
-                onClick={() => {
-                  setTool('text');
-                  setRail('text');
-                  addTextOverlay('body');
-                }}
-              >
-                <Type className="h-4 w-4" />
-              </button>
-              <button
-                type="button"
-                className={`ilv-tool-btn ${tool === 'image' ? 'is-active' : ''}`}
-                title="Add image"
-                onClick={() => {
-                  setTool('image');
-                  setRail('image');
-                  addScene('image');
-                }}
-              >
-                <ImageIcon className="h-4 w-4" />
-              </button>
-              <button type="button" className="ilv-tool-btn" title="Shapes (background frame)" onClick={() => setTool('shapes')}>
-                <Square className="h-4 w-4" />
-              </button>
-              <div className="ml-auto flex items-center gap-2">
-                <input
-                  className="ilv-input min-h-[32px] w-[140px] py-1 text-xs"
-                  type="number"
-                  min={1000}
-                  step={500}
-                  value={scene.durationMs}
-                  onChange={(e) => updateScene({ durationMs: Math.max(1000, Number(e.target.value) || 1000) })}
-                  title="Scene duration (ms)"
-                />
-                <span className="text-[10px] font-semibold uppercase text-[var(--ss-muted)]">ms</span>
-              </div>
-            </div>
-
-            <div className="ilv-stage">
-              <div className="ilv-stage-canvas" style={{ transform: `scale(${zoom})`, transformOrigin: 'center center' }}>
-                <SceneRenderer
-                  scene={scene}
-                  timeMs={sceneTimeMs}
-                  playing={playing}
-                  showLyrics
-                  interactive
-                  selectedOverlayId={selectedOverlayId}
-                  onSelectOverlay={setSelectedOverlayId}
-                  onMoveOverlay={(id, x, y) => {
-                    updateScene({
-                      overlays: scene.overlays.map((o) => (o.id === id ? { ...o, x, y } : o)),
-                    });
-                  }}
-                />
-              </div>
+            <button
+              type="button"
+              className={`ilv-tool-btn ${tool === 'image' ? 'is-active' : ''}`}
+              title="Add image"
+              onClick={() => {
+                setTool('image');
+                setRail('image');
+                addScene('image');
+              }}
+            >
+              <ImageIcon className="h-4 w-4" />
+            </button>
+            <button type="button" className="ilv-tool-btn" title="Shapes" onClick={() => setTool('shapes')}>
+              <Square className="h-4 w-4" />
+            </button>
+            <div className="ml-auto flex items-center gap-2">
+              <input
+                className="ilv-input min-h-[32px] w-[120px] py-1 text-xs"
+                type="number"
+                min={1000}
+                step={500}
+                value={scene.durationMs}
+                onChange={(e) => updateScene({ durationMs: Math.max(1000, Number(e.target.value) || 1000) })}
+                title="Scene duration (ms)"
+              />
+              <span className="text-[10px] font-semibold uppercase text-[var(--ss-muted)]">ms</span>
             </div>
           </div>
 
-          {/* Right tool rail */}
-          <aside className="ilv-rail" aria-label="Content tools">
-            {RAIL.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                className={`ilv-rail-btn ${rail === item.id ? 'is-active' : ''}`}
-                onClick={() => setRail((r) => (r === item.id ? null : item.id))}
-              >
-                {item.icon}
-                <span>{item.label}</span>
-              </button>
-            ))}
-          </aside>
+          <div className="ilv-stage">
+            <div
+              className="ilv-stage-canvas"
+              style={{ ['--ilv-zoom' as string]: String(zoom) }}
+            >
+              <SceneRenderer
+                key={`${scene.id}-${playing ? 'p' : 's'}-${sceneIndex}`}
+                scene={scene}
+                timeMs={sceneTimeMs}
+                playing={playing}
+                showLyrics
+                interactive
+                selectedOverlayId={selectedOverlayId}
+                onSelectOverlay={setSelectedOverlayId}
+                onMoveOverlay={(id, x, y) => {
+                  updateScene({
+                    overlays: scene.overlays.map((o) => (o.id === id ? { ...o, x, y } : o)),
+                  });
+                }}
+                transitionClass={transitionClass(scene.transition.type)}
+              />
+            </div>
+          </div>
+        </div>
 
-          {/* Side panel */}
-          {rail && (
-            <div className="ilv-panel">
-              <div className="flex items-center justify-between border-b border-[var(--ss-line)] px-3 py-2">
-                <strong className="text-sm font-extrabold tracking-tight">
-                  {RAIL.find((r) => r.id === rail)?.label}
-                </strong>
-                <button type="button" className="ilv-tool-btn" onClick={() => setRail(null)} aria-label="Close panel">
-                  <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
-                </button>
-              </div>
-              <div className="flex-1 overflow-y-auto">
-                {rail === 'text' && (
-                  <div className="space-y-3 p-3">
-                    <p className="text-xs text-[var(--ss-muted)]">
-                      Canva-style titles: add, drag to position, pick a preset and brand colour.
-                    </p>
-                    <div className="flex flex-wrap gap-2">
-                      <button type="button" className="ilv-btn ilv-btn-primary text-xs" onClick={() => addTextOverlay('headline')}>
-                        Add title
-                      </button>
-                      <button type="button" className="ilv-btn ilv-btn-secondary text-xs" onClick={() => addTextOverlay('subtitle')}>
-                        Add subtitle
-                      </button>
-                      <button type="button" className="ilv-btn ilv-btn-secondary text-xs" onClick={() => addTextOverlay('body')}>
-                        Add text
+        {rail && (
+          <div className="ilv-panel">
+            <div className="flex items-center justify-between border-b border-[var(--ss-line)] px-3 py-2">
+              <strong className="text-sm font-extrabold tracking-tight">
+                {RAIL.find((r) => r.id === rail)?.label}
+              </strong>
+              <button type="button" className="ilv-tool-btn" onClick={() => setRail(null)} aria-label="Close panel">
+                <ChevronDown className="h-4 w-4 rotate-[-90deg]" />
+              </button>
+            </div>
+            <div className="flex-1 overflow-y-auto">
+              {rail === 'text' && (
+                <div className="space-y-3 p-3">
+                  <p className="text-xs text-[var(--ss-muted)]">
+                    Add titles and body copy, then drag them on the stage. Safe margins keep text readable in class.
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    <button type="button" className="ilv-btn ilv-btn-primary text-xs" onClick={() => addTextOverlay('headline')}>
+                      Add title
+                    </button>
+                    <button type="button" className="ilv-btn ilv-btn-secondary text-xs" onClick={() => addTextOverlay('subtitle')}>
+                      Add subtitle
+                    </button>
+                    <button type="button" className="ilv-btn ilv-btn-secondary text-xs" onClick={() => addTextOverlay('body')}>
+                      Add text
+                    </button>
+                  </div>
+                  {selectedOverlay && (
+                    <div className="space-y-2 rounded-[12px] border border-[var(--ss-line)] bg-[var(--ss-lilac)] p-2.5">
+                      <label className="ilv-label">Selected text</label>
+                      <textarea
+                        className="ilv-textarea min-h-[64px]"
+                        value={selectedOverlay.text}
+                        onChange={(e) =>
+                          updateScene({
+                            overlays: scene.overlays.map((o) =>
+                              o.id === selectedOverlay.id ? { ...o, text: e.target.value } : o,
+                            ),
+                          })
+                        }
+                      />
+                      <label className="ilv-label">Preset</label>
+                      <select
+                        className="ilv-select"
+                        value={selectedOverlay.style}
+                        onChange={(e) =>
+                          updateScene({
+                            overlays: scene.overlays.map((o) =>
+                              o.id === selectedOverlay.id
+                                ? { ...o, style: e.target.value as TextOverlay['style'] }
+                                : o,
+                            ),
+                          })
+                        }
+                      >
+                        <option value="headline">Headline</option>
+                        <option value="subtitle">Subtitle</option>
+                        <option value="body">Body</option>
+                      </select>
+                      <label className="ilv-label">Colour</label>
+                      <div className="flex flex-wrap gap-2">
+                        {BRAND_TEXT_COLORS.map((c) => (
+                          <button
+                            key={c}
+                            type="button"
+                            title={c}
+                            className="h-8 w-8 rounded-full border border-[var(--ss-line)]"
+                            style={{ background: c }}
+                            onClick={() =>
+                              updateScene({
+                                overlays: scene.overlays.map((o) =>
+                                  o.id === selectedOverlay.id ? { ...o, color: c } : o,
+                                ),
+                              })
+                            }
+                          />
+                        ))}
+                      </div>
+                      <button
+                        type="button"
+                        className="ilv-btn ilv-btn-secondary w-full text-xs"
+                        onClick={() => {
+                          updateScene({
+                            overlays: scene.overlays.filter((o) => o.id !== selectedOverlay.id),
+                          });
+                          setSelectedOverlayId(null);
+                        }}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                        Remove text
                       </button>
                     </div>
-                    {selectedOverlay && (
-                      <div className="space-y-2 rounded-[12px] border border-[var(--ss-line)] bg-[var(--ss-lilac)] p-2.5">
-                        <label className="ilv-label">Selected text</label>
-                        <textarea
-                          className="ilv-textarea min-h-[64px]"
-                          value={selectedOverlay.text}
-                          onChange={(e) =>
-                            updateScene({
-                              overlays: scene.overlays.map((o) =>
-                                o.id === selectedOverlay.id ? { ...o, text: e.target.value } : o,
-                              ),
-                            })
-                          }
-                        />
-                        <label className="ilv-label">Preset</label>
-                        <select
-                          className="ilv-select"
-                          value={selectedOverlay.style}
-                          onChange={(e) =>
-                            updateScene({
-                              overlays: scene.overlays.map((o) =>
-                                o.id === selectedOverlay.id
-                                  ? { ...o, style: e.target.value as TextOverlay['style'] }
-                                  : o,
-                              ),
-                            })
-                          }
-                        >
-                          <option value="headline">Headline</option>
-                          <option value="subtitle">Subtitle</option>
-                          <option value="body">Body</option>
-                        </select>
-                        <label className="ilv-label">Colour</label>
-                        <div className="flex flex-wrap gap-2">
-                          {BRAND_TEXT_COLORS.map((c) => (
-                            <button
-                              key={c}
-                              type="button"
-                              title={c}
-                              className="h-8 w-8 rounded-full border border-[var(--ss-line)]"
-                              style={{ background: c }}
-                              onClick={() =>
-                                updateScene({
-                                  overlays: scene.overlays.map((o) =>
-                                    o.id === selectedOverlay.id ? { ...o, color: c } : o,
-                                  ),
-                                })
-                              }
-                            />
-                          ))}
-                        </div>
-                        <button
-                          type="button"
-                          className="ilv-btn ilv-btn-secondary w-full text-xs"
-                          onClick={() => {
-                            updateScene({
-                              overlays: scene.overlays.filter((o) => o.id !== selectedOverlay.id),
-                            });
-                            setSelectedOverlayId(null);
-                          }}
-                        >
-                          <Trash2 className="h-3.5 w-3.5" />
-                          Remove text
-                        </button>
-                      </div>
-                    )}
+                  )}
+                </div>
+              )}
+
+              {rail === 'lyrics' && (
+                <LyricsPanel
+                  scene={scene}
+                  sceneTimeMs={sceneTimeMs}
+                  playing={playing}
+                  authToken={authToken}
+                  onChange={(lyrics) => updateScene({ lyrics, type: 'lyrics' })}
+                  onSeek={(ms) => {
+                    setSceneTimeMs(ms);
+                    setPlaying(false);
+                  }}
+                  onTogglePlay={() => setPlaying((p) => !p)}
+                />
+              )}
+
+              {rail === 'transitions' && (
+                <div className="space-y-3 p-3">
+                  <p className="text-xs text-[var(--ss-muted)]">
+                    Per-slide transition into this scene. Preview with the timeline play button.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {TRANSITION_OPTIONS.map((opt) => (
+                      <button
+                        key={opt.type}
+                        type="button"
+                        className={`ilv-btn text-xs ${
+                          scene.transition.type === opt.type ? 'ilv-btn-primary' : 'ilv-btn-secondary'
+                        }`}
+                        onClick={() =>
+                          updateScene({
+                            transition: { ...scene.transition, type: opt.type as TransitionType },
+                          })
+                        }
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
                   </div>
-                )}
-
-                {rail === 'lyrics' && (
-                  <LyricsPanel
-                    scene={scene}
-                    sceneTimeMs={sceneTimeMs}
-                    playing={playing}
-                    authToken={authToken}
-                    onChange={(lyrics) => updateScene({ lyrics, type: 'lyrics' })}
-                    onSeek={(ms) => {
-                      setSceneTimeMs(ms);
-                      setPlaying(false);
-                    }}
-                    onTogglePlay={() => setPlaying((p) => !p)}
+                  <label className="ilv-label">Duration (ms)</label>
+                  <input
+                    className="ilv-input"
+                    type="number"
+                    min={0}
+                    max={3000}
+                    step={50}
+                    value={scene.transition.durationMs}
+                    onChange={(e) =>
+                      updateScene({
+                        transition: {
+                          ...scene.transition,
+                          durationMs: Math.max(0, Number(e.target.value) || 0),
+                        },
+                      })
+                    }
                   />
-                )}
+                  <button
+                    type="button"
+                    className="ilv-btn ilv-btn-secondary w-full"
+                    onClick={() => {
+                      setSceneTimeMs(0);
+                      setPlaying(true);
+                    }}
+                  >
+                    Preview transition
+                  </button>
+                </div>
+              )}
 
-                {rail === 'transitions' && (
-                  <div className="space-y-3 p-3">
-                    <p className="text-xs text-[var(--ss-muted)]">
-                      Per-slide transition into this scene. Preview with Play — respects prefers-reduced-motion.
+              {(rail === 'video' ||
+                rail === 'audio' ||
+                rail === 'image' ||
+                rail === 'canva' ||
+                rail === 'powerpoint' ||
+                rail === 'embed' ||
+                rail === 'uploads') && (
+                <div className="space-y-3 p-3">
+                  <p className="text-xs text-[var(--ss-muted)]">
+                    {rail === 'canva' &&
+                      'Use a Canva Embed link so it can play in class. Share → More → Embed, then paste below. Or export MP4 and add as video.'}
+                    {rail === 'powerpoint' &&
+                      'Paste an Office Online embed URL, or upload a PPTX hosted where Office can reach it.'}
+                    {rail === 'embed' && 'Paste any allow-listed embed URL.'}
+                    {(rail === 'video' || rail === 'audio' || rail === 'image' || rail === 'uploads') &&
+                      'Add a media URL. Demo and local files work now.'}
+                  </p>
+                  <label className="ilv-label">Media / embed URL</label>
+                  <input
+                    className="ilv-input"
+                    value={urlDraft}
+                    onChange={(e) => setUrlDraft(e.target.value)}
+                    placeholder={
+                      rail === 'canva'
+                        ? 'https://www.canva.com/design/…/…/view?embed'
+                        : 'https://…'
+                    }
+                  />
+                  {rail === 'canva' && (
+                    <p className="text-[11px] leading-snug text-[var(--ss-muted)]">
+                      Edit or view links are blocked in iframes. Only the Embed URL (
+                      <code className="text-[10px]">/view?embed</code>) works. Short links (canva.link) must be
+                      opened and replaced with the full embed URL.
                     </p>
-                    <div className="grid grid-cols-2 gap-2">
-                      {TRANSITION_OPTIONS.map((opt) => (
+                  )}
+                  <button
+                    type="button"
+                    className="ilv-btn ilv-btn-primary w-full"
+                    onClick={() => {
+                      const typeMap: Record<string, SceneType> = {
+                        video: 'video',
+                        audio: 'audio',
+                        image: 'image',
+                        canva: 'canva',
+                        powerpoint: 'powerpoint',
+                        embed: 'embed',
+                        uploads: scene.type,
+                      };
+                      const t = typeMap[rail || 'video'];
+                      if (scene.type !== t && rail !== 'uploads') {
+                        addScene(t);
+                      }
+                      applyMediaUrl(urlDraft, t);
+                    }}
+                  >
+                    Apply to scene
+                  </button>
+                  <button
+                    type="button"
+                    className="ilv-btn ilv-btn-secondary w-full"
+                    onClick={() => addScene((rail === 'uploads' ? 'video' : rail) as SceneType)}
+                  >
+                    <Plus className="h-4 w-4" />
+                    New {rail === 'uploads' ? 'video' : rail} scene
+                  </button>
+                  {scene.notes && (
+                    <p className="rounded-[12px] border border-[var(--ss-line)] bg-[var(--ss-lilac)] p-2 text-xs text-[var(--ss-muted)]">
+                      {scene.notes}
+                    </p>
+                  )}
+                  <div>
+                    <label className="ilv-label">Media library</label>
+                    <div className="space-y-1.5">
+                      {lesson.mediaLibrary.length === 0 && (
+                        <button type="button" className="ilv-empty-slot w-full" disabled>
+                          + Add media via URL above
+                        </button>
+                      )}
+                      {lesson.mediaLibrary.map((m) => (
                         <button
-                          key={opt.type}
+                          key={m.id}
                           type="button"
-                          className={`ilv-btn text-xs ${
-                            scene.transition.type === opt.type ? 'ilv-btn-primary' : 'ilv-btn-secondary'
-                          }`}
-                          onClick={() =>
-                            updateScene({
-                              transition: { ...scene.transition, type: opt.type as TransitionType },
-                            })
-                          }
+                          className="ilv-card w-full text-left text-xs hover:border-[var(--ss-indigo)]"
+                          draggable
+                          onDragStart={(e) => {
+                            e.dataTransfer.setData('application/ilv-media', JSON.stringify(m));
+                          }}
+                          onClick={() => applyMediaUrl(m.url, m.kind === 'upload' ? undefined : (m.kind as SceneType))}
                         >
-                          {opt.label}
+                          <div className="font-bold">{m.name}</div>
+                          <div className="truncate text-[var(--ss-muted)]">{m.url}</div>
                         </button>
                       ))}
                     </div>
-                    <label className="ilv-label">Duration (ms)</label>
-                    <input
-                      className="ilv-input"
-                      type="number"
-                      min={0}
-                      max={3000}
-                      step={50}
-                      value={scene.transition.durationMs}
-                      onChange={(e) =>
-                        updateScene({
-                          transition: {
-                            ...scene.transition,
-                            durationMs: Math.max(0, Number(e.target.value) || 0),
-                          },
-                        })
-                      }
-                    />
-                    <button
-                      type="button"
-                      className="ilv-btn ilv-btn-secondary w-full"
-                      onClick={() => {
-                        setSceneTimeMs(0);
-                        setPlaying(true);
-                      }}
-                    >
-                      Preview transition
-                    </button>
                   </div>
-                )}
-
-                {(rail === 'video' ||
-                  rail === 'audio' ||
-                  rail === 'image' ||
-                  rail === 'canva' ||
-                  rail === 'powerpoint' ||
-                  rail === 'embed' ||
-                  rail === 'uploads') && (
-                  <div className="space-y-3 p-3">
-                    <p className="text-xs text-[var(--ss-muted)]">
-                      {rail === 'canva' &&
-                        'Paste a Canva share/embed link, or add an exported MP4 to the media library. Live embeds keep layout; MP4 locks motion.'}
-                      {rail === 'powerpoint' &&
-                        'Paste an Office Online embed URL, or upload a PPTX hosted where Office can reach it. Animations need Online or an MP4 export.'}
-                      {rail === 'embed' && 'Generic placeholder for media types not finalised yet.'}
-                      {(rail === 'video' || rail === 'audio' || rail === 'image' || rail === 'uploads') &&
-                        'Add a URL (hosted elsewhere later is fine). Demo/local files work now.'}
-                    </p>
-                    <label className="ilv-label">Media / embed URL</label>
-                    <input
-                      className="ilv-input"
-                      value={urlDraft}
-                      onChange={(e) => setUrlDraft(e.target.value)}
-                      placeholder="https://…"
-                    />
-                    <button
-                      type="button"
-                      className="ilv-btn ilv-btn-primary w-full"
-                      onClick={() => {
-                        const typeMap: Record<string, SceneType> = {
-                          video: 'video',
-                          audio: 'audio',
-                          image: 'image',
-                          canva: 'canva',
-                          powerpoint: 'powerpoint',
-                          embed: 'embed',
-                          uploads: scene.type,
-                        };
-                        const t = typeMap[rail || 'video'];
-                        if (scene.type !== t && rail !== 'uploads') {
-                          addScene(t);
-                        }
-                        applyMediaUrl(urlDraft, t);
-                      }}
-                    >
-                      Apply to scene
-                    </button>
-                    <button
-                      type="button"
-                      className="ilv-btn ilv-btn-secondary w-full"
-                      onClick={() => addScene((rail === 'uploads' ? 'video' : rail) as SceneType)}
-                    >
-                      <Plus className="h-4 w-4" />
-                      New {rail === 'uploads' ? 'video' : rail} scene
-                    </button>
-                    {scene.notes && (
-                      <p className="rounded-[12px] border border-[var(--ss-line)] bg-[var(--ss-lilac)] p-2 text-xs text-[var(--ss-muted)]">
-                        {scene.notes}
-                      </p>
-                    )}
-                    <div>
-                      <label className="ilv-label">Media library</label>
-                      <div className="space-y-1.5">
-                        {lesson.mediaLibrary.length === 0 && (
-                          <button type="button" className="ilv-empty-slot w-full" disabled>
-                            + Add media via URL above
-                          </button>
-                        )}
-                        {lesson.mediaLibrary.map((m) => (
-                          <button
-                            key={m.id}
-                            type="button"
-                            className="ilv-card w-full text-left text-xs hover:border-[var(--ss-indigo)]"
-                            draggable
-                            onDragStart={(e) => {
-                              e.dataTransfer.setData('application/ilv-media', JSON.stringify(m));
-                            }}
-                            onClick={() => applyMediaUrl(m.url, m.kind === 'upload' ? undefined : (m.kind as SceneType))}
-                          >
-                            <div className="font-bold">{m.name}</div>
-                            <div className="truncate text-[var(--ss-muted)]">{m.url}</div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          </div>
+        )}
 
-        {/* Bottom timeline */}
-        <div className="ilv-timeline">
-          <div className="ilv-timeline-controls">
+        <aside className="ilv-rail" aria-label="Content tools">
+          {RAIL.map((item) => (
+            <button
+              key={item.id}
+              type="button"
+              className={`ilv-rail-btn ${rail === item.id ? 'is-active' : ''}`}
+              onClick={() => setRail((r) => (r === item.id ? null : item.id))}
+            >
+              {item.icon}
+              <span>{item.label}</span>
+            </button>
+          ))}
+        </aside>
+      </div>
+
+      <div className="ilv-timeline">
+        <div className="ilv-timeline-controls">
+          <button
+            type="button"
+            className="ilv-btn ilv-btn-secondary text-xs"
+            onClick={() => setRail((r) => (r === 'transitions' ? null : 'transitions'))}
+          >
+            Transitions
+          </button>
+          <div className="flex items-center gap-3">
             <button
               type="button"
-              className="ilv-btn ilv-btn-secondary text-xs"
-              onClick={() => setRail((r) => (r === 'transitions' ? null : 'transitions'))}
+              className="ilv-play-btn"
+              onClick={() => setPlaying((p) => !p)}
+              aria-label={playing ? 'Pause preview' : 'Play preview'}
             >
-              Transitions
+              {playing ? <Pause className="h-4 w-4" /> : <Play className="h-4 w-4 fill-white" />}
             </button>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                className="ilv-play-btn"
-                onClick={() => setPlaying((p) => !p)}
-                aria-label={playing ? 'Pause' : 'Play'}
-              >
-                {playing ? (
-                  <span className="text-xs font-bold tracking-widest">II</span>
-                ) : (
-                  <Play className="h-4 w-4 fill-white" />
-                )}
-              </button>
-              <span className="tabular-nums text-sm font-semibold text-[var(--ss-ink)]">
-                {formatTimecode(
-                  lesson.scenes.slice(0, sceneIndex).reduce((s, sc) => s + sc.durationMs, 0) + sceneTimeMs,
-                )}{' '}
-                / {formatTimecode(totalMs)}
-              </span>
-            </div>
-            <label className="flex items-center gap-2 text-xs text-[var(--ss-muted)]">
-              Zoom
-              <input
-                type="range"
-                min={0.6}
-                max={2}
-                step={0.1}
-                value={timelineZoom}
-                onChange={(e) => setTimelineZoom(Number(e.target.value))}
-              />
-            </label>
+            <span className="tabular-nums text-sm font-semibold text-[var(--ss-ink)]">
+              {formatTimecode(elapsedMs)} / {formatTimecode(totalMs)}
+            </span>
           </div>
+          <label className="flex items-center gap-2 text-xs text-[var(--ss-muted)]">
+            Zoom
+            <input
+              type="range"
+              min={0.6}
+              max={2}
+              step={0.1}
+              value={timelineZoom}
+              onChange={(e) => setTimelineZoom(Number(e.target.value))}
+            />
+          </label>
+        </div>
 
+        <div
+          className="ilv-scene-track"
+          onDragOver={(e) => e.preventDefault()}
+          onClick={(e) => {
+            const track = e.currentTarget;
+            if ((e.target as HTMLElement).closest('.ilv-scene-clip, .ilv-add-scene')) return;
+            const rect = track.getBoundingClientRect();
+            const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left + track.scrollLeft) / Math.max(track.scrollWidth, 1)));
+            seekLessonMs(ratio * totalMs);
+            setPlaying(false);
+          }}
+          onDrop={(e) => {
+            const raw = e.dataTransfer.getData('application/ilv-media');
+            if (!raw) return;
+            try {
+              const m = JSON.parse(raw) as MediaLibraryItem;
+              applyMediaUrl(m.url, m.kind === 'upload' ? undefined : (m.kind as SceneType));
+            } catch {
+              /* ignore */
+            }
+          }}
+        >
           <div
-            className="ilv-scene-track"
-            onDragOver={(e) => e.preventDefault()}
-            onDrop={(e) => {
-              const raw = e.dataTransfer.getData('application/ilv-media');
-              if (!raw) return;
-              try {
-                const m = JSON.parse(raw) as MediaLibraryItem;
-                applyMediaUrl(m.url, m.kind === 'upload' ? undefined : (m.kind as SceneType));
-              } catch {
-                /* ignore */
-              }
+            className="ilv-playhead"
+            style={{
+              left: totalMs > 0 ? `${(elapsedMs / totalMs) * 100}%` : 0,
             }}
-          >
-            {lesson.scenes.map((sc, i) => (
-              <div
-                key={sc.id}
-                className={`ilv-scene-clip ${i === sceneIndex ? 'is-active' : ''}`}
-                style={{ width: clipWidth }}
-                draggable
-                onDragStart={(e) => e.dataTransfer.setData('text/ilv-scene-index', String(i))}
-                onDragOver={(e) => e.preventDefault()}
-                onDrop={(e) => {
-                  e.preventDefault();
-                  const from = Number(e.dataTransfer.getData('text/ilv-scene-index'));
-                  if (!Number.isNaN(from)) reorderScene(from, i);
-                }}
-                onClick={() => {
-                  setSceneIndex(i);
-                  setSceneTimeMs(0);
-                  setPlaying(false);
-                }}
-              >
-                <div className="ilv-scene-thumb">
-                  {sc.type === 'image' && sc.mediaUrl ? (
-                    <img src={sc.mediaUrl} alt="" className="h-full w-full object-cover" />
-                  ) : (
-                    SCENE_TYPE_LABELS[sc.type]
-                  )}
-                </div>
-                <div className="ilv-scene-typebar" style={{ background: SCENE_TYPE_COLORS[sc.type] }}>
-                  {SCENE_TYPE_LABELS[sc.type]}
-                </div>
-              </div>
-            ))}
-            <button type="button" className="ilv-add-scene" title="Add scene" onClick={() => addScene('title')}>
-              <Plus className="h-5 w-5" />
-            </button>
-          </div>
+          />
+          {lesson.scenes.map((sc, i) => (
+            <SceneThumb
+              key={sc.id}
+              scene={sc}
+              index={i}
+              active={i === sceneIndex}
+              width={clipWidth}
+              onSelect={() => {
+                setSceneIndex(i);
+                setSceneTimeMs(0);
+                setPlaying(false);
+              }}
+              onReorder={reorderScene}
+            />
+          ))}
+          <button type="button" className="ilv-add-scene" title="Add scene" onClick={() => addScene('title')}>
+            <Plus className="h-5 w-5" />
+          </button>
         </div>
       </div>
 

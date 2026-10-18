@@ -52,20 +52,7 @@ export function InteractiveLessonHub() {
       ownerId: userId,
       ownerEmail: user?.email,
       status: 'draft',
-      scenes: [emptyScene('title', {
-        overlays: [
-          {
-            id: createId('ov'),
-            text: 'Add title',
-            style: 'headline',
-            x: 10,
-            y: 38,
-            width: 80,
-            color: '#FFFFFF',
-            fontSize: 48,
-          },
-        ],
-      })],
+      scenes: [emptyScene('title')],
       mediaLibrary: [],
       attachedLessonKeys: [],
       createdAt: now,

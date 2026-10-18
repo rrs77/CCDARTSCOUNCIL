@@ -133,41 +133,78 @@
   background: var(--ss-suntint);
 }
 
-/* Editor chrome */
+/* Editor chrome — full-viewport Google Vids–style workspace */
 .ilv-editor {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
   display: grid;
-  grid-template-rows: auto 1fr auto;
-  /* Fit under CCD header + dash tabs + footer without clipping the timeline */
-  height: min(78vh, 760px);
-  min-height: 560px;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr);
+  width: 100vw;
+  height: 100dvh;
+  max-height: 100dvh;
+  min-height: 0;
   background: var(--ss-lilac);
-  border: 1px solid var(--ss-line);
-  border-radius: 14px;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
 }
 
 .ilv-editor-header {
+  flex: 0 0 auto;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 0.75rem;
-  padding: 0.55rem 0.85rem;
+  min-height: 52px;
+  padding: 0.4rem 0.85rem;
   background: var(--ss-white);
   border-bottom: 1px solid var(--ss-line);
 }
 
+.ilv-editor-header-left {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  min-width: 0;
+  flex: 1;
+}
+
+.ilv-editor-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  flex-wrap: wrap;
+  flex: 0 0 auto;
+}
+
+.ilv-editor-header .ilv-input {
+  min-height: 36px;
+  font-size: 1rem;
+}
+
 .ilv-editor-body {
   display: grid;
-  grid-template-columns: 1fr 76px;
+  /* stage | tool rail — panel column added when .has-panel */
+  grid-template-columns: minmax(0, 1fr) 72px;
+  grid-template-rows: minmax(0, 1fr);
   min-height: 0;
+  min-width: 0;
+  overflow: hidden;
   background: var(--ss-canvas);
 }
 
+.ilv-editor-body.has-panel {
+  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px) 72px;
+}
+
 .ilv-stage-wrap {
-  display: flex;
-  flex-direction: column;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   min-width: 0;
   min-height: 0;
+  overflow: hidden;
 }
 
 .ilv-toolbar {
@@ -175,9 +212,10 @@
   align-items: center;
   gap: 0.35rem;
   flex-wrap: wrap;
-  padding: 0.4rem 0.75rem;
+  padding: 0.35rem 0.75rem;
   background: var(--ss-white);
   border-bottom: 1px solid var(--ss-line);
+  flex: 0 0 auto;
 }
 
 .ilv-tool-btn {
@@ -203,27 +241,92 @@
 }
 
 .ilv-stage {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1rem;
   min-height: 0;
-  background:
-    linear-gradient(90deg, rgba(226, 224, 239, 0.55) 1px, transparent 1px) 0 0 / 24px 24px,
-    linear-gradient(rgba(226, 224, 239, 0.55) 1px, transparent 1px) 0 0 / 24px 24px,
-    var(--ss-canvas);
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  padding: 1.25rem 1.5rem;
+  overflow: auto;
+  container-type: size;
+  container-name: ilv-editor-stage;
+  background: var(--ss-canvas);
 }
 
 .ilv-stage-canvas {
   position: relative;
-  width: min(100%, 960px);
+  /* Fit 16:9 inside remaining stage area; zoom via --ilv-zoom (scrolls inside .ilv-stage when > 1) */
+  --ilv-zoom: 1;
   aspect-ratio: 16 / 9;
+  width: min(calc(100cqw * var(--ilv-zoom)), calc(100cqh * var(--ilv-zoom) * 16 / 9));
+  height: auto;
+  max-width: none;
+  flex-shrink: 0;
   background: var(--ss-white);
   border: 1px solid var(--ss-line);
-  border-radius: 10px;
+  border-radius: 4px;
   overflow: hidden;
   box-shadow: none;
+}
+
+@supports not (width: 1cqw) {
+  .ilv-stage-canvas {
+    width: min(100%, calc((100dvh - 12rem) * 16 / 9));
+    max-height: calc(100dvh - 12rem);
+  }
+}
+
+.ilv-stage-helper {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  pointer-events: none;
+  text-align: center;
+  padding: 8%;
+}
+.ilv-stage-helper-title {
+  font-size: clamp(1.25rem, 3.2cqw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: rgba(255, 255, 255, 0.28);
+}
+.ilv-stage-helper-sub {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.2);
+}
+
+.ilv-overlay-box.is-placeholder {
+  opacity: 0.38;
+  font-style: italic;
+}
+
+.ilv-embed-fallback {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  padding: 1.5rem;
+  text-align: center;
+  background: #1f1b4d;
+  color: #fff;
+}
+.ilv-embed-fallback-title {
+  font-size: 1.35rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.ilv-embed-fallback-body {
+  max-width: 28rem;
+  font-size: 0.85rem;
+  line-height: 1.45;
+  color: rgba(255, 255, 255, 0.75);
 }
 
 .ilv-rail {
@@ -234,6 +337,8 @@
   background: var(--ss-ink);
   color: #fff;
   overflow-y: auto;
+  min-height: 0;
+  z-index: 1;
 }
 
 .ilv-rail-btn {
@@ -262,9 +367,12 @@
 }
 
 .ilv-timeline {
+  flex: 0 0 auto;
   background: var(--ss-white);
   border-top: 1px solid var(--ss-line);
   padding: 0.5rem 0.75rem 0.65rem;
+  min-width: 0;
+  z-index: 2;
 }
 
 .ilv-timeline-controls {
@@ -309,6 +417,8 @@
   cursor: grab;
   overflow: hidden;
   user-select: none;
+  position: relative;
+  z-index: 1;
 }
 .ilv-scene-clip.is-active {
   border-color: var(--ss-indigo);
@@ -316,7 +426,7 @@
   outline-offset: 1px;
 }
 .ilv-scene-thumb {
-  height: 56px;
+  height: 64px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -325,15 +435,62 @@
   font-weight: 700;
   color: var(--ss-muted);
   overflow: hidden;
+  position: relative;
+}
+.ilv-thumb-media {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.ilv-thumb-brand {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+}
+.ilv-thumb-logo {
+  height: 22px;
+  width: auto;
+  opacity: 0.95;
+}
+.ilv-thumb-title {
+  padding: 0.35rem;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.2;
+  text-align: center;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.ilv-thumb-fallback {
+  font-size: 10px;
+  font-weight: 700;
+  color: var(--ss-muted);
 }
 .ilv-scene-typebar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 0.25rem;
   padding: 0.2rem 0.4rem;
   font-size: 10px;
   font-weight: 700;
   color: #fff;
+}
+.ilv-scene-dur {
+  opacity: 0.9;
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
 }
 
 .ilv-add-scene {
@@ -361,7 +518,17 @@
   width: 2px;
   background: var(--ss-indigo);
   pointer-events: none;
-  z-index: 2;
+  z-index: 3;
+}
+.ilv-playhead::before {
+  content: '';
+  position: absolute;
+  top: -3px;
+  left: -4px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ss-indigo);
 }
 
 /* Player */
@@ -551,14 +718,15 @@
 }
 
 .ilv-panel {
-  position: absolute;
-  top: 0;
-  right: 76px;
-  bottom: 0;
-  width: min(320px, 90vw);
+  /* In-flow grid column — pushes the stage, never overlays it */
+  position: relative;
+  width: auto;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
   background: var(--ss-white);
   border-left: 1px solid var(--ss-line);
-  z-index: 5;
+  z-index: 1;
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -614,26 +782,27 @@
 }
 
 @media (max-width: 768px) {
-  .ilv-editor {
-    height: auto;
-    min-height: 0;
-  }
-  .ilv-editor-body {
-    grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
+  .ilv-editor-body,
+  .ilv-editor-body.has-panel {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr) auto auto;
   }
   .ilv-rail {
     flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
+    order: 3;
   }
   .ilv-rail-btn {
     min-width: 64px;
   }
   .ilv-panel {
-    right: 0;
-    width: 100%;
-    top: auto;
-    height: 45%;
+    order: 2;
+    max-height: 38dvh;
+    border-left: none;
+    border-top: 1px solid var(--ss-line);
+  }
+  .ilv-stage-wrap {
+    order: 1;
   }
 }
