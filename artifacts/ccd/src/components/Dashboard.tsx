@@ -5,9 +5,10 @@ import { LessonPlanBuilder } from "./LessonPlanBuilder";
 import { LessonPlannerCalendar } from "./LessonPlannerCalendar";
 import { ActivityLibrary } from "./ActivityLibrary";
 import { LessonLibrary } from "./LessonLibrary";
-import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake, Mail, CircleHelp } from 'lucide-react';
+import { Calendar, BookOpen, Edit3, FolderOpen, Tag, Handshake, Mail, CircleHelp, Clapperboard } from 'lucide-react';
 import { OurPartners } from './OurPartners';
 import { ContactUsPanel } from './ContactUsPanel';
+import { InteractiveLessonHub } from '../features/interactive-lesson-viewer';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
@@ -79,6 +80,7 @@ export function Dashboard() {
         'calendar',
         'our-partners',
         'contact-us',
+        'lesson-viewer',
       ]);
       if (tab && allowed.has(tab)) {
         setActiveTab(tab);
@@ -99,6 +101,7 @@ export function Dashboard() {
       'calendar',
       'our-partners',
       'contact-us',
+      'lesson-viewer',
     ]);
     const openContact = () => setActiveTab('contact-us');
     const openPartners = () => setActiveTab('our-partners');
@@ -342,8 +345,8 @@ export function Dashboard() {
                 </button>
               </div>
             )}
-            {/* 7 tabs — 3-col wrap on mobile; sm+ uses 7 so Partner Hubs + Contact fit */}
-            <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-7 gap-1 auto-rows-auto">
+            {/* 8 tabs — 3-col wrap on mobile; sm+ uses 8 so Lesson Viewer + Partner Hubs + Contact fit */}
+            <TabsList className="ccd-dash-tabs w-full h-auto grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-8 gap-1 auto-rows-auto">
               <TabsTrigger
                 value="unit-viewer"
                 data-tab="unit-viewer"
@@ -391,6 +394,16 @@ export function Dashboard() {
                 <Calendar className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
                 <span className="hidden sm:inline">Calendar</span>
                 <span className="sm:hidden">Calendar</span>
+              </TabsTrigger>
+
+              <TabsTrigger
+                value="lesson-viewer"
+                data-tab="lesson-viewer"
+                className={dashTabClass}
+              >
+                <Clapperboard className="h-5 w-5 sm:h-6 sm:w-6 shrink-0" />
+                <span className="hidden sm:inline">Lesson Viewer</span>
+                <span className="sm:hidden">Viewer</span>
               </TabsTrigger>
 
               <TabsTrigger
@@ -458,6 +471,10 @@ export function Dashboard() {
                 onCreateLessonPlan={handleCreateLessonPlan}
                 className={currentSheetInfo.sheet}
               />
+            </TabsContent>
+
+            <TabsContent value="lesson-viewer" className="mt-6 ccd-fade-in-up" key={`lv-${activeTab}`}>
+              <InteractiveLessonHub />
             </TabsContent>
 
             <TabsContent value="our-partners" className="mt-6 ccd-fade-in-up" key={`op-${activeTab}`}>

@@ -19,6 +19,22 @@
   --ccd-lime: #B6FF7E;
   --ccd-sage: #F3F6F3;
   --ccd-sage-mist: #E8F0EA;
+
+  /* Studio Score — Interactive Lesson Viewer (+ new teacher surfaces) */
+  --ss-ink: #1f1b4d;
+  --ss-indigo: #4338e8;
+  --ss-sun: #ffc93c;
+  --ss-lilac: #f4f3fa;
+  --ss-canvas: #edecf2;
+  --ss-mint: #d5f3ea;
+  --ss-suntint: #fff1c2;
+  --ss-line: #e2e0ef;
+  --ss-muted: #77738f;
+  --ss-softindigo: #e9e6ff;
+  --ss-lavender: #e5e2ff;
+  --ss-white: #ffffff;
+  --ss-font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ss-font-ui: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 }
 
 /* Promo walkthrough motion-graphics palette (scoped to the login promo surface) */
