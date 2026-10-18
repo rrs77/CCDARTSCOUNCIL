@@ -129,7 +129,7 @@ export function EventModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Calendar className="h-6 w-6" />

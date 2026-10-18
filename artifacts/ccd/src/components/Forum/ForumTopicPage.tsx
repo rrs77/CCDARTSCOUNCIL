@@ -112,7 +112,7 @@ export function ForumTopicPage({
         onClick={() =>
           navigate(topic.category?.slug ? `/forum/c/${topic.category.slug}` : '/forum')
         }
-        className="text-sm text-teal-800 hover:underline"
+        className="text-sm text-[#1F1B4D] hover:underline"
       >
         ← {topic.category?.title || 'Category'}
       </button>
@@ -120,7 +120,7 @@ export function ForumTopicPage({
       <article className="rounded-xl border border-[#d5e0dc] bg-white p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <h1 className="font-serif text-3xl text-[#002D24]">{topic.title}</h1>
+            <h1 className="text-3xl font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>{topic.title}</h1>
             <p className="mt-1 text-sm text-gray-500">
               {topic.author?.display_name || 'Member'} ·{' '}
               {new Date(topic.created_at).toLocaleString()}
@@ -191,7 +191,7 @@ export function ForumTopicPage({
       </article>
 
       <section className="space-y-3">
-        <h2 className="text-lg font-semibold text-[#002D24]">
+        <h2 className="text-lg font-semibold text-[#1F1B4D]">
           Replies ({topic.reply_count || posts.filter((p) => !p.is_topic_starter).length})
         </h2>
         {posts
@@ -250,7 +250,7 @@ export function ForumTopicPage({
 
       {!topic.is_locked && (
         <form onSubmit={onReply} className="space-y-3 rounded-xl border border-[#d5e0dc] bg-white p-4">
-          <h3 className="font-semibold text-[#002D24]">Reply</h3>
+          <h3 className="font-semibold text-[#1F1B4D]">Reply</h3>
           {!user || !canReply ? (
             <button
               type="button"
@@ -273,7 +273,7 @@ export function ForumTopicPage({
               <button
                 type="submit"
                 disabled={busy}
-                className="rounded-lg bg-[#002D24] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+                className="rounded-lg bg-[#1F1B4D] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
               >
                 {busy ? 'Posting…' : 'Post reply'}
               </button>
@@ -287,7 +287,7 @@ export function ForumTopicPage({
       {reportOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
           <div className="w-full max-w-md rounded-xl bg-white p-5 shadow-xl">
-            <h3 className="font-semibold text-[#002D24]">Report content</h3>
+            <h3 className="font-semibold text-[#1F1B4D]">Report content</h3>
             <p className="mt-1 text-xs text-gray-500">
               Choose <strong>safeguarding</strong> only for child protection or urgent safety concerns.
               Those reports are prioritised separately from ordinary moderation.
@@ -319,7 +319,7 @@ export function ForumTopicPage({
               </button>
               <button
                 type="button"
-                className="rounded bg-[#002D24] px-3 py-1.5 text-sm text-white"
+                className="rounded bg-[#1F1B4D] px-3 py-1.5 text-sm text-white"
                 onClick={() =>
                   onReport(reportOpen === 'topic' ? undefined : reportOpen)
                 }

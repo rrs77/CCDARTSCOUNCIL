@@ -86,7 +86,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
           "Let's take a quick tour of the app. We'll point out the key features so you can hit the ground running. Use Next / Back to move through the steps, or Skip to exit at any time.",
         target: 'body',
         position: 'center',
-        icon: <Sparkles className="h-7 w-7 text-teal-500" />,
+        icon: <Sparkles className="h-7 w-7 text-[#4338E8]" />,
       },
       {
         title: 'Pick a Class',
@@ -118,7 +118,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
           'Build a new lesson by dragging activities in from the library. Re-order, edit, and save — your lesson then shows up in the Lesson Library, ready to schedule in the Planner.',
         target: '[data-tab="lesson-builder"]',
         position: 'bottom',
-        icon: <Edit3 className="h-7 w-7 text-teal-500" />,
+        icon: <Edit3 className="h-7 w-7 text-[#4338E8]" />,
       },
       {
         title: 'Activity Library',
@@ -158,7 +158,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
           "That's the whirlwind tour. Pick a class, open the Activity Library or Planner, and start designing — you can reopen this tour any time from the Help button.",
         target: 'body',
         position: 'center',
-        icon: <Sparkles className="h-7 w-7 text-teal-500" />,
+        icon: <Sparkles className="h-7 w-7 text-[#4338E8]" />,
       },
     ],
     [productName]
@@ -359,7 +359,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
           the backdrop and close the tour. */}
       {highlightRect && (
         <div
-          className="pointer-events-none absolute rounded-xl ring-4 ring-teal-400 ring-offset-2 ring-offset-transparent transition-all duration-200"
+          className="pointer-events-none absolute rounded-xl ring-4 ring-[#a9a3ff] ring-offset-2 ring-offset-transparent transition-all duration-200"
           style={{
             top: highlightRect.top - HIGHLIGHT_PADDING,
             left: highlightRect.left - HIGHLIGHT_PADDING,
@@ -385,7 +385,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
       >
         <div className="p-6">
           <div className="flex items-start justify-between mb-4">
-            <span className="bg-teal-50 text-teal-700 text-xs font-semibold px-2.5 py-1 rounded-full">
+            <span className="bg-[#E9E6FF] text-[#4338E8] text-xs font-semibold px-2.5 py-1 rounded-full">
               Step {currentStep + 1} of {steps.length}
             </span>
             <button
@@ -426,7 +426,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
               )}
               <button
                 onClick={handleNext}
-                className="px-4 py-2 text-sm font-semibold bg-teal-600 hover:bg-teal-700 text-white rounded-lg flex items-center gap-1 shadow-sm"
+                className="px-4 py-2 text-sm font-semibold bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg flex items-center gap-1 shadow-sm"
               >
                 {isLast ? 'Finish' : 'Next'}
                 {!isLast && <ChevronRight className="h-4 w-4" />}

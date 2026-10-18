@@ -52,10 +52,10 @@ export function ForcePasswordChangeGate({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#002D24]/80 p-4">
+    <div className="fixed inset-0 z-[90] flex items-center justify-center bg-[#1F1B4D]/80 p-4">
       <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-xl">
         <div className="mb-4 flex items-center gap-2">
-          <Lock className="h-5 w-5 text-[#002D24]" />
+          <Lock className="h-5 w-5 text-[#1F1B4D]" />
           <h1 className="text-lg font-semibold text-gray-900">Choose a new password</h1>
         </div>
         <p className="mb-4 text-sm text-gray-600">
@@ -90,7 +90,7 @@ export function ForcePasswordChangeGate({ children }: { children: React.ReactNod
           <button
             type="submit"
             disabled={saving}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#002D24] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
+            className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-[#1F1B4D] px-4 py-2.5 text-sm font-medium text-white disabled:opacity-60"
           >
             {saving && <Loader2 className="h-4 w-4 animate-spin" />}
             Save and continue

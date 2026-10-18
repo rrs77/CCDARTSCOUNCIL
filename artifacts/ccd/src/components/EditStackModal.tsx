@@ -58,7 +58,7 @@ export function EditStackModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
       <div className="bg-white rounded-card shadow-soft w-full max-w-lg overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white flex items-center justify-between">
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white flex items-center justify-between">
           <div className="flex items-center space-x-2">
             <Edit3 className="h-6 w-6" />
             <h3 className="text-lg font-semibold">Edit Stack</h3>

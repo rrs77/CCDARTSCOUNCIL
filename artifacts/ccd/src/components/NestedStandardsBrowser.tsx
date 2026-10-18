@@ -170,26 +170,26 @@ export function NestedStandardsBrowser({
       {!isControlledMode && (
         <button
           onClick={() => setIsOpen(!isOpen)}
-          className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-teal-50 to-blue-50 border border-teal-200 rounded-lg hover:from-teal-100 hover:to-blue-100 transition-all duration-200 shadow-sm"
+          className="w-full flex items-center justify-between px-4 py-3 bg-gradient-to-r from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg hover:from-[#D8D4F5] hover:to-[#E9E6FF] transition-all duration-200 shadow-sm"
         >
           <div className="flex items-center space-x-2">
-            <Tag className="h-5 w-5 text-teal-600" />
-            <span className="text-sm font-semibold text-teal-800">
+            <Tag className="h-5 w-5 text-[#4338E8]" />
+            <span className="text-sm font-semibold text-[#1F1B4D]">
               {getStandardsLabel()}
             </span>
           </div>
           {isOpen ? (
-            <ChevronUp className="h-5 w-5 text-teal-600" />
+            <ChevronUp className="h-5 w-5 text-[#4338E8]" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-teal-600" />
+            <ChevronDown className="h-5 w-5 text-[#4338E8]" />
           )}
         </button>
       )}
 
       {isOpen && (
-        <div className={`${isControlledMode ? '' : 'absolute'} z-[60] ${isControlledMode ? '' : 'mt-2'} w-full bg-white rounded-xl shadow-2xl border border-teal-200 overflow-hidden`}>
+        <div className={`${isControlledMode ? '' : 'absolute'} z-[60] ${isControlledMode ? '' : 'mt-2'} w-full bg-white rounded-xl shadow-2xl border border-[#E2E0EF] overflow-hidden`}>
           {/* Header */}
-          <div className="p-4 border-b border-teal-100 bg-gradient-to-r from-teal-500 to-teal-600">
+          <div className="p-4 border-b border-[#E2E0EF] bg-gradient-to-r from-[#1F1B4D] to-[#4338E8]">
             <div className="flex items-center justify-center">
               <div className="flex items-center space-x-2 text-white">
                 <Tag className="h-5 w-5" />
@@ -273,9 +273,9 @@ export function NestedStandardsBrowser({
                                           >
                                             <div className="flex items-center space-x-2">
                                               {expandedAreas.includes(area.id) ? (
-                                                <ChevronDown className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                                                <ChevronDown className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
                                               ) : (
-                                                <ChevronRight className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                                                <ChevronRight className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
                                               )}
                                               <span className="font-medium text-gray-700">{area.name}</span>
                                             </div>
@@ -298,7 +298,7 @@ export function NestedStandardsBrowser({
                                                   >
                                                     <div className={`w-5 h-5 flex-shrink-0 rounded border-2 mt-0.5 ${
                                                       isSelected
-                                                        ? 'bg-teal-600 border-teal-600 flex items-center justify-center'
+                                                        ? 'bg-[#4338E8] border-[#4338E8] flex items-center justify-center'
                                                         : 'border-gray-300 bg-white'
                                                     }`}>
                                                       {isSelected && (
@@ -331,14 +331,14 @@ export function NestedStandardsBrowser({
           </div>
 
           {/* Footer */}
-          <div className="p-4 border-t border-teal-100 bg-gradient-to-r from-teal-50 to-blue-50">
+          <div className="p-4 border-t border-[#E2E0EF] bg-gradient-to-r from-[#E9E6FF] to-blue-50">
             <div className="flex justify-between items-center">
-              <span className="text-sm font-semibold text-teal-700">
+              <span className="text-sm font-semibold text-[#4338E8]">
                 {selectedObjectiveIds.length} standard{selectedObjectiveIds.length !== 1 ? 's' : ''} selected
               </span>
               <button
                 onClick={() => setIsOpen(false)}
-                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-lg shadow-md transition-colors duration-200"
+                className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white text-sm font-semibold rounded-lg shadow-md transition-colors duration-200"
               >
                 Done
               </button>
@@ -349,7 +349,7 @@ export function NestedStandardsBrowser({
 
       {/* Selected Standards Preview - only in uncontrolled mode */}
       {!isControlledMode && selectedObjectiveIds.length > 0 && !isOpen && (
-        <div className="mt-3 p-3 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg border border-teal-100">
+        <div className="mt-3 p-3 bg-gradient-to-r from-[#E9E6FF] to-blue-50 rounded-lg border border-[#E2E0EF]">
           <div className="flex flex-wrap gap-2">
             {selectedObjectiveIds.map((objectiveId) => {
               const objective = customObjectives.find(obj => obj.id === objectiveId);
@@ -358,7 +358,7 @@ export function NestedStandardsBrowser({
               return (
                 <div
                   key={objectiveId}
-                  className="inline-flex items-center space-x-2 px-3 py-1.5 bg-white border border-teal-200 text-teal-800 text-sm rounded-full shadow-sm"
+                  className="inline-flex items-center space-x-2 px-3 py-1.5 bg-white border border-[#E2E0EF] text-[#1F1B4D] text-sm rounded-full shadow-sm"
                 >
                   <span className="truncate max-w-[250px]">{objective.objective_text}</span>
                   <button
@@ -366,7 +366,7 @@ export function NestedStandardsBrowser({
                       e.stopPropagation();
                       handleToggleObjective(objectiveId);
                     }}
-                    className="hover:text-teal-900 p-0.5 hover:bg-teal-100 rounded-full transition-colors duration-200"
+                    className="hover:text-[#1F1B4D] p-0.5 hover:bg-[#E9E6FF] rounded-full transition-colors duration-200"
                   >
                     <X className="h-4 w-4" />
                   </button>

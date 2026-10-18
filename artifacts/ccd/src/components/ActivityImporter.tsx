@@ -389,17 +389,17 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-teal-600 to-cyan-600 text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#4338E8] to-cyan-600 text-white">
           <div className="flex items-center space-x-3">
             <Upload className="h-6 w-6" />
             <div>
               <h2 id="import-activities-title" className="text-xl font-bold">Import/Export Activities</h2>
-              <p className="text-teal-100 text-sm">Upload an Excel file with your activity data or export existing activities</p>
+              <p className="text-[#E9E6FF] text-sm">Upload an Excel file with your activity data or export existing activities</p>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-teal-100 hover:text-white hover:bg-teal-700 rounded-lg transition-colors duration-200"
+            className="p-2 text-[#E9E6FF] hover:text-white hover:bg-[#3529d1] rounded-lg transition-colors duration-200"
           >
             <X className="h-6 w-6" />
           </button>
@@ -487,7 +487,7 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
                 accept=".xlsx,.xls,.csv"
                 onChange={handleFileUpload}
                 disabled={importStatus === 'processing'}
-                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-teal-50 file:text-teal-700 hover:file:bg-teal-100 transition-colors duration-200"
+                className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8] file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-[#E9E6FF] file:text-[#4338E8] hover:file:bg-[#E9E6FF] transition-colors duration-200"
                 dir="ltr"
               />
               
@@ -559,7 +559,7 @@ export function ActivityImporter({ onImport, onClose }: ActivityImporterProps) {
             <button
               onClick={handleImport}
               disabled={importStatus !== 'success' || importedData.length === 0}
-              className="px-6 py-3 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              className="px-6 py-3 bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-[#a9a3ff] text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
             >
               <CheckCircle className="h-5 w-5" />
               <span>Import {importedData.length} Activities</span>

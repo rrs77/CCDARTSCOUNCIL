@@ -189,10 +189,9 @@ export function SectionFrame({
 
         <div className="prezi-copy">
           {showBrand ? (
-            <div className="prezi-brand-lockup" aria-label={meta.brand}>
-              <LogoMark size={62} title={meta.brand} />
+            <div className="prezi-brand-lockup" aria-label="designer">
+              <LogoMark size={56} title="designer" />
               <div className="prezi-brand-lockup-text">
-                <div className="prezi-brand-lockup-name">{meta.brand}</div>
                 <div className="prezi-brand-lockup-line">
                   {meta.experienceLead}{" "}
                   <span className="prezi-brand-lockup-accent">{meta.experienceAccent}</span>

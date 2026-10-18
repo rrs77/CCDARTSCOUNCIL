@@ -82,7 +82,7 @@ export function AssignToHalfTermModal({
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
         <div className="bg-white rounded-card shadow-soft w-full max-w-md">
           <div className="p-6 text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4338E8] mx-auto mb-4"></div>
             <p className="text-gray-600">Loading half-terms...</p>
           </div>
         </div>
@@ -135,7 +135,7 @@ export function AssignToHalfTermModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
       <div className="bg-white rounded-card shadow-soft w-full max-w-md overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />

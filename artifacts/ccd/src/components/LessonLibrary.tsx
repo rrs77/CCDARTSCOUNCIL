@@ -871,7 +871,7 @@ export function LessonLibrary({
     if (!keys.length) return null;
     return (
       <div className="border-b border-gray-100 px-2 py-2 space-y-1">
-        <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-teal-800/80">
+        <p className="px-1 text-[11px] font-semibold uppercase tracking-wide text-[#1F1B4D]/80">
           Lesson plans
           {pack.sheetId ? (
             <span className="ml-1 font-normal normal-case tracking-normal text-gray-500">
@@ -897,9 +897,9 @@ export function LessonLibrary({
                 <button
                   type="button"
                   onClick={() => handlePartnerLessonClick(pack, lessonKey)}
-                  className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-teal-50 transition-colors"
+                  className="flex w-full items-start gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-[#E9E6FF] transition-colors"
                 >
-                  <span className="mt-0.5 shrink-0 rounded bg-teal-100 px-1.5 py-0.5 text-[11px] font-semibold text-teal-800">
+                  <span className="mt-0.5 shrink-0 rounded bg-[#E9E6FF] px-1.5 py-0.5 text-[11px] font-semibold text-[#1F1B4D]">
                     {lessonKey}
                   </span>
                   <span className="min-w-0 flex-1">
@@ -945,14 +945,14 @@ export function LessonLibrary({
     return (
       <div className={`bg-white rounded-xl shadow-lg  overflow-hidden ${className}`}>
         <div className="p-6 border-b border-gray-200 text-white"
-style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
           <div className="flex items-center space-x-3">
             <BookOpen className="h-6 w-6" />
             <h2 className="text-xl font-bold">Lesson Library</h2>
           </div>
         </div>
         <div className="p-8 text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-teal-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#4338E8] mx-auto"></div>
           <p className="mt-4 text-gray-600">Loading lessons...</p>
         </div>
       </div>
@@ -964,7 +964,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
     return (
       <div className={`bg-white rounded-xl shadow-lg  overflow-hidden ${className}`}>
         <div className="p-6 border-b border-gray-200 text-white"
-style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <BookOpen className="h-6 w-6" />
@@ -1028,7 +1028,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               }
             }}
             disabled={refreshing}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-60"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] disabled:opacity-60"
           >
             <RotateCcw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
             {refreshing ? 'Loading…' : 'Refresh'}
@@ -1054,13 +1054,13 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
   return (
     <div className={`bg-white rounded-xl shadow-lg  overflow-hidden ${className}`}>
       {/* Header */}
-      <div className="p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
+      <div className="p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #4338E8, #4338E8)' }}>
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center space-x-3">
             {showTrash ? <Trash2 className="h-6 w-6" /> : <BookOpen className="h-6 w-6" />}
             <div>
               <h2 className="text-xl font-bold">{showTrash ? 'Trash' : 'Lesson Library'}</h2>
-              <p className="text-teal-100 text-sm">
+              <p className="text-[#E9E6FF] text-sm">
                 {showTrash 
                   ? `${Object.keys(trashLessons || {}).length} deleted lesson${Object.keys(trashLessons || {}).length !== 1 ? 's' : ''}`
                   : `${filteredAndSortedLessons.length} of ${lessonNumbers.length} lessons`
@@ -1155,7 +1155,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               aria-expanded={showStacksSection}
             >
               <div className="flex items-center gap-3">
-                <Layers className="h-5 w-5 text-teal-600" />
+                <Layers className="h-5 w-5 text-[#4338E8]" />
                 <span className="font-semibold text-gray-900">Lesson Stacks / Units</span>
                 <span className="text-sm text-gray-600">({stacks.length})</span>
               </div>
@@ -1172,7 +1172,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                   <button
                     type="button"
                     onClick={handleCreateStack}
-                    className="flex items-center justify-center gap-2 h-10 px-5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap flex-shrink-0 self-start sm:self-auto"
+                    className="flex items-center justify-center gap-2 h-10 px-5 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap flex-shrink-0 self-start sm:self-auto"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Create Stack</span>
@@ -1215,7 +1215,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               placeholder="Search lessons..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full h-10 pl-10 pr-4 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-teal-500 focus:outline-none"
+              className="w-full h-10 pl-10 pr-4 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-[#4338E8] focus:outline-none"
               dir="ltr"
             />
           </div>
@@ -1223,7 +1223,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
           <select
             value={selectedHalfTerm}
             onChange={(e) => setSelectedHalfTerm(e.target.value)}
-            className="h-10 px-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none w-48"
+            className="h-10 px-3 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-[#4338E8] focus:outline-none w-48"
             dir="ltr"
           >
             <option value="all" className="text-gray-900">All Half-Terms</option>
@@ -1239,7 +1239,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               onClick={() => toggleSort('number')}
               title={showButtonHelp ? 'Sort by lesson number' : undefined}
               className={`flex items-center justify-center space-x-1 h-10 px-3 rounded-lg transition-colors duration-200 ${
-                sortBy === 'number' ? 'bg-teal-600 text-white border border-teal-600' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
+                sortBy === 'number' ? 'bg-[#4338E8] text-white border border-[#4338E8]' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
               }`}
             >
               <span className="text-sm">#</span>
@@ -1249,7 +1249,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               onClick={() => toggleSort('time')}
               title={showButtonHelp ? 'Sort by duration (time)' : undefined}
               className={`flex items-center justify-center space-x-1 h-10 px-3 rounded-lg transition-colors duration-200 ${
-                sortBy === 'time' ? 'bg-teal-600 text-white border border-teal-600' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
+                sortBy === 'time' ? 'bg-[#4338E8] text-white border border-[#4338E8]' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
               }`}
             >
               <Clock className="h-4 w-4" />
@@ -1259,7 +1259,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
               onClick={() => toggleSort('activities')}
               title={showButtonHelp ? 'Sort by number of activities' : undefined}
               className={`flex items-center justify-center space-x-1 h-10 px-3 rounded-lg transition-colors duration-200 ${
-                sortBy === 'activities' ? 'bg-teal-600 text-white border border-teal-600' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
+                sortBy === 'activities' ? 'bg-[#4338E8] text-white border border-[#4338E8]' : 'bg-white text-gray-700 hover:bg-gray-50 border border-transparent'
               }`}
             >
               <Tag className="h-4 w-4" />
@@ -1296,7 +1296,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                 key={stack.id}
                 onClick={() => handleAddUnitFromPack(stack)}
                 disabled={addingStackId === stack.id}
-                className="flex items-center justify-center space-x-2 h-10 px-5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
+                className="flex items-center justify-center space-x-2 h-10 px-5 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
                 title={`Add unit: ${stack.name} (${stack.lessons?.length || 0} lessons)`}
               >
                 <Layers className="h-4 w-4" />
@@ -1310,7 +1310,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                 setClassCopyInitialLessons([]);
                 setShowClassCopyModal(true);
               }}
-              className="flex items-center justify-center space-x-2 h-10 px-5 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
+              className="flex items-center justify-center space-x-2 h-10 px-5 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 whitespace-nowrap"
               title={showButtonHelp ? 'Copy lessons to another year group' : undefined}
             >
               <Copy className="h-4 w-4" />
@@ -1470,7 +1470,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[80vh] overflow-hidden">
             <div className="p-4 border-b border-gray-200 text-white"
-style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-semibold">Add Activity to Lesson</h3>
                 <button
@@ -1490,7 +1490,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                     placeholder="Search activities..."
                     value={activitySearchQuery}
                     onChange={(e) => setActivitySearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-teal-500 focus:outline-none"
+                    className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-[#4338E8] focus:outline-none"
                   />
                 </div>
                 <div className="relative" style={{ minWidth: '250px' }}>
@@ -1498,7 +1498,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                     selectedCategory={selectedCategory === 'all' ? '' : selectedCategory}
                     onCategoryChange={(category) => setSelectedCategory(category || 'all')}
                     placeholder="All Categories"
-                    className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
+                    className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-[#4338E8] focus:outline-none"
                   />
                 </div>
               </div>
@@ -1555,7 +1555,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
             {/* Edit Header */}
             <div className="p-4 border-b border-gray-200 text-white"
-style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
               <div className="flex items-center justify-between">
                 <div className="flex items-center space-x-2">
                   <Edit3 className="h-5 w-5" />
@@ -1589,7 +1589,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                   type="checkbox"
                   checked={showHeaderFooterEdit}
                   onChange={(e) => setShowHeaderFooterEdit(e.target.checked)}
-                  className="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                  className="h-5 w-5 rounded border-gray-300 text-[#4338E8] focus:ring-2 focus:ring-[#4338E8] cursor-pointer"
                 />
                 <span className="text-sm font-medium text-gray-700">
                   Edit header and footer text
@@ -1611,7 +1611,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                       value={customHeader}
                       onChange={(e) => setCustomHeader(e.target.value)}
                       placeholder={`Leave blank for default: "Lesson ${editingLessonNumber}"`}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                     />
                     <p className="mt-1 text-xs text-gray-500">
                       Default: Lesson {editingLessonNumber}
@@ -1628,7 +1628,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                       value={customFooter}
                       onChange={(e) => setCustomFooter(e.target.value)}
                       placeholder="Leave blank for default footer"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                     />
                     <p className="mt-1 text-xs text-gray-500">
                       Default: {settings?.branding?.loginTitle || 'Creative Curriculum Designer'} • Lesson {editingLessonNumber} • {currentSheetInfo.display} • © {settings?.branding?.footerCompanyName || 'Rhythmstix'} {settings?.branding?.footerCopyrightYear || new Date().getFullYear()}

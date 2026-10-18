@@ -53,7 +53,7 @@ export function AssignPacksModal({ user, onSave, onClose }: AssignPacksModalProp
       <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2">
-            <Package className="h-5 w-5 text-teal-600" />
+            <Package className="h-5 w-5 text-[#4338E8]" />
             Assign packs
           </h2>
           <button type="button" onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg" aria-label="Close">
@@ -79,7 +79,7 @@ export function AssignPacksModal({ user, onSave, onClose }: AssignPacksModalProp
                     type="checkbox"
                     checked={selectedPackIds.includes(pack.pack_id)}
                     onChange={() => togglePack(pack.pack_id)}
-                    className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                    className="rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                   />
                   <span className="text-2xl" aria-hidden>{pack.icon || '📦'}</span>
                   <div className="flex-1 min-w-0">
@@ -99,7 +99,7 @@ export function AssignPacksModal({ user, onSave, onClose }: AssignPacksModalProp
             type="button"
             onClick={handleSave}
             disabled={saving || packs.length === 0}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 flex items-center gap-2"
+            className="px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] disabled:opacity-50 flex items-center gap-2"
           >
             <Save className="h-4 w-4" />
             {saving ? 'Saving…' : 'Save'}

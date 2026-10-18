@@ -97,7 +97,7 @@ export const ActivityPacksAdmin: React.FC<ActivityPacksAdminProps> = ({ userEmai
           <div className="flex items-center justify-between">
             <div>
               <h3 className="text-xl font-bold text-gray-900 flex items-center space-x-2">
-                <Package className="h-6 w-6 text-teal-600" />
+                <Package className="h-6 w-6 text-[#4338E8]" />
                 <span>Manage Activity Packs</span>
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -107,7 +107,7 @@ export const ActivityPacksAdmin: React.FC<ActivityPacksAdminProps> = ({ userEmai
             {canAddPack && (
               <button
                 onClick={handleCreatePack}
-                className="flex items-center space-x-2 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors"
+                className="flex items-center space-x-2 px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] transition-colors"
               >
                 <Plus className="h-4 w-4" />
                 <span>Add resource pack</span>
@@ -120,7 +120,7 @@ export const ActivityPacksAdmin: React.FC<ActivityPacksAdminProps> = ({ userEmai
         {packs.map((pack) => (
           <div
             key={pack.id}
-            className="bg-white border border-gray-200 rounded-lg p-5 hover:border-teal-300 transition-colors"
+            className="bg-white border border-gray-200 rounded-lg p-5 hover:border-[#bcb7f4] transition-colors"
           >
             <div className="flex items-start justify-between">
               <div className="flex-1">
@@ -151,7 +151,7 @@ export const ActivityPacksAdmin: React.FC<ActivityPacksAdminProps> = ({ userEmai
                       setEditingPack(pack);
                       setShowCreateForm(true);
                     }}
-                    className="px-3 py-1.5 text-teal-600 border border-teal-600 rounded hover:bg-teal-50 transition-colors text-sm"
+                    className="px-3 py-1.5 text-[#4338E8] border border-[#4338E8] rounded hover:bg-[#E9E6FF] transition-colors text-sm"
                     aria-label={`Edit ${pack.name}`}
                   >
                     Edit

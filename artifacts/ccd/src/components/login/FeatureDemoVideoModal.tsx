@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { ExternalLink, Maximize, Minimize, X } from 'lucide-react';
+import { ExternalLink, Maximize, Minimize, Volume2, VolumeX, X } from 'lucide-react';
 import {
   FEATURE_DEMO_PATH,
   FEATURE_DEMO_VIDEO_MP4,
@@ -9,13 +9,15 @@ import {
 } from './prototypeCopy';
 
 /**
- * Archived MP4 player (July 2026).
- * Login first-open CTA now opens FeatureWalkthroughModal (ccd-pitch) instead.
- * Kept in-repo for optional replay; do not wire back as the primary post-notice path.
+ * In-app MP4 player — archived feature-demo replay (card modal).
+ * Post-login welcome video was removed; keep `variant` for call-site compat.
  */
 interface FeatureDemoVideoModalProps {
   isOpen: boolean;
   onClose: () => void;
+  /** Welcome path removed — always plays the archived feature demo. */
+  variant?: 'welcome' | 'archive';
+  closeLabel?: string;
 }
 
 type VideoWithWebkitFullscreen = HTMLVideoElement & {
@@ -46,31 +48,19 @@ function isVideoFullscreen(video: VideoWithWebkitFullscreen | null): boolean {
   return fullscreenEl === video;
 }
 
-/**
- * Enter fullscreen on the <video> itself.
- *
- * Important: do NOT call webkitEnterFullscreen first. Desktop Safari exposes that
- * method, but it only works for iOS native video fullscreen — calling it fails and
- * previously prevented requestFullscreen from ever running.
- */
 function enterVideoFullscreen(video: VideoWithWebkitFullscreen): void {
-  // Chrome / Firefox / desktop Safari: standard Fullscreen API (sync call keeps user gesture).
   if (typeof video.requestFullscreen === 'function' && document.fullscreenEnabled !== false) {
     void video.requestFullscreen();
     return;
   }
-
   if (typeof video.webkitRequestFullscreen === 'function') {
     video.webkitRequestFullscreen();
     return;
   }
-
   if (typeof video.msRequestFullscreen === 'function') {
     video.msRequestFullscreen();
     return;
   }
-
-  // iOS Safari: presentation-mode fullscreen (works with playsInline).
   if (typeof video.webkitEnterFullscreen === 'function') {
     video.webkitEnterFullscreen();
   }
@@ -91,20 +81,83 @@ function exitVideoFullscreen(video: VideoWithWebkitFullscreen): void {
   }
 }
 
-export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModalProps) {
+const WELCOME_FADE_MS = 900;
+
+export function FeatureDemoVideoModal({
+  isOpen,
+  onClose,
+  variant: _variant = 'archive',
+  closeLabel,
+}: FeatureDemoVideoModalProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const fadeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const closingRef = useRef(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [loadError, setLoadError] = useState(false);
+  const [fadingOut, setFadingOut] = useState(false);
+  const [visible, setVisible] = useState(false);
+  const [muted, setMuted] = useState(false);
+  const [needsUnmuteHint, setNeedsUnmuteHint] = useState(false);
+  const title = PARTNERS_FUNDING_VIDEO_TITLE;
+  const doneLabel = closeLabel ?? 'Continue to sign in';
+  void _variant;
 
   const syncFullscreenState = useCallback(() => {
     setIsFullscreen(isVideoFullscreen(videoRef.current as VideoWithWebkitFullscreen | null));
   }, []);
 
+  const finishClose = useCallback(() => {
+    closingRef.current = false;
+    setFadingOut(false);
+    setVisible(false);
+    setNeedsUnmuteHint(false);
+    setMuted(false);
+    const video = videoRef.current as VideoWithWebkitFullscreen | null;
+    if (video) {
+      try {
+        video.pause();
+        if (isVideoFullscreen(video)) exitVideoFullscreen(video);
+      } catch {
+        /* ignore */
+      }
+    }
+    onClose();
+  }, [onClose]);
+
+  /** Fade the immersive layer out, then dismiss. */
+  const beginFadeOut = useCallback(() => {
+    if (closingRef.current) return;
+    closingRef.current = true;
+    setFadingOut(true);
+    if (fadeTimerRef.current) clearTimeout(fadeTimerRef.current);
+    fadeTimerRef.current = setTimeout(() => {
+      fadeTimerRef.current = null;
+      finishClose();
+    }, WELCOME_FADE_MS);
+  }, [finishClose]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      closingRef.current = false;
+      setFadingOut(false);
+      setVisible(false);
+      setIsFullscreen(false);
+      if (fadeTimerRef.current) {
+        clearTimeout(fadeTimerRef.current);
+        fadeTimerRef.current = null;
+      }
+      return;
+    }
+    // Next frame so the opacity transition can fade in.
+    const t = requestAnimationFrame(() => setVisible(true));
+    return () => cancelAnimationFrame(t);
+  }, [isOpen]);
+
   useEffect(() => {
     if (!isOpen) return;
     const onKeyDown = (e: KeyboardEvent) => {
-      // Don't dismiss the modal while native fullscreen is active — Escape exits fullscreen first.
-      if (e.key === 'Escape' && !isVideoFullscreen(videoRef.current as VideoWithWebkitFullscreen | null)) {
+      if (e.key !== 'Escape') return;
+      if (!isVideoFullscreen(videoRef.current as VideoWithWebkitFullscreen | null)) {
         onClose();
       }
     };
@@ -113,10 +166,7 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
   }, [isOpen, onClose]);
 
   useEffect(() => {
-    if (!isOpen) {
-      setIsFullscreen(false);
-      return;
-    }
+    if (!isOpen) return;
 
     const video = videoRef.current as VideoWithWebkitFullscreen | null;
     if (!video) return;
@@ -136,30 +186,50 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
   }, [isOpen, syncFullscreenState]);
 
   useEffect(() => {
-    const video = videoRef.current;
+    const video = videoRef.current as VideoWithWebkitFullscreen | null;
     if (!isOpen || !video) return;
 
     setLoadError(false);
+    closingRef.current = false;
+    setFadingOut(false);
 
-    // Older iOS Safari still looks for the webkit attribute.
     video.setAttribute('playsinline', 'true');
     video.setAttribute('webkit-playsinline', 'true');
 
-    video.currentTime = 0;
-    // CTA that opened this modal is a user gesture — play should succeed without muted.
-    const playPromise = video.play();
-    if (playPromise && typeof playPromise.catch === 'function') {
-      playPromise.catch(() => {
-        // Autoplay may be blocked until the user presses play — controls remain available.
-      });
+    const mp4 = publicAssetHref(FEATURE_DEMO_VIDEO_MP4);
+    if (video.getAttribute('src') !== mp4) {
+      video.setAttribute('src', mp4);
+      video.load();
     }
+
+    video.currentTime = 0;
+    video.muted = false;
+    setMuted(false);
+    setNeedsUnmuteHint(false);
+
+    const tryPlay = async () => {
+      try {
+        await video.play();
+      } catch {
+        // Autoplay with sound blocked — mute and retry so playback still starts immediately.
+        video.muted = true;
+        setMuted(true);
+        setNeedsUnmuteHint(true);
+        try {
+          await video.play();
+        } catch {
+          setLoadError(true);
+        }
+      }
+    };
+
+    void tryPlay();
 
     return () => {
       video.pause();
     };
-  }, [isOpen]);
+  }, [isOpen, syncFullscreenState]);
 
-  // Must stay a direct click handler so requestFullscreen keeps the user gesture.
   const toggleFullscreen = () => {
     const video = videoRef.current as VideoWithWebkitFullscreen | null;
     if (!video) return;
@@ -170,10 +240,26 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
         enterVideoFullscreen(video);
       }
     } catch {
-      // Fullscreen can be denied by the browser; native controls remain as fallback.
+      /* Fullscreen can be denied */
     }
-    // Events (fullscreenchange / webkitbeginfullscreen) also sync; this covers sync failures.
     syncFullscreenState();
+  };
+
+  const unmute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = false;
+    setMuted(false);
+    setNeedsUnmuteHint(false);
+    void video.play().catch(() => undefined);
+  };
+
+  const toggleMute = () => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.muted = !video.muted;
+    setMuted(video.muted);
+    if (!video.muted) setNeedsUnmuteHint(false);
   };
 
   if (!isOpen) return null;
@@ -185,31 +271,33 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
 
   return (
     <div
-      className="fixed inset-0 z-[95] flex items-center justify-center bg-black/55 p-3 sm:p-6"
+      className="fixed inset-0 z-[95] flex items-center justify-center bg-[rgba(21,18,51,0.55)] p-3 sm:p-6"
       role="dialog"
       aria-modal="true"
       aria-labelledby="feature-demo-video-title"
       onClick={onClose}
     >
       <div
-        className="flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#B6FF7E]/25 shadow-2xl"
+        className="flex w-full max-w-4xl flex-col overflow-hidden rounded-2xl border border-[#E2E0EF]/30 shadow-2xl"
         style={{
-          background:
-            'linear-gradient(165deg, #002D24 0%, #0a3d32 55%, #123f35 100%)',
+          background: 'linear-gradient(165deg, #1F1B4D 0%, #2a2466 55%, #4338E8 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-start justify-between gap-3 px-4 pb-3 pt-4 sm:px-5 sm:pt-5">
           <div className="min-w-0">
-            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B6FF7E]/90">
+            <p className="text-xs font-extrabold uppercase tracking-[0.14em] text-[#FFC93C]">
               Feature overview
             </p>
             <h2
               id="feature-demo-video-title"
-              className="mt-1 text-lg font-semibold tracking-tight text-white sm:text-xl"
-              style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+              className="mt-1 text-lg font-extrabold tracking-tight text-white sm:text-xl"
+              style={{
+                fontFamily:
+                  "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)",
+              }}
             >
-              {PARTNERS_FUNDING_VIDEO_TITLE}
+              {title}
             </h2>
           </div>
           <button
@@ -233,10 +321,9 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
               poster={posterSrc}
               onError={() => setLoadError(true)}
               onLoadedData={() => setLoadError(false)}
-              // Do not set controlsList="nofullscreen" — native control bar fullscreen must stay available.
             >
               <source src={mp4Src} type="video/mp4" />
-              <source src={webmSrc} type="video/webm" />
+              {webmSrc ? <source src={webmSrc} type="video/webm" /> : null}
               Your browser does not support embedded video.
             </video>
             {loadError && (
@@ -246,7 +333,7 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
                   href={fullPlayerHref}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="font-semibold text-[#B6FF7E] underline-offset-2 hover:underline"
+                  className="font-semibold text-[#FFC93C] underline-offset-2 hover:underline"
                 >
                   Open the feature-demo page
                 </a>{' '}
@@ -261,7 +348,7 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
             <button
               type="button"
               onClick={toggleFullscreen}
-              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#B6FF7E]/40 bg-white/5 px-3.5 py-2.5 text-sm font-semibold text-[#B6FF7E] transition-colors hover:bg-white/10"
+              className="inline-flex items-center justify-center gap-2 rounded-lg border border-[#FFC93C]/45 bg-white/5 px-3.5 py-2.5 text-sm font-semibold text-[#FFC93C] transition-colors hover:bg-white/10"
               aria-label={isFullscreen ? 'Exit fullscreen' : 'Enter fullscreen'}
             >
               {isFullscreen ? (
@@ -275,7 +362,7 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
               href={fullPlayerHref}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center justify-center gap-2 text-sm font-medium text-[#B6FF7E] underline-offset-2 transition-opacity hover:underline hover:opacity-90"
+              className="inline-flex items-center justify-center gap-2 text-sm font-medium text-[#FFC93C] underline-offset-2 transition-opacity hover:underline hover:opacity-90"
             >
               Open full feature-demo page
               <ExternalLink className="h-3.5 w-3.5 shrink-0 opacity-80" aria-hidden />
@@ -284,9 +371,9 @@ export function FeatureDemoVideoModal({ isOpen, onClose }: FeatureDemoVideoModal
           <button
             type="button"
             onClick={onClose}
-            className="rounded-lg bg-[#B6FF7E] px-4 py-2.5 text-sm font-semibold text-[#002D24] transition-opacity hover:opacity-90"
+            className="rounded-lg bg-[#FFC93C] px-4 py-2.5 text-sm font-bold text-[#1F1B4D] transition-opacity hover:opacity-90"
           >
-            Continue to sign in
+            {doneLabel}
           </button>
         </div>
       </div>

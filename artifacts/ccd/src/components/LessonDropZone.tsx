@@ -300,7 +300,7 @@ export function LessonDropZone({
 
   return (
     <>
-      <div className="bg-white rounded-card shadow-soft border border-gray-200 overflow-hidden" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
+      <div className="bg-white rounded-card shadow-soft border border-gray-200 overflow-hidden" style={{ background: 'linear-gradient(to right, #4338E8, #4338E8)' }}>
         {/* Header - Thinner when activities are present */}
         <div className={`${headerPadding} text-white transition-all duration-200`}>
           <div className={`flex items-start justify-between ${headerCompact ? 'mb-2' : 'mb-4'}`}>
@@ -385,7 +385,7 @@ export function LessonDropZone({
           {isEditing && onAddActivitiesClick && (
             <div className={`${hasActivities ? 'px-4 py-2' : 'px-6 py-3'} border-b border-gray-200 flex items-center justify-between`}>
               <div className="flex items-center space-x-2">
-                <Plus className={`${hasActivities ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-teal-600`} />
+                <Plus className={`${hasActivities ? 'h-3.5 w-3.5' : 'h-4 w-4'} text-[#4338E8]`} />
                 <span className={`${hasActivities ? 'text-xs' : 'text-sm'} font-medium text-gray-700`}>Activities</span>
                 {lessonPlan.activities.length > 0 && (
                   <span className="text-xs text-gray-500">({lessonPlan.activities.length})</span>
@@ -393,7 +393,7 @@ export function LessonDropZone({
               </div>
               <button
                 onClick={onAddActivitiesClick}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-teal-600 hover:bg-teal-700 text-white text-xs font-medium rounded transition-colors"
+                className="flex items-center space-x-1.5 px-3 py-1.5 bg-[#4338E8] hover:bg-[#3529d1] text-white text-xs font-medium rounded transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Activities</span>
@@ -409,7 +409,7 @@ export function LessonDropZone({
             {lessonPlan.activities.length === 0 ? (
               <div className="text-center py-12 px-6">
                 <div className={`mx-auto w-16 h-16 rounded-button flex items-center justify-center mb-3 transition-colors duration-200 ${
-                  isOver ? 'bg-teal-100' : 'bg-gray-100'
+                  isOver ? 'bg-[#E9E6FF]' : 'bg-gray-100'
                 }`}>
                   <Plus className={`h-8 w-8 transition-colors duration-200 ${
                     isOver ? 'text-gray-600' : 'text-gray-400'

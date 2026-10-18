@@ -36,12 +36,12 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
   // Get resources - match the actual activity data structure
   const resources = [
     { label: 'Video', url: activity.videoLink, icon: Video, color: 'text-red-600 bg-red-50 border-red-200', type: 'video' },
-    { label: 'Music', url: activity.musicLink, icon: Music, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'music' },
-    { label: 'Backing', url: activity.backingLink, icon: Volume2, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'backing' },
+    { label: 'Music', url: activity.musicLink, icon: Music, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'music' },
+    { label: 'Backing', url: activity.backingLink, icon: Volume2, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'backing' },
     { label: 'Vocals', url: activity.vocalsLink, icon: Volume2, color: 'text-orange-600 bg-orange-50 border-orange-200', type: 'vocals' },
-    { label: 'Resource', url: activity.resourceLink, icon: FileText, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'resource' },
+    { label: 'Resource', url: activity.resourceLink, icon: FileText, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'resource' },
     { label: 'Link', url: activity.link, icon: LinkIcon, color: 'text-gray-600 bg-gray-50 border-gray-200', type: 'link' },
-    { label: 'Image', url: activity.imageLink, icon: Image, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'image' },
+    { label: 'Image', url: activity.imageLink, icon: Image, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'image' },
     { label: 'Canva', url: activity.canvaLink, icon: Palette, color: 'text-indigo-600 bg-indigo-50 border-indigo-200', type: 'canva' },
   ].filter(resource => resource.url && resource.url.trim());
 
@@ -57,7 +57,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center space-x-3 min-w-0">
               <button
@@ -74,7 +74,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
               </div>
               <div className="min-w-0">
                 <h2 className="text-xl font-semibold truncate">{activity.activity}</h2>
-                <p className="text-teal-100 text-sm truncate">{activity.category}</p>
+                <p className="text-[#E9E6FF] text-sm truncate">{activity.category}</p>
               </div>
             </div>
             <button
@@ -115,7 +115,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
                     {validYearGroups.map((group, index) => (
                       <span
                         key={index}
-                        className="px-3 py-1 bg-teal-100 text-teal-800 text-sm rounded-full"
+                        className="px-3 py-1 bg-[#E9E6FF] text-[#1F1B4D] text-sm rounded-full"
                       >
                         {group}
                       </span>
@@ -228,7 +228,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
           )}
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center gap-2"
+            className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 inline-flex items-center gap-2"
           >
             <ArrowLeft className="h-4 w-4" />
             <span>Back</span>

@@ -161,7 +161,7 @@ export function AddSoftwarePackModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[80]" role="dialog" aria-modal="true" aria-labelledby="add-pack-title">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-teal-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-[#E9E6FF]">
           <div>
             <h2 id="add-pack-title" className="text-xl font-bold text-gray-900">
               {isEditing ? 'Edit resource pack' : 'Add resource pack'}
@@ -192,14 +192,14 @@ export function AddSoftwarePackModal({
                   value={packId}
                   onChange={(e) => setPackId(e.target.value.toUpperCase().replace(/\s/g, '_'))}
                   placeholder="e.g. COMMEDIA_KS3_DRAMA"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                   disabled={isEditing}
                 />
                 {!isEditing && (
                   <button
                     type="button"
                     onClick={suggestPackId}
-                    className="text-xs text-teal-600 hover:underline mt-1"
+                    className="text-xs text-[#4338E8] hover:underline mt-1"
                   >
                     Suggest from name
                   </button>
@@ -214,7 +214,7 @@ export function AddSoftwarePackModal({
                       type="button"
                       onClick={() => setIcon(emoji)}
                       className={`text-2xl p-1 rounded border-2 transition-colors ${
-                        icon === emoji ? 'border-teal-600 bg-teal-50' : 'border-transparent hover:bg-gray-100'
+                        icon === emoji ? 'border-[#4338E8] bg-[#E9E6FF]' : 'border-transparent hover:bg-gray-100'
                       }`}
                     >
                       {emoji}
@@ -240,7 +240,7 @@ export function AddSoftwarePackModal({
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="e.g. Commedia dell'arte – KS3 Drama"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                 required
               />
             </div>
@@ -252,7 +252,7 @@ export function AddSoftwarePackModal({
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Describe what's included so users know what they're getting..."
                 rows={3}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
               />
             </div>
 
@@ -262,7 +262,7 @@ export function AddSoftwarePackModal({
                   type="checkbox"
                   checked={isActive}
                   onChange={(e) => setIsActive(e.target.checked)}
-                  className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  className="rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                 />
                 <span className="text-sm text-gray-700">Available in library</span>
               </label>
@@ -284,8 +284,8 @@ export function AddSoftwarePackModal({
                       onClick={() => toggleYearGroupSection(section.id)}
                       className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                         isSelected
-                          ? 'bg-teal-600 text-white'
-                          : 'bg-gray-100 border border-gray-300 text-gray-700 hover:border-teal-400'
+                          ? 'bg-[#4338E8] text-white'
+                          : 'bg-gray-100 border border-gray-300 text-gray-700 hover:border-[#bcb7f4]'
                       }`}
                     >
                       {section.label}
@@ -303,13 +303,13 @@ export function AddSoftwarePackModal({
               <div className="mb-4">
                 <div className="flex items-center justify-between gap-2 mb-1">
                   <span className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                    <FileText className="h-4 w-4 text-teal-600" />
+                    <FileText className="h-4 w-4 text-[#4338E8]" />
                     Introduction (optional)
                   </span>
                   <button
                     type="button"
                     onClick={() => setShowIntroductionModal(true)}
-                    className="px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100"
+                    className="px-3 py-1.5 text-sm font-medium text-[#4338E8] bg-[#E9E6FF] border border-[#E2E0EF] rounded-lg hover:bg-[#E9E6FF]"
                   >
                     {introduction ? 'Edit introduction' : 'Add introduction'}
                   </button>
@@ -320,7 +320,7 @@ export function AddSoftwarePackModal({
                 {introduction && (() => {
                   const plain = introduction.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
                   return (
-                    <p className="mt-1 text-xs text-gray-600 line-clamp-2 overflow-hidden border-l-2 border-teal-200 pl-2">
+                    <p className="mt-1 text-xs text-gray-600 line-clamp-2 overflow-hidden border-l-2 border-[#E2E0EF] pl-2">
                       {plain.slice(0, 120)}{plain.length > 120 ? '…' : ''}
                     </p>
                   );
@@ -331,7 +331,7 @@ export function AddSoftwarePackModal({
               {stacks.length > 0 ? (
                 <div>
                   <p className="text-sm font-medium text-gray-700 mb-1 flex items-center gap-2">
-                    <Layers className="h-4 w-4 text-teal-600" />
+                    <Layers className="h-4 w-4 text-[#4338E8]" />
                     Lessons from the database (lesson stacks)
                   </p>
                   <p className="text-xs text-gray-600 mb-2">
@@ -347,8 +347,8 @@ export function AddSoftwarePackModal({
                           onClick={() => toggleStack(stack.id)}
                           className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
                             isSelected
-                              ? 'bg-teal-600 text-white'
-                              : 'bg-gray-100 border border-gray-300 text-gray-700 hover:border-teal-400'
+                              ? 'bg-[#4338E8] text-white'
+                              : 'bg-gray-100 border border-gray-300 text-gray-700 hover:border-[#bcb7f4]'
                           }`}
                         >
                           <span className="truncate max-w-[180px]" title={stack.name}>{stack.name}</span>
@@ -373,7 +373,7 @@ export function AddSoftwarePackModal({
                 <button
                   type="button"
                   onClick={() => setCategoriesExpanded(!categoriesExpanded)}
-                  className="flex items-center gap-2 w-full text-left text-sm font-semibold text-gray-900 hover:text-teal-700"
+                  className="flex items-center gap-2 w-full text-left text-sm font-semibold text-gray-900 hover:text-[#3529d1]"
                 >
                   {categoriesExpanded ? <ChevronDown className="h-4 w-4" /> : <ChevronRight className="h-4 w-4" />}
                   Link to categories (optional) — {categoryIds.length} selected
@@ -397,7 +397,7 @@ export function AddSoftwarePackModal({
                                   type="button"
                                   onClick={() => toggleCategory(id)}
                                   className={`px-2 py-0.5 rounded text-xs font-medium transition-colors ${
-                                    isSelected ? 'bg-teal-600 text-white' : 'bg-white border border-gray-300 text-gray-700 hover:border-teal-400'
+                                    isSelected ? 'bg-[#4338E8] text-white' : 'bg-white border border-gray-300 text-gray-700 hover:border-[#bcb7f4]'
                                   }`}
                                 >
                                   {cat.name}
@@ -425,7 +425,7 @@ export function AddSoftwarePackModal({
             <button
               type="submit"
               disabled={saving}
-              className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-60 flex items-center gap-2"
+              className="px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] disabled:opacity-60 flex items-center gap-2"
             >
               <Save className="h-4 w-4" />
               {saving ? 'Saving…' : isEditing ? 'Update pack' : 'Add resource pack'}

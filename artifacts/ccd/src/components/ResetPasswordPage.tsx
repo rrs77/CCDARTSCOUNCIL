@@ -169,7 +169,7 @@ export function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: loginBgColor }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md">
           <p className="text-gray-700">Password reset requires Supabase to be configured.</p>
-          <a href="/" className="mt-4 inline-block text-teal-600 hover:underline font-medium">Back to sign in</a>
+          <a href="/" className="mt-4 inline-block text-[#4338E8] hover:underline font-medium">Back to sign in</a>
         </div>
       </div>
     );
@@ -180,7 +180,7 @@ export function ResetPasswordPage() {
       <div className="min-h-screen flex items-center justify-center p-4" style={{ backgroundColor: loginBgColor }}>
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
           <p className="text-gray-700 mb-4">Password reset is only available when sign-in uses Supabase Auth. Ask your administrator to set VITE_USE_SUPABASE_AUTH=true.</p>
-          <a href="/" className="text-teal-600 hover:underline font-medium">Back to sign in</a>
+          <a href="/" className="text-[#4338E8] hover:underline font-medium">Back to sign in</a>
         </div>
       </div>
     );
@@ -202,7 +202,7 @@ export function ResetPasswordPage() {
         <div className="bg-white rounded-2xl shadow-xl p-8 max-w-md text-center">
           <h2 className="text-lg font-semibold text-gray-900 mb-4">Invalid or expired link</h2>
           <p className="text-gray-600 mb-4">Ask your administrator to resend the invitation, or request a new password reset from the login screen.</p>
-          <a href="/" className="text-teal-600 hover:underline font-medium">Back to sign in</a>
+          <a href="/" className="text-[#4338E8] hover:underline font-medium">Back to sign in</a>
         </div>
       </div>
     );
@@ -243,7 +243,7 @@ export function ResetPasswordPage() {
                     onChange={(e) => setPassword(e.target.value)}
                     required
                     minLength={6}
-                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
+                    className="block w-full pl-10 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] text-gray-900"
                     placeholder="Enter new password"
                     autoComplete="new-password"
                   />
@@ -264,7 +264,7 @@ export function ResetPasswordPage() {
                   value={confirm}
                   onChange={(e) => setConfirm(e.target.value)}
                   required
-                  className="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 text-gray-900"
+                  className="block w-full pl-3 pr-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] text-gray-900"
                   placeholder="Confirm new password"
                   autoComplete="new-password"
                 />

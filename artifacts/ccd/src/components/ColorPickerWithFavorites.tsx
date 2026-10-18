@@ -45,7 +45,7 @@ export function ColorPickerWithFavorites({
                 <button
                   type="button"
                   onClick={() => onChange(color)}
-                  className={`${swatchClassName} ${value.toLowerCase() === color.toLowerCase() ? 'ring-2 ring-teal-500 ring-offset-1' : ''}`}
+                  className={`${swatchClassName} ${value.toLowerCase() === color.toLowerCase() ? 'ring-2 ring-[#4338E8] ring-offset-1' : ''}`}
                   style={{ backgroundColor: color }}
                   title={`Use ${color}`}
                   aria-label={`Use colour ${color}`}

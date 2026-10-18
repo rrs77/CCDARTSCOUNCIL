@@ -11,7 +11,6 @@ import {
   ArrowRight,
   PlayCircle,
   BookOpen,
-  ExternalLink,
 } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { getAppBaseUrl } from '../utils/apiUrl';
@@ -26,18 +25,15 @@ import {
   checkSupabaseAuthHealth,
   setSessionOnlyCookie,
 } from '../config/supabase';
-import { activateDemoMode } from '../utils/demoMode';
-import { seedDemoData } from '../utils/demoSeed';
 import { FeatureWalkthroughModal } from './FeatureWalkthrough/FeatureWalkthroughModal';
-import { PrototypePasswordPrompt, isPrototypeUnlocked } from './PrototypeGate';
 import { LoginHeroPanel, THE_FACTS_HREF } from './login/LoginHeroPanel';
 import { PrototypeNoticeBar } from './login/PrototypeNoticeBar';
 import { PartnersFundingStartModal } from './login/PartnersFundingStartModal';
 import { PARTNERS_FUNDING_VIDEO_STORAGE_KEY } from './login/prototypeCopy';
-import { LogoSVG, LOGO_BG } from './Logo';
+import { LogoSVG } from './Logo';
 import { RegisterForm } from './Auth/RegisterForm';
 
-const LOGIN_GREEN = LOGO_BG;
+const LOGIN_INDIGO = '#4338E8';
 
 export function LoginForm() {
   const { login } = useAuth();
@@ -59,7 +55,6 @@ export function LoginForm() {
   const [forgotSubmitting, setForgotSubmitting] = useState(false);
   const [forgotError, setForgotError] = useState('');
   const [showFeatureWalkthrough, setShowFeatureWalkthrough] = useState(false);
-  const [showPrototypePassword, setShowPrototypePassword] = useState(false);
   const [showPartnersFundingStart, setShowPartnersFundingStart] = useState(false);
 
   const branding = settings.branding || {};
@@ -70,6 +65,10 @@ export function LoginForm() {
   const handleSubmit = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
     setError('');
+    if (!username.trim()) {
+      setError('Missing email');
+      return;
+    }
     setIsSubmitting(true);
     try {
       if (isSupabaseAuthEnabled() && !staySignedIn) {
@@ -200,46 +199,22 @@ export function LoginForm() {
     setShowInstallPrompt(false);
   };
 
-  const handleStartPreview = async () => {
-    if (!isPrototypeUnlocked()) {
-      setShowPrototypePassword(true);
-      return;
-    }
-    await enterPrototype();
-  };
-
-  const enterPrototype = async () => {
-    // Defense in depth: never seed/navigate without the password gate.
-    if (!isPrototypeUnlocked()) {
-      setShowPrototypePassword(true);
-      return;
-    }
-    if (!activateDemoMode('default')) {
-      setShowPrototypePassword(true);
-      return;
-    }
-    await seedDemoData();
-    window.location.assign('/?demo=1');
-  };
-
   const inputClassName =
-    'w-full rounded-lg border border-gray-300 bg-white py-3 pl-10 pr-4 text-sm text-gray-900 placeholder-gray-400 focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20';
+    'w-full rounded-lg border border-[#E2E0EF] bg-white py-3 pl-10 pr-4 text-sm text-[#1F1B4D] placeholder-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25';
 
   return (
     <div
       className="relative flex min-h-screen flex-col overflow-x-hidden"
       style={{
-        backgroundColor: '#e9e7e3',
-        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n' x='0' y='0' width='100%25' height='100%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.25' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 0.52 0 0 0 0 0.51 0 0 0 0 0.49 0 0 0 0.07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`,
-        backgroundRepeat: 'repeat',
-        backgroundSize: '180px 180px',
+        backgroundColor: '#EDECF2',
+        fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)",
       }}
     >
       {/* Hidden in film mode via html.ccd-feature-demo CSS (see index.css). */}
       <PrototypeNoticeBar />
       {/* Outer surround only: fluid padding scales with viewport; stage design unchanged */}
       <div className="relative z-10 flex flex-1 flex-col p-0 sm:p-[clamp(0.75rem,2vw,1rem)] lg:p-[clamp(1rem,2.5vw,1.5rem)]">
-        <div className="relative mx-auto flex w-full max-w-[min(1440px,100%)] flex-col bg-[#002D24] sm:min-h-[calc(100dvh-2.5rem)] sm:overflow-hidden sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(0,45,36,0.18)] lg:min-h-[calc(100dvh-3.5rem)]">
+        <div className="relative mx-auto flex w-full max-w-[min(1440px,100%)] flex-col bg-[#1F1B4D] sm:min-h-[calc(100dvh-2.5rem)] sm:overflow-hidden sm:rounded-2xl sm:shadow-[0_24px_80px_rgba(31,27,77,0.22)] lg:min-h-[calc(100dvh-3.5rem)]">
           {/* Full-bleed hero — content-sized stack on phone; fills stage on desktop */}
           <div className="relative w-full lg:absolute lg:inset-0">
             <LoginHeroPanel logoLetters={logoLetters} />
@@ -248,56 +223,61 @@ export function LoginForm() {
           {/* Login card — below hero on phone/tablet (no overlap); floats over image on desktop */}
           <div className="relative z-20 mx-4 mb-5 mt-4 sm:mx-6 sm:mb-6 sm:mt-5 lg:absolute lg:bottom-auto lg:left-auto lg:right-5 lg:top-1/2 lg:mx-0 lg:mb-0 lg:mt-0 lg:w-[min(320px,30%)] lg:-translate-y-1/2 xl:right-8 xl:w-[340px]">
             <div className="overflow-hidden rounded-2xl border border-transparent bg-white shadow-[0_20px_50px_rgba(0,0,0,0.22)] lg:shadow-[0_20px_50px_rgba(0,0,0,0.25)]">
-              <div className="flex items-center gap-2 px-4 pt-3 sm:px-5 lg:px-5 lg:pt-3">
-                {canInstall && !isInstalled && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      await install();
-                    }}
-                    className="flex items-center gap-1.5 rounded-lg px-2.5 py-2 text-sm font-medium text-gray-500 transition-colors hover:bg-white/60 hover:text-gray-700"
-                  >
-                    <Download className="h-4 w-4" />
-                    <span className="hidden sm:inline">Install</span>
-                  </button>
-                )}
-                <div className="grid min-w-0 flex-1 grid-cols-2 gap-2">
-                  <a
-                    href={THE_FACTS_HREF}
-                    className="flex min-h-14 w-full items-center justify-center gap-2 rounded-lg border border-[#14B8A6]/45 bg-[#E8F0EA] px-3 py-2 text-center text-sm font-semibold leading-tight text-[#002D24] transition-colors hover:bg-[#D9E8DE]"
-                  >
-                    <BookOpen className="h-5 w-5 shrink-0 text-[#0D9488]" aria-hidden />
-                    <span>The facts</span>
-                  </a>
-                  <button
-                    type="button"
-                    onClick={() => setShowFeatureWalkthrough(true)}
-                    className="flex min-h-14 w-full items-center justify-center gap-2 rounded-lg bg-[#B6FF7E] px-3 py-2 text-center text-sm font-semibold leading-tight text-[#002D24] transition-colors hover:bg-[#A7F46E]"
-                  >
-                    <PlayCircle className="h-5 w-5 shrink-0 text-[#002D24]" />
-                    <span>Feature walkthrough</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="px-4 pb-5 pt-1 sm:px-5 sm:pb-6 lg:px-5 lg:pb-6">
+              <div className="px-4 pb-5 pt-4 sm:px-5 sm:pb-6 lg:px-5 lg:pb-6">
                 <div className="w-full">
                   {/* Logo on phone/tablet form only — desktop already has the hero mark */}
                   <LogoSVG
                     size="sm"
-                    showText={false}
+                    showText
                     letters={logoLetters}
-                    className="!space-x-0 lg:hidden"
+                    className="mb-3 lg:hidden"
                   />
 
-                  <div className="mb-5 mt-3 lg:mt-0">
+                  <div className="mb-4 flex flex-nowrap items-center gap-x-2.5 overflow-hidden">
+                    <a
+                      href={THE_FACTS_HREF}
+                      className="inline-flex shrink-0 items-center gap-1 text-[0.8125rem] font-semibold leading-none text-[#4338E8] underline-offset-2 hover:underline sm:text-sm"
+                    >
+                      <BookOpen className="h-3.5 w-3.5 shrink-0 sm:h-4 sm:w-4" aria-hidden />
+                      The facts
+                    </a>
+                    <span className="shrink-0 text-sm text-[#E2E0EF]" aria-hidden>
+                      ·
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setShowFeatureWalkthrough(true)}
+                      className="inline-flex min-w-0 items-center gap-1 text-[0.8125rem] font-semibold leading-none text-[#1F1B4D] underline-offset-2 hover:underline sm:text-sm"
+                    >
+                      <PlayCircle className="h-3.5 w-3.5 shrink-0 text-[#4338E8] sm:h-4 sm:w-4" aria-hidden />
+                      <span className="truncate">Feature walkthrough</span>
+                    </button>
+                    {canInstall && !isInstalled && (
+                      <>
+                        <span className="shrink-0 text-sm text-[#E2E0EF]" aria-hidden>
+                          ·
+                        </span>
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            await install();
+                          }}
+                          className="inline-flex shrink-0 items-center gap-1 text-xs font-medium text-[#77738F] underline-offset-2 hover:text-[#1F1B4D] hover:underline"
+                        >
+                          <Download className="h-3.5 w-3.5" />
+                          Install
+                        </button>
+                      </>
+                    )}
+                  </div>
+
+                  <div className="mb-4">
                     <h2
-                      className="text-xl font-semibold tracking-tight text-[#002D24] sm:text-2xl"
-                      style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+                      className="text-xl font-extrabold tracking-tight text-[#1F1B4D] sm:text-2xl"
+                      style={{ fontFamily: "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)" }}
                     >
                       Welcome back
                     </h2>
-                    <p className="mt-1 text-sm text-gray-500">Sign in to continue to your account.</p>
                   </div>
 
                   {showRegister ? (
@@ -310,7 +290,7 @@ export function LoginForm() {
                       <button
                         type="button"
                         onClick={() => setShowRegister(false)}
-                        className="text-sm font-medium text-[#008272] hover:underline"
+                        className="text-sm font-medium text-[#4338E8] hover:underline"
                       >
                         Back to sign in
                       </button>
@@ -352,20 +332,9 @@ export function LoginForm() {
                       </div>
 
                       <div>
-                        <div className="mb-1.5 flex items-center justify-between">
-                          <label htmlFor="login-password" className="block text-sm font-medium text-gray-700">
-                            Password
-                          </label>
-                          {isSupabaseConfigured() && (
-                            <button
-                              type="button"
-                              onClick={() => setShowForgotPassword(true)}
-                              className="text-sm font-medium text-[#002D24] hover:underline"
-                            >
-                              Forgot password?
-                            </button>
-                          )}
-                        </div>
+                        <label htmlFor="login-password" className="mb-1.5 block text-sm font-medium text-gray-700">
+                          Password
+                        </label>
                         <div className="relative">
                           <Lock className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
                           <input
@@ -387,6 +356,15 @@ export function LoginForm() {
                             {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                           </button>
                         </div>
+                        {isSupabaseConfigured() && (
+                          <button
+                            type="button"
+                            onClick={() => setShowForgotPassword(true)}
+                            className="mt-1.5 text-sm font-medium text-[#1F1B4D] hover:underline"
+                          >
+                            Forgot password?
+                          </button>
+                        )}
                       </div>
 
                       {isSupabaseAuthEnabled() && (
@@ -395,7 +373,7 @@ export function LoginForm() {
                             type="checkbox"
                             checked={staySignedIn}
                             onChange={(e) => setStaySignedIn(e.target.checked)}
-                            className="h-4 w-4 rounded border-gray-300 text-[#002D24] focus:ring-[#002D24]"
+                            className="h-4 w-4 rounded border-gray-300 text-[#1F1B4D] focus:ring-[#1F1B4D]"
                           />
                           Remember me
                         </label>
@@ -411,7 +389,7 @@ export function LoginForm() {
                                 type="button"
                                 onClick={() => handleSubmit()}
                                 disabled={isSubmitting || !username.trim()}
-                                className="mt-1 flex items-center gap-1 text-sm font-medium text-[#002D24] hover:underline"
+                                className="mt-1 flex items-center gap-1 text-sm font-medium text-[#1F1B4D] hover:underline"
                               >
                                 <RefreshCw className="h-3.5 w-3.5" />
                                 Try again
@@ -443,8 +421,8 @@ export function LoginForm() {
                       <button
                         type="submit"
                         disabled={isSubmitting}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-3.5 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
-                        style={{ backgroundColor: isSubmitting ? '#6B7280' : LOGIN_GREEN }}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-semibold text-white transition-all hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-60"
+                        style={{ backgroundColor: isSubmitting ? '#6B7280' : LOGIN_INDIGO }}
                       >
                         {isSubmitting ? (
                           <>
@@ -461,31 +439,20 @@ export function LoginForm() {
                     </form>
                   )}
 
-                  {!showForgotPassword && !showRegister && (
+                  {!showForgotPassword && !showRegister && isSupabaseAuthEnabled() && (
                     <>
-                      <div className="my-5 flex items-center gap-3">
+                      <div className="my-2.5 flex items-center gap-2.5">
                         <div className="h-px flex-1 bg-gray-200" />
-                        <span className="text-xs font-medium uppercase tracking-wide text-gray-400">or</span>
+                        <span className="text-[10px] font-medium uppercase tracking-wide text-gray-400">or</span>
                         <div className="h-px flex-1 bg-gray-200" />
                       </div>
 
-                      {isSupabaseAuthEnabled() && (
-                        <button
-                          type="button"
-                          onClick={() => setShowRegister(true)}
-                          className="mb-3 flex w-full items-center justify-center gap-2 rounded-lg border border-[#002D24]/30 bg-white px-4 py-3 text-sm font-semibold text-[#002D24] transition-colors hover:bg-[#002D24]/5"
-                        >
-                          Create an account
-                        </button>
-                      )}
-
                       <button
                         type="button"
-                        onClick={handleStartPreview}
-                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-3.5 text-sm font-semibold text-gray-700 transition-colors hover:bg-gray-50"
+                        onClick={() => setShowRegister(true)}
+                        className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#1F1B4D]/30 bg-white px-4 py-2 text-sm font-semibold text-[#1F1B4D] transition-colors hover:bg-[#1F1B4D]/5"
                       >
-                        Explore the working prototype
-                        <ExternalLink className="h-4 w-4" />
+                        Create an account
                       </button>
                     </>
                   )}
@@ -510,16 +477,6 @@ export function LoginForm() {
         isOpen={showFeatureWalkthrough}
         onClose={() => setShowFeatureWalkthrough(false)}
       />
-
-      {showPrototypePassword && (
-        <PrototypePasswordPrompt
-          onUnlocked={() => {
-            setShowPrototypePassword(false);
-            void enterPrototype();
-          }}
-          onCancel={() => setShowPrototypePassword(false)}
-        />
-      )}
 
       <PartnersFundingStartModal
         isOpen={showPartnersFundingStart}
@@ -582,7 +539,7 @@ function ForgotPasswordPanel({
             type="submit"
             disabled={forgotSubmitting}
             className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity disabled:opacity-60"
-            style={{ backgroundColor: forgotSubmitting ? '#9CA3AF' : LOGIN_GREEN }}
+            style={{ backgroundColor: forgotSubmitting ? '#9CA3AF' : LOGIN_INDIGO }}
           >
             {forgotSubmitting ? 'Sending...' : 'Send reset link'}
           </button>
@@ -607,8 +564,8 @@ function InstallPromptModal({
       <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
         <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center space-x-3">
-            <div className="rounded-lg bg-[#002D24]/10 p-2">
-              <Download className="h-6 w-6 text-[#002D24]" />
+            <div className="rounded-lg bg-[#1F1B4D]/10 p-2">
+              <Download className="h-6 w-6 text-[#1F1B4D]" />
             </div>
             <div>
               <h3 className="text-xl font-bold text-gray-900">Install App</h3>
@@ -626,8 +583,8 @@ function InstallPromptModal({
         </div>
 
         <div className="space-y-4">
-          <div className="rounded-lg border border-[#002D24]/15 bg-[#002D24]/5 p-4">
-            <p className="mb-2 text-sm font-medium text-[#002D24]">Benefits of installing:</p>
+          <div className="rounded-lg border border-[#1F1B4D]/15 bg-[#1F1B4D]/5 p-4">
+            <p className="mb-2 text-sm font-medium text-[#1F1B4D]">Benefits of installing:</p>
             <ul className="list-inside list-disc space-y-1 text-sm text-gray-700">
               <li>Quick access from your desktop or home screen</li>
               <li>Works offline with cached data</li>
@@ -640,7 +597,7 @@ function InstallPromptModal({
               type="button"
               onClick={onInstall}
               className="flex flex-1 items-center justify-center space-x-2 rounded-lg px-6 py-3 font-semibold text-white shadow-md transition-all hover:shadow-lg"
-              style={{ backgroundColor: LOGIN_GREEN }}
+              style={{ backgroundColor: LOGIN_INDIGO }}
             >
               <Download className="h-5 w-5" />
               <span>Install Now</span>

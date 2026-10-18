@@ -70,17 +70,24 @@ const TERM_NAMES: Record<string, string> = {
   'SM2': 'Summer 2 (Jun-Jul)',
 };
 
-// Map term IDs to colors
+// Map term IDs to colors (Studio Score)
 const TERM_COLORS: Record<string, string> = {
-  'A1': '#3B82F6', // Blue
-  'A2': '#1D4ED8', // Darker Blue
-  'SP1': '#10B981', // Green
-  'SP2': '#059669', // Darker Green
-  'SM1': '#0EA5E9', // Light Blue
-  'SM2': '#06B6D4', // Cyan Blue
+  'A1': '#4338E8',
+  'A2': '#3529d1',
+  'SP1': '#0B6B5F',
+  'SP2': '#148F7F',
+  'SM1': '#E97451',
+  'SM2': '#C45C3A',
 };
 
-export function UnitViewer() {
+interface UnitViewerProps {
+  /** Open this half-term's lesson picker once data is ready (from year map). */
+  initialHalfTermId?: string | null;
+  /** Compact chrome when embedded under HalfTermDesigner. */
+  hidePageChrome?: boolean;
+}
+
+export function UnitViewer({ initialHalfTermId = null, hidePageChrome = false }: UnitViewerProps = {}) {
   const { 
     currentSheetInfo, 
     allLessonsData, 
@@ -183,6 +190,13 @@ export function UnitViewer() {
       }))
     });
   }, [halfTerms, loading]);
+
+  // Open a specific half-term when arriving from the school-wide year map
+  useEffect(() => {
+    if (!initialHalfTermId || loading) return;
+    setSelectedHalfTerm(initialHalfTermId);
+    setShowLessonSelectionModal(true);
+  }, [initialHalfTermId, loading, currentSheetInfo.sheet]);
 
   // Load units from localStorage
   useEffect(() => {
@@ -349,7 +363,7 @@ export function UnitViewer() {
       '#EC4899', // Pink
       '#EF4444', // Red
       '#F97316', // Orange
-      '#14B8A6', // Teal
+      '#4338E8', // Teal
     ];
     return colors[Math.floor(Math.random() * colors.length)];
   };
@@ -778,7 +792,7 @@ export function UnitViewer() {
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
             <div className="bg-white rounded-card shadow-soft w-full max-w-4xl max-h-[80vh] overflow-hidden">
               <div className="p-4 border-b border-gray-200 text-white"
-style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
                 <div className="flex items-center justify-between">
                   <h3 className="text-lg font-semibold">Add Activity to Lesson</h3>
                   <button
@@ -798,7 +812,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                       placeholder="Search activities..."
                       value={activitySearchQuery}
                       onChange={(e) => setActivitySearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-teal-500 focus:outline-none"
+                      className="w-full pl-10 pr-4 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:border-[#4338E8] focus:outline-none"
                     />
                   </div>
                   <div className="relative" style={{ minWidth: '250px' }}>
@@ -806,7 +820,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                       selectedCategory={selectedCategory === 'all' ? '' : selectedCategory}
                       onCategoryChange={(category) => setSelectedCategory(category || 'all')}
                       placeholder="All Categories"
-                      className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-teal-500 focus:outline-none"
+                      className="px-3 py-2 bg-white border border-gray-300 rounded-lg text-gray-900 focus:border-[#4338E8] focus:outline-none"
                     />
                   </div>
                 </div>
@@ -863,7 +877,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
             <div className="bg-white rounded-card shadow-soft w-full max-w-6xl max-h-[90vh] overflow-hidden">
               {/* Edit Header */}
               <div className="p-4 border-b border-gray-200 text-white"
-style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Edit3 className="h-5 w-5" />
@@ -897,7 +911,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                     type="checkbox"
                     checked={showHeaderFooterEdit}
                     onChange={(e) => setShowHeaderFooterEdit(e.target.checked)}
-                    className="h-5 w-5 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                    className="h-5 w-5 rounded border-gray-300 text-[#4338E8] focus:ring-2 focus:ring-[#4338E8] cursor-pointer"
                   />
                   <span className="text-sm font-medium text-gray-700">
                     Edit header and footer text
@@ -919,7 +933,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                         value={customHeader}
                         onChange={(e) => setCustomHeader(e.target.value)}
                         placeholder={`Leave blank for default: "Lesson ${editingLessonNumber}"`}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         Default: Lesson {editingLessonNumber}
@@ -936,7 +950,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                         value={customFooter}
                         onChange={(e) => setCustomFooter(e.target.value)}
                         placeholder="Leave blank for default footer"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                       />
                       <p className="mt-1 text-xs text-gray-500">
                         Default: {productName} • Lesson {editingLessonNumber} • {currentSheetInfo.display} • © {footerCompany} {footerYear}
@@ -992,192 +1006,123 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
     );
   }
 
-  // Default view - half-term cards
+  // Default view — compact half-term list (Planner / HalfTermDesigner own the page title)
   return (
-      <div key={refreshKey} className="min-h-screen" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 md:px-6 lg:px-8 py-4 sm:py-6">
-          <div className="bg-white rounded-card shadow-soft mb-6 sm:mb-8 p-4 sm:p-6 md:p-7">
-              <div className="text-gray-900">
-                <div className="flex flex-col xl:flex-row xl:items-center xl:justify-between gap-4">
-                  <div className="flex-shrink-0 min-w-0">
-                    <h2
-                      className="text-xl sm:text-2xl font-semibold mb-1 tracking-tight"
-                      style={{
-                        fontFamily: '"Playfair Display", Georgia, serif',
-                        color: '#002D24',
-                      }}
-                    >
-                      Half-Term Designer
-                    </h2>
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                      <span className="text-xs sm:text-sm font-normal text-gray-600">
-                        Academic Year {currentAcademicYear}
-                      </span>
-                      {(() => {
-                        // Academic year runs Sept–Aug: current year is 2025-2026 until Sept 2026, then 2026-2027
-                        const now = new Date();
-                        const month = now.getMonth(); // 0=Jan, 8=Sep
-                        const year = now.getFullYear();
-                        const currentSchoolYear = month >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
-                        return currentAcademicYear === currentSchoolYear && (
-                          <span
-                            className="text-xs font-medium px-2 sm:px-3 py-1 rounded-full whitespace-nowrap border"
-                            style={{
-                              backgroundColor: 'rgba(182, 255, 126, 0.35)',
-                              borderColor: 'rgba(0, 45, 36, 0.2)',
-                              color: '#002D24',
-                            }}
-                          >
-                            Current Year
-                          </span>
-                        );
-                      })()}
-                    </div>
-                  </div>
-
-                  <div className="flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-stretch xl:items-center xl:flex-initial xl:max-w-none">
-                    {/* Year Navigation Arrows */}
-                    <div className="flex items-center gap-2 flex-shrink-0">
-                      <button
-                        onClick={() => {
-                          const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
-                          const canGoBack = currentIndex < getAvailableYears().length - 1;
-                          if (canGoBack) {
-                            handleYearChange(getAvailableYears()[currentIndex + 1]);
-                          }
-                        }}
-                        disabled={getAvailableYears().indexOf(currentAcademicYear) >= getAvailableYears().length - 1}
-                        className="w-8 h-8 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                        style={{ color: '#6B7280' }}
-                        title="View previous academic year"
-                      >
-                        <ChevronLeft className="h-4 w-4" />
-                      </button>
-
-                      <button
-                        onClick={() => {
-                          const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
-                          const canGoForward = currentIndex > 0;
-                          if (canGoForward) {
-                            handleYearChange(getAvailableYears()[currentIndex - 1]);
-                          }
-                        }}
-                        disabled={getAvailableYears().indexOf(currentAcademicYear) <= 0}
-                        className="w-8 h-8 sm:w-9 sm:h-9 bg-white border border-gray-200 rounded-lg flex items-center justify-center transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24] disabled:opacity-50 disabled:cursor-not-allowed touch-manipulation"
-                        style={{ color: '#6B7280' }}
-                        title="Return to more recent year"
-                      >
-                        <ChevronRight className="h-4 w-4" />
-                      </button>
-                    </div>
-
-                    {/* Copy Term Button — lime primary (login brand) */}
-                    <button
-                      onClick={() => setShowTermCopyModal(true)}
-                      className="px-3 sm:px-4 py-2 rounded-lg text-xs sm:text-sm font-semibold transition-opacity duration-200 flex items-center justify-center space-x-2 focus:outline-none focus:ring-2 focus:ring-[#002D24]/30 focus:ring-offset-2 touch-manipulation min-h-[36px] sm:min-h-[40px] hover:opacity-90"
-                      style={{
-                        backgroundColor: '#B6FF7E',
-                        color: '#002D24',
-                        fontWeight: 600,
-                        userSelect: 'none',
-                        WebkitUserSelect: 'none',
-                        WebkitTapHighlightColor: 'transparent',
-                      }}
-                    >
-                      <Calendar className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                      <span style={{ fontWeight: 600, userSelect: 'none', whiteSpace: 'nowrap' }}>Copy Term</span>
-                    </button>
-
-                    {/* Search field */}
-                    <div className="relative flex-1 sm:flex-initial sm:min-w-[180px] sm:max-w-[240px]">
-                      <div className="absolute left-3 top-1/2 transform -translate-y-1/2" style={{ width: '16px', height: '16px' }}>
-                        <svg
-                          viewBox="0 0 80 80"
-                          className="w-full h-full"
-                          style={{ fill: 'none' }}
-                        >
-                          <circle cx="40" cy="40" r="38" fill="#002D24" />
-                          <circle
-                            cx="40"
-                            cy="40"
-                            r="34"
-                            fill="none"
-                            stroke="#B6FF7E"
-                            strokeWidth="3"
-                          />
-                          <text
-                            x="40"
-                            y="40"
-                            textAnchor="middle"
-                            dominantBaseline="central"
-                            fill="white"
-                            fontSize="28"
-                            fontWeight="700"
-                            fontFamily="Inter, -apple-system, BlinkMacSystemFont, sans-serif"
-                            letterSpacing="-1"
-                          >
-                            CCD
-                          </text>
-                        </svg>
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Search units..."
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full sm:w-48 pl-10 pr-4 border border-gray-300 rounded-lg text-xs sm:text-sm transition-all duration-200 touch-manipulation"
-                        style={{
-                          height: '36px',
-                          minHeight: '36px',
-                          fontSize: '14px',
-                          color: '#111827',
-                          backgroundColor: 'white',
-                          WebkitAppearance: 'none',
-                          appearance: 'none',
-                        }}
-                        onFocus={(e) => {
-                          e.target.style.borderColor = 'transparent';
-                          e.target.style.boxShadow = '0 0 0 2px #002D24';
-                        }}
-                        onBlur={(e) => {
-                          e.target.style.borderColor = '#D1D5DB';
-                          e.target.style.boxShadow = 'none';
-                        }}
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
+      <div key={refreshKey} className="min-w-0">
+        {!hidePageChrome && (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex min-w-0 flex-wrap items-center gap-2">
+            <span className="text-[12px] font-extrabold text-[#1F1B4D]">
+              {currentSheetInfo.display || currentSheetInfo.sheet}
+            </span>
+            <span className="text-[12px] text-[#77738F]">·</span>
+            <span className="text-[12px] font-extrabold text-[#1F1B4D]">
+              {currentAcademicYear.replace('-', '–')}
+            </span>
+            {(() => {
+              const now = new Date();
+              const month = now.getMonth();
+              const year = now.getFullYear();
+              const currentSchoolYear = month >= 8 ? `${year}-${year + 1}` : `${year - 1}-${year}`;
+              return currentAcademicYear === currentSchoolYear ? (
+                <span className="rounded-md bg-[#FFF1C2] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#1F1B4D]">
+                  Current
+                </span>
+              ) : null;
+            })()}
           </div>
 
-          {/* Focused Half-Term Indicator */}
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              type="button"
+              onClick={() => {
+                const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
+                if (currentIndex < getAvailableYears().length - 1) {
+                  handleYearChange(getAvailableYears()[currentIndex + 1]);
+                }
+              }}
+              disabled={getAvailableYears().indexOf(currentAcademicYear) >= getAvailableYears().length - 1}
+              className="grid h-8 w-8 place-items-center rounded-lg border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-40"
+              title="Previous academic year"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                const currentIndex = getAvailableYears().indexOf(currentAcademicYear);
+                if (currentIndex > 0) {
+                  handleYearChange(getAvailableYears()[currentIndex - 1]);
+                }
+              }}
+              disabled={getAvailableYears().indexOf(currentAcademicYear) <= 0}
+              className="grid h-8 w-8 place-items-center rounded-lg border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-40"
+              title="Next academic year"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowTermCopyModal(true)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FFC93C] px-2.5 text-[12px] font-extrabold text-[#1F1B4D] hover:brightness-95"
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              Copy term
+            </button>
+            <input
+              type="search"
+              placeholder="Search…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 w-[9.5rem] rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[12px] text-[#1F1B4D] placeholder:text-[#9CA3AF] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+            />
+          </div>
+        </div>
+        )}
+
+        {hidePageChrome && (
+          <div className="mb-3 flex flex-wrap items-center justify-end gap-1.5">
+            <button
+              type="button"
+              onClick={() => setShowTermCopyModal(true)}
+              className="inline-flex h-8 items-center gap-1.5 rounded-lg bg-[#FFC93C] px-2.5 text-[12px] font-extrabold text-[#1F1B4D] hover:brightness-95"
+            >
+              <Calendar className="h-3.5 w-3.5" />
+              Copy term
+            </button>
+            <input
+              type="search"
+              placeholder="Search…"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 w-[9.5rem] rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[12px] text-[#1F1B4D] placeholder:text-[#9CA3AF] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+            />
+          </div>
+        )}
+
           {focusedHalfTermId && (
-            <div className="bg-indigo-50 border border-indigo-200 rounded-lg p-4 mb-6 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                <Eye className="h-5 w-5 text-indigo-600" />
-                <div>
-                  <h3 className="font-medium text-gray-900">Focused on {TERM_NAMES[focusedHalfTermId]}</h3>
-                  <p className="text-sm text-gray-600">Showing only units from this half-term</p>
-                </div>
+            <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-[#E9E6FF] bg-[#F4F3FA] px-3 py-2">
+              <div className="flex min-w-0 items-center gap-2 text-[12px] text-[#1F1B4D]">
+                <Eye className="h-3.5 w-3.5 shrink-0 text-[#4338E8]" />
+                <span className="truncate font-semibold">Focused on {TERM_NAMES[focusedHalfTermId]}</span>
               </div>
               <button
+                type="button"
                 onClick={() => setFocusedHalfTermId(null)}
-                className="px-3 py-1.5 bg-indigo-100 hover:bg-indigo-200 text-indigo-700 rounded-lg text-sm font-medium"
+                className="shrink-0 rounded-lg px-2 py-1 text-[11px] font-bold text-[#4338E8] hover:bg-white"
               >
-                Show All Half-Terms
+                Show all
               </button>
             </div>
           )}
 
-          {/* Half-Term Cards Grid */}
           {loading ? (
-            <div className="flex justify-center items-center py-12">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#002D24]"></div>
-              <span className="ml-3 text-gray-600">Loading half-terms...</span>
+            <div className="flex items-center justify-center py-8 text-[13px] text-[#77738F]">
+              <div className="mr-2 h-5 w-5 animate-spin rounded-full border-2 border-[#E2E0EF] border-t-[#4338E8]" />
+              Loading half-terms…
             </div>
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
+            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 mb-4">
               {HALF_TERMS
                 .map((halfTerm) => {
                   const lessons = getLessonsForHalfTerm(halfTerm.id);
@@ -1283,9 +1228,6 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
                 })}
             </div>
           )}
-
-
-        </div>
 
         {/* Activity Details Modal */}
         {selectedActivity && (

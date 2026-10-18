@@ -83,7 +83,7 @@ export function CreateStackModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
       <div className="bg-white rounded-card shadow-soft w-full max-w-4xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 text-white flex items-center justify-between" style={{ background: 'linear-gradient(to right, #2DD4BF, #14B8A6)' }}>
+        <div className="p-4 border-b border-gray-200 text-white flex items-center justify-between" style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
           <div className="flex items-center space-x-2">
             <Layers className="h-6 w-6" />
             <h3 className="text-lg font-semibold">Create Activity Stack</h3>
@@ -109,7 +109,7 @@ export function CreateStackModal({
               value={stackName}
               onChange={(e) => setStackName(e.target.value)}
               placeholder="e.g., Photosynthesis Unit, Week 3 Lessons"
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#4338E8] focus:outline-none"
               disabled={isCreating}
             />
           </div>
@@ -125,7 +125,7 @@ export function CreateStackModal({
               onChange={(e) => setStackDescription(e.target.value)}
               placeholder="Brief description of this activity stack..."
               rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:border-[#4338E8] focus:outline-none"
               disabled={isCreating}
             />
           </div>
@@ -145,7 +145,7 @@ export function CreateStackModal({
                   placeholder="Search activities..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                   disabled={isCreating}
                 />
               </div>
@@ -154,7 +154,7 @@ export function CreateStackModal({
                   selectedCategory={selectedCategory === 'all' ? '' : selectedCategory}
                   onCategoryChange={(category) => setSelectedCategory(category === '' ? 'all' : category)}
                   placeholder="All Categories"
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:border-[#4338E8] focus:outline-none"
                 />
               </div>
               <div className="relative" style={{ minWidth: '200px' }}>
@@ -162,7 +162,7 @@ export function CreateStackModal({
                   selectedLevel={selectedLevel}
                   onLevelChange={setSelectedLevel}
                   placeholder="All Levels"
-                  className="px-4 py-2 border border-gray-300 rounded-lg focus:border-teal-500 focus:outline-none"
+                  className="px-4 py-2 border border-gray-300 rounded-lg focus:border-[#4338E8] focus:outline-none"
                 />
               </div>
             </div>
@@ -182,7 +182,7 @@ export function CreateStackModal({
                       <div
                         key={activity._id || activity.id}
                         className={`p-3 hover:bg-gray-50 cursor-pointer transition-colors ${
-                          isSelected ? 'bg-teal-50 border-l-4 border-l-teal-500' : ''
+                          isSelected ? 'bg-[#E9E6FF] border-l-4 border-l-[#4338E8]' : ''
                         }`}
                         onClick={() => onActivitySelectionChange(activity._id || activity.id || '', !isSelected)}
                       >
@@ -192,7 +192,7 @@ export function CreateStackModal({
                               type="checkbox"
                               checked={isSelected}
                               onChange={() => {}} // Handled by parent div onClick
-                              className="w-4 h-4 text-teal-600 bg-gray-100 border-gray-300 rounded focus:outline-none"
+                              className="w-4 h-4 text-[#4338E8] bg-gray-100 border-gray-300 rounded focus:outline-none"
                               disabled={isCreating}
                             />
                             <div className="flex-1">
@@ -213,7 +213,7 @@ export function CreateStackModal({
                             </div>
                           </div>
                           {isSelected && (
-                            <CheckCircle className="h-5 w-5 text-teal-600" />
+                            <CheckCircle className="h-5 w-5 text-[#4338E8]" />
                           )}
                         </div>
                       </div>

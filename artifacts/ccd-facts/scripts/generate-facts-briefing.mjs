@@ -18,13 +18,15 @@ const root = join(here, "..");
 const contentPath = join(root, "CONTENT.md");
 const outPath = join(root, "public", "the-facts-briefing.pdf");
 
-const FOREST = [0, 45, 36];
-const LIME = [182, 255, 126];
-const INK = [15, 42, 46];
-const MUTED = [92, 111, 114];
-const RULE = [210, 214, 208];
-const WASH = [247, 250, 248];
-const WHITE = [255, 250, 247];
+/* Studio Score — match main CCDesigner app */
+const FOREST = [31, 27, 77];
+const LIME = [255, 201, 60];
+const INK = [31, 27, 77];
+const MUTED = [119, 115, 143];
+const RULE = [226, 224, 239];
+const WASH = [244, 243, 250];
+const WHITE = [255, 255, 255];
+const INDIGO = [67, 56, 232];
 
 const PAGE = { w: 210, h: 297 };
 const M = { l: 16, r: 16, t: 20, b: 18 };
@@ -277,19 +279,20 @@ function drawRichLine(doc, units, x, y, fontSize, color, font, opts = {}) {
   });
 }
 
-/** Circular CCD mark — lime ring, forest fill, white letters. */
+/** Ribbon mark image + “designer” word (Studio Score lockup). */
 function drawLogo(doc, cx, cy, d, onDark) {
-  const r = d / 2;
-  const inner = r * 0.92;
-  doc.setFillColor(...(onDark ? [8, 52, 44] : FOREST));
-  doc.circle(cx, cy, inner, "F");
-  doc.setDrawColor(...LIME);
-  doc.setLineWidth(Math.max(0.7, d * 0.034));
-  doc.circle(cx, cy, inner, "S");
+  const markPath = join(root, "public", "ccd-mark.png");
+  const half = d / 2;
+  try {
+    doc.addImage(markPath, "PNG", cx - half, cy - half, d, d);
+  } catch {
+    doc.setFillColor(...INDIGO);
+    doc.circle(cx, cy, half * 0.92, "F");
+  }
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(d * 0.4);
-  doc.setTextColor(...WHITE);
-  doc.text("CCD", cx, cy + d * 0.05, { align: "center", charSpace: d >= 28 ? 0.35 : 0 });
+  doc.setFontSize(Math.max(8, d * 0.42));
+  doc.setTextColor(...(onDark ? WHITE : INK));
+  doc.text("designer", cx + half + d * 0.12, cy + d * 0.08);
 }
 
 function washPage(doc) {

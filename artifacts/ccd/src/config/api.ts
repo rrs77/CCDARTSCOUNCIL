@@ -1802,9 +1802,28 @@ export const brandingApi = {
 // Year-group sections are persisted as a JSON document in the generic
 // `branding_settings` key/value table so the user's section grouping (EYFS/KS1/…)
 // survives across devices, browsers, and cache clears.
+const getUserYearGroupSectionsKey = (): string | null => {
+  const uid = getAuthenticatedUserId();
+  return uid ? `user:${uid}:year_group_sections` : null;
+};
+
 export const yearGroupSectionsApi = {
   get: async (): Promise<unknown[] | null> => {
     try {
+      const scopedKey = getUserYearGroupSectionsKey();
+      // Prefer per-user sections so each school keeps its own EYFS/KS1… layout.
+      if (scopedKey) {
+        const { data: scoped, error: scopedErr } = await supabase
+          .from(TABLES.BRANDING_SETTINGS)
+          .select('data')
+          .eq('key', scopedKey)
+          .maybeSingle();
+        if (scopedErr) throw scopedErr;
+        const scopedValue = (scoped?.data as { sections?: unknown[] } | null)?.sections;
+        if (Array.isArray(scopedValue)) return scopedValue;
+      }
+
+      // Legacy global key — migrate on next save
       const { data, error } = await supabase
         .from(TABLES.BRANDING_SETTINGS)
         .select('data')
@@ -1821,11 +1840,16 @@ export const yearGroupSectionsApi = {
 
   upsert: async (sections: unknown[]): Promise<boolean> => {
     try {
+      const scopedKey = getUserYearGroupSectionsKey();
+      if (!scopedKey) {
+        console.warn('⚠️ yearGroupSectionsApi.upsert: no authenticated user — refusing unscoped write');
+        return false;
+      }
       const { error } = await supabase
         .from(TABLES.BRANDING_SETTINGS)
         .upsert(
           {
-            key: 'year_group_sections',
+            key: scopedKey,
             data: { sections },
             updated_at: new Date().toISOString(),
           },

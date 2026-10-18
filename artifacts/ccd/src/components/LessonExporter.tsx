@@ -157,7 +157,7 @@ export function LessonExporter({ lessonNumber, onClose }: LessonExporterProps) {
                 }}
                 disabled={isSharing}
                 aria-label={isDemo ? 'Copy link (sign up to unlock)' : 'Copy share link to clipboard'}
-                className={`px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
+                className={`px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
                   isSharing ? 'opacity-50 cursor-not-allowed' : ''
                 }`}
               >
@@ -180,15 +180,15 @@ export function LessonExporter({ lessonNumber, onClose }: LessonExporterProps) {
               </button>
             </div>
             {shareUrl && shareSuccess && (
-              <div className="mt-3 p-3 bg-teal-50 border border-teal-200 rounded-lg">
+              <div className="mt-3 p-3 bg-[#E9E6FF] border border-[#E2E0EF] rounded-lg">
                 <div className="flex items-center justify-between">
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-teal-900 mb-1">Shareable URL:</p>
-                    <p className="text-xs text-teal-700 break-all">{shareUrl}</p>
+                    <p className="text-sm font-medium text-[#1F1B4D] mb-1">Shareable URL:</p>
+                    <p className="text-xs text-[#4338E8] break-all">{shareUrl}</p>
                   </div>
                   <button
                       onClick={() => copyToClipboard(shareUrl)}
-                      className="ml-3 p-2 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-lg transition-colors"
+                      className="ml-3 p-2 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-lg transition-colors"
                       title="Copy URL"
                   >
                     <Copy className="h-4 w-4" />

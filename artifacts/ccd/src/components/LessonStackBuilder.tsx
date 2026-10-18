@@ -45,7 +45,7 @@ interface LessonStackBuilderProps {
 const COLOR_OPTIONS = [
   '#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6',
   '#06B6D4', '#84CC16', '#F97316', '#EC4899', '#6366F1',
-  '#14B8A6', '#F43F5E', '#8B5CF6', '#06B6D4', '#84CC16'
+  '#4338E8', '#F43F5E', '#8B5CF6', '#06B6D4', '#84CC16'
 ];
 
 export function LessonStackBuilder({
@@ -62,7 +62,7 @@ export function LessonStackBuilder({
   // Form state
   const [stackName, setStackName] = useState('');
   const [stackDescription, setStackDescription] = useState('');
-  const [stackColor, setStackColor] = useState('#14B8A6');
+  const [stackColor, setStackColor] = useState('#4338E8');
   const [selectedLessons, setSelectedLessons] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('all');
@@ -93,7 +93,7 @@ export function LessonStackBuilder({
     } else {
       setStackName('');
       setStackDescription('');
-      setStackColor('#14B8A6');
+      setStackColor('#4338E8');
       setSelectedLessons([]);
       setCustomObjectives([]);
     }
@@ -210,7 +210,7 @@ export function LessonStackBuilder({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70]">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] overflow-hidden">
         {/* Header */}
-        <div className="p-6 border-b border-gray-200 text-white bg-gradient-to-r from-teal-500 to-teal-600">
+        <div className="p-6 border-b border-gray-200 text-white bg-gradient-to-r from-[#1F1B4D] to-[#4338E8]">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <Layers className="h-6 w-6" />
@@ -239,7 +239,7 @@ export function LessonStackBuilder({
                   type="text"
                   value={stackName}
                   onChange={(e) => setStackName(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                   placeholder="e.g., Fractions Unit"
                 />
               </div>
@@ -297,7 +297,7 @@ export function LessonStackBuilder({
               <textarea
                 value={stackDescription}
                 onChange={(e) => setStackDescription(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                 rows={2}
                 placeholder="Brief description of this lesson stack..."
               />
@@ -311,7 +311,7 @@ export function LessonStackBuilder({
                 </label>
                 <button
                   onClick={() => setShowObjectivesBrowser(true)}
-                  className="px-3 py-1 text-xs bg-teal-600 hover:bg-teal-700 text-white rounded-lg flex items-center space-x-1"
+                  className="px-3 py-1 text-xs bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg flex items-center space-x-1"
                   type="button"
                 >
                   <Plus className="h-3 w-3" />
@@ -324,13 +324,13 @@ export function LessonStackBuilder({
                   {customObjectives.slice(0, 5).map((objectiveId, index) => (
                     <div
                       key={objectiveId}
-                      className="inline-flex items-center px-2 py-1 bg-teal-100 text-teal-800 rounded-full text-xs font-medium border border-teal-200"
+                      className="inline-flex items-center px-2 py-1 bg-[#E9E6FF] text-[#1F1B4D] rounded-full text-xs font-medium border border-[#E2E0EF]"
                     >
                       <Target className="h-3 w-3 mr-1" />
                       <span>Objective {index + 1}</span>
                       <button
                         onClick={() => handleRemoveObjective(objectiveId)}
-                        className="ml-1 text-teal-600 hover:text-teal-800"
+                        className="ml-1 text-[#4338E8] hover:text-[#1F1B4D]"
                         type="button"
                       >
                         <X className="h-3 w-3" />
@@ -364,7 +364,7 @@ export function LessonStackBuilder({
                       placeholder="Search lessons..."
                       value={searchQuery}
                       onChange={(e) => setSearchQuery(e.target.value)}
-                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                     />
                   </div>
                   
@@ -372,7 +372,7 @@ export function LessonStackBuilder({
                     selectedCategory={selectedCategory === 'all' ? '' : selectedCategory}
                     onCategoryChange={(category) => setSelectedCategory(category || 'all')}
                     placeholder="All Categories"
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                   />
                 </div>
               </div>
@@ -433,7 +433,7 @@ export function LessonStackBuilder({
                           </div>
                           <div className="ml-3">
                             {selectedLessons.includes(lessonNum) ? (
-                              <div className="w-6 h-6 bg-teal-600 rounded-full flex items-center justify-center">
+                              <div className="w-6 h-6 bg-[#4338E8] rounded-full flex items-center justify-center">
                                 <Check className="h-4 w-4 text-white" />
                               </div>
                             ) : (
@@ -550,7 +550,7 @@ export function LessonStackBuilder({
             <button
               onClick={handleSave}
               disabled={!stackName.trim() || selectedLessons.length === 0}
-              className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-6 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               <Save className="h-4 w-4" />
               <span>{editingStack ? 'Update Stack' : 'Create Stack'}</span>

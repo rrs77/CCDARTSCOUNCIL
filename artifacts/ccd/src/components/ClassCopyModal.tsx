@@ -103,7 +103,7 @@ export function ClassCopyModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
       <div className="bg-white rounded-card shadow-soft max-w-2xl w-full max-h-[90vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div>
             <h2 className="text-2xl font-bold">Copy Lessons to Another Class</h2>
             <p className="text-sm text-white/90 mt-1">Select lessons to copy from <strong>{availableClasses.find(c => c.id === currentClass)?.name}</strong> to another class</p>
@@ -133,7 +133,7 @@ export function ClassCopyModal({
               </label>
               <button
                 onClick={handleSelectAll}
-                className="text-sm text-teal-600 hover:text-teal-700 font-medium"
+                className="text-sm text-[#4338E8] hover:text-[#3529d1] font-medium"
               >
                 {selectAll ? 'Deselect All' : 'Select All'}
               </button>
@@ -160,7 +160,7 @@ export function ClassCopyModal({
                           type="checkbox"
                           checked={selectedLessons.includes(lessonNumber)}
                           onChange={() => handleLessonToggle(lessonNumber)}
-                          className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-2 focus:ring-teal-500 cursor-pointer"
+                          className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-2 focus:ring-[#4338E8] cursor-pointer"
                         />
                         <div className="ml-3 flex-1">
                           <div className="flex items-center justify-between">
@@ -195,7 +195,7 @@ export function ClassCopyModal({
             <select
               value={targetClass}
               onChange={(e) => setTargetClass(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
             >
               <option value="">Select a class...</option>
               {availableClasses
@@ -233,7 +233,7 @@ export function ClassCopyModal({
           <button
             onClick={handleCopy}
             disabled={isLoading || selectedLessons.length === 0 || !targetClass}
-            className="flex items-center space-x-2 px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-gray-300 text-white font-medium rounded-lg transition-colors"
           >
             {isLoading ? (
               <>

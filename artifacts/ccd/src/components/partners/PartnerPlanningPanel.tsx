@@ -89,8 +89,8 @@ function SelectionCheck({
         compact ? 'h-4 w-4' : 'h-4.5 w-4.5 h-[18px] w-[18px]'
       } ${
         checked
-          ? 'border-[#002D24] bg-[#A3E635] text-[#002D24]'
-          : 'border-[#002D24]/35 bg-white hover:border-[#002D24]/70'
+          ? 'border-[#4338E8] bg-[#FFC93C] text-[#1F1B4D]'
+          : 'border-[#E2E0EF] bg-white hover:border-[#4338E8]/60'
       }`}
     >
       {checked ? <Check className="h-3 w-3" strokeWidth={3} aria-hidden /> : null}
@@ -169,30 +169,35 @@ export function PartnerPlanningPanel({
 
   return (
     <div
-      className={`overflow-hidden rounded-xl border border-[#002D24]/15 bg-white shadow-sm ${className}`}
+      className={`overflow-hidden rounded-lg border border-[#E2E0EF] bg-white ${className}`}
       data-partner-planning
+      style={{ borderLeft: '4px solid #1F1B4D' }}
     >
+      {/* Same density as Activity Library category rows — not a nested “app” header */}
       <button
         type="button"
         onClick={() => setRootOpen((v) => !v)}
-        className={`flex w-full items-center gap-2 bg-[#002D24] text-left font-semibold text-white hover:bg-[#003d32] ${
-          compact ? 'px-3 py-2.5 text-sm' : 'px-4 py-3 text-base'
-        }`}
+        className="flex w-full items-center gap-2.5 bg-[#F4F3FA] px-3 py-2 text-left hover:bg-[#E9E6FF]/70"
         aria-expanded={rootOpen}
       >
         {rootOpen ? (
-          <ChevronDown className="h-4 w-4 shrink-0 text-[#A3E635]" aria-hidden />
+          <ChevronDown className="h-4 w-4 shrink-0 text-[#77738F]" aria-hidden />
         ) : (
-          <ChevronRight className="h-4 w-4 shrink-0 text-[#A3E635]" aria-hidden />
+          <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" aria-hidden />
         )}
-        <span>Select partner planning</span>
-        <span className="ml-auto text-xs font-medium text-white/75">
+        <span className="rounded-full bg-[#1F1B4D] px-2 py-0.5 text-[11px] font-semibold text-white">
+          Partner planning
+        </span>
+        <span className="text-xs text-[#77738F]">
           {orgGroups.length} org{orgGroups.length === 1 ? '' : 's'}
+        </span>
+        <span className="ml-auto text-[11px] font-medium text-[#4338E8]">
+          {rootOpen ? 'Hide' : 'Show'}
         </span>
       </button>
 
       {rootOpen && (
-        <div className={`space-y-2 bg-[var(--ccd-sage-mist,#E8F0EA)]/40 ${compact ? 'p-2' : 'p-3'}`}>
+        <div className="space-y-1.5 border-t border-[#E2E0EF] bg-white p-1.5">
           {orgGroups.map((org) => {
             const orgOpen = openOrgs.has(org.orgId);
             const isPaidOrg = PAID_ORG_IDS.has(org.orgId);
@@ -201,55 +206,50 @@ export function PartnerPlanningPanel({
             return (
               <div
                 key={org.orgId}
-                className={`overflow-hidden rounded-lg border bg-white ${
-                  isPaidOrg ? 'border-[#A3E635]/70' : 'border-[#002D24]/12'
+                className={`overflow-hidden rounded-md border bg-white ${
+                  isPaidOrg ? 'border-[#FFC93C]/80' : 'border-[#E2E0EF]'
                 }`}
               >
                 <button
                   type="button"
                   onClick={() => toggleOrg(org.orgId)}
-                  className={`flex w-full items-center gap-3 text-left hover:bg-[#E8F0EA]/60 ${
-                    compact ? 'px-2.5 py-2' : 'px-3 py-2.5'
-                  }`}
+                  className="flex w-full items-center gap-2 px-2 py-1.5 text-left hover:bg-[#F4F3FA]"
                   aria-expanded={orgOpen}
                 >
                   {orgOpen ? (
-                    <ChevronDown className="h-4 w-4 shrink-0 text-[#002D24]/60" aria-hidden />
+                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#77738F]" aria-hidden />
                   ) : (
-                    <ChevronRight className="h-4 w-4 shrink-0 text-[#002D24]/60" aria-hidden />
+                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#77738F]" aria-hidden />
                   )}
                   <span
-                    className={`flex h-10 w-16 shrink-0 items-center justify-center rounded-md px-1.5 ${
-                      onLightPlate ? 'border border-[#002D24]/10' : ''
+                    className={`flex h-7 w-12 shrink-0 items-center justify-center rounded px-1 ${
+                      onLightPlate ? 'border border-[#E2E0EF]' : ''
                     }`}
                     style={{ backgroundColor: logoBg }}
                   >
                     <img
                       src={org.logoSrc}
                       alt=""
-                      className={`max-h-7 max-w-full object-contain ${
+                      className={`max-h-5 max-w-full object-contain ${
                         org.logoInvert ? 'brightness-0 invert' : ''
                       }`}
                       loading="lazy"
                       decoding="async"
                     />
                   </span>
-                  <span
-                    className={`font-semibold text-[#002D24] ${compact ? 'text-sm' : 'text-sm sm:text-base'}`}
-                  >
+                  <span className="truncate text-sm font-semibold text-[#1F1B4D]">
                     {org.orgLabel}
                   </span>
-                  <span className="ml-auto text-xs text-[#002D24]/55">
+                  <span className="ml-auto shrink-0 text-[11px] text-[#77738F]">
                     {org.projects.length} project{org.projects.length === 1 ? '' : 's'}
                   </span>
                 </button>
 
                 {orgOpen && (
-                  <div className="space-y-1.5 border-t border-[#002D24]/08 bg-[#F7FAF8] px-2 py-2">
+                  <div className="space-y-1 border-t border-[#E2E0EF] bg-[#F4F3FA]/50 px-1.5 py-1.5">
                     {org.projects.map((pack) => {
                       const pKey = partnerPlanningProjectKey(org.orgId, pack.projectId);
                       const pOpen = openProjects.has(pKey);
-                      // Resolve against live + local library; do not year-filter away pack contents.
                       const packActs = resolvePartnerPlanningActivities(pack, activities);
                       const visibleActs = activityFilter
                         ? packActs.filter(activityFilter)
@@ -278,21 +278,17 @@ export function PartnerPlanningPanel({
                       return (
                         <div
                           key={pack.projectId}
-                          className={`overflow-hidden rounded-md border bg-white ${
+                          className={`overflow-hidden rounded border bg-white ${
                             projectSelected
-                              ? 'border-[#A3E635] ring-1 ring-[#A3E635]/50'
-                              : 'border-[#002D24]/10'
+                              ? 'border-[#FFC93C] ring-1 ring-[#FFC93C]/40'
+                              : 'border-[#E2E0EF]'
                           }`}
                         >
-                          <div
-                            className={`flex w-full items-center gap-2 text-left ${
-                              compact ? 'px-2 py-1.5 text-sm' : 'px-3 py-2 text-sm'
-                            }`}
-                          >
+                          <div className="flex w-full items-center gap-1.5 px-1.5 py-1 text-sm">
                             {canSelectProject ? (
                               <SelectionCheck
                                 checked={projectSelected}
-                                compact={compact}
+                                compact
                                 label={
                                   projectSelected
                                     ? `Deselect ${pack.projectTitle}`
@@ -306,17 +302,17 @@ export function PartnerPlanningPanel({
                             <button
                               type="button"
                               onClick={() => toggleProjectOpen(org.orgId, pack.projectId)}
-                              className="flex min-w-0 flex-1 items-center gap-2 hover:opacity-90"
+                              className="flex min-w-0 flex-1 items-center gap-1.5 hover:opacity-90"
                               aria-expanded={pOpen}
                             >
                               {pOpen ? (
                                 <ChevronDown
-                                  className="h-3.5 w-3.5 shrink-0 text-[#002D24]/50"
+                                  className="h-3 w-3 shrink-0 text-[#77738F]"
                                   aria-hidden
                                 />
                               ) : (
                                 <ChevronRight
-                                  className="h-3.5 w-3.5 shrink-0 text-[#002D24]/50"
+                                  className="h-3 w-3 shrink-0 text-[#77738F]"
                                   aria-hidden
                                 />
                               )}
@@ -324,31 +320,31 @@ export function PartnerPlanningPanel({
                                 <img
                                   src={pack.thumbSrc}
                                   alt=""
-                                  className="h-8 w-12 shrink-0 rounded object-cover"
+                                  className="h-6 w-9 shrink-0 rounded object-cover"
                                   loading="lazy"
                                   decoding="async"
                                 />
                               ) : null}
-                              <span className="truncate font-medium text-[#002D24]">
+                              <span className="truncate text-xs font-medium text-[#1F1B4D]">
                                 {pack.projectTitle}
                               </span>
-                              <span className="ml-auto shrink-0 text-xs text-[#002D24]/55">
+                              <span className="ml-auto shrink-0 text-[10px] text-[#77738F]">
                                 {badge}
                               </span>
                             </button>
                           </div>
 
                           {pOpen && (
-                            <div className="border-t border-[#002D24]/08 bg-white">
+                            <div className="border-t border-[#E2E0EF] bg-white">
                               {renderLessons?.(pack)}
                               {mode === 'lessons' && lessonCount === 0 ? (
-                                <p className="px-3 py-2 text-xs text-[#002D24]/55">
+                                <p className="px-2 py-1.5 text-[11px] text-[#77738F]">
                                   No lesson plans registered for this project yet.
                                 </p>
                               ) : null}
                               {mode !== 'lessons' && packActs.length === 0 ? (
-                                <div className="space-y-2 px-3 py-2">
-                                  <p className="text-xs text-[#002D24]/55">
+                                <div className="space-y-1 px-2 py-1.5">
+                                  <p className="text-[11px] text-[#77738F]">
                                     {(pack.activityIds || []).length > 0
                                       ? sheetMismatch || yearMismatch
                                         ? `Activities are in your local library for ${
@@ -358,21 +354,21 @@ export function PartnerPlanningPanel({
                                       : 'No activities registered for this project yet.'}
                                   </p>
                                   {canSelectProject ? (
-                                    <p className="text-[11px] text-[#002D24]/45">
+                                    <p className="text-[10px] text-[#77738F]/80">
                                       You can still select this project pack above.
                                     </p>
                                   ) : null}
                                 </div>
                               ) : null}
                               {mode !== 'lessons' && packActs.length > 0 && yearMismatch ? (
-                                <p className="border-b border-[#002D24]/06 px-3 py-1.5 text-[11px] text-[#002D24]/55">
+                                <p className="border-b border-[#E2E0EF] px-2 py-1 text-[10px] text-[#77738F]">
                                   Packed for{' '}
                                   {formatSheetLabel(pack.sheetId || '') || 'another year group'} —
                                   still selectable here.
                                 </p>
                               ) : null}
                               {mode !== 'lessons' && packActs.length > 0 ? (
-                                <div className={compact ? 'space-y-1 p-1.5' : 'space-y-2 p-2'}>
+                                <div className="space-y-1 p-1">
                                   {packActs.map((activity, index) => {
                                     const actKey = getActivityStarKey(activity);
                                     const selected = selectedActSet.has(actKey);
@@ -391,10 +387,10 @@ export function PartnerPlanningPanel({
                                     return (
                                       <div
                                         key={actKey}
-                                        className={`flex items-center gap-2 rounded-md border px-2 py-1.5 text-sm ${
+                                        className={`flex items-center gap-1.5 rounded border px-1.5 py-1 text-xs ${
                                           selected
-                                            ? 'border-[#A3E635] bg-[#F7FEE7]'
-                                            : 'border-[#002D24]/08 bg-white'
+                                            ? 'border-[#FFC93C] bg-[#FFF8E6]'
+                                            : 'border-[#E2E0EF] bg-white'
                                         }`}
                                       >
                                         {selectionEnabled && onActivitySelectionChange ? (
@@ -417,7 +413,7 @@ export function PartnerPlanningPanel({
                                         ) : null}
                                         <button
                                           type="button"
-                                          className="min-w-0 flex-1 truncate text-left font-medium text-[#002D24] hover:underline"
+                                          className="min-w-0 flex-1 truncate text-left font-medium text-[#1F1B4D] hover:underline"
                                           onClick={() => {
                                             if (onActivityOpen) {
                                               onActivityOpen(activity as Activity, pack);
@@ -432,7 +428,7 @@ export function PartnerPlanningPanel({
                                         >
                                           {activity.activity}
                                         </button>
-                                        <span className="shrink-0 text-[11px] text-[#002D24]/45">
+                                        <span className="shrink-0 text-[10px] text-[#77738F]">
                                           {activity.category}
                                         </span>
                                       </div>

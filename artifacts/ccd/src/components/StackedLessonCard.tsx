@@ -202,7 +202,7 @@ export function StackedLessonCard({
     // Activity Stack Style - Compact horizontal cards matching activity stacks exactly
     return (
       <div 
-        className="bg-gray-100 rounded-lg shadow-sm border border-gray-200 hover:border-teal-300 hover:shadow-md transition-all duration-200 cursor-pointer group relative"
+        className="bg-gray-100 rounded-lg shadow-sm border border-gray-200 hover:border-[#bcb7f4] hover:shadow-md transition-all duration-200 cursor-pointer group relative"
         onClick={onClick}
       >
         <div className="p-3">
@@ -210,7 +210,7 @@ export function StackedLessonCard({
             <div className="flex items-center space-x-2 flex-1 min-w-0">
               <Layers className="h-4 w-4 text-gray-500 flex-shrink-0" />
               <div 
-                className="w-2 h-2 rounded-full flex-shrink-0 bg-teal-500"
+                className="w-2 h-2 rounded-full flex-shrink-0 bg-[#E9E6FF]0"
               />
               {isRenaming ? (
                 <input
@@ -610,7 +610,7 @@ export function StackedLessonCard({
                   <div 
                     className="w-12 h-12 rounded-full flex items-center justify-center text-white font-bold mx-auto mb-2 shadow-lg"
                     style={{ 
-                      backgroundColor: '#14B8A6'
+                      backgroundColor: '#4338E8'
                     }}
                   >
                     {lesson.number}
@@ -636,7 +636,7 @@ export function StackedLessonCard({
           {onEdit && (
             <button
               onClick={(e) => handleActionClick(e, 'edit')}
-              className="p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-lg shadow-sm text-teal-600 hover:text-teal-800 transition-colors"
+              className="p-2 bg-white bg-opacity-80 hover:bg-opacity-100 rounded-lg shadow-sm text-[#4338E8] hover:text-[#1F1B4D] transition-colors"
               title="Edit Stack"
             >
               <Edit3 className="h-4 w-4" />

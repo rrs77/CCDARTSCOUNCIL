@@ -1246,7 +1246,7 @@ export function LessonPlannerCalendar({
 
     const calDropClass = useDropZoneStyle({ isOver, canDrop, variant: 'cell' });
 
-    let cellBgColor = isCurrentMonth ? 'bg-white' : 'bg-[#F7FAF8] opacity-70';
+    let cellBgColor = isCurrentMonth ? 'bg-white' : 'bg-[#F4F3FA] opacity-70';
     if (isHolidayDate) cellBgColor = 'bg-red-50';
     if (isInsetDayDate) cellBgColor = 'bg-purple-50';
     
@@ -1255,12 +1255,12 @@ export function LessonPlannerCalendar({
         ref={drop as unknown as React.Ref<HTMLDivElement>}
         onClick={() => !isHolidayDate && !isInsetDayDate && handleDateClick(date)}
         className={`
-          relative w-full min-h-[5.5rem] sm:h-24 p-1.5 border border-[#E5EDE8] rounded-md
+          relative w-full min-h-[5.5rem] sm:h-24 p-1.5 border border-[#E2E0EF] rounded-md
           hover:bg-[rgba(0,45,36,0.03)] transition-colors duration-200
-          ${isSelected ? 'bg-[rgba(182,255,126,0.18)] border-[#002D24]/30' : cellBgColor}
-          ${isTodayDate ? 'ring-2 ring-[#002D24]/35 ring-offset-1' : ''}
-          ${hasPlans && !isSelected ? 'bg-[#F1F6F2]' : ''}
-          ${isSelectedWithPlans && isLessonSummaryOpen ? 'bg-[rgba(182,255,126,0.28)] border-[#002D24]/40 ring-2 ring-[#002D24]/40' : ''}
+          ${isSelected ? 'bg-[rgba(182,255,126,0.18)] border-[#1F1B4D]/30' : cellBgColor}
+          ${isTodayDate ? 'ring-2 ring-[#1F1B4D]/35 ring-offset-1' : ''}
+          ${hasPlans && !isSelected ? 'bg-[#E9E6FF]' : ''}
+          ${isSelectedWithPlans && isLessonSummaryOpen ? 'bg-[rgba(182,255,126,0.28)] border-[#1F1B4D]/40 ring-2 ring-[#1F1B4D]/40' : ''}
           ${isHolidayDate || isInsetDayDate ? 'cursor-default' : 'cursor-pointer'}
           ${calDropClass} ${calFlash}
         `}
@@ -1270,7 +1270,7 @@ export function LessonPlannerCalendar({
             <span
               className={`text-sm font-medium ${
                 isTodayDate
-                  ? 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#002D24] text-white text-xs'
+                  ? 'inline-flex h-6 w-6 items-center justify-center rounded-full bg-[#1F1B4D] text-white text-xs'
                   : 'text-gray-800'
               }`}
             >
@@ -1315,7 +1315,7 @@ export function LessonPlannerCalendar({
                   <div 
                     key={idx}
                     className={`text-xs px-1 py-0.5 truncate rounded-sm flex items-center gap-0.5 ${
-                      isKeyDate ? 'font-semibold ring-1 ring-teal-700/20' : ''
+                      isKeyDate ? 'font-semibold ring-1 ring-[#4338E8]/20' : ''
                     }`}
                     style={{ 
                       backgroundColor: isKeyDate ? 'rgba(15, 118, 110, 0.12)' : `${event.color}20`,
@@ -1519,9 +1519,9 @@ export function LessonPlannerCalendar({
     return (
       <div
         ref={setDropRef}
-        className={`relative flex-1 min-w-0 border-l border-[#E5EDE8] ${
+        className={`relative flex-1 min-w-0 border-l border-[#E2E0EF] ${
           isHolidayDate ? 'bg-red-50/40' : isInsetDayDate ? 'bg-purple-50/40' : 'bg-white'
-        } ${isTodayDate ? 'bg-[#F1F6F2]/70' : ''} ${dropClass} ${flashClass}`}
+        } ${isTodayDate ? 'bg-[#E9E6FF]/70' : ''} ${dropClass} ${flashClass}`}
         style={{ height: gridHeightPx }}
         onClick={(e) => {
           if (isHolidayDate || isInsetDayDate) return;
@@ -1534,7 +1534,7 @@ export function LessonPlannerCalendar({
         {dayViewHours.map((hour) => (
           <div
             key={hour}
-            className="absolute left-0 right-0 border-t border-[#E5EDE8] pointer-events-none"
+            className="absolute left-0 right-0 border-t border-[#E2E0EF] pointer-events-none"
             style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX, height: HOUR_HEIGHT_PX }}
           >
             {showHourLabels && (
@@ -1571,7 +1571,7 @@ export function LessonPlannerCalendar({
               role="button"
               tabIndex={0}
               title={`${item.title}${item.subtitle ? ` · ${item.subtitle}` : ''}`}
-              className="absolute z-[2] overflow-hidden rounded-md border border-black/5 shadow-sm cursor-pointer hover:brightness-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#002D24]/35"
+              className="absolute z-[2] overflow-hidden rounded-md border border-black/5 shadow-sm cursor-pointer hover:brightness-[0.97] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#1F1B4D]/35"
               style={{
                 top: top + 1,
                 height: Math.max(height - 2, 20),
@@ -1640,10 +1640,10 @@ export function LessonPlannerCalendar({
     );
 
     return (
-      <div className="flex flex-col rounded-xl border border-[#E5EDE8] overflow-hidden bg-white">
+      <div className="flex flex-col rounded-xl border border-[#E2E0EF] overflow-hidden bg-white">
         {/* Day headers */}
-        <div className="flex border-b border-[#E5EDE8]" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}>
-          <div className="w-14 sm:w-16 shrink-0 border-r border-[#E5EDE8]" />
+        <div className="flex border-b border-[#E2E0EF]" style={{ backgroundColor: 'var(--ccd-sage, #F4F3FA)' }}>
+          <div className="w-14 sm:w-16 shrink-0 border-r border-[#E2E0EF]" />
           {weekDays.map((date) => {
             const today = isSameDay(date, nowTick);
             return (
@@ -1658,12 +1658,12 @@ export function LessonPlannerCalendar({
                   today ? 'bg-white' : ''
                 }`}
               >
-                <div className={`text-[10px] leading-none uppercase tracking-wide ${today ? 'text-[#002D24] font-semibold' : 'text-gray-500'}`}>
+                <div className={`text-[10px] leading-none uppercase tracking-wide ${today ? 'text-[#1F1B4D] font-semibold' : 'text-gray-500'}`}>
                   {format(date, 'EEE')}
                 </div>
                 <div
                   className={`mt-px inline-flex h-6 w-6 items-center justify-center rounded-full text-sm font-semibold leading-none ${
-                    today ? 'bg-[#002D24] text-white' : 'text-[#002D24]'
+                    today ? 'bg-[#1F1B4D] text-white' : 'text-[#1F1B4D]'
                   }`}
                 >
                   {format(date, 'd')}
@@ -1675,12 +1675,12 @@ export function LessonPlannerCalendar({
 
         {/* All-day row */}
         {hasAllDay && (
-          <div className="flex border-b border-[#E5EDE8] min-h-[36px]" style={{ backgroundColor: '#FAFCFA' }}>
-            <div className="w-14 sm:w-16 shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-[#E5EDE8]">
+          <div className="flex border-b border-[#E2E0EF] min-h-[36px]" style={{ backgroundColor: '#FAFCFA' }}>
+            <div className="w-14 sm:w-16 shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-[#E2E0EF]">
               <span className="text-[10px] uppercase tracking-wide text-gray-400">All day</span>
             </div>
             {allDayByDate.map(({ date, events, untimedPlans }) => (
-              <div key={`allday-${date.toISOString()}`} className="flex-1 min-w-0 border-l border-[#E5EDE8] px-1 py-1 space-y-0.5">
+              <div key={`allday-${date.toISOString()}`} className="flex-1 min-w-0 border-l border-[#E2E0EF] px-1 py-1 space-y-0.5">
                 {events.map((event) => (
                     <button
                       key={event.id}
@@ -1725,7 +1725,7 @@ export function LessonPlannerCalendar({
         <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
           <div className="flex relative" style={{ height: gridHeightPx }}>
             {/* Time gutter */}
-            <div className="w-14 sm:w-16 shrink-0 relative border-r border-[#E5EDE8] bg-[#FAFCFA]">
+            <div className="w-14 sm:w-16 shrink-0 relative border-r border-[#E2E0EF] bg-[#FAFCFA]">
               {dayViewHours.map((hour) => (
                 <div
                   key={hour}
@@ -1764,31 +1764,31 @@ export function LessonPlannerCalendar({
       );
       const today = isSameDay(safeDate, nowTick);
       const dayNavBtn =
-        'inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24]';
+        'inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors duration-200 hover:border-[#1F1B4D] hover:text-[#1F1B4D]';
 
       return (
-        <div className="flex flex-col rounded-xl border border-[#E5EDE8] overflow-hidden bg-white">
+        <div className="flex flex-col rounded-xl border border-[#E2E0EF] overflow-hidden bg-white">
           <div
-            className={`px-4 py-3 border-b border-[#E5EDE8] ${
+            className={`px-4 py-3 border-b border-[#E2E0EF] ${
               isHolidayDate ? 'bg-red-50' : isInsetDayDate ? 'bg-purple-50' : ''
             }`}
             style={
               !isHolidayDate && !isInsetDayDate
-                ? { backgroundColor: 'var(--ccd-sage, #F3F6F3)' }
+                ? { backgroundColor: 'var(--ccd-sage, #F4F3FA)' }
                 : undefined
             }
           >
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <h2
-                  className="text-lg sm:text-xl font-semibold text-[#002D24]"
-                  style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+                  className="text-lg sm:text-xl font-semibold text-[#1F1B4D]"
+                  style={{ fontFamily: "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)" }}
                 >
                   {format(safeDate, 'EEEE, MMMM d, yyyy')}
                 </h2>
                 <div className="flex items-center flex-wrap gap-2 mt-1">
                   {today && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#002D24] text-white font-medium">
+                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#1F1B4D] text-white font-medium">
                       Today
                     </span>
                   )}
@@ -1816,7 +1816,7 @@ export function LessonPlannerCalendar({
                 <button
                   type="button"
                   onClick={() => setDayViewDate(new Date())}
-                  className="inline-flex min-h-[40px] items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:border-[#002D24] hover:text-[#002D24]"
+                  className="inline-flex min-h-[40px] items-center px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:border-[#1F1B4D] hover:text-[#1F1B4D]"
                 >
                   Today
                 </button>
@@ -1877,7 +1877,7 @@ export function LessonPlannerCalendar({
 
           <div className="overflow-auto" style={{ maxHeight: 'calc(100vh - 340px)' }}>
             <div className="flex relative" style={{ height: gridHeightPx }}>
-              <div className="w-14 sm:w-16 shrink-0 relative border-r border-[#E5EDE8] bg-[#FAFCFA]">
+              <div className="w-14 sm:w-16 shrink-0 relative border-r border-[#E2E0EF] bg-[#FAFCFA]">
                 {dayViewHours.map((hour) => (
                   <div
                     key={hour}
@@ -1902,7 +1902,7 @@ export function LessonPlannerCalendar({
           <p>Error loading day view. Please try again.</p>
           <button
             onClick={() => setViewMode('month')}
-            className="mt-2 px-4 py-2 bg-[#002D24] text-white rounded-lg"
+            className="mt-2 px-4 py-2 bg-[#1F1B4D] text-white rounded-lg"
           >
             Return to Month View
           </button>
@@ -2141,7 +2141,7 @@ export function LessonPlannerCalendar({
                                         handleViewLessonDetails(plan.lessonNumber!);
                                         setIsLessonSummaryOpen(false);
                                       }}
-                                      className="p-1.5 text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-button transition-colors duration-200"
+                                      className="p-1.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-button transition-colors duration-200"
                                       title="View/Edit Lesson"
                                     >
                                       <Edit3 className="h-4 w-4" />
@@ -2320,37 +2320,37 @@ export function LessonPlannerCalendar({
   };
 
   const navBtnClass =
-    'inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24]';
+    'inline-flex min-h-[40px] min-w-[40px] items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors duration-200 hover:border-[#1F1B4D] hover:text-[#1F1B4D]';
 
   const viewBtnClass = (active: boolean) =>
     `flex-1 min-w-0 sm:flex-none min-h-[40px] md:min-h-[44px] px-2 sm:px-2.5 md:px-3.5 py-2 text-xs sm:text-sm font-medium rounded-md transition-colors duration-200 ${
       active
-        ? 'bg-[#002D24] text-white shadow-sm'
-        : 'text-gray-600 hover:text-[#002D24] hover:bg-white'
+        ? 'bg-[#1F1B4D] text-white shadow-sm'
+        : 'text-gray-600 hover:text-[#1F1B4D] hover:bg-white'
     }`;
 
   return (
     <div className="bg-white rounded-card shadow-soft border border-gray-100 overflow-hidden ccd-fade-in-up" ref={calendarRef}>
       {/* Calendar Header — light forest/sage, split primary vs tools */}
       <div
-        className="border-b border-[#E5EDE8]"
-        style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}
+        className="border-b border-[#E2E0EF]"
+        style={{ backgroundColor: 'var(--ccd-sage, #F4F3FA)' }}
       >
         {/* Primary row: title + primary CTA + overflow tools */}
         <div className="px-3 sm:px-5 md:px-6 pt-4 sm:pt-5 pb-3 sm:pb-4 flex flex-col gap-3 sm:gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0 flex items-center gap-3">
             <div
-              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#002D24]/12"
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-[#1F1B4D]/12"
               style={{ backgroundColor: 'rgba(182, 255, 126, 0.35)' }}
             >
-              <CalendarIcon className="h-5 w-5" style={{ color: '#002D24' }} />
+              <CalendarIcon className="h-5 w-5" style={{ color: '#1F1B4D' }} />
             </div>
             <div className="min-w-0">
               <h2
                 className="text-xl sm:text-2xl font-semibold tracking-tight"
                 style={{
-                  fontFamily: '"Playfair Display", Georgia, serif',
-                  color: '#002D24',
+                  fontFamily: "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)",
+                  color: '#1F1B4D',
                 }}
               >
                 Calendar
@@ -2369,8 +2369,8 @@ export function LessonPlannerCalendar({
                 setEditingEvent(null);
                 setShowEventModal(true);
               }}
-              className="inline-flex min-h-[44px] sm:min-h-[48px] flex-1 sm:flex-none items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-opacity duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#002D24]/30 focus:ring-offset-2"
-              style={{ backgroundColor: '#B6FF7E', color: '#002D24' }}
+              className="inline-flex min-h-[44px] sm:min-h-[48px] flex-1 sm:flex-none items-center justify-center gap-2 px-4 sm:px-5 py-2.5 sm:py-3 rounded-xl text-sm sm:text-base font-semibold transition-opacity duration-200 hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-[#1F1B4D]/30 focus:ring-offset-2"
+              style={{ backgroundColor: '#FFC93C', color: '#1F1B4D' }}
             >
               <Plus className="h-5 w-5 shrink-0" />
               <span>Add Event</span>
@@ -2402,7 +2402,7 @@ export function LessonPlannerCalendar({
                       void handlePrintCalendar();
                     }}
                     disabled={isExportingPdf}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2] disabled:opacity-60"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#E9E6FF] disabled:opacity-60"
                   >
                     <Printer className="h-4 w-4 text-gray-500 shrink-0" />
                     {isExportingPdf ? 'Exporting…' : 'Export PDF'}
@@ -2414,7 +2414,7 @@ export function LessonPlannerCalendar({
                       setShowActionsMenu(false);
                       handleExportIcal();
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2]"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#E9E6FF]"
                   >
                     <Download className="h-4 w-4 text-gray-500 shrink-0" />
                     Export iCal
@@ -2427,7 +2427,7 @@ export function LessonPlannerCalendar({
                       setShowActionsMenu(false);
                       setShowTimetableBuilder(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2]"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#E9E6FF]"
                   >
                     <Users className="h-4 w-4 text-gray-500 shrink-0" />
                     Timetable Builder
@@ -2439,7 +2439,7 @@ export function LessonPlannerCalendar({
                       setShowActionsMenu(false);
                       setShowTimetableModal(true);
                     }}
-                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#F1F6F2]"
+                    className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#E9E6FF]"
                   >
                     <Repeat className="h-4 w-4 text-gray-500 shrink-0" />
                     Timetable sync
@@ -2455,11 +2455,11 @@ export function LessonPlannerCalendar({
           className="px-3 sm:px-5 md:px-6 pb-3 sm:pb-3.5"
           data-ccd-key-dates-populate="1"
         >
-          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3 rounded-xl border border-[#E5EDE8] bg-white/80 px-3 py-2.5 sm:px-4">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:gap-3 rounded-xl border border-[#E2E0EF] bg-white/80 px-3 py-2.5 sm:px-4">
             <div className="min-w-0 flex-1">
               <label
                 htmlFor="ccd-populate-key-dates"
-                className="block text-xs font-semibold text-[#002D24]"
+                className="block text-xs font-semibold text-[#1F1B4D]"
               >
                 Populate with key dates from
               </label>
@@ -2480,7 +2480,7 @@ export function LessonPlannerCalendar({
                   setKeyDatesOrgId(value);
                   setShowKeyDatesModal(true);
                 }}
-                className="w-full min-h-[40px] appearance-none rounded-lg border border-[#002D24]/20 bg-white py-2 pl-3 pr-9 text-sm text-[#002D24] focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20"
+                className="w-full min-h-[40px] appearance-none rounded-lg border border-[#1F1B4D]/20 bg-white py-2 pl-3 pr-9 text-sm text-[#1F1B4D] focus:border-[#1F1B4D] focus:outline-none focus:ring-2 focus:ring-[#1F1B4D]/20"
               >
                 <option value="">Choose a source…</option>
                 {getKeyDatePopulateOptions().map((opt) => (
@@ -2490,7 +2490,7 @@ export function LessonPlannerCalendar({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#002D24]/50" />
+              <ChevronDown className="pointer-events-none absolute right-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#1F1B4D]/50" />
             </div>
           </div>
           <ImportantDatesPanel
@@ -2528,7 +2528,7 @@ export function LessonPlannerCalendar({
                 setCurrentDate(new Date());
                 setDayViewDate(new Date());
               }}
-              className="inline-flex min-h-[40px] md:min-h-[44px] items-center px-3 sm:px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors duration-200 hover:border-[#002D24] hover:text-[#002D24]"
+              className="inline-flex min-h-[40px] md:min-h-[44px] items-center px-3 sm:px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors duration-200 hover:border-[#1F1B4D] hover:text-[#1F1B4D]"
             >
               Today
             </button>
@@ -2550,8 +2550,8 @@ export function LessonPlannerCalendar({
             </button>
 
             <h3
-              className="ml-0.5 sm:ml-1 basis-full sm:basis-auto text-base sm:text-lg font-semibold tracking-tight text-[#002D24] truncate"
-              style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+              className="ml-0.5 sm:ml-1 basis-full sm:basis-auto text-base sm:text-lg font-semibold tracking-tight text-[#1F1B4D] truncate"
+              style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
             >
               {periodLabel}
             </h3>
@@ -2562,7 +2562,7 @@ export function LessonPlannerCalendar({
               <select
                 value={unitFilter}
                 onChange={(e) => setUnitFilter(e.target.value)}
-                className="w-full sm:w-auto min-h-[40px] md:min-h-[44px] px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#002D24]/25 focus:border-[#002D24]"
+                className="w-full sm:w-auto min-h-[40px] md:min-h-[44px] px-3 py-2 rounded-lg border border-gray-200 bg-white text-sm text-gray-700 focus:outline-none focus:ring-2 focus:ring-[#1F1B4D]/25 focus:border-[#1F1B4D]"
               >
                 <option value="all">All Units</option>
                 {units.map((unit) => (
@@ -2664,7 +2664,7 @@ export function LessonPlannerCalendar({
       )}
 
       {/* Legend */}
-      <div className="px-4 sm:px-5 pb-5 pt-1 border-t border-[#E5EDE8]" style={{ backgroundColor: 'var(--ccd-sage, #F3F6F3)' }}>
+      <div className="px-4 sm:px-5 pb-5 pt-1 border-t border-[#E2E0EF]" style={{ backgroundColor: 'var(--ccd-sage, #F4F3FA)' }}>
         <div className="flex items-center justify-center flex-wrap gap-x-5 gap-y-2 text-xs">
           <div className="flex items-center gap-1.5">
             <div className="w-2 h-2 rounded-full bg-[#3D6B5E]" />

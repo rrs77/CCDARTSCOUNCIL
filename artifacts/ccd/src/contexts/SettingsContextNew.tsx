@@ -2117,11 +2117,11 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       };
     }
 
-    // Default teal theme
+    // Default Studio Score theme (teacher workspace)
     return {
-      primary: '#14B8A6',
-      secondary: '#0D9488',
-      accent: '#2DD4BF',
+      primary: '#4338E8',
+      secondary: '#1F1B4D',
+      accent: '#FFC93C',
     };
   };
 

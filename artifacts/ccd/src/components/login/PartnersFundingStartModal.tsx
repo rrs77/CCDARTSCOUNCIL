@@ -43,14 +43,14 @@ export function PartnersFundingStartModal({
       aria-labelledby="partners-funding-start-title"
     >
       <div
-        className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#002D24]/15 bg-white shadow-xl"
+        className="w-full max-w-lg overflow-hidden rounded-2xl border border-[#1F1B4D]/15 bg-white shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <div
           className="relative px-6 pb-5 pt-6 sm:px-8 sm:pt-7"
           style={{
             background:
-              'linear-gradient(165deg, #002D24 0%, #0a3d32 55%, #123f35 100%)',
+              'linear-gradient(165deg, #1F1B4D 0%, #2a2466 55%, #4338E8 100%)',
           }}
         >
           <button
@@ -62,13 +62,13 @@ export function PartnersFundingStartModal({
             <X className="h-5 w-5" />
           </button>
 
-          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#B6FF7E]/90">
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#FFC93C]/90">
             {PARTNER_DISCLAIMER_FRAMING}
           </p>
           <h2
             id="partners-funding-start-title"
             className="mt-2 max-w-[22rem] text-2xl font-semibold tracking-tight text-white"
-            style={{ fontFamily: '"Playfair Display", Georgia, serif' }}
+            style={{ fontFamily: "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)" }}
           >
             {PARTNERS_FUNDING_START_TITLE}
           </h2>
@@ -84,14 +84,14 @@ export function PartnersFundingStartModal({
 
           <a
             href={THE_FACTS_HREF}
-            className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#B6FF7E] px-4 py-3.5 text-[#002D24] transition-colors hover:bg-[#A7F46E]"
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg bg-[#FFC93C] px-4 py-3.5 text-[#1F1B4D] transition-colors hover:bg-[#F5C02E]"
           >
             <BookOpen className="h-5 w-5 shrink-0" aria-hidden />
             <span className="min-w-0 text-left">
               <span className="block text-sm font-semibold leading-tight">
                 {PARTNERS_FUNDING_FACTS_CTA}
               </span>
-              <span className="mt-0.5 block text-xs font-medium leading-snug text-[#002D24]/75">
+              <span className="mt-0.5 block text-xs font-medium leading-snug text-[#1F1B4D]/75">
                 {PARTNERS_FUNDING_FACTS_BYLINE}
               </span>
             </span>
@@ -100,7 +100,7 @@ export function PartnersFundingStartModal({
           <button
             type="button"
             onClick={onStartWalkthrough}
-            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-[#002D24]/15 bg-white px-4 py-3.5 text-sm font-semibold text-[#002D24] transition-colors hover:bg-[#F4F7F5]"
+            className="flex w-full items-center justify-center gap-2.5 rounded-lg border border-[#1F1B4D]/15 bg-white px-4 py-3.5 text-sm font-semibold text-[#1F1B4D] transition-colors hover:bg-[#F4F3FA]"
           >
             <PlayCircle className="h-5 w-5 shrink-0" aria-hidden />
             <span>{PARTNERS_FUNDING_VIDEO_CTA}</span>
@@ -110,7 +110,7 @@ export function PartnersFundingStartModal({
             type="button"
             onClick={onClose}
             className="w-full rounded-lg px-4 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-95"
-            style={{ backgroundColor: '#002D24' }}
+            style={{ backgroundColor: '#1F1B4D' }}
           >
             {PARTNERS_FUNDING_CONTINUE_CTA}
           </button>

@@ -78,18 +78,18 @@ export function ContactUsPanel() {
 
   return (
     <div className="space-y-6" data-ccd-contact-us="1">
-      <div className="flex items-center gap-3 rounded-lg border border-[#002D24]/10 bg-[var(--ccd-sage-mist,#E8F0EA)] px-3 py-2.5 sm:px-4">
+      <div className="flex items-center gap-3 rounded-lg border border-[#1F1B4D]/10 bg-[var(--ccd-sage-mist,#E8F0EA)] px-3 py-2.5 sm:px-4">
         <div
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#002D24]/75"
+          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-[#1F1B4D]/75"
           style={{ backgroundColor: 'rgba(0, 45, 36, 0.06)' }}
         >
           <Mail className="h-4 w-4" aria-hidden />
         </div>
         <div className="min-w-0 flex-1">
-          <h2 className="text-base font-semibold tracking-tight text-[#002D24] sm:text-lg">
+          <h2 className="text-base font-semibold tracking-tight text-[#1F1B4D] sm:text-lg">
             Contact us
           </h2>
-          <p className="text-sm leading-snug text-[#002D24]/70">
+          <p className="text-sm leading-snug text-[#1F1B4D]/70">
             Send an enquiry about CCDesigner.
           </p>
         </div>
@@ -97,8 +97,8 @@ export function ContactUsPanel() {
 
       <div className="grid gap-6 lg:grid-cols-[0.85fr_1.15fr]">
         <aside className="space-y-4">
-          <div className="rounded-2xl bg-[#002D24] px-5 py-6 text-white sm:px-6">
-            <Mail className="mb-3 h-7 w-7 text-[#B6FF7E]" strokeWidth={1.75} aria-hidden />
+          <div className="rounded-2xl bg-[#1F1B4D] px-5 py-6 text-white sm:px-6">
+            <Mail className="mb-3 h-7 w-7 text-[#FFC93C]" strokeWidth={1.75} aria-hidden />
             <h3 className="text-lg font-semibold tracking-tight">Email</h3>
             <a
               href={`mailto:${CCDESIGNER_CONTACT_EMAIL}`}
@@ -110,8 +110,8 @@ export function ContactUsPanel() {
               Prototype, funding and arts-sector consultation queries welcome. No account required.
             </p>
           </div>
-          <div className="rounded-2xl border border-[#002D24]/10 bg-white px-5 py-5 text-sm text-[#002D24]/75">
-            <p className="font-semibold text-[#002D24]">Optional details help</p>
+          <div className="rounded-2xl border border-[#1F1B4D]/10 bg-white px-5 py-5 text-sm text-[#1F1B4D]/75">
+            <p className="font-semibold text-[#1F1B4D]">Optional details help</p>
             <p className="mt-2 leading-relaxed">
               Role, mobile and preferred follow-up times are optional — fill them in if useful, then
               tell us what you’d like to explore in CCDesigner.
@@ -120,16 +120,16 @@ export function ContactUsPanel() {
         </aside>
 
         {submitted ? (
-          <div className="flex min-h-[22rem] flex-col items-start justify-center rounded-2xl border border-[#002D24]/10 bg-white px-6 py-10 sm:px-8">
-            <CheckCircle2 className="h-10 w-10 text-[#002D24]" strokeWidth={1.75} aria-hidden />
-            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[#002D24]">
+          <div className="flex min-h-[22rem] flex-col items-start justify-center rounded-2xl border border-[#1F1B4D]/10 bg-white px-6 py-10 sm:px-8">
+            <CheckCircle2 className="h-10 w-10 text-[#1F1B4D]" strokeWidth={1.75} aria-hidden />
+            <h3 className="mt-4 text-2xl font-semibold tracking-tight text-[#1F1B4D]">
               Thanks for getting in touch
             </h3>
-            <p className="mt-3 max-w-md text-sm text-[#002D24]/70">
+            <p className="mt-3 max-w-md text-sm text-[#1F1B4D]/70">
               Your email app should open with a prepared message. If it doesn’t, send your enquiry
               directly to{' '}
               <a
-                className="font-semibold text-[#002D24] underline"
+                className="font-semibold text-[#1F1B4D] underline"
                 href={`mailto:${CCDESIGNER_CONTACT_EMAIL}`}
               >
                 {CCDESIGNER_CONTACT_EMAIL}
@@ -138,7 +138,7 @@ export function ContactUsPanel() {
             </p>
             <button
               type="button"
-              className="mt-6 text-sm font-semibold text-[#002D24] hover:underline"
+              className="mt-6 text-sm font-semibold text-[#1F1B4D] hover:underline"
               onClick={() => {
                 setSubmitted(false);
                 setForm(INITIAL);
@@ -150,7 +150,7 @@ export function ContactUsPanel() {
         ) : (
           <form
             onSubmit={onSubmit}
-            className="rounded-2xl border border-[#002D24]/10 bg-white px-5 py-7 sm:px-8 sm:py-8"
+            className="rounded-2xl border border-[#1F1B4D]/10 bg-white px-5 py-7 sm:px-8 sm:py-8"
             noValidate
           >
             <div className="grid gap-5 sm:grid-cols-2">
@@ -202,9 +202,9 @@ export function ContactUsPanel() {
               </Field>
             </div>
 
-            <div className="mt-6 border-t border-[#002D24]/10 pt-5">
-              <p className="text-sm font-semibold text-[#002D24]">Before you write</p>
-              <p className="mt-1 text-xs text-[#002D24]/55">
+            <div className="mt-6 border-t border-[#1F1B4D]/10 pt-5">
+              <p className="text-sm font-semibold text-[#1F1B4D]">Before you write</p>
+              <p className="mt-1 text-xs text-[#1F1B4D]/55">
                 Optional — only included in your email if you fill them in.
               </p>
               <div className="mt-4 grid gap-5 sm:grid-cols-2">
@@ -253,7 +253,7 @@ export function ContactUsPanel() {
               </div>
             </div>
 
-            <div className="mt-6 border-t border-[#002D24]/10 pt-5">
+            <div className="mt-6 border-t border-[#1F1B4D]/10 pt-5">
               <Field label="Message" htmlFor="ccd-contact-message">
                 <textarea
                   id="ccd-contact-message"
@@ -276,11 +276,11 @@ export function ContactUsPanel() {
 
             <button
               type="submit"
-              className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-[#002D24] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 sm:w-auto"
+              className="mt-6 inline-flex min-h-12 w-full items-center justify-center rounded-lg bg-[#1F1B4D] px-6 py-3 text-sm font-semibold text-white transition hover:opacity-95 sm:w-auto"
             >
               Send enquiry
             </button>
-            <p className="mt-3 text-xs text-[#002D24]/55">
+            <p className="mt-3 text-xs text-[#1F1B4D]/55">
               Opens your email app with the message ready to send. No account required.
             </p>
           </form>
@@ -293,9 +293,9 @@ export function ContactUsPanel() {
           min-height: 2.75rem;
           border-radius: 0.5rem;
           border: 1px solid rgba(0, 45, 36, 0.18);
-          background: #F3F6F3;
+          background: #F4F3FA;
           padding: 0.7rem 0.9rem;
-          color: #002D24;
+          color: #1F1B4D;
           font-size: 0.875rem;
           transition: border-color 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
         }
@@ -308,7 +308,7 @@ export function ContactUsPanel() {
         }
         .ccd-contact-input:focus {
           outline: none;
-          border-color: #002D24;
+          border-color: #1F1B4D;
           box-shadow: 0 0 0 3px rgba(182, 255, 126, 0.35);
           background: #fff;
         }
@@ -333,7 +333,7 @@ function Field({
 }) {
   return (
     <label className={`block ${className}`} htmlFor={htmlFor}>
-      <span className="mb-1.5 block text-sm font-semibold text-[#002D24]">{label}</span>
+      <span className="mb-1.5 block text-sm font-semibold text-[#1F1B4D]">{label}</span>
       {children}
     </label>
   );

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, Maximize2, Minimize2, MapPin, BarChart3, MessageSquare, Shield, Search } from 'lucide-react';
+import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Save, Users, Database, AlertTriangle, GraduationCap, Package, Filter, Video, Music, Volume2, FileText, Link as LinkIcon, Image, FileVideo, FileMusic, File, Globe, ExternalLink, Share2, Download, Upload, Eye, Play, Pause, Headphones, Mic, Speaker, Film, Camera, BookOpen, Book, Folder, Cloud, Network, Target, HelpCircle, ChevronDown, ChevronRight, Undo2, Redo2, MapPin, BarChart3, MessageSquare, Shield, Search } from 'lucide-react';
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../contexts/SettingsContextNew';
 import { DataSourceSettings } from './DataSourceSettings';
 import { CustomObjectivesAdmin } from './CustomObjectivesAdmin';
@@ -15,7 +15,7 @@ import { MyHubAdministration } from './musicHubs/MyHubAdministration';
 import { DownloadAnalytics } from './Admin/DownloadAnalytics';
 import { HubAdminDashboard } from './Admin/HubAdminDashboard';
 import { MyDownloads } from './Downloads/MyDownloads';
-import { customCategoriesApi, activityPacksApi } from '../config/api';
+import { customCategoriesApi, activityPacksApi, yearGroupSectionsApi } from '../config/api';
 import type { ActivityPack } from '../config/api';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
@@ -69,7 +69,7 @@ function YearGroupSectionSelect({
       onClick={(e) => e.stopPropagation()}
       className={
         className ??
-        'h-10 min-w-[8.5rem] max-w-full px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none'
+        'h-10 min-w-[8.5rem] max-w-full px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none'
       }
     >
       {emptyLabel ? <option value="">{emptyLabel}</option> : null}
@@ -109,7 +109,7 @@ function CategoryFolderSelect({
       onClick={(e) => e.stopPropagation()}
       className={
         className ??
-        'h-10 min-w-[8.5rem] max-w-full px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none'
+        'h-10 min-w-[8.5rem] max-w-full px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none'
       }
     >
       <option value="">{emptyLabel || 'Uncategorised'}</option>
@@ -184,7 +184,7 @@ function DraggableCategory({ category, index, onReorder, onDragEnd, children }: 
       ref={ref}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       data-handler-id={handlerId}
-      className={`rounded-lg transition-all ${isDragging ? 'ring-2 ring-teal-400 shadow-lg' : ''} ${dropZoneClass} ${flashClass}`}
+      className={`rounded-lg transition-all ${isDragging ? 'ring-2 ring-[#a9a3ff] shadow-lg' : ''} ${dropZoneClass} ${flashClass}`}
     >
       {children}
     </div>
@@ -244,7 +244,6 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const isViewOnly = useIsViewOnly();
   const { settings, updateSettings, resetToDefaults, categories, updateCategories, resetCategoriesToDefaults, restoreSystemCategoryDefaults, clearUserCreatedCategories, categoryFolders, customYearGroups, updateYearGroups, updateYearGroupSections, getOrderedYearGroups, yearGroupSections, deleteYearGroup, resetYearGroupsToDefaults, ensureYearGroupsInSections, forceSyncYearGroups, forceSyncToSupabase, forceRefreshFromSupabase, forceSyncCurrentYearGroups, forceSafariSync, startUserChange, endUserChange, resourceLinks, updateResourceLinks, resetResourceLinksToDefaults } = useSettings();
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [yearGroupsExpanded, setYearGroupsExpanded] = useState(false);
   const [tempSettings, setTempSettings] = useState(settings);
   const [tempCategories, setTempCategories] = useState(categories);
   const [tempYearGroups, setTempYearGroups] = useState(customYearGroups);
@@ -277,6 +276,11 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
   const [newYearGroupName, setNewYearGroupName] = useState('');
   const [newYearGroupColor, setNewYearGroupColor] = useState('#3B82F6');
   const [newYearGroupSectionId, setNewYearGroupSectionId] = useState('other');
+  const [showAddClassForm, setShowAddClassForm] = useState(false);
+  /** Secondary Settings areas (folders, objectives, downloads) stay collapsed by default. */
+  const [settingsMoreOpen, setSettingsMoreOpen] = useState(false);
+  /** Undo / section tools — rare; keep off the main path. */
+  const [manageSectionsOpen, setManageSectionsOpen] = useState(false);
   const [otherYearGroupQuery, setOtherYearGroupQuery] = useState('');
   const [selectedOtherYearGroupIds, setSelectedOtherYearGroupIds] = useState<Set<string>>(new Set());
   const [bulkOtherTargetSectionId, setBulkOtherTargetSectionId] = useState('');
@@ -350,15 +354,15 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
     } catch {
       /* ignore */
     }
-    if (activeTab === 'users' && !showUserManagement) setActiveTab('resource-links');
+    if (activeTab === 'users' && !showUserManagement) setActiveTab('yeargroups');
     if (activeTab === 'download-analytics' && !showDownloadAnalytics) setActiveTab('my-downloads');
-    if (activeTab === 'hub-admin' && !showHubAdmin) setActiveTab('resource-links');
-    if (activeTab === 'hub-content' && !isAdmin) setActiveTab('resource-links');
-    if (activeTab === 'branding' && !isAdmin) setActiveTab('resource-links');
-    if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('resource-links');
-    if (activeTab === 'system-categories' && !canEditSystemCategories) setActiveTab('resource-links');
-    if (activeTab === 'data' && !isAdmin) setActiveTab('resource-links');
-    // general, resource-links, data are under Admin for all users – no redirect
+    if (activeTab === 'hub-admin' && !showHubAdmin) setActiveTab('yeargroups');
+    if (activeTab === 'hub-content' && !isAdmin) setActiveTab('yeargroups');
+    if (activeTab === 'branding' && !isAdmin) setActiveTab('yeargroups');
+    if (activeTab === 'manage-packs' && !isAdmin && !isCreator) setActiveTab('yeargroups');
+    if (activeTab === 'system-categories' && !canEditSystemCategories) setActiveTab('yeargroups');
+    if (activeTab === 'data' && !isAdmin) setActiveTab('yeargroups');
+    if (activeTab === 'purchases') setActiveTab('yeargroups');
   }, [isOpen, activeTab, showUserManagement, showDownloadAnalytics, showHubAdmin, isAdmin, isCreator, canEditSystemCategories]);
 
   // Keep undo/redo history for year-group sections (key stages).
@@ -553,24 +557,29 @@ export function UserSettings({ isOpen, onClose }: UserSettingsProps) {
       if (!synced) {
         console.warn('⚠️ Supabase sync returned false - queue may still save shortly');
       }
+
+      // Flush section layout now (not only the debounced autosave) so Save is permanent
+      const sectionsOk = await yearGroupSectionsApi.upsert(yearGroupSections);
+      if (!sectionsOk) {
+        console.warn('⚠️ Year-group sections did not confirm to Supabase');
+      }
       
       // Show success message
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000); // Hide after 3 seconds
       
       // Show toast notification for better visibility
-      toast.success('Settings saved successfully!', {
+      toast.success(sectionsOk ? 'Settings saved' : 'Settings saved locally — cloud sync pending', {
         duration: 3000,
         position: 'top-center',
-        icon: '✅',
         style: {
-          background: '#E6F7F5',
-          color: '#0BA596',
-          border: '1px solid #0BA596',
-          borderRadius: '8px',
+          background: '#E9E6FF',
+          color: '#1F1B4D',
+          border: '1px solid #E2E0EF',
+          borderRadius: '12px',
           padding: '12px 16px',
           fontSize: '14px',
-          fontWeight: '500'
+          fontWeight: '600'
         }
       });
       
@@ -1197,52 +1206,54 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
   if (!isOpen) return null;
 
+  const ssTab = (on: boolean) =>
+    `px-3 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4338E8] focus-visible:ring-offset-1 min-h-[40px] ${
+      on
+        ? 'text-white bg-[#4338E8] shadow-sm'
+        : 'text-[#77738F] hover:text-[#1F1B4D] hover:bg-white'
+    }`;
+
   return (
-    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-end sm:items-center justify-center z-[60]">
-      <div className="bg-white rounded-t-2xl sm:rounded-2xl shadow-2xl w-full h-[95vh] sm:h-auto sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl sm:max-h-[90vh] flex flex-col overflow-hidden sm:mx-4">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-gray-200 bg-white flex-shrink-0">
+    <div className="fixed inset-0 bg-[rgba(21,18,51,0.38)] backdrop-blur-sm flex items-end sm:items-center justify-center z-[60]">
+      <div className="bg-[#F4F3FA] rounded-t-2xl sm:rounded-2xl shadow-2xl w-full h-[95vh] sm:h-auto sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl sm:max-h-[90vh] flex flex-col overflow-hidden sm:mx-4 border border-[#E2E0EF]">
+        {/* Header — Studio Score */}
+        <div className="flex items-center justify-between px-4 sm:px-6 py-3.5 sm:py-4 border-b border-[#E2E0EF] bg-white flex-shrink-0">
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-teal-50 flex-shrink-0">
-              <Settings className="h-4.5 w-4.5 text-teal-600" />
+            <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-[#E9E6FF] flex-shrink-0">
+              <Settings className="h-4.5 w-4.5 text-[#4338E8]" />
             </div>
             <div className="min-w-0">
-              <h2 
-                className="text-base sm:text-lg font-semibold text-gray-900 truncate leading-tight"
-                style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+              <h2
+                className="text-base sm:text-lg font-extrabold text-[#1F1B4D] truncate leading-tight tracking-tight"
+                style={{ fontFamily: 'var(--ss-font-display, ui-sans-serif, system-ui, sans-serif)' }}
               >
                 Settings
               </h2>
-              <p className="text-xs text-gray-500 hidden sm:block">Manage year groups, categories, and preferences</p>
+              <p className="text-xs text-[#77738F] hidden sm:block">
+                Add classes, choose their folders, then pick a class in the header to plan
+              </p>
             </div>
           </div>
           <button
             onClick={handleCancel}
-            className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors duration-150 flex-shrink-0"
+            className="p-2 text-[#77738F] hover:text-[#1F1B4D] hover:bg-[#F4F3FA] rounded-lg transition-colors duration-150 flex-shrink-0"
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         {/* Tabs */}
-        <div 
-          className="flex flex-wrap items-center gap-1.5 px-3 sm:px-5 py-2.5 bg-gray-50/80 flex-shrink-0 border-b border-gray-100" 
-        >
+        <div className="flex flex-wrap items-center gap-1.5 px-3 sm:px-5 py-2.5 bg-white/80 flex-shrink-0 border-b border-[#E2E0EF]">
           <div className="flex flex-wrap items-center gap-1 min-w-0 flex-1">
           {[
-            { id: 'yeargroups', label: 'Year Groups', icon: null },
-            { id: 'categories', label: 'Categories', icon: null },
-            { id: 'admin', label: 'Objectives', icon: null },
-            { id: 'purchases', label: 'Resource Library', icon: null },
+            { id: 'yeargroups', label: 'My classes' },
+            { id: 'categories', label: 'Activity folders' },
+            { id: 'admin', label: 'Objectives' },
           ].map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 focus-visible:ring-offset-1 min-h-[36px] ${
-                activeTab === tab.id
-                  ? 'text-white bg-teal-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-              }`}
+              className={ssTab(activeTab === tab.id)}
             >
               {tab.label}
             </button>
@@ -1250,11 +1261,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           <button
             onClick={() => setActiveTab('my-downloads')}
-            className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
-              activeTab === 'my-downloads'
-                ? 'text-white bg-teal-600 shadow-sm'
-                : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-            }`}
+            className={`${ssTab(activeTab === 'my-downloads')} flex items-center gap-1.5`}
           >
             <Download className="h-3.5 w-3.5" />
             <span>My Downloads</span>
@@ -1262,11 +1269,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {showDownloadAnalytics && (
             <button
               onClick={() => setActiveTab('download-analytics')}
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
-                activeTab === 'download-analytics'
-                  ? 'text-white bg-teal-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-              }`}
+              className={`${ssTab(activeTab === 'download-analytics')} flex items-center gap-1.5`}
             >
               <BarChart3 className="h-3.5 w-3.5" />
               <span>Download analytics</span>
@@ -1275,11 +1278,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {showUserManagement && (
             <button
               onClick={() => setActiveTab('users')}
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex-shrink-0 transition-all duration-150 focus:outline-none flex items-center gap-1.5 min-h-[36px] ${
-                activeTab === 'users'
-                  ? 'text-white bg-teal-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-              }`}
+              className={`${ssTab(activeTab === 'users')} flex items-center gap-1.5`}
             >
               <Users className="h-3.5 w-3.5" />
               <span>Users</span>
@@ -1292,11 +1291,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               ref={adminTriggerRef}
               type="button"
               onClick={() => setAdminMenuOpen(prev => !prev)}
-              className={`px-3 sm:px-4 py-2 rounded-lg font-medium text-xs sm:text-sm whitespace-nowrap flex items-center gap-1.5 transition-all duration-150 focus:outline-none min-h-[36px] ${
-                (activeTab === 'resource-links' || activeTab === 'data' || activeTab === 'manage-packs' || activeTab === 'branding' || activeTab === 'hub-content' || activeTab === 'system-categories')
-                  ? 'text-white bg-teal-600 shadow-sm'
-                  : 'text-gray-600 hover:text-gray-900 hover:bg-white'
-              }`}
+              className={`${ssTab(
+                activeTab === 'resource-links' ||
+                  activeTab === 'data' ||
+                  activeTab === 'manage-packs' ||
+                  activeTab === 'branding' ||
+                  activeTab === 'hub-content' ||
+                  activeTab === 'system-categories',
+              )} flex items-center gap-1.5`}
             >
               <Settings className="h-3.5 w-3.5" />
               <span>Admin</span>
@@ -1311,7 +1313,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <button
                     type="button"
                     onClick={() => { setActiveTab('users'); setAdminMenuOpen(false); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'users' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'users' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                   >
                     <Users className="h-4 w-4" />
                     Users
@@ -1321,7 +1323,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <button
                     type="button"
                     onClick={() => { setActiveTab('hub-admin'); setAdminMenuOpen(false); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'hub-admin' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'hub-admin' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                   >
                     <Shield className="h-4 w-4" />
                     Hub admin
@@ -1338,7 +1340,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <button
                     type="button"
                     onClick={() => { setActiveTab('manage-packs'); setAdminMenuOpen(false); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'manage-packs' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'manage-packs' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                   >
                     <Package className="h-4 w-4" />
                     Manage Packs
@@ -1348,7 +1350,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <button
                     type="button"
                     onClick={() => { setActiveTab('system-categories'); setAdminMenuOpen(false); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'system-categories' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'system-categories' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                   >
                     <Palette className="h-4 w-4" />
                     System categories
@@ -1358,7 +1360,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <button
                     type="button"
                     onClick={() => { setActiveTab('hub-content'); setAdminMenuOpen(false); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'hub-content' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'hub-content' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                   >
                     <MapPin className="h-4 w-4" />
                     Hub content
@@ -1368,7 +1370,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <button
                     type="button"
                     onClick={() => { setActiveTab('branding'); setAdminMenuOpen(false); }}
-                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'branding' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                    className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'branding' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                   >
                     <Palette className="h-4 w-4" />
                     Branding
@@ -1377,7 +1379,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 <button
                   type="button"
                   onClick={() => { setActiveTab('resource-links'); setAdminMenuOpen(false); }}
-                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'resource-links' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                  className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'resource-links' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                 >
                   <LinkIcon className="h-4 w-4" />
                   Resource Links
@@ -1388,7 +1390,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     <button
                       type="button"
                       onClick={() => { setActiveTab('data'); setAdminMenuOpen(false); }}
-                      className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'data' ? 'bg-teal-50 text-teal-700 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                      className={`w-full px-4 py-2.5 text-left text-sm flex items-center gap-2.5 transition-colors ${activeTab === 'data' ? 'bg-[#E9E6FF] text-[#4338E8] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                     >
                       <Database className="h-4 w-4" />
                       Data & Backup
@@ -1402,9 +1404,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
         </div>
 
         {/* Content */}
-        <div ref={settingsContentRef} className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 space-y-5 sm:space-y-6">
+        <div ref={settingsContentRef} className="flex-1 overflow-y-auto p-3 sm:p-5 space-y-3 sm:space-y-4">
           {saveSuccess && (
-            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-teal-50 border border-teal-200 text-teal-700">
+            <div className="flex items-center gap-2.5 px-4 py-3 rounded-xl bg-[#E9E6FF] border border-[#E2E0EF] text-[#4338E8]">
               <svg className="h-5 w-5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
                 <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
               </svg>
@@ -1414,42 +1416,82 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'yeargroups' && (
             <div className="space-y-4">
-              <MyHubAdministration />
-              <div className="space-y-4">
-              {/* Class Management */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-4 sm:p-6">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
-                  <div className="flex items-center space-x-3 min-w-0">
-                    <Users className="h-6 w-6 text-teal-600 shrink-0" />
-                    <h3 
-                      className="text-lg font-semibold text-gray-900"
-                      style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-                    >
-                      Class Management
-                    </h3>
-                  </div>
-                  <button
-                    onClick={handleResetYearGroups}
-                    className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-2 px-3 py-2 bg-teal-100 hover:bg-teal-200 text-teal-700 text-sm font-medium rounded-lg transition-colors duration-200"
-                    title="⚠️ DANGER: This will delete all custom year groups and reset to the 3 defaults!"
+              <div className="flex flex-wrap items-start justify-between gap-3">
+                <div className="min-w-0 max-w-xl">
+                  <h3
+                    className="text-[17px] font-extrabold tracking-tight text-[#1F1B4D]"
+                    style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
                   >
-                    <RotateCcw className="h-4 w-4 shrink-0" />
-                    <span>Reset to Default</span>
+                    My classes
+                  </h3>
+                  <p className="mt-1 text-[13px] leading-relaxed text-[#77738F]">
+                    Organised by stage. Open a class to rename or move it. Changes save as you go — use Save Settings to confirm to the cloud.
+                  </p>
+                </div>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleUndoSections}
+                    disabled={sectionUndoStack.length === 0}
+                    className="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-35"
+                    title="Undo"
+                    aria-label="Undo section changes"
+                  >
+                    <Undo2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={handleRedoSections}
+                    disabled={sectionRedoStack.length === 0}
+                    className="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-35"
+                    title="Redo"
+                    aria-label="Redo section changes"
+                  >
+                    <Redo2 className="h-4 w-4" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const sorted = [...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder);
+                      const maxOrder = sorted.length ? Math.max(...sorted.map((s) => s.sortOrder)) : -1;
+                      updateYearGroupSections((prev) => [
+                        ...prev,
+                        {
+                          id: `section-${Date.now()}`,
+                          label: 'New section',
+                          sortOrder: maxOrder + 1,
+                          collapsed: false,
+                          yearGroupIds: [],
+                        },
+                      ]);
+                    }}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold text-[#1F1B4D] hover:border-[#bcb7f4]"
+                  >
+                    <Plus className="h-3.5 w-3.5" /> Section
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowAddClassForm((v) => !v)}
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3 text-[12px] font-extrabold text-white hover:bg-[#3529d1]"
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                    {showAddClassForm ? 'Cancel' : 'Add class'}
                   </button>
                 </div>
+              </div>
 
-                {/* Add New Year Group */}
-                <div className="bg-white rounded-lg p-4 mb-6 shadow-sm">
-                  <h4 
-                    className="font-medium text-gray-900 mb-3"
-                    style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-                  >
-                    Add New Year Group
-                  </h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-3">
+              {/* Class Management */}
+              <div className="rounded-2xl border border-[#E2E0EF] bg-white p-3 sm:p-4 shadow-[0_1px_0_rgba(31,27,77,0.04)]">
+
+                {/* Add class — collapsed by default */}
+                {showAddClassForm && (
+                <div className="mb-3 rounded-lg border border-[#E2E0EF] bg-[#F4F3FA]/80 p-3">
+                  <h4 className="mb-2 text-[13px] font-bold text-[#1F1B4D]">New class</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
                     <div>
-                      <label htmlFor="newYearGroupId" className="block text-xs font-medium text-gray-600 mb-1.5">
-                        ID (used in system)
+                      <label htmlFor="newYearGroupId" className="block text-xs font-medium text-[#77738F] mb-1">
+                        System ID
                       </label>
                       <input
                         id="newYearGroupId"
@@ -1457,15 +1499,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         type="text"
                         value={newYearGroupId}
                         onChange={(e) => setNewYearGroupId(e.target.value)}
-                        placeholder="e.g., Year1"
-                        className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
-                        style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+                        placeholder="e.g. Year1"
+                        className="w-full h-9 px-3 border border-[#E2E0EF] rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none text-sm"
                         dir="ltr"
                       />
                     </div>
                     <div>
-                      <label htmlFor="newYearGroupName" className="block text-xs font-medium text-gray-600 mb-1.5">
-                        Display Name
+                      <label htmlFor="newYearGroupName" className="block text-xs font-medium text-[#77738F] mb-1">
+                        Display name
                       </label>
                       <input
                         id="newYearGroupName"
@@ -1473,13 +1514,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         type="text"
                         value={newYearGroupName}
                         onChange={(e) => setNewYearGroupName(e.target.value)}
-                        placeholder="e.g., Year 1"
-                        className="w-full h-10 px-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
-                        style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+                        placeholder="e.g. Year 1"
+                        className="w-full h-9 px-3 border border-[#E2E0EF] rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none text-sm"
                       />
                     </div>
                     <div>
-                      <label htmlFor="newYearGroupSection" className="block text-xs font-medium text-gray-600 mb-1.5">
+                      <label htmlFor="newYearGroupSection" className="block text-xs font-medium text-[#77738F] mb-1">
                         Section
                       </label>
                       <YearGroupSectionSelect
@@ -1487,25 +1527,27 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         value={newYearGroupSectionId}
                         onChange={setNewYearGroupSectionId}
                         sections={yearGroupSections}
-                        className="w-full h-10 px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                        className="w-full h-9 px-2 border border-[#E2E0EF] rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                       />
                     </div>
                     <div>
-                      <label htmlFor="newYearGroupColor" className="block text-xs font-medium text-gray-600 mb-1.5">
-                        Color
+                      <label htmlFor="newYearGroupColor" className="block text-xs font-medium text-[#77738F] mb-1">
+                        Colour
                       </label>
                       <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
                         <ColorPickerWithFavorites
                           id="newYearGroupColor"
                           value={newYearGroupColor}
                           onChange={setNewYearGroupColor}
-                          className="h-10 w-12 shrink-0 rounded-lg border border-gray-300 cursor-pointer"
+                          className="h-9 w-12 shrink-0 rounded-lg border border-[#E2E0EF] cursor-pointer"
                         />
                         <button
-                          onClick={handleAddYearGroup}
+                          onClick={() => {
+                            handleAddYearGroup();
+                            setShowAddClassForm(false);
+                          }}
                           disabled={!newYearGroupId.trim() || !newYearGroupName.trim()}
-                          className="inline-flex h-10 w-full sm:w-auto items-center justify-center gap-2 px-4 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg transition-colors duration-200"
-                          style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+                          className="inline-flex h-9 w-full sm:w-auto items-center justify-center gap-2 px-4 bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-[#a9a3ff] text-white font-semibold rounded-lg text-sm"
                         >
                           <Plus className="h-4 w-4 shrink-0" />
                           <span>Add</span>
@@ -1514,6 +1556,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     </div>
                   </div>
                 </div>
+                )}
 
                 {/* Notification: Link Year Group to Objectives */}
                 {newlyAddedYearGroup && (
@@ -1560,135 +1603,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   </div>
                 )}
 
-                {/* Backdrop for expanded view */}
-                {yearGroupsExpanded && (
-                  <div
-                    className="fixed inset-0 z-[69] bg-black/50"
-                    onClick={() => setYearGroupsExpanded(false)}
-                    aria-hidden="true"
-                  />
-                )}
-                {/* Year Groups List — toggles between inline panel and expanded modal overlay */}
-                <div
-                  className={
-                    yearGroupsExpanded
-                      ? 'fixed inset-4 md:inset-8 z-[70] bg-white rounded-lg border border-teal-200 p-4 shadow-2xl flex flex-col overflow-hidden'
-                      : 'bg-white rounded-lg border border-teal-200 p-4'
-                  }
-                >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-3">
-                    <h4 className="font-medium text-gray-900">Manage Year Groups</h4>
-                    <div className="flex flex-wrap gap-2">
-                      <button
-                        type="button"
-                        onClick={() => setYearGroupsExpanded((v) => !v)}
-                        className="inline-flex min-h-[36px] items-center gap-2 px-3 py-1.5 text-sm rounded-md bg-teal-100 text-teal-700 hover:bg-teal-200 transition-colors"
-                        title={yearGroupsExpanded ? 'Minimise' : 'Expand to full screen'}
-                      >
-                        {yearGroupsExpanded ? (
-                          <>
-                            <Minimize2 className="h-4 w-4" />
-                            Minimise
-                          </>
-                        ) : (
-                          <>
-                            <Maximize2 className="h-4 w-4" />
-                            Expand
-                          </>
-                        )}
-                      </button>
-                      <button
-                        onClick={async () => {
-                          if (isRefreshing) return; // Prevent multiple clicks
-                          
-                          setIsRefreshing(true);
-                          try {
-                            console.log('🔄 Manual refresh requested...');
-                            const success = await forceRefreshFromSupabase();
-                            if (success) {
-                              console.log('✅ Manual refresh completed');
-                              // Update temp state to match refreshed data
-                              setTempYearGroups(customYearGroups);
-                            }
-                          } catch (error) {
-                            console.error('❌ Manual refresh failed:', error);
-                          } finally {
-                            setIsRefreshing(false);
-                          }
-                        }}
-                        disabled={isRefreshing}
-                        className={`inline-flex min-h-[36px] items-center gap-2 px-3 py-1.5 text-sm rounded-md transition-colors ${
-                          isRefreshing 
-                            ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                            : 'bg-teal-100 text-teal-700 hover:bg-teal-200'
-                        }`}
-                        title={isRefreshing ? "Refreshing..." : "Refresh from server"}
-                      >
-                        <RotateCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
-                        {isRefreshing ? 'Refreshing...' : 'Refresh'}
-                      </button>
-                      {yearGroupsExpanded && (
-                        <button
-                          type="button"
-                          onClick={() => setYearGroupsExpanded(false)}
-                          className="p-1.5 text-gray-400 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
-                          title="Close expanded view"
-                          aria-label="Close expanded view"
-                        >
-                          <X className="h-4 w-4" />
-                        </button>
-                      )}
-                    </div>
-                  </div>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Assign each class with the Section dropdown. Drag only to reorder within a section. Search and bulk-move the Other list when it is long. Section changes use Undo/Redo below and are saved automatically.
-                  </p>
-                  <div className="mb-3 flex flex-wrap items-center justify-start gap-2">
-                    <button
-                      type="button"
-                      onClick={handleUndoSections}
-                      disabled={sectionUndoStack.length === 0}
-                      className={`inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        sectionUndoStack.length === 0
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      title="Undo section changes"
-                    >
-                      <Undo2 className="h-4 w-4" /> Undo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleRedoSections}
-                      disabled={sectionRedoStack.length === 0}
-                      className={`inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium rounded-lg transition-colors ${
-                        sectionRedoStack.length === 0
-                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                      title="Redo section changes"
-                    >
-                      <Redo2 className="h-4 w-4" /> Redo
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const sorted = [...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder);
-                        const maxOrder = sorted.length ? Math.max(...sorted.map(s => s.sortOrder)) : -1;
-                        updateYearGroupSections(prev => [...prev, { id: `section-${Date.now()}`, label: 'New section', sortOrder: maxOrder + 1, collapsed: false, yearGroupIds: [] }]);
-                      }}
-                      className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-100 hover:bg-teal-200 rounded-lg transition-colors"
-                    >
-                      <Plus className="h-4 w-4" /> Add section
-                    </button>
-                  </div>
-                  <div
-                    className={
-                      yearGroupsExpanded
-                        ? 'space-y-2 flex-1 min-h-0 overflow-y-auto'
-                        : 'space-y-2 max-h-[480px] overflow-y-auto'
-                    }
-                  >
+                <div className="space-y-3 max-h-[min(62vh,560px)] overflow-y-auto pr-0.5">
+                  <div className="space-y-3">
                     {[...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder).map((section) => {
                       const yearGroupsInSection = section.yearGroupIds
                         .map(token => resolveYearGroupFromToken(tempYearGroups, token))
@@ -1705,8 +1621,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       const isOther = section.id === 'other';
                       const sectionOpen = !section.collapsed || (isOther && Boolean(otherQuery));
                       return (
-                        <div key={section.id} className="rounded-lg border border-gray-200 bg-white overflow-hidden">
-                          <div className="w-full flex items-center gap-2 px-3 py-2.5 bg-gray-100 hover:bg-gray-200">
+                        <div key={section.id} className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-[#FAFAFC]">
+                          <div className="flex w-full items-center gap-2 px-3 py-2">
                           <button
                             type="button"
                             onClick={() => updateYearGroupSections(prev => prev.map(s => s.id === section.id ? { ...s, collapsed: !s.collapsed } : s))}
@@ -1715,12 +1631,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             className={`flex items-center gap-2 text-left ${editingSectionId === section.id ? 'flex-shrink-0' : 'flex-1 min-w-0'}`}
                           >
                             {sectionOpen ? (
-                              <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                              <ChevronDown className="h-4 w-4 text-[#77738F] flex-shrink-0" />
                             ) : (
-                              <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                              <ChevronRight className="h-4 w-4 text-[#77738F] flex-shrink-0" />
                             )}
                             {editingSectionId !== section.id && (
-                              <span className="font-medium text-gray-900 flex-1">{section.label}</span>
+                              <span className="flex-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
+                                {section.label}
+                              </span>
                             )}
                           </button>
                             {editingSectionId === section.id && (
@@ -1744,7 +1662,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     setEditingSectionId(null);
                                   }
                                 }}
-                                className="flex-1 min-w-0 px-2 py-0.5 border border-teal-300 rounded text-sm"
+                                className="flex-1 min-w-0 px-2 py-0.5 border border-[#bcb7f4] rounded text-sm"
                                 autoFocus
                               />
                             )}
@@ -1776,7 +1694,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 )}
                               </>
                             )}
-                            <span className="text-xs text-gray-500">({yearGroupsInSection.length})</span>
+                            <span className="rounded-md bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#77738F] ring-1 ring-[#E2E0EF]">
+                              {yearGroupsInSection.length}
+                            </span>
                           </div>
                           {isOther && (
                             <div className="p-2 space-y-2 border-t border-gray-100">
@@ -1789,7 +1709,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                   value={otherYearGroupQuery}
                                   onChange={(e) => setOtherYearGroupQuery(e.target.value)}
                                   placeholder="Search Other year groups"
-                                  className="w-full h-10 pl-8 pr-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                                  className="w-full h-10 pl-8 pr-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                                 />
                               </div>
                               {sectionOpen && visibleYearGroups.length > 0 && (
@@ -1823,13 +1743,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     onChange={setBulkOtherTargetSectionId}
                                     sections={yearGroupSections.filter((s) => s.id !== 'other')}
                                     emptyLabel="Choose section"
-                                    className="h-10 min-w-[8.5rem] flex-1 sm:flex-none px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                    className="h-10 min-w-[8.5rem] flex-1 sm:flex-none px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:outline-none"
                                   />
                                   <button
                                     type="button"
                                     onClick={handleBulkAssignOtherYearGroups}
                                     disabled={selectedOtherYearGroupIds.size === 0 || !bulkOtherTargetSectionId}
-                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 disabled:cursor-not-allowed rounded-lg"
+                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-white bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-[#bcb7f4] disabled:cursor-not-allowed rounded-lg"
                                   >
                                     Assign {selectedOtherYearGroupIds.size > 0 ? `(${selectedOtherYearGroupIds.size})` : ''}
                                   </button>
@@ -1838,13 +1758,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             </div>
                           )}
                           {sectionOpen && (
-                            <div className="p-2 pt-0 space-y-1.5 border-t border-gray-100">
+                            <div className="space-y-1 border-t border-[#E2E0EF] bg-white p-1.5">
                               {visibleYearGroups.length === 0 ? (
-                                <div className="min-h-[3rem] rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center py-3 px-2">
-                                  <p className="text-sm text-gray-500 text-center">
+                                <div className="flex min-h-[3rem] items-center justify-center rounded-xl border border-dashed border-[#E2E0EF] bg-[#F4F3FA]/50 px-2 py-3">
+                                  <p className="text-center text-[12px] text-[#77738F]">
                                     {isOther && otherQuery
-                                      ? 'No year groups match your search.'
-                                      : 'No year groups in this section. Use Add year group below, or assign a class with the Section dropdown.'}
+                                      ? 'No classes match your search.'
+                                      : 'Empty — add a class or move one here.'}
                                   </p>
                                 </div>
                               ) : (
@@ -1870,8 +1790,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         handleYearGroupDragEnd();
                                       }}
                                       onDragEnd={handleYearGroupDragEnd}
-                                      className={`p-3 rounded-lg transition-colors duration-200 ${
-                                        draggedYearGroup === yearGroup.id ? 'bg-teal-50 border-2 border-teal-300 opacity-50' : 'bg-gray-50 hover:bg-gray-100'
+                                      className={`rounded-xl px-2.5 py-2 transition-colors ${
+                                        draggedYearGroup === yearGroup.id
+                                          ? 'border border-[#bcb7f4] bg-[#E9E6FF] opacity-50'
+                                          : editingYearGroup === yearGroup.id
+                                            ? 'border border-[#E9E6FF] bg-[#F7F6FC]'
+                                            : 'border border-transparent hover:bg-[#F4F3FA]'
                                       }`}
                                     >
                                       {editingYearGroup === yearGroup.id ? (
@@ -1904,7 +1828,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                               <div>
                                                 <label className="block text-xs font-medium text-gray-600 mb-1">Colour</label>
                                                 <ColorPickerWithFavorites
-                                                  value={editingYearGroupDraft?.color ?? yearGroup.color ?? '#14B8A6'}
+                                                  value={editingYearGroupDraft?.color ?? yearGroup.color ?? '#4338E8'}
                                                   onChange={(color) => setEditingYearGroupDraft(prev => prev ? { ...prev, color } : null)}
                                                   className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
                                                 />
@@ -1931,7 +1855,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                                 setEditingYearGroupDraft(null);
                                                 setEditingYearGroup(null);
                                               }}
-                                              className="p-1.5 text-teal-600 hover:bg-teal-50 rounded"
+                                              className="p-1.5 text-[#4338E8] hover:bg-[#E9E6FF] rounded"
                                               title="Save display name and colour"
                                             >
                                               <Save className="h-5 w-5" />
@@ -1948,55 +1872,75 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                           </div>
                                         </div>
                                       ) : (
-                                        <div className="flex flex-col gap-2 sm:flex-row sm:items-center">
-                                          <div className="flex items-center gap-3 min-w-0 flex-1">
-                                            {isOther && (
-                                              <label className="flex-shrink-0 inline-flex items-center" onMouseDown={(e) => e.stopPropagation()}>
-                                                <span className="sr-only">Select {yearGroup.name}</span>
-                                                <input
-                                                  type="checkbox"
-                                                  checked={isSelectedOther}
-                                                  onChange={(e) => {
-                                                    setSelectedOtherYearGroupIds((prev) => {
-                                                      const next = new Set(prev);
-                                                      if (e.target.checked) next.add(yearGroup.id);
-                                                      else next.delete(yearGroup.id);
-                                                      return next;
-                                                    });
-                                                  }}
-                                                  className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
-                                                />
-                                              </label>
-                                            )}
-                                            <div className="flex-shrink-0 cursor-grab active:cursor-grabbing" title="Drag to reorder within this section">
-                                              <GripVertical className="h-5 w-5 text-gray-400" />
-                                            </div>
-                                            <div className="w-4 h-4 rounded-full flex-shrink-0" style={{ backgroundColor: yearGroup.color }} />
-                                            <div className="flex-1 min-w-0">
-                                              <div className="font-medium text-gray-900 truncate">{yearGroup.name}</div>
-                                              <div className="text-xs text-gray-500 truncate">ID: {yearGroup.id}</div>
-                                            </div>
-                                          </div>
-                                          <div className="flex flex-wrap items-center gap-2 sm:justify-end">
-                                            <label htmlFor={`section-${yearGroup.id}`} className="text-xs font-medium text-gray-600">
-                                              Section
+                                        <div className="flex items-center gap-2">
+                                          {isOther && (
+                                            <label className="inline-flex shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>
+                                              <span className="sr-only">Select {yearGroup.name}</span>
+                                              <input
+                                                type="checkbox"
+                                                checked={isSelectedOther}
+                                                onChange={(e) => {
+                                                  setSelectedOtherYearGroupIds((prev) => {
+                                                    const next = new Set(prev);
+                                                    if (e.target.checked) next.add(yearGroup.id);
+                                                    else next.delete(yearGroup.id);
+                                                    return next;
+                                                  });
+                                                }}
+                                                className="h-3.5 w-3.5 rounded border-[#E2E0EF] text-[#4338E8] focus:ring-[#4338E8]"
+                                              />
                                             </label>
-                                            <YearGroupSectionSelect
-                                              id={`section-${yearGroup.id}`}
-                                              value={section.id}
-                                              onChange={(next) => handleAssignYearGroupSection(yearGroup.id, next)}
-                                              sections={yearGroupSections}
-                                            />
-                                            <button type="button" onClick={() => { setEditingYearGroup(yearGroup.id); setEditingYearGroupDraft({ id: yearGroup.id, name: yearGroup.name, color: yearGroup.color || '#14B8A6' }); }} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded min-h-[36px] min-w-[36px] inline-flex items-center justify-center" aria-label={`Edit ${yearGroup.name}`}><Edit3 className="h-4 w-4" /></button>
-                                            <button
-                                              type="button"
-                                              onClick={() => void handleDeleteYearGroup(yearGroup)}
-                                              className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded min-h-[36px] min-w-[36px] inline-flex items-center justify-center"
-                                              aria-label={`Delete ${yearGroup.name}`}
-                                            >
-                                              <Trash2 className="h-4 w-4" />
-                                            </button>
+                                          )}
+                                          <div className="shrink-0 cursor-grab active:cursor-grabbing text-[#C4C0D8]" title="Drag to reorder">
+                                            <GripVertical className="h-4 w-4" />
                                           </div>
+                                          <span
+                                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                                            style={{ backgroundColor: yearGroup.color }}
+                                            aria-hidden
+                                          />
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingYearGroup(yearGroup.id);
+                                              setEditingYearGroupDraft({
+                                                id: yearGroup.id,
+                                                name: yearGroup.name,
+                                                color: yearGroup.color || '#4338E8',
+                                              });
+                                            }}
+                                            className="min-w-0 flex-1 text-left"
+                                          >
+                                            <span className="block truncate text-[13px] font-bold text-[#1F1B4D]">
+                                              {yearGroup.name}
+                                            </span>
+                                            <span className="block truncate text-[10px] font-medium text-[#9CA3AF]">
+                                              {yearGroup.id}
+                                            </span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              setEditingYearGroup(yearGroup.id);
+                                              setEditingYearGroupDraft({
+                                                id: yearGroup.id,
+                                                name: yearGroup.name,
+                                                color: yearGroup.color || '#4338E8',
+                                              });
+                                            }}
+                                            className="grid h-8 w-8 place-items-center rounded-lg text-[#77738F] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
+                                            aria-label={`Edit ${yearGroup.name}`}
+                                          >
+                                            <ChevronRight className="h-4 w-4" />
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => void handleDeleteYearGroup(yearGroup)}
+                                            className="grid h-8 w-8 place-items-center rounded-lg text-[#C4C0D8] hover:bg-red-50 hover:text-red-600"
+                                            aria-label={`Delete ${yearGroup.name}`}
+                                          >
+                                            <Trash2 className="h-3.5 w-3.5" />
+                                          </button>
                                         </div>
                                       )}
                                     </div>
@@ -2004,7 +1948,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 })
                               )}
                               {addInSectionId === section.id ? (
-                                <div className="p-3 rounded-lg border border-teal-200 bg-teal-50/60 space-y-3">
+                                <div className="p-3 rounded-lg border border-[#E2E0EF] bg-[#E9E6FF]/60 space-y-3">
                                   <p className="text-sm font-medium text-gray-900">Add year group to {section.label}</p>
                                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                     <div>
@@ -2014,7 +1958,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         value={inlineNewYearGroupId}
                                         onChange={(e) => setInlineNewYearGroupId(e.target.value)}
                                         placeholder="e.g., Year1"
-                                        className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                        className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338E8] focus:outline-none"
                                       />
                                     </div>
                                     <div>
@@ -2024,7 +1968,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         value={inlineNewYearGroupName}
                                         onChange={(e) => setInlineNewYearGroupName(e.target.value)}
                                         placeholder="e.g., Year 1"
-                                        className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                        className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338E8] focus:outline-none"
                                       />
                                     </div>
                                     <div>
@@ -2041,7 +1985,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                       type="button"
                                       onClick={() => void handleAddYearGroupInSection(section.id)}
                                       disabled={!inlineNewYearGroupId.trim() || !inlineNewYearGroupName.trim()}
-                                      className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 rounded-lg"
+                                      className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-[#bcb7f4] rounded-lg"
                                     >
                                       <Plus className="h-4 w-4" /> Add
                                     </button>
@@ -2066,7 +2010,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     setAddInSectionId(section.id);
                                     setNewYearGroupSectionId(section.id);
                                   }}
-                                  className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
+                                  className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#4338E8] bg-[#E9E6FF] hover:bg-[#E9E6FF] rounded-lg"
                                 >
                                   <Plus className="h-4 w-4" /> Add year group
                                 </button>
@@ -2080,18 +2024,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
               </div>
 
-              {/* Warning about changing IDs */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mt-6">
-                <div className="flex items-start space-x-3">
-                  <div className="text-yellow-600 flex-shrink-0 mt-0.5">⚠️</div>
-                  <div>
-                    <h4 className="font-medium text-gray-900 mb-1">Year group IDs are locked</h4>
-                    <p className="text-sm text-gray-600">
-                      Existing system IDs stay read-only so lesson and activity links remain intact. You can still change the display name, colour, and section.
-                    </p>
-                  </div>
-                </div>
-              </div>
+              <p className="text-[11px] leading-relaxed text-[#9CA3AF]">
+                System IDs stay locked so lesson links remain intact. Rename, recolour, or move a class anytime — Save Settings confirms to the cloud.
+              </p>
+              <MyHubAdministration />
             </div>
             </div>
           )}
@@ -2100,20 +2036,20 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             <>
 
               {/* Category Management */}
-              <div className="bg-teal-50 border border-teal-200 rounded-xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                  <div className="flex items-center space-x-3">
-                    <Palette className="h-6 w-6 text-teal-600" />
+              <div className="rounded-xl border border-[#E2E0EF] bg-white p-3 sm:p-4">
+                <div className="mb-3 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <Palette className="h-5 w-5 text-[#4338E8] shrink-0" />
                     <div>
-                      <h3 className="text-lg font-semibold text-gray-900">Activity Categories</h3>
-                      <p className="text-xs text-gray-500 mt-0.5">
-                        App categories are shared defaults. Create your own below — assign year groups so they show in EYFS / other classes.
+                      <h3 className="text-[15px] font-extrabold tracking-tight text-[#1F1B4D]">Activity folders</h3>
+                      <p className="text-xs text-[#77738F]">
+                        Tick which classes see each folder. That controls the Activity Library for the class in the header.
                       </p>
                     </div>
                   </div>
                   <button
                     onClick={handleResetCategories}
-                    className="px-3 py-1.5 bg-teal-100 hover:bg-teal-200 text-teal-700 text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-1"
+                    className="px-3 py-1.5 bg-[#E9E6FF] hover:bg-[#D8D4F5] text-[#4338E8] text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-1"
                   >
                     <RotateCcw className="h-3.5 w-3.5" />
                     <span>Reset options…</span>
@@ -2121,7 +2057,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
 
                 {/* Create My Category */}
-                <div className="bg-white rounded-lg border border-teal-200 p-4 mb-6">
+                <div className="bg-white rounded-lg border border-[#E2E0EF] p-4 mb-6">
                   <h4 className="font-medium text-gray-900 mb-1">+ New category (yours)</h4>
                   <p className="text-xs text-gray-500 mb-3">
                     Creates a personal category for your account. Choose year groups so it appears in the Activity Library.
@@ -2142,7 +2078,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         value={newCategoryName}
                         onChange={(e) => setNewCategoryName(e.target.value)}
                         placeholder="Category name"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                         dir="ltr"
                       />
                     </div>
@@ -2162,13 +2098,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         value={newCategoryFolder}
                         folders={categoryFolders}
                         onChange={setNewCategoryFolder}
-                        className="w-full h-10 px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                        className="w-full h-10 px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:outline-none"
                       />
                     </div>
                     <button
                       onClick={handleAddCategory}
                       disabled={!newCategoryName.trim()}
-                      className="px-4 py-2 bg-teal-600 hover:bg-teal-700 disabled:bg-teal-400 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+                      className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-[#a9a3ff] text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
                     >
                       <Plus className="h-4 w-4" />
                       <span>Add</span>
@@ -2202,7 +2138,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[70] p-4">
                     <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[80vh] flex flex-col">
                       {/* Header - Teal gradient matching other modals */}
-                      <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white flex items-center justify-between">
+                      <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white flex items-center justify-between">
                         <div className="flex items-center space-x-3">
                           <div className="p-2 bg-white bg-opacity-20 rounded-lg">
                             <Users className="h-5 w-5" />
@@ -2242,7 +2178,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     onChange={(e) => {
                                       handleYearGroupChange(yearGroup, e.target.checked);
                                     }}
-                                    className="h-5 w-5 text-teal-600 focus:ring-teal-500 border-gray-300 rounded"
+                                    className="h-5 w-5 text-[#4338E8] focus:ring-[#4338E8] border-gray-300 rounded"
                                   />
                                   <span className="text-sm font-medium text-gray-700 flex-1">{yearGroup.name}</span>
                           </label>
@@ -2267,7 +2203,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         </button>
                         <button
                           onClick={() => setShowYearGroupsModal(false)}
-                          className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors"
+                          className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white text-sm font-medium rounded-lg transition-colors"
                         >
                           Done
                         </button>
@@ -2277,12 +2213,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 )}
 
                 {/* Category List */}
-                <div className="bg-white rounded-lg border border-teal-200 p-4">
+                <div className="bg-white rounded-lg border border-[#E2E0EF] p-4">
                   <div className="flex justify-between items-center mb-3">
                     <h4 className="font-medium text-gray-900">
                       Manage Categories
                       {isRefreshing && (
-                        <span className="ml-2 text-sm text-teal-600">(Refreshing...)</span>
+                        <span className="ml-2 text-sm text-[#4338E8]">(Refreshing...)</span>
                       )}
                     </h4>
                     <button
@@ -2301,7 +2237,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         }
                       }}
                       disabled={isRefreshing}
-                      className="flex items-center gap-2 px-3 py-1 text-sm bg-teal-100 text-teal-700 rounded-md hover:bg-teal-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="flex items-center gap-2 px-3 py-1 text-sm bg-[#E9E6FF] text-[#4338E8] rounded-md hover:bg-[#D8D4F5] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                       title="Refresh categories from server"
                     >
                       <RotateCcw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
@@ -2314,7 +2250,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
                   {/* Bulk Year Group Assignment Section */}
                   {bulkYearGroupMode && (
-                    <div className="mb-6 p-5 bg-gradient-to-br from-teal-50 to-teal-100 border-2 border-teal-300 rounded-xl shadow-sm">
+                    <div className="mb-6 p-5 bg-gradient-to-br from-[#E9E6FF] to-[#D8D4F5] border-2 border-[#bcb7f4] rounded-xl shadow-sm">
                       {/* Header */}
                       <div className="flex items-start justify-between mb-4">
                         <div className="flex-1">
@@ -2342,14 +2278,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         {bulkStep1Collapsed && selectedYearGroupsForBulk.size > 0 ? (
                           <div className="flex items-center justify-between">
                             <span className="text-sm text-gray-700">
-                              <span className="font-semibold text-teal-600">{selectedYearGroupsForBulk.size} year group{selectedYearGroupsForBulk.size !== 1 ? 's' : ''} selected</span>
+                              <span className="font-semibold text-[#4338E8]">{selectedYearGroupsForBulk.size} year group{selectedYearGroupsForBulk.size !== 1 ? 's' : ''} selected</span>
                               {' — '}
                               Select categories below, then apply.
                             </span>
                             <button
                               type="button"
                               onClick={() => setBulkStep1Collapsed(false)}
-                              className="px-3 py-1.5 text-sm font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors border border-teal-200"
+                              className="px-3 py-1.5 text-sm font-medium text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-lg transition-colors border border-[#E2E0EF]"
                             >
                               Edit year groups
                             </button>
@@ -2364,7 +2300,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 <button
                                   type="button"
                                   onClick={() => setBulkStep1Collapsed(true)}
-                                  className="px-3 py-1 text-xs font-medium text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded transition-colors"
+                                  className="px-3 py-1 text-xs font-medium text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded transition-colors"
                                   title="Collapse so you can select categories below"
                                 >
                                   Collapse — select categories below
@@ -2386,7 +2322,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                       setSelectedYearGroupsForBulk(newSelected);
                                     }}
                                     className={`px-3 py-2 text-sm font-medium rounded-lg transition-all ${
-                                      isSelected ? 'bg-teal-600 hover:bg-teal-700 text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300'
+                                      isSelected ? 'bg-[#4338E8] hover:bg-[#3529d1] text-white shadow-md' : 'bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-300'
                                     }`}
                                     title={`${isSelected ? 'Deselect' : 'Select'} ${yearGroup.name}`}
                                   >
@@ -2398,7 +2334,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             <div className="flex items-center justify-between">
                               <div className="text-xs text-gray-500">
                                 {selectedYearGroupsForBulk.size > 0 ? (
-                                  <span className="text-teal-600 font-semibold">
+                                  <span className="text-[#4338E8] font-semibold">
                                     {selectedYearGroupsForBulk.size} year group{selectedYearGroupsForBulk.size !== 1 ? 's' : ''} selected
                                   </span>
                                 ) : (
@@ -2425,7 +2361,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         </label>
                         <div className="text-sm text-gray-600">
                           {selectedCategoriesForBulk.size > 0 ? (
-                            <span className="text-teal-600 font-semibold">
+                            <span className="text-[#4338E8] font-semibold">
                               {selectedCategoriesForBulk.size} categor{selectedCategoriesForBulk.size !== 1 ? 'ies' : 'y'} selected
                                 </span>
                           ) : (
@@ -2436,7 +2372,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
                       {/* Step 3: Action Buttons */}
                       {selectedCategoriesForBulk.size > 0 && selectedYearGroupsForBulk.size > 0 && (
-                        <div className="p-4 bg-white rounded-lg border-2 border-teal-300">
+                        <div className="p-4 bg-white rounded-lg border-2 border-[#bcb7f4]">
                           <label className="block text-sm font-semibold text-gray-700 mb-3">
                             Step 3: Apply Changes
                           </label>
@@ -2470,7 +2406,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 setSelectedYearGroupsForBulk(new Set());
                                 setBulkYearGroupMode(false);
                               }}
-                              className="px-5 py-2.5 bg-teal-600 hover:bg-teal-700 text-white text-sm font-semibold rounded-lg transition-colors shadow-sm flex items-center gap-2"
+                              className="px-5 py-2.5 bg-[#4338E8] hover:bg-[#3529d1] text-white text-sm font-semibold rounded-lg transition-colors shadow-sm flex items-center gap-2"
                             >
                               <Plus className="h-4 w-4" />
                               Assign Selected Year Groups
@@ -2521,7 +2457,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     <div className="mb-4 flex gap-2">
                       <button
                         onClick={() => { setBulkYearGroupMode(true); setBulkStep1Collapsed(false); }}
-                        className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
+                        className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white text-sm font-medium rounded-lg transition-colors flex items-center gap-2"
                       >
                         <Filter className="h-4 w-4" />
                         Bulk Assign Year Groups
@@ -2597,7 +2533,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                   value={uncategorisedQuery}
                                   onChange={(e) => setUncategorisedQuery(e.target.value)}
                                   placeholder="Search Uncategorised"
-                                  className="w-full h-10 pl-8 pr-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                  className="w-full h-10 pl-8 pr-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338E8] focus:outline-none"
                                 />
                               </div>
                               {visible.length > 0 && (
@@ -2633,13 +2569,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     folders={categoryFolders}
                                     onChange={setBulkFolderTarget}
                                     emptyLabel="Choose folder"
-                                    className="h-10 min-w-[8.5rem] flex-1 sm:flex-none px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                    className="h-10 min-w-[8.5rem] flex-1 sm:flex-none px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:outline-none"
                                   />
                                   <button
                                     type="button"
                                     onClick={handleBulkAssignUncategorised}
                                     disabled={selectedUncategorisedNames.size === 0 || !bulkFolderTarget}
-                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 disabled:cursor-not-allowed rounded-lg"
+                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-white bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-[#bcb7f4] disabled:cursor-not-allowed rounded-lg"
                                   >
                                     Assign {selectedUncategorisedNames.size > 0 ? `(${selectedUncategorisedNames.size})` : ''}
                                   </button>
@@ -2685,7 +2621,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       >
                       <div 
                         className={`p-3 rounded-lg transition-colors duration-200 ${
-                          bulkYearGroupMode && selectedCategoriesForBulk.has(category.name) ? 'bg-teal-100 border-teal-300 border-2' :
+                          bulkYearGroupMode && selectedCategoriesForBulk.has(category.name) ? 'bg-[#E9E6FF] border-[#bcb7f4] border-2' :
                           'bg-gray-50 hover:bg-gray-100'
                         } ${!bulkYearGroupMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
                       >
@@ -2731,7 +2667,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     setTempCategories(categories);
                                   }
                                 }}
-                                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                                  className="flex-1 px-2 py-1 border border-gray-300 rounded text-sm focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                                 dir="ltr"
                               />
                               <ColorPickerWithFavorites
@@ -2750,7 +2686,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     updateCategories(tempCategories);
                                     setEditingCategory(null);
                                   }}
-                                className="p-1.5 text-teal-600 hover:text-teal-800 hover:bg-teal-50 rounded-lg transition-colors duration-200"
+                                className="p-1.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-lg transition-colors duration-200"
                                   title="Save changes"
                               >
                                 <Save className="h-5 w-5" />
@@ -2772,7 +2708,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                   setTempCategories(updatedCategories);
                                   updateCategories(updatedCategories);
                                 }}
-                                className="w-full max-w-xs px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                                className="w-full max-w-xs px-2 py-1.5 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                               >
                                 <option value="">Uncategorised</option>
                                 {[...categoryFolders].sort((a, b) => a.position - b.position).map((folder) => (
@@ -2828,7 +2764,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                             console.error('❌ Failed to sync year group assignment:', error);
                                           }
                                         }}
-                                        className="rounded-full border border-gray-300 text-teal-600 focus:ring-teal-500 focus:ring-offset-0 checked:border-0 checked:bg-teal-600"
+                                        className="rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8] focus:ring-offset-0 checked:border-0 checked:bg-[#4338E8]"
                                       />
                                       <span className={`text-sm ${isEnabled ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>
                                         {yearGroup.name}
@@ -2855,7 +2791,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                   {isSystemCategory(category) ? (
                                     <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">App</span>
                                   ) : (
-                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-teal-50 text-teal-700 border border-teal-200">Mine</span>
+                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-[#E9E6FF] text-[#4338E8] border border-[#E2E0EF]">Mine</span>
                                   )}
                                 </div>
                                 <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center mb-2">
@@ -2872,7 +2808,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                             return next;
                                           });
                                         }}
-                                        className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                                        className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                                       />
                                       <span>Select</span>
                                     </label>
@@ -2935,7 +2871,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                             console.error('❌ Failed to sync year group assignment:', error);
                                           }
                                         }}
-                                            className="rounded-full border border-gray-300 text-teal-600 focus:ring-teal-500 focus:ring-offset-0 checked:border-0 checked:bg-teal-600"
+                                            className="rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8] focus:ring-offset-0 checked:border-0 checked:bg-[#4338E8]"
                                           />
                                           <span className={`text-xs ${isEnabled ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>{yearGroup.name}</span>
                                         </label>
@@ -2969,7 +2905,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                           console.log('✅ Closing edit mode for category:', category.name);
                                           setEditingCategoryYearGroups(null);
                                         }}
-                                        className="text-xs text-teal-600 hover:text-teal-800 px-2 py-1 hover:bg-teal-50 rounded font-medium"
+                                        className="text-xs text-[#4338E8] hover:text-[#1F1B4D] px-2 py-1 hover:bg-[#E9E6FF] rounded font-medium"
                                       >
                                         Done
                                       </button>
@@ -2988,7 +2924,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         .map(yearGroup => (
                                           <span 
                                             key={yearGroup.id} 
-                                            className="px-2 py-1 bg-teal-100 text-teal-800 text-xs font-medium rounded-full"
+                                            className="px-2 py-1 bg-[#E9E6FF] text-[#1F1B4D] text-xs font-medium rounded-full"
                                             title={yearGroup.name}
                                           >
                                             {yearGroup.name}
@@ -3005,7 +2941,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         console.log('🔄 Opening edit mode for category:', category.name, 'index:', index);
                                         setEditingCategoryYearGroups(`category-index-${index}`);
                                       }}
-                                      className="px-2 py-1 bg-teal-50 text-teal-700 text-xs font-medium rounded-full hover:bg-teal-100 transition-colors border border-teal-200 mt-1"
+                                      className="px-2 py-1 bg-[#E9E6FF] text-[#4338E8] text-xs font-medium rounded-full hover:bg-[#E9E6FF] transition-colors border border-[#E2E0EF] mt-1"
                                       title="Click to assign or edit year groups"
                                     >
                                       {(!category.yearGroups || Object.values(category.yearGroups).every(v => !v)) 
@@ -3032,7 +2968,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     }
                                     setSelectedCategoriesForBulk(newSelected);
                                   }}
-                                  className="w-4 h-4 rounded-full border border-gray-300 text-teal-600 focus:ring-teal-500 focus:ring-offset-0 checked:border-0 checked:bg-teal-600"
+                                  className="w-4 h-4 rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8] focus:ring-offset-0 checked:border-0 checked:bg-[#4338E8]"
                                 />
                               ) : (
                                 <>
@@ -3063,7 +2999,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     })
                           )}
                           {addInFolderName === folderKey ? (
-                            <div className="p-3 rounded-lg border border-teal-200 bg-teal-50/60 space-y-3">
+                            <div className="p-3 rounded-lg border border-[#E2E0EF] bg-[#E9E6FF]/60 space-y-3">
                               <p className="text-sm font-medium text-gray-900">
                                 Add category{folderName ? ` to ${folderName}` : ' to Uncategorised'}
                               </p>
@@ -3077,7 +3013,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     value={inlineNewCategoryName}
                                     onChange={(e) => setInlineNewCategoryName(e.target.value)}
                                     placeholder="Category name"
-                                    className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:outline-none"
+                                    className="w-full h-10 px-3 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338E8] focus:outline-none"
                                   />
                                 </div>
                                 <ColorPickerWithFavorites
@@ -3091,7 +3027,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                   type="button"
                                   onClick={() => void handleAddCategoryInFolder(folderKey)}
                                   disabled={!inlineNewCategoryName.trim()}
-                                  className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-teal-600 hover:bg-teal-700 disabled:bg-teal-300 rounded-lg"
+                                  className="inline-flex min-h-[40px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-white bg-[#4338E8] hover:bg-[#3529d1] disabled:bg-[#bcb7f4] rounded-lg"
                                 >
                                   <Plus className="h-4 w-4" /> Add
                                 </button>
@@ -3115,7 +3051,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 setAddInFolderName(folderKey);
                                 setNewCategoryFolder(folderKey);
                               }}
-                              className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-teal-700 bg-teal-50 hover:bg-teal-100 rounded-lg"
+                              className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#4338E8] bg-[#E9E6FF] hover:bg-[#E9E6FF] rounded-lg"
                             >
                               <Plus className="h-4 w-4" /> Add category
                             </button>
@@ -3133,7 +3069,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {activeTab === 'purchases' && (
             <div className="space-y-6">
               {/* Resource Library Header */}
-              <div className="rounded-lg p-6 bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200">
+              <div className="rounded-lg p-6 bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF]">
                 <div className="flex items-center space-x-3 mb-4">
                   <span className="text-3xl">📚</span>
                   <h3 className="text-xl font-bold text-gray-900">Resource Library</h3>
@@ -3154,14 +3090,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 {shopPacks.length > 0 && (
                   <div className="space-y-4">
                     {shopPacks.map((pack) => (
-                      <div key={pack.pack_id} className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+                      <div key={pack.pack_id} className="rounded-lg border border-[#E2E0EF] bg-white p-6 hover:shadow-lg transition-shadow">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
                             <div className="flex items-center space-x-3 mb-3">
                               <span className="text-4xl" aria-hidden>{pack.icon || '📦'}</span>
                               <div>
                                 <h5 className="text-xl font-bold text-gray-900">{pack.name}</h5>
-                                <p className="text-sm text-teal-600 font-medium">
+                                <p className="text-sm text-[#4338E8] font-medium">
                                   {pack.stack_ids?.length ? 'Full lesson pack' : 'Activity pack'}
                                 </p>
                               </div>
@@ -3178,14 +3114,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 )}
 
                 {/* Drama Games Card Set */}
-                <div className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+                <div className="rounded-lg border border-[#E2E0EF] bg-white p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
                         <span className="text-4xl">🎭</span>
                         <div>
                           <h5 className="text-xl font-bold text-gray-900">Drama Games Activity Pack</h5>
-                          <p className="text-sm text-teal-600 font-medium">50+ Drama Activities</p>
+                          <p className="text-sm text-[#4338E8] font-medium">50+ Drama Activities</p>
                         </div>
                       </div>
                       <div className="space-y-2 mb-4">
@@ -3207,14 +3143,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
 
                 {/* Commedia dell'arte for KS3 */}
-                <div className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+                <div className="rounded-lg border border-[#E2E0EF] bg-white p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
                         <span className="text-4xl">🎭</span>
                         <div>
                           <h5 className="text-xl font-bold text-gray-900">Commedia dell'arte – KS3 Drama</h5>
-                          <p className="text-sm text-teal-600 font-medium">Full lesson packs ready to use</p>
+                          <p className="text-sm text-[#4338E8] font-medium">Full lesson packs ready to use</p>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 mb-4">
@@ -3226,14 +3162,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
 
                 {/* Improvisation for KS3 */}
-                <div className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+                <div className="rounded-lg border border-[#E2E0EF] bg-white p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
                         <span className="text-4xl">🎪</span>
                         <div>
                           <h5 className="text-xl font-bold text-gray-900">Improvisation – KS3 Drama</h5>
-                          <p className="text-sm text-teal-600 font-medium">Full lesson pack</p>
+                          <p className="text-sm text-[#4338E8] font-medium">Full lesson pack</p>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 mb-4">
@@ -3245,14 +3181,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
 
                 {/* Kneehigh Theatre – KS3 */}
-                <div className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+                <div className="rounded-lg border border-[#E2E0EF] bg-white p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
                         <span className="text-4xl">🎬</span>
                         <div>
                           <h5 className="text-xl font-bold text-gray-900">Kneehigh Theatre – KS3 Drama Practitioner</h5>
-                          <p className="text-sm text-teal-600 font-medium">Full lesson pack</p>
+                          <p className="text-sm text-[#4338E8] font-medium">Full lesson pack</p>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 mb-4">
@@ -3264,14 +3200,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
 
                 {/* Brecht for KS3 */}
-                <div className="rounded-lg border border-teal-200 bg-white p-6 hover:shadow-lg transition-shadow">
+                <div className="rounded-lg border border-[#E2E0EF] bg-white p-6 hover:shadow-lg transition-shadow">
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
                       <div className="flex items-center space-x-3 mb-3">
                         <span className="text-4xl">🎭</span>
                         <div>
                           <h5 className="text-xl font-bold text-gray-900">Brecht – KS3 Drama Practitioner</h5>
-                          <p className="text-sm text-teal-600 font-medium">Full lesson pack</p>
+                          <p className="text-sm text-[#4338E8] font-medium">Full lesson pack</p>
                         </div>
                       </div>
                       <p className="text-sm text-gray-700 mb-4">
@@ -3311,14 +3247,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               </div>
 
               {/* Support Section */}
-              <div className="rounded-lg bg-teal-50 border border-teal-200 p-4 mt-6">
+              <div className="rounded-lg bg-[#E9E6FF] border border-[#E2E0EF] p-4 mt-6">
                 <div className="flex items-start space-x-3">
                   <span className="text-2xl">ℹ️</span>
                   <div className="flex-1">
                     <h6 className="font-semibold text-gray-900 mb-1">Need Help?</h6>
                     <p className="text-sm text-gray-700">
                       If a pack hasn't appeared in your library, please contact support at{' '}
-                      <a href="mailto:support@rhythmstiix.co.uk" className="text-teal-600 hover:text-teal-700 font-medium">
+                      <a href="mailto:support@rhythmstiix.co.uk" className="text-[#4338E8] hover:text-[#3529d1] font-medium">
                         support@rhythmstiix.co.uk
                       </a>
                       .
@@ -3338,9 +3274,9 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {activeTab === 'manage-packs' && (
             <div className="space-y-6">
               {/* Activity Packs Management */}
-              <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
+              <div className="border border-[#E2E0EF] bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] rounded-lg p-6 shadow-sm">
                 <div className="flex items-center space-x-3 mb-4">
-                  <Package className="h-6 w-6 text-teal-600" />
+                  <Package className="h-6 w-6 text-[#4338E8]" />
                   <h3 className="text-lg font-semibold text-gray-900">Activity Packs Management</h3>
                 </div>
                 <p className="text-sm text-gray-600 mb-6">
@@ -3361,7 +3297,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           {activeTab === 'resource-links' && (
             <div className="space-y-6">
               {/* General option (merged here – only one setting) */}
-              <div className="bg-white rounded-lg border border-teal-200 p-4 shadow-sm">
+              <div className="bg-white rounded-lg border border-[#E2E0EF] p-4 shadow-sm">
                 <h3 className="text-sm font-semibold text-gray-900 mb-3">General</h3>
                 <label className="flex items-center gap-3 cursor-pointer">
                   <input
@@ -3372,7 +3308,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       setTempSettings(prev => ({ ...prev, showButtonHelp: checked }));
                       updateSettings({ showButtonHelp: checked });
                     }}
-                    className="h-4 w-4 rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                    className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                   />
                   <span className="text-sm font-medium text-gray-900">Show hover help for buttons</span>
                 </label>
@@ -3380,10 +3316,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   When on, hovering over toolbar buttons (e.g. in Lesson Library) shows a short explanation.
                 </p>
               </div>
-              <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
+              <div className="border border-[#E2E0EF] bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] rounded-lg p-6 shadow-sm">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-3">
-                    <LinkIcon className="h-6 w-6 text-teal-600" />
+                    <LinkIcon className="h-6 w-6 text-[#4338E8]" />
                     <h3 className="text-lg font-semibold text-gray-900">Resource Links Customisation</h3>
                   </div>
                   <button
@@ -3393,7 +3329,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         setTempResourceLinks(resourceLinks);
                       }
                     }}
-                    className="px-3 py-1.5 text-sm text-teal-600 hover:text-teal-700 hover:bg-teal-100 rounded-lg transition-colors flex items-center space-x-1"
+                    className="px-3 py-1.5 text-sm text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded-lg transition-colors flex items-center space-x-1"
                   >
                     <RotateCcw className="h-4 w-4" />
                     <span>Reset to Defaults</span>
@@ -3421,7 +3357,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 updated[index] = { ...updated[index], label: e.target.value };
                                 setTempResourceLinks(updated);
                               }}
-                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                              className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                               placeholder="Resource link label"
                             />
                           </div>
@@ -3432,7 +3368,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               updated[index] = { ...updated[index], iconName: e.target.value };
                               setTempResourceLinks(updated);
                             }}
-                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                            className="px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                           >
                             {getAvailableIcons().map(icon => (
                               <option key={icon.name} value={icon.name}>{icon.label}</option>
@@ -3447,7 +3383,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 updated[index] = { ...updated[index], enabled: e.target.checked };
                                 setTempResourceLinks(updated);
                               }}
-                              className="w-4 h-4 text-teal-600 border-gray-300 rounded focus:ring-teal-500"
+                              className="w-4 h-4 text-[#4338E8] border-gray-300 rounded focus:ring-[#4338E8]"
                             />
                             <span className="text-sm text-gray-700">Enabled</span>
                           </label>
@@ -3472,7 +3408,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       setSaveSuccess(true);
                       setTimeout(() => setSaveSuccess(false), 3000);
                     }}
-                    className="px-4 py-2 text-sm font-medium text-white bg-teal-600 rounded-lg hover:bg-teal-700 transition-colors"
+                    className="px-4 py-2 text-sm font-medium text-white bg-[#4338E8] rounded-lg hover:bg-[#3529d1] transition-colors"
                   >
                     Save Changes
                   </button>
@@ -3504,7 +3440,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               <div className="space-y-3">
                 <p className="text-sm text-gray-600">User information, user types (roles), and password reset. Use Actions → Manage Access to assign Music Hub areas.</p>
                 <MyHubAdministration />
-                <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
+                <div className="border border-[#E2E0EF] bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] rounded-lg p-6 shadow-sm">
                   <UserManagement />
                 </div>
               </div>
@@ -3518,17 +3454,17 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 organisationFilter={null}
                 canAddOrganisations={canAddSubscriberOrgs}
               />
-              <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
+              <div className="border border-[#E2E0EF] bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] rounded-lg p-6 shadow-sm">
                 <HubContentApprovalQueue />
               </div>
             </div>
           )}
 
           {activeTab === 'branding' && isAdmin && (
-            <div className="border border-teal-200 bg-gradient-to-br from-teal-50 to-cyan-50 rounded-lg p-6 shadow-sm">
+            <div className="border border-[#E2E0EF] bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] rounded-lg p-6 shadow-sm">
               <div className="flex items-center justify-between mb-4">
                 <div className="flex items-center space-x-3">
-                  <Palette className="h-6 w-6 text-teal-600" />
+                  <Palette className="h-6 w-6 text-[#4338E8]" />
                   <h3 className="text-lg font-semibold text-gray-900">White-label Branding</h3>
                 </div>
                 <button
@@ -3545,7 +3481,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         footerCopyrightYear: '2026',
                         footerContactEmail: 'rob@rhythmstix.co.uk',
                         footerPrivacyUrl: 'https://www.rhythmstix.co.uk/policy',
-                        footerBackgroundColor: '#128c7e',
+                        footerBackgroundColor: '#4338E8',
                         showSocialMedia: true,
                         footerSocialLinks: [
                           { platform: 'youtube', url: 'https://www.youtube.com/channel/UCooHhU7FKALUQ4CtqjDFMsw' },
@@ -3558,7 +3494,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       toast.success('Branding reset to defaults');
                     }
                   }}
-                  className="px-3 py-1.5 text-sm text-teal-600 hover:text-teal-700 hover:bg-teal-100 rounded-lg transition-colors flex items-center space-x-1"
+                  className="px-3 py-1.5 text-sm text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded-lg transition-colors flex items-center space-x-1"
                 >
                   <RotateCcw className="h-4 w-4" />
                   <span>Reset to defaults</span>
@@ -3684,7 +3620,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       value={tempSettings.branding?.footerBackgroundColor ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, footerBackgroundColor: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="#128c7e"
+                      placeholder="#4338E8"
                     />
                   </div>
                   <label className="flex items-center gap-2">
@@ -3743,7 +3679,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         const next = [...(tempSettings.branding?.footerSocialLinks ?? []), { platform: 'youtube', url: '' }];
                         setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, footerSocialLinks: next } }));
                       }}
-                      className="flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-700"
+                      className="flex items-center gap-1.5 text-sm text-[#4338E8] hover:text-[#3529d1]"
                     >
                       <Plus className="h-4 w-4" />
                       Add social link
@@ -3759,16 +3695,16 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
         </div>
 
         {/* Footer */}
-        <div className="flex flex-col-reverse gap-3 p-4 sm:flex-row sm:justify-between sm:p-6 border-t border-gray-200 bg-gray-50">
+        <div className="flex flex-col-reverse gap-2 border-t border-[#E2E0EF] bg-white p-3 sm:flex-row sm:items-center sm:justify-between sm:px-5 sm:py-3.5">
           <button
             onClick={handleCancel}
-            className="w-full sm:w-auto min-h-[44px] px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="inline-flex h-10 w-full items-center justify-center rounded-xl border border-[#E2E0EF] bg-white px-4 text-[13px] font-bold text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D] sm:w-auto"
           >
             Cancel
           </button>
           <button
             onClick={handleSave}
-            className="w-full sm:w-auto min-h-[44px] px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
+            className="inline-flex h-10 w-full items-center justify-center rounded-xl bg-[#4338E8] px-5 text-[13px] font-extrabold text-white hover:bg-[#3529d1] sm:w-auto"
           >
             Save Settings
           </button>

@@ -205,7 +205,7 @@ export function TimeSlotLessonModal({
               placeholder="Search lessons..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
             />
           </div>
         </div>
@@ -231,12 +231,12 @@ export function TimeSlotLessonModal({
                     key={lessonNumber}
                     onClick={() => handleSelectLesson(lessonNumber)}
                     disabled={isAdding}
-                    className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-teal-400 hover:bg-teal-50 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full text-left p-4 border border-gray-200 rounded-lg hover:border-[#bcb7f4] hover:bg-[#E9E6FF] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     <div className="flex items-start justify-between">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center space-x-2 mb-2">
-                          <span className="text-sm font-semibold text-teal-600 bg-teal-100 px-2 py-1 rounded">
+                          <span className="text-sm font-semibold text-[#4338E8] bg-[#E9E6FF] px-2 py-1 rounded">
                             Lesson {lessonNumber}
                           </span>
                           {duration > 0 && (
@@ -268,8 +268,8 @@ export function TimeSlotLessonModal({
                         )}
                       </div>
                       <div className="ml-4 flex-shrink-0">
-                        <div className="w-8 h-8 rounded-full bg-teal-100 flex items-center justify-center">
-                          <Check className="h-4 w-4 text-teal-600" />
+                        <div className="w-8 h-8 rounded-full bg-[#E9E6FF] flex items-center justify-center">
+                          <Check className="h-4 w-4 text-[#4338E8]" />
                         </div>
                       </div>
                     </div>

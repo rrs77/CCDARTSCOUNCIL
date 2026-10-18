@@ -291,7 +291,7 @@ export function SimpleNestedCategoryDropdown({
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 placeholder="Search categories..."
-                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none"
+                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8] outline-none"
                 onClick={(e) => e.stopPropagation()}
               />
               {searchQuery && (
@@ -329,7 +329,7 @@ export function SimpleNestedCategoryDropdown({
                     return (
                       <React.Fragment key={sectionId}>
                         <li
-                          className="px-2 py-2 bg-gray-100 border-t border-gray-200 text-sm font-semibold text-gray-800 flex items-center justify-between cursor-pointer hover:bg-teal-50"
+                          className="px-2 py-2 bg-gray-100 border-t border-gray-200 text-sm font-semibold text-gray-800 flex items-center justify-between cursor-pointer hover:bg-[#E9E6FF]"
                           onClick={(e) => { e.preventDefault(); e.stopPropagation(); toggleKeyStageExpansion(sectionId); }}
                           onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
                           onMouseUp={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -344,7 +344,7 @@ export function SimpleNestedCategoryDropdown({
                           <li
                             key={category.name}
                             className={`flex items-center gap-2 px-6 py-2 text-sm cursor-pointer transition-colors duration-150 ${
-                              selectedCategory === category.name ? 'bg-teal-100 font-medium' : 'text-gray-700 hover:bg-teal-50'
+                              selectedCategory === category.name ? 'bg-[#E9E6FF] font-medium' : 'text-gray-700 hover:bg-[#E9E6FF]'
                             }`}
                             onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleSelectCategory(category.name); }}
                             onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
@@ -393,7 +393,7 @@ export function SimpleNestedCategoryDropdown({
             {sortedGroups.map(groupName => (
               <React.Fragment key={groupName}>
                 <li 
-                  className="px-2 py-2 bg-gray-50 border-t border-b border-gray-200 text-sm font-semibold text-gray-800 flex items-center justify-between cursor-pointer hover:bg-teal-50 transition-all duration-150"
+                  className="px-2 py-2 bg-gray-50 border-t border-b border-gray-200 text-sm font-semibold text-gray-800 flex items-center justify-between cursor-pointer hover:bg-[#E9E6FF] transition-all duration-150"
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -425,8 +425,8 @@ export function SimpleNestedCategoryDropdown({
                     key={category.name}
                     className={`flex items-center gap-2 px-6 py-2 text-sm cursor-pointer transition-colors duration-150 ${
                       selectedCategory === category.name 
-                        ? 'bg-teal-100 font-medium' 
-                        : 'text-gray-700 hover:bg-teal-50'
+                        ? 'bg-[#E9E6FF] font-medium' 
+                        : 'text-gray-700 hover:bg-[#E9E6FF]'
                     }`}
                     style={{
                       color: selectedCategory === category.name ? '#374151' : undefined

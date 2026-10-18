@@ -68,7 +68,7 @@ export function MyDownloads() {
   if (loading) {
     return (
       <div className="flex justify-center py-10">
-        <Loader2 className="h-7 w-7 animate-spin text-teal-600" />
+        <Loader2 className="h-7 w-7 animate-spin text-[#4338E8]" />
       </div>
     );
   }
@@ -132,7 +132,7 @@ export function MyDownloads() {
                     <button
                       type="button"
                       onClick={() => void redownload(ev.resource_id)}
-                      className="text-teal-700 hover:underline"
+                      className="text-[#4338E8] hover:underline"
                     >
                       Download
                     </button>

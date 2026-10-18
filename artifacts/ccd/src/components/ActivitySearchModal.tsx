@@ -87,7 +87,7 @@ export function ActivitySearchModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[100] p-4">
       <div className="bg-white rounded-card shadow-soft w-full max-w-4xl max-h-[80vh] flex flex-col">
         {/* Header - Teal gradient matching other modals */}
-        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white flex items-center justify-between">
+        <div className="p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white flex items-center justify-between">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-white bg-opacity-20 rounded-lg">
               <Plus className="h-5 w-5" />
@@ -118,7 +118,7 @@ export function ActivitySearchModal({
                 placeholder="Search activities..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-teal-500 focus:border-teal-500 outline-none bg-white"
+                className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8] outline-none bg-white"
                 autoFocus
               />
             </div>
@@ -137,11 +137,11 @@ export function ActivitySearchModal({
           {(selectedCategory || searchQuery) && (
             <div className="flex items-center gap-2 mt-3 flex-wrap">
               {selectedCategory && (
-                <span className="inline-flex items-center px-3 py-1 bg-teal-100 text-teal-800 text-xs font-medium rounded-full">
+                <span className="inline-flex items-center px-3 py-1 bg-[#E9E6FF] text-[#1F1B4D] text-xs font-medium rounded-full">
                   {selectedCategory}
                   <button
                     onClick={() => setSelectedCategory(null)}
-                    className="ml-2 hover:text-teal-900"
+                    className="ml-2 hover:text-[#1F1B4D]"
                   >
                     <X className="h-3 w-3" />
                   </button>
@@ -185,7 +185,7 @@ export function ActivitySearchModal({
                     onClick={(e) => handleActivityClick(activity, e)}
                     className={`relative flex items-center py-2.5 px-4 transition-all duration-200 group ${
                       isSelected 
-                        ? 'bg-teal-50' 
+                        ? 'bg-[#E9E6FF]' 
                         : 'hover:bg-gray-50 cursor-pointer'
                     }`}
                   >
@@ -233,8 +233,8 @@ export function ActivitySearchModal({
                     {/* Selection checkbox - matches app styling */}
                     <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 ${
                       isSelected 
-                        ? 'bg-teal-600 border-teal-600' 
-                        : 'border-gray-300 group-hover:border-teal-400'
+                        ? 'bg-[#4338E8] border-[#4338E8]' 
+                        : 'border-gray-300 group-hover:border-[#bcb7f4]'
                     }`}>
                       {isSelected && (
                         <Check className="h-3 w-3 text-white" />
@@ -262,7 +262,7 @@ export function ActivitySearchModal({
           </div>
           <button
             onClick={onClose}
-            className="px-6 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors"
+            className="px-6 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors"
           >
             Done
           </button>

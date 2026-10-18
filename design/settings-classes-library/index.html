@@ -1,0 +1,278 @@
+<!doctype html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>CCDesigner · My classes — simpler Settings</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo">CCD</span>
+        <div>
+          <p class="eyebrow">Design preview · simpler pass</p>
+          <h1>My classes</h1>
+        </div>
+      </div>
+      <p class="lede">One Settings screen. Open a class → choose which folders it sees. Partner packs are added in Partner Hubs, not here.</p>
+    </header>
+
+    <div class="shell" id="shell">
+      <div class="modal">
+        <div class="modal-head">
+          <h2>Settings</h2>
+          <button type="button" class="ghost" disabled aria-hidden="true">✕</button>
+        </div>
+
+        <!-- Single surface — no Year Groups / Categories / Folders tabs -->
+        <section class="view" id="view-classes" aria-labelledby="classes-title">
+          <div class="view-toolbar">
+            <div>
+              <h3 id="classes-title">My classes</h3>
+              <p class="hint">These are the classes you plan for. Tap one to set its name and folders.</p>
+            </div>
+            <button type="button" class="primary" id="open-add-class">+ Add class</button>
+          </div>
+
+          <div class="stage-block" data-stage="EYFS">
+            <h4>EYFS <span>3</span></h4>
+            <ul class="class-list">
+              <li>
+                <button type="button" class="class-row" data-class="lkg" data-name="Lower Kindergarten Music" data-stage="EYFS" data-color="#10B981" data-preset="eyfs-music">
+                  <span class="dot" style="background:#10B981"></span>
+                  <span class="meta">
+                    <strong>Lower Kindergarten Music</strong>
+                    <em>Welcome · Kodály · Vocal warm-ups</em>
+                  </span>
+                  <span class="chev">Open</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="class-row" data-class="ukg" data-name="Upper Kindergarten Music" data-stage="EYFS" data-color="#0EA5E9" data-preset="eyfs-music">
+                  <span class="dot" style="background:#0EA5E9"></span>
+                  <span class="meta">
+                    <strong>Upper Kindergarten Music</strong>
+                    <em>Welcome · Kodály · Vocal warm-ups</em>
+                  </span>
+                  <span class="chev">Open</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="class-row" data-class="rec" data-name="Reception Drama" data-stage="EYFS" data-color="#7C3AED" data-preset="drama">
+                  <span class="dot" style="background:#7C3AED"></span>
+                  <span class="meta">
+                    <strong>Reception Drama</strong>
+                    <em>Drama Games</em>
+                  </span>
+                  <span class="chev">Open</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="stage-block" data-stage="KS2">
+            <h4>KS2 <span>2</span></h4>
+            <ul class="class-list">
+              <li>
+                <button type="button" class="class-row" data-class="y6" data-name="Year 6 Music" data-stage="KS2" data-color="#3B82F6" data-preset="y6">
+                  <span class="dot" style="background:#3B82F6"></span>
+                  <span class="meta">
+                    <strong>Year 6 Music</strong>
+                    <em>Vocal warm-ups · LSO orchestra</em>
+                  </span>
+                  <span class="chev">Open</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="class-row" data-class="y5" data-name="Year 5 Music" data-stage="KS2" data-color="#6366F1" data-preset="ks2">
+                  <span class="dot" style="background:#6366F1"></span>
+                  <span class="meta">
+                    <strong>Year 5 Music</strong>
+                    <em>Vocal warm-ups</em>
+                  </span>
+                  <span class="chev">Open</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="stage-block" data-stage="KS3">
+            <h4>KS3 <span>2</span></h4>
+            <ul class="class-list">
+              <li>
+                <button type="button" class="class-row" data-class="y7d" data-name="Year 7 Drama" data-stage="KS3" data-color="#A855F7" data-preset="y7-drama">
+                  <span class="dot" style="background:#A855F7"></span>
+                  <span class="meta">
+                    <strong>Year 7 Drama</strong>
+                    <em>Year 7 Drama · We Teach Drama</em>
+                  </span>
+                  <span class="chev">Open</span>
+                </button>
+              </li>
+              <li>
+                <button type="button" class="class-row" data-class="y8" data-name="Year 8 Music" data-stage="KS3" data-color="#0EA5E9" data-preset="y8">
+                  <span class="dot" style="background:#0EA5E9"></span>
+                  <span class="meta">
+                    <strong>Year 8 Music</strong>
+                    <em>Vocal warm-ups · 4 Chords</em>
+                  </span>
+                  <span class="chev">Open</span>
+                </button>
+              </li>
+            </ul>
+          </div>
+        </section>
+
+        <footer class="modal-foot quiet">
+          <p class="fine">Need a new pack from an arts organisation? Add it in <strong>Partner Hubs</strong> — it will show up as a folder on the class.</p>
+          <button type="button" class="ghost">Close</button>
+        </footer>
+      </div>
+
+      <!-- Add class — short -->
+      <aside class="drawer hidden" id="drawer-add-class" role="dialog" aria-labelledby="add-class-title" aria-modal="true">
+        <div class="drawer-scrim" data-close></div>
+        <div class="drawer-panel">
+          <header>
+            <h3 id="add-class-title">Add class</h3>
+            <button type="button" class="icon-close" data-close aria-label="Close">✕</button>
+          </header>
+          <form class="form" id="form-add-class">
+            <label>
+              Class name
+              <input type="text" name="name" placeholder="e.g. Year 6 Music" required autocomplete="off" />
+            </label>
+            <label>
+              Stage
+              <select name="stage" id="add-stage">
+                <option>EYFS</option>
+                <option>KS1</option>
+                <option selected>KS2</option>
+                <option>KS3</option>
+                <option>KS4</option>
+                <option>Other</option>
+              </select>
+            </label>
+            <fieldset>
+              <legend>Colour</legend>
+              <div class="swatches" role="radiogroup" aria-label="Class colour">
+                <label class="swatch"><input type="radio" name="color" value="#10B981" checked /><span style="background:#10B981"></span></label>
+                <label class="swatch"><input type="radio" name="color" value="#0EA5E9" /><span style="background:#0EA5E9"></span></label>
+                <label class="swatch"><input type="radio" name="color" value="#3B82F6" /><span style="background:#3B82F6"></span></label>
+                <label class="swatch"><input type="radio" name="color" value="#7C3AED" /><span style="background:#7C3AED"></span></label>
+                <label class="swatch"><input type="radio" name="color" value="#EC4899" /><span style="background:#EC4899"></span></label>
+                <label class="swatch"><input type="radio" name="color" value="#F59E0B" /><span style="background:#F59E0B"></span></label>
+              </div>
+            </fieldset>
+            <p class="fine callout">We’ll switch on a few free starter folders for this stage. You can turn them off on the next screen.</p>
+            <div class="form-actions">
+              <button type="button" class="ghost" data-close>Cancel</button>
+              <button type="submit" class="primary">Continue</button>
+            </div>
+          </form>
+        </div>
+      </aside>
+
+      <!-- Class = the only place you manage folders -->
+      <aside class="drawer hidden" id="drawer-class" role="dialog" aria-labelledby="class-detail-title" aria-modal="true">
+        <div class="drawer-scrim" data-close></div>
+        <div class="drawer-panel wide">
+          <header>
+            <div class="class-head">
+              <span class="dot lg" id="class-detail-dot"></span>
+              <div>
+                <p class="eyebrow" id="class-detail-stage">KS2</p>
+                <h3 id="class-detail-title">Year 6 Music</h3>
+              </div>
+            </div>
+            <button type="button" class="icon-close" data-close aria-label="Close">✕</button>
+          </header>
+
+          <div class="panel-body">
+            <label class="inline-edit">
+              Name
+              <input type="text" id="class-detail-name" />
+            </label>
+
+            <div class="folder-pick">
+              <div class="folder-pick-head">
+                <h4>Folders for this class</h4>
+                <p>On = these activities appear in the library when you plan for this class. <strong id="folder-count">0 on</strong></p>
+              </div>
+
+              <p class="group-label">Free with CCDesigner</p>
+              <ul class="check-list toggle-list" id="list-included">
+                <li data-id="welcome"><label><input type="checkbox" /> Welcome</label></li>
+                <li data-id="kodaly"><label><input type="checkbox" /> Kodály Songs</label></li>
+                <li data-id="vocal"><label><input type="checkbox" /> Vocal warm-ups</label></li>
+                <li data-id="drama"><label><input type="checkbox" /> Drama Games</label></li>
+                <li data-id="core"><label><input type="checkbox" /> Core Songs</label></li>
+              </ul>
+
+              <p class="group-label">Yours</p>
+              <ul class="check-list toggle-list" id="list-yours">
+                <li data-id="y7-drama"><label><input type="checkbox" /> Year 7 Drama</label></li>
+                <li data-id="ks1-drama"><label><input type="checkbox" /> KS1 Drama Games</label></li>
+              </ul>
+              <button type="button" class="add-inline" id="open-add-folder">+ Create folder for this class</button>
+
+              <p class="group-label">From Partner Hubs</p>
+              <ul class="check-list toggle-list" id="list-partner">
+                <li data-id="lso"><label><input type="checkbox" /> How to Build an Orchestra <em>LSO</em></label></li>
+                <li data-id="roh"><label><input type="checkbox" /> Romeo and Juliet <em>ROH</em></label></li>
+                <li data-id="chords"><label><input type="checkbox" /> 4 Chords</label></li>
+                <li data-id="wtd"><label><input type="checkbox" /> We Teach Drama packs <em>WTD</em></label></li>
+                <li data-id="jazz"><label><input type="checkbox" /> Jazz North worksheets <em>Jazz</em></label></li>
+              </ul>
+              <p class="fine hubs-hint">Missing a pack? Add it in Partner Hubs — then tick it here.</p>
+            </div>
+          </div>
+
+          <div class="form-actions sticky">
+            <button type="button" class="danger-ghost">Remove class</button>
+            <div class="spacer"></div>
+            <button type="button" class="primary" data-close>Done</button>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Create folder — only from inside a class -->
+      <aside class="drawer hidden" id="drawer-add-folder" role="dialog" aria-labelledby="add-folder-title" aria-modal="true">
+        <div class="drawer-scrim" data-close-folder></div>
+        <div class="drawer-panel">
+          <header>
+            <h3 id="add-folder-title">New folder</h3>
+            <button type="button" class="icon-close" data-close-folder aria-label="Close">✕</button>
+          </header>
+          <form class="form" id="form-add-folder">
+            <label>
+              Name
+              <input type="text" name="name" placeholder="e.g. Year 7 Drama or KS1 Drama Games" required autocomplete="off" />
+            </label>
+            <p class="fine">This folder will be switched on for <strong id="folder-for-class">this class</strong>. You can tick it on other classes later.</p>
+            <div class="form-actions">
+              <button type="button" class="ghost" data-close-folder>Cancel</button>
+              <button type="submit" class="primary">Create</button>
+            </div>
+          </form>
+        </div>
+      </aside>
+    </div>
+
+    <aside class="notes">
+      <h2>Simpler model</h2>
+      <ol>
+        <li><strong>Settings</strong> = list of classes only.</li>
+        <li><strong>Open a class</strong> = name + folder on/off. That’s the whole library setup.</li>
+        <li><strong>Create folder</strong> from the class (friendly names).</li>
+        <li><strong>Partner Hubs</strong> = add arts-org packs; they appear as ticks here.</li>
+      </ol>
+      <p>No separate Categories / Year Groups / Activity folders tabs.</p>
+      <p class="fine">Refresh http://127.0.0.1:8766/</p>
+    </aside>
+  </div>
+  <script src="app.js"></script>
+</body>
+</html>

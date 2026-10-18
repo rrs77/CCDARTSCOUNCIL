@@ -182,7 +182,7 @@ export function ResourceViewer({ url, title, type, onClose }: ResourceViewerProp
                   href={url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center space-x-2 px-6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors"
+                  className="inline-flex items-center space-x-2 px-6 py-3 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors"
                 >
                   <ExternalLink className="h-5 w-5" />
                   <span>Open {getResourceTypeLabel()}</span>

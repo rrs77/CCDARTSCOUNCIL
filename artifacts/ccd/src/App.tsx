@@ -371,20 +371,20 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="ccd-studio-root min-h-screen bg-[#EDECF2] flex flex-col">
       <Toaster 
         position="top-right"
         toastOptions={{
           duration: 4000,
           style: {
-            background: '#fff',
-            color: '#333',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+            background: '#1F1B4D',
+            color: '#fff',
+            boxShadow: '0 4px 12px rgba(31,27,77,0.2)',
           },
           success: {
             iconTheme: {
-              primary: '#0D9488',
-              secondary: '#fff',
+              primary: '#FFC93C',
+              secondary: '#1F1B4D',
             },
           },
           error: {
@@ -397,7 +397,14 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       />
       {showPreviewBanner && <PreviewBanner />}
       <Header />
-      <main className={`flex-1 pb-44 md:pb-24 ${showPreviewBanner ? 'pt-[calc(3.5rem+var(--preview-banner-height,0px))] sm:pt-[calc(4rem+var(--preview-banner-height,0px))]' : 'pt-14 sm:pt-16'}`}>
+      {/* Studio Score: shell fills the viewport; no old max-width dashboard card */}
+      <main
+        className={`flex-1 min-w-0 pb-20 md:pb-4 ${
+          showPreviewBanner
+            ? 'pt-[calc(3.5rem+var(--preview-banner-height,0px))] sm:pt-[calc(4rem+var(--preview-banner-height,0px))]'
+            : 'pt-14 sm:pt-16'
+        }`}
+      >
         <Dashboard />
       </main>
       <Footer />

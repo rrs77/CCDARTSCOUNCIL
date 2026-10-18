@@ -1713,12 +1713,12 @@ export function LessonPrintModal({
                   type="checkbox"
                   checked={exportUseCustomHeaderFooter}
                   onChange={(e) => setExportUseCustomHeaderFooter(e.target.checked)}
-                  className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  className="rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                 />
                 <span className="text-sm font-medium text-gray-700">Use custom header & footer</span>
               </label>
               {exportUseCustomHeaderFooter && (
-                <div className="pl-6 space-y-2 border-l-2 border-teal-200">
+                <div className="pl-6 space-y-2 border-l-2 border-[#E2E0EF]">
                   <div>
                     <label className="block text-xs font-medium text-gray-500 mb-1">Custom header</label>
                     <input
@@ -1726,7 +1726,7 @@ export function LessonPrintModal({
                       value={exportCustomHeader}
                       onChange={(e) => setExportCustomHeader(e.target.value)}
                       placeholder="e.g. Lesson 3, Autumn 1 - Year 2 Music"
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                     />
                   </div>
                   <div>
@@ -1736,7 +1736,7 @@ export function LessonPrintModal({
                       value={exportCustomFooter}
                       onChange={(e) => setExportCustomFooter(e.target.value)}
                       placeholder={`e.g. ${productName} • Lesson 3 • © ${footerYear}`}
-                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500"
+                      className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-[#4338E8]"
                     />
                   </div>
                 </div>
@@ -1776,7 +1776,7 @@ export function LessonPrintModal({
                   }}
                   disabled={isExporting || isSharing || isSharingSingle}
                   aria-label="Copy share link to clipboard"
-                  className={`px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
+                  className={`px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
                     isExporting || isSharing || isSharingSingle ? 'opacity-50 cursor-not-allowed' : ''
                   }`}
                 >
@@ -1804,16 +1804,16 @@ export function LessonPrintModal({
           {shareUrl && shareSuccess && (
             <div 
               data-share-url
-              className="p-4 border-t border-teal-200 bg-teal-50"
+              className="p-4 border-t border-[#E2E0EF] bg-[#E9E6FF]"
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-teal-900 mb-1">Shareable URL:</p>
-                  <p className="text-xs text-teal-700 break-all">{shareUrl}</p>
+                  <p className="text-sm font-medium text-[#1F1B4D] mb-1">Shareable URL:</p>
+                  <p className="text-xs text-[#4338E8] break-all">{shareUrl}</p>
                 </div>
                 <button
                     onClick={() => copyToClipboard(shareUrl)}
-                    className="ml-3 p-2 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-lg transition-colors"
+                    className="ml-3 p-2 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-lg transition-colors"
                     title="Copy URL"
                 >
                   <Copy className="h-4 w-4" />

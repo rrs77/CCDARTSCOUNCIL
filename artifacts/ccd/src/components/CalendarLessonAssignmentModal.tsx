@@ -154,7 +154,7 @@ export function CalendarLessonAssignmentModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="p-4 sm:p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
+        <div className="p-4 sm:p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #4338E8, #4338E8)' }}>
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
               <h2 className="text-xl sm:text-2xl font-bold">Add to Calendar</h2>
@@ -182,7 +182,7 @@ export function CalendarLessonAssignmentModal({
             }}
             className={`flex-1 min-h-[48px] px-3 sm:px-6 py-3 sm:py-4 font-medium transition-colors ${
               activeTab === 'lesson'
-                ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50'
+                ? 'text-[#4338E8] border-b-2 border-[#4338E8] bg-[#E9E6FF]'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
@@ -199,7 +199,7 @@ export function CalendarLessonAssignmentModal({
             }}
             className={`flex-1 min-h-[48px] px-3 sm:px-6 py-3 sm:py-4 font-medium transition-colors ${
               activeTab === 'stack'
-                ? 'text-teal-600 border-b-2 border-teal-600 bg-teal-50'
+                ? 'text-[#4338E8] border-b-2 border-[#4338E8] bg-[#E9E6FF]'
                 : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
             }`}
           >
@@ -221,13 +221,13 @@ export function CalendarLessonAssignmentModal({
                 placeholder={activeTab === 'lesson' ? 'Search lessons...' : 'Search stacks...'}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-button focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-button focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
               />
             </div>
           </div>
 
           {/* Spread Days Input – for stacks, auto-set to lesson count (one lesson per session on timetable days) */}
-          <div className="mb-6 p-4 bg-teal-50 rounded-card border border-teal-200">
+          <div className="mb-6 p-4 bg-[#E9E6FF] rounded-card border border-[#E2E0EF]">
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Spread over how many sessions?
             </label>
@@ -238,17 +238,17 @@ export function CalendarLessonAssignmentModal({
                 max="20"
                 value={spreadDays}
                 onChange={(e) => setSpreadDays(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-24 px-3 py-2 border border-gray-300 rounded-button focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                className="w-24 px-3 py-2 border border-gray-300 rounded-button focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
               />
               <span className="text-sm text-gray-600">
                 {spreadDays === 1 ? 'session' : 'sessions'}
                 {activeTab === 'stack' && selectedStackData && (
-                  <span className="text-teal-600 ml-2">
+                  <span className="text-[#4338E8] ml-2">
                     (1 lesson per session from start date)
                   </span>
                 )}
                 {activeTab === 'lesson' && timetableClasses.length > 0 && (
-                  <span className="text-teal-600 ml-2">
+                  <span className="text-[#4338E8] ml-2">
                     (Based on your timetable)
                   </span>
                 )}
@@ -260,7 +260,7 @@ export function CalendarLessonAssignmentModal({
               </p>
             )}
             {timetableClasses.length > 0 && activeTab === 'stack' && selectedStackData && (
-              <p className="text-xs text-teal-700 mt-2">
+              <p className="text-xs text-[#4338E8] mt-2">
                 Sessions will use your class timetable days from the start date you chose.
               </p>
             )}
@@ -285,14 +285,14 @@ export function CalendarLessonAssignmentModal({
                       onClick={() => setSelectedLesson(lessonNumber)}
                       className={`w-full text-left p-4 rounded-card border-2 transition-all ${
                         isSelected
-                          ? 'border-teal-500 bg-teal-50 shadow-soft'
-                          : 'border-gray-200 hover:border-teal-300 hover:bg-gray-50'
+                          ? 'border-[#4338E8] bg-[#E9E6FF] shadow-soft'
+                          : 'border-gray-200 hover:border-[#bcb7f4] hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <BookOpen className="h-4 w-4 text-teal-600" />
+                            <BookOpen className="h-4 w-4 text-[#4338E8]" />
                             <span className="font-semibold text-gray-900">{title}</span>
                           </div>
                           {lessonData && (
@@ -308,7 +308,7 @@ export function CalendarLessonAssignmentModal({
                           )}
                         </div>
                         {isSelected && (
-                          <div className="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-[#4338E8] flex items-center justify-center">
                             <ChevronRight className="h-4 w-4 text-white" />
                           </div>
                         )}
@@ -337,14 +337,14 @@ export function CalendarLessonAssignmentModal({
                       onClick={() => setSelectedStack(stack.id)}
                       className={`w-full text-left p-4 rounded-card border-2 transition-all ${
                         isSelected
-                          ? 'border-teal-500 bg-teal-50 shadow-soft'
-                          : 'border-gray-200 hover:border-teal-300 hover:bg-gray-50'
+                          ? 'border-[#4338E8] bg-[#E9E6FF] shadow-soft'
+                          : 'border-gray-200 hover:border-[#bcb7f4] hover:bg-gray-50'
                       }`}
                     >
                       <div className="flex items-center justify-between">
                         <div className="flex-1">
                           <div className="flex items-center space-x-2 mb-1">
-                            <Layers className="h-4 w-4 text-teal-600" />
+                            <Layers className="h-4 w-4 text-[#4338E8]" />
                             <span className="font-semibold text-gray-900">{stack.name}</span>
                           </div>
                           {stack.description && (
@@ -359,7 +359,7 @@ export function CalendarLessonAssignmentModal({
                           </div>
                         </div>
                         {isSelected && (
-                          <div className="w-6 h-6 rounded-full bg-teal-600 flex items-center justify-center">
+                          <div className="w-6 h-6 rounded-full bg-[#4338E8] flex items-center justify-center">
                             <ChevronRight className="h-4 w-4 text-white" />
                           </div>
                         )}
@@ -392,7 +392,7 @@ export function CalendarLessonAssignmentModal({
             <button
               onClick={handleAssign}
               disabled={!selectedLesson && !selectedStack}
-              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-button transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+              className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-button transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
             >
               <Calendar className="h-4 w-4" />
               <span>Add to Calendar</span>

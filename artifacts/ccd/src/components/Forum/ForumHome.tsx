@@ -63,7 +63,7 @@ export function ForumHome({
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="font-serif text-3xl text-[#002D24]">
+        <h1 className="text-3xl font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>
           {searchQuery ? `Search: ${searchQuery}` : 'Community'}
         </h1>
         <p className="mt-2 max-w-2xl text-sm text-gray-600">
@@ -89,7 +89,7 @@ export function ForumHome({
 
       {!searchQuery && (
         <section>
-          <h2 className="mb-3 text-lg font-semibold text-[#002D24]">Categories</h2>
+          <h2 className="mb-3 text-lg font-semibold text-[#1F1B4D]">Categories</h2>
           {loading && <p className="text-sm text-gray-500">Loading…</p>}
           <ul className="divide-y divide-[#e2ebe8] rounded-xl border border-[#d5e0dc] bg-white">
             {categories.map((c) => (
@@ -134,7 +134,7 @@ export function ForumHome({
 
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-          <h2 className="text-lg font-semibold text-[#002D24]">
+          <h2 className="text-lg font-semibold text-[#1F1B4D]">
             {searchQuery ? 'Results' : 'Topics'}
           </h2>
           <div className="flex gap-1 text-sm">
@@ -144,7 +144,7 @@ export function ForumHome({
                 type="button"
                 onClick={() => setFilter(f)}
                 className={`rounded-lg px-3 py-1.5 capitalize ${
-                  filter === f ? 'bg-[#002D24] text-white' : 'bg-white text-gray-700 ring-1 ring-[#d5e0dc]'
+                  filter === f ? 'bg-[#1F1B4D] text-white' : 'bg-white text-gray-700 ring-1 ring-[#d5e0dc]'
                 }`}
               >
                 {f}
@@ -163,7 +163,7 @@ export function ForumHome({
                 <div>
                   <div className="font-medium text-gray-900">
                     {t.is_pinned && (
-                      <span className="mr-2 text-[11px] font-semibold uppercase text-teal-700">
+                      <span className="mr-2 text-[11px] font-semibold uppercase text-[#4338E8]">
                         Pinned
                       </span>
                     )}

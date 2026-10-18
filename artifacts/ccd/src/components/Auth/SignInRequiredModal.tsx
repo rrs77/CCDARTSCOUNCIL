@@ -49,7 +49,7 @@ export function SignInRequiredModal({
       >
         <div className="mb-4 flex items-start justify-between gap-3">
           <div className="flex items-center gap-2">
-            <Lock className="h-5 w-5 text-[#002D24]" aria-hidden />
+            <Lock className="h-5 w-5 text-[#1F1B4D]" aria-hidden />
             <h2 id="signin-required-title" className="text-lg font-semibold text-gray-900">
               Sign in required
             </h2>
@@ -87,7 +87,7 @@ export function SignInRequiredModal({
             <button
               type="button"
               onClick={goLogin}
-              className="rounded-lg bg-[#002D24] px-4 py-2 text-sm font-medium text-white hover:opacity-95"
+              className="rounded-lg bg-[#1F1B4D] px-4 py-2 text-sm font-medium text-white hover:opacity-95"
             >
               Sign in
             </button>

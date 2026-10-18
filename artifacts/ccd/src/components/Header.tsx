@@ -33,6 +33,15 @@ export function Header() {
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
+  /** Year group selector is for Lesson Builder / Activity Library — not Planner (all classes). */
+  const [studioTab, setStudioTab] = useState(() =>
+    typeof document !== 'undefined' ? document.documentElement.dataset.ccdTab || 'unit-viewer' : 'unit-viewer',
+  );
+  const showYearGroupSelector =
+    studioTab === 'lesson-builder' ||
+    studioTab === 'activity-library' ||
+    studioTab === 'lesson-library' ||
+    studioTab === 'curriculum';
 
   // Auto-open the walkthrough when the user arrived via the login page's
   // "Feature Walkthrough" button (which sets a one-shot session flag and
@@ -60,6 +69,21 @@ export function Header() {
     const handler = () => setShowWalkthrough(true);
     window.addEventListener('ccd:start-walkthrough', handler);
     return () => window.removeEventListener('ccd:start-walkthrough', handler);
+  }, []);
+
+  useEffect(() => {
+    const openSettings = () => setSettingsOpen(true);
+    window.addEventListener('ccd:open-settings', openSettings);
+    return () => window.removeEventListener('ccd:open-settings', openSettings);
+  }, []);
+
+  useEffect(() => {
+    const onTab = (e: Event) => {
+      const tab = (e as CustomEvent<{ tab?: string }>).detail?.tab;
+      if (tab) setStudioTab(tab);
+    };
+    window.addEventListener('ccd:active-tab', onTab);
+    return () => window.removeEventListener('ccd:active-tab', onTab);
   }, []);
 
   useEffect(() => {
@@ -244,18 +268,16 @@ export function Header() {
 
   return (
     <>
-      <header className={`bg-white fixed left-0 right-0 z-50 ${shouldShowPreviewBanner() ? 'top-[var(--preview-banner-height,0px)]' : 'top-0'}`} style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6 xl:px-8">
+      <header
+        className={`ccd-app-header bg-white fixed left-0 right-0 z-50 ${shouldShowPreviewBanner() ? 'top-[var(--preview-banner-height,0px)]' : 'top-0'}`}
+        style={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.08)' }}
+      >
+        <div className="mx-auto w-full max-w-none px-3 sm:px-4 lg:px-6 xl:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
-            {/* Logo and Title */}
-            <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
-              {/* CCD logo mark */}
-              <LogoSVG size="xs-sm" showText={false} letters={settings.branding?.logoLetters} className="flex-shrink-0" />
-              <div className="min-w-0 flex-1 flex items-center space-x-2">
-                <h1 className="text-sm sm:text-lg lg:text-xl font-bold text-gray-900 truncate" style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}>
-                  <span className="hidden sm:inline">{settings.branding?.loginTitle || 'Creative Curriculum Designer'}</span>
-                  <span className="sm:hidden">{settings.branding?.logoLetters || 'CCD'}</span>
-                </h1>
+            {/* Brand hidden on desktop when Studio Score sidebar owns branding */}
+            <div className="ccd-studio-brand-slot flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1 md:flex-none">
+              <LogoSVG size="xs-sm" showText letters={settings.branding?.logoLetters} className="flex-shrink-0 md:hidden max-w-[140px]" />
+              <div className="min-w-0 flex items-center space-x-2 md:hidden">
                 {isViewOnly && (
                   <span className="px-2 py-0.5 text-xs font-medium bg-yellow-100 text-yellow-800 rounded-md border border-yellow-200">
                     View Only
@@ -266,20 +288,21 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1 lg:space-x-2 flex-shrink-0">
-              {/* Year Group Selector – collapsible key stages (only sections with resources) */}
+              {/* Year group — Lesson Builder / Activity Library / Library / Curriculum only */}
+              {showYearGroupSelector && (
               <div className="relative min-w-0" ref={yearGroupDropdownRef} data-walkthrough="year-group-selector">
                 <button
                   type="button"
                   onClick={openYearGroupDropdown}
-                  className="bg-gray-50 border border-gray-300 text-gray-900 text-xs lg:text-sm rounded-lg focus:border-teal-500 focus:ring-0 focus:outline-none px-3 py-1.5 lg:py-2 pr-8 flex items-center justify-between gap-2 min-w-[120px] lg:min-w-[200px] max-w-[280px] hover:bg-gray-100 transition-colors"
+                  className="bg-white border border-[#E2E0EF] text-[#1F1B4D] text-xs lg:text-sm rounded-xl focus:border-[#4338E8] focus:ring-2 focus:ring-[#4338E8]/20 focus:outline-none px-3 py-1.5 lg:py-2 pr-8 flex items-center justify-between gap-2 min-w-[140px] lg:min-w-[220px] max-w-[320px] hover:border-[#bcb7f4] transition-colors"
                   title={classSelectorLabel}
                   aria-label={`Class: ${classSelectorLabel}`}
                 >
                   <span className="truncate">
                     {currentSection ? (
                       <>
-                        <span className="font-semibold text-teal-800">{currentSection.label}</span>
-                        <span className="text-gray-400"> · </span>
+                        <span className="font-semibold text-[#4338E8]">{currentSection.label}</span>
+                        <span className="text-[#77738F]"> · </span>
                         <span>{currentSheetInfo.display || currentSheetInfo.sheet}</span>
                       </>
                     ) : (
@@ -310,9 +333,9 @@ export function Header() {
                                   key={group.id}
                                   type="button"
                                   onClick={() => selectYearGroup(group)}
-                                  className={`w-full flex items-center gap-2 px-3 py-2 pl-8 text-left text-sm hover:bg-teal-50 ${currentSheetInfo.sheet === group.id ? 'bg-teal-50 text-teal-800 font-medium' : 'text-gray-700'}`}
+                                  className={`w-full flex items-center gap-2 px-3 py-2 pl-8 text-left text-sm hover:bg-[#E9E6FF] ${currentSheetInfo.sheet === group.id ? 'bg-[#E9E6FF] text-[#1F1B4D] font-medium' : 'text-gray-700'}`}
                                 >
-                                  {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                                  {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-[#4338E8]" />}
                                   <span className={currentSheetInfo.sheet === group.id ? 'font-medium' : ''}>{group.name}</span>
                                 </button>
                               ))}
@@ -328,9 +351,9 @@ export function Header() {
                             key={group.id}
                             type="button"
                             onClick={() => selectYearGroup(group)}
-                            className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-teal-50 ${currentSheetInfo.sheet === group.id ? 'bg-teal-50 text-teal-800 font-medium' : 'text-gray-700'}`}
+                            className={`w-full flex items-center gap-2 px-3 py-2 text-left text-sm hover:bg-[#E9E6FF] ${currentSheetInfo.sheet === group.id ? 'bg-[#E9E6FF] text-[#1F1B4D] font-medium' : 'text-gray-700'}`}
                           >
-                            {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                            {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-[#4338E8]" />}
                             <span className={currentSheetInfo.sheet === group.id ? 'font-medium' : ''}>{group.name}</span>
                           </button>
                         ))}
@@ -344,6 +367,7 @@ export function Header() {
                   </div>
                 )}
               </div>
+              )}
 
               {/* Install App Button */}
               {canInstall && !isInstalled && (
@@ -352,7 +376,7 @@ export function Header() {
                     // Automatically trigger installation - browser will handle the prompt
                     await install();
                   }}
-                  className="flex items-center space-x-1.5 px-3 py-1.5 lg:px-4 lg:py-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors duration-200 flex-shrink-0 border border-teal-200"
+                  className="flex items-center space-x-1.5 px-3 py-1.5 lg:px-4 lg:py-2 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded-lg transition-colors duration-200 flex-shrink-0 border border-[#E2E0EF]"
                   title="Install this app to your device for quick access and offline use"
                 >
                   <Download className="h-4 w-4 lg:h-5 lg:w-5" />
@@ -444,7 +468,8 @@ export function Header() {
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-200">
               <div className="space-y-4">
-                {/* Year Group Selector Mobile – collapsible key stages */}
+                {/* Year Group Selector Mobile — same surfaces as desktop */}
+                {showYearGroupSelector && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     Select Year Group
@@ -470,9 +495,9 @@ export function Header() {
                                   key={group.id}
                                   type="button"
                                   onClick={() => { selectYearGroup(group); setMobileMenuOpen(false); }}
-                                  className={`w-full flex items-center gap-2 px-3 py-2 pl-8 text-left text-sm ${currentSheetInfo.sheet === group.id ? 'bg-teal-100 text-teal-800 font-medium' : 'text-gray-700 hover:bg-gray-100'}`}
+                                  className={`w-full flex items-center gap-2 px-3 py-2 pl-8 text-left text-sm ${currentSheetInfo.sheet === group.id ? 'bg-[#E9E6FF] text-[#1F1B4D] font-medium' : 'text-gray-700 hover:bg-gray-100'}`}
                                 >
-                                  {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                                  {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-[#4338E8]" />}
                                   {group.name}
                                 </button>
                               ))}
@@ -486,9 +511,9 @@ export function Header() {
                         key={group.id}
                         type="button"
                         onClick={() => { selectYearGroup(group); setMobileMenuOpen(false); }}
-                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm bg-white border-b border-gray-100 last:border-b-0 ${currentSheetInfo.sheet === group.id ? 'bg-teal-100 text-teal-800 font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
+                        className={`w-full flex items-center gap-2 px-3 py-2.5 text-left text-sm bg-white border-b border-gray-100 last:border-b-0 ${currentSheetInfo.sheet === group.id ? 'bg-[#E9E6FF] text-[#1F1B4D] font-medium' : 'text-gray-700 hover:bg-gray-50'}`}
                       >
-                        {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-teal-600" />}
+                        {currentSheetInfo.sheet === group.id && <Check className="h-4 w-4 flex-shrink-0 text-[#4338E8]" />}
                         {group.name}
                       </button>
                     ))}
@@ -497,6 +522,7 @@ export function Header() {
                     )}
                   </div>
                 </div>
+                )}
 
                 {/* User Info Mobile */}
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
@@ -525,7 +551,7 @@ export function Header() {
                             alert('To install this app:\n\nDesktop: Look for the install icon (⊕) in your browser\'s address bar\n\niOS: Tap Share → Add to Home Screen\n\nAndroid: Tap Menu → Install app');
                           }
                         }}
-                        className="flex items-center space-x-2 px-3 py-2 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors duration-200 border border-teal-200"
+                        className="flex items-center space-x-2 px-3 py-2 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded-lg transition-colors duration-200 border border-[#E2E0EF]"
                         title="Install this app to your device"
                       >
                         <Download className="h-5 w-5" />

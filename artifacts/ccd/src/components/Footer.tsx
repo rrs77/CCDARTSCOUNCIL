@@ -15,7 +15,7 @@ const SOCIAL_ICONS: Record<string, React.ComponentType<{ className?: string }>> 
 export function Footer() {
   const { settings } = useSettings();
   const b = settings.branding || {};
-  const footerBg = b.footerBackgroundColor || '#128c7e';
+  const footerBg = b.footerBackgroundColor || '#4338E8';
   const privacyUrl = b.footerPrivacyUrl || 'https://www.rhythmstix.co.uk/policy';
   const copyrightYear = b.footerCopyrightYear || '2026';
   const companyName = b.footerCompanyName || 'Rhythmstix';
@@ -32,7 +32,7 @@ export function Footer() {
   const socialLinks = (customLinks?.length ? customLinks : legacyLinks) as { platform: string; url: string }[];
 
   return (
-    <footer className="fixed bottom-0 left-0 right-0 text-white py-3 z-30 shadow-lg" style={{ backgroundColor: footerBg }}>
+    <footer className="ccd-app-footer fixed bottom-0 left-0 right-0 text-white py-3 z-30 shadow-lg" style={{ backgroundColor: footerBg }}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col md:flex-row items-center justify-between space-y-4 md:space-y-0">
           

@@ -70,7 +70,7 @@ export function AssignStackToTermModal({
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[60]">
       <div className="bg-white rounded-card shadow-soft max-w-md w-full mx-4 overflow-hidden">
         {/* Header */}
-        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="p-4 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2">
               <Calendar className="h-5 w-5" />
@@ -89,7 +89,7 @@ export function AssignStackToTermModal({
         <div className="p-6">
           <div className="mb-6">
             <div className="flex items-center space-x-2 mb-3">
-              <div className="w-3 h-3 rounded-full bg-teal-500"></div>
+              <div className="w-3 h-3 rounded-full bg-[#4338E8]"></div>
               <span className="font-medium text-gray-900">{stackName}</span>
             </div>
             <p className="text-sm text-gray-600">

@@ -1,28 +1,28 @@
-@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap");
 @import "tailwindcss";
 
 :root {
-  /* CCD house palette + type */
-  --forest: #002d24;
-  --forest-deep: #001a15;
-  --forest-soft: #0d9488;
-  --lime: #b6ff7e;
-  --teal: #14b8a6;
-  --teal-deep: #0d9488;
-  --teal-mist: #5eead4;
+  /* Studio Score — match main CCD teacher app (legacy names kept for selectors) */
+  --forest: #1f1b4d;
+  --forest-deep: #151233;
+  --forest-soft: #4338e8;
+  --lime: #ffc93c;
+  --teal: #4338e8;
+  --teal-deep: #3529d1;
+  --teal-mist: #a9a3ff;
   --coral: #ff6b6b;
-  --sage: #f3f6f3;
-  --sage-mist: #e8f0ea;
-  --paper: #f7faf8;
-  --paper-deep: #e8f0ea;
-  --ink: #0f2a2e;
-  --muted: #5c6f72;
-  --rule: rgba(0, 45, 36, 0.12);
+  --sage: #f4f3fa;
+  --sage-mist: #e9e6ff;
+  --paper: #f4f3fa;
+  --paper-deep: #e2e0ef;
+  --ink: #1f1b4d;
+  --muted: #77738f;
+  --rule: rgba(31, 27, 77, 0.12);
   --accent: var(--teal);
   --focus-ring: color-mix(in srgb, var(--teal) 55%, transparent);
-  --font-display: "Playfair Display", Georgia, serif;
-  --font-serif: "Playfair Display", Georgia, serif;
-  --font-body: "Inter", system-ui, sans-serif;
+  --font-display: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
   --ease-out-swift: cubic-bezier(0.22, 0.61, 0.36, 1);
 }
 
@@ -94,9 +94,9 @@ button:focus-visible {
   height: 100%;
   overflow: hidden;
   background:
-    radial-gradient(ellipse 90% 60% at 15% 10%, rgba(182, 255, 126, 0.14), transparent 55%),
-    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(20, 184, 166, 0.12), transparent 50%),
-    linear-gradient(165deg, #001a15 0%, #002d24 50%, #0a3d32 100%);
+    radial-gradient(ellipse 90% 60% at 15% 10%, rgba(255, 201, 60, 0.12), transparent 55%),
+    radial-gradient(ellipse 70% 50% at 90% 80%, rgba(67, 56, 232, 0.16), transparent 50%),
+    linear-gradient(165deg, #151233 0%, #1f1b4d 50%, #2a2466 100%);
   touch-action: none;
 }
 
@@ -220,11 +220,16 @@ button:focus-visible {
   color: #fffaf7;
   font-family: var(--font-display);
   font-size: clamp(2.6rem, 6.2vw, 3.85rem);
-  font-weight: 500;
+  font-weight: 800;
   line-height: 1.08;
-  letter-spacing: -0.015em;
-  word-spacing: 0.06em;
-  text-shadow: 0 8px 28px rgba(0, 26, 21, 0.45);
+  letter-spacing: -0.02em;
+  word-spacing: 0.02em;
+  text-shadow: 0 8px 28px rgba(21, 18, 51, 0.45);
+}
+
+.stage-launcher h1 em {
+  font-style: normal;
+  font-weight: 800;
 }
 
 .stage-launcher h1 em {

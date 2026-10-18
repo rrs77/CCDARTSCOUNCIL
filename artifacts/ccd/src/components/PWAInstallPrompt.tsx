@@ -78,8 +78,8 @@ export function PWAInstallPrompt() {
       <div className="bg-white rounded-xl shadow-2xl border border-gray-200 p-4 sm:p-6">
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center space-x-3">
-            <div className="p-2 bg-teal-100 rounded-lg">
-              <Download className="h-5 w-5 text-teal-600" />
+            <div className="p-2 bg-[#E9E6FF] rounded-lg">
+              <Download className="h-5 w-5 text-[#4338E8]" />
             </div>
             <div>
               <h3 className="font-semibold text-gray-900">Install App</h3>
@@ -99,12 +99,12 @@ export function PWAInstallPrompt() {
         
         {isIOS ? (
           <div className="space-y-3">
-            <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+            <div className="bg-[#E9E6FF] border border-[#E2E0EF] rounded-lg p-3">
               <div className="flex items-start space-x-2">
-                <Smartphone className="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-teal-900">
+                <Smartphone className="h-5 w-5 text-[#4338E8] flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-[#1F1B4D]">
                   <p className="font-medium mb-1">Install on iOS:</p>
-                  <ol className="list-decimal list-inside space-y-1 text-teal-800">
+                  <ol className="list-decimal list-inside space-y-1 text-[#1F1B4D]">
                     <li>Tap the Share button <span className="font-mono">□↑</span> at the bottom</li>
                     <li>Scroll down and tap "Add to Home Screen"</li>
                     <li>Tap "Add" in the top right</li>
@@ -121,19 +121,19 @@ export function PWAInstallPrompt() {
           </div>
         ) : (
           <div className="space-y-3">
-            <div className="bg-teal-50 border border-teal-200 rounded-lg p-3">
+            <div className="bg-[#E9E6FF] border border-[#E2E0EF] rounded-lg p-3">
               <div className="flex items-start space-x-2">
-                <Monitor className="h-5 w-5 text-teal-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-teal-900">
+                <Monitor className="h-5 w-5 text-[#4338E8] flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-[#1F1B4D]">
                   <p className="font-medium mb-1">Install on Desktop:</p>
-                  <p className="text-teal-800">Click Install below, or look for the <span className="font-mono bg-white px-1 rounded">⊕</span> icon in your browser's address bar</p>
+                  <p className="text-[#1F1B4D]">Click Install below, or look for the <span className="font-mono bg-white px-1 rounded">⊕</span> icon in your browser's address bar</p>
                 </div>
               </div>
             </div>
             <div className="flex space-x-2">
               <button
                 onClick={handleInstallClick}
-                className="flex-1 bg-gradient-to-r from-teal-500 to-teal-600 text-white px-4 py-2 rounded-lg font-medium hover:from-teal-600 hover:to-teal-700 transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
+                className="flex-1 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white px-4 py-2 rounded-lg font-medium hover:from-[#4338E8] hover:to-[#3529d1] transition-all shadow-md hover:shadow-lg flex items-center justify-center space-x-2"
               >
                 <Download className="h-4 w-4" />
                 <span>Install Now</span>

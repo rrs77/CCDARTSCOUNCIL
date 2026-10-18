@@ -54,7 +54,7 @@ export function RegisterForm({ onSuccess, onCancel, compact }: RegisterFormProps
   };
 
   const inputClass =
-    'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#002D24] focus:outline-none focus:ring-2 focus:ring-[#002D24]/20';
+    'w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-[#1F1B4D] focus:outline-none focus:ring-2 focus:ring-[#1F1B4D]/20';
 
   return (
     <form onSubmit={handleSubmit} className={compact ? 'space-y-3' : 'space-y-4'}>
@@ -165,7 +165,7 @@ export function RegisterForm({ onSuccess, onCancel, compact }: RegisterFormProps
         <button
           type="submit"
           disabled={submitting}
-          className="inline-flex items-center gap-2 rounded-lg bg-[#002D24] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
+          className="inline-flex items-center gap-2 rounded-lg bg-[#1F1B4D] px-4 py-2 text-sm font-medium text-white disabled:opacity-60"
         >
           {submitting && <Loader2 className="h-4 w-4 animate-spin" />}
           Create account

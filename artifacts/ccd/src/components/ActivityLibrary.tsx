@@ -10,9 +10,6 @@ import {
   BookOpen, 
   Clock, 
   Tag,
-  ArrowUpDown,
-  ArrowDownUp,
-  Eye,
   Upload,
   Download,
   Trash2,
@@ -22,7 +19,6 @@ import {
   Type,
   Star,
   ChevronDown,
-  ChevronRight,
   Undo2,
   Redo2,
 } from 'lucide-react';
@@ -205,8 +201,8 @@ export function ActivityLibrary({
   const [loading, setLoading] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<string | null>(null);
   const [userOwnedPacks, setUserOwnedPacks] = useState<string[]>([]);
-  const [topicsExpanded, setTopicsExpanded] = useState(true);
   const [selectedTopic, setSelectedTopic] = useState('all');
+  const [libraryToolsOpen, setLibraryToolsOpen] = useState(false);
   const [historyUndoStack, setHistoryUndoStack] = useState<ActivityHistoryAction[]>([]);
   const [historyRedoStack, setHistoryRedoStack] = useState<ActivityHistoryAction[]>([]);
   const [isApplyingHistory, setIsApplyingHistory] = useState(false);
@@ -717,7 +713,7 @@ export function ActivityLibrary({
       )];
 
       if (missingCategoryNames.length > 0) {
-        const palette = ['#14B8A6', '#0EA5E9', '#F59E0B', '#A855F7', '#EF4444', '#10B981', '#6366F1', '#EC4899'];
+        const palette = ['#4338E8', '#0EA5E9', '#F59E0B', '#A855F7', '#EF4444', '#10B981', '#6366F1', '#EC4899'];
         const addedCategories = missingCategoryNames.map((name, idx) => ({
           name,
           color: palette[(categories.length + idx) % palette.length],
@@ -857,181 +853,219 @@ export function ActivityLibrary({
   };
 
 
+  const toolBtn =
+    'inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#77738F] transition-colors hover:bg-[#E9E6FF] hover:text-[#1F1B4D] disabled:opacity-40';
+  const toolBtnOn = 'bg-[#E9E6FF] text-[#4338E8]';
+
   return (
-    <div className="bg-white rounded-xl shadow-lg  overflow-hidden">
-      {/* Header */}
-      <div className="p-4 sm:p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-3 sm:mb-4 gap-4">
-          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
-            <div className="min-w-0">
-              <h2 className="text-lg sm:text-xl lg:text-2xl font-bold truncate">
-                {className ? `${className} Activity Library` : 'Activity Library'}
-              </h2>
-              <p className="text-white text-xs sm:text-sm">
-                {getCurrentYearGroupKeys().length > 0
-                  ? `${filteredActivityCount} of ${totalActivitiesForYearGroup} activities`
-                  : `${filteredActivityCount} activities`}
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2 sm:space-x-3 flex-wrap gap-2">
-            <button
-              onClick={() => {
-                if (isViewOnly) {
-                  alert('View-only mode: Cannot create activities.');
-                  return;
-                }
-                setShowCreator(true);
+    <div className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white">
+      {/* Compact Studio Score toolbar — no full-bleed purple slab, no stretch search */}
+      <div className="border-b border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2.5 sm:px-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="min-w-0 flex-1">
+            <h2
+              className="truncate text-base font-extrabold tracking-tight text-[#1F1B4D] sm:text-lg"
+              style={{
+                fontFamily:
+                  "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)",
               }}
-              disabled={isViewOnly}
-              className={`btn-accent px-3 sm:px-4 py-1.5 sm:py-2 text-xs sm:text-sm ${isViewOnly ? 'opacity-50 cursor-not-allowed' : ''}`}
             >
-              <Plus className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Create Activity</span>
-              <span className="sm:hidden">Create</span>
-            </button>
-            
-            <button
-              onClick={handleRefreshActivities}
-              disabled={loading}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white bg-opacity-20 hover:bg-opacity-30 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors duration-200 flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
-              title="Refresh activities from Supabase"
-            >
-              <RotateCcw className={`h-3 w-3 sm:h-4 sm:w-4 ${loading ? 'animate-spin' : ''}`} />
-              <span className="hidden sm:inline">Refresh</span>
-            </button>
+              {className ? className : 'Activity Library'}
+            </h2>
+            <p className="text-[11px] font-medium text-[#77738F]">
+              {getCurrentYearGroupKeys().length > 0
+                ? `${filteredActivityCount} of ${totalActivitiesForYearGroup} activities`
+                : `${filteredActivityCount} activities`}
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => {
+              if (isViewOnly) {
+                alert('View-only mode: Cannot create activities.');
+                return;
+              }
+              setShowCreator(true);
+            }}
+            disabled={isViewOnly}
+            className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg bg-[#FFC93C] px-3 text-xs font-bold text-[#1F1B4D] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Create
+          </button>
+
+          <div className="relative">
             <button
               type="button"
-              onClick={handleUndoActivityChange}
-              disabled={historyUndoStack.length === 0 || isApplyingHistory}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white bg-opacity-20 hover:bg-opacity-30 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors duration-200 flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
-              title="Undo last activity change"
+              onClick={() => setLibraryToolsOpen((v) => !v)}
+              className={`${toolBtn} ${libraryToolsOpen ? toolBtnOn : ''}`}
+              title="More tools"
+              aria-expanded={libraryToolsOpen}
             >
-              <Undo2 className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Undo</span>
+              <Filter className="h-4 w-4" />
             </button>
-            <button
-              type="button"
-              onClick={handleRedoActivityChange}
-              disabled={historyRedoStack.length === 0 || isApplyingHistory}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white bg-opacity-20 hover:bg-opacity-30 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors duration-200 flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
-              title="Redo last activity change"
-            >
-              <Redo2 className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Redo</span>
-            </button>
-            
-            <button
-              onClick={() => setShowImporter(true)}
-              className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200 flex items-center space-x-1 sm:space-x-2 text-xs sm:text-sm"
-            >
-              <Upload className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Import/Export</span>
-              <span className="sm:hidden">Import</span>
-            </button>
+            {libraryToolsOpen && (
+              <>
+                <button
+                  type="button"
+                  className="fixed inset-0 z-20 cursor-default"
+                  aria-label="Close tools"
+                  onClick={() => setLibraryToolsOpen(false)}
+                />
+                <div className="absolute right-0 z-30 mt-1 w-44 overflow-hidden rounded-xl border border-[#E2E0EF] bg-white py-1 shadow-lg">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLibraryToolsOpen(false);
+                      void handleRefreshActivities();
+                    }}
+                    disabled={loading}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
+                  >
+                    <RotateCcw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLibraryToolsOpen(false);
+                      void handleUndoActivityChange();
+                    }}
+                    disabled={historyUndoStack.length === 0 || isApplyingHistory}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
+                  >
+                    <Undo2 className="h-3.5 w-3.5" />
+                    Undo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLibraryToolsOpen(false);
+                      void handleRedoActivityChange();
+                    }}
+                    disabled={historyRedoStack.length === 0 || isApplyingHistory}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
+                  >
+                    <Redo2 className="h-3.5 w-3.5" />
+                    Redo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setLibraryToolsOpen(false);
+                      setShowImporter(true);
+                    }}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA]"
+                  >
+                    <Upload className="h-3.5 w-3.5" />
+                    Import / export
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
 
-        {/* Search and Sort Controls */}
-        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-          {/* Search */}
-          <div className="relative w-full sm:flex-1 sm:min-w-[180px]">
-            <Search 
-              className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-teal-500" 
-            />
+        {/* One compact filter row — fixed search width, no stretch */}
+        <div className="mt-2.5 flex flex-wrap items-center gap-2">
+          <div className="relative w-full max-w-[220px] sm:w-[220px]">
+            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
             <input
               type="text"
-              placeholder="Search activities..."
+              placeholder="Search…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-2.5 bg-white border-2 border-teal-400 rounded-lg text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-200"
-              style={{
-                boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1), 0 0 0 3px rgba(20, 184, 166, 0.1)'
-              }}
+              className="w-full rounded-lg border border-[#E2E0EF] bg-white py-1.5 pl-8 pr-2.5 text-sm text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
               dir="ltr"
             />
           </div>
 
-          {/* Category Filter Dropdown */}
-          <div className="relative w-full sm:w-auto sm:min-w-[180px]">
+          <div className="w-full max-w-[180px] sm:w-[180px]">
             <SimpleNestedCategoryDropdown
               selectedCategory={localSelectedCategory === 'all' ? '' : localSelectedCategory}
               onCategoryChange={(category) => handleCategoryChange(category === '' ? 'all' : category)}
-              placeholder="All Categories"
-              className="px-4 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent font-semibold"
+              placeholder="All categories"
+              className="w-full truncate rounded-lg border border-[#E2E0EF] bg-white px-2.5 py-1.5 text-sm font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
               showAllCategories={false}
             />
           </div>
 
-          {/* Sort and View Icons - Properly spaced */}
-          <div className="flex flex-wrap items-center gap-2">
+          {availableTopicsForSelection.length > 0 && (
+            <label className="relative inline-flex min-w-[140px] max-w-[200px] flex-1 items-center sm:flex-none">
+              <span className="sr-only">Topic</span>
+              <select
+                value={selectedTopic}
+                onChange={(e) => setSelectedTopic(e.target.value)}
+                className="w-full appearance-none rounded-lg border border-[#E2E0EF] bg-white py-1.5 pl-2.5 pr-8 text-sm font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
+              >
+                <option value="all">All topics</option>
+                {availableTopicsForSelection.map((topic) => (
+                  <option key={topic} value={topic}>
+                    {topic}
+                  </option>
+                ))}
+              </select>
+              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
+            </label>
+          )}
+
+          <div className="ml-auto flex items-center gap-0.5">
             <button
+              type="button"
               onClick={() => toggleSort('category')}
-              className={`inline-flex min-h-[44px] min-w-[44px] items-center justify-center p-2 rounded-lg transition-colors duration-200 ${
-                sortBy === 'category' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
-              }`}
-              title="Sort by Category"
+              className={`${toolBtn} ${sortBy === 'category' ? toolBtnOn : ''}`}
+              title="Sort by category"
             >
-              <Tag className="h-4 w-4" />
-              {sortBy === 'category' && (sortOrder === 'asc' ? <ArrowUpDown className="h-3 w-3 ml-1" /> : <ArrowDownUp className="h-3 w-3 ml-1" />)}
+              <Tag className="h-3.5 w-3.5" />
             </button>
             <button
+              type="button"
               onClick={() => toggleSort('time')}
-              className={`flex items-center justify-center p-2 rounded-lg transition-colors duration-200 ${
-                sortBy === 'time' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
-              }`}
-              title="Sort by Time"
+              className={`${toolBtn} ${sortBy === 'time' ? toolBtnOn : ''}`}
+              title="Sort by time"
             >
-              <Clock className="h-4 w-4" />
-              {sortBy === 'time' && (sortOrder === 'asc' ? <ArrowUpDown className="h-3 w-3 ml-1" /> : <ArrowDownUp className="h-3 w-3 ml-1" />)}
+              <Clock className="h-3.5 w-3.5" />
             </button>
             <button
+              type="button"
               onClick={() => {
                 toggleSort('name');
-                setSortOrder('asc'); // Always A-Z when clicking A-Z button
+                setSortOrder('asc');
               }}
-              className={`flex items-center justify-center p-2 rounded-lg transition-colors duration-200 ${
-                sortBy === 'name' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
-              }`}
-              title="Sort A-Z by Name"
+              className={`${toolBtn} ${sortBy === 'name' ? toolBtnOn : ''}`}
+              title="Sort A–Z"
             >
-              <Type className="h-4 w-4" />
-              {sortBy === 'name' && sortOrder === 'asc' && <span className="text-xs ml-1">A-Z</span>}
+              <Type className="h-3.5 w-3.5" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('grid')}
-              className={`p-2 rounded-lg transition-colors duration-200 ${
-                viewMode === 'grid' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
-              }`}
-              title="Grid View"
+              className={`${toolBtn} ${viewMode === 'grid' ? toolBtnOn : ''}`}
+              title="Grid view"
             >
-              <Grid className="h-4 w-4" />
+              <Grid className="h-3.5 w-3.5" />
             </button>
             <button
+              type="button"
               onClick={() => setViewMode('list')}
-              className={`p-2 rounded-lg transition-colors duration-200 ${
-                viewMode === 'list' ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
-              }`}
-              title="List View"
+              className={`${toolBtn} ${viewMode === 'list' ? toolBtnOn : ''}`}
+              title="List view"
             >
-              <List className="h-4 w-4" />
+              <List className="h-3.5 w-3.5" />
             </button>
             <button
               type="button"
               onClick={() => setGlobalStarredFirst((v) => !v)}
-              className={`p-2 rounded-lg transition-colors duration-200 ${
-                globalStarredFirst ? 'bg-white bg-opacity-20' : 'hover:bg-white hover:bg-opacity-10'
-              }`}
+              className={`${toolBtn} ${globalStarredFirst ? toolBtnOn : ''}`}
               title={
                 globalStarredFirst
-                  ? 'Turn off: show starred first in every category'
-                  : 'Show starred activities first in every category'
+                  ? 'Starred first: on'
+                  : 'Show starred activities first'
               }
             >
               <Star
-                className={`h-4 w-4 ${globalStarredFirst ? 'fill-amber-300 text-amber-200' : 'text-white'}`}
+                className={`h-3.5 w-3.5 ${globalStarredFirst ? 'fill-[#FFC93C] text-[#FFC93C]' : ''}`}
                 strokeWidth={globalStarredFirst ? 0 : 2}
               />
             </button>
@@ -1039,65 +1073,12 @@ export function ActivityLibrary({
         </div>
       </div>
 
-
       {/* Main Content */}
       <div className="flex relative">
-        
-        <div className="p-6 flex-1">
-        {availableTopicsForSelection.length > 0 && (
-          <div className="mb-4 rounded-xl border border-teal-100 bg-teal-50/40">
-            <button
-              type="button"
-              onClick={() => setTopicsExpanded((v) => !v)}
-              className="w-full flex items-center justify-between px-4 py-3 text-left"
-            >
-              <div>
-                <p className="text-sm font-semibold text-teal-800">
-                  Topics for {className || 'selected class/year group'}
-                </p>
-                <p className="text-xs text-teal-700/80">
-                  {availableTopicsForSelection.length} topic{availableTopicsForSelection.length === 1 ? '' : 's'} available
-                </p>
-              </div>
-              {topicsExpanded ? (
-                <ChevronDown className="h-4 w-4 text-teal-700" />
-              ) : (
-                <ChevronRight className="h-4 w-4 text-teal-700" />
-              )}
-            </button>
-            {topicsExpanded && (
-              <div className="px-4 pb-4 flex flex-wrap gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSelectedTopic('all')}
-                  className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                    selectedTopic === 'all'
-                      ? 'bg-teal-600 text-white border-teal-600 font-bold shadow-sm'
-                      : 'bg-white text-gray-700 border-gray-200 font-medium hover:bg-gray-50'
-                  }`}
-                >
-                  All Topics
-                </button>
-                {availableTopicsForSelection.map((topic) => (
-                  <button
-                    key={topic}
-                    type="button"
-                    onClick={() => setSelectedTopic(topic)}
-                    className={`px-3 py-1.5 text-xs rounded-full border transition-colors ${
-                      selectedTopic === topic
-                        ? 'bg-teal-600 text-white border-teal-600 font-bold shadow-sm'
-                        : 'bg-white text-gray-700 border-gray-200 font-medium hover:bg-gray-50'
-                    }`}
-                  >
-                    {topic}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
+        <div className="flex-1 p-3 sm:p-4">
         <PartnerPlanningPanel
-          className="mb-4"
+          className="mb-3"
+          compact
           activities={allActivities}
           currentSheetId={className || currentSheetInfo?.sheet}
           selectable
@@ -1222,7 +1203,7 @@ export function ActivityLibrary({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayGroups.map((group) => (
               <React.Fragment key={`cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-teal-200 bg-white/95 backdrop-blur sticky top-0 z-10">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1254,7 +1235,7 @@ export function ActivityLibrary({
                       <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
                     </div>
                   )}
-                  <h3 className="text-lg font-bold text-teal-700">{group.name}</h3>
+                  <h3 className="text-lg font-bold text-[#4338E8]">{group.name}</h3>
                   <button
                     type="button"
                     onClick={() => toggleStarredFirstForCategory(group.name)}
@@ -1290,9 +1271,9 @@ export function ActivityLibrary({
                       {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
                         <div
                           data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-teal-100"
+                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
                         >
-                          <h4 className="text-base font-semibold text-teal-500">{firstLetter}</h4>
+                          <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
                         </div>
                       )}
                       <div
@@ -1371,7 +1352,7 @@ export function ActivityLibrary({
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
             {displayGroups.map((group) => (
               <React.Fragment key={`grid-cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-teal-200 bg-white/95 backdrop-blur sticky top-0 z-10">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1403,7 +1384,7 @@ export function ActivityLibrary({
                       <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
                     </div>
                   )}
-                  <h3 className="text-lg font-bold text-teal-700">{group.name}</h3>
+                  <h3 className="text-lg font-bold text-[#4338E8]">{group.name}</h3>
                   <button
                     type="button"
                     onClick={() => toggleStarredFirstForCategory(group.name)}
@@ -1438,9 +1419,9 @@ export function ActivityLibrary({
                       {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
                         <div
                           data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-teal-100"
+                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
                         >
-                          <h4 className="text-base font-semibold text-teal-500">{firstLetter}</h4>
+                          <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
                         </div>
                       )}
                       <div className="h-full">

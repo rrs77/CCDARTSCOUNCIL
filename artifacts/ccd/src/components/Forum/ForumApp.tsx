@@ -86,13 +86,13 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
   const chrome = (
     <div className={embedded ? '' : 'min-h-screen bg-[#f4f7f6]'}>
       <ForumSeoHead route={route} />
-      <header className="border-b border-[#d5e0dc] bg-[#002D24] text-white">
+      <header className="border-b border-[#d5e0dc] bg-[#1F1B4D] text-white">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-3 px-4 py-4">
           <div className="flex items-center gap-3">
             {!embedded && (
               <a
                 href="/"
-                className="inline-flex items-center gap-1 text-sm text-teal-100 hover:text-white"
+                className="inline-flex items-center gap-1 text-sm text-[#E9E6FF] hover:text-white"
               >
                 <ArrowLeft className="h-4 w-4" />
                 CCDesigner
@@ -103,7 +103,7 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
               onClick={() => navigateForum('/forum')}
               className="flex items-center gap-2 font-semibold tracking-tight"
             >
-              <MessageSquare className="h-5 w-5 text-teal-200" />
+              <MessageSquare className="h-5 w-5 text-[#bcb7f4]" />
               Community Forum
             </button>
           </div>
@@ -123,11 +123,11 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
                 value={searchQ}
                 onChange={(e) => setSearchQ(e.target.value)}
                 placeholder="Search topics…"
-                className="w-full rounded-lg border-0 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-teal-100/70 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-teal-300"
+                className="w-full rounded-lg border-0 bg-white/10 px-3 py-2 text-sm text-white placeholder:text-[#E9E6FF]/70 focus:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#a9a3ff]"
               />
               <button
                 type="submit"
-                className="rounded-lg bg-teal-600 px-3 py-2 text-sm font-medium hover:bg-teal-500"
+                className="rounded-lg bg-[#4338E8] px-3 py-2 text-sm font-medium hover:bg-[#E9E6FF]0"
                 aria-label="Search"
               >
                 <Search className="h-4 w-4" />
@@ -136,7 +136,7 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
             <button
               type="button"
               onClick={() => navigateForum('/forum/guidelines')}
-              className="hidden rounded-lg px-2 py-2 text-sm text-teal-100 hover:bg-white/10 sm:inline"
+              className="hidden rounded-lg px-2 py-2 text-sm text-[#E9E6FF] hover:bg-white/10 sm:inline"
             >
               Guidelines
             </button>
@@ -144,7 +144,7 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
               <button
                 type="button"
                 onClick={() => navigateForum('/forum/admin')}
-                className="rounded-lg p-2 text-teal-100 hover:bg-white/10"
+                className="rounded-lg p-2 text-[#E9E6FF] hover:bg-white/10"
                 title="Forum admin"
                 aria-label="Forum admin"
               >

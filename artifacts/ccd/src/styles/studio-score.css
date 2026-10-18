@@ -1,0 +1,737 @@
+/**
+ * Studio Score — outer teacher workspace tokens.
+ * Partner Hubs keep forest/teal (.ccd-partner-hubs / existing hub CSS).
+ */
+
+:root {
+  --ss-ink: #1f1b4d;
+  --ss-indigo: #4338e8;
+  --ss-sun: #ffc93c;
+  --ss-lilac: #f4f3fa;
+  --ss-mint: #d5f3ea;
+  --ss-suntint: #fff1c2;
+  --ss-line: #e2e0ef;
+  --ss-muted: #77738f;
+  --ss-softindigo: #e9e6ff;
+  --ss-lavender: #e5e2ff;
+  --ss-white: #ffffff;
+  --ss-sidebar: 200px;
+  /* Page titles match sidebar / UI — same family, heavier weight */
+  --ss-font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --ss-font-ui: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+.ccd-studio {
+  font-family: var(--ss-font-ui);
+  color: var(--ss-ink);
+  background: #edecf2;
+}
+
+/* Match left-panel typography everywhere in the teacher shell */
+.ccd-studio h1,
+.ccd-studio h2,
+.ccd-studio h3,
+.ccd-studio .ccd-studio-title {
+  font-family: var(--ss-font-display);
+  letter-spacing: -0.02em;
+}
+
+.ccd-studio button,
+.ccd-studio input,
+.ccd-studio select,
+.ccd-studio textarea,
+.ccd-studio label,
+.ccd-studio p,
+.ccd-studio span,
+.ccd-studio li {
+  font-family: inherit;
+}
+
+.ccd-studio *:focus-visible {
+  outline: 3px solid #a9a3ff;
+  outline-offset: 2px;
+}
+
+/* Full-bleed workspace — not a side panel bolted onto the old chrome */
+.ccd-studio-app {
+  display: grid;
+  grid-template-columns: var(--ss-sidebar) minmax(0, 1fr);
+  min-height: calc(100vh - 3.5rem);
+  max-width: none;
+  margin: 0;
+  background: var(--ss-lilac);
+  border: 0;
+}
+
+/* Header only spans the workspace column; brand lives in the sidebar */
+html.ccd-studio header.ccd-app-header {
+  background: var(--ss-lilac) !important;
+  border-bottom: 1px solid var(--ss-line);
+  box-shadow: none !important;
+}
+
+html.ccd-studio header.ccd-app-header .ccd-studio-brand-slot {
+  display: none;
+}
+
+@media (min-width: 1025px) {
+  html.ccd-studio header.ccd-app-header {
+    left: var(--ss-sidebar);
+    width: calc(100% - var(--ss-sidebar));
+  }
+
+  html.ccd-studio.ccd-studio-nav-collapsed header.ccd-app-header {
+    left: 76px;
+    width: calc(100% - 76px);
+  }
+}
+
+/* Old teal footer fights the quiet shell — Contact lives in More tools */
+html.ccd-studio footer.ccd-app-footer {
+  display: none !important;
+}
+
+html.ccd-studio body,
+html.ccd-studio {
+  background: #edecf2;
+}
+
+.ccd-studio-app.is-collapsed {
+  --ss-sidebar: 76px;
+}
+
+.ccd-studio-sidebar {
+  background: var(--ss-ink);
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 22px 14px;
+  gap: 20px;
+  position: sticky;
+  top: 3.5rem;
+  height: calc(100vh - 3.5rem);
+  overflow-y: auto;
+  z-index: 40;
+}
+
+@media (min-width: 1025px) {
+  .ccd-studio-sidebar {
+    position: fixed;
+    left: 0;
+    top: 0;
+    height: 100vh;
+    width: var(--ss-sidebar);
+    z-index: 55;
+  }
+
+  .ccd-studio-app {
+    display: block;
+    padding-left: var(--ss-sidebar);
+  }
+
+  .ccd-studio-app.is-collapsed {
+    padding-left: 76px;
+  }
+
+  .ccd-studio-app.is-collapsed .ccd-studio-sidebar {
+    width: 76px;
+  }
+}
+
+.ccd-studio-brand {
+  display: flex;
+  align-items: center;
+  padding: 4px 8px 10px;
+  min-height: 42px;
+}
+
+/* Full lockup — ribbon mark + CSS “designer” */
+.ccd-studio-brand-logo {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  height: auto;
+}
+
+.ccd-studio-brand-mark {
+  display: block;
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
+}
+
+.ccd-studio-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ccd-studio-section {
+  color: #928cb8;
+  text-transform: uppercase;
+  letter-spacing: 0.14em;
+  font-weight: 800;
+  font-size: 9px;
+  padding: 10px 12px 4px;
+}
+
+.ccd-studio-nav-item {
+  border: 0;
+  background: transparent;
+  color: #d9d6f6;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 10px 12px;
+  border-radius: 12px;
+  text-align: left;
+  font-weight: 700;
+  font-size: 12.5px;
+  cursor: pointer;
+  position: relative;
+  width: 100%;
+  font-family: inherit;
+}
+
+.ccd-studio-nav-item:hover {
+  background: #343064;
+}
+
+.ccd-studio-nav-item.is-active {
+  background: var(--ss-indigo);
+  color: #fff;
+  padding-left: 16px;
+}
+
+.ccd-studio-nav-item.is-active::before {
+  content: '';
+  position: absolute;
+  left: 5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ss-sun);
+}
+
+.ccd-studio-sidebar-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ccd-studio-quiet {
+  color: #948ebc;
+  font-size: 10px;
+  line-height: 1.65;
+  padding: 0 11px;
+  margin: 0;
+}
+
+.ccd-studio-collapse {
+  border: 1px solid #555084;
+  background: transparent;
+  color: #dedbf7;
+  border-radius: 11px;
+  padding: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 700;
+  min-height: 44px;
+}
+
+.ccd-studio-app.is-collapsed .ccd-studio-nav-item {
+  justify-content: center;
+  padding: 10px;
+}
+
+.ccd-studio-app.is-collapsed .ccd-studio-nav-item.is-active {
+  padding: 10px;
+}
+
+.ccd-studio-app.is-collapsed .ccd-studio-nav-item.is-active::before,
+.ccd-studio-app.is-collapsed .ccd-studio-nav-item span,
+.ccd-studio-app.is-collapsed .ccd-studio-section,
+.ccd-studio-app.is-collapsed .ccd-studio-brand-copy,
+.ccd-studio-app.is-collapsed .ccd-studio-quiet,
+.ccd-studio-app.is-collapsed .ccd-studio-collapse span {
+  display: none;
+}
+
+.ccd-studio-workspace {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ss-lilac);
+}
+
+.ccd-studio-workspace-inner {
+  flex: 1;
+  padding: 14px 22px 40px;
+  min-width: 0;
+  max-width: none;
+}
+
+.ccd-studio-workspace-inner.hubs-bridge {
+  /* Partner Hubs keep their own sage/forest canvas */
+  padding: 8px 12px 40px;
+  background: transparent;
+}
+
+.ccd-studio-eyebrow {
+  font-size: 10px;
+  color: #777397;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin: 0;
+}
+
+.ccd-studio-eyebrow span {
+  color: var(--ss-indigo);
+}
+
+.ccd-studio-title {
+  font-family: var(--ss-font-display);
+  font-size: clamp(28px, 3vw, 40px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+  line-height: 1.1;
+  margin: 4px 0 0;
+  color: var(--ss-ink);
+}
+
+.ccd-studio-sub {
+  color: var(--ss-muted);
+  line-height: 1.55;
+  margin: 8px 0 0;
+  font-size: 13px;
+  max-width: 52ch;
+}
+
+.ccd-studio-btn {
+  height: 40px;
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 11px;
+  border: 1px solid var(--ss-line);
+  background: var(--ss-white);
+  color: var(--ss-ink);
+  font-weight: 700;
+  font-size: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.ccd-studio-btn:hover {
+  border-color: #bcb7f4;
+}
+
+.ccd-studio-btn.primary {
+  background: var(--ss-indigo);
+  color: #fff;
+  border-color: var(--ss-indigo);
+}
+
+.ccd-studio-btn.primary:hover {
+  background: #3529d1;
+}
+
+.ccd-studio-mobile-nav {
+  display: none;
+}
+
+/* Quiet planner week — compact so empty days don’t dominate */
+.ss-week-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.ss-day {
+  min-height: 0;
+  padding: 8px 7px 10px;
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.72);
+  border: 1px solid #e8e6f2;
+}
+
+.ss-day.is-today {
+  background: var(--ss-lavender);
+  border-color: #d8d4f5;
+}
+
+.ss-day-head {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  min-height: 0;
+  padding: 0 2px 2px;
+}
+
+.ss-day-num {
+  font: 800 18px/1 var(--ss-font-ui);
+  color: var(--ss-ink);
+}
+
+.ss-day-dow {
+  font-size: 11px;
+  font-weight: 700;
+  color: #817d99;
+}
+
+.ss-today-pill {
+  margin-left: auto;
+  background: var(--ss-sun);
+  color: var(--ss-ink);
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 7px;
+  border-radius: 20px;
+}
+
+.ss-lesson-card {
+  width: 100%;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  background: var(--ss-white);
+  border: 1px solid #e1dfef;
+  border-radius: 12px;
+  padding: 8px 9px;
+  gap: 4px;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+  box-shadow: none;
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.ss-lesson-card:hover {
+  border-color: #c7c3f4;
+  background: #faf9ff;
+}
+
+.ss-lesson-card.is-selected {
+  border-color: var(--ss-indigo);
+  box-shadow: 0 0 0 2px rgba(67, 56, 232, 0.2);
+}
+
+.ss-lesson-card strong {
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.3;
+  color: var(--ss-ink);
+}
+
+.ss-lesson-card .ss-desc {
+  color: #666381;
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.ss-timepill {
+  background: var(--ss-mint);
+  border-radius: 20px;
+  color: #2a5b53;
+  font-size: 9px;
+  font-weight: 800;
+  padding: 3px 7px;
+}
+
+.ss-timepill.sun {
+  background: var(--ss-suntint);
+  color: #735b13;
+}
+
+.ss-timepill.indigo {
+  background: var(--ss-softindigo);
+  color: #514c99;
+}
+
+.ss-empty-slot {
+  border: 1px dashed #ddd9ef;
+  border-radius: 10px;
+  min-height: 34px;
+  width: 100%;
+  background: transparent;
+  color: #928fb0;
+  font-size: 11px;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  font-family: inherit;
+  margin-top: 2px;
+}
+
+.ss-empty-slot:hover {
+  background: rgba(255, 255, 255, 0.6);
+  border-color: #bbb5f8;
+  color: var(--ss-indigo);
+}
+
+/* Compact month grid */
+.ss-month-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.ss-month-dow {
+  padding: 2px 4px 4px;
+  font-size: 10px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #77738f;
+}
+
+.ss-month-day {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 72px;
+  padding: 6px 6px 7px;
+  text-align: left;
+  border-radius: 10px;
+  border: 1px solid #e2e0ef;
+  background: #fff;
+  cursor: pointer;
+  font: inherit;
+  color: inherit;
+}
+
+.ss-month-day:hover {
+  background: #f7f6fc;
+}
+
+.ss-month-day.out-month {
+  background: #f4f3fa;
+  opacity: 0.72;
+}
+
+.ss-month-day.is-closed {
+  border-color: #fecdd3;
+  background: #fff7f7;
+}
+
+.ss-month-day.is-today {
+  border-color: #4338e8;
+  background: #e5e2ff;
+  box-shadow: inset 0 0 0 1px #ffc93c;
+}
+
+.ss-month-num {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--ss-ink);
+  line-height: 1.2;
+}
+
+.ss-month-num.is-muted {
+  color: #9ca3af;
+}
+
+.ss-month-num .is-badge {
+  display: inline-grid;
+  place-items: center;
+  min-width: 20px;
+  height: 20px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #4338e8;
+  color: #fff;
+  font-size: 11px;
+}
+
+.ss-month-closed {
+  display: none;
+  max-width: 55%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  border-radius: 5px;
+  background: #ffe4e6;
+  color: #9f1239;
+  font-size: 9px;
+  font-weight: 700;
+  padding: 1px 5px;
+}
+
+.ss-month-dots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+}
+
+.ss-month-dots i {
+  display: block;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+}
+
+.ss-month-lessons {
+  display: none;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ss-month-chip {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  border-radius: 5px;
+  padding: 2px 5px;
+  font-size: 10px;
+  color: #1f2937;
+}
+
+.ss-month-chip i {
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.ss-month-chip b {
+  flex-shrink: 0;
+  font-weight: 800;
+}
+
+.ss-month-chip em {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-style: normal;
+  color: #666381;
+}
+
+.ss-month-more {
+  padding: 0 4px;
+  font-size: 10px;
+  font-weight: 800;
+  color: #4338e8;
+}
+
+@media (min-width: 640px) {
+  .ss-month-day {
+    min-height: 88px;
+    padding: 7px;
+  }
+
+  .ss-month-closed {
+    display: inline-block;
+  }
+
+  .ss-month-dots {
+    display: none;
+  }
+
+  .ss-month-lessons {
+    display: flex;
+  }
+}
+
+@media (max-width: 1024px) {
+  .ccd-studio-app {
+    grid-template-columns: 1fr;
+    border: 0;
+    max-width: none;
+  }
+
+  .ccd-studio-sidebar {
+    display: none;
+  }
+
+  .ccd-studio-workspace-inner {
+    padding: 16px 16px 96px;
+  }
+
+  .ccd-studio-mobile-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--ss-ink);
+    justify-content: space-around;
+    align-items: center;
+    z-index: 50;
+    height: 67px;
+    padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+
+  .ccd-studio-mobile-nav button {
+    border: 0;
+    background: transparent;
+    color: #aaa5ce;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    font-weight: 700;
+    padding: 8px 10px;
+    min-height: 44px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+
+  .ccd-studio-mobile-nav button.is-active {
+    color: #fff;
+  }
+
+  .ss-week-grid {
+    grid-template-columns: repeat(5, minmax(148px, 1fr));
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .ss-month-grid {
+    gap: 3px;
+  }
+}
+
+@media (max-width: 520px) {
+  .ss-week-grid {
+    display: flex;
+    flex-direction: column;
+    overflow: visible;
+    gap: 8px;
+  }
+
+  .ss-day {
+    min-height: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ss-lesson-card {
+    transition: none;
+  }
+}

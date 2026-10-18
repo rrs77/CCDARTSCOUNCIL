@@ -213,18 +213,18 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
     <div
       className={
         embedded
-          ? 'rounded-xl border border-teal-200 bg-white shadow-sm'
+          ? 'rounded-xl border border-[#E2E0EF] bg-white shadow-sm'
           : 'flex max-h-[92vh] w-full max-w-6xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl'
       }
     >
-      <header className="flex items-start justify-between gap-3 border-b border-teal-100 bg-gradient-to-r from-[#002D24] to-[#008272] px-5 py-4 text-white">
+      <header className="flex items-start justify-between gap-3 border-b border-[#E2E0EF] bg-gradient-to-r from-[#1F1B4D] to-[#008272] px-5 py-4 text-white">
         <div>
-          <p className="text-xs uppercase tracking-wide text-teal-100">Organisation hub admin</p>
+          <p className="text-xs uppercase tracking-wide text-[#E9E6FF]">Organisation hub admin</p>
           <h2 className="text-xl font-semibold">
             {org ? `Editing: ${org.display_name}` : 'Select a hub'}
           </h2>
           {org && (
-            <p className="mt-1 text-sm text-teal-50">
+            <p className="mt-1 text-sm text-[#E9E6FF]">
               /{org.slug} · your role: {hubRole.replace('hub_', '')}
               {isSuper ? ' · super admin' : ''}
             </p>
@@ -298,8 +298,8 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
                   key={h.id}
                   type="button"
                   onClick={() => setSelectedId(h.id)}
-                  className={`block w-full border-b border-gray-50 px-3 py-2.5 text-left text-sm hover:bg-teal-50 ${
-                    selectedId === h.id ? 'bg-teal-50 font-semibold text-teal-900' : 'text-gray-800'
+                  className={`block w-full border-b border-gray-50 px-3 py-2.5 text-left text-sm hover:bg-[#E9E6FF] ${
+                    selectedId === h.id ? 'bg-[#E9E6FF] font-semibold text-[#1F1B4D]' : 'text-gray-800'
                   }`}
                 >
                   <span className="block truncate">{h.display_name}</span>
@@ -323,8 +323,8 @@ export function HubAdminDashboard({ onClose, embedded }: HubAdminDashboardProps)
                   onClick={() => setSection(s.id)}
                   className={`rounded-md px-2.5 py-1.5 text-xs font-medium ${
                     section === s.id
-                      ? 'bg-teal-700 text-white'
-                      : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-teal-50'
+                      ? 'bg-[#3529d1] text-white'
+                      : 'bg-white text-gray-700 ring-1 ring-gray-200 hover:bg-[#E9E6FF]'
                   }`}
                 >
                   {s.label}
@@ -539,7 +539,7 @@ function EditPageSection(props: {
         type="button"
         disabled={saving}
         onClick={onSave}
-        className="inline-flex items-center gap-2 rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-60"
+        className="inline-flex items-center gap-2 rounded-lg bg-[#3529d1] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3529d1] disabled:opacity-60"
       >
         {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
         Save page
@@ -613,7 +613,7 @@ function ResourcesSection({
         {draftsOnly ? 'Draft resources' : 'Resources'} — external links only
       </h3>
       {!draftsOnly && can(hubRole, 'hub_editor') && (
-        <div className="grid gap-2 rounded-lg border border-dashed border-teal-200 bg-teal-50/40 p-3 sm:grid-cols-4">
+        <div className="grid gap-2 rounded-lg border border-dashed border-[#E2E0EF] bg-[#E9E6FF]/40 p-3 sm:grid-cols-4">
           <input
             placeholder="Title"
             className="rounded-md border px-2 py-1.5 text-sm sm:col-span-1"
@@ -641,7 +641,7 @@ function ResourcesSection({
               type="button"
               disabled={busy}
               onClick={() => void create()}
-              className="inline-flex items-center gap-1 rounded-md bg-teal-700 px-3 py-1.5 text-sm text-white"
+              className="inline-flex items-center gap-1 rounded-md bg-[#3529d1] px-3 py-1.5 text-sm text-white"
             >
               <Plus className="h-3.5 w-3.5" /> Add
             </button>
@@ -675,7 +675,7 @@ function ResourcesSection({
               {can(hubRole, 'hub_publisher') && r.status !== 'published' && (
                 <button
                   type="button"
-                  className="rounded bg-teal-50 px-2 py-1 text-xs text-teal-800"
+                  className="rounded bg-[#E9E6FF] px-2 py-1 text-xs text-[#1F1B4D]"
                   onClick={async () => {
                     try {
                       await resourceLifecycle(hubId, r.id, 'publish');
@@ -751,7 +751,7 @@ function PublishSection({
 }) {
   return (
     <div className="mx-auto max-w-md space-y-4 text-center">
-      <Upload className="mx-auto h-8 w-8 text-teal-700" />
+      <Upload className="mx-auto h-8 w-8 text-[#4338E8]" />
       <p className="text-sm text-gray-600">
         Publishing creates a page revision and makes structured content live on the public hub.
         Resource publish is per-item under Resources.
@@ -759,7 +759,7 @@ function PublishSection({
       <div className="flex justify-center gap-2">
         <button
           type="button"
-          className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+          className="rounded-lg bg-[#3529d1] px-4 py-2 text-sm font-semibold text-white"
           onClick={async () => {
             try {
               await hubPageAction(hubId, 'publish');
@@ -802,7 +802,7 @@ function PreviewSection(props: {
       <div className="flex items-center gap-2 text-sm text-gray-500">
         <Eye className="h-4 w-4" /> Preview (published resources only)
       </div>
-      <h3 className="text-2xl font-semibold" style={{ color: props.org.primary_color || '#002D24' }}>
+      <h3 className="text-2xl font-semibold" style={{ color: props.org.primary_color || '#1F1B4D' }}>
         {props.org.display_name}
       </h3>
       <p className="text-sm text-gray-600">{props.tagline}</p>
@@ -882,7 +882,7 @@ function MembersSection({ hubId }: { hubId: string }) {
         </select>
         <button
           type="button"
-          className="rounded-md bg-teal-700 px-3 py-2 text-sm text-white"
+          className="rounded-md bg-[#3529d1] px-3 py-2 text-sm text-white"
           onClick={async () => {
             try {
               await grantHubMember(hubId, { email, role });
@@ -948,7 +948,7 @@ function AnalyticsSection({ hubId }: { hubId: string }) {
   return (
     <div className="space-y-3">
       <div className="flex items-center gap-2">
-        <BarChart3 className="h-5 w-5 text-teal-700" />
+        <BarChart3 className="h-5 w-5 text-[#4338E8]" />
         <h3 className="font-semibold">Downloads (30 days) — this hub only</h3>
       </div>
       <p className="text-xs text-gray-500">Raw IP addresses are never shown. Geo city/region only.</p>
@@ -956,7 +956,7 @@ function AnalyticsSection({ hubId }: { hubId: string }) {
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
         <>
-          <p className="text-3xl font-semibold text-teal-900">{total}</p>
+          <p className="text-3xl font-semibold text-[#1F1B4D]">{total}</p>
           <ul className="text-sm">
             {Object.entries(byResource).map(([id, n]) => (
               <li key={id} className="flex justify-between border-b py-1">
@@ -974,13 +974,13 @@ function AnalyticsSection({ hubId }: { hubId: string }) {
 function ExportSection({ hubId, slug }: { hubId: string; slug: string }) {
   return (
     <div className="space-y-3">
-      <Download className="h-6 w-6 text-teal-700" />
+      <Download className="h-6 w-6 text-[#4338E8]" />
       <p className="text-sm text-gray-600">
         Export org-scoped download events as CSV (no raw IPs). Requires a signed-in session.
       </p>
       <button
         type="button"
-        className="rounded-lg bg-teal-700 px-4 py-2 text-sm font-semibold text-white"
+        className="rounded-lg bg-[#3529d1] px-4 py-2 text-sm font-semibold text-white"
         onClick={async () => {
           const { data } = await supabase.auth.getSession();
           const token = data.session?.access_token;
@@ -1076,11 +1076,11 @@ export function HubAdminEntryButton({ onOpen }: { onOpen: () => void }) {
     <button
       type="button"
       onClick={onOpen}
-      className="inline-flex items-center gap-2 rounded-lg border border-teal-200 bg-teal-50 px-3 py-2 text-sm font-medium text-teal-900 hover:bg-teal-100"
+      className="inline-flex items-center gap-2 rounded-lg border border-[#E2E0EF] bg-[#E9E6FF] px-3 py-2 text-sm font-medium text-[#1F1B4D] hover:bg-[#E9E6FF]"
     >
       <Shield className="h-4 w-4" />
       Organisation hub admin
-      <CheckCircle2 className="h-3.5 w-3.5 text-teal-600" />
+      <CheckCircle2 className="h-3.5 w-3.5 text-[#4338E8]" />
     </button>
   );
 }

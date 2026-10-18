@@ -101,12 +101,12 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
       <div
         className={
           isEnlarged
-            ? 'relative flex h-full w-full max-w-none flex-col overflow-hidden rounded-none border border-[#B6FF7E]/35 shadow-2xl sm:rounded-2xl'
-            : 'relative flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#B6FF7E]/35 shadow-2xl'
+            ? 'relative flex h-full w-full max-w-none flex-col overflow-hidden rounded-none border border-[#FFC93C]/35 shadow-2xl sm:rounded-2xl'
+            : 'relative flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#FFC93C]/35 shadow-2xl'
         }
         style={{
           background:
-            'linear-gradient(165deg, #002D24 0%, #0a3d32 55%, #123f35 100%)',
+            'linear-gradient(165deg, #1F1B4D 0%, #0a3d32 55%, #123f35 100%)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -115,7 +115,7 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
           <button
             type="button"
             onClick={toggleEnlarge}
-            className="inline-flex items-center justify-center rounded-lg border border-[#B6FF7E]/40 bg-white/5 p-2 text-[#B6FF7E] transition-colors hover:bg-white/10"
+            className="inline-flex items-center justify-center rounded-lg border border-[#FFC93C]/40 bg-white/5 p-2 text-[#FFC93C] transition-colors hover:bg-white/10"
             aria-label={isEnlarged ? 'Exit enlarge' : 'Enlarge'}
             aria-pressed={isEnlarged}
             title={isEnlarged ? 'Exit enlarge' : 'Enlarge'}

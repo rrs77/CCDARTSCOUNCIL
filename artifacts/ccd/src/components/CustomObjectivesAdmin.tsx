@@ -95,7 +95,7 @@ function DraggableYearGroup({ yearGroup, index, isSelected, onSelect, onReorder,
       ref={ref}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       data-handler-id={handlerId}
-      className={`transition-all rounded-lg ${isDragging ? 'ring-2 ring-teal-400 shadow-lg' : ''} ${dropZoneClass} ${flashClass}`}
+      className={`transition-all rounded-lg ${isDragging ? 'ring-2 ring-[#a9a3ff] shadow-lg' : ''} ${dropZoneClass} ${flashClass}`}
     >
       {children}
     </div>
@@ -659,13 +659,13 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     <>
       {/* Header */}
       {!embedded && (
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-teal-600 to-teal-700 text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#4338E8] to-[#3529d1] text-white">
           <div className="flex items-center space-x-3">
             <h2 className="text-xl font-bold">Custom Objectives Admin</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-teal-100 hover:text-white hover:bg-teal-800 rounded-lg transition-colors duration-200"
+            className="p-2 text-[#E9E6FF] hover:text-white hover:bg-[#3529d1] rounded-lg transition-colors duration-200"
           >
             <X className="h-6 w-6" />
           </button>
@@ -702,7 +702,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                 <div className="flex space-x-2">
                   <button
                     onClick={handleCreateYearGroup}
-                    className="p-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition-colors duration-200"
+                    className="p-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] transition-colors duration-200"
                     title="Create New Subject Area"
                   >
                     <Plus className="h-4 w-4" />
@@ -857,7 +857,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                               <div
                                 className={`p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-colors duration-200 overflow-hidden ${
                                   selectedYearGroup === yearGroup.id
-                                    ? 'border-teal-500 bg-teal-50'
+                                    ? 'border-[#4338E8] bg-[#E9E6FF]'
                                     : 'border-gray-200 bg-white hover:border-gray-300'
                                 }`}
                                 onClick={() => setSelectedYearGroup(yearGroup.id)}
@@ -879,7 +879,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                         )}
                                         {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
                                           <span title={`Linked to: ${yearGroup.linked_year_groups.join(', ')}`} className="flex-shrink-0">
-                                            <Link2 className="h-3 w-3 text-teal-500" />
+                                            <Link2 className="h-3 w-3 text-[#4338E8]" />
                                           </span>
                                         )}
                                       </div>
@@ -887,7 +887,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                         {yearGroup.areas.length} areas, {yearGroup.areas.reduce((sum, area) => sum + area.objectives.length, 0)} objectives
                                       </p>
                                       {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
-                                        <p className="text-xs text-teal-600 truncate" title={yearGroup.linked_year_groups.join(', ')}>
+                                        <p className="text-xs text-[#4338E8] truncate" title={yearGroup.linked_year_groups.join(', ')}>
                                           → {yearGroup.linked_year_groups.slice(0, 3).join(', ')}{yearGroup.linked_year_groups.length > 3 ? ` +${yearGroup.linked_year_groups.length - 3}` : ''}
                                         </p>
                                       )}
@@ -991,7 +991,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                             </button>
                             <button
                               onClick={() => handleEditYearGroup(yearGroup)}
-                              className="px-2 py-1 bg-teal-600 text-white text-xs rounded-md hover:bg-teal-700 transition-colors duration-200 flex items-center space-x-1"
+                              className="px-2 py-1 bg-[#4338E8] text-white text-xs rounded-md hover:bg-[#3529d1] transition-colors duration-200 flex items-center space-x-1"
                               title="Edit"
                             >
                               <Edit2 className="h-3 w-3" />
@@ -1021,16 +1021,16 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                             <div key={section} className="space-y-3">
                               {/* Section Header */}
                               {section !== 'Other' && (
-                                <div className="bg-gradient-to-r from-teal-50 to-blue-50 border-l-4 border-teal-500 px-4 py-3 rounded-lg">
-                                  <h3 className="text-lg font-bold text-teal-900">{section}</h3>
+                                <div className="bg-gradient-to-r from-[#E9E6FF] to-blue-50 border-l-4 border-[#4338E8] px-4 py-3 rounded-lg">
+                                  <h3 className="text-lg font-bold text-[#1F1B4D]">{section}</h3>
                                 </div>
                               )}
                               
                               {/* Areas within this section */}
                               {areas.map((area) => (
-                                <div key={area.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-teal-300 transition-colors">
+                                <div key={area.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-[#bcb7f4] transition-colors">
                                   <div
-                                    className="p-4 bg-gradient-to-r from-gray-50 to-white cursor-pointer flex items-center justify-between hover:from-teal-50 hover:to-blue-50 transition-colors"
+                                    className="p-4 bg-gradient-to-r from-gray-50 to-white cursor-pointer flex items-center justify-between hover:from-[#E9E6FF] hover:to-blue-50 transition-colors"
                                     onClick={() => toggleAreaExpansion(area.id)}
                                   >
                                     <div>
@@ -1038,10 +1038,10 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                       {area.description && (
                                         <p className="text-sm text-gray-600 mt-1">{area.description}</p>
                                       )}
-                                      <p className="text-xs text-teal-600 font-medium mt-1">{area.objectives.length} objectives</p>
+                                      <p className="text-xs text-[#4338E8] font-medium mt-1">{area.objectives.length} objectives</p>
                                     </div>
                                     {expandedAreas.has(area.id) ? (
-                                      <ChevronDown className="h-5 w-5 text-teal-600" />
+                                      <ChevronDown className="h-5 w-5 text-[#4338E8]" />
                                     ) : (
                                       <ChevronRight className="h-5 w-5 text-gray-400" />
                                     )}
@@ -1051,8 +1051,8 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                     <div className="p-4 bg-white border-t border-gray-100">
                                       <div className="space-y-2">
                                         {area.objectives.map((objective, idx) => (
-                                          <div key={objective.id} className="flex items-start space-x-3 p-3 bg-gradient-to-r from-teal-50 to-blue-50 rounded-lg border border-teal-100">
-                                            <div className="flex-shrink-0 w-6 h-6 bg-teal-600 text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                          <div key={objective.id} className="flex items-start space-x-3 p-3 bg-gradient-to-r from-[#E9E6FF] to-blue-50 rounded-lg border border-[#E2E0EF]">
+                                            <div className="flex-shrink-0 w-6 h-6 bg-[#4338E8] text-white rounded-full flex items-center justify-center text-xs font-bold">
                                               {idx + 1}
                                             </div>
                                             <div className="flex-1">
@@ -1098,7 +1098,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                     type="text"
                     value={cloneData.targetName}
                     onChange={(e) => setCloneData(prev => ({ ...prev, targetName: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                   />
                 </div>
                 <div>
@@ -1122,7 +1122,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                 </button>
                 <button
                   onClick={handleCloneYearGroup}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700"
+                  className="px-4 py-2 bg-[#4338E8] text-white rounded-md hover:bg-[#3529d1]"
                 >
                   Clone
                 </button>
@@ -1136,7 +1136,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[75]">
             <div className="bg-white rounded-lg w-full max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
               {/* Header with close button */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-teal-600 to-teal-700 text-white">
+              <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#4338E8] to-[#3529d1] text-white">
                 <h3 className="text-lg font-semibold">
                   {editingYearGroup ? 'Edit Main Heading (Subject Area)' : 'Create New Main Heading (Subject Area)'}
                 </h3>
@@ -1146,7 +1146,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                     setEditingYearGroup(null);
                     setSaveStatus('idle');
                   }}
-                  className="p-2 text-teal-100 hover:text-white hover:bg-teal-800 rounded-lg transition-colors duration-200"
+                  className="p-2 text-[#E9E6FF] hover:text-white hover:bg-[#3529d1] rounded-lg transition-colors duration-200"
                 >
                   <X className="h-6 w-6" />
                 </button>
@@ -1155,20 +1155,20 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
               {/* Save Status Message */}
               {saveStatus !== 'idle' && (
                 <div className={`mx-6 mt-4 p-4 rounded-lg shadow-md transition-all duration-300 ${
-                  saveStatus === 'success' ? 'bg-teal-50 border border-teal-200' :
+                  saveStatus === 'success' ? 'bg-[#E9E6FF] border border-[#E2E0EF]' :
                   'bg-red-50 border border-red-200'
                 }`}>
                   <div className="flex items-center space-x-3">
                     {saveStatus === 'success' ? (
                       <>
-                        <div className="flex-shrink-0 w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-                          <Check className="h-6 w-6 text-teal-600" />
+                        <div className="flex-shrink-0 w-10 h-10 bg-[#E9E6FF] rounded-full flex items-center justify-center">
+                          <Check className="h-6 w-6 text-[#4338E8]" />
                         </div>
                         <div>
-                          <h3 className="text-lg font-medium text-teal-800">
+                          <h3 className="text-lg font-medium text-[#1F1B4D]">
                             {editingYearGroup ? 'Subject area updated successfully!' : 'Subject area created successfully!'}
                           </h3>
-                          <p className="text-sm text-teal-600">
+                          <p className="text-sm text-[#4338E8]">
                             {editingYearGroup ? 'Your changes have been saved.' : 'Your new subject area has been created.'}
                           </p>
                         </div>
@@ -1204,7 +1204,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                         ...prev,
                         year_group: { ...prev.year_group, name: e.target.value }
                       }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                       placeholder="e.g., Communication and Language, Mathematics"
                     />
                   </div>
@@ -1234,7 +1234,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                       ...prev,
                       year_group: { ...prev.year_group, description: e.target.value }
                     }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                     rows={2}
                     placeholder="Brief description of this subject area (e.g., age group, context)"
                   />
@@ -1244,7 +1244,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
                     <div className="flex items-center space-x-2">
-                      <Link2 className="h-4 w-4 text-teal-600" />
+                      <Link2 className="h-4 w-4 text-[#4338E8]" />
                       <span>Link to Year Groups</span>
                     </div>
                   </label>
@@ -1273,8 +1273,8 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                             }}
                             className={`px-3 py-1.5 rounded-full text-sm font-medium transition-all flex items-center space-x-1.5 ${
                               isLinked
-                                ? 'bg-teal-600 text-white ring-2 ring-teal-300'
-                                : 'bg-white text-gray-700 border border-gray-300 hover:border-teal-400 hover:bg-teal-50'
+                                ? 'bg-[#4338E8] text-white ring-2 ring-[#a9a3ff]'
+                                : 'bg-white text-gray-700 border border-gray-300 hover:border-[#bcb7f4] hover:bg-[#E9E6FF]'
                             }`}
                           >
                             {isLinked && <Check className="h-3 w-3" />}
@@ -1285,7 +1285,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                     )}
                   </div>
                   {(formData.year_group.linked_year_groups?.length || 0) > 0 && (
-                    <p className="text-xs text-teal-600 mt-1">
+                    <p className="text-xs text-[#4338E8] mt-1">
                       Linked to {formData.year_group.linked_year_groups?.length} year group{formData.year_group.linked_year_groups?.length !== 1 ? 's' : ''}
                     </p>
                   )}
@@ -1297,7 +1297,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                     <h4 className="text-md font-medium text-gray-900">Subheadings (Focus Areas)</h4>
                     <button
                       onClick={addArea}
-                      className="px-3 py-1 bg-teal-600 text-white text-sm rounded-md hover:bg-teal-700"
+                      className="px-3 py-1 bg-[#4338E8] text-white text-sm rounded-md hover:bg-[#3529d1]"
                     >
                       Add Subheading
                     </button>
@@ -1330,7 +1330,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                   i === areaIndex ? { ...a, section: e.target.value } : a
                                 )
                               }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                               placeholder="e.g., Communication and Language, Physical Development"
                             />
                             <p className="text-xs text-gray-500 mt-1">
@@ -1351,7 +1351,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                   i === areaIndex ? { ...a, name: e.target.value } : a
                                 )
                               }))}
-                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent"
+                              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent"
                               placeholder="e.g., Listening, Attention and Understanding"
                             />
                             <p className="text-xs text-gray-500 mt-1">
@@ -1376,7 +1376,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                                 autoResizeTextarea(e.target);
                                 handleObjectiveTextChange(areaIndex, 0, e.target.value);
                               }}
-                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-teal-500 focus:border-transparent resize-none overflow-hidden"
+                              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-[#4338E8] focus:border-transparent resize-none overflow-hidden"
                               rows={Math.max(3, area.objectives.length)}
                               placeholder="Enter objectives here. Press Enter after each objective to separate them:&#10;&#10;Objective 1 text&#10;Objective 2 text&#10;Objective 3 text&#10;&#10;Or use # to separate:&#10;Objective 1 # Objective 2 # Objective 3"
                               style={{ minHeight: '5rem' }}
@@ -1449,7 +1449,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                 <button
                   onClick={handleSaveYearGroup}
                   disabled={!formData.year_group.name || formData.areas.length === 0}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-md hover:bg-teal-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  className="px-4 py-2 bg-[#4338E8] text-white rounded-md hover:bg-[#3529d1] disabled:bg-gray-400 disabled:cursor-not-allowed"
                 >
                   {editingYearGroup ? 'Update' : 'Create'}
                 </button>

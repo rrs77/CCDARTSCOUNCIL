@@ -76,8 +76,7 @@ export function StageOverview({
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: reduced ? 0.01 : 0.4, ease: easeOut }}
         >
-          <LogoMark size={52} title={meta.productName} />
-          <p className="stage-launcher-brand">{meta.productName}</p>
+          <LogoMark size={52} title="designer" />
         </motion.div>
         <div className="stage-launcher-intro-row">
           <div className="stage-launcher-titles">

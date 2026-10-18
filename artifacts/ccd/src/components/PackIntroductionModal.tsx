@@ -29,7 +29,7 @@ export function PackIntroductionModal({
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-[90]" role="dialog" aria-modal="true" aria-labelledby="pack-intro-title">
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-3xl max-h-[90vh] overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-teal-50">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-[#E9E6FF]">
           <div>
             <h2 id="pack-intro-title" className="text-xl font-bold text-gray-900">
               Introduction to this pack
@@ -73,7 +73,7 @@ export function PackIntroductionModal({
           <button
             type="button"
             onClick={handleSave}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 flex items-center gap-2"
+            className="px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] flex items-center gap-2"
           >
             <Save className="h-4 w-4" />
             Save introduction

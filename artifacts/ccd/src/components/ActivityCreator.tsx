@@ -366,7 +366,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                   name="activity"
                   value={activity.activity}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${errors.activity ? 'border-red-500' : 'border-gray-300'} rounded-button focus:ring-2 focus:ring-teal-500 focus:border-transparent text-lg`}
+                  className={`w-full px-4 py-3 border ${errors.activity ? 'border-red-500' : 'border-gray-300'} rounded-button focus:ring-2 focus:ring-[#4338E8] focus:border-transparent text-lg`}
                   style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
                   onFocus={(e) => e.target.style.borderColor = '#0BA596'}
                   onBlur={(e) => e.target.style.borderColor = errors.activity ? '#EF4444' : '#D1D5DB'}
@@ -383,7 +383,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                 <button
                   type="button"
                   onClick={() => setShowObjectivesBrowser(true)}
-                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-button hover:border-teal-500 hover:bg-teal-50 transition-colors duration-200 flex items-center justify-center space-x-2 text-gray-600 hover:text-teal-700"
+                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-button hover:border-[#4338E8] hover:bg-[#E9E6FF] transition-colors duration-200 flex items-center justify-center space-x-2 text-gray-600 hover:text-[#3529d1]"
                 >
                   <Tag className="h-5 w-5" />
                   <span className="font-medium">
@@ -444,7 +444,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                     name="requiredPack"
                     value={activity.requiredPack}
                     onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent transition-colors duration-200 text-sm font-medium bg-white"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent transition-colors duration-200 text-sm font-medium bg-white"
                   >
                     <option value="">No pack required</option>
                     {availablePacks.filter(p => p.is_active).map((pack) => (
@@ -486,7 +486,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                       </div>
                       <div 
                         className="w-6 h-6 rounded-full flex-shrink-0 border-2 border-white shadow-sm"
-                        style={{ backgroundColor: group.color || '#14B8A6' }}
+                        style={{ backgroundColor: group.color || '#4338E8' }}
                       ></div>
                       <span className={`text-sm font-medium ${
                         activity.yearGroups.includes(group.name) 
@@ -553,7 +553,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                     <button
                       type="button"
                       onClick={addTopic}
-                      className="px-3 py-2 rounded-lg border border-teal-300 bg-teal-50 text-teal-700 hover:bg-teal-100"
+                      className="px-3 py-2 rounded-lg border border-[#bcb7f4] bg-[#E9E6FF] text-[#4338E8] hover:bg-[#E9E6FF]"
                       title="Add topic"
                     >
                       <Plus className="h-4 w-4" />
@@ -564,13 +564,13 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                       {parseTopics(activity.unitName).map((topic) => (
                         <span
                           key={topic}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-teal-100 text-teal-800"
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#E9E6FF] text-[#1F1B4D]"
                         >
                           {topic}
                           <button
                             type="button"
                             onClick={() => removeTopic(topic)}
-                            className="text-teal-700 hover:text-teal-900"
+                            className="text-[#4338E8] hover:text-[#1F1B4D]"
                             title={`Remove ${topic}`}
                           >
                             <X className="h-3 w-3" />

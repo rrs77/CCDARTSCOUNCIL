@@ -205,7 +205,7 @@ export function LessonDetailsModal({
         <div 
           className="p-3 sm:p-4 text-white relative flex-shrink-0 z-10"
           style={{ 
-            background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)'
+            background: 'linear-gradient(135deg, #4338E8 0%, #4338E8 100%)'
           }}
         >
           <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -363,7 +363,7 @@ export function LessonDetailsModal({
               {lessonData.learningOutcome && (
                 <div className="space-y-2">
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-teal-600" />
+                    <Target className="h-5 w-5 text-[#4338E8]" />
                     <span>Learning Outcome</span>
                   </h4>
                   <div 
@@ -378,7 +378,7 @@ export function LessonDetailsModal({
               {lessonData.successCriteria && (
                 <div className="space-y-2">
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-teal-600" />
+                    <Target className="h-5 w-5 text-[#4338E8]" />
                     <span>Success Criteria</span>
                   </h4>
                   <div 
@@ -469,13 +469,13 @@ export function LessonDetailsModal({
                 return (
                   <div className="space-y-2">
                     <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                      <Link className="h-5 w-5 text-teal-600" />
+                      <Link className="h-5 w-5 text-[#4338E8]" />
                       <span>Links &amp; Resources</span>
                     </h4>
-                    <div className="bg-teal-50 rounded-lg p-4 border border-teal-100 space-y-3">
+                    <div className="bg-[#E9E6FF] rounded-lg p-4 border border-[#E2E0EF] space-y-3">
                       {lessonData.videoLink && (
                         <div>
-                          <div className="flex items-center gap-2 text-sm font-medium text-teal-900">
+                          <div className="flex items-center gap-2 text-sm font-medium text-[#1F1B4D]">
                             <span className="w-2.5 h-2.5 bg-red-500 rounded-full flex-shrink-0" />
                             Video
                           </div>
@@ -483,7 +483,7 @@ export function LessonDetailsModal({
                             href={lessonData.videoLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                            className="mt-0.5 block text-sm text-[#4338E8] hover:text-[#1F1B4D] hover:underline break-all"
                           >
                             {lessonData.videoLink}
                           </a>
@@ -491,15 +491,15 @@ export function LessonDetailsModal({
                       )}
                       {lessonData.resourceLink && (
                         <div>
-                          <div className="flex items-center gap-2 text-sm font-medium text-teal-900">
-                            <FileText className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                          <div className="flex items-center gap-2 text-sm font-medium text-[#1F1B4D]">
+                            <FileText className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
                             Resource pack
                           </div>
                           <a
                             href={lessonData.resourceLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                            className="mt-0.5 block text-sm text-[#4338E8] hover:text-[#1F1B4D] hover:underline break-all"
                           >
                             {lessonData.resourceLink}
                           </a>
@@ -507,12 +507,12 @@ export function LessonDetailsModal({
                       )}
                       {lessonData.imageLink && (
                         <div>
-                          <div className="text-sm font-medium text-teal-900">Image</div>
+                          <div className="text-sm font-medium text-[#1F1B4D]">Image</div>
                           <a
                             href={lessonData.imageLink}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                            className="mt-0.5 block text-sm text-[#4338E8] hover:text-[#1F1B4D] hover:underline break-all"
                           >
                             {lessonData.imageLink}
                           </a>
@@ -521,14 +521,14 @@ export function LessonDetailsModal({
                       {extra.map((link, index) =>
                         link?.url ? (
                           <div key={`${link.url}-${index}`}>
-                            <div className="text-sm font-medium text-teal-900">
+                            <div className="text-sm font-medium text-[#1F1B4D]">
                               {link.label || `Link ${index + 1}`}
                             </div>
                             <a
                               href={link.url}
                               target="_blank"
                               rel="noopener noreferrer"
-                              className="mt-0.5 block text-sm text-teal-700 hover:text-teal-900 hover:underline break-all"
+                              className="mt-0.5 block text-sm text-[#4338E8] hover:text-[#1F1B4D] hover:underline break-all"
                             >
                               {link.url}
                             </a>

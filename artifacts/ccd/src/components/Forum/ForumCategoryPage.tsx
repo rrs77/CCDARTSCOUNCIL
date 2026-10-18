@@ -96,14 +96,14 @@ export function ForumCategoryPage({
       <button
         type="button"
         onClick={() => navigate('/forum')}
-        className="text-sm text-teal-800 hover:underline"
+        className="text-sm text-[#1F1B4D] hover:underline"
       >
         ← All categories
       </button>
 
       {category && (
         <div>
-          <h1 className="font-serif text-3xl text-[#002D24]">{category.title}</h1>
+          <h1 className="text-3xl font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>{category.title}</h1>
           {category.description && (
             <p className="mt-2 text-sm text-gray-600">{category.description}</p>
           )}
@@ -149,7 +149,7 @@ export function ForumCategoryPage({
 
       {showCompose && category && (
         <form onSubmit={onCreate} className="space-y-3 rounded-xl border border-[#d5e0dc] bg-white p-4">
-          <h2 className="font-semibold text-[#002D24]">New topic</h2>
+          <h2 className="font-semibold text-[#1F1B4D]">New topic</h2>
           <input
             required
             minLength={5}
@@ -171,7 +171,7 @@ export function ForumCategoryPage({
           <button
             type="submit"
             disabled={posting}
-            className="rounded-lg bg-[#002D24] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
+            className="rounded-lg bg-[#1F1B4D] px-4 py-2 text-sm font-medium text-white disabled:opacity-50"
           >
             {posting ? 'Posting…' : 'Post topic'}
           </button>

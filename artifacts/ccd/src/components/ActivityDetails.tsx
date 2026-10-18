@@ -53,7 +53,7 @@ export function ActivityDetails({
           <p className="text-gray-700 mb-6">Activity data is invalid or missing.</p>
           <button
             onClick={onClose}
-            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors"
+            className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors"
           >
             Close
           </button>
@@ -795,7 +795,7 @@ export function ActivityDetails({
                     {onViewUnit && activity.unitName && (
                       <button
                         onClick={() => onViewUnit(activity.unitName)}
-                        className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
+                        className="p-1.5 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded transition-colors"
                         title="View Unit"
                       >
                         <FolderOpen className="h-4 w-4" />
@@ -830,7 +830,7 @@ export function ActivityDetails({
                     {onViewLesson && activity.lessonNumber && (
                       <button
                         onClick={() => onViewLesson(activity.lessonNumber)}
-                        className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
+                        className="p-1.5 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded transition-colors"
                         title="View Lesson"
                       >
                         <BookOpen className="h-4 w-4" />

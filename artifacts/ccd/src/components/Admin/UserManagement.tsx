@@ -80,7 +80,7 @@ function roleBadgeClass(role: ProfileRole): string {
     case 'superuser':
       return 'bg-purple-100 text-purple-800 border-purple-200';
     case 'admin':
-      return 'bg-teal-100 text-teal-800 border-teal-200';
+      return 'bg-[#E9E6FF] text-[#1F1B4D] border-[#E2E0EF]';
     case 'organisation':
       return 'bg-indigo-100 text-indigo-800 border-indigo-200';
     case 'creator':
@@ -654,7 +654,7 @@ export function UserManagement() {
   if (loading && users.length === 0 && !loadError) {
     return (
       <div className="flex items-center justify-center py-12">
-        <Loader2 className="h-8 w-8 animate-spin text-teal-600" />
+        <Loader2 className="h-8 w-8 animate-spin text-[#4338E8]" />
       </div>
     );
   }
@@ -667,7 +667,7 @@ export function UserManagement() {
         <button
           type="button"
           onClick={() => void reload()}
-          className="mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700"
+          className="mt-4 px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1]"
         >
           Try again
         </button>
@@ -694,7 +694,7 @@ export function UserManagement() {
             setCreateEmail('');
             setCreateRole('teacher');
           }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-teal-600 text-white text-sm font-medium rounded-lg hover:bg-teal-700 transition-colors"
+          className="inline-flex items-center gap-2 px-4 py-2 bg-[#4338E8] text-white text-sm font-medium rounded-lg hover:bg-[#3529d1] transition-colors"
         >
           <Plus className="h-4 w-4" />
           Create User
@@ -804,7 +804,7 @@ export function UserManagement() {
       <div className="relative border border-gray-200 rounded-lg overflow-x-auto">
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50">
-            <Loader2 className="h-6 w-6 animate-spin text-teal-600" />
+            <Loader2 className="h-6 w-6 animate-spin text-[#4338E8]" />
           </div>
         )}
         <table className="w-full text-left min-w-[720px]">
@@ -1268,7 +1268,7 @@ export function UserManagement() {
                 <button
                   type="submit"
                   disabled={createSending}
-                  className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50 inline-flex items-center gap-2"
+                  className="px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] disabled:opacity-50 inline-flex items-center gap-2"
                 >
                   {createSending ? (
                     <Loader2 className="h-4 w-4 animate-spin" />

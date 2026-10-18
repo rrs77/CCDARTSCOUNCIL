@@ -112,7 +112,7 @@ export function SystemCategoriesAdmin() {
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 text-sm bg-teal-600 hover:bg-teal-700 disabled:opacity-60 text-white rounded-lg flex items-center gap-2"
+            className="px-4 py-2 text-sm bg-[#4338E8] hover:bg-[#3529d1] disabled:opacity-60 text-white rounded-lg flex items-center gap-2"
           >
             <Save className="h-4 w-4" />
             {saving ? 'Saving…' : 'Save catalog'}

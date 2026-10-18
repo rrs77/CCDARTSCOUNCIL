@@ -370,17 +370,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // Don't set loading=true here – it would unmount LoginForm and clear the password field.
       // LoginForm handles its own submit loading state.
 
-      // Real credentials must never inherit a stuck demo session / seeded selector state.
-      // Clear demo flag + seeded localStorage when leaving demo (or if a prior demo user id remains).
-      try {
-        const priorUserId = localStorage.getItem('rhythmstix_user_id');
-        if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
-          clearDemoMode();
-        }
-      } catch {
-        /* privacy mode – best effort */
-      }
-
       if (isSupabaseAuthEnabled()) {
         const { data, error } = await supabase.auth.signInWithPassword({
           email: username.trim(),
@@ -388,10 +377,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
         if (error) {
           const msg = (error.message || '').toLowerCase();
+          if (/missing email/.test(msg)) {
+            throw new Error('Missing email');
+          }
           const isWrongPassword = /invalid|credential|wrong|incorrect|login credentials/.test(msg);
           throw new Error(isWrongPassword ? 'Email or password incorrect. Try again or use Forgot password.' : (error.message || 'Sign-in failed'));
         }
         if (!data.session?.user) throw new Error('No session after sign in');
+        // Only clear demo after a successful auth — failed attempts must not wipe seeded data.
+        try {
+          const priorUserId = localStorage.getItem('rhythmstix_user_id');
+          if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
+            clearDemoMode();
+          }
+        } catch {
+          /* privacy mode – best effort */
+        }
         const sessionUser = data.session.user;
         // Mark this user as handled so the onAuthStateChange SIGNED_IN event doesn't fire a duplicate fetch.
         lastHandledUserIdRef.current = sessionUser.id;
@@ -413,6 +414,14 @@ export function AuthProvider({ children }: AuthProviderProps) {
         try {
           const authResponse = await wordpressAPI.authenticate(username, password);
           if (authResponse.token) {
+            try {
+              const priorUserId = localStorage.getItem('rhythmstix_user_id');
+              if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
+                clearDemoMode();
+              }
+            } catch {
+              /* privacy mode – best effort */
+            }
             localStorage.setItem('rhythmstix_auth_token', authResponse.token);
             const userInfo = await wordpressAPI.getUserInfo(authResponse.token);
             const userData: AppUser = {

@@ -2,6 +2,8 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import App from './App';
 import './index.css';
+import './styles/studio-score.css';
+
 import { isAuthorizedDemoMode } from './utils/demoMode';
 import { seedDemoData } from './utils/demoSeed';
 import { applyFeatureDemoFilmClass } from './utils/featureDemoFilm';

@@ -133,7 +133,7 @@ function CompactDraggableActivity({ activity, index, onRemove, onReorder }: Comp
       data-handler-id={handlerId}
       className={`flex items-center py-2.5 px-3 group cursor-grab active:cursor-grabbing transition-all rounded-lg ${
         isDragging 
-          ? 'bg-teal-50 shadow-lg ring-2 ring-teal-400' 
+          ? 'bg-[#E9E6FF] shadow-lg ring-2 ring-[#a9a3ff]' 
           : 'hover:bg-gray-50'
       } ${dropZoneClass} ${flashClass}`}
     >
@@ -566,7 +566,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'main'
                 ? 'text-white'
-                : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50'
+                : 'text-gray-600 hover:text-[#4338E8] hover:bg-[#E9E6FF]'
             }`}
             style={{
               ...(activeTab === 'main' ? { background: 'linear-gradient(135deg, #0BA596 0%, #0BA596 100%)' } : {}),
@@ -602,7 +602,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
               activeTab === 'extended'
                 ? 'text-white'
-                : 'text-gray-600 hover:text-teal-600 hover:bg-teal-50'
+                : 'text-gray-600 hover:text-[#4338E8] hover:bg-[#E9E6FF]'
             }`}
             style={{
               ...(activeTab === 'extended' ? { background: 'linear-gradient(135deg, #0BA596 0%, #0BA596 100%)' } : {}),
@@ -640,9 +640,9 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
           {activeTab === 'main' ? (
             <div className="p-6 space-y-6">
               {/* Basic Information Card */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-5">
+              <div className="bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg p-5">
                 <div className="flex items-center space-x-2 mb-4">
-                  <BookOpen className="h-5 w-5 text-teal-600" />
+                  <BookOpen className="h-5 w-5 text-[#4338E8]" />
                   <h3 className="text-lg font-semibold text-gray-900">Basic Information</h3>
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -654,7 +654,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('lessonTitle'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -665,7 +665,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       name="lessonTitle"
                       value={lesson.lessonTitle}
                       onChange={handleChange}
-                      className={`w-full h-10 px-3 border ${errors.lessonTitle ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent`}
+                      className={`w-full h-10 px-3 border ${errors.lessonTitle ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent`}
                       style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
                       placeholder="e.g., Musical Rhythms"
                     />
@@ -682,7 +682,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('lessonName'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -693,7 +693,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       name="lessonName"
                       value={lesson.lessonName}
                       onChange={handleChange}
-                      className={`w-full h-10 px-3 border ${errors.lessonName ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent`}
+                      className={`w-full h-10 px-3 border ${errors.lessonName ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent`}
                       style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
                       placeholder="e.g., Exploring Tempo"
                     />
@@ -711,7 +711,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       name="duration"
                       value={lesson.duration || ''}
                       onChange={handleChange}
-                      className={`w-full h-10 px-3 border ${errors.duration ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm bg-white focus:ring-2 focus:ring-teal-500 focus:border-transparent`}
+                      className={`w-full h-10 px-3 border ${errors.duration ? 'border-red-500' : 'border-gray-300'} rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent`}
                       style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
                       placeholder="60"
                       min="0"
@@ -740,10 +740,10 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               </div>
 
               {/* Assessment Objectives Card - Applies to whole lesson */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-5">
+              <div className="bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-teal-600" />
+                    <Target className="h-5 w-5 text-[#4338E8]" />
                     <h3 className="text-lg font-semibold text-gray-900">Assessment Objectives</h3>
                   </div>
                   <button
@@ -758,7 +758,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                     <span>Select Objectives</span>
                   </button>
                 </div>
-                <p className="text-xs text-teal-700 mb-3">
+                <p className="text-xs text-[#4338E8] mb-3">
                   Select curriculum objectives that this lesson addresses. These apply to the entire lesson.
                 </p>
                 {lesson.assessmentObjectives.length > 0 ? (
@@ -766,10 +766,10 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                     {lesson.assessmentObjectives.map((objective: string, index: number) => (
                       <div 
                         key={index}
-                        className="flex items-start space-x-2 bg-white rounded-lg p-3 border border-teal-100"
+                        className="flex items-start space-x-2 bg-white rounded-lg p-3 border border-[#E2E0EF]"
                       >
-                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 flex items-center justify-center mt-0.5">
-                          <span className="text-xs font-medium text-teal-700">{index + 1}</span>
+                        <div className="flex-shrink-0 w-5 h-5 rounded-full bg-[#E9E6FF] flex items-center justify-center mt-0.5">
+                          <span className="text-xs font-medium text-[#4338E8]">{index + 1}</span>
                         </div>
                         <p className="text-sm text-gray-700 flex-1">{objective}</p>
                         <button
@@ -788,7 +788,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                     ))}
                   </div>
                 ) : (
-                  <div className="bg-white rounded-lg p-4 border border-dashed border-teal-200 text-center">
+                  <div className="bg-white rounded-lg p-4 border border-dashed border-[#E2E0EF] text-center">
                     <p className="text-sm text-gray-500">No assessment objectives selected</p>
                     <p className="text-xs text-gray-400 mt-1">Click "Select Objectives" to add curriculum objectives</p>
                   </div>
@@ -796,10 +796,10 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               </div>
 
               {/* Learning Objectives Card */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-5">
+              <div className="bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg p-5">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-teal-600" />
+                    <Target className="h-5 w-5 text-[#4338E8]" />
                     <h3 className="text-lg font-semibold text-gray-900">Learning Objectives</h3>
                   </div>
                 </div>
@@ -812,7 +812,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('learningOutcome'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -838,7 +838,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('successCriteria'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -856,14 +856,14 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               </div>
 
               {/* Introduction Card */}
-              <div className={`bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg transition-all duration-300 ${lesson.introduction ? 'p-5' : 'p-4'}`}>
+              <div className={`bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg transition-all duration-300 ${lesson.introduction ? 'p-5' : 'p-4'}`}>
                 <div className="flex items-center space-x-2 mb-3">
-                  <BookOpen className="h-5 w-5 text-teal-600" />
+                  <BookOpen className="h-5 w-5 text-[#4338E8]" />
                   <h3 className="text-base font-semibold text-gray-900">Introduction/Context</h3>
                   <button
                     type="button"
                     onClick={() => { setExampleSection('introduction'); setShowExampleModal(true); }}
-                    className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                    className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                     title="View example"
                   >
                     <HelpCircle className="h-4 w-4" />
@@ -887,14 +887,14 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               </div>
 
               {/* Main Activity Card */}
-              <div className={`bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg transition-all duration-300 ${lesson.mainActivity ? 'p-5' : 'p-4'}`}>
+              <div className={`bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg transition-all duration-300 ${lesson.mainActivity ? 'p-5' : 'p-4'}`}>
                 <div className="flex items-center space-x-2 mb-3">
-                  <Target className="h-5 w-5 text-teal-600" />
+                  <Target className="h-5 w-5 text-[#4338E8]" />
                   <h3 className="text-base font-semibold text-gray-900">Main Activity</h3>
                   <button
                     type="button"
                     onClick={() => { setExampleSection('mainActivity'); setShowExampleModal(true); }}
-                    className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                    className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                     title="View example"
                   >
                     <HelpCircle className="h-4 w-4" />
@@ -912,13 +912,13 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               </div>
 
               {/* Activities Section - Standalone card below Main Activity */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-5">
+              <div className="bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg p-5">
                 <div className="flex items-center justify-between mb-3">
                   <div className="flex items-center space-x-2">
-                    <Layers className="h-5 w-5 text-teal-600" />
+                    <Layers className="h-5 w-5 text-[#4338E8]" />
                     <h3 className="text-base font-semibold text-gray-900">Activities from Library</h3>
                     {selectedActivities.length > 0 && (
-                      <span className="text-xs text-gray-500 bg-teal-100 px-2 py-0.5 rounded-full">
+                      <span className="text-xs text-gray-500 bg-[#E9E6FF] px-2 py-0.5 rounded-full">
                         {selectedActivities.length} selected
                       </span>
                     )}
@@ -957,14 +957,14 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               </div>
 
               {/* Plenary Card */}
-              <div className={`bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg transition-all duration-300 ${lesson.plenary ? 'p-5' : 'p-4'}`}>
+              <div className={`bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg transition-all duration-300 ${lesson.plenary ? 'p-5' : 'p-4'}`}>
                 <div className="flex items-center space-x-2 mb-3">
-                  <Target className="h-5 w-5 text-teal-600" />
+                  <Target className="h-5 w-5 text-[#4338E8]" />
                   <h3 className="text-base font-semibold text-gray-900">Plenary/Conclusion</h3>
                   <button
                     type="button"
                     onClick={() => { setExampleSection('plenary'); setShowExampleModal(true); }}
-                    className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                    className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                     title="View example"
                   >
                     <HelpCircle className="h-4 w-4" />
@@ -998,7 +998,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('vocabulary'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -1027,7 +1027,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('keyQuestions'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -1056,7 +1056,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('resources'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -1085,7 +1085,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       <button
                         type="button"
                         onClick={() => { setExampleSection('assessment'); setShowExampleModal(true); }}
-                        className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                        className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                         title="View example"
                       >
                         <HelpCircle className="h-4 w-4" />
@@ -1115,7 +1115,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                     <button
                       type="button"
                       onClick={() => { setExampleSection('differentiation'); setShowExampleModal(true); }}
-                      className="p-0.5 text-teal-600 hover:text-teal-800 hover:bg-teal-100 rounded-full transition-colors"
+                      className="p-0.5 text-[#4338E8] hover:text-[#1F1B4D] hover:bg-[#E9E6FF] rounded-full transition-colors"
                       title="View example"
                     >
                       <HelpCircle className="h-4 w-4" />
@@ -1138,9 +1138,9 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               ) : null}
 
               {/* Web Links Card */}
-              <div className="bg-gradient-to-br from-teal-50 to-cyan-50 border border-teal-200 rounded-lg p-5">
+              <div className="bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] border border-[#E2E0EF] rounded-lg p-5">
                 <div className="flex items-center space-x-2 mb-4">
-                  <Link2 className="h-5 w-5 text-teal-600" />
+                  <Link2 className="h-5 w-5 text-[#4338E8]" />
                   <h3 className="text-base font-semibold text-gray-900">Web Links & Resources</h3>
                 </div>
 
@@ -1222,7 +1222,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                 <button
                   type="button"
                   onClick={handleAddLink}
-                  className="flex items-center space-x-2 px-3 py-2 text-teal-600 hover:bg-teal-50 rounded-lg text-sm font-medium transition-colors"
+                  className="flex items-center space-x-2 px-3 py-2 text-[#4338E8] hover:bg-[#E9E6FF] rounded-lg text-sm font-medium transition-colors"
                 >
                   <Plus className="h-4 w-4" />
                   <span>Add Link</span>
@@ -1237,7 +1237,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
           <button
             type="button"
             onClick={() => setShowPreview(!showPreview)}
-            className="flex items-center space-x-2 px-4 py-2 text-teal-600 hover:bg-teal-50 rounded-lg text-sm font-medium transition-colors"
+            className="flex items-center space-x-2 px-4 py-2 text-[#4338E8] hover:bg-[#E9E6FF] rounded-lg text-sm font-medium transition-colors"
           >
             <Eye className="h-4 w-4" />
             <span>Preview Card</span>
@@ -1288,19 +1288,19 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
             {/* Scrollable Content */}
             <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
               {/* Lesson Header Info */}
-              <div className="bg-gradient-to-r from-teal-50 to-teal-100 rounded-lg p-4 border border-teal-200">
+              <div className="bg-gradient-to-r from-[#E9E6FF] to-[#D8D4F5] rounded-lg p-4 border border-[#E2E0EF]">
                 <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
                   {lesson.lessonTitle || 'Untitled Lesson'}
                 </h2>
                 <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
                   {lesson.lessonName && (
                     <div className="flex items-center space-x-1">
-                      <BookOpen className="h-4 w-4 text-teal-600" />
+                      <BookOpen className="h-4 w-4 text-[#4338E8]" />
                       <span className="font-medium">{lesson.lessonName}</span>
                     </div>
                   )}
                   <div className="flex items-center space-x-1">
-                    <Clock className="h-4 w-4 text-teal-600" />
+                    <Clock className="h-4 w-4 text-[#4338E8]" />
                     <span className="font-medium">{lesson.duration} minutes</span>
                   </div>
                 </div>
@@ -1310,10 +1310,10 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               {lesson.assessmentObjectives && lesson.assessmentObjectives.length > 0 && (
                 <div className="space-y-2">
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-teal-600" />
+                    <Target className="h-5 w-5 text-[#4338E8]" />
                     <span>Assessment Objectives</span>
                   </h4>
-                  <div className="bg-teal-50 rounded-lg p-4 border border-teal-200">
+                  <div className="bg-[#E9E6FF] rounded-lg p-4 border border-[#E2E0EF]">
                     <ul className="space-y-2">
                       {lesson.assessmentObjectives.map((objective: string, index: number) => (
                         <li key={index} className="flex items-start space-x-2 text-sm text-gray-700">
@@ -1332,7 +1332,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               {lesson.learningOutcome && (
                 <div className="space-y-2">
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-teal-600" />
+                    <Target className="h-5 w-5 text-[#4338E8]" />
                     <span>Learning Outcome</span>
                   </h4>
                   <div 
@@ -1347,7 +1347,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               {lesson.successCriteria && (
                 <div className="space-y-2">
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-teal-600" />
+                    <Target className="h-5 w-5 text-[#4338E8]" />
                     <span>Success Criteria</span>
                   </h4>
                   <div 
@@ -1450,7 +1450,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
               {(lesson.videoLink || lesson.resourceLink || lesson.imageLink || (lesson.additionalLinks && lesson.additionalLinks.length > 0)) && (
                 <div className="space-y-2">
                   <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Link2 className="h-5 w-5 text-teal-600" />
+                    <Link2 className="h-5 w-5 text-[#4338E8]" />
                     <span>Links & Resources</span>
                   </h4>
                   <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-2">
@@ -1460,7 +1460,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                           <span className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0"></span>
                           <span className="text-sm font-medium text-gray-800">Video</span>
                         </div>
-                        <a href={lesson.videoLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                        <a href={lesson.videoLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
                           {lesson.videoLink}
                         </a>
                       </div>
@@ -1468,10 +1468,10 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                     {lesson.resourceLink && (
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center space-x-2">
-                          <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                          <Link2 className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
                           <span className="text-sm font-medium text-gray-800">Resource</span>
                         </div>
-                        <a href={lesson.resourceLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                        <a href={lesson.resourceLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
                           {lesson.resourceLink}
                         </a>
                       </div>
@@ -1479,10 +1479,10 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                     {lesson.imageLink && (
                       <div className="flex flex-col gap-0.5">
                         <div className="flex items-center space-x-2">
-                          <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                          <Link2 className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
                           <span className="text-sm font-medium text-gray-800">Image</span>
                         </div>
-                        <a href={lesson.imageLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                        <a href={lesson.imageLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
                           {lesson.imageLink}
                         </a>
                       </div>
@@ -1491,10 +1491,10 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
                       link.url && (
                         <div key={index} className="flex flex-col gap-0.5">
                           <div className="flex items-center space-x-2">
-                            <Link2 className="h-4 w-4 text-teal-600 flex-shrink-0" />
+                            <Link2 className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
                             <span className="text-sm font-medium text-gray-800">{link.label || `Link ${index + 1}`}</span>
                           </div>
-                          <a href={link.url} target="_blank" rel="noopener noreferrer" className="ml-5 text-teal-600 hover:text-teal-800 hover:underline text-sm break-all">
+                          <a href={link.url} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
                             {link.url}
                           </a>
                         </div>
@@ -1509,7 +1509,7 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
             <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
               <button
                 onClick={() => setShowPreview(false)}
-                className="px-6 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 text-sm font-medium transition-colors"
+                className="px-6 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] text-sm font-medium transition-colors"
               >
                 Close Preview
               </button>

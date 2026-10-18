@@ -485,10 +485,10 @@ export function TimetableBuilder({
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
         <div className="bg-white rounded-2xl shadow-xl max-w-[95vw] w-full max-h-[95vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div>
             <h2 className="text-2xl font-bold">Timetable Builder</h2>
-            <p className="text-teal-100 mt-1">{className}</p>
+            <p className="text-[#E9E6FF] mt-1">{className}</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -501,7 +501,7 @@ export function TimetableBuilder({
               type="button"
               onClick={() => saveTimetable(timetableClasses)}
               disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-teal-600 hover:bg-teal-50 font-medium rounded-lg transition-colors text-sm shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+              className="flex items-center gap-2 px-4 py-2 bg-white text-[#4338E8] hover:bg-[#E9E6FF] font-medium rounded-lg transition-colors text-sm shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
             >
               <Save className="h-4 w-4" />
               {isSaving ? 'Saving...' : 'Save'}
@@ -539,7 +539,7 @@ export function TimetableBuilder({
                     if (e.target.checked) setSameForWholeYear();
                     else setPerTermTimetable();
                   }}
-                  className="rounded border-gray-300 text-teal-600 focus:ring-teal-500"
+                  className="rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                 />
                 <span className="text-sm text-gray-700">Same timetable for all terms</span>
               </label>
@@ -548,7 +548,7 @@ export function TimetableBuilder({
                   <button
                     type="button"
                     onClick={copyFromPreviousTerm}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-teal-700 bg-teal-50 border border-teal-200 rounded-lg hover:bg-teal-100 transition-colors"
+                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-[#4338E8] bg-[#E9E6FF] border border-[#E2E0EF] rounded-lg hover:bg-[#E9E6FF] transition-colors"
                   >
                     <Copy className="h-4 w-4" />
                     Copy from previous term
@@ -640,7 +640,7 @@ export function TimetableBuilder({
                       type: 'curriculum'
                     });
                   }}
-                  className="p-1.5 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded-lg transition-colors"
+                  className="p-1.5 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded-lg transition-colors"
                   title="Add a Class"
                 >
                   <Plus className="h-5 w-5" />
@@ -878,15 +878,15 @@ function TimetableSlotRow({
       ref={drop as unknown as React.Ref<HTMLDivElement>}
       data-slot-row
       className={`border-b border-gray-200 flex items-center justify-center transition-colors cursor-pointer ${
-        isOver ? 'border-teal-300' : 'hover:bg-gray-50'
+        isOver ? 'border-[#bcb7f4]' : 'hover:bg-gray-50'
       } ${slotZoneClass} ${flashClass}`}
       style={{ height: heightPx }}
       onClick={(e) => { e.stopPropagation(); onSelectSlot(); }}
     >
       {isOver ? (
-        <span className="text-xs font-medium text-teal-700">Drop here</span>
+        <span className="text-xs font-medium text-[#4338E8]">Drop here</span>
       ) : canDrop ? (
-        <span className="text-[10px] font-medium text-teal-600/70" aria-hidden>Drop year group here</span>
+        <span className="text-[10px] font-medium text-[#4338E8]/70" aria-hidden>Drop year group here</span>
       ) : (
         <span className="text-xs text-gray-300 opacity-0 hover:opacity-100" aria-hidden>+</span>
       )}
@@ -982,7 +982,7 @@ function TimetableDayColumn({
       ref={drop as unknown as React.Ref<HTMLDivElement>}
       data-day-column
       className={`min-w-0 border-r border-gray-200 relative transition-colors last:border-r-0 ${
-        showDropHint ? 'bg-teal-100 ring-2 ring-teal-400 ring-inset' : 'bg-white'
+        showDropHint ? 'bg-[#E9E6FF] ring-2 ring-[#a9a3ff] ring-inset' : 'bg-white'
       }`}
       style={{ height: gridHeightPx }}
     >
@@ -1245,7 +1245,7 @@ function TimetableGridCell({
     <td
       ref={drop as unknown as React.Ref<HTMLTableDataCellElement>}
       className={`border-r border-gray-200 relative min-h-[60px] ${
-        isOver ? 'bg-teal-50 border-2 border-teal-300' : 'bg-white hover:bg-gray-50'
+        isOver ? 'bg-[#E9E6FF] border-2 border-[#bcb7f4]' : 'bg-white hover:bg-gray-50'
       } transition-colors cursor-pointer`}
       onClick={onSelect}
     >
@@ -1295,7 +1295,7 @@ function TimetableGridCell({
       {classes.length === 0 && (
         <div className="h-full min-h-[60px] flex items-center justify-center">
           {isOver ? (
-            <div className="text-xs text-teal-600 font-medium">Drop here</div>
+            <div className="text-xs text-[#4338E8] font-medium">Drop here</div>
           ) : (
             <div className="text-xs text-gray-300 opacity-0 hover:opacity-100 transition-opacity">Drop here</div>
           )}
@@ -1371,7 +1371,7 @@ function EditTimetableClassModal({
               type="text"
               value={editedClass.className}
               onChange={(e) => setEditedClass({ ...editedClass, className: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8]"
               placeholder="e.g., Reception Music"
             />
           </div>
@@ -1381,7 +1381,7 @@ function EditTimetableClassModal({
             <select
               value={editedClass.type}
               onChange={(e) => setEditedClass({ ...editedClass, type: e.target.value as any })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8]"
             >
               <option value="curriculum">Curriculum</option>
               <option value="non-curriculum">Non-Curriculum</option>
@@ -1394,7 +1394,7 @@ function EditTimetableClassModal({
             <select
               value={editedClass.day}
               onChange={(e) => setEditedClass({ ...editedClass, day: parseInt(e.target.value) })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8]"
             >
               {DAY_NAMES.map((day, index) => (
                 <option key={index} value={index}>
@@ -1411,7 +1411,7 @@ function EditTimetableClassModal({
                 type="time"
                 value={normalizeTimeForInput(editedClass.startTime)}
                 onChange={(e) => setEditedClass({ ...editedClass, startTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8]"
               />
             </div>
             <div>
@@ -1420,7 +1420,7 @@ function EditTimetableClassModal({
                 type="time"
                 value={normalizeTimeForInput(editedClass.endTime)}
                 onChange={(e) => setEditedClass({ ...editedClass, endTime: e.target.value })}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8]"
               />
             </div>
           </div>
@@ -1431,7 +1431,7 @@ function EditTimetableClassModal({
               type="text"
               value={editedClass.location}
               onChange={(e) => setEditedClass({ ...editedClass, location: e.target.value })}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8]"
               placeholder="e.g., Music Room"
             />
           </div>
@@ -1464,7 +1464,7 @@ function EditTimetableClassModal({
             </button>
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg transition-colors"
+              className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg transition-colors"
             >
               {isNew ? 'Add' : 'Save'}
             </button>

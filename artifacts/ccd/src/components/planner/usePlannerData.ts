@@ -198,14 +198,22 @@ export function usePlannerData(range: { from: Date; to: Date }) {
               ? readJson<{ allLessonsData?: Record<string, LessonData>; lessonNumbers?: string[] }>(`lesson-data-${classId}`, {})
               : {};
           const lessons = sheet?.allLessonsData || local.allLessonsData || {};
-          const lessonNumbers: string[] = sheet?.lessonNumbers?.length
-            ? sheet.lessonNumbers
-            : local.lessonNumbers || Object.keys(lessons);
+          // Prefer the full library for the class — never truncate to a short lessonNumbers list.
+          const lessonNumbers = [
+            ...new Set([
+              ...(sheet?.lessonNumbers || []),
+              ...(local.lessonNumbers || []),
+              ...Object.keys(lessons),
+              ...(terms || []).flatMap((t: { lessons?: string[] }) => t.lessons || []),
+            ]),
+          ]
+            .filter((n) => !!lessons[n])
+            .sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b)));
           setLessonCache((prev) => ({
             ...prev,
             [key]: {
               lessons,
-              lessonNumbers: lessonNumbers.filter((n) => lessons[n]),
+              lessonNumbers,
               halfTerms: (terms || []).map((t: { id: string; lessons: string[] }) => ({ id: t.id, lessons: t.lessons || [] })),
             },
           }));

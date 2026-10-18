@@ -67,7 +67,7 @@ export function ManageMusicHubAccessModal({
         <div className="flex items-center justify-between border-b border-gray-200 px-5 py-4">
           <div>
             <h2 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <MapPin className="h-5 w-5 text-teal-600" />
+              <MapPin className="h-5 w-5 text-[#4338E8]" />
               Manage Access
             </h2>
             <p className="mt-0.5 text-sm text-gray-600">
@@ -85,7 +85,7 @@ export function ManageMusicHubAccessModal({
             only system admins approve & publish.
           </p>
 
-          <label className="flex items-start gap-2 rounded-lg border border-teal-200 bg-teal-50/60 px-3 py-2.5">
+          <label className="flex items-start gap-2 rounded-lg border border-[#E2E0EF] bg-[#E9E6FF]/60 px-3 py-2.5">
             <input
               type="checkbox"
               className="mt-0.5"
@@ -144,7 +144,7 @@ export function ManageMusicHubAccessModal({
             type="button"
             disabled={saving}
             onClick={handleSave}
-            className="rounded-lg bg-teal-600 px-4 py-2 text-sm font-semibold text-white hover:bg-teal-700 disabled:opacity-50"
+            className="rounded-lg bg-[#4338E8] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3529d1] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save access'}
           </button>

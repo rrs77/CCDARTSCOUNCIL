@@ -35,7 +35,7 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
   if (!item) return null;
 
   const baseClass =
-    'inline-flex items-center gap-2 px-3 py-2 rounded-lg shadow-2xl ring-2 ring-teal-500 bg-white text-sm font-medium text-gray-800 max-w-xs';
+    'inline-flex items-center gap-2 px-3 py-2 rounded-lg shadow-2xl ring-2 ring-[#4338E8] bg-white text-sm font-medium text-gray-800 max-w-xs';
 
   switch (itemType) {
     case 'activity': {
@@ -44,7 +44,7 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
         (a && (a.activity || a.name || a.title)) || 'Activity';
       return (
         <div className={baseClass}>
-          <BookOpen className="h-4 w-4 text-teal-600 flex-shrink-0" />
+          <BookOpen className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
           <span className="truncate">{label}</span>
         </div>
       );
@@ -54,12 +54,12 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
       const count = Array.isArray(stack?.activities) ? stack.activities.length : 0;
       return (
         <div className={baseClass}>
-          <BookOpen className="h-4 w-4 text-teal-600 flex-shrink-0" />
+          <BookOpen className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
           <span className="truncate">
             {stack?.name || 'Activity stack'}
           </span>
           {count > 0 && (
-            <span className="ml-1 px-1.5 py-0.5 bg-teal-100 text-teal-700 rounded text-xs">
+            <span className="ml-1 px-1.5 py-0.5 bg-[#E9E6FF] text-[#4338E8] rounded text-xs">
               {count}
             </span>
           )}
@@ -77,7 +77,7 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
       const name = item?.name || 'Category';
       return (
         <div className={baseClass}>
-          <Tag className="h-4 w-4 text-teal-600 flex-shrink-0" />
+          <Tag className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
           <span className="truncate">{name}</span>
         </div>
       );
@@ -85,14 +85,14 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
     case 'yearGroup':
       return (
         <div className={baseClass}>
-          <GraduationCap className="h-4 w-4 text-teal-600 flex-shrink-0" />
+          <GraduationCap className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
           <span className="truncate">Year group</span>
         </div>
       );
     case 'objective':
       return (
         <div className={baseClass}>
-          <Target className="h-4 w-4 text-teal-600 flex-shrink-0" />
+          <Target className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
           <span className="truncate">{item?.code || 'Objective'}</span>
         </div>
       );
@@ -101,7 +101,7 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
       const title = item?.title || item?.name || 'Lesson';
       return (
         <div className={baseClass}>
-          <BookOpen className="h-4 w-4 text-teal-600 flex-shrink-0" />
+          <BookOpen className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
           <span className="truncate">{title}</span>
         </div>
       );

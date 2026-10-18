@@ -102,7 +102,7 @@ function DraggableFolderRow({
     <div
       ref={ref}
       className={`rounded-lg border border-gray-200 bg-white transition-all ${
-        isDragging ? 'opacity-50 ring-2 ring-teal-400' : ''
+        isDragging ? 'opacity-50 ring-2 ring-[#a9a3ff]' : ''
       } ${dropZoneClass} ${flashClass}`}
     >
       <div className="flex items-center gap-2 p-2.5">
@@ -135,7 +135,7 @@ function DraggableFolderRow({
                 setIsEditing(false);
               }
             }}
-            className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-teal-500 outline-none"
+            className="flex-1 min-w-0 px-2 py-1 text-sm border border-gray-300 rounded focus:ring-2 focus:ring-[#4338E8] outline-none"
             autoFocus
           />
         ) : (
@@ -249,7 +249,7 @@ export function CategoryFoldersPanel({
   const [collapsed, setCollapsed] = useState<Set<string>>(() => loadCollapsed());
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
-  const [newFolderColor, setNewFolderColor] = useState('#14B8A6');
+  const [newFolderColor, setNewFolderColor] = useState('#4338E8');
 
   const sortedFolders = [...categoryFolders].sort((a, b) => a.position - b.position);
 
@@ -268,7 +268,7 @@ export function CategoryFoldersPanel({
     if (!name) return;
     addCategoryFolder(name, newFolderColor);
     setNewFolderName('');
-    setNewFolderColor('#14B8A6');
+    setNewFolderColor('#4338E8');
     setShowNewFolder(false);
   };
 
@@ -281,7 +281,7 @@ export function CategoryFoldersPanel({
         <button
           type="button"
           onClick={() => setShowNewFolder((v) => !v)}
-          className="inline-flex min-h-[36px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-teal-600 hover:bg-teal-700 text-white rounded-lg"
+          className="inline-flex min-h-[36px] items-center gap-1.5 px-3 py-1.5 text-sm font-medium bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg"
         >
           <Plus className="h-4 w-4" />
           New Folder
@@ -289,14 +289,14 @@ export function CategoryFoldersPanel({
       </div>
 
       {showNewFolder && (
-        <div className="p-3 bg-white border border-teal-200 rounded-lg flex flex-wrap items-end gap-3">
+        <div className="p-3 bg-white border border-[#E2E0EF] rounded-lg flex flex-wrap items-end gap-3">
           <div className="flex-1 min-w-[160px]">
             <label className="block text-xs font-medium text-gray-600 mb-1">Folder name</label>
             <input
               value={newFolderName}
               onChange={(e) => setNewFolderName(e.target.value)}
               placeholder="e.g. Kodály"
-              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 outline-none"
+              className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] outline-none"
             />
           </div>
           <div>
@@ -308,7 +308,7 @@ export function CategoryFoldersPanel({
               type="button"
               onClick={handleCreateFolder}
               disabled={!newFolderName.trim()}
-              className="px-3 py-2 text-sm bg-teal-600 hover:bg-teal-700 disabled:opacity-50 text-white rounded-lg"
+              className="px-3 py-2 text-sm bg-[#4338E8] hover:bg-[#3529d1] disabled:opacity-50 text-white rounded-lg"
             >
               Create
             </button>

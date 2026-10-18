@@ -32,7 +32,7 @@ export function ActivityStackModal({
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
       <div className="relative bg-white w-full max-w-5xl max-h-[85vh] rounded-card shadow-soft overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div>
             <h3 className="text-white text-lg font-semibold">{stack.name}</h3>
             <p className="text-white/80 text-sm">
@@ -60,7 +60,7 @@ export function ActivityStackModal({
         {/* Content */}
         <div className="p-6 overflow-y-auto max-h-[calc(85vh-80px)]">
           {stack.description && (
-            <div className="mb-6 p-4 bg-teal-50 border border-teal-200 rounded-lg">
+            <div className="mb-6 p-4 bg-[#E9E6FF] border border-[#E2E0EF] rounded-lg">
               <p className="text-gray-700 text-sm">{stack.description}</p>
             </div>
           )}

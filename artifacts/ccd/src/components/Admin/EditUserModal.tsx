@@ -318,7 +318,7 @@ export function EditUserModal({ user, yearGroupNames, categoryNames, onSave, onC
             type="button"
             onClick={handleSave}
             disabled={saving}
-            className="px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 disabled:opacity-50"
+            className="px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] disabled:opacity-50"
           >
             {saving ? 'Saving…' : 'Save'}
           </button>

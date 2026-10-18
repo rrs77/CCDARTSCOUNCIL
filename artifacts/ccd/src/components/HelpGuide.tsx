@@ -58,8 +58,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         <div className="space-y-3">
           <p>Start by navigating to the <strong>Activity Library</strong> tab in the main navigation.</p>
           <p>Click the <strong>Create Activity</strong> button at the top of the page to open the activity creation form.</p>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>Tip:</strong> Activities are the building blocks of your lessons. Create reusable activities that can be combined in different ways across multiple lessons.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>Tip:</strong> Activities are the building blocks of your lessons. Create reusable activities that can be combined in different ways across multiple lessons.</p>
           </div>
         </div>
       ),
@@ -129,7 +129,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           </ul>
           <p className="mt-3">Click the <strong>Create Activity</strong> button at the bottom of the form.</p>
           <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded mt-3">
-            <p className="text-sm text-teal-900"><strong>Success!</strong> Your activity now appears in the Activity Library and is ready to be added to lessons. You can edit or delete it anytime from the library.</p>
+            <p className="text-sm text-[#1F1B4D]"><strong>Success!</strong> Your activity now appears in the Activity Library and is ready to be added to lessons. You can edit or delete it anytime from the library.</p>
           </div>
         </div>
       )
@@ -143,8 +143,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         <div className="space-y-3">
           <p>Navigate to the <strong>Lesson Builder</strong> tab in the main navigation.</p>
           <p>You'll see a blank lesson template with an activity library panel on the right side.</p>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>Overview:</strong> Lessons are composed of activities from your library. Build a structured lesson by selecting and arranging activities in a logical flow.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>Overview:</strong> Lessons are composed of activities from your library. Build a structured lesson by selecting and arranging activities in a logical flow.</p>
           </div>
         </div>
       ),
@@ -229,7 +229,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li><strong>Edit Later:</strong> Access saved lessons from the Unit Builder or Calendar views</li>
           </ul>
           <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded mt-3">
-            <p className="text-sm text-teal-900"><strong>Next Step:</strong> Once saved, your lesson is ready to be added to a unit and scheduled on your calendar. You can also duplicate and modify it for different year groups or terms.</p>
+            <p className="text-sm text-[#1F1B4D]"><strong>Next Step:</strong> Once saved, your lesson is ready to be added to a unit and scheduled on your calendar. You can also duplicate and modify it for different year groups or terms.</p>
           </div>
         </div>
       )
@@ -243,8 +243,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         <div className="space-y-3">
           <p>Navigate to the <strong>Unit Builder</strong> tab in the main navigation.</p>
           <p>Click the <strong>Create New</strong> button to start building a fresh unit of work.</p>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>What is a Unit?</strong> A unit is a collection of related lessons organised around a theme or topic, typically covering a half-term (5-7 weeks) of teaching.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>What is a Unit?</strong> A unit is a collection of related lessons organised around a theme or topic, typically covering a half-term (5-7 weeks) of teaching.</p>
           </div>
         </div>
       ),
@@ -314,7 +314,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li>Duplicate units to create variations for different year groups</li>
           </ul>
           <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded mt-3">
-            <p className="text-sm text-teal-900"><strong>Ready to Schedule:</strong> Your saved unit is now ready to be assigned to specific weeks on your calendar, making it easy to plan your entire academic year.</p>
+            <p className="text-sm text-[#1F1B4D]"><strong>Ready to Schedule:</strong> Your saved unit is now ready to be assigned to specific weeks on your calendar, making it easy to plan your entire academic year.</p>
           </div>
         </div>
       )
@@ -328,8 +328,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         <div className="space-y-3">
           <p>Navigate to the <strong>Calendar</strong> tab in the main navigation.</p>
           <p>The calendar view shows your entire academic year divided into weeks, with half-term boundaries clearly marked.</p>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>Calendar Overview:</strong> This is where your planning comes to life. Assign units to specific dates to create a complete year-long curriculum map.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>Calendar Overview:</strong> This is where your planning comes to life. Assign units to specific dates to create a complete year-long curriculum map.</p>
           </div>
         </div>
       ),
@@ -390,13 +390,13 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
               <p className="font-semibold" style={{color: '#0BA596'}}>Spring 2 (SP2)</p>
               <p className="text-sm" style={{color: '#0BA596'}}>March - April</p>
             </div>
-            <div className="bg-teal-50 p-2 rounded border border-teal-200">
-              <p className="font-semibold text-teal-900">Summer 1 (SM1)</p>
-              <p className="text-sm text-teal-800">April - May</p>
+            <div className="bg-[#E9E6FF] p-2 rounded border border-[#E2E0EF]">
+              <p className="font-semibold text-[#1F1B4D]">Summer 1 (SM1)</p>
+              <p className="text-sm text-[#1F1B4D]">April - May</p>
             </div>
-            <div className="bg-teal-100 p-2 rounded border border-teal-300">
-              <p className="font-semibold text-teal-900">Summer 2 (SM2)</p>
-              <p className="text-sm text-teal-800">June - July</p>
+            <div className="bg-[#E9E6FF] p-2 rounded border border-[#bcb7f4]">
+              <p className="font-semibold text-[#1F1B4D]">Summer 2 (SM2)</p>
+              <p className="text-sm text-[#1F1B4D]">June - July</p>
             </div>
           </div>
         </div>
@@ -446,8 +446,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       content: (
         <div className="space-y-3">
           <p>Export your plans as PDFs or print directly from the <strong>Calendar</strong> or <strong>Lesson Library</strong>.</p>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>Where to find it:</strong> Use the <strong>Export PDF</strong> button on the Calendar tab to generate a branded PDF of your week or month. Lesson plans can also be printed from the lesson detail view.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>Where to find it:</strong> Use the <strong>Export PDF</strong> button on the Calendar tab to generate a branded PDF of your week or month. Lesson plans can also be printed from the lesson detail view.</p>
           </div>
         </div>
       ),
@@ -494,8 +494,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       content: (
         <div className="space-y-3">
           <p>Share any lesson or half-term plan with colleagues or substitutes via a <strong>shareable web link</strong>.</p>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>How it works:</strong> In the <strong>Lesson Library</strong>, each lesson card has a <strong>Copy Link</strong> (or link) button. Click it to generate a unique URL that opens a read-only view of that lesson plan.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>How it works:</strong> In the <strong>Lesson Library</strong>, each lesson card has a <strong>Copy Link</strong> (or link) button. Click it to generate a unique URL that opens a read-only view of that lesson plan.</p>
           </div>
         </div>
       ),
@@ -513,7 +513,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li><strong>Reuse:</strong> The same link can be used again; later clicks copy the existing link without regenerating</li>
           </ul>
           <div className="bg-blue-50 border-l-4 border-blue-500 p-3 rounded mt-3">
-            <p className="text-sm text-teal-900"><strong>Use cases:</strong> Share with cover teachers, send to colleagues for feedback, or keep a link in your timetable for quick access.</p>
+            <p className="text-sm text-[#1F1B4D]"><strong>Use cases:</strong> Share with cover teachers, send to colleagues for feedback, or keep a link in your timetable for quick access.</p>
           </div>
         </div>
       )
@@ -544,8 +544,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li>From the login screen, use the <strong>The facts</strong> button</li>
             <li>Or open <strong>/the-facts/</strong> in your browser</li>
           </ul>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>What’s new:</strong> The briefing is a magazine-style PDF with a cover, photos, and charts. Index cards drop in one by one, and a jump bar lets you move between stages.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>What’s new:</strong> The briefing is a magazine-style PDF with a cover, photos, and charts. Index cards drop in one by one, and a jump bar lets you move between stages.</p>
           </div>
         </div>
       )
@@ -652,8 +652,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li>Publish or unpublish categories (seeded categories start as drafts)</li>
             <li>Lock a category, review reports, and set notification preferences</li>
           </ul>
-          <div className="bg-teal-50 border-l-4 border-teal-500 p-3 rounded">
-            <p className="text-sm text-teal-900"><strong>Guidelines:</strong> Read <strong>/forum/guidelines</strong> before posting. Safeguarding reports are flagged for moderators.</p>
+          <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
+            <p className="text-sm text-[#1F1B4D]"><strong>Guidelines:</strong> Read <strong>/forum/guidelines</strong> before posting. Safeguarding reports are flagged for moderators.</p>
           </div>
         </div>
       )
@@ -880,7 +880,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         isAnimating ? 'modal-bounce' : ''
       }`}>
         {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div className="flex items-center space-x-3">
             <HelpCircle className="h-6 w-6" />
             <h2 className="text-xl font-bold">{productName}</h2>
@@ -905,7 +905,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
 
         {/* Home: Overview (intro + index) – only on home */}
         {isHomeView && (
-          <div className="flex-1 overflow-y-auto bg-gradient-to-r from-teal-50 to-blue-50 border-b border-gray-200">
+          <div className="flex-1 overflow-y-auto bg-gradient-to-r from-[#E9E6FF] to-blue-50 border-b border-gray-200">
             <div className="p-6 max-w-4xl mx-auto">
               <p className="text-sm text-gray-700 leading-relaxed mb-4">
                 A comprehensive planning platform to streamline your curriculum development. Build reusable activities, organise them into structured lessons, group lessons into units and stacks, schedule everything on the calendar, and print or share your plans. You can also open The Facts briefing, use the Community Forum, download partner resources, and manage your account from Settings.
@@ -915,9 +915,9 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                 <button
                   type="button"
                   onClick={() => { setActiveSection('activity'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-teal-400"
+                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-[#a9a3ff]"
                 >
-                  <div className="flex items-center space-x-1.5 text-teal-600">
+                  <div className="flex items-center space-x-1.5 text-[#4338E8]">
                     <Tag className="h-3.5 w-3.5" />
                     <h4 className="font-semibold text-xs">Activity Library</h4>
                   </div>
@@ -925,9 +925,9 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                 <button
                   type="button"
                   onClick={() => { setActiveSection('lesson'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-teal-400"
+                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-[#a9a3ff]"
                 >
-                  <div className="flex items-center space-x-1.5 text-teal-600">
+                  <div className="flex items-center space-x-1.5 text-[#4338E8]">
                     <Edit3 className="h-3.5 w-3.5" />
                     <h4 className="font-semibold text-xs">Lesson Builder</h4>
                   </div>
@@ -1021,13 +1021,13 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                   onClose();
                   window.dispatchEvent(new Event('ccd:start-walkthrough'));
                 }}
-                className="px-4 py-2 text-teal-700 hover:bg-teal-50 font-medium rounded-lg transition-colors duration-200"
+                className="px-4 py-2 text-[#4338E8] hover:bg-[#E9E6FF] font-medium rounded-lg transition-colors duration-200"
               >
                 Take a quick tour
               </button>
               <button
                 onClick={onClose}
-                className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200"
+                className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200"
               >
                 Close
               </button>
@@ -1044,7 +1044,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('activity'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'activity' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1055,7 +1055,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('lesson'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'lesson' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1066,7 +1066,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('unit'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'unit' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1077,7 +1077,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('assign'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'assign' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1088,7 +1088,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('print'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'print' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1099,7 +1099,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('share'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'share' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1110,7 +1110,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('facts'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'facts'
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1121,7 +1121,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('account'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'account'
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1132,7 +1132,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('forum'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'forum'
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1143,7 +1143,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             onClick={() => { setActiveSection('partners'); setCurrentStep(0); }}
             className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
               activeSection === 'partners'
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white'
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -1205,7 +1205,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
                 <div 
                   key={index}
                   className={`w-2.5 h-2.5 rounded-full transition-colors duration-200 ${
-                    index === currentStep ? 'bg-teal-600' : 'bg-gray-300'
+                    index === currentStep ? 'bg-[#4338E8]' : 'bg-gray-300'
                   }`}
                 />
               ))}
@@ -1234,7 +1234,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           
           <button
             onClick={handleNext}
-            className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+            className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
           >
             <span>{currentStep < currentSteps.length - 1 || activeSection !== 'partners' ? 'Next' : 'Finish'}</span>
             <ChevronRight className="h-5 w-5" />

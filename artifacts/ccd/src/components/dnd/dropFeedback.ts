@@ -21,23 +21,23 @@ export function useDropZoneStyle({
   if (isOver) {
     switch (variant) {
       case 'inline':
-        return 'ring-2 ring-teal-500 bg-teal-50/70';
+        return 'ring-2 ring-[#4338E8] bg-[#E9E6FF]/70';
       case 'cell':
-        return 'ring-2 ring-inset ring-teal-500 bg-teal-50';
+        return 'ring-2 ring-inset ring-[#4338E8] bg-[#E9E6FF]';
       case 'panel':
       default:
-        return 'ring-2 ring-teal-500 ring-offset-2 ring-offset-white bg-teal-50/60';
+        return 'ring-2 ring-[#4338E8] ring-offset-2 ring-offset-white bg-[#E9E6FF]/60';
     }
   }
   // canDrop (but not currently over) — softer cue so eligible targets are visible
   switch (variant) {
     case 'inline':
-      return 'ring-1 ring-dashed ring-teal-300/60';
+      return 'ring-1 ring-dashed ring-[#a9a3ff]/60';
     case 'cell':
-      return 'ring-1 ring-inset ring-teal-200';
+      return 'ring-1 ring-inset ring-[#bcb7f4]';
     case 'panel':
     default:
-      return 'ring-1 ring-dashed ring-teal-300';
+      return 'ring-1 ring-dashed ring-[#a9a3ff]';
   }
 }
 

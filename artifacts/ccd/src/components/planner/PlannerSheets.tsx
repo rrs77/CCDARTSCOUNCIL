@@ -1,19 +1,23 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   BookOpen,
   CalendarClock,
   Check,
+  ChevronDown,
+  ChevronRight,
   Copy,
   ExternalLink,
   Lock,
   MoveRight,
   Search,
+  Sparkles,
   X,
 } from 'lucide-react';
-import type { Activity, LessonPlan } from '../../contexts/DataContext';
+import { useData, type Activity, type LessonPlan } from '../../contexts/DataContext';
 import type { PlannerData } from './usePlannerData';
 import {
+  HALF_TERMS,
   isoWeek,
   planStatusLabel,
   plural,
@@ -26,14 +30,16 @@ import {
   type PlannerReflection,
 } from './plannerModel';
 import { lessonTitle } from './plannerEntries';
+import { PolishWithAIModal, type PolishSuggestionId } from '../studio/PolishWithAIModal';
+import { applyLessonPolishDraft } from '../../utils/applyLessonPolish';
 
 const fieldClass =
-  'w-full rounded-xl border border-[#D1D5DB] bg-white px-3 py-2 text-sm text-[#1F2937] focus:outline-none focus:ring-2 focus:ring-[#0D9488]/40 focus:border-[#0D9488]';
-const sectionTitle = 'text-xs font-bold uppercase tracking-[0.06em] text-[#4B5563] mb-2';
+  'w-full rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-sm text-[#1F1B4D] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/35 focus:border-[#4338E8]';
+const sectionTitle = 'text-xs font-bold uppercase tracking-[0.06em] text-[#77738F] mb-2';
 const btn =
-  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl border border-[#E5E7EB] bg-white px-3.5 text-sm font-medium text-[#374151] hover:bg-[#F7FAF8] disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl border border-[#E2E0EF] bg-white px-3.5 text-sm font-medium text-[#1F1B4D] hover:border-[#bcb7f4] hover:bg-[#F4F3FA] disabled:opacity-50';
 const btnPrimary =
-  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl bg-[#002D24] px-4 text-sm font-semibold text-white hover:bg-[#014034] disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl bg-[#4338E8] px-4 text-sm font-semibold text-white hover:bg-[#3529d1] disabled:opacity-50';
 
 /** Side panel on wide screens; bottom sheet with a scrim on tablets and phones. */
 export function PlannerSheet({ onClose, children, label }: { onClose: () => void; children: React.ReactNode; label: string }) {
@@ -44,7 +50,7 @@ export function PlannerSheet({ onClose, children, label }: { onClose: () => void
   }, [onClose]);
   return createPortal(
     <>
-      <div className="fixed inset-0 z-[60] bg-[#002D24]/30 md:bg-[#002D24]/15" onClick={onClose} aria-hidden />
+      <div className="fixed inset-0 z-[60] bg-[rgba(21,18,51,0.38)] md:bg-[rgba(21,18,51,0.18)]" onClick={onClose} aria-hidden />
       <aside
         role="dialog"
         aria-modal="true"
@@ -53,8 +59,8 @@ export function PlannerSheet({ onClose, children, label }: { onClose: () => void
       >
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#D1D5DB] md:hidden" aria-hidden />
         <div className="flex items-start justify-between gap-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#4B5563]">{label}</span>
-          <button type="button" onClick={onClose} className="-mt-1 rounded-lg p-1.5 text-[#4B5563] hover:bg-[#F3F6F3]" aria-label="Close">
+          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#77738F]">{label}</span>
+          <button type="button" onClick={onClose} className="-mt-1 rounded-lg p-1.5 text-[#77738F] hover:bg-[#F4F3FA]" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
         </div>
@@ -83,12 +89,15 @@ export function LessonDetailsSheet({
   data,
   onClose,
   onOpenLibrary,
+  onEditInBuilder,
 }: {
   entry: DayEntry & { plan: LessonPlan };
   data: PlannerData;
   onClose: () => void;
   onOpenLibrary: (classId: string) => void;
+  onEditInBuilder?: (plan: LessonPlan) => void;
 }) {
+  const [polishOpen, setPolishOpen] = useState(false);
   const plan = entry.plan;
   const cls = data.classById.get(plan.className);
   const cache = data.lessonCache[plan.className];
@@ -131,8 +140,8 @@ export function LessonDetailsSheet({
 
   return (
     <PlannerSheet onClose={onClose} label={mode === 'details' ? 'Lesson details' : mode === 'move' ? 'Move this lesson' : 'Teach to another class'}>
-      <h2 className="mt-1 text-[22px] font-semibold leading-tight text-[#002D24]" style={{ fontFamily: SERIF }}>{title}</h2>
-      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-[#4B5563]">
+      <h2 className="mt-1 text-[22px] font-semibold leading-tight text-[#1F1B4D]" style={{ fontFamily: SERIF }}>{title}</h2>
+      <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-[#77738F]">
         <ClassChip cls={cls} />
         <span>
           {fmtDate(date)}
@@ -151,7 +160,7 @@ export function LessonDetailsSheet({
                 type="button"
                 onClick={() => setStatus(s)}
                 className={`min-h-[36px] rounded-full border px-3 text-[13px] font-semibold ${
-                  plan.status === s ? 'border-[#002D24] bg-[#002D24] text-white' : 'border-[#D5E0D8] bg-white text-[#374151] hover:bg-[#F3F6F3]'
+                  plan.status === s ? 'border-[#4338E8] bg-[#4338E8] text-white' : 'border-[#E2E0EF] bg-white text-[#1F1B4D] hover:bg-[#F4F3FA]'
                 }`}
               >
                 {s === 'completed' && <Check className="mr-1 inline h-3.5 w-3.5" />}
@@ -160,31 +169,31 @@ export function LessonDetailsSheet({
             ))}
           </div>
 
-          <section className="mt-4 border-t border-[#E5EDE8] pt-4">
+          <section className="mt-4 border-t border-[#E2E0EF] pt-4">
             <h3 className={sectionTitle}>In this lesson</h3>
             {activities.length ? (
               <ol className="space-y-1.5">
                 {activities.slice(0, 12).map((a, i) => (
                   <li key={a._uniqueId || a.id || i} className="flex items-baseline gap-2 text-sm text-[#1F2937]">
-                    <span className="w-5 shrink-0 text-xs font-semibold text-[#4B5563] tabular-nums">{i + 1}.</span>
+                    <span className="w-5 shrink-0 text-xs font-semibold text-[#77738F] tabular-nums">{i + 1}.</span>
                     <span className="flex-1">{a.activity || 'Activity'}</span>
-                    {a.time ? <span className="text-xs text-[#4B5563] tabular-nums">{a.time} min</span> : null}
+                    {a.time ? <span className="text-xs text-[#77738F] tabular-nums">{a.time} min</span> : null}
                   </li>
                 ))}
-                {activities.length > 12 && <li className="text-xs text-[#4B5563]">+{activities.length - 12} more</li>}
+                {activities.length > 12 && <li className="text-xs text-[#77738F]">+{activities.length - 12} more</li>}
               </ol>
             ) : (
-              <p className="text-sm text-[#4B5563]">No activities yet. Build this lesson in the Lesson Builder.</p>
+              <p className="text-sm text-[#77738F]">No activities yet. Build this lesson in the Lesson Builder.</p>
             )}
             {lesson?.learningOutcome && (
-              <p className="mt-3 rounded-xl bg-[#F1F6F2] px-3 py-2 text-sm text-[#1F2937]">
+              <p className="mt-3 rounded-xl bg-[#E9E6FF] px-3 py-2 text-sm text-[#1F2937]">
                 <span className="font-semibold">Learning outcome: </span>
                 {lesson.learningOutcome.replace(/<[^>]+>/g, ' ')}
               </p>
             )}
           </section>
 
-          <section className="mt-4 border-t border-[#E5EDE8] pt-4">
+          <section className="mt-4 border-t border-[#E2E0EF] pt-4">
             <h3 className={sectionTitle}>Note for this class</h3>
             <textarea
               value={note}
@@ -201,7 +210,7 @@ export function LessonDetailsSheet({
           </section>
 
           {(isPast || plan.status === 'completed') && (
-            <section className="mt-4 border-t border-[#E5EDE8] pt-4">
+            <section className="mt-4 border-t border-[#E2E0EF] pt-4">
               <h3 className={sectionTitle}>How did it go?</h3>
               <div className="flex flex-wrap gap-1.5" role="group" aria-label="Lesson outcome">
                 {([
@@ -214,7 +223,7 @@ export function LessonDetailsSheet({
                     type="button"
                     onClick={() => setReflection((r) => ({ ...r, outcome: r.outcome === v ? null : v }))}
                     className={`min-h-[34px] rounded-full border px-3 text-[13px] ${
-                      reflection.outcome === v ? 'border-[#002D24] bg-[#002D24] text-white' : 'border-[#D5E0D8] text-[#374151]'
+                      reflection.outcome === v ? 'border-[#4338E8] bg-[#4338E8] text-white' : 'border-[#E2E0EF] text-[#1F1B4D]'
                     }`}
                   >
                     {label}
@@ -236,8 +245,8 @@ export function LessonDetailsSheet({
                   />
                 </label>
               ))}
-              <p className="mt-2 flex items-center gap-2 rounded-xl bg-[#F1F6F2] px-3 py-2 text-[12.5px] text-[#374151]">
-                <Lock className="h-4 w-4 shrink-0 text-[#002D24]" />
+              <p className="mt-2 flex items-center gap-2 rounded-xl bg-[#E9E6FF] px-3 py-2 text-[12.5px] text-[#374151]">
+                <Lock className="h-4 w-4 shrink-0 text-[#1F1B4D]" />
                 Private to you. Saved against {cls?.name || 'this class'} on this date, not the lesson itself.
               </p>
               <button type="button" className={`${btnPrimary} mt-3`} onClick={() => data.saveReflection(reflection)}>
@@ -246,7 +255,22 @@ export function LessonDetailsSheet({
             </section>
           )}
 
-          <div className="mt-5 flex flex-wrap gap-2 border-t border-[#E5EDE8] pt-4">
+          <div className="mt-5 flex flex-wrap gap-2 border-t border-[#E2E0EF] pt-4">
+            {onEditInBuilder && (
+              <button
+                type="button"
+                className={btnPrimary}
+                onClick={() => {
+                  onEditInBuilder(plan);
+                  onClose();
+                }}
+              >
+                Edit in Lesson Builder
+              </button>
+            )}
+            <button type="button" className={`${btn} border-[#4338E8]/30 text-[#4338E8]`} onClick={() => setPolishOpen(true)}>
+              <Sparkles className="h-4 w-4" /> Polish with AI
+            </button>
             <button type="button" className={btn} onClick={() => setMode('move')}>
               <MoveRight className="h-4 w-4" /> Move
             </button>
@@ -257,6 +281,15 @@ export function LessonDetailsSheet({
               <ExternalLink className="h-4 w-4" /> Open lessons for {cls?.name || 'class'}
             </button>
           </div>
+          <PolishWithAIModal
+            open={polishOpen}
+            lessonTitle={title}
+            onClose={() => setPolishOpen(false)}
+            onAccept={(ids: PolishSuggestionId[]) => {
+              const next = applyLessonPolishDraft(plan, ids);
+              void data.savePlans([next as LessonPlan], 'Polish suggestions applied to this lesson draft.');
+            }}
+          />
         </>
       )}
 
@@ -294,7 +327,7 @@ function MoveForm({ plan, data, onDone }: { plan: LessonPlan; data: PlannerData;
         <div className="flex flex-wrap items-center gap-2 text-[13px] text-[#374151]">
           Timetabled:
           {slotTimes.map((t) => (
-            <button key={t} type="button" onClick={() => setTime(t)} className="rounded-full border border-[#D5E0D8] px-2.5 py-1 hover:bg-[#F3F6F3]">
+            <button key={t} type="button" onClick={() => setTime(t)} className="rounded-full border border-[#E2E0EF] px-2.5 py-1 hover:bg-[#F4F3FA]">
               {t}
             </button>
           ))}
@@ -364,7 +397,7 @@ function ReuseForm({ plan, title, data, onDone }: { plan: LessonPlan; title: str
           <input type="time" value={time} onChange={(e) => setTime(e.target.value)} className={`${fieldClass} mt-1`} />
         </label>
       </div>
-      <ul className="space-y-1.5 rounded-2xl border border-[#D6EBC9] bg-[#F6FBF3] px-4 py-3 text-[13px] text-[#1E6B3E]">
+      <ul className="space-y-1.5 rounded-2xl border border-[#D8D4F5] bg-[#E9E6FF] px-4 py-3 text-[13px] text-[#1E6B3E]">
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" />A new session for {targetName} with the same activities.</li>
         <li className="flex gap-2"><Check className="mt-0.5 h-4 w-4 shrink-0" />The original lesson and its reflection are not changed.</li>
         <li className="flex gap-2"><CalendarClock className="mt-0.5 h-4 w-4 shrink-0" />Each class keeps its own copy, so you can adapt it for {targetName} without affecting the original.</li>
@@ -388,34 +421,106 @@ export function SchedulePickerSheet({
   data: PlannerData;
   onClose: () => void;
 }) {
+  const { currentSheetInfo, allLessonsData, lessonNumbers: liveLessonNumbers } = useData();
   const visible = data.classes.filter((c) => !c.hidden);
-  const [classId, setClassId] = useState(initial.classId || visible[0]?.id || '');
+  const [classId, setClassId] = useState(
+    initial.classId ||
+      (visible.some((c) => c.id === currentSheetInfo.sheet) ? currentSheetInfo.sheet : visible[0]?.id) ||
+      '',
+  );
   const [date, setDate] = useState(ymd(initial.date));
   const [time, setTime] = useState(initial.time || '');
   const [query, setQuery] = useState('');
+  const [classMenuOpen, setClassMenuOpen] = useState(false);
+  const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
+  const classMenuRef = useRef<HTMLDivElement>(null);
   const cache = data.lessonCache[classId];
   const { ensureLessons } = data;
+
+  const folderGroups = useMemo(() => {
+    const folders = data.folders?.length
+      ? data.folders
+      : [{ id: 'all', name: 'Classes', classes: visible }];
+    return folders
+      .map((f) => ({ ...f, classes: f.classes.filter((c) => !c.hidden) }))
+      .filter((f) => f.classes.length > 0);
+  }, [data.folders, visible]);
+
+  useEffect(() => {
+    if (!classMenuOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (!classMenuRef.current?.contains(e.target as Node)) setClassMenuOpen(false);
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [classMenuOpen]);
+
+  useEffect(() => {
+    // Open the section that contains the current class when the menu opens
+    if (!classMenuOpen) return;
+    const containing = folderGroups.find((f) => f.classes.some((c) => c.id === classId));
+    if (containing) setOpenSections((prev) => new Set(prev).add(containing.id));
+  }, [classMenuOpen, classId, folderGroups]);
 
   useEffect(() => {
     if (classId) ensureLessons(classId);
   }, [classId, ensureLessons]);
 
   const cls = data.classById.get(classId);
+  const isCurrentSheet = classId === currentSheetInfo.sheet;
+
+  /** Full class library: API/cache + live DataContext when this is the header class. */
+  const library = useMemo(() => {
+    const fromCache = cache && cache !== 'loading' ? cache.lessons : {};
+    const fromLive = isCurrentSheet ? allLessonsData || {} : {};
+    const lessons = { ...fromCache, ...fromLive };
+    const numbers = [
+      ...new Set([
+        ...(cache && cache !== 'loading' ? cache.lessonNumbers : []),
+        ...(isCurrentSheet ? liveLessonNumbers || [] : []),
+        ...Object.keys(lessons),
+      ]),
+    ]
+      .filter((n) => !!lessons[n])
+      .sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b)));
+    return { lessons, numbers };
+  }, [cache, isCurrentSheet, allLessonsData, liveLessonNumbers]);
+
+  const halfTermLabel = useMemo(() => {
+    const map = new Map<string, string>();
+    if (!cache || cache === 'loading') return map;
+    for (const t of cache.halfTerms) {
+      const meta = HALF_TERMS.find((h) => h.id === t.id);
+      const label = meta?.name || t.id;
+      for (const n of t.lessons) {
+        if (!map.has(n)) map.set(n, label);
+      }
+    }
+    return map;
+  }, [cache]);
+
   const scheduled = useMemo(
     () => new Set(data.plans.filter((p) => p.className === classId && p.lessonNumber).map((p) => p.lessonNumber!)),
     [data.plans, classId],
   );
+
   const lessons = useMemo(() => {
-    if (!cache || cache === 'loading') return [];
     const q = query.trim().toLowerCase();
-    return cache.lessonNumbers
-      .map((n) => ({ n, l: cache.lessons[n] }))
-      .filter(({ n, l }) => !q || `${l.title || ''} ${l.lessonName || ''} lesson ${n}`.toLowerCase().includes(q));
-  }, [cache, query]);
+    return library.numbers
+      .map((n) => ({ n, l: library.lessons[n] }))
+      .filter(({ n, l }) => {
+        if (!l) return false;
+        if (!q) return true;
+        const term = halfTermLabel.get(n) || '';
+        return `${l.title || ''} ${l.lessonName || ''} lesson ${n} ${term}`.toLowerCase().includes(q);
+      });
+  }, [library, query, halfTermLabel]);
+
+  const loading = (!cache || cache === 'loading') && library.numbers.length === 0;
 
   const choose = (n: string) => {
-    if (!cache || cache === 'loading') return;
-    const l = cache.lessons[n];
+    const l = library.lessons[n];
+    if (!l) return;
     const d = new Date(`${date}T12:00:00`);
     const activities = (l.orderedActivities?.length ? l.orderedActivities : Object.values(l.grouped || {}).flat()).map((a) => ({
       ...a,
@@ -441,15 +546,86 @@ export function SchedulePickerSheet({
 
   return (
     <PlannerSheet onClose={onClose} label="Choose a lesson">
+      <p className="mt-1 text-[13px] text-[#77738F]">
+        All lessons in {cls?.name || 'this class'}’s library. Already on the planner stay available to schedule again.
+      </p>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-1">
-        <label className="block text-[13px] font-semibold text-[#374151]">
+        <div className="relative block text-[13px] font-semibold text-[#374151]" ref={classMenuRef}>
           Class
-          <select value={classId} onChange={(e) => setClassId(e.target.value)} className={`${fieldClass} mt-1`}>
-            {visible.map((c) => (
-              <option key={c.id} value={c.id}>{c.name}</option>
-            ))}
-          </select>
-        </label>
+          <button
+            type="button"
+            onClick={() => setClassMenuOpen((o) => !o)}
+            className={`${fieldClass} mt-1 flex items-center justify-between gap-2 text-left font-semibold`}
+            aria-expanded={classMenuOpen}
+            aria-haspopup="listbox"
+          >
+            <span className="flex min-w-0 items-center gap-2">
+              {cls?.color ? (
+                <span className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ background: cls.color }} aria-hidden />
+              ) : null}
+              <span className="truncate">{cls?.name || 'Choose a class'}</span>
+            </span>
+            <ChevronDown className={`h-4 w-4 shrink-0 text-[#77738F] transition-transform ${classMenuOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {classMenuOpen && (
+            <div
+              className="absolute left-0 right-0 z-20 mt-1 max-h-[min(50vh,320px)] overflow-y-auto rounded-xl border border-[#E2E0EF] bg-white/95 py-1 shadow-lg backdrop-blur-md"
+              role="listbox"
+            >
+              {folderGroups.map((folder) => {
+                const open = openSections.has(folder.id);
+                return (
+                  <div key={folder.id} className="border-b border-[#E2E0EF]/80 last:border-0">
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setOpenSections((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(folder.id)) next.delete(folder.id);
+                          else next.add(folder.id);
+                          return next;
+                        })
+                      }
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left hover:bg-[#F4F3FA]"
+                    >
+                      {open ? (
+                        <ChevronDown className="h-3.5 w-3.5 text-[#77738F]" />
+                      ) : (
+                        <ChevronRight className="h-3.5 w-3.5 text-[#77738F]" />
+                      )}
+                      <span className="flex-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
+                        {folder.name}
+                      </span>
+                      <span className="text-[10px] font-bold text-[#C4C0D8]">{folder.classes.length}</span>
+                    </button>
+                    {open &&
+                      folder.classes.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          role="option"
+                          aria-selected={c.id === classId}
+                          onClick={() => {
+                            setClassId(c.id);
+                            setClassMenuOpen(false);
+                          }}
+                          className={`flex w-full items-center gap-2 px-3 py-2 pl-9 text-left text-[13px] ${
+                            c.id === classId
+                              ? 'bg-[#E9E6FF] font-bold text-[#1F1B4D]'
+                              : 'font-medium text-[#1F1B4D] hover:bg-[#F4F3FA]'
+                          }`}
+                        >
+                          <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: c.color }} aria-hidden />
+                          <span className="min-w-0 flex-1 truncate">{c.name}</span>
+                          {c.id === classId ? <Check className="h-3.5 w-3.5 shrink-0 text-[#4338E8]" /> : null}
+                        </button>
+                      ))}
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
         <label className="block text-[13px] font-semibold text-[#374151]">
           Date
           <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className={`${fieldClass} mt-1`} />
@@ -466,14 +642,20 @@ export function SchedulePickerSheet({
           onChange={(e) => setQuery(e.target.value)}
           placeholder={`Search ${cls?.name || ''} lessons…`}
           className={`${fieldClass} pl-9`}
+          aria-label="Search lessons"
         />
       </div>
-      <div className="mt-3 space-y-2">
-        {cache === 'loading' || !cache ? (
-          <p className="py-6 text-center text-sm text-[#4B5563]">Loading lessons…</p>
+      {!loading && lessons.length > 0 && (
+        <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#77738F]">
+          {lessons.length} lesson{lessons.length === 1 ? '' : 's'}
+        </p>
+      )}
+      <div className="mt-2 max-h-[min(60vh,520px)] space-y-2 overflow-y-auto pr-0.5">
+        {loading ? (
+          <p className="py-6 text-center text-sm text-[#77738F]">Loading lessons…</p>
         ) : lessons.length === 0 ? (
-          <p className="py-6 text-center text-sm text-[#4B5563]">
-            No lessons found for {cls?.name}. Create one in the Lesson Builder first.
+          <p className="py-6 text-center text-sm text-[#77738F]">
+            No lessons found for {cls?.name}. Create one in the Lesson Builder or Lesson Library first.
           </p>
         ) : (
           lessons.map(({ n, l }) => (
@@ -481,16 +663,17 @@ export function SchedulePickerSheet({
               key={n}
               type="button"
               onClick={() => choose(n)}
-              className="flex w-full items-center gap-3 rounded-xl border border-[#E5EDE8] bg-white px-3 py-2.5 text-left hover:bg-[#F7FAF8]"
+              className="flex w-full items-center gap-3 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2.5 text-left hover:border-[#bcb7f4] hover:bg-[#F4F3FA]"
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#F1F6F2] text-xs font-bold text-[#002D24]">{n}</span>
+              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#E9E6FF] text-xs font-bold text-[#1F1B4D]">{n}</span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-[#1F2937]">{l.title || l.lessonName || `Lesson ${n}`}</span>
-                <span className="block text-xs text-[#4B5563]">
+                <span className="block text-xs text-[#77738F]">
+                  {halfTermLabel.get(n) ? `${halfTermLabel.get(n)} · ` : ''}
                   {plural(Object.values(l.grouped || {}).flat().length, 'activity', 'activities')} · {l.totalTime || 0} min
                 </span>
               </span>
-              {scheduled.has(n) && <span className="rounded-full bg-[#E7F5EC] px-2 py-0.5 text-[11.5px] font-semibold text-[#1E6B3E]">Scheduled</span>}
+              {scheduled.has(n) && <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[11.5px] font-semibold text-[#1E6B3E]">Scheduled</span>}
               <BookOpen className="h-4 w-4 shrink-0 text-[#6B7280]" />
             </button>
           ))

@@ -32,7 +32,7 @@ export function StackCard({ stack, onClick, onPrint, onDelete, showDelete }: Sta
     >
       {/* Layer 2 (back) - Teal */}
       <div
-        className="absolute inset-0 translate-x-2 translate-y-2 rounded-card bg-[#0D9488] opacity-40 shadow-soft"
+        className="absolute inset-0 translate-x-2 translate-y-2 rounded-card bg-[#4338E8] opacity-40 shadow-soft"
         aria-hidden
       />
       {/* Layer 1 (middle) - Teal/Blue */}
@@ -99,7 +99,7 @@ export function StackCard({ stack, onClick, onPrint, onDelete, showDelete }: Sta
               <span>{stack.totalTime} min</span>
             </div>
             {stack.customObjectives && stack.customObjectives.length > 0 && (
-              <div className="flex items-center text-sm text-teal-600 font-medium">
+              <div className="flex items-center text-sm text-[#4338E8] font-medium">
                 <Target className="h-4 w-4 mr-1" />
                 <span>{stack.customObjectives.length} objectives</span>
               </div>

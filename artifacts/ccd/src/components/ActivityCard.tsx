@@ -176,12 +176,12 @@ export function ActivityCard({
 
   const resources = [
     { label: 'Video', url: activity.videoLink, icon: Video, color: 'text-red-600 bg-red-50 border-red-200', type: 'video' },
-    { label: 'Music', url: activity.musicLink, icon: Music, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'music' },
-    { label: 'Backing', url: activity.backingLink, icon: Volume2, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'backing' },
-    { label: 'Resource', url: activity.resourceLink, icon: FileText, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'resource' },
+    { label: 'Music', url: activity.musicLink, icon: Music, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'music' },
+    { label: 'Backing', url: activity.backingLink, icon: Volume2, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'backing' },
+    { label: 'Resource', url: activity.resourceLink, icon: FileText, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'resource' },
     { label: 'Link', url: activity.link, icon: LinkIcon, color: 'text-gray-600 bg-gray-50 border-gray-200', type: 'link' },
     { label: 'Vocals', url: activity.vocalsLink, icon: Volume2, color: 'text-orange-600 bg-orange-50 border-orange-200', type: 'vocals' },
-    { label: 'Image', url: activity.imageLink, icon: Image, color: 'text-teal-600 bg-teal-50 border-teal-200', type: 'image' },
+    { label: 'Image', url: activity.imageLink, icon: Image, color: 'text-[#4338E8] bg-[#E9E6FF] border-[#E2E0EF]', type: 'image' },
   ].filter(resource => resource.url && resource.url.trim());
 
   // Get category color from context or use provided color (use normalized category)
@@ -258,7 +258,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
         ref={draggable ? (drag as unknown as React.Ref<HTMLDivElement>) : undefined}
         className={`bg-white rounded-md shadow-soft border transition-all duration-200 hover:shadow-hover cursor-pointer ${
           isEditing ? 'ring-2 ring-blue-300' : 'border-gray-200 hover:border-gray-300'
-        } ${isDragging ? 'opacity-50' : ''} ${isExpanded ? 'border-teal-300' : ''} flex flex-col`}
+        } ${isDragging ? 'opacity-50' : ''} ${isExpanded ? 'border-[#bcb7f4]' : ''} flex flex-col`}
         style={{ borderLeftColor: cardColor, borderLeftWidth: '4px' }}
         onClick={handleCardClick}
       >
@@ -279,7 +279,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
                   }
                 }}
                 className={`w-5 h-5 rounded-full flex items-center justify-center cursor-pointer transition-colors flex-shrink-0 ${
-                  isSelected ? 'bg-teal-600' : 'border-2 border-gray-300 hover:border-teal-400'
+                  isSelected ? 'bg-[#4338E8]' : 'border-2 border-gray-300 hover:border-[#bcb7f4]'
                 }`}
                 role="button"
                 tabIndex={0}
@@ -352,7 +352,7 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
       <div
         ref={draggable ? (drag as unknown as React.Ref<HTMLDivElement>) : undefined}
         className={`bg-white rounded-card shadow-soft border transition-all duration-200 ${draggable ? 'cursor-move' : 'cursor-pointer'} ${
-          isEditing ? 'ring-2 ring-blue-300' : 'border-gray-200 hover:border-teal-400 hover:shadow-lg hover:shadow-teal-100 hover:-translate-y-1 hover:bg-teal-50/30'
+          isEditing ? 'ring-2 ring-[#bcb7f4]' : 'border-gray-200 hover:border-[#bcb7f4] hover:shadow-lg hover:shadow-[#E9E6FF] hover:-translate-y-1 hover:bg-[#E9E6FF]/30'
         } ${isDragging ? 'opacity-50' : ''} h-full flex flex-col`}
         style={{ cursor: draggable ? 'move' : 'pointer', borderLeftColor: cardColor, borderLeftWidth: '4px' }}
         onClick={handleCardClick}
@@ -696,7 +696,7 @@ return (
                 type="text"
                 value={editedActivity.unitName}
                 onChange={(e) => setEditedActivity(prev => ({ ...prev, unitName: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                 placeholder="Unit name"
                 onClick={(e) => e.stopPropagation()}
                 dir="ltr"
@@ -710,7 +710,7 @@ return (
                       e.stopPropagation();
                       onViewUnit(activity.unitName);
                     }}
-                    className="p-1 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
+                    className="p-1 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded transition-colors"
                     title="View Unit"
                   >
                     <FolderOpen className="h-4 w-4" />
@@ -732,7 +732,7 @@ return (
                 type="text"
                 value={editedActivity.lessonNumber}
                 onChange={(e) => setEditedActivity(prev => ({ ...prev, lessonNumber: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none"
                 placeholder="Lesson number"
                 onClick={(e) => e.stopPropagation()}
                 dir="ltr"
@@ -746,7 +746,7 @@ return (
                       e.stopPropagation();
                       onViewLesson(activity.lessonNumber);
                     }}
-                    className="p-1 text-teal-600 hover:text-teal-700 hover:bg-teal-50 rounded transition-colors"
+                    className="p-1 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded transition-colors"
                     title="View Lesson"
                   >
                     <BookOpen className="h-4 w-4" />
@@ -766,7 +766,7 @@ return (
             </label>
             <div className="flex flex-wrap gap-1">
               {activity.eyfsStandards.slice(0, 2).map((standard, index) => (
-                <span key={index} className="inline-block px-2 py-1 bg-teal-100 text-teal-800 text-xs rounded-full" dir="ltr">
+                <span key={index} className="inline-block px-2 py-1 bg-[#E9E6FF] text-[#1F1B4D] text-xs rounded-full" dir="ltr">
                   {standard.split(':')[1] || standard}
                 </span>
               ))}
@@ -790,7 +790,7 @@ return (
                     e.stopPropagation();
                     setShowResources(!showResources);
                   }}
-                  className="text-xs text-teal-600 hover:text-teal-800"
+                  className="text-xs text-[#4338E8] hover:text-[#1F1B4D]"
                 >
                   {showResources ? 'Hide' : 'Show'}
                 </button>
@@ -814,7 +814,7 @@ return (
                       type="url"
                       value={editedActivity[key as keyof Activity] as string}
                       onChange={(e) => setEditedActivity(prev => ({ ...prev, [key]: e.target.value }))}
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-transparent focus:outline-none text-sm"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none text-sm"
                       placeholder={`${label} URL`}
                       dir="ltr"
                     />
@@ -927,7 +927,7 @@ return (
                 e.stopPropagation();
                 handleSave();
               }}
-              className="px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
+              className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
             >
               <Save className="h-4 w-4" />
               <span>Save</span>

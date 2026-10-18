@@ -12,18 +12,22 @@
   --ccd-duration-fast: 140ms;
   --ccd-duration-base: 220ms;
   --ccd-duration-slow: 360ms;
-  --ccd-teal: #14B8A6;
-  --ccd-teal-deep: #0D9488;
-  /* Login brand — used in Unit Viewer / Half-Term Designer */
-  --ccd-forest: #002D24;
-  --ccd-lime: #B6FF7E;
-  --ccd-sage: #F3F6F3;
-  --ccd-sage-mist: #E8F0EA;
+  /* Studio Score tokens (teacher workspace). Partner Hubs keep forest/teal locally. */
+  --ccd-teal: #4338E8;
+  --ccd-teal-deep: #4338E8;
+  --ccd-indigo: #4338E8;
+  --ccd-ink: #1F1B4D;
+  --ccd-sun: #FFC93C;
+  --ccd-lilac: #F4F3FA;
+  --ccd-forest: #1F1B4D;
+  --ccd-lime: #FFC93C;
+  --ccd-sage: #F4F3FA;
+  --ccd-sage-mist: #E9E6FF;
 }
 
 /* Promo walkthrough motion-graphics palette (scoped to the login promo surface) */
 .ccd-promo-surface {
-  --color-primary: #14B8A6;
+  --color-primary: #4338E8;
   --color-primary-light: #5EEAD4;
   --color-primary-dark: #008272;
   --color-accent: #FF6B6B;
@@ -68,17 +72,8 @@ body {
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  border-color: var(--ccd-teal);
-  box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.15);
-}
-
-/* Teal ring for focus states */
-.focus\:ring-teal-500:focus {
-  --tw-ring-color: #17a2b8 !important;
-}
-
-.focus\:border-teal-500:focus {
-  border-color: #17a2b8 !important;
+  border-color: var(--ccd-indigo);
+  box-shadow: 0 0 0 3px rgba(67, 56, 232, 0.2);
 }
 
 @keyframes bounce-in {
@@ -195,13 +190,13 @@ textarea:focus-visible {
 }
 .ccd-card-lift:hover {
   transform: translateY(-4px) scale(1.015);
-  box-shadow: 0 18px 36px -12px rgba(0, 45, 36, 0.22),
-              0 8px 16px -6px rgba(0, 45, 36, 0.12);
+  box-shadow: 0 18px 36px -12px rgba(31, 27, 77, 0.18),
+              0 8px 16px -6px rgba(31, 27, 77, 0.1);
 }
 
-/* Dashboard main tabs — teal underline under every tab; active is stronger/thicker. */
+/* Dashboard main tabs — indigo underline (Studio Score). */
 .ccd-dash-tabs {
-  background: #F4F7F5 !important;
+  background: #F4F3FA !important;
   border-radius: 0.5rem 0.5rem 0 0 !important;
   padding: 0.15rem 0.15rem 0 !important;
   gap: 0.25rem;
@@ -212,7 +207,7 @@ textarea:focus-visible {
   border-radius: 0.5rem 0.5rem 0 0 !important;
   background: transparent !important;
   box-shadow: none !important;
-  color: #4B5563;
+  color: #77738F;
 }
 .ccd-dash-tab::after {
   content: '';
@@ -222,25 +217,25 @@ textarea:focus-visible {
   bottom: 0;
   height: 3px;
   border-radius: 2px 2px 0 0;
-  background: var(--ccd-teal-deep, #0D9488);
+  background: var(--ccd-indigo, #4338E8);
   opacity: 0.28;
 }
 .ccd-dash-tab:hover {
-  color: var(--ccd-forest);
-  background: rgba(0, 45, 36, 0.04) !important;
+  color: var(--ccd-ink);
+  background: rgba(67, 56, 232, 0.06) !important;
 }
 .ccd-dash-tab:hover::after {
   opacity: 0.55;
 }
 .ccd-dash-tab[data-state='active'] {
-  color: var(--ccd-forest) !important;
+  color: var(--ccd-ink) !important;
   font-weight: 600;
   background: transparent !important;
   box-shadow: none !important;
 }
 .ccd-dash-tab[data-state='active']::after {
   height: 4px;
-  background: var(--ccd-teal-deep, #0D9488);
+  background: var(--ccd-indigo, #4338E8);
   opacity: 1;
 }
 

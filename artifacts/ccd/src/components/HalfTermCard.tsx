@@ -21,10 +21,10 @@ interface HalfTermCardProps {
   halfTerms?: Array<{ id: string; name: string; lessons: string[] }>;
 }
 
-const FOREST = '#002D24';
-
+/**
+ * Compact half-term row — dense Studio Score control, not a large status card.
+ */
 export function HalfTermCard({
-  id,
   name,
   months,
   color,
@@ -32,87 +32,49 @@ export function HalfTermCard({
   stackCount = 0,
   onClick,
   isComplete,
-  theme,
-  onLessonClick,
-  onLessonEdit,
-  halfTerms = []
 }: HalfTermCardProps) {
-  // Three visual variants:
-  //   empty       — light sage band, "Add lessons" affordance
-  //   in-progress — forest footer with lesson count
-  //   complete    — forest footer with check icon
-  const variant: 'empty' | 'in-progress' | 'complete' =
-    lessonCount === 0 ? 'empty' : isComplete ? 'complete' : 'in-progress';
-
-  const bandStyle =
-    variant === 'empty'
-      ? { backgroundColor: '#F1F6F2', color: FOREST, borderTop: '1px dashed #D5E3DA' }
-      : { backgroundColor: FOREST, color: '#FFFFFF', borderTop: '1px solid transparent' };
+  const empty = lessonCount === 0;
+  const status = empty
+    ? 'Add lessons'
+    : `${lessonCount} lesson${lessonCount !== 1 ? 's' : ''}${
+        stackCount > 0 ? ` · ${stackCount} stack${stackCount !== 1 ? 's' : ''}` : ''
+      }`;
 
   return (
-    <div
-      className="bg-white rounded-card shadow-soft ccd-card-lift cursor-pointer group overflow-hidden border border-gray-100 hover:border-[#002D24]/25"
+    <button
+      type="button"
       onClick={onClick}
+      className="group flex w-full items-center gap-3 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2.5 text-left transition-colors hover:border-[#bcb7f4] hover:bg-[#F7F6FC]"
     >
-      {/* TOP SECTION — title, months chip, chevron */}
-      <div className="relative px-4 sm:px-5 pt-5 pb-4">
-        <div className="flex items-start justify-between gap-3 mb-2">
-          <div className="min-w-0 flex-1">
-            <h3
-              className="text-[17px] sm:text-[18px] font-semibold leading-tight tracking-tight"
-              style={{
-                fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif',
-                color: FOREST,
-              }}
-            >
-              {name}
-            </h3>
-            <p
-              className="mt-1 inline-block text-[12px] font-medium text-gray-500 tracking-wide uppercase"
-              style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
-            >
-              {months}
-            </p>
-          </div>
-          <ChevronRight
-            className="h-5 w-5 flex-shrink-0 text-gray-300 transition-all duration-200 group-hover:translate-x-1 group-hover:text-[#002D24]"
-          />
-        </div>
-      </div>
-
-      {/* BOTTOM BAND — status */}
-      <div
-        className="relative flex items-center justify-between px-4 sm:px-5 py-3"
-        style={{ ...bandStyle, transition: 'background-color 250ms var(--ccd-ease-out)' }}
-      >
-        <div className="flex items-center gap-2 min-w-0">
-          {variant === 'complete' ? (
-            <CheckCircle className="h-[18px] w-[18px] flex-shrink-0" />
-          ) : variant === 'in-progress' ? (
-            <BookOpen className="h-[18px] w-[18px] flex-shrink-0" />
-          ) : (
-            <Plus className="h-[18px] w-[18px] flex-shrink-0 opacity-70" />
-          )}
+      <span
+        className="h-8 w-1.5 shrink-0 rounded-full"
+        style={{ background: color || '#4338E8' }}
+        aria-hidden
+      />
+      <span className="min-w-0 flex-1">
+        <span className="flex items-baseline gap-2">
           <span
-            className="text-[14px] font-medium truncate"
-            style={{ fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, sans-serif' }}
+            className="truncate text-[13px] font-extrabold tracking-tight text-[#1F1B4D]"
+            style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
           >
-            {variant === 'empty'
-              ? 'Add lessons'
-              : `${lessonCount} lesson${lessonCount !== 1 ? 's' : ''}`}
-            {stackCount > 0 && variant !== 'empty' && (
-              <span className="ml-2 opacity-90">
-                · {stackCount} stack{stackCount !== 1 ? 's' : ''}
-              </span>
-            )}
+            {name}
           </span>
-        </div>
-        {variant === 'complete' && (
-          <span className="text-[11px] font-semibold tracking-wide uppercase opacity-90">
-            Complete
+          <span className="shrink-0 text-[10px] font-bold uppercase tracking-wide text-[#77738F]">
+            {months}
           </span>
-        )}
-      </div>
-    </div>
+        </span>
+        <span className="mt-0.5 flex items-center gap-1.5 text-[11px] font-medium text-[#77738F]">
+          {isComplete ? (
+            <CheckCircle className="h-3 w-3 text-[#4338E8]" aria-hidden />
+          ) : empty ? (
+            <Plus className="h-3 w-3" aria-hidden />
+          ) : (
+            <BookOpen className="h-3 w-3" aria-hidden />
+          )}
+          {isComplete ? `Complete · ${status}` : status}
+        </span>
+      </span>
+      <ChevronRight className="h-4 w-4 shrink-0 text-[#C4C0D8] transition-transform group-hover:translate-x-0.5 group-hover:text-[#4338E8]" />
+    </button>
   );
 }

@@ -170,7 +170,7 @@ export function TimetableModal({
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-teal-500 to-teal-600 text-white">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4 p-4 sm:p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div className="flex items-center space-x-2 sm:space-x-3 min-w-0 flex-1">
             <Repeat className="h-5 w-5 sm:h-6 sm:w-6 flex-shrink-0" />
             <div className="min-w-0">
@@ -279,7 +279,7 @@ export function TimetableModal({
             onClick={() => setActiveTab('add')}
             className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 sm:py-3 font-medium text-xs sm:text-sm transition-colors duration-200 touch-manipulation ${
               activeTab === 'add' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >
@@ -289,7 +289,7 @@ export function TimetableModal({
             onClick={() => setActiveTab('manage')}
             className={`flex-1 sm:flex-initial px-4 sm:px-6 py-2.5 sm:py-3 font-medium text-xs sm:text-sm transition-colors duration-200 touch-manipulation ${
               activeTab === 'manage' 
-                ? 'border-b-2 border-teal-600 text-teal-600 bg-white' 
+                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
                 : 'text-gray-600 hover:text-gray-900'
             }`}
           >

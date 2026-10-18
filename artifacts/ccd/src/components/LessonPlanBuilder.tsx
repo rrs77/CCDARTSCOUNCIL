@@ -19,8 +19,11 @@ import {
   Calendar,
   ChevronLeft,
   ChevronRight,
-  RefreshCw
+  RefreshCw,
+  Sparkles,
 } from 'lucide-react';
+import { PolishWithAIModal, type PolishSuggestionId } from './studio/PolishWithAIModal';
+import { applyLessonPolishDraft } from '../utils/applyLessonPolish';
 import { ActivityCard } from './ActivityCard';
 import { ActivityStackCard } from './ActivityStackCard';
 import { LessonDropZone } from './LessonDropZone';
@@ -211,6 +214,7 @@ export function LessonPlanBuilder({
   const [selectedActivities, setSelectedActivities] = useState<string[]>([]);
   const [partnerSelectedProjectKeys, setPartnerSelectedProjectKeys] = useState<string[]>([]);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  const [polishOpen, setPolishOpen] = useState(false);
   const [currentLessonIndex, setCurrentLessonIndex] = useState(0);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [lessonNumber, setLessonNumber] = useState<string>('');
@@ -934,64 +938,46 @@ export function LessonPlanBuilder({
             </div>
           )}
           
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-            {/* Activity Library Panel */}
+          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+            {/* Activity Library Panel — flat Studio Score surface, not a nested app chrome */}
             <div className="lg:col-span-1 flex flex-col">
-              <div className="bg-white rounded-card shadow-soft overflow-hidden lg:sticky lg:top-8 flex flex-col max-h-none lg:max-h-[calc(100vh-4rem)]">
-                {/* Library Header */}
-                <div className="p-4 sm:p-6 border-b border-gray-200 text-white flex flex-col gap-4" style={{ background: 'linear-gradient(to right, #14B8A6, #0D9488)' }}>
-                  <div>
-                    <h3 className="text-base sm:text-lg font-semibold">Activity Library - Build Your Lesson</h3>
-                  </div>
-                  
-                  {/* Search and Category Filter */}
-                  <div className="flex flex-col sm:flex-row gap-2">
-                    {/* Search */}
+              <div className="flex max-h-none flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]">
+                <div className="flex flex-col gap-2 border-b border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2.5 sm:px-4">
+                  <h3
+                    className="text-sm font-extrabold tracking-tight text-[#1F1B4D]"
+                    style={{ fontFamily: "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)" }}
+                  >
+                    Activities
+                  </h3>
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <div className="relative flex-1">
-                      <Search 
-                        className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4" 
-                        style={{ color: '#FFFFFF' }}
-                      />
+                      <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
                       <input
                         type="text"
-                        placeholder="Search activities..."
+                        placeholder="Search activities…"
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-sm font-semibold text-white placeholder:text-white placeholder:opacity-90"
+                        className="w-full rounded-lg border border-[#E2E0EF] bg-white py-1.5 pl-8 pr-3 text-sm text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
                       />
                     </div>
-                    
-                    {/* Category Filter */}
                     <SimpleNestedCategoryDropdown
                       selectedCategory={selectedCategory === 'all' ? '' : selectedCategory}
                       onCategoryChange={(category) => setSelectedCategory(category || 'all')}
                       placeholder="All Categories"
-                      className="flex-1 px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-lg text-white focus:ring-2 focus:ring-white focus:ring-opacity-50 focus:border-transparent text-sm truncate font-semibold"
-                      dropdownBackgroundColor="#D6F2EE"
+                      className="flex-1 truncate rounded-lg border border-[#E2E0EF] bg-white px-3 py-1.5 text-sm font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
+                      dropdownBackgroundColor="#F4F3FA"
                       showAllCategories={true}
                     />
                   </div>
-                  
-                  {/* Add Selected Button */}
                   {selectedActivities.length > 0 && (
-                    <div className="mt-3 mb-8" style={{ position: 'relative', zIndex: 30 }}>
-                      <button
-                        type="button"
-                        onClick={addSelectedActivities}
-                        className="w-full py-3 text-white font-semibold rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 shadow-md"
-                        style={{
-                          backgroundColor: '#065F5B',
-                          border: 'none',
-                          cursor: 'pointer',
-                          pointerEvents: 'auto'
-                        }}
-                        onMouseEnter={(e) => (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#0D9488'}
-                        onMouseLeave={(e) => (e.currentTarget as HTMLButtonElement).style.backgroundColor = '#065F5B'}
-                      >
-                        <Plus className="h-4 w-4" />
-                        <span>Add {selectedActivities.length} Selected {selectedActivities.length === 1 ? 'Activity' : 'Activities'}</span>
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      onClick={addSelectedActivities}
+                      className="inline-flex min-h-[36px] w-full items-center justify-center gap-1.5 rounded-lg bg-[#4338E8] px-3 text-sm font-semibold text-white hover:bg-[#3529d1]"
+                    >
+                      <Plus className="h-4 w-4" />
+                      Add {selectedActivities.length} selected
+                    </button>
                   )}
                 </div>
                 
@@ -1043,9 +1029,9 @@ export function LessonPlanBuilder({
                 )}
 
                 {/* Activity List - Grouped by Category */}
-                <div className="p-3 pt-3 flex-1 overflow-y-auto min-h-0">
+                <div className="min-h-0 flex-1 overflow-y-auto p-2">
                   <PartnerPlanningPanel
-                    className="mb-4"
+                    className="mb-2"
                     compact
                     activities={allActivities}
                     currentSheetId={currentSheetInfo?.sheet}
@@ -1140,7 +1126,7 @@ export function LessonPlanBuilder({
                       )}
                     </div>
                   ) : (
-                    <div className="space-y-3">
+                    <div className="space-y-1.5">
                       {groupedActivitiesByCategory.sortedCategories?.map((categoryName) => {
                         const categoryActivities = groupedActivitiesByCategory.grouped?.[categoryName] || [];
                         const categoryInfo = categories.find(cat => cat.name === categoryName);
@@ -1148,32 +1134,30 @@ export function LessonPlanBuilder({
                         const isExpanded = expandedCategories.has(categoryName);
                         
                         return (
-                          <div key={categoryName} className="border border-gray-200 rounded-lg overflow-hidden">
-                            {/* Category Header */}
-                            <div className="w-full bg-gray-50" style={{ borderLeft: `4px solid ${categoryColor}` }}>
+                          <div key={categoryName} className="overflow-hidden rounded-lg border border-[#E2E0EF]">
+                            <div className="w-full bg-[#F4F3FA]" style={{ borderLeft: `4px solid ${categoryColor}` }}>
                               <button
                                 onClick={() => toggleCategory(categoryName)}
-                                className="w-full px-4 py-2.5 flex items-center space-x-3 hover:bg-gray-100 transition-colors"
+                                className="flex w-full items-center gap-2.5 px-3 py-2 hover:bg-[#E9E6FF]/50 transition-colors"
                               >
                                 <ChevronRight 
-                                  className={`h-4 w-4 text-gray-600 transition-transform ${isExpanded ? 'transform rotate-90' : ''}`}
+                                  className={`h-3.5 w-3.5 text-[#77738F] transition-transform ${isExpanded ? 'transform rotate-90' : ''}`}
                                 />
                                 <span 
-                                  className="text-xs font-semibold px-2 py-1 rounded-full text-white whitespace-nowrap"
+                                  className="whitespace-nowrap rounded-full px-2 py-0.5 text-[11px] font-semibold text-white"
                                   style={{ backgroundColor: categoryColor }}
                                 >
                                   {categoryName}
                                 </span>
-                                <span className="text-sm text-gray-600 whitespace-nowrap">
-                                  {categoryActivities.length} {categoryActivities.length === 1 ? 'activity' : 'activities'}
+                                <span className="whitespace-nowrap text-xs text-[#77738F]">
+                                  {categoryActivities.length}
                                 </span>
                               </button>
                             </div>
                             
-                            {/* Category Activities - One per line */}
                             {isExpanded && (
-                              <div className="bg-white border-t border-gray-200">
-                                <div className="grid grid-cols-1 gap-2 p-2">
+                              <div className="border-t border-[#E2E0EF] bg-white">
+                                <div className="grid grid-cols-1 gap-1 p-1.5">
                                   {categoryActivities.map((activity, index) => {
                                     const activityId = `${activity.activity}-${activity.category}`;
                                     const isSelected = selectedActivities.includes(activityId);
@@ -1213,8 +1197,23 @@ export function LessonPlanBuilder({
               </div>
             </div>
 
-            {/* Lesson Plan Details */}
+            {/* Lesson Plan Details — drag activities here; reorder stays intact */}
             <div className="lg:col-span-1 flex flex-col">
+              <div className="mb-2 flex flex-wrap items-center justify-between gap-2 px-0.5">
+                <p className="text-sm font-extrabold tracking-tight text-[#1F1B4D]">
+                  Your lesson
+                  <span className="ml-2 text-xs font-medium text-[#77738F]">Drag activities in · reorder anytime</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setPolishOpen(true)}
+                  disabled={isViewOnly}
+                  className="inline-flex min-h-[32px] items-center gap-1.5 rounded-lg bg-[#4338E8] px-3 text-xs font-bold text-white hover:bg-[#3529d1] disabled:opacity-50"
+                >
+                  <Sparkles className="h-3.5 w-3.5" aria-hidden />
+                  Polish with AI
+                </button>
+              </div>
               <div className="flex-1">
                 <LessonDropZone
                   lessonPlan={currentLessonPlan as any}
@@ -1232,6 +1231,17 @@ export function LessonPlanBuilder({
           </div>
         </div>
       </div>
+
+      <PolishWithAIModal
+        open={polishOpen}
+        lessonTitle={currentLessonPlan.title || 'Untitled lesson'}
+        onClose={() => setPolishOpen(false)}
+        onAccept={(ids: PolishSuggestionId[]) => {
+          const next = applyLessonPolishDraft(currentLessonPlan, ids);
+          setCurrentLessonPlan(next);
+          setHasUnsavedChanges(true);
+        }}
+      />
 
       {/* Activity Details Modal - Simple view for quick preview */}
       {selectedActivity && !editingActivity && (
@@ -1287,18 +1297,18 @@ export function LessonPlanBuilder({
       {saveStatus !== 'idle' && (
         <div className="fixed inset-0 flex items-center justify-center z-50 pointer-events-none">
           <div className={`max-w-md w-full mx-auto px-6 py-4 rounded-lg shadow-xl transition-all duration-300 transform ${
-            saveStatus === 'success' ? 'bg-teal-50 border border-teal-200' :
+            saveStatus === 'success' ? 'bg-[#E9E6FF] border border-[#E2E0EF]' :
             'bg-red-50 border border-red-200'
           }`}>
             <div className="flex items-center space-x-3">
               {saveStatus === 'success' ? (
                 <>
-                  <div className="flex-shrink-0 w-10 h-10 bg-teal-100 rounded-full flex items-center justify-center">
-                    <Check className="h-6 w-6 text-teal-600" />
+                  <div className="flex-shrink-0 w-10 h-10 bg-[#E9E6FF] rounded-full flex items-center justify-center">
+                    <Check className="h-6 w-6 text-[#4338E8]" />
                   </div>
                   <div>
-                    <h3 className="text-lg font-medium text-teal-800">Lesson saved successfully!</h3>
-                    <p className="text-sm text-teal-600">Your lesson plan has been saved.</p>
+                    <h3 className="text-lg font-medium text-[#1F1B4D]">Lesson saved successfully!</h3>
+                    <p className="text-sm text-[#4338E8]">Your lesson plan has been saved.</p>
                   </div>
                 </>
               ) : (

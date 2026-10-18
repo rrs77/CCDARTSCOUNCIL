@@ -68,9 +68,9 @@ export function ForumAdminPage({
   if (!canManage && !canMod) {
     return (
       <div className="space-y-4">
-        <h1 className="font-serif text-2xl text-[#002D24]">Forum preferences</h1>
+        <h1 className="text-2xl font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>Forum preferences</h1>
         <PrefsForm prefs={prefs} onSave={setPrefs} />
-        <button type="button" className="text-sm text-teal-800" onClick={() => navigate('/forum')}>
+        <button type="button" className="text-sm text-[#1F1B4D]" onClick={() => navigate('/forum')}>
           ← Back to forum
         </button>
       </div>
@@ -79,7 +79,7 @@ export function ForumAdminPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="font-serif text-3xl text-[#002D24]">Forum admin</h1>
+      <h1 className="text-3xl font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>Forum admin</h1>
       {error && <p className="text-sm text-red-700">{error}</p>}
 
       <div className="flex flex-wrap gap-2">
@@ -96,7 +96,7 @@ export function ForumAdminPage({
             type="button"
             onClick={() => setTab(id)}
             className={`rounded-lg px-3 py-1.5 text-sm ${
-              tab === id ? 'bg-[#002D24] text-white' : 'bg-white ring-1 ring-[#d5e0dc]'
+              tab === id ? 'bg-[#1F1B4D] text-white' : 'bg-white ring-1 ring-[#d5e0dc]'
             }`}
           >
             {label}
@@ -293,7 +293,7 @@ function PrefsForm({
           {label}
         </label>
       ))}
-      <button type="submit" className="rounded bg-[#002D24] px-3 py-2 text-sm text-white">
+      <button type="submit" className="rounded bg-[#1F1B4D] px-3 py-2 text-sm text-white">
         Save preferences
       </button>
     </form>

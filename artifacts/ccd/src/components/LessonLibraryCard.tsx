@@ -249,7 +249,7 @@ export function LessonLibraryCard({
                     console.log('🔄 Setting showDuplicateConfirm to true');
                     setShowDuplicateConfirm(true);
                   }}
-                  className="p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg shadow-sm flex items-center space-x-1"
+                  className="p-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg shadow-sm flex items-center space-x-1"
                   title="Duplicate lesson"
                 >
                   <Copy className="h-3 w-3" />
@@ -275,7 +275,7 @@ export function LessonLibraryCard({
                     e.stopPropagation();
                     onEdit();
                   }}
-                  className="p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg shadow-sm flex items-center space-x-1"
+                  className="p-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg shadow-sm flex items-center space-x-1"
                   title="Edit lesson activities"
                 >
                   <Edit3 className="h-3 w-3" />
@@ -422,7 +422,7 @@ export function LessonLibraryCard({
                   console.log('🔄 Setting showDuplicateConfirm to true');
                   setShowDuplicateConfirm(true);
                 }}
-                className="p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg shadow-sm flex items-center space-x-1"
+                className="p-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg shadow-sm flex items-center space-x-1"
                 title="Duplicate Lesson"
               >
                 <Copy className="h-4 w-4" />
@@ -448,7 +448,7 @@ export function LessonLibraryCard({
                   e.stopPropagation();
                   onEdit();
                 }}
-                className="p-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg shadow-sm flex items-center space-x-1"
+                className="p-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg shadow-sm flex items-center space-x-1"
                 title="Edit Lesson"
               >
                 <Edit3 className="h-4 w-4" />
@@ -667,7 +667,7 @@ export function LessonLibraryCard({
                 </button>
                 <button
                   onClick={handleDuplicateConfirm}
-                  className="flex-1 px-4 py-2 bg-teal-600 hover:bg-teal-700 text-white rounded-lg font-medium transition-colors"
+                  className="flex-1 px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg font-medium transition-colors"
                 >
                   Duplicate Lesson
                 </button>

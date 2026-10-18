@@ -2,6 +2,16 @@ import type { LessonPlan } from '../../contexts/DataContext';
 
 export type PlannerView = 'day' | 'week' | 'month' | 'term' | 'units' | 'classic';
 
+/** Rooms: Schedule = calendar; Units = half-term sequence for one class. */
+export type PlannerRoom = 'schedule' | 'units';
+
+export const SCHEDULE_VIEWS: { id: 'day' | 'week' | 'month'; label: string }[] = [
+  { id: 'week', label: 'Week' },
+  { id: 'day', label: 'Day' },
+  { id: 'month', label: 'Month' },
+];
+
+/** @deprecated Prefer SCHEDULE_VIEWS + rooms; kept for any older callers. */
 export const PLANNER_VIEWS: { id: Exclude<PlannerView, 'classic'>; label: string }[] = [
   { id: 'day', label: 'Day' },
   { id: 'week', label: 'Week' },
@@ -87,10 +97,11 @@ export interface DayEntry {
 
 export const CLASS_PALETTE = [
   '#E11D48', '#D97706', '#CA8A04', '#7C3AED', '#2563EB',
-  '#16A34A', '#0D9488', '#4F46E5', '#475569', '#DB2777',
+  '#16A34A', '#0D9488', '#4338E8', '#475569', '#DB2777',
 ];
 
-export const SERIF = '"Playfair Display", Georgia, serif';
+/** Display face — same as left-panel Studio Score headings. */
+export const SERIF = "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)";
 
 export const pad = (n: number) => String(n).padStart(2, '0');
 
@@ -179,7 +190,7 @@ export const readableInk = (hex: string) => {
   const h = hex.replace('#', '');
   const full = h.length === 3 ? h.split('').map((c) => c + c).join('') : h;
   let n = parseInt(full, 16);
-  if (Number.isNaN(n)) return '#002D24';
+  if (Number.isNaN(n)) return '#1F1B4D';
   let r = (n >> 16) & 255;
   let g = (n >> 8) & 255;
   let b = n & 255;
