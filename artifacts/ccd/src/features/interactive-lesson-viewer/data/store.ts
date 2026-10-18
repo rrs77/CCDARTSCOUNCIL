@@ -116,12 +116,16 @@ export async function listInteractiveLessons(opts: {
 }
 
 export async function getInteractiveLesson(id: string): Promise<InteractiveLesson | null> {
+  // Always rebuild the shipped demo so preview content stays polished (no stale placeholders).
+  if (id === 'demo-interactive-lesson') {
+    const demo = buildDemoInteractiveLesson();
+    const rest = readLocal().filter((l) => l.id !== id && !l.isDemo);
+    writeLocal([demo, ...rest]);
+    return demo;
+  }
+
   const local = readLocal().find((l) => l.id === id);
   if (local) return local;
-
-  if (id === 'demo-interactive-lesson') {
-    return buildDemoInteractiveLesson();
-  }
 
   if (useRemoteSync()) {
     try {

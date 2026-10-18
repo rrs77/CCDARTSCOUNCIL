@@ -153,7 +153,7 @@ export function SceneRenderer({
             allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
           />
-        ) : (
+        ) : scene.overlays.length === 0 ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 p-6 text-center">
             {scene.posterUrl && (
               <img src={scene.posterUrl} alt="" className="mb-2 h-16 w-auto opacity-80" />
@@ -165,15 +165,23 @@ export function SceneRenderer({
               Add an embed or share link in the editor.
             </p>
           </div>
-        )
+        ) : scene.posterUrl ? (
+          <img
+            src={scene.posterUrl}
+            alt=""
+            className="absolute inset-0 m-auto h-20 w-auto opacity-25"
+            draggable={false}
+          />
+        ) : null
       )}
 
-      {(scene.type === 'canva' || scene.type === 'powerpoint') && scene.embedUrl?.includes('Placeholder') && (
+      {(scene.type === 'canva' || scene.type === 'powerpoint') &&
+        !scene.embedUrl &&
+        !(scene.overlays && scene.overlays.length > 0) && (
         <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-[#1F1B4D]/92 p-8 text-center text-white">
           {scene.posterUrl && <img src={scene.posterUrl} alt="" className="h-14 w-auto" />}
           <p className="text-2xl font-extrabold tracking-tight">{scene.type === 'canva' ? 'Canva design' : 'PowerPoint'}</p>
-          <p className="max-w-lg text-sm text-white/75">{scene.notes}</p>
-          <span className="ilv-chip ilv-chip-sun text-[#1F1B4D]">Placeholder embed — replace with your link</span>
+          <p className="max-w-lg text-sm text-white/75">{scene.notes || 'Add a share or embed link in the editor.'}</p>
         </div>
       )}
 

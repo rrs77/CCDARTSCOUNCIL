@@ -788,7 +788,6 @@ export function InteractiveLessonEditor({
       {showPlayer && (
         <InteractiveLessonPlayer
           lesson={lesson}
-          startSceneIndex={sceneIndex}
           onClose={() => setShowPlayer(false)}
         />
       )}

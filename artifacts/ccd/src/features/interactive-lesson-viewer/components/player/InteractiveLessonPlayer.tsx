@@ -153,7 +153,7 @@ export function InteractiveLessonPlayer({
 
   return (
     <div id="ilv-player-root" className="ilv-root ilv-player" role="dialog" aria-modal="true" aria-label={lesson.title}>
-      <div className="flex items-center justify-between gap-3 border-b border-white/10 px-4 py-2">
+      <div className="ilv-player-header">
         <div>
           <h2 className="text-base font-extrabold tracking-tight text-white">{lesson.title}</h2>
           <p className="text-xs text-white/60">
