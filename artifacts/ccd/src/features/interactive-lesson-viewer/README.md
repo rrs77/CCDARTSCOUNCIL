@@ -13,12 +13,19 @@ Self-contained module for Google Vids–style interactive lessons inside CCDesig
 
 ## Setup for Rob
 
-1. **Migration** — run in Supabase SQL Editor:
+1. **Migration** (optional for first click-through) — run in Supabase SQL Editor:
    - `supabase/migrations/20261018_interactive_lessons.sql`
+   - Until applied, the app uses **localStorage + the shipped demo lesson** (prototype demo mode never needs the table).
 2. **Optional Whisper auto-transcribe** — set server env (never commit):
    - `OPENAI_API_KEY` (or `WHISPER_API_KEY`)
    - Also ensure `SUPABASE_JWT_SECRET` or `SUPABASE_SERVICE_ROLE_KEY` for `/api/interactive-lessons/transcribe`
+   - Transcription is routed through `/api/router` (not a separate Vercel function) to stay within the Hobby 12-function limit.
 3. Without a key, Tap to sync + paste/auto-align still work.
+
+### Open Lesson Viewer (demo)
+
+Password gate: `artscouncil26`  
+Then: `/?demo=1&tab=lesson-viewer` → **Play** or **Edit** on *CCDesigner Interactive Demo*.
 
 ## Demo content
 

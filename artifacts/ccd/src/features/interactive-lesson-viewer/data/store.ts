@@ -1,9 +1,16 @@
 import { supabase, isSupabaseAuthEnabled } from '../../../config/supabase';
+import { isAuthorizedDemoMode, isDemoModeActive } from '../../../utils/demoMode';
 import { buildDemoInteractiveLesson } from './demoLesson';
 import type { InteractiveLesson, InteractiveLessonSummary } from '../types';
 
 const LOCAL_KEY = 'ccd-interactive-lessons-v1';
 const TABLE = 'interactive_lessons';
+
+/** Prefer localStorage when migration isn't applied yet, or in prototype demo. */
+function useRemoteSync(): boolean {
+  if (isDemoModeActive() || isAuthorizedDemoMode()) return false;
+  return isSupabaseAuthEnabled();
+}
 
 function readLocal(): InteractiveLesson[] {
   try {
@@ -21,10 +28,12 @@ function writeLocal(lessons: InteractiveLesson[]) {
 }
 
 function ensureDemo(lessons: InteractiveLesson[], ownerId: string): InteractiveLesson[] {
-  if (lessons.some((l) => l.id === 'demo-interactive-lesson' || l.isDemo)) {
-    return lessons;
-  }
-  return [buildDemoInteractiveLesson(ownerId), ...lessons];
+  const demo = buildDemoInteractiveLesson(ownerId);
+  const withoutStaleDemo = lessons.filter(
+    (l) => l.id !== 'demo-interactive-lesson' && !l.isDemo,
+  );
+  // Always refresh the shipped demo so preview works without the Supabase migration.
+  return [demo, ...withoutStaleDemo];
 }
 
 function toSummary(lesson: InteractiveLesson): InteractiveLessonSummary {
@@ -66,7 +75,7 @@ export async function listInteractiveLessons(opts: {
   writeLocal(local);
 
   let remote: InteractiveLesson[] = [];
-  if (isSupabaseAuthEnabled()) {
+  if (useRemoteSync()) {
     try {
       let query = supabase.from(TABLE).select('*').order('updated_at', { ascending: false });
       if (!opts.canEdit) {
@@ -76,8 +85,11 @@ export async function listInteractiveLessons(opts: {
         query = query.or(`owner_id.eq.${opts.userId},status.eq.published`);
       }
       const { data, error } = await query;
+      // Missing table / RLS (migration not applied) → stay on localStorage demo.
       if (!error && data) {
         remote = data.map((r) => rowToLesson(r as Record<string, unknown>));
+      } else if (error) {
+        console.warn('[ILV] remote list skipped (using local/demo):', error.message);
       }
     } catch (err) {
       console.warn('[ILV] list remote failed, using local', err);
@@ -106,7 +118,7 @@ export async function getInteractiveLesson(id: string): Promise<InteractiveLesso
     return buildDemoInteractiveLesson();
   }
 
-  if (isSupabaseAuthEnabled()) {
+  if (useRemoteSync()) {
     try {
       const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).maybeSingle();
       if (!error && data) return rowToLesson(data as Record<string, unknown>);
@@ -123,7 +135,7 @@ export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<
   local.unshift(next);
   writeLocal(local);
 
-  if (isSupabaseAuthEnabled() && !next.isDemo) {
+  if (useRemoteSync() && !next.isDemo) {
     try {
       const payload = {
         id: next.id,
@@ -149,7 +161,7 @@ export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<
 export async function deleteInteractiveLesson(id: string, userId: string): Promise<void> {
   if (id === 'demo-interactive-lesson') return;
   writeLocal(readLocal().filter((l) => !(l.id === id && l.ownerId === userId)));
-  if (isSupabaseAuthEnabled()) {
+  if (useRemoteSync()) {
     try {
       await supabase.from(TABLE).delete().eq('id', id).eq('owner_id', userId);
     } catch (err) {

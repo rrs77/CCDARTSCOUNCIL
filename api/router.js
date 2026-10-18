@@ -34,6 +34,9 @@ import * as musicHubPassword from '../server/api/music-hubs/admin/password.js';
 import * as musicHubResource from '../server/api/music-hubs/resource.js';
 import * as musicHubUnlock from '../server/api/music-hubs/unlock.js';
 
+/* Interactive Lesson Viewer (kept out of /api entrypoints for Hobby function limit) */
+import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
+
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -163,6 +166,15 @@ function targetFor(pathname) {
     return null;
   }
 
+  /* ---------- Interactive Lesson Viewer ---------- */
+
+  if (area === 'interactive-lessons') {
+    if (rest.length === 1 && rest[0] === 'transcribe') {
+      return ilvTranscribe;
+    }
+    return null;
+  }
+
   return null;
 }
 
@@ -176,7 +188,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|interactive-lessons)(\/|$)/.test(route) ||
     route.includes('..')
   ) {
     return null;
