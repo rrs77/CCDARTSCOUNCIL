@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   ChevronLeft,
   ChevronRight,
@@ -151,7 +152,8 @@ export function InteractiveLessonPlayer({
 
   if (!scene) return null;
 
-  return (
+  // Portal to body so dashboard transform ancestors can't trap position:fixed.
+  return createPortal(
     <div id="ilv-player-root" className="ilv-root ilv-player" role="dialog" aria-modal="true" aria-label={lesson.title}>
       <div className="ilv-player-header">
         <div>
@@ -223,6 +225,7 @@ export function InteractiveLessonPlayer({
           </button>
         </div>
       </div>
-    </div>
+    </div>,
+    document.body,
   );
 }

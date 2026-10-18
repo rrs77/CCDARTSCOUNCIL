@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import {
   Undo2,
   Redo2,
@@ -325,7 +326,8 @@ export function InteractiveLessonEditor({
     );
   }
 
-  return (
+  // Portal to body — dashboard TabsContent uses transform, which would trap position:fixed.
+  return createPortal(
     <div className="ilv-root ilv-editor" role="dialog" aria-modal="true" aria-label="Interactive lesson editor">
       <header className="ilv-editor-header">
         <div className="ilv-editor-header-left">
@@ -832,6 +834,7 @@ export function InteractiveLessonEditor({
           onClose={() => setShowPlayer(false)}
         />
       )}
-    </div>
+    </div>,
+    document.body,
   );
 }
