@@ -1,0 +1,34 @@
+{
+  "unit-viewer": {
+    "hasClassSelect": 0,
+    "visibleClass": true
+  },
+  "curriculum": {
+    "hasClassSelect": 1,
+    "visibleClass": true
+  },
+  "lesson-builder": {
+    "hasClassSelect": 1,
+    "visibleClass": true
+  },
+  "lesson-library": {
+    "hasClassSelect": 1,
+    "visibleClass": true
+  },
+  "activity-library": {
+    "hasClassSelect": 1,
+    "visibleClass": true
+  },
+  "lesson-viewer": {
+    "hasClassSelect": 0,
+    "visibleClass": false
+  },
+  "our-partners": {
+    "hasClassSelect": 1,
+    "visibleClass": true
+  },
+  "more": {
+    "hasClassSelect": 0,
+    "visibleClass": true
+  }
+}
