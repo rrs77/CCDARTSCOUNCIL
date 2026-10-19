@@ -520,6 +520,7 @@ export function SceneRenderer({
               ['--ilv-text-anim-delay' as string]: `${ov.animation?.delayMs || 0}ms`,
             }}
             onPointerDown={(e) => onPointerDown(e, ov)}
+            onClick={(e) => e.stopPropagation()}
           >
             {ov.text}
           </div>
