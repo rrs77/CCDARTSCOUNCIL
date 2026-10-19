@@ -11,7 +11,8 @@ Full-page Settings (`/settings/...`) inside the Studio shell. Autosave with conf
 | Learning objectives | `/settings/objectives` | Custom objectives admin |
 | Preferences | `/settings/preferences` | School name, hover tips, resource labels |
 | Downloads | `/settings/downloads` | My downloads (+ stats chip when allowed) |
-| School tools | `/settings/school?panel=…` | Role-gated: People, hubs, branding, packs, system folders, backup |
+| Users | `/settings/users` | Invite/manage school users (admin / school lead; visible in demo) |
+| School tools | `/settings/school?panel=…` | Role-gated: hubs, branding, packs, system folders, backup |
 
 ## Control audit
 
@@ -31,7 +32,9 @@ Full-page Settings (`/settings/...`) inside the Studio shell. Autosave with conf
 | Activity resource labels | Temp + dual Save buttons | Autosave on change; toast on blur | Yes |
 | My downloads | Modal tab | Downloads section | Yes — screenshot |
 | Download analytics | Separate top tab | Chip inside Downloads when allowed | Role-gated |
-| Users / hub admin / branding / packs / system folders / data | Admin dropdown soup | Grouped under School tools with chips | Hidden for demo teacher (expected) |
+| Users admin (list, invite, roles, packs, reset, suspend) | Buried under School tools → People; gated off in demo | Top-level **Users** section; searchable/sortable table; school/classes/status columns; CSV import/export; demo roster fallback | Yes — Users screenshot |
+| Hub admin / branding / packs / system folders / data | Admin dropdown soup | Remain under School tools with chips | Role-gated |
+| Header "Demo Visitor" | Synthetic demo name always shown | Account menu with real profile name/initials (never "Demo Visitor") | Yes — header screenshot |
 | Dead “Resource Library / purchases” tab | Unreachable but still in bundle | Removed | N/A |
 | Unused `general` tab type | Dead | Dropped from IA | N/A |
 | Duplicate MyHubAdministration on My classes | Shown at bottom of classes | Removed from classes (kept under School tools) | Yes |
@@ -46,7 +49,11 @@ Full-page Settings (`/settings/...`) inside the Studio shell. Autosave with conf
 - `/opt/cursor/artifacts/screenshots/settings-folders.png`
 - `/opt/cursor/artifacts/screenshots/settings-objectives.png`
 - `/opt/cursor/artifacts/screenshots/settings-preferences.png`
+- `/opt/cursor/artifacts/screenshots/settings-preferences-1280.png`
+- `/opt/cursor/artifacts/screenshots/settings-preferences-1440.png`
+- `/opt/cursor/artifacts/screenshots/settings-users.png`
 - `/opt/cursor/artifacts/screenshots/settings-downloads.png`
+- `/opt/cursor/artifacts/screenshots/header-account-menu.png`
 - `/opt/cursor/artifacts/screenshots/settings-from-more-tools.png`
 - `/opt/cursor/artifacts/screenshots/settings-effect-class-chip.png`
 - `/opt/cursor/artifacts/screenshots/settings-effect-activity-library.png`

@@ -1,6 +1,7 @@
 import { useMemo } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { isSupabaseAuthEnabled, isSupabaseConfigured } from '../../config/supabase';
+import { isDemoModeActive } from '../../utils/demoMode';
 import type { SettingsAccess } from './SettingsPage';
 import type { SchoolToolsPanelId } from './settingsSections';
 
@@ -22,13 +23,16 @@ export function useSettingsAccess(): SettingsAccess {
       user?.role === 'superuser' ||
       profile?.role === 'superuser';
     const isCreator = profile?.role === 'creator';
-    const showUserManagement =
-      (isSupabaseAuthEnabled() || isSupabaseConfigured()) &&
-      (isAdmin ||
-        profile?.role === 'admin' ||
-        profile?.role === 'superuser' ||
-        profile?.role === 'super_admin' ||
-        profile?.can_manage_users === true);
+    const canManageUsers =
+      isAdmin ||
+      profile?.role === 'admin' ||
+      profile?.role === 'superuser' ||
+      profile?.role === 'super_admin' ||
+      profile?.can_manage_users === true;
+    // Live API when Supabase is on; demo always shows Users for school leads/admins.
+    const showUsers =
+      canManageUsers &&
+      (isDemoModeActive() || isSupabaseAuthEnabled() || isSupabaseConfigured());
     const showHubAdmin =
       isAdmin ||
       profile?.role === 'organisation' ||
@@ -37,7 +41,6 @@ export function useSettingsAccess(): SettingsAccess {
     const canEditSystemCategories = isAdmin || isSuperAdmin;
 
     const schoolPanels: SchoolToolsPanelId[] = [];
-    if (showUserManagement) schoolPanels.push('users');
     if (showHubAdmin) schoolPanels.push('hub-admin');
     if (isAdmin) schoolPanels.push('hub-content');
     if (isAdmin) schoolPanels.push('branding');
@@ -46,8 +49,8 @@ export function useSettingsAccess(): SettingsAccess {
     if (isAdmin) schoolPanels.push('data');
 
     return {
-      // Downloads section is always useful (My downloads). Analytics is a chip inside it.
       showDownloads: true,
+      showUsers,
       showSchoolTools: schoolPanels.length > 0,
       schoolPanels,
     };

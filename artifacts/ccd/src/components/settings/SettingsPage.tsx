@@ -15,6 +15,8 @@ import {
 
 export interface SettingsAccess {
   showDownloads: boolean;
+  /** Top-level Users section (admins / school leads / demo) */
+  showUsers: boolean;
   showSchoolTools: boolean;
   /** Which school-tool panels this user can open */
   schoolPanels: SchoolToolsPanelId[];
@@ -30,8 +32,9 @@ interface SettingsPageProps {
 function readSchoolPanelFromUrl(): SchoolToolsPanelId | null {
   try {
     const panel = new URLSearchParams(window.location.search).get('panel');
+    // Legacy ?panel=users → open top-level Users (handled by path/section resolver)
+    if (panel === 'users') return null;
     if (
-      panel === 'users' ||
       panel === 'hub-admin' ||
       panel === 'hub-content' ||
       panel === 'branding' ||
@@ -74,10 +77,11 @@ export function SettingsPage({ access, initialSection, initialSchoolPanel }: Set
   const visibleSections = useMemo(() => {
     return SETTINGS_SECTIONS.filter((s) => {
       if (s.requires === 'downloads') return access.showDownloads;
+      if (s.requires === 'users') return access.showUsers;
       if (s.requires === 'school') return access.showSchoolTools;
       return true;
     });
-  }, [access.showDownloads, access.showSchoolTools]);
+  }, [access.showDownloads, access.showUsers, access.showSchoolTools]);
 
   const filteredSections = useMemo(() => {
     const q = navQuery.trim().toLowerCase();
@@ -117,7 +121,6 @@ export function SettingsPage({ access, initialSection, initialSchoolPanel }: Set
           const panel = detail?.section as SchoolToolsPanelId | undefined;
           if (
             panel === 'hub-admin' ||
-            panel === 'users' ||
             panel === 'hub-content' ||
             panel === 'branding' ||
             panel === 'manage-packs' ||
@@ -150,7 +153,6 @@ export function SettingsPage({ access, initialSection, initialSchoolPanel }: Set
         syncSettingsUrl(mapped);
         if (
           pending === 'hub-admin' ||
-          pending === 'users' ||
           pending === 'hub-content' ||
           pending === 'branding' ||
           pending === 'data' ||
@@ -194,8 +196,8 @@ export function SettingsPage({ access, initialSection, initialSchoolPanel }: Set
           <p className="ccd-studio-eyebrow mb-0.5">
             WORKSPACE / <span>SETTINGS</span>
           </p>
-          <h1 className="ccd-studio-title !mb-0 !text-[1.35rem] sm:!text-[1.5rem]">Settings</h1>
-          <p className="mt-1 max-w-2xl text-sm text-[#77738F]">
+          <h1 className="ss-settings-page-title">Settings</h1>
+          <p className="ss-settings-page-sub">
             Set up your classes and folders once — everything else in the app follows.
           </p>
         </div>
@@ -205,7 +207,7 @@ export function SettingsPage({ access, initialSection, initialSchoolPanel }: Set
         <aside className="ss-settings-nav" aria-label="Settings sections">
           {visibleSections.length > 5 && (
             <div className="ss-settings-nav-search">
-              <Search className="h-3.5 w-3.5 text-[#77738F]" aria-hidden />
+              <Search className="h-3.5 w-3.5 text-[#5C5878]" aria-hidden />
               <input
                 type="search"
                 value={navQuery}
@@ -217,7 +219,7 @@ export function SettingsPage({ access, initialSection, initialSchoolPanel }: Set
           )}
           <nav className="ss-settings-nav-list">
             {filteredSections.length === 0 ? (
-              <p className="px-3 py-2 text-xs text-[#77738F]">No sections match “{navQuery}”.</p>
+              <p className="px-3 py-2 text-sm text-[#5C5878]">No sections match “{navQuery}”.</p>
             ) : (
               filteredSections.map((s) => (
                 <button

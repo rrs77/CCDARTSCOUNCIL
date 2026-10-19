@@ -8,6 +8,7 @@ import {
   clearDemoMode,
   getDemoOriginSchool,
 } from '../utils/demoMode';
+import { titleCaseSlug } from '../utils/accountDisplay';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -39,16 +40,47 @@ function useAuth() {
  * Logout clears the flag, the seeded data, and redirects back to the
  * originating school homepage.
  */
-// The demo visitor gets a full `teacher` role so every create / edit /
-// duplicate workflow works in the prototype. All of their changes stay in
-// browser storage (mock Supabase client + seeded localStorage) and are wiped
-// when the session ends, so nothing can reach the live account.
-const DEMO_USER: AppUser = {
-  id: 'demo-visitor',
-  email: 'demo@ccd.preview',
-  name: 'Demo Visitor',
-  role: 'teacher',
-};
+/**
+ * Demo / Preview session identity.
+ * Display name is never the literal "Demo Visitor" — derive from the school
+ * slug when available so the header account menu looks like a real teacher.
+ * Role is admin + can_manage_users so Settings → Users is visible in demo.
+ * All writes stay in browser storage and are wiped when the session ends.
+ */
+function buildDemoSession(): { user: AppUser; profile: Profile } {
+  const schoolLabel = titleCaseSlug(getDemoOriginSchool()) || 'Curriculum Designer';
+  const displayName = 'Alex Morgan';
+  const email = 'admin@curriculum.demo';
+  const profile: Profile = {
+    id: 'demo-visitor',
+    email,
+    display_name: displayName,
+    first_name: 'Alex',
+    last_name: 'Morgan',
+    school_or_org: schoolLabel,
+    role: 'admin',
+    status: 'active',
+    can_edit_activities: true,
+    can_edit_lessons: true,
+    can_manage_year_groups: true,
+    can_manage_users: true,
+    can_view_download_analytics: true,
+    invitation_status: 'complete',
+    allowed_year_groups: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  const user: AppUser = {
+    id: profile.id,
+    email,
+    name: displayName,
+    role: 'admin',
+    profile,
+  };
+  return { user, profile };
+}
+
+const DEMO_USER_ID = 'demo-visitor';
 
 
 interface AuthProviderProps {
@@ -276,9 +308,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // real credentials. Unauthorized ?demo=1 / stale flags are rejected.
       if (isAuthorizedDemoMode()) {
         resolvedRef.current = true;
-        setUser(DEMO_USER);
-        setProfile(null);
-        syncUserIdToStorage(DEMO_USER.id);
+        const demo = buildDemoSession();
+        setUser(demo.user);
+        setProfile(demo.profile);
+        syncUserIdToStorage(demo.user.id);
         setLoading(false);
         return;
       }
@@ -387,7 +420,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Only clear demo after a successful auth — failed attempts must not wipe seeded data.
         try {
           const priorUserId = localStorage.getItem('rhythmstix_user_id');
-          if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
+          if (isDemoModeActive() || priorUserId === DEMO_USER_ID) {
             clearDemoMode();
           }
         } catch {
@@ -416,7 +449,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (authResponse.token) {
             try {
               const priorUserId = localStorage.getItem('rhythmstix_user_id');
-              if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
+              if (isDemoModeActive() || priorUserId === DEMO_USER_ID) {
                 clearDemoMode();
               }
             } catch {
