@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ChevronRight, Maximize2, Minus, Plus } from 'lucide-react';
+import { ChevronRight, Minus, Plus } from 'lucide-react';
 import {
   type BBox,
   ENGLAND,
@@ -9,7 +9,6 @@ import {
   focusName,
   hubLabel,
   parentFocus,
-  sameFocus,
 } from './ukHubMapData';
 
 /** Studio Score Partner Hubs map — lavender / periwinkle (mockup). */
@@ -19,8 +18,9 @@ const DISTRICT_TONES = ['#DCE0F6', '#D2D7F3', '#C8CEF0', '#E4E7F8', '#CFD5F2'];
 const NATION_FILL = '#EEF1F6';
 const MUTED = '#F1F3F8';
 const HOVER = '#B8B6F0';
-const SELECTED = '#8B88E8';
+const SELECTED = '#6B68D8';
 const COAST = '#C5CEE8';
+const INK = '#1F1B4D';
 
 const FLY_MS = 720;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -388,10 +388,17 @@ export function UkHubMap({
     return m;
   }, [items]);
 
+  const selectedItemId = ctx.ladId || ctx.hubId || ctx.regionId || null;
+  const tipItem = useMemo(() => {
+    const id = hover || selectedItemId;
+    if (!id) return null;
+    return items.find((it) => it.id === id) ?? null;
+  }, [hover, selectedItemId, items]);
+
   const fillFor = (code: string): string => {
     const l = ix.lad(code)!;
     const it = itemOfLad.get(code);
-    if (it && ctx.ladId === it.id) return SELECTED;
+    if (it && (ctx.ladId === it.id || ctx.hubId === it.id || ctx.regionId === it.id)) return SELECTED;
     if (it && hover === it.id) return HOVER;
     if (!it) return MUTED;
     if (ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND)) return DISTRICT_TONES[l.tone % DISTRICT_TONES.length];
@@ -441,7 +448,9 @@ export function UkHubMap({
       const hit = placed.some((p) => !(box[0] + box[2] < p[0] || p[0] + p[2] < box[0] || box[1] + box[3] < p[1] || p[1] + p[3] < box[1]));
       if (hit) continue;
       placed.push(box);
-      out.push({ id: it.id, x, y, lines, fs, selected: it.id === ctx.ladId });
+      const selected =
+        it.id === ctx.ladId || it.id === ctx.hubId || it.id === ctx.regionId;
+      out.push({ id: it.id, x, y, lines, fs, selected });
     }
     return out;
   }, [items, settled, ctx]);
@@ -454,10 +463,10 @@ export function UkHubMap({
   return (
     <div
       ref={wrapRef}
-      className={`ukmap relative select-none overflow-hidden rounded-2xl border border-[#002D24]/[0.07] ${className}`}
+      className={`ukmap relative select-none overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.06] ${className}`}
       style={{
         background:
-          'radial-gradient(120% 90% at 55% 35%, #FDFEFC 0%, #F6F8F5 55%, #EEF3EF 100%)',
+          'radial-gradient(120% 90% at 55% 35%, #FBFBFF 0%, #F0F1FA 55%, #E8EAF6 100%)',
         touchAction: 'none',
       }}
     >
@@ -474,7 +483,7 @@ export function UkHubMap({
         onPointerCancel={onPointerUp}
         onPointerLeave={() => onHover(null)}
       >
-        <g style={{ filter: moving ? undefined : 'drop-shadow(0 2px 6px rgba(0,45,36,0.07))' }}>
+        <g style={{ filter: moving ? undefined : 'drop-shadow(0 2px 6px rgba(31,27,77,0.08))' }}>
           {ix.data.nations.map((n) => (
             <path key={n.code} d={n.d} fill={COAST} stroke={COAST} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
           ))}
@@ -498,7 +507,7 @@ export function UkHubMap({
         </g>
 
         {items.map((it) => {
-          const isSel = ctx.ladId === it.id;
+          const isSel = selectedItemId === it.id;
           const fine = Boolean(ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND));
           return (
             <g
@@ -547,8 +556,8 @@ export function UkHubMap({
               <path
                 key={h.id}
                 d={h.outline}
-                stroke="#002D24"
-                strokeOpacity={ctx.hubId === h.id ? 0.55 : ctx.hubId ? 0.12 : 0.22}
+                stroke={INK}
+                strokeOpacity={ctx.hubId === h.id ? 0.45 : ctx.hubId ? 0.1 : 0.18}
                 strokeWidth={ctx.hubId === h.id ? 1.5 : 1}
                 vectorEffect="non-scaling-stroke"
                 strokeLinejoin="round"
@@ -576,8 +585,8 @@ export function UkHubMap({
               width={s.box[2]}
               height={s.box[3]}
               rx={s.box[2] * 0.06}
-              stroke="#002D24"
-              strokeOpacity={0.18}
+              stroke={INK}
+              strokeOpacity={0.16}
               strokeWidth={1}
               vectorEffect="non-scaling-stroke"
             >
@@ -591,32 +600,49 @@ export function UkHubMap({
           pointerEvents="none"
           className="transition-opacity duration-200"
           style={{ opacity: moving ? 0 : 1 }}
-          fontFamily="Inter, system-ui, sans-serif"
+          fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
         >
-          {labels.map((lb) => (
-            <text
-              key={lb.id}
-              x={lb.x}
-              y={lb.y - ((lb.lines.length - 1) * lb.fs * 1.2) / 2}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={lb.fs}
-              fontWeight={lb.selected ? 650 : 560}
-              letterSpacing={lb.fs * 0.01}
-              fill={lb.selected ? '#FFFFFF' : '#1F1B4D'}
-              stroke={lb.selected ? SELECTED : '#FFFFFF'}
-              strokeWidth={lb.fs * 0.28}
-              strokeLinejoin="round"
-              paintOrder="stroke"
-            >
-              {lb.lines.map((ln, i) => (
-                <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.2}>
-                  {ln}
-                </tspan>
-              ))}
-            </text>
-          ))}
+          {labels.map((lb) => {
+            const isSel = lb.selected || lb.id === selectedItemId;
+            return (
+              <text
+                key={lb.id}
+                x={lb.x}
+                y={lb.y - ((lb.lines.length - 1) * lb.fs * 1.2) / 2}
+                textAnchor="middle"
+                dominantBaseline="central"
+                fontSize={lb.fs}
+                fontWeight={isSel ? 650 : 560}
+                letterSpacing={lb.fs * 0.01}
+                fill={isSel ? '#FFFFFF' : INK}
+                stroke={isSel ? SELECTED : '#FFFFFF'}
+                strokeWidth={lb.fs * 0.28}
+                strokeLinejoin="round"
+                paintOrder="stroke"
+              >
+                {lb.lines.map((ln, i) => (
+                  <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.2}>
+                    {ln}
+                  </tspan>
+                ))}
+              </text>
+            );
+          })}
         </g>
+
+        {tipItem && !moving && (
+          <g aria-hidden pointerEvents="none">
+            <circle
+              cx={tipItem.label[0]}
+              cy={tipItem.label[1]}
+              r={Math.max(5, 4.5 * settled.px)}
+              fill="#FFFFFF"
+              stroke="#4338E8"
+              strokeWidth={2.25 * settled.px}
+            />
+            <circle cx={tipItem.label[0]} cy={tipItem.label[1]} r={Math.max(2.2, 2 * settled.px)} fill="#4338E8" />
+          </g>
+        )}
 
         {showRegionCounts && (focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND)) && (
           <g aria-hidden pointerEvents="none" style={{ opacity: moving ? 0 : 1 }}>
@@ -627,14 +653,14 @@ export function UkHubMap({
               const rad = Math.max(10, 9 * settled.px);
               return (
                 <g key={`count-${r.code}`} transform={`translate(${x}, ${y + 14 * settled.px})`}>
-                  <circle r={rad} fill="#0B6B5F" stroke="#FFFFFF" strokeWidth={1.75 * settled.px} />
+                  <circle r={rad} fill="#4338E8" stroke="#FFFFFF" strokeWidth={1.75 * settled.px} />
                   <text
                     textAnchor="middle"
                     dominantBaseline="central"
                     fontSize={Math.max(9, 10 * settled.px)}
                     fontWeight={700}
                     fill="#FFFFFF"
-                    fontFamily="Inter, system-ui, sans-serif"
+                    fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
                   >
                     {n}
                   </text>
@@ -645,23 +671,38 @@ export function UkHubMap({
         )}
       </svg>
 
+      {tipItem && !moving && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[12px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
+          style={{
+            left: `${((tipItem.label[0] - settled.box[0]) / settled.box[2]) * 100}%`,
+            top: `${((tipItem.label[1] - settled.box[1]) / settled.box[3]) * 100}%`,
+            marginTop: '-14px',
+          }}
+        >
+          {mapLabel(tipItem.name)}
+          <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#1A1A40]" />
+        </div>
+      )}
+
       {showBreadcrumb && (
         <nav
           aria-label="Map location"
-          className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-0.5 rounded-full border border-white/70 bg-white/80 px-1.5 py-1 text-[13px] shadow-[0_1px_2px_rgba(0,45,36,0.06),0_4px_16px_rgba(0,45,36,0.06)] backdrop-blur-md"
+          className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-0.5 rounded-full border border-white/70 bg-white/80 px-1.5 py-1 text-[13px] shadow-[0_1px_2px_rgba(31,27,77,0.06),0_4px_16px_rgba(31,27,77,0.06)] backdrop-blur-md"
         >
           {crumbs.map((c, i) => {
             const last = i === crumbs.length - 1;
             return (
               <span key={i} className="flex items-center">
-                {i > 0 && <ChevronRight className="mx-0.5 h-3.5 w-3.5 text-[#002D24]/30" aria-hidden />}
+                {i > 0 && <ChevronRight className="mx-0.5 h-3.5 w-3.5 text-[#1F1B4D]/30" aria-hidden />}
                 <button
                   type="button"
                   disabled={last}
                   aria-current={last ? 'location' : undefined}
                   onClick={() => onFocus(c)}
                   className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
-                    last ? 'text-[#002D24]' : 'text-[#002D24]/60 hover:bg-[#002D24]/[0.05] hover:text-[#002D24]'
+                    last ? 'text-[#1F1B4D]' : 'text-[#1F1B4D]/60 hover:bg-[#4338E8]/[0.06] hover:text-[#1F1B4D]'
                   }`}
                 >
                   {i === 0 ? 'UK' : focusName(ix, c)}
@@ -672,26 +713,19 @@ export function UkHubMap({
         </nav>
       )}
 
-      <div className="absolute left-3 top-3 flex flex-col overflow-hidden rounded-xl border border-white/70 bg-white/90 shadow-[0_1px_2px_rgba(0,45,36,0.06),0_6px_20px_rgba(0,45,36,0.08)] backdrop-blur-md">
+      <div
+        className={`absolute ${showBreadcrumb ? 'left-3 top-14' : 'left-3 top-3'} flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
+      >
         <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
           <Plus className="h-4 w-4" />
         </button>
-        <span className="mx-2 h-px bg-[#002D24]/[0.08]" aria-hidden />
+        <span className="mx-2 h-px bg-[#1F1B4D]/[0.08]" aria-hidden />
         <button type="button" aria-label="Zoom out" onClick={() => zoomButton(1.7)} className="ukmap-ctl">
           <Minus className="h-4 w-4" />
         </button>
-        <span className="mx-2 h-px bg-[#002D24]/[0.08]" aria-hidden />
-        <button
-          type="button"
-          aria-label="Show the whole UK"
-          onClick={() => (sameFocus(focus, { level: 'uk' }) ? flyTo(fit(ix.data.viewBox)) : onFocus({ level: 'uk' }))}
-          className="ukmap-ctl"
-        >
-          <Maximize2 className="h-4 w-4" />
-        </button>
       </div>
 
-      <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[11px] leading-tight text-[#002D24]/45">
+      <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[10px] leading-tight text-[#1F1B4D]/40">
         Contains OS data © Crown copyright and database right 2024 · ONS (OGL v3) · Hub areas: Arts Council England
       </p>
 
