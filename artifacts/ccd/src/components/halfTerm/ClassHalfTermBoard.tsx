@@ -102,7 +102,7 @@ export function ClassHalfTermBoard({
             className="mb-2 inline-flex items-center gap-1.5 text-[12px] font-bold text-[#4338E8] hover:underline"
           >
             <ArrowLeft className="h-3.5 w-3.5" />
-            All year groups
+            All classes
           </button>
           <div className="flex flex-wrap items-center gap-2.5">
             <h1 className="text-[1.85rem] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[2.1rem]">
