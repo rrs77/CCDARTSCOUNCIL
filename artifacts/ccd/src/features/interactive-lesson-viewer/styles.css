@@ -1439,6 +1439,49 @@
   font-weight: 600;
 }
 
+/* Demoted capability card in the Slides library grid (C8) */
+.ilv-hub-features-card {
+  display: flex;
+  flex-direction: column;
+  min-height: 320px;
+  background:
+    radial-gradient(90% 70% at 100% 0%, rgba(67, 56, 232, 0.08) 0%, transparent 55%),
+    linear-gradient(165deg, #ffffff 0%, #f7f6ff 100%);
+}
+
+.ilv-hub-features-card-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  flex: 1;
+  padding: 1.15rem 1.2rem 1.25rem;
+}
+
+.ilv-hub-features-card-title {
+  margin: 0;
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ss-ink);
+}
+
+.ilv-hub-features-card-lede {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.45;
+  color: var(--ss-muted);
+  font-weight: 600;
+}
+
+.ilv-hub-features--card {
+  margin-top: 0.35rem;
+  flex: 1;
+}
+
+.ilv-hub-features--card li {
+  background: #fff;
+}
+
 .ilv-hub-empty {
   grid-column: 1 / -1;
   display: flex;
