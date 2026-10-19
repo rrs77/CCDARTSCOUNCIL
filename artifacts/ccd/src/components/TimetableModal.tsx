@@ -1,9 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { createPortal } from 'react-dom';
-import { X, Plus, Save, Trash2, Clock, MapPin, Repeat, FolderOpen, Check, InfoIcon, Pencil, Share2, Download, Lock, Link2, Copy } from 'lucide-react';
+import { X, Plus, Save, Trash2, Clock, MapPin, Repeat, FolderOpen, Check, InfoIcon, Pencil, Share2, Download, Link2, Copy } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useShareTimetable } from '../hooks/useShareTimetable';
-import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
 
@@ -68,7 +67,6 @@ export function TimetableModal({
 }: TimetableModalProps) {
   const { getThemeForClass } = useSettings();
   const { shareTimetable, isSharing, shareUrl } = useShareTimetable();
-  const { isDemo, showUpgradePrompt } = useDemoMode();
   const [activeTab, setActiveTab] = useState<'add' | 'manage'>('add');
   const [editingClass, setEditingClass] = useState<TimetableClass | null>(null);
   const [newClass, setNewClass] = useState<TimetableClass>({
@@ -188,11 +186,7 @@ export function TimetableModal({
                   onClick={async (e) => {
                     e.preventDefault();
                     if (isSharing) return;
-                    if (isDemo) {
-                      showUpgradePrompt('Timetable sharing');
-                      return;
-                    }
-                    
+
                     try {
                       const url = await shareTimetable(timetableClasses, className);
                       if (url) {
@@ -222,13 +216,9 @@ export function TimetableModal({
                     </>
                   ) : (
                     <>
-                      {isDemo ? (
-                        <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                      ) : (
-                        <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
-                      )}
-                      <span className="hidden sm:inline">{isDemo ? 'Share (sign up)' : 'Copy Link'}</span>
-                      <span className="sm:hidden">{isDemo ? 'Share' : 'Copy'}</span>
+                      <Link2 className="h-3.5 w-3.5 sm:h-4 sm:w-4 flex-shrink-0" />
+                      <span className="hidden sm:inline">Copy Link</span>
+                      <span className="sm:hidden">Copy</span>
                     </>
                   )}
                 </button>
