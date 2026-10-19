@@ -181,13 +181,15 @@ export function featuredArtsOrganisations(): OrgEntry[] {
   return FEATURED_ORG_SLUGS.map((s) => bySlug.get(s)).filter(Boolean) as OrgEntry[];
 }
 
-/** Soft tag colours for listing chips (mockup-style). */
+/** Soft tag colours for listing chips (Partner Hubs mockup). */
 export const TAG_TONE: Record<string, string> = {
   Performances: 'bg-[#EDE9FE] text-[#5B21B6]',
   Workshops: 'bg-[#FEF3C7] text-[#92400E]',
   Resources: 'bg-[#DBEAFE] text-[#1D4ED8]',
-  CPD: 'bg-[#D1FAE5] text-[#047857]',
-  Projects: 'bg-[#E0E7FF] text-[#3730A3]',
+  CPD: 'bg-[#E0E7FF] text-[#4338E8]',
+  Ensembles: 'bg-[#FEF9C3] text-[#854D0E]',
+  'Youth ensembles': 'bg-[#DBEAFE] text-[#1D4ED8]',
+  Projects: 'bg-[#EDE9FE] text-[#5B21B6]',
   'Teacher packs': 'bg-[#FCE7F3] text-[#9D174D]',
   Inclusive: 'bg-[#CCFBF1] text-[#0F766E]',
 };

@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ChevronRight, Maximize2, Minus, Plus } from 'lucide-react';
+import { ChevronRight, Minus, Plus } from 'lucide-react';
 import {
   type BBox,
   ENGLAND,
@@ -9,18 +9,61 @@ import {
   focusName,
   hubLabel,
   parentFocus,
-  sameFocus,
 } from './ukHubMapData';
 
-/** Studio Score Partner Hubs map — lavender / periwinkle (mockup). */
-const REGION_TONES = ['#E4E8F8', '#D9DFF5', '#CDD5F2', '#EAEAF8'];
-const HUB_TONES = ['#D8DCF6', '#CDD3F3', '#C2C9F0', '#E0E4F7', '#D3D8F4'];
-const DISTRICT_TONES = ['#DCE0F6', '#D2D7F3', '#C8CEF0', '#E4E7F8', '#CFD5F2'];
-const NATION_FILL = '#EEF1F6';
-const MUTED = '#F1F3F8';
-const HOVER = '#B8B6F0';
-const SELECTED = '#8B88E8';
-const COAST = '#C5CEE8';
+/** Indigo/lilac map (default). Music Hubs browse uses pale green + numbered markers. */
+const PALETTES = {
+  indigo: {
+    region: ['#E4E8F8', '#D9DFF5', '#CDD5F2', '#EAEAF8'],
+    hub: ['#D8DCF6', '#CDD3F3', '#C2C9F0', '#E0E4F7', '#D3D8F4'],
+    district: ['#DCE0F6', '#D2D7F3', '#C8CEF0', '#E4E7F8', '#CFD5F2'],
+    nation: '#EEF1F6',
+    muted: '#F1F3F8',
+    hover: '#B8B6F0',
+    selected: '#6B68D8',
+    coast: '#C5CEE8',
+    ink: '#1F1B4D',
+    count: '#4338E8',
+    bg: 'radial-gradient(120% 90% at 55% 35%, #FBFBFF 0%, #F0F1FA 55%, #E8EAF6 100%)',
+  },
+  green: {
+    // Distinct soft regional tints for the Music Hubs England landing
+    region: [
+      '#B7D9C0', // North East
+      '#9BCFBE', // North West
+      '#C5D9A8', // Yorkshire
+      '#A8D4AE', // East Midlands
+      '#8FCBB5', // West Midlands
+      '#B8D4E8', // East of England
+      '#C5C0E8', // London
+      '#A8D4C8', // South East
+      '#D4CFA0', // South West
+    ],
+    hub: ['#98CBA0', '#98CBA0', '#8CC296', '#98CBA0', '#98CBA0'],
+    district: ['#9FCEA6', '#9FCEA6', '#93C59C', '#9FCEA6', '#9FCEA6'],
+    nation: '#E8EFEA',
+    muted: '#F0F4F1',
+    hover: '#5BBF8A',
+    selected: '#0F5C52',
+    coast: '#D5E0D8',
+    ink: '#1A3A22',
+    count: '#084840',
+    bg: 'radial-gradient(120% 90% at 55% 35%, #F7FBF8 0%, #EEF5F0 55%, #E4EFE6 100%)',
+  },
+} as const;
+
+/** Soft regional fills keyed by region order in the dataset (tone index). */
+const LANDING_REGION_FILLS = [
+  '#A8D4B4', // North East — mint
+  '#7EC4B8', // North West — teal
+  '#C5D98A', // Yorkshire — lime
+  '#9BCF9E', // East Midlands — soft green
+  '#6FB8A8', // West Midlands — sea
+  '#9EC4E0', // East of England — sky
+  '#B8B0E0', // London — lilac
+  '#8FCBB8', // South East — jade
+  '#D4C98A', // South West — sand
+] as const;
 
 const FLY_MS = 720;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -33,8 +76,25 @@ interface Props {
   onHover: (id: string | null) => void;
   className?: string;
   showBreadcrumb?: boolean;
-  /** Green numbered badges on regions (Music Hubs browse mockup). */
+  /** Green numbered badges on regions (legacy). Prefer regionLabelMode="names". */
   showRegionCounts?: boolean;
+  /**
+   * How to label English regions on the UK/England overview:
+   * - counts: large number bubbles (legacy)
+   * - names: region name + hub count text labels (preferred for Music landing)
+   * - none: no overview labels
+   */
+  regionLabelMode?: 'counts' | 'names' | 'none';
+  /** Map colour system — Music Hubs browse uses pale green. */
+  palette?: keyof typeof PALETTES;
+  /** Crop/zoom to England (hides Scotland/Wales/Shetland inset from the frame). */
+  frameEngland?: boolean;
+  /** Hide +/- zoom controls. */
+  showControls?: boolean;
+  /** Attribution line under the map. */
+  showAttribution?: boolean;
+  /** Draw feature name labels (hubs/districts). Off for compact locator maps. */
+  showFeatureLabels?: boolean;
 }
 
 interface Item {
@@ -77,7 +137,25 @@ export function UkHubMap({
   className = '',
   showBreadcrumb = true,
   showRegionCounts = false,
+  regionLabelMode,
+  palette = 'indigo',
+  frameEngland = false,
+  showControls = true,
+  showAttribution = true,
+  showFeatureLabels = true,
 }: Props) {
+  const labelMode: 'counts' | 'names' | 'none' =
+    regionLabelMode ?? (showRegionCounts ? 'counts' : 'none');
+  const tones = PALETTES[palette];
+  const REGION_TONES = tones.region;
+  const HUB_TONES = tones.hub;
+  const DISTRICT_TONES = tones.district;
+  const NATION_FILL = tones.nation;
+  const MUTED = tones.muted;
+  const HOVER = tones.hover;
+  const SELECTED = tones.selected;
+  const COAST = tones.coast;
+  const INK = tones.ink;
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const cam = useRef<BBox>(ix.data.viewBox);
@@ -115,17 +193,27 @@ export function UkHubMap({
     const cw = el?.clientWidth || 800;
     const ch = el?.clientHeight || 600;
     const aspect = cw / ch;
+    const topPx = showBreadcrumb ? 56 : 8;
+    // England landing: keep England's own aspect so it fills the panel height
+    // (SVG meet letterboxes sides) instead of zooming out to Scotland/Wales.
+    if (frameEngland && b[3] < ix.data.viewBox[3] * 0.85) {
+      const pad = 0.02;
+      const w = b[2] * (1 + pad * 2);
+      const h = b[3] * (1 + pad * 2);
+      const cx = b[0] + b[2] / 2;
+      const cy = b[1] + b[3] / 2;
+      return [cx - w / 2, cy - h / 2, w, h];
+    }
     const pad = b[2] >= ix.data.viewBox[2] * 0.9 ? 0.03 : 0.08;
     let w = b[2] * (1 + pad * 2);
     let h = b[3] * (1 + pad * 2);
-    const topPx = showBreadcrumb ? 56 : 16;
     h += (topPx / ch) * h;
     if (w / h < aspect) w = h * aspect;
     else h = w / aspect;
     const cx = b[0] + b[2] / 2;
     const cy = b[1] + b[3] / 2 - (topPx / ch) * h * 0.45;
     return [cx - w / 2, cy - h / 2, w, h];
-  }, [showBreadcrumb, ix]);
+  }, [showBreadcrumb, ix, frameEngland]);
 
   const flyTo = useCallback(
     (target: BBox, ms = FLY_MS) => {
@@ -161,10 +249,20 @@ export function UkHubMap({
     [apply, settle],
   );
 
+  const frameBBox = useCallback(
+    (f: MapFocus): BBox => {
+      if (frameEngland && (f.level === 'uk' || (f.level === 'nation' && f.id === ENGLAND))) {
+        return ix.nation(ENGLAND)?.bbox ?? focusBBox(ix, f);
+      }
+      return focusBBox(ix, f);
+    },
+    [frameEngland, ix],
+  );
+
   // Frame the focus whenever it changes.
   const firstFrame = useRef(true);
   useLayoutEffect(() => {
-    const target = fit(focusBBox(ix, focus));
+    const target = fit(frameBBox(focus));
     if (firstFrame.current) {
       firstFrame.current = false;
       apply(target);
@@ -172,19 +270,19 @@ export function UkHubMap({
       return;
     }
     flyTo(target);
-  }, [ix, focus, fit, flyTo, apply, settle]);
+  }, [ix, focus, fit, flyTo, apply, settle, frameBBox]);
 
   // Refit on resize without animation.
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver(() => {
-      apply(fit(focusBBox(ix, focus)));
+      apply(fit(frameBBox(focus)));
       settle();
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [ix, focus, fit, apply, settle]);
+  }, [ix, focus, fit, apply, settle, frameBBox]);
 
   // ---------- free navigation ----------
   const clampBox = useCallback(
@@ -231,6 +329,7 @@ export function UkHubMap({
     const el = wrapRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      if (!showControls) return;
       if (!(e.ctrlKey || e.metaKey)) {
         setHint(true);
         window.clearTimeout(hintTimer.current);
@@ -244,7 +343,7 @@ export function UkHubMap({
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [zoomAt]);
+  }, [zoomAt, showControls]);
 
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const drag = useRef<{ x: number; y: number; box: BBox; moved: boolean; pinch?: number } | null>(null);
@@ -388,10 +487,17 @@ export function UkHubMap({
     return m;
   }, [items]);
 
+  const selectedItemId = ctx.ladId || ctx.hubId || ctx.regionId || null;
+  const tipItem = useMemo(() => {
+    const id = hover || selectedItemId;
+    if (!id) return null;
+    return items.find((it) => it.id === id) ?? null;
+  }, [hover, selectedItemId, items]);
+
   const fillFor = (code: string): string => {
     const l = ix.lad(code)!;
     const it = itemOfLad.get(code);
-    if (it && ctx.ladId === it.id) return SELECTED;
+    if (it && (ctx.ladId === it.id || ctx.hubId === it.id || ctx.regionId === it.id)) return SELECTED;
     if (it && hover === it.id) return HOVER;
     if (!it) return MUTED;
     if (ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND)) return DISTRICT_TONES[l.tone % DISTRICT_TONES.length];
@@ -417,13 +523,85 @@ export function UkHubMap({
     onFocus(f);
   };
 
+  const isEnglandOverview =
+    focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND);
+
   // ---------- labels with simple collision avoidance ----------
   const labels = useMemo(() => {
+    type Lb = { id: string; x: number; y: number; lines: string[]; fs: number; selected: boolean; sub?: string };
+    // Legacy count bubbles: no text labels
+    if (isEnglandOverview && labelMode === 'counts') return [] as Lb[];
+    // Name+count labels on the England overview
+    if (isEnglandOverview && labelMode === 'names') {
+      const px = settled.px;
+      const fs = Math.max(11, 12.5 * px);
+      const [vx, vy, vw, vh] = settled.box;
+      const placed: BBox[] = [];
+      const out: Lb[] = [];
+      // Nudge crowded SE/London labels apart
+      const nudge: Record<string, [number, number]> = {
+        // region codes are ONS-like; also match by name fallback below
+      };
+      const byNameNudge: Record<string, [number, number]> = {
+        London: [-30, -10],
+        'South East': [160, 110],
+        'East of England': [90, -50],
+        'South West': [-70, 50],
+        'East Midlands': [20, -20],
+        'West Midlands': [-30, 10],
+        'Yorkshire and The Humber': [30, -10],
+      };
+      const sorted = [...ix.data.regions].sort((a, b) => a.name.localeCompare(b.name));
+      for (const r of sorted) {
+        const n = ix.hubsInRegion(r.code).length;
+        if (!n) continue;
+        let [x, y] = r.label;
+        const dxy = byNameNudge[r.name] || nudge[r.code];
+        if (dxy) {
+          x += dxy[0];
+          y += dxy[1];
+        }
+        if (x < vx || x > vx + vw || y < vy || y > vy + vh) continue;
+        const displayName =
+          r.name === 'Yorkshire and The Humber' ? 'Yorkshire & The Humber' : r.name;
+        const lines = splitLabel(displayName);
+        const sub = `${n}`;
+        const w = Math.max(...lines.map((s) => s.length), 2) * fs * 0.58 + fs * 0.8;
+        const h = lines.length * fs * 1.15 + fs * 1.15;
+        const box: BBox = [x - w / 2, y - h / 2, w, h];
+        const margin = 4 * px;
+        if (box[0] < vx + margin || box[1] < vy + margin || box[0] + w > vx + vw - margin || box[1] + h > vy + vh - margin) {
+          // still place if slightly out — overview labels are important
+        }
+        const hit = placed.some(
+          (p) => !(box[0] + box[2] < p[0] || p[0] + p[2] < box[0] || box[1] + box[3] < p[1] || p[1] + p[3] < box[1]),
+        );
+        if (hit) {
+          // try a small downward shift once
+          const y2 = y + fs * 1.6;
+          const box2: BBox = [x - w / 2, y2 - h / 2, w, h];
+          const hit2 = placed.some(
+            (p) => !(box2[0] + box2[2] < p[0] || p[0] + p[2] < box2[0] || box2[1] + box2[3] < p[1] || p[1] + p[3] < box2[1]),
+          );
+          if (!hit2) {
+            placed.push(box2);
+            out.push({ id: r.code, x, y: y2, lines, fs, selected: hover === r.code, sub });
+            continue;
+          }
+        }
+        placed.push(box);
+        out.push({ id: r.code, x, y, lines, fs, selected: hover === r.code, sub });
+      }
+      return out;
+    }
+    if (isEnglandOverview && labelMode === 'none') return [] as Lb[];
+    if (!showFeatureLabels) return [] as Lb[];
+
     const px = settled.px;
     const fs = (ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND) ? 12.5 : 13) * px;
     const [vx, vy, vw, vh] = settled.box;
     const placed: BBox[] = [];
-    const out: { id: string; x: number; y: number; lines: string[]; fs: number; selected: boolean }[] = [];
+    const out: Lb[] = [];
     const sorted = [...items].sort((a, b) => {
       if (a.id === ctx.ladId) return -1;
       if (b.id === ctx.ladId) return 1;
@@ -441,23 +619,69 @@ export function UkHubMap({
       const hit = placed.some((p) => !(box[0] + box[2] < p[0] || p[0] + p[2] < box[0] || box[1] + box[3] < p[1] || p[1] + p[3] < box[1]));
       if (hit) continue;
       placed.push(box);
-      out.push({ id: it.id, x, y, lines, fs, selected: it.id === ctx.ladId });
+      const selected =
+        it.id === ctx.ladId || it.id === ctx.hubId || it.id === ctx.regionId;
+      out.push({ id: it.id, x, y, lines, fs, selected });
     }
     return out;
-  }, [items, settled, ctx]);
+  }, [items, settled, ctx, labelMode, isEnglandOverview, focus, ix, hover, showFeatureLabels]);
 
   const ladsDrawn = ix.data.lads;
-  const hubOutlines = level !== 'uk' && !(ctx.nationId && ctx.nationId !== ENGLAND);
+  // Never draw the 43 hub outlines on the England landing — regions only.
+  const hubOutlines =
+    !isEnglandOverview && level !== 'uk' && !(ctx.nationId && ctx.nationId !== ENGLAND);
+  const regionLanding = isEnglandOverview && (labelMode === 'names' || frameEngland);
   const crumbs: MapFocus[] = [];
   for (let f: MapFocus | null = focus; f; f = parentFocus(ix, f)) crumbs.unshift(f);
+
+  const regionFill = (code: string, tone: number, hovered: boolean) => {
+    if (hovered) return HOVER;
+    return LANDING_REGION_FILLS[tone % LANDING_REGION_FILLS.length] || REGION_TONES[tone % REGION_TONES.length];
+  };
+
+  const shortRegionName = (name: string) =>
+    name === 'Yorkshire and The Humber' ? 'Yorkshire & Humber' : name;
+
+  // Screen-space pill labels for the England landing (fixed readable size).
+  const landingPills = useMemo(() => {
+    if (!regionLanding || moving) return [] as { id: string; name: string; count: number; left: number; top: number; active: boolean }[];
+    const [vx, vy, vw, vh] = settled.box;
+    const byNameNudge: Record<string, [number, number]> = {
+      London: [-20, -20],
+      'South East': [140, 100],
+      'East of England': [70, -40],
+      'South West': [-50, 40],
+      'East Midlands': [10, -15],
+      'West Midlands': [-20, 5],
+      'Yorkshire and The Humber': [20, -10],
+      'North East': [10, 0],
+      'North West': [-10, 10],
+    };
+    return ix.data.regions.map((r) => {
+      const count = ix.hubsInRegion(r.code).length;
+      let [x, y] = r.label;
+      const dxy = byNameNudge[r.name];
+      if (dxy) {
+        x += dxy[0];
+        y += dxy[1];
+      }
+      return {
+        id: r.code,
+        name: shortRegionName(r.name),
+        count,
+        left: ((x - vx) / vw) * 100,
+        top: ((y - vy) / vh) * 100,
+        active: hover === r.code,
+      };
+    });
+  }, [regionLanding, moving, settled.box, ix, hover]);
 
   return (
     <div
       ref={wrapRef}
-      className={`ukmap relative select-none overflow-hidden rounded-2xl border border-[#002D24]/[0.07] ${className}`}
+      className={`ukmap relative select-none overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.06] ${className}`}
       style={{
-        background:
-          'radial-gradient(120% 90% at 55% 35%, #FDFEFC 0%, #F6F8F5 55%, #EEF3EF 100%)',
+        background: tones.bg,
         touchAction: 'none',
       }}
     >
@@ -474,72 +698,130 @@ export function UkHubMap({
         onPointerCancel={onPointerUp}
         onPointerLeave={() => onHover(null)}
       >
-        <g style={{ filter: moving ? undefined : 'drop-shadow(0 2px 6px rgba(0,45,36,0.07))' }}>
-          {ix.data.nations.map((n) => (
-            <path key={n.code} d={n.d} fill={COAST} stroke={COAST} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-          ))}
+        {/* Faint non-England nations (or skip when framing England tightly). */}
+        <g style={{ filter: moving ? undefined : 'drop-shadow(0 2px 6px rgba(31,27,77,0.06))' }}>
+          {ix.data.nations.map((n) => {
+            if (n.code === ENGLAND) return null;
+            if (regionLanding) {
+              // Keep Wales / Scotland / NI barely visible so England dominates.
+              return (
+                <path
+                  key={n.code}
+                  d={n.d}
+                  fill="#D8E2DA"
+                  fillOpacity={0.12}
+                  stroke="#D8E2DA"
+                  strokeOpacity={0.08}
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            }
+            return (
+              <path key={n.code} d={n.d} fill={COAST} stroke={COAST} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+            );
+          })}
         </g>
 
-        <g aria-hidden>
-          {ladsDrawn
-            .filter((l) => !itemOfLad.has(l.code))
-            .map((l) => (
-              <path
-                key={l.code}
-                d={l.d}
-                fill={fillFor(l.code)}
-                stroke={MUTED}
-                strokeWidth={0.6}
-                vectorEffect="non-scaling-stroke"
-                className="cursor-pointer transition-[fill] duration-150"
-                onClick={() => activate(outsideFocus(l.code))}
-              />
-            ))}
-        </g>
+        {!regionLanding && (
+          <g aria-hidden>
+            {ladsDrawn
+              .filter((l) => !itemOfLad.has(l.code))
+              .map((l) => (
+                <path
+                  key={l.code}
+                  d={l.d}
+                  fill={fillFor(l.code)}
+                  stroke={MUTED}
+                  strokeWidth={0.6}
+                  vectorEffect="non-scaling-stroke"
+                  className="cursor-pointer transition-[fill] duration-150"
+                  onClick={() => activate(outsideFocus(l.code))}
+                />
+              ))}
+          </g>
+        )}
 
-        {items.map((it) => {
-          const isSel = ctx.ladId === it.id;
-          const fine = Boolean(ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND));
-          return (
-            <g
-              key={it.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`${it.name}${isSel ? ', selected' : ''}`}
-              aria-pressed={isSel || undefined}
-              className="ukmap-item cursor-pointer outline-none"
-              onPointerEnter={() => onHover(it.id)}
-              onPointerLeave={() => onHover(null)}
-              onFocus={() => onHover(it.id)}
-              onBlur={() => onHover(null)}
-              onClick={() => activate(it.focus)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onFocus(it.focus);
-                } else if (e.key === 'Escape') {
-                  const p = parentFocus(ix, focus);
-                  if (p) onFocus(p);
-                }
-              }}
-            >
-              {it.lads.map((code) => {
-                const fill = fillFor(code);
-                return (
+        {/* England landing: one dissolved path per region */}
+        {regionLanding
+          ? ix.data.regions.map((r) => {
+              const active = hover === r.code;
+              const fill = regionFill(r.code, r.tone, active);
+              return (
+                <g
+                  key={r.code}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${r.name}, ${ix.hubsInRegion(r.code).length} Music Hubs`}
+                  aria-pressed={active || undefined}
+                  className="ukmap-item cursor-pointer outline-none"
+                  onPointerEnter={() => onHover(r.code)}
+                  onPointerLeave={() => onHover(null)}
+                  onFocus={() => onHover(r.code)}
+                  onBlur={() => onHover(null)}
+                  onClick={() => activate({ level: 'region', id: r.code })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onFocus({ level: 'region', id: r.code });
+                    }
+                  }}
+                >
                   <path
-                    key={code}
-                    d={ix.lad(code)!.d}
+                    d={r.d}
                     fill={fill}
-                    stroke={fine ? '#FFFFFF' : fill}
-                    strokeWidth={fine ? (isSel ? 0 : 1) : 0.6}
+                    stroke="#FFFFFF"
+                    strokeWidth={active ? 2.25 : 1.75}
                     vectorEffect="non-scaling-stroke"
-                    className="transition-[fill] duration-150"
+                    strokeLinejoin="round"
+                    className="transition-[fill,stroke-width] duration-150"
                   />
-                );
-              })}
-            </g>
-          );
-        })}
+                </g>
+              );
+            })
+          : items.map((it) => {
+              const isSel = selectedItemId === it.id;
+              const fine = Boolean(ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND));
+              return (
+                <g
+                  key={it.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${it.name}${isSel ? ', selected' : ''}`}
+                  aria-pressed={isSel || undefined}
+                  className="ukmap-item cursor-pointer outline-none"
+                  onPointerEnter={() => onHover(it.id)}
+                  onPointerLeave={() => onHover(null)}
+                  onFocus={() => onHover(it.id)}
+                  onBlur={() => onHover(null)}
+                  onClick={() => activate(it.focus)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onFocus(it.focus);
+                    } else if (e.key === 'Escape') {
+                      const p = parentFocus(ix, focus);
+                      if (p) onFocus(p);
+                    }
+                  }}
+                >
+                  {it.lads.map((code) => {
+                    const fill = fillFor(code);
+                    return (
+                      <path
+                        key={code}
+                        d={ix.lad(code)!.d}
+                        fill={fill}
+                        stroke={fine ? '#FFFFFF' : fill}
+                        strokeWidth={fine ? (isSel ? 0 : 1) : 0.6}
+                        vectorEffect="non-scaling-stroke"
+                        className="transition-[fill] duration-150"
+                      />
+                    );
+                  })}
+                </g>
+              );
+            })}
 
         <g aria-hidden fill="none" pointerEvents="none">
           {hubOutlines &&
@@ -547,14 +829,15 @@ export function UkHubMap({
               <path
                 key={h.id}
                 d={h.outline}
-                stroke="#002D24"
-                strokeOpacity={ctx.hubId === h.id ? 0.55 : ctx.hubId ? 0.12 : 0.22}
+                stroke={INK}
+                strokeOpacity={ctx.hubId === h.id ? 0.45 : ctx.hubId ? 0.1 : 0.18}
                 strokeWidth={ctx.hubId === h.id ? 1.5 : 1}
                 vectorEffect="non-scaling-stroke"
                 strokeLinejoin="round"
               />
             ))}
-          {!ctx.hubId &&
+          {!regionLanding &&
+            !ctx.hubId &&
             ix.data.regions.map((r) => (
               <path
                 key={r.code}
@@ -565,76 +848,119 @@ export function UkHubMap({
                 vectorEffect="non-scaling-stroke"
               />
             ))}
-          {ix.data.nations.map((n) => (
-            <path key={n.code} d={n.d} stroke="#FFFFFF" strokeWidth={1.75} vectorEffect="non-scaling-stroke" />
-          ))}
-          {ix.data.insets.map((s) => (
-            <rect
-              key={s.name}
-              x={s.box[0]}
-              y={s.box[1]}
-              width={s.box[2]}
-              height={s.box[3]}
-              rx={s.box[2] * 0.06}
-              stroke="#002D24"
-              strokeOpacity={0.18}
-              strokeWidth={1}
-              vectorEffect="non-scaling-stroke"
-            >
-              <title>{`${s.name} (inset, same scale)`}</title>
-            </rect>
-          ))}
+          {!regionLanding &&
+            ix.data.nations.map((n) => (
+              <path key={n.code} d={n.d} stroke="#FFFFFF" strokeWidth={1.75} vectorEffect="non-scaling-stroke" />
+            ))}
+          {!regionLanding &&
+            ix.data.insets.map((s) => (
+              <rect
+                key={s.name}
+                x={s.box[0]}
+                y={s.box[1]}
+                width={s.box[2]}
+                height={s.box[3]}
+                rx={s.box[2] * 0.06}
+                stroke={INK}
+                strokeOpacity={0.16}
+                strokeWidth={1}
+                vectorEffect="non-scaling-stroke"
+              >
+                <title>{`${s.name} (inset, same scale)`}</title>
+              </rect>
+            ))}
         </g>
 
-        <g
-          aria-hidden
-          pointerEvents="none"
-          className="transition-opacity duration-200"
-          style={{ opacity: moving ? 0 : 1 }}
-          fontFamily="Inter, system-ui, sans-serif"
-        >
-          {labels.map((lb) => (
-            <text
-              key={lb.id}
-              x={lb.x}
-              y={lb.y - ((lb.lines.length - 1) * lb.fs * 1.2) / 2}
-              textAnchor="middle"
-              dominantBaseline="central"
-              fontSize={lb.fs}
-              fontWeight={lb.selected ? 650 : 560}
-              letterSpacing={lb.fs * 0.01}
-              fill={lb.selected ? '#FFFFFF' : '#1F1B4D'}
-              stroke={lb.selected ? SELECTED : '#FFFFFF'}
-              strokeWidth={lb.fs * 0.28}
-              strokeLinejoin="round"
-              paintOrder="stroke"
-            >
-              {lb.lines.map((ln, i) => (
-                <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.2}>
-                  {ln}
-                </tspan>
-              ))}
-            </text>
-          ))}
-        </g>
+        {/* Non-landing feature labels stay as SVG text */}
+        {!regionLanding && (
+          <g
+            aria-hidden
+            pointerEvents="none"
+            className="transition-opacity duration-200"
+            style={{ opacity: moving ? 0 : 1 }}
+            fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
+          >
+            {labels.map((lb) => {
+              const isSel = lb.selected || lb.id === selectedItemId || hover === lb.id;
+              const hasSub = Boolean(lb.sub);
+              const blockH = lb.lines.length * lb.fs * 1.15 + (hasSub ? lb.fs * 1.1 : 0);
+              return (
+                <g key={lb.id}>
+                  <text
+                    x={lb.x}
+                    y={lb.y - blockH / 2 + lb.fs * 0.55}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={lb.fs}
+                    fontWeight={isSel ? 700 : 600}
+                    letterSpacing={lb.fs * 0.01}
+                    fill={isSel ? tones.count : INK}
+                    stroke="#FFFFFF"
+                    strokeWidth={lb.fs * 0.32}
+                    strokeLinejoin="round"
+                    paintOrder="stroke"
+                  >
+                    {lb.lines.map((ln, i) => (
+                      <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.15}>
+                        {ln}
+                      </tspan>
+                    ))}
+                  </text>
+                  {hasSub && (
+                    <text
+                      x={lb.x}
+                      y={lb.y - blockH / 2 + lb.lines.length * lb.fs * 1.15 + lb.fs * 0.55}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={lb.fs * 0.95}
+                      fontWeight={800}
+                      fill={tones.count}
+                      stroke="#FFFFFF"
+                      strokeWidth={lb.fs * 0.28}
+                      strokeLinejoin="round"
+                      paintOrder="stroke"
+                    >
+                      {lb.sub} hub{lb.sub === '1' ? '' : 's'}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+        )}
 
-        {showRegionCounts && (focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND)) && (
+        {tipItem && !moving && labelMode !== 'names' && (
+          <g aria-hidden pointerEvents="none">
+            <circle
+              cx={tipItem.label[0]}
+              cy={tipItem.label[1]}
+              r={Math.max(5, 4.5 * settled.px)}
+              fill="#FFFFFF"
+              stroke={tones.count}
+              strokeWidth={2.25 * settled.px}
+            />
+            <circle cx={tipItem.label[0]} cy={tipItem.label[1]} r={Math.max(2.2, 2 * settled.px)} fill={tones.count} />
+          </g>
+        )}
+
+        {isEnglandOverview && labelMode === 'counts' && (
           <g aria-hidden pointerEvents="none" style={{ opacity: moving ? 0 : 1 }}>
             {ix.data.regions.map((r) => {
               const n = ix.hubsInRegion(r.code).length;
               if (!n) return null;
               const [x, y] = r.label;
-              const rad = Math.max(10, 9 * settled.px);
+              const rad = Math.max(22, 20 * settled.px);
               return (
-                <g key={`count-${r.code}`} transform={`translate(${x}, ${y + 14 * settled.px})`}>
-                  <circle r={rad} fill="#0B6B5F" stroke="#FFFFFF" strokeWidth={1.75 * settled.px} />
+                <g key={`count-${r.code}`} transform={`translate(${x}, ${y})`}>
+                  <circle r={rad + 3 * settled.px} fill={tones.count} opacity={0.18} />
+                  <circle r={rad} fill={tones.count} stroke="#FFFFFF" strokeWidth={3 * settled.px} />
                   <text
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={Math.max(9, 10 * settled.px)}
-                    fontWeight={700}
+                    fontSize={Math.max(14, 15 * settled.px)}
+                    fontWeight={800}
                     fill="#FFFFFF"
-                    fontFamily="Inter, system-ui, sans-serif"
+                    fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
                   >
                     {n}
                   </text>
@@ -645,23 +971,61 @@ export function UkHubMap({
         )}
       </svg>
 
+      {/* Readable HTML pills on the England landing — fixed 12–13px, not SVG-scaled. */}
+      {regionLanding &&
+        landingPills.map((p) => (
+          <div
+            key={`pill-${p.id}`}
+            aria-hidden
+            className={`pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-2.5 py-1 text-[12.5px] font-semibold leading-none shadow-[0_1px_3px_rgba(26,58,34,0.12)] transition-[background,border-color,color,box-shadow] duration-150 ${
+              p.active
+                ? 'border-[#0B6B5F]/35 bg-[#0B6B5F] text-white shadow-[0_4px_14px_-4px_rgba(11,107,95,0.45)]'
+                : 'border-[#1A3A22]/10 bg-white text-[#1A3A22]'
+            }`}
+            style={{ left: `${p.left}%`, top: `${p.top}%` }}
+          >
+            {p.name} · {p.count}
+          </div>
+        ))}
+
+      {tipItem && !moving && !regionLanding && (
+        <div
+          aria-hidden
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[12px] font-semibold leading-snug text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
+          style={{
+            left: `${((tipItem.label[0] - settled.box[0]) / settled.box[2]) * 100}%`,
+            top: `${((tipItem.label[1] - settled.box[1]) / settled.box[3]) * 100}%`,
+            marginTop: '-14px',
+          }}
+        >
+          <span className="block">{mapLabel(tipItem.name)}</span>
+          {showRegionCounts && tipItem.focus.level === 'region' && (
+            <span className="mt-0.5 block text-[11px] font-medium text-white/80">
+              {ix.hubsInRegion(tipItem.id).length} Music Hub
+              {ix.hubsInRegion(tipItem.id).length === 1 ? '' : 's'}
+            </span>
+          )}
+          <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#1A1A40]" />
+        </div>
+      )}
+
       {showBreadcrumb && (
         <nav
           aria-label="Map location"
-          className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-0.5 rounded-full border border-white/70 bg-white/80 px-1.5 py-1 text-[13px] shadow-[0_1px_2px_rgba(0,45,36,0.06),0_4px_16px_rgba(0,45,36,0.06)] backdrop-blur-md"
+          className="absolute left-3 top-3 flex max-w-[calc(100%-1.5rem)] flex-wrap items-center gap-0.5 rounded-full border border-white/70 bg-white/80 px-1.5 py-1 text-[13px] shadow-[0_1px_2px_rgba(31,27,77,0.06),0_4px_16px_rgba(31,27,77,0.06)] backdrop-blur-md"
         >
           {crumbs.map((c, i) => {
             const last = i === crumbs.length - 1;
             return (
               <span key={i} className="flex items-center">
-                {i > 0 && <ChevronRight className="mx-0.5 h-3.5 w-3.5 text-[#002D24]/30" aria-hidden />}
+                {i > 0 && <ChevronRight className="mx-0.5 h-3.5 w-3.5 text-[#1F1B4D]/30" aria-hidden />}
                 <button
                   type="button"
                   disabled={last}
                   aria-current={last ? 'location' : undefined}
                   onClick={() => onFocus(c)}
                   className={`rounded-full px-2.5 py-1 font-medium transition-colors ${
-                    last ? 'text-[#002D24]' : 'text-[#002D24]/60 hover:bg-[#002D24]/[0.05] hover:text-[#002D24]'
+                    last ? 'text-[#1F1B4D]' : 'text-[#1F1B4D]/60 hover:bg-[#4338E8]/[0.06] hover:text-[#1F1B4D]'
                   }`}
                 >
                   {i === 0 ? 'UK' : focusName(ix, c)}
@@ -672,28 +1036,25 @@ export function UkHubMap({
         </nav>
       )}
 
-      <div className="absolute left-3 top-3 flex flex-col overflow-hidden rounded-xl border border-white/70 bg-white/90 shadow-[0_1px_2px_rgba(0,45,36,0.06),0_6px_20px_rgba(0,45,36,0.08)] backdrop-blur-md">
-        <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
-          <Plus className="h-4 w-4" />
-        </button>
-        <span className="mx-2 h-px bg-[#002D24]/[0.08]" aria-hidden />
-        <button type="button" aria-label="Zoom out" onClick={() => zoomButton(1.7)} className="ukmap-ctl">
-          <Minus className="h-4 w-4" />
-        </button>
-        <span className="mx-2 h-px bg-[#002D24]/[0.08]" aria-hidden />
-        <button
-          type="button"
-          aria-label="Show the whole UK"
-          onClick={() => (sameFocus(focus, { level: 'uk' }) ? flyTo(fit(ix.data.viewBox)) : onFocus({ level: 'uk' }))}
-          className="ukmap-ctl"
+      {showControls && (
+        <div
+          className={`absolute ${showBreadcrumb ? 'left-3 top-14' : 'left-3 top-3'} flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
         >
-          <Maximize2 className="h-4 w-4" />
-        </button>
-      </div>
+          <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
+            <Plus className="h-4 w-4" />
+          </button>
+          <span className="mx-2 h-px bg-[#1F1B4D]/[0.08]" aria-hidden />
+          <button type="button" aria-label="Zoom out" onClick={() => zoomButton(1.7)} className="ukmap-ctl">
+            <Minus className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
-      <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[11px] leading-tight text-[#002D24]/45">
-        Contains OS data © Crown copyright and database right 2024 · ONS (OGL v3) · Hub areas: Arts Council England
-      </p>
+      {showAttribution && (
+        <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[10px] leading-tight text-[#1F1B4D]/40">
+          Contains OS data © Crown copyright and database right 2024 · ONS (OGL v3) · Hub areas: Arts Council England
+        </p>
+      )}
 
       <div
         aria-hidden
