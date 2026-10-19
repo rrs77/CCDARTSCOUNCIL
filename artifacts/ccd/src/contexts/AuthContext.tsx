@@ -51,6 +51,12 @@ function buildDemoSession(): { user: AppUser; profile: Profile } {
   const schoolLabel = titleCaseSlug(getDemoOriginSchool()) || 'Curriculum Designer';
   const displayName = 'Alex Morgan';
   const email = 'admin@curriculum.demo';
+  let mustChange = false;
+  try {
+    mustChange = sessionStorage.getItem('ccd-demo-must-change-password') === '1';
+  } catch {
+    /* ignore */
+  }
   const profile: Profile = {
     id: 'demo-visitor',
     email,
@@ -59,13 +65,14 @@ function buildDemoSession(): { user: AppUser; profile: Profile } {
     last_name: 'Morgan',
     school_or_org: schoolLabel,
     role: 'admin',
-    status: 'active',
+    status: mustChange ? 'invited' : 'active',
+    must_change_password: mustChange,
     can_edit_activities: true,
     can_edit_lessons: true,
     can_manage_year_groups: true,
     can_manage_users: true,
     can_view_download_analytics: true,
-    invitation_status: 'complete',
+    invitation_status: mustChange ? 'pending' : 'complete',
     allowed_year_groups: null,
     created_at: new Date().toISOString(),
     updated_at: new Date().toISOString(),

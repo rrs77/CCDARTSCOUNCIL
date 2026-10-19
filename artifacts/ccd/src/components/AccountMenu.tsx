@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ChevronDown, LogOut, Settings } from 'lucide-react';
+import { ChevronDown, KeyRound, Loader2, LogOut, Settings, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { navigateToSettings } from './settings';
+import { supabase } from '../config/supabase';
+import { isDemoModeActive } from '../utils/demoMode';
 import {
   initialsFromDisplayName,
   resolveDisplayName,
   roleLabelShort,
 } from '../utils/accountDisplay';
+import toast from 'react-hot-toast';
 
 interface AccountMenuProps {
   /** Compact trigger for the desktop header strip */
@@ -16,8 +19,13 @@ interface AccountMenuProps {
 }
 
 export function AccountMenu({ compact = true, onNavigate }: AccountMenuProps) {
-  const { user, profile, logout } = useAuth();
+  const { user, profile, logout, refreshProfile } = useAuth();
   const [open, setOpen] = useState(false);
+  const [passwordOpen, setPasswordOpen] = useState(false);
+  const [password, setPassword] = useState('');
+  const [confirm, setConfirm] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [savingPassword, setSavingPassword] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const displayName = resolveDisplayName(user, profile);
@@ -44,6 +52,50 @@ export function AccountMenu({ compact = true, onNavigate }: AccountMenuProps) {
   }, [open]);
 
   if (!user) return null;
+
+  const submitPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setPasswordError('');
+    if (password.length < 8) {
+      setPasswordError('Use at least 8 characters.');
+      return;
+    }
+    if (password !== confirm) {
+      setPasswordError('Passwords do not match.');
+      return;
+    }
+    setSavingPassword(true);
+    try {
+      if (isDemoModeActive()) {
+        toast.success('Password updated (demo — not saved to the server).');
+        setPasswordOpen(false);
+        setPassword('');
+        setConfirm('');
+        return;
+      }
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) throw new Error(error.message);
+      if (profile?.id) {
+        await supabase
+          .from('profiles')
+          .update({
+            must_change_password: false,
+            status: 'active',
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', profile.id);
+        await refreshProfile();
+      }
+      toast.success('Password updated.');
+      setPasswordOpen(false);
+      setPassword('');
+      setConfirm('');
+    } catch (err) {
+      setPasswordError(err instanceof Error ? err.message : 'Could not update password');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
 
   return (
     <div className="relative flex-shrink-0" ref={rootRef}>
@@ -106,6 +158,18 @@ export function AccountMenu({ compact = true, onNavigate }: AccountMenuProps) {
               className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
               onClick={() => {
                 setOpen(false);
+                setPasswordOpen(true);
+              }}
+            >
+              <KeyRound className="h-4 w-4 text-[#4338E8]" />
+              Change password
+            </button>
+            <button
+              type="button"
+              role="menuitem"
+              className="flex w-full items-center gap-2 rounded-lg px-2.5 py-2 text-left text-[13px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
+              onClick={() => {
+                setOpen(false);
                 onNavigate?.();
                 void logout();
               }}
@@ -113,6 +177,64 @@ export function AccountMenu({ compact = true, onNavigate }: AccountMenuProps) {
               <LogOut className="h-4 w-4 text-[#77738F]" />
               Sign out
             </button>
+          </div>
+        </div>
+      )}
+
+      {passwordOpen && (
+        <div className="fixed inset-0 z-[80] flex items-center justify-center bg-[#1F1B4D]/55 p-4">
+          <div className="w-full max-w-md rounded-2xl border border-[#E2E0EF] bg-white p-5 shadow-xl">
+            <div className="mb-3 flex items-start justify-between gap-2">
+              <div>
+                <h2 className="text-[16px] font-extrabold text-[#1F1B4D]">Change password</h2>
+                <p className="mt-1 text-[13px] font-medium text-[#5C5878]">
+                  Choose a new password for {email || 'your account'}.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="rounded-lg p-1.5 text-[#77738F] hover:bg-[#F4F3FA]"
+                aria-label="Close"
+                onClick={() => setPasswordOpen(false)}
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+            <form onSubmit={(e) => void submitPassword(e)} className="space-y-3">
+              <div>
+                <label className="mb-1 block text-[12px] font-bold text-[#5C5878]">New password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="w-full rounded-xl border border-[#E2E0EF] px-3 py-2 text-sm focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+                  autoComplete="new-password"
+                />
+              </div>
+              <div>
+                <label className="mb-1 block text-[12px] font-bold text-[#5C5878]">Confirm password</label>
+                <input
+                  type="password"
+                  required
+                  minLength={8}
+                  value={confirm}
+                  onChange={(e) => setConfirm(e.target.value)}
+                  className="w-full rounded-xl border border-[#E2E0EF] px-3 py-2 text-sm focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+                  autoComplete="new-password"
+                />
+              </div>
+              {passwordError ? <p className="text-[13px] font-medium text-red-600">{passwordError}</p> : null}
+              <button
+                type="submit"
+                disabled={savingPassword}
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-xl bg-[#4338E8] text-[13px] font-extrabold text-white hover:bg-[#3529d1] disabled:opacity-60"
+              >
+                {savingPassword ? <Loader2 className="h-4 w-4 animate-spin" /> : null}
+                Save password
+              </button>
+            </form>
           </div>
         </div>
       )}
