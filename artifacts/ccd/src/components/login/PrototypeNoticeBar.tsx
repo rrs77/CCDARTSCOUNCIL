@@ -1,19 +1,19 @@
 import { PROTOTYPE_NOTICE } from './prototypeCopy';
 
 /**
- * Full-width notice bar — sits above login/landing content without overlapping it.
+ * Full-width notice bar — solid Studio Score indigo wash, no accent lines.
  */
 export function PrototypeNoticeBar() {
   return (
     <div
       role="status"
       data-ccd-prototype-chrome="notice"
-      className="flex w-full shrink-0 items-center justify-center border-b border-[#E2E0EF] px-4 py-2 sm:px-6 sm:py-2.5"
+      className="flex w-full shrink-0 items-center justify-center bg-[#E9E6FF] px-4 py-2.5 sm:px-6 sm:py-3"
       style={{
-        backgroundColor: '#F4F3FA',
+        fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)",
       }}
     >
-      <p className="max-w-5xl text-center text-[11px] font-medium leading-snug text-[#77738F] sm:text-xs sm:leading-relaxed">
+      <p className="max-w-5xl text-center text-[12px] font-semibold leading-snug text-[#1F1B4D] sm:text-[13px] sm:leading-relaxed">
         {PROTOTYPE_NOTICE}
       </p>
     </div>

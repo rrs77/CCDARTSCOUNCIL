@@ -172,6 +172,7 @@ export function Dashboard() {
   const showTabsExplainerButton = isAuthorizedDemoMode();
   const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
+  const wideCanvas = activeTab === 'activity-library';
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
 
@@ -179,7 +180,7 @@ export function Dashboard() {
   void setUnits;
 
   return (
-    <StudioShell active={navId} onNavigate={shellNavigate} hubsMode={hubsMode}>
+    <StudioShell active={navId} onNavigate={shellNavigate} hubsMode={hubsMode} wideCanvas={wideCanvas}>
       {showTabsExplainerButton && activeTab !== 'our-partners' && (
         <div className="mb-3 flex justify-end">
           <button

@@ -295,14 +295,16 @@ textarea:focus-visible {
     transform: scale(1) translate3d(0, 0, 0);
   }
   to {
-    transform: scale(1.07) translate3d(-1.2%, -0.8%, 0);
+    /* Gentle zoom only — avoid upward drift that crops faces at the top */
+    transform: scale(1.04) translate3d(-0.6%, 0.4%, 0);
   }
 }
 
 .ccd-login-hero-image {
   animation: ccd-login-ken-burns 32s var(--ccd-ease-in-out) infinite alternate;
   will-change: transform;
-  transform-origin: 45% 40%;
+  /* Anchor near faces so object-cover keeps heads in frame */
+  transform-origin: 40% 18%;
 }
 
 @keyframes ccd-login-hero-fade {

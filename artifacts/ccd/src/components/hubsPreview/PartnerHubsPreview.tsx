@@ -40,15 +40,21 @@ import {
   parentFocus,
 } from './ukHubMapData';
 import {
-  ARTS_ORGANISATIONS,
   DISCIPLINES,
   type Discipline,
   NATION_NOTES,
   ORGANISATIONS,
   type OrgEntry,
-  PAID_RESOURCES,
   organisationBrand,
 } from './hubsPreviewContent';
+import {
+  ArtsOrganisationsDirectoryView,
+  MusicHubResultCard,
+  MusicHubToolbar,
+  PaidResourcesDirectoryView,
+  PartnerSectionTabs,
+  SelectedAreaPanel,
+} from './PartnerHubsDirectoryViews';
 import {
   ACCESS_LABEL,
   type Directory,
@@ -879,27 +885,11 @@ function OrgDirectorySection({
 }
 
 function OrganisationsSection() {
-  return (
-    <OrgDirectorySection
-      headingId="orgs-heading"
-      title="Arts organisations"
-      blurb="National cultural organisations with free or openly linked classroom resources."
-      entries={ARTS_ORGANISATIONS}
-      emptyLabel="No arts organisations match these filters."
-    />
-  );
+  return <ArtsOrganisationsDirectoryView />;
 }
 
 function PaidResourcesSection() {
-  return (
-    <OrgDirectorySection
-      headingId="paid-heading"
-      title="Paid resources"
-      blurb="Subscription and paid classroom packs — drama schemes, composition courses and similar teaching products."
-      entries={PAID_RESOURCES}
-      emptyLabel="No paid resources match these filters."
-    />
-  );
+  return <PaidResourcesDirectoryView />;
 }
 
 // ---------------------------------------------------------------------------
@@ -1818,44 +1808,97 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
     );
   }
 
+  const musicHubsForList = useMemo(() => {
+    if (!ix) return [] as MapHub[];
+    if (focus.level === 'region') return ix.hubsInRegion(focus.id);
+    if (focus.level === 'hub') {
+      const h = ix.hub(focus.id);
+      return h ? [h] : [];
+    }
+    if (focus.level === 'lad') {
+      const lad = ix.lad(focus.id);
+      const h = lad?.hub ? ix.hub(lad.hub) : undefined;
+      return h ? [h] : [];
+    }
+    return [...ix.data.hubs].sort((a, b) => hubLabel(a).localeCompare(hubLabel(b)));
+  }, [ix, focus]);
+
+  const [musicDiscipline, setMusicDiscipline] = useState<Discipline | 'All'>('All');
+
+  const selectedArea = useMemo(() => {
+    if (!ix) {
+      return {
+        title: 'England',
+        hubCount: 0,
+        blurb: 'Select a region on the map to explore Music Hubs.',
+        localAreas: [] as string[],
+        viewFocus: { level: 'uk' } as MapFocus,
+      };
+    }
+    if (focus.level === 'region') {
+      const r = ix.region(focus.id);
+      const hubs = ix.hubsInRegion(focus.id);
+      const lads = ix.data.lads.filter((l) => l.region === focus.id);
+      return {
+        title: r?.name || 'Region',
+        hubCount: hubs.length,
+        blurb: `${hubs.length} Music Hub${hubs.length === 1 ? '' : 's'} serve schools across this region. Choose a local area or open the hub list below.`,
+        localAreas: lads.map((l) => l.name),
+        viewFocus: focus,
+      };
+    }
+    if (focus.level === 'hub') {
+      const h = ix.hub(focus.id);
+      const lads = h ? ix.ladsInHub(h.id) : [];
+      return {
+        title: h ? hubLabel(h) : 'Music Hub',
+        hubCount: h ? 1 : 0,
+        blurb: h?.leadOrganisation
+          ? `Lead organisation: ${h.leadOrganisation}. Open the hub page for resources, workshops and local services.`
+          : 'Open this Music Hub for resources and local services.',
+        localAreas: lads.map((l) => l.name),
+        viewFocus: focus,
+      };
+    }
+    if (focus.level === 'lad') {
+      const lad = ix.lad(focus.id);
+      const h = lad?.hub ? ix.hub(lad.hub) : undefined;
+      return {
+        title: lad?.name || 'Local area',
+        hubCount: h ? 1 : 0,
+        blurb: h
+          ? `Served by ${hubLabel(h)}. Explore the hub for curriculum support, ensembles and CPD.`
+          : 'No verified Music Hub listing for this area yet.',
+        localAreas: lad ? [lad.name] : [],
+        viewFocus: h ? ({ level: 'hub', id: h.id } as MapFocus) : focus,
+      };
+    }
+    return {
+      title: 'England',
+      hubCount: ix.data.hubs.length,
+      blurb: 'Zoom into a region on the map to see Music Hubs and local authority areas, or browse the list below.',
+      localAreas: ix.data.regions.map((r) => r.name).slice(0, 6),
+      viewFocus: { level: 'nation', id: ENGLAND } as MapFocus,
+    };
+  }, [ix, focus]);
+
   return (
-    <div className={`space-y-8 ${focus.level === 'lad' ? 'pb-56 lg:pb-0' : ''}`}>
-      <header className="space-y-5">
+    <div className={`space-y-6 ${focus.level === 'lad' ? 'pb-56 lg:pb-0' : ''}`}>
+      <header className="space-y-4">
         {atUk ? (
           <div>
-            <h1 className={`text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-[40px] ${ink}`}>Partner Hubs</h1>
-            <p className={`ccd-page-lede ccd-page-lede--single mt-3 text-[17px] leading-snug ${muted}`}>
-              Explore Music Hubs, arts organisations and teaching resources. Bring the ideas you find straight into your planning.
+            <h1 className="text-[32px] font-bold leading-[1.1] tracking-tight text-[#1F1B4D] sm:text-[38px]">
+              Partner Hubs
+            </h1>
+            <p className={`ccd-page-lede ccd-page-lede--single mt-2 text-[16px] leading-snug ${muted}`}>
+              Explore Music Hubs, arts organisations and teaching resources. Bring the ideas you find straight into your
+              planning.
             </p>
           </div>
         ) : (
           <Crumbs items={browseCrumbs} />
         )}
-        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
-          <GlobalSearch ix={ix} onFocusMap={go} />
-          <div role="tablist" aria-label="Partner Hubs sections" className="inline-flex h-12 max-w-full flex-wrap rounded-2xl bg-[#002D24]/[0.05] p-1 sm:h-14 sm:flex-nowrap">
-            {(
-              [
-                ['music-hubs', 'Music Hubs'],
-                ['organisations', 'Arts organisations'],
-                ['paid-resources', 'Paid resources'],
-              ] as [Section, string][]
-            ).map(([k, label]) => (
-              <button
-                key={k}
-                role="tab"
-                type="button"
-                aria-selected={route.section === k}
-                onClick={() => writeRoute({ section: k })}
-                className={`flex-1 whitespace-nowrap rounded-xl px-3 text-[13px] font-medium transition sm:px-4 sm:text-[15px] ${
-                  route.section === k ? 'bg-white text-[#002D24] shadow-[0_1px_3px_rgba(0,45,36,0.12)]' : 'text-[#002D24]/60 hover:text-[#002D24]'
-                }`}
-              >
-                {label}
-              </button>
-            ))}
-          </div>
-        </div>
+        <PartnerSectionTabs section={route.section} onSection={(s) => writeRoute({ section: s })} />
       </header>
 
       {route.section === 'organisations' ? (
@@ -1863,49 +1906,103 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
       ) : route.section === 'paid-resources' ? (
         <PaidResourcesSection />
       ) : (
-        <>
-          {atUk && ix && <FeaturedHubs ix={ix} go={go} />}
+        <div className="space-y-6">
+          <MusicHubToolbar
+            discipline={musicDiscipline}
+            onDiscipline={setMusicDiscipline}
+            searchSlot={<GlobalSearch ix={ix} onFocusMap={go} />}
+          />
 
-          <section aria-labelledby="browse-heading" className="space-y-3">
-            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
-              <h2 id="browse-heading" className={`text-[22px] font-semibold tracking-tight ${ink}`}>
-                {atUk || !ix ? 'Browse by location' : focusName(ix, focus)}
-              </h2>
-              <p className={`text-[14px] leading-snug ${muted}`}>
-                {atUk
-                  ? 'Zoom from the UK to your Music Hub and local area, or choose from the list.'
-                  : 'Select an area on the map or in the list.'}
-              </p>
-            </div>
-            {error ? (
-              <EmptyState title="The map couldn’t load." body="Check your connection and try again." action={<SecondaryButton onClick={() => window.location.reload()}>Try again</SecondaryButton>} />
-            ) : !ix ? (
-              <div className="h-[560px] animate-pulse rounded-2xl bg-[#EEF3EF]" aria-label="Loading map" />
-            ) : (
-              <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_380px]">
-                <UkHubMap
-                  ix={ix}
-                  focus={focus}
-                  hover={hover}
-                  onHover={setHover}
-                  onFocus={(f) => go(f)}
-                  showBreadcrumb={false}
-                  className="h-[440px] sm:h-[560px] lg:h-[680px]"
-                />
-                <div className="lg:max-h-[680px] lg:overflow-y-auto lg:pr-1">
-                  <BrowsePanel ix={ix} focus={focus} hover={hover} onHover={setHover} go={go} />
+          {error ? (
+            <EmptyState
+              title="The map couldn’t load."
+              body="Check your connection and try again."
+              action={<SecondaryButton onClick={() => window.location.reload()}>Try again</SecondaryButton>}
+            />
+          ) : !ix ? (
+            <div className="h-[480px] animate-pulse rounded-2xl bg-[#EEF0F8]" aria-label="Loading map" />
+          ) : (
+            <>
+              <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-[#F4F3FA] p-2 sm:p-3">
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)] lg:items-stretch">
+                  <div className="overflow-hidden rounded-xl bg-white">
+                    <UkHubMap
+                      ix={ix}
+                      focus={focus}
+                      hover={hover}
+                      onHover={setHover}
+                      onFocus={(f) => go(f)}
+                      showBreadcrumb={false}
+                      className="h-[340px] sm:h-[420px] lg:h-[460px] !rounded-xl !border-0"
+                    />
+                  </div>
+                  <SelectedAreaPanel
+                    title={selectedArea.title}
+                    hubCount={selectedArea.hubCount}
+                    blurb={selectedArea.blurb}
+                    localAreas={selectedArea.localAreas}
+                    onViewHubs={() => {
+                      if (selectedArea.viewFocus.level === 'hub') {
+                        go(selectedArea.viewFocus, 'hub');
+                      } else {
+                        go(selectedArea.viewFocus);
+                      }
+                    }}
+                  />
                 </div>
               </div>
-            )}
-          </section>
+
+              <section className="space-y-4" aria-labelledby="music-hubs-results">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <h2 id="music-hubs-results" className="text-[22px] font-bold tracking-tight text-[#1F1B4D]">
+                      Music Hubs
+                    </h2>
+                    <p className={`mt-0.5 text-[14px] ${muted}`}>
+                      {musicHubsForList.length} hub{musicHubsForList.length === 1 ? '' : 's'}
+                      {atUk ? ' across England' : ` · ${focusName(ix, focus)}`}. Find local areas, resources and
+                      opportunities.
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex min-h-[34px] items-center gap-1 rounded-full bg-white px-3 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10">
+                      Sort by: A–Z <ChevronRight className="h-3.5 w-3.5 rotate-90 opacity-50" aria-hidden />
+                    </span>
+                  </div>
+                </div>
+                {musicHubsForList.length === 0 ? (
+                  <BrowsePanel ix={ix} focus={focus} hover={hover} onHover={setHover} go={go} />
+                ) : (
+                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="list">
+                    {musicHubsForList.map((h) => (
+                      <li key={h.id}>
+                        <MusicHubResultCard
+                          id={h.id}
+                          name={hubLabel(h)}
+                          region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
+                          location={h.authorities.slice(0, 2).join(', ') || h.aceAreaName || 'England'}
+                          detail={
+                            h.leadOrganisation
+                              ? `${h.leadOrganisation} delivers music education across ${h.lads.length} local areas.`
+                              : `Music education hub covering ${h.lads.length} local areas.`
+                          }
+                          onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
+            </>
+          )}
 
           {atUk && (
-            <p className={`flex items-center gap-2 text-[13px] ${muted}`}>
-              <Info className="h-4 w-4" aria-hidden />
-              Hub areas and lead organisations from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
+            <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
+              <Info className="h-3.5 w-3.5" aria-hidden />
+              Hub areas from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
             </p>
           )}
-        </>
+        </div>
       )}
     </div>
   );

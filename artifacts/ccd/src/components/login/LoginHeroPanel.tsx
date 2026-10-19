@@ -30,7 +30,7 @@ export function LoginHeroPanel({ logoLetters: _logoLetters = 'CCD' }: LoginHeroP
         <img
           src={HERO_IMAGE}
           alt=""
-          className="ccd-login-hero-image absolute inset-0 h-full w-full object-cover object-left lg:object-[28%_center]"
+          className="ccd-login-hero-image absolute inset-0 h-full w-full object-cover object-left object-top lg:object-[22%_12%]"
           decoding="async"
         />
         {/* Neutral ink wash — keep the photo visible, avoid purple cast */}

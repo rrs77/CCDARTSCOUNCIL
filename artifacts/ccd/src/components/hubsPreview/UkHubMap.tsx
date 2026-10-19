@@ -12,14 +12,15 @@ import {
   sameFocus,
 } from './ukHubMapData';
 
-const REGION_TONES = ['#D3E5D9', '#C0DACA', '#ADCFBB', '#DDEBE2'];
-const HUB_TONES = ['#C6DFD0', '#AFD3BF', '#9BC8B0', '#D6E9DE', '#B9D9C9'];
-const DISTRICT_TONES = ['#CFE5D8', '#BCDCCA', '#A9D1BB', '#DBECE2', '#B5D7C6'];
-const NATION_FILL = '#E1E9E3';
-const MUTED = '#E9EEEA';
-const HOVER = '#8ED5C6';
-const SELECTED = '#002D24';
-const COAST = '#B4C8BC';
+/** Studio Score Partner Hubs map — lavender / periwinkle (mockup). */
+const REGION_TONES = ['#E4E8F8', '#D9DFF5', '#CDD5F2', '#EAEAF8'];
+const HUB_TONES = ['#D8DCF6', '#CDD3F3', '#C2C9F0', '#E0E4F7', '#D3D8F4'];
+const DISTRICT_TONES = ['#DCE0F6', '#D2D7F3', '#C8CEF0', '#E4E7F8', '#CFD5F2'];
+const NATION_FILL = '#EEF1F6';
+const MUTED = '#F1F3F8';
+const HOVER = '#B8B6F0';
+const SELECTED = '#8B88E8';
+const COAST = '#C5CEE8';
 
 const FLY_MS = 720;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -32,6 +33,8 @@ interface Props {
   onHover: (id: string | null) => void;
   className?: string;
   showBreadcrumb?: boolean;
+  /** Green numbered badges on regions (Music Hubs browse mockup). */
+  showRegionCounts?: boolean;
 }
 
 interface Item {
@@ -65,7 +68,16 @@ function splitLabel(text: string): string[] {
   return best;
 }
 
-export function UkHubMap({ ix, focus, onFocus, hover, onHover, className = '', showBreadcrumb = true }: Props) {
+export function UkHubMap({
+  ix,
+  focus,
+  onFocus,
+  hover,
+  onHover,
+  className = '',
+  showBreadcrumb = true,
+  showRegionCounts = false,
+}: Props) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const cam = useRef<BBox>(ix.data.viewBox);
@@ -591,7 +603,7 @@ export function UkHubMap({ ix, focus, onFocus, hover, onHover, className = '', s
               fontSize={lb.fs}
               fontWeight={lb.selected ? 650 : 560}
               letterSpacing={lb.fs * 0.01}
-              fill={lb.selected ? '#FFFFFF' : '#0B3B30'}
+              fill={lb.selected ? '#FFFFFF' : '#1F1B4D'}
               stroke={lb.selected ? SELECTED : '#FFFFFF'}
               strokeWidth={lb.fs * 0.28}
               strokeLinejoin="round"
@@ -605,6 +617,32 @@ export function UkHubMap({ ix, focus, onFocus, hover, onHover, className = '', s
             </text>
           ))}
         </g>
+
+        {showRegionCounts && (focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND)) && (
+          <g aria-hidden pointerEvents="none" style={{ opacity: moving ? 0 : 1 }}>
+            {ix.data.regions.map((r) => {
+              const n = ix.hubsInRegion(r.code).length;
+              if (!n) return null;
+              const [x, y] = r.label;
+              const rad = Math.max(10, 9 * settled.px);
+              return (
+                <g key={`count-${r.code}`} transform={`translate(${x}, ${y + 14 * settled.px})`}>
+                  <circle r={rad} fill="#0B6B5F" stroke="#FFFFFF" strokeWidth={1.75 * settled.px} />
+                  <text
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={Math.max(9, 10 * settled.px)}
+                    fontWeight={700}
+                    fill="#FFFFFF"
+                    fontFamily="Inter, system-ui, sans-serif"
+                  >
+                    {n}
+                  </text>
+                </g>
+              );
+            })}
+          </g>
+        )}
       </svg>
 
       {showBreadcrumb && (
@@ -634,7 +672,7 @@ export function UkHubMap({ ix, focus, onFocus, hover, onHover, className = '', s
         </nav>
       )}
 
-      <div className="absolute bottom-3 right-3 flex flex-col overflow-hidden rounded-xl border border-white/70 bg-white/85 shadow-[0_1px_2px_rgba(0,45,36,0.06),0_6px_20px_rgba(0,45,36,0.08)] backdrop-blur-md">
+      <div className="absolute left-3 top-3 flex flex-col overflow-hidden rounded-xl border border-white/70 bg-white/90 shadow-[0_1px_2px_rgba(0,45,36,0.06),0_6px_20px_rgba(0,45,36,0.08)] backdrop-blur-md">
         <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
           <Plus className="h-4 w-4" />
         </button>
@@ -659,7 +697,7 @@ export function UkHubMap({ ix, focus, onFocus, hover, onHover, className = '', s
 
       <div
         aria-hidden
-        className={`pointer-events-none absolute inset-x-0 top-1/2 mx-auto w-max -translate-y-1/2 rounded-full bg-[#002D24]/80 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-opacity duration-300 ${
+        className={`pointer-events-none absolute inset-x-0 top-1/2 mx-auto w-max -translate-y-1/2 rounded-full bg-[#1F1B4D]/90 px-4 py-2 text-sm font-medium text-white backdrop-blur transition-opacity duration-300 ${
           hint ? 'opacity-100' : 'opacity-0'
         }`}
       >

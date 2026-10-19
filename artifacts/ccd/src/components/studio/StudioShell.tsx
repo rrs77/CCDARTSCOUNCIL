@@ -35,11 +35,13 @@ interface StudioShellProps {
   children: React.ReactNode;
   /** Hub surfaces keep forest/teal padding */
   hubsMode?: boolean;
+  /** Drop workspace max-width (Activity Library grid needs the full column) */
+  wideCanvas?: boolean;
   /** Slim class/settings bar from Header */
   topBar?: React.ReactNode;
 }
 
-export function StudioShell({ active, onNavigate, children, hubsMode, topBar }: StudioShellProps) {
+export function StudioShell({ active, onNavigate, children, hubsMode, wideCanvas, topBar }: StudioShellProps) {
   const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
@@ -135,7 +137,11 @@ export function StudioShell({ active, onNavigate, children, hubsMode, topBar }: 
 
       <div className="ccd-studio-workspace">
         {topBar}
-        <div className={`ccd-studio-workspace-inner ${hubsMode ? 'hubs-bridge' : ''}`}>{children}</div>
+        <div
+          className={`ccd-studio-workspace-inner ${hubsMode ? 'hubs-bridge' : ''} ${wideCanvas ? 'wide-canvas' : ''}`}
+        >
+          {children}
+        </div>
       </div>
 
       <nav className="ccd-studio-mobile-nav" aria-label="Mobile navigation">

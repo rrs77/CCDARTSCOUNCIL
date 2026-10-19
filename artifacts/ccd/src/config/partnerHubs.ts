@@ -101,7 +101,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'We Teach Drama',
     shortName: 'We Teach Drama',
     siteUrl: 'https://www.weteachdrama.com/',
-    logoSrc: '/partners/we-teach-drama.png',
+    /** Colour mark with transparent background for org cards */
+    logoSrc: '/partners/weteachdrama/wtd-logo-from-site.png',
     interactive: true,
     paid: true,
     tagline: 'Drama schemes and classroom resources',
@@ -111,9 +112,9 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#1f2937',
     accentColor: '#F59E0B',
-    /** Site logo (dark) on light plate for legibility */
+    /** Colour transparent logo — no white plate on dark strip */
     logoOnPlate: true,
-    logoPanelColor: '#FFFFFF',
+    logoPanelColor: 'transparent',
   },
   {
     slug: 'ems',
@@ -183,7 +184,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'iCompose',
     shortName: 'iCompose',
     siteUrl: 'https://www.icancompose.com/',
-    logoSrc: '/partners/icompose-logo.svg',
+    /** White lockup for dark org-card strip */
+    logoSrc: '/partners/icompose.svg',
     interactive: true,
     paid: true,
     tagline: 'Online composition courses for secondary musicians',
@@ -193,9 +195,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#0a1628',
     accentColor: '#5BA3D9',
-    /** Official colour logo on light plate — readable in compact rows */
-    logoOnPlate: true,
-    logoPanelColor: '#FFFFFF',
+    logoOnPlate: false,
   },
   {
     slug: 'dramaresource',

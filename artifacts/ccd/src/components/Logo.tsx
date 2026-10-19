@@ -37,7 +37,8 @@ const MARK_SIZE: Record<NonNullable<LogoProps['size']>, string> = {
   sm: 'h-9 w-9',
   md: 'h-10 w-10',
   lg: 'h-12 w-12',
-  hero: 'h-16 w-16 sm:h-[4.5rem] sm:w-[4.5rem] lg:h-20 lg:w-20',
+  /* Login hero — 1.5× prior lockup so brand leads the first viewport */
+  hero: 'h-24 w-24 sm:h-[6.75rem] sm:w-[6.75rem] lg:h-[7.5rem] lg:w-[7.5rem]',
 };
 
 /** “designer” text size — optically matches mark height */
@@ -47,7 +48,7 @@ const WORD_SIZE: Record<NonNullable<LogoProps['size']>, string> = {
   sm: 'text-[1.3rem]',
   md: 'text-[1.45rem]',
   lg: 'text-[1.7rem]',
-  hero: 'text-[2.25rem] sm:text-[2.65rem] lg:text-[3.1rem]',
+  hero: 'text-[3.375rem] sm:text-[3.975rem] lg:text-[4.65rem]',
 };
 
 export function normaliseLogoLetters(val: string | undefined): string {
