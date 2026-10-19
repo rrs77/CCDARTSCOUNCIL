@@ -256,7 +256,7 @@ export function ActivityEditorPage({
   const [showObjectivesBrowser, setShowObjectivesBrowser] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [editingResourceKey, setEditingResourceKey] = useState<string | null>(null);
-  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
   const [objectiveMeta, setObjectiveMeta] = useState<{
     objectives: CustomObjective[];
     areas: CustomObjectiveArea[];
@@ -264,6 +264,7 @@ export function ActivityEditorPage({
   const addMenuRef = useRef<HTMLDivElement>(null);
   const imageInputRef = useRef<HTMLInputElement>(null);
   const draftTimer = useRef<number | null>(null);
+  const draftSkipFirst = useRef(true);
   const didPreselect = useRef(Boolean(form.yearGroups.length));
 
   useEffect(() => {
@@ -303,8 +304,21 @@ export function ActivityEditorPage({
     return () => document.removeEventListener('mousedown', onDoc);
   }, [addMenuOpen]);
 
-  // Autosave draft indicator
+  // Autosave draft indicator — skip the mount tick so we don't flash "Saving…"
   useEffect(() => {
+    if (draftSkipFirst.current) {
+      draftSkipFirst.current = false;
+      try {
+        sessionStorage.setItem(
+          `ccd-activity-draft-${mode}-${form.id || form._id || 'new'}`,
+          JSON.stringify(form),
+        );
+      } catch {
+        /* ignore */
+      }
+      setDraftStatus('saved');
+      return;
+    }
     if (draftTimer.current) window.clearTimeout(draftTimer.current);
     setDraftStatus('saving');
     draftTimer.current = window.setTimeout(() => {
@@ -318,7 +332,7 @@ export function ActivityEditorPage({
       }
       setDraftStatus('saved');
       if (onSaveDraft) void onSaveDraft(form as unknown as Activity);
-    }, 700);
+    }, 650);
     return () => {
       if (draftTimer.current) window.clearTimeout(draftTimer.current);
     };
@@ -346,19 +360,36 @@ export function ActivityEditorPage({
   }, [currentClassGroup, resolveGroupSectionId]);
 
   const yearGroupBuckets = useMemo(() => {
-    const grouped = YEAR_GROUP_DISPLAY_BUCKETS.map((bucket) => ({
-      ...bucket,
-      groups: customYearGroups.filter((g) =>
+    const grouped = YEAR_GROUP_DISPLAY_BUCKETS.map((bucket) => {
+      const groups = customYearGroups.filter((g) =>
         bucket.sectionIds.includes(resolveGroupSectionId(g)),
-      ),
-    })).filter((b) => b.groups.length > 0);
+      );
+      // Current class first within its stage so the selected pill wraps near the top.
+      if (currentClassGroup && bucket.sectionIds.includes(resolveGroupSectionId(currentClassGroup))) {
+        groups.sort((a, b) => {
+          if (a.id === currentClassGroup.id || a.name === currentClassGroup.name) return -1;
+          if (b.id === currentClassGroup.id || b.name === currentClassGroup.name) return 1;
+          return a.name.localeCompare(b.name);
+        });
+      }
+      return { ...bucket, groups };
+    }).filter((b) => b.groups.length > 0);
 
     if (!showAllYearGroups) {
       const focused = grouped.filter((b) => b.id === currentStageBucketId);
       return focused.length > 0 ? focused : grouped.slice(0, 1);
     }
-    return grouped;
-  }, [customYearGroups, resolveGroupSectionId, showAllYearGroups, currentStageBucketId]);
+    // Current stage first, then the rest.
+    const current = grouped.filter((b) => b.id === currentStageBucketId);
+    const rest = grouped.filter((b) => b.id !== currentStageBucketId);
+    return [...current, ...rest];
+  }, [
+    customYearGroups,
+    resolveGroupSectionId,
+    showAllYearGroups,
+    currentStageBucketId,
+    currentClassGroup,
+  ]);
 
   const hiddenYearGroupCount = useMemo(() => {
     if (showAllYearGroups) return 0;
@@ -509,13 +540,13 @@ export function ActivityEditorPage({
 
   return (
     <div
-      className="flex h-[calc(100dvh-7.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-[#F4F3FA]"
+      className="flex h-full min-h-0 flex-1 flex-col overflow-hidden bg-[#F4F3FA]"
       style={{
         fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)",
       }}
     >
-      {/* Top bar */}
-      <header className="flex shrink-0 flex-wrap items-center gap-2 border-b border-[#E2E0EF] bg-white px-3 py-2.5 sm:px-4">
+      {/* Top bar — page header when library chrome is hidden */}
+      <header className="z-10 flex shrink-0 flex-wrap items-center gap-2 border-b border-[#E2E0EF] bg-white px-4 py-2.5 sm:px-5">
         <div className="inline-flex max-w-[min(100%,16rem)] items-center gap-1.5 truncate rounded-lg border border-[#E2E0EF] bg-[#F4F3FA] px-2.5 py-1.5 text-[12px] font-bold text-[#1F1B4D]">
           <span className="rounded-md bg-[#E9E6FF] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#4338E8]">
             {stageLabel}
@@ -530,12 +561,13 @@ export function ActivityEditorPage({
         </div>
         <div className="grow" />
         <div
-          className={`inline-flex items-center gap-1 text-[12px] font-semibold ${
+          className={`inline-flex min-w-[6.5rem] items-center gap-1 text-[12px] font-semibold ${
             draftStatus === 'saved' ? 'text-[#16a34a]' : 'text-[#77738F]'
           }`}
+          aria-live="polite"
         >
           {draftStatus === 'saved' ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : null}
-          {draftStatus === 'saving' ? 'Saving…' : draftStatus === 'saved' ? 'Draft saved' : ''}
+          {draftStatus === 'saving' ? 'Saving…' : 'Draft saved'}
         </div>
         <button
           type="button"
@@ -561,11 +593,11 @@ export function ActivityEditorPage({
         </button>
       </header>
 
-      {/* Two-column body */}
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto grid max-w-[1400px] grid-cols-1 gap-5 p-4 min-[1101px]:grid-cols-[minmax(0,1fr)_384px] min-[1101px]:p-5">
+      {/* Two-column body: left scrolls; right column sticky with Details scrolling alone */}
+      <div className="mx-auto grid min-h-0 w-full max-w-[1400px] flex-1 grid-cols-1 gap-5 overflow-y-auto p-4 min-[1101px]:grid-cols-[minmax(0,1fr)_384px] min-[1101px]:overflow-hidden min-[1101px]:p-5">
           {/* Left main card */}
-          <section className="flex flex-col gap-6 overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white p-6 shadow-[0_8px_30px_rgba(31,27,77,0.06)] sm:p-8">
+          <div className="min-h-0 min-[1101px]:overflow-y-auto">
+          <section className="flex flex-col gap-6 rounded-2xl border border-[#E2E0EF] bg-white p-6 shadow-[0_8px_30px_rgba(31,27,77,0.06)] sm:p-8">
             <div>
               <p className="mb-2 text-[11px] font-extrabold uppercase tracking-[0.08em] text-[#77738F]">
                 {mode === 'create' ? 'New activity' : 'Edit activity'}
@@ -825,17 +857,18 @@ export function ActivityEditorPage({
               </div>
             </div>
           </section>
+          </div>
 
-          {/* Right column */}
-          <aside className="flex flex-col gap-4 lg:sticky lg:top-4 lg:max-h-[calc(100dvh-10rem)] lg:overflow-y-auto lg:self-start">
-            <div className="rounded-2xl border border-[#e4e2fb] bg-gradient-to-br from-[#eef2ff] to-[#faf5ff] p-4 shadow-[0_8px_30px_rgba(31,27,77,0.05)]">
+          {/* Right column: sticky as a whole; preview stays visible; Details scrolls */}
+          <aside className="flex min-h-0 flex-col gap-4 self-stretch max-[1100px]:max-h-none max-[1100px]:overflow-visible min-[1101px]:overflow-hidden">
+            <div className="shrink-0 rounded-2xl border border-[#e4e2fb] bg-gradient-to-br from-[#eef2ff] to-[#faf5ff] p-4 shadow-[0_8px_30px_rgba(31,27,77,0.05)]">
               <div className="mb-2.5 flex items-center gap-1.5 text-[11px] font-extrabold uppercase tracking-[0.06em] text-[#6366f1]">
                 Live preview
                 <span className="ml-auto text-[11px] font-semibold normal-case tracking-normal text-[#9a98b8]">
                   How it appears in your library
                 </span>
               </div>
-              <div className="pointer-events-none origin-top scale-[0.98]">
+              <div className="pointer-events-none">
                 <ActivityCard
                   activity={previewActivity}
                   categoryColor={categoryColor}
@@ -845,8 +878,8 @@ export function ActivityEditorPage({
               </div>
             </div>
 
-            <div className="flex flex-1 flex-col gap-5 rounded-2xl border border-[#E2E0EF] bg-white p-5 shadow-[0_8px_30px_rgba(31,27,77,0.05)]">
-              <h4 className="flex items-center text-[15px] font-extrabold text-[#1F1B4D]">
+            <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto rounded-2xl border border-[#E2E0EF] bg-white p-5 shadow-[0_8px_30px_rgba(31,27,77,0.05)] max-[1100px]:overflow-visible">
+              <h4 className="flex shrink-0 items-center text-[15px] font-extrabold text-[#1F1B4D]">
                 Details
                 <span className="ml-auto text-[11.5px] font-semibold text-[#9a98b8]">* required</span>
               </h4>
@@ -952,13 +985,13 @@ export function ActivityEditorPage({
                     </button>
                   )}
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2.5">
                   {yearGroupBuckets.map((bucket) => (
-                    <div key={bucket.id}>
-                      <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-[#77738F]">
+                    <div key={bucket.id} className="min-w-0">
+                      <p className="mb-1.5 text-[10px] font-extrabold uppercase tracking-wide text-[#77738F]">
                         {bucket.label}
                       </p>
-                      <div className="flex flex-wrap gap-1.5">
+                      <div className="flex max-w-full flex-wrap gap-1.5">
                         {bucket.groups.map((group) => {
                           const selected = form.yearGroups.includes(group.name);
                           const color = group.color || '#4338E8';
@@ -975,19 +1008,21 @@ export function ActivityEditorPage({
                                 }))
                               }
                               aria-pressed={selected}
-                              className={`inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold ${
+                              className={`inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1 text-[12px] font-semibold leading-tight ${
                                 selected
                                   ? 'border-[#a5b4fc] bg-[#eef2ff] text-[#3730a3]'
                                   : 'border-[#e3e2ee] bg-white text-[#55537a]'
                               }`}
                             >
                               <span
-                                className="h-[7px] w-[7px] rounded-full"
+                                className="h-[7px] w-[7px] shrink-0 rounded-full"
                                 style={{ backgroundColor: color }}
                               />
-                              {group.name}
+                              <span className="min-w-0 truncate">{group.name}</span>
                               {selected ? (
-                                <span className="text-[11px] font-extrabold text-[#4338E8]">✓</span>
+                                <span className="shrink-0 text-[11px] font-extrabold text-[#4338E8]">
+                                  ✓
+                                </span>
                               ) : null}
                             </button>
                           );
@@ -1079,7 +1114,6 @@ export function ActivityEditorPage({
               </div>
             </div>
           </aside>
-        </div>
       </div>
 
       {showObjectivesBrowser && (
