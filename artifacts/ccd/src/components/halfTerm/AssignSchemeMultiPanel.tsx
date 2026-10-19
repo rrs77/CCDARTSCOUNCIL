@@ -131,7 +131,10 @@ export function AssignSchemeMultiPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doneCount, setDoneCount] = useState(0);
-  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set());
+  /** All stages start collapsed every time the modal opens. */
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(
+    () => new Set(STAGE_ORDER),
+  );
 
   const termMeta = HALF_TERMS.find((t) => t.id === target.halfTermId);
   const termColor = TERM_COLORS[target.halfTermId] || '#4338E8';
@@ -205,8 +208,17 @@ export function AssignSchemeMultiPanel({
   }, [onClose]);
 
   useEffect(() => {
+    // Reset collapse + selection whenever this half-term assign modal opens/retargets
+    setCollapsedStages(new Set(STAGE_ORDER));
+    setPreviewId(null);
+    setSelectedStackId(null);
+    setQuery('');
+    setClassQuery('');
+    setSchemeSubject('All');
     if (target.preselectedClassIds?.length) {
       setSelectedClassIds(new Set(target.preselectedClassIds));
+    } else {
+      setSelectedClassIds(new Set());
     }
   }, [target.halfTermId, target.preselectedClassIds?.join(',')]);
 
@@ -425,7 +437,7 @@ export function AssignSchemeMultiPanel({
         ) : null}
 
         {/* Two panes */}
-        <div className="grid min-h-0 flex-1 grid-cols-1 divide-y divide-[#E2E0EF] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+        <div className="grid min-h-0 flex-1 grid-cols-1 divide-y divide-[#E2E0EF] lg:grid-cols-[minmax(0,1.65fr)_minmax(260px,0.85fr)] lg:divide-x lg:divide-y-0">
           {/* LEFT: Classes */}
           <section className="flex min-h-0 flex-col bg-white">
             <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#E2E0EF]/80 px-5 py-3 sm:px-6">
@@ -510,6 +522,11 @@ export function AssignSchemeMultiPanel({
                           >
                             {block.classes.length}
                           </span>
+                          {selectedInGroup > 0 ? (
+                            <span className="rounded-full bg-[#4338E8] px-2 py-0.5 text-[11px] font-extrabold tabular-nums text-white">
+                              {selectedInGroup} selected
+                            </span>
+                          ) : null}
                         </button>
                         <button
                           type="button"
@@ -687,100 +704,81 @@ export function AssignSchemeMultiPanel({
                   No schemes match your search.
                 </div>
               ) : (
-                availableSchemes.map((stack) => {
-                  const open = previewId === stack.id;
-                  const picked = selectedStackId === stack.id;
-                  const subject = inferSchemeSubject(stack);
-                  const lessonPreview = stack.lessons.slice(0, 4);
-                  return (
-                    <div
-                      key={stack.id}
-                      role="button"
-                      tabIndex={0}
-                      aria-pressed={picked}
-                      onClick={() => setSelectedStackId(stack.id)}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Enter' || e.key === ' ') {
-                          e.preventDefault();
-                          setSelectedStackId(stack.id);
-                        }
-                      }}
-                      className={`w-full cursor-pointer overflow-hidden rounded-2xl border bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition ${
-                        picked
-                          ? 'border-[#4338E8] ring-2 ring-[#4338E8]/25'
-                          : 'border-[#E2E0EF] hover:border-[#bcb7f4]'
-                      }`}
-                    >
-                      <div className="flex items-stretch gap-0">
-                        <span
-                          className="w-1.5 shrink-0 self-stretch"
-                          style={{ background: stack.color || '#4338E8' }}
-                          aria-hidden
-                        />
-                        <div className="min-w-0 flex-1 p-3.5 sm:p-4">
-                          <div className="flex items-start gap-3">
-                            <span
-                              className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
-                                picked
-                                  ? 'border-[#4338E8] bg-[#4338E8] text-white'
-                                  : 'border-[#D8D5E8] bg-white'
-                              }`}
-                              aria-hidden
-                            >
-                              {picked ? <Check className="h-3 w-3" /> : null}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <div className="flex flex-wrap items-center gap-2">
-                                <p className="text-[15px] font-extrabold text-[#1F1B4D]">
+                <div className="grid grid-cols-2 gap-2">
+                  {availableSchemes.map((stack) => {
+                    const open = previewId === stack.id;
+                    const picked = selectedStackId === stack.id;
+                    const subject = inferSchemeSubject(stack);
+                    const lessonPreview = stack.lessons.slice(0, 2);
+                    return (
+                      <div
+                        key={stack.id}
+                        role="button"
+                        tabIndex={0}
+                        aria-pressed={picked}
+                        onClick={() => setSelectedStackId(stack.id)}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            setSelectedStackId(stack.id);
+                          }
+                        }}
+                        className={`col-span-1 flex max-w-full cursor-pointer flex-col overflow-hidden rounded-xl border bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition ${
+                          open ? 'col-span-2' : ''
+                        } ${
+                          picked
+                            ? 'border-[#4338E8] ring-2 ring-[#4338E8]/25'
+                            : 'border-[#E2E0EF] hover:border-[#bcb7f4]'
+                        }`}
+                      >
+                        <div className="flex min-h-0 flex-1 items-stretch gap-0">
+                          <span
+                            className="w-1 shrink-0 self-stretch"
+                            style={{ background: stack.color || '#4338E8' }}
+                            aria-hidden
+                          />
+                          <div className="min-w-0 flex-1 p-2.5 sm:p-3">
+                            <div className="flex items-start gap-2">
+                              <span
+                                className={`mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full border ${
+                                  picked
+                                    ? 'border-[#4338E8] bg-[#4338E8] text-white'
+                                    : 'border-[#D8D5E8] bg-white'
+                                }`}
+                                aria-hidden
+                              >
+                                {picked ? <Check className="h-2.5 w-2.5" /> : null}
+                              </span>
+                              <div className="min-w-0 flex-1">
+                                <p className="line-clamp-2 text-[13px] font-extrabold leading-snug text-[#1F1B4D]">
                                   {stack.name}
                                 </p>
                                 {subject !== 'Other' ? (
-                                  <span className="rounded-md bg-[#F4F3FA] px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[#5C5878]">
+                                  <span className="mt-1 inline-block rounded-md bg-[#F4F3FA] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#5C5878]">
                                     {subject}
                                   </span>
                                 ) : null}
+                                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-[#5C5878]">
+                                  <span className="inline-flex items-center gap-0.5">
+                                    <BookOpen className="h-3 w-3" />
+                                    {stack.lessons.length}
+                                  </span>
+                                  <span className="inline-flex items-center gap-0.5">
+                                    <Clock className="h-3 w-3" />
+                                    {formatDuration(stack.totalTime)}
+                                  </span>
+                                </div>
+                                {!open && lessonPreview.length > 0 ? (
+                                  <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-[#9B97B0]">
+                                    {lessonPreview
+                                      .map((id) => allLessonsData[id]?.title || `Lesson ${id}`)
+                                      .join(' · ')}
+                                    {stack.lessons.length > lessonPreview.length
+                                      ? ` · +${stack.lessons.length - lessonPreview.length}`
+                                      : ''}
+                                  </p>
+                                ) : null}
                               </div>
-                              {stack.description ? (
-                                <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-[#77738F]">
-                                  {stack.description}
-                                </p>
-                              ) : null}
-                              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-semibold text-[#5C5878]">
-                                <span className="inline-flex items-center gap-1">
-                                  <BookOpen className="h-3.5 w-3.5" />
-                                  {stack.lessons.length} lesson
-                                  {stack.lessons.length === 1 ? '' : 's'}
-                                </span>
-                                <span className="inline-flex items-center gap-1">
-                                  <Clock className="h-3.5 w-3.5" />
-                                  {formatDuration(stack.totalTime)}
-                                </span>
-                              </div>
-                              {lessonPreview.length > 0 ? (
-                                <ol className="mt-2 space-y-0.5 border-t border-[#E2E0EF]/80 pt-2">
-                                  {lessonPreview.map((lessonId, i) => {
-                                    const lesson = allLessonsData[lessonId];
-                                    return (
-                                      <li
-                                        key={`${stack.id}-prev-${lessonId}`}
-                                        className="flex items-baseline gap-1.5 text-[12px] text-[#77738F]"
-                                      >
-                                        <span className="w-4 shrink-0 text-right font-bold tabular-nums text-[#C4C0D8]">
-                                          {i + 1}.
-                                        </span>
-                                        <span className="min-w-0 truncate font-semibold text-[#5C5878]">
-                                          {lesson?.title || `Lesson ${lessonId}`}
-                                        </span>
-                                      </li>
-                                    );
-                                  })}
-                                  {stack.lessons.length > lessonPreview.length ? (
-                                    <li className="pl-5 text-[11px] font-bold text-[#9B97B0]">
-                                      +{stack.lessons.length - lessonPreview.length} more
-                                    </li>
-                                  ) : null}
-                                </ol>
-                              ) : null}
                             </div>
                             <button
                               type="button"
@@ -788,44 +786,44 @@ export function AssignSchemeMultiPanel({
                                 e.stopPropagation();
                                 setPreviewId(open ? null : stack.id);
                               }}
-                              className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl border border-[#E2E0EF] px-2.5 text-[12px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
+                              className="mt-2 inline-flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-[#E2E0EF] text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
                               aria-expanded={open}
                             >
-                              Lessons
+                              {open ? 'Hide lessons' : 'Lessons'}
                               {open ? (
-                                <ChevronDown className="h-3.5 w-3.5" />
+                                <ChevronDown className="h-3 w-3" />
                               ) : (
-                                <ChevronRight className="h-3.5 w-3.5" />
+                                <ChevronRight className="h-3 w-3" />
                               )}
                             </button>
+                            {open ? (
+                              <div className="mt-2 rounded-lg border border-[#E2E0EF] bg-[#F4F3FA]/80 px-2.5 py-2">
+                                <ol className="space-y-0.5">
+                                  {stack.lessons.map((lessonId, i) => {
+                                    const lesson = allLessonsData[lessonId];
+                                    return (
+                                      <li
+                                        key={`${stack.id}-${lessonId}`}
+                                        className="flex items-baseline gap-1.5 text-[12px] text-[#5C5878]"
+                                      >
+                                        <span className="w-4 shrink-0 text-right font-bold tabular-nums text-[#9B97B0]">
+                                          {i + 1}.
+                                        </span>
+                                        <span className="min-w-0 font-semibold text-[#1F1B4D]">
+                                          {lesson?.title || `Lesson ${lessonId}`}
+                                        </span>
+                                      </li>
+                                    );
+                                  })}
+                                </ol>
+                              </div>
+                            ) : null}
                           </div>
-                          {open ? (
-                            <div className="mt-3 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA]/80 px-3 py-2.5">
-                              <ol className="space-y-1">
-                                {stack.lessons.map((lessonId, i) => {
-                                  const lesson = allLessonsData[lessonId];
-                                  return (
-                                    <li
-                                      key={`${stack.id}-${lessonId}`}
-                                      className="flex items-baseline gap-2 text-[13px] text-[#5C5878]"
-                                    >
-                                      <span className="w-5 shrink-0 text-right font-bold tabular-nums text-[#9B97B0]">
-                                        {i + 1}.
-                                      </span>
-                                      <span className="min-w-0 font-semibold text-[#1F1B4D]">
-                                        {lesson?.title || `Lesson ${lessonId}`}
-                                      </span>
-                                    </li>
-                                  );
-                                })}
-                              </ol>
-                            </div>
-                          ) : null}
                         </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </div>
               )}
             </div>
           </section>
