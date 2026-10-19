@@ -139,8 +139,14 @@
   inset: 0;
   z-index: 200;
   display: grid;
+  /* header full width; rail spans body + splitter + timeline to the viewport bottom */
+  grid-template-columns: minmax(0, 1fr) 72px;
   grid-template-rows: auto minmax(0, 1fr) 10px auto;
-  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas:
+    'header header'
+    'body rail'
+    'split rail'
+    'time rail';
   /* inset:0 sizes the shell — avoid 100vw (scrollbar overflow shifts the rail mid-canvas) */
   width: auto;
   max-width: 100%;
@@ -154,6 +160,7 @@
 }
 
 .ilv-editor-header {
+  grid-area: header;
   flex: 0 0 auto;
   display: flex;
   align-items: center;
@@ -187,11 +194,12 @@
 }
 
 .ilv-editor-body {
+  grid-area: body;
   display: grid;
-  /* stage | tool rail — panel column added when .has-panel */
-  grid-template-columns: minmax(0, 1fr) 72px;
+  /* stage [| panel] — tool rail lives on the editor shell, full height */
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: minmax(0, 1fr);
-  grid-template-areas: 'stage rail';
+  grid-template-areas: 'stage';
   min-height: 0;
   min-width: 0;
   width: 100%;
@@ -202,8 +210,8 @@
 }
 
 .ilv-editor-body.has-panel {
-  grid-template-columns: minmax(0, 1fr) minmax(200px, min(280px, 28vw)) 72px;
-  grid-template-areas: 'stage panel rail';
+  grid-template-columns: minmax(0, 1fr) minmax(200px, min(280px, 28vw));
+  grid-template-areas: 'stage panel';
 }
 
 .ilv-stage-wrap {
@@ -374,11 +382,17 @@
   color: #fff;
   overflow-x: hidden;
   overflow-y: auto;
+  overscroll-behavior: contain;
   min-height: 0;
+  height: 100%;
+  max-height: 100%;
   width: 72px;
   max-width: 72px;
   justify-self: stretch;
-  z-index: 2;
+  align-self: stretch;
+  z-index: 3;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-gutter: stable;
 }
 
 .ilv-rail-btn {
@@ -407,6 +421,7 @@
 }
 
 .ilv-timeline {
+  grid-area: time;
   flex: 0 0 auto;
   background: var(--ss-white);
   border-top: 1px solid var(--ss-line);
@@ -1624,14 +1639,23 @@
 }
 
 @media (max-width: 768px) {
+  .ilv-editor {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto minmax(0, 1fr) auto 10px auto;
+    grid-template-areas:
+      'header'
+      'body'
+      'rail'
+      'split'
+      'time';
+  }
   .ilv-editor-body,
   .ilv-editor-body.has-panel {
     grid-template-columns: minmax(0, 1fr);
-    grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-rows: minmax(0, 1fr) auto;
     grid-template-areas:
       'stage'
-      'panel'
-      'rail';
+      'panel';
   }
   .ilv-rail {
     flex-direction: row;
@@ -1639,6 +1663,8 @@
     overflow-y: hidden;
     width: 100%;
     max-width: none;
+    height: auto;
+    max-height: none;
   }
   .ilv-rail-btn {
     min-width: 64px;
@@ -1985,6 +2011,7 @@
 
 /* Timeline splitter */
 .ilv-timeline-splitter {
+  grid-area: split;
   flex: 0 0 10px;
   height: 10px;
   display: flex;
