@@ -2529,8 +2529,24 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const getCategoryColor = (categoryName: string): string => {
-    const category = categories.find((cat) => cat.name === categoryName);
-    return category?.color || '#6b7280';
+    if (!categoryName) return '#6b7280';
+    const exact = categories.find((cat) => cat.name === categoryName);
+    if (exact?.color) return exact.color;
+    // Vocal Warmups / Vocal Warm-Ups (and sub-spellings) share one parent colour
+    const lower = categoryName.trim().toLowerCase();
+    if (
+      lower === 'vocal warmups' ||
+      lower === 'vocal warm-ups' ||
+      lower === 'vocal warmup' ||
+      lower === 'vocal warm-up'
+    ) {
+      const vocal = categories.find((cat) => {
+        const n = (cat.name || '').trim().toLowerCase();
+        return n === 'vocal warmups' || n === 'vocal warm-ups';
+      });
+      if (vocal?.color) return vocal.color;
+    }
+    return '#6b7280';
   };
 
   const getCategoryByName = (categoryName: string): Category | null => {
