@@ -14,6 +14,7 @@ import { useShareLesson } from '../hooks/useShareLesson';
 import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
 import type { Activity, LessonData } from '../contexts/DataContext';
+import { AttachInteractiveLesson } from '../features/interactive-lesson-viewer';
 
 interface LessonDetailsModalProps {
   lessonNumber: string;
@@ -45,7 +46,16 @@ export function LessonDetailsModal({
   halfTermId,
   halfTermName
 }: LessonDetailsModalProps) {
-  const { allLessonsData, updateLessonTitle, lessonStandards, deleteLesson, updateHalfTerm, getLessonsForHalfTerm } = useData();
+  const {
+    allLessonsData,
+    updateLessonTitle,
+    lessonStandards,
+    deleteLesson,
+    updateHalfTerm,
+    getLessonsForHalfTerm,
+    currentSheetInfo,
+    updateLessonData,
+  } = useData();
   const { getCategoryColor } = useSettings();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [initialResource, setInitialResource] = useState<{url: string, title: string, type: string} | null>(null);
@@ -352,6 +362,24 @@ export function LessonDetailsModal({
               <NestedStandardsBrowser lessonNumber={lessonNumber} />
             </div>
           )}
+
+          {/* Interactive Lesson Viewer — available on every lesson (activity or plan) */}
+          <div className="mb-6 space-y-2">
+            <h4 className="text-base sm:text-lg font-semibold text-gray-900">Interactive lesson</h4>
+            <AttachInteractiveLesson
+              sheet={currentSheetInfo.sheet}
+              lessonNumber={lessonNumber}
+              existingId={lessonData.interactiveLessonId || null}
+              onAttached={(id) => {
+                if (updateLessonData) {
+                  void updateLessonData(lessonNumber, {
+                    ...lessonData,
+                    interactiveLessonId: id || undefined,
+                  });
+                }
+              }}
+            />
+          </div>
 
           {/* Lesson Plan Details Section - Match Full Lesson Preview Styling */}
           {(lessonData.learningOutcome || lessonData.successCriteria || lessonData.introduction || 
