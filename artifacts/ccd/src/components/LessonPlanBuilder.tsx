@@ -28,7 +28,7 @@ import { ActivityCard } from './ActivityCard';
 import { ActivityStackCard } from './ActivityStackCard';
 import { LessonDropZone } from './LessonDropZone';
 import { ActivityDetailsModal } from './ActivityDetailsModal';
-import { ActivityDetails } from './ActivityDetails';
+import { ActivityEditorPage } from './ActivityEditorPage';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
@@ -71,7 +71,15 @@ export function LessonPlanBuilder({
   onUnsavedChangesChange 
 }: LessonPlanBuilderProps = {}) {
   const isViewOnly = useIsViewOnly();
-  const { currentSheetInfo, allLessonsData, addOrUpdateUserLessonPlan, userCreatedLessonPlans, allActivities, activityStacks } = useData();
+  const {
+    currentSheetInfo,
+    allLessonsData,
+    addOrUpdateUserLessonPlan,
+    userCreatedLessonPlans,
+    allActivities,
+    activityStacks,
+    updateActivity,
+  } = useData();
   const { categories, customYearGroups, mapActivityLevelToYearGroup } = useSettings();
   
   // Early return if essential data is not loaded
@@ -1272,25 +1280,27 @@ export function LessonPlanBuilder({
         />
       )}
 
-      {/* Activity Editing Modal - Full featured editing */}
+      {/* Activity editing — full-page editor (option A), consistent with Activity library */}
       {editingActivity && (
-        <ActivityDetails
-          activity={editingActivity}
-          onClose={() => {
-            setEditingActivity(null);
-            setSelectedActivity(null);
-            setShowActivityPreview(false);
-            setActivityToView(null);
-          }}
-          isEditing={true}
-          onUpdate={(updatedActivity) => {
-            // Activity is updated in global context by ActivityDetails
-            setEditingActivity(null);
-            setSelectedActivity(null);
-            setShowActivityPreview(false);
-            setActivityToView(null);
-          }}
-        />
+        <div className="fixed inset-0 z-[60] overflow-auto bg-[#F4F3FA] p-3 sm:p-4">
+          <ActivityEditorPage
+            mode="edit"
+            initialActivity={editingActivity}
+            onCancel={() => {
+              setEditingActivity(null);
+              setSelectedActivity(null);
+              setShowActivityPreview(false);
+              setActivityToView(null);
+            }}
+            onSave={async (updatedActivity) => {
+              await updateActivity(updatedActivity);
+              setEditingActivity(null);
+              setSelectedActivity(null);
+              setShowActivityPreview(false);
+              setActivityToView(null);
+            }}
+          />
+        </div>
       )}
 
       {/* Save Status Message */}
