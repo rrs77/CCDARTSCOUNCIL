@@ -86,7 +86,7 @@ export function LessonCoverPreview({ cover, sceneTypes, className = '' }: Lesson
           <span className="ilv-lesson-cover-icon" style={{ background: SCENE_TYPE_COLORS[cover?.type || 'title'] }}>
             {TYPE_ICON[cover?.type || 'title'] || <Clapperboard className="h-5 w-5" />}
           </span>
-          <p className="ilv-lesson-cover-headline">{cover?.headline || cover?.title || 'Interactive lesson'}</p>
+          <p className="ilv-lesson-cover-headline">{cover?.headline || cover?.title || 'Slides'}</p>
           {sceneTypes && sceneTypes.length > 0 && (
             <div className="ilv-lesson-cover-types">
               {sceneTypes.slice(0, 4).map((t) => (

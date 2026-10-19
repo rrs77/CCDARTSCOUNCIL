@@ -19,16 +19,15 @@ import {
   deleteInteractiveLesson,
   getInteractiveLesson,
   getPublishedInteractiveLessonForPlayer,
-  listInteractiveLessons,
+  listSlidesLibrary,
   saveInteractiveLesson,
 } from '../data/store';
 import { buildDemoInteractiveLesson } from '../data/demoLesson';
-import type { InteractiveLesson, InteractiveLessonSummary } from '../types';
+import type { InteractiveLesson, InteractiveLessonSummary, SlidesLibraryTab } from '../types';
 import { createId, emptyScene } from '../types';
 import { InteractiveLessonEditor } from './editor/InteractiveLessonEditor';
 import { InteractiveLessonPlayer } from './player/InteractiveLessonPlayer';
 import { LessonCoverPreview } from './LessonCoverPreview';
-import { LessonHeroPreview } from './LessonHeroPreview';
 import { readPlayerLaunchFromLocation } from '../utils/playerLinks';
 import '../styles.css';
 
@@ -52,7 +51,7 @@ function formatRelativeEdited(iso: string): string {
 
 const FEATURES = [
   { icon: <Layers className="h-4 w-4" />, label: 'Timeline scenes' },
-  { icon: <Mic2 className="h-4 w-4" />, label: 'Karaoke lyrics' },
+  { icon: <Mic2 className="h-4 w-4" />, label: 'Lyric videos' },
   { icon: <Youtube className="h-4 w-4" />, label: 'YouTube & audio' },
   { icon: <Presentation className="h-4 w-4" />, label: 'Canva & PowerPoint' },
   { icon: <Clapperboard className="h-4 w-4" />, label: 'Full-screen present' },
@@ -135,20 +134,27 @@ export function InteractiveLessonHub() {
   const [playerOnly, setPlayerOnly] = useState(false);
   const [unavailable, setUnavailable] = useState('');
   const [error, setError] = useState('');
+  const [libraryTab, setLibraryTab] = useState<SlidesLibraryTab>('mine');
+  const [libraryQuery, setLibraryQuery] = useState('');
 
   const userId = user?.id || 'anonymous';
 
   const refresh = useCallback(async () => {
     setLoading(true);
     try {
-      const list = await listInteractiveLessons({ userId, canEdit });
+      const list = await listSlidesLibrary({
+        userId,
+        canEdit,
+        tab: libraryTab,
+        query: libraryQuery,
+      });
       setItems(list);
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Failed to load interactive lessons');
+      setError(e instanceof Error ? e.message : 'Failed to load slides');
     } finally {
       setLoading(false);
     }
-  }, [userId, canEdit]);
+  }, [userId, canEdit, libraryTab, libraryQuery]);
 
   useEffect(() => {
     void refresh();
@@ -170,9 +176,9 @@ export function InteractiveLessonHub() {
         setPlaying(lesson);
         setUnavailable('');
       } else if (reason === 'unpublished') {
-        setUnavailable('This interactive lesson is not available yet. Ask the author to publish it.');
+        setUnavailable('These slides are not available yet. Ask the author to publish them.');
       } else {
-        setUnavailable('Interactive lesson not found.');
+        setUnavailable('Slides not found.');
       }
       try {
         const params = new URLSearchParams(window.location.search);
@@ -195,11 +201,12 @@ export function InteractiveLessonHub() {
     const now = new Date().toISOString();
     const lesson: InteractiveLesson = {
       id: createId('ilv'),
-      title: 'Untitled interactive lesson',
+      title: 'Untitled slides',
       description: '',
       ownerId: userId,
       ownerEmail: user?.email,
       status: 'draft',
+      source: 'user',
       scenes: [emptyScene('title')],
       mediaLibrary: [],
       attachedLessonKeys: [],
@@ -213,12 +220,12 @@ export function InteractiveLessonHub() {
 
   const openEditor = async (id: string) => {
     if (!canEdit) {
-      setError('Only admins and hub admins can open the Interactive Lesson editor.');
+      setError('Only admins and hub admins can open the Slides editor.');
       return;
     }
     const lesson = await getInteractiveLesson(id);
     if (!lesson) {
-      setError('Lesson not found');
+      setError('Slides not found');
       return;
     }
     if (lesson.isDemo || lesson.ownerId !== userId) {
@@ -243,7 +250,7 @@ export function InteractiveLessonHub() {
   const openPlayer = async (id: string) => {
     const lesson = (await getInteractiveLesson(id)) || buildDemoInteractiveLesson(userId);
     if (lesson.status !== 'published' && lesson.ownerId !== userId && !lesson.isDemo && !canEdit) {
-      setError('This interactive lesson is not published yet.');
+      setError('These slides are not published yet.');
       return;
     }
     setPlaying(lesson);
@@ -273,9 +280,9 @@ export function InteractiveLessonHub() {
 
       <section className="ilv-hub-hero">
         <div className="ilv-hub-hero-copy">
-          <h1 className="ilv-hub-hero-title">Interactive lessons that fill the room</h1>
+          <h1 className="ilv-hub-hero-title">Slides that fill the room</h1>
           <p className="ilv-hub-hero-lede">
-            Build timeline scenes with karaoke lyrics and timed words, YouTube, audio, Canva and
+            Build timeline scenes with lyric videos and timed words, YouTube, audio, Canva and
             PowerPoint embeds — then present full-screen to the class. Attach a player-only link to
             any CCD lesson.
           </p>
@@ -283,7 +290,7 @@ export function InteractiveLessonHub() {
             {canEdit ? (
               <button type="button" className="ilv-btn ilv-btn-primary ilv-hub-cta" onClick={() => void createNew()}>
                 <Plus className="h-4 w-4" />
-                New interactive lesson
+                New slides
               </button>
             ) : (
               <span className="ilv-chip inline-flex items-center gap-1.5">
@@ -292,16 +299,15 @@ export function InteractiveLessonHub() {
               </span>
             )}
           </div>
-          <ul className="ilv-hub-features">
-            {FEATURES.map((f) => (
-              <li key={f.label}>
-                {f.icon}
-                {f.label}
-              </li>
-            ))}
-          </ul>
         </div>
-        <LessonHeroPreview />
+        <ul className="ilv-hub-features" aria-label="What you can build">
+          {FEATURES.map((f) => (
+            <li key={f.label}>
+              {f.icon}
+              {f.label}
+            </li>
+          ))}
+        </ul>
       </section>
 
       {error && (
@@ -311,11 +317,41 @@ export function InteractiveLessonHub() {
       )}
 
       <div className="ilv-hub-library-head">
-        <h2 className="ilv-hub-library-title">Your interactive lessons</h2>
+        <h2 className="ilv-hub-library-title">Slides library</h2>
         <p className="ilv-hub-library-meta">
-          {loading ? 'Loading…' : `${items.length} lesson${items.length === 1 ? '' : 's'}`}
-          {canEdit ? ' · create, edit and publish' : ' · play published lessons'}
+          {loading ? 'Loading…' : `${items.length} deck${items.length === 1 ? '' : 's'}`}
+          {canEdit ? ' · create, edit and publish' : ' · play published slides'}
         </p>
+      </div>
+
+      <div className="mb-3 flex flex-wrap items-center gap-2">
+        <div className="ilv-hub-library-tabs" role="tablist">
+          {(
+            [
+              { id: 'mine' as const, label: 'My slides' },
+              { id: 'hubs' as const, label: 'From hubs' },
+            ]
+          ).map((t) => (
+            <button
+              key={t.id}
+              type="button"
+              role="tab"
+              aria-selected={libraryTab === t.id}
+              className={`ilv-slides-picker-tab ${libraryTab === t.id ? 'is-active' : ''}`}
+              onClick={() => setLibraryTab(t.id)}
+            >
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <label className="ilv-slides-picker-search max-w-sm flex-1">
+          <span className="sr-only">Search slides</span>
+          <input
+            value={libraryQuery}
+            onChange={(e) => setLibraryQuery(e.target.value)}
+            placeholder="Search title, tags, subject…"
+          />
+        </label>
       </div>
 
       {loading ? (
@@ -351,7 +387,7 @@ export function InteractiveLessonHub() {
                     <LessonCardMenu
                       canDelete={canDelete}
                       onDelete={() => {
-                        if (confirm('Delete this interactive lesson?')) {
+                        if (confirm('Delete these slides?')) {
                           void deleteInteractiveLesson(item.id, userId).then(refresh);
                         }
                       }}
@@ -397,23 +433,33 @@ export function InteractiveLessonHub() {
             );
           })}
 
-          {canEdit && (
+          {canEdit && libraryTab === 'mine' && (
             <button type="button" className="ilv-create-tile" onClick={() => void createNew()}>
               <span className="ilv-create-tile-icon">
                 <Plus className="h-7 w-7" />
               </span>
-              <span className="ilv-create-tile-title">Create interactive lesson</span>
+              <span className="ilv-create-tile-title">Create new slides</span>
               <span className="ilv-create-tile-sub">
-                Start with a title scene — add karaoke, embeds and timeline as you go
+                Start with a title scene — add lyric videos, embeds and timeline as you go
               </span>
             </button>
           )}
 
-          {!canEdit && items.length === 0 && (
+          {!loading && items.length === 0 && (
             <div className="ilv-hub-empty">
               <Clapperboard className="h-8 w-8 text-[var(--ss-indigo)]" />
-              <p>No published interactive lessons yet.</p>
-              <p className="text-[var(--ss-muted)]">Ask an admin to publish one, or attach a player link from a CCD lesson.</p>
+              <p>
+                {libraryTab === 'hubs'
+                  ? 'No hub slides in your library yet.'
+                  : 'No slides here yet.'}
+              </p>
+              <p className="text-[var(--ss-muted)]">
+                {libraryTab === 'hubs'
+                  ? 'Add Partner Hub resources to unlock packs, or browse seeded hub demos.'
+                  : canEdit
+                    ? 'Create a deck or switch to From hubs.'
+                    : 'Ask an admin to publish slides, or attach a player link from a CCD lesson.'}
+              </p>
             </div>
           )}
         </div>

@@ -505,6 +505,9 @@ export interface AudioMixSettings {
   lanes?: AudioLaneState[];
 }
 
+/** Where a slides deck came from in the teacher library. */
+export type InteractiveLessonSource = 'user' | 'hub' | 'demo';
+
 export interface InteractiveLesson {
   id: string;
   title: string;
@@ -522,6 +525,13 @@ export interface InteractiveLesson {
   createdAt: string;
   updatedAt: string;
   isDemo?: boolean;
+  /** Library provenance — user-created, partner hub pack, or shipped demo. */
+  source?: InteractiveLessonSource;
+  /** Partner hub slug when source === 'hub'. */
+  hubId?: string;
+  hubName?: string;
+  tags?: string[];
+  subject?: string;
 }
 
 /** Lightweight first-scene snapshot for library tile covers. */
@@ -548,7 +558,14 @@ export interface InteractiveLessonSummary {
   cover?: InteractiveLessonCover;
   /** Distinct scene types in order of first appearance (for cover chips). */
   sceneTypes?: SceneType[];
+  source?: InteractiveLessonSource;
+  hubId?: string;
+  hubName?: string;
+  tags?: string[];
+  subject?: string;
 }
+
+export type SlidesLibraryTab = 'mine' | 'hubs' | 'all';
 
 export const SCENE_TYPE_COLORS: Record<SceneType, string> = {
   video: '#F59E0B',
@@ -571,7 +588,7 @@ export const SCENE_TYPE_LABELS: Record<SceneType, string> = {
   image: 'Image',
   title: 'Title',
   text: 'Text',
-  lyrics: 'Lyrics',
+  lyrics: 'Lyric video',
   youtube: 'YouTube',
   vimeo: 'Vimeo',
   canva: 'Canva',
@@ -688,8 +705,8 @@ export const TEXT_ANIMATION_OPTIONS: { type: TextAnimationType; label: string; p
   { type: 'pulse', label: 'Pulse', phase: 'emphasis' },
   { type: 'glow-pulse', label: 'Glow pulse', phase: 'emphasis' },
   { type: 'scale-highlight', label: 'Scale highlight', phase: 'emphasis' },
-  { type: 'karaoke-wipe', label: 'Karaoke wipe', phase: 'emphasis' },
-  { type: 'karaoke-fill', label: 'Karaoke fill', phase: 'emphasis' },
+  { type: 'karaoke-wipe', label: 'Lyric wipe', phase: 'emphasis' },
+  { type: 'karaoke-fill', label: 'Lyric fill', phase: 'emphasis' },
   { type: 'colour-sweep', label: 'Colour sweep', phase: 'emphasis' },
 ];
 

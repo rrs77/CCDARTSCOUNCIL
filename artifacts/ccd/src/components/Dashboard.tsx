@@ -359,7 +359,7 @@ export function Dashboard() {
       {activeTab === 'lesson-viewer' && (
         <div className="ccd-fade-in-up" key="lv">
           <p className="ccd-studio-eyebrow mb-1">
-            CONNECT &amp; CREATE / <span>LESSON VIEWER</span>
+            CONNECT &amp; CREATE / <span>SLIDES</span>
           </p>
           <InteractiveLessonHub />
         </div>

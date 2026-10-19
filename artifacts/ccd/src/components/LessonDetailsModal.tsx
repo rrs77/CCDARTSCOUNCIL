@@ -202,7 +202,7 @@ export function LessonDetailsModal({
       {/* Scrollable shell: works at any viewport size; bottom padding clears the fixed site footer */}
       <div className="relative z-10 flex min-h-full items-start justify-center p-2 sm:p-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] sm:items-center">
         <div
-          className="relative bg-white rounded-card shadow-soft w-full max-w-3xl max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-6rem)] overflow-hidden flex flex-col animate-scale-in"
+          className="relative bg-white rounded-card shadow-soft w-full max-w-[min(1180px,96vw)] max-h-[calc(100dvh-4.5rem)] sm:max-h-[calc(100dvh-3.5rem)] overflow-hidden flex flex-col animate-scale-in"
           onClick={(e) => e.stopPropagation()}
         >
         {/* Header — shrink-0 so action menu never scrolls/clips off-screen */}
@@ -278,15 +278,6 @@ export function LessonDetailsModal({
                 <Trash2 className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
                 <span className="text-sm font-medium hidden sm:inline">Delete</span>
               </button>
-              <button
-                onClick={() => setShowEyfsSelector(!showEyfsSelector)}
-                className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2"
-                title="Manage Standards"
-              >
-                <Tag className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                <span className="text-sm font-medium hidden md:inline">Standards</span>
-              </button>
-              
               {/* Export PDF Button */}
               <button
                 type="button"
@@ -336,33 +327,9 @@ export function LessonDetailsModal({
           </div>
         </div>
 
-        {/* Content - Scrollable (flex-1 so header/footer stay on screen) */}
-        <div className="p-4 sm:p-6 flex-1 min-h-0 overflow-y-auto">
-          {/* Standards Selector (conditionally shown) */}
-          {showEyfsSelector && (
-            <div className="mb-6">
-              <NestedStandardsBrowser lessonNumber={lessonNumber} />
-            </div>
-          )}
-
-          {/* Interactive Lesson Viewer — available on every lesson (activity or plan) */}
-          <div className="mb-6 space-y-2">
-            <h4 className="text-base sm:text-lg font-semibold text-gray-900">Interactive lesson</h4>
-            <AttachInteractiveLesson
-              sheet={currentSheetInfo.sheet}
-              lessonNumber={lessonNumber}
-              existingId={lessonData.interactiveLessonId || null}
-              onAttached={(id) => {
-                if (updateLessonData) {
-                  void updateLessonData(lessonNumber, {
-                    ...lessonData,
-                    interactiveLessonId: id || undefined,
-                  });
-                }
-              }}
-            />
-          </div>
-
+        {/* Content — wide two-column: overview/activities | Slides & tools rail */}
+        <div className="flex flex-1 min-h-0 flex-col lg:flex-row">
+          <div className="flex-1 min-h-0 min-w-0 overflow-y-auto p-4 sm:p-6">
           {/* Lesson Plan Details Section - Match Full Lesson Preview Styling */}
           {(lessonData.learningOutcome || lessonData.successCriteria || lessonData.introduction || 
             lessonData.mainActivity || lessonData.plenary || lessonData.vocabulary || 
@@ -718,6 +685,103 @@ export function LessonDetailsModal({
               );
             })}
           </div>
+          </div>
+
+          {/* Side rail — Slides, Standards, resources & actions */}
+          <aside className="flex w-full shrink-0 flex-col border-t border-[#E2E0EF] bg-[#F8F7FC] lg:w-[320px] lg:border-t-0 lg:border-l overflow-y-auto">
+            <div className="space-y-4 p-4 sm:p-5">
+              <AttachInteractiveLesson
+                sheet={currentSheetInfo.sheet}
+                lessonNumber={lessonNumber}
+                existingId={lessonData.interactiveLessonId || null}
+                onAttached={(id) => {
+                  if (updateLessonData) {
+                    void updateLessonData(lessonNumber, {
+                      ...lessonData,
+                      interactiveLessonId: id || undefined,
+                    });
+                  }
+                }}
+              />
+
+              <div className="rounded-[14px] border border-[#E2E0EF] bg-white p-3">
+                <div className="mb-2 flex items-center justify-between gap-2">
+                  <h4 className="text-xs font-extrabold uppercase tracking-wide text-[#77738F]">Standards</h4>
+                  <button
+                    type="button"
+                    onClick={() => setShowEyfsSelector(!showEyfsSelector)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-[#E2E0EF] bg-[#F4F3FA] px-2 py-1 text-[11px] font-bold text-[#1F1B4D] hover:border-[#4338E8]"
+                  >
+                    <Tag className="h-3.5 w-3.5 text-[#4338E8]" />
+                    {showEyfsSelector ? 'Hide' : 'Manage'}
+                  </button>
+                </div>
+                {showEyfsSelector ? (
+                  <div className="max-h-[280px] overflow-y-auto">
+                    <NestedStandardsBrowser lessonNumber={lessonNumber} />
+                  </div>
+                ) : (
+                  <p className="text-[12px] font-medium leading-snug text-[#77738F]">
+                    {standardsCount ? `${standardsCount} linked` : 'No standards linked yet'}
+                  </p>
+                )}
+              </div>
+
+              <div className="rounded-[14px] border border-[#E2E0EF] bg-white p-3">
+                <h4 className="mb-2 text-xs font-extrabold uppercase tracking-wide text-[#77738F]">Actions</h4>
+                <div className="flex flex-col gap-2">
+                  {onEdit && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        onEdit();
+                        onClose();
+                      }}
+                      className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-[#4338E8]"
+                    >
+                      <Edit3 className="h-4 w-4 text-[#4338E8]" />
+                      Edit lesson
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (isDemo) {
+                        showUpgradePrompt('PDF export');
+                        return;
+                      }
+                      setShowPrintModal(true);
+                    }}
+                    className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-[#4338E8]"
+                  >
+                    {isDemo ? <Lock className="h-4 w-4" /> : <Download className="h-4 w-4 text-[#4338E8]" />}
+                    Export PDF
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      void handleCopyLink();
+                    }}
+                    disabled={isSharingLink}
+                    className="inline-flex min-h-[40px] items-center justify-center gap-2 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-[#4338E8] disabled:opacity-60"
+                  >
+                    {isSharingLink ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : isDemo ? (
+                      <Lock className="h-4 w-4" />
+                    ) : (
+                      <Link className="h-4 w-4 text-[#4338E8]" />
+                    )}
+                    Copy link
+                  </button>
+                </div>
+              </div>
+            </div>
+          </aside>
         </div>
 
         {/* Footer */}

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { sanitizeHtml } from '../utils/sanitize';
-import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette, ArrowLeft } from 'lucide-react';
+import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Upload, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette, ArrowLeft, Clapperboard } from 'lucide-react';
 import { EditableText } from './EditableText';
 import { RichTextEditor } from './RichTextEditor';
 import { ResourceViewer } from './ResourceViewer';
@@ -14,6 +14,8 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useDemoMode } from '../hooks/useDemoMode';
 import { openActivityResource, shouldOpenResourceInNewTab } from '../utils/openActivityResource';
+import { SlidesLibraryPicker } from '../features/interactive-lesson-viewer';
+import { buildPlayerUrl } from '../features/interactive-lesson-viewer/utils/playerLinks';
 import toast from 'react-hot-toast';
 
 interface ActivityDetailsProps {
@@ -79,6 +81,7 @@ export function ActivityDetails({
   const [isEditMode, setIsEditMode] = useState(isLessonBuilderContext ? initialEditMode : isEditing);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [standardsHasChanges, setStandardsHasChanges] = useState(false);
+  const [slidesPickerOpen, setSlidesPickerOpen] = useState(false);
   const [standardsLastSaved, setStandardsLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -853,6 +856,15 @@ export function ActivityDetails({
             {/* Resources — compact editor in edit mode; chip buttons when viewing */}
             <div>
               {isEditMode && !isReadOnly ? (
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setSlidesPickerOpen(true)}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2.5 text-sm font-bold text-[#1F1B4D] hover:border-[#4338E8]"
+                  >
+                    <Clapperboard className="h-4 w-4 text-[#4338E8]" />
+                    Add slides from library
+                  </button>
                 <CompactActivityResources
                   values={{
                     videoLink: editedActivity.videoLink,
@@ -877,6 +889,7 @@ export function ActivityDetails({
                     reader.readAsDataURL(file);
                   }}
                 />
+                </div>
               ) : (
                 <>
                   <h3 className="mb-3 text-lg font-semibold text-gray-900">
@@ -1056,6 +1069,23 @@ export function ActivityDetails({
           </div>
         </div>
       )}
+
+      <SlidesLibraryPicker
+        open={slidesPickerOpen}
+        onClose={() => setSlidesPickerOpen(false)}
+        title="Add slides to activity"
+        onAttach={(id) => {
+          const url = `${window.location.origin}${buildPlayerUrl(id)}`;
+          setEditedActivity((prev) => ({
+            ...prev,
+            resourceLink: prev.resourceLink || url,
+            link: prev.link || url,
+          }));
+          setHasUnsavedChanges(true);
+          setIsEditMode(true);
+          toast.success('Slides player link added to resources');
+        }}
+      />
     </>,
     document.body
   );

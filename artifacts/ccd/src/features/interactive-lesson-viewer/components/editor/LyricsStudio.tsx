@@ -258,16 +258,16 @@ export function LyricsStudio({
   };
 
   return createPortal(
-    <div className="ilv-lyrics-studio" role="dialog" aria-modal="true" aria-label="Lyrics Studio">
+    <div className="ilv-lyrics-studio" role="dialog" aria-modal="true" aria-label="Lyric video Studio">
       <div className="ilv-lyrics-studio-sheet">
         <header className="ilv-lyrics-studio-head">
           <div>
-            <h2 className="text-base font-extrabold tracking-tight text-[var(--ss-ink)]">Lyrics Studio</h2>
+            <h2 className="text-base font-extrabold tracking-tight text-[var(--ss-ink)]">Lyric video Studio</h2>
             <p className="text-xs text-[var(--ss-muted)]">
               Edit lines, drag timing on the waveform, tap-sync or auto-transcribe the vocal track.
             </p>
           </div>
-          <button type="button" className="ilv-tool-btn" onClick={onClose} aria-label="Close Lyrics Studio">
+          <button type="button" className="ilv-tool-btn" onClick={onClose} aria-label="Close Lyric video Studio">
             <X className="h-5 w-5" />
           </button>
         </header>
@@ -550,7 +550,7 @@ export function LyricsStudio({
             {tab === 'display' && (
               <div className="space-y-3 overflow-y-auto pr-1">
                 <p className="text-xs text-[var(--ss-muted)]">
-                  Karaoke look on the stage — kept here so the side panel stays uncluttered.
+                  Lyric video look on the stage — kept here so the side panel stays uncluttered.
                 </p>
                 <label className="ilv-label">Font</label>
                 <select
@@ -652,7 +652,7 @@ export function LyricsStudio({
             {tab === 'tracks' && (
               <div className="space-y-3 overflow-y-auto pr-1">
                 <p className="text-xs text-[var(--ss-muted)]">
-                  Karaoke scenes keep a <strong>vocal</strong> (full) and <strong>backing</strong> (instrumental)
+                  Lyric video scenes keep a <strong>vocal</strong> (full) and <strong>backing</strong> (instrumental)
                   track time-aligned. Auto-sync always uses the vocal. Players can switch versions live.
                 </p>
                 <label className="ilv-label">Vocal track (full version)</label>
