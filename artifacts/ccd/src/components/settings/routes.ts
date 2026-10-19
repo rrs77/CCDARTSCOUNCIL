@@ -7,6 +7,7 @@ const PATH_BY_SECTION: Record<SettingsSectionId, string> = {
   objectives: '/settings/objectives',
   preferences: '/settings/preferences',
   downloads: '/settings/downloads',
+  users: '/settings/users',
   school: '/settings/school',
 };
 
@@ -23,6 +24,8 @@ const SECTION_BY_PATH: Record<string, SettingsSectionId> = {
   '/settings/preferences/': 'preferences',
   '/settings/downloads': 'downloads',
   '/settings/downloads/': 'downloads',
+  '/settings/users': 'users',
+  '/settings/users/': 'users',
   '/settings/school': 'school',
   '/settings/school/': 'school',
   // Legacy tab ids used by sessionStorage / Partner Hub deep links
@@ -32,7 +35,6 @@ const SECTION_BY_PATH: Record<string, SettingsSectionId> = {
   '/settings/resource-links': 'preferences',
   '/settings/my-downloads': 'downloads',
   '/settings/hub-admin': 'school',
-  '/settings/users': 'school',
   '/settings/branding': 'school',
   '/settings/data': 'school',
   '/settings/manage-packs': 'school',
@@ -54,8 +56,9 @@ const LEGACY_TAB_TO_SECTION: Record<string, SettingsSectionId> = {
   'my-downloads': 'downloads',
   downloads: 'downloads',
   'download-analytics': 'downloads',
+  users: 'users',
+  people: 'users',
   'hub-admin': 'school',
-  users: 'school',
   branding: 'school',
   data: 'school',
   'manage-packs': 'school',
@@ -128,7 +131,6 @@ export function clearSettingsUrlIfPresent(): void {
 }
 
 const SCHOOL_PANEL_LEGACY = new Set([
-  'users',
   'hub-admin',
   'hub-content',
   'branding',
@@ -140,7 +142,11 @@ const SCHOOL_PANEL_LEGACY = new Set([
 /** Open Settings as a full page (URL + shell tab). Optional legacy tab id maps to a section. */
 export function navigateToSettings(legacyTabOrSection?: string): void {
   const raw = legacyTabOrSection?.trim().toLowerCase() || '';
-  const section = sectionFromLegacyTab(raw) ?? DEFAULT_SETTINGS_SECTION;
+  // Legacy "users" under school tools → top-level Users section
+  const section =
+    raw === 'users' || raw === 'people'
+      ? ('users' as SettingsSectionId)
+      : sectionFromLegacyTab(raw) ?? DEFAULT_SETTINGS_SECTION;
   const schoolPanel = SCHOOL_PANEL_LEGACY.has(raw) ? raw : null;
   try {
     sessionStorage.removeItem('ccd-open-settings-tab');

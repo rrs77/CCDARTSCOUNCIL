@@ -6,8 +6,7 @@ import { CustomObjectivesAdmin } from '../CustomObjectivesAdmin';
 import { ActivityPacksAdmin } from '../ActivityPacksAdmin';
 import { useAuth } from '../../hooks/useAuth';
 import { useIsViewOnly } from '../../hooks/useIsViewOnly';
-import { isSupabaseConfigured, isSupabaseAuthEnabled } from '../../config/supabase';
-import { AuthGuard } from '../Auth/AuthGuard';
+import { isSupabaseConfigured } from '../../config/supabase';
 import { UserManagement } from '../Admin/UserManagement';
 import { HubContentApprovalQueue } from '../musicHubs/HubContentApprovalQueue';
 import { MusicHubAdminPanel } from '../musicHubs/MusicHubAdminPanel';
@@ -39,6 +38,8 @@ import { SystemCategoriesAdmin } from '../Admin/SystemCategoriesAdmin';
 import { toastSettingsSaved, toastSettingsError } from './saveToast';
 import type { SchoolToolsPanelId, SettingsSectionId } from './settingsSections';
 import { SCHOOL_TOOLS_PANELS } from './settingsSections';
+import { keyStageAccent } from './keyStageAccents';
+import { groupClassesBySubject } from '../../utils/classOrganization';
 
 
 function YearGroupSectionSelect({
@@ -251,6 +252,7 @@ const SECTION_TO_TAB: Record<SettingsSectionId, string> = {
   objectives: 'admin',
   preferences: 'resource-links',
   downloads: 'my-downloads',
+  users: 'users',
   school: 'school',
 };
 
@@ -304,6 +306,10 @@ export function SettingsContent({
   const [settingsMoreOpen, setSettingsMoreOpen] = useState(false);
   /** Undo / section tools — rare; keep off the main path. */
   const [manageSectionsOpen, setManageSectionsOpen] = useState(false);
+  /** Key-stage cards always start collapsed (local UI — not persisted open state). */
+  const [expandedSectionIds, setExpandedSectionIds] = useState<Set<string>>(new Set());
+  /** Subject sub-groups inside a stage also start collapsed. */
+  const [expandedSubjectKeys, setExpandedSubjectKeys] = useState<Set<string>>(new Set());
   const [otherYearGroupQuery, setOtherYearGroupQuery] = useState('');
   const [selectedOtherYearGroupIds, setSelectedOtherYearGroupIds] = useState<Set<string>>(new Set());
   const [bulkOtherTargetSectionId, setBulkOtherTargetSectionId] = useState('');
@@ -345,7 +351,15 @@ export function SettingsContent({
     profile?.role === 'superuser';
   const canEditSystemCategories = isAdmin || isSuperAdmin;
   const isCreator = profile?.role === 'creator';
-  const showUserManagement = (isSupabaseAuthEnabled() || isSupabaseConfigured()) && (isAdmin || profile?.role === 'admin' || profile?.role === 'superuser' || profile?.role === 'super_admin' || profile?.can_manage_users === true);
+  const showUserManagement =
+    isAdmin ||
+    profile?.role === 'admin' ||
+    profile?.role === 'superuser' ||
+    profile?.role === 'super_admin' ||
+    profile?.can_manage_users === true ||
+    user?.role === 'admin' ||
+    user?.role === 'superuser' ||
+    user?.role === 'super_admin';
   const showDownloadAnalytics =
     isAdmin ||
     profile?.role === 'organisation' ||
@@ -377,6 +391,14 @@ export function SettingsContent({
     }
     setActiveTab(SECTION_TO_TAB[section]);
   }, [section, schoolPanel, schoolPanels, downloadsView]);
+
+  // Entering My classes always resets stage cards + subject groups to collapsed.
+  React.useEffect(() => {
+    if (section === 'classes') {
+      setExpandedSectionIds(new Set());
+      setExpandedSubjectKeys(new Set());
+    }
+  }, [section]);
 
   // Keep undo/redo history for year-group sections (key stages).
   React.useEffect(() => {
@@ -1201,6 +1223,190 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
 
 
+
+  const renderYearGroupRow = (
+    yearGroup: (typeof tempYearGroups)[number],
+    section: YearGroupSection,
+    isOther: boolean,
+  ) => {
+    const isSelectedOther = selectedOtherYearGroupIds.has(yearGroup.id);
+    return (
+      <div
+        key={yearGroup.id}
+        draggable
+        onDragStart={(e) => {
+          const target = e.target as HTMLElement;
+          if (target.closest('select, input, button, label, a')) {
+            e.preventDefault();
+            return;
+          }
+          handleYearGroupDragStart(e, yearGroup.id);
+        }}
+        onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
+        onDrop={(e) => {
+          e.preventDefault();
+          const draggedId = draggedYearGroup || e.dataTransfer.getData('text/plain') || null;
+          if (draggedId) handleYearGroupDropInSection(draggedId, yearGroup.id, section.id);
+          handleYearGroupDragEnd();
+        }}
+        onDragEnd={handleYearGroupDragEnd}
+        className={`rounded-xl px-2.5 py-2 transition-colors ${
+          draggedYearGroup === yearGroup.id
+            ? 'border border-[#bcb7f4] bg-[#E9E6FF] opacity-50'
+            : editingYearGroup === yearGroup.id
+              ? 'border border-[#E9E6FF] bg-[#F7F6FC]'
+              : 'border border-transparent hover:bg-[#F4F3FA]'
+        }`}
+      >
+        {editingYearGroup === yearGroup.id ? (
+          <div className="flex flex-col gap-2">
+            <div className="flex items-start gap-3">
+              <div className="flex-shrink-0 cursor-move pt-1" title="Drag to reorder within this section" aria-hidden>
+                <GripVertical className="h-5 w-5 text-gray-400" />
+              </div>
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">ID (read-only)</label>
+                  <input
+                    type="text"
+                    value={yearGroup.id}
+                    readOnly
+                    aria-readonly="true"
+                    className="w-full px-2 py-1 border border-gray-200 rounded text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
+                    dir="ltr"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Display name</label>
+                  <input
+                    type="text"
+                    value={editingYearGroupDraft?.name ?? yearGroup.name}
+                    onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, name: e.target.value } : null)}
+                    className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">Colour</label>
+                  <ColorPickerWithFavorites
+                    value={editingYearGroupDraft?.color ?? yearGroup.color ?? '#4338E8'}
+                    onChange={(color) => setEditingYearGroupDraft(prev => prev ? { ...prev, color } : null)}
+                    className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
+                  />
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!editingYearGroupDraft) {
+                    setEditingYearGroup(null);
+                    return;
+                  }
+                  const idx = resolveYearGroupIndex(yearGroup);
+                  if (idx < 0) {
+                    toast.error('Could not save: class not found in list. Refresh settings and try again.');
+                    return;
+                  }
+                  handleUpdateYearGroup(
+                    idx,
+                    yearGroup.id,
+                    editingYearGroupDraft.name,
+                    editingYearGroupDraft.color
+                  );
+                  setEditingYearGroupDraft(null);
+                  setEditingYearGroup(null);
+                }}
+                className="p-1.5 text-[#4338E8] hover:bg-[#E9E6FF] rounded"
+                title="Save display name and colour"
+              >
+                <Save className="h-5 w-5" />
+              </button>
+            </div>
+            <div className="ml-8">
+              <label htmlFor={`edit-section-${yearGroup.id}`} className="block text-xs font-medium text-gray-600 mb-1">Section</label>
+              <YearGroupSectionSelect
+                id={`edit-section-${yearGroup.id}`}
+                value={section.id}
+                onChange={(next) => handleAssignYearGroupSection(yearGroup.id, next)}
+                sections={yearGroupSections}
+              />
+            </div>
+          </div>
+        ) : (
+          <div className="flex items-center gap-2">
+            {isOther && (
+              <label className="inline-flex shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>
+                <span className="sr-only">Select {yearGroup.name}</span>
+                <input
+                  type="checkbox"
+                  checked={isSelectedOther}
+                  onChange={(e) => {
+                    setSelectedOtherYearGroupIds((prev) => {
+                      const next = new Set(prev);
+                      if (e.target.checked) next.add(yearGroup.id);
+                      else next.delete(yearGroup.id);
+                      return next;
+                    });
+                  }}
+                  className="h-3.5 w-3.5 rounded border-[#E2E0EF] text-[#4338E8] focus:ring-[#4338E8]"
+                />
+              </label>
+            )}
+            <div className="shrink-0 cursor-grab active:cursor-grabbing text-[#C4C0D8]" title="Drag to reorder">
+              <GripVertical className="h-4 w-4" />
+            </div>
+            <span
+              className="h-2.5 w-2.5 shrink-0 rounded-full"
+              style={{ backgroundColor: yearGroup.color }}
+              aria-hidden
+            />
+            <button
+              type="button"
+              onClick={() => {
+                setEditingYearGroup(yearGroup.id);
+                setEditingYearGroupDraft({
+                  id: yearGroup.id,
+                  name: yearGroup.name,
+                  color: yearGroup.color || '#4338E8',
+                });
+              }}
+              className="min-w-0 flex-1 text-left"
+            >
+              <span className="ss-settings-class-name block truncate">
+                {yearGroup.name}
+              </span>
+              <span className="block truncate text-[10px] font-medium text-[#9CA3AF]">
+                {yearGroup.id}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                setEditingYearGroup(yearGroup.id);
+                setEditingYearGroupDraft({
+                  id: yearGroup.id,
+                  name: yearGroup.name,
+                  color: yearGroup.color || '#4338E8',
+                });
+              }}
+              className="grid h-8 w-8 place-items-center rounded-lg text-[#77738F] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
+              aria-label={`Edit ${yearGroup.name}`}
+            >
+              <ChevronRight className="h-4 w-4" />
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleDeleteYearGroup(yearGroup)}
+              className="grid h-8 w-8 place-items-center rounded-lg text-[#C4C0D8] hover:bg-red-50 hover:text-red-600"
+              aria-label={`Delete ${yearGroup.name}`}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <div className="ss-settings-content" ref={settingsContentRef}>
 
@@ -1256,18 +1462,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'yeargroups' && (
             <div className="space-y-4">
-              <div className="flex flex-wrap items-start justify-between gap-3">
-                <div className="min-w-0">
-                  <p className="ccd-page-lede ccd-page-lede--single text-[13px] font-medium leading-snug text-[#5C5878]">
-                    Changes save as you go. Classes appear in the header picker, timetable and half-term map.
-                  </p>
-                </div>
-                <div className="flex flex-wrap items-center gap-1.5">
+              <div className="flex flex-wrap items-center justify-end gap-1.5">
                   <button
                     type="button"
                     onClick={handleUndoSections}
                     disabled={sectionUndoStack.length === 0}
-                    className="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-35"
+                    className="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E0EF] bg-white text-[#5C5878] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-35"
                     title="Undo"
                     aria-label="Undo section changes"
                   >
@@ -1277,7 +1477,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     type="button"
                     onClick={handleRedoSections}
                     disabled={sectionRedoStack.length === 0}
-                    className="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-35"
+                    className="grid h-9 w-9 place-items-center rounded-xl border border-[#E2E0EF] bg-white text-[#5C5878] hover:border-[#bcb7f4] hover:text-[#1F1B4D] disabled:opacity-35"
                     title="Redo"
                     aria-label="Redo section changes"
                   >
@@ -1288,30 +1488,31 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     onClick={() => {
                       const sorted = [...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder);
                       const maxOrder = sorted.length ? Math.max(...sorted.map((s) => s.sortOrder)) : -1;
+                      const newId = `section-${Date.now()}`;
                       updateYearGroupSections((prev) => [
                         ...prev,
                         {
-                          id: `section-${Date.now()}`,
+                          id: newId,
                           label: 'New section',
                           sortOrder: maxOrder + 1,
-                          collapsed: false,
+                          collapsed: true,
                           yearGroupIds: [],
                         },
                       ]);
+                      setExpandedSectionIds((prev) => new Set(prev).add(newId));
                     }}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold text-[#1F1B4D] hover:border-[#bcb7f4]"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-bold text-[#1F1B4D] hover:border-[#bcb7f4]"
                   >
                     <Plus className="h-3.5 w-3.5" /> Section
                   </button>
                   <button
                     type="button"
                     onClick={() => setShowAddClassForm((v) => !v)}
-                    className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3 text-[12px] font-extrabold text-white hover:bg-[#3529d1]"
+                    className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3 text-[13px] font-extrabold text-white hover:bg-[#3529d1]"
                   >
                     <Plus className="h-3.5 w-3.5" />
                     {showAddClassForm ? 'Cancel' : 'Add class'}
                   </button>
-                </div>
               </div>
 
               <div className="space-y-3">
@@ -1437,8 +1638,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                   </div>
                 )}
 
-                <div className="space-y-3 max-h-[min(62vh,560px)] overflow-y-auto pr-0.5">
-                  <div className="space-y-3">
+                <div className="ss-settings-stage-grid">
                     {[...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder).map((section) => {
                       const yearGroupsInSection = section.yearGroupIds
                         .map(token => resolveYearGroupFromToken(tempYearGroups, token))
@@ -1453,38 +1653,51 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             )
                           : yearGroupsInSection;
                       const isOther = section.id === 'other';
-                      // Only open when explicitly expanded — undefined/true = collapsed
                       const sectionOpen =
-                        section.collapsed === false || (isOther && Boolean(otherQuery));
+                        expandedSectionIds.has(section.id) || (isOther && Boolean(otherQuery));
+                      const accent = keyStageAccent(section.id, section.label);
+                      const subjectGroups = groupClassesBySubject(visibleYearGroups);
+                      const showSubjectGroups = subjectGroups.length > 1;
+                      const toggleSection = () => {
+                        setExpandedSectionIds((prev) => {
+                          const next = new Set(prev);
+                          if (next.has(section.id)) next.delete(section.id);
+                          else next.add(section.id);
+                          return next;
+                        });
+                      };
                       return (
-                        <div key={section.id} className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-[#FAFAFC]">
-                          <div className="flex w-full items-center gap-2 px-3 py-2">
-                          <button
-                            type="button"
-                            onClick={() =>
-                              updateYearGroupSections((prev) =>
-                                prev.map((s) =>
-                                  s.id === section.id
-                                    ? { ...s, collapsed: section.collapsed === false }
-                                    : s,
-                                ),
-                              )
-                            }
-                            aria-expanded={sectionOpen}
-                            aria-label={editingSectionId === section.id ? `Expand or collapse ${section.label}` : undefined}
-                            className={`flex items-center gap-2 text-left ${editingSectionId === section.id ? 'flex-shrink-0' : 'flex-1 min-w-0'}`}
+                        <div
+                          key={section.id}
+                          className={`ss-settings-stage-card ${sectionOpen ? 'is-open' : ''}`}
+                          style={{ borderColor: sectionOpen ? accent.bar : undefined }}
+                        >
+                          <div
+                            className="ss-settings-stage-card-head"
+                            style={{ background: accent.tint }}
                           >
-                            {sectionOpen ? (
-                              <ChevronDown className="h-4 w-4 text-[#5C5878] flex-shrink-0" />
-                            ) : (
-                              <ChevronRight className="h-4 w-4 text-[#5C5878] flex-shrink-0" />
-                            )}
-                            {editingSectionId !== section.id && (
-                              <span className="flex-1 text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#1F1B4D]">
-                                {section.label}
-                              </span>
-                            )}
-                          </button>
+                            <button
+                              type="button"
+                              onClick={toggleSection}
+                              aria-expanded={sectionOpen}
+                              className={`flex min-w-0 items-center gap-2 text-left ${editingSectionId === section.id ? 'flex-shrink-0' : 'flex-1'}`}
+                            >
+                              {sectionOpen ? (
+                                <ChevronDown className="h-4 w-4 flex-shrink-0" style={{ color: accent.label }} />
+                              ) : (
+                                <ChevronRight className="h-4 w-4 flex-shrink-0" style={{ color: accent.label }} />
+                              )}
+                              <span
+                                className="h-2 w-2 shrink-0 rounded-full"
+                                style={{ backgroundColor: accent.bar }}
+                                aria-hidden
+                              />
+                              {editingSectionId !== section.id && (
+                                <span className="ss-settings-stage-label truncate" style={{ color: accent.label }}>
+                                  {section.label}
+                                </span>
+                              )}
+                            </button>
                             {editingSectionId === section.id && (
                               <input
                                 type="text"
@@ -1515,7 +1728,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 <button
                                   type="button"
                                   onClick={(e) => { e.stopPropagation(); setEditingSectionId(section.id); setEditingSectionLabel(section.label); }}
-                                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-gray-200 rounded"
+                                  className="p-1 text-gray-500 hover:text-gray-700 hover:bg-white/60 rounded"
                                   title="Edit section name"
                                 >
                                   <Edit3 className="h-3.5 w-3.5" />
@@ -1538,12 +1751,15 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                 )}
                               </>
                             )}
-                            <span className="rounded-md bg-white px-1.5 py-0.5 text-[10px] font-bold text-[#5C5878] ring-1 ring-[#E2E0EF]">
+                            <span
+                              className="ss-settings-stage-count"
+                              style={{ background: accent.badge, color: accent.badgeText }}
+                            >
                               {yearGroupsInSection.length}
                             </span>
                           </div>
                           {isOther && sectionOpen && (
-                            <div className="space-y-2 border-t border-[#E2E0EF] p-2">
+                            <div className="space-y-2 border-t border-[#E2E0EF] px-2.5 py-2" style={{ background: accent.tint }}>
                               <label htmlFor="other-year-group-search" className="sr-only">Search Other year groups</label>
                               <div className="relative">
                                 <Search className="absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#5C5878] pointer-events-none" />
@@ -1553,7 +1769,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                   value={otherYearGroupQuery}
                                   onChange={(e) => setOtherYearGroupQuery(e.target.value)}
                                   placeholder="Search Other year groups"
-                                  className="h-10 w-full rounded-lg border border-[#E2E0EF] pl-8 pr-3 text-sm text-[#1F1B4D] placeholder:text-[#8B879E] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+                                  className="h-10 w-full rounded-lg border border-[#E2E0EF] bg-white pl-8 pr-3 text-sm text-[#1F1B4D] placeholder:text-[#8B879E] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
                                 />
                               </div>
                               {visibleYearGroups.length > 0 && (
@@ -1572,7 +1788,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         return next;
                                       });
                                     }}
-                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-gray-100 hover:bg-gray-200 rounded-lg"
+                                    className="inline-flex min-h-[40px] items-center px-3 py-1.5 text-sm font-medium text-gray-700 bg-white hover:bg-gray-100 rounded-lg border border-[#E2E0EF]"
                                   >
                                     {visibleYearGroups.every((yg) => selectedOtherYearGroupIds.has(yg.id))
                                       ? 'Clear visible'
@@ -1602,7 +1818,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             </div>
                           )}
                           {sectionOpen && (
-                            <div className="space-y-1 border-t border-[#E2E0EF] bg-white p-1.5">
+                            <div className="ss-settings-stage-body space-y-2">
                               {visibleYearGroups.length === 0 ? (
                                 <div className="flex min-h-[3rem] items-center justify-center rounded-xl border border-dashed border-[#E2E0EF] bg-[#F4F3FA]/50 px-2 py-3">
                                   <p className="text-center text-[12px] text-[#77738F]">
@@ -1611,185 +1827,48 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                       : 'Empty — add a class or move one here.'}
                                   </p>
                                 </div>
-                              ) : (
-                                visibleYearGroups.map((yearGroup) => {
-                                  const isSelectedOther = selectedOtherYearGroupIds.has(yearGroup.id);
+                              ) : showSubjectGroups ? (
+                                subjectGroups.map((sg) => {
+                                  const subjectKey = `${section.id}::${sg.subject.id}`;
+                                  const subjectOpen = expandedSubjectKeys.has(subjectKey);
                                   return (
-                                    <div
-                                      key={yearGroup.id}
-                                      draggable
-                                      onDragStart={(e) => {
-                                        const target = e.target as HTMLElement;
-                                        if (target.closest('select, input, button, label, a')) {
-                                          e.preventDefault();
-                                          return;
-                                        }
-                                        handleYearGroupDragStart(e, yearGroup.id);
-                                      }}
-                                      onDragOver={(e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; }}
-                                      onDrop={(e) => {
-                                        e.preventDefault();
-                                        const draggedId = draggedYearGroup || e.dataTransfer.getData('text/plain') || null;
-                                        if (draggedId) handleYearGroupDropInSection(draggedId, yearGroup.id, section.id);
-                                        handleYearGroupDragEnd();
-                                      }}
-                                      onDragEnd={handleYearGroupDragEnd}
-                                      className={`rounded-xl px-2.5 py-2 transition-colors ${
-                                        draggedYearGroup === yearGroup.id
-                                          ? 'border border-[#bcb7f4] bg-[#E9E6FF] opacity-50'
-                                          : editingYearGroup === yearGroup.id
-                                            ? 'border border-[#E9E6FF] bg-[#F7F6FC]'
-                                            : 'border border-transparent hover:bg-[#F4F3FA]'
-                                      }`}
-                                    >
-                                      {editingYearGroup === yearGroup.id ? (
-                                        <div className="flex flex-col gap-2">
-                                          <div className="flex items-start gap-3">
-                                            <div className="flex-shrink-0 cursor-move pt-1" title="Drag to reorder within this section" aria-hidden>
-                                              <GripVertical className="h-5 w-5 text-gray-400" />
-                                            </div>
-                                            <div className="flex-1 grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                              <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">ID (read-only)</label>
-                                                <input
-                                                  type="text"
-                                                  value={yearGroup.id}
-                                                  readOnly
-                                                  aria-readonly="true"
-                                                  className="w-full px-2 py-1 border border-gray-200 rounded text-sm bg-gray-100 text-gray-600 cursor-not-allowed"
-                                                  dir="ltr"
-                                                />
-                                              </div>
-                                              <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">Display name</label>
-                                                <input
-                                                  type="text"
-                                                  value={editingYearGroupDraft?.name ?? yearGroup.name}
-                                                  onChange={(e) => setEditingYearGroupDraft(prev => prev ? { ...prev, name: e.target.value } : null)}
-                                                  className="w-full px-2 py-1 border border-gray-300 rounded text-sm"
-                                                />
-                                              </div>
-                                              <div>
-                                                <label className="block text-xs font-medium text-gray-600 mb-1">Colour</label>
-                                                <ColorPickerWithFavorites
-                                                  value={editingYearGroupDraft?.color ?? yearGroup.color ?? '#4338E8'}
-                                                  onChange={(color) => setEditingYearGroupDraft(prev => prev ? { ...prev, color } : null)}
-                                                  className="w-10 h-8 rounded border border-gray-300 cursor-pointer"
-                                                />
-                                              </div>
-                                            </div>
-                                            <button
-                                              type="button"
-                                              onClick={() => {
-                                                if (!editingYearGroupDraft) {
-                                                  setEditingYearGroup(null);
-                                                  return;
-                                                }
-                                                const idx = resolveYearGroupIndex(yearGroup);
-                                                if (idx < 0) {
-                                                  toast.error('Could not save: class not found in list. Refresh settings and try again.');
-                                                  return;
-                                                }
-                                                handleUpdateYearGroup(
-                                                  idx,
-                                                  yearGroup.id,
-                                                  editingYearGroupDraft.name,
-                                                  editingYearGroupDraft.color
-                                                );
-                                                setEditingYearGroupDraft(null);
-                                                setEditingYearGroup(null);
-                                              }}
-                                              className="p-1.5 text-[#4338E8] hover:bg-[#E9E6FF] rounded"
-                                              title="Save display name and colour"
-                                            >
-                                              <Save className="h-5 w-5" />
-                                            </button>
-                                          </div>
-                                          <div className="ml-8">
-                                            <label htmlFor={`edit-section-${yearGroup.id}`} className="block text-xs font-medium text-gray-600 mb-1">Section</label>
-                                            <YearGroupSectionSelect
-                                              id={`edit-section-${yearGroup.id}`}
-                                              value={section.id}
-                                              onChange={(next) => handleAssignYearGroupSection(yearGroup.id, next)}
-                                              sections={yearGroupSections}
-                                            />
-                                          </div>
-                                        </div>
-                                      ) : (
-                                        <div className="flex items-center gap-2">
-                                          {isOther && (
-                                            <label className="inline-flex shrink-0 items-center" onMouseDown={(e) => e.stopPropagation()}>
-                                              <span className="sr-only">Select {yearGroup.name}</span>
-                                              <input
-                                                type="checkbox"
-                                                checked={isSelectedOther}
-                                                onChange={(e) => {
-                                                  setSelectedOtherYearGroupIds((prev) => {
-                                                    const next = new Set(prev);
-                                                    if (e.target.checked) next.add(yearGroup.id);
-                                                    else next.delete(yearGroup.id);
-                                                    return next;
-                                                  });
-                                                }}
-                                                className="h-3.5 w-3.5 rounded border-[#E2E0EF] text-[#4338E8] focus:ring-[#4338E8]"
-                                              />
-                                            </label>
-                                          )}
-                                          <div className="shrink-0 cursor-grab active:cursor-grabbing text-[#C4C0D8]" title="Drag to reorder">
-                                            <GripVertical className="h-4 w-4" />
-                                          </div>
-                                          <span
-                                            className="h-2.5 w-2.5 shrink-0 rounded-full"
-                                            style={{ backgroundColor: yearGroup.color }}
-                                            aria-hidden
-                                          />
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setEditingYearGroup(yearGroup.id);
-                                              setEditingYearGroupDraft({
-                                                id: yearGroup.id,
-                                                name: yearGroup.name,
-                                                color: yearGroup.color || '#4338E8',
-                                              });
-                                            }}
-                                            className="min-w-0 flex-1 text-left"
-                                          >
-                                            <span className="block truncate text-[13px] font-bold text-[#1F1B4D]">
-                                              {yearGroup.name}
-                                            </span>
-                                            <span className="block truncate text-[10px] font-medium text-[#9CA3AF]">
-                                              {yearGroup.id}
-                                            </span>
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => {
-                                              setEditingYearGroup(yearGroup.id);
-                                              setEditingYearGroupDraft({
-                                                id: yearGroup.id,
-                                                name: yearGroup.name,
-                                                color: yearGroup.color || '#4338E8',
-                                              });
-                                            }}
-                                            className="grid h-8 w-8 place-items-center rounded-lg text-[#77738F] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
-                                            aria-label={`Edit ${yearGroup.name}`}
-                                          >
-                                            <ChevronRight className="h-4 w-4" />
-                                          </button>
-                                          <button
-                                            type="button"
-                                            onClick={() => void handleDeleteYearGroup(yearGroup)}
-                                            className="grid h-8 w-8 place-items-center rounded-lg text-[#C4C0D8] hover:bg-red-50 hover:text-red-600"
-                                            aria-label={`Delete ${yearGroup.name}`}
-                                          >
-                                            <Trash2 className="h-3.5 w-3.5" />
-                                          </button>
+                                    <div key={subjectKey} className="ss-settings-subject-group">
+                                      <button
+                                        type="button"
+                                        className="ss-settings-subject-head"
+                                        aria-expanded={subjectOpen}
+                                        onClick={() => {
+                                          setExpandedSubjectKeys((prev) => {
+                                            const next = new Set(prev);
+                                            if (next.has(subjectKey)) next.delete(subjectKey);
+                                            else next.add(subjectKey);
+                                            return next;
+                                          });
+                                        }}
+                                      >
+                                        {subjectOpen ? (
+                                          <ChevronDown className="h-3.5 w-3.5 text-[#77738F]" />
+                                        ) : (
+                                          <ChevronRight className="h-3.5 w-3.5 text-[#77738F]" />
+                                        )}
+                                        <span className="ss-settings-subject-dot" style={{ background: sg.subject.color }} />
+                                        <span className="flex-1 truncate">{sg.subject.label}</span>
+                                        <span className="text-[11px] font-bold tabular-nums text-[#77738F]">{sg.classes.length}</span>
+                                      </button>
+                                      {subjectOpen && (
+                                        <div className="ss-settings-subject-body space-y-1">
+                                          {sg.classes.map((yearGroup) => renderYearGroupRow(yearGroup, section, isOther))}
                                         </div>
                                       )}
                                     </div>
                                   );
                                 })
+                              ) : (
+                                <div className="space-y-1">
+                                  {(subjectGroups[0]?.classes ?? visibleYearGroups).map((yearGroup) =>
+                                    renderYearGroupRow(yearGroup, section, isOther),
+                                  )}
+                                </div>
                               )}
                               {addInSectionId === section.id ? (
                                 <div className="p-3 rounded-lg border border-[#E2E0EF] bg-[#E9E6FF]/60 space-y-3">
@@ -1854,7 +1933,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     setAddInSectionId(section.id);
                                     setNewYearGroupSectionId(section.id);
                                   }}
-                                  className="inline-flex min-h-[40px] w-full sm:w-auto items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#4338E8] bg-[#E9E6FF] hover:bg-[#E9E6FF] rounded-lg"
+                                  className="inline-flex min-h-[40px] w-full items-center justify-center gap-1.5 px-3 py-1.5 text-sm font-medium text-[#4338E8] bg-[#E9E6FF] hover:bg-[#E0DCF8] rounded-lg"
                                 >
                                   <Plus className="h-4 w-4" /> Add year group
                                 </button>
@@ -1864,7 +1943,6 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         </div>
                       );
                     })}
-                  </div>
                 </div>
               </div>
 
@@ -2947,48 +3025,50 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'resource-links' && (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-[#E2E0EF] bg-white p-4 sm:p-5">
-                <h3 className="text-sm font-extrabold text-[#1F1B4D]">School name</h3>
-                <p className="mt-1 text-xs text-[#77738F]">Shown in places that refer to your school. Saves as you type.</p>
-                <input
-                  type="text"
-                  value={tempSettings.schoolName || ''}
-                  onChange={(e) => {
-                    const schoolName = e.target.value;
-                    setTempSettings((prev) => ({ ...prev, schoolName }));
-                    updateSettings({ schoolName });
-                  }}
-                  onBlur={() => toastSettingsSaved('School name saved')}
-                  placeholder="e.g. Oaklands Primary"
-                  className="mt-3 w-full max-w-md rounded-xl border border-[#E2E0EF] bg-[#FAFAFC] px-3 py-2.5 text-sm text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/30"
-                />
-              </div>
-
-              <div className="rounded-2xl border border-[#E2E0EF] bg-white p-4 sm:p-5">
-                <h3 className="text-sm font-extrabold text-[#1F1B4D]">Button tips</h3>
-                <p className="mt-1 text-xs text-[#77738F]">Short explanations when you hover toolbar buttons.</p>
-                <label className="mt-3 flex cursor-pointer items-center gap-3">
+              <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border border-[#E2E0EF] bg-white p-4 sm:p-5">
+                  <h3 className="text-[15px] font-extrabold text-[#1F1B4D]">School name</h3>
+                  <p className="mt-1 text-[13px] font-medium text-[#5C5878]">Shown where the app refers to your school. Saves as you type.</p>
                   <input
-                    type="checkbox"
-                    checked={settings.showButtonHelp !== false}
+                    type="text"
+                    value={tempSettings.schoolName || ''}
                     onChange={(e) => {
-                      const checked = e.target.checked;
-                      setTempSettings((prev) => ({ ...prev, showButtonHelp: checked }));
-                      updateSettings({ showButtonHelp: checked });
-                      toastSettingsSaved(checked ? 'Hover tips on' : 'Hover tips off');
+                      const schoolName = e.target.value;
+                      setTempSettings((prev) => ({ ...prev, schoolName }));
+                      updateSettings({ schoolName });
                     }}
-                    className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
+                    onBlur={() => toastSettingsSaved('School name saved')}
+                    placeholder="e.g. Oaklands Primary"
+                    className="mt-3 w-full rounded-xl border border-[#E2E0EF] bg-[#FAFAFC] px-3 py-2.5 text-[15px] text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/30"
                   />
-                  <span className="text-sm font-medium text-[#1F1B4D]">Show hover help for buttons</span>
-                </label>
+                </div>
+
+                <div className="rounded-2xl border border-[#E2E0EF] bg-white p-4 sm:p-5">
+                  <h3 className="text-[15px] font-extrabold text-[#1F1B4D]">Button tips</h3>
+                  <p className="mt-1 text-[13px] font-medium text-[#5C5878]">Short explanations when you hover toolbar buttons.</p>
+                  <label className="mt-4 flex cursor-pointer items-center gap-3 rounded-xl border border-[#E2E0EF] bg-[#FAFAFC] px-3 py-3">
+                    <input
+                      type="checkbox"
+                      checked={settings.showButtonHelp !== false}
+                      onChange={(e) => {
+                        const checked = e.target.checked;
+                        setTempSettings((prev) => ({ ...prev, showButtonHelp: checked }));
+                        updateSettings({ showButtonHelp: checked });
+                        toastSettingsSaved(checked ? 'Hover tips on' : 'Hover tips off');
+                      }}
+                      className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
+                    />
+                    <span className="text-[15px] font-semibold text-[#1F1B4D]">Show hover help for buttons</span>
+                  </label>
+                </div>
               </div>
 
               <div className="rounded-2xl border border-[#E2E0EF] bg-white p-4 sm:p-5">
                 <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
                   <div>
-                    <h3 className="text-sm font-extrabold text-[#1F1B4D]">Activity resource labels</h3>
-                    <p className="mt-1 text-xs text-[#77738F]">
-                      Names and icons for links on an activity (video, audio, slides…). Changes save automatically.
+                    <h3 className="text-[15px] font-extrabold text-[#1F1B4D]">Activity resource labels</h3>
+                    <p className="mt-1 text-[13px] font-medium text-[#5C5878]">
+                      Names and icons for links on an activity. Changes save automatically.
                     </p>
                   </div>
                   <button
@@ -3000,14 +3080,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         toastSettingsSaved('Resource labels reset');
                       }
                     }}
-                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium text-[#4338E8] hover:bg-[#E9E6FF]"
+                    className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-semibold text-[#4338E8] hover:bg-[#E9E6FF]"
                   >
                     <RotateCcw className="h-4 w-4" />
                     Reset
                   </button>
                 </div>
 
-                <div className="mt-4 space-y-3">
+                <div className="ss-settings-resource-grid mt-4">
                   {tempResourceLinks.map((link, index) => {
                     const IconComponent = getIconComponent(link.iconName);
                     const persist = (updated: ResourceLinkConfig[]) => {
@@ -3015,8 +3095,27 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       updateResourceLinks(updated);
                     };
                     return (
-                      <div key={link.key} className="flex flex-wrap items-center gap-3 rounded-xl border border-[#E2E0EF] bg-[#FAFAFC] p-3">
-                        <IconComponent className="h-5 w-5 shrink-0 text-[#77738F]" />
+                      <div key={link.key} className="ss-settings-resource-tile">
+                        <div className="flex items-center gap-2">
+                          <span className="grid h-9 w-9 place-items-center rounded-lg bg-[#E9E6FF] text-[#4338E8]">
+                            <IconComponent className="h-4 w-4" />
+                          </span>
+                          <select
+                            value={link.iconName}
+                            onChange={(e) => {
+                              const updated = [...tempResourceLinks];
+                              updated[index] = { ...updated[index], iconName: e.target.value };
+                              persist(updated);
+                              toastSettingsSaved('Icon saved');
+                            }}
+                            className="min-w-0 flex-1 rounded-lg border border-[#E2E0EF] bg-white px-2 py-1.5 text-[13px] font-medium focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/30"
+                            aria-label={`Icon for ${link.key}`}
+                          >
+                            {getAvailableIcons().map((icon) => (
+                              <option key={icon.name} value={icon.name}>{icon.label}</option>
+                            ))}
+                          </select>
+                        </div>
                         <input
                           type="text"
                           value={link.label}
@@ -3026,26 +3125,11 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             persist(updated);
                           }}
                           onBlur={() => toastSettingsSaved('Label saved')}
-                          className="min-w-[10rem] flex-1 rounded-lg border border-[#E2E0EF] bg-white px-3 py-2 text-sm focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/30"
+                          className="mt-2 w-full rounded-lg border border-[#E2E0EF] bg-white px-3 py-2 text-[14px] font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/30"
                           placeholder="Label"
                           aria-label={`Label for ${link.key}`}
                         />
-                        <select
-                          value={link.iconName}
-                          onChange={(e) => {
-                            const updated = [...tempResourceLinks];
-                            updated[index] = { ...updated[index], iconName: e.target.value };
-                            persist(updated);
-                            toastSettingsSaved('Icon saved');
-                          }}
-                          className="rounded-lg border border-[#E2E0EF] bg-white px-3 py-2 text-sm focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/30"
-                          aria-label={`Icon for ${link.key}`}
-                        >
-                          {getAvailableIcons().map((icon) => (
-                            <option key={icon.name} value={icon.name}>{icon.label}</option>
-                          ))}
-                        </select>
-                        <label className="flex cursor-pointer items-center gap-2 text-sm text-[#1F1B4D]">
+                        <label className="mt-2 flex cursor-pointer items-center gap-2 text-[13px] font-semibold text-[#1F1B4D]">
                           <input
                             type="checkbox"
                             checked={link.enabled}
@@ -3057,7 +3141,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             }}
                             className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                           />
-                          Show
+                          Show on activities
                         </label>
                       </div>
                     );
@@ -3065,8 +3149,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
               </div>
 
-              <div className="rounded-2xl border border-dashed border-[#E2E0EF] bg-[#FAFAFC] p-4 text-sm text-[#5C5878]">
-                <p className="font-semibold text-[#1F1B4D]">Looking for timetable or half-terms?</p>
+              <div className="rounded-2xl border border-dashed border-[#E2E0EF] bg-[#FAFAFC] p-4 text-[13px] font-medium text-[#5C5878]">
+                <p className="text-[15px] font-extrabold text-[#1F1B4D]">Looking for timetable or half-terms?</p>
                 <p className="mt-1">
                   Weekly slots live in <strong>Planner → Timetable</strong>. The year map is under <strong>Half-terms</strong> in the sidebar. Partner organisations are under <strong>Partner Hubs</strong>.
                 </p>
@@ -3075,7 +3159,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           )}
 
           {activeTab === 'admin' && (
-            <div ref={adminTabContentRef} className="min-h-[620px] w-full flex flex-col">
+            <div ref={adminTabContentRef} className="flex min-h-0 w-full flex-1 flex-col">
               <CustomObjectivesAdmin embedded={true} />
             </div>
           )}
@@ -3093,15 +3177,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           )}
 
           {activeTab === 'users' && showUserManagement && (
-            <AuthGuard requireCanManageUsers fallback={<div className="p-4 text-gray-600">You don’t have permission to manage users.</div>}>
-              <div className="space-y-3">
-                <p className="text-sm text-gray-600">User information, user types (roles), and password reset. Use Actions → Manage Access to assign Music Hub areas.</p>
-                <MyHubAdministration />
-                <div className="border border-[#E2E0EF] bg-gradient-to-br from-[#E9E6FF] to-[#F4F3FA] rounded-lg p-6 shadow-sm">
-                  <UserManagement />
-                </div>
-              </div>
-            </AuthGuard>
+            <div className="ss-settings-users-panel min-h-0 flex-1">
+              <UserManagement />
+            </div>
+          )}
+          {activeTab === 'users' && !showUserManagement && (
+            <div className="rounded-2xl border border-[#E2E0EF] bg-white p-6 text-[14px] font-medium text-[#5C5878]">
+              You don’t have permission to manage users.
+            </div>
           )}
 
           {activeTab === 'hub-content' && isAdmin && (

@@ -56,9 +56,11 @@ export function ObjectiveSelector({
       const visible = data.filter((yg) => !isSystemUnassignedPool(yg));
       setYearGroups(visible);
       
-      // Auto-expand first year group
+      // Open with first subject expanded so group titles + "N objectives"
+      // counts are visible; keep individual "I can" statements collapsed.
       if (visible.length > 0) {
         setExpandedYearGroups(new Set([visible[0].id]));
+        setExpandedAreas(new Set());
       }
     } catch (err) {
       console.error('Failed to load objectives:', err);

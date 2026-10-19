@@ -29,6 +29,7 @@ export function NestedStandardsBrowser({
   const [internalIsOpen, setInternalIsOpen] = useState(false);
   const [expandedYearGroups, setExpandedYearGroups] = useState<string[]>([]);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
+  /** Area/"I can" groups always start collapsed until clicked. */
   const [expandedAreas, setExpandedAreas] = useState<string[]>([]);
   
   // Custom objectives state
@@ -158,6 +159,22 @@ export function NestedStandardsBrowser({
   const getObjectivesForArea = (areaId: string) => {
     return customObjectives.filter(obj => obj.area_id === areaId);
   };
+
+  // On open: show strand/group titles with counts; keep "I can" rows collapsed.
+  useEffect(() => {
+    if (!isOpen || loading || customYearGroups.length === 0) return;
+    const ygIds = customYearGroups.map((yg) => yg.id);
+    const sectionKeys: string[] = [];
+    customYearGroups.forEach((yg) => {
+      Object.keys(getAreasGroupedBySection(yg.id)).forEach((section) => {
+        sectionKeys.push(`${yg.id}-${section}`);
+      });
+    });
+    setExpandedYearGroups(ygIds);
+    setExpandedSections(sectionKeys);
+    setExpandedAreas([]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- intentionally when panel opens / data arrives
+  }, [isOpen, loading, customYearGroups, customAreas]);
 
   const getStandardsLabel = () => {
     const totalSelected = selectedObjectiveIds.length;

@@ -8,6 +8,7 @@ export type SettingsSectionId =
   | 'objectives'
   | 'preferences'
   | 'downloads'
+  | 'users'
   | 'school';
 
 export const DEFAULT_SETTINGS_SECTION: SettingsSectionId = 'classes';
@@ -23,7 +24,7 @@ export interface SettingsSectionDef {
   /** Keywords for the left-nav search */
   keywords: string[];
   /** Only show when the callback returns true (role gates) */
-  requires?: 'always' | 'downloads' | 'school';
+  requires?: 'always' | 'downloads' | 'users' | 'school';
 }
 
 /** Most-used first. Keep teacher language free of jargon. */
@@ -32,7 +33,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     id: 'classes',
     label: 'My classes',
     title: 'My classes',
-    helper: 'Add, rename and group the classes you teach. These appear in the header class picker, timetable and half-term map.',
+    helper: 'Add and group the classes you teach.',
     keywords: ['class', 'year', 'group', 'stage', 'eyfs', 'ks1', 'ks2', 'add'],
     requires: 'always',
   },
@@ -40,7 +41,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     id: 'folders',
     label: 'Activity folders',
     title: 'Activity folders',
-    helper: 'Choose which folders each class can see in the Activity Library.',
+    helper: 'Which folders each class can see.',
     keywords: ['folder', 'category', 'activity', 'library', 'visibility'],
     requires: 'always',
   },
@@ -48,7 +49,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     id: 'objectives',
     label: 'Learning objectives',
     title: 'Learning objectives',
-    helper: 'Manage the learning objectives you can attach to lessons and activities.',
+    helper: 'Objectives for lessons and activities.',
     keywords: ['objective', 'curriculum', 'standard', 'target'],
     requires: 'always',
   },
@@ -56,7 +57,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     id: 'preferences',
     label: 'Preferences',
     title: 'Preferences',
-    helper: 'Small display choices — hover tips, school name, and activity resource labels.',
+    helper: 'School name, tips and resource labels.',
     keywords: ['help', 'tooltip', 'resource', 'link', 'school', 'name', 'appearance'],
     requires: 'always',
   },
@@ -64,16 +65,34 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     id: 'downloads',
     label: 'Downloads',
     title: 'Downloads',
-    helper: 'Files you have downloaded, and download stats if your role allows it.',
+    helper: 'Your downloads and stats.',
     keywords: ['download', 'file', 'analytics', 'stats'],
     requires: 'downloads',
+  },
+  {
+    id: 'users',
+    label: 'Users',
+    title: 'Users',
+    helper: 'Invite and manage who can use Studio Score.',
+    keywords: [
+      'user',
+      'people',
+      'invite',
+      'role',
+      'admin',
+      'password',
+      'access',
+      'csv',
+      'school',
+    ],
+    requires: 'users',
   },
   {
     id: 'school',
     label: 'School tools',
     title: 'School tools',
-    helper: 'Users, hubs, branding, packs and data — only shown if your account can manage them.',
-    keywords: ['admin', 'user', 'hub', 'branding', 'pack', 'backup', 'data', 'system'],
+    helper: 'Hubs, branding and data.',
+    keywords: ['admin', 'hub', 'branding', 'pack', 'backup', 'data', 'system'],
     requires: 'school',
   },
 ];
@@ -82,9 +101,8 @@ export function isSettingsSectionId(value: string): value is SettingsSectionId {
   return SETTINGS_SECTIONS.some((s) => s.id === value);
 }
 
-/** Sub-panels inside School tools (role-gated). */
+/** Sub-panels inside School tools (role-gated). Users is a top-level section. */
 export type SchoolToolsPanelId =
-  | 'users'
   | 'hub-admin'
   | 'hub-content'
   | 'branding'
@@ -97,7 +115,6 @@ export const SCHOOL_TOOLS_PANELS: {
   label: string;
   helper: string;
 }[] = [
-  { id: 'users', label: 'People', helper: 'Invite and manage who can use Studio Score at your school.' },
   { id: 'hub-admin', label: 'Partner hubs', helper: 'Edit hub pages, members and resources you administer.' },
   { id: 'hub-content', label: 'Hub content', helper: 'Approve and manage content shared into hubs.' },
   { id: 'branding', label: 'Login & footer', helper: 'Customise the login screen and footer for your deployment.' },
