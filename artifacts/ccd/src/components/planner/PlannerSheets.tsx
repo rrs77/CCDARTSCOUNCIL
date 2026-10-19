@@ -19,6 +19,7 @@ import type { PlannerData } from './usePlannerData';
 import {
   HALF_TERMS,
   isoWeek,
+  normalizeTime,
   planStatusLabel,
   plural,
   readableInk,
@@ -140,6 +141,13 @@ export function LessonDetailsSheet({
 
   const setStatus = (status: LessonPlan['status']) =>
     data.savePlans([{ ...plan, status }], status === 'completed' ? 'Marked as taught.' : `Marked as ${planStatusLabel[status].toLowerCase()}.`);
+
+  /** Remove the lesson from this timetable outline — the dashed slot returns. */
+  const clearFromSlot = () => {
+    void data
+      .savePlans([{ ...plan, status: 'cancelled' }], entry.slot ? 'Cleared — timetable slot is empty again.' : 'Lesson cleared.')
+      .then(onClose);
+  };
 
   const date = new Date(plan.date);
   const isPast = date < new Date(new Date().toDateString());
@@ -286,6 +294,15 @@ export function LessonDetailsSheet({
             <button type="button" className={btn} onClick={() => onOpenLibrary(plan.className)}>
               <ExternalLink className="h-4 w-4" /> Open lessons for {cls?.name || 'class'}
             </button>
+            {plan.status !== 'cancelled' && (
+              <button
+                type="button"
+                className={`${btn} border-[#FECACA] text-[#B91C1C] hover:bg-[#FEF2F2]`}
+                onClick={clearFromSlot}
+              >
+                {entry.slot ? 'Clear from slot' : 'Remove from planner'}
+              </button>
+            )}
           </div>
           <PolishWithAIModal
             open={polishOpen}
@@ -435,13 +452,20 @@ export function SchedulePickerSheet({
       '',
   );
   const [date, setDate] = useState(ymd(initial.date));
-  const [time, setTime] = useState(initial.time || '');
+  const [time, setTime] = useState(initial.time ? normalizeTime(initial.time) : '');
   const [query, setQuery] = useState('');
   const [classMenuOpen, setClassMenuOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
   const classMenuRef = useRef<HTMLDivElement>(null);
   const cache = data.lessonCache[classId];
   const { ensureLessons } = data;
+
+  // Keep picker pre-filtered when opening from a timetable outline.
+  useEffect(() => {
+    if (initial.classId) setClassId(initial.classId);
+    setDate(ymd(initial.date));
+    setTime(initial.time ? normalizeTime(initial.time) : '');
+  }, [initial.classId, initial.date, initial.time]);
 
   const folderGroups = useMemo(() => {
     const folders = data.folders?.length
@@ -545,7 +569,8 @@ export function SchedulePickerSheet({
       status: 'planned',
       lessonNumber: n,
       title: l.title || l.lessonName || `Lesson ${n}`,
-      time: time || undefined,
+      // Keep the timetable slot's start time so the outline matches after save.
+      time: time ? normalizeTime(time) : undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -670,6 +695,7 @@ export function SchedulePickerSheet({
             <button
               key={n}
               type="button"
+              data-lesson-pick={n}
               onClick={() => choose(n)}
               className="flex w-full items-center gap-3 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2.5 text-left hover:border-[#bcb7f4] hover:bg-[#F4F3FA]"
             >

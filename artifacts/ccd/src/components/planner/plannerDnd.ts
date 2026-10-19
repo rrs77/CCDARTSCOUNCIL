@@ -1,5 +1,5 @@
 import type { LessonPlan } from '../../contexts/DataContext';
-import { isoWeek, timeToMinutes, ymd } from './plannerModel';
+import { isoWeek, normalizeTime, timeToMinutes, ymd } from './plannerModel';
 
 /** react-dnd item type for scheduled lesson cards in the Studio Score planner. */
 export const PLANNER_LESSON_DND = 'planner-lesson';
@@ -50,7 +50,8 @@ export function movePlanToDate(
   time?: string,
 ): LessonPlan {
   const nextTime = time !== undefined ? time || undefined : plan.time;
-  const hhmm = nextTime && /^\d{1,2}:\d{2}/.test(nextTime) ? nextTime.slice(0, 5) : '12:00';
+  const normalized = nextTime ? normalizeTime(nextTime) : undefined;
+  const hhmm = normalized && /^\d{2}:\d{2}$/.test(normalized) ? normalized : '12:00';
   const d = new Date(`${ymd(targetDate)}T${hhmm}:00`);
   return {
     ...plan,
@@ -58,5 +59,20 @@ export function movePlanToDate(
     week: isoWeek(d),
     time: nextTime,
     updatedAt: new Date(),
+  };
+}
+
+/** Drop a scheduled lesson onto a timetable outline slot (date + time + class). */
+export function fillOutlineSlot(
+  plan: LessonPlan,
+  targetDate: Date,
+  slot: { classId: string; time: string },
+): LessonPlan {
+  const next = movePlanToDate(plan, targetDate, slot.time);
+  return {
+    ...next,
+    className: slot.classId,
+    time: slot.time,
+    status: plan.status === 'cancelled' ? 'planned' : plan.status,
   };
 }

@@ -114,6 +114,14 @@ export const pad = (n: number) => String(n).padStart(2, '0');
 
 export const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
 
+/** Normalize `9:00` / `09:00` / `9:0` so timetable slots match scheduled plans. */
+export const normalizeTime = (t?: string | null): string => {
+  if (!t) return '';
+  const m = String(t).trim().match(/^(\d{1,2}):(\d{1,2})/);
+  if (!m) return String(t).trim();
+  return `${pad(parseInt(m[1], 10) || 0)}:${pad(parseInt(m[2], 10) || 0)}`;
+};
+
 export const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 
 export const addDays = (d: Date, n: number) => {

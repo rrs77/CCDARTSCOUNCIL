@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { X, Plus, Save, Trash2, MapPin, Settings, ChevronDown, Copy, CopyPlus } from 'lucide-react';
+import { X, Plus, Save, Trash2, MapPin, Settings, ChevronDown, ChevronRight, Copy, CopyPlus, Search, PanelLeftClose, PanelLeft } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useDrop, useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
@@ -129,7 +129,7 @@ export function TimetableBuilder({
   initialEditClass,
   embedded = false,
 }: TimetableBuilderProps) {
-  const { customYearGroups, getThemeForClass } = useSettings();
+  const { customYearGroups, getThemeForClass, yearGroupSections } = useSettings();
 
   const myClasses = useMemo(
     () =>
@@ -152,6 +152,9 @@ export function TimetableBuilder({
   const settingsRef = useRef<HTMLDivElement>(null);
   const gridViewportRef = useRef<HTMLDivElement>(null);
   const [gridViewportH, setGridViewportH] = useState(0);
+  const [classSearch, setClassSearch] = useState('');
+  const [panelCollapsed, setPanelCollapsed] = useState(false);
+  const [sectionsExpanded, setSectionsExpanded] = useState<Set<string>>(() => new Set());
 
   const getStorageKey = (termId: string) => teacherTermKey(termId);
   const globalFlagKey = () => teacherGlobalFlagKey();
@@ -170,6 +173,42 @@ export function TimetableBuilder({
       return [5, 15, 30, 60].includes(n) ? n : DEFAULT_SLOT_INTERVAL;
     } catch { return DEFAULT_SLOT_INTERVAL; }
   });
+
+  const classesByKeyStage = useMemo(() => {
+    const q = classSearch.trim().toLowerCase();
+    const match = (name: string) => !q || name.toLowerCase().includes(q);
+    const sections = [...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder);
+    const grouped = sections
+      .map((section) => ({
+        id: section.id,
+        label: section.label,
+        classes: (section.yearGroupIds || [])
+          .map((id) => myClasses.find((g) => g.id === id || g.name === id))
+          .filter((g): g is (typeof myClasses)[number] => Boolean(g) && match(g.name)),
+      }))
+      .filter((s) => s.classes.length > 0);
+    const assigned = new Set(grouped.flatMap((s) => s.classes.map((c) => c.id)));
+    const other = myClasses.filter((g) => !assigned.has(g.id) && match(g.name));
+    if (other.length) grouped.push({ id: 'other', label: 'Other classes', classes: other });
+    return grouped;
+  }, [yearGroupSections, myClasses, classSearch]);
+
+  // Expand every key stage on first load so a long My classes list is
+  // immediately scrollable; each section remains individually collapsible.
+  useEffect(() => {
+    if (sectionsExpanded.size > 0) return;
+    if (classesByKeyStage.length === 0) return;
+    setSectionsExpanded(new Set(classesByKeyStage.map((s) => s.id)));
+  }, [classesByKeyStage, sectionsExpanded.size]);
+
+  const toggleSection = (id: string) => {
+    setSectionsExpanded((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  };
 
   const persistTimeConfig = (key: string, value: string) => {
     try { localStorage.setItem(timeConfigKey(key), value); } catch { /* ignore */ }
@@ -263,8 +302,13 @@ export function TimetableBuilder({
       if (termId === undefined) {
         setTimetableClasses(classes);
       }
-      if (onTimetableUpdate && termId === undefined) {
+      if (onTimetableUpdate) {
         onTimetableUpdate(classes);
+      }
+      try {
+        window.dispatchEvent(new CustomEvent('ccd:timetable-updated'));
+      } catch {
+        /* ignore */
       }
       // Best-effort cloud mirror keyed by teacher scope (not a single class)
       if (isSupabaseConfigured()) {
@@ -393,11 +437,11 @@ export function TimetableBuilder({
   };
 
   const handleDeleteClass = (classId: string) => {
-    if (confirm('Are you sure you want to delete this timetable entry?')) {
-      saveTimetable(timetableClasses.filter(c => c.id !== classId));
-      if (editingClass?.id === classId) {
-        setEditingClass(null);
-      }
+    // Instant remove — the builder X control is an undoable canvas action,
+    // not a destructive account operation. (A confirm() also breaks automated DnD tests.)
+    saveTimetable(timetableClasses.filter((c) => c.id !== classId));
+    if (editingClass?.id === classId) {
+      setEditingClass(null);
     }
   };
 
@@ -578,45 +622,38 @@ export function TimetableBuilder({
     </div>
   );
 
+  const openBreakClub = () => {
+    if (selectedSlot) handleAddNonCurriculum(selectedSlot.day, selectedSlot.time);
+    else {
+      setEditingClass({
+        id: `new-${Date.now()}`,
+        day: 1,
+        startTime: dayStart,
+        endTime: formatMinutesToTime(parseTimeToMinutes(dayStart) + slotInterval),
+        className: '',
+        location: '',
+        color: '#9CA3AF',
+        type: 'non-curriculum',
+      });
+    }
+  };
+
   const page = (
-    <div className="ss-timetable-page">
-      <div className="ss-timetable-toolbar">
-        <div className="ss-timetable-palette">
-          <div className="ss-timetable-palette-meta">
-            <span className="ss-timetable-kicker">My classes</span>
-            <span className="ss-timetable-term">{termHint}</span>
-          </div>
-          {myClasses.length === 0 ? (
-            <p className="ss-timetable-empty-hint">Add classes in Settings → My classes, then drag them onto the week.</p>
-          ) : (
-            <div className="ss-timetable-chips">
-              {myClasses.map((yg) => (
-                <DraggableYearGroup key={yg.id} yearGroup={yg} chip />
-              ))}
-            </div>
-          )}
+    <div className={`ss-timetable-page ${panelCollapsed ? 'is-panel-collapsed' : ''}`}>
+      <div className="ss-timetable-topbar">
+        <div className="ss-timetable-topbar-left">
           <button
             type="button"
-            className="ss-timetable-break"
-            onClick={() => {
-              if (selectedSlot) handleAddNonCurriculum(selectedSlot.day, selectedSlot.time);
-              else {
-                setEditingClass({
-                  id: `new-${Date.now()}`,
-                  day: 1,
-                  startTime: dayStart,
-                  endTime: formatMinutesToTime(parseTimeToMinutes(dayStart) + slotInterval),
-                  className: '',
-                  location: '',
-                  color: '#9CA3AF',
-                  type: 'non-curriculum',
-                });
-              }
-            }}
+            className="ss-timetable-icon-btn"
+            onClick={() => setPanelCollapsed((c) => !c)}
+            aria-pressed={panelCollapsed}
+            aria-label={panelCollapsed ? 'Show class panel' : 'Hide class panel'}
+            title={panelCollapsed ? 'Show classes' : 'Hide classes'}
           >
-            <Plus className="h-3.5 w-3.5" />
-            Break / club
+            {panelCollapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
+          <span className="ss-timetable-term">{termHint}</span>
+          <span className="ss-timetable-hint">Drag a class onto the week</span>
         </div>
         <div className="ss-timetable-actions relative">
           <button
@@ -647,60 +684,120 @@ export function TimetableBuilder({
         </div>
       </div>
 
-      <div className="ss-timetable-board">
-        <div
-          className="ss-timetable-dayhead"
-          style={{ gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
-        >
-          <div className="ss-timetable-corner">
-            {showRotationLabel ? <span>Rot.</span> : null}
-          </div>
-          {displayDayIndices.map((dayIndex, index) => (
-            <div key={dayIndex} className="ss-timetable-dow">
-              {dayHeaders[index]}
-            </div>
-          ))}
-        </div>
-
-        <div ref={gridViewportRef} className="ss-timetable-grid-viewport">
-          <div
-            className="ss-timetable-grid"
-            style={{
-              gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))`,
-              height: gridHeightPx,
-            }}
-          >
-            <div className="ss-timetable-ruler" style={{ height: gridHeightPx }}>
-              {slotStartTimes.map((slotTime) => (
-                <div key={slotTime} className="ss-timetable-tick" style={{ height: slotHeightPx }}>
-                  <span>{slotTime}</span>
+      <div className="ss-timetable-body">
+        <aside className="ss-timetable-rail" aria-label="My classes">
+          {!panelCollapsed && (
+            <>
+              <div className="ss-timetable-rail-head">
+                <p className="ss-timetable-kicker">My classes</p>
+                <div className="ss-timetable-search">
+                  <Search className="h-3.5 w-3.5 text-[#77738F]" aria-hidden />
+                  <input
+                    type="search"
+                    value={classSearch}
+                    onChange={(e) => setClassSearch(e.target.value)}
+                    placeholder="Search classes"
+                    aria-label="Search classes"
+                  />
                 </div>
-              ))}
+              </div>
+              <div className="ss-timetable-rail-scroll">
+                {myClasses.length === 0 ? (
+                  <p className="ss-timetable-empty-hint">Add classes in Settings → My classes.</p>
+                ) : classesByKeyStage.length === 0 ? (
+                  <p className="ss-timetable-empty-hint">No classes match “{classSearch}”.</p>
+                ) : (
+                  classesByKeyStage.map((section) => {
+                    const open = sectionsExpanded.has(section.id);
+                    return (
+                      <div key={section.id} className="ss-timetable-section">
+                        <button
+                          type="button"
+                          className="ss-timetable-section-btn"
+                          onClick={() => toggleSection(section.id)}
+                          aria-expanded={open}
+                        >
+                          {open ? <ChevronDown className="h-3.5 w-3.5" /> : <ChevronRight className="h-3.5 w-3.5" />}
+                          <span>{section.label}</span>
+                          <span className="ss-timetable-section-count">{section.classes.length}</span>
+                        </button>
+                        {open && (
+                          <div className="ss-timetable-section-list">
+                            {section.classes.map((yg) => (
+                              <DraggableYearGroup key={yg.id} yearGroup={yg} chip />
+                            ))}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+              <div className="ss-timetable-rail-foot">
+                <button type="button" className="ss-timetable-break" onClick={openBreakClub}>
+                  <Plus className="h-3.5 w-3.5" />
+                  Break / club
+                </button>
+              </div>
+            </>
+          )}
+        </aside>
+
+        <div className="ss-timetable-board">
+          <div
+            className="ss-timetable-dayhead"
+            style={{ gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
+          >
+            <div className="ss-timetable-corner">
+              {showRotationLabel ? <span>Rot.</span> : null}
             </div>
             {displayDayIndices.map((dayIndex, index) => (
-              <TimetableDayColumn
-                key={dayIndex}
-                day={dayIndex}
-                dayLabel={dayHeaders[index]}
-                classes={getClassesForDay(dayIndex)}
-                dayStartMinutes={dayStartMinutes}
-                dayEndMinutes={dayEndMinutes}
-                pxPerMinute={effectivePxPerMinute}
-                slotHeightPx={slotHeightPx}
-                gridHeightPx={gridHeightPx}
-                slotStartTimes={slotStartTimes}
-                slotDurationMinutes={slotDurationMinutes}
-                onAddYearGroup={(timeSlot) => (yearGroup: any) => handleAddYearGroup(dayIndex, timeSlot, yearGroup)}
-                onAddNonCurriculum={(timeSlot) => () => handleAddNonCurriculum(dayIndex, timeSlot)}
-                onEdit={(cls) => setEditingClass(cls)}
-                onDelete={handleDeleteClass}
-                onResize={handleResizeClass}
-                onMoveClass={handleMoveClass}
-                onSelectSlot={(timeSlot) => setSelectedSlot({ day: dayIndex, time: timeSlot })}
-                timeToMinutes={timeToMinutes}
-                minutesToTime={minutesToTime}
-              />
+              <div key={dayIndex} className="ss-timetable-dow">
+                {dayHeaders[index]}
+              </div>
             ))}
+          </div>
+
+          <div ref={gridViewportRef} className="ss-timetable-grid-viewport">
+            <div
+              className="ss-timetable-grid"
+              style={{
+                gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))`,
+                height: gridHeightPx,
+              }}
+            >
+              <div className="ss-timetable-ruler" style={{ height: gridHeightPx }}>
+                {slotStartTimes.map((slotTime) => (
+                  <div key={slotTime} className="ss-timetable-tick" style={{ height: slotHeightPx }}>
+                    <span>{slotTime}</span>
+                  </div>
+                ))}
+              </div>
+              {displayDayIndices.map((dayIndex, index) => (
+                <TimetableDayColumn
+                  key={dayIndex}
+                  day={dayIndex}
+                  dayLabel={dayHeaders[index]}
+                  classes={getClassesForDay(dayIndex)}
+                  dayStartMinutes={dayStartMinutes}
+                  dayEndMinutes={dayEndMinutes}
+                  pxPerMinute={effectivePxPerMinute}
+                  slotHeightPx={slotHeightPx}
+                  gridHeightPx={gridHeightPx}
+                  slotStartTimes={slotStartTimes}
+                  slotDurationMinutes={slotDurationMinutes}
+                  onAddYearGroup={(timeSlot) => (yearGroup: any) => handleAddYearGroup(dayIndex, timeSlot, yearGroup)}
+                  onAddNonCurriculum={(timeSlot) => () => handleAddNonCurriculum(dayIndex, timeSlot)}
+                  onEdit={(cls) => setEditingClass(cls)}
+                  onDelete={handleDeleteClass}
+                  onResize={handleResizeClass}
+                  onMoveClass={handleMoveClass}
+                  onSelectSlot={(timeSlot) => setSelectedSlot({ day: dayIndex, time: timeSlot })}
+                  timeToMinutes={timeToMinutes}
+                  minutesToTime={minutesToTime}
+                />
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -718,6 +815,7 @@ export function TimetableBuilder({
       )}
     </div>
   );
+
 
   // Full-page inside Studio shell when embedded; otherwise a workspace-covering layer
   // (never a small dialog perched on the classic calendar).
@@ -1049,7 +1147,10 @@ function TimetableClassBlock({
           )}
         </div>
         <button
-          onClick={(e) => { e.stopPropagation(); onDelete(); }}
+          type="button"
+          aria-label={`Remove ${cls.className}`}
+          onMouseDown={(e) => { e.preventDefault(); e.stopPropagation(); }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onDelete(); }}
           className="ml-1 opacity-80 hover:opacity-100 p-0.5 shrink-0"
         >
           <X className="h-3 w-3" />
@@ -1067,8 +1168,8 @@ function TimetableClassBlock({
   );
 }
 
-/** Compact colour chip (or legacy list row) for dragging a My class onto the grid. */
-function DraggableYearGroup({ yearGroup, chip = false }: { yearGroup: any; chip?: boolean }) {
+/** Draggable class chip for the left rail (full-width, colour-coded). */
+function DraggableYearGroup({ yearGroup }: { yearGroup: any; chip?: boolean }) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'year-group',
     item: { yearGroup },
@@ -1078,37 +1179,18 @@ function DraggableYearGroup({ yearGroup, chip = false }: { yearGroup: any; chip?
   }), [yearGroup]);
 
   const color = yearGroup.color || '#4338E8';
-  if (chip) {
-    return (
-      <button
-        type="button"
-        ref={drag as unknown as React.Ref<HTMLButtonElement>}
-        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E2E0EF] bg-white py-1 pl-1 pr-2.5 text-left text-[12px] font-semibold text-[#1F1B4D] shadow-sm transition hover:border-[#bcb7f4] ${
-          isDragging ? 'opacity-40' : ''
-        }`}
-        title={`Drag ${yearGroup.name} onto the grid`}
-        style={{ cursor: 'grab' }}
-      >
-        <span
-          className="h-4 w-4 shrink-0 rounded-full ring-2 ring-white"
-          style={{ backgroundColor: color }}
-          aria-hidden
-        />
-        <span className="max-w-[9.5rem] truncate">{yearGroup.name}</span>
-      </button>
-    );
-  }
-
   return (
-    <div
-      ref={drag as unknown as React.Ref<HTMLDivElement>}
-      className={`flex cursor-move items-center space-x-2 rounded-lg border border-gray-200 bg-white p-2 text-sm transition-shadow hover:shadow-md ${
-        isDragging ? 'opacity-50' : ''
-      }`}
-      style={{ borderLeftColor: color, borderLeftWidth: '3px' }}
+    <button
+      type="button"
+      ref={drag as unknown as React.Ref<HTMLButtonElement>}
+      className={`ss-timetable-class-chip ${isDragging ? 'is-dragging' : ''}`}
+      title={`Drag ${yearGroup.name} onto the grid`}
+      style={{ borderLeftColor: color }}
+      data-class-chip={yearGroup.name}
     >
-      <div className="flex-1 font-medium text-gray-900">{yearGroup.name}</div>
-    </div>
+      <span className="ss-timetable-class-dot" style={{ backgroundColor: color }} aria-hidden />
+      <span className="ss-timetable-class-name">{yearGroup.name}</span>
+    </button>
   );
 }
 

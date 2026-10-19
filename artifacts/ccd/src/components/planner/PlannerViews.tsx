@@ -8,6 +8,7 @@ import { buildDayEntries, eventsOn, lessonTitle, nextFreeSlots } from './planner
 import { lessonActivities, lessonActivityCount } from '../../utils/lessonEntries';
 import {
   PLANNER_LESSON_DND,
+  fillOutlineSlot,
   movePlanToDate,
   resolveDropTime,
   type PlannerLessonDragItem,
@@ -57,6 +58,27 @@ function useMovePlan(data: PlannerData) {
       }
       const next = movePlanToDate(plan, targetDate, nextTime);
       void data.savePlans([next], `Moved to ${targetDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}.`);
+    },
+    [data],
+  );
+}
+
+/** Drop a lesson onto an empty timetable outline — snaps date, time and class. */
+function useFillOutline(data: PlannerData) {
+  return useCallback(
+    (item: PlannerLessonDragItem, targetDate: Date, entry: DayEntry) => {
+      const plan = data.plans.find((p) => p.id === item.planId);
+      if (!plan || !entry.slot) return;
+      const next = fillOutlineSlot(plan, targetDate, {
+        classId: entry.classId,
+        time: entry.time || entry.slot.startTime,
+      });
+      const label = targetDate.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+      void data.savePlans([next], `Filled ${label} · ${entry.time || entry.slot.startTime}.`);
     },
     [data],
   );
@@ -113,6 +135,7 @@ function DayColumn({
   onOpenEntry,
   onAdd,
   onMove,
+  onFillOutline,
   roomy = false,
 }: {
   date: Date;
@@ -126,6 +149,7 @@ function DayColumn({
   onOpenEntry: (entry: DayEntry) => void;
   onAdd: (date: Date) => void;
   onMove: (item: PlannerLessonDragItem, targetDate: Date, timeOpts?: { beforeTime?: string; afterTime?: string }) => void;
+  onFillOutline: (item: PlannerLessonDragItem, targetDate: Date, entry: DayEntry) => void;
   roomy?: boolean;
 }) {
   const { flashClass, triggerFlash } = useDropFlash();
@@ -133,7 +157,7 @@ function DayColumn({
     () => ({
       accept: PLANNER_LESSON_DND,
       drop: (item: PlannerLessonDragItem, monitor) => {
-        // Child card drop targets handle relative placement first
+        // Child card drop targets handle relative placement / outline fill first
         if (monitor.didDrop()) return;
         onMove(item, date);
         triggerFlash();
@@ -211,16 +235,24 @@ function DayColumn({
           onDropRelative={
             entry.plan ? (item, place) => onDropRelative(item, place, entry) : undefined
           }
+          onDropOntoOutline={
+            !entry.plan && entry.slot
+              ? (item) => {
+                  onFillOutline(item, date, entry);
+                  triggerFlash();
+                }
+              : undefined
+          }
         />
       ))}
       <button
         type="button"
         onClick={() => onAdd(date)}
         className="ss-empty-slot"
-        aria-label={`Add lesson on ${date.toLocaleDateString('en-GB')}`}
+        aria-label={`Add a one-off lesson on ${date.toLocaleDateString('en-GB')}`}
       >
         <Plus className="h-4 w-4" />
-        Add lesson
+        Add one-off lesson
       </button>
     </section>
   );
@@ -232,7 +264,11 @@ export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, o
   const mondayKey = startOfWeek(anchor).getTime();
   const days = useMemo(() => {
     const all = Array.from({ length: 7 }, (_, i) => addDays(new Date(mondayKey), i));
-    return all.map((d) => ({ date: d, entries: buildDayEntries(d, visibleIds, data.plans, data.slots), events: eventsOn(d, data.events) }));
+    return all.map((d) => ({
+      date: d,
+      entries: buildDayEntries(d, visibleIds, data.plans, data.slots, data.events),
+      events: eventsOn(d, data.events),
+    }));
   }, [mondayKey, visibleIds, data.plans, data.slots, data.events]);
   const shown = days.filter((d, i) => i < 5 || d.entries.length > 0);
   const allEntries = useMemo(() => days.flatMap((d) => d.entries), [days]);
@@ -240,6 +276,7 @@ export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, o
   const unitLabel = useUnitLabel(data);
   const today = new Date();
   const onMove = useMovePlan(data);
+  const onFillOutline = useFillOutline(data);
 
   return (
     <div className="ss-week-grid -mx-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:overflow-visible lg:px-0">
@@ -257,6 +294,7 @@ export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, o
           onOpenEntry={onOpenEntry}
           onAdd={onAdd}
           onMove={onMove}
+          onFillOutline={onFillOutline}
         />
       ))}
     </div>
@@ -269,13 +307,14 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
   const dayKey = startOfDay(anchor).getTime();
   const date = new Date(dayKey);
   const entries = useMemo(
-    () => buildDayEntries(new Date(dayKey), visibleIds, data.plans, data.slots),
-    [dayKey, visibleIds, data.plans, data.slots],
+    () => buildDayEntries(new Date(dayKey), visibleIds, data.plans, data.slots, data.events),
+    [dayKey, visibleIds, data.plans, data.slots, data.events],
   );
   const events = eventsOn(date, data.events);
   useEnsureVisibleLessons(data, entries);
   const unitLabel = useUnitLabel(data);
   const onMove = useMovePlan(data);
+  const onFillOutline = useFillOutline(data);
   const { flashClass, triggerFlash } = useDropFlash();
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
@@ -336,13 +375,21 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
                   }
                 : undefined
             }
+            onDropOntoOutline={
+              !entry.plan && entry.slot
+                ? (item) => {
+                    onFillOutline(item, date, entry);
+                    triggerFlash();
+                  }
+                : undefined
+            }
           />
         </div>
       ))}
       <div className="grid grid-cols-1 sm:grid-cols-[72px_1fr] sm:gap-4">
         <span className="hidden sm:block" />
-        <button type="button" onClick={() => onAdd(date)} className="ss-empty-slot" aria-label="Add a lesson">
-          <Plus className="h-4 w-4" /> Add a lesson
+        <button type="button" onClick={() => onAdd(date)} className="ss-empty-slot" aria-label="Add a one-off lesson">
+          <Plus className="h-4 w-4" /> Add a one-off lesson
         </button>
       </div>
     </div>
@@ -448,7 +495,7 @@ export function MonthView({ data, visibleIds, anchor, onPickDay }: Omit<ViewProp
         ))}
         {weeks.flat().map((date) => {
           const inMonth = date.getMonth() === anchor.getMonth();
-          const entries = buildDayEntries(date, visibleIds, data.plans, data.slots).filter((e) => e.plan);
+          const entries = buildDayEntries(date, visibleIds, data.plans, data.slots, data.events).filter((e) => e.plan);
           const closed = eventsOn(date, data.events).find((e) => e.type === 'holiday' || e.type === 'inset');
           return (
             <MonthDayCell
