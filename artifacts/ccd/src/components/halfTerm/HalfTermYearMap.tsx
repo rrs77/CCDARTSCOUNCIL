@@ -355,15 +355,15 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: Hal
     <div className="min-w-0 w-full" style={{ fontFamily: UI_FONT }}>
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 max-w-2xl">
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#77738F]">
-            Plan &amp; progress / Term view
+          <p className="ccd-studio-eyebrow">
+            CONNECT &amp; CREATE / <span>HALF-TERMS</span>
           </p>
           <h1 className="mt-1 text-[1.65rem] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[1.75rem]">
             Half-term map
           </h1>
           <p className="ccd-page-lede ccd-page-lede--single mt-1.5 text-[13px] leading-snug text-[#77738F]">
-            One row per class, one column per half-term. Filter stages, then open a cell to add or
-            review lessons.
+            One row per class, one column per half-term. Open a cell to assign a whole scheme of work —
+            then drop lessons into the week planner.
           </p>
         </div>
 

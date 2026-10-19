@@ -21,8 +21,8 @@ export function PeriFeedbackPage() {
     <div className="ccd-boltons">
       <header className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
-          <p className="ccd-studio-eyebrow" style={{ color: '#118c7f' }}>
-            PeriFeedback / <span className="text-[#4338E8]">Peripatetic teaching</span>
+          <p className="ccd-studio-eyebrow">
+            YOUR TOOLS / <span>PERIFEEDBACK</span>
           </p>
           <h1 className="ccd-studio-title">PeriFeedback</h1>
           <p className="ccd-studio-sub max-w-xl">

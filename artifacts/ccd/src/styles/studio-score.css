@@ -676,15 +676,24 @@ html.ccd-studio .ss-dialog-lg {
   box-shadow: 0 0 0 2px rgba(67, 56, 232, 0.25);
 }
 
-/* Empty timetable outline — dashed placeholder waiting for a lesson */
+/* Empty timetable outline — clearly distinct from booked lesson cards */
 .ss-lesson-card.is-outline {
-  background: rgba(255, 255, 255, 0.72);
-  border-color: #d4d0ea;
+  background: rgba(244, 243, 250, 0.55);
+  border-color: #cfcbe4;
+  border-style: dashed;
+  box-shadow: none;
+  opacity: 0.92;
 }
 
 .ss-lesson-card.is-outline:hover {
-  background: #f7f6ff;
+  background: #f0eefb;
   border-color: #bcb7f4;
+  opacity: 1;
+}
+
+.ss-lesson-card.is-outline strong,
+.ss-lesson-card.is-outline .ss-desc {
+  color: #9b97b0;
 }
 
 .ss-lesson-card strong {

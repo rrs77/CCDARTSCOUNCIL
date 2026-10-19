@@ -1891,6 +1891,9 @@ function PartnerHubsBrowse({
         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
           <div className="min-w-0">
             {atRegion && <Crumbs items={browseCrumbs} />}
+            <p className="ccd-studio-eyebrow mb-1">
+              CONNECT &amp; CREATE / <span>PARTNER HUBS</span>
+            </p>
             <h1
               className={`text-[32px] font-bold leading-[1.1] tracking-tight text-[#1F1B4D] sm:text-[40px] ${
                 atRegion ? 'mt-2' : ''

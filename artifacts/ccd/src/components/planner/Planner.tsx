@@ -10,7 +10,7 @@ import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import { TimetableBuilder } from '../TimetableBuilder';
 import { usePlannerData, type PlannerData } from './usePlannerData';
-import { WeekView, DayView, MonthView, UnitsView } from './PlannerViews';
+import { WeekView, DayView, MonthView } from './PlannerViews';
 import { LessonDetailsSheet, SchedulePickerSheet } from './PlannerSheets';
 import { buildDayEntries, lessonTitle } from './plannerEntries';
 import {
@@ -31,8 +31,6 @@ import {
 
 interface PlannerProps {
   initialView?: PlannerView;
-  /** Existing Half-Term Designer, shown as the Term view for the focused class. */
-  renderTerm: () => React.ReactNode;
   /** Existing calendar (timetable builder, events, iCal, PDF), kept available while the Planner matures. */
   renderClassic: () => React.ReactNode;
 }
@@ -70,10 +68,13 @@ function roomFromView(v: PlannerView): PlannerRoom {
   return 'schedule';
 }
 
-export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps) {
+export function Planner({ initialView, renderClassic }: PlannerProps) {
   const { currentSheetInfo, setCurrentSheetInfo } = useData();
   const { settings } = useSettings();
-  const [view, setView] = useState<PlannerView>(initialView || 'week');
+  // C2: term/units views moved to Half-terms — never open them inside Planner
+  const safeInitial =
+    initialView && initialView !== 'term' && initialView !== 'units' ? initialView : 'week';
+  const [view, setView] = useState<PlannerView>(safeInitial);
   const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
   const [focus, setFocus] = useState<string>('all');
   const [sheet, setSheet] = useState<Sheet>(null);
@@ -88,9 +89,9 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
     () => new Set(focus === 'all' ? classes.filter((c) => !c.hidden).map((c) => c.id) : [focus]),
     [classes, focus],
   );
-  /** Units / class calendar use the header class selector — Timetable is teacher-level (all classes). */
+  /** Class calendar uses the header class selector — Timetable is teacher-level (all classes). */
   const focusedClassId =
-    room === 'units' || view === 'classic'
+    view === 'classic'
       ? classById.has(currentSheetInfo.sheet)
         ? currentSheetInfo.sheet
         : classes[0]?.id || ''
@@ -100,15 +101,57 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           ? currentSheetInfo.sheet
           : classes[0]?.id || '';
 
+  // C1: publish All/One focus so the header chip stays in sync
   useEffect(() => {
-    if ((view === 'term' || view === 'units' || view === 'classic') && currentSheetInfo.sheet && classById.has(currentSheetInfo.sheet) && focus !== currentSheetInfo.sheet) {
+    const mode = focus === 'all' ? 'all' : 'one';
+    try {
+      document.documentElement.dataset.ccdPlannerFocus = mode;
+    } catch {
+      /* ignore */
+    }
+    window.dispatchEvent(new CustomEvent('ccd:planner-focus', { detail: { mode } }));
+  }, [focus]);
+
+  useEffect(() => {
+    const onRequest = (e: Event) => {
+      const mode = (e as CustomEvent<{ mode?: string }>).detail?.mode;
+      if (mode === 'all') {
+        setFocus('all');
+        return;
+      }
+      if (mode === 'one') {
+        const id = classById.has(currentSheetInfo.sheet)
+          ? currentSheetInfo.sheet
+          : classes[0]?.id;
+        if (id) setFocus(id);
+      }
+    };
+    window.addEventListener('ccd:planner-focus-request', onRequest);
+    return () => window.removeEventListener('ccd:planner-focus-request', onRequest);
+  }, [classById, currentSheetInfo.sheet, classes]);
+
+  useEffect(() => {
+    if (view === 'classic' && currentSheetInfo.sheet && classById.has(currentSheetInfo.sheet) && focus !== currentSheetInfo.sheet) {
       setFocus(currentSheetInfo.sheet);
     }
   }, [view, currentSheetInfo.sheet, classById, focus]);
 
+  // Keep one-class focus aligned with header class when in one-class mode
+  useEffect(() => {
+    if (focus === 'all') return;
+    if (currentSheetInfo.sheet && classById.has(currentSheetInfo.sheet) && focus !== currentSheetInfo.sheet) {
+      setFocus(currentSheetInfo.sheet);
+    }
+  }, [currentSheetInfo.sheet, classById, focus]);
+
   const { refreshStorage, reloadPlans } = data;
   const changeView = useCallback(
     (next: PlannerView) => {
+      // C2: year planning lives on Half-terms — bounce old Units/term deep-links
+      if (next === 'term' || next === 'units') {
+        window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'curriculum' } }));
+        return;
+      }
       if ((view === 'timetable' || view === 'classic') && next !== view) {
         refreshStorage();
         void reloadPlans();
@@ -121,10 +164,9 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
 
   const goRoom = useCallback(
     (next: PlannerRoom) => {
+      // C2: Half-terms owns year planning — Units room redirects to sidebar Half-terms
       if (next === 'units') {
-        const id = classById.has(currentSheetInfo.sheet) ? currentSheetInfo.sheet : classes[0]?.id;
-        if (id) setFocus(id);
-        changeView('term');
+        window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'curriculum' } }));
         return;
       }
       if (next === 'timetable') {
@@ -134,7 +176,7 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
       }
       if (view === 'term' || view === 'units' || view === 'timetable' || view === 'classic') changeView('week');
     },
-    [changeView, view, currentSheetInfo.sheet, classById, classes],
+    [changeView, view],
   );
 
   const step = (dir: -1 | 1) => {
@@ -229,22 +271,33 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
     <div className={`ss-planner-shell ${view === 'timetable' ? 'is-timetable-fullpage' : ''}`}>
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex shrink-0 flex-wrap items-end justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
-            <h1
-              className="text-[clamp(22px,2.4vw,30px)] font-extrabold leading-none tracking-tight text-[#1F1B4D]"
-              style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
-            >
-              {pageTitle}
-            </h1>
-            <p className="text-[13px] font-medium text-[#77738F]">
-              {view === 'timetable'
-                ? 'Your week · all My classes'
-                : view === 'classic'
-                  ? `${classById.get(focusedClassId)?.name || 'Class'} · events & key dates`
-                  : `${halfTerm?.name} · ${academicYear.replace('-', '–')}${
-                      view === 'week' || view === 'day' || view === 'month' ? ` · ${heading}` : ''
-                    }`}
+          <div className="min-w-0">
+            <p className="ccd-studio-eyebrow mb-1">
+              CONNECT &amp; CREATE / <span>PLANNER</span>
             </p>
+            <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h1
+                className="text-[clamp(22px,2.4vw,30px)] font-extrabold leading-none tracking-tight text-[#1F1B4D]"
+                style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
+              >
+                {pageTitle}
+              </h1>
+              <p className="text-[13px] font-medium text-[#77738F]">
+                {view === 'timetable'
+                  ? 'Your week · all My classes'
+                  : view === 'classic'
+                    ? `${classById.get(focusedClassId)?.name || 'Class'} · events & key dates`
+                    : `${halfTerm?.name} · ${academicYear.replace('-', '–')}${
+                        view === 'week' || view === 'day' || view === 'month'
+                          ? ` · ${heading}${
+                              focus === 'all'
+                                ? ' · Showing every class — switch to One class to filter'
+                                : ` · ${classById.get(focus)?.name || 'One class'}`
+                            }`
+                          : ''
+                      }`}
+              </p>
+            </div>
           </div>
           {view !== 'timetable' && (
             <div className="flex flex-wrap items-center gap-2">
@@ -272,6 +325,49 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           )}
         </header>
 
+        {inSchedule && (
+          <div className="mt-3 flex shrink-0 flex-wrap items-center gap-3 rounded-2xl border border-[#E2E0EF] bg-white px-3 py-2.5">
+            <div
+              className="inline-flex rounded-full bg-[#F4F3FA] p-1"
+              role="group"
+              aria-label="Class focus"
+            >
+              <button
+                type="button"
+                onClick={() => setFocus('all')}
+                className={`min-h-[32px] rounded-full px-3.5 text-[12px] font-bold ${
+                  focus === 'all' ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
+                }`}
+              >
+                All classes
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  const id = classById.has(currentSheetInfo.sheet)
+                    ? currentSheetInfo.sheet
+                    : classes[0]?.id;
+                  if (id) {
+                    setFocus(id);
+                    if (id !== currentSheetInfo.sheet) {
+                      const c = classById.get(id);
+                      if (c) setCurrentSheetInfo({ sheet: c.id, display: c.name, eyfs: `${c.id} Statements` });
+                    }
+                  }
+                }}
+                className={`min-h-[32px] rounded-full px-3.5 text-[12px] font-bold ${
+                  focus !== 'all' ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
+                }`}
+              >
+                One class
+              </button>
+            </div>
+            <p className="hidden text-[12px] text-[#77738F] sm:block">
+              Tip: pick one class when you want Activities, Lessons and Half-terms to stay in the same context.
+            </p>
+          </div>
+        )}
+
         <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex rounded-xl border border-[#E2E0EF] bg-white p-1" role="tablist" aria-label="Planner area">
@@ -279,7 +375,6 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                 [
                   { id: 'schedule' as const, label: 'Schedule' },
                   { id: 'timetable' as const, label: 'Timetable builder' },
-                  { id: 'units' as const, label: 'Units' },
                 ] as const
               ).map((r) => (
                 <button
@@ -301,7 +396,7 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                 View
                 <select
                   className="min-h-[36px] rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold normal-case tracking-normal text-[#1F1B4D]"
-                  value={view === 'classic' ? 'week' : view}
+                  value={view}
                   aria-label="Planner view"
                   onChange={(e) => changeView(e.target.value as PlannerView)}
                 >
@@ -312,29 +407,6 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                   ))}
                 </select>
               </label>
-            )}
-            {room === 'units' && (
-              <div className="flex rounded-lg p-0.5" role="tablist" aria-label="Units tools">
-                {(
-                  [
-                    { id: 'term' as const, label: 'Half-terms' },
-                    { id: 'units' as const, label: 'Progress' },
-                  ] as const
-                ).map((v) => (
-                  <button
-                    key={v.id}
-                    type="button"
-                    role="tab"
-                    aria-selected={view === v.id}
-                    onClick={() => changeView(v.id)}
-                    className={`min-h-[32px] rounded-md px-2.5 text-[13px] font-medium ${
-                      view === v.id ? 'bg-white text-[#4338E8] shadow-sm ring-1 ring-[#E2E0EF]' : 'text-[#77738F]'
-                    }`}
-                  >
-                    {v.label}
-                  </button>
-                ))}
-              </div>
             )}
           </div>
 
@@ -358,9 +430,6 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                 </button>
               )}
             </div>
-          )}
-          {room === 'units' && (
-            <span className="px-1 text-[13px] font-medium text-[#77738F]">{dateLabel}</span>
           )}
         </div>
 
@@ -401,24 +470,6 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                 changeView('day');
               }}
             />
-          )}
-          {view === 'units' && (
-            <UnitsView
-              data={data}
-              classId={focusedClassId}
-              academicYear={academicYear}
-              onOpenTimetable={() => changeView('timetable')}
-              onChangeYear={(y) => setAnchor(new Date(Number(y.split('-')[0]), 9, 1))}
-            />
-          )}
-          {view === 'term' && (
-            focusedClassId === currentSheetInfo.sheet ? (
-              renderTerm()
-            ) : (
-              <p className="py-10 text-center text-sm text-[#77738F]">
-                {focusedClassId ? 'Loading…' : 'Choose a class to edit half-terms.'}
-              </p>
-            )
           )}
           {view === 'timetable' && (
             <TimetableBuilder

@@ -278,51 +278,33 @@ export function InteractiveLessonHub() {
         </div>
       )}
 
-      <section className="ilv-hub-hero">
-        <div className="ilv-hub-hero-copy">
-          <h1 className="ilv-hub-hero-title">Slides that fill the room</h1>
-          <p className="ilv-hub-hero-lede">
-            Build timeline scenes with lyric videos and timed words, YouTube, audio, Canva and
-            PowerPoint embeds — then present full-screen to the class. Attach a player-only link to
-            any CCD lesson.
+      {/* C8: library-first — demoted marketing; no full-width hero above the decks */}
+      <div className="mb-5 flex flex-wrap items-end justify-between gap-3">
+        <div className="min-w-0 max-w-2xl">
+          <h1 className="ccd-studio-title">Slides</h1>
+          <p className="ccd-studio-sub mt-1">
+            Present lyric videos, Canva and timeline scenes to the class. Attach a player link from any
+            lesson.
           </p>
-          <div className="ilv-hub-hero-actions">
-            {canEdit ? (
-              <button type="button" className="ilv-btn ilv-btn-primary ilv-hub-cta" onClick={() => void createNew()}>
-                <Plus className="h-4 w-4" />
-                New slides
-              </button>
-            ) : (
-              <span className="ilv-chip inline-flex items-center gap-1.5">
-                <Lock className="h-3.5 w-3.5" />
-                Player only · editor needs admin / hub admin
-              </span>
-            )}
-          </div>
         </div>
-        <ul className="ilv-hub-features" aria-label="What you can build">
-          {FEATURES.map((f) => (
-            <li key={f.label}>
-              {f.icon}
-              {f.label}
-            </li>
-          ))}
-        </ul>
-      </section>
+        {canEdit ? (
+          <button type="button" className="ilv-btn ilv-btn-primary ilv-hub-cta" onClick={() => void createNew()}>
+            <Plus className="h-4 w-4" />
+            New slides
+          </button>
+        ) : (
+          <span className="ilv-chip inline-flex items-center gap-1.5">
+            <Lock className="h-3.5 w-3.5" />
+            Player only · editor needs admin / hub admin
+          </span>
+        )}
+      </div>
 
       {error && (
         <div className="mb-4 rounded-[12px] border border-[var(--ss-line)] bg-[var(--ss-suntint)] px-3 py-2 text-sm">
           {error}
         </div>
       )}
-
-      <div className="ilv-hub-library-head">
-        <h2 className="ilv-hub-library-title">Slides library</h2>
-        <p className="ilv-hub-library-meta">
-          {loading ? 'Loading…' : `${items.length} deck${items.length === 1 ? '' : 's'}`}
-          {canEdit ? ' · create, edit and publish' : ' · play published slides'}
-        </p>
-      </div>
 
       <div className="mb-3 flex flex-wrap items-center gap-2">
         <div className="ilv-hub-library-tabs" role="tablist">
@@ -352,6 +334,9 @@ export function InteractiveLessonHub() {
             placeholder="Search title, tags, subject…"
           />
         </label>
+        <p className="text-[12px] font-medium text-[var(--ss-muted)]">
+          {loading ? 'Loading…' : `${items.length} deck${items.length === 1 ? '' : 's'}`}
+        </p>
       </div>
 
       {loading ? (
@@ -444,6 +429,18 @@ export function InteractiveLessonHub() {
               </span>
             </button>
           )}
+
+          <aside className="ilv-lesson-tile ilv-hub-features-card" aria-label="What you can build">
+            <div className="ilv-lesson-tile-body" style={{ justifyContent: 'center', minHeight: 180 }}>
+              <h3 className="ilv-lesson-tile-title">What you can build</h3>
+              <p className="ilv-lesson-tile-desc mt-2" style={{ WebkitLineClamp: 6 }}>
+                {FEATURES.map((f) => f.label).join(' · ')}
+              </p>
+              <p className="mt-3 text-[12px] text-[var(--ss-muted)]">
+                Features sit beside the library — not above it as a second hero.
+              </p>
+            </div>
+          </aside>
 
           {!loading && items.length === 0 && (
             <div className="ilv-hub-empty">

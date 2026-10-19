@@ -33,15 +33,18 @@ export function Header() {
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
-  /** Year group selector is for Lesson Builder / Activity Library — not Planner (all classes). */
+  /** Persistent class context on every tab (C1). Planner can be All-class or One-class. */
   const [studioTab, setStudioTab] = useState(() =>
     typeof document !== 'undefined' ? document.documentElement.dataset.ccdTab || 'unit-viewer' : 'unit-viewer',
   );
-  const showYearGroupSelector =
-    studioTab === 'lesson-builder' ||
-    studioTab === 'activity-library' ||
-    studioTab === 'lesson-library' ||
-    studioTab === 'curriculum';
+  const [plannerFocusMode, setPlannerFocusMode] = useState<'all' | 'one'>(() =>
+    typeof document !== 'undefined' && document.documentElement.dataset.ccdPlannerFocus === 'one'
+      ? 'one'
+      : 'all',
+  );
+  const onPlannerTab = studioTab === 'unit-viewer';
+  const allClassPlannerView = onPlannerTab && plannerFocusMode === 'all';
+  const showYearGroupSelector = true;
 
   // Auto-open the walkthrough when the user arrived via the login page's
   // "Feature Walkthrough" button (which sets a one-shot session flag and
@@ -84,6 +87,15 @@ export function Header() {
     };
     window.addEventListener('ccd:active-tab', onTab);
     return () => window.removeEventListener('ccd:active-tab', onTab);
+  }, []);
+
+  useEffect(() => {
+    const onFocus = (e: Event) => {
+      const mode = (e as CustomEvent<{ mode?: string }>).detail?.mode;
+      if (mode === 'all' || mode === 'one') setPlannerFocusMode(mode);
+    };
+    window.addEventListener('ccd:planner-focus', onFocus);
+    return () => window.removeEventListener('ccd:planner-focus', onFocus);
   }, []);
 
   useEffect(() => {
@@ -194,6 +206,9 @@ export function Header() {
   const selectYearGroup = (group: { id: string; name: string }) => {
     setCurrentSheetInfo({ sheet: group.id, display: group.name, eyfs: `${group.id} Statements` });
     setYearGroupDropdownOpen(false);
+    if (onPlannerTab) {
+      window.dispatchEvent(new CustomEvent('ccd:planner-focus-request', { detail: { mode: 'one' } }));
+    }
   };
 
   const openYearGroupDropdown = () => {
@@ -288,18 +303,30 @@ export function Header() {
 
             {/* Desktop Navigation */}
             <div className="hidden md:flex items-center space-x-1 lg:space-x-2 flex-shrink-0">
-              {/* Year group — Lesson Builder / Activity Library / Library / Curriculum only */}
+              {/* Persistent class context chip (C1) — every tab */}
               {showYearGroupSelector && (
-              <div className="relative min-w-0" ref={yearGroupDropdownRef} data-walkthrough="year-group-selector">
+              <div className="relative min-w-0 flex items-center gap-2" ref={yearGroupDropdownRef} data-walkthrough="year-group-selector">
                 <button
                   type="button"
-                  onClick={openYearGroupDropdown}
+                  onClick={() => {
+                    if (allClassPlannerView) {
+                      // Switching chip while in all-class planner → one-class mode
+                      window.dispatchEvent(new CustomEvent('ccd:planner-focus-request', { detail: { mode: 'one' } }));
+                    }
+                    openYearGroupDropdown();
+                  }}
                   className="bg-white border border-[#E2E0EF] text-[#1F1B4D] text-xs lg:text-sm rounded-xl focus:border-[#4338E8] focus:ring-2 focus:ring-[#4338E8]/20 focus:outline-none px-3 py-1.5 lg:py-2 pr-8 flex items-center justify-between gap-2 min-w-[140px] lg:min-w-[220px] max-w-[320px] hover:border-[#bcb7f4] transition-colors"
-                  title={classSelectorLabel}
-                  aria-label={`Class: ${classSelectorLabel}`}
+                  title={allClassPlannerView ? 'All classes · Week overview' : classSelectorLabel}
+                  aria-label={allClassPlannerView ? 'All classes · Week overview' : `Class: ${classSelectorLabel}`}
                 >
                   <span className="truncate">
-                    {currentSection ? (
+                    {allClassPlannerView ? (
+                      <>
+                        <span className="font-semibold text-[#4338E8]">All classes</span>
+                        <span className="text-[#77738F]"> · </span>
+                        <span>Week overview</span>
+                      </>
+                    ) : currentSection ? (
                       <>
                         <span className="font-semibold text-[#4338E8]">{currentSection.label}</span>
                         <span className="text-[#77738F]"> · </span>
@@ -311,6 +338,15 @@ export function Header() {
                   </span>
                   <ChevronDown className={`h-4 w-4 flex-shrink-0 text-gray-500 transition-transform ${yearGroupDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
+                <span
+                  className={`hidden lg:inline-flex shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${
+                    allClassPlannerView
+                      ? 'bg-amber-100 text-amber-900'
+                      : 'bg-[#E9E6FF] text-[#4338E8]'
+                  }`}
+                >
+                  {allClassPlannerView ? 'All-class view' : 'Class context'}
+                </span>
                 {yearGroupDropdownOpen && hasSelectorItems && (
                   <div className="absolute top-full left-0 mt-1 w-64 max-h-[70vh] overflow-y-auto bg-white border border-gray-200 rounded-lg shadow-lg z-50 py-1">
                     {displaySections.map((section) => {
@@ -468,11 +504,11 @@ export function Header() {
           {mobileMenuOpen && (
             <div className="md:hidden py-4 border-t border-gray-200">
               <div className="space-y-4">
-                {/* Year Group Selector Mobile — same surfaces as desktop */}
+                {/* Year Group Selector Mobile — persistent on every tab (C1) */}
                 {showYearGroupSelector && (
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Select Year Group
+                    {allClassPlannerView ? 'Class context (currently all classes)' : 'Select class'}
                   </label>
                   <div className="space-y-1 border border-gray-200 rounded-lg overflow-hidden bg-gray-50">
                     {displaySections.map((section) => {
