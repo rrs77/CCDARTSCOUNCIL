@@ -4,7 +4,7 @@ import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
-import { UserSettings } from './UserSettings';
+import { navigateToSettings } from './settings';
 import { WalkthroughGuide } from './WalkthroughGuide';
 import { HelpGuide, type HelpGuideSection } from './HelpGuide';
 import { LogoSVG } from './Logo';
@@ -29,7 +29,6 @@ export function Header() {
 
   const { canInstall, isInstalled, install } = usePWAInstall();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
@@ -75,7 +74,7 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    const openSettings = () => setSettingsOpen(true);
+    const openSettings = () => navigateToSettings();
     window.addEventListener('ccd:open-settings', openSettings);
     return () => window.removeEventListener('ccd:open-settings', openSettings);
   }, []);
@@ -100,8 +99,9 @@ export function Header() {
 
   useEffect(() => {
     try {
-      if (sessionStorage.getItem('ccd-open-settings-tab')) {
-        setSettingsOpen(true);
+      const pending = sessionStorage.getItem('ccd-open-settings-tab');
+      if (pending) {
+        navigateToSettings(pending);
       }
     } catch {
       /* ignore */
@@ -141,18 +141,17 @@ export function Header() {
       .filter((section) => section.groups.length > 0);
   }, [yearGroupSections, selectorTokenMap]);
 
-  // Classes in Other / not assigned to a key stage. Demo intentionally omits these;
-  // real teachers need them so the selector is not empty when defaults live in Other.
+  // Classes in Other / not assigned to a key stage. Always surface them when no
+  // key-stage section has classes — otherwise Settings → My classes won't reach the header chip.
   const uncategorizedGroups = React.useMemo(() => {
-    if (demoMode) return [] as { id: string; name: string; color?: string }[];
     const assignedIds = new Set<string>();
     displaySections.forEach((section) => {
       section.groups.forEach((g) => assignedIds.add(g.id));
     });
     return yearGroupsForSelector.filter((g) => !assignedIds.has(g.id));
-  }, [demoMode, displaySections, yearGroupsForSelector]);
+  }, [displaySections, yearGroupsForSelector]);
 
-  // Flat list of selectable classes (key-stage folders, then uncategorized for real logins).
+  // Flat list of selectable classes (key-stage folders, then unassigned).
   const selectableYearGroups = React.useMemo(() => {
     const groups: { id: string; name: string; color?: string }[] = [];
     const seen = new Set<string>();
@@ -174,8 +173,8 @@ export function Header() {
   const hasSelectorItems = displaySections.length > 0 || uncategorizedGroups.length > 0;
 
   const emptySelectorMessage = demoMode
-    ? 'Your classes will appear here once you add them in Settings → Year Groups.'
-    : 'No classes in this list yet. Add them in Settings → Year Groups.';
+    ? 'Your classes will appear here once you add them in Settings → My classes.'
+    : 'No classes in this list yet. Add them in Settings → My classes.';
 
   // If current class is not under a key stage (or not allowed), switch to the first assigned one.
   useEffect(() => {
@@ -441,11 +440,12 @@ export function Header() {
                 <HelpCircle className="h-4 w-4 lg:h-5 lg:w-5" />
               </button>
 
-              {/* Settings Button */}
+              {/* Settings Button — full-page Settings */}
               <button
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => navigateToSettings()}
                 className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="User Settings"
+                title="Settings"
+                aria-label="Open settings"
                 data-walkthrough="settings"
               >
                 <Settings className="h-4 w-4 lg:h-5 lg:w-5" />
@@ -606,10 +606,11 @@ export function Header() {
                     </button>
                     <button
                       onClick={() => {
-                        setSettingsOpen(true);
                         setMobileMenuOpen(false);
+                        navigateToSettings();
                       }}
                       className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
+                      aria-label="Open settings"
                     >
                       <Settings className="h-5 w-5" />
                     </button>
@@ -633,12 +634,6 @@ export function Header() {
           )}
         </div>
       </header>
-
-      {/* User Settings Modal */}
-      <UserSettings 
-        isOpen={settingsOpen} 
-        onClose={() => setSettingsOpen(false)} 
-      />
 
       {/* Walkthrough Guide */}
       <WalkthroughGuide

@@ -25,7 +25,8 @@ export type StudioNavId =
   | 'lesson-viewer'
   | 'bolt-ons'
   | 'assessify'
-  | 'perifeedback';
+  | 'perifeedback'
+  | 'settings';
 
 const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.ReactNode; dataTab: string }[] = [
   { id: 'unit-viewer', label: 'Planner', short: 'Planner', icon: <Calendar className="h-[17px] w-[17px]" />, dataTab: 'unit-viewer' },
@@ -83,7 +84,7 @@ export function StudioShell({
   }, [collapsed]);
 
   const mobileActive =
-    active === 'contact-us' || active === 'more' || isBoltOnsNav(active)
+    active === 'contact-us' || active === 'more' || active === 'settings' || isBoltOnsNav(active)
       ? 'more'
       : active;
 
@@ -140,8 +141,8 @@ export function StudioShell({
           <button
             type="button"
             data-tab="more"
-            className={`ccd-studio-nav-item ${active === 'more' || active === 'contact-us' ? 'is-active' : ''}`}
-            aria-current={active === 'more' || active === 'contact-us' ? 'page' : undefined}
+            className={`ccd-studio-nav-item ${active === 'more' || active === 'contact-us' || active === 'settings' ? 'is-active' : ''}`}
+            aria-current={active === 'more' || active === 'contact-us' || active === 'settings' ? 'page' : undefined}
             onClick={() => onNavigate('more')}
           >
             <MoreHorizontal className="h-[17px] w-[17px]" />
