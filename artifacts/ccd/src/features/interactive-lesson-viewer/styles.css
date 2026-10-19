@@ -141,9 +141,11 @@
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) 10px auto;
   grid-template-columns: minmax(0, 1fr);
-  width: 100vw;
-  height: 100dvh;
-  max-height: 100dvh;
+  /* inset:0 sizes the shell — avoid 100vw (scrollbar overflow shifts the rail mid-canvas) */
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  max-height: 100%;
   min-height: 0;
   background: var(--ss-canvas);
   border: none;
@@ -189,17 +191,23 @@
   /* stage | tool rail — panel column added when .has-panel */
   grid-template-columns: minmax(0, 1fr) 72px;
   grid-template-rows: minmax(0, 1fr);
+  grid-template-areas: 'stage rail';
   min-height: 0;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
   overflow: hidden;
   background: var(--ss-canvas);
+  align-items: stretch;
 }
 
 .ilv-editor-body.has-panel {
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px) 72px;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, min(280px, 28vw)) 72px;
+  grid-template-areas: 'stage panel rail';
 }
 
 .ilv-stage-wrap {
+  grid-area: stage;
   display: flex;
   flex-direction: column;
   min-width: 0;
@@ -246,7 +254,7 @@
   min-width: 0;
   display: grid;
   place-items: center;
-  padding: 1.25rem 1.5rem;
+  padding: clamp(0.65rem, 1.5cqh, 1.25rem) clamp(0.65rem, 1.5cqw, 1.5rem);
   overflow: auto;
   container-type: size;
   container-name: ilv-editor-stage;
@@ -258,9 +266,15 @@
   /* Fit 16:9 inside remaining stage area; zoom via --ilv-zoom (scrolls inside .ilv-stage when > 1) */
   --ilv-zoom: 1;
   aspect-ratio: 16 / 9;
-  width: min(calc(100cqw * var(--ilv-zoom)), calc(100cqh * var(--ilv-zoom) * 16 / 9));
+  box-sizing: border-box;
+  width: min(
+    100%,
+    calc(100cqw * var(--ilv-zoom)),
+    calc(100cqh * var(--ilv-zoom) * 16 / 9)
+  );
   height: auto;
-  max-width: none;
+  max-width: 100%;
+  max-height: min(100%, calc(100cqh * var(--ilv-zoom)));
   flex-shrink: 0;
   background: var(--ss-white);
   border: 1px solid var(--ss-line);
@@ -276,8 +290,9 @@
 
 @supports not (width: 1cqw) {
   .ilv-stage-canvas {
-    width: min(100%, calc((100dvh - 12rem) * 16 / 9));
-    max-height: calc(100dvh - 12rem);
+    width: min(100%, calc((100% - 0px) * var(--ilv-zoom, 1)), calc((100dvh - 14rem) * 16 / 9));
+    max-width: 100%;
+    max-height: min(100%, calc(100dvh - 14rem));
   }
 }
 
@@ -350,15 +365,20 @@
 }
 
 .ilv-rail {
+  grid-area: rail;
   display: flex;
   flex-direction: column;
   gap: 0.15rem;
   padding: 0.4rem 0.25rem;
   background: var(--ss-ink);
   color: #fff;
+  overflow-x: hidden;
   overflow-y: auto;
   min-height: 0;
-  z-index: 1;
+  width: 72px;
+  max-width: 72px;
+  justify-self: stretch;
+  z-index: 2;
 }
 
 .ilv-rail-btn {
@@ -1514,11 +1534,13 @@
 
 .ilv-panel {
   /* In-flow grid column — pushes the stage, never overlays it */
+  grid-area: panel;
   position: relative;
   width: auto;
   min-width: 0;
   min-height: 0;
   height: 100%;
+  max-height: 100%;
   background: var(--ss-white);
   border-left: 1px solid var(--ss-line);
   z-index: 1;
@@ -1606,24 +1628,25 @@
   .ilv-editor-body.has-panel {
     grid-template-columns: minmax(0, 1fr);
     grid-template-rows: minmax(0, 1fr) auto auto;
+    grid-template-areas:
+      'stage'
+      'panel'
+      'rail';
   }
   .ilv-rail {
     flex-direction: row;
     overflow-x: auto;
     overflow-y: hidden;
-    order: 3;
+    width: 100%;
+    max-width: none;
   }
   .ilv-rail-btn {
     min-width: 64px;
   }
   .ilv-panel {
-    order: 2;
     max-height: 38dvh;
     border-left: none;
     border-top: 1px solid var(--ss-line);
-  }
-  .ilv-stage-wrap {
-    order: 1;
   }
 }
 
