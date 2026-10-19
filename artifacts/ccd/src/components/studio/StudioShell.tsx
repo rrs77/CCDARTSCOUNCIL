@@ -4,11 +4,13 @@ import {
   Calendar,
   ChevronLeft,
   Clapperboard,
+  CornerDownRight,
   Edit3,
   FolderOpen,
   Globe2,
   Grid3X3,
   MoreHorizontal,
+  Sparkles,
 } from 'lucide-react';
 
 export type StudioNavId =
@@ -20,7 +22,10 @@ export type StudioNavId =
   | 'more'
   | 'lesson-library'
   | 'contact-us'
-  | 'lesson-viewer';
+  | 'lesson-viewer'
+  | 'bolt-ons'
+  | 'assessify'
+  | 'perifeedback';
 
 const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.ReactNode; dataTab: string }[] = [
   { id: 'unit-viewer', label: 'Planner', short: 'Planner', icon: <Calendar className="h-[17px] w-[17px]" />, dataTab: 'unit-viewer' },
@@ -31,6 +36,14 @@ const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.Reac
   { id: 'lesson-viewer', label: 'Lesson Viewer', short: 'Viewer', icon: <Clapperboard className="h-[17px] w-[17px]" />, dataTab: 'lesson-viewer' },
   { id: 'our-partners', label: 'Partner Hubs', short: 'Hubs', icon: <Globe2 className="h-[17px] w-[17px]" />, dataTab: 'our-partners' },
 ];
+
+const BOLT_ON_SUBLINKS: { id: StudioNavId; label: string; dataTab: string }[] = [
+  { id: 'assessify', label: 'Assessify', dataTab: 'assessify' },
+  { id: 'perifeedback', label: 'PeriFeedback', dataTab: 'perifeedback' },
+];
+
+const isBoltOnsNav = (id: StudioNavId) =>
+  id === 'bolt-ons' || id === 'assessify' || id === 'perifeedback';
 
 interface StudioShellProps {
   active: StudioNavId;
@@ -60,9 +73,11 @@ export function StudioShell({ active, onNavigate, children, hubsMode, wideCanvas
   }, [collapsed]);
 
   const mobileActive =
-    active === 'contact-us' || active === 'more'
+    active === 'contact-us' || active === 'more' || isBoltOnsNav(active)
       ? 'more'
       : active;
+
+  const boltOnsOpen = isBoltOnsNav(active);
 
   return (
     <div className={`ccd-studio-app ${collapsed ? 'is-collapsed' : ''}`}>
@@ -122,6 +137,37 @@ export function StudioShell({ active, onNavigate, children, hubsMode, wideCanvas
             <MoreHorizontal className="h-[17px] w-[17px]" />
             <span>More tools</span>
           </button>
+          <button
+            type="button"
+            data-tab="bolt-ons"
+            className={`ccd-studio-nav-item ${boltOnsOpen ? 'is-active' : ''}`}
+            aria-current={active === 'bolt-ons' ? 'page' : undefined}
+            aria-expanded={boltOnsOpen}
+            onClick={() => onNavigate('bolt-ons')}
+          >
+            <Sparkles className="h-[17px] w-[17px]" />
+            <span>+ Bolt-ons</span>
+            <span className="ccd-studio-nav-badge" aria-label="2 bolt-ons">
+              2
+            </span>
+          </button>
+          {boltOnsOpen && !collapsed ? (
+            <div className="ccd-studio-subnav" role="group" aria-label="Bolt-ons products">
+              {BOLT_ON_SUBLINKS.map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-tab={item.dataTab}
+                  className={`ccd-studio-subnav-item ${active === item.id ? 'is-active' : ''}`}
+                  aria-current={active === item.id ? 'page' : undefined}
+                  onClick={() => onNavigate(item.id)}
+                >
+                  <CornerDownRight className="h-3.5 w-3.5 opacity-70" aria-hidden />
+                  <span>{item.label}</span>
+                </button>
+              ))}
+            </div>
+          ) : null}
         </nav>
 
         <div className="ccd-studio-sidebar-foot">
