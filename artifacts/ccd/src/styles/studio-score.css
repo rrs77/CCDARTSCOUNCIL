@@ -61,7 +61,7 @@
 
 /* Full-bleed workspace — not a side panel bolted onto the old chrome */
 .ccd-studio-app {
-  display: grid !important;
+  display: grid;
   grid-template-columns: var(--ss-sidebar) minmax(0, 1fr);
   min-height: calc(100vh - 4rem);
   height: calc(100vh - 4rem);
@@ -160,6 +160,12 @@ html.ccd-studio {
 
   .ccd-studio-app.is-collapsed .ccd-studio-sidebar {
     width: 76px;
+  }
+
+  /* Workspace must fill the padded app column (sidebar is position:fixed). */
+  .ccd-studio-workspace {
+    width: 100%;
+    min-width: 0;
   }
 }
 
