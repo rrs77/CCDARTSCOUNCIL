@@ -87,6 +87,8 @@ export interface LessonData {
   resourceLink?: string;
   imageLink?: string;
   additionalLinks?: string;
+  /** Attached Interactive Lesson Viewer document id. */
+  interactiveLessonId?: string;
   notes?: string;
   standards?: any[];
   assessmentObjectives?: string[];

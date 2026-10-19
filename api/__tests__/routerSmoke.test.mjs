@@ -140,3 +140,14 @@ describe('music hub routes', () => {
     assert.notEqual(status, 404, JSON.stringify(body));
   });
 });
+
+describe('interactive lesson viewer routes', () => {
+  it('dispatches GET /api/interactive-lessons/transcribe via combined router', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('GET', 'interactive-lessons/transcribe'),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+    assert.equal(typeof body.available, 'boolean');
+  });
+});

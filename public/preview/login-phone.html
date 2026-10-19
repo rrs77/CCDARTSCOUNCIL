@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CCD Login Preview — Phone</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,600;1,9..144,500&family=DM+Sans:wght@400;500;600;700&display=swap" rel="stylesheet" />
+<style>
+  :root { --green:#002D24; --lime:#B6FF7E; }
+  * { box-sizing: border-box; }
+  body { margin:0; font-family:"DM Sans",system-ui,sans-serif; background:#fff; }
+  .banner {
+    background: var(--green); color:#fff; text-align:center;
+    padding: 12px 14px; font-size: 11px; line-height: 1.4; font-weight: 500;
+  }
+  .hero {
+    position: relative; min-height: 42vh; color:#fff;
+    background:
+      linear-gradient(180deg, rgba(0,45,36,.25) 0%, rgba(0,45,36,.78) 55%, rgba(0,45,36,.96) 100%),
+      url('/preview-login-desktop.jpg') left 20% center / cover no-repeat;
+    padding: 18px 16px 14px;
+    display:flex; flex-direction:column; justify-content:flex-end;
+  }
+  .seal {
+    position:absolute; top:14px; left:14px; width:64px; height:64px;
+    border-radius:50%; background:var(--green); border:2px solid rgba(182,255,126,.55);
+    display:flex; align-items:center; justify-content:center;
+    font-family: Fraunces, Georgia, serif; font-weight:600; font-size:16px; letter-spacing:.02em;
+  }
+  .hero h1 {
+    margin:0; font-family: Fraunces, Georgia, serif; font-weight:600;
+    font-size: 1.45rem; line-height: 1.15; max-width: 18ch;
+  }
+  .hero h1 em { color: var(--lime); font-style: italic; font-weight: 500; }
+  .hero .sub { margin: 8px 0 12px; font-size: 12.5px; line-height:1.45; color: rgba(255,255,255,.9); }
+  .logos { display:flex; flex-wrap:wrap; gap:8px 12px; align-items:center; opacity:.42; }
+  .logos img { height: 12px; width:auto; max-width:64px; object-fit:contain; filter: brightness(0) invert(1); }
+  .disc { margin-top:8px; font-size:11px; line-height:1.4; color:#fff; font-weight:600; }
+  .form { padding: 20px 18px 28px; }
+  .top { display:flex; justify-content:flex-end; margin-bottom: 8px; }
+  .walk {
+    display:inline-flex; align-items:center; gap:6px; background:var(--lime); color:#000;
+    font-size:12px; font-weight:600; border:0; border-radius:8px; padding:8px 12px;
+  }
+  .logo-center { display:flex; justify-content:center; margin: 6px 0 14px; }
+  .logo-center .mark {
+    width:56px; height:56px; border-radius:50%; background:var(--green);
+    border:1.5px solid rgba(182,255,126,.5); color:#fff;
+    display:flex; align-items:center; justify-content:center;
+    font-family: Fraunces, Georgia, serif; font-weight:600; font-size:15px;
+  }
+  h2 { margin:0; font-family: Fraunces, Georgia, serif; font-size:1.55rem; color:var(--green); }
+  .hint { margin:4px 0 16px; font-size:13px; color:#6b7280; }
+  label { display:block; font-size:13px; font-weight:500; color:#374151; margin-bottom:6px; }
+  .field { margin-bottom:12px; }
+  input[type=email], input[type=password] {
+    width:100%; border:1px solid #d1d5db; border-radius:8px; padding:12px; font-size:14px;
+  }
+  .row { display:flex; justify-content:space-between; align-items:center; }
+  .row a { color:var(--green); font-size:13px; font-weight:500; text-decoration:none; }
+  .remember { display:flex; gap:8px; align-items:center; font-size:13px; color:#4b5563; margin:10px 0 14px; }
+  .btn {
+    width:100%; background:var(--green); color:#fff; border:0; border-radius:8px;
+    padding:13px; font-size:14px; font-weight:600;
+  }
+  .or { display:flex; align-items:center; gap:10px; margin:16px 0; color:#9ca3af; font-size:11px; text-transform:uppercase; }
+  .or:before, .or:after { content:""; flex:1; height:1px; background:#e5e7eb; }
+  .btn2 {
+    width:100%; background:#fff; border:1px solid #d1d5db; border-radius:8px;
+    padding:12px; font-size:13px; font-weight:600; color:#374151;
+  }
+  .about { display:block; width:100%; text-align:center; margin-top:10px; background:none; border:0; color:#6b7280; font-size:13px; }
+  .foot { text-align:center; margin-top:18px; font-size:13px; color:#6b7280; }
+  .foot a { color:var(--green); font-weight:600; text-decoration:none; }
+</style>
+</head>
+<body>
+  <div class="banner">CCDesigner Prototype v0.1 — Early-stage interactive demonstration for Arts Council England funding discussions and arts-sector consultation.</div>
+  <div class="hero">
+    <div class="seal" aria-hidden="true">CCD</div>
+    <h1>Exceptional lessons start with <em>connection</em></h1>
+    <p class="sub">Inspired by the arts. Built for the classroom.</p>
+    <div class="logos">
+      <img src="/partners/royal-opera-house.svg" alt="" />
+      <img src="/partners/lso.svg" alt="" />
+      <img src="/partners/national-theatre.svg" alt="" />
+      <img src="/partners/bbc-ten-pieces.svg" alt="" />
+      <img src="/partners/tate.svg" alt="" />
+      <img src="/partners/national-gallery.svg" alt="" />
+      <img src="/partners/sadlers-wells.svg" alt="" />
+    </div>
+    <p class="disc">Organisations shown are examples for demonstration only. Their inclusion does not imply endorsement, funding or partnership. All trademarks remain the property of their respective owners.</p>
+  </div>
+  <div class="form">
+    <div class="top"><button class="walk" type="button">▶ Feature walkthrough</button></div>
+    <div class="logo-center"><div class="mark">CCD</div></div>
+    <h2>Welcome back</h2>
+    <p class="hint">Sign in to continue to your account.</p>
+    <label for="e">Email address</label>
+    <div class="field"><input id="e" type="email" placeholder="you@school.org" /></div>
+    <div class="row"><label for="p">Password</label><a href="#">Forgot password?</a></div>
+    <div class="field"><input id="p" type="password" placeholder="Enter your password" value="password" /></div>
+    <label class="remember"><input type="checkbox" checked /> Remember me</label>
+    <button class="btn" type="button">Sign in →</button>
+    <div class="or">or</div>
+    <button class="btn2" type="button">Explore the working prototype ↗</button>
+    <button class="about" type="button">About this prototype</button>
+    <p class="foot">Don't have an account? <a href="#">Create one</a></p>
+  </div>
+</body>
+</html>

@@ -9,6 +9,7 @@ import { OurPartners } from './OurPartners';
 import { PartnerHubsPreview, isPartnerHubsLink, newPartnerHubsEnabled } from './hubsPreview/PartnerHubsPreview';
 import { ContactUsPanel } from './ContactUsPanel';
 import { Planner } from './planner/Planner';
+import { InteractiveLessonHub } from '../features/interactive-lesson-viewer';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { isAuthorizedDemoMode } from '../utils/demoMode';
@@ -47,6 +48,7 @@ const ALLOWED = new Set([
   'contact-us',
   'curriculum',
   'more',
+  'lesson-viewer',
 ]);
 
 export function Dashboard() {
@@ -90,7 +92,14 @@ export function Dashboard() {
       const tab = params.get('tab');
       if (tab && ALLOWED.has(tab)) {
         setActiveTab(tab);
-        window.history.replaceState({}, '', window.location.pathname || '/');
+        // Preserve player deep-link params for Lesson Viewer hub to consume.
+        const keep = new URLSearchParams();
+        const play = params.get('play');
+        const mode = params.get('mode');
+        if (play) keep.set('play', play);
+        if (mode) keep.set('mode', mode);
+        const qs = keep.toString();
+        window.history.replaceState({}, '', `${window.location.pathname || '/'}${qs ? `?${qs}` : ''}`);
       }
     } catch {
       /* ignore */
@@ -283,6 +292,18 @@ export function Dashboard() {
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
           />
+        </div>
+      )}
+
+      {activeTab === 'lesson-viewer' && (
+        <div className="ccd-fade-in-up" key="lv">
+          <p className="ccd-studio-eyebrow mb-1">
+            CONNECT &amp; CREATE / <span>LESSON VIEWER</span>
+          </p>
+          <p className="mb-4 text-sm text-[#77738F]">
+            Build and present interactive classroom lessons — attach a player-only link to any CCD lesson.
+          </p>
+          <InteractiveLessonHub />
         </div>
       )}
 

@@ -2,6 +2,7 @@ import React from 'react';
 import {
   BookOpen,
   CalendarCog,
+  Clapperboard,
   FolderOpen,
   HelpCircle,
   Mail,
@@ -26,6 +27,14 @@ const TOOLS: {
     icon: <FolderOpen className="h-5 w-5" />,
     action: 'tab',
     tab: 'lesson-library',
+  },
+  {
+    id: 'lesson-viewer',
+    title: 'Lesson Viewer',
+    desc: 'Interactive classroom player — Canva, YouTube, Slides, karaoke and more.',
+    icon: <Clapperboard className="h-5 w-5" />,
+    action: 'tab',
+    tab: 'lesson-viewer',
   },
   {
     id: 'curriculum',
