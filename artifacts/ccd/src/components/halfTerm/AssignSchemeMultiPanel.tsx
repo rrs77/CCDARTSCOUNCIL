@@ -476,169 +476,176 @@ export function AssignSchemeMultiPanel({
                 />
               </div>
             </div>
-            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4 sm:px-6">
+            <div className="min-h-0 flex-1 overflow-y-auto px-5 pb-4 sm:px-6">
               {stageBlocks.length === 0 ? (
                 <p className="py-8 text-center text-[14px] text-[#77738F]">No classes match.</p>
               ) : (
-                stageBlocks.map((block) => {
-                  const accent = keyStageAccent(block.id, block.label);
-                  const open = !collapsedStages.has(block.id);
-                  const ids = block.classes.map((c) => c.id);
-                  const selectedInGroup = ids.filter((id) => selectedClassIds.has(id)).length;
-                  const allSelected = selectedInGroup === ids.length && ids.length > 0;
-                  const showSubjects = block.subjectGroups.length > 1;
-                  return (
-                    <div
-                      key={block.id}
-                      className={`ss-settings-stage-card ${open ? 'is-open' : ''}`}
-                      style={{ borderColor: open ? accent.bar : undefined }}
-                    >
+                <div className="grid grid-cols-2 gap-2.5 content-start">
+                  {stageBlocks.map((block) => {
+                    const accent = keyStageAccent(block.id, block.label);
+                    const open = !collapsedStages.has(block.id);
+                    const ids = block.classes.map((c) => c.id);
+                    const selectedInGroup = ids.filter((id) => selectedClassIds.has(id)).length;
+                    const allSelected = selectedInGroup === ids.length && ids.length > 0;
+                    const showSubjects = block.subjectGroups.length > 1;
+                    return (
                       <div
-                        className="ss-settings-stage-card-head"
-                        style={{ background: accent.tint }}
+                        key={block.id}
+                        className={`ss-settings-stage-card min-w-0 ${open ? 'is-open col-span-2' : 'col-span-1'}`}
+                        style={{ borderColor: open ? accent.bar : undefined }}
                       >
-                        <button
-                          type="button"
-                          onClick={() => toggleStageCollapsed(block.id)}
-                          className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                          aria-expanded={open}
+                        <div
+                          className="ss-settings-stage-card-head"
+                          style={{ background: accent.tint }}
                         >
-                          {open ? (
-                            <ChevronDown className="h-4 w-4 shrink-0 text-[#77738F]" />
-                          ) : (
-                            <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" />
-                          )}
-                          <span
-                            className="h-2.5 w-2.5 shrink-0 rounded-full"
-                            style={{ background: accent.bar }}
-                            aria-hidden
-                          />
-                          <span className="ss-settings-stage-label" style={{ color: accent.label }}>
-                            {block.label}
-                          </span>
-                          <span
-                            className="ss-settings-stage-count"
-                            style={{ background: accent.badge, color: accent.badgeText }}
+                          <button
+                            type="button"
+                            onClick={() => toggleStageCollapsed(block.id)}
+                            className="flex min-w-0 flex-1 items-center gap-1.5 text-left sm:gap-2"
+                            aria-expanded={open}
                           >
-                            {block.classes.length}
-                          </span>
-                          {selectedInGroup > 0 ? (
-                            <span className="rounded-full bg-[#4338E8] px-2 py-0.5 text-[11px] font-extrabold tabular-nums text-white">
-                              {selectedInGroup} selected
-                            </span>
-                          ) : null}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() =>
-                            allSelected ? clearGroup(ids) : selectGroup(ids)
-                          }
-                          className="shrink-0 rounded-lg px-2 py-1 text-[12px] font-extrabold text-[#4338E8] hover:bg-white/70"
-                        >
-                          {allSelected ? 'Clear' : 'Select all'}
-                          {selectedInGroup > 0 && !allSelected ? (
-                            <span className="ml-1 tabular-nums opacity-70">
-                              ({selectedInGroup})
-                            </span>
-                          ) : null}
-                        </button>
-                      </div>
-                      {open ? (
-                        <div className="ss-settings-stage-body space-y-2">
-                          {(showSubjects
-                            ? block.subjectGroups.map((g) => ({
-                                key: g.subject.id,
-                                subject: g.subject,
-                                classes: g.classes,
-                              }))
-                            : [
-                                {
-                                  key: 'all',
-                                  subject: null as (typeof block.subjectGroups)[0]['subject'] | null,
-                                  classes: block.classes,
-                                },
-                              ]
-                          ).map((group) => (
-                            <div
-                              key={group.key}
-                              className={showSubjects ? 'ss-settings-subject-group' : ''}
+                            {open ? (
+                              <ChevronDown className="h-4 w-4 shrink-0 text-[#77738F]" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" />
+                            )}
+                            <span
+                              className="h-2.5 w-2.5 shrink-0 rounded-full"
+                              style={{ background: accent.bar }}
+                              aria-hidden
+                            />
+                            <span
+                              className="ss-settings-stage-label truncate"
+                              style={{ color: accent.label }}
                             >
-                              {showSubjects && group.subject ? (
-                                <div className="ss-settings-subject-head cursor-default">
-                                  <span
-                                    className="ss-settings-subject-dot"
-                                    style={{ background: group.subject.color }}
-                                  />
-                                  <span>{group.subject.label}</span>
-                                  <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
-                                    {group.classes.length}
-                                  </span>
-                                </div>
-                              ) : null}
-                              <ul
-                                className={
-                                  showSubjects ? 'ss-settings-subject-body space-y-1' : 'space-y-1'
-                                }
+                              {block.label}
+                            </span>
+                            <span
+                              className="ss-settings-stage-count"
+                              style={{ background: accent.badge, color: accent.badgeText }}
+                            >
+                              {block.classes.length}
+                            </span>
+                            {selectedInGroup > 0 ? (
+                              <span className="hidden rounded-full bg-[#4338E8] px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums text-white sm:inline">
+                                {selectedInGroup} sel.
+                              </span>
+                            ) : null}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() =>
+                              allSelected ? clearGroup(ids) : selectGroup(ids)
+                            }
+                            className="shrink-0 rounded-lg px-1.5 py-1 text-[11px] font-extrabold text-[#4338E8] hover:bg-white/70 sm:px-2 sm:text-[12px]"
+                          >
+                            {allSelected ? 'Clear' : 'All'}
+                            {selectedInGroup > 0 && !allSelected ? (
+                              <span className="ml-0.5 tabular-nums opacity-70">
+                                ({selectedInGroup})
+                              </span>
+                            ) : null}
+                          </button>
+                        </div>
+                        {open ? (
+                          <div className="ss-settings-stage-body space-y-2">
+                            {(showSubjects
+                              ? block.subjectGroups.map((g) => ({
+                                  key: g.subject.id,
+                                  subject: g.subject,
+                                  classes: g.classes,
+                                }))
+                              : [
+                                  {
+                                    key: 'all',
+                                    subject: null as
+                                      | (typeof block.subjectGroups)[0]['subject']
+                                      | null,
+                                    classes: block.classes,
+                                  },
+                                ]
+                            ).map((group) => (
+                              <div
+                                key={group.key}
+                                className={showSubjects ? 'ss-settings-subject-group' : ''}
                               >
-                                {group.classes.map((cls) => {
-                                  const on = selectedClassIds.has(cls.id);
-                                  const has =
-                                    selectedStackId != null &&
-                                    alreadyHasScheme(cls.id, selectedStackId);
-                                  const chip = classDisplayColor(cls);
-                                  const { title, context } = classLabelParts(cls);
-                                  return (
-                                    <li key={cls.id}>
-                                      <button
-                                        type="button"
-                                        onClick={() => toggleClass(cls.id)}
-                                        className={`flex w-full items-start gap-2.5 rounded-xl border px-2.5 py-2 text-left transition ${
-                                          on
-                                            ? 'border-[#4338E8] bg-[#EEEDFC]'
-                                            : 'border-transparent bg-white hover:border-[#E2E0EF] hover:bg-[#FAFAFC]'
-                                        }`}
-                                      >
-                                        <span
-                                          className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border ${
+                                {showSubjects && group.subject ? (
+                                  <div className="ss-settings-subject-head cursor-default">
+                                    <span
+                                      className="ss-settings-subject-dot"
+                                      style={{ background: group.subject.color }}
+                                    />
+                                    <span>{group.subject.label}</span>
+                                    <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
+                                      {group.classes.length}
+                                    </span>
+                                  </div>
+                                ) : null}
+                                <ul
+                                  className={`grid grid-cols-2 gap-1.5 xl:grid-cols-4 ${
+                                    showSubjects ? 'ss-settings-subject-body' : ''
+                                  }`}
+                                >
+                                  {group.classes.map((cls) => {
+                                    const on = selectedClassIds.has(cls.id);
+                                    const has =
+                                      selectedStackId != null &&
+                                      alreadyHasScheme(cls.id, selectedStackId);
+                                    const chip = classDisplayColor(cls);
+                                    const { title, context } = classLabelParts(cls);
+                                    return (
+                                      <li key={cls.id} className="min-w-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => toggleClass(cls.id)}
+                                          className={`flex h-full w-full items-start gap-2 rounded-xl border px-2 py-2 text-left transition ${
                                             on
-                                              ? 'border-[#4338E8] bg-[#4338E8] text-white'
-                                              : 'border-[#D8D5E8] bg-white text-transparent'
+                                              ? 'border-[#4338E8] bg-[#EEEDFC]'
+                                              : 'border-transparent bg-white hover:border-[#E2E0EF] hover:bg-[#FAFAFC]'
                                           }`}
                                         >
-                                          <Check className="h-3 w-3" />
-                                        </span>
-                                        <span
-                                          className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
-                                          style={{ background: chip }}
-                                          aria-hidden
-                                        />
-                                        <span className="min-w-0 flex-1">
-                                          <span className="ss-settings-class-name block truncate">
-                                            {title}
+                                          <span
+                                            className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border ${
+                                              on
+                                                ? 'border-[#4338E8] bg-[#4338E8] text-white'
+                                                : 'border-[#D8D5E8] bg-white text-transparent'
+                                            }`}
+                                          >
+                                            <Check className="h-3 w-3" />
                                           </span>
-                                          {context ? (
-                                            <span className="mt-0.5 block truncate text-[12px] font-semibold text-[#9B97B0]">
-                                              {context}
+                                          <span
+                                            className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                                            style={{ background: chip }}
+                                            aria-hidden
+                                          />
+                                          <span className="min-w-0 flex-1">
+                                            <span className="ss-settings-class-name block truncate text-[13px] sm:text-[15px]">
+                                              {title}
                                             </span>
-                                          ) : null}
-                                        </span>
-                                        {has ? (
-                                          <span className="mt-0.5 shrink-0 rounded-md bg-[#D5F3EA] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#0B6B5F]">
-                                            Has it
+                                            {context ? (
+                                              <span className="mt-0.5 block truncate text-[11px] font-semibold text-[#9B97B0] sm:text-[12px]">
+                                                {context}
+                                              </span>
+                                            ) : null}
+                                            {has ? (
+                                              <span className="mt-1 inline-block rounded-md bg-[#D5F3EA] px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#0B6B5F]">
+                                                Has it
+                                              </span>
+                                            ) : null}
                                           </span>
-                                        ) : null}
-                                      </button>
-                                    </li>
-                                  );
-                                })}
-                              </ul>
-                            </div>
-                          ))}
-                        </div>
-                      ) : null}
-                    </div>
-                  );
-                })
+                                        </button>
+                                      </li>
+                                    );
+                                  })}
+                                </ul>
+                              </div>
+                            ))}
+                          </div>
+                        ) : null}
+                      </div>
+                    );
+                  })}
+                </div>
               )}
             </div>
           </section>
