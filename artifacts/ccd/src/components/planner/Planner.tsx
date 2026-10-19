@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import {
-  CalendarCog,
   ChevronLeft,
   ChevronRight,
   Plus,
@@ -9,6 +8,7 @@ import {
 } from 'lucide-react';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
+import { TimetableBuilder } from '../TimetableBuilder';
 import { usePlannerData, type PlannerData } from './usePlannerData';
 import { WeekView, DayView, MonthView, UnitsView } from './PlannerViews';
 import { LessonDetailsSheet, SchedulePickerSheet } from './PlannerSheets';
@@ -69,7 +69,8 @@ function roomFromView(v: PlannerView): PlannerRoom {
   return 'schedule';
 }
 
-export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps) {
+export function Planner({ initialView, renderTerm, renderClassic: _renderClassic }: PlannerProps) {
+  void _renderClassic;
   const { currentSheetInfo, setCurrentSheetInfo } = useData();
   const { settings } = useSettings();
   const [view, setView] = useState<PlannerView>(initialView || 'week');
@@ -333,8 +334,7 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           )}
           {room === 'timetable' && (
             <p className="max-w-md text-[12px] font-medium leading-snug text-[#77738F]">
-              Build <span className="font-bold text-[#1F1B4D]">your weekly timetable</span> for all
-              My classes. Drag classes onto the grid, then return to Schedule to plan lessons.
+              Drag My classes onto the week, then return to Schedule to plan lessons.
             </p>
           )}
           {room === 'units' && view !== 'classic' && (
@@ -399,23 +399,16 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
             )
           )}
           {view === 'classic' && (
-            <>
-              <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl border border-[#E2E0EF] bg-[#F4F3FA] px-4 py-3">
-                <CalendarCog className="h-5 w-5 shrink-0 text-[#4338E8]" aria-hidden />
-                <div className="min-w-0 flex-1">
-                  <p className="text-[13px] font-extrabold text-[#1F1B4D]">
-                    Timetable builder · all My classes
-                  </p>
-                  <p className="text-[12px] font-medium text-[#77738F]">
-                    Your weekly slots across every class you teach. Holidays and inset days stay on the calendar.
-                  </p>
-                </div>
-                <button type="button" onClick={() => changeView('week')} className={`${primaryBtn} shrink-0`}>
-                  Back to week
-                </button>
-              </div>
-              {focusedClassId === currentSheetInfo.sheet ? renderClassic() : <p className="py-10 text-center text-sm text-[#77738F]">Loading…</p>}
-            </>
+            <div className="ss-timetable-room flex min-h-0 flex-1 flex-col">
+              <TimetableBuilder
+                isOpen
+                embedded
+                onClose={() => changeView('week')}
+                onTimetableUpdate={() => {
+                  refreshStorage();
+                }}
+              />
+            </div>
           )}
         </div>
       </main>

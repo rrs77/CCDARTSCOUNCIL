@@ -890,3 +890,18 @@ html.ccd-studio .ss-dialog-lg {
     transition: none;
   }
 }
+
+/* Timetable builder room — calm weekly canvas */
+.ss-timetable-room {
+  min-height: min(72vh, calc(100dvh - 12rem));
+}
+
+.ss-timetable-shell {
+  min-height: inherit;
+  background: #fff;
+}
+
+.ss-timetable-shell [data-class-block] {
+  border-radius: 10px;
+  box-shadow: none;
+}
