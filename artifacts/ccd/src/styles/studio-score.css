@@ -262,6 +262,68 @@ html.ccd-studio {
   background: var(--ss-sun);
 }
 
+.ccd-studio-nav-item.is-section {
+  background: rgba(67, 56, 232, 0.28);
+  color: #fff;
+}
+
+.ccd-studio-nav-badge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ss-indigo);
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 18px;
+  text-align: center;
+}
+
+.ccd-studio-nav-item.is-active .ccd-studio-nav-badge,
+.ccd-studio-nav-item.is-section .ccd-studio-nav-badge {
+  background: rgba(255, 255, 255, 0.92);
+  color: var(--ss-indigo);
+}
+
+.ccd-studio-subnav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 2px 0 6px 10px;
+  padding-left: 8px;
+  border-left: 1px solid rgba(255, 255, 255, 0.12);
+}
+
+.ccd-studio-subnav-item {
+  border: 0;
+  background: transparent;
+  color: #c9c5ea;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  text-align: left;
+  font-weight: 650;
+  font-size: 12px;
+  cursor: pointer;
+  width: 100%;
+  font-family: inherit;
+}
+
+.ccd-studio-subnav-item:hover {
+  background: #343064;
+  color: #fff;
+}
+
+.ccd-studio-subnav-item.is-active {
+  background: #2a2660;
+  color: #fff;
+}
+
 .ccd-studio-sidebar-foot {
   margin-top: auto;
   display: flex;
@@ -308,7 +370,9 @@ html.ccd-studio {
 .ccd-studio-app.is-collapsed .ccd-studio-section,
 .ccd-studio-app.is-collapsed .ccd-studio-brand-copy,
 .ccd-studio-app.is-collapsed .ccd-studio-quiet,
-.ccd-studio-app.is-collapsed .ccd-studio-collapse span {
+.ccd-studio-app.is-collapsed .ccd-studio-collapse span,
+.ccd-studio-app.is-collapsed .ccd-studio-nav-badge,
+.ccd-studio-app.is-collapsed .ccd-studio-subnav {
   display: none;
 }
 

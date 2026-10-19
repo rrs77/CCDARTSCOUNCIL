@@ -69,6 +69,7 @@ const RESERVED_SLUGS = new Set<string>([
   'signup',
   'register',
   'music-hubs',
+  'bolt-ons',
   ...PARTNER_HUB_SLUGS,
   'manifest.json',
   'manifest.webmanifest',
