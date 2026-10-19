@@ -21,6 +21,22 @@ import { NestedStandardsBrowser } from './NestedStandardsBrowser';
 import { CompactActivityResources } from './CompactActivityResources';
 import { activityPacksApi, ActivityPack } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
+import { useData } from '../contexts/DataContext';
+import {
+  findSectionIdForYearGroup,
+  getDefaultSectionIdForYearGroup,
+  resolveYearGroupFromToken,
+} from '../utils/yearGroupSectionOrder';
+
+/** Display buckets for the compact year-group picker (KS3+KS4 combined). */
+const YEAR_GROUP_DISPLAY_BUCKETS: { id: string; label: string; sectionIds: string[] }[] = [
+  { id: 'eyfs', label: 'EYFS', sectionIds: ['eyfs'] },
+  { id: 'ks1', label: 'KS1', sectionIds: ['ks1'] },
+  { id: 'ks2', label: 'KS2', sectionIds: ['ks2'] },
+  { id: 'ks34', label: 'KS3/4', sectionIds: ['ks3', 'ks4'] },
+  { id: 'ks5', label: 'KS5', sectionIds: ['ks5'] },
+  { id: 'other', label: 'Other', sectionIds: ['other'] },
+];
 
 interface ActivityCreatorProps {
   onClose: () => void;
@@ -30,10 +46,30 @@ interface ActivityCreatorProps {
 }
 
 export function ActivityCreator({ onClose, onSave, categories, levels }: ActivityCreatorProps) {
-  const { categories: allCategories, customYearGroups, resourceLinks } = useSettings();
+  const { categories: allCategories, customYearGroups, resourceLinks, yearGroupSections } =
+    useSettings();
+  const { currentSheetInfo } = useData();
   const { user } = useAuth();
   const [topicInput, setTopicInput] = useState('');
-  const [activity, setActivity] = useState({
+
+  const currentClassGroup = React.useMemo(() => {
+    const sheet = currentSheetInfo?.sheet;
+    const display = currentSheetInfo?.display;
+    return (
+      resolveYearGroupFromToken(customYearGroups, sheet || '') ||
+      resolveYearGroupFromToken(customYearGroups, display || '') ||
+      customYearGroups.find(
+        (g) =>
+          g.id === sheet ||
+          g.name === display ||
+          g.name === sheet ||
+          g.id === display,
+      ) ||
+      null
+    );
+  }, [customYearGroups, currentSheetInfo?.sheet, currentSheetInfo?.display]);
+
+  const [activity, setActivity] = useState(() => ({
     activity: '',
     description: '',
     activityText: '', // New field for activity text
@@ -51,7 +87,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
     canvaLink: '',
     category: '',
     level: '',
-    yearGroups: [] as string[], // New field for multiple year groups
+    // Pre-select the class currently open in the Activity Library / header.
+    yearGroups: currentClassGroup?.name ? [currentClassGroup.name] : ([] as string[]),
     curriculum_type: 'EYFS' as 'EYFS' | 'CUSTOM', // New field for curriculum type
     custom_objective_year_group_id: '', // New field for custom objectives year group
     custom_objective_ids: [] as string[], // New field for selected custom objectives
@@ -59,7 +96,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
     lessonNumber: '',
     teachingUnit: '',
     requiredPack: '' // New field for pack requirement
-  });
+  }));
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [showObjectivesBrowser, setShowObjectivesBrowser] = useState(false);
@@ -71,6 +108,63 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
   const prevActivityRef = useRef(activity);
   /** Longer rich-text stays collapsed so the essentials fit on a laptop. */
   const [writingOpen, setWritingOpen] = useState(false);
+  /** Year-group picker: current stage only until Show all. */
+  const [showAllYearGroups, setShowAllYearGroups] = useState(false);
+  const didPreselectYearGroup = useRef(Boolean(currentClassGroup?.name));
+
+  // If year groups load after mount, pre-select the current class once.
+  useEffect(() => {
+    if (didPreselectYearGroup.current || !currentClassGroup?.name) return;
+    didPreselectYearGroup.current = true;
+    setActivity((prev) => {
+      if (prev.yearGroups.length > 0) return prev;
+      return { ...prev, yearGroups: [currentClassGroup.name] };
+    });
+  }, [currentClassGroup]);
+
+  const resolveGroupSectionId = React.useCallback(
+    (group: { id: string; name: string }) => {
+      // Prefer an explicit Settings key-stage assignment; if the class still
+      // sits in "Other" (or is unassigned), fall back to name-based staging so
+      // the picker groups EYFS / KS1 / KS2 / KS3/4 usefully.
+      const fromSettings = findSectionIdForYearGroup(
+        yearGroupSections,
+        group.id,
+        customYearGroups,
+      );
+      if (fromSettings && fromSettings !== 'other') return fromSettings;
+      return getDefaultSectionIdForYearGroup(group.id, group.name);
+    },
+    [yearGroupSections, customYearGroups],
+  );
+
+  const currentStageBucketId = React.useMemo(() => {
+    if (!currentClassGroup) return 'other';
+    const sectionId = resolveGroupSectionId(currentClassGroup);
+    const bucket = YEAR_GROUP_DISPLAY_BUCKETS.find((b) => b.sectionIds.includes(sectionId));
+    return bucket?.id || 'other';
+  }, [currentClassGroup, resolveGroupSectionId]);
+
+  const yearGroupBuckets = React.useMemo(() => {
+    const grouped = YEAR_GROUP_DISPLAY_BUCKETS.map((bucket) => ({
+      ...bucket,
+      groups: customYearGroups.filter((g) =>
+        bucket.sectionIds.includes(resolveGroupSectionId(g)),
+      ),
+    })).filter((b) => b.groups.length > 0);
+
+    if (!showAllYearGroups) {
+      const focused = grouped.filter((b) => b.id === currentStageBucketId);
+      return focused.length > 0 ? focused : grouped.slice(0, 1);
+    }
+    return grouped;
+  }, [customYearGroups, resolveGroupSectionId, showAllYearGroups, currentStageBucketId]);
+
+  const hiddenYearGroupCount = React.useMemo(() => {
+    if (showAllYearGroups) return 0;
+    const visible = new Set(yearGroupBuckets.flatMap((b) => b.groups.map((g) => g.id)));
+    return customYearGroups.filter((g) => !visible.has(g.id)).length;
+  }, [showAllYearGroups, yearGroupBuckets, customYearGroups]);
 
   const sanitizeText = (value: string): string =>
     (value || '')
@@ -362,8 +456,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
               )}
             </div>
 
-            {/* Category + Duration */}
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+            {/* Category + Duration — duration chips stay on one row */}
+            <div className="grid grid-cols-1 items-end gap-2 sm:grid-cols-[minmax(0,1fr)_auto]">
               <div className="min-w-0">
                 <label className={fieldLabel}>
                   Category <span className="text-red-500">*</span>
@@ -387,22 +481,22 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                 )}
               </div>
 
-              <div className="sm:w-[13.5rem]">
+              <div className="sm:shrink-0">
                 <label className={fieldLabel}>Duration</label>
-                <div className="flex flex-wrap items-center gap-1.5">
-                  <div className="inline-flex h-8 items-center overflow-hidden rounded-lg border border-[#E2E0EF] bg-white focus-within:border-[#4338E8] focus-within:ring-2 focus-within:ring-[#4338E8]/20">
+                <div className="flex flex-nowrap items-center gap-1">
+                  <div className="inline-flex h-8 shrink-0 items-center overflow-hidden rounded-lg border border-[#E2E0EF] bg-white focus-within:border-[#4338E8] focus-within:ring-2 focus-within:ring-[#4338E8]/20">
                     <input
                       type="number"
                       name="time"
                       value={activity.time}
                       onChange={handleTimeChange}
                       min={0}
-                      className="h-full w-14 border-0 bg-transparent px-2 text-[13px] text-[#1F1B4D] focus:outline-none focus:ring-0"
+                      className="h-full w-9 border-0 bg-transparent px-1.5 text-[13px] tabular-nums text-[#1F1B4D] focus:outline-none focus:ring-0"
                       placeholder="0"
                       dir="ltr"
                       aria-label="Duration in minutes"
                     />
-                    <span className="border-l border-[#E2E0EF] px-2 text-[11px] font-semibold text-[#77738F]">
+                    <span className="border-l border-[#E2E0EF] px-1.5 text-[10px] font-semibold text-[#77738F]">
                       min
                     </span>
                   </div>
@@ -413,7 +507,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                         key={mins}
                         type="button"
                         onClick={() => setActivity((prev) => ({ ...prev, time: mins }))}
-                        className={`inline-flex h-7 min-w-[2rem] items-center justify-center rounded-md px-1.5 text-[11px] font-bold transition-colors ${
+                        className={`inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-[11px] font-bold tabular-nums transition-colors ${
                           active
                             ? 'bg-[#4338E8] text-white'
                             : 'border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D]'
@@ -427,38 +521,68 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
               </div>
             </div>
 
-            {/* Year groups — compact colour pills */}
+            {/* Year groups — stage-grouped pills; current stage first */}
             <div>
-              <label className={fieldLabel}>
-                Year groups <span className="text-red-500">*</span>
-              </label>
-              <div className="flex flex-wrap gap-1.5">
-                {customYearGroups.map((group) => {
-                  const selected = activity.yearGroups.includes(group.name);
-                  const color = group.color || '#4338E8';
-                  return (
-                    <button
-                      key={group.name}
-                      type="button"
-                      onClick={() => handleYearGroupChange(group.name, !selected)}
-                      aria-pressed={selected}
-                      className="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-semibold transition-colors"
-                      style={{
-                        borderColor: selected ? color : '#E2E0EF',
-                        backgroundColor: selected ? `${color}22` : '#fff',
-                        color: selected ? '#1F1B4D' : '#77738F',
-                      }}
-                      title={group.name}
-                    >
-                      <span
-                        className="h-2 w-2 shrink-0 rounded-full"
-                        style={{ backgroundColor: color }}
-                        aria-hidden
-                      />
-                      <span className="truncate">{group.name}</span>
-                    </button>
-                  );
-                })}
+              <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+                <label className="text-[11px] font-bold tracking-wide text-[#1F1B4D]">
+                  Year groups <span className="text-red-500">*</span>
+                  {currentClassGroup?.name && (
+                    <span className="ml-1.5 font-medium text-[#77738F]">
+                      · {currentClassGroup.name}
+                    </span>
+                  )}
+                </label>
+                {hiddenYearGroupCount > 0 || showAllYearGroups ? (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllYearGroups((v) => !v)}
+                    className="text-[11px] font-bold text-[#4338E8] hover:underline"
+                  >
+                    {showAllYearGroups
+                      ? 'Show current stage'
+                      : `Show all (${hiddenYearGroupCount} more)`}
+                  </button>
+                ) : null}
+              </div>
+              <div className="space-y-2">
+                {yearGroupBuckets.map((bucket) => (
+                  <div key={bucket.id}>
+                    <p className="mb-1 text-[10px] font-extrabold uppercase tracking-wide text-[#77738F]">
+                      {bucket.label}
+                      {!showAllYearGroups && currentClassGroup ? ' · current stage' : ''}
+                    </p>
+                    <div className="flex flex-wrap gap-1">
+                      {bucket.groups.map((group) => {
+                        const selected = activity.yearGroups.includes(group.name);
+                        const color = group.color || '#4338E8';
+                        const isCurrent = currentClassGroup?.id === group.id;
+                        return (
+                          <button
+                            key={group.id}
+                            type="button"
+                            onClick={() => handleYearGroupChange(group.name, !selected)}
+                            aria-pressed={selected}
+                            className="inline-flex max-w-full items-center gap-1 rounded-full border px-1.5 py-0.5 text-[10px] font-semibold transition-colors"
+                            style={{
+                              borderColor: selected ? color : isCurrent ? color : '#E2E0EF',
+                              backgroundColor: selected ? `${color}22` : '#fff',
+                              color: selected || isCurrent ? '#1F1B4D' : '#77738F',
+                              boxShadow: isCurrent && !selected ? `inset 0 0 0 1px ${color}55` : undefined,
+                            }}
+                            title={group.name}
+                          >
+                            <span
+                              className="h-1.5 w-1.5 shrink-0 rounded-full"
+                              style={{ backgroundColor: color }}
+                              aria-hidden
+                            />
+                            <span className="truncate">{group.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
               {errors.yearGroups && (
                 <p className="mt-1 text-[11px] text-red-500">{errors.yearGroups}</p>
