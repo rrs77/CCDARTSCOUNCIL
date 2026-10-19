@@ -1002,11 +1002,42 @@ export function hubLogoSrc(id: string) {
 
 /**
  * Card hero mark — official hub logo on a light panel, or a brand-colour wordmark tile.
- * Assets live at `/music-hubs/logos/hero/{hubId}.png` (640×360, object-fit: contain).
+ * Assets live at `/music-hubs/logos/hero/{hubId}.png` (640×280, object-fit: contain).
  */
 export function hubHeroSrc(id: string) {
   const logoId = HUB_COVER_ALIASES[id] ?? id;
   return `/music-hubs/logos/hero/${logoId}.png`;
+}
+
+/** Soft-tint wordmark fallbacks when no official logo is available (full panel fill). */
+const HUB_WORDMARKS: Record<string, { color: string; tint: string; label: string }> = {
+  berkshire: { color: '#9D174D', tint: '#F3E0E8', label: 'Berkshire Music Hub' },
+  'cheshire-and-wirral': { color: '#0F766E', tint: '#DCEEEB', label: 'Cheshire & Wirral Music Hub' },
+  'cornwall-and-the-isles-of-scilly': { color: '#1D4ED8', tint: '#DDE6FA', label: 'Cornwall & Isles of Scilly Music Hub' },
+  cumbria: { color: '#1E3A8A', tint: '#DEE4F1', label: 'Cumbria Music Hub' },
+  'derby-and-derbyshire': { color: '#7C2D12', tint: '#EFE0D9', label: 'Derby & Derbyshire Music Hub' },
+  'devon-plymouth-and-torbay': { color: '#4C1D95', tint: '#E7DFF2', label: 'Devon, Plymouth & Torbay Music Hub' },
+  'gloucestershire-swindon-and-wiltshire': {
+    color: '#BE123C',
+    tint: '#F6DCE4',
+    label: 'Gloucestershire, Swindon & Wiltshire Music Hub',
+  },
+  'leicester-and-leicestershire': { color: '#4338E8', tint: '#E4E2FB', label: 'Leicester & Leicestershire Music Hub' },
+  'london-south-east': { color: '#4338E8', tint: '#E4E2FB', label: 'London South East Music Hub' },
+  'north-and-south-of-tyne-and-darlington': {
+    color: '#A16207',
+    tint: '#F3E9D6',
+    label: 'North & South of Tyne and Darlington Music Hub',
+  },
+  surrey: { color: '#1E3A8A', tint: '#DEE4F1', label: 'Surrey Music Hub' },
+  sussex: { color: '#0F766E', tint: '#DCEEEB', label: 'Sussex Music Hub' },
+  'tri-borough': { color: '#0B6B5F', tint: '#D9EEEA', label: 'Tri-borough Music Hub' },
+  'west-of-england-avon': { color: '#1D4ED8', tint: '#DDE6FA', label: 'West of England (Avon) Music Hub' },
+};
+
+export function hubWordmark(id: string) {
+  const logoId = HUB_COVER_ALIASES[id] ?? id;
+  return HUB_WORDMARKS[logoId] ?? null;
 }
 
 /** Friendly card title — e.g. "Essex Music Hub", "Cambridgeshire Music". */
@@ -1048,20 +1079,31 @@ export function MusicHubResultCard({
 }) {
   const [saved, setSaved] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
+  const wordmark = hubWordmark(id);
   return (
     <article className="group relative flex flex-col overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_10px_22px_-14px_rgba(11,107,95,0.35)]">
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-col text-left">
-        <div className="relative flex h-[92px] shrink-0 items-center justify-center overflow-hidden bg-white px-3 py-2.5 ring-1 ring-inset ring-[#1F1B4D]/[0.04]">
-          {!heroFailed ? (
+        <div
+          className="relative flex h-[92px] shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-[#1F1B4D]/[0.04]"
+          style={wordmark ? { backgroundColor: wordmark.tint } : { backgroundColor: '#FFFFFF' }}
+        >
+          {wordmark ? (
+            <span
+              className="line-clamp-3 px-3 text-center text-[13px] font-bold leading-snug tracking-tight sm:text-[14px]"
+              style={{ color: wordmark.color }}
+            >
+              {wordmark.label}
+            </span>
+          ) : !heroFailed ? (
             <img
               src={hubHeroSrc(id)}
               alt=""
-              className="max-h-[64px] max-w-[88%] object-contain transition duration-500 group-hover:scale-[1.02]"
+              className="h-[80%] max-h-[74px] w-[82%] object-contain transition duration-500 group-hover:scale-[1.02]"
               loading="lazy"
               onError={() => setHeroFailed(true)}
             />
           ) : (
-            <span className="line-clamp-2 max-w-[90%] rounded-md bg-[#E4F4EF] px-2.5 py-1.5 text-center text-[11px] font-bold leading-snug text-[#0B6B5F]">
+            <span className="line-clamp-3 px-3 text-center text-[13px] font-bold leading-snug text-[#0B6B5F]">
               {name}
             </span>
           )}

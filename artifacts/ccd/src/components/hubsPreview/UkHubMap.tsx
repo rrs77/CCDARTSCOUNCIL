@@ -53,10 +53,25 @@ interface Props {
   onHover: (id: string | null) => void;
   className?: string;
   showBreadcrumb?: boolean;
-  /** Green numbered badges on regions (Music Hubs browse mockup). */
+  /** Green numbered badges on regions (legacy). Prefer regionLabelMode="names". */
   showRegionCounts?: boolean;
+  /**
+   * How to label English regions on the UK/England overview:
+   * - counts: large number bubbles (legacy)
+   * - names: region name + hub count text labels (preferred for Music landing)
+   * - none: no overview labels
+   */
+  regionLabelMode?: 'counts' | 'names' | 'none';
   /** Map colour system — Music Hubs browse uses pale green. */
   palette?: keyof typeof PALETTES;
+  /** Crop/zoom to England (hides Scotland/Wales/Shetland inset from the frame). */
+  frameEngland?: boolean;
+  /** Hide +/- zoom controls. */
+  showControls?: boolean;
+  /** Attribution line under the map. */
+  showAttribution?: boolean;
+  /** Draw feature name labels (hubs/districts). Off for compact locator maps. */
+  showFeatureLabels?: boolean;
 }
 
 interface Item {
@@ -99,8 +114,15 @@ export function UkHubMap({
   className = '',
   showBreadcrumb = true,
   showRegionCounts = false,
+  regionLabelMode,
   palette = 'indigo',
+  frameEngland = false,
+  showControls = true,
+  showAttribution = true,
+  showFeatureLabels = true,
 }: Props) {
+  const labelMode: 'counts' | 'names' | 'none' =
+    regionLabelMode ?? (showRegionCounts ? 'counts' : 'none');
   const tones = PALETTES[palette];
   const REGION_TONES = tones.region;
   const HUB_TONES = tones.hub;
@@ -148,17 +170,27 @@ export function UkHubMap({
     const cw = el?.clientWidth || 800;
     const ch = el?.clientHeight || 600;
     const aspect = cw / ch;
+    const topPx = showBreadcrumb ? 56 : 8;
+    // England landing: keep England's own aspect so it fills the panel height
+    // (SVG meet letterboxes sides) instead of zooming out to Scotland/Wales.
+    if (frameEngland && b[3] < ix.data.viewBox[3] * 0.85) {
+      const pad = 0.05;
+      const w = b[2] * (1 + pad * 2);
+      const h = b[3] * (1 + pad * 2);
+      const cx = b[0] + b[2] / 2;
+      const cy = b[1] + b[3] / 2;
+      return [cx - w / 2, cy - h / 2, w, h];
+    }
     const pad = b[2] >= ix.data.viewBox[2] * 0.9 ? 0.03 : 0.08;
     let w = b[2] * (1 + pad * 2);
     let h = b[3] * (1 + pad * 2);
-    const topPx = showBreadcrumb ? 56 : 16;
     h += (topPx / ch) * h;
     if (w / h < aspect) w = h * aspect;
     else h = w / aspect;
     const cx = b[0] + b[2] / 2;
     const cy = b[1] + b[3] / 2 - (topPx / ch) * h * 0.45;
     return [cx - w / 2, cy - h / 2, w, h];
-  }, [showBreadcrumb, ix]);
+  }, [showBreadcrumb, ix, frameEngland]);
 
   const flyTo = useCallback(
     (target: BBox, ms = FLY_MS) => {
@@ -194,10 +226,20 @@ export function UkHubMap({
     [apply, settle],
   );
 
+  const frameBBox = useCallback(
+    (f: MapFocus): BBox => {
+      if (frameEngland && (f.level === 'uk' || (f.level === 'nation' && f.id === ENGLAND))) {
+        return ix.nation(ENGLAND)?.bbox ?? focusBBox(ix, f);
+      }
+      return focusBBox(ix, f);
+    },
+    [frameEngland, ix],
+  );
+
   // Frame the focus whenever it changes.
   const firstFrame = useRef(true);
   useLayoutEffect(() => {
-    const target = fit(focusBBox(ix, focus));
+    const target = fit(frameBBox(focus));
     if (firstFrame.current) {
       firstFrame.current = false;
       apply(target);
@@ -205,19 +247,19 @@ export function UkHubMap({
       return;
     }
     flyTo(target);
-  }, [ix, focus, fit, flyTo, apply, settle]);
+  }, [ix, focus, fit, flyTo, apply, settle, frameBBox]);
 
   // Refit on resize without animation.
   useEffect(() => {
     const el = wrapRef.current;
     if (!el) return;
     const ro = new ResizeObserver(() => {
-      apply(fit(focusBBox(ix, focus)));
+      apply(fit(frameBBox(focus)));
       settle();
     });
     ro.observe(el);
     return () => ro.disconnect();
-  }, [ix, focus, fit, apply, settle]);
+  }, [ix, focus, fit, apply, settle, frameBBox]);
 
   // ---------- free navigation ----------
   const clampBox = useCallback(
@@ -457,17 +499,85 @@ export function UkHubMap({
     onFocus(f);
   };
 
+  const isEnglandOverview =
+    focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND);
+
   // ---------- labels with simple collision avoidance ----------
-  // UK overview with region counts: no text labels at all — only large cluster bubbles.
   const labels = useMemo(() => {
-    const ukOverview =
-      showRegionCounts && (focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND));
-    if (ukOverview) return [] as { id: string; x: number; y: number; lines: string[]; fs: number; selected: boolean }[];
+    type Lb = { id: string; x: number; y: number; lines: string[]; fs: number; selected: boolean; sub?: string };
+    // Legacy count bubbles: no text labels
+    if (isEnglandOverview && labelMode === 'counts') return [] as Lb[];
+    // Name+count labels on the England overview
+    if (isEnglandOverview && labelMode === 'names') {
+      const px = settled.px;
+      const fs = Math.max(11, 12.5 * px);
+      const [vx, vy, vw, vh] = settled.box;
+      const placed: BBox[] = [];
+      const out: Lb[] = [];
+      // Nudge crowded SE/London labels apart
+      const nudge: Record<string, [number, number]> = {
+        // region codes are ONS-like; also match by name fallback below
+      };
+      const byNameNudge: Record<string, [number, number]> = {
+        London: [-30, -10],
+        'South East': [160, 110],
+        'East of England': [90, -50],
+        'South West': [-70, 50],
+        'East Midlands': [20, -20],
+        'West Midlands': [-30, 10],
+        'Yorkshire and The Humber': [30, -10],
+      };
+      const sorted = [...ix.data.regions].sort((a, b) => a.name.localeCompare(b.name));
+      for (const r of sorted) {
+        const n = ix.hubsInRegion(r.code).length;
+        if (!n) continue;
+        let [x, y] = r.label;
+        const dxy = byNameNudge[r.name] || nudge[r.code];
+        if (dxy) {
+          x += dxy[0];
+          y += dxy[1];
+        }
+        if (x < vx || x > vx + vw || y < vy || y > vy + vh) continue;
+        const displayName =
+          r.name === 'Yorkshire and The Humber' ? 'Yorkshire & The Humber' : r.name;
+        const lines = splitLabel(displayName);
+        const sub = `${n}`;
+        const w = Math.max(...lines.map((s) => s.length), 2) * fs * 0.58 + fs * 0.8;
+        const h = lines.length * fs * 1.15 + fs * 1.15;
+        const box: BBox = [x - w / 2, y - h / 2, w, h];
+        const margin = 4 * px;
+        if (box[0] < vx + margin || box[1] < vy + margin || box[0] + w > vx + vw - margin || box[1] + h > vy + vh - margin) {
+          // still place if slightly out — overview labels are important
+        }
+        const hit = placed.some(
+          (p) => !(box[0] + box[2] < p[0] || p[0] + p[2] < box[0] || box[1] + box[3] < p[1] || p[1] + p[3] < box[1]),
+        );
+        if (hit) {
+          // try a small downward shift once
+          const y2 = y + fs * 1.6;
+          const box2: BBox = [x - w / 2, y2 - h / 2, w, h];
+          const hit2 = placed.some(
+            (p) => !(box2[0] + box2[2] < p[0] || p[0] + p[2] < box2[0] || box2[1] + box2[3] < p[1] || p[1] + p[3] < box2[1]),
+          );
+          if (!hit2) {
+            placed.push(box2);
+            out.push({ id: r.code, x, y: y2, lines, fs, selected: hover === r.code, sub });
+            continue;
+          }
+        }
+        placed.push(box);
+        out.push({ id: r.code, x, y, lines, fs, selected: hover === r.code, sub });
+      }
+      return out;
+    }
+    if (isEnglandOverview && labelMode === 'none') return [] as Lb[];
+    if (!showFeatureLabels) return [] as Lb[];
+
     const px = settled.px;
     const fs = (ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND) ? 12.5 : 13) * px;
     const [vx, vy, vw, vh] = settled.box;
     const placed: BBox[] = [];
-    const out: { id: string; x: number; y: number; lines: string[]; fs: number; selected: boolean }[] = [];
+    const out: Lb[] = [];
     const sorted = [...items].sort((a, b) => {
       if (a.id === ctx.ladId) return -1;
       if (b.id === ctx.ladId) return 1;
@@ -490,7 +600,7 @@ export function UkHubMap({
       out.push({ id: it.id, x, y, lines, fs, selected });
     }
     return out;
-  }, [items, settled, ctx, showRegionCounts, focus.level, focus]);
+  }, [items, settled, ctx, labelMode, isEnglandOverview, focus, ix, hover, showFeatureLabels]);
 
   const ladsDrawn = ix.data.lads;
   const hubOutlines = level !== 'uk' && !(ctx.nationId && ctx.nationId !== ENGLAND);
@@ -639,34 +749,54 @@ export function UkHubMap({
           fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
         >
           {labels.map((lb) => {
-            const isSel = lb.selected || lb.id === selectedItemId;
+            const isSel = lb.selected || lb.id === selectedItemId || hover === lb.id;
+            const hasSub = Boolean(lb.sub);
+            const blockH = lb.lines.length * lb.fs * 1.15 + (hasSub ? lb.fs * 1.1 : 0);
             return (
-              <text
-                key={lb.id}
-                x={lb.x}
-                y={lb.y - ((lb.lines.length - 1) * lb.fs * 1.2) / 2}
-                textAnchor="middle"
-                dominantBaseline="central"
-                fontSize={lb.fs}
-                fontWeight={isSel ? 650 : 560}
-                letterSpacing={lb.fs * 0.01}
-                fill={isSel ? '#FFFFFF' : INK}
-                stroke={isSel ? SELECTED : '#FFFFFF'}
-                strokeWidth={lb.fs * 0.28}
-                strokeLinejoin="round"
-                paintOrder="stroke"
-              >
-                {lb.lines.map((ln, i) => (
-                  <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.2}>
-                    {ln}
-                  </tspan>
-                ))}
-              </text>
+              <g key={lb.id}>
+                <text
+                  x={lb.x}
+                  y={lb.y - blockH / 2 + lb.fs * 0.55}
+                  textAnchor="middle"
+                  dominantBaseline="central"
+                  fontSize={lb.fs}
+                  fontWeight={isSel ? 700 : 600}
+                  letterSpacing={lb.fs * 0.01}
+                  fill={isSel ? tones.count : INK}
+                  stroke="#FFFFFF"
+                  strokeWidth={lb.fs * 0.32}
+                  strokeLinejoin="round"
+                  paintOrder="stroke"
+                >
+                  {lb.lines.map((ln, i) => (
+                    <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.15}>
+                      {ln}
+                    </tspan>
+                  ))}
+                </text>
+                {hasSub && (
+                  <text
+                    x={lb.x}
+                    y={lb.y - blockH / 2 + lb.lines.length * lb.fs * 1.15 + lb.fs * 0.55}
+                    textAnchor="middle"
+                    dominantBaseline="central"
+                    fontSize={lb.fs * 0.95}
+                    fontWeight={800}
+                    fill={tones.count}
+                    stroke="#FFFFFF"
+                    strokeWidth={lb.fs * 0.28}
+                    strokeLinejoin="round"
+                    paintOrder="stroke"
+                  >
+                    {lb.sub} hub{(lb.sub === '1' ? '' : 's')}
+                  </text>
+                )}
+              </g>
             );
           })}
         </g>
 
-        {tipItem && !moving && (
+        {tipItem && !moving && labelMode !== 'names' && (
           <g aria-hidden pointerEvents="none">
             <circle
               cx={tipItem.label[0]}
@@ -680,13 +810,12 @@ export function UkHubMap({
           </g>
         )}
 
-        {showRegionCounts && (focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND)) && (
+        {isEnglandOverview && labelMode === 'counts' && (
           <g aria-hidden pointerEvents="none" style={{ opacity: moving ? 0 : 1 }}>
             {ix.data.regions.map((r) => {
               const n = ix.hubsInRegion(r.code).length;
               if (!n) return null;
               const [x, y] = r.label;
-              // Target: fewer, larger dark-green cluster bubbles (scale with map px)
               const rad = Math.max(22, 20 * settled.px);
               return (
                 <g key={`count-${r.code}`} transform={`translate(${x}, ${y})`}>
@@ -757,21 +886,25 @@ export function UkHubMap({
         </nav>
       )}
 
-      <div
-        className={`absolute ${showBreadcrumb ? 'left-3 top-14' : 'left-3 top-3'} flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
-      >
-        <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
-          <Plus className="h-4 w-4" />
-        </button>
-        <span className="mx-2 h-px bg-[#1F1B4D]/[0.08]" aria-hidden />
-        <button type="button" aria-label="Zoom out" onClick={() => zoomButton(1.7)} className="ukmap-ctl">
-          <Minus className="h-4 w-4" />
-        </button>
-      </div>
+      {showControls && (
+        <div
+          className={`absolute ${showBreadcrumb ? 'left-3 top-14' : 'left-3 top-3'} flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
+        >
+          <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
+            <Plus className="h-4 w-4" />
+          </button>
+          <span className="mx-2 h-px bg-[#1F1B4D]/[0.08]" aria-hidden />
+          <button type="button" aria-label="Zoom out" onClick={() => zoomButton(1.7)} className="ukmap-ctl">
+            <Minus className="h-4 w-4" />
+          </button>
+        </div>
+      )}
 
-      <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[10px] leading-tight text-[#1F1B4D]/40">
-        Contains OS data © Crown copyright and database right 2024 · ONS (OGL v3) · Hub areas: Arts Council England
-      </p>
+      {showAttribution && (
+        <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[10px] leading-tight text-[#1F1B4D]/40">
+          Contains OS data © Crown copyright and database right 2024 · ONS (OGL v3) · Hub areas: Arts Council England
+        </p>
+      )}
 
       <div
         aria-hidden

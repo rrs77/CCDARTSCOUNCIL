@@ -1947,59 +1947,64 @@ function PartnerHubsBrowse({
                 </p>
               </div>
 
-              <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
-                <UkHubMap
-                  ix={ix}
-                  focus={{ level: 'uk' }}
-                  hover={hover}
-                  onHover={setHover}
-                  onFocus={onMapFocus}
-                  showBreadcrumb={false}
-                  showRegionCounts
-                  palette="green"
-                  className="h-[min(62vh,560px)] min-h-[360px] !rounded-2xl !border-0 sm:min-h-[420px]"
-                />
-              </div>
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-stretch">
+                <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
+                  <UkHubMap
+                    ix={ix}
+                    focus={{ level: 'nation', id: ENGLAND }}
+                    hover={hover}
+                    onHover={setHover}
+                    onFocus={onMapFocus}
+                    showBreadcrumb={false}
+                    regionLabelMode="names"
+                    frameEngland
+                    showControls
+                    showAttribution={false}
+                    palette="green"
+                    className="h-[380px] !rounded-2xl !border-0 sm:h-[420px]"
+                  />
+                </div>
 
-              <div>
-                <h3 className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#1F1B4D]/45">
-                  Regions
-                </h3>
-                <ul
-                  className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2 lg:grid-cols-3"
-                  role="list"
-                  aria-label="Music Hub regions"
-                >
-                  {regionRows.map((r) => {
-                    const active = hover === r.code;
-                    return (
-                      <li key={r.code}>
-                        <button
-                          type="button"
-                          onMouseEnter={() => setHover(r.code)}
-                          onMouseLeave={() => setHover(null)}
-                          onFocus={() => setHover(r.code)}
-                          onBlur={() => setHover(null)}
-                          onClick={() => go({ level: 'region', id: r.code })}
-                          className={`flex w-full items-center justify-between gap-3 rounded-xl px-3.5 py-2.5 text-left transition ${
-                            active
-                              ? 'bg-[#E4F4EF] text-[#0B6B5F] ring-1 ring-[#0B6B5F]/25'
-                              : 'bg-white text-[#1F1B4D] ring-1 ring-[#1F1B4D]/[0.08] hover:bg-[#F4FBF7] hover:ring-[#0B6B5F]/20'
-                          }`}
-                        >
-                          <span className="min-w-0 truncate text-[14px] font-semibold">{r.name}</span>
-                          <span
-                            className={`shrink-0 rounded-full px-2 py-0.5 text-[12px] font-bold tabular-nums ${
-                              active ? 'bg-[#0B6B5F] text-white' : 'bg-[#E4F4EF] text-[#0B6B5F]'
+                <div className="flex min-h-0 flex-col rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-3 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:p-4">
+                  <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#1F1B4D]/45">
+                    Regions
+                  </h3>
+                  <ul
+                    className="mt-2 flex flex-1 flex-col gap-1 overflow-y-auto"
+                    role="list"
+                    aria-label="Music Hub regions"
+                  >
+                    {regionRows.map((r) => {
+                      const active = hover === r.code;
+                      return (
+                        <li key={r.code}>
+                          <button
+                            type="button"
+                            onMouseEnter={() => setHover(r.code)}
+                            onMouseLeave={() => setHover(null)}
+                            onFocus={() => setHover(r.code)}
+                            onBlur={() => setHover(null)}
+                            onClick={() => go({ level: 'region', id: r.code })}
+                            className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition ${
+                              active
+                                ? 'bg-[#E4F4EF] text-[#0B6B5F] ring-1 ring-[#0B6B5F]/25'
+                                : 'text-[#1F1B4D] hover:bg-[#F4FBF7]'
                             }`}
                           >
-                            {r.count}
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                            <span className="min-w-0 truncate text-[13px] font-semibold">{r.name}</span>
+                            <span
+                              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
+                                active ? 'bg-[#0B6B5F] text-white' : 'bg-[#E4F4EF] text-[#0B6B5F]'
+                              }`}
+                            >
+                              {r.count}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               </div>
 
               <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
@@ -2019,20 +2024,23 @@ function PartnerHubsBrowse({
                 </button>
               </div>
 
-              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_220px] lg:items-start">
-                <div className="min-w-0">
+              <div className="flex flex-col gap-4 rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-4 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+                <div className="min-w-0 flex-1">
                   <h2
                     id="music-hubs-results"
                     className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[26px]"
                   >
                     {regionName}
                   </h2>
-                  <p className={`mt-1 text-[14px] leading-snug ${muted}`}>
+                  <p className={`mt-1 max-w-lg text-[14px] leading-snug ${muted}`}>
                     {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'} serve schools across this region.
                     Open a hub to explore resources and local services.
                   </p>
+                  <p className="mt-2 text-[13px] font-semibold text-[#0B6B5F]">
+                    {regionHubCount} hub{regionHubCount === 1 ? '' : 's'} in {regionName}
+                  </p>
                 </div>
-                <div className="overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
+                <div className="ml-auto h-[150px] w-full max-w-[260px] shrink-0 overflow-hidden rounded-xl ring-1 ring-[#1F1B4D]/[0.08] sm:w-[260px]">
                   <UkHubMap
                     ix={ix}
                     focus={focus}
@@ -2040,17 +2048,17 @@ function PartnerHubsBrowse({
                     onHover={setHover}
                     onFocus={onMapFocus}
                     showBreadcrumb={false}
-                    showRegionCounts={false}
+                    regionLabelMode="none"
+                    showFeatureLabels={false}
+                    showControls={false}
+                    showAttribution={false}
                     palette="green"
-                    className="h-[140px] !rounded-xl !border-0 sm:h-[160px]"
+                    className="h-full w-full !rounded-xl !border-0"
                   />
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-end justify-between gap-3">
-                <p className="text-[14px] font-semibold text-[#1F1B4D]">
-                  {regionHubCount} hub{regionHubCount === 1 ? '' : 's'} in {regionName}
-                </p>
+              <div className="flex flex-wrap items-center justify-end gap-3">
                 <button
                   type="button"
                   className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10"
