@@ -1,0 +1,695 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>CCDesigner UX Audit — After mockups</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --navy: #1F1B4D;
+    --indigo: #4f46e5;
+    --indigo-bright: #4338E8;
+    --ink: #1F1B4D;
+    --muted: #77738F;
+    --line: #E2E0EF;
+    --bg: #F4F3FA;
+    --white: #fff;
+    --green: #059669;
+    --amber: #D97706;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif;
+    background: #0f0e1a;
+    color: var(--ink);
+  }
+  .frame {
+    width: 1440px;
+    height: 900px;
+    background: var(--bg);
+    display: grid;
+    grid-template-columns: 248px 1fr;
+    overflow: hidden;
+    position: relative;
+    margin: 24px auto;
+    box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  }
+  .frame.collapsed { grid-template-columns: 72px 1fr; }
+  aside {
+    background: var(--navy);
+    color: #fff;
+    padding: 18px 14px 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 10px 18px;
+    font-weight: 800;
+    font-size: 18px;
+    letter-spacing: -0.02em;
+  }
+  .brand-mark {
+    width: 36px; height: 36px; border-radius: 10px;
+    background: conic-gradient(from 210deg, #6d28d9, #2563eb, #f59e0b, #ec4899, #6d28d9);
+    display: grid; place-items: center; font-size: 11px; font-weight: 800;
+  }
+  .section {
+    font-size: 10px; letter-spacing: .08em; text-transform: uppercase;
+    color: rgba(255,255,255,.45); padding: 14px 12px 6px; font-weight: 700;
+  }
+  .nav-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 12px;
+    font-size: 13.5px; font-weight: 600; color: rgba(255,255,255,.82);
+  }
+  .nav-item.active {
+    background: var(--indigo); color: #fff;
+    box-shadow: inset 3px 0 0 #FACC15;
+  }
+  .nav-item .ico {
+    width: 18px; height: 18px; border-radius: 4px;
+    background: rgba(255,255,255,.18); flex: none;
+  }
+  .nav-foot { margin-top: auto; padding: 8px 4px; color: rgba(255,255,255,.55); font-size: 12px; }
+  .workspace { display: flex; flex-direction: column; min-width: 0; }
+  .topbar {
+    height: 52px; background: #fff; border-bottom: 1px solid var(--line);
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 20px; gap: 12px;
+  }
+  .class-pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    border: 1px solid var(--line); background: #fff;
+    border-radius: 10px; padding: 7px 12px; font-size: 13px; font-weight: 600;
+  }
+  .class-pill .dot { width: 8px; height: 8px; border-radius: 99px; background: #10b981; }
+  .top-actions { display: flex; gap: 10px; align-items: center; color: var(--muted); }
+  .avatar { font-size: 13px; font-weight: 600; color: var(--ink); }
+  .canvas { padding: 22px 28px; overflow: hidden; flex: 1; }
+  .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: .06em; color: var(--indigo); text-transform: uppercase; }
+  .eyebrow span { color: var(--muted); }
+  h1 { margin: 4px 0 6px; font-size: 28px; letter-spacing: -0.03em; }
+  .sub { margin: 0 0 18px; color: var(--muted); font-size: 14px; max-width: 720px; line-height: 1.45; }
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px;
+    border-radius: 10px; border: 1px solid transparent;
+    padding: 9px 14px; font-weight: 700; font-size: 13px; cursor: default;
+  }
+  .btn-primary { background: var(--indigo-bright); color: #fff; }
+  .btn-ghost { background: #fff; border-color: var(--line); color: var(--ink); }
+  .btn-soft { background: #EEF2FF; color: var(--indigo); border-color: #C7D2FE; }
+  .row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+  .card {
+    background: #fff; border: 1px solid var(--line); border-radius: 16px; padding: 16px 18px;
+  }
+  .tabs {
+    display: inline-flex; background: #EEF0F8; border-radius: 12px; padding: 4px; gap: 2px;
+  }
+  .tabs .t {
+    padding: 8px 14px; border-radius: 9px; font-size: 13px; font-weight: 700; color: var(--muted);
+  }
+  .tabs .t.on { background: var(--indigo); color: #fff; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 6px;
+    background: #ECFDF5; color: #047857; border-radius: 999px;
+    padding: 4px 10px; font-size: 11px; font-weight: 700;
+  }
+  .journey {
+    display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin: 16px 0 20px;
+  }
+  .step {
+    background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 14px;
+    position: relative;
+  }
+  .step .n {
+    width: 24px; height: 24px; border-radius: 99px; background: var(--indigo);
+    color: #fff; display: grid; place-items: center; font-size: 12px; font-weight: 800; margin-bottom: 8px;
+  }
+  .step strong { display: block; font-size: 13px; margin-bottom: 4px; }
+  .step p { margin: 0; font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .step::after {
+    content: '→'; position: absolute; right: -10px; top: 50%; transform: translateY(-50%);
+    color: var(--indigo); font-weight: 800; z-index: 2;
+  }
+  .step:last-child::after { display: none; }
+  .grid-week {
+    display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-top: 14px;
+  }
+  .day {
+    background: #F3F2F8; border-radius: 14px; padding: 10px; min-height: 420px;
+  }
+  .day h3 { margin: 0 0 10px; font-size: 12px; color: var(--muted); display: flex; justify-content: space-between; }
+  .lesson {
+    background: #fff; border-radius: 12px; padding: 10px; margin-bottom: 8px;
+    border: 1px solid var(--line); font-size: 12px;
+  }
+  .lesson .meta { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+  .pill { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #D1FAE5; color: #065F46; }
+  .pill.blue { background: #DBEAFE; color: #1E40AF; }
+  .pill.purple { background: #EDE9FE; color: #5B21B6; }
+  .callout {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    background: linear-gradient(90deg, #EEF2FF, #F5F3FF);
+    border: 1px solid #C7D2FE; border-radius: 14px; padding: 12px 14px; margin-bottom: 14px;
+  }
+  .callout strong { font-size: 13px; }
+  .callout p { margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+  .tools-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .tool {
+    background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 16px;
+    min-height: 92px; display: flex; flex-direction: column; gap: 4px;
+  }
+  .tool .ico { color: var(--indigo); font-size: 18px; }
+  .tool strong { font-size: 14px; }
+  .tool span { font-size: 12px; color: var(--muted); line-height: 1.4; }
+  .muted-label {
+    font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase;
+    color: var(--muted); margin: 18px 0 8px;
+  }
+  .lesson-row {
+    display: grid; grid-template-columns: 36px 1fr auto; gap: 12px; align-items: center;
+    background: #fff; border: 1px solid var(--line); border-radius: 14px; padding: 12px 14px; margin-bottom: 8px;
+  }
+  .num {
+    width: 28px; height: 28px; border-radius: 99px; background: #FB923C; color: #fff;
+    display: grid; place-items: center; font-weight: 800; font-size: 12px;
+  }
+  .actions { display: flex; gap: 8px; }
+  .menu-btn {
+    width: 34px; height: 34px; border-radius: 10px; border: 1px solid var(--line);
+    background: #fff; display: grid; place-items: center; font-weight: 800; color: var(--muted);
+  }
+  .share-panel {
+    position: absolute; right: 36px; top: 120px; width: 340px;
+    background: #fff; border: 1px solid var(--line); border-radius: 16px;
+    box-shadow: 0 18px 50px rgba(31,27,77,.18); padding: 16px; z-index: 5;
+  }
+  .share-panel h2 { margin: 0 0 4px; font-size: 16px; }
+  .share-panel p { margin: 0 0 12px; font-size: 12px; color: var(--muted); }
+  .share-item {
+    display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px;
+    border: 1px solid var(--line); margin-bottom: 8px; font-size: 13px; font-weight: 600;
+  }
+  .login {
+    width: 1440px; height: 900px; margin: 24px auto; position: relative;
+    background: #1F1B4D url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="40" height="40"><rect fill="%23221e55" width="40" height="40"/><circle cx="6" cy="6" r="1.2" fill="%233a3470"/></svg>');
+    background-size: cover; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  }
+  .login-hero {
+    position: absolute; left: 64px; top: 180px; color: #fff; max-width: 520px;
+  }
+  .login-hero h1 { font-size: 48px; line-height: 1.05; margin: 12px 0; letter-spacing: -0.03em; }
+  .login-hero h1 em { color: #E8C56A; font-style: normal; }
+  .login-card {
+    position: absolute; right: 72px; top: 50%; transform: translateY(-50%);
+    width: 360px; background: #fff; border-radius: 18px; padding: 22px; box-shadow: 0 20px 50px rgba(0,0,0,.28);
+  }
+  .login-card h2 { margin: 0 0 14px; font-size: 22px; }
+  .field {
+    border: 1px solid var(--line); border-radius: 10px; padding: 12px; margin-bottom: 10px;
+    font-size: 13px; color: var(--muted);
+  }
+  .proto-bar {
+    height: 36px; background: rgba(0,0,0,.35); color: rgba(255,255,255,.85);
+    display: flex; align-items: center; justify-content: center; font-size: 12px;
+  }
+  .setup-strip {
+    position: absolute; left: 64px; bottom: 48px; right: 460px;
+    background: rgba(255,255,255,.1); border: 1px solid rgba(255,255,255,.2);
+    backdrop-filter: blur(8px); border-radius: 14px; padding: 14px 16px; color: #fff;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .setup-strip strong { display: block; font-size: 14px; }
+  .setup-strip span { font-size: 12px; opacity: .8; }
+  .sitemap {
+    width: 1440px; height: 900px; margin: 24px auto; background: #fff;
+    padding: 36px 44px; box-shadow: 0 20px 60px rgba(0,0,0,.45);
+  }
+  .sitemap h1 { margin: 0 0 6px; font-size: 28px; }
+  .sitemap .lede { color: var(--muted); margin-bottom: 28px; }
+  .map-grid {
+    display: grid; grid-template-columns: 220px 1fr 1fr 1fr; gap: 16px; align-items: start;
+  }
+  .map-col {
+    border: 1px solid var(--line); border-radius: 16px; padding: 14px; background: var(--bg);
+    min-height: 620px;
+  }
+  .map-col h3 {
+    margin: 0 0 12px; font-size: 13px; letter-spacing: .04em; text-transform: uppercase;
+    color: var(--indigo); font-weight: 800;
+  }
+  .node {
+    background: #fff; border: 1px solid var(--line); border-radius: 12px;
+    padding: 10px 12px; margin-bottom: 8px; font-size: 13px; font-weight: 600;
+  }
+  .node small { display: block; font-weight: 500; color: var(--muted); margin-top: 2px; font-size: 11px; }
+  .node.primary { border-color: #C7D2FE; background: #EEF2FF; }
+  .node.accent { border-color: #A7F3D0; background: #ECFDF5; }
+  .flow {
+    margin-top: 18px; display: flex; gap: 8px; align-items: center; flex-wrap: wrap;
+    font-size: 12px; font-weight: 700;
+  }
+  .flow .chip {
+    background: var(--navy); color: #fff; border-radius: 999px; padding: 7px 12px;
+  }
+  .flow .arrow { color: var(--indigo); }
+  .label-tag {
+    display: inline-block; font-size: 10px; font-weight: 800; color: var(--amber);
+    background: #FFFBEB; border: 1px solid #FDE68A; border-radius: 6px; padding: 2px 6px; margin-left: 6px;
+  }
+</style>
+</head>
+<body>
+
+<!-- ========== 01 AFTER: Expanded IA sidebar + setup strip ========== -->
+<section class="frame" id="after-01">
+  <aside>
+    <div class="brand"><div class="brand-mark">cc</div>designer</div>
+    <div class="section">Plan your week</div>
+    <div class="nav-item active"><div class="ico"></div>Planner</div>
+    <div class="nav-item"><div class="ico"></div>Timetable</div>
+    <div class="nav-item"><div class="ico"></div>Half-terms</div>
+    <div class="section">Build lessons</div>
+    <div class="nav-item"><div class="ico"></div>Activities</div>
+    <div class="nav-item"><div class="ico"></div>Lesson Builder</div>
+    <div class="nav-item"><div class="ico"></div>Lessons</div>
+    <div class="nav-item"><div class="ico"></div>Slides</div>
+    <div class="section">Discover</div>
+    <div class="nav-item"><div class="ico"></div>Partner Hubs</div>
+    <div class="section">Account</div>
+    <div class="nav-item"><div class="ico"></div>Settings</div>
+    <div class="nav-item"><div class="ico"></div>Help &amp; forum</div>
+    <div class="nav-foot">Collapse menu</div>
+  </aside>
+  <div class="workspace">
+    <div class="topbar">
+      <div class="class-pill"><span class="dot"></span> All my classes · this week</div>
+      <div class="top-actions">
+        <span>Forum</span><span>Help</span><span>Share</span>
+        <span class="avatar">Demo Visitor</span>
+      </div>
+    </div>
+    <div class="canvas">
+      <div class="callout">
+        <div>
+          <strong>Finish setup — then this week fills itself</strong>
+          <p>1. Confirm My classes → 2. Set your timetable → 3. Assign schemes in Half-terms → 4. Fill the week</p>
+        </div>
+        <button class="btn btn-primary">Continue setup</button>
+      </div>
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <div class="eyebrow">PLAN / <span>THIS WEEK</span></div>
+          <h1 style="margin:0;font-size:26px">Week planner</h1>
+          <p class="sub" style="margin:4px 0 0">Autumn 1 · 2026–2027 · slots from your timetable</p>
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost">This week</button>
+          <button class="btn btn-primary">+ New lesson</button>
+        </div>
+      </div>
+      <div class="row" style="margin-top:14px;justify-content:space-between">
+        <div class="tabs">
+          <div class="t on">Week</div>
+          <div class="t">Day</div>
+        </div>
+        <div class="badge">9 planned · from timetable</div>
+      </div>
+      <div class="grid-week">
+        <div class="day"><h3>19 Mon <span class="pill" style="background:#FEF3C7;color:#92400E">Today</span></h3>
+          <div class="lesson"><div class="meta"><span style="color:var(--muted)">09:00</span><span class="pill">LKG</span></div><strong>New Starters</strong></div>
+          <div class="lesson"><div class="meta"><span style="color:var(--muted)">11:00</span><span class="pill blue">Y8 Music</span></div><strong>Find the four chords</strong></div>
+        </div>
+        <div class="day"><h3>20 Tue</h3>
+          <div class="lesson"><div class="meta"><span style="color:var(--muted)">09:30</span><span class="pill purple">Rec Drama</span></div><strong>Exploring Rhythm</strong></div>
+        </div>
+        <div class="day"><h3>21 Wed</h3>
+          <div class="lesson"><div class="meta"><span style="color:var(--muted)">09:00</span><span class="pill" style="background:#FFEDD5;color:#9A3412">LKG Music</span></div><strong>Welcome songs</strong></div>
+        </div>
+        <div class="day"><h3>22 Thu</h3>
+          <div class="lesson"><div class="meta"><span style="color:var(--muted)">09:45</span><span class="pill purple">UKG</span></div><strong>Pulse &amp; beat</strong></div>
+        </div>
+        <div class="day"><h3>23 Fri</h3>
+          <div class="lesson"><div class="meta"><span style="color:var(--muted)">13:30</span><span class="pill blue">Y9 Music</span></div><strong>Listening quiz</strong></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 02 AFTER: More tools cleaned ========== -->
+<section class="frame" id="after-02">
+  <aside>
+    <div class="brand"><div class="brand-mark">cc</div>designer</div>
+    <div class="section">Plan your week</div>
+    <div class="nav-item"><div class="ico"></div>Planner</div>
+    <div class="nav-item"><div class="ico"></div>Timetable</div>
+    <div class="nav-item"><div class="ico"></div>Half-terms</div>
+    <div class="section">Build lessons</div>
+    <div class="nav-item"><div class="ico"></div>Activities</div>
+    <div class="nav-item"><div class="ico"></div>Lesson Builder</div>
+    <div class="nav-item"><div class="ico"></div>Lessons</div>
+    <div class="nav-item"><div class="ico"></div>Slides</div>
+    <div class="section">Discover</div>
+    <div class="nav-item"><div class="ico"></div>Partner Hubs</div>
+    <div class="section">Account</div>
+    <div class="nav-item active"><div class="ico"></div>Settings</div>
+    <div class="nav-item"><div class="ico"></div>Help &amp; forum</div>
+    <div class="nav-foot">Collapse menu</div>
+  </aside>
+  <div class="workspace">
+    <div class="topbar">
+      <div class="class-pill"><span class="dot"></span> Lower Kindergarten Music</div>
+      <div class="top-actions"><span class="avatar">Demo Visitor</span></div>
+    </div>
+    <div class="canvas">
+      <div class="eyebrow">ACCOUNT / <span>UTILITIES</span></div>
+      <h1>Helpful extras</h1>
+      <p class="sub">Things that don’t need a permanent sidebar slot. Primary areas stay in the nav on the left — no duplicates.</p>
+      <div class="tools-grid">
+        <div class="tool"><div class="ico">📅</div><strong>Class calendar</strong><span>Events and key dates for the selected class — separate from the weekly timetable.</span></div>
+        <div class="tool"><div class="ico">✉️</div><strong>Contact</strong><span>Support and feedback for CCDesigner.</span></div>
+        <div class="tool"><div class="ico">✨</div><strong>Feature walkthrough</strong><span>A short guided tour of Plan → Build → Present.</span></div>
+        <div class="tool"><div class="ico">🧩</div><strong>Bolt-ons</strong><span>Optional add-ons: Assessify and PeriFeedback.</span></div>
+      </div>
+      <div class="muted-label">Already in the sidebar</div>
+      <div class="card" style="color:var(--muted);font-size:13px;line-height:1.5">
+        Planner · Timetable · Half-terms · Activities · Lesson Builder · Lessons · Slides · Partner Hubs · Settings · Help &amp; forum
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 03 AFTER: Unified Half-terms (no Units duplicate) ========== -->
+<section class="frame" id="after-03">
+  <aside>
+    <div class="brand"><div class="brand-mark">cc</div>designer</div>
+    <div class="section">Plan your week</div>
+    <div class="nav-item"><div class="ico"></div>Planner</div>
+    <div class="nav-item"><div class="ico"></div>Timetable</div>
+    <div class="nav-item active"><div class="ico"></div>Half-terms</div>
+    <div class="section">Build lessons</div>
+    <div class="nav-item"><div class="ico"></div>Activities</div>
+    <div class="nav-item"><div class="ico"></div>Lesson Builder</div>
+    <div class="nav-item"><div class="ico"></div>Lessons</div>
+    <div class="nav-item"><div class="ico"></div>Slides</div>
+    <div class="section">Discover</div>
+    <div class="nav-item"><div class="ico"></div>Partner Hubs</div>
+    <div class="nav-foot">Collapse menu</div>
+  </aside>
+  <div class="workspace">
+    <div class="topbar">
+      <div class="class-pill"><span class="dot"></span> Lower Kindergarten Music</div>
+      <div class="top-actions"><span class="avatar">Demo Visitor</span></div>
+    </div>
+    <div class="canvas">
+      <div class="row" style="justify-content:space-between;align-items:flex-start">
+        <div>
+          <div class="eyebrow">PLAN / <span>HALF-TERMS</span></div>
+          <h1 style="margin:0;font-size:26px">Half-term map</h1>
+          <p class="sub" style="margin:6px 0 0">One place for the year. Toggle <strong>This class</strong> or <strong>All classes</strong> — no separate Units tab.</p>
+        </div>
+        <div class="row">
+          <div class="tabs">
+            <div class="t on">This class</div>
+            <div class="t">All classes</div>
+          </div>
+          <button class="btn btn-primary">+ Assign scheme</button>
+        </div>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px">
+        <div class="card" style="border-left:4px solid #6366F1"><strong>Autumn 1</strong><div style="color:var(--muted);font-size:12px;margin:4px 0 10px">Sep–Oct · CURRENT</div><div class="badge">2 lessons assigned</div></div>
+        <div class="card" style="border-left:4px solid #6366F1"><strong>Autumn 2</strong><div style="color:var(--muted);font-size:12px;margin:4px 0 10px">Nov–Dec</div><button class="btn btn-soft" style="margin-top:4px">+ Add lessons</button></div>
+        <div class="card" style="border-left:4px solid #10B981"><strong>Spring 1</strong><div style="color:var(--muted);font-size:12px;margin:4px 0 10px">Jan–Feb</div><button class="btn btn-soft" style="margin-top:4px">+ Add lessons</button></div>
+        <div class="card" style="border-left:4px solid #10B981"><strong>Spring 2</strong><div style="color:var(--muted);font-size:12px;margin:4px 0 10px">Mar–Apr</div><button class="btn btn-soft" style="margin-top:4px">+ Add lessons</button></div>
+        <div class="card" style="border-left:4px solid #F59E0B"><strong>Summer 1</strong><div style="color:var(--muted);font-size:12px;margin:4px 0 10px">Apr–May</div><button class="btn btn-soft" style="margin-top:4px">+ Add lessons</button></div>
+        <div class="card" style="border-left:4px solid #F59E0B"><strong>Summer 2</strong><div style="color:var(--muted);font-size:12px;margin:4px 0 10px">Jun–Jul</div><button class="btn btn-soft" style="margin-top:4px">+ Add lessons</button></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 04 AFTER: Simplified Lessons row actions ========== -->
+<section class="frame" id="after-04">
+  <aside>
+    <div class="brand"><div class="brand-mark">cc</div>designer</div>
+    <div class="section">Build lessons</div>
+    <div class="nav-item"><div class="ico"></div>Activities</div>
+    <div class="nav-item"><div class="ico"></div>Lesson Builder</div>
+    <div class="nav-item active"><div class="ico"></div>Lessons</div>
+    <div class="nav-item"><div class="ico"></div>Slides</div>
+    <div class="nav-foot">Collapse menu</div>
+  </aside>
+  <div class="workspace">
+    <div class="topbar">
+      <div class="class-pill"><span class="dot"></span> Lower Kindergarten Music</div>
+      <div class="top-actions"><span class="avatar">Demo Visitor</span></div>
+    </div>
+    <div class="canvas">
+      <div class="eyebrow">BUILD / <span>LESSONS</span></div>
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h1 style="margin:0;font-size:26px">Lessons</h1>
+          <p class="sub" style="margin:6px 0 0">Saved from Lesson Builder for this class. Open to edit, or assign into a half-term.</p>
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost">Copy lesson</button>
+          <button class="btn btn-primary">+ Create lesson</button>
+        </div>
+      </div>
+      <div class="card" style="margin:14px 0;padding:10px 14px;display:flex;gap:10px;align-items:center">
+        <input style="flex:1;border:0;outline:0;font:inherit;color:var(--muted)" value="Search lessons…" readonly />
+        <button class="btn btn-ghost">All half-terms</button>
+      </div>
+      <div class="lesson-row">
+        <div class="num">1</div>
+        <div><strong>For Parents</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">39 mins · 11 activities · Autumn 1</div></div>
+        <div class="actions">
+          <button class="btn btn-primary">Open</button>
+          <button class="btn btn-soft">Assign</button>
+          <div class="menu-btn">⋯</div>
+        </div>
+      </div>
+      <div class="lesson-row">
+        <div class="num">2</div>
+        <div><strong>L1 New Starters</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">28 mins · 8 activities · Autumn 1</div></div>
+        <div class="actions">
+          <button class="btn btn-primary">Open</button>
+          <button class="btn btn-soft">Assign</button>
+          <div class="menu-btn">⋯</div>
+        </div>
+      </div>
+      <div class="lesson-row">
+        <div class="num">3</div>
+        <div><strong>Example2</strong><div style="font-size:12px;color:var(--muted);margin-top:2px">15 mins · 4 activities · Unassigned</div></div>
+        <div class="actions">
+          <button class="btn btn-primary">Open</button>
+          <button class="btn btn-soft">Assign</button>
+          <div class="menu-btn">⋯</div>
+        </div>
+      </div>
+      <p style="font-size:12px;color:var(--muted);margin-top:14px">Overflow menu: Copy link · Duplicate · Move to class · Delete</p>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 05 AFTER: Login without stacked modals ========== -->
+<section class="login" id="after-05">
+  <div class="proto-bar">Working prototype for Arts Council consultation — logos for demonstration only</div>
+  <div class="login-hero">
+    <div class="brand" style="padding:0;color:#fff"><div class="brand-mark">cc</div>designer</div>
+    <h1>Exceptional lessons with <em>connection</em></h1>
+    <p style="opacity:.85;font-size:16px;line-height:1.5;max-width:440px">Capture ideas, build lessons, and connect with arts organisations — from EYFS to A-level.</p>
+  </div>
+  <div class="login-card">
+    <div style="display:flex;gap:12px;font-size:13px;font-weight:700;margin-bottom:12px">
+      <span style="color:var(--indigo)">The facts</span>
+      <span style="color:var(--line)">·</span>
+      <span>Feature walkthrough</span>
+    </div>
+    <h2>Welcome back</h2>
+    <div class="field">you@school.org</div>
+    <div class="field">Password</div>
+    <button class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;margin-top:4px">Sign in</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;padding:12px;margin-top:8px">Create an account</button>
+    <button class="btn btn-soft" style="width:100%;justify-content:center;padding:12px;margin-top:10px">Preview the teacher app</button>
+  </div>
+  <div class="setup-strip">
+    <div>
+      <strong>New here?</strong>
+      <span>One clear entry — sign in, create an account, or preview. No stacked welcome modals.</span>
+    </div>
+    <button class="btn btn-primary">Preview</button>
+  </div>
+</section>
+
+<!-- ========== 06 AFTER: Unified Share ========== -->
+<section class="frame" id="after-06">
+  <aside>
+    <div class="brand"><div class="brand-mark">cc</div>designer</div>
+    <div class="section">Plan your week</div>
+    <div class="nav-item active"><div class="ico"></div>Planner</div>
+    <div class="nav-item"><div class="ico"></div>Timetable</div>
+    <div class="nav-item"><div class="ico"></div>Half-terms</div>
+    <div class="nav-foot">Collapse menu</div>
+  </aside>
+  <div class="workspace">
+    <div class="topbar">
+      <div class="class-pill"><span class="dot"></span> All my classes · this week</div>
+      <div class="top-actions">
+        <span>Forum</span><span>Help</span>
+        <button class="btn btn-primary" style="padding:7px 12px">Share</button>
+        <span class="avatar">Demo Visitor</span>
+      </div>
+    </div>
+    <div class="canvas" style="position:relative">
+      <div class="eyebrow">PLAN / <span>THIS WEEK</span></div>
+      <h1 style="margin:0;font-size:26px">Week planner</h1>
+      <p class="sub">Autumn 1 · 2026–2027 · This week</p>
+      <div class="grid-week" style="opacity:.55">
+        <div class="day"><h3>19 Mon</h3><div class="lesson"><strong>LKG</strong></div></div>
+        <div class="day"><h3>20 Tue</h3><div class="lesson"><strong>Drama</strong></div></div>
+        <div class="day"><h3>21 Wed</h3><div class="lesson"><strong>Music</strong></div></div>
+        <div class="day"><h3>22 Thu</h3><div class="lesson"><strong>UKG</strong></div></div>
+        <div class="day"><h3>23 Fri</h3><div class="lesson"><strong>Y9</strong></div></div>
+      </div>
+      <div class="share-panel">
+        <h2>Share this week</h2>
+        <p>One place for export and links — same pattern on Lessons and Slides.</p>
+        <div class="share-item">📄 Export PDF</div>
+        <div class="share-item">🔗 Copy link to this week</div>
+        <div class="share-item">🖨 Print</div>
+        <button class="btn btn-ghost" style="width:100%;justify-content:center;margin-top:4px">Cancel</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 07 AFTER: Persistent class context + simplified activity chrome ========== -->
+<section class="frame" id="after-07">
+  <aside>
+    <div class="brand"><div class="brand-mark">cc</div>designer</div>
+    <div class="section">Build lessons</div>
+    <div class="nav-item active"><div class="ico"></div>Activities</div>
+    <div class="nav-item"><div class="ico"></div>Lesson Builder</div>
+    <div class="nav-item"><div class="ico"></div>Lessons</div>
+    <div class="nav-item"><div class="ico"></div>Slides</div>
+    <div class="nav-foot">Collapse menu</div>
+  </aside>
+  <div class="workspace">
+    <div class="topbar">
+      <div class="row" style="gap:8px">
+        <div class="class-pill"><span class="dot"></span> Lower Kindergarten Music ▾</div>
+        <span class="badge">Planning for this class everywhere</span>
+      </div>
+      <div class="top-actions"><span class="avatar">Demo Visitor</span></div>
+    </div>
+    <div class="canvas">
+      <div class="eyebrow">BUILD / <span>ACTIVITIES</span></div>
+      <div class="row" style="justify-content:space-between">
+        <div>
+          <h1 style="margin:0;font-size:26px">Activity library</h1>
+          <p class="sub" style="margin:6px 0 0">Folders visible to <strong>Lower Kindergarten Music</strong>. Change class above — Settings controls folder visibility.</p>
+        </div>
+        <button class="btn btn-primary">+ Create activity</button>
+      </div>
+      <div class="card" style="margin:14px 0;display:flex;gap:10px;align-items:center;padding:10px 14px">
+        <span style="flex:1;color:var(--muted);font-size:13px">Search activities…</span>
+        <button class="btn btn-ghost">Welcome</button>
+        <button class="btn btn-ghost">All topics</button>
+      </div>
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px">
+        <div class="card" style="border-top:3px solid #10B981">
+          <div class="row" style="justify-content:space-between"><strong>Introduce Bailey</strong><span style="font-size:11px;color:var(--muted)">2m</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">Welcome · Meet the class puppet</div>
+        </div>
+        <div class="card" style="border-top:3px solid #10B981">
+          <div class="row" style="justify-content:space-between"><strong>Bee Bee Bumble Bee</strong><span style="font-size:11px;color:var(--muted)">3m</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">Welcome · Name game song</div>
+        </div>
+        <div class="card" style="border-top:3px solid #10B981">
+          <div class="row" style="justify-content:space-between"><strong>Hello Everybody</strong><span style="font-size:11px;color:var(--muted)">2m</span></div>
+          <div style="font-size:12px;color:var(--muted);margin-top:6px">Welcome · Greeting song</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ========== 08 AFTER: Teaching journey diagram (also used as #08) ========== -->
+<section class="frame" id="after-08" style="grid-template-columns:1fr">
+  <div class="workspace" style="padding:28px 36px">
+    <div class="eyebrow">ONBOARDING / <span>FIRST WEEK</span></div>
+    <h1>Your teaching journey</h1>
+    <p class="sub">Show this once after first login (and from Help). It maps the four jobs teachers actually do.</p>
+    <div class="journey">
+      <div class="step"><div class="n">1</div><strong>Set up</strong><p>My classes → Timetable slots for each class</p></div>
+      <div class="step"><div class="n">2</div><strong>Plan the term</strong><p>Half-terms map: assign schemes / lessons to each half-term</p></div>
+      <div class="step"><div class="n">3</div><strong>Build</strong><p>Activities → Lesson Builder → save to Lessons</p></div>
+      <div class="step"><div class="n">4</div><strong>Teach &amp; share</strong><p>Week planner · Slides · Export / Copy link</p></div>
+    </div>
+    <div class="card" style="margin-top:8px">
+      <strong style="display:block;margin-bottom:8px">Where things live (proposed)</strong>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;font-size:13px">
+        <div><div class="muted-label" style="margin-top:0">Plan</div>Planner · Timetable · Half-terms</div>
+        <div><div class="muted-label" style="margin-top:0">Build</div>Activities · Lesson Builder · Lessons · Slides</div>
+        <div><div class="muted-label" style="margin-top:0">Discover &amp; account</div>Partner Hubs · Settings · Help &amp; forum</div>
+      </div>
+    </div>
+    <div class="row" style="margin-top:18px">
+      <button class="btn btn-primary">Start with My classes</button>
+      <button class="btn btn-ghost">Skip for now</button>
+    </div>
+  </div>
+</section>
+
+<!-- ========== SITEMAP ========== -->
+<section class="sitemap" id="sitemap">
+  <h1>Proposed navigation structure</h1>
+  <p class="lede">Group by teacher jobs. Promote Timetable and Settings out of “More tools”. Collapse Half-terms / Units into one surface. Keep Bolt-ons secondary.</p>
+  <div class="map-grid">
+    <div class="map-col" style="background:#EEF2FF">
+      <h3>Brand</h3>
+      <div class="node primary">designer <small>Product name locked in UI — avoid “Lesson Viewer”, “Curriculum”, “CCDesigner” mix in chrome</small></div>
+      <div class="node">Header class switcher <small>Always visible when content is class-scoped</small></div>
+      <div class="node">Share menu <small>Export PDF · Copy link · Print</small></div>
+    </div>
+    <div class="map-col">
+      <h3>Plan your week</h3>
+      <div class="node primary">Planner <small>Week / Day schedule only</small></div>
+      <div class="node primary">Timetable <small>Top-level — weekly slots for My classes</small></div>
+      <div class="node primary">Half-terms <small>This class ↔ All classes toggle. Retire Units tab</small></div>
+    </div>
+    <div class="map-col">
+      <h3>Build lessons</h3>
+      <div class="node primary">Activities <small>Rename from Activity Library (shorter)</small></div>
+      <div class="node primary">Lesson Builder</div>
+      <div class="node primary">Lessons <small>Never “Lesson Library” in toasts/help</small></div>
+      <div class="node primary">Slides <small>Never “Lesson Viewer” / “Interactive lesson” in UI</small></div>
+    </div>
+    <div class="map-col">
+      <h3>Discover &amp; account</h3>
+      <div class="node accent">Partner Hubs <small>Music Hubs · Arts orgs · Paid resources</small></div>
+      <div class="node accent">Settings <small>My classes first</small></div>
+      <div class="node">Help &amp; forum</div>
+      <div class="node">Extras <small>Class calendar · Contact · Walkthrough · Bolt-ons</small></div>
+    </div>
+  </div>
+  <div class="flow">
+    <span class="chip">My classes</span><span class="arrow">→</span>
+    <span class="chip">Timetable</span><span class="arrow">→</span>
+    <span class="chip">Half-terms</span><span class="arrow">→</span>
+    <span class="chip">Week planner</span><span class="arrow">→</span>
+    <span class="chip">Build / Slides / Share</span>
+  </div>
+</section>
+
+</body>
+</html>
