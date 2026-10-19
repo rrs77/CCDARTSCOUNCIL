@@ -30,6 +30,7 @@ import { HALF_TERMS, TERM_COLORS } from './halfTermConstants';
 import {
   classDisplayColor,
   getStageIdForClass,
+  HALF_TERM_STAGE_IDS,
   inferClassSubject,
   readClassHalfTerms,
   writeClassHalfTermStacks,
@@ -40,7 +41,7 @@ import {
 
 const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)";
 
-const STAGE_ORDER = ['eyfs', 'ks1', 'ks2', 'ks3', 'ks4', 'ks5', 'other'] as const;
+const STAGE_ORDER = HALF_TERM_STAGE_IDS;
 
 const SHORT_NAME_EXPAND: Record<string, string> = {
   lkg: 'Lower Kindergarten',
@@ -175,7 +176,8 @@ export function AssignSchemeMultiPanel({
 
     for (const cls of allClasses) {
       const stageId = getStageIdForClass(cls, yearGroupSections || [], allClasses);
-      const bucket = byStage.get(stageId) || byStage.get('other')!;
+      const bucket = byStage.get(stageId);
+      if (!bucket) continue;
       if (q) {
         const { title, context } = classLabelParts(cls);
         const hay = `${cls.name} ${cls.id} ${title} ${context || ''}`.toLowerCase();
@@ -192,7 +194,7 @@ export function AssignSchemeMultiPanel({
         id.toUpperCase();
       return {
         id,
-        label: id === 'other' ? 'Other' : label,
+        label,
         classes,
         subjectGroups: groupClassesBySubject(classes),
       };

@@ -1,13 +1,29 @@
-import { getDefaultSectionIdForYearGroup } from '../../utils/yearGroupSectionOrder';
+import {
+  findSectionIdForYearGroup,
+  getDefaultSectionIdForYearGroup,
+  type YearGroupSectionLike,
+} from '../../utils/yearGroupSectionOrder';
 import { HALF_TERMS } from './halfTermConstants';
 import type { StackedLesson } from '../../hooks/useLessonStacks';
 
 export type ClassSubject = 'Music' | 'Drama' | 'Dance' | 'Art' | 'Other';
 
+/** Key stages used on the Half-terms board / Add-scheme picker — never "other". */
+export const HALF_TERM_STAGE_IDS = ['eyfs', 'ks1', 'ks2', 'ks3', 'ks4', 'ks5'] as const;
+export type HalfTermStageId = (typeof HALF_TERM_STAGE_IDS)[number];
+
 export type ClassRef = {
   id: string;
   name: string;
   color?: string;
+};
+
+export type StageResolveResult = {
+  stageId: HalfTermStageId;
+  /** True when name/id inference (or forced fallback) was used instead of Settings. */
+  inferred: boolean;
+  /** True when inference failed and we placed the class under a default stage. */
+  forcedFallback: boolean;
 };
 
 export type HalfTermRecord = {
@@ -153,20 +169,50 @@ export function writeClassHalfTermStacks(
   return next;
 }
 
+function asHalfTermStage(id: string | null | undefined): HalfTermStageId | null {
+  const s = (id || '').trim().toLowerCase();
+  return (HALF_TERM_STAGE_IDS as readonly string[]).includes(s)
+    ? (s as HalfTermStageId)
+    : null;
+}
+
+/**
+ * Resolve a class to EYFS–KS5 for Half-terms UI.
+ * Settings membership wins when it is a real key stage; otherwise infer from
+ * name/id (LKG/UKG/Nursery/Reception → EYFS, Y1–2 → KS1, …). Never returns "other".
+ * Ambiguous leftovers go to KS2 and are flagged via `forcedFallback`.
+ */
+export function resolveHalfTermStageForClass(
+  cls: ClassRef,
+  sections: YearGroupSectionLike[],
+  allClasses: ClassRef[],
+): StageResolveResult {
+  const fromSettings = findSectionIdForYearGroup(sections || [], cls.id, allClasses);
+  const settingsStage = asHalfTermStage(fromSettings);
+  if (settingsStage) {
+    return { stageId: settingsStage, inferred: false, forcedFallback: false };
+  }
+
+  const inferredRaw = getDefaultSectionIdForYearGroup(cls.id, cls.name);
+  const inferred = asHalfTermStage(inferredRaw);
+  if (inferred) {
+    return { stageId: inferred, inferred: true, forcedFallback: false };
+  }
+
+  // Truly ambiguous — nearest sensible middle stage
+  return { stageId: 'ks2', inferred: true, forcedFallback: true };
+}
+
 export function getStageIdForClass(
   cls: ClassRef,
   sections: { id: string; yearGroupIds: string[] }[],
   allClasses: ClassRef[],
-): string {
-  for (const section of sections) {
-    if (section.id === 'other') continue;
-    for (const token of section.yearGroupIds || []) {
-      const t = (token || '').trim().toLowerCase();
-      if (!t) continue;
-      if (t === cls.id.toLowerCase() || t === cls.name.toLowerCase()) return section.id;
-    }
-  }
-  return getDefaultSectionIdForYearGroup(cls.id, cls.name);
+): HalfTermStageId {
+  return resolveHalfTermStageForClass(
+    cls,
+    sections as YearGroupSectionLike[],
+    allClasses,
+  ).stageId;
 }
 
 export const CLASS_SUBJECT_FILTERS: ClassSubject[] = ['Music', 'Drama', 'Dance', 'Art'];
