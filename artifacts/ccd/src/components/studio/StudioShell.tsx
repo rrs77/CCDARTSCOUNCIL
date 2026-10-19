@@ -3,6 +3,7 @@ import {
   BookOpen,
   Calendar,
   ChevronLeft,
+  Clapperboard,
   Edit3,
   FolderOpen,
   Globe2,
@@ -18,7 +19,8 @@ export type StudioNavId =
   | 'curriculum'
   | 'more'
   | 'lesson-library'
-  | 'contact-us';
+  | 'contact-us'
+  | 'lesson-viewer';
 
 const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.ReactNode; dataTab: string }[] = [
   { id: 'unit-viewer', label: 'Planner', short: 'Planner', icon: <Calendar className="h-[17px] w-[17px]" />, dataTab: 'unit-viewer' },
@@ -26,6 +28,7 @@ const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.Reac
   { id: 'lesson-builder', label: 'Lesson Builder', short: 'Builder', icon: <Edit3 className="h-[17px] w-[17px]" />, dataTab: 'lesson-builder' },
   { id: 'lesson-library', label: 'Lessons', short: 'Lessons', icon: <FolderOpen className="h-[17px] w-[17px]" />, dataTab: 'lesson-library' },
   { id: 'activity-library', label: 'Activity Library', short: 'Activities', icon: <Grid3X3 className="h-[17px] w-[17px]" />, dataTab: 'activity-library' },
+  { id: 'lesson-viewer', label: 'Lesson Viewer', short: 'Viewer', icon: <Clapperboard className="h-[17px] w-[17px]" />, dataTab: 'lesson-viewer' },
   { id: 'our-partners', label: 'Partner Hubs', short: 'Hubs', icon: <Globe2 className="h-[17px] w-[17px]" />, dataTab: 'our-partners' },
 ];
 
