@@ -708,7 +708,8 @@ export function ActivityLibrary({
     return (
       <div
         key={`head-${catKey}`}
-        className="col-span-full flex flex-wrap items-center gap-2 py-2 px-2 border-b border-[#E2E0EF] bg-white cursor-pointer hover:bg-[#F8F7FC]"
+        className="col-span-full flex flex-wrap items-center gap-2 py-2 px-2 border-b-2 bg-white cursor-pointer hover:bg-[#F8F7FC]"
+        style={{ borderBottomColor: `${getCategoryColor(categoryName)}55` }}
         onClick={() => toggleHierarchyKey(catKey)}
         role="button"
         aria-expanded={expanded}
@@ -756,7 +757,12 @@ export function ActivityLibrary({
           className="w-2.5 h-2.5 rounded-full flex-shrink-0"
           style={{ backgroundColor: getCategoryColor(categoryName) }}
         />
-        <h3 className="text-base font-bold text-[#4338E8]">{categoryName}</h3>
+        <h3
+          className="text-base font-bold"
+          style={{ color: getCategoryColor(categoryName) || '#4338E8' }}
+        >
+          {categoryName}
+        </h3>
         <button
           type="button"
           onClick={(e) => {
