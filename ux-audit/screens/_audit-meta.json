@@ -1,0 +1,23 @@
+{
+  "auditDump": {
+    "nav": [
+      "Planner",
+      "Half-terms",
+      "Lesson Builder",
+      "Lessons",
+      "Activity Library",
+      "Slides",
+      "Partner Hubs",
+      "More tools",
+      "+ Bolt-ons",
+      "2"
+    ],
+    "eyebrow": "YOUR TEACHING / LESSONS",
+    "title": "Partner Hubs · CCDesigner",
+    "tab": "lesson-library"
+  },
+  "consoleErrors": [
+    "Failed to load resource: the server responded with a status of 500 (Internal Server Error)",
+    "Share failed: Error: Share PDF failed: 500"
+  ]
+}
