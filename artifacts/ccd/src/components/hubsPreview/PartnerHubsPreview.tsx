@@ -1958,10 +1958,11 @@ function PartnerHubsBrowse({
                     showBreadcrumb={false}
                     regionLabelMode="names"
                     frameEngland
-                    showControls
+                    showControls={false}
                     showAttribution={false}
+                    showFeatureLabels={false}
                     palette="green"
-                    className="h-[380px] !rounded-2xl !border-0 sm:h-[420px]"
+                    className="h-[440px] !rounded-2xl !border-0 sm:h-[520px] lg:h-[560px]"
                   />
                 </div>
 

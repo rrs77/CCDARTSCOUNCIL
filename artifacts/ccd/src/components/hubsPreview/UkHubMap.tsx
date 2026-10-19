@@ -27,20 +27,43 @@ const PALETTES = {
     bg: 'radial-gradient(120% 90% at 55% 35%, #FBFBFF 0%, #F0F1FA 55%, #E8EAF6 100%)',
   },
   green: {
-    // Soft green England wash — clearly green, not grey; dark bubbles carry hierarchy
-    region: ['#A8D4AE', '#A8D4AE', '#9CCBA3', '#A8D4AE'],
+    // Distinct soft regional tints for the Music Hubs England landing
+    region: [
+      '#B7D9C0', // North East
+      '#9BCFBE', // North West
+      '#C5D9A8', // Yorkshire
+      '#A8D4AE', // East Midlands
+      '#8FCBB5', // West Midlands
+      '#B8D4E8', // East of England
+      '#C5C0E8', // London
+      '#A8D4C8', // South East
+      '#D4CFA0', // South West
+    ],
     hub: ['#98CBA0', '#98CBA0', '#8CC296', '#98CBA0', '#98CBA0'],
     district: ['#9FCEA6', '#9FCEA6', '#93C59C', '#9FCEA6', '#9FCEA6'],
-    nation: '#DCEBDF',
-    muted: '#EAF3EC',
-    hover: '#6BBF78',
+    nation: '#E8EFEA',
+    muted: '#F0F4F1',
+    hover: '#5BBF8A',
     selected: '#0F5C52',
-    coast: '#8FBF98',
+    coast: '#D5E0D8',
     ink: '#1A3A22',
     count: '#084840',
-    bg: 'radial-gradient(120% 90% at 55% 35%, #F7FBF8 0%, #E8F3EA 55%, #D8EBD9 100%)',
+    bg: 'radial-gradient(120% 90% at 55% 35%, #F7FBF8 0%, #EEF5F0 55%, #E4EFE6 100%)',
   },
 } as const;
+
+/** Soft regional fills keyed by region order in the dataset (tone index). */
+const LANDING_REGION_FILLS = [
+  '#A8D4B4', // North East — mint
+  '#7EC4B8', // North West — teal
+  '#C5D98A', // Yorkshire — lime
+  '#9BCF9E', // East Midlands — soft green
+  '#6FB8A8', // West Midlands — sea
+  '#9EC4E0', // East of England — sky
+  '#B8B0E0', // London — lilac
+  '#8FCBB8', // South East — jade
+  '#D4C98A', // South West — sand
+] as const;
 
 const FLY_MS = 720;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -174,7 +197,7 @@ export function UkHubMap({
     // England landing: keep England's own aspect so it fills the panel height
     // (SVG meet letterboxes sides) instead of zooming out to Scotland/Wales.
     if (frameEngland && b[3] < ix.data.viewBox[3] * 0.85) {
-      const pad = 0.05;
+      const pad = 0.02;
       const w = b[2] * (1 + pad * 2);
       const h = b[3] * (1 + pad * 2);
       const cx = b[0] + b[2] / 2;
@@ -306,6 +329,7 @@ export function UkHubMap({
     const el = wrapRef.current;
     if (!el) return;
     const onWheel = (e: WheelEvent) => {
+      if (!showControls) return;
       if (!(e.ctrlKey || e.metaKey)) {
         setHint(true);
         window.clearTimeout(hintTimer.current);
@@ -319,7 +343,7 @@ export function UkHubMap({
     };
     el.addEventListener('wheel', onWheel, { passive: false });
     return () => el.removeEventListener('wheel', onWheel);
-  }, [zoomAt]);
+  }, [zoomAt, showControls]);
 
   const pointers = useRef(new Map<number, { x: number; y: number }>());
   const drag = useRef<{ x: number; y: number; box: BBox; moved: boolean; pinch?: number } | null>(null);
@@ -603,9 +627,54 @@ export function UkHubMap({
   }, [items, settled, ctx, labelMode, isEnglandOverview, focus, ix, hover, showFeatureLabels]);
 
   const ladsDrawn = ix.data.lads;
-  const hubOutlines = level !== 'uk' && !(ctx.nationId && ctx.nationId !== ENGLAND);
+  // Never draw the 43 hub outlines on the England landing — regions only.
+  const hubOutlines =
+    !isEnglandOverview && level !== 'uk' && !(ctx.nationId && ctx.nationId !== ENGLAND);
+  const regionLanding = isEnglandOverview && (labelMode === 'names' || frameEngland);
   const crumbs: MapFocus[] = [];
   for (let f: MapFocus | null = focus; f; f = parentFocus(ix, f)) crumbs.unshift(f);
+
+  const regionFill = (code: string, tone: number, hovered: boolean) => {
+    if (hovered) return HOVER;
+    return LANDING_REGION_FILLS[tone % LANDING_REGION_FILLS.length] || REGION_TONES[tone % REGION_TONES.length];
+  };
+
+  const shortRegionName = (name: string) =>
+    name === 'Yorkshire and The Humber' ? 'Yorkshire & Humber' : name;
+
+  // Screen-space pill labels for the England landing (fixed readable size).
+  const landingPills = useMemo(() => {
+    if (!regionLanding || moving) return [] as { id: string; name: string; count: number; left: number; top: number; active: boolean }[];
+    const [vx, vy, vw, vh] = settled.box;
+    const byNameNudge: Record<string, [number, number]> = {
+      London: [-20, -20],
+      'South East': [140, 100],
+      'East of England': [70, -40],
+      'South West': [-50, 40],
+      'East Midlands': [10, -15],
+      'West Midlands': [-20, 5],
+      'Yorkshire and The Humber': [20, -10],
+      'North East': [10, 0],
+      'North West': [-10, 10],
+    };
+    return ix.data.regions.map((r) => {
+      const count = ix.hubsInRegion(r.code).length;
+      let [x, y] = r.label;
+      const dxy = byNameNudge[r.name];
+      if (dxy) {
+        x += dxy[0];
+        y += dxy[1];
+      }
+      return {
+        id: r.code,
+        name: shortRegionName(r.name),
+        count,
+        left: ((x - vx) / vw) * 100,
+        top: ((y - vy) / vh) * 100,
+        active: hover === r.code,
+      };
+    });
+  }, [regionLanding, moving, settled.box, ix, hover]);
 
   return (
     <div
@@ -629,72 +698,130 @@ export function UkHubMap({
         onPointerCancel={onPointerUp}
         onPointerLeave={() => onHover(null)}
       >
-        <g style={{ filter: moving ? undefined : 'drop-shadow(0 2px 6px rgba(31,27,77,0.08))' }}>
-          {ix.data.nations.map((n) => (
-            <path key={n.code} d={n.d} fill={COAST} stroke={COAST} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
-          ))}
+        {/* Faint non-England nations (or skip when framing England tightly). */}
+        <g style={{ filter: moving ? undefined : 'drop-shadow(0 2px 6px rgba(31,27,77,0.06))' }}>
+          {ix.data.nations.map((n) => {
+            if (n.code === ENGLAND) return null;
+            if (regionLanding) {
+              // Keep Wales / Scotland / NI barely visible so England dominates.
+              return (
+                <path
+                  key={n.code}
+                  d={n.d}
+                  fill="#D8E2DA"
+                  fillOpacity={0.12}
+                  stroke="#D8E2DA"
+                  strokeOpacity={0.08}
+                  strokeWidth={1}
+                  vectorEffect="non-scaling-stroke"
+                />
+              );
+            }
+            return (
+              <path key={n.code} d={n.d} fill={COAST} stroke={COAST} strokeWidth={1.5} vectorEffect="non-scaling-stroke" />
+            );
+          })}
         </g>
 
-        <g aria-hidden>
-          {ladsDrawn
-            .filter((l) => !itemOfLad.has(l.code))
-            .map((l) => (
-              <path
-                key={l.code}
-                d={l.d}
-                fill={fillFor(l.code)}
-                stroke={MUTED}
-                strokeWidth={0.6}
-                vectorEffect="non-scaling-stroke"
-                className="cursor-pointer transition-[fill] duration-150"
-                onClick={() => activate(outsideFocus(l.code))}
-              />
-            ))}
-        </g>
+        {!regionLanding && (
+          <g aria-hidden>
+            {ladsDrawn
+              .filter((l) => !itemOfLad.has(l.code))
+              .map((l) => (
+                <path
+                  key={l.code}
+                  d={l.d}
+                  fill={fillFor(l.code)}
+                  stroke={MUTED}
+                  strokeWidth={0.6}
+                  vectorEffect="non-scaling-stroke"
+                  className="cursor-pointer transition-[fill] duration-150"
+                  onClick={() => activate(outsideFocus(l.code))}
+                />
+              ))}
+          </g>
+        )}
 
-        {items.map((it) => {
-          const isSel = selectedItemId === it.id;
-          const fine = Boolean(ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND));
-          return (
-            <g
-              key={it.id}
-              role="button"
-              tabIndex={0}
-              aria-label={`${it.name}${isSel ? ', selected' : ''}`}
-              aria-pressed={isSel || undefined}
-              className="ukmap-item cursor-pointer outline-none"
-              onPointerEnter={() => onHover(it.id)}
-              onPointerLeave={() => onHover(null)}
-              onFocus={() => onHover(it.id)}
-              onBlur={() => onHover(null)}
-              onClick={() => activate(it.focus)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' || e.key === ' ') {
-                  e.preventDefault();
-                  onFocus(it.focus);
-                } else if (e.key === 'Escape') {
-                  const p = parentFocus(ix, focus);
-                  if (p) onFocus(p);
-                }
-              }}
-            >
-              {it.lads.map((code) => {
-                const fill = fillFor(code);
-                return (
+        {/* England landing: one dissolved path per region */}
+        {regionLanding
+          ? ix.data.regions.map((r) => {
+              const active = hover === r.code;
+              const fill = regionFill(r.code, r.tone, active);
+              return (
+                <g
+                  key={r.code}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${r.name}, ${ix.hubsInRegion(r.code).length} Music Hubs`}
+                  aria-pressed={active || undefined}
+                  className="ukmap-item cursor-pointer outline-none"
+                  onPointerEnter={() => onHover(r.code)}
+                  onPointerLeave={() => onHover(null)}
+                  onFocus={() => onHover(r.code)}
+                  onBlur={() => onHover(null)}
+                  onClick={() => activate({ level: 'region', id: r.code })}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onFocus({ level: 'region', id: r.code });
+                    }
+                  }}
+                >
                   <path
-                    key={code}
-                    d={ix.lad(code)!.d}
+                    d={r.d}
                     fill={fill}
-                    stroke={fine ? '#FFFFFF' : fill}
-                    strokeWidth={fine ? (isSel ? 0 : 1) : 0.6}
+                    stroke="#FFFFFF"
+                    strokeWidth={active ? 2.25 : 1.75}
                     vectorEffect="non-scaling-stroke"
-                    className="transition-[fill] duration-150"
+                    strokeLinejoin="round"
+                    className="transition-[fill,stroke-width] duration-150"
                   />
-                );
-              })}
-            </g>
-          );
-        })}
+                </g>
+              );
+            })
+          : items.map((it) => {
+              const isSel = selectedItemId === it.id;
+              const fine = Boolean(ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND));
+              return (
+                <g
+                  key={it.id}
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`${it.name}${isSel ? ', selected' : ''}`}
+                  aria-pressed={isSel || undefined}
+                  className="ukmap-item cursor-pointer outline-none"
+                  onPointerEnter={() => onHover(it.id)}
+                  onPointerLeave={() => onHover(null)}
+                  onFocus={() => onHover(it.id)}
+                  onBlur={() => onHover(null)}
+                  onClick={() => activate(it.focus)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      onFocus(it.focus);
+                    } else if (e.key === 'Escape') {
+                      const p = parentFocus(ix, focus);
+                      if (p) onFocus(p);
+                    }
+                  }}
+                >
+                  {it.lads.map((code) => {
+                    const fill = fillFor(code);
+                    return (
+                      <path
+                        key={code}
+                        d={ix.lad(code)!.d}
+                        fill={fill}
+                        stroke={fine ? '#FFFFFF' : fill}
+                        strokeWidth={fine ? (isSel ? 0 : 1) : 0.6}
+                        vectorEffect="non-scaling-stroke"
+                        className="transition-[fill] duration-150"
+                      />
+                    );
+                  })}
+                </g>
+              );
+            })}
 
         <g aria-hidden fill="none" pointerEvents="none">
           {hubOutlines &&
@@ -709,7 +836,8 @@ export function UkHubMap({
                 strokeLinejoin="round"
               />
             ))}
-          {!ctx.hubId &&
+          {!regionLanding &&
+            !ctx.hubId &&
             ix.data.regions.map((r) => (
               <path
                 key={r.code}
@@ -720,81 +848,86 @@ export function UkHubMap({
                 vectorEffect="non-scaling-stroke"
               />
             ))}
-          {ix.data.nations.map((n) => (
-            <path key={n.code} d={n.d} stroke="#FFFFFF" strokeWidth={1.75} vectorEffect="non-scaling-stroke" />
-          ))}
-          {ix.data.insets.map((s) => (
-            <rect
-              key={s.name}
-              x={s.box[0]}
-              y={s.box[1]}
-              width={s.box[2]}
-              height={s.box[3]}
-              rx={s.box[2] * 0.06}
-              stroke={INK}
-              strokeOpacity={0.16}
-              strokeWidth={1}
-              vectorEffect="non-scaling-stroke"
-            >
-              <title>{`${s.name} (inset, same scale)`}</title>
-            </rect>
-          ))}
+          {!regionLanding &&
+            ix.data.nations.map((n) => (
+              <path key={n.code} d={n.d} stroke="#FFFFFF" strokeWidth={1.75} vectorEffect="non-scaling-stroke" />
+            ))}
+          {!regionLanding &&
+            ix.data.insets.map((s) => (
+              <rect
+                key={s.name}
+                x={s.box[0]}
+                y={s.box[1]}
+                width={s.box[2]}
+                height={s.box[3]}
+                rx={s.box[2] * 0.06}
+                stroke={INK}
+                strokeOpacity={0.16}
+                strokeWidth={1}
+                vectorEffect="non-scaling-stroke"
+              >
+                <title>{`${s.name} (inset, same scale)`}</title>
+              </rect>
+            ))}
         </g>
 
-        <g
-          aria-hidden
-          pointerEvents="none"
-          className="transition-opacity duration-200"
-          style={{ opacity: moving ? 0 : 1 }}
-          fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
-        >
-          {labels.map((lb) => {
-            const isSel = lb.selected || lb.id === selectedItemId || hover === lb.id;
-            const hasSub = Boolean(lb.sub);
-            const blockH = lb.lines.length * lb.fs * 1.15 + (hasSub ? lb.fs * 1.1 : 0);
-            return (
-              <g key={lb.id}>
-                <text
-                  x={lb.x}
-                  y={lb.y - blockH / 2 + lb.fs * 0.55}
-                  textAnchor="middle"
-                  dominantBaseline="central"
-                  fontSize={lb.fs}
-                  fontWeight={isSel ? 700 : 600}
-                  letterSpacing={lb.fs * 0.01}
-                  fill={isSel ? tones.count : INK}
-                  stroke="#FFFFFF"
-                  strokeWidth={lb.fs * 0.32}
-                  strokeLinejoin="round"
-                  paintOrder="stroke"
-                >
-                  {lb.lines.map((ln, i) => (
-                    <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.15}>
-                      {ln}
-                    </tspan>
-                  ))}
-                </text>
-                {hasSub && (
+        {/* Non-landing feature labels stay as SVG text */}
+        {!regionLanding && (
+          <g
+            aria-hidden
+            pointerEvents="none"
+            className="transition-opacity duration-200"
+            style={{ opacity: moving ? 0 : 1 }}
+            fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
+          >
+            {labels.map((lb) => {
+              const isSel = lb.selected || lb.id === selectedItemId || hover === lb.id;
+              const hasSub = Boolean(lb.sub);
+              const blockH = lb.lines.length * lb.fs * 1.15 + (hasSub ? lb.fs * 1.1 : 0);
+              return (
+                <g key={lb.id}>
                   <text
                     x={lb.x}
-                    y={lb.y - blockH / 2 + lb.lines.length * lb.fs * 1.15 + lb.fs * 0.55}
+                    y={lb.y - blockH / 2 + lb.fs * 0.55}
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={lb.fs * 0.95}
-                    fontWeight={800}
-                    fill={tones.count}
+                    fontSize={lb.fs}
+                    fontWeight={isSel ? 700 : 600}
+                    letterSpacing={lb.fs * 0.01}
+                    fill={isSel ? tones.count : INK}
                     stroke="#FFFFFF"
-                    strokeWidth={lb.fs * 0.28}
+                    strokeWidth={lb.fs * 0.32}
                     strokeLinejoin="round"
                     paintOrder="stroke"
                   >
-                    {lb.sub} hub{(lb.sub === '1' ? '' : 's')}
+                    {lb.lines.map((ln, i) => (
+                      <tspan key={i} x={lb.x} dy={i === 0 ? 0 : lb.fs * 1.15}>
+                        {ln}
+                      </tspan>
+                    ))}
                   </text>
-                )}
-              </g>
-            );
-          })}
-        </g>
+                  {hasSub && (
+                    <text
+                      x={lb.x}
+                      y={lb.y - blockH / 2 + lb.lines.length * lb.fs * 1.15 + lb.fs * 0.55}
+                      textAnchor="middle"
+                      dominantBaseline="central"
+                      fontSize={lb.fs * 0.95}
+                      fontWeight={800}
+                      fill={tones.count}
+                      stroke="#FFFFFF"
+                      strokeWidth={lb.fs * 0.28}
+                      strokeLinejoin="round"
+                      paintOrder="stroke"
+                    >
+                      {lb.sub} hub{lb.sub === '1' ? '' : 's'}
+                    </text>
+                  )}
+                </g>
+              );
+            })}
+          </g>
+        )}
 
         {tipItem && !moving && labelMode !== 'names' && (
           <g aria-hidden pointerEvents="none">
@@ -838,7 +971,24 @@ export function UkHubMap({
         )}
       </svg>
 
-      {tipItem && !moving && (
+      {/* Readable HTML pills on the England landing — fixed 12–13px, not SVG-scaled. */}
+      {regionLanding &&
+        landingPills.map((p) => (
+          <div
+            key={`pill-${p.id}`}
+            aria-hidden
+            className={`pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-2.5 py-1 text-[12.5px] font-semibold leading-none shadow-[0_1px_3px_rgba(26,58,34,0.12)] transition-[background,border-color,color,box-shadow] duration-150 ${
+              p.active
+                ? 'border-[#0B6B5F]/35 bg-[#0B6B5F] text-white shadow-[0_4px_14px_-4px_rgba(11,107,95,0.45)]'
+                : 'border-[#1A3A22]/10 bg-white text-[#1A3A22]'
+            }`}
+            style={{ left: `${p.left}%`, top: `${p.top}%` }}
+          >
+            {p.name} · {p.count}
+          </div>
+        ))}
+
+      {tipItem && !moving && !regionLanding && (
         <div
           aria-hidden
           className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[12px] font-semibold leading-snug text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
