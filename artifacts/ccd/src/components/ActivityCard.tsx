@@ -369,77 +369,9 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
             </div>
           </div>
           
-          <p className="text-sm text-gray-600 mb-2" dir="ltr">{normalizedCategory}</p>
-          
-          {activity.yearGroups && activity.yearGroups.length > 0 && (
-            <div className="flex flex-wrap gap-1 mb-2">
-              {activity.yearGroups.filter(yearGroup => yearGroup && yearGroup.toLowerCase() !== 'all').map(yearGroup => {
-                // Create abbreviation: "Lower Kindergarten Music" → "LKG M"
-                // Also handles old labels like "EYFS U", "EYFS L", etc.
-                // Handles comma-separated values like "EYFS U, Reception"
-                const abbreviate = (label: string): string => {
-                  if (!label) return label;
-                  
-                  // Handle comma-separated values (e.g., "EYFS U, Reception")
-                  if (label.includes(',')) {
-                    return label.split(',').map(part => abbreviate(part.trim())).join(', ');
-                  }
-                  
-                  // Handle old "EYFS U" format → "UKG"
-                  if (label === 'EYFS U' || label === 'Upper EYFS' || label.startsWith('EYFS U')) {
-                    const parts = label.split(' ');
-                    if (parts.length > 2) {
-                      const category = parts.slice(2).join(' ').trim();
-                      const catAbbr = category ? category.charAt(0) : '';
-                      return `UKG ${catAbbr}`.trim();
-                    }
-                    return 'UKG';
-                  }
-                  
-                  // Handle old "EYFS L" format → "LKG"
-                  if (label === 'EYFS L' || label === 'Lower EYFS' || label.startsWith('EYFS L')) {
-                    const parts = label.split(' ');
-                    if (parts.length > 2) {
-                      const category = parts.slice(2).join(' ').trim();
-                      const catAbbr = category ? category.charAt(0) : '';
-                      return `LKG ${catAbbr}`.trim();
-                    }
-                    return 'LKG';
-                  }
-                  
-                  // Handle "Lower Kindergarten" → "LKG"
-                  if (label.includes('Lower Kindergarten')) {
-                    const category = label.replace('Lower Kindergarten', '').trim();
-                    const catAbbr = category ? category.charAt(0) : '';
-                    return `LKG ${catAbbr}`.trim();
-                  }
-                  // Handle "Upper Kindergarten" → "UKG"
-                  if (label.includes('Upper Kindergarten')) {
-                    const category = label.replace('Upper Kindergarten', '').trim();
-                    const catAbbr = category ? category.charAt(0) : '';
-                    return `UKG ${catAbbr}`.trim();
-                  }
-                  // Handle "Reception" → "Reception M/D/etc"
-                  if (label.includes('Reception')) {
-                    const category = label.replace('Reception', '').trim();
-                    const catAbbr = category ? category.charAt(0) : '';
-                    return `Reception ${catAbbr}`.trim();
-                  }
-                  // Fallback: return original
-                  return label;
-                };
-                
-                return (
-                <span 
-                  key={yearGroup} 
-                    className="px-2 py-1 bg-[#D4F1EF] text-[#17A697] text-xs font-medium rounded-full whitespace-nowrap"
-                >
-                    {abbreviate(yearGroup)}
-                </span>
-                );
-              })}
-            </div>
-          )}
+          <p className="mb-1.5 text-sm text-gray-600" dir="ltr">{normalizedCategory}</p>
+
+          {/* Year-group pills intentionally omitted on library/lesson cards — edit in Details / full-page editor */}
           
           {activity.description && (
             <div 
@@ -557,81 +489,11 @@ return (
                 <h3 className="text-lg font-bold leading-tight" dir="ltr">{activity.activity}</h3>
               )}
               
-              <div className="flex items-center space-x-2 mt-2 flex-wrap">
-                {activity.yearGroups && activity.yearGroups.filter(yg => yg && yg.toLowerCase() !== 'all').length > 0 ? (
-                  activity.yearGroups.filter(yearGroup => yearGroup && yearGroup.toLowerCase() !== 'all').map(yearGroup => {
-                    // Create abbreviation: "Lower Kindergarten Music" → "LKG M"
-                    // Also handles old labels like "EYFS U", "EYFS L", etc.
-                    // Handles comma-separated values like "EYFS U, Reception"
-                    const abbreviate = (label: string): string => {
-                      if (!label) return label;
-                      
-                      // Handle comma-separated values (e.g., "EYFS U, Reception")
-                      if (label.includes(',')) {
-                        return label.split(',').map(part => abbreviate(part.trim())).join(', ');
-                      }
-                      
-                      // Handle old "EYFS U" format → "UKG"
-                      if (label === 'EYFS U' || label === 'Upper EYFS' || label.startsWith('EYFS U')) {
-                        // Try to extract category if present (e.g., "EYFS U Music" → "UKG M")
-                        const parts = label.split(' ');
-                        if (parts.length > 2) {
-                          const category = parts.slice(2).join(' ').trim();
-                          const catAbbr = category ? category.charAt(0) : '';
-                          return `UKG ${catAbbr}`.trim();
-                        }
-                        return 'UKG';
-                      }
-                      
-                      // Handle old "EYFS L" format → "LKG"
-                      if (label === 'EYFS L' || label === 'Lower EYFS' || label.startsWith('EYFS L')) {
-                        // Try to extract category if present (e.g., "EYFS L Music" → "LKG M")
-                        const parts = label.split(' ');
-                        if (parts.length > 2) {
-                          const category = parts.slice(2).join(' ').trim();
-                          const catAbbr = category ? category.charAt(0) : '';
-                          return `LKG ${catAbbr}`.trim();
-                        }
-                        return 'LKG';
-                      }
-                      
-                      // Handle "Lower Kindergarten" → "LKG"
-                      if (label.includes('Lower Kindergarten')) {
-                        const category = label.replace('Lower Kindergarten', '').trim();
-                        const catAbbr = category ? category.charAt(0) : '';
-                        return `LKG ${catAbbr}`.trim();
-                      }
-                      // Handle "Upper Kindergarten" → "UKG"
-                      if (label.includes('Upper Kindergarten')) {
-                        const category = label.replace('Upper Kindergarten', '').trim();
-                        const catAbbr = category ? category.charAt(0) : '';
-                        return `UKG ${catAbbr}`.trim();
-                      }
-                      // Handle "Reception" → "Reception M/D/etc"
-                      if (label.includes('Reception')) {
-                        const category = label.replace('Reception', '').trim();
-                        const catAbbr = category ? category.charAt(0) : '';
-                        return `Reception ${catAbbr}`.trim();
-                      }
-                      // Fallback: return original (but this shouldn't happen with proper data)
-                      return label;
-                    };
-                    
-                    return (
-                    <span 
-                      key={yearGroup} 
-                        className="px-2 py-1 bg-white bg-opacity-20 text-white text-xs font-medium rounded-full whitespace-nowrap"
-                    >
-                        {abbreviate(yearGroup)}
-                    </span>
-                    );
-                  })
-                ) : activity.level && (
-                  <span className="px-2 py-1 bg-white bg-opacity-20 text-xs font-medium rounded-full">
-                    {activity.level}
-                  </span>
-                )}
-              </div>
+              {activity.category ? (
+                <p className="mt-1.5 text-sm text-white/80" dir="ltr">
+                  {normalizedCategory}
+                </p>
+              ) : null}
             </div>
 
             <div className="flex items-center space-x-2 ml-3">

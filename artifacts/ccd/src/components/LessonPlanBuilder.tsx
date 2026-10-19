@@ -764,9 +764,8 @@ export function LessonPlanBuilder({
       return {};
     }
     
-    // OR-style visibility (parity with ActivityLibrary): show if the category is
-    // assigned to this year group in Settings, OR the activity itself is tagged
-    // for the current year group.
+    // Parity with ActivityLibrary: Settings folder visibility AND activity
+    // year-group tags (when the activity has specific tags).
     const ygKeys = getCurrentYearGroupKeys();
     let filtered = allActivities.filter(activity => {
       const description = activity.description || '';

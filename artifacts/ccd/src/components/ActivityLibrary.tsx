@@ -541,7 +541,7 @@ export function ActivityLibrary({
       // Level filtering removed - show all levels
       const matchesLevel = true;
       
-      // OR-style: category assigned in Settings, or activity tagged for this year group.
+      // Settings folder visibility AND activity year-group tags (when present).
       const visibleForYearGroup = activityVisibleForYearGroup({
         activityCategory: activity.category,
         availableCategoriesForYearGroup,
