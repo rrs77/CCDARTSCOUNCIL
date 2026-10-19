@@ -4,6 +4,7 @@ import { halfTermsApi } from '../../config/api';
 import { useAuth } from '../../hooks/useAuth';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
+import { useLessonStacks } from '../../hooks/useLessonStacks';
 import {
   HALF_TERMS,
   TERM_COLORS,
@@ -17,6 +18,8 @@ type CellSummary = {
   lessonCount: number;
   stackCount: number;
   isComplete: boolean;
+  stackIds: string[];
+  stackNames: string[];
 };
 
 type RowData = {
@@ -35,21 +38,28 @@ const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui
 
 function emptyCells(): Record<string, CellSummary> {
   return Object.fromEntries(
-    HALF_TERMS.map((t) => [t.id, { lessonCount: 0, stackCount: 0, isComplete: false }]),
+    HALF_TERMS.map((t) => [
+      t.id,
+      { lessonCount: 0, stackCount: 0, isComplete: false, stackIds: [], stackNames: [] },
+    ]),
   );
 }
 
 function summariseTerms(
   terms: Array<{ id: string; lessons?: string[]; stacks?: string[]; isComplete?: boolean }>,
+  stackNameById: Map<string, string>,
 ): Record<string, CellSummary> {
   const cells = emptyCells();
   for (const term of terms) {
     const id = term.id;
     if (!cells[id]) continue;
+    const stackIds = term.stacks || [];
     cells[id] = {
       lessonCount: term.lessons?.length ?? 0,
-      stackCount: term.stacks?.length ?? 0,
+      stackCount: stackIds.length,
       isComplete: !!term.isComplete,
+      stackIds,
+      stackNames: stackIds.map((sid) => stackNameById.get(sid) || 'Scheme'),
     };
   }
   return cells;
@@ -93,19 +103,28 @@ function hexToRgba(hex: string, alpha: number): string {
 interface HalfTermYearMapProps {
   onOpenClass: (group: YearGroupRef) => void;
   onOpenTerm: (group: YearGroupRef, halfTermId: string) => void;
+  /** Bump to reload cell summaries after an assign/remove. */
+  refreshKey?: number;
 }
 
 /**
  * School-wide half-term map: year groups × six half-terms, grouped by key stage.
  * Teachers pick which stages to show (EYFS only, KS1–2, etc.).
  */
-export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProps) {
+export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: HalfTermYearMapProps) {
   const { user } = useAuth();
   const { currentAcademicYear, setCurrentAcademicYear, getAvailableYears, currentSheetInfo } = useData();
   const { customYearGroups, yearGroupSections } = useSettings();
+  const { stacks } = useLessonStacks();
   const [rows, setRows] = useState<RowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  const stackNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const s of stacks) map.set(s.id, s.name);
+    return map;
+  }, [stacks]);
 
   const allowedIds = user?.profile?.allowed_year_groups ?? null;
   const yearGroups: YearGroupRef[] = useMemo(() => {
@@ -187,12 +206,12 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
           yearGroups.map(async (group) => {
             const local = readLocalTerms(group.id, currentAcademicYear);
             if (local && local.length > 0) {
-              return { group, cells: summariseTerms(local) };
+              return { group, cells: summariseTerms(local, stackNameById) };
             }
             try {
               const remote = await halfTermsApi.getBySheet(group.id, currentAcademicYear);
               if (remote && remote.length > 0) {
-                return { group, cells: summariseTerms(remote) };
+                return { group, cells: summariseTerms(remote, stackNameById) };
               }
             } catch {
               /* local empty is fine */
@@ -212,7 +231,7 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
     return () => {
       cancelled = true;
     };
-  }, [yearGroups, currentAcademicYear]);
+  }, [yearGroups, currentAcademicYear, refreshKey, stackNameById]);
 
   const blocks: SectionBlock[] = useMemo(() => {
     const byId = new Map(rows.map((r) => [r.group.id, r]));
@@ -536,12 +555,17 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
                             lessonCount: 0,
                             stackCount: 0,
                             isComplete: false,
+                            stackIds: [],
+                            stackNames: [],
                           };
-                          const total = cell.lessonCount + cell.stackCount;
-                          const empty = total === 0 && !cell.isComplete;
+                          const hasSchemes = cell.stackCount > 0;
+                          const hasLessons = cell.lessonCount > 0;
+                          const empty = !hasSchemes && !hasLessons && !cell.isComplete;
                           const color = TERM_COLORS[term.id];
                           const tint = TERM_TINTS[term.id];
                           const isCurrentCol = currentTermId === term.id;
+                          const primaryScheme = cell.stackNames[0];
+                          const extraSchemes = Math.max(0, cell.stackNames.length - 1);
                           return (
                             <td
                               key={term.id}
@@ -550,18 +574,18 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
                               <button
                                 type="button"
                                 onClick={() => onOpenTerm(row.group, term.id)}
-                                title={`${row.group.name} · ${term.name}`}
+                                title={`${row.group.name} · ${term.name}${
+                                  primaryScheme ? ` · ${primaryScheme}` : ''
+                                }`}
                                 aria-label={
                                   empty
-                                    ? `Add lessons for ${row.group.name}, ${term.name}`
-                                    : `${cell.lessonCount || total} lesson${(cell.lessonCount || total) === 1 ? '' : 's'} in ${row.group.name}, ${term.name}`
+                                    ? `Add scheme of work for ${row.group.name}, ${term.name}`
+                                    : hasSchemes
+                                      ? `${cell.stackNames.join(', ')} in ${row.group.name}, ${term.name}`
+                                      : `${cell.lessonCount} lesson${cell.lessonCount === 1 ? '' : 's'} in ${row.group.name}, ${term.name}`
                                 }
-                                className={`group/cell relative flex h-12 w-full flex-col items-center justify-center rounded-xl transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A9A3FF] ${
-                                  empty
-                                    ? 'bg-transparent hover:bg-[#F4F3FA]'
-                                    : cell.isComplete
-                                      ? 'hover:brightness-[0.98]'
-                                      : 'hover:brightness-[0.98]'
+                                className={`group/cell relative flex min-h-[3.25rem] w-full flex-col items-center justify-center rounded-xl px-1 py-1.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#A9A3FF] ${
+                                  empty ? 'bg-transparent hover:bg-[#F4F3FA]' : 'hover:brightness-[0.98]'
                                 }`}
                                 style={
                                   empty
@@ -582,6 +606,33 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
                                     />
                                     <Plus className="h-4 w-4 text-transparent transition group-hover/cell:text-[#9B97B0] group-focus-visible/cell:text-[#4338E8]" />
                                   </>
+                                ) : hasSchemes ? (
+                                  <span className="inline-flex max-w-full flex-col items-center gap-0.5 px-0.5">
+                                    <span
+                                      className="inline-flex max-w-full items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-extrabold text-white shadow-sm"
+                                      style={{ background: cell.isComplete ? '#0B6B5F' : color }}
+                                    >
+                                      {cell.isComplete ? (
+                                        <CheckCircle className="h-3 w-3 shrink-0" aria-hidden />
+                                      ) : null}
+                                      <span className="truncate">{primaryScheme}</span>
+                                    </span>
+                                    {extraSchemes > 0 ? (
+                                      <span
+                                        className="text-[10px] font-bold"
+                                        style={{ color: cell.isComplete ? '#0B6B5F' : color }}
+                                      >
+                                        +{extraSchemes} more
+                                      </span>
+                                    ) : cell.lessonCount > 0 ? (
+                                      <span
+                                        className="text-[10px] font-bold tabular-nums"
+                                        style={{ color: cell.isComplete ? '#0B6B5F' : color }}
+                                      >
+                                        {cell.lessonCount} lesson{cell.lessonCount === 1 ? '' : 's'}
+                                      </span>
+                                    ) : null}
+                                  </span>
                                 ) : (
                                   <span className="inline-flex max-w-full flex-col items-center gap-0.5 px-1">
                                     <span
@@ -591,19 +642,11 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
                                       {cell.isComplete ? (
                                         <CheckCircle className="h-3 w-3" aria-hidden />
                                       ) : null}
-                                      {cell.lessonCount || total}
+                                      {cell.lessonCount}
                                       <span className="text-[10px] font-bold opacity-90">
-                                        {(cell.lessonCount || total) === 1 ? 'lesson' : 'lessons'}
+                                        {cell.lessonCount === 1 ? 'lesson' : 'lessons'}
                                       </span>
                                     </span>
-                                    {cell.stackCount > 0 ? (
-                                      <span
-                                        className="text-[10px] font-bold"
-                                        style={{ color: cell.isComplete ? '#0B6B5F' : color }}
-                                      >
-                                        {cell.stackCount} stack{cell.stackCount === 1 ? '' : 's'}
-                                      </span>
-                                    ) : null}
                                   </span>
                                 )}
                               </button>
