@@ -1823,22 +1823,23 @@ export function InteractiveLessonEditor({
           </div>
         )}
 
-        <aside className="ilv-rail" aria-label="Content tools">
-          {RAIL.map((item) => (
-            <button
-              key={item.id}
-              type="button"
-              className={`ilv-rail-btn ${rail === item.id ? 'is-active' : ''}`}
-              title={item.label}
-              aria-label={item.label}
-              onClick={() => setRail((r) => (r === item.id ? null : item.id))}
-            >
-              {item.icon}
-              <span>{item.label}</span>
-            </button>
-          ))}
-        </aside>
       </div>
+
+      <aside className="ilv-rail" aria-label="Content tools">
+        {RAIL.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            className={`ilv-rail-btn ${rail === item.id ? 'is-active' : ''}`}
+            title={item.label}
+            aria-label={item.label}
+            onClick={() => setRail((r) => (r === item.id ? null : item.id))}
+          >
+            {item.icon}
+            <span>{item.label}</span>
+          </button>
+        ))}
+      </aside>
 
       <div
         className="ilv-timeline-splitter"
