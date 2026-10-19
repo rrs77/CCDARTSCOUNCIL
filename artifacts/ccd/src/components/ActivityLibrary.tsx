@@ -30,7 +30,7 @@ import { isLsoLibraryCategory, LSO_LOGO_SRC } from '../utils/lsoBranding';
 import { isRohLibraryCategory, ROH_LOGO_SRC } from '../utils/rohBranding';
 import { isWtdLibraryCategory, WTD_LOGO_SRC } from '../utils/wtdBranding';
 import { ActivityImporter } from './ActivityImporter';
-import { ActivityCreator } from './ActivityCreator';
+import { ActivityEditorPage } from './ActivityEditorPage';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
@@ -746,12 +746,9 @@ export function ActivityLibrary({
       return;
     }
     // Convert any "EYFS U" levels to "UKG"
-    if (activity.level === "EYFS U") {
-      activity.level = "UKG";
-    }
-    
-    setEditingActivity(activity);
-    setSelectedActivityDetails(activity);
+    const next = activity.level === 'EYFS U' ? { ...activity, level: 'UKG' } : activity;
+    setSelectedActivityDetails(null);
+    setEditingActivity(next);
   };
 
   const handleImportActivities = async (activities: Activity[]) => {
@@ -927,14 +924,43 @@ export function ActivityLibrary({
     'inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#77738F] transition-colors hover:bg-[#E9E6FF] hover:text-[#1F1B4D] disabled:opacity-40';
   const toolBtnOn = 'bg-[#E9E6FF] text-[#4338E8]';
 
-  // When editing/viewing details, replace the library with an in-workspace editor
-  // (avoids a cramped modal and stops the page background from scrolling underneath).
+  // Full-page create / edit (option A) — beside the studio sidebar, not a modal.
+  if (showCreator) {
+    return (
+      <ActivityEditorPage
+        mode="create"
+        onCancel={() => setShowCreator(false)}
+        onSave={async (activity) => {
+          await handleCreateActivity(activity);
+        }}
+      />
+    );
+  }
+
+  if (editingActivity) {
+    return (
+      <ActivityEditorPage
+        mode="edit"
+        initialActivity={editingActivity}
+        onCancel={() => {
+          setEditingActivity(null);
+          setSelectedActivityDetails(null);
+        }}
+        onSave={async (updatedActivity) => {
+          await handleActivityUpdate(updatedActivity);
+          setEditingActivity(null);
+          setSelectedActivityDetails(null);
+        }}
+      />
+    );
+  }
+
+  // Viewing details (read) — keep ActivityDetails as an in-workspace page.
   if (selectedActivityDetails) {
     return (
       <div className="flex h-[calc(100dvh-7.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white">
         <ActivityDetails
           activity={selectedActivityDetails}
-          presentation="page"
           onClose={() => {
             setSelectedActivityDetails(null);
             setEditingActivity(null);
@@ -944,7 +970,7 @@ export function ActivityLibrary({
             onActivitySelect(selectedActivityDetails);
             setSelectedActivityDetails(null);
           }}
-          isEditing={selectedActivityDetails === editingActivity}
+          isEditing={false}
           onUpdate={(updatedActivity) => {
             handleActivityUpdate(updatedActivity);
             setEditingActivity(null);
@@ -1593,16 +1619,6 @@ export function ActivityLibrary({
         )}
         </div>
       </div>
-
-      {/* Activity Creator Modal */}
-      {showCreator && (
-        <ActivityCreator 
-          onSave={handleCreateActivity}
-          onClose={() => setShowCreator(false)}
-          categories={uniqueCategories}
-          levels={uniqueLevels}
-        />
-      )}
 
       {/* Activity Importer Modal */}
       {showImporter && (

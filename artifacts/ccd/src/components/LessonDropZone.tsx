@@ -14,8 +14,9 @@ import {
   ChevronRight,
   RefreshCw
 } from 'lucide-react';
-import { ActivityDetails } from './ActivityDetails'; // Import the modal component
-import { useData } from '../contexts/DataContext'; // Import to access updateActivity
+import { ActivityDetails } from './ActivityDetails';
+import { ActivityEditorPage } from './ActivityEditorPage';
+import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import type { Activity } from '../contexts/DataContext';
 
@@ -445,8 +446,23 @@ export function LessonDropZone({
 
       </div>
 
-      {/* NEW: Activity Details Modal */}
-      {selectedActivityDetails && (
+      {/* Activity details (read) or full-page editor (edit) */}
+      {editingActivity ? (
+        <div className="fixed inset-0 z-[60] overflow-auto bg-[#F4F3FA] p-3 sm:p-4">
+          <ActivityEditorPage
+            mode="edit"
+            initialActivity={editingActivity}
+            onCancel={() => {
+              setEditingActivity(null);
+              setSelectedActivityDetails(null);
+              setInitialResource(null);
+            }}
+            onSave={async (updated) => {
+              await handleActivityUpdate(updated);
+            }}
+          />
+        </div>
+      ) : selectedActivityDetails ? (
         <ActivityDetails
           activity={selectedActivityDetails}
           onClose={() => {
@@ -454,14 +470,14 @@ export function LessonDropZone({
             setEditingActivity(null);
             setInitialResource(null);
           }}
-          onAddToLesson={undefined} // No "Add to Lesson" button needed - already in lesson
-          isEditing={editingActivity !== null && selectedActivityDetails === editingActivity}
+          onAddToLesson={undefined}
+          isEditing={false}
           onUpdate={handleActivityUpdate}
           {...({ onEdit: handleEditActivity } as any)}
           initialResource={initialResource}
           onDelete={deleteActivity}
         />
-      )}
+      ) : null}
     </>
   );
 }
