@@ -25,6 +25,7 @@ import {
   ChevronDown,
   ArrowLeft,
   Presentation,
+  Youtube,
 } from 'lucide-react';
 import type {
   InteractiveLesson,
@@ -35,7 +36,6 @@ import type {
   TransitionType,
 } from '../../types';
 import {
-  BRAND_TEXT_COLORS,
   TRANSITION_OPTIONS,
   createId,
   emptyScene,
@@ -44,6 +44,9 @@ import {
 } from '../../types';
 import { SceneRenderer } from '../SceneRenderer';
 import { LyricsPanel } from './LyricsPanel';
+import { TextToolbar } from './TextToolbar';
+import { ColorSwatchPicker } from './ColorSwatchPicker';
+import { LyricsWaveformDock } from './LyricsWaveformDock';
 import { InteractiveLessonPlayer } from '../player/InteractiveLessonPlayer';
 import { saveInteractiveLesson } from '../../data/store';
 import { SceneThumb } from './SceneThumb';
@@ -62,6 +65,7 @@ type RailPanel =
   | 'lyrics'
   | 'canva'
   | 'powerpoint'
+  | 'youtube'
   | 'googleslides'
   | 'embed'
   | 'uploads'
@@ -83,6 +87,7 @@ const RAIL: { id: RailPanel; label: string; icon: React.ReactNode }[] = [
   { id: 'image', label: 'Image', icon: <ImageIcon className="h-4 w-4" /> },
   { id: 'text', label: 'Text', icon: <Type className="h-4 w-4" /> },
   { id: 'lyrics', label: 'Lyrics', icon: <Mic2 className="h-4 w-4" /> },
+  { id: 'youtube', label: 'YouTube', icon: <Youtube className="h-4 w-4" /> },
   { id: 'canva', label: 'Canva', icon: <Palette className="h-4 w-4" /> },
   { id: 'powerpoint', label: 'PPT', icon: <FileSpreadsheet className="h-4 w-4" /> },
   { id: 'googleslides', label: 'Slides', icon: <Presentation className="h-4 w-4" /> },
@@ -368,6 +373,12 @@ export function InteractiveLessonEditor({
       const el = e.target as HTMLElement | null;
       if (el?.closest('input, textarea, select, [contenteditable="true"]')) return;
       if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (selectedOverlayId && scene) {
+          e.preventDefault();
+          updateScene({ overlays: scene.overlays.filter((o) => o.id !== selectedOverlayId) });
+          setSelectedOverlayId(null);
+          return;
+        }
         if (!lesson.scenes.length) return;
         e.preventDefault();
         deleteSceneAt(sceneIndex);
@@ -375,7 +386,7 @@ export function InteractiveLessonEditor({
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [deleteSceneAt, lesson.scenes.length, sceneIndex]);
+  }, [deleteSceneAt, lesson.scenes.length, scene, sceneIndex, selectedOverlayId, updateScene]);
 
   const clipWidth = useMemo(() => 96 + timelineZoom * 40, [timelineZoom]);
 
@@ -405,9 +416,30 @@ export function InteractiveLessonEditor({
         return 'ilv-tr-zoom-enter';
       case 'dissolve':
         return 'ilv-tr-dissolve-enter';
+      case 'wipe-left':
+        return 'ilv-tr-wipe-left-enter';
+      case 'wipe-right':
+        return 'ilv-tr-wipe-right-enter';
+      case 'push-up':
+        return 'ilv-tr-push-up-enter';
+      case 'push-down':
+        return 'ilv-tr-push-down-enter';
+      case 'blur':
+        return 'ilv-tr-blur-enter';
+      case 'bounce':
+        return 'ilv-tr-bounce-enter';
+      case 'flip':
+        return 'ilv-tr-flip-enter';
       default:
         return '';
     }
+  };
+
+  const patchOverlay = (id: string, patch: Partial<TextOverlay>) => {
+    if (!scene) return;
+    updateScene({
+      overlays: scene.overlays.map((o) => (o.id === id ? { ...o, ...patch } : o)),
+    });
   };
 
 
@@ -619,6 +651,9 @@ export function InteractiveLessonEditor({
               </div>
             )}
           </div>
+          {selectedOverlay && (
+            <TextToolbar overlay={selectedOverlay} onChange={(patch) => patchOverlay(selectedOverlay.id, patch)} />
+          )}
 
           <div className="ilv-stage">
             <div
@@ -670,7 +705,7 @@ export function InteractiveLessonEditor({
               {rail === 'text' && (
                 <div className="space-y-3 p-3">
                   <p className="text-xs text-[var(--ss-muted)]">
-                    Add titles and body copy, then drag them on the stage. Safe margins keep text readable in class.
+                    Add titles and body copy, then drag them on the stage. Use the Canva-style toolbar above the stage for fonts, colour, and animations.
                   </p>
                   <div className="flex flex-wrap gap-2">
                     <button type="button" className="ilv-btn ilv-btn-primary text-xs" onClick={() => addTextOverlay('headline')}>
@@ -689,25 +724,15 @@ export function InteractiveLessonEditor({
                       <textarea
                         className="ilv-textarea min-h-[64px]"
                         value={selectedOverlay.text}
-                        onChange={(e) =>
-                          updateScene({
-                            overlays: scene.overlays.map((o) =>
-                              o.id === selectedOverlay.id ? { ...o, text: e.target.value } : o,
-                            ),
-                          })
-                        }
+                        onChange={(e) => patchOverlay(selectedOverlay.id, { text: e.target.value })}
                       />
                       <label className="ilv-label">Preset</label>
                       <select
                         className="ilv-select"
                         value={selectedOverlay.style}
                         onChange={(e) =>
-                          updateScene({
-                            overlays: scene.overlays.map((o) =>
-                              o.id === selectedOverlay.id
-                                ? { ...o, style: e.target.value as TextOverlay['style'] }
-                                : o,
-                            ),
+                          patchOverlay(selectedOverlay.id, {
+                            style: e.target.value as TextOverlay['style'],
                           })
                         }
                       >
@@ -715,25 +740,11 @@ export function InteractiveLessonEditor({
                         <option value="subtitle">Subtitle</option>
                         <option value="body">Body</option>
                       </select>
-                      <label className="ilv-label">Colour</label>
-                      <div className="flex flex-wrap gap-2">
-                        {BRAND_TEXT_COLORS.map((c) => (
-                          <button
-                            key={c}
-                            type="button"
-                            title={c}
-                            className="h-8 w-8 rounded-full border border-[var(--ss-line)]"
-                            style={{ background: c }}
-                            onClick={() =>
-                              updateScene({
-                                overlays: scene.overlays.map((o) =>
-                                  o.id === selectedOverlay.id ? { ...o, color: c } : o,
-                                ),
-                              })
-                            }
-                          />
-                        ))}
-                      </div>
+                      <ColorSwatchPicker
+                        label="Colour"
+                        value={selectedOverlay.color}
+                        onChange={(color) => patchOverlay(selectedOverlay.id, { color })}
+                      />
                       <button
                         type="button"
                         className="ilv-btn ilv-btn-secondary w-full text-xs"
@@ -759,6 +770,7 @@ export function InteractiveLessonEditor({
                   playing={playing}
                   authToken={authToken}
                   onChange={(lyrics) => updateScene({ lyrics, type: 'lyrics' })}
+                  onChangeDisplay={(lyricsDisplay) => updateScene({ lyricsDisplay, type: 'lyrics' })}
                   onSeek={(ms) => {
                     setSceneTimeMs(ms);
                     setPlaying(false);
@@ -772,7 +784,7 @@ export function InteractiveLessonEditor({
                   <p className="text-xs text-[var(--ss-muted)]">
                     Per-slide transition into this scene. Preview with the timeline play button.
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {TRANSITION_OPTIONS.map((opt) => (
                       <button
                         key={opt.type}
@@ -825,6 +837,8 @@ export function InteractiveLessonEditor({
                 rail === 'image' ||
                 rail === 'canva' ||
                 rail === 'powerpoint' ||
+                rail === 'youtube' ||
+                rail === 'googleslides' ||
                 rail === 'embed' ||
                 rail === 'uploads') && (
                 <div className="space-y-3 p-3">
@@ -833,11 +847,21 @@ export function InteractiveLessonEditor({
                       'Use a Canva Embed link so it can play in class. Share → More → Embed, then paste below. Or export MP4 and add as video.'}
                     {rail === 'powerpoint' &&
                       'Paste an Office Online embed URL, or upload a PPTX hosted where Office can reach it.'}
+                    {rail === 'youtube' &&
+                      'Paste any YouTube watch, share, Shorts, or embed URL. Optional start/end times from the link (?t= / &start= / &end=) are kept.'}
+                    {rail === 'googleslides' &&
+                      'Paste a Google Slides share or edit link (Anyone with the link). We convert it to the classroom embed URL.'}
                     {rail === 'embed' && 'Paste any allow-listed embed URL.'}
                     {(rail === 'video' || rail === 'audio' || rail === 'image' || rail === 'uploads') &&
-                      'Add a media URL. Demo and local files work now.'}
+                      'Add a media URL. YouTube links pasted into Video are auto-detected. Demo and local files work now.'}
                   </p>
-                  <label className="ilv-label">Media / embed URL</label>
+                  <label className="ilv-label">
+                    {rail === 'youtube'
+                      ? 'YouTube URL'
+                      : rail === 'googleslides'
+                        ? 'Google Slides URL'
+                        : 'Media / embed URL'}
+                  </label>
                   <input
                     className="ilv-input"
                     value={urlDraft}
@@ -845,7 +869,11 @@ export function InteractiveLessonEditor({
                     placeholder={
                       rail === 'canva'
                         ? 'https://www.canva.com/design/…/…/view?embed'
-                        : 'https://…'
+                        : rail === 'youtube'
+                          ? 'https://www.youtube.com/watch?v=…'
+                          : rail === 'googleslides'
+                            ? 'https://docs.google.com/presentation/d/…/edit'
+                            : 'https://…'
                     }
                   />
                   {rail === 'canva' && (
@@ -853,6 +881,44 @@ export function InteractiveLessonEditor({
                       Edit or view links are blocked in iframes. Only the Embed URL (
                       <code className="text-[10px]">/view?embed</code>) works. Short links (canva.link) must be
                       opened and replaced with the full embed URL.
+                    </p>
+                  )}
+                  {rail === 'youtube' && scene.type === 'youtube' && (
+                    <div className="grid grid-cols-2 gap-2">
+                      <div>
+                        <label className="ilv-label">Start (sec)</label>
+                        <input
+                          className="ilv-input"
+                          type="number"
+                          min={0}
+                          value={scene.youtubeStartSec ?? 0}
+                          onChange={(e) =>
+                            updateScene({ youtubeStartSec: Math.max(0, Number(e.target.value) || 0) })
+                          }
+                        />
+                      </div>
+                      <div>
+                        <label className="ilv-label">End (sec)</label>
+                        <input
+                          className="ilv-input"
+                          type="number"
+                          min={0}
+                          value={scene.youtubeEndSec ?? ''}
+                          placeholder="optional"
+                          onChange={(e) => {
+                            const v = e.target.value;
+                            updateScene({
+                              youtubeEndSec: v === '' ? undefined : Math.max(0, Number(v) || 0),
+                            });
+                          }}
+                        />
+                      </div>
+                    </div>
+                  )}
+                  {rail === 'googleslides' && (
+                    <p className="text-[11px] leading-snug text-[var(--ss-muted)]">
+                      Share the deck as <strong>Anyone with the link can view</strong>, or use File → Share → Publish to
+                      the web. Advance stays Manual so teachers click through slides in class.
                     </p>
                   )}
                   <button
@@ -865,6 +931,8 @@ export function InteractiveLessonEditor({
                         image: 'image',
                         canva: 'canva',
                         powerpoint: 'powerpoint',
+                        youtube: 'youtube',
+                        googleslides: 'googleslides',
                         embed: 'embed',
                         uploads: scene.type,
                       };
@@ -875,15 +943,37 @@ export function InteractiveLessonEditor({
                       applyMediaUrl(urlDraft, t);
                     }}
                   >
-                    Apply to scene
+                    {rail === 'youtube'
+                      ? 'Import YouTube'
+                      : rail === 'googleslides'
+                        ? 'Import Slides'
+                        : 'Apply to scene'}
                   </button>
                   <button
                     type="button"
                     className="ilv-btn ilv-btn-secondary w-full"
-                    onClick={() => addScene((rail === 'uploads' ? 'video' : rail) as SceneType)}
+                    onClick={() =>
+                      addScene(
+                        (rail === 'uploads'
+                          ? 'video'
+                          : rail === 'youtube'
+                            ? 'youtube'
+                            : rail === 'googleslides'
+                              ? 'googleslides'
+                              : rail) as SceneType,
+                      )
+                    }
                   >
                     <Plus className="h-4 w-4" />
-                    New {rail === 'uploads' ? 'video' : rail} scene
+                    New{' '}
+                    {rail === 'uploads'
+                      ? 'video'
+                      : rail === 'youtube'
+                        ? 'YouTube'
+                        : rail === 'googleslides'
+                          ? 'Slides'
+                          : rail}{' '}
+                    scene
                   </button>
                   {scene.notes && (
                     <p className="rounded-[12px] border border-[var(--ss-line)] bg-[var(--ss-lilac)] p-2 text-xs text-[var(--ss-muted)]">
@@ -1033,6 +1123,18 @@ export function InteractiveLessonEditor({
             </button>
           )}
         </div>
+
+        {scene && (scene.type === 'lyrics' || (scene.lyrics && scene.lyrics.length > 0)) && (
+          <LyricsWaveformDock
+            scene={scene}
+            sceneTimeMs={sceneTimeMs}
+            onSeek={(ms) => {
+              setSceneTimeMs(ms);
+              setPlaying(false);
+            }}
+            onChangeLyrics={(lyrics) => updateScene({ lyrics, type: 'lyrics' })}
+          />
+        )}
       </div>
 
       {toast && (

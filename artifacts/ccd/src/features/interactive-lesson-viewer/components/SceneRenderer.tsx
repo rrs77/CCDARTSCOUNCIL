@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { ExternalLink } from 'lucide-react';
 import type { Scene, TextOverlay } from '../types';
-import { TEXT_PRESET_DEFAULTS } from '../types';
+import { DEFAULT_LYRICS_DISPLAY, TEXT_FONT_OPTIONS, TEXT_PRESET_DEFAULTS } from '../types';
 import { activeLyricIndex } from '../utils/lyricsSync';
 import {
   canvaOpenUrl,
@@ -15,7 +15,6 @@ import {
   normalizeGoogleSlidesEmbedUrl,
   parseGoogleSlidesUrl,
 } from '../utils/googleSlidesEmbed';
-import { TEXT_FONT_OPTIONS } from '../types';
 
 interface SceneRendererProps {
   scene: Scene;
@@ -486,13 +485,16 @@ export function SceneRenderer({
           ov.effects?.outline
             ? `${ov.effects.outlineWidth || 1}px ${ov.effects.outlineColor || '#000'}`
             : undefined;
+        const animType = ov.animation?.type && ov.animation.type !== 'none' ? ov.animation.type : null;
+        const animClass =
+          !reducedMotion && animType ? `ilv-text-anim ilv-text-anim-${animType}` : '';
         return (
           <div
             key={ov.id}
             data-style={ov.style}
             className={`ilv-overlay-box ${selectedOverlayId === ov.id ? 'is-selected' : ''} ${
               isPlaceholder ? 'is-placeholder' : ''
-            } ${ov.locked ? 'is-locked' : ''}`}
+            } ${ov.locked ? 'is-locked' : ''} ${animClass}`}
             style={{
               left: `${ov.x}%`,
               top: `${ov.y}%`,
@@ -514,6 +516,8 @@ export function SceneRenderer({
               background: ov.effects?.highlight ? ov.effects.highlightColor || 'rgba(255,201,60,0.35)' : undefined,
               zIndex: ov.zIndex || 1,
               pointerEvents: interactive ? 'auto' : 'none',
+              ['--ilv-text-anim-ms' as string]: `${ov.animation?.durationMs || 700}ms`,
+              ['--ilv-text-anim-delay' as string]: `${ov.animation?.delayMs || 0}ms`,
             }}
             onPointerDown={(e) => onPointerDown(e, ov)}
           >
@@ -522,24 +526,61 @@ export function SceneRenderer({
         );
       })}
 
-      {showLyrics && scene.lyrics && scene.lyrics.length > 0 && (
-        <div className="absolute inset-x-0 bottom-[12%] px-6">
-          <div className="mx-auto flex max-w-3xl flex-col items-center gap-2">
-            {scene.lyrics
-              .filter((_, i) => i >= lyricIdx - 1 && i <= lyricIdx + 1)
-              .map((line) => {
-                const idx = scene.lyrics!.findIndex((l) => l.id === line.id);
-                const state =
-                  idx === lyricIdx ? 'is-active' : idx < lyricIdx ? 'is-past' : 'is-upcoming';
-                return (
-                  <div key={line.id} className={`ilv-karaoke-line ${state}`}>
-                    {line.text}
-                  </div>
-                );
-              })}
+      {showLyrics && scene.lyrics && scene.lyrics.length > 0 && (() => {
+        const ld = { ...DEFAULT_LYRICS_DISPLAY, ...scene.lyricsDisplay };
+        const font =
+          TEXT_FONT_OPTIONS.find((f) => f.id === ld.fontFamily)?.stack || TEXT_FONT_OPTIONS[0].stack;
+        const posClass =
+          ld.position === 'top'
+            ? 'items-start pt-[10%]'
+            : ld.position === 'center'
+              ? 'items-center'
+              : 'items-end pb-[12%]';
+        return (
+          <div className={`absolute inset-0 flex px-6 ${posClass}`} style={{ pointerEvents: 'none' }}>
+            <div
+              className={`mx-auto flex w-full max-w-3xl flex-col items-center gap-2 ${ld.background ? 'ilv-karaoke-backdrop' : ''}`}
+              style={
+                ld.background
+                  ? { background: ld.backgroundColor || 'rgba(31,27,77,0.55)' }
+                  : undefined
+              }
+            >
+              {scene.lyrics
+                .map((line, idx) => ({ line, idx }))
+                .filter(({ idx }) => {
+                  if (idx === lyricIdx) return true;
+                  if (idx === lyricIdx - 1) return ld.showPast !== false;
+                  if (idx === lyricIdx + 1) return ld.showUpcoming !== false;
+                  return false;
+                })
+                .map(({ line, idx }) => {
+                  const state =
+                    idx === lyricIdx ? 'is-active' : idx < lyricIdx ? 'is-past' : 'is-upcoming';
+                  const color =
+                    state === 'is-active'
+                      ? ld.activeColor
+                      : state === 'is-past'
+                        ? ld.pastColor
+                        : ld.upcomingColor;
+                  return (
+                    <div
+                      key={line.id}
+                      className={`ilv-karaoke-line ${state}`}
+                      style={{
+                        color,
+                        fontFamily: font,
+                        fontSize: ld.fontSize || 28,
+                      }}
+                    >
+                      {line.text}
+                    </div>
+                  );
+                })}
+            </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

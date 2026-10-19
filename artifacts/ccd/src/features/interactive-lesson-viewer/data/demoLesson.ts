@@ -77,6 +77,8 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
             width: 84,
             color: '#FFFFFF',
             fontSize: 44,
+            fontFamily: 'plus-jakarta',
+            animation: { type: 'slide-up', durationMs: 700 },
           },
           {
             id: 'ov-title-2',
@@ -87,6 +89,8 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
             width: 84,
             color: '#FFC93C',
             fontSize: 24,
+            fontFamily: 'playfair',
+            animation: { type: 'fade-in', durationMs: 900, delayMs: 200 },
           },
         ],
       },
@@ -99,6 +103,18 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
         transition: { type: 'dissolve', durationMs: 700 },
         mediaUrl: KARAOKE_AUDIO,
         backgroundColor: '#1F1B4D',
+        lyricsDisplay: {
+          fontFamily: 'fredoka',
+          fontSize: 30,
+          activeColor: '#FFC93C',
+          upcomingColor: 'rgba(255,255,255,0.45)',
+          pastColor: 'rgba(255,255,255,0.28)',
+          position: 'bottom',
+          showUpcoming: true,
+          showPast: true,
+          background: true,
+          backgroundColor: 'rgba(31,27,77,0.55)',
+        },
         notes:
           'SAMPLE — royalty-free placeholder tone (not a commercial song). Timed lyrics for classroom karaoke demo.',
         overlays: [

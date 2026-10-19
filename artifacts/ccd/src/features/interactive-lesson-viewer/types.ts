@@ -16,7 +16,19 @@ export type SceneType =
   | 'googleslides'
   | 'embed';
 
-export type TransitionType = 'none' | 'fade' | 'slide' | 'zoom' | 'dissolve';
+export type TransitionType =
+  | 'none'
+  | 'fade'
+  | 'slide'
+  | 'zoom'
+  | 'dissolve'
+  | 'wipe-left'
+  | 'wipe-right'
+  | 'push-up'
+  | 'push-down'
+  | 'blur'
+  | 'bounce'
+  | 'flip';
 
 /** How the classroom player advances past this scene. */
 export type AdvanceMode = 'manual' | 'timer' | 'media-end';
@@ -25,6 +37,19 @@ export type TextPreset = 'headline' | 'subtitle' | 'body';
 
 export type TextAlign = 'left' | 'center' | 'right' | 'justify';
 export type TextListType = 'none' | 'bullet' | 'numbered';
+
+export type TextAnimationType =
+  | 'none'
+  | 'fade-in'
+  | 'slide-up'
+  | 'slide-down'
+  | 'slide-left'
+  | 'slide-right'
+  | 'zoom-in'
+  | 'bounce'
+  | 'pulse'
+  | 'typewriter'
+  | 'pop';
 
 export interface SceneTransition {
   type: TransitionType;
@@ -40,6 +65,12 @@ export interface TextEffects {
   outlineWidth?: number;
   highlight?: boolean;
   highlightColor?: string;
+}
+
+export interface TextAnimation {
+  type: TextAnimationType;
+  durationMs?: number;
+  delayMs?: number;
 }
 
 export interface TextOverlay {
@@ -67,8 +98,26 @@ export interface TextOverlay {
   locked?: boolean;
   listType?: TextListType;
   effects?: TextEffects;
+  animation?: TextAnimation;
   /** Stacking order within the scene (higher = front). */
   zIndex?: number;
+}
+
+export type LyricsPosition = 'top' | 'center' | 'bottom';
+
+export interface LyricsDisplayOptions {
+  fontFamily?: string;
+  fontSize?: number;
+  activeColor?: string;
+  upcomingColor?: string;
+  pastColor?: string;
+  position?: LyricsPosition;
+  showUpcoming?: boolean;
+  showPast?: boolean;
+  background?: boolean;
+  backgroundColor?: string;
+  /** Lead-in highlight before line start (ms). */
+  leadInMs?: number;
 }
 
 export interface LyricLine {
@@ -92,6 +141,7 @@ export interface Scene {
   backgroundColor?: string;
   overlays: TextOverlay[];
   lyrics?: LyricLine[];
+  lyricsDisplay?: LyricsDisplayOptions;
   /** Trade-off / helper note shown in editor for Canva / PPT / embeds. */
   notes?: string;
   /** Classroom advance behaviour. Defaults by type when omitted. */
@@ -202,17 +252,38 @@ export const DEFAULT_SOLID_COLORS = [
   '#002D24',
 ] as const;
 
-export const TEXT_FONT_OPTIONS: { id: string; label: string; stack: string }[] = [
-  { id: 'plus-jakarta', label: 'Plus Jakarta Sans', stack: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'lexend', label: 'Lexend', stack: "'Lexend', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'atkinson', label: 'Atkinson Hyperlegible', stack: "'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'nunito', label: 'Nunito', stack: "'Nunito', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'poppins', label: 'Poppins', stack: "'Poppins', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'fredoka', label: 'Fredoka', stack: "'Fredoka', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'baloo', label: 'Baloo 2', stack: "'Baloo 2', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'patrick', label: 'Patrick Hand', stack: "'Patrick Hand', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'montserrat', label: 'Montserrat', stack: "'Montserrat', ui-sans-serif, system-ui, sans-serif" },
-  { id: 'playfair', label: 'Playfair Display', stack: "'Playfair Display', ui-serif, Georgia, serif" },
+export const TEXT_FONT_OPTIONS: { id: string; label: string; stack: string; category: string }[] = [
+  { id: 'plus-jakarta', label: 'Plus Jakarta Sans', stack: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'inter', label: 'Inter', stack: "'Inter', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'lexend', label: 'Lexend', stack: "'Lexend', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'atkinson', label: 'Atkinson Hyperlegible', stack: "'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'nunito', label: 'Nunito', stack: "'Nunito', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'poppins', label: 'Poppins', stack: "'Poppins', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'montserrat', label: 'Montserrat', stack: "'Montserrat', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'dm-sans', label: 'DM Sans', stack: "'DM Sans', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'space-grotesk', label: 'Space Grotesk', stack: "'Space Grotesk', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'outfit', label: 'Outfit', stack: "'Outfit', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'rubik', label: 'Rubik', stack: "'Rubik', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'source-sans', label: 'Source Sans 3', stack: "'Source Sans 3', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'work-sans', label: 'Work Sans', stack: "'Work Sans', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'manrope', label: 'Manrope', stack: "'Manrope', ui-sans-serif, system-ui, sans-serif", category: 'Sans' },
+  { id: 'fredoka', label: 'Fredoka', stack: "'Fredoka', ui-sans-serif, system-ui, sans-serif", category: 'Display' },
+  { id: 'baloo', label: 'Baloo 2', stack: "'Baloo 2', ui-sans-serif, system-ui, sans-serif", category: 'Display' },
+  { id: 'comfortaa', label: 'Comfortaa', stack: "'Comfortaa', ui-sans-serif, system-ui, sans-serif", category: 'Display' },
+  { id: 'righteous', label: 'Righteous', stack: "'Righteous', ui-sans-serif, system-ui, sans-serif", category: 'Display' },
+  { id: 'bebas', label: 'Bebas Neue', stack: "'Bebas Neue', ui-sans-serif, system-ui, sans-serif", category: 'Display' },
+  { id: 'anton', label: 'Anton', stack: "'Anton', ui-sans-serif, system-ui, sans-serif", category: 'Display' },
+  { id: 'lobster', label: 'Lobster', stack: "'Lobster', ui-serif, Georgia, serif", category: 'Display' },
+  { id: 'pacifico', label: 'Pacifico', stack: "'Pacifico', cursive", category: 'Script' },
+  { id: 'caveat', label: 'Caveat', stack: "'Caveat', cursive", category: 'Script' },
+  { id: 'patrick', label: 'Patrick Hand', stack: "'Patrick Hand', cursive", category: 'Script' },
+  { id: 'kalam', label: 'Kalam', stack: "'Kalam', cursive", category: 'Script' },
+  { id: 'playfair', label: 'Playfair Display', stack: "'Playfair Display', ui-serif, Georgia, serif", category: 'Serif' },
+  { id: 'merriweather', label: 'Merriweather', stack: "'Merriweather', ui-serif, Georgia, serif", category: 'Serif' },
+  { id: 'lora', label: 'Lora', stack: "'Lora', ui-serif, Georgia, serif", category: 'Serif' },
+  { id: 'libre-baskerville', label: 'Libre Baskerville', stack: "'Libre Baskerville', ui-serif, Georgia, serif", category: 'Serif' },
+  { id: 'crimson', label: 'Crimson Text', stack: "'Crimson Text', ui-serif, Georgia, serif", category: 'Serif' },
+  { id: 'bricolage', label: 'Bricolage Grotesque', stack: "'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif", category: 'Display' },
 ];
 
 export const TEXT_PRESET_DEFAULTS: Record<
@@ -230,7 +301,42 @@ export const TRANSITION_OPTIONS: { type: TransitionType; label: string }[] = [
   { type: 'slide', label: 'Slide' },
   { type: 'zoom', label: 'Zoom' },
   { type: 'dissolve', label: 'Dissolve' },
+  { type: 'wipe-left', label: 'Wipe left' },
+  { type: 'wipe-right', label: 'Wipe right' },
+  { type: 'push-up', label: 'Push up' },
+  { type: 'push-down', label: 'Push down' },
+  { type: 'blur', label: 'Blur' },
+  { type: 'bounce', label: 'Bounce' },
+  { type: 'flip', label: 'Flip' },
 ];
+
+export const TEXT_ANIMATION_OPTIONS: { type: TextAnimationType; label: string }[] = [
+  { type: 'none', label: 'None' },
+  { type: 'fade-in', label: 'Fade in' },
+  { type: 'slide-up', label: 'Slide up' },
+  { type: 'slide-down', label: 'Slide down' },
+  { type: 'slide-left', label: 'Slide left' },
+  { type: 'slide-right', label: 'Slide right' },
+  { type: 'zoom-in', label: 'Zoom in' },
+  { type: 'bounce', label: 'Bounce' },
+  { type: 'pulse', label: 'Pulse' },
+  { type: 'typewriter', label: 'Typewriter' },
+  { type: 'pop', label: 'Pop' },
+];
+
+export const DEFAULT_LYRICS_DISPLAY: LyricsDisplayOptions = {
+  fontFamily: 'plus-jakarta',
+  fontSize: 28,
+  activeColor: '#FFFFFF',
+  upcomingColor: 'rgba(255,255,255,0.45)',
+  pastColor: 'rgba(255,255,255,0.28)',
+  position: 'bottom',
+  showUpcoming: true,
+  showPast: true,
+  background: false,
+  backgroundColor: 'rgba(31,27,77,0.55)',
+  leadInMs: 0,
+};
 
 export function createId(prefix = 'il'): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;

@@ -40,6 +40,20 @@ function transitionClass(type: string): string {
       return 'ilv-tr-zoom-enter';
     case 'dissolve':
       return 'ilv-tr-dissolve-enter';
+    case 'wipe-left':
+      return 'ilv-tr-wipe-left-enter';
+    case 'wipe-right':
+      return 'ilv-tr-wipe-right-enter';
+    case 'push-up':
+      return 'ilv-tr-push-up-enter';
+    case 'push-down':
+      return 'ilv-tr-push-down-enter';
+    case 'blur':
+      return 'ilv-tr-blur-enter';
+    case 'bounce':
+      return 'ilv-tr-bounce-enter';
+    case 'flip':
+      return 'ilv-tr-flip-enter';
     default:
       return '';
   }
