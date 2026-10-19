@@ -49,28 +49,108 @@ export type TextAnimationType =
   | 'bounce'
   | 'pulse'
   | 'typewriter'
-  | 'pop';
+  | 'pop'
+  | 'karaoke-wipe'
+  | 'karaoke-fill'
+  | 'bounce-in'
+  | 'word-pop'
+  | 'fade-up'
+  | 'glow-pulse'
+  | 'scale-highlight'
+  | 'slide-in-line'
+  | 'colour-sweep';
+
+export type TextAnimationPhase = 'entrance' | 'emphasis' | 'exit';
+export type LyricAnimScope = 'line' | 'word';
 
 export interface SceneTransition {
   type: TransitionType;
   durationMs: number;
 }
 
+/** Canva-style text effect preset. */
+export type TextEffectPreset =
+  | 'none'
+  | 'shadow'
+  | 'lift'
+  | 'hollow'
+  | 'splice'
+  | 'echo'
+  | 'glitch'
+  | 'neon'
+  | 'background'
+  | 'outline'
+  | 'curve';
+
+export type TextCase = 'none' | 'uppercase' | 'lowercase' | 'capitalize';
+export type BorderStyle = 'none' | 'solid' | 'dashed' | 'dotted';
+
 export interface TextEffects {
+  /** Active visual preset (Canva-style). */
+  preset?: TextEffectPreset;
   shadow?: boolean;
   shadowColor?: string;
-  shadowIntensity?: number; // 0–100
+  shadowIntensity?: number; // 0–100 (legacy blur/opacity proxy)
+  /** Shadow offset distance in px. */
+  shadowOffset?: number;
+  /** Shadow direction in degrees (0 = right, 90 = down). */
+  shadowAngle?: number;
+  shadowBlur?: number;
+  shadowOpacity?: number; // 0–1
   outline?: boolean;
   outlineColor?: string;
   outlineWidth?: number;
   highlight?: boolean;
   highlightColor?: string;
+  highlightOpacity?: number; // 0–1
+  /** Neon glow intensity 0–100. */
+  neonIntensity?: number;
+  neonColor?: string;
+  /** Curve warp amount −100…100 (arc text approximation via CSS). */
+  curveAmount?: number;
+  /** Echo / splice / glitch layers use secondary colour. */
+  effectColor?: string;
+  effectOpacity?: number;
+  /** Text fill gradient (overrides solid color when set). */
+  fillGradient?: string;
+  /** Box chrome */
+  boxBackground?: string;
+  boxGradient?: string;
+  boxRadius?: number; // px; large values → pill
+  boxPadding?: number; // px
+  boxBorderWidth?: number;
+  boxBorderColor?: string;
+  boxBorderStyle?: BorderStyle;
+  /** Vertical align tweak for superscript (boolean). */
+  superscript?: boolean;
 }
 
 export interface TextAnimation {
   type: TextAnimationType;
+  phase?: TextAnimationPhase;
   durationMs?: number;
   delayMs?: number;
+  /** Emphasis / karaoke speed multiplier (0.25–3). */
+  speed?: number;
+  scope?: LyricAnimScope;
+}
+
+export type SceneBackgroundKind = 'color' | 'gradient' | 'image' | 'video';
+
+export interface SceneBackground {
+  kind: SceneBackgroundKind;
+  color?: string;
+  gradient?: string;
+  imageUrl?: string;
+  videoUrl?: string;
+  /** Dim overlay 0–1. */
+  dim?: number;
+  /** CSS blur px on media. */
+  blur?: number;
+  /** Media opacity 0–1. */
+  opacity?: number;
+  loop?: boolean;
+  muted?: boolean;
 }
 
 export interface TextOverlay {
@@ -89,18 +169,184 @@ export interface TextOverlay {
   fontWeight?: number | string;
   fontStyle?: 'normal' | 'italic';
   textDecoration?: 'none' | 'underline' | 'line-through' | 'underline line-through';
-  textTransform?: 'none' | 'uppercase';
+  textTransform?: TextCase;
   textAlign?: TextAlign;
-  letterSpacing?: number; // em-ish px offset
-  lineHeight?: number;
-  opacity?: number; // 0–1
+  letterSpacing?: number; // px
+  lineHeight?: number; // unitless multiplier
+  /** Whole-element opacity 0–1 (text + box). Prefer color/boxBackground alpha for separate control. */
+  opacity?: number;
+  /** Text box fill (supports rgba / #rrggbbaa). Prefer effects.boxBackground when both set. */
+  boxBackground?: string;
   rotation?: number; // degrees
+  flipH?: boolean;
+  flipV?: boolean;
   locked?: boolean;
   listType?: TextListType;
   effects?: TextEffects;
   animation?: TextAnimation;
   /** Stacking order within the scene (higher = front). */
   zIndex?: number;
+}
+
+export const TEXT_EFFECT_PRESETS: { id: TextEffectPreset; label: string }[] = [
+  { id: 'none', label: 'None' },
+  { id: 'shadow', label: 'Shadow' },
+  { id: 'lift', label: 'Lift' },
+  { id: 'hollow', label: 'Hollow' },
+  { id: 'splice', label: 'Splice' },
+  { id: 'echo', label: 'Echo' },
+  { id: 'glitch', label: 'Glitch' },
+  { id: 'neon', label: 'Neon' },
+  { id: 'background', label: 'Background' },
+  { id: 'outline', label: 'Outline' },
+  { id: 'curve', label: 'Curve' },
+];
+
+/** Apply a Canva-style effect preset onto existing effects (keeps unrelated box chrome). */
+export function applyTextEffectPreset(
+  current: TextEffects | undefined,
+  preset: TextEffectPreset,
+): TextEffects {
+  const base: TextEffects = { ...(current || {}), preset };
+  // Reset mutually exclusive flags
+  base.shadow = false;
+  base.outline = false;
+  base.highlight = false;
+  switch (preset) {
+    case 'none':
+      return { ...base, curveAmount: 0, neonIntensity: 0, fillGradient: undefined };
+    case 'shadow':
+      return {
+        ...base,
+        shadow: true,
+        shadowOffset: current?.shadowOffset ?? 4,
+        shadowAngle: current?.shadowAngle ?? 135,
+        shadowBlur: current?.shadowBlur ?? 6,
+        shadowOpacity: current?.shadowOpacity ?? 0.45,
+        shadowColor: current?.shadowColor || 'rgba(0,0,0,0.55)',
+      };
+    case 'lift':
+      return {
+        ...base,
+        shadow: true,
+        shadowOffset: 0,
+        shadowAngle: 90,
+        shadowBlur: 18,
+        shadowOpacity: 0.35,
+        shadowColor: 'rgba(31,27,77,0.4)',
+      };
+    case 'hollow':
+      return {
+        ...base,
+        outline: true,
+        outlineWidth: current?.outlineWidth ?? 2,
+        outlineColor: current?.outlineColor || '#1F1B4D',
+      };
+    case 'splice':
+      return {
+        ...base,
+        outline: true,
+        outlineWidth: 2,
+        outlineColor: current?.outlineColor || '#FFFFFF',
+        effectColor: current?.effectColor || '#4338E8',
+        effectOpacity: 0.9,
+      };
+    case 'echo':
+      return {
+        ...base,
+        shadow: true,
+        shadowOffset: 6,
+        shadowAngle: 0,
+        shadowBlur: 0,
+        shadowOpacity: 0.55,
+        shadowColor: current?.effectColor || '#4338E8',
+        effectColor: current?.effectColor || '#4338E8',
+      };
+    case 'glitch':
+      return {
+        ...base,
+        shadow: true,
+        shadowOffset: 3,
+        shadowAngle: 0,
+        shadowBlur: 0,
+        shadowOpacity: 0.85,
+        shadowColor: '#FF2D55',
+        effectColor: '#00C2FF',
+        effectOpacity: 0.85,
+      };
+    case 'neon':
+      return {
+        ...base,
+        neonIntensity: current?.neonIntensity ?? 70,
+        neonColor: current?.neonColor || '#FFC93C',
+        shadow: true,
+        shadowBlur: 16,
+        shadowOffset: 0,
+        shadowOpacity: 0.9,
+        shadowColor: current?.neonColor || '#FFC93C',
+      };
+    case 'background':
+      return {
+        ...base,
+        highlight: true,
+        highlightColor: current?.highlightColor || 'rgba(255,201,60,0.45)',
+        highlightOpacity: current?.highlightOpacity ?? 0.45,
+      };
+    case 'outline':
+      return {
+        ...base,
+        outline: true,
+        outlineWidth: current?.outlineWidth ?? 3,
+        outlineColor: current?.outlineColor || '#FFFFFF',
+        shadow: true,
+        shadowOffset: 0,
+        shadowBlur: 0,
+        shadowOpacity: 1,
+        shadowColor: '#1F1B4D',
+      };
+    case 'curve':
+      return {
+        ...base,
+        curveAmount: current?.curveAmount ?? 40,
+      };
+    default:
+      return base;
+  }
+}
+
+/** Attribution for free/public-domain or cloud media. */
+export interface MediaAttribution {
+  license?: string;
+  creator?: string;
+  sourceUrl?: string;
+  provider?: string;
+  title?: string;
+}
+
+export type StageObjectKind = 'image' | 'video' | 'shape';
+export type ShapeKind = 'rect' | 'rounded' | 'ellipse' | 'triangle' | 'line' | 'arrow' | 'star';
+
+/** Placed image / video / shape on the stage (Canva-style transformable). */
+export interface StageObject {
+  id: string;
+  kind: StageObjectKind;
+  shape?: ShapeKind;
+  mediaUrl?: string;
+  /** Position as % of stage. */
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  rotation?: number;
+  opacity?: number; // 0–1
+  flipH?: boolean;
+  flipV?: boolean;
+  fill?: string;
+  stroke?: string;
+  strokeWidth?: number;
+  locked?: boolean;
+  zIndex?: number;
+  attribution?: MediaAttribution;
 }
 
 export type LyricsPosition = 'top' | 'center' | 'bottom';
@@ -116,8 +362,22 @@ export interface LyricsDisplayOptions {
   showPast?: boolean;
   background?: boolean;
   backgroundColor?: string;
+  /** Lyric backdrop opacity 0–1 (multiplies backgroundColor alpha when set). */
+  backdropOpacity?: number;
   /** Lead-in highlight before line start (ms). */
   leadInMs?: number;
+  /** Karaoke / lyric animation. */
+  animation?: TextAnimationType;
+  animScope?: LyricAnimScope;
+  animSpeed?: number; // 0.25–3
+  animDurationMs?: number;
+}
+
+export interface LyricWord {
+  id: string;
+  text: string;
+  startMs: number;
+  endMs: number;
 }
 
 export interface LyricLine {
@@ -125,6 +385,20 @@ export interface LyricLine {
   text: string;
   startMs: number;
   endMs: number;
+  /** Optional per-word timing within the line. */
+  words?: LyricWord[];
+}
+
+/** Karaoke dual-track: instrumental backing + full vocal, time-aligned. */
+export type KaraokeTrackDefault = 'vocals' | 'backing';
+
+export interface KaraokeTracks {
+  /** Full / vocal version URL (used for Whisper auto-sync). */
+  vocalUrl?: string;
+  /** Instrumental / backing track URL. */
+  backingUrl?: string;
+  /** Default version when the player opens. */
+  defaultVersion?: KaraokeTrackDefault;
 }
 
 export interface Scene {
@@ -139,9 +413,21 @@ export interface Scene {
   embedUrl?: string;
   posterUrl?: string;
   backgroundColor?: string;
+  /** Optional CSS gradient overriding solid backgroundColor when set. */
+  backgroundGradient?: string;
+  /** Rich scene background (colour / gradient / image / video). */
+  background?: SceneBackground;
+  /** Scene background opacity 0–1 (colour/gradient/image/video bed). */
+  backgroundOpacity?: number;
+  /** Full-bleed scene media opacity 0–1. */
+  mediaOpacity?: number;
   overlays: TextOverlay[];
+  /** Placed images, videos, and shapes on the canvas. */
+  objects?: StageObject[];
   lyrics?: LyricLine[];
   lyricsDisplay?: LyricsDisplayOptions;
+  /** Karaoke: backing + vocal URLs (mediaUrl stays as the active/default play URL). */
+  karaokeTracks?: KaraokeTracks;
   /** Trade-off / helper note shown in editor for Canva / PPT / embeds. */
   notes?: string;
   /** Classroom advance behaviour. Defaults by type when omitted. */
@@ -161,6 +447,62 @@ export interface MediaLibraryItem {
   thumbUrl?: string;
   durationMs?: number;
   addedAt: string;
+  attribution?: MediaAttribution;
+  /** Detected cloud provider badge (Drive, Dropbox, …). */
+  cloudProvider?: string;
+  /** Original share link before normalisation. */
+  sourceUrl?: string;
+}
+
+/** Timeline audio lane kind — separate Voiceover vs Music rows. */
+export type AudioLaneKind = 'voiceover' | 'music';
+
+/** How music behaves while a manual-advance scene is waiting on Next. */
+export type ManualAdvanceAudioMode = 'keep-playing' | 'pause-until-next';
+
+export interface VolumeKeyframe {
+  /** 0–1 position along the clip duration. */
+  t: number;
+  /** Gain 0–1. */
+  gain: number;
+}
+
+export interface AudioClip {
+  id: string;
+  lane: AudioLaneKind;
+  name: string;
+  mediaUrl: string;
+  mediaId?: string;
+  /** Absolute start on the lesson timeline (ms from lesson start, using scene durations). */
+  startMs: number;
+  /** Clip length on the timeline (ms). May span multiple scenes. */
+  durationMs: number;
+  /** Offset into the source file (trim start). */
+  trimStartMs?: number;
+  volume?: number; // 0–1, default 1
+  fadeInMs?: number;
+  fadeOutMs?: number;
+  /** Optional volume envelope; t is 0–1 along clip. */
+  volumeCurve?: VolumeKeyframe[];
+  /** Music only: loop the source for the full clip span. */
+  loop?: boolean;
+  muted?: boolean;
+}
+
+export interface AudioLaneState {
+  kind: AudioLaneKind;
+  muted?: boolean;
+  solo?: boolean;
+}
+
+export interface AudioMixSettings {
+  /** Auto-duck music while voiceover is audible. */
+  duckMusicUnderVoiceover?: boolean;
+  /** Duck amount 0–1 (how much to reduce music). Default 0.7. */
+  duckAmount?: number;
+  /** Manual-advance scenes: keep music playing or pause until Next. */
+  manualAdvanceMusic?: ManualAdvanceAudioMode;
+  lanes?: AudioLaneState[];
 }
 
 export interface InteractiveLesson {
@@ -172,6 +514,9 @@ export interface InteractiveLesson {
   status: InteractiveLessonStatus;
   scenes: Scene[];
   mediaLibrary: MediaLibraryItem[];
+  /** Multi-track audio clips (voiceover / music) spanning the lesson timeline. */
+  audioClips?: AudioClip[];
+  audioMix?: AudioMixSettings;
   /** CCD lesson attachment keys (`sheet:lessonNumber`). */
   attachedLessonKeys: string[];
   createdAt: string;
@@ -310,18 +655,27 @@ export const TRANSITION_OPTIONS: { type: TransitionType; label: string }[] = [
   { type: 'flip', label: 'Flip' },
 ];
 
-export const TEXT_ANIMATION_OPTIONS: { type: TextAnimationType; label: string }[] = [
+export const TEXT_ANIMATION_OPTIONS: { type: TextAnimationType; label: string; phase?: TextAnimationPhase }[] = [
   { type: 'none', label: 'None' },
-  { type: 'fade-in', label: 'Fade in' },
-  { type: 'slide-up', label: 'Slide up' },
-  { type: 'slide-down', label: 'Slide down' },
-  { type: 'slide-left', label: 'Slide left' },
-  { type: 'slide-right', label: 'Slide right' },
-  { type: 'zoom-in', label: 'Zoom in' },
-  { type: 'bounce', label: 'Bounce' },
-  { type: 'pulse', label: 'Pulse' },
-  { type: 'typewriter', label: 'Typewriter' },
-  { type: 'pop', label: 'Pop' },
+  { type: 'fade-in', label: 'Fade in', phase: 'entrance' },
+  { type: 'fade-up', label: 'Fade up', phase: 'entrance' },
+  { type: 'slide-up', label: 'Slide up', phase: 'entrance' },
+  { type: 'slide-down', label: 'Slide down', phase: 'entrance' },
+  { type: 'slide-left', label: 'Slide left', phase: 'entrance' },
+  { type: 'slide-right', label: 'Slide right', phase: 'entrance' },
+  { type: 'slide-in-line', label: 'Slide in line', phase: 'entrance' },
+  { type: 'zoom-in', label: 'Zoom in', phase: 'entrance' },
+  { type: 'bounce', label: 'Bounce', phase: 'entrance' },
+  { type: 'bounce-in', label: 'Bounce in', phase: 'entrance' },
+  { type: 'pop', label: 'Pop', phase: 'entrance' },
+  { type: 'word-pop', label: 'Word pop', phase: 'entrance' },
+  { type: 'typewriter', label: 'Typewriter', phase: 'entrance' },
+  { type: 'pulse', label: 'Pulse', phase: 'emphasis' },
+  { type: 'glow-pulse', label: 'Glow pulse', phase: 'emphasis' },
+  { type: 'scale-highlight', label: 'Scale highlight', phase: 'emphasis' },
+  { type: 'karaoke-wipe', label: 'Karaoke wipe', phase: 'emphasis' },
+  { type: 'karaoke-fill', label: 'Karaoke fill', phase: 'emphasis' },
+  { type: 'colour-sweep', label: 'Colour sweep', phase: 'emphasis' },
 ];
 
 export const DEFAULT_LYRICS_DISPLAY: LyricsDisplayOptions = {

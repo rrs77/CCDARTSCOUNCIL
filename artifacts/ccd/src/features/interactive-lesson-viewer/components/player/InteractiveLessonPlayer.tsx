@@ -10,8 +10,9 @@ import {
   X,
   Mic2,
   Pencil,
+  Music2,
 } from 'lucide-react';
-import type { InteractiveLesson } from '../../types';
+import type { InteractiveLesson, KaraokeTrackDefault } from '../../types';
 import {
   formatTimecode,
   lessonDurationMs,
@@ -19,6 +20,7 @@ import {
   sceneClockMs,
 } from '../../types';
 import { SceneRenderer } from '../SceneRenderer';
+import { absoluteLayoutMs, useLessonAudioMixer } from '../../hooks/useLessonAudioMixer';
 
 interface InteractiveLessonPlayerProps {
   lesson: InteractiveLesson;
@@ -73,6 +75,11 @@ export function InteractiveLessonPlayer({
   const [sceneTimeMs, setSceneTimeMs] = useState(0);
   const [isFullscreen, setIsFullscreen] = useState(false);
   const [trKey, setTrKey] = useState(0);
+  const [vocalVersion, setVocalVersion] = useState<KaraokeTrackDefault>(() => {
+    const s = lesson.scenes[startSceneIndex];
+    return s?.karaokeTracks?.defaultVersion || 'vocals';
+  });
+  const [showStrip, setShowStrip] = useState(false);
   const reducedMotion =
     typeof window !== 'undefined' &&
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
@@ -84,6 +91,17 @@ export function InteractiveLessonPlayer({
     const before = lesson.scenes.slice(0, sceneIndex).reduce((s, sc) => s + sceneClockMs(sc), 0);
     return before + (advanceMode === 'manual' ? 0 : sceneTimeMs);
   }, [lesson.scenes, sceneIndex, sceneTimeMs, advanceMode]);
+  const absoluteMs = absoluteLayoutMs(lesson, sceneIndex, sceneTimeMs);
+  useLessonAudioMixer(lesson, absoluteMs, playing, sceneIndex);
+
+  const karaoke = scene?.karaokeTracks;
+  const mediaOverride = useMemo(() => {
+    if (!karaoke) return null;
+    if (vocalVersion === 'backing' && karaoke.backingUrl) return karaoke.backingUrl;
+    if (vocalVersion === 'vocals' && karaoke.vocalUrl) return karaoke.vocalUrl;
+    return null;
+  }, [karaoke, vocalVersion]);
+  const hasKaraokeToggle = Boolean(karaoke?.vocalUrl && karaoke?.backingUrl);
 
   const goTo = useCallback(
     (idx: number) => {
@@ -244,17 +262,35 @@ export function InteractiveLessonPlayer({
       <div id="ilv-player-stage" className="ilv-player-stage" onClick={() => setPlaying((p) => !p)}>
         <div className="ilv-player-frame">
           <SceneRenderer
-            key={`${scene.id}-${trKey}`}
+            key={`${scene.id}-${trKey}-${vocalVersion}`}
             scene={scene}
             timeMs={sceneTimeMs}
             playing={playing}
             showLyrics={showLyrics}
+            mediaUrlOverride={mediaOverride}
             transitionClass={transitionClass(scene.transition.type)}
             reducedMotion={reducedMotion}
             onMediaEnded={advanceMode === 'media-end' ? advanceFromMediaEnd : undefined}
           />
         </div>
       </div>
+
+      {showStrip && (
+        <div className="ilv-player-strip" onClick={(e) => e.stopPropagation()}>
+          {lesson.scenes.map((sc, i) => (
+            <button
+              key={sc.id}
+              type="button"
+              className={`ilv-player-strip-thumb ${i === sceneIndex ? 'is-active' : ''}`}
+              onClick={() => goTo(i)}
+              title={sc.title}
+            >
+              <span>{i + 1}</span>
+              <em>{sc.title}</em>
+            </button>
+          ))}
+        </div>
+      )}
 
       <div className="ilv-player-controls" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
@@ -278,6 +314,15 @@ export function InteractiveLessonPlayer({
           >
             <ChevronRight className="h-5 w-5" />
           </button>
+          <button
+            type="button"
+            className={`ilv-ctrl ${showStrip ? 'is-on' : ''}`}
+            onClick={() => setShowStrip((v) => !v)}
+            aria-label="Scene picker"
+            title="Jump to scene"
+          >
+            Scenes
+          </button>
           <span className="ml-2 tabular-nums text-sm text-white/80">
             {advanceMode === 'manual'
               ? `Scene ${sceneIndex + 1} / ${lesson.scenes.length}`
@@ -296,6 +341,22 @@ export function InteractiveLessonPlayer({
             <Mic2 className="h-4 w-4" />
             <span className="hidden sm:inline">{showLyrics ? 'Lyrics on' : 'Lyrics off'}</span>
           </button>
+          {hasKaraokeToggle && (
+            <button
+              type="button"
+              className={`ilv-ctrl ${vocalVersion === 'vocals' ? 'is-on' : ''}`}
+              onClick={() =>
+                setVocalVersion((v) => (v === 'vocals' ? 'backing' : 'vocals'))
+              }
+              aria-pressed={vocalVersion === 'vocals'}
+              title="Toggle vocals / backing at the same timestamp"
+            >
+              <Music2 className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {vocalVersion === 'vocals' ? 'With vocals' : 'Backing only'}
+              </span>
+            </button>
+          )}
           <button type="button" className="ilv-ctrl" onClick={toggleFullscreen} aria-label="Fullscreen">
             {isFullscreen ? <Minimize2 className="h-4 w-4" /> : <Maximize2 className="h-4 w-4" />}
           </button>

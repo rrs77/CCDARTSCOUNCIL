@@ -46,9 +46,11 @@ export function InteractiveLessonHub() {
     void refresh();
   }, [refresh]);
 
-  // Deep-link: /?tab=lesson-viewer&play=<id>&mode=player → classroom player only
+  const [launchScene, setLaunchScene] = useState(0);
+
+  // Deep-link: /?tab=lesson-viewer&play=<id>&mode=player&scene=N → classroom player only
   useEffect(() => {
-    const { playId, playerOnly: only } = readPlayerLaunchFromLocation();
+    const { playId, playerOnly: only, sceneIndex } = readPlayerLaunchFromLocation();
     if (!playId) return;
     let cancelled = false;
     void (async () => {
@@ -56,6 +58,7 @@ export function InteractiveLessonHub() {
       if (cancelled) return;
       if (lesson) {
         setPlayerOnly(only);
+        setLaunchScene(Math.max(0, Math.min(sceneIndex, lesson.scenes.length - 1)));
         setPlaying(lesson);
         setUnavailable('');
       } else if (reason === 'unpublished') {
@@ -68,6 +71,7 @@ export function InteractiveLessonHub() {
         const params = new URLSearchParams(window.location.search);
         params.delete('play');
         params.delete('mode');
+        params.delete('scene');
         const qs = params.toString();
         window.history.replaceState({}, '', `${window.location.pathname || '/'}${qs ? `?${qs}` : ''}`);
       } catch {
@@ -271,11 +275,13 @@ export function InteractiveLessonHub() {
           lesson={playing}
           playerOnly={playerOnly}
           canEdit={canEdit}
+          startSceneIndex={launchScene}
           onEdit={
             canEdit
               ? () => {
                   setPlaying(null);
                   setPlayerOnly(false);
+                  setLaunchScene(0);
                   void openEditor(playing.id);
                 }
               : undefined
@@ -283,6 +289,7 @@ export function InteractiveLessonHub() {
           onClose={() => {
             setPlaying(null);
             setPlayerOnly(false);
+            setLaunchScene(0);
           }}
         />
       )}

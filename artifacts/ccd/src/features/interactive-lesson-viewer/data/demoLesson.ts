@@ -102,6 +102,11 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
         advanceMode: 'media-end',
         transition: { type: 'dissolve', durationMs: 700 },
         mediaUrl: KARAOKE_AUDIO,
+        karaokeTracks: {
+          vocalUrl: KARAOKE_AUDIO,
+          backingUrl: KARAOKE_AUDIO,
+          defaultVersion: 'vocals',
+        },
         backgroundColor: '#1F1B4D',
         lyricsDisplay: {
           fontFamily: 'fredoka',

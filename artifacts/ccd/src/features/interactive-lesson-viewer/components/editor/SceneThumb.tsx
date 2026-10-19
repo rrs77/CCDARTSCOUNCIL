@@ -1,6 +1,7 @@
-import React, { useEffect, useRef, useState } from 'react';
-import { MoreHorizontal, Trash2, Copy, ChevronLeft, ChevronRight } from 'lucide-react';
-import type { Scene } from '../../types';
+import React, { useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
+import { MoreHorizontal, Trash2, Copy, ChevronLeft, ChevronRight, Timer } from 'lucide-react';
+import type { AdvanceMode, Scene } from '../../types';
 import { SCENE_TYPE_COLORS, SCENE_TYPE_LABELS, formatSceneDurationLabel } from '../../types';
 import { parseYouTubeUrl } from '../../utils/youtubeEmbed';
 
@@ -17,9 +18,13 @@ interface SceneThumbProps {
   onDuplicate: () => void;
   onMoveLeft: () => void;
   onMoveRight: () => void;
+  onSetAdvance?: (mode: AdvanceMode) => void;
 }
 
-/** Mini visual preview for the timeline strip, with delete + ⋯ menu. */
+const MENU_W = 180;
+const MENU_EST_H = 220;
+
+/** Mini visual preview for the timeline strip, with delete + portal ⋯ menu. */
 export function SceneThumb({
   scene,
   active,
@@ -33,10 +38,17 @@ export function SceneThumb({
   onDuplicate,
   onMoveLeft,
   onMoveRight,
+  onSetAdvance,
 }: SceneThumbProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
+  const moreBtnRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [menuPos, setMenuPos] = useState<{ top: number; left: number; flipUp: boolean }>({
+    top: 0,
+    left: 0,
+    flipUp: false,
+  });
 
   useEffect(() => {
     const v = videoRef.current;
@@ -52,10 +64,31 @@ export function SceneThumb({
     return () => v.removeEventListener('loadeddata', seek);
   }, [scene.mediaUrl]);
 
+  useLayoutEffect(() => {
+    if (!menuOpen || !moreBtnRef.current) return;
+    const place = () => {
+      const rect = moreBtnRef.current!.getBoundingClientRect();
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const flipUp = spaceBelow < MENU_EST_H && rect.top > MENU_EST_H;
+      const left = Math.max(8, Math.min(window.innerWidth - MENU_W - 8, rect.right - MENU_W));
+      const top = flipUp ? rect.top - 6 : rect.bottom + 6;
+      setMenuPos({ top, left, flipUp });
+    };
+    place();
+    window.addEventListener('resize', place);
+    window.addEventListener('scroll', place, true);
+    return () => {
+      window.removeEventListener('resize', place);
+      window.removeEventListener('scroll', place, true);
+    };
+  }, [menuOpen]);
+
   useEffect(() => {
     if (!menuOpen) return;
     const onDoc = (e: MouseEvent) => {
-      if (!menuRef.current?.contains(e.target as Node)) setMenuOpen(false);
+      const t = e.target as Node;
+      if (menuRef.current?.contains(t) || moreBtnRef.current?.contains(t)) return;
+      setMenuOpen(false);
     };
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') setMenuOpen(false);
@@ -73,60 +106,22 @@ export function SceneThumb({
   const yt = scene.type === 'youtube' && scene.embedUrl ? parseYouTubeUrl(scene.embedUrl) : null;
   const durLabel = formatSceneDurationLabel(scene);
 
-  return (
-    <div
-      className={`ilv-scene-clip ${active ? 'is-active' : ''} ${menuOpen ? 'is-menu-open' : ''}`}
-      style={{ width }}
-      draggable={!menuOpen}
-      onDragStart={(e) => {
-        if ((e.target as HTMLElement).closest('.ilv-clip-actions, .ilv-clip-menu')) {
-          e.preventDefault();
-          return;
-        }
-        e.dataTransfer.setData('text/ilv-scene-index', String(index));
-      }}
-      onDragOver={(e) => e.preventDefault()}
-      onDrop={(e) => {
-        e.preventDefault();
-        const from = Number(e.dataTransfer.getData('text/ilv-scene-index'));
-        if (!Number.isNaN(from)) onReorder(from, index);
-      }}
-      onClick={onSelect}
-      onContextMenu={(e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        onSelect();
-        setMenuOpen(true);
-      }}
-      title={`${scene.title} · ${durLabel}`}
-    >
-      <div className="ilv-clip-actions" onClick={(e) => e.stopPropagation()}>
-        <button
-          type="button"
-          className="ilv-clip-action"
-          aria-label="Delete scene"
-          title="Delete scene"
-          onClick={() => {
-            setMenuOpen(false);
-            onDelete();
+  const menu = menuOpen
+    ? createPortal(
+        <div
+          ref={menuRef}
+          className={`ilv-clip-menu ilv-clip-menu-portal ${menuPos.flipUp ? 'is-flip-up' : ''}`}
+          role="menu"
+          style={{
+            position: 'fixed',
+            top: menuPos.flipUp ? undefined : menuPos.top,
+            bottom: menuPos.flipUp ? window.innerHeight - menuPos.top : undefined,
+            left: menuPos.left,
+            width: MENU_W,
+            zIndex: 10050,
           }}
+          onClick={(e) => e.stopPropagation()}
         >
-          <Trash2 className="h-3.5 w-3.5" />
-        </button>
-        <button
-          type="button"
-          className={`ilv-clip-action ${menuOpen ? 'is-on' : ''}`}
-          aria-label="More scene actions"
-          aria-expanded={menuOpen}
-          title="More"
-          onClick={() => setMenuOpen((v) => !v)}
-        >
-          <MoreHorizontal className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {menuOpen && (
-        <div ref={menuRef} className="ilv-clip-menu" role="menu" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             role="menuitem"
@@ -162,6 +157,45 @@ export function SceneThumb({
             <ChevronRight className="h-3.5 w-3.5" />
             Move right
           </button>
+          {onSetAdvance && (
+            <>
+              <div className="ilv-clip-menu-sep" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onSetAdvance('manual');
+                }}
+              >
+                <Timer className="h-3.5 w-3.5" />
+                Advance: Manual
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onSetAdvance('timer');
+                }}
+              >
+                <Timer className="h-3.5 w-3.5" />
+                Advance: Timer
+              </button>
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setMenuOpen(false);
+                  onSetAdvance('media-end');
+                }}
+              >
+                <Timer className="h-3.5 w-3.5" />
+                Advance: Media end
+              </button>
+            </>
+          )}
+          <div className="ilv-clip-menu-sep" />
           <button
             type="button"
             role="menuitem"
@@ -174,8 +208,65 @@ export function SceneThumb({
             <Trash2 className="h-3.5 w-3.5" />
             Delete
           </button>
-        </div>
-      )}
+        </div>,
+        document.body,
+      )
+    : null;
+
+  return (
+    <div
+      className={`ilv-scene-clip ${active ? 'is-active' : ''} ${menuOpen ? 'is-menu-open' : ''}`}
+      style={{ width }}
+      draggable={!menuOpen}
+      onDragStart={(e) => {
+        if ((e.target as HTMLElement).closest('.ilv-clip-actions')) {
+          e.preventDefault();
+          return;
+        }
+        e.dataTransfer.setData('text/ilv-scene-index', String(index));
+      }}
+      onDragOver={(e) => e.preventDefault()}
+      onDrop={(e) => {
+        e.preventDefault();
+        const from = Number(e.dataTransfer.getData('text/ilv-scene-index'));
+        if (!Number.isNaN(from)) onReorder(from, index);
+      }}
+      onClick={onSelect}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onSelect();
+        setMenuOpen(true);
+      }}
+      title={`${scene.title} · ${durLabel}`}
+    >
+      <div className="ilv-clip-actions" onClick={(e) => e.stopPropagation()}>
+        <button
+          type="button"
+          className="ilv-clip-action"
+          aria-label="Delete scene"
+          title="Delete scene"
+          onClick={() => {
+            setMenuOpen(false);
+            onDelete();
+          }}
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+        <button
+          ref={moreBtnRef}
+          type="button"
+          className={`ilv-clip-action ${menuOpen ? 'is-on' : ''}`}
+          aria-label="More scene actions"
+          aria-expanded={menuOpen}
+          title="More"
+          onClick={() => setMenuOpen((v) => !v)}
+        >
+          <MoreHorizontal className="h-3.5 w-3.5" />
+        </button>
+      </div>
+
+      {menu}
 
       <div className="ilv-scene-thumb" style={{ background: bg }}>
         {scene.type === 'video' && scene.mediaUrl && (
@@ -184,21 +275,23 @@ export function SceneThumb({
         {scene.type === 'image' && scene.mediaUrl && (
           <img src={scene.mediaUrl} alt="" className="ilv-thumb-media" draggable={false} />
         )}
-        {scene.type === 'youtube' && (
-          yt?.thumbUrl ? (
+        {scene.type === 'youtube' &&
+          (yt?.thumbUrl ? (
             <img src={yt.thumbUrl} alt="" className="ilv-thumb-media" draggable={false} />
           ) : (
             <div className="ilv-thumb-brand" style={{ background: SCENE_TYPE_COLORS.youtube }}>
               YouTube
             </div>
-          )
-        )}
+          ))}
         {scene.type === 'vimeo' && (
           <div className="ilv-thumb-brand" style={{ background: SCENE_TYPE_COLORS.vimeo }}>
             Vimeo
           </div>
         )}
-        {(scene.type === 'canva' || scene.type === 'powerpoint' || scene.type === 'googleslides' || scene.type === 'embed') && (
+        {(scene.type === 'canva' ||
+          scene.type === 'powerpoint' ||
+          scene.type === 'googleslides' ||
+          scene.type === 'embed') && (
           <div className="ilv-thumb-brand" style={{ background: '#1F1B4D' }}>
             {scene.posterUrl ? <img src={scene.posterUrl} alt="" className="ilv-thumb-logo" /> : null}
             <span>{SCENE_TYPE_LABELS[scene.type]}</span>
