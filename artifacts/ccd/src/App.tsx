@@ -71,6 +71,7 @@ import {
 import { ForumApp, isForumPath } from './components/Forum/ForumApp';
 import { OmniMusicPartnerHub } from './components/partners/OmniMusicPartnerHub';
 import { isBoltOnsPath } from './components/boltOns/routes';
+import { isSettingsPath } from './components/settings/routes';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
@@ -119,6 +120,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       musicHubRoute === null &&
       typeof window !== 'undefined' &&
       !isBoltOnsPath(window.location.pathname) &&
+      !isSettingsPath(window.location.pathname) &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
