@@ -3,7 +3,7 @@ import {
   BookOpen,
   Check,
   ChevronDown,
-  ChevronUp,
+  ChevronRight,
   Clock,
   Layers,
   Plus,
@@ -14,18 +14,40 @@ import { createPortal } from 'react-dom';
 import { useAuth } from '../../hooks/useAuth';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
-import { useLessonStacks } from '../../hooks/useLessonStacks';
+import { useLessonStacks, type StackedLesson } from '../../hooks/useLessonStacks';
+import { keyStageAccent } from '../settings/keyStageAccents';
+import {
+  DEFAULT_YEAR_GROUP_SECTION_LABELS,
+} from '../../utils/yearGroupSectionOrder';
+import {
+  detectClassSubject,
+  groupClassesBySubject,
+  sortClassesNatural,
+  subjectDef,
+  type ClassLike,
+} from '../../utils/classOrganization';
 import { HALF_TERMS, TERM_COLORS } from './halfTermConstants';
 import {
   classDisplayColor,
   getStageIdForClass,
+  inferClassSubject,
   readClassHalfTerms,
-  sortClassesForHalfTermBoard,
   writeClassHalfTermStacks,
   type ClassRef,
+  CLASS_SUBJECT_FILTERS,
+  type ClassSubject,
 } from './halfTermClassUtils';
 
 const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)";
+
+const STAGE_ORDER = ['eyfs', 'ks1', 'ks2', 'ks3', 'ks4', 'ks5', 'other'] as const;
+
+const SHORT_NAME_EXPAND: Record<string, string> = {
+  lkg: 'Lower Kindergarten',
+  ukg: 'Upper Kindergarten',
+  rec: 'Reception',
+  reception: 'Reception',
+};
 
 export type AssignSchemeMultiTarget = {
   halfTermId: string;
@@ -47,8 +69,41 @@ function formatDuration(mins: number): string {
   return m ? `${h}h ${m}m` : `${h}h`;
 }
 
+/** Readable title + context line for ambiguous short names (LKG vs Lower Kindergarten). */
+function classLabelParts(cls: ClassLike): { title: string; context: string | null } {
+  const name = (cls.name || '').trim();
+  const id = (cls.id || '').trim();
+  const subject = subjectDef(detectClassSubject(cls));
+  const key = name.toLowerCase().replace(/\s+/g, '');
+  const expanded =
+    SHORT_NAME_EXPAND[name.toLowerCase()] ||
+    SHORT_NAME_EXPAND[key] ||
+    SHORT_NAME_EXPAND[id.toLowerCase().replace(/\s+/g, '')];
+
+  if (expanded && expanded.toLowerCase() !== name.toLowerCase()) {
+    const bits = [name !== expanded ? name : null, subject.id !== 'other' ? subject.label : null]
+      .filter(Boolean)
+      .join(' · ');
+    return { title: expanded, context: bits || (id !== name ? id : null) };
+  }
+
+  const nameHasSubject =
+    subject.id !== 'other' && new RegExp(`\\b${subject.label}\\b`, 'i').test(name);
+  const contextBits: string[] = [];
+  if (!nameHasSubject && subject.id !== 'other') contextBits.push(subject.label);
+  if (id && id !== name && !name.toLowerCase().includes(id.toLowerCase())) {
+    contextBits.push(id);
+  }
+  return { title: name || id, context: contextBits.length ? contextBits.join(' · ') : null };
+}
+
+function inferSchemeSubject(stack: StackedLesson): ClassSubject | 'Other' {
+  return inferClassSubject(`${stack.name} ${stack.description || ''}`);
+}
+
 /**
- * Assign one scheme of work to one or more classes for a half-term in a single action.
+ * Assign one scheme of work to one or more classes for a half-term.
+ * Two-pane layout: classes (key-stage groups) | scheme cards.
  */
 export function AssignSchemeMultiPanel({
   target,
@@ -67,6 +122,7 @@ export function AssignSchemeMultiPanel({
   const { stacks, loading: stacksLoading } = useLessonStacks();
   const [query, setQuery] = useState('');
   const [classQuery, setClassQuery] = useState('');
+  const [schemeSubject, setSchemeSubject] = useState<ClassSubject | 'All'>('All');
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [selectedClassIds, setSelectedClassIds] = useState<Set<string>>(
     () => new Set(target.preselectedClassIds || []),
@@ -75,6 +131,7 @@ export function AssignSchemeMultiPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [doneCount, setDoneCount] = useState(0);
+  const [collapsedStages, setCollapsedStages] = useState<Set<string>>(new Set());
 
   const termMeta = HALF_TERMS.find((t) => t.id === target.halfTermId);
   const termColor = TERM_COLORS[target.halfTermId] || '#4338E8';
@@ -92,32 +149,48 @@ export function AssignSchemeMultiPanel({
     return base.map((g) => ({ id: g.id, name: g.name, color: g.color }));
   }, [customYearGroups, allowedIds]);
 
-  const sortedClasses = useMemo(
-    () =>
-      sortClassesForHalfTermBoard(allClasses, (cls) =>
-        getStageIdForClass(cls, yearGroupSections || [], allClasses),
-      ),
-    [allClasses, yearGroupSections],
-  );
-
-  const filteredClasses = useMemo(() => {
+  const stageBlocks = useMemo(() => {
     const q = classQuery.trim().toLowerCase();
-    if (!q) return sortedClasses;
-    return sortedClasses.filter(
-      (c) => c.name.toLowerCase().includes(q) || c.id.toLowerCase().includes(q),
-    );
-  }, [sortedClasses, classQuery]);
+    const byStage = new Map<string, ClassRef[]>();
+    for (const id of STAGE_ORDER) byStage.set(id, []);
+
+    for (const cls of allClasses) {
+      const stageId = getStageIdForClass(cls, yearGroupSections || [], allClasses);
+      const bucket = byStage.get(stageId) || byStage.get('other')!;
+      if (q) {
+        const { title, context } = classLabelParts(cls);
+        const hay = `${cls.name} ${cls.id} ${title} ${context || ''}`.toLowerCase();
+        if (!hay.includes(q)) continue;
+      }
+      bucket.push(cls);
+    }
+
+    return STAGE_ORDER.map((id) => {
+      const classes = sortClassesNatural(byStage.get(id) || []);
+      const label =
+        DEFAULT_YEAR_GROUP_SECTION_LABELS.find((s) => s.id === id)?.label ||
+        yearGroupSections?.find((s) => s.id === id)?.label ||
+        id.toUpperCase();
+      return {
+        id,
+        label: id === 'other' ? 'Other' : label,
+        classes,
+        subjectGroups: groupClassesBySubject(classes),
+      };
+    }).filter((b) => b.classes.length > 0);
+  }, [allClasses, yearGroupSections, classQuery]);
 
   const availableSchemes = useMemo(() => {
     const q = query.trim().toLowerCase();
     return stacks.filter((s) => {
+      if (schemeSubject !== 'All' && inferSchemeSubject(s) !== schemeSubject) return false;
       if (!q) return true;
       return (
         s.name.toLowerCase().includes(q) ||
         (s.description || '').toLowerCase().includes(q)
       );
     });
-  }, [stacks, query]);
+  }, [stacks, query, schemeSubject]);
 
   const selectedStack = selectedStackId
     ? stacks.find((s) => s.id === selectedStackId) || null
@@ -131,7 +204,6 @@ export function AssignSchemeMultiPanel({
     return () => window.removeEventListener('keydown', onKey);
   }, [onClose]);
 
-  // Keep preselection in sync if target changes
   useEffect(() => {
     if (target.preselectedClassIds?.length) {
       setSelectedClassIds(new Set(target.preselectedClassIds));
@@ -147,15 +219,32 @@ export function AssignSchemeMultiPanel({
     });
   };
 
-  const selectAllVisible = () => {
+  const selectGroup = (ids: string[]) => {
     setSelectedClassIds((prev) => {
       const next = new Set(prev);
-      for (const c of filteredClasses) next.add(c.id);
+      for (const id of ids) next.add(id);
+      return next;
+    });
+  };
+
+  const clearGroup = (ids: string[]) => {
+    setSelectedClassIds((prev) => {
+      const next = new Set(prev);
+      for (const id of ids) next.delete(id);
       return next;
     });
   };
 
   const clearClasses = () => setSelectedClassIds(new Set());
+
+  const toggleStageCollapsed = (stageId: string) => {
+    setCollapsedStages((prev) => {
+      const next = new Set(prev);
+      if (next.has(stageId)) next.delete(stageId);
+      else next.add(stageId);
+      return next;
+    });
+  };
 
   const alreadyHasScheme = (classId: string, stackId: string) => {
     const terms = readClassHalfTerms(classId, currentAcademicYear);
@@ -163,9 +252,20 @@ export function AssignSchemeMultiPanel({
     return !!ht?.stacks?.includes(stackId);
   };
 
+  const canAssign = !!selectedStack && selectedClassIds.size > 0 && !busy;
+  const disabledReason = busy
+    ? null
+    : !selectedStack && selectedClassIds.size === 0
+      ? 'Choose at least one class and a scheme'
+      : !selectedStack
+        ? 'Choose a scheme of work'
+        : selectedClassIds.size === 0
+          ? 'Choose at least one class'
+          : null;
+
   const assign = async () => {
     if (!selectedStack || selectedClassIds.size === 0) {
-      setError('Choose at least one class and one scheme of work.');
+      setError(disabledReason || 'Choose at least one class and one scheme of work.');
       return;
     }
     setBusy(true);
@@ -191,7 +291,6 @@ export function AssignSchemeMultiPanel({
           nextIds,
           stacks,
         );
-        // Keep DataContext in sync when writing the currently open sheet
         if (classId === currentSheetInfo.sheet) {
           const stackLessons = nextIds
             .flatMap((id) => stacks.find((s) => s.id === id)?.lessons || [])
@@ -222,9 +321,17 @@ export function AssignSchemeMultiPanel({
     window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-library' } }));
   };
 
+  const footerSummary = busy
+    ? `Assigning… ${doneCount}/${selectedClassIds.size}`
+    : selectedStack && selectedClassIds.size > 0
+      ? `Assign ${selectedStack.name} to ${selectedClassIds.size} class${
+          selectedClassIds.size === 1 ? '' : 'es'
+        } in ${termName}`
+      : disabledReason;
+
   const panel = (
     <div
-      className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-6"
+      className="fixed inset-0 z-[80] flex items-end justify-center sm:items-center sm:p-5 lg:p-8"
       style={{ fontFamily: UI_FONT }}
       role="dialog"
       aria-modal="true"
@@ -232,297 +339,521 @@ export function AssignSchemeMultiPanel({
     >
       <button
         type="button"
-        className="absolute inset-0 bg-[rgba(21,18,51,0.45)] backdrop-blur-[2px]"
+        className="absolute inset-0 bg-[rgba(21,18,51,0.48)] backdrop-blur-[2px]"
         aria-label="Close"
         onClick={onClose}
       />
 
-      <div className="relative z-[1] flex max-h-[min(92vh,900px)] w-full max-w-3xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
-        <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-6">
-          <div className="mb-3 flex items-start justify-between gap-3">
+      <div className="relative z-[1] flex max-h-[min(94vh,920px)] w-full max-w-[68rem] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
+        {/* Header */}
+        <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-7">
+          <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
+              <p className="text-[12px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
                 Add scheme of work
               </p>
               <h2
                 id="assign-multi-title"
-                className="mt-1 text-[1.35rem] font-extrabold tracking-tight text-[#1F1B4D]"
+                className="mt-1 text-[1.5rem] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[1.65rem]"
               >
                 <span style={{ color: termColor }}>{termName}</span>
                 {termMonths ? (
-                  <span className="ml-2 text-[14px] font-semibold text-[#77738F]">
+                  <span className="ml-2 text-[15px] font-semibold text-[#77738F]">
                     {termMonths}
                   </span>
                 ) : null}
               </h2>
-              <p className="mt-1 text-[13px] leading-snug text-[#5C5878]">
-                Choose class(es) and one scheme — assign to several classes in one go.
+              <p className="mt-1.5 text-[14px] leading-snug text-[#5C5878]">
+                Choose classes, then a whole scheme — assign to several classes in one go.
               </p>
             </div>
             <button
               type="button"
               onClick={onClose}
-              className="grid h-9 w-9 shrink-0 place-items-center rounded-xl border border-[#E2E0EF] text-[#77738F] transition hover:border-[#bcb7f4] hover:bg-[#F4F3FA] hover:text-[#1F1B4D]"
+              className="grid h-10 w-10 shrink-0 place-items-center rounded-xl border border-[#E2E0EF] text-[#77738F] transition hover:border-[#bcb7f4] hover:bg-[#F4F3FA] hover:text-[#1F1B4D]"
               aria-label="Close"
             >
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="h-1.5 w-full rounded-full" style={{ background: termColor }} aria-hidden />
+          <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: termColor }} aria-hidden />
+
+          {/* Step labels */}
+          <div className="mt-3.5 flex flex-wrap gap-2">
+            <span
+              className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[13px] font-extrabold ${
+                selectedClassIds.size > 0
+                  ? 'bg-[#E9E6FF] text-[#4338E8]'
+                  : 'bg-[#F4F3FA] text-[#5C5878]'
+              }`}
+            >
+              <span
+                className={`grid h-5 w-5 place-items-center rounded-full text-[11px] font-extrabold ${
+                  selectedClassIds.size > 0 ? 'bg-[#4338E8] text-white' : 'bg-white text-[#77738F]'
+                }`}
+              >
+                1
+              </span>
+              Choose classes
+              {selectedClassIds.size > 0 ? (
+                <span className="tabular-nums opacity-80">· {selectedClassIds.size}</span>
+              ) : null}
+            </span>
+            <span
+              className={`inline-flex items-center gap-2 rounded-xl px-3 py-1.5 text-[13px] font-extrabold ${
+                selectedStack
+                  ? 'bg-[#E9E6FF] text-[#4338E8]'
+                  : 'bg-[#F4F3FA] text-[#5C5878]'
+              }`}
+            >
+              <span
+                className={`grid h-5 w-5 place-items-center rounded-full text-[11px] font-extrabold ${
+                  selectedStack ? 'bg-[#4338E8] text-white' : 'bg-white text-[#77738F]'
+                }`}
+              >
+                2
+              </span>
+              Choose scheme
+            </span>
+          </div>
         </div>
 
-        <div className="min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6">
-          {error ? (
-            <div className="mb-3 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800">
-              {error}
-            </div>
-          ) : null}
+        {error ? (
+          <div className="mx-5 mt-3 shrink-0 rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-800 sm:mx-7">
+            {error}
+          </div>
+        ) : null}
 
-          {/* Classes */}
-          <section className="mb-6">
-            <div className="mb-2.5 flex flex-wrap items-end justify-between gap-2">
-              <h3 className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
-                Classes
-              </h3>
-              <div className="flex flex-wrap items-center gap-2">
+        {/* Two panes */}
+        <div className="grid min-h-0 flex-1 grid-cols-1 divide-y divide-[#E2E0EF] lg:grid-cols-2 lg:divide-x lg:divide-y-0">
+          {/* LEFT: Classes */}
+          <section className="flex min-h-0 flex-col bg-white">
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#E2E0EF]/80 px-5 py-3 sm:px-6">
+              <h3 className="text-[15px] font-extrabold text-[#1F1B4D]">Classes</h3>
+              <div className="flex flex-wrap items-center gap-2.5">
                 <button
                   type="button"
-                  onClick={selectAllVisible}
-                  className="text-[12px] font-bold text-[#4338E8] hover:underline"
+                  onClick={() =>
+                    selectGroup(stageBlocks.flatMap((b) => b.classes.map((c) => c.id)))
+                  }
+                  className="text-[13px] font-bold text-[#4338E8] hover:underline"
                 >
                   Select all
                 </button>
                 <button
                   type="button"
                   onClick={clearClasses}
-                  className="text-[12px] font-bold text-[#77738F] hover:underline"
+                  className="text-[13px] font-bold text-[#77738F] hover:underline"
                 >
                   Clear
                 </button>
-                <span className="text-[12px] font-bold tabular-nums text-[#4338E8]">
+                <span className="rounded-lg bg-[#E9E6FF] px-2 py-0.5 text-[12px] font-extrabold tabular-nums text-[#4338E8]">
                   {selectedClassIds.size} selected
                 </span>
               </div>
             </div>
-            <div className="relative mb-2.5">
-              <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9B97B0]" />
-              <input
-                type="search"
-                value={classQuery}
-                onChange={(e) => setClassQuery(e.target.value)}
-                placeholder="Filter classes…"
-                className="h-9 w-full rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] py-2 pl-9 pr-3 text-[13px] font-medium text-[#1F1B4D] placeholder:text-[#9B97B0] focus:border-[#4338E8] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
-              />
+            <div className="shrink-0 px-5 py-2.5 sm:px-6">
+              <div className="relative">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9B97B0]" />
+                <input
+                  type="search"
+                  value={classQuery}
+                  onChange={(e) => setClassQuery(e.target.value)}
+                  placeholder="Filter classes…"
+                  className="h-10 w-full rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] py-2 pl-10 pr-3 text-[14px] font-medium text-[#1F1B4D] placeholder:text-[#9B97B0] focus:border-[#4338E8] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+                />
+              </div>
             </div>
-            <ul className="grid max-h-44 grid-cols-1 gap-1.5 overflow-y-auto sm:grid-cols-2">
-              {filteredClasses.map((cls) => {
-                const on = selectedClassIds.has(cls.id);
-                const has =
-                  selectedStackId != null && alreadyHasScheme(cls.id, selectedStackId);
-                const chip = classDisplayColor(cls);
-                return (
-                  <li key={cls.id}>
-                    <button
-                      type="button"
-                      onClick={() => toggleClass(cls.id)}
-                      className={`flex w-full items-center gap-2 rounded-xl border px-2.5 py-2 text-left transition ${
-                        on
-                          ? 'border-[#4338E8] bg-[#EEEDFC]'
-                          : 'border-[#E2E0EF] bg-white hover:border-[#bcb7f4]'
-                      }`}
+            <div className="min-h-0 flex-1 space-y-3 overflow-y-auto px-5 pb-4 sm:px-6">
+              {stageBlocks.length === 0 ? (
+                <p className="py-8 text-center text-[14px] text-[#77738F]">No classes match.</p>
+              ) : (
+                stageBlocks.map((block) => {
+                  const accent = keyStageAccent(block.id, block.label);
+                  const open = !collapsedStages.has(block.id);
+                  const ids = block.classes.map((c) => c.id);
+                  const selectedInGroup = ids.filter((id) => selectedClassIds.has(id)).length;
+                  const allSelected = selectedInGroup === ids.length && ids.length > 0;
+                  const showSubjects = block.subjectGroups.length > 1;
+                  return (
+                    <div
+                      key={block.id}
+                      className={`ss-settings-stage-card ${open ? 'is-open' : ''}`}
+                      style={{ borderColor: open ? accent.bar : undefined }}
                     >
-                      <span
-                        className={`grid h-5 w-5 shrink-0 place-items-center rounded-md border ${
-                          on
-                            ? 'border-[#4338E8] bg-[#4338E8] text-white'
-                            : 'border-[#D8D5E8] bg-white text-transparent'
-                        }`}
+                      <div
+                        className="ss-settings-stage-card-head"
+                        style={{ background: accent.tint }}
                       >
-                        <Check className="h-3 w-3" />
-                      </span>
-                      <span
-                        className="h-2.5 w-2.5 shrink-0 rounded-full"
-                        style={{ background: chip }}
-                        aria-hidden
-                      />
-                      <span className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#1F1B4D]">
-                        {cls.name}
-                      </span>
-                      {has ? (
-                        <span className="shrink-0 text-[10px] font-extrabold uppercase tracking-wide text-[#0B6B5F]">
-                          Has it
-                        </span>
+                        <button
+                          type="button"
+                          onClick={() => toggleStageCollapsed(block.id)}
+                          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                          aria-expanded={open}
+                        >
+                          {open ? (
+                            <ChevronDown className="h-4 w-4 shrink-0 text-[#77738F]" />
+                          ) : (
+                            <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" />
+                          )}
+                          <span
+                            className="h-2.5 w-2.5 shrink-0 rounded-full"
+                            style={{ background: accent.bar }}
+                            aria-hidden
+                          />
+                          <span className="ss-settings-stage-label" style={{ color: accent.label }}>
+                            {block.label}
+                          </span>
+                          <span
+                            className="ss-settings-stage-count"
+                            style={{ background: accent.badge, color: accent.badgeText }}
+                          >
+                            {block.classes.length}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            allSelected ? clearGroup(ids) : selectGroup(ids)
+                          }
+                          className="shrink-0 rounded-lg px-2 py-1 text-[12px] font-extrabold text-[#4338E8] hover:bg-white/70"
+                        >
+                          {allSelected ? 'Clear' : 'Select all'}
+                          {selectedInGroup > 0 && !allSelected ? (
+                            <span className="ml-1 tabular-nums opacity-70">
+                              ({selectedInGroup})
+                            </span>
+                          ) : null}
+                        </button>
+                      </div>
+                      {open ? (
+                        <div className="ss-settings-stage-body space-y-2">
+                          {(showSubjects
+                            ? block.subjectGroups.map((g) => ({
+                                key: g.subject.id,
+                                subject: g.subject,
+                                classes: g.classes,
+                              }))
+                            : [
+                                {
+                                  key: 'all',
+                                  subject: null as (typeof block.subjectGroups)[0]['subject'] | null,
+                                  classes: block.classes,
+                                },
+                              ]
+                          ).map((group) => (
+                            <div
+                              key={group.key}
+                              className={showSubjects ? 'ss-settings-subject-group' : ''}
+                            >
+                              {showSubjects && group.subject ? (
+                                <div className="ss-settings-subject-head cursor-default">
+                                  <span
+                                    className="ss-settings-subject-dot"
+                                    style={{ background: group.subject.color }}
+                                  />
+                                  <span>{group.subject.label}</span>
+                                  <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
+                                    {group.classes.length}
+                                  </span>
+                                </div>
+                              ) : null}
+                              <ul
+                                className={
+                                  showSubjects ? 'ss-settings-subject-body space-y-1' : 'space-y-1'
+                                }
+                              >
+                                {group.classes.map((cls) => {
+                                  const on = selectedClassIds.has(cls.id);
+                                  const has =
+                                    selectedStackId != null &&
+                                    alreadyHasScheme(cls.id, selectedStackId);
+                                  const chip = classDisplayColor(cls);
+                                  const { title, context } = classLabelParts(cls);
+                                  return (
+                                    <li key={cls.id}>
+                                      <button
+                                        type="button"
+                                        onClick={() => toggleClass(cls.id)}
+                                        className={`flex w-full items-start gap-2.5 rounded-xl border px-2.5 py-2 text-left transition ${
+                                          on
+                                            ? 'border-[#4338E8] bg-[#EEEDFC]'
+                                            : 'border-transparent bg-white hover:border-[#E2E0EF] hover:bg-[#FAFAFC]'
+                                        }`}
+                                      >
+                                        <span
+                                          className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-md border ${
+                                            on
+                                              ? 'border-[#4338E8] bg-[#4338E8] text-white'
+                                              : 'border-[#D8D5E8] bg-white text-transparent'
+                                          }`}
+                                        >
+                                          <Check className="h-3 w-3" />
+                                        </span>
+                                        <span
+                                          className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full"
+                                          style={{ background: chip }}
+                                          aria-hidden
+                                        />
+                                        <span className="min-w-0 flex-1">
+                                          <span className="ss-settings-class-name block truncate">
+                                            {title}
+                                          </span>
+                                          {context ? (
+                                            <span className="mt-0.5 block truncate text-[12px] font-semibold text-[#9B97B0]">
+                                              {context}
+                                            </span>
+                                          ) : null}
+                                        </span>
+                                        {has ? (
+                                          <span className="mt-0.5 shrink-0 rounded-md bg-[#D5F3EA] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#0B6B5F]">
+                                            Has it
+                                          </span>
+                                        ) : null}
+                                      </button>
+                                    </li>
+                                  );
+                                })}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
                       ) : null}
-                    </button>
-                  </li>
-                );
-              })}
-            </ul>
+                    </div>
+                  );
+                })
+              )}
+            </div>
           </section>
 
-          {/* Schemes */}
-          <section>
-            <div className="mb-2.5 flex flex-wrap items-end justify-between gap-2">
-              <h3 className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
-                Scheme of work
-              </h3>
-              <div className="relative w-full sm:w-56">
-                <Search className="pointer-events-none absolute left-3 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#9B97B0]" />
+          {/* RIGHT: Schemes */}
+          <section className="flex min-h-0 flex-col bg-[#FAFAFC]/50">
+            <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-b border-[#E2E0EF]/80 px-5 py-3 sm:px-6">
+              <h3 className="text-[15px] font-extrabold text-[#1F1B4D]">Scheme of work</h3>
+              <div className="relative w-full sm:w-52">
+                <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-[#9B97B0]" />
                 <input
                   type="search"
                   value={query}
                   onChange={(e) => setQuery(e.target.value)}
                   placeholder="Search schemes…"
-                  className="h-9 w-full rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] py-2 pl-9 pr-3 text-[13px] font-medium text-[#1F1B4D] placeholder:text-[#9B97B0] focus:border-[#4338E8] focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
+                  className="h-10 w-full rounded-xl border border-[#E2E0EF] bg-white py-2 pl-10 pr-3 text-[14px] font-medium text-[#1F1B4D] placeholder:text-[#9B97B0] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
                 />
               </div>
             </div>
-
-            {stacksLoading ? (
-              <p className="py-8 text-center text-[13px] text-[#77738F]">Loading schemes…</p>
-            ) : stacks.length === 0 ? (
-              <div className="rounded-2xl border border-[#E2E0EF] bg-[#F4F3FA]/80 px-4 py-8 text-center">
-                <Layers className="mx-auto h-9 w-9 text-[#4338E8]" />
-                <p className="mt-2 text-[15px] font-extrabold text-[#1F1B4D]">
-                  No schemes of work yet
-                </p>
-                <p className="mx-auto mt-1 max-w-sm text-[13px] leading-snug text-[#77738F]">
-                  Create a scheme in Lessons, then return here to assign it.
-                </p>
-                <button
-                  type="button"
-                  onClick={goCreateScheme}
-                  className="mt-4 inline-flex h-10 items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[13px] font-bold text-white transition hover:bg-[#3529d1]"
-                >
-                  <Plus className="h-4 w-4" />
-                  Create a scheme of work
-                </button>
-              </div>
-            ) : availableSchemes.length === 0 ? (
-              <div className="rounded-2xl border border-dashed border-[#E2E0EF] px-4 py-6 text-center text-[13px] text-[#77738F]">
-                No schemes match your search.
-              </div>
-            ) : (
-              <ul className="space-y-2">
-                {availableSchemes.map((stack) => {
+            <div className="flex shrink-0 flex-wrap gap-1.5 px-5 py-2.5 sm:px-6">
+              {(['All', ...CLASS_SUBJECT_FILTERS] as const).map((s) => {
+                const active = schemeSubject === s;
+                return (
+                  <button
+                    key={s}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setSchemeSubject(s)}
+                    className={`inline-flex h-8 items-center rounded-lg px-2.5 text-[12px] font-extrabold transition ${
+                      active
+                        ? 'bg-[#4338E8] text-white'
+                        : 'border border-[#E2E0EF] bg-white text-[#5C5878] hover:border-[#bcb7f4]'
+                    }`}
+                  >
+                    {s}
+                  </button>
+                );
+              })}
+            </div>
+            <div className="min-h-0 flex-1 space-y-2.5 overflow-y-auto px-5 pb-4 sm:px-6">
+              {stacksLoading ? (
+                <p className="py-10 text-center text-[14px] text-[#77738F]">Loading schemes…</p>
+              ) : stacks.length === 0 ? (
+                <div className="rounded-2xl border border-[#E2E0EF] bg-white px-4 py-10 text-center">
+                  <Layers className="mx-auto h-10 w-10 text-[#4338E8]" />
+                  <p className="mt-3 text-[16px] font-extrabold text-[#1F1B4D]">
+                    No schemes of work yet
+                  </p>
+                  <p className="mx-auto mt-1.5 max-w-sm text-[14px] leading-snug text-[#77738F]">
+                    Create a scheme (lesson stack / unit) in Lessons, then return here to assign it.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={goCreateScheme}
+                    className="mt-4 inline-flex h-11 items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[14px] font-bold text-white transition hover:bg-[#3529d1]"
+                  >
+                    <Plus className="h-4 w-4" />
+                    Create a scheme
+                  </button>
+                </div>
+              ) : availableSchemes.length === 0 ? (
+                <div className="rounded-2xl border border-dashed border-[#E2E0EF] bg-white px-4 py-8 text-center text-[14px] text-[#77738F]">
+                  No schemes match your search.
+                </div>
+              ) : (
+                availableSchemes.map((stack) => {
                   const open = previewId === stack.id;
                   const picked = selectedStackId === stack.id;
+                  const subject = inferSchemeSubject(stack);
+                  const lessonPreview = stack.lessons.slice(0, 4);
                   return (
-                    <li
+                    <div
                       key={stack.id}
-                      className={`overflow-hidden rounded-2xl border bg-white shadow-[0_1px_2px_rgba(31,27,77,0.03)] ${
-                        picked ? 'border-[#4338E8] ring-2 ring-[#4338E8]/20' : 'border-[#E2E0EF]'
+                      role="button"
+                      tabIndex={0}
+                      aria-pressed={picked}
+                      onClick={() => setSelectedStackId(stack.id)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                          e.preventDefault();
+                          setSelectedStackId(stack.id);
+                        }
+                      }}
+                      className={`w-full cursor-pointer overflow-hidden rounded-2xl border bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition ${
+                        picked
+                          ? 'border-[#4338E8] ring-2 ring-[#4338E8]/25'
+                          : 'border-[#E2E0EF] hover:border-[#bcb7f4]'
                       }`}
                     >
-                      <div className="flex items-start gap-3 p-3.5">
-                        <button
-                          type="button"
-                          onClick={() => setSelectedStackId(stack.id)}
-                          className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
-                            picked
-                              ? 'border-[#4338E8] bg-[#4338E8] text-white'
-                              : 'border-[#D8D5E8] bg-white'
-                          }`}
-                          aria-label={`Select ${stack.name}`}
-                          aria-pressed={picked}
-                        >
-                          {picked ? <Check className="h-3 w-3" /> : null}
-                        </button>
+                      <div className="flex items-stretch gap-0">
                         <span
-                          className="mt-0.5 h-10 w-1.5 shrink-0 rounded-full"
+                          className="w-1.5 shrink-0 self-stretch"
                           style={{ background: stack.color || '#4338E8' }}
                           aria-hidden
                         />
-                        <button
-                          type="button"
-                          onClick={() => setSelectedStackId(stack.id)}
-                          className="min-w-0 flex-1 text-left"
-                        >
-                          <p className="text-[14px] font-extrabold text-[#1F1B4D]">{stack.name}</p>
-                          {stack.description ? (
-                            <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-[#77738F]">
-                              {stack.description}
-                            </p>
-                          ) : null}
-                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] font-semibold text-[#5C5878]">
-                            <span className="inline-flex items-center gap-1">
-                              <BookOpen className="h-3.5 w-3.5" />
-                              {stack.lessons.length} lesson
-                              {stack.lessons.length === 1 ? '' : 's'}
+                        <div className="min-w-0 flex-1 p-3.5 sm:p-4">
+                          <div className="flex items-start gap-3">
+                            <span
+                              className={`mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full border ${
+                                picked
+                                  ? 'border-[#4338E8] bg-[#4338E8] text-white'
+                                  : 'border-[#D8D5E8] bg-white'
+                              }`}
+                              aria-hidden
+                            >
+                              {picked ? <Check className="h-3 w-3" /> : null}
                             </span>
-                            <span className="inline-flex items-center gap-1">
-                              <Clock className="h-3.5 w-3.5" />
-                              {formatDuration(stack.totalTime)}
-                            </span>
+                            <div className="min-w-0 flex-1">
+                              <div className="flex flex-wrap items-center gap-2">
+                                <p className="text-[15px] font-extrabold text-[#1F1B4D]">
+                                  {stack.name}
+                                </p>
+                                {subject !== 'Other' ? (
+                                  <span className="rounded-md bg-[#F4F3FA] px-1.5 py-0.5 text-[11px] font-extrabold uppercase tracking-wide text-[#5C5878]">
+                                    {subject}
+                                  </span>
+                                ) : null}
+                              </div>
+                              {stack.description ? (
+                                <p className="mt-1 line-clamp-2 text-[13px] leading-snug text-[#77738F]">
+                                  {stack.description}
+                                </p>
+                              ) : null}
+                              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] font-semibold text-[#5C5878]">
+                                <span className="inline-flex items-center gap-1">
+                                  <BookOpen className="h-3.5 w-3.5" />
+                                  {stack.lessons.length} lesson
+                                  {stack.lessons.length === 1 ? '' : 's'}
+                                </span>
+                                <span className="inline-flex items-center gap-1">
+                                  <Clock className="h-3.5 w-3.5" />
+                                  {formatDuration(stack.totalTime)}
+                                </span>
+                              </div>
+                              {lessonPreview.length > 0 ? (
+                                <ol className="mt-2 space-y-0.5 border-t border-[#E2E0EF]/80 pt-2">
+                                  {lessonPreview.map((lessonId, i) => {
+                                    const lesson = allLessonsData[lessonId];
+                                    return (
+                                      <li
+                                        key={`${stack.id}-prev-${lessonId}`}
+                                        className="flex items-baseline gap-1.5 text-[12px] text-[#77738F]"
+                                      >
+                                        <span className="w-4 shrink-0 text-right font-bold tabular-nums text-[#C4C0D8]">
+                                          {i + 1}.
+                                        </span>
+                                        <span className="min-w-0 truncate font-semibold text-[#5C5878]">
+                                          {lesson?.title || `Lesson ${lessonId}`}
+                                        </span>
+                                      </li>
+                                    );
+                                  })}
+                                  {stack.lessons.length > lessonPreview.length ? (
+                                    <li className="pl-5 text-[11px] font-bold text-[#9B97B0]">
+                                      +{stack.lessons.length - lessonPreview.length} more
+                                    </li>
+                                  ) : null}
+                                </ol>
+                              ) : null}
+                            </div>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setPreviewId(open ? null : stack.id);
+                              }}
+                              className="inline-flex h-9 shrink-0 items-center gap-1 rounded-xl border border-[#E2E0EF] px-2.5 text-[12px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
+                              aria-expanded={open}
+                            >
+                              Lessons
+                              {open ? (
+                                <ChevronDown className="h-3.5 w-3.5" />
+                              ) : (
+                                <ChevronRight className="h-3.5 w-3.5" />
+                              )}
+                            </button>
                           </div>
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setPreviewId(open ? null : stack.id)}
-                          className="inline-flex h-9 shrink-0 items-center justify-center gap-1 rounded-xl border border-[#E2E0EF] px-2.5 text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
-                          aria-expanded={open}
-                        >
-                          Lessons
                           {open ? (
-                            <ChevronUp className="h-3.5 w-3.5" />
-                          ) : (
-                            <ChevronDown className="h-3.5 w-3.5" />
-                          )}
-                        </button>
-                      </div>
-                      {open ? (
-                        <div className="border-t border-[#E2E0EF] bg-[#F4F3FA]/70 px-3.5 py-2.5">
-                          <ol className="space-y-1">
-                            {stack.lessons.map((lessonId, i) => {
-                              const lesson = allLessonsData[lessonId];
-                              return (
-                                <li
-                                  key={`${stack.id}-${lessonId}`}
-                                  className="flex items-baseline gap-2 text-[12px] text-[#5C5878]"
-                                >
-                                  <span className="w-5 shrink-0 text-right font-bold tabular-nums text-[#9B97B0]">
-                                    {i + 1}.
-                                  </span>
-                                  <span className="min-w-0 font-semibold text-[#1F1B4D]">
-                                    {lesson?.title || `Lesson ${lessonId}`}
-                                  </span>
-                                </li>
-                              );
-                            })}
-                          </ol>
+                            <div className="mt-3 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA]/80 px-3 py-2.5">
+                              <ol className="space-y-1">
+                                {stack.lessons.map((lessonId, i) => {
+                                  const lesson = allLessonsData[lessonId];
+                                  return (
+                                    <li
+                                      key={`${stack.id}-${lessonId}`}
+                                      className="flex items-baseline gap-2 text-[13px] text-[#5C5878]"
+                                    >
+                                      <span className="w-5 shrink-0 text-right font-bold tabular-nums text-[#9B97B0]">
+                                        {i + 1}.
+                                      </span>
+                                      <span className="min-w-0 font-semibold text-[#1F1B4D]">
+                                        {lesson?.title || `Lesson ${lessonId}`}
+                                      </span>
+                                    </li>
+                                  );
+                                })}
+                              </ol>
+                            </div>
+                          ) : null}
                         </div>
-                      ) : null}
-                    </li>
+                      </div>
+                    </div>
                   );
-                })}
-              </ul>
-            )}
+                })
+              )}
+            </div>
           </section>
         </div>
 
-        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#E2E0EF] bg-[#FAFAFC] px-5 py-3.5 sm:px-6">
-          <p className="text-[12px] font-medium text-[#77738F]">
-            {busy
-              ? `Assigning… ${doneCount}/${selectedClassIds.size}`
-              : selectedStack
-                ? `${selectedStack.name} → ${selectedClassIds.size} class${
-                    selectedClassIds.size === 1 ? '' : 'es'
-                  }`
-                : 'Pick classes and a scheme'}
+        {/* Sticky footer */}
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-[#E2E0EF] bg-[#FAFAFC] px-5 py-3.5 sm:px-7">
+          <p
+            className={`min-w-0 flex-1 text-[13px] font-semibold leading-snug sm:text-[14px] ${
+              canAssign ? 'text-[#1F1B4D]' : 'text-[#77738F]'
+            }`}
+          >
+            {footerSummary}
           </p>
-          <div className="flex items-center gap-2">
+          <div className="flex shrink-0 items-center gap-2">
             <button
               type="button"
               onClick={onClose}
-              className="inline-flex h-10 items-center rounded-xl border border-[#E2E0EF] px-4 text-[13px] font-bold text-[#5C5878] hover:bg-white"
+              className="inline-flex h-11 items-center rounded-xl border border-[#E2E0EF] px-4 text-[14px] font-bold text-[#5C5878] hover:bg-white"
             >
               Cancel
             </button>
             <button
               type="button"
-              disabled={busy || !selectedStack || selectedClassIds.size === 0}
+              disabled={!canAssign}
+              title={disabledReason || undefined}
               onClick={() => void assign()}
-              className="inline-flex h-10 items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[13px] font-bold text-white transition hover:bg-[#3529d1] disabled:opacity-45"
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#4338E8] px-5 text-[14px] font-extrabold text-white transition hover:bg-[#3529d1] disabled:cursor-not-allowed disabled:bg-[#C4C0D8] disabled:opacity-90"
             >
               <Check className="h-4 w-4" />
               Assign
