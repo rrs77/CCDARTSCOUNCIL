@@ -51,7 +51,7 @@ function formatRelativeEdited(iso: string): string {
 
 const FEATURES = [
   { icon: <Layers className="h-4 w-4" />, label: 'Timeline scenes' },
-  { icon: <Mic2 className="h-4 w-4" />, label: 'Karaoke lyrics' },
+  { icon: <Mic2 className="h-4 w-4" />, label: 'Lyric videos' },
   { icon: <Youtube className="h-4 w-4" />, label: 'YouTube & audio' },
   { icon: <Presentation className="h-4 w-4" />, label: 'Canva & PowerPoint' },
   { icon: <Clapperboard className="h-4 w-4" />, label: 'Full-screen present' },
@@ -282,7 +282,7 @@ export function InteractiveLessonHub() {
         <div className="ilv-hub-hero-copy">
           <h1 className="ilv-hub-hero-title">Slides that fill the room</h1>
           <p className="ilv-hub-hero-lede">
-            Build timeline scenes with karaoke lyrics and timed words, YouTube, audio, Canva and
+            Build timeline scenes with lyric videos and timed words, YouTube, audio, Canva and
             PowerPoint embeds — then present full-screen to the class. Attach a player-only link to
             any CCD lesson.
           </p>
@@ -440,7 +440,7 @@ export function InteractiveLessonHub() {
               </span>
               <span className="ilv-create-tile-title">Create new slides</span>
               <span className="ilv-create-tile-sub">
-                Start with a title scene — add karaoke, embeds and timeline as you go
+                Start with a title scene — add lyric videos, embeds and timeline as you go
               </span>
             </button>
           )}

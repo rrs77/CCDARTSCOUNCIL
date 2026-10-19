@@ -934,8 +934,8 @@
 
 .ilv-hub-hero {
   display: grid;
-  grid-template-columns: minmax(0, 1.35fr) minmax(220px, 0.75fr);
-  gap: 1.25rem 2rem;
+  grid-template-columns: minmax(0, 1fr) minmax(200px, 240px);
+  gap: 1.25rem 1.75rem;
   align-items: center;
   margin: 0.35rem 0 1.5rem;
   padding: 1.25rem 1.4rem 1.3rem;

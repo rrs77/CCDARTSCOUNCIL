@@ -13,7 +13,7 @@ export function buildHubSlidesDecks(): InteractiveLesson[] {
     id: 'hub-slides-lso-orchestra-warmup',
     title: 'LSO · Orchestra warm-up slides',
     description:
-      'Partner Hub pack: title, listening focus, and a short karaoke rhythm warm-up for KS2.',
+      'Partner Hub pack: title, listening focus, and a short lyric video rhythm warm-up for KS2.',
     ownerId: 'hub-lso',
     ownerEmail: 'hubs@ccd.preview',
     status: 'published',

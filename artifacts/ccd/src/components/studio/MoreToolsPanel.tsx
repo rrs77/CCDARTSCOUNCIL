@@ -31,7 +31,7 @@ const TOOLS: {
   {
     id: 'lesson-viewer',
     title: 'Slides',
-    desc: 'Interactive classroom slides — Canva, YouTube, karaoke lyrics and more.',
+    desc: 'Interactive classroom slides — Canva, YouTube, lyric videos and more.',
     icon: <Clapperboard className="h-5 w-5" />,
     action: 'tab',
     tab: 'lesson-viewer',

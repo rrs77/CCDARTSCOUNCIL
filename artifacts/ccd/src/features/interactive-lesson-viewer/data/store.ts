@@ -65,7 +65,7 @@ function ensureDemo(lessons: InteractiveLesson[], ownerId: string): InteractiveL
   const demo = {
     ...buildDemoInteractiveLesson(ownerId),
     source: 'demo' as const,
-    tags: ['demo', 'karaoke', 'youtube', 'canva'],
+    tags: ['demo', 'lyric-videos', 'youtube', 'canva'],
     subject: 'Performing arts',
   };
   const withoutStaleDemo = lessons.filter(
@@ -282,7 +282,7 @@ export async function getInteractiveLesson(id: string): Promise<InteractiveLesso
     const demo = {
       ...buildDemoInteractiveLesson(),
       source: 'demo' as const,
-      tags: ['demo', 'karaoke', 'youtube', 'canva'],
+      tags: ['demo', 'lyric-videos', 'youtube', 'canva'],
       subject: 'Performing arts',
     };
     const rest = readLocal().filter((l) => l.id !== id && !l.isDemo);

@@ -588,7 +588,7 @@ export const SCENE_TYPE_LABELS: Record<SceneType, string> = {
   image: 'Image',
   title: 'Title',
   text: 'Text',
-  lyrics: 'Lyrics',
+  lyrics: 'Lyric video',
   youtube: 'YouTube',
   vimeo: 'Vimeo',
   canva: 'Canva',
@@ -705,8 +705,8 @@ export const TEXT_ANIMATION_OPTIONS: { type: TextAnimationType; label: string; p
   { type: 'pulse', label: 'Pulse', phase: 'emphasis' },
   { type: 'glow-pulse', label: 'Glow pulse', phase: 'emphasis' },
   { type: 'scale-highlight', label: 'Scale highlight', phase: 'emphasis' },
-  { type: 'karaoke-wipe', label: 'Karaoke wipe', phase: 'emphasis' },
-  { type: 'karaoke-fill', label: 'Karaoke fill', phase: 'emphasis' },
+  { type: 'karaoke-wipe', label: 'Lyric wipe', phase: 'emphasis' },
+  { type: 'karaoke-fill', label: 'Lyric fill', phase: 'emphasis' },
   { type: 'colour-sweep', label: 'Colour sweep', phase: 'emphasis' },
 ];
 
