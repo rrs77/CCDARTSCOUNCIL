@@ -23,7 +23,6 @@ import {
   type Discipline,
   type OrgEntry,
   PAID_RESOURCES,
-  TAG_TONE,
   orgListingMeta,
 } from './hubsPreviewContent';
 
@@ -47,22 +46,6 @@ const HUB_COVER_ALIASES: Record<string, string> = {
   triborough: 'tri-borough',
   'west-of-england': 'west-of-england-avon',
 };
-
-const HUB_TAG_SETS: string[][] = [
-  ['CPD', 'Ensembles', 'Projects'],
-  ['CPD', 'Resources', 'Youth'],
-  ['CPD', 'Teacher support'],
-  ['Resources', 'Ensembles', 'Projects'],
-  ['CPD', 'Resources', 'Ensembles'],
-];
-
-function OrgTag({ label }: { label: string }) {
-  return (
-    <span className={`rounded-full px-2 py-0.5 text-[11px] font-semibold ${TAG_TONE[label] ?? 'bg-[#F4F3FA] text-[#1F1B4D]'}`}>
-      {label}
-    </span>
-  );
-}
 
 /**
  * Wide wordmark strip — partner logos are landscape marks; keep full mark readable (never crop).
@@ -516,12 +499,7 @@ export function ArtsOrganisationsDirectoryView() {
                         <p className={`mt-2 line-clamp-2 text-[12px] leading-snug ${muted}`}>
                           {o.hub.tagline || meta.location}
                         </p>
-                        <div className="mt-auto flex items-end justify-between gap-2 pt-3">
-                          <div className="flex flex-wrap gap-1.5">
-                            {meta.tags.slice(0, 3).map((t) => (
-                              <OrgTag key={t} label={t} />
-                            ))}
-                          </div>
+                        <div className="mt-auto flex justify-end pt-3">
                           <button
                             type="button"
                             aria-label={`Open ${o.hub.displayName}`}
@@ -1021,12 +999,6 @@ export function hubCoverSrc(id: string) {
   return `/music-hubs/covers/${coverId}.jpg`;
 }
 
-function hubTagsFor(id: string) {
-  let n = 0;
-  for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i) * (i + 3)) % 991;
-  return HUB_TAG_SETS[n % HUB_TAG_SETS.length];
-}
-
 /** Friendly card title — e.g. "Essex Music Hub", "Cambridgeshire Music". */
 export function musicHubCardTitle(id: string, fullName: string, lead?: string) {
   if (id === 'cambridgeshire-and-peterborough') return 'Cambridgeshire Music';
@@ -1066,7 +1038,6 @@ export function MusicHubResultCard({
 }) {
   const logo = HUB_CARD_LOGOS[id];
   const initial = name.replace(/^The /, '').charAt(0).toUpperCase();
-  const tags = hubTagsFor(id);
   const [saved, setSaved] = useState(false);
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_12px_28px_-16px_rgba(11,107,95,0.35)]">
@@ -1095,12 +1066,7 @@ export function MusicHubResultCard({
           <h3 className={`text-[14px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
           <p className={`mt-0.5 text-[11px] font-medium ${muted}`}>{location}</p>
           <p className={`mt-1 line-clamp-2 text-[11px] leading-snug ${muted}`}>{detail}</p>
-          <div className="mt-auto flex items-end justify-between gap-2 pt-2">
-            <div className="flex flex-wrap gap-1">
-              {tags.map((t) => (
-                <OrgTag key={t} label={t === 'Youth ensembles' ? 'Youth' : t} />
-              ))}
-            </div>
+          <div className="mt-auto flex justify-end pt-2.5">
             <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white">
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
             </span>
