@@ -11,9 +11,9 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
 
   return {
     id: 'demo-interactive-lesson',
-    title: 'CCDesigner Interactive Demo',
+    title: 'CCDesigner Slides Demo',
     description:
-      'Classroom-ready sample: intro sting, title, karaoke with timed lyrics, YouTube, audio, Canva and PowerPoint embeds.',
+      'Classroom-ready sample slides: intro sting, title, karaoke with timed lyrics, YouTube, audio, Canva and PowerPoint embeds.',
     ownerId,
     ownerEmail: 'demo@ccd.preview',
     status: 'published',

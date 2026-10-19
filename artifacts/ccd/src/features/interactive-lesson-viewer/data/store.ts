@@ -1,10 +1,17 @@
 import { supabase, isSupabaseAuthEnabled } from '../../../config/supabase';
 import { isAuthorizedDemoMode, isDemoModeActive } from '../../../utils/demoMode';
 import { buildDemoInteractiveLesson } from './demoLesson';
-import type { InteractiveLesson, InteractiveLessonSummary } from '../types';
+import { buildHubSlidesDecks } from './hubDecks';
+import type {
+  InteractiveLesson,
+  InteractiveLessonSummary,
+  SlidesLibraryTab,
+} from '../types';
 
 const LOCAL_KEY = 'ccd-interactive-lessons-v1';
+const LIBRARY_LINKS_KEY = 'ccd-ilv-library-links-v1';
 const TABLE = 'interactive_lessons';
+const LINKS_TABLE = 'interactive_lesson_library_links';
 
 /**
  * Prefer localStorage when:
@@ -32,13 +39,52 @@ function writeLocal(lessons: InteractiveLesson[]) {
   localStorage.setItem(LOCAL_KEY, JSON.stringify(lessons));
 }
 
+function readLibraryLinks(userId: string): string[] {
+  try {
+    const raw = localStorage.getItem(LIBRARY_LINKS_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw) as Record<string, string[]>;
+    return Array.isArray(parsed[userId]) ? parsed[userId] : [];
+  } catch {
+    return [];
+  }
+}
+
+function writeLibraryLinks(userId: string, ids: string[]) {
+  try {
+    const raw = localStorage.getItem(LIBRARY_LINKS_KEY);
+    const parsed = raw ? (JSON.parse(raw) as Record<string, string[]>) : {};
+    parsed[userId] = Array.from(new Set(ids));
+    localStorage.setItem(LIBRARY_LINKS_KEY, JSON.stringify(parsed));
+  } catch {
+    /* ignore */
+  }
+}
+
 function ensureDemo(lessons: InteractiveLesson[], ownerId: string): InteractiveLesson[] {
-  const demo = buildDemoInteractiveLesson(ownerId);
+  const demo = {
+    ...buildDemoInteractiveLesson(ownerId),
+    source: 'demo' as const,
+    tags: ['demo', 'karaoke', 'youtube', 'canva'],
+    subject: 'Performing arts',
+  };
   const withoutStaleDemo = lessons.filter(
     (l) => l.id !== 'demo-interactive-lesson' && !l.isDemo,
   );
   // Always refresh the shipped demo so preview works without the Supabase migration.
   return [demo, ...withoutStaleDemo];
+}
+
+function ensureHubDecks(lessons: InteractiveLesson[]): InteractiveLesson[] {
+  const hubs = buildHubSlidesDecks();
+  const hubIds = new Set(hubs.map((h) => h.id));
+  const withoutStaleHubs = lessons.filter((l) => !hubIds.has(l.id) && l.source !== 'hub');
+  // Refresh hub packs so prototype content stays polished.
+  return [...withoutStaleHubs, ...hubs];
+}
+
+function ensureLibrary(lessons: InteractiveLesson[], ownerId: string): InteractiveLesson[] {
+  return ensureHubDecks(ensureDemo(lessons, ownerId));
 }
 
 function toSummary(lesson: InteractiveLesson): InteractiveLessonSummary {
@@ -48,6 +94,8 @@ function toSummary(lesson: InteractiveLesson): InteractiveLessonSummary {
     if (!sceneTypes.includes(s.type)) sceneTypes.push(s.type);
   }
   const headline = first?.overlays?.find((o) => o.style === 'headline')?.text;
+  const source =
+    lesson.source || (lesson.isDemo ? 'demo' : lesson.hubId ? 'hub' : 'user');
   return {
     id: lesson.id,
     title: lesson.title,
@@ -58,6 +106,11 @@ function toSummary(lesson: InteractiveLesson): InteractiveLessonSummary {
     updatedAt: lesson.updatedAt,
     isDemo: lesson.isDemo,
     sceneTypes,
+    source,
+    hubId: lesson.hubId,
+    hubName: lesson.hubName,
+    tags: lesson.tags,
+    subject: lesson.subject,
     cover: first
       ? {
           type: first.type,
@@ -88,14 +141,37 @@ function rowToLesson(row: Record<string, unknown>): InteractiveLesson {
     createdAt: String(row.created_at || data.createdAt || new Date().toISOString()),
     updatedAt: String(row.updated_at || data.updatedAt || new Date().toISOString()),
     isDemo: Boolean(data.isDemo),
+    source:
+      (row.source as InteractiveLesson['source']) ||
+      data.source ||
+      (data.isDemo ? 'demo' : undefined),
+    hubId: (row.hub_id as string) || data.hubId,
+    hubName: (row.hub_name as string) || data.hubName,
+    tags: (row.tags as string[]) || data.tags,
+    subject: (row.subject as string) || data.subject,
   };
+}
+
+function matchesQuery(summary: InteractiveLessonSummary, query: string): boolean {
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  const hay = [
+    summary.title,
+    summary.description,
+    summary.subject || '',
+    summary.hubName || '',
+    ...(summary.tags || []),
+  ]
+    .join(' ')
+    .toLowerCase();
+  return hay.includes(q);
 }
 
 export async function listInteractiveLessons(opts: {
   userId: string;
   canEdit: boolean;
 }): Promise<InteractiveLessonSummary[]> {
-  const local = ensureDemo(readLocal(), opts.userId);
+  const local = ensureLibrary(readLocal(), opts.userId);
   writeLocal(local);
 
   let remote: InteractiveLesson[] = [];
@@ -126,24 +202,102 @@ export async function listInteractiveLessons(opts: {
 
   const all = Array.from(byId.values());
   const visible = opts.canEdit
-    ? all.filter((l) => l.ownerId === opts.userId || l.isDemo || l.status === 'published')
-    : all.filter((l) => l.status === 'published');
+    ? all.filter(
+        (l) =>
+          l.ownerId === opts.userId ||
+          l.isDemo ||
+          l.source === 'hub' ||
+          l.status === 'published',
+      )
+    : all.filter((l) => l.status === 'published' || l.source === 'hub' || l.isDemo);
 
   return visible
     .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt))
     .map(toSummary);
 }
 
+/**
+ * Slides library for the picker + Slides tab.
+ * - mine: decks the teacher owns (plus the shipped demo starter)
+ * - hubs: partner-hub decks linked into the teacher library (prototype seeds two)
+ * - all: both
+ */
+export async function listSlidesLibrary(opts: {
+  userId: string;
+  canEdit: boolean;
+  tab?: SlidesLibraryTab;
+  query?: string;
+}): Promise<InteractiveLessonSummary[]> {
+  const tab = opts.tab || 'all';
+  const all = await listInteractiveLessons({ userId: opts.userId, canEdit: opts.canEdit });
+  const linkedHubIds = new Set(readLibraryLinks(opts.userId));
+
+  // Prototype: seeded hub decks are always linked so "From hubs" isn't empty.
+  for (const h of buildHubSlidesDecks()) linkedHubIds.add(h.id);
+  writeLibraryLinks(opts.userId, Array.from(linkedHubIds));
+
+  const filtered = all.filter((item) => {
+    const source = item.source || (item.isDemo ? 'demo' : item.hubId ? 'hub' : 'user');
+    if (tab === 'mine') {
+      return (
+        source !== 'hub' &&
+        (item.ownerId === opts.userId || item.isDemo || source === 'demo' || source === 'user')
+      );
+    }
+    if (tab === 'hubs') {
+      return source === 'hub' && linkedHubIds.has(item.id);
+    }
+    return true;
+  });
+
+  return filtered.filter((item) => matchesQuery(item, opts.query || ''));
+}
+
+/** Record that a hub slides deck is available in this teacher's library. */
+export function linkHubSlidesToLibrary(userId: string, interactiveLessonId: string) {
+  const ids = readLibraryLinks(userId);
+  if (!ids.includes(interactiveLessonId)) {
+    writeLibraryLinks(userId, [...ids, interactiveLessonId]);
+  }
+  if (useRemoteSync()) {
+    void supabase
+      .from(LINKS_TABLE)
+      .upsert(
+        {
+          user_id: userId,
+          interactive_lesson_id: interactiveLessonId,
+          source: 'hub',
+        },
+        { onConflict: 'user_id,interactive_lesson_id' },
+      )
+      .then(({ error }) => {
+        if (error) console.warn('[ILV] library link upsert skipped', error.message);
+      });
+  }
+}
+
 export async function getInteractiveLesson(id: string): Promise<InteractiveLesson | null> {
   // Always rebuild the shipped demo so preview content stays polished (no stale placeholders).
   if (id === 'demo-interactive-lesson') {
-    const demo = buildDemoInteractiveLesson();
+    const demo = {
+      ...buildDemoInteractiveLesson(),
+      source: 'demo' as const,
+      tags: ['demo', 'karaoke', 'youtube', 'canva'],
+      subject: 'Performing arts',
+    };
     const rest = readLocal().filter((l) => l.id !== id && !l.isDemo);
-    writeLocal([demo, ...rest]);
+    writeLocal(ensureHubDecks([demo, ...rest]));
     return demo;
   }
 
-  const local = readLocal().find((l) => l.id === id);
+  const hubMatch = buildHubSlidesDecks().find((h) => h.id === id);
+  if (hubMatch) {
+    const rest = readLocal().filter((l) => l.id !== id);
+    writeLocal(ensureHubDecks([hubMatch, ...rest]));
+    return hubMatch;
+  }
+
+  const local = ensureLibrary(readLocal(), 'anonymous').find((l) => l.id === id);
   if (local) return local;
 
   if (useRemoteSync()) {
@@ -185,12 +339,16 @@ export async function getPublishedInteractiveLessonForPlayer(
 }
 
 export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<InteractiveLesson> {
-  const next = { ...lesson, updatedAt: new Date().toISOString() };
+  const next: InteractiveLesson = {
+    ...lesson,
+    source: lesson.source || (lesson.isDemo ? 'demo' : lesson.hubId ? 'hub' : 'user'),
+    updatedAt: new Date().toISOString(),
+  };
   const local = readLocal().filter((l) => l.id !== next.id);
   local.unshift(next);
-  writeLocal(local);
+  writeLocal(ensureHubDecks(local));
 
-  if (useRemoteSync() && !next.isDemo) {
+  if (useRemoteSync() && !next.isDemo && next.source !== 'hub') {
     try {
       const payload = {
         id: next.id,
@@ -199,6 +357,11 @@ export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<
         description: next.description,
         status: next.status,
         attached_lesson_keys: next.attachedLessonKeys,
+        source: next.source || 'user',
+        hub_id: next.hubId || null,
+        hub_name: next.hubName || null,
+        tags: next.tags || [],
+        subject: next.subject || null,
         data: next,
         updated_at: next.updatedAt,
         created_at: next.createdAt,
@@ -215,6 +378,7 @@ export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<
 
 export async function deleteInteractiveLesson(id: string, userId: string): Promise<void> {
   if (id === 'demo-interactive-lesson') return;
+  if (id.startsWith('hub-slides-')) return;
   writeLocal(readLocal().filter((l) => !(l.id === id && l.ownerId === userId)));
   if (useRemoteSync()) {
     try {
@@ -264,6 +428,8 @@ export function getAttachedInteractiveLessonId(sheet: string, lessonNumber: stri
 }
 
 export function seedInteractiveLessonsForDemo(userId: string) {
-  const local = ensureDemo(readLocal(), userId);
+  const local = ensureLibrary(readLocal(), userId);
   writeLocal(local);
+  const hubIds = buildHubSlidesDecks().map((h) => h.id);
+  writeLibraryLinks(userId, [...readLibraryLinks(userId), ...hubIds]);
 }

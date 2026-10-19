@@ -870,7 +870,7 @@ export function InteractiveLessonEditor({
 
   // Portal to body — dashboard TabsContent uses transform, which would trap position:fixed.
   return createPortal(
-    <div className="ilv-root ilv-editor" role="dialog" aria-modal="true" aria-label="Interactive lesson editor">
+    <div className="ilv-root ilv-editor" role="dialog" aria-modal="true" aria-label="Slides editor">
       <header className="ilv-editor-header">
         <div className="ilv-editor-header-left">
           <button type="button" className="ilv-btn ilv-btn-secondary" onClick={onClose} aria-label="Back">
