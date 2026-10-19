@@ -44,6 +44,7 @@ import { setupOCRFilmComputerMusic } from './setupOCRFilmComputerMusic';
 import { setupWTDBloodBrothers } from './setupWTDBloodBrothers';
 import { setupLSOYear6Example } from './setupLSOYear6';
 import { setupROHRomeoJuliet } from './setupROHRomeoJuliet';
+import { filterLessonEntries } from './lessonEntries';
 
 type Row = Record<string, any>;
 
@@ -297,9 +298,8 @@ function attachPhaseStandardsToSnapshotLesson(
   const isYear6Music = sheetName === 'Year 6 Music';
   if (!isEyfs && !isYear6Music) return;
 
-  for (const [num, lesson] of Object.entries(allLessonsData)) {
+  for (const [num, lesson] of Object.entries(filterLessonEntries(allLessonsData))) {
     if (!lesson || typeof lesson !== 'object') continue;
-    if (['teachingUnits', 'lessonStandards'].includes(num)) continue;
 
     if (isEyfs) {
       // Store ELG texts in lessonStandards (legacy EYFS path) AND custom objective
@@ -386,7 +386,12 @@ export async function seedDemoData(): Promise<void> {
     for (const row of tables.lessons || []) {
       if (SKIP_SHEETS.has(row.sheet_name)) continue;
       const raw = row.data || {};
-      const allLessonsData: Row = structuredClone(raw.allLessonsData ?? raw);
+      // Snapshot rows store lessons flat under `data` (e.g. { lesson1: {...} }).
+      // Never nest sheet metadata back into `data` — lessonsApi.getBySheet spreads
+      // `data` as allLessonsData, and keys like allLessonsData/lessonStandards would
+      // show up as fake lessons in the Week planner picker.
+      const cloned = structuredClone(raw.allLessonsData ?? raw);
+      const allLessonsData: Row = filterLessonEntries(cloned);
       if (!allLessonsData || Object.keys(allLessonsData).length === 0) continue;
 
       const lessonStandardsMap: Record<string, string[]> = {
@@ -394,15 +399,18 @@ export async function seedDemoData(): Promise<void> {
       };
       attachPhaseStandardsToSnapshotLesson(row.sheet_name, allLessonsData, lessonStandardsMap);
 
+      const lessonNumbers = (row.lesson_numbers || Object.keys(allLessonsData)).filter(
+        (n: string) => !!allLessonsData[n],
+      );
       const bundle = {
         allLessonsData,
-        lessonNumbers: row.lesson_numbers || Object.keys(allLessonsData),
+        lessonNumbers,
         teachingUnits: raw.teachingUnits || row.teaching_units || [],
         lessonStandards: lessonStandardsMap,
       };
       localStorage.setItem(`lesson-data-${row.sheet_name}`, JSON.stringify(bundle));
       sheetNames.push({ sheet: row.sheet_name });
-      dbLessons.push({ ...row, data: { ...(typeof raw === 'object' ? raw : {}), allLessonsData, lessonStandards: lessonStandardsMap } });
+      dbLessons.push({ ...row, data: allLessonsData, lesson_numbers: lessonNumbers });
     }
 
     for (const { sheet, data } of generatedPerSheet) {

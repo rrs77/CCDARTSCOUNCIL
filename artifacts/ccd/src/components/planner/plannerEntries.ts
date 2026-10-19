@@ -2,48 +2,13 @@ import type { LessonPlan } from '../../contexts/DataContext';
 import type { ClassLessons } from './usePlannerData';
 import {
   addDays,
+  normalizeTime,
   timeToMinutes,
   ymd,
   type DayEntry,
   type PlannerEvent,
   type TimetableSlot,
 } from './plannerModel';
-
-/** Timetable slots and scheduled lessons for one day, matched on class + start time. */
-export function buildDayEntries(
-  date: Date,
-  classIds: Set<string>,
-  plans: LessonPlan[],
-  slots: TimetableSlot[],
-): DayEntry[] {
-  const key = ymd(date);
-  const dayPlans = plans.filter(
-    (p) => classIds.has(p.className) && ymd(new Date(p.date)) === key && p.status !== 'cancelled',
-  );
-  const used = new Set<string>();
-  const entries: DayEntry[] = [];
-  slots
-    .filter((s) => s.day === date.getDay() && classIds.has(s.className))
-    .forEach((slot) => {
-      const plan = dayPlans.find((p) => !used.has(p.id) && p.className === slot.className && p.time === slot.startTime);
-      if (plan) used.add(plan.id);
-      entries.push({
-        key: `${slot.id}:${key}`,
-        classId: slot.className,
-        time: slot.startTime,
-        endTime: slot.endTime,
-        location: slot.location,
-        plan,
-        slot,
-      });
-    });
-  dayPlans
-    .filter((p) => !used.has(p.id))
-    .forEach((plan) =>
-      entries.push({ key: plan.id, classId: plan.className, time: plan.time || '', plan }),
-    );
-  return entries.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
-}
 
 export const eventsOn = (date: Date, events: PlannerEvent[]) => {
   const d = ymd(date);
@@ -52,6 +17,61 @@ export const eventsOn = (date: Date, events: PlannerEvent[]) => {
 
 export const isClosedDay = (date: Date, events: PlannerEvent[]) =>
   eventsOn(date, events).some((e) => e.type === 'holiday' || e.type === 'inset');
+
+/**
+ * Timetable slots and scheduled lessons for one day, matched on class + start time.
+ * Recurring outline slots are skipped on holiday / INSET days when `events` are provided;
+ * one-off lessons (no matching slot) still appear.
+ */
+export function buildDayEntries(
+  date: Date,
+  classIds: Set<string>,
+  plans: LessonPlan[],
+  slots: TimetableSlot[],
+  events: PlannerEvent[] = [],
+): DayEntry[] {
+  const key = ymd(date);
+  const closed = isClosedDay(date, events);
+  const dayPlans = plans.filter(
+    (p) => classIds.has(p.className) && ymd(new Date(p.date)) === key && p.status !== 'cancelled',
+  );
+  const used = new Set<string>();
+  const entries: DayEntry[] = [];
+  if (!closed) {
+    slots
+      .filter((s) => s.day === date.getDay() && classIds.has(s.className))
+      .forEach((slot) => {
+        const slotTime = normalizeTime(slot.startTime);
+        const plan = dayPlans.find(
+          (p) =>
+            !used.has(p.id) &&
+            p.className === slot.className &&
+            normalizeTime(p.time) === slotTime,
+        );
+        if (plan) used.add(plan.id);
+        entries.push({
+          key: `${slot.id}:${key}`,
+          classId: slot.className,
+          time: slot.startTime,
+          endTime: slot.endTime,
+          location: slot.location,
+          plan,
+          slot,
+        });
+      });
+  }
+  dayPlans
+    .filter((p) => !used.has(p.id))
+    .forEach((plan) =>
+      entries.push({
+        key: plan.id,
+        classId: plan.className,
+        time: plan.time || '',
+        plan,
+      }),
+    );
+  return entries.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
+}
 
 export function lessonTitle(plan: LessonPlan | undefined, cache?: ClassLessons | 'loading') {
   if (!plan) return '';
@@ -91,7 +111,11 @@ export function nextFreeSlots(
         return;
       }
       const taken = plans.some(
-        (p) => p.className === classId && ymd(new Date(p.date)) === ymd(day) && p.time === s.startTime && p.status !== 'cancelled',
+        (p) =>
+          p.className === classId &&
+          ymd(new Date(p.date)) === ymd(day) &&
+          normalizeTime(p.time) === normalizeTime(s.startTime) &&
+          p.status !== 'cancelled',
       );
       if (!taken) out.push({ date: day, time: s.startTime });
     });
