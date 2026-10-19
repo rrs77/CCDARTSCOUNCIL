@@ -9,14 +9,12 @@ import {
   MapPin,
   Search,
   ShoppingBag,
-  SlidersHorizontal,
   Users,
 } from 'lucide-react';
 import { openPartnerHub, type PartnerHubConfig } from '../../config/partnerHubs';
 import {
   formatPricePence,
   getPaidProductsForPartner,
-  PAID_PARTNER_PRODUCTS,
   type PaidPartnerSlug,
 } from '../../config/paidPartnerProducts';
 import {
@@ -40,19 +38,22 @@ type ResourceTypeFilter = (typeof RESOURCE_TYPES)[number] | 'All';
 const PAID_RESOURCE_TYPES = ['Scheme of work', 'Lesson packs', 'CPD course'] as const;
 type PaidTypeFilter = (typeof PAID_RESOURCE_TYPES)[number] | 'All';
 
-/** Hub card cover photos — cycle a small local set so the grid feels varied. */
-const HUB_COVERS = [
-  '/login/hero-arts-clean.jpg',
-  '/login/hero-arts.jpg',
-  '/music-hubs/placeholder-hero.svg',
-] as const;
+/**
+ * One unique venue/building photo per Music Hub — never reuse across cards,
+ * never the rehearsal collage. Files live at `/music-hubs/covers/{hubId}.jpg`.
+ */
+const HUB_COVER_ALIASES: Record<string, string> = {
+  'essex-southend-on-sea-and-thurrock': 'greater-essex',
+  triborough: 'tri-borough',
+  'west-of-england': 'west-of-england-avon',
+};
 
 const HUB_TAG_SETS: string[][] = [
-  ['CPD', 'Resources', 'Ensembles'],
-  ['CPD', 'Resources', 'Projects'],
-  ['Resources', 'Ensembles', 'Youth ensembles'],
   ['CPD', 'Ensembles', 'Projects'],
-  ['Resources', 'Projects', 'Youth ensembles'],
+  ['CPD', 'Resources', 'Youth'],
+  ['CPD', 'Teacher support'],
+  ['Resources', 'Ensembles', 'Projects'],
+  ['CPD', 'Resources', 'Ensembles'],
 ];
 
 function OrgTag({ label }: { label: string }) {
@@ -578,6 +579,8 @@ type PaidListing = {
   subject: Discipline | 'Cross-arts';
   ages: string[];
   hub?: PartnerHubConfig;
+  logoLabel?: string;
+  logoBg?: string;
 };
 
 function paidTypeFromMeta(title: string, meta?: string): (typeof PAID_RESOURCE_TYPES)[number] {
@@ -595,38 +598,99 @@ function paidSubjectFromPartner(slug: string, name: string): Discipline | 'Cross
   return 'Music';
 }
 
-function buildPaidListings(): PaidListing[] {
-  const bySlug = new Map(PAID_RESOURCES.map((o) => [o.hub.slug, o]));
-  const fromProducts: PaidListing[] = PAID_PARTNER_PRODUCTS.filter(
-    (p) => p.partnerSlug !== 'jazznorth',
-  ).map((p) => {
-    const hub = bySlug.get(p.partnerSlug)?.hub;
-    const type = paidTypeFromMeta(p.title, p.meta);
-    return {
-      id: p.id,
-      title: p.title,
-      partnerSlug: p.partnerSlug,
-      partnerName: p.partnerName,
-      description: p.meta || hub?.tagline || 'Classroom-ready teaching resources.',
-      type,
-      pricePence: p.pricePence,
-      priceLabel:
-        p.pricePence === 0
-          ? 'Free'
-          : `From ${formatPricePence(p.pricePence)}${/year|licence/i.test(p.meta || '') ? ' / year' : ''}`,
-      subject: paidSubjectFromPartner(p.partnerSlug, p.partnerName),
-      ages: ['KS1', 'KS2', 'KS3', 'KS4'],
-      hub,
-    };
-  });
+/** Music Hub orgs must never appear in Paid resources — those live on hub pages. */
+const HUB_OWNED_PAID_SLUGS = new Set(['ems', 'triborough', 'jazznorth']);
 
-  // Partner-level cards so the grid still feels rich when products are few
-  const partnerCards: PaidListing[] = PAID_RESOURCES.map((o) => {
-    const products = getPaidProductsForPartner(o.hub.slug as PaidPartnerSlug);
-    const from = products[0];
+/** Showcase providers from the Studio mockup (one card each). */
+const PAID_SHOWCASE: Array<{
+  id: string;
+  title: string;
+  description: string;
+  type: (typeof PAID_RESOURCE_TYPES)[number];
+  pricePence: number;
+  priceLabel: string;
+  subject: Discipline;
+  ages: string[];
+  logoLabel: string;
+  logoBg: string;
+}> = [
+  {
+    id: 'charanga',
+    title: 'Charanga Music Scheme',
+    description: 'Complete music scheme for EYFS–KS2.',
+    type: 'Scheme of work',
+    pricePence: 17500,
+    priceLabel: 'From £175 / year',
+    subject: 'Music',
+    ages: ['EYFS', 'KS1', 'KS2'],
+    logoLabel: 'Charanga',
+    logoBg: '#1D4ED8',
+  },
+  {
+    id: 'step-into-dance',
+    title: 'Step Into Dance',
+    description: 'Creative dance schemes and CPD.',
+    type: 'Scheme of work',
+    pricePence: 12000,
+    priceLabel: 'From £120 / year',
+    subject: 'Dance',
+    ages: ['KS1', 'KS2', 'KS3'],
+    logoLabel: 'Step Into Dance',
+    logoBg: '#9D174D',
+  },
+  {
+    id: 'kapow-primary-art',
+    title: 'Kapow Primary Art',
+    description: 'Whole-school art and design scheme.',
+    type: 'Scheme of work',
+    pricePence: 8900,
+    priceLabel: 'From £89 / year',
+    subject: 'Art & design',
+    ages: ['EYFS', 'KS1', 'KS2'],
+    logoLabel: 'Kapow',
+    logoBg: '#0F766E',
+  },
+  {
+    id: 'music-tech-schools',
+    title: 'Music Tech for Schools',
+    description: 'Digital music resources and courses.',
+    type: 'CPD course',
+    pricePence: 6000,
+    priceLabel: 'From £60',
+    subject: 'Music',
+    ages: ['KS2', 'KS3', 'KS4'],
+    logoLabel: 'Music Tech',
+    logoBg: '#4338E8',
+  },
+  {
+    id: 'youth-theatre-toolkit',
+    title: 'Youth Theatre Toolkit',
+    description: 'Drama strategies and performance projects.',
+    type: 'Lesson packs',
+    pricePence: 6000,
+    priceLabel: 'From £60',
+    subject: 'Drama',
+    ages: ['KS3', 'KS4', 'KS5'],
+    logoLabel: 'Youth Theatre',
+    logoBg: '#B45309',
+  },
+];
+
+/**
+ * One card per company/provider — never per workshop/course, never Music Hub orgs.
+ */
+function buildPaidListings(): PaidListing[] {
+  const partnerCards: PaidListing[] = PAID_RESOURCES.filter(
+    (o) => !HUB_OWNED_PAID_SLUGS.has(o.hub.slug),
+  ).map((o) => {
+    const products = getPaidProductsForPartner(o.hub.slug as PaidPartnerSlug).filter(
+      (p) => !HUB_OWNED_PAID_SLUGS.has(p.partnerSlug),
+    );
+    const priced = products.filter((p) => p.pricePence > 0);
+    const from = priced.sort((a, b) => a.pricePence - b.pricePence)[0] ?? products[0];
     const type = from ? paidTypeFromMeta(from.title, from.meta) : 'Lesson packs';
     return {
-      id: `partner-${o.hub.slug}`,
+      id: o.hub.slug,
       title: o.hub.displayName,
       partnerSlug: o.hub.slug,
       partnerName: o.hub.displayName,
@@ -638,20 +702,28 @@ function buildPaidListings(): PaidListing[] {
           ? 'Free'
           : `From ${formatPricePence(from.pricePence)} / year`
         : 'See pricing',
-      subject: (o.disciplines[0] as Discipline) || 'Music',
-      ages: ['EYFS', 'KS1', 'KS2', 'KS3'],
+      subject: (o.disciplines[0] as Discipline) || paidSubjectFromPartner(o.hub.slug, o.hub.displayName),
+      ages: ['EYFS', 'KS1', 'KS2', 'KS3', 'KS4'],
       hub: o.hub,
     };
   });
 
-  const seen = new Set<string>();
-  const out: PaidListing[] = [];
-  for (const item of [...partnerCards, ...fromProducts]) {
-    if (seen.has(item.id)) continue;
-    seen.add(item.id);
-    out.push(item);
-  }
-  return out;
+  const showcase: PaidListing[] = PAID_SHOWCASE.map((s) => ({
+    id: s.id,
+    title: s.title,
+    partnerSlug: s.id,
+    partnerName: s.title,
+    description: s.description,
+    type: s.type,
+    pricePence: s.pricePence,
+    priceLabel: s.priceLabel,
+    subject: s.subject,
+    ages: s.ages,
+    logoLabel: s.logoLabel,
+    logoBg: s.logoBg,
+  }));
+
+  return [...partnerCards, ...showcase].sort((a, b) => a.title.localeCompare(b.title));
 }
 
 const PAID_TYPE_TONE: Record<(typeof PAID_RESOURCE_TYPES)[number], string> = {
@@ -731,7 +803,6 @@ export function PaidResourcesDirectoryView() {
 
   const openListing = (l: PaidListing) => {
     if (l.hub) openPartnerHub(l.hub.slug);
-    else openPartnerHub(l.partnerSlug);
   };
 
   return (
@@ -842,8 +913,11 @@ export function PaidResourcesDirectoryView() {
                       {l.hub ? (
                         <OrgLogoStrip hub={l.hub} />
                       ) : (
-                        <div className="flex h-[4.25rem] items-center justify-center rounded-xl bg-[#FEF3C7] px-4 text-[14px] font-bold text-[#92400E]">
-                          {l.partnerName}
+                        <div
+                          className="flex h-[4.25rem] items-center justify-center rounded-xl px-4 text-[13px] font-bold text-white"
+                          style={{ backgroundColor: l.logoBg || '#92400E' }}
+                        >
+                          {l.logoLabel || l.partnerName}
                         </div>
                       )}
                       <button
@@ -859,18 +933,20 @@ export function PaidResourcesDirectoryView() {
                       </button>
                     </div>
                     <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
-                      <span className={`w-fit rounded-full px-2.5 py-0.5 text-[11px] font-bold ${PAID_TYPE_TONE[l.type]}`}>
+                      <p className="text-[12px] font-semibold text-[#B45309]">{l.subject}</p>
+                      <h3 className={`mt-0.5 text-[15px] font-bold leading-snug tracking-tight ${ink}`}>{l.title}</h3>
+                      <p className={`mt-1.5 line-clamp-2 text-[12px] leading-snug ${muted}`}>{l.description}</p>
+                      <span className={`mt-2 w-fit rounded-full px-2.5 py-0.5 text-[11px] font-bold ${PAID_TYPE_TONE[l.type]}`}>
                         {l.type}
                       </span>
-                      <h3 className={`mt-2 text-[15px] font-bold leading-snug tracking-tight ${ink}`}>{l.title}</h3>
-                      <p className={`mt-1.5 line-clamp-2 text-[12px] leading-snug ${muted}`}>{l.description}</p>
                       <div className="mt-auto flex items-center justify-between gap-2 pt-3">
                         <p className="text-[14px] font-bold text-[#92400E]">{l.priceLabel}</p>
                         <button
                           type="button"
                           aria-label={`Open ${l.title}`}
                           onClick={() => openListing(l)}
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7] text-[#92400E] transition group-hover:bg-[#B45309] group-hover:text-white"
+                          disabled={!l.hub}
+                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7] text-[#92400E] transition enabled:group-hover:bg-[#B45309] enabled:group-hover:text-white disabled:opacity-50"
                         >
                           <ArrowRight className="h-4 w-4" />
                         </button>
@@ -901,35 +977,39 @@ export function PartnerSectionTabs({
       label: 'Music Hubs',
       hint: 'Map and local areas',
       Icon: Users,
-      on: 'bg-[#1A1A40] text-white shadow-[0_12px_28px_-14px_rgba(26,26,64,0.75)]',
-      off: 'bg-[#E9E6FF] text-[#1F1B4D] hover:bg-[#D8D4F5]',
+      on: 'bg-[#0F5C52] text-white shadow-[0_8px_20px_-12px_rgba(15,92,82,0.55)]',
+      off: 'bg-[#E8F3EF] text-[#1F1B4D] hover:bg-[#DCEEE7]',
       chipOn: 'bg-white/15',
-      chipOff: 'bg-[#4338E8]',
+      chipOff: 'bg-[#0F5C52]',
+      hintOn: 'text-white/75',
     },
     {
       id: 'organisations' as const,
       label: 'Arts organisations',
       hint: 'Free cultural resources',
       Icon: Landmark,
-      on: 'bg-[#5B4BDB] text-white shadow-[0_12px_28px_-14px_rgba(91,75,219,0.7)]',
-      off: 'bg-[#EDE9FE] text-[#1F1B4D] hover:bg-[#DDD6FE]',
-      chipOn: 'bg-white/20',
-      chipOff: 'bg-[#5B4BDB]',
+      on: 'bg-[#6B5CE0] text-white shadow-[0_8px_20px_-12px_rgba(107,92,224,0.5)]',
+      off: 'bg-[#EEEAFB] text-[#1F1B4D] hover:bg-[#E4DEF8]',
+      chipOn: 'bg-white/15',
+      chipOff: 'bg-[#6B5CE0]',
+      hintOn: 'text-white/75',
     },
     {
       id: 'paid-resources' as const,
       label: 'Paid resources',
       hint: 'Schemes and courses',
       Icon: ShoppingBag,
-      on: 'bg-[#B45309] text-white shadow-[0_12px_28px_-14px_rgba(180,83,9,0.65)]',
-      off: 'bg-[#FEF9C3] text-[#78350F] hover:bg-[#FDE68A]',
-      chipOn: 'bg-white/20',
-      chipOff: 'bg-[#B45309]',
+      // Pale yellow selected (mockup) — not a heavy solid orange
+      on: 'bg-[#F5E7A0] text-[#6B4410] shadow-[0_8px_20px_-12px_rgba(180,140,40,0.35)] ring-1 ring-[#E5C84A]/70',
+      off: 'bg-[#FBF3D8] text-[#7A4E0C] hover:bg-[#F7EAC0]',
+      chipOn: 'bg-[#C47A1A]',
+      chipOff: 'bg-[#C47A1A]',
+      hintOn: 'text-[#6B4410]/70',
     },
   ];
 
   return (
-    <div role="tablist" aria-label="Partner Hubs sections" className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+    <div role="tablist" aria-label="Partner Hubs sections" className="flex flex-wrap items-stretch gap-2.5">
       {tabs.map((tab) => {
         const selected = section === tab.id;
         const Icon = tab.Icon;
@@ -940,21 +1020,21 @@ export function PartnerSectionTabs({
             role="tab"
             aria-selected={selected}
             onClick={() => onSection(tab.id)}
-            className={`flex min-h-[88px] items-center gap-3.5 rounded-2xl px-4 py-4 text-left transition sm:px-5 sm:py-5 ${
+            className={`inline-flex max-w-full items-center gap-2.5 rounded-2xl px-3.5 py-2.5 text-left transition sm:px-4 sm:py-3 ${
               selected ? tab.on : tab.off
             }`}
           >
             <span
-              className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-xl ${
+              className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg sm:h-9 sm:w-9 ${
                 selected ? tab.chipOn : tab.chipOff
               }`}
               aria-hidden
             >
-              <Icon className="h-5 w-5 text-white" strokeWidth={2.25} />
+              <Icon className="h-4 w-4 text-white" strokeWidth={2.2} />
             </span>
-            <span className="min-w-0">
-              <span className="block text-[16px] font-extrabold tracking-tight">{tab.label}</span>
-              <span className={`mt-0.5 block text-[13px] font-medium ${selected ? 'text-white/75' : 'opacity-75'}`}>
+            <span className="min-w-0 pr-1">
+              <span className="block text-[14px] font-bold tracking-tight sm:text-[15px]">{tab.label}</span>
+              <span className={`mt-0.5 block text-[11px] font-medium sm:text-[12px] ${selected ? tab.hintOn : 'opacity-70'}`}>
                 {tab.hint}
               </span>
             </span>
@@ -965,54 +1045,54 @@ export function PartnerSectionTabs({
   );
 }
 
-/** Search + discipline pills + Filters (Music Hubs mockup). */
+/** Search + All regions / Music / Age groups / Opportunities + List view (target). */
 export function MusicHubToolbar({
-  discipline,
-  onDiscipline,
   searchSlot,
+  view,
+  onView,
 }: {
-  discipline: Discipline | 'All';
-  onDiscipline: (d: Discipline | 'All') => void;
   searchSlot?: React.ReactNode;
+  view?: 'grid' | 'list';
+  onView?: (v: 'grid' | 'list') => void;
 }) {
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
       <div className="min-w-0 flex-1">
         {searchSlot ?? (
-          <label className="flex h-12 items-center gap-2.5 rounded-2xl border border-[#1F1B4D]/10 bg-white px-4 shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
+          <label className="flex h-11 items-center gap-2.5 rounded-2xl border border-[#1F1B4D]/10 bg-white px-4 shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
             <Search className="h-4 w-4 text-[#1F1B4D]/40" aria-hidden />
             <input
-              placeholder="Search hubs, places, organisations and resources…"
+              placeholder="Search hubs, places or resources…"
               className="h-full min-w-0 flex-1 bg-transparent text-[14px] text-[#1F1B4D] outline-none placeholder:text-[#1F1B4D]/40"
             />
           </label>
         )}
       </div>
-      <div className="flex flex-wrap items-center gap-2" role="radiogroup" aria-label="Filter by discipline">
-        {(['All', ...DISCIPLINES] as const).map((d) => (
+      <div className="flex flex-wrap items-center gap-2">
+        {['All regions', 'Music', 'Age groups', 'Opportunities'].map((label) => (
           <button
-            key={d}
+            key={label}
             type="button"
-            role="radio"
-            aria-checked={discipline === d}
-            onClick={() => onDiscipline(d)}
-            className={`min-h-[40px] rounded-full px-3.5 text-[13px] font-semibold transition ${
-              discipline === d
-                ? 'bg-[#1A1A40] text-white shadow-[0_6px_16px_-10px_rgba(26,26,64,0.7)]'
-                : 'bg-white text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/12 hover:ring-[#1F1B4D]/25'
-            }`}
+            className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/12"
           >
-            {d}
+            {label}
+            <ChevronDown className="h-3.5 w-3.5 opacity-45" aria-hidden />
           </button>
         ))}
-        <button
-          type="button"
-          className="inline-flex min-h-[40px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/12"
-        >
-          <SlidersHorizontal className="h-3.5 w-3.5 opacity-55" aria-hidden />
-          Filters
-          <ChevronDown className="h-3.5 w-3.5 opacity-50" />
-        </button>
+        {onView && (
+          <button
+            type="button"
+            onClick={() => onView(view === 'list' ? 'grid' : 'list')}
+            className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition ${
+              view === 'list'
+                ? 'bg-[#0B6B5F] text-white'
+                : 'bg-white text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/12'
+            }`}
+          >
+            <List className="h-3.5 w-3.5" aria-hidden />
+            List view
+          </button>
+        )}
       </div>
     </div>
   );
@@ -1026,10 +1106,10 @@ const HUB_CARD_LOGOS: Record<string, string> = {
   triborough: '/music-hubs/logos/tri-borough-music-hub.png',
 };
 
-function hubCoverSrc(id: string) {
-  let n = 0;
-  for (let i = 0; i < id.length; i++) n = (n + id.charCodeAt(i) * (i + 1)) % 997;
-  return HUB_COVERS[n % HUB_COVERS.length];
+/** Resolve a hub id to its dedicated cover asset (one file per hub). */
+export function hubCoverSrc(id: string) {
+  const coverId = HUB_COVER_ALIASES[id] ?? id;
+  return `/music-hubs/covers/${coverId}.jpg`;
 }
 
 function hubTagsFor(id: string) {
@@ -1041,7 +1121,8 @@ function hubTagsFor(id: string) {
 /** Friendly card title — e.g. "Essex Music Hub", "Cambridgeshire Music". */
 export function musicHubCardTitle(id: string, fullName: string, lead?: string) {
   if (id === 'cambridgeshire-and-peterborough') return 'Cambridgeshire Music';
-  if (id.includes('essex') || /essex/i.test(fullName)) return 'Essex Music Hub';
+  if (id.includes('essex') || /essex/i.test(fullName)) return 'Greater Essex Music Hub';
+  if (id === 'tri-borough' || id === 'triborough' || /tri-?borough/i.test(fullName)) return 'Tri-borough Music Hub';
   if (/suffolk/i.test(fullName) || id.includes('suffolk')) return 'Suffolk Music Hub';
   if (lead && /music$/i.test(lead) && lead.length < 40) return lead;
   return fullName
@@ -1050,6 +1131,15 @@ export function musicHubCardTitle(id: string, fullName: string, lead?: string) {
     .replace(/ \(BLMK\)/, '');
 }
 
+export function musicHubCardDetail(id: string, lead?: string, ladCount?: number): string {
+  if (id.includes('essex')) return 'Music education, projects and CPD across Essex.';
+  if (id === 'cambridgeshire-and-peterborough') return 'Inspiring music making across Cambridgeshire.';
+  if (id === 'tri-borough' || id === 'triborough') return 'Supporting music education across the tri-borough area.';
+  if (lead) return `${lead} delivers music education across ${ladCount ?? 0} local areas.`;
+  return `Music education hub covering ${ladCount ?? 0} local areas.`;
+}
+
+/** Compact hub card for the map+cards side-by-side layout (target). */
 export function MusicHubResultCard({
   id,
   name,
@@ -1068,41 +1158,55 @@ export function MusicHubResultCard({
   const logo = HUB_CARD_LOGOS[id];
   const initial = name.replace(/^The /, '').charAt(0).toUpperCase();
   const tags = hubTagsFor(id);
+  const [saved, setSaved] = useState(false);
   return (
-    <button
-      type="button"
-      onClick={onOpen}
-      className="group flex w-full flex-col overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#4338E8]/35 hover:shadow-[0_14px_32px_-18px_rgba(67,56,232,0.35)]"
-    >
-      <div className="relative aspect-[16/10] overflow-hidden bg-[#E9E6FF]">
-        <img
-          src={hubCoverSrc(id)}
-          alt=""
-          className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.04]"
-          loading="lazy"
-        />
-        <span className="absolute left-2.5 top-2.5 inline-flex items-center gap-1 rounded-full bg-[#1A1A40]/92 px-2.5 py-1 text-[10px] font-bold text-white shadow-sm backdrop-blur-sm">
-          <MapPin className="h-3 w-3 shrink-0 opacity-90" aria-hidden />
-          {region}
-        </span>
-      </div>
-      <div className="relative flex flex-1 flex-col px-3.5 pb-3.5 pt-0">
-        <span className="-mt-6 mb-2 flex h-12 w-12 items-center justify-center overflow-hidden rounded-full bg-[#1A1A40] text-[14px] font-bold text-white ring-[3px] ring-white">
-          {logo ? <img src={logo} alt="" className="h-7 w-7 object-contain brightness-0 invert" /> : initial}
-        </span>
-        <h3 className={`text-[15px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
-        <p className={`mt-0.5 flex items-center gap-1 text-[12px] ${muted}`}>
-          <MapPin className="h-3 w-3 shrink-0" aria-hidden />
-          <span className="truncate">{location}</span>
-        </p>
-        <p className={`mt-1.5 line-clamp-2 text-[12px] leading-snug ${muted}`}>{detail}</p>
-        <div className="mt-auto flex flex-wrap gap-1.5 pt-2.5">
-          {tags.map((t) => (
-            <OrgTag key={t} label={t} />
-          ))}
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_12px_28px_-16px_rgba(11,107,95,0.35)]">
+      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 flex-col text-left">
+        <div className="relative aspect-[16/9] overflow-hidden bg-[#E4F4EF]">
+          <img
+            src={hubCoverSrc(id)}
+            alt=""
+            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
+            loading="lazy"
+          />
+          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-[#1F1B4D] shadow-sm">
+            {region}
+          </span>
         </div>
-      </div>
-    </button>
+        <div className="relative flex flex-1 flex-col px-3 pb-3 pt-0">
+          <span className="-mt-5 mb-1.5 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#0B6B5F] text-[13px] font-bold text-white ring-[3px] ring-white">
+            {logo ? <img src={logo} alt="" className="h-6 w-6 object-contain brightness-0 invert" /> : initial}
+          </span>
+          <h3 className={`text-[14px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
+          <p className={`mt-0.5 text-[11px] font-medium ${muted}`}>{location}</p>
+          <p className={`mt-1 line-clamp-2 text-[11px] leading-snug ${muted}`}>{detail}</p>
+          <div className="mt-auto flex items-end justify-between gap-2 pt-2">
+            <div className="flex flex-wrap gap-1">
+              {tags.map((t) => (
+                <OrgTag key={t} label={t === 'Youth ensembles' ? 'Youth' : t} />
+              ))}
+            </div>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white">
+              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+            </span>
+          </div>
+        </div>
+      </button>
+      <button
+        type="button"
+        aria-label={saved ? 'Remove from saved' : 'Save hub'}
+        aria-pressed={saved}
+        onClick={(e) => {
+          e.stopPropagation();
+          setSaved((v) => !v);
+        }}
+        className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#1F1B4D]/10 ${
+          saved ? 'text-[#E11D48]' : 'text-[#1F1B4D]/40 hover:text-[#E11D48]'
+        }`}
+      >
+        <Heart className={`h-3.5 w-3.5 ${saved ? 'fill-current' : ''}`} />
+      </button>
+    </article>
   );
 }
 
@@ -1172,14 +1276,15 @@ export function MusicHubsResultsHeader({
   );
 }
 
-/** Right-hand selected area panel beside the map (mockup). */
+/** Selected area panel — chips and CTA are interactive. */
 export function SelectedAreaPanel({
   title,
   hubCount,
   blurb,
   localAreas,
   onViewHubs,
-  photoSrc = '/login/hero-arts-clean.jpg',
+  onSelectLocalArea,
+  photoSrc = '/music-hubs/covers/greater-essex.jpg',
   statLabel,
 }: {
   title: string;
@@ -1187,6 +1292,7 @@ export function SelectedAreaPanel({
   blurb: string;
   localAreas: string[];
   onViewHubs: () => void;
+  onSelectLocalArea?: (name: string) => void;
   photoSrc?: string;
   /** Override the default “N Music Hubs Across {title}” line. */
   statLabel?: string;
@@ -1196,14 +1302,14 @@ export function SelectedAreaPanel({
     `${hubCount} Music Hub${hubCount === 1 ? '' : 's'} Across ${title === 'England' ? 'England' : title}`;
 
   return (
-    <aside className="flex h-full min-h-[300px] flex-col bg-white p-5 sm:min-h-[340px] sm:p-6 lg:border-l lg:border-[#1F1B4D]/[0.06]">
+    <aside className="flex h-full min-h-[260px] flex-col rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:p-6">
       <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#1F1B4D]/45">Selected area</p>
 
       <div className="mt-3 flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-[24px] font-bold leading-tight tracking-tight text-[#1F1B4D] sm:text-[26px]">{title}</h3>
+          <h3 className="text-[22px] font-bold leading-tight tracking-tight text-[#1F1B4D] sm:text-[24px]">{title}</h3>
           <p className="mt-2 flex items-center gap-2 text-[14px] font-semibold text-[#1F1B4D]">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E9E6FF] text-[#4338E8]" aria-hidden>
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E4F4EF] text-[#0B6B5F]" aria-hidden>
               <Users className="h-3.5 w-3.5" strokeWidth={2.5} />
             </span>
             <span>{stat}</span>
@@ -1223,12 +1329,14 @@ export function SelectedAreaPanel({
           <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#1F1B4D]/45">Local areas</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {localAreas.slice(0, 8).map((a) => (
-              <span
+              <button
                 key={a}
-                className="rounded-full bg-[#E0E7FF] px-2.5 py-1 text-[12px] font-semibold text-[#4338E8]"
+                type="button"
+                onClick={() => onSelectLocalArea?.(a)}
+                className="rounded-full bg-[#E4F4EF] px-2.5 py-1 text-[12px] font-semibold text-[#0B6B5F] transition hover:bg-[#0B6B5F] hover:text-white"
               >
                 {a}
-              </span>
+              </button>
             ))}
           </div>
         </div>
@@ -1237,7 +1345,7 @@ export function SelectedAreaPanel({
       <button
         type="button"
         onClick={onViewHubs}
-        className="mt-auto inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[14px] font-bold text-white shadow-[0_10px_24px_-14px_rgba(67,56,232,0.65)] transition hover:bg-[#3529d1]"
+        className="mt-auto inline-flex min-h-[48px] w-full items-center justify-center gap-2 rounded-xl bg-[#0B6B5F] px-4 text-[14px] font-bold text-white shadow-[0_10px_24px_-14px_rgba(11,107,95,0.55)] transition hover:bg-[#085549]"
       >
         View hubs in {title} <ArrowRight className="h-4 w-4" aria-hidden />
       </button>
