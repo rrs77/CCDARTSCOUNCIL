@@ -13,6 +13,8 @@ import {
   Package,
   Search,
   Eraser,
+  Download,
+  Upload,
 } from 'lucide-react';
 import { supabase } from '../../config/supabase';
 import { getVercelApiUrl } from '../../utils/apiUrl';
@@ -23,6 +25,11 @@ import type { InvitationStatus, Profile, ProfileRole, ProfileStatus } from '../.
 import { EditUserModal } from './EditUserModal';
 import { AssignPacksModal } from './AssignPacksModal';
 import { listAdminHubs } from '../../utils/hubAdminApi';
+import { isDemoModeActive } from '../../utils/demoMode';
+import {
+  filterDemoUsers,
+  getDemoUsersStore,
+} from '../../data/demoUsers';
 import toast from 'react-hot-toast';
 
 const BASE_ROLES: { value: ProfileRole; label: string }[] = [
@@ -151,7 +158,7 @@ function formatDate(iso: string | undefined): string {
   }
 }
 
-type SortKey = 'created_at' | 'email' | 'display_name' | 'role';
+type SortKey = 'created_at' | 'email' | 'display_name' | 'role' | 'school_or_org' | 'updated_at';
 
 interface ListResponse {
   users: Profile[];
@@ -195,9 +202,14 @@ export function UserManagement() {
   const [filterRole, setFilterRole] = useState<string>('all');
   const [filterStatus, setFilterStatus] = useState<string>('all');
   const [filterHub, setFilterHub] = useState<string>('all');
+  const [filterSchool, setFilterSchool] = useState<string>('all');
   const [hubOptions, setHubOptions] = useState<{ id: string; label: string }[]>([]);
+  const [schoolOptions, setSchoolOptions] = useState<string[]>([]);
   const [sortKey, setSortKey] = useState<SortKey>('created_at');
   const [sortAsc, setSortAsc] = useState(false);
+  const [csvImporting, setCsvImporting] = useState(false);
+  const csvInputRef = useRef<HTMLInputElement>(null);
+  const demoMode = isDemoModeActive();
   const [page, setPage] = useState(1);
   const [anonymiseUser, setAnonymiseUser] = useState<Profile | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -225,7 +237,7 @@ export function UserManagement() {
   useEffect(() => {
     setPage(1);
     setSelectedIds(new Set());
-  }, [search, filterRole, filterStatus, filterHub, sortKey, sortAsc]);
+  }, [search, filterRole, filterStatus, filterHub, filterSchool, sortKey, sortAsc]);
 
   useEffect(() => {
     let cancelled = false;
@@ -248,6 +260,24 @@ export function UserManagement() {
   }, []);
 
   const fetchUsers = useCallback(async (): Promise<ListResponse> => {
+    if (demoMode) {
+      const data = filterDemoUsers({
+        q: search,
+        role: filterRole,
+        status: filterStatus,
+        school: filterSchool,
+        sort: sortKey,
+        order: sortAsc ? 'asc' : 'desc',
+        page,
+        pageSize: PAGE_SIZE,
+      });
+      const schools = Array.from(
+        new Set(getDemoUsersStore().map((u) => u.school_or_org).filter(Boolean) as string[]),
+      ).sort();
+      setSchoolOptions(schools);
+      return { ...data, scope: 'demo' };
+    }
+
     const qs = new URLSearchParams();
     qs.set('page', String(page));
     qs.set('pageSize', String(PAGE_SIZE));
@@ -257,6 +287,7 @@ export function UserManagement() {
     if (filterRole !== 'all') qs.set('role', filterRole);
     if (filterStatus !== 'all') qs.set('status', filterStatus);
     if (filterHub !== 'all') qs.set('hub', filterHub);
+    if (filterSchool !== 'all') qs.set('school', filterSchool);
 
     let res: Response;
     try {
@@ -264,27 +295,62 @@ export function UserManagement() {
         headers: await authHeaders(),
       });
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Failed to fetch';
-      throw new Error(
-        msg === 'Failed to fetch' || (err instanceof TypeError)
-          ? 'Cannot reach the Users API (local server on port 8080 not running, or proxy failed).'
-          : msg,
+      // Offline / no API — fall back to demo roster so Settings → Users still works
+      const data = filterDemoUsers({
+        q: search,
+        role: filterRole,
+        status: filterStatus,
+        school: filterSchool,
+        sort: sortKey,
+        order: sortAsc ? 'asc' : 'desc',
+        page,
+        pageSize: PAGE_SIZE,
+      });
+      setSchoolOptions(
+        Array.from(
+          new Set(getDemoUsersStore().map((u) => u.school_or_org).filter(Boolean) as string[]),
+        ).sort(),
       );
+      toast('Showing sample users (API unreachable).', { icon: 'ℹ️' });
+      return { ...data, scope: 'demo-fallback' };
     }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
       const apiError =
         (data as { error?: string; message?: string })?.error ||
         (data as { message?: string })?.message;
-      if (res.status === 502 || res.status === 503 || res.status === 504) {
-        throw new Error(
-          'Cannot reach the Users API (local server on port 8080 not running, or proxy failed).',
+      if (res.status === 502 || res.status === 503 || res.status === 504 || res.status === 401) {
+        const fallback = filterDemoUsers({
+          q: search,
+          role: filterRole,
+          status: filterStatus,
+          school: filterSchool,
+          sort: sortKey,
+          order: sortAsc ? 'asc' : 'desc',
+          page,
+          pageSize: PAGE_SIZE,
+        });
+        setSchoolOptions(
+          Array.from(
+            new Set(getDemoUsersStore().map((u) => u.school_or_org).filter(Boolean) as string[]),
+          ).sort(),
         );
+        toast('Showing sample users (API unavailable).', { icon: 'ℹ️' });
+        return { ...fallback, scope: 'demo-fallback' };
       }
       throw new Error(apiError || 'Failed to load users');
     }
-    return data as ListResponse;
-  }, [page, sortKey, sortAsc, search, filterRole, filterStatus, filterHub]);
+    const list = data as ListResponse;
+    const schools = Array.from(
+      new Set(
+        (list.users || [])
+          .map((u) => u.school_or_org)
+          .filter((s): s is string => Boolean(s && s.trim())),
+      ),
+    ).sort();
+    if (schools.length) setSchoolOptions((prev) => Array.from(new Set([...prev, ...schools])).sort());
+    return list;
+  }, [page, sortKey, sortAsc, search, filterRole, filterStatus, filterHub, filterSchool, demoMode]);
 
   const reload = useCallback(async () => {
     setLoadError(null);
@@ -372,6 +438,22 @@ export function UserManagement() {
 
   const handleSave = async (updates: Partial<Profile>) => {
     if (!editingUser) return;
+    if (demoMode) {
+      const store = getDemoUsersStore();
+      const idx = store.findIndex((u) => u.id === editingUser.id);
+      if (idx >= 0) {
+        store[idx] = { ...store[idx], ...updates, updated_at: new Date().toISOString() };
+      }
+      setUsers((prev) =>
+        prev.map((u) =>
+          u.id === editingUser.id
+            ? { ...u, ...updates, hub_ids: editingUser.hub_ids, hub_memberships: editingUser.hub_memberships }
+            : u,
+        ),
+      );
+      setMenuOpenForId(null);
+      return;
+    }
     const { error } = await supabase.from('profiles').update(updates).eq('id', editingUser.id);
     if (error) throw new Error(error.message);
     setUsers((prev) =>
@@ -412,6 +494,10 @@ export function UserManagement() {
     setSendingResetFor(profile.id);
     setMenuOpenForId(null);
     try {
+      if (demoMode) {
+        toast.success(`Password reset prepared for ${email} (demo — no email sent).`);
+        return;
+      }
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -433,6 +519,22 @@ export function UserManagement() {
     setResendingInviteFor(profile.id);
     setMenuOpenForId(null);
     try {
+      if (demoMode) {
+        const store = getDemoUsersStore();
+        const idx = store.findIndex((u) => u.id === profile.id);
+        if (idx >= 0) {
+          store[idx] = {
+            ...store[idx],
+            invite_sent_at: new Date().toISOString(),
+            invitation_status: 'pending',
+            status: 'invited',
+            updated_at: new Date().toISOString(),
+          };
+        }
+        toast.success(`Invite resent to ${email} (demo — no email sent).`);
+        await reload();
+        return;
+      }
       const res = await fetch(getVercelApiUrl('/api/resend-invite'), {
         method: 'POST',
         headers: await authHeaders(),
@@ -468,6 +570,21 @@ export function UserManagement() {
     }
     setMenuOpenForId(null);
     try {
+      if (demoMode) {
+        const store = getDemoUsersStore();
+        const idx = store.findIndex((u) => u.id === profile.id);
+        if (idx >= 0) {
+          store[idx] = {
+            ...store[idx],
+            status: next,
+            invitation_status: next === 'suspended' ? 'suspended' : 'complete',
+            updated_at: new Date().toISOString(),
+          };
+        }
+        toast.success(next === 'suspended' ? 'User suspended.' : 'User reactivated.');
+        await reload();
+        return;
+      }
       const { error } = await supabase
         .from('profiles')
         .update({ status: next, updated_at: new Date().toISOString() })
@@ -492,6 +609,15 @@ export function UserManagement() {
     }
     setMenuOpenForId(null);
     try {
+      if (demoMode) {
+        const store = getDemoUsersStore();
+        const idx = store.findIndex((u) => u.id === profile.id);
+        if (idx >= 0) store.splice(idx, 1);
+        setDeleteConfirmUser(null);
+        toast.success('User removed.');
+        await reload();
+        return;
+      }
       const { error } = await supabase.from('profiles').delete().eq('id', profile.id);
       if (error) throw new Error(error.message);
       setDeleteConfirmUser(null);
@@ -611,8 +737,48 @@ export function UserManagement() {
     }
     setCreateError('');
     setCreateSending(true);
-    const apiUrl = getVercelApiUrl('/api/create-user');
     try {
+      if (demoMode) {
+        const store = getDemoUsersStore();
+        if (store.some((u) => (u.email || '').toLowerCase() === emailTrimmed.toLowerCase())) {
+          setCreateError('A user with this email already exists.');
+          return;
+        }
+        const now = new Date().toISOString();
+        store.unshift({
+          id: `demo-user-${Date.now()}`,
+          email: emailTrimmed,
+          display_name: createName.trim() || emailTrimmed.split('@')[0],
+          school_or_org: currentProfile?.school_or_org || 'Curriculum Designer',
+          role: createRole,
+          status: 'invited',
+          can_edit_activities: true,
+          can_edit_lessons: true,
+          can_manage_year_groups: false,
+          can_manage_users: false,
+          invitation_status: 'pending',
+          invite_sent_at: now,
+          allowed_year_groups:
+            createAllowedYearGroups.length > 0 ? createAllowedYearGroups : null,
+          admin_preset_categories:
+            createPresetCategories.length > 0 ? createPresetCategories : null,
+          admin_preset_activity_pack_ids:
+            createPresetPackIds.length > 0 ? createPresetPackIds : null,
+          created_at: now,
+          updated_at: now,
+        });
+        toast.success(`Invite prepared for ${emailTrimmed} (demo — no email sent).`);
+        setShowCreateUserModal(false);
+        setCreateName('');
+        setCreateEmail('');
+        setCreateRole('teacher');
+        setCreateAllowedYearGroups([]);
+        setCreatePresetCategories([]);
+        setCreatePresetPackIds([]);
+        await reload();
+        return;
+      }
+      const apiUrl = getVercelApiUrl('/api/create-user');
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: await authHeaders(),
@@ -669,6 +835,115 @@ export function UserManagement() {
     }
   };
 
+  const classesLabel = (user: Profile): string => {
+    const yg = user.allowed_year_groups;
+    if (!yg || yg.length === 0) return '—';
+    if (yg.length <= 2) return yg.join(', ');
+    return `${yg.slice(0, 2).join(', ')} +${yg.length - 2}`;
+  };
+
+  const handleExportCsv = () => {
+    const rows = [
+      ['Name', 'Email', 'Role', 'School', 'Classes', 'Status', 'Last active', 'Created'],
+      ...users.map((u) => [
+        u.display_name || '',
+        u.email || '',
+        u.role,
+        u.school_or_org || '',
+        (u.allowed_year_groups || []).join('; '),
+        u.status || invitationStatusOf(u),
+        formatDate(u.updated_at),
+        formatDate(u.created_at),
+      ]),
+    ];
+    const csv = rows
+      .map((r) => r.map((c) => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `users-export-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.success('CSV exported.');
+  };
+
+  const handleCsvImport = async (file: File) => {
+    setCsvImporting(true);
+    try {
+      const text = await file.text();
+      const lines = text.split(/\r?\n/).map((l) => l.trim()).filter(Boolean);
+      if (lines.length < 2) {
+        toast.error('CSV needs a header row and at least one user.');
+        return;
+      }
+      const header = lines[0].toLowerCase();
+      if (!header.includes('email')) {
+        toast.error('CSV must include an Email column.');
+        return;
+      }
+      let imported = 0;
+      for (const line of lines.slice(1)) {
+        const cols = line.match(/("([^"]|"")*"|[^,]*)/g)?.map((c) =>
+          c.replace(/^"|"$/g, '').replace(/""/g, '"').trim(),
+        ) ?? [];
+        // Expect name, email, role (optional) — flexible by header order
+        const headers = lines[0].split(',').map((h) => h.replace(/"/g, '').trim().toLowerCase());
+        const get = (key: string) => {
+          const i = headers.findIndex((h) => h === key || h.includes(key));
+          return i >= 0 ? cols[i] || '' : '';
+        };
+        const email = get('email');
+        if (!email || !email.includes('@')) continue;
+        const name = get('name') || get('display') || email.split('@')[0];
+        const roleRaw = (get('role') || 'teacher').toLowerCase() as ProfileRole;
+        const role: ProfileRole = BASE_ROLES.some((r) => r.value === roleRaw)
+          ? roleRaw
+          : 'teacher';
+
+        if (demoMode) {
+          const store = getDemoUsersStore();
+          if (store.some((u) => (u.email || '').toLowerCase() === email.toLowerCase())) continue;
+          const now = new Date().toISOString();
+          store.unshift({
+            id: `demo-csv-${Date.now()}-${imported}`,
+            email,
+            display_name: name,
+            school_or_org: get('school') || currentProfile?.school_or_org || 'Curriculum Designer',
+            role,
+            status: 'invited',
+            can_edit_activities: true,
+            can_edit_lessons: true,
+            can_manage_year_groups: false,
+            can_manage_users: false,
+            invitation_status: 'pending',
+            invite_sent_at: now,
+            allowed_year_groups: null,
+            created_at: now,
+            updated_at: now,
+          });
+          imported += 1;
+          continue;
+        }
+
+        const res = await fetch(getVercelApiUrl('/api/create-user'), {
+          method: 'POST',
+          headers: await authHeaders(),
+          body: JSON.stringify({ email, display_name: name, role }),
+        });
+        if (res.ok) imported += 1;
+      }
+      toast.success(`Imported ${imported} user${imported === 1 ? '' : 's'}.`);
+      await reload();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : 'CSV import failed');
+    } finally {
+      setCsvImporting(false);
+      if (csvInputRef.current) csvInputRef.current.value = '';
+    }
+  };
+
   if (loading && users.length === 0 && !loadError) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -709,48 +984,78 @@ export function UserManagement() {
     users.length > 0 && users.every((u) => selectedIds.has(u.id));
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <div className="flex items-center gap-2 text-gray-700">
-          <Users className="h-5 w-5" />
-          <h3 className="text-lg font-semibold">Users & access</h3>
+    <div className="ss-settings-users space-y-4">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-[#1F1B4D]">
+            <Users className="h-5 w-5 text-[#4338E8]" />
+            <h3 className="text-[17px] font-extrabold tracking-tight">Users & access</h3>
+          </div>
+          <p className="mt-1 max-w-2xl text-[13px] font-medium text-[#5C5878]">
+            Invite teachers, set roles and classes, reset passwords, and manage access.
+            {demoMode ? ' Demo roster — changes stay in this browser.' : null}
+          </p>
         </div>
-        <button
-          type="button"
-          onClick={() => {
-            setShowCreateUserModal(true);
-            setCreateError('');
-            setCreateName('');
-            setCreateEmail('');
-            setCreateRole('teacher');
-          }}
-          className="inline-flex items-center gap-2 px-4 py-2 bg-[#4338E8] text-white text-sm font-medium rounded-lg hover:bg-[#3529d1] transition-colors"
-        >
-          <Plus className="h-4 w-4" />
-          Create User
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <input
+            ref={csvInputRef}
+            type="file"
+            accept=".csv,text/csv"
+            className="hidden"
+            onChange={(e) => {
+              const f = e.target.files?.[0];
+              if (f) void handleCsvImport(f);
+            }}
+          />
+          <button
+            type="button"
+            disabled={csvImporting}
+            onClick={() => csvInputRef.current?.click()}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-bold text-[#1F1B4D] hover:border-[#bcb7f4] disabled:opacity-50"
+          >
+            {csvImporting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Upload className="h-3.5 w-3.5" />}
+            Import CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-bold text-[#1F1B4D] hover:border-[#bcb7f4]"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              setShowCreateUserModal(true);
+              setCreateError('');
+              setCreateName('');
+              setCreateEmail('');
+              setCreateRole('teacher');
+            }}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3 text-[13px] font-extrabold text-white hover:bg-[#3529d1]"
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Invite user
+          </button>
+        </div>
       </div>
-      <p className="text-sm text-gray-600">
-        Search and filter users server-side. Create a teacher with an invitation to set their
-        own password, then edit role and hub access, resend expired invites, suspend, anonymise
-        (UK GDPR), or remove access. Passwords are never stored in admin settings.
-      </p>
 
       <div className="flex flex-wrap items-center gap-2">
         <div className="relative min-w-[200px] flex-1">
-          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-gray-400" />
+          <Search className="pointer-events-none absolute left-2.5 top-2.5 h-4 w-4 text-[#77738F]" />
           <input
             type="search"
-            placeholder="Search name or email…"
+            placeholder="Search name, email or school…"
             value={searchInput}
             onChange={(e) => setSearchInput(e.target.value)}
-            className="w-full rounded-lg border border-gray-300 py-2 pl-8 pr-3 text-sm"
+            className="w-full rounded-xl border border-[#E2E0EF] bg-white py-2 pl-8 pr-3 text-sm text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25"
           />
         </div>
         <select
           value={filterRole}
           onChange={(e) => setFilterRole(e.target.value)}
-          className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+          className="rounded-xl border border-[#E2E0EF] bg-white px-2 py-2 text-sm"
         >
           <option value="all">All roles</option>
           {createUserRoles.map((r) => (
@@ -762,7 +1067,7 @@ export function UserManagement() {
         <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+          className="rounded-xl border border-[#E2E0EF] bg-white px-2 py-2 text-sm"
         >
           <option value="all">All statuses</option>
           {STATUS_OPTIONS.map((s) => (
@@ -771,11 +1076,25 @@ export function UserManagement() {
             </option>
           ))}
         </select>
+        {schoolOptions.length > 0 && (
+          <select
+            value={filterSchool}
+            onChange={(e) => setFilterSchool(e.target.value)}
+            className="rounded-xl border border-[#E2E0EF] bg-white px-2 py-2 text-sm"
+          >
+            <option value="all">All schools</option>
+            {schoolOptions.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+        )}
         {hubOptions.length > 0 && (
           <select
             value={filterHub}
             onChange={(e) => setFilterHub(e.target.value)}
-            className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+            className="rounded-xl border border-[#E2E0EF] bg-white px-2 py-2 text-sm"
           >
             <option value="all">All hubs</option>
             {hubOptions.map((h) => (
@@ -792,13 +1111,15 @@ export function UserManagement() {
             setSortKey(k);
             setSortAsc(dir === 'asc');
           }}
-          className="rounded-lg border border-gray-300 px-2 py-2 text-sm"
+          className="rounded-xl border border-[#E2E0EF] bg-white px-2 py-2 text-sm"
         >
           <option value="created_at:desc">Newest first</option>
           <option value="created_at:asc">Oldest first</option>
+          <option value="updated_at:desc">Last active</option>
           <option value="email:asc">Email A–Z</option>
           <option value="display_name:asc">Name A–Z</option>
           <option value="role:asc">Role A–Z</option>
+          <option value="school_or_org:asc">School A–Z</option>
         </select>
       </div>
 
@@ -831,16 +1152,16 @@ export function UserManagement() {
         </div>
       )}
 
-      <div className="relative border border-gray-200 rounded-lg overflow-x-auto">
+      <div className="relative overflow-x-auto rounded-2xl border border-[#E2E0EF] bg-white">
         {loading && (
           <div className="absolute inset-0 z-10 flex items-center justify-center bg-white/50">
             <Loader2 className="h-6 w-6 animate-spin text-[#4338E8]" />
           </div>
         )}
-        <table className="w-full text-left min-w-[720px]">
-          <thead className="bg-gray-50 border-b border-gray-200">
+        <table className="w-full min-w-[1080px] text-left">
+          <thead className="border-b border-[#E2E0EF] bg-[#FAFAFC]">
             <tr>
-              <th className="px-3 py-3 w-10">
+              <th className="w-10 px-3 py-3">
                 <input
                   type="checkbox"
                   checked={allPageSelected}
@@ -848,25 +1169,28 @@ export function UserManagement() {
                   aria-label="Select all on page"
                 />
               </th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-700">Name</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-700">Email</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-700">Role</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-700">Status</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-700">Created</th>
-              <th className="px-4 py-3 text-sm font-medium text-gray-700 text-right">Actions</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Name</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Email</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Role</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">School</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Classes</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Status</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Last active</th>
+              <th className="px-3 py-3 text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Created</th>
+              <th className="px-3 py-3 text-right text-[12px] font-extrabold uppercase tracking-wide text-[#5C5878]">Actions</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-[#E2E0EF]">
             {users.length === 0 ? (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-gray-500">
-                  No users match your filters. Use &quot;Create User&quot; to add one.
+                <td colSpan={10} className="px-4 py-8 text-center text-[13px] text-[#5C5878]">
+                  No users match your filters. Use &quot;Invite user&quot; or Import CSV to add one.
                 </td>
               </tr>
             ) : (
               users.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50">
-                  <td className="px-3 py-3">
+                <tr key={user.id} className="hover:bg-[#F7F6FC]">
+                  <td className="px-3 py-2.5">
                     <input
                       type="checkbox"
                       checked={selectedIds.has(user.id)}
@@ -874,28 +1198,37 @@ export function UserManagement() {
                       aria-label={`Select ${user.display_name || user.email || user.id}`}
                     />
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-900">
+                  <td className="px-3 py-2.5 text-[13px] font-bold text-[#1F1B4D]">
                     {user.display_name ?? '—'}
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-700">{user.email ?? '—'}</td>
-                  <td className="px-4 py-3">
+                  <td className="px-3 py-2.5 text-[13px] font-medium text-[#5C5878]">{user.email ?? '—'}</td>
+                  <td className="px-3 py-2.5">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium border ${roleBadgeClass(user.role as ProfileRole)}`}
+                      className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-bold ${roleBadgeClass(user.role as ProfileRole)}`}
                     >
                       {roleLabel(user.role as ProfileRole)}
                     </span>
                   </td>
-                  <td className="px-4 py-3">
+                  <td className="max-w-[9rem] truncate px-3 py-2.5 text-[13px] font-medium text-[#5C5878]" title={user.school_or_org || undefined}>
+                    {user.school_or_org || '—'}
+                  </td>
+                  <td className="max-w-[8rem] truncate px-3 py-2.5 text-[12px] font-medium text-[#5C5878]" title={(user.allowed_year_groups || []).join(', ')}>
+                    {classesLabel(user)}
+                  </td>
+                  <td className="px-3 py-2.5">
                     <span
-                      className={`inline-flex px-2 py-0.5 rounded text-xs font-medium border ${invitationBadgeClass(user)}`}
+                      className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-bold ${invitationBadgeClass(user)}`}
                     >
                       {invitationLabel(user)}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-sm text-gray-500">
+                  <td className="px-3 py-2.5 text-[12px] text-[#77738F]">
+                    {formatDate(user.updated_at)}
+                  </td>
+                  <td className="px-3 py-2.5 text-[12px] text-[#77738F]">
                     {formatDate(user.created_at)}
                   </td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-3 py-2.5 text-right">
                     <div
                       className="relative inline-block"
                       ref={menuOpenForId === user.id ? menuRef : undefined}
@@ -907,7 +1240,7 @@ export function UserManagement() {
                           e.stopPropagation();
                           setMenuOpenForId(menuOpenForId === user.id ? null : user.id);
                         }}
-                        className="p-2 rounded-lg hover:bg-gray-200 text-gray-600"
+                        className="rounded-lg p-2 text-[#5C5878] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
                         aria-label="Actions"
                       >
                         <MoreVertical className="h-5 w-5" />

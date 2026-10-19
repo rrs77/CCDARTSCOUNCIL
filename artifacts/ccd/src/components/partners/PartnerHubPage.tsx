@@ -142,7 +142,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
                 } catch {
                   /* ignore */
                 }
-                window.location.assign('/');
+                window.location.assign('/settings/school?panel=hub-admin');
               }}
               className="inline-flex items-center rounded-lg bg-[#002D24] px-3 py-2 text-sm font-semibold text-white hover:opacity-95"
             >

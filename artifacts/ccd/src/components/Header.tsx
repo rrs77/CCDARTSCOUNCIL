@@ -1,18 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, User, LogOut, BookOpen, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
+import { Menu, X, BookOpen, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
-import { UserSettings } from './UserSettings';
+import { navigateToSettings } from './settings';
 import { WalkthroughGuide } from './WalkthroughGuide';
 import { HelpGuide, type HelpGuideSection } from './HelpGuide';
 import { LogoSVG } from './Logo';
+import { AccountMenu } from './AccountMenu';
 import { usePWAInstall } from '../hooks/usePWAInstall';
+import { flattenClassesNatural } from '../utils/classOrganization';
 import { isDemoModeActive, shouldShowPreviewBanner } from '../utils/demoMode';
 
 export function Header() {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isViewOnly = useIsViewOnly();
   const { currentSheetInfo, setCurrentSheetInfo, refreshData, loading } = useData();
   const { settings, customYearGroups, yearGroupSections } = useSettings();
@@ -29,7 +31,6 @@ export function Header() {
 
   const { canInstall, isInstalled, install } = usePWAInstall();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
@@ -75,7 +76,7 @@ export function Header() {
   }, []);
 
   useEffect(() => {
-    const openSettings = () => setSettingsOpen(true);
+    const openSettings = () => navigateToSettings();
     window.addEventListener('ccd:open-settings', openSettings);
     return () => window.removeEventListener('ccd:open-settings', openSettings);
   }, []);
@@ -100,8 +101,9 @@ export function Header() {
 
   useEffect(() => {
     try {
-      if (sessionStorage.getItem('ccd-open-settings-tab')) {
-        setSettingsOpen(true);
+      const pending = sessionStorage.getItem('ccd-open-settings-tab');
+      if (pending) {
+        navigateToSettings(pending);
       }
     } catch {
       /* ignore */
@@ -133,26 +135,29 @@ export function Header() {
       .filter((section) => !isOtherSection(section))
       .map((section) => ({
         ...section,
-        groups: section.yearGroupIds
-          .map((token) => selectorTokenMap.get(normalizeToken(token)))
-          .filter((g): g is { id: string; name: string; color?: string } => Boolean(g))
-          .filter((g, index, arr) => arr.findIndex((x) => x.id === g.id) === index),
+        groups: flattenClassesNatural(
+          section.yearGroupIds
+            .map((token) => selectorTokenMap.get(normalizeToken(token)))
+            .filter((g): g is { id: string; name: string; color?: string } => Boolean(g))
+            .filter((g, index, arr) => arr.findIndex((x) => x.id === g.id) === index),
+        ),
       }))
       .filter((section) => section.groups.length > 0);
   }, [yearGroupSections, selectorTokenMap]);
 
-  // Classes in Other / not assigned to a key stage. Demo intentionally omits these;
-  // real teachers need them so the selector is not empty when defaults live in Other.
+  // Classes in Other / not assigned to a key stage. Always surface them when no
+  // key-stage section has classes — otherwise Settings → My classes won't reach the header chip.
   const uncategorizedGroups = React.useMemo(() => {
-    if (demoMode) return [] as { id: string; name: string; color?: string }[];
     const assignedIds = new Set<string>();
     displaySections.forEach((section) => {
       section.groups.forEach((g) => assignedIds.add(g.id));
     });
-    return yearGroupsForSelector.filter((g) => !assignedIds.has(g.id));
-  }, [demoMode, displaySections, yearGroupsForSelector]);
+    return flattenClassesNatural(
+      yearGroupsForSelector.filter((g) => !assignedIds.has(g.id)),
+    );
+  }, [displaySections, yearGroupsForSelector]);
 
-  // Flat list of selectable classes (key-stage folders, then uncategorized for real logins).
+  // Flat list of selectable classes (key-stage folders, then unassigned).
   const selectableYearGroups = React.useMemo(() => {
     const groups: { id: string; name: string; color?: string }[] = [];
     const seen = new Set<string>();
@@ -174,8 +179,8 @@ export function Header() {
   const hasSelectorItems = displaySections.length > 0 || uncategorizedGroups.length > 0;
 
   const emptySelectorMessage = demoMode
-    ? 'Your classes will appear here once you add them in Settings → Year Groups.'
-    : 'No classes in this list yet. Add them in Settings → Year Groups.';
+    ? 'Your classes will appear here once you add them in Settings → My classes.'
+    : 'No classes in this list yet. Add them in Settings → My classes.';
 
   // If current class is not under a key stage (or not allowed), switch to the first assigned one.
   useEffect(() => {
@@ -441,11 +446,12 @@ export function Header() {
                 <HelpCircle className="h-4 w-4 lg:h-5 lg:w-5" />
               </button>
 
-              {/* Settings Button */}
+              {/* Settings Button — full-page Settings */}
               <button
-                onClick={() => setSettingsOpen(true)}
+                onClick={() => navigateToSettings()}
                 className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="User Settings"
+                title="Settings"
+                aria-label="Open settings"
                 data-walkthrough="settings"
               >
                 <Settings className="h-4 w-4 lg:h-5 lg:w-5" />
@@ -461,32 +467,8 @@ export function Header() {
                 <RefreshCw className={`h-4 w-4 lg:h-5 lg:w-5 ${loading ? 'animate-spin' : ''}`} />
               </button>
 
-              {/* User Menu */}
-              <div className="flex items-center space-x-1 lg:space-x-3 flex-shrink-0 min-w-0">
-                <div className="flex items-center space-x-1 lg:space-x-2 min-w-0 p-1 lg:p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer">
-                  {user?.avatar ? (
-                    <img
-                      src={user.avatar}
-                      alt={user.name}
-                      className="h-6 w-6 lg:h-8 lg:w-8 rounded-full object-cover flex-shrink-0"
-                    />
-                  ) : (
-                    <div className="h-6 w-6 lg:h-8 lg:w-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                      <User className="h-3 w-3 lg:h-5 lg:w-5 text-gray-600" />
-                    </div>
-                  )}
-                  <span className="text-xs lg:text-sm font-medium text-gray-700 truncate max-w-[80px] lg:max-w-[120px] hidden lg:inline">
-                    {user?.name}
-                  </span>
-                </div>
-                <button
-                  onClick={() => void logout()}
-                  className="p-1.5 lg:p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                  title="Logout"
-                >
-                  <LogOut className="h-4 w-4 lg:h-5 lg:w-5" />
-                </button>
-              </div>
+              {/* Account menu — real profile name/initials; never "Demo Visitor" */}
+              <AccountMenu compact />
             </div>
 
             {/* Mobile Menu Button */}
@@ -560,24 +542,9 @@ export function Header() {
                 </div>
                 )}
 
-                {/* User Info Mobile */}
-                <div className="flex items-center justify-between pt-4 border-t border-gray-200">
-                  <div className="flex items-center space-x-3 min-w-0 flex-1">
-                    {user?.avatar ? (
-                      <img
-                        src={user.avatar}
-                        alt={user.name}
-                        className="h-8 w-8 rounded-full object-cover flex-shrink-0"
-                      />
-                    ) : (
-                      <div className="h-8 w-8 bg-gray-300 rounded-full flex items-center justify-center flex-shrink-0">
-                        <User className="h-5 w-5 text-gray-600" />
-                      </div>
-                    )}
-                    <span className="text-sm font-medium text-gray-700 truncate">
-                      {user?.name}
-                    </span>
-                  </div>
+                {/* Account + quick actions (mobile) */}
+                <div className="flex items-center justify-between gap-2 pt-4 border-t border-gray-200">
+                  <AccountMenu compact={false} onNavigate={() => setMobileMenuOpen(false)} />
                   <div className="flex space-x-2 flex-shrink-0">
                     {canInstall && !isInstalled && (
                       <button
@@ -605,26 +572,11 @@ export function Header() {
                       <HelpCircle className="h-5 w-5" />
                     </button>
                     <button
-                      onClick={() => {
-                        setSettingsOpen(true);
-                        setMobileMenuOpen(false);
-                      }}
-                      className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                    >
-                      <Settings className="h-5 w-5" />
-                    </button>
-                    <button
                       onClick={handleRefresh}
                       disabled={loading}
                       className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 disabled:opacity-50"
                     >
                       <RefreshCw className={`h-5 w-5 ${loading ? 'animate-spin' : ''}`} />
-                    </button>
-                    <button
-                      onClick={() => void logout()}
-                      className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                    >
-                      <LogOut className="h-5 w-5" />
                     </button>
                   </div>
                 </div>
@@ -633,12 +585,6 @@ export function Header() {
           )}
         </div>
       </header>
-
-      {/* User Settings Modal */}
-      <UserSettings 
-        isOpen={settingsOpen} 
-        onClose={() => setSettingsOpen(false)} 
-      />
 
       {/* Walkthrough Guide */}
       <WalkthroughGuide
