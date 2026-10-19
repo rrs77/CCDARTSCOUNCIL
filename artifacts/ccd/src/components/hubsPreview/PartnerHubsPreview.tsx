@@ -2034,82 +2034,103 @@ function PartnerHubsBrowse({
             <div className="h-[420px] animate-pulse rounded-2xl bg-[#EEF0F8]" aria-label="Loading map" />
           ) : (
             <>
-              {/* Target layout: compact map LEFT, hub cards RIGHT */}
-              <div className="grid gap-4 lg:grid-cols-[minmax(280px,0.95fr)_minmax(0,1.35fr)] lg:items-start">
-                <div className="space-y-3">
-                  <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
-                    <UkHubMap
-                      ix={ix}
-                      focus={focus}
-                      hover={hover}
-                      onHover={setHover}
-                      onFocus={onMapFocus}
-                      showBreadcrumb={false}
-                      showRegionCounts
-                      palette="green"
-                      className="h-[320px] !rounded-2xl !border-0 sm:h-[380px] lg:h-[440px]"
-                    />
-                  </div>
-                  {(showSelectedPanel || focus.level !== 'uk') && (
-                    <SelectedAreaPanel
-                      title={selectedArea.title}
-                      hubCount={selectedArea.hubCount}
-                      blurb={selectedArea.blurb}
-                      localAreas={selectedArea.localAreas.map((a) => a.name)}
-                      photoSrc={selectedArea.photoSrc}
-                      onViewHubs={onViewHubs}
-                      onSelectLocalArea={onSelectLocalArea}
-                    />
-                  )}
+              {/*
+                Target layout: map only beside the first card row (no tall empty column).
+                Remaining cards flow full-width underneath (~5 per row on wide screens).
+              */}
+              <section ref={resultsRef} className="min-w-0 space-y-4" aria-labelledby="music-hubs-results">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <h2 id="music-hubs-results" className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[24px]">
+                    {headingLabel}
+                  </h2>
+                  <button
+                    type="button"
+                    className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10"
+                  >
+                    Sort by: A–Z
+                    <ChevronRight className="h-3.5 w-3.5 rotate-90 opacity-50" aria-hidden />
+                  </button>
                 </div>
 
-                <section ref={resultsRef} className="min-w-0 space-y-3" aria-labelledby="music-hubs-results">
-                  <div className="flex flex-wrap items-end justify-between gap-3">
-                    <h2 id="music-hubs-results" className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[24px]">
-                      {headingLabel}
-                    </h2>
-                    <button
-                      type="button"
-                      className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10"
-                    >
-                      Sort by: A–Z
-                      <ChevronRight className="h-3.5 w-3.5 rotate-90 opacity-50" aria-hidden />
-                    </button>
-                  </div>
-
-                  {sortedHubs.length === 0 ? (
+                {sortedHubs.length === 0 ? (
+                  <div className="grid gap-4 lg:grid-cols-[minmax(260px,360px)_minmax(0,1fr)] lg:items-start">
+                    <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
+                      <UkHubMap
+                        ix={ix}
+                        focus={focus}
+                        hover={hover}
+                        onHover={setHover}
+                        onFocus={onMapFocus}
+                        showBreadcrumb={false}
+                        showRegionCounts
+                        palette="green"
+                        className="h-[300px] !rounded-2xl !border-0 sm:h-[340px]"
+                      />
+                    </div>
                     <BrowsePanel ix={ix} focus={focus} hover={hover} onHover={setHover} go={go} />
-                  ) : hubsView === 'list' ? (
-                    <ul className="space-y-2" role="list">
-                      {sortedHubs.map((h) => (
-                        <li key={h.id}>
-                          <MusicHubListRow
-                            name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
-                            region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
-                            location={h.authorities[0] || h.aceAreaName || 'England'}
-                            onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                  </div>
+                ) : hubsView === 'list' ? (
+                  <ul className="space-y-2" role="list">
+                    {sortedHubs.map((h) => (
+                      <li key={h.id}>
+                        <MusicHubListRow
+                          name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
+                          region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
+                          location={h.authorities[0] || h.aceAreaName || 'England'}
+                          onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul
+                    className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
+                    role="list"
+                  >
+                    {/* Map spans two card-rows so cards flow beside it, then full-width underneath */}
+                    <li className="min-w-0 sm:col-span-1 sm:row-span-2 md:row-span-2 lg:row-span-2 xl:row-span-2">
+                      <div className="flex h-full flex-col gap-3">
+                        <div className="min-h-0 flex-1 overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
+                          <UkHubMap
+                            ix={ix}
+                            focus={focus}
+                            hover={hover}
+                            onHover={setHover}
+                            onFocus={onMapFocus}
+                            showBreadcrumb={false}
+                            showRegionCounts
+                            palette="green"
+                            className="h-full min-h-[200px] !rounded-2xl !border-0"
                           />
-                        </li>
-                      ))}
-                    </ul>
-                  ) : (
-                    <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="list">
-                      {sortedHubs.map((h) => (
-                        <li key={h.id}>
-                          <MusicHubResultCard
-                            id={h.id}
-                            name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
-                            region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
-                            location={h.authorities[0] || h.aceAreaName || 'England'}
-                            detail={musicHubCardDetail(h.id, h.leadOrganisation ?? undefined, h.lads.length)}
-                            onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                        </div>
+                        {(showSelectedPanel || focus.level !== 'uk') && (
+                          <SelectedAreaPanel
+                            title={selectedArea.title}
+                            hubCount={selectedArea.hubCount}
+                            blurb={selectedArea.blurb}
+                            localAreas={selectedArea.localAreas.map((a) => a.name)}
+                            photoSrc={selectedArea.photoSrc}
+                            onViewHubs={onViewHubs}
+                            onSelectLocalArea={onSelectLocalArea}
                           />
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </section>
-              </div>
+                        )}
+                      </div>
+                    </li>
+                    {sortedHubs.map((h) => (
+                      <li key={h.id} className="min-w-0">
+                        <MusicHubResultCard
+                          id={h.id}
+                          name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
+                          region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
+                          location={h.authorities[0] || h.aceAreaName || 'England'}
+                          detail={musicHubCardDetail(h.id, h.leadOrganisation ?? undefined, h.lads.length)}
+                          onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </section>
 
               <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
                 <Info className="h-3.5 w-3.5" aria-hidden />
