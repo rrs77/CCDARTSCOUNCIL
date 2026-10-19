@@ -27,18 +27,18 @@ const PALETTES = {
     bg: 'radial-gradient(120% 90% at 55% 35%, #FBFBFF 0%, #F0F1FA 55%, #E8EAF6 100%)',
   },
   green: {
-    // Soft green England — near-uniform wash; dark cluster bubbles carry hierarchy
-    region: ['#C5E3C9', '#C5E3C9', '#B9DCBE', '#C5E3C9'],
-    hub: ['#B6DDBB', '#B6DDBB', '#AAD4B0', '#B6DDBB', '#B6DDBB'],
-    district: ['#BCDFC1', '#BCDFC1', '#B0D7B6', '#BCDFC1', '#BCDFC1'],
-    nation: '#E8F2EA',
-    muted: '#F1F6F2',
-    hover: '#7EC48A',
+    // Soft green England wash — clearly green, not grey; dark bubbles carry hierarchy
+    region: ['#A8D4AE', '#A8D4AE', '#9CCBA3', '#A8D4AE'],
+    hub: ['#98CBA0', '#98CBA0', '#8CC296', '#98CBA0', '#98CBA0'],
+    district: ['#9FCEA6', '#9FCEA6', '#93C59C', '#9FCEA6', '#9FCEA6'],
+    nation: '#DCEBDF',
+    muted: '#EAF3EC',
+    hover: '#6BBF78',
     selected: '#0F5C52',
-    coast: '#B8D4BD',
+    coast: '#8FBF98',
     ink: '#1A3A22',
-    count: '#0A4F46',
-    bg: 'radial-gradient(120% 90% at 55% 35%, #FDFFFD 0%, #F4F9F5 50%, #E9F2EB 100%)',
+    count: '#084840',
+    bg: 'radial-gradient(120% 90% at 55% 35%, #F7FBF8 0%, #E8F3EA 55%, #D8EBD9 100%)',
   },
 } as const;
 
