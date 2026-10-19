@@ -22,6 +22,14 @@ import {
   clearBoltOnsUrlIfPresent,
   resolveBoltOnsPageFromLocation,
 } from './boltOns/routes';
+import { SettingsPage, useSettingsAccess } from './settings';
+import {
+  clearSettingsUrlIfPresent,
+  isSettingsPath,
+  resolveSettingsSectionFromLocation,
+  syncSettingsUrl,
+} from './settings/routes';
+import { DEFAULT_SETTINGS_SECTION } from './settings/settingsSections';
 
 interface Unit {
   id: string;
@@ -57,6 +65,7 @@ const ALLOWED = new Set([
   'bolt-ons',
   'assessify',
   'perifeedback',
+  'settings',
 ]);
 
 const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
@@ -64,6 +73,10 @@ const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
 function initialDashboardTab(): string {
   const fromBoltOns = resolveBoltOnsPageFromLocation();
   if (fromBoltOns) return fromBoltOns;
+  if (typeof window !== 'undefined' && isSettingsPath(window.location.pathname)) {
+    return 'settings';
+  }
+  if (resolveSettingsSectionFromLocation()) return 'settings';
   if (isPartnerHubsLink()) return 'our-partners';
   return 'unit-viewer';
 }
@@ -80,6 +93,7 @@ export function Dashboard() {
     deleteUserLessonPlan,
   } = useData();
   const { getThemeForClass } = useSettings();
+  const settingsAccess = useSettingsAccess();
   const [activeTab, setActiveTabRaw] = useState<string>(initialDashboardTab);
   const newPartnerHubs = newPartnerHubsEnabled();
   const setActiveTab = (tab: string) => {
@@ -87,6 +101,12 @@ export function Dashboard() {
     setActiveTabRaw(next);
     if (!BOLT_ON_TABS.has(next)) {
       clearBoltOnsUrlIfPresent();
+    }
+    if (next === 'settings') {
+      const section = resolveSettingsSectionFromLocation() || DEFAULT_SETTINGS_SECTION;
+      syncSettingsUrl(section);
+    } else {
+      clearSettingsUrlIfPresent();
     }
   };
 
@@ -115,12 +135,17 @@ export function Dashboard() {
         setActiveTab(fromPath);
         return;
       }
+      if (isSettingsPath(window.location.pathname) || resolveSettingsSectionFromLocation()) {
+        setActiveTab('settings');
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab && ALLOWED.has(tab)) {
         setActiveTab(tab);
         // Bolt-ons sync their own /bolt-ons paths via BoltOnsView.
         if (BOLT_ON_TABS.has(tab)) return;
+        if (tab === 'settings') return;
         // Preserve player deep-link params for Lesson Viewer hub to consume.
         const keep = new URLSearchParams();
         const play = params.get('play');
@@ -138,11 +163,21 @@ export function Dashboard() {
   useEffect(() => {
     const onPopState = () => {
       const page = resolveBoltOnsPageFromLocation();
-      if (page) setActiveTab(page);
+      if (page) {
+        setActiveTab(page);
+        return;
+      }
+      if (isSettingsPath(window.location.pathname)) {
+        setActiveTab('settings');
+        return;
+      }
+      if (activeTab === 'settings') {
+        setActiveTab('unit-viewer');
+      }
     };
     window.addEventListener('popstate', onPopState);
     return () => window.removeEventListener('popstate', onPopState);
-  }, []);
+  }, [activeTab]);
 
   useEffect(() => {
     const openContact = () => setActiveTab('contact-us');
@@ -219,7 +254,8 @@ export function Dashboard() {
   const showTabsExplainerButton = isAuthorizedDemoMode();
   const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
-  const wideCanvas = activeTab === 'activity-library' || activeTab === 'lesson-viewer';
+  const wideCanvas =
+    activeTab === 'activity-library' || activeTab === 'lesson-viewer' || activeTab === 'settings';
   const editorFlush = activeTab === 'activity-library' && activityEditorOpen;
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
@@ -368,6 +404,15 @@ export function Dashboard() {
       {activeTab === 'more' && (
         <div className="ccd-fade-in-up" key="more">
           <MoreToolsPanel onNavigate={shellNavigate} />
+        </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div className="ccd-fade-in-up h-full min-h-0" key="settings">
+          <SettingsPage
+            access={settingsAccess}
+            initialSection={resolveSettingsSectionFromLocation() || DEFAULT_SETTINGS_SECTION}
+          />
         </div>
       )}
 

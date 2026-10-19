@@ -79,12 +79,7 @@ export function MoreToolsPanel({ onNavigate }: Props) {
       return;
     }
     if (tool.action === 'settings') {
-      try {
-        sessionStorage.setItem('ccd-open-settings-tab', 'yeargroups');
-      } catch {
-        /* ignore */
-      }
-      window.dispatchEvent(new CustomEvent('ccd:open-settings'));
+      onNavigate('settings');
       return;
     }
     if (tool.action === 'forum') {
