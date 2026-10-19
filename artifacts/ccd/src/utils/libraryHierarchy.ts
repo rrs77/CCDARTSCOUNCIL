@@ -101,19 +101,19 @@ const CATEGORY_PLACEMENT: Record<
   singing: { subject: 'Music', keyStage: 'ks1' },
   'ks2 songs': { subject: 'Music', keyStage: 'ks2' },
 
-  // Drama
-  'drama games': { subject: 'Drama', keyStage: 'ks1' },
+  // Drama — multi-stage; per-activity year-group tags decide filing
+  'drama games': { subject: 'Drama' },
   'ks1 drama': { subject: 'Drama', keyStage: 'ks1' },
 
-  // Vocal warm-ups (Music)
-  'vocal warmups': { subject: 'Music', keyStage: 'ks2' },
-  'vocal warm-ups': { subject: 'Music', keyStage: 'ks2' },
-  'vocal warmup': { subject: 'Music', keyStage: 'ks2' },
-  'physical starters': { subject: 'Music', keyStage: 'ks2' },
-  'breathing exercises': { subject: 'Music', keyStage: 'ks2' },
-  'facial warm-ups / diction': { subject: 'Music', keyStage: 'ks2' },
-  'facial warm ups / diction': { subject: 'Music', keyStage: 'ks2' },
-  'pitch exercises': { subject: 'Music', keyStage: 'ks2' },
+  // Vocal warm-ups (Music) — multi-stage via tags / "All"
+  'vocal warmups': { subject: 'Music' },
+  'vocal warm-ups': { subject: 'Music' },
+  'vocal warmup': { subject: 'Music' },
+  'physical starters': { subject: 'Music' },
+  'breathing exercises': { subject: 'Music' },
+  'facial warm-ups / diction': { subject: 'Music' },
+  'facial warm ups / diction': { subject: 'Music' },
+  'pitch exercises': { subject: 'Music' },
 
   // OCR Film / Computer Music (KS4)
   'film/computer music — listen': { subject: 'Music', keyStage: 'ks4' },
@@ -169,6 +169,98 @@ export interface CategoryHierarchyMeta {
   groups?: string[] | null;
 }
 
+/** Map a single year-group / level tag to a key stage (or null). */
+export function keyStageFromYearGroupTag(tag: string): LibraryKeyStageId | null {
+  const lower = String(tag || '').trim().toLowerCase();
+  if (!lower || lower === 'all') return null;
+
+  if (
+    /\b(lkg|ukg)\b/.test(lower) ||
+    lower.includes('lower kindergarten') ||
+    lower.includes('upper kindergarten') ||
+    /\breception\b/.test(lower) ||
+    /\beyfs\b/.test(lower) ||
+    lower.includes('early years')
+  ) {
+    return 'eyfs';
+  }
+
+  if (/\b(gcse|ks4|key stage 4)\b/.test(lower)) return 'ks4';
+  if (/\b(a[\s-]?level|ks5|key stage 5|sixth form)\b/.test(lower)) return 'ks5';
+  if (/\b(ks3|key stage 3)\b/.test(lower)) return 'ks3';
+  if (/\b(ks2|key stage 2)\b/.test(lower)) return 'ks2';
+  if (/\b(ks1|key stage 1)\b/.test(lower)) return 'ks1';
+
+  const yearMatch = lower.match(/\byear\s*(\d{1,2})\b/) || lower.match(/\by(\d{1,2})\b/);
+  if (yearMatch) {
+    const y = Number(yearMatch[1]);
+    if (y === 1 || y === 2) return 'ks1';
+    if (y >= 3 && y <= 6) return 'ks2';
+    if (y >= 7 && y <= 9) return 'ks3';
+    if (y === 10 || y === 11) return 'ks4';
+    if (y >= 12 && y <= 14) return 'ks5';
+  }
+
+  return null;
+}
+
+/**
+ * Key stages implied by an activity's year-group tags (and optional level).
+ * "All" / empty → empty array (caller falls back to category defaults).
+ */
+export function keyStagesFromActivityTags(
+  yearGroups: unknown,
+  level?: string | null,
+): LibraryKeyStageId[] {
+  const tags = Array.isArray(yearGroups)
+    ? yearGroups.map((t) => String(t || '').trim()).filter(Boolean)
+    : [];
+  const stages = new Set<LibraryKeyStageId>();
+  const hasAll = tags.some((t) => t.toLowerCase() === 'all');
+  if (!hasAll) {
+    for (const tag of tags) {
+      const ks = keyStageFromYearGroupTag(tag);
+      if (ks) stages.add(ks);
+    }
+  }
+  if (stages.size === 0 && level) {
+    const fromLevel = keyStageFromYearGroupTag(level);
+    if (fromLevel) stages.add(fromLevel);
+  }
+  return LIBRARY_KEY_STAGES.map((k) => k.id).filter((id) => stages.has(id));
+}
+
+/** Default stages when an activity is tagged All / untagged, by subject category. */
+export function defaultKeyStagesForCategory(categoryName: string): LibraryKeyStageId[] {
+  const n = normalizeKey(categoryName);
+  if (n.includes('drama games') || n === 'drama games') return ['eyfs', 'ks1', 'ks2'];
+  if (
+    n.includes('vocal') ||
+    n.includes('breathing') ||
+    n.includes('physical starters') ||
+    n.includes('facial') ||
+    n.includes('pitch exercises')
+  ) {
+    return ['ks1', 'ks2', 'ks3'];
+  }
+  const single = inferKeyStageFromCategoryName(categoryName);
+  return single ? [single] : ['eyfs'];
+}
+
+/**
+ * Resolve subject for a leaf category (key stage comes from activity tags).
+ */
+export function resolveCategorySubject(category: CategoryHierarchyMeta): LibrarySubject {
+  const groups = Array.isArray(category.groups) ? category.groups.filter(Boolean) : [];
+  const fromGroupsSubject = groups.find((g) => isLibrarySubject(g));
+  return (
+    (fromGroupsSubject as LibrarySubject | undefined) ||
+    (isLibrarySubject(category.group) ? (category.group as LibrarySubject) : null) ||
+    inferSubjectFromCategoryName(category.name) ||
+    'Music'
+  );
+}
+
 /**
  * Resolve key stage + subject for a leaf category.
  * Prefer explicit `groups` metadata, then `group` as subject, then name heuristics.
@@ -181,13 +273,7 @@ export function resolveCategoryHierarchy(
 ): { keyStage: LibraryKeyStageId; subject: LibrarySubject } {
   const groups = Array.isArray(category.groups) ? category.groups.filter(Boolean) : [];
   const fromGroupsKs = groups.find((g) => isLibraryKeyStageId(g.toLowerCase()));
-  const fromGroupsSubject = groups.find((g) => isLibrarySubject(g));
-
-  const subject: LibrarySubject =
-    (fromGroupsSubject as LibrarySubject | undefined) ||
-    (isLibrarySubject(category.group) ? (category.group as LibrarySubject) : null) ||
-    inferSubjectFromCategoryName(category.name) ||
-    'Music';
+  const subject = resolveCategorySubject(category);
 
   const metaKs = fromGroupsKs
     ? (fromGroupsKs.toLowerCase() as LibraryKeyStageId)
@@ -221,10 +307,24 @@ export interface HierarchyNode {
   count: number;
 }
 
+type ActivityLike = {
+  yearGroups?: unknown;
+  yeargroups?: unknown;
+  level?: string | null;
+};
+
+function activityYearGroupTags(activity: ActivityLike): unknown {
+  return activity.yearGroups ?? activity.yeargroups;
+}
+
 /**
- * Nest flat category activity groups into key stage → subject → category.
+ * Nest activities into key stage → subject → category.
+ *
+ * Each activity is filed under every key stage implied by its year-group tags
+ * (or category defaults when tags are All/empty). When a class is selected,
+ * `viewerKeyStage` limits filing to that stage so the tree matches the filter.
  */
-export function buildLibraryHierarchyTree<T>(
+export function buildLibraryHierarchyTree<T extends ActivityLike>(
   categoryGroups: { name: string; activities: T[] }[],
   categoryMetaByName: Map<string, CategoryHierarchyMeta>,
   viewerKeyStage?: LibraryKeyStageId | null,
@@ -235,18 +335,63 @@ export function buildLibraryHierarchyTree<T>(
     Map<LibrarySubject, Map<string, CatBucket>>
   >();
 
-  for (const group of categoryGroups) {
-    const meta = categoryMetaByName.get(group.name) || { name: group.name };
-    const { keyStage, subject } = resolveCategoryHierarchy(meta, viewerKeyStage);
-    if (!tree.has(keyStage)) tree.set(keyStage, new Map());
-    const bySubject = tree.get(keyStage)!;
+  const ensureBucket = (ks: LibraryKeyStageId, subject: LibrarySubject, catName: string) => {
+    if (!tree.has(ks)) tree.set(ks, new Map());
+    const bySubject = tree.get(ks)!;
     if (!bySubject.has(subject)) bySubject.set(subject, new Map());
     const byCat = bySubject.get(subject)!;
-    byCat.set(group.name, {
-      name: group.name,
-      activities: group.activities,
-      count: group.activities.length,
-    });
+    if (!byCat.has(catName)) {
+      byCat.set(catName, { name: catName, activities: [], count: 0 });
+    }
+    return byCat.get(catName)!;
+  };
+
+  for (const group of categoryGroups) {
+    const meta = categoryMetaByName.get(group.name) || { name: group.name };
+    const subject = resolveCategorySubject(meta);
+
+    for (const activity of group.activities) {
+      let stages = keyStagesFromActivityTags(activityYearGroupTags(activity), activity.level);
+      if (stages.length === 0) {
+        stages = defaultKeyStagesForCategory(group.name);
+      }
+      // Category metadata may list additional stages (e.g. groups: eyfs, ks1, ks2, Drama)
+      const metaStages = (meta.groups || [])
+        .map((g) => g.toLowerCase())
+        .filter((g): g is LibraryKeyStageId => isLibraryKeyStageId(g));
+      if (metaStages.length > 0 && stages.length === 0) {
+        stages = metaStages;
+      }
+
+      if (viewerKeyStage && isLibraryKeyStageId(viewerKeyStage)) {
+        // Class selected: only show under that stage (activities already filtered).
+        // Still require the activity to be plausible for this stage when tags are specific.
+        const tagged = keyStagesFromActivityTags(activityYearGroupTags(activity), activity.level);
+        if (tagged.length > 0 && !tagged.includes(viewerKeyStage)) {
+          // Tagged for other stages only — skip under this viewer (shouldn't normally appear).
+          continue;
+        }
+        stages = [viewerKeyStage];
+      }
+
+      let effectiveSubject = subject;
+      if (
+        effectiveSubject === 'Photography' &&
+        stages.every((s) => s === 'eyfs' || s === 'ks1' || s === 'ks2' || s === 'ks3')
+      ) {
+        stages = stages.map(() => 'ks4' as LibraryKeyStageId);
+        stages = [...new Set(stages)];
+      }
+
+      for (const ks of stages) {
+        if (effectiveSubject === 'Photography' && (ks === 'eyfs' || ks === 'ks1' || ks === 'ks2' || ks === 'ks3')) {
+          continue;
+        }
+        const bucket = ensureBucket(ks, effectiveSubject, group.name);
+        bucket.activities.push(activity);
+        bucket.count = bucket.activities.length;
+      }
+    }
   }
 
   const nodes: HierarchyNode[] = [];
@@ -262,7 +407,6 @@ export function buildLibraryHierarchyTree<T>(
         const count = cats.reduce((sum, c) => sum + c.count, 0);
         return { subject, categories: cats, count };
       });
-    // Any unexpected subjects
     for (const [subject, catMap] of bySubject) {
       if (subjects.some((s) => s.subject === subject)) continue;
       const cats = [...catMap.values()].sort((a, b) => a.name.localeCompare(b.name));

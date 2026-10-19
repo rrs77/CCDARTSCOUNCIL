@@ -169,3 +169,7 @@ VALUES ('ccaead63-6818-489e-9bc7-3015302811fb', 'Vocal Warm-Ups', '#EC4899', 70,
 ON CONFLICT (id) DO UPDATE SET name=EXCLUDED.name, color=EXCLUDED.color, year_groups=EXCLUDED.year_groups, groups=EXCLUDED.groups, "group"=EXCLUDED."group", updated_at=NOW();
 
 COMMIT;
+
+-- Drama Games: ensure EYFS class tags so EYFS teachers see the bank (demo/snapshot parity).
+-- Full yeargroups arrays are maintained in demoSnapshot.json; apply targeted live updates as needed.
+-- Vocal Warm-Ups content/colours: see 2026-10-19_vocal_warmups_content.sql

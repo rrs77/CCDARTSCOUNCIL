@@ -12,7 +12,9 @@ Top level **key stage** → **subject** → **leaf category** (existing folders 
 
 All headings start **collapsed**. Activity counts show on collapsed rows. Expanded state is remembered for the browser session.
 
-Class filter behaviour is unchanged: a class only sees categories assigned to it in Settings (plus vocal warm-up subcategory mapping).
+Activities are filed under **every key stage implied by their year-group tags** (e.g. Drama Games tagged Reception + Year 1–6 appear under EYFS, KS1 and KS2 Drama). Untagged / `All` banks (Vocal Warm-Ups) use category defaults (KS1–KS3 Music). When a class is selected, the tree shows that class’s key stage only; Settings folder visibility still gates which categories appear.
+
+Class filter behaviour is otherwise unchanged: a class only sees categories assigned to it in Settings (plus vocal warm-up subcategory mapping).
 
 ## Spec / guidance sources (England)
 
