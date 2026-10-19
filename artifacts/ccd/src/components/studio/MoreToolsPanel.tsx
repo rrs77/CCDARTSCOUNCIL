@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   BookOpen,
+  Calendar,
   CalendarCog,
   Clapperboard,
   FolderOpen,
@@ -17,7 +18,7 @@ const TOOLS: {
   title: string;
   desc: string;
   icon: React.ReactNode;
-  action: 'tab' | 'settings' | 'forum' | 'help' | 'walkthrough';
+  action: 'tab' | 'settings' | 'forum' | 'help' | 'walkthrough' | 'timetable' | 'class-calendar';
   tab?: StudioNavId;
 }[] = [
   {
@@ -62,10 +63,16 @@ const TOOLS: {
   {
     id: 'timetable',
     title: 'Timetable builder',
-    desc: 'Planner → Timetable builder — set weekly slots for the selected class.',
+    desc: 'Full-page weekly slots for all My classes (Planner → Timetable builder).',
     icon: <CalendarCog className="h-5 w-5" />,
-    action: 'tab',
-    tab: 'unit-viewer',
+    action: 'timetable',
+  },
+  {
+    id: 'class-calendar',
+    title: 'Class calendar',
+    desc: 'Events and key dates for the selected class — not the weekly timetable.',
+    icon: <Calendar className="h-5 w-5" />,
+    action: 'class-calendar',
   },
   {
     id: 'forum',
@@ -98,6 +105,16 @@ export function MoreToolsPanel({ onNavigate }: Props) {
   const run = (tool: (typeof TOOLS)[number]) => {
     if (tool.action === 'tab' && tool.tab) {
       onNavigate(tool.tab);
+      return;
+    }
+    if (tool.action === 'timetable') {
+      onNavigate('unit-viewer');
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent('ccd:open-timetable')), 0);
+      return;
+    }
+    if (tool.action === 'class-calendar') {
+      onNavigate('unit-viewer');
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent('ccd:open-class-calendar')), 0);
       return;
     }
     if (tool.action === 'settings') {

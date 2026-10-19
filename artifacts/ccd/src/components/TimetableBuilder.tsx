@@ -1,11 +1,21 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { X, Plus, Save, Trash2, Clock, MapPin, GripVertical, Edit3, Users, BookOpen, Settings, Calendar, ChevronDown, ChevronRight, Copy, CopyPlus } from 'lucide-react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { X, Plus, Save, Trash2, MapPin, Settings, ChevronDown, Copy, CopyPlus } from 'lucide-react';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useDrop, useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
+import {
+  TERM_IDS as SHARED_TERM_IDS,
+  loadTeacherTimetable,
+  migrateLegacyTimetablesToTeacher,
+  saveTeacherTimetable,
+  teacherGlobalFlagKey,
+  teacherTermKey,
+  teacherTimeConfigKey,
+  type TimetableEntry,
+} from '../utils/timetableStorage';
 
 interface TimetableClass {
   id: string;
@@ -23,19 +33,20 @@ interface TimetableClass {
 interface TimetableBuilderProps {
   isOpen: boolean;
   onClose: () => void;
-  className: string; // Current class/sheet name
+  /** @deprecated Teacher-level timetable — kept optional for callers/theme fallback only. */
+  className?: string;
   onTimetableUpdate?: (classes: TimetableClass[]) => void;
   initialEditClass?: TimetableClass | null; // Optional class to edit when opening
+  /** When true, render as the Timetable builder room canvas (no modal over a calendar). */
+  embedded?: boolean;
 }
 
 const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 const DAY_SHORT_NAMES = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
-// Use Monday-Friday for school days (Day 1-5)
-const SCHOOL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const SCHOOL_DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 // Terms in order (for "previous term" and "same for year")
-const TERM_IDS = ['A1', 'A2', 'SP1', 'SP2', 'SM1', 'SM2'] as const;
+const TERM_IDS = SHARED_TERM_IDS;
 const TERM_LABELS: Record<string, string> = {
   A1: 'Autumn 1',
   A2: 'Autumn 2',
@@ -47,12 +58,12 @@ const TERM_LABELS: Record<string, string> = {
 
 const DRAG_TYPE_TIMETABLE_BLOCK = 'timetable-block';
 
-const PX_PER_MINUTE = 1.5;
-const MIN_SLOT_HEIGHT_PX = 48;
+const PX_PER_MINUTE = 1.15;
+const MIN_SLOT_HEIGHT_PX = 36;
 
-const DEFAULT_DAY_START = '7:30';
-const DEFAULT_DAY_END = '17:00';
-const DEFAULT_SLOT_INTERVAL = 15; // minutes; 5, 15, 30, 60 supported
+const DEFAULT_DAY_START = '8:00';
+const DEFAULT_DAY_END = '16:00';
+const DEFAULT_SLOT_INTERVAL = 30; // minutes; 5, 15, 30, 60 supported — 30 is the calm default
 
 function parseTimeToMinutes(time: string): number {
   const [h, m] = time.split(':').map(s => parseInt(s, 10) || 0);
@@ -115,45 +126,37 @@ export function TimetableBuilder({
   onClose,
   className,
   onTimetableUpdate,
-  initialEditClass
+  initialEditClass,
+  embedded = false,
 }: TimetableBuilderProps) {
-  const { customYearGroups, getThemeForClass, yearGroupSections } = useSettings();
-  const [timetableKeyStagesExpanded, setTimetableKeyStagesExpanded] = useState<Set<string>>(new Set());
+  const { customYearGroups, getThemeForClass } = useSettings();
 
-  const yearGroupsByKeyStage = useMemo(() => {
-    const sections = [...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder);
-    return sections
-      .map(section => ({
-        sectionId: section.id,
-        label: section.label,
-        sortOrder: section.sortOrder,
-        yearGroups: (section.yearGroupIds || [])
-          .map(id => customYearGroups.find(g => g.id === id))
-          .filter((g): g is NonNullable<typeof g> => Boolean(g))
-      }))
-      .filter(s => s.yearGroups.length > 0);
-  }, [yearGroupSections, customYearGroups]);
-
-  const toggleTimetableKeyStage = (sectionId: string) => {
-    setTimetableKeyStagesExpanded(prev => {
-      const next = new Set(prev);
-      if (next.has(sectionId)) next.delete(sectionId);
-      else next.add(sectionId);
-      return next;
-    });
-  };
+  const myClasses = useMemo(
+    () =>
+      customYearGroups.map((g) => ({
+        id: g.id,
+        name: g.name,
+        color: g.color || getThemeForClass(g.id).primary,
+      })),
+    [customYearGroups, getThemeForClass],
+  );
 
   const [selectedTermId, setSelectedTermId] = useState<string>('A1');
   const [timetableClasses, setTimetableClasses] = useState<TimetableClass[]>([]);
   const [editingClass, setEditingClass] = useState<TimetableClass | null>(initialEditClass || null);
   const [isSaving, setIsSaving] = useState(false);
-  const [selectedSlot, setSelectedSlot] = useState<{day: number, time: string} | null>(null);
+  const [selectedSlot, setSelectedSlot] = useState<{ day: number; time: string } | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'days'>('days');
+  const [showRotationLabel, setShowRotationLabel] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
+  const settingsRef = useRef<HTMLDivElement>(null);
+  const gridViewportRef = useRef<HTMLDivElement>(null);
+  const [gridViewportH, setGridViewportH] = useState(0);
 
-  const getStorageKey = (termId: string) => `timetable-${className}-${termId}`;
-  const globalFlagKey = () => `timetable-${className}-global`;
+  const getStorageKey = (termId: string) => teacherTermKey(termId);
+  const globalFlagKey = () => teacherGlobalFlagKey();
 
-  const timeConfigKey = (key: string) => `timetable-${className}-${key}`;
+  const timeConfigKey = (key: string) => teacherTimeConfigKey(key);
   const [dayStart, setDayStart] = useState<string>(() => {
     try { return localStorage.getItem(timeConfigKey('dayStart')) || DEFAULT_DAY_START; } catch { return DEFAULT_DAY_START; }
   });
@@ -172,6 +175,8 @@ export function TimetableBuilder({
     try { localStorage.setItem(timeConfigKey(key), value); } catch { /* ignore */ }
   };
 
+  const themeFallbackClass = className || myClasses[0]?.id || 'LKG';
+
   const dayStartMinutes = parseTimeToMinutes(dayStart);
   const dayEndMinutes = parseTimeToMinutes(dayEnd);
   const slotStartTimes = useMemo(
@@ -179,11 +184,6 @@ export function TimetableBuilder({
     [dayStart, dayEnd, slotInterval]
   );
   const slotDurationMinutes = slotInterval;
-  // Slot rows enforce a minimum height, so event top/height must use the same
-  // effective px-per-minute as the grid — not the nominal PX_PER_MINUTE constant.
-  const slotHeightPx = Math.max(slotDurationMinutes * PX_PER_MINUTE, MIN_SLOT_HEIGHT_PX);
-  const effectivePxPerMinute = slotHeightPx / slotDurationMinutes;
-  const gridHeightPx = slotStartTimes.length * slotHeightPx;
 
   const [isGlobalTimetable, setIsGlobalTimetable] = useState<boolean>(() => {
     try {
@@ -193,96 +193,89 @@ export function TimetableBuilder({
     }
   });
 
+  useEffect(() => {
+    const el = gridViewportRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect.height ?? 0;
+      setGridViewportH(h);
+    });
+    ro.observe(el);
+    setGridViewportH(el.clientHeight);
+    return () => ro.disconnect();
+  }, [isOpen, embedded]);
+
+  // Fit the school day into the available page height when possible —
+  // full-page feel instead of a tall sparse scroll.
+  const fittedSlotH =
+    gridViewportH > 0 && slotStartTimes.length > 0
+      ? gridViewportH / slotStartTimes.length
+      : slotDurationMinutes * PX_PER_MINUTE;
+  const slotHeightPx = Math.max(MIN_SLOT_HEIGHT_PX, fittedSlotH);
+  const effectivePxPerMinute = slotHeightPx / slotDurationMinutes;
+  const gridHeightPx = slotStartTimes.length * slotHeightPx;
+
   const loadTimetable = React.useCallback(async (termId: string) => {
     try {
-      const useGlobal = localStorage.getItem(globalFlagKey()) === 'true';
-      let saved: string | null;
-      if (useGlobal) {
-        saved = localStorage.getItem(`timetable-${className}`);
-      } else {
-        saved = localStorage.getItem(getStorageKey(termId));
-      }
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setTimetableClasses(Array.isArray(parsed) ? parsed : []);
-        return;
-      }
-      if (!useGlobal) {
-        const legacy = localStorage.getItem(`timetable-${className}`);
-        if (legacy) {
-          const parsed = JSON.parse(legacy);
-          const classes = Array.isArray(parsed) ? parsed : [];
-          setTimetableClasses(classes);
-          localStorage.setItem(getStorageKey(termId), JSON.stringify(classes));
-          return;
-        }
-        if (isSupabaseConfigured()) {
-          const { data, error } = await supabase
-            .from(TABLES.TIMETABLE_CLASSES || 'timetable_classes')
-            .select('*')
-            .eq('class_name', className);
-          if (!error && data?.length) {
-            const classes = data.map((item: any) => ({
-              id: item.id,
-              day: item.day,
-              startTime: item.start_time,
-              endTime: item.end_time,
-              className: item.class_name_display || item.class_name,
-              location: item.location || '',
-              color: item.color || getThemeForClass(className).primary,
-              type: item.type || 'curriculum',
-              yearGroupId: item.year_group_id,
-              recurringUnitId: item.recurring_unit_id
-            }));
-            setTimetableClasses(classes);
-            localStorage.setItem(getStorageKey(termId), JSON.stringify(classes));
-            return;
-          }
-        }
-      }
-      setTimetableClasses([]);
+      migrateLegacyTimetablesToTeacher(myClasses);
+      const classes = loadTeacherTimetable(termId) as TimetableClass[];
+      setTimetableClasses(classes);
     } catch (error) {
       console.error('Error loading timetable:', error);
       setTimetableClasses([]);
     }
-  }, [className, getThemeForClass]);
+  }, [myClasses]);
 
   useEffect(() => {
     if (!isOpen) return;
+    migrateLegacyTimetablesToTeacher(myClasses);
     loadTimetable(selectedTermId);
     if (initialEditClass) setEditingClass(initialEditClass);
     else setEditingClass(null);
-  }, [isOpen, className, selectedTermId, initialEditClass, loadTimetable]);
+  }, [isOpen, selectedTermId, initialEditClass, loadTimetable, myClasses]);
 
   useEffect(() => {
     const flag = localStorage.getItem(globalFlagKey()) === 'true';
     setIsGlobalTimetable(flag);
-  }, [isOpen, className]);
+  }, [isOpen]);
+
+  useEffect(() => {
+    if (!settingsOpen) return;
+    const onDoc = (e: MouseEvent) => {
+      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) {
+        setSettingsOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', onDoc);
+    return () => document.removeEventListener('mousedown', onDoc);
+  }, [settingsOpen]);
 
   const saveTimetable = async (classes: TimetableClass[], termId?: string) => {
     const useGlobal = localStorage.getItem(globalFlagKey()) === 'true';
     const term = termId ?? selectedTermId;
     setIsSaving(true);
     try {
-      if (useGlobal) {
-        localStorage.setItem(`timetable-${className}`, JSON.stringify(classes));
-      } else {
-        localStorage.setItem(getStorageKey(term), JSON.stringify(classes));
-      }
+      saveTeacherTimetable(classes as TimetableEntry[], {
+        termId: term,
+        useGlobal,
+        classes: myClasses,
+      });
       if (termId === undefined) {
         setTimetableClasses(classes);
       }
       if (onTimetableUpdate && termId === undefined) {
         onTimetableUpdate(classes);
       }
+      // Best-effort cloud mirror keyed by teacher scope (not a single class)
       if (isSupabaseConfigured()) {
+        const scope = 'teacher';
         await supabase
           .from(TABLES.TIMETABLE_CLASSES || 'timetable_classes')
           .delete()
-          .eq('class_name', className);
+          .eq('class_name', scope);
         if (classes.length > 0) {
           const insertData = classes.map(cls => ({
-            class_name: className,
+            class_name: scope,
             day: cls.day,
             start_time: cls.startTime,
             end_time: cls.endTime,
@@ -338,7 +331,11 @@ export function TimetableBuilder({
       return;
     }
     localStorage.setItem(globalFlagKey(), 'true');
-    localStorage.setItem(`timetable-${className}`, JSON.stringify(classes));
+    saveTeacherTimetable(classes as TimetableEntry[], {
+      termId: selectedTermId,
+      useGlobal: true,
+      classes: myClasses,
+    });
     setIsGlobalTimetable(true);
     setTimetableClasses(classes);
     if (onTimetableUpdate) onTimetableUpdate(classes);
@@ -349,7 +346,11 @@ export function TimetableBuilder({
     const current = timetableClasses.map(c => ({ ...c, id: `class-${Date.now()}-${Math.random().toString(36).slice(2)}` }));
     localStorage.setItem(globalFlagKey(), 'false');
     setIsGlobalTimetable(false);
-    localStorage.setItem(getStorageKey(selectedTermId), JSON.stringify(current));
+    saveTeacherTimetable(current as TimetableEntry[], {
+      termId: selectedTermId,
+      useGlobal: false,
+      classes: myClasses,
+    });
     loadTimetable(selectedTermId);
     alert('Each term now has its own timetable. Change the semester to see or edit that term\'s timetable.');
   };
@@ -364,7 +365,7 @@ export function TimetableBuilder({
       endTime: formatMinutesToTime(endM),
       className: yearGroup.name,
       location: '',
-      color: yearGroup.color || getThemeForClass(className).primary,
+      color: yearGroup.color || getThemeForClass(yearGroup.id || themeFallbackClass).primary,
       type: 'curriculum',
       yearGroupId: yearGroup.id
     };
@@ -453,352 +454,234 @@ export function TimetableBuilder({
     void saveTimetable(updated);
   };
 
-  // Get all unique classes with their scheduled days
-  const classList = useMemo(() => {
-    const classMap = new Map<string, { class: TimetableClass; days: number[] }>();
-    
-    timetableClasses.forEach(cls => {
-      if (!classMap.has(cls.className)) {
-        classMap.set(cls.className, { class: cls, days: [] });
-      }
-      const entry = classMap.get(cls.className)!;
-      if (!entry.days.includes(cls.day)) {
-        entry.days.push(cls.day);
-      }
-    });
-    
-    return Array.from(classMap.values()).map(({ class: cls, days }) => ({
-      ...cls,
-      scheduledDays: days.sort()
-    }));
-  }, [timetableClasses]);
-
   // Get days to display based on view mode
-  const displayDays = viewMode === 'days' ? SCHOOL_DAYS : DAY_NAMES;
-  const displayDayIndices = viewMode === 'days' 
+  const displayDayIndices = viewMode === 'days'
     ? [1, 2, 3, 4, 5] // Monday-Friday
     : [0, 1, 2, 3, 4, 5, 6]; // All days
 
   if (!isOpen) return null;
 
-  return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[70]">
-        <div className="bg-white rounded-2xl shadow-xl max-w-[95vw] w-full max-h-[95vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
-          <div>
-            <h2 className="text-2xl font-bold">Timetable Builder</h2>
-            <p className="text-[#E9E6FF] mt-1">{className}</p>
+  const dayHeaders = viewMode === 'days' ? SCHOOL_DAY_SHORT : DAY_SHORT_NAMES;
+  const termHint = isGlobalTimetable ? 'All terms' : TERM_LABELS[selectedTermId];
+
+  const settingsPopover = (
+    <div
+      ref={settingsRef}
+      className="absolute right-0 top-full z-40 mt-2 w-[300px] rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-[0_16px_40px_rgba(31,27,77,0.12)]"
+    >
+      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Term</p>
+      <select
+        value={selectedTermId}
+        onChange={(e) => setSelectedTermId(e.target.value)}
+        disabled={isGlobalTimetable}
+        className="mt-1.5 w-full rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2 text-[13px] font-semibold text-[#1F1B4D] disabled:opacity-60"
+      >
+        {TERM_IDS.map((id) => (
+          <option key={id} value={id}>{TERM_LABELS[id]}</option>
+        ))}
+      </select>
+      <label className="mt-3 flex cursor-pointer items-start gap-2">
+        <input
+          type="checkbox"
+          checked={isGlobalTimetable}
+          onChange={(e) => {
+            if (e.target.checked) setSameForWholeYear();
+            else setPerTermTimetable();
+          }}
+          className="mt-0.5 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
+        />
+        <span className="text-[13px] font-medium text-[#1F1B4D]">Same timetable for all terms</span>
+      </label>
+      {!isGlobalTimetable && (
+        <div className="mt-2 space-y-1.5">
+          <button
+            type="button"
+            onClick={copyFromPreviousTerm}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#E9E6FF] px-3 py-2 text-[12px] font-semibold text-[#4338E8] hover:bg-[#E2E0EF]"
+          >
+            <Copy className="h-3.5 w-3.5" />
+            Copy from previous term
+          </button>
+          <button
+            type="button"
+            onClick={setSameForWholeYear}
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-[12px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
+          >
+            <CopyPlus className="h-3.5 w-3.5" />
+            Apply to whole year
+          </button>
+        </div>
+      )}
+      <div className="my-3 border-t border-[#E2E0EF]" />
+      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Grid</p>
+      <div className="mt-1.5 grid grid-cols-2 gap-2">
+        <label className="block">
+          <span className="text-[11px] font-medium text-[#77738F]">Day start</span>
+          <input
+            type="time"
+            value={normalizeTimeForInput(dayStart)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDayStart(v);
+              persistTimeConfig('dayStart', v);
+            }}
+            className="mt-0.5 w-full rounded-xl border border-[#E2E0EF] px-2 py-1.5 text-[13px]"
+          />
+        </label>
+        <label className="block">
+          <span className="text-[11px] font-medium text-[#77738F]">Day end</span>
+          <input
+            type="time"
+            value={normalizeTimeForInput(dayEnd)}
+            onChange={(e) => {
+              const v = e.target.value;
+              setDayEnd(v);
+              persistTimeConfig('dayEnd', v);
+            }}
+            className="mt-0.5 w-full rounded-xl border border-[#E2E0EF] px-2 py-1.5 text-[13px]"
+          />
+        </label>
+      </div>
+      <label className="mt-2 block">
+        <span className="text-[11px] font-medium text-[#77738F]">Slot interval</span>
+        <select
+          value={slotInterval}
+          onChange={(e) => {
+            const n = parseInt(e.target.value, 10);
+            setSlotInterval(n);
+            persistTimeConfig('slotInterval', String(n));
+          }}
+          className="mt-0.5 w-full rounded-xl border border-[#E2E0EF] px-2 py-1.5 text-[13px] font-semibold text-[#1F1B4D]"
+        >
+          <option value={5}>5 min</option>
+          <option value={15}>15 min</option>
+          <option value={30}>30 min</option>
+          <option value={60}>60 min</option>
+        </select>
+      </label>
+      <label className="mt-3 flex cursor-pointer items-center gap-2">
+        <input
+          type="checkbox"
+          checked={showRotationLabel}
+          onChange={(e) => setShowRotationLabel(e.target.checked)}
+          className="rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
+        />
+        <span className="text-[13px] font-medium text-[#1F1B4D]">Show rotation label</span>
+      </label>
+      <button
+        type="button"
+        onClick={() => setViewMode(viewMode === 'days' ? 'week' : 'days')}
+        className="mt-2 w-full rounded-xl border border-[#E2E0EF] px-3 py-2 text-[12px] font-semibold text-[#77738F] hover:bg-[#F4F3FA]"
+      >
+        {viewMode === 'days' ? 'Show weekend days' : 'School days only (Mon–Fri)'}
+      </button>
+    </div>
+  );
+
+  const page = (
+    <div className="ss-timetable-page">
+      <div className="ss-timetable-toolbar">
+        <div className="ss-timetable-palette">
+          <div className="ss-timetable-palette-meta">
+            <span className="ss-timetable-kicker">My classes</span>
+            <span className="ss-timetable-term">{termHint}</span>
           </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setViewMode(viewMode === 'days' ? 'week' : 'days')}
-              className="px-4 py-2 bg-white/20 hover:bg-white/30 text-white font-medium rounded-lg transition-colors text-sm"
-            >
-              {viewMode === 'days' ? 'Show All Days' : 'School Days Only'}
+          {myClasses.length === 0 ? (
+            <p className="ss-timetable-empty-hint">Add classes in Settings → My classes, then drag them onto the week.</p>
+          ) : (
+            <div className="ss-timetable-chips">
+              {myClasses.map((yg) => (
+                <DraggableYearGroup key={yg.id} yearGroup={yg} chip />
+              ))}
+            </div>
+          )}
+          <button
+            type="button"
+            className="ss-timetable-break"
+            onClick={() => {
+              if (selectedSlot) handleAddNonCurriculum(selectedSlot.day, selectedSlot.time);
+              else {
+                setEditingClass({
+                  id: `new-${Date.now()}`,
+                  day: 1,
+                  startTime: dayStart,
+                  endTime: formatMinutesToTime(parseTimeToMinutes(dayStart) + slotInterval),
+                  className: '',
+                  location: '',
+                  color: '#9CA3AF',
+                  type: 'non-curriculum',
+                });
+              }
+            }}
+          >
+            <Plus className="h-3.5 w-3.5" />
+            Break / club
+          </button>
+        </div>
+        <div className="ss-timetable-actions relative">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((o) => !o)}
+            className="ss-timetable-icon-btn"
+            aria-expanded={settingsOpen}
+            aria-label="Timetable settings"
+            title="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+          {settingsOpen && settingsPopover}
+          <button
+            type="button"
+            onClick={() => saveTimetable(timetableClasses)}
+            disabled={isSaving}
+            className="ss-timetable-save"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving ? 'Saving…' : 'Save'}
+          </button>
+          {!embedded && (
+            <button type="button" onClick={onClose} className="ss-timetable-icon-btn" aria-label="Close">
+              <X className="h-5 w-5" />
             </button>
-            <button
-              type="button"
-              onClick={() => saveTimetable(timetableClasses)}
-              disabled={isSaving}
-              className="flex items-center gap-2 px-4 py-2 bg-white text-[#4338E8] hover:bg-[#E9E6FF] font-medium rounded-lg transition-colors text-sm shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              <Save className="h-4 w-4" />
-              {isSaving ? 'Saving...' : 'Save'}
-            </button>
-            <button
-              onClick={onClose}
-              className="p-2 text-white/80 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <X className="h-6 w-6" />
-            </button>
+          )}
+        </div>
+      </div>
+
+      <div className="ss-timetable-board">
+        <div
+          className="ss-timetable-dayhead"
+          style={{ gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
+        >
+          <div className="ss-timetable-corner">
+            {showRotationLabel ? <span>Rot.</span> : null}
           </div>
+          {displayDayIndices.map((dayIndex, index) => (
+            <div key={dayIndex} className="ss-timetable-dow">
+              {dayHeaders[index]}
+            </div>
+          ))}
         </div>
 
-        {/* Content - min-h-0 so flex children can shrink and scroll */}
-        <div className="flex-1 min-h-0 overflow-hidden flex">
-          {/* Left Sidebar - Class List; min-h-0 so inner overflow-y-auto can scroll */}
-          <div className="w-80 flex-shrink-0 min-h-0 border-r border-gray-200 bg-gray-50 flex flex-col overflow-hidden">
-            {/* Semester/Term Selection */}
-            <div className="p-4 border-b border-gray-200 bg-white">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Semester</h3>
-              <select
-                value={selectedTermId}
-                onChange={(e) => setSelectedTermId(e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm mb-3"
-              >
-                {TERM_IDS.map(id => (
-                  <option key={id} value={id}>{TERM_LABELS[id]}</option>
-                ))}
-              </select>
-              <label className="flex items-center gap-2 mb-3 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={isGlobalTimetable}
-                  onChange={(e) => {
-                    if (e.target.checked) setSameForWholeYear();
-                    else setPerTermTimetable();
-                  }}
-                  className="rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
-                />
-                <span className="text-sm text-gray-700">Same timetable for all terms</span>
-              </label>
-              {!isGlobalTimetable && (
-                <div className="space-y-2">
-                  <button
-                    type="button"
-                    onClick={copyFromPreviousTerm}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-[#4338E8] bg-[#E9E6FF] border border-[#E2E0EF] rounded-lg hover:bg-[#E9E6FF] transition-colors"
-                  >
-                    <Copy className="h-4 w-4" />
-                    Copy from previous term
-                  </button>
-                  <button
-                    type="button"
-                    onClick={setSameForWholeYear}
-                    className="w-full flex items-center justify-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-200 rounded-lg hover:bg-gray-200 transition-colors"
-                  >
-                    <CopyPlus className="h-4 w-4" />
-                    Apply this timetable to whole year
-                  </button>
-                </div>
-              )}
-              <p className="text-xs text-gray-500 mt-2">
-                {isGlobalTimetable
-                  ? 'One timetable for the whole year. Uncheck above to edit per term.'
-                  : 'Each term has its own timetable. Change semester to view or edit that term.'}
-              </p>
-            </div>
-
-            {/* Grid times – customisable so lessons can start at e.g. 2:15 or 4:05 */}
-            <div className="p-4 border-b border-gray-200 bg-white">
-              <h3 className="text-xs font-semibold text-gray-500 uppercase mb-2">Grid times</h3>
-              <div className="grid grid-cols-2 gap-2 mb-2">
-                <div>
-                  <label className="block text-xs text-gray-600 mb-0.5">Day start</label>
-                  <input
-                    type="time"
-                    value={normalizeTimeForInput(dayStart)}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setDayStart(v);
-                      persistTimeConfig('dayStart', v);
-                    }}
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
-                  />
-                </div>
-                <div>
-                  <label className="block text-xs text-gray-600 mb-0.5">Day end</label>
-                  <input
-                    type="time"
-                    value={normalizeTimeForInput(dayEnd)}
-                    onChange={(e) => {
-                      const v = e.target.value;
-                      setDayEnd(v);
-                      persistTimeConfig('dayEnd', v);
-                    }}
-                    className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
-                  />
-                </div>
-              </div>
-              <div>
-                <label className="block text-xs text-gray-600 mb-0.5">Slot interval</label>
-                <select
-                  value={slotInterval}
-                  onChange={(e) => {
-                    const v = Number(e.target.value);
-                    setSlotInterval(v);
-                    persistTimeConfig('slotInterval', String(v));
-                  }}
-                  className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm"
-                >
-                  <option value={5}>5 min</option>
-                  <option value={15}>15 min</option>
-                  <option value={30}>30 min</option>
-                  <option value={60}>60 min</option>
-                </select>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Slots define drop targets. Edit any entry to set times like 2:15 or 4:05.
-              </p>
-            </div>
-
-            {/* Class List - scrollable so you can reach bottom */}
-            <div className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="font-semibold text-gray-900">Class List</h3>
-                <button
-                  onClick={() => {
-                    setEditingClass({
-                      id: `new-${Date.now()}`,
-                      day: 1,
-                      startTime: '9:00',
-                      endTime: '10:00',
-                      className: '',
-                      location: '',
-                      color: getThemeForClass(className).primary,
-                      type: 'curriculum'
-                    });
-                  }}
-                  className="p-1.5 text-[#4338E8] hover:text-[#3529d1] hover:bg-[#E9E6FF] rounded-lg transition-colors"
-                  title="Add a Class"
-                >
-                  <Plus className="h-5 w-5" />
-                </button>
-              </div>
-
-              {/* Year Groups for Dragging – same key stage structure as Settings */}
-              <div className="mb-4">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Drag to Add</h4>
-                <div className="space-y-1">
-                  {yearGroupsByKeyStage.map(({ sectionId, label, yearGroups: sectionYearGroups }) => {
-                    const isExpanded = timetableKeyStagesExpanded.has(sectionId);
-                    return (
-                      <div key={sectionId} className="rounded-lg border border-gray-200 overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => toggleTimetableKeyStage(sectionId)}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-left text-sm font-semibold text-gray-800"
-                        >
-                          {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
-                          <span>{label}</span>
-                          <span className="text-xs font-normal text-gray-500">({sectionYearGroups.length})</span>
-                        </button>
-                        {isExpanded && (
-                          <div className="p-2 pt-0 space-y-2 border-t border-gray-100">
-                            {sectionYearGroups.map(yearGroup => (
-                              <DraggableYearGroup key={yearGroup.id} yearGroup={yearGroup} />
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* Scheduled Classes */}
-              {classList.length === 0 ? (
-                <div className="text-center py-8 text-gray-500 text-sm">
-                  <p>No classes scheduled</p>
-                  <p className="text-xs mt-1">Drag year groups or click + to add</p>
-                </div>
-              ) : (
-                <div className="space-y-2">
-                  {classList.map((cls) => {
-                    const daysText = cls.scheduledDays.length === 0 
-                      ? 'Unscheduled'
-                      : cls.scheduledDays.length === 1
-                        ? `Day ${cls.scheduledDays[0] + 1}`
-                        : `Days ${cls.scheduledDays.map(d => d + 1).join(', ')}`;
-                    
-                    return (
-                      <div
-                        key={cls.id}
-                        className="bg-white border-2 rounded-lg p-3 hover:shadow-md transition-shadow cursor-pointer group"
-                        style={{ borderLeftColor: cls.color, borderLeftWidth: '4px' }}
-                        onClick={() => setEditingClass(cls)}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div className="flex-1 min-w-0">
-                            <div className="font-medium text-sm text-gray-900 truncate">{cls.className}</div>
-                            <div className="text-xs text-gray-500 mt-1">{daysText}</div>
-                            {cls.location && (
-                              <div className="text-xs text-gray-400 mt-1 flex items-center">
-                                <MapPin className="h-3 w-3 mr-1" />
-                                {cls.location}
-                              </div>
-                            )}
-                          </div>
-                          <div className="flex items-center space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setEditingClass(cls);
-                              }}
-                              className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded"
-                              title="Edit"
-                            >
-                              <Settings className="h-4 w-4" />
-                            </button>
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                handleDeleteClass(cls.id);
-                              }}
-                              className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded"
-                              title="Delete"
-                            >
-                              <Trash2 className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-
-              {/* Non-Curriculum Button */}
-              <div className="mt-6 pt-4 border-t border-gray-200">
-                <button
-                  onClick={() => {
-                    if (selectedSlot) {
-                      handleAddNonCurriculum(selectedSlot.day, selectedSlot.time);
-                    } else {
-                      alert('Please select a time slot first');
-                    }
-                  }}
-                  className="w-full p-3 bg-white border border-gray-200 rounded-lg hover:shadow-md transition-shadow flex items-center justify-center space-x-2"
-                >
-                  <Plus className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm text-gray-700">Add Break/Club</span>
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Timetable Grid - use CSS Grid for full width and aligned columns */}
-          <div className="flex-1 min-w-0 w-full overflow-auto bg-white flex flex-col">
-            {/* Header row: Rotation | Day 1 | Day 2 ... - grid aligns with columns below */}
-            <div
-              className="flex-shrink-0 border-b-2 border-gray-300 bg-gray-50 sticky top-0 z-30 grid"
-              style={{ gridTemplateColumns: `80px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
-            >
-              <div className="p-3 border-r border-gray-300 flex items-center">
-                <button className="px-2 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200 rounded-lg transition-colors flex items-center">
-                  Rotation
-                  <ChevronDown className="ml-1 h-4 w-4" />
-                </button>
-              </div>
-              {displayDayIndices.map((dayIndex, index) => (
-                <div key={dayIndex} className="p-3 text-center text-sm font-semibold text-gray-700 border-r border-gray-300 last:border-r-0">
-                  {viewMode === 'days' ? `Day ${index + 1}` : displayDays[index]}
+        <div ref={gridViewportRef} className="ss-timetable-grid-viewport">
+          <div
+            className="ss-timetable-grid"
+            style={{
+              gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))`,
+              height: gridHeightPx,
+            }}
+          >
+            <div className="ss-timetable-ruler" style={{ height: gridHeightPx }}>
+              {slotStartTimes.map((slotTime) => (
+                <div key={slotTime} className="ss-timetable-tick" style={{ height: slotHeightPx }}>
+                  <span>{slotTime}</span>
                 </div>
               ))}
             </div>
-            <div
-              className="flex-1 overflow-auto min-h-0 grid"
-              style={{ gridTemplateColumns: `80px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
-            >
-              {/* Time ruler column (one row per slot) */}
-              <div className="sticky left-0 z-20 bg-gray-50 border-r border-gray-300 flex flex-col" style={{ height: gridHeightPx }}>
-                {slotStartTimes.map((slotTime) => (
-                  <div
-                    key={slotTime}
-                    className="flex items-center justify-end pr-2 border-b border-gray-200 flex-shrink-0"
-                    style={{ height: slotHeightPx }}
-                  >
-                    <span className="text-xs text-gray-600 font-medium">{slotTime}</span>
-                  </div>
-                ))}
-              </div>
-              {/* Day columns */}
-              {displayDayIndices.map((dayIndex, index) => (
+            {displayDayIndices.map((dayIndex, index) => (
               <TimetableDayColumn
                 key={dayIndex}
                 day={dayIndex}
-                dayLabel={viewMode === 'days' ? `Day ${index + 1}` : displayDays[index]}
+                dayLabel={dayHeaders[index]}
                 classes={getClassesForDay(dayIndex)}
                 dayStartMinutes={dayStartMinutes}
                 dayEndMinutes={dayEndMinutes}
@@ -818,26 +701,34 @@ export function TimetableBuilder({
                 minutesToTime={minutesToTime}
               />
             ))}
-            </div>
           </div>
         </div>
-
-        {/* Edit Modal */}
-        {editingClass && (
-          <EditTimetableClassModal
-            class={editingClass}
-            onSave={handleUpdateClass}
-            onClose={() => setEditingClass(null)}
-            onDelete={() => editingClass.id.startsWith('new-') ? setEditingClass(null) : handleDeleteClass(editingClass.id)}
-            yearGroups={customYearGroups}
-            theme={getThemeForClass(className)}
-            isNew={editingClass.id.startsWith('new-')}
-          />
-        )}
-        </div>
       </div>
+
+      {editingClass && (
+        <EditTimetableClassModal
+          class={editingClass}
+          onSave={handleUpdateClass}
+          onClose={() => setEditingClass(null)}
+          onDelete={() => (editingClass.id.startsWith('new-') ? setEditingClass(null) : handleDeleteClass(editingClass.id))}
+          yearGroups={customYearGroups}
+          theme={getThemeForClass(themeFallbackClass)}
+          isNew={editingClass.id.startsWith('new-')}
+        />
+      )}
+    </div>
+  );
+
+  // Full-page inside Studio shell when embedded; otherwise a workspace-covering layer
+  // (never a small dialog perched on the classic calendar).
+  if (embedded) return page;
+  return (
+    <div className="ss-timetable-overlay" role="dialog" aria-modal="true" aria-label="Timetable builder">
+      {page}
+    </div>
   );
 }
+
 
 // Format minutes from midnight as HH:MM
 function minutesToTime(totalMinutes: number): string {
@@ -877,8 +768,8 @@ function TimetableSlotRow({
     <div
       ref={drop as unknown as React.Ref<HTMLDivElement>}
       data-slot-row
-      className={`border-b border-gray-200 flex items-center justify-center transition-colors cursor-pointer ${
-        isOver ? 'border-[#bcb7f4]' : 'hover:bg-gray-50'
+      className={`flex cursor-pointer items-center justify-center border-b border-[#E2E0EF]/80 transition-colors ${
+        isOver ? 'border-[#bcb7f4]' : 'hover:bg-[#F4F3FA]/80'
       } ${slotZoneClass} ${flashClass}`}
       style={{ height: heightPx }}
       onClick={(e) => { e.stopPropagation(); onSelectSlot(); }}
@@ -981,7 +872,7 @@ function TimetableDayColumn({
     <div
       ref={drop as unknown as React.Ref<HTMLDivElement>}
       data-day-column
-      className={`min-w-0 border-r border-gray-200 relative transition-colors last:border-r-0 ${
+      className={`relative min-w-0 border-r border-[#E2E0EF] transition-colors last:border-r-0 ${
         showDropHint ? 'bg-[#E9E6FF] ring-2 ring-[#a9a3ff] ring-inset' : 'bg-white'
       }`}
       style={{ height: gridHeightPx }}
@@ -1176,25 +1067,46 @@ function TimetableClassBlock({
   );
 }
 
-// Draggable Year Group Component
-function DraggableYearGroup({ yearGroup }: { yearGroup: any }) {
+/** Compact colour chip (or legacy list row) for dragging a My class onto the grid. */
+function DraggableYearGroup({ yearGroup, chip = false }: { yearGroup: any; chip?: boolean }) {
   const [{ isDragging }, drag] = useDrag(() => ({
     type: 'year-group',
     item: { yearGroup },
     collect: (monitor) => ({
-      isDragging: monitor.isDragging()
-    })
+      isDragging: monitor.isDragging(),
+    }),
   }), [yearGroup]);
+
+  const color = yearGroup.color || '#4338E8';
+  if (chip) {
+    return (
+      <button
+        type="button"
+        ref={drag as unknown as React.Ref<HTMLButtonElement>}
+        className={`inline-flex shrink-0 items-center gap-1.5 rounded-full border border-[#E2E0EF] bg-white py-1 pl-1 pr-2.5 text-left text-[12px] font-semibold text-[#1F1B4D] shadow-sm transition hover:border-[#bcb7f4] ${
+          isDragging ? 'opacity-40' : ''
+        }`}
+        title={`Drag ${yearGroup.name} onto the grid`}
+        style={{ cursor: 'grab' }}
+      >
+        <span
+          className="h-4 w-4 shrink-0 rounded-full ring-2 ring-white"
+          style={{ backgroundColor: color }}
+          aria-hidden
+        />
+        <span className="max-w-[9.5rem] truncate">{yearGroup.name}</span>
+      </button>
+    );
+  }
 
   return (
     <div
       ref={drag as unknown as React.Ref<HTMLDivElement>}
-      className={`p-2 bg-white border border-gray-200 rounded-lg cursor-move hover:shadow-md transition-shadow flex items-center space-x-2 text-sm ${
+      className={`flex cursor-move items-center space-x-2 rounded-lg border border-gray-200 bg-white p-2 text-sm transition-shadow hover:shadow-md ${
         isDragging ? 'opacity-50' : ''
       }`}
-      style={{ borderLeftColor: yearGroup.color, borderLeftWidth: '3px' }}
+      style={{ borderLeftColor: color, borderLeftWidth: '3px' }}
     >
-      <GripVertical className="h-4 w-4 text-gray-400" />
       <div className="flex-1 font-medium text-gray-900">{yearGroup.name}</div>
     </div>
   );

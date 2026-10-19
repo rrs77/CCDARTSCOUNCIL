@@ -550,11 +550,18 @@ html.ccd-studio .ss-dialog-lg {
   gap: 8px;
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid #e8e6f2;
+  transition: background 0.14s, border-color 0.14s, box-shadow 0.14s;
 }
 
 .ss-day.is-today {
   background: var(--ss-lavender);
   border-color: #d8d4f5;
+}
+
+.ss-day.is-drop-over {
+  background: #e9e6ff !important;
+  border-color: #4338e8 !important;
+  box-shadow: inset 0 0 0 2px rgba(67, 56, 232, 0.35);
 }
 
 .ss-day-head {
@@ -601,7 +608,15 @@ html.ccd-studio .ss-dialog-lg {
   font: inherit;
   color: inherit;
   box-shadow: none;
-  transition: border-color 0.14s, background 0.14s;
+  transition: border-color 0.14s, background 0.14s, opacity 0.14s, transform 0.14s, box-shadow 0.14s;
+}
+
+.ss-lesson-card.is-draggable {
+  cursor: grab;
+}
+
+.ss-lesson-card.is-draggable:active {
+  cursor: grabbing;
 }
 
 .ss-lesson-card:hover {
@@ -612,6 +627,18 @@ html.ccd-studio .ss-dialog-lg {
 .ss-lesson-card.is-selected {
   border-color: var(--ss-indigo);
   box-shadow: 0 0 0 2px rgba(67, 56, 232, 0.2);
+}
+
+.ss-lesson-card.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.98);
+  border-style: dashed;
+}
+
+.ss-lesson-card.is-drop-target {
+  border-color: var(--ss-indigo);
+  background: #e9e6ff;
+  box-shadow: 0 0 0 2px rgba(67, 56, 232, 0.25);
 }
 
 .ss-lesson-card strong {
@@ -925,5 +952,283 @@ html.ccd-studio .ss-dialog-lg {
 @media (prefers-reduced-motion: reduce) {
   .ss-lesson-card {
     transition: none;
+  }
+}
+
+/* —— Full-page Timetable (fills Studio workspace; sidebar stays) —— */
+
+.ccd-studio-workspace-inner:has(.ss-timetable-page) {
+  max-width: none;
+  margin-inline: 0;
+  padding: 14px 18px 18px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 3.75rem);
+}
+
+.ss-planner-shell.is-timetable-fullpage {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+}
+
+.ss-planner-shell.is-timetable-fullpage .ss-planner-board.is-timetable {
+  flex: 1 1 auto;
+  min-height: 0;
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+}
+
+.ss-timetable-page {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: var(--ss-white);
+  border: 1px solid var(--ss-line);
+  border-radius: 20px;
+  overflow: hidden;
+}
+
+.ss-timetable-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 70;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+  background: var(--ss-lilac);
+}
+
+.ss-timetable-overlay .ss-timetable-page {
+  flex: 1;
+  border-radius: 0;
+  border: 0;
+}
+
+.ss-timetable-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px 16px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--ss-line);
+  background: linear-gradient(180deg, #faf9fd 0%, #fff 100%);
+  flex-shrink: 0;
+}
+
+.ss-timetable-palette {
+  flex: 1 1 280px;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+}
+
+.ss-timetable-palette-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.ss-timetable-kicker {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ss-muted);
+}
+
+.ss-timetable-term {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ss-muted);
+}
+
+.ss-timetable-chips {
+  display: flex;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px 0;
+  min-width: 0;
+  flex: 1 1 auto;
+  scrollbar-width: thin;
+}
+
+.ss-timetable-empty-hint {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ss-muted);
+}
+
+.ss-timetable-break {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--ss-indigo);
+  background: transparent;
+  border: 0;
+  padding: 4px 0;
+  cursor: pointer;
+}
+
+.ss-timetable-break:hover {
+  color: #3529d1;
+}
+
+.ss-timetable-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  margin-left: auto;
+}
+
+.ss-timetable-icon-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1px solid var(--ss-line);
+  background: #fff;
+  color: var(--ss-muted);
+  cursor: pointer;
+}
+
+.ss-timetable-icon-btn:hover {
+  border-color: #bcb7f4;
+  color: var(--ss-ink);
+}
+
+.ss-timetable-save {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 12px;
+  border: 0;
+  background: var(--ss-indigo);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.ss-timetable-save:hover {
+  background: #3529d1;
+}
+
+.ss-timetable-save:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.ss-timetable-board {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.ss-timetable-dayhead {
+  display: grid;
+  flex-shrink: 0;
+  border-bottom: 1px solid var(--ss-line);
+  background: #faf9fd;
+}
+
+.ss-timetable-corner {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid var(--ss-line);
+  min-height: 40px;
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ss-muted);
+}
+
+.ss-timetable-dow {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  border-right: 1px solid var(--ss-line);
+  font-size: 13px;
+  font-weight: 800;
+  color: var(--ss-ink);
+}
+
+.ss-timetable-dow:last-child {
+  border-right: 0;
+}
+
+.ss-timetable-grid-viewport {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: auto;
+}
+
+.ss-timetable-grid {
+  display: grid;
+  min-width: 640px;
+}
+
+.ss-timetable-ruler {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ss-line);
+  background: #faf9fd;
+}
+
+.ss-timetable-tick {
+  display: flex;
+  align-items: flex-start;
+  justify-content: flex-end;
+  padding: 2px 6px 0 0;
+  border-bottom: 1px solid rgba(226, 224, 239, 0.85);
+  box-sizing: border-box;
+}
+
+.ss-timetable-tick span {
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--ss-muted);
+}
+
+.ss-timetable-page [data-day-column] {
+  border-right-color: var(--ss-line) !important;
+}
+
+.ss-timetable-page [data-class-block] {
+  border-radius: 10px;
+  box-shadow: none;
+}
+
+@media (max-width: 720px) {
+  .ss-timetable-toolbar {
+    padding: 10px 12px;
+  }
+
+  .ss-timetable-actions {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
   }
 }
