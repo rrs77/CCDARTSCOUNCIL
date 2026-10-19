@@ -595,6 +595,34 @@ export async function seedDemoData(): Promise<void> {
     }));
     localStorage.setItem('saved-categories', JSON.stringify(savedCategories));
 
+    // Subject folders for Settings → Activity folders (Music / Drama / Dance / Art / Photography).
+    try {
+      const subjectOrder = ['Music', 'Drama', 'Dance', 'Art', 'Photography'] as const;
+      const subjectColors: Record<string, string> = {
+        Music: '#14B8A6',
+        Drama: '#8B5CF6',
+        Dance: '#EC4899',
+        Art: '#F59E0B',
+        Photography: '#6366F1',
+      };
+      const used = new Set(
+        savedCategories.map((c) => c.group).filter((g): g is string => typeof g === 'string' && !!g),
+      );
+      const folders = subjectOrder
+        .filter((name) => used.has(name))
+        .map((name, i) => ({
+          id: `demo-folder-${name.toLowerCase()}`,
+          name,
+          color: subjectColors[name] || '#6B7280',
+          position: i,
+        }));
+      if (folders.length) {
+        localStorage.setItem('category-folders', JSON.stringify(folders));
+      }
+    } catch {
+      /* quota / private mode */
+    }
+
     // ---- 6. Stacks ----
     writeDemoTable('lesson_stacks', tables.lesson_stacks || []);
     writeDemoTable('activity_stacks', tables.activity_stacks || []);
