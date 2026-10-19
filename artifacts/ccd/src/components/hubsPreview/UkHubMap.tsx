@@ -11,16 +11,35 @@ import {
   parentFocus,
 } from './ukHubMapData';
 
-/** Studio Score Partner Hubs map — lavender / periwinkle (mockup). */
-const REGION_TONES = ['#E4E8F8', '#D9DFF5', '#CDD5F2', '#EAEAF8'];
-const HUB_TONES = ['#D8DCF6', '#CDD3F3', '#C2C9F0', '#E0E4F7', '#D3D8F4'];
-const DISTRICT_TONES = ['#DCE0F6', '#D2D7F3', '#C8CEF0', '#E4E7F8', '#CFD5F2'];
-const NATION_FILL = '#EEF1F6';
-const MUTED = '#F1F3F8';
-const HOVER = '#B8B6F0';
-const SELECTED = '#6B68D8';
-const COAST = '#C5CEE8';
-const INK = '#1F1B4D';
+/** Indigo/lilac map (default). Music Hubs browse uses pale green + numbered markers. */
+const PALETTES = {
+  indigo: {
+    region: ['#E4E8F8', '#D9DFF5', '#CDD5F2', '#EAEAF8'],
+    hub: ['#D8DCF6', '#CDD3F3', '#C2C9F0', '#E0E4F7', '#D3D8F4'],
+    district: ['#DCE0F6', '#D2D7F3', '#C8CEF0', '#E4E7F8', '#CFD5F2'],
+    nation: '#EEF1F6',
+    muted: '#F1F3F8',
+    hover: '#B8B6F0',
+    selected: '#6B68D8',
+    coast: '#C5CEE8',
+    ink: '#1F1B4D',
+    count: '#4338E8',
+    bg: 'radial-gradient(120% 90% at 55% 35%, #FBFBFF 0%, #F0F1FA 55%, #E8EAF6 100%)',
+  },
+  green: {
+    region: ['#D8EBD9', '#CFE6D1', '#C5E0C8', '#DEEFE0'],
+    hub: ['#CDE4CF', '#C2DDC5', '#B7D6BB', '#D4E9D6', '#C8E1CB'],
+    district: ['#D3E7D5', '#C9E0CC', '#BFD9C2', '#DCECDD', '#CEE4D1'],
+    nation: '#E8F2E9',
+    muted: '#EFF5F0',
+    hover: '#8FCF96',
+    selected: '#2F6B3A',
+    coast: '#C5D9C8',
+    ink: '#14301A',
+    count: '#0B6B5F',
+    bg: 'radial-gradient(120% 90% at 55% 35%, #FBFDFB 0%, #F1F7F2 55%, #E5EFE7 100%)',
+  },
+} as const;
 
 const FLY_MS = 720;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2);
@@ -35,6 +54,8 @@ interface Props {
   showBreadcrumb?: boolean;
   /** Green numbered badges on regions (Music Hubs browse mockup). */
   showRegionCounts?: boolean;
+  /** Map colour system — Music Hubs browse uses pale green. */
+  palette?: keyof typeof PALETTES;
 }
 
 interface Item {
@@ -77,7 +98,18 @@ export function UkHubMap({
   className = '',
   showBreadcrumb = true,
   showRegionCounts = false,
+  palette = 'indigo',
 }: Props) {
+  const tones = PALETTES[palette];
+  const REGION_TONES = tones.region;
+  const HUB_TONES = tones.hub;
+  const DISTRICT_TONES = tones.district;
+  const NATION_FILL = tones.nation;
+  const MUTED = tones.muted;
+  const HOVER = tones.hover;
+  const SELECTED = tones.selected;
+  const COAST = tones.coast;
+  const INK = tones.ink;
   const wrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const cam = useRef<BBox>(ix.data.viewBox);
@@ -465,8 +497,7 @@ export function UkHubMap({
       ref={wrapRef}
       className={`ukmap relative select-none overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.06] ${className}`}
       style={{
-        background:
-          'radial-gradient(120% 90% at 55% 35%, #FBFBFF 0%, #F0F1FA 55%, #E8EAF6 100%)',
+        background: tones.bg,
         touchAction: 'none',
       }}
     >
@@ -637,10 +668,10 @@ export function UkHubMap({
               cy={tipItem.label[1]}
               r={Math.max(5, 4.5 * settled.px)}
               fill="#FFFFFF"
-              stroke="#4338E8"
+              stroke={tones.count}
               strokeWidth={2.25 * settled.px}
             />
-            <circle cx={tipItem.label[0]} cy={tipItem.label[1]} r={Math.max(2.2, 2 * settled.px)} fill="#4338E8" />
+            <circle cx={tipItem.label[0]} cy={tipItem.label[1]} r={Math.max(2.2, 2 * settled.px)} fill={tones.count} />
           </g>
         )}
 
@@ -650,14 +681,14 @@ export function UkHubMap({
               const n = ix.hubsInRegion(r.code).length;
               if (!n) return null;
               const [x, y] = r.label;
-              const rad = Math.max(10, 9 * settled.px);
+              const rad = Math.max(11, 10 * settled.px);
               return (
                 <g key={`count-${r.code}`} transform={`translate(${x}, ${y + 14 * settled.px})`}>
-                  <circle r={rad} fill="#4338E8" stroke="#FFFFFF" strokeWidth={1.75 * settled.px} />
+                  <circle r={rad} fill={tones.count} stroke="#FFFFFF" strokeWidth={2 * settled.px} />
                   <text
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={Math.max(9, 10 * settled.px)}
+                    fontSize={Math.max(10, 11 * settled.px)}
                     fontWeight={700}
                     fill="#FFFFFF"
                     fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
