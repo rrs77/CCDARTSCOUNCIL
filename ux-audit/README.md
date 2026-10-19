@@ -180,3 +180,39 @@ Code/nav still uses `unit-viewer`, `curriculum`, `lesson-viewer` while UI says P
 | [screens/](screens/) | Full walkthrough captures (login → bolt-ons) |
 
 Mockup source: [`mockups/render-mockups.html`](mockups/render-mockups.html) (navy sidebar, indigo `#4f46e5`, Plus Jakarta Sans, white rounded cards).
+
+---
+
+## Addendum — second pass (same branch)
+
+Complementary findings from a parallel walkthrough on the same `preview/oct19-audit` tip. Does not replace the ranked list above; use where it sharpens priority or adds evidence.
+
+### A1. Critical — Sidebar defaults to collapsed
+`StudioShell` initializes `collapsed` to `true`, so every remount starts icon-only. Teachers lose labels until they expand. Pair with sug. 1: default **expanded** on desktop ≥1280px and persist preference.
+
+**Evidence:** [images/alt/01-before-collapsed.png](images/alt/01-before-collapsed.png) · proposed regroup [images/alt/01-after-regroup.png](images/alt/01-after-regroup.png) · alt sitemap [images/alt/00-sitemap-alt.png](images/alt/00-sitemap-alt.png)
+
+### A2. High — Planner “Units” duplicates Half-terms
+Planner tabs include **Schedule · Timetable builder · Units**; Units shows a single-class half-term grid while sidebar **Half-terms** is the all-class map. Same job, two doors (agrees with glossary work in sug. 2/4).
+
+**Evidence:** [images/alt/03-before-units-tab.png](images/alt/03-before-units-tab.png) · [images/alt/03-after-unified-halfterms.png](images/alt/03-after-unified-halfterms.png)
+
+### A3. High — Promote Timetable + Settings; More tools = extras only
+Aligns with sug. 7. Alternate mockup of extras-only page: [images/alt/02-before-more-tools.png](images/alt/02-before-more-tools.png) · [images/alt/02-after-more-tools.png](images/alt/02-after-more-tools.png)
+
+### A4. Medium — Header Share menu (alongside PDF 500 fix)
+Sug. 8 covers the 500. Product pattern: one **Share** control (Export PDF · Copy link · Print) in the header on Planner / Lessons / Slides.
+
+**Mock:** [images/alt/06-after-share-menu.png](images/alt/06-after-share-menu.png)
+
+### A5. Medium — Login: one Preview entry, no stacked modal
+Prototype notice bar is enough; avoid welcome modal on top of the landing card.
+
+**Mock:** [images/alt/05-after-login-clean.png](images/alt/05-after-login-clean.png)
+
+### A6. Medium — Explicit teaching-journey screen (once)
+Four steps: My classes → Timetable → Half-terms → Week / Build / Share. Show once after first login and from Help.
+
+**Mock:** [images/alt/08-after-teaching-journey.png](images/alt/08-after-teaching-journey.png)
+
+Additional screen dumps from the second pass: [`screens-alt/`](screens-alt/). Mockup HTML: [`mockups/after-mockups-alt.html`](mockups/after-mockups-alt.html).
