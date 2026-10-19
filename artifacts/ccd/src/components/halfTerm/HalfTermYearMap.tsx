@@ -6,6 +6,10 @@ import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import { useLessonStacks } from '../../hooks/useLessonStacks';
 import {
+  DEFAULT_YEAR_GROUP_SECTION_LABELS,
+  resolveDisplaySectionIdForYearGroup,
+} from '../../utils/yearGroupSectionOrder';
+import {
   HALF_TERMS,
   TERM_COLORS,
   TERM_TINTS,
@@ -140,21 +144,66 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: Hal
     [yearGroupSections],
   );
 
-  const stageOptions = useMemo(
-    () =>
-      sortedSections.map((s) => ({
-        id: s.id,
-        label: s.id === 'other' ? 'Unallocated' : s.label,
-      })),
-    [sortedSections],
-  );
+  /**
+   * Effective stage membership for the map:
+   * Settings section first (id or name token), then name/id inference for orphans.
+   * Does not write back to Settings — drag-into-stage there remains authoritative.
+   */
+  const effectiveSectionIds = useMemo(() => {
+    const bySection = new Map<string, string[]>();
+    for (const s of DEFAULT_YEAR_GROUP_SECTION_LABELS) bySection.set(s.id, []);
+
+    // Ensure any custom section ids from Settings still appear
+    for (const s of sortedSections) {
+      if (!bySection.has(s.id)) bySection.set(s.id, []);
+    }
+
+    const placed = new Set<string>();
+    for (const group of yearGroups) {
+      const sectionId = resolveDisplaySectionIdForYearGroup(sortedSections, group, yearGroups);
+      const bucket = bySection.get(sectionId) ?? bySection.get('other')!;
+      if (!placed.has(group.id)) {
+        bucket.push(group.id);
+        placed.add(group.id);
+      }
+    }
+    return bySection;
+  }, [sortedSections, yearGroups]);
+
+  const stageOptions = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const s of DEFAULT_YEAR_GROUP_SECTION_LABELS) {
+      labels.set(s.id, s.id === 'other' ? 'Unallocated' : s.label);
+    }
+    for (const s of sortedSections) {
+      labels.set(s.id, s.id === 'other' ? 'Unallocated' : s.label);
+    }
+    // Stable stage order: defaults first, then any extras from Settings
+    const ids: string[] = DEFAULT_YEAR_GROUP_SECTION_LABELS.map((s) => s.id);
+    for (const s of sortedSections) {
+      if (!ids.includes(s.id)) ids.push(s.id);
+    }
+    return ids
+      .filter((id) => {
+        // Hide empty Unallocated from the filter strip
+        if (id === 'other') return (effectiveSectionIds.get(id)?.length ?? 0) > 0;
+        return true;
+      })
+      .map((id) => ({
+        id,
+        label: labels.get(id) || id,
+        count: effectiveSectionIds.get(id)?.length ?? 0,
+      }));
+  }, [sortedSections, effectiveSectionIds]);
 
   const defaultVisibleStages = useMemo(() => {
-    const allocated = sortedSections.filter((s) => s.id !== 'other' && (s.yearGroupIds?.length ?? 0) > 0);
+    const allocated = stageOptions.filter((s) => s.id !== 'other' && s.count > 0);
     if (allocated.length > 0) return new Set(allocated.map((s) => s.id));
-    const other = sortedSections.find((s) => s.id === 'other');
-    return new Set(other ? [other.id] : sortedSections.map((s) => s.id));
-  }, [sortedSections]);
+    const other = stageOptions.find((s) => s.id === 'other');
+    return new Set(other ? [other.id] : stageOptions.map((s) => s.id));
+  }, [stageOptions]);
+
+  const genuineUnallocatedCount = effectiveSectionIds.get('other')?.length ?? 0;
 
   const [visibleStages, setVisibleStages] = useState<Set<string>>(() => new Set());
 
@@ -235,36 +284,40 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: Hal
 
   const blocks: SectionBlock[] = useMemo(() => {
     const byId = new Map(rows.map((r) => [r.group.id, r]));
-    const used = new Set<string>();
     const out: SectionBlock[] = [];
+    const labelFor = (id: string) =>
+      id === 'other'
+        ? 'Unallocated'
+        : sortedSections.find((s) => s.id === id)?.label ||
+          DEFAULT_YEAR_GROUP_SECTION_LABELS.find((s) => s.id === id)?.label ||
+          id;
 
-    for (const section of sortedSections) {
-      if (visibleStages.size > 0 && !visibleStages.has(section.id)) continue;
+    // Walk stages in stable order; membership comes from effectiveSectionIds
+    // (Settings first, then name inference) — never dump filtered-out stages into Unallocated.
+    const stageIds: string[] = DEFAULT_YEAR_GROUP_SECTION_LABELS.map((s) => s.id);
+    for (const s of sortedSections) {
+      if (!stageIds.includes(s.id)) stageIds.push(s.id);
+    }
+
+    for (const sectionId of stageIds) {
+      if (visibleStages.size > 0 && !visibleStages.has(sectionId)) continue;
+      const ids = effectiveSectionIds.get(sectionId) || [];
+      if (sectionId === 'other' && ids.length === 0) continue;
       const sectionRows: RowData[] = [];
-      for (const ygId of section.yearGroupIds || []) {
+      for (const ygId of ids) {
         const row = byId.get(ygId);
-        if (!row) continue;
-        sectionRows.push(row);
-        used.add(ygId);
+        if (row) sectionRows.push(row);
       }
       if (sectionRows.length === 0) continue;
       out.push({
-        id: section.id,
-        label: section.id === 'other' ? 'Unallocated' : section.label,
+        id: sectionId,
+        label: labelFor(sectionId),
         rows: sectionRows,
       });
     }
 
-    // Any classes missing from sections (legacy ids) land under Unallocated when that stage is visible
-    const orphans = rows.filter((r) => !used.has(r.group.id));
-    if (orphans.length > 0 && (visibleStages.size === 0 || visibleStages.has('other'))) {
-      const existing = out.find((b) => b.id === 'other');
-      if (existing) existing.rows.push(...orphans);
-      else out.push({ id: 'other', label: 'Unallocated', rows: orphans });
-    }
-
     return out;
-  }, [rows, sortedSections, visibleStages]);
+  }, [rows, sortedSections, visibleStages, effectiveSectionIds]);
 
   const visibleRowCount = blocks.reduce((n, b) => n + b.rows.length, 0);
   const years = getAvailableYears();
@@ -289,7 +342,12 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: Hal
     0,
   );
   const totalCells = Math.max(1, visibleRowCount * HALF_TERMS.length);
-  const onlyUnallocated = blocks.length > 0 && blocks.every((b) => b.id === 'other');
+  // Banner only when every class is genuinely ambiguous — not when the filter
+  // is simply narrowed to Unallocated.
+  const onlyUnallocated =
+    yearGroups.length > 0 &&
+    genuineUnallocatedCount > 0 &&
+    genuineUnallocatedCount === yearGroups.length;
   const allStagesSelected =
     stageOptions.length > 0 && stageOptions.every((s) => visibleStages.has(s.id));
 
@@ -359,35 +417,34 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: Hal
               Show stages
             </span>
             <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1.5" role="group" aria-label="Stage filter">
-              {stageOptions.map((s) => {
-                const on = visibleStages.has(s.id);
-                const count =
-                  sortedSections.find((sec) => sec.id === s.id)?.yearGroupIds?.length ?? 0;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    aria-pressed={on}
-                    onClick={() => toggleStage(s.id)}
-                    className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg px-3 text-[12px] font-bold transition ${
-                      on
-                        ? s.id === 'other'
-                          ? 'bg-[#5C5878] text-white shadow-sm'
-                          : 'bg-[#4338E8] text-white shadow-sm'
-                        : 'bg-[#F4F3FA] text-[#5C5878] hover:bg-[#E9E6FF] hover:text-[#1F1B4D]'
-                    }`}
-                  >
-                    {s.label}
-                    <span
-                      className={`rounded-md px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums ${
-                        on ? 'bg-white/20 text-white' : 'bg-white text-[#9B97B0]'
-                      }`}
-                    >
-                      {count}
-                    </span>
-                  </button>
-                );
-              })}
+          {stageOptions.map((s) => {
+            const on = visibleStages.has(s.id);
+            const count = s.count;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                aria-pressed={on}
+                onClick={() => toggleStage(s.id)}
+                className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg px-3 text-[12px] font-bold transition ${
+                  on
+                    ? s.id === 'other'
+                      ? 'bg-[#5C5878] text-white shadow-sm'
+                      : 'bg-[#4338E8] text-white shadow-sm'
+                    : 'bg-[#F4F3FA] text-[#5C5878] hover:bg-[#E9E6FF] hover:text-[#1F1B4D]'
+                }`}
+              >
+                {s.label}
+                <span
+                  className={`rounded-md px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums ${
+                    on ? 'bg-white/20 text-white' : 'bg-white text-[#9B97B0]'
+                  }`}
+                >
+                  {count}
+                </span>
+              </button>
+            );
+          })}
               <button
                 type="button"
                 onClick={showAllStages}
