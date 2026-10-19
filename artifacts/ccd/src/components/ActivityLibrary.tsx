@@ -1376,7 +1376,7 @@ export function ActivityLibrary({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayGroups.map((group) => (
               <React.Fragment key={`cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 bg-white" style={{ borderBottomColor: `${getCategoryColor(group.name)}55` }}>
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1408,7 +1408,12 @@ export function ActivityLibrary({
                       <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
                     </div>
                   )}
-                  <h3 className="text-lg font-bold text-[#4338E8]">{group.name}</h3>
+                  <h3
+                    className="text-lg font-bold"
+                    style={{ color: getCategoryColor(group.name) || '#4338E8' }}
+                  >
+                    {group.name}
+                  </h3>
                   <button
                     type="button"
                     onClick={() => toggleStarredFirstForCategory(group.name)}
@@ -1528,7 +1533,7 @@ export function ActivityLibrary({
           >
             {displayGroups.map((group) => (
               <React.Fragment key={`grid-cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 bg-white" style={{ borderBottomColor: `${getCategoryColor(group.name)}55` }}>
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1560,7 +1565,12 @@ export function ActivityLibrary({
                       <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
                     </div>
                   )}
-                  <h3 className="text-lg font-bold text-[#4338E8]">{group.name}</h3>
+                  <h3
+                    className="text-lg font-bold"
+                    style={{ color: getCategoryColor(group.name) || '#4338E8' }}
+                  >
+                    {group.name}
+                  </h3>
                   <button
                     type="button"
                     onClick={() => toggleStarredFirstForCategory(group.name)}
