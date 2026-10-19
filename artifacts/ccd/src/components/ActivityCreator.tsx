@@ -8,33 +8,18 @@ import {
   Save, 
   X, 
   Edit3, 
-  Type,
-  Palette,
-  Link,
-  Image,
-  Upload,
-  Clock,
-  Video,
-  Music,
-  FileText,
-  Link as LinkIcon,
-  Volume2,
+  ChevronDown,
   Undo2,
   Redo2
 } from 'lucide-react';
+
+const DURATION_CHIPS = [5, 10, 15, 25] as const;
 import { useSettings, ResourceLinkConfig } from '../contexts/SettingsContextNew';
 import { RichTextEditor } from './RichTextEditor';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { NestedStandardsBrowser } from './NestedStandardsBrowser';
+import { CompactActivityResources } from './CompactActivityResources';
 import { activityPacksApi, ActivityPack } from '../config/api';
-
-// Helper function to get icon component by name for resource links
-const getIconComponentForResourceLink = (iconName: string) => {
-  const iconMap: { [key: string]: React.ComponentType<any> } = {
-    Video, Music, Volume2, FileText, Palette, LinkIcon, Image
-  };
-  return iconMap[iconName] || FileText; // Default to FileText if icon not found
-};
 import { useAuth } from '../hooks/useAuth';
 
 interface ActivityCreatorProps {
@@ -77,7 +62,6 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const [showObjectivesBrowser, setShowObjectivesBrowser] = useState(false);
   const [availablePacks, setAvailablePacks] = useState<ActivityPack[]>([]);
   const isAdmin = user?.email === 'rob.reichstorer@gmail.com';
@@ -85,6 +69,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
   const [formRedoStack, setFormRedoStack] = useState<Array<typeof activity>>([]);
   const applyingFormHistoryRef = useRef(false);
   const prevActivityRef = useRef(activity);
+  /** Longer rich-text stays collapsed so the essentials fit on a laptop. */
+  const [writingOpen, setWritingOpen] = useState(false);
 
   const sanitizeText = (value: string): string =>
     (value || '')
@@ -243,22 +229,6 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Convert to base64 for demo purposes
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageUrl = event.target?.result as string;
-      setActivity(prev => ({
-        ...prev,
-        imageLink: imageUrl
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
@@ -304,9 +274,23 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
     }
   };
 
+  const fieldLabel = 'mb-1 block text-[11px] font-bold tracking-wide text-[#1F1B4D]';
+  const fieldInput =
+    'h-8 w-full rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[13px] text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20';
+  const sectionToggle =
+    'flex w-full items-center justify-between gap-2 rounded-lg border border-[#E2E0EF] bg-white px-3 py-2 text-left transition-colors hover:border-[#bcb7f4]';
+
+  const writingFilled =
+    Boolean(activity.description?.replace(/<[^>]+>/g, '').trim()) ||
+    Boolean(activity.activityText?.replace(/<[^>]+>/g, '').trim());
+
+  const setResourceValue = (key: string, value: string) => {
+    setActivity((prev) => ({ ...prev, [key]: value }));
+  };
+
   return createPortal(
     <div
-      className="fixed inset-0 z-[60] flex items-center justify-center p-4"
+      className="fixed inset-0 z-[60] flex items-center justify-center p-3 sm:p-4"
       role="dialog"
       aria-modal="true"
       aria-labelledby="create-activity-title"
@@ -314,224 +298,206 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
       {/* Full-viewport dim — portaled so it is not clipped by ActivityLibrary overflow-hidden */}
       <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
       <div
-        className="relative z-10 flex w-full max-w-xl max-h-[min(90vh,40rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_24px_80px_rgba(31,27,77,0.22)]"
+        className="relative z-10 flex w-full max-w-2xl max-h-[min(90vh,42rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_24px_80px_rgba(31,27,77,0.22)]"
         onClick={(e) => e.stopPropagation()}
+        style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
       >
         {/* Header — Studio Score */}
-        <div className="flex items-center justify-between border-b border-[#E2E0EF] bg-[#1F1B4D] px-4 py-3 text-white">
-          <div className="flex items-center gap-2.5">
-            <Tag className="h-4 w-4 text-[#FFC93C]" />
-            <h2 id="create-activity-title" className="text-[15px] font-extrabold tracking-tight">
+        <div className="flex shrink-0 items-center justify-between border-b border-[#E2E0EF] bg-[#1F1B4D] px-3.5 py-2.5 text-white">
+          <div className="flex items-center gap-2">
+            <Tag className="h-3.5 w-3.5 text-[#FFC93C]" />
+            <h2 id="create-activity-title" className="text-[14px] font-extrabold tracking-tight">
               Create activity
             </h2>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-0.5">
             <button
               type="button"
               onClick={handleUndoForm}
               disabled={formUndoStack.length === 0}
-              className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded-lg p-1.5 text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
               title="Undo"
             >
-              <Undo2 className="h-5 w-5" />
+              <Undo2 className="h-4 w-4" />
             </button>
             <button
               type="button"
               onClick={handleRedoForm}
               disabled={formRedoStack.length === 0}
-              className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200 disabled:opacity-40 disabled:cursor-not-allowed"
+              className="rounded-lg p-1.5 text-white transition-colors hover:bg-white/15 disabled:cursor-not-allowed disabled:opacity-40"
               title="Redo"
             >
-              <Redo2 className="h-5 w-5" />
+              <Redo2 className="h-4 w-4" />
             </button>
             <button
+              type="button"
               onClick={onClose}
-              className="p-2 text-white hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200"
+              className="rounded-lg p-1.5 text-white transition-colors hover:bg-white/15"
+              title="Close"
             >
-              <X className="h-6 w-6" />
+              <X className="h-4 w-4" />
             </button>
           </div>
         </div>
 
-        {/* Form Content */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto bg-[#F4F3FA]/40 px-4 py-4">
-          <div className="space-y-4">
-            {/* Basic Information */}
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              {/* Activity Name */}
-              <div className="col-span-2">
-                <label className="mb-1.5 block text-[12px] font-bold text-[#1F1B4D]">
-                  Activity name <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="activity"
-                  value={activity.activity}
-                  onChange={handleChange}
-                  className={`w-full rounded-xl border bg-white px-3 py-2.5 text-[13px] text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25 ${errors.activity ? 'border-red-500' : 'border-[#E2E0EF]'}`}
-                  placeholder="Enter activity name"
-                  dir="ltr"
-                />
-                {errors.activity && (
-                  <p className="mt-1 text-sm text-red-500">{errors.activity}</p>
-                )}
-              </div>
+        {/* Form Content — essentials first; rich sections collapsed */}
+        <form onSubmit={handleSubmit} className="min-h-0 flex-1 overflow-y-auto bg-[#F4F3FA]/50 px-3.5 py-3">
+          <div className="space-y-3">
+            {/* Activity name */}
+            <div>
+              <label className={fieldLabel}>
+                Activity name <span className="text-red-500">*</span>
+              </label>
+              <input
+                type="text"
+                name="activity"
+                value={activity.activity}
+                onChange={handleChange}
+                className={`${fieldInput} ${errors.activity ? 'border-red-500' : ''}`}
+                placeholder="Enter activity name"
+                dir="ltr"
+              />
+              {errors.activity && (
+                <p className="mt-1 text-[11px] text-red-500">{errors.activity}</p>
+              )}
+            </div>
 
-              {/* Objectives Selector */}
-              <div className="col-span-2">
-                <button
-                  type="button"
-                  onClick={() => setShowObjectivesBrowser(true)}
-                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#E2E0EF] bg-white px-3 py-3 text-[12px] font-semibold text-[#77738F] transition-colors hover:border-[#4338E8] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
-                >
-                  <Tag className="h-5 w-5" />
-                  <span className="font-medium">
-                    {activity.custom_objective_ids.length > 0
-                      ? `${activity.custom_objective_ids.length} objective${activity.custom_objective_ids.length !== 1 ? 's' : ''} selected`
-                      : 'Click to choose curriculum objectives'}
-                  </span>
-                </button>
-                
-                {activity.custom_objective_ids.length > 0 && (
-                  <div className="mt-2 text-sm text-gray-600">
-                    <button
-                      type="button"
-                      onClick={() => setActivity(prev => ({ ...prev, custom_objective_ids: [] }))}
-                      className="text-red-600 hover:text-red-800 flex items-center space-x-1"
-                    >
-                      <X className="h-3 w-3" />
-                      <span>Clear all objectives</span>
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Curriculum Type - REMOVED: Now all objectives are shown together */}
-
-              {/* Category */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+            {/* Category + Duration */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-[minmax(0,1fr)_auto]">
+              <div className="min-w-0">
+                <label className={fieldLabel}>
                   Category <span className="text-red-500">*</span>
                 </label>
-                <div className={`border rounded-lg ${errors.category ? 'border-red-500' : 'border-gray-300'} focus-within:border-gray-400 transition-colors duration-200`}
-                     style={{ 
-                       borderColor: errors.category ? '#EF4444' : '#D1D5DB',
-                       '--tw-ring-color': '#4338E8'
-                     } as React.CSSProperties}>
+                <div
+                  className={`overflow-hidden rounded-lg border bg-white focus-within:border-[#4338E8] focus-within:ring-2 focus-within:ring-[#4338E8]/20 ${
+                    errors.category ? 'border-red-500' : 'border-[#E2E0EF]'
+                  }`}
+                >
                   <SimpleNestedCategoryDropdown
                     selectedCategory={activity.category}
-                    onCategoryChange={(category) => setActivity(prev => ({ ...prev, category }))}
+                    onCategoryChange={(category) => setActivity((prev) => ({ ...prev, category }))}
                     placeholder="Select a category"
-                    className="px-4 py-3 text-sm font-medium w-full bg-white"
-                    dropdownBackgroundColor="#F0FDFA"
+                    className="h-8 w-full bg-white px-2.5 text-[13px] font-medium"
+                    dropdownBackgroundColor="#F4F3FA"
                     showAllCategories={true}
                   />
                 </div>
                 {errors.category && (
-                  <p className="mt-1 text-sm text-red-500">{errors.category}</p>
+                  <p className="mt-1 text-[11px] text-red-500">{errors.category}</p>
                 )}
               </div>
 
-              {/* Required Pack (Admin Only) */}
-              {isAdmin && availablePacks.length > 0 && (
-                <div className="col-span-2">
-                  <label htmlFor="requiredPack" className="block text-sm font-medium text-gray-700 mb-2">
-                    Required Pack (Optional)
-                  </label>
-                  <select
-                    id="requiredPack"
-                    name="requiredPack"
-                    value={activity.requiredPack}
-                    onChange={handleChange}
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8] focus:border-transparent transition-colors duration-200 text-sm font-medium bg-white"
-                  >
-                    <option value="">No pack required</option>
-                    {availablePacks.filter(p => p.is_active).map((pack) => (
-                      <option key={pack.pack_id} value={pack.pack_id}>
-                        {pack.icon} {pack.name}
-                      </option>
-                    ))}
-                  </select>
-                  <p className="mt-1 text-xs text-gray-500">
-                    If selected, only users with access to this pack will see this activity
-                  </p>
+              <div className="sm:w-[13.5rem]">
+                <label className={fieldLabel}>Duration</label>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <div className="inline-flex h-8 items-center overflow-hidden rounded-lg border border-[#E2E0EF] bg-white focus-within:border-[#4338E8] focus-within:ring-2 focus-within:ring-[#4338E8]/20">
+                    <input
+                      type="number"
+                      name="time"
+                      value={activity.time}
+                      onChange={handleTimeChange}
+                      min={0}
+                      className="h-full w-14 border-0 bg-transparent px-2 text-[13px] text-[#1F1B4D] focus:outline-none focus:ring-0"
+                      placeholder="0"
+                      dir="ltr"
+                      aria-label="Duration in minutes"
+                    />
+                    <span className="border-l border-[#E2E0EF] px-2 text-[11px] font-semibold text-[#77738F]">
+                      min
+                    </span>
+                  </div>
+                  {DURATION_CHIPS.map((mins) => {
+                    const active = activity.time === mins;
+                    return (
+                      <button
+                        key={mins}
+                        type="button"
+                        onClick={() => setActivity((prev) => ({ ...prev, time: mins }))}
+                        className={`inline-flex h-7 min-w-[2rem] items-center justify-center rounded-md px-1.5 text-[11px] font-bold transition-colors ${
+                          active
+                            ? 'bg-[#4338E8] text-white'
+                            : 'border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D]'
+                        }`}
+                      >
+                        {mins}
+                      </button>
+                    );
+                  })}
                 </div>
+              </div>
+            </div>
+
+            {/* Year groups — compact colour pills */}
+            <div>
+              <label className={fieldLabel}>
+                Year groups <span className="text-red-500">*</span>
+              </label>
+              <div className="flex flex-wrap gap-1.5">
+                {customYearGroups.map((group) => {
+                  const selected = activity.yearGroups.includes(group.name);
+                  const color = group.color || '#4338E8';
+                  return (
+                    <button
+                      key={group.name}
+                      type="button"
+                      onClick={() => handleYearGroupChange(group.name, !selected)}
+                      aria-pressed={selected}
+                      className="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2 py-1 text-[11px] font-semibold transition-colors"
+                      style={{
+                        borderColor: selected ? color : '#E2E0EF',
+                        backgroundColor: selected ? `${color}22` : '#fff',
+                        color: selected ? '#1F1B4D' : '#77738F',
+                      }}
+                      title={group.name}
+                    >
+                      <span
+                        className="h-2 w-2 shrink-0 rounded-full"
+                        style={{ backgroundColor: color }}
+                        aria-hidden
+                      />
+                      <span className="truncate">{group.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+              {errors.yearGroups && (
+                <p className="mt-1 text-[11px] text-red-500">{errors.yearGroups}</p>
               )}
+            </div>
 
-              {/* Year Groups - Multi-select */}
+            {/* Objectives + Topics row */}
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-3">
-                  Select Year Groups <span className="text-red-500">*</span>
-                </label>
-                <div className="space-y-2 max-h-48 overflow-y-auto">
-                  {customYearGroups.map(group => (
-                    <label key={group.name} className={`flex items-center space-x-3 cursor-pointer p-3 rounded-lg border transition-all duration-200 ${
-                      activity.yearGroups.includes(group.name)
-                        ? 'shadow-sm'
-                        : 'border-gray-200 hover:border-gray-300 hover:bg-gray-25'
-                    }`}
-                    style={{
-                      borderColor: activity.yearGroups.includes(group.name) ? '#4338E8' : '#E5E7EB',
-                      backgroundColor: activity.yearGroups.includes(group.name) ? '#E6F7F5' : undefined
-                    }}>
-                      <div className="flex items-center">
-                        <input
-                          type="checkbox"
-                          checked={activity.yearGroups.includes(group.name)}
-                          onChange={(e) => handleYearGroupChange(group.name, e.target.checked)}
-                          className="h-5 w-5 border-gray-300 rounded"
-                          style={{ accentColor: '#4338E8' }}
-                        />
-                      </div>
-                      <div 
-                        className="w-6 h-6 rounded-full flex-shrink-0 border-2 border-white shadow-sm"
-                        style={{ backgroundColor: group.color || '#4338E8' }}
-                      ></div>
-                      <span className={`text-sm font-medium ${
-                        activity.yearGroups.includes(group.name) 
-                          ? 'font-medium' 
-                          : 'text-gray-700'
-                      }`}>
-                        {group.name}
-                      </span>
-                    </label>
-                  ))}
+                <label className={fieldLabel}>Curriculum objectives</label>
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => setShowObjectivesBrowser(true)}
+                    className="inline-flex h-8 items-center gap-1.5 rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[12px] font-semibold text-[#1F1B4D] transition-colors hover:border-[#4338E8] hover:bg-[#E9E6FF]"
+                  >
+                    <Tag className="h-3.5 w-3.5 text-[#4338E8]" />
+                    {activity.custom_objective_ids.length > 0
+                      ? `${activity.custom_objective_ids.length} selected`
+                      : 'Choose objectives'}
+                  </button>
+                  {activity.custom_objective_ids.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setActivity((prev) => ({ ...prev, custom_objective_ids: [] }))}
+                      className="inline-flex h-8 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-[#77738F] hover:text-red-600"
+                      title="Clear objectives"
+                    >
+                      <X className="h-3 w-3" />
+                      Clear
+                    </button>
+                  )}
                 </div>
-                {errors.yearGroups && (
-                  <p className="mt-2 text-sm text-red-500 flex items-center">
-                    <span className="mr-1">⚠️</span>
-                    {errors.yearGroups}
-                  </p>
-                )}
               </div>
 
-              {/* Time */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Duration (minutes)
-                </label>
-                <input
-                  type="number"
-                  name="time"
-                  value={activity.time}
-                  onChange={handleTimeChange}
-                  min="0"
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                  style={{ '--tw-ring-color': '#4338E8' } as React.CSSProperties}
-                  onFocus={(e) => e.target.style.borderColor = '#4338E8'}
-                  onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
-                  placeholder="Enter duration in minutes"
-                  dir="ltr"
-                />
-              </div>
-
-              {/* Topics (stored in unitName as comma-separated values) */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Topics
-                </label>
-                <div className="space-y-2">
-                  <div className="flex gap-2">
+                <label className={fieldLabel}>Topics</label>
+                <div className="space-y-1.5">
+                  <div className="flex gap-1.5">
                     <input
                       type="text"
                       value={topicInput}
@@ -542,28 +508,25 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                           addTopic();
                         }
                       }}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                      style={{ '--tw-ring-color': '#4338E8' } as React.CSSProperties}
-                      onFocus={(e) => (e.target.style.borderColor = '#4338E8')}
-                      onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
-                      placeholder="Type a topic then click +"
+                      className={fieldInput}
+                      placeholder="Type a topic, then +"
                       dir="ltr"
                     />
                     <button
                       type="button"
                       onClick={addTopic}
-                      className="px-3 py-2 rounded-lg border border-[#bcb7f4] bg-[#E9E6FF] text-[#4338E8] hover:bg-[#E9E6FF]"
+                      className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-[#bcb7f4] bg-[#E9E6FF] text-[#4338E8] hover:bg-[#ddd8ff]"
                       title="Add topic"
                     >
-                      <Plus className="h-4 w-4" />
+                      <Plus className="h-3.5 w-3.5" />
                     </button>
                   </div>
                   {parseTopics(activity.unitName).length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-1">
                       {parseTopics(activity.unitName).map((topic) => (
                         <span
                           key={topic}
-                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium bg-[#E9E6FF] text-[#1F1B4D]"
+                          className="inline-flex items-center gap-1 rounded-full bg-[#E9E6FF] px-2 py-0.5 text-[11px] font-medium text-[#1F1B4D]"
                         >
                           {topic}
                           <button
@@ -582,196 +545,129 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
               </div>
             </div>
 
-            {/* Introduction/Context */}
-            <div>
-              <div className="mb-3 flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={activity.descriptionHeading || 'Introduction/Context'}
-                  onChange={(e) => setActivity(prev => ({ ...prev, descriptionHeading: e.target.value }))}
-                  className="text-base font-semibold text-gray-900 bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 flex-1 hover:border-b-2 hover:border-gray-300 transition-colors"
-                  placeholder="Enter heading (e.g., Introduction/Context)"
-                  style={{ 
-                    borderBottom: '2px solid transparent',
-                    minHeight: '28px'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderBottomColor = '#4338E8';
-                    e.target.style.borderBottomWidth = '2px';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderBottomColor = 'transparent';
-                  }}
-                />
-                <Edit3 className="h-4 w-4 text-gray-400 flex-shrink-0" />
+            {/* Required Pack (Admin Only) */}
+            {isAdmin && availablePacks.length > 0 && (
+              <div>
+                <label htmlFor="requiredPack" className={fieldLabel}>
+                  Required pack <span className="font-medium text-[#77738F]">(optional)</span>
+                </label>
+                <select
+                  id="requiredPack"
+                  name="requiredPack"
+                  value={activity.requiredPack}
+                  onChange={handleChange}
+                  className={fieldInput}
+                >
+                  <option value="">No pack required</option>
+                  {availablePacks
+                    .filter((p) => p.is_active)
+                    .map((pack) => (
+                      <option key={pack.pack_id} value={pack.pack_id}>
+                        {pack.icon} {pack.name}
+                      </option>
+                    ))}
+                </select>
               </div>
-              <RichTextEditor
-                value={activity.description}
-                onChange={(value) => setActivity(prev => ({ ...prev, description: value }))}
-                placeholder="Enter introduction/context..."
-                minHeight="150px"
-              />
-            </div>
+            )}
 
-            {/* Activity */}
-            <div>
-              <div className="mb-3 flex items-center space-x-2">
-                <input
-                  type="text"
-                  value={activity.activityHeading || 'Activity'}
-                  onChange={(e) => setActivity(prev => ({ ...prev, activityHeading: e.target.value }))}
-                  className="text-base font-semibold text-gray-900 bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 flex-1 hover:border-b-2 hover:border-gray-300 transition-colors"
-                  placeholder="Enter heading (e.g., Activity)"
-                  style={{ 
-                    borderBottom: '2px solid transparent',
-                    minHeight: '28px'
-                  }}
-                  onFocus={(e) => {
-                    e.target.style.borderBottomColor = '#4338E8';
-                    e.target.style.borderBottomWidth = '2px';
-                  }}
-                  onBlur={(e) => {
-                    e.target.style.borderBottomColor = 'transparent';
-                  }}
+            {/* Collapsible: writing */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                className={sectionToggle}
+                aria-expanded={writingOpen}
+                onClick={() => setWritingOpen((v) => !v)}
+              >
+                <span className="min-w-0">
+                  <span className="block text-[12px] font-extrabold text-[#1F1B4D]">
+                    Introduction &amp; activity text
+                  </span>
+                  <span className="block text-[11px] text-[#77738F]">
+                    {writingFilled ? 'Content added' : 'Optional rich text — expand to edit'}
+                  </span>
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 shrink-0 text-[#77738F] transition-transform ${writingOpen ? 'rotate-180' : ''}`}
                 />
-                <Edit3 className="h-4 w-4 text-gray-400 flex-shrink-0" />
-              </div>
-              <RichTextEditor
-                value={activity.activityText}
-                onChange={(value) => setActivity(prev => ({ ...prev, activityText: value }))}
-                placeholder="Enter activity instructions..."
-                minHeight="150px"
-              />
-            </div>
-
-            {/* Activity Image */}
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Activity Image
-              </label>
-              <div className="flex items-center space-x-4">
-                {activity.imageLink ? (
-                  <div className="relative">
-                    <img 
-                      src={activity.imageLink} 
-                      alt="Activity" 
-                      className="w-32 h-32 object-cover rounded-lg border border-gray-200"
+              </button>
+              {writingOpen && (
+                <div className="space-y-3 rounded-lg border border-[#E2E0EF] bg-white p-3">
+                  <div>
+                    <div className="mb-1.5 flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={activity.descriptionHeading || 'Introduction/Context'}
+                        onChange={(e) =>
+                          setActivity((prev) => ({ ...prev, descriptionHeading: e.target.value }))
+                        }
+                        className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[12px] font-bold text-[#1F1B4D] outline-none focus:ring-0"
+                        placeholder="Introduction/Context"
+                      />
+                      <Edit3 className="h-3.5 w-3.5 shrink-0 text-[#77738F]" />
+                    </div>
+                    <RichTextEditor
+                      value={activity.description}
+                      onChange={(value) => setActivity((prev) => ({ ...prev, description: value }))}
+                      placeholder="Enter introduction/context..."
+                      minHeight="100px"
                     />
-                    <button
-                      type="button"
-                      onClick={() => setActivity(prev => ({ ...prev, imageLink: '' }))}
-                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                    >
-                      <X className="h-4 w-4" />
-                    </button>
                   </div>
-                ) : (
-                  <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                    <Image className="h-8 w-8 text-gray-400" />
-                  </div>
-                )}
-                
-                <div className="flex-1">
-                  <p className="text-sm text-gray-600 mb-2">
-                    Upload an image for this activity or provide an image URL
-                  </p>
-                  <div className="flex space-x-2">
-                    <button
-                      type="button"
-                      onClick={() => imageInputRef.current?.click()}
-                      className="px-3 py-2 text-white text-sm font-medium rounded-lg flex items-center space-x-1"
-                      style={{ backgroundColor: '#4338E8' }}
-                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#3529d1'}
-                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#4338E8'}
-                    >
-                      <Upload className="h-4 w-4" />
-                      <span>Upload</span>
-                    </button>
-                    <input
-                      ref={imageInputRef}
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={handleImageUpload}
-                    />
-                    <input
-                      type="url"
-                      name="imageLink"
-                      value={activity.imageLink}
-                      onChange={handleChange}
-                      placeholder="Or paste image URL"
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent text-sm"
-                      style={{ '--tw-ring-color': '#4338E8' } as React.CSSProperties}
-                      onFocus={(e) => e.target.style.borderColor = '#4338E8'}
-                      onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
-                      dir="ltr"
+                  <div>
+                    <div className="mb-1.5 flex items-center gap-1.5">
+                      <input
+                        type="text"
+                        value={activity.activityHeading || 'Activity'}
+                        onChange={(e) =>
+                          setActivity((prev) => ({ ...prev, activityHeading: e.target.value }))
+                        }
+                        className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[12px] font-bold text-[#1F1B4D] outline-none focus:ring-0"
+                        placeholder="Activity"
+                      />
+                      <Edit3 className="h-3.5 w-3.5 shrink-0 text-[#77738F]" />
+                    </div>
+                    <RichTextEditor
+                      value={activity.activityText}
+                      onChange={(value) => setActivity((prev) => ({ ...prev, activityText: value }))}
+                      placeholder="Enter activity instructions..."
+                      minHeight="100px"
                     />
                   </div>
                 </div>
-              </div>
+              )}
             </div>
 
-            {/* Resources */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Resources</h3>
-              <div className="space-y-4">
-                {resourceLinks
-                  .filter(link => link.enabled)
-                  .map((linkConfig) => {
-                    // Get icon component dynamically
-                    const IconComponent = getIconComponentForResourceLink(linkConfig.iconName);
-                    return (
-                      <div key={linkConfig.key} className="flex items-center space-x-3">
-                        <IconComponent className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                        <input
-                          type="text"
-                          name={linkConfig.key}
-                          value={activity[linkConfig.key as keyof typeof activity] as string}
-                          onChange={handleChange}
-                          className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                          placeholder={linkConfig.label}
-                          dir="ltr"
-                        />
-                      </div>
-                    );
-                  })}
-                
-                {/* Custom Link - Moved to bottom with editable heading above */}
-                <div>
-                  <div className="mb-2 flex items-center space-x-2">
-                    <LinkIcon className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                    <input
-                      type="text"
-                      value={activity.linkHeading || 'Additional Link'}
-                      onChange={(e) => setActivity(prev => ({ ...prev, linkHeading: e.target.value }))}
-                      className="text-sm font-medium text-gray-700 bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 flex-1"
-                      placeholder="Enter heading (e.g., Additional Link)"
-                      style={{ borderBottom: '2px solid transparent' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#4338E8'}
-                      onBlur={(e) => e.target.style.borderBottomColor = 'transparent'}
-                    />
-                    <Edit3 className="h-3 w-3 text-gray-400 flex-shrink-0" />
-                  </div>
-                  <div className="flex items-center space-x-3">
-                    <div className="w-5 flex-shrink-0"></div> {/* Spacer to align with other inputs */}
-                    <input
-                      type="text"
-                      name="link"
-                      value={activity.link}
-                      onChange={handleChange}
-                      className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-                      placeholder="Link URL"
-                      dir="ltr"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
+            {/* Resources — compact chips; empty types stay hidden */}
+            <CompactActivityResources
+              values={{
+                videoLink: activity.videoLink,
+                musicLink: activity.musicLink,
+                backingLink: activity.backingLink,
+                resourceLink: activity.resourceLink,
+                vocalsLink: activity.vocalsLink,
+                canvaLink: activity.canvaLink,
+                imageLink: activity.imageLink,
+                link: activity.link,
+              }}
+              onChange={setResourceValue}
+              resourceLinks={resourceLinks}
+              linkHeading={activity.linkHeading || 'Additional Link'}
+              onLinkHeadingChange={(value) =>
+                setActivity((prev) => ({ ...prev, linkHeading: value }))
+              }
+              onImageFile={(file) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                  const imageUrl = event.target?.result as string;
+                  setActivity((prev) => ({ ...prev, imageLink: imageUrl }));
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
           </div>
         </form>
 
-        {/* Footer */}
-        <div className="flex justify-end gap-2 border-t border-[#E2E0EF] bg-white px-4 py-3">
+        {/* Sticky footer */}
+        <div className="flex shrink-0 justify-end gap-2 border-t border-[#E2E0EF] bg-white px-3.5 py-2.5">
           <button
             type="button"
             onClick={onClose}

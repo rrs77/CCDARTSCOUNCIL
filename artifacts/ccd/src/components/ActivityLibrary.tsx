@@ -1340,7 +1340,7 @@ export function ActivityLibrary({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayGroups.map((group) => (
               <React.Fragment key={`cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white">
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1408,7 +1408,7 @@ export function ActivityLibrary({
                       {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
                         <div
                           data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
+                          className="col-span-full py-2 bg-white border-b border-[#E2E0EF]"
                         >
                           <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
                         </div>
@@ -1492,7 +1492,7 @@ export function ActivityLibrary({
           >
             {displayGroups.map((group) => (
               <React.Fragment key={`grid-cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white">
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1559,7 +1559,7 @@ export function ActivityLibrary({
                       {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
                         <div
                           data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
+                          className="col-span-full py-2 bg-white border-b border-[#E2E0EF]"
                         >
                           <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
                         </div>
