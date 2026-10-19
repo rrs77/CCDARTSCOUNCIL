@@ -97,6 +97,22 @@ function classLabelParts(cls: ClassLike): { title: string; context: string | nul
   return { title: name || id, context: contextBits.length ? contextBits.join(' · ') : null };
 }
 
+/**
+ * Min column width so the longest class title fits on one line when possible.
+ * auto-fill then drops to 3 (or 2) columns when 4 won't fit.
+ */
+function classGridMinColRem(classes: ClassLike[]): number {
+  let maxLen = 10;
+  for (const cls of classes) {
+    const { title } = classLabelParts(cls);
+    maxLen = Math.max(maxLen, title.length);
+  }
+  // Extrabold ~15px ≈ 0.58rem/char; chrome = checkbox + dot + gaps + padding
+  const textRem = maxLen * 0.58;
+  const chromeRem = 3.6;
+  return Math.min(16, Math.max(9.5, Math.ceil((textRem + chromeRem) * 4) / 4));
+}
+
 function inferSchemeSubject(stack: StackedLesson): ClassSubject | 'Other' {
   return inferClassSubject(`${stack.name} ${stack.description || ''}`);
 }
@@ -582,9 +598,12 @@ export function AssignSchemeMultiPanel({
                                   </div>
                                 ) : null}
                                 <ul
-                                  className={`grid grid-cols-2 gap-1.5 xl:grid-cols-4 ${
+                                  className={`grid gap-1.5 ${
                                     showSubjects ? 'ss-settings-subject-body' : ''
                                   }`}
+                                  style={{
+                                    gridTemplateColumns: `repeat(auto-fill, minmax(min(100%, ${classGridMinColRem(group.classes)}rem), 1fr))`,
+                                  }}
                                 >
                                   {group.classes.map((cls) => {
                                     const on = selectedClassIds.has(cls.id);
@@ -618,12 +637,12 @@ export function AssignSchemeMultiPanel({
                                             style={{ background: chip }}
                                             aria-hidden
                                           />
-                                          <span className="min-w-0 flex-1">
-                                            <span className="ss-settings-class-name block truncate text-[13px] sm:text-[15px]">
+                                          <span className="min-w-0 flex-1 overflow-hidden">
+                                            <span className="ss-settings-class-name block break-words text-[13px] leading-snug sm:text-[15px]">
                                               {title}
                                             </span>
                                             {context ? (
-                                              <span className="mt-0.5 block truncate text-[11px] font-semibold text-[#9B97B0] sm:text-[12px]">
+                                              <span className="mt-0.5 block break-words text-[11px] font-semibold leading-snug text-[#9B97B0] sm:text-[12px]">
                                                 {context}
                                               </span>
                                             ) : null}
