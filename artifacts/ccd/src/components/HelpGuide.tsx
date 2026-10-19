@@ -653,7 +653,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li>Lock a category, review reports, and set notification preferences</li>
           </ul>
           <div className="bg-[#E9E6FF] border-l-4 border-[#4338E8] p-3 rounded">
-            <p className="text-sm text-[#1F1B4D]"><strong>Guidelines:</strong> Read <strong>/forum/guidelines</strong> before posting. Safeguarding reports are flagged for moderators.</p>
+            <p className="text-sm text-[#1F1B4D]">Safeguarding reports are flagged for moderators.</p>
           </div>
         </div>
       )

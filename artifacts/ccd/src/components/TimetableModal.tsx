@@ -166,7 +166,7 @@ export function TimetableModal({
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
       <div
-        className="relative z-10 bg-white rounded-card shadow-soft w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden"
+        className="relative z-10 bg-white rounded-card shadow-soft w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}

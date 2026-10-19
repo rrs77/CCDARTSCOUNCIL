@@ -20,11 +20,9 @@ export function ForumSeoHead({
     const prevTitle = document.title;
     const pageTitle = title
       ? `${title} · CCDesigner Forum`
-      : route.name === 'guidelines'
-        ? 'Community guidelines · CCDesigner Forum'
-        : route.name === 'admin'
-          ? 'Forum admin · CCDesigner'
-          : 'Community Forum · CCDesigner';
+      : route.name === 'admin'
+        ? 'Forum admin · CCDesigner'
+        : 'Community Forum · CCDesigner';
     document.title = pageTitle;
 
     const ensureMeta = (name: string, content: string, attr: 'name' | 'property' = 'name') => {

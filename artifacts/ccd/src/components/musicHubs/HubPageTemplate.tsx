@@ -373,12 +373,14 @@ export function HubPageTemplate({
                   )}
                 </div>
                 {displayContent.tagline && (
-                  <p className="mt-1 text-sm text-[#002D24]/70">{displayContent.tagline}</p>
+                  <p className="ccd-page-lede ccd-page-lede--single mt-1 text-sm text-[#002D24]/70">
+                    {displayContent.tagline}
+                  </p>
                 )}
                 {(displayContent.description || []).map((p) => (
                   <p
                     key={p.slice(0, 40)}
-                    className="mt-2 max-w-3xl text-sm leading-relaxed text-[#002D24]/75"
+                    className="ccd-page-lede mt-2 text-sm leading-relaxed text-[#002D24]/75"
                   >
                     {p}
                   </p>

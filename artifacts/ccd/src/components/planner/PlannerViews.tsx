@@ -81,7 +81,7 @@ export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, o
   const today = new Date();
 
   return (
-    <div className="ss-week-grid -mx-1 overflow-x-auto px-1 pb-2 lg:mx-0 lg:overflow-visible lg:px-0">
+    <div className="ss-week-grid -mx-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:overflow-visible lg:px-0">
       {shown.filter((_, i) => i < 5 || shown.length <= 5).map(({ date, entries, events }) => {
         const isToday = sameDay(date, today);
         return (
@@ -90,7 +90,7 @@ export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, o
             aria-label={date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
             className={`ss-day ${isToday ? 'is-today' : ''}`}
           >
-            <header className="ss-day-head">
+            <header className="ss-day-head shrink-0">
               <span className="ss-day-num">{date.getDate()}</span>
               <span className="ss-day-dow">{date.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
               {isToday && <span className="ss-today-pill">Today</span>}
@@ -112,7 +112,8 @@ export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, o
               />
             ))}
             <button type="button" onClick={() => onAdd(date)} className="ss-empty-slot" aria-label={`Add lesson on ${date.toLocaleDateString('en-GB')}`}>
-              <Plus className="h-3.5 w-3.5" /> Add lesson
+              <Plus className="h-4 w-4" />
+              Add lesson
             </button>
           </section>
         );

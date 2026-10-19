@@ -1,4 +1,4 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { createPortal } from 'react-dom';
 import toast from 'react-hot-toast';
 import { 
@@ -191,6 +191,76 @@ export function ActivityLibrary({
     if (typeof window === 'undefined') return 'grid';
     return window.matchMedia('(max-width: 640px)').matches ? 'list' : 'grid';
   });
+  /** Columns across the activity grid (2–7). Auto-fits to width unless the user pins a value. */
+  const GRID_COLS_MIN = 2;
+  const GRID_COLS_MAX = 7;
+  const GRID_CARD_MIN_PX = 210;
+  const colsForWidth = useCallback((width: number) => {
+    if (width <= 0) return 4;
+    return Math.max(
+      GRID_COLS_MIN,
+      Math.min(GRID_COLS_MAX, Math.floor(width / GRID_CARD_MIN_PX)),
+    );
+  }, []);
+  const [gridCols, setGridCols] = useState(() => {
+    if (typeof window === 'undefined') return 5;
+    try {
+      const pinned = localStorage.getItem('ccd-activity-library-grid-cols-pinned') === '1';
+      const raw = localStorage.getItem('ccd-activity-library-grid-cols');
+      if (pinned && raw) {
+        const n = Number(raw);
+        if (Number.isFinite(n)) return Math.max(GRID_COLS_MIN, Math.min(GRID_COLS_MAX, Math.round(n)));
+      }
+    } catch {
+      /* ignore */
+    }
+    return colsForWidth(window.innerWidth - 120);
+  });
+  const [gridColsPinned, setGridColsPinned] = useState(() => {
+    try {
+      return localStorage.getItem('ccd-activity-library-grid-cols-pinned') === '1';
+    } catch {
+      return false;
+    }
+  });
+  const libraryScrollRef = useRef<HTMLDivElement>(null);
+  const gridMeasureRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = gridMeasureRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      if (gridColsPinned) return;
+      setGridCols(colsForWidth(w));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [gridColsPinned, colsForWidth]);
+
+  const setGridColsFromSlider = (value: number) => {
+    const next = Math.max(GRID_COLS_MIN, Math.min(GRID_COLS_MAX, Math.round(value)));
+    setGridCols(next);
+    setGridColsPinned(true);
+    try {
+      localStorage.setItem('ccd-activity-library-grid-cols', String(next));
+      localStorage.setItem('ccd-activity-library-grid-cols-pinned', '1');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const resetGridColsAuto = () => {
+    setGridColsPinned(false);
+    try {
+      localStorage.removeItem('ccd-activity-library-grid-cols-pinned');
+    } catch {
+      /* ignore */
+    }
+    const w = gridMeasureRef.current?.clientWidth ?? window.innerWidth - 120;
+    setGridCols(colsForWidth(w));
+  };
+
   const [editingActivity, setEditingActivity] = useState<Activity | null>(null);
   const [selectedActivityDetails, setSelectedActivityDetails] = useState<Activity | null>(null);
   const [showActivityModal, setShowActivityModal] = useState(false);
@@ -857,14 +927,44 @@ export function ActivityLibrary({
     'inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#77738F] transition-colors hover:bg-[#E9E6FF] hover:text-[#1F1B4D] disabled:opacity-40';
   const toolBtnOn = 'bg-[#E9E6FF] text-[#4338E8]';
 
+  // When editing/viewing details, replace the library with an in-workspace editor
+  // (avoids a cramped modal and stops the page background from scrolling underneath).
+  if (selectedActivityDetails) {
+    return (
+      <div className="flex h-[calc(100dvh-7.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white">
+        <ActivityDetails
+          activity={selectedActivityDetails}
+          presentation="page"
+          onClose={() => {
+            setSelectedActivityDetails(null);
+            setEditingActivity(null);
+            setInitialResource(null);
+          }}
+          onAddToLesson={() => {
+            onActivitySelect(selectedActivityDetails);
+            setSelectedActivityDetails(null);
+          }}
+          isEditing={selectedActivityDetails === editingActivity}
+          onUpdate={(updatedActivity) => {
+            handleActivityUpdate(updatedActivity);
+            setEditingActivity(null);
+            setSelectedActivityDetails(null);
+          }}
+          initialResource={initialResource}
+          onDelete={deleteActivity}
+        />
+      </div>
+    );
+  }
+
   return (
-    <div className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white">
-      {/* Compact Studio Score toolbar — no full-bleed purple slab, no stretch search */}
-      <div className="border-b border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2.5 sm:px-4">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-          <div className="min-w-0 flex-1">
+    <div className="flex h-[calc(100dvh-7.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white">
+      {/* Single compact toolbar row */}
+      <div className="shrink-0 border-b border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2 sm:px-4">
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
+          <div className="min-w-0 shrink-0 pr-1">
             <h2
-              className="truncate text-base font-extrabold tracking-tight text-[#1F1B4D] sm:text-lg"
+              className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base"
               style={{
                 fontFamily:
                   "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)",
@@ -872,132 +972,42 @@ export function ActivityLibrary({
             >
               {className ? className : 'Activity Library'}
             </h2>
-            <p className="text-[11px] font-medium text-[#77738F]">
+            <p className="text-[10px] font-medium leading-tight text-[#77738F]">
               {getCurrentYearGroupKeys().length > 0
-                ? `${filteredActivityCount} of ${totalActivitiesForYearGroup} activities`
+                ? `${filteredActivityCount} of ${totalActivitiesForYearGroup}`
                 : `${filteredActivityCount} activities`}
             </p>
           </div>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (isViewOnly) {
-                alert('View-only mode: Cannot create activities.');
-                return;
-              }
-              setShowCreator(true);
-            }}
-            disabled={isViewOnly}
-            className={`inline-flex min-h-[34px] items-center gap-1.5 rounded-lg bg-[#FFC93C] px-3 text-xs font-bold text-[#1F1B4D] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50`}
-          >
-            <Plus className="h-3.5 w-3.5" />
-            Create
-          </button>
-
-          <div className="relative">
-            <button
-              type="button"
-              onClick={() => setLibraryToolsOpen((v) => !v)}
-              className={`${toolBtn} ${libraryToolsOpen ? toolBtnOn : ''}`}
-              title="More tools"
-              aria-expanded={libraryToolsOpen}
-            >
-              <Filter className="h-4 w-4" />
-            </button>
-            {libraryToolsOpen && (
-              <>
-                <button
-                  type="button"
-                  className="fixed inset-0 z-20 cursor-default"
-                  aria-label="Close tools"
-                  onClick={() => setLibraryToolsOpen(false)}
-                />
-                <div className="absolute right-0 z-30 mt-1 w-44 overflow-hidden rounded-xl border border-[#E2E0EF] bg-white py-1 shadow-lg">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLibraryToolsOpen(false);
-                      void handleRefreshActivities();
-                    }}
-                    disabled={loading}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
-                  >
-                    <RotateCcw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-                    Refresh
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLibraryToolsOpen(false);
-                      void handleUndoActivityChange();
-                    }}
-                    disabled={historyUndoStack.length === 0 || isApplyingHistory}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
-                  >
-                    <Undo2 className="h-3.5 w-3.5" />
-                    Undo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLibraryToolsOpen(false);
-                      void handleRedoActivityChange();
-                    }}
-                    disabled={historyRedoStack.length === 0 || isApplyingHistory}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
-                  >
-                    <Redo2 className="h-3.5 w-3.5" />
-                    Redo
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setLibraryToolsOpen(false);
-                      setShowImporter(true);
-                    }}
-                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA]"
-                  >
-                    <Upload className="h-3.5 w-3.5" />
-                    Import / export
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* One compact filter row — fixed search width, no stretch */}
-        <div className="mt-2.5 flex flex-wrap items-center gap-2">
-          <div className="relative w-full max-w-[220px] sm:w-[220px]">
-            <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
+          <div className="relative w-[160px] shrink-0 sm:w-[180px]">
+            <Search className="pointer-events-none absolute left-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
             <input
               type="text"
               placeholder="Search…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-[#E2E0EF] bg-white py-1.5 pl-8 pr-2.5 text-sm text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
+              className="h-8 w-full rounded-lg border border-[#E2E0EF] bg-white py-1 pl-7 pr-2 text-xs text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
               dir="ltr"
             />
           </div>
 
-          <div className="w-full max-w-[180px] sm:w-[180px]">
+          <div className="w-[140px] shrink-0 sm:w-[160px]">
             <SimpleNestedCategoryDropdown
               selectedCategory={localSelectedCategory === 'all' ? '' : localSelectedCategory}
               onCategoryChange={(category) => handleCategoryChange(category === '' ? 'all' : category)}
               placeholder="All categories"
-              className="w-full truncate rounded-lg border border-[#E2E0EF] bg-white px-2.5 py-1.5 text-sm font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
+              className="h-8 w-full truncate rounded-lg border border-[#E2E0EF] bg-white px-2 py-1 text-xs font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
               showAllCategories={false}
             />
           </div>
 
           {availableTopicsForSelection.length > 0 && (
-            <label className="relative inline-flex min-w-[140px] max-w-[200px] flex-1 items-center sm:flex-none">
+            <label className="relative inline-flex w-[120px] shrink-0 items-center sm:w-[140px]">
               <span className="sr-only">Topic</span>
               <select
                 value={selectedTopic}
                 onChange={(e) => setSelectedTopic(e.target.value)}
-                className="w-full appearance-none rounded-lg border border-[#E2E0EF] bg-white py-1.5 pl-2.5 pr-8 text-sm font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
+                className="h-8 w-full appearance-none rounded-lg border border-[#E2E0EF] bg-white py-1 pl-2 pr-7 text-xs font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
               >
                 <option value="all">All topics</option>
                 {availableTopicsForSelection.map((topic) => (
@@ -1006,11 +1016,45 @@ export function ActivityLibrary({
                   </option>
                 ))}
               </select>
-              <ChevronDown className="pointer-events-none absolute right-2 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
+              <ChevronDown className="pointer-events-none absolute right-1.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
             </label>
           )}
 
-          <div className="ml-auto flex items-center gap-0.5">
+          {viewMode === 'grid' && (
+            <label
+              className="flex items-center gap-1.5 rounded-lg border border-[#E2E0EF] bg-white px-2 py-1"
+              title={
+                gridColsPinned
+                  ? `${gridCols} columns (drag to change; click Auto to fit width)`
+                  : `${gridCols} columns (auto-fits to width)`
+              }
+            >
+              <span className="text-[10px] font-bold text-[#5C5878] tabular-nums">{gridCols}</span>
+              <input
+                type="range"
+                min={GRID_COLS_MIN}
+                max={GRID_COLS_MAX}
+                step={1}
+                value={gridCols}
+                onChange={(e) => setGridColsFromSlider(Number(e.target.value))}
+                className="h-1 w-16 cursor-pointer accent-[#4338E8] sm:w-20"
+                aria-label="Activities per row"
+              />
+              <button
+                type="button"
+                onClick={resetGridColsAuto}
+                className={`rounded px-1 text-[9px] font-extrabold uppercase tracking-wide ${
+                  gridColsPinned
+                    ? 'text-[#4338E8] hover:bg-[#E9E6FF]'
+                    : 'text-[#77738F]'
+                }`}
+              >
+                Auto
+              </button>
+            </label>
+          )}
+
+          <div className="ml-auto flex flex-wrap items-center gap-0.5">
             <button
               type="button"
               onClick={() => toggleSort('category')}
@@ -1069,13 +1113,106 @@ export function ActivityLibrary({
                 strokeWidth={globalStarredFirst ? 0 : 2}
               />
             </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                if (isViewOnly) {
+                  alert('View-only mode: Cannot create activities.');
+                  return;
+                }
+                setShowCreator(true);
+              }}
+              disabled={isViewOnly}
+              className="ml-1 inline-flex h-8 items-center gap-1 rounded-lg bg-[#FFC93C] px-2.5 text-[11px] font-bold text-[#1F1B4D] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Plus className="h-3.5 w-3.5" />
+              Create
+            </button>
+
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setLibraryToolsOpen((v) => !v)}
+                className={`${toolBtn} ${libraryToolsOpen ? toolBtnOn : ''}`}
+                title="More tools"
+                aria-expanded={libraryToolsOpen}
+              >
+                <Filter className="h-4 w-4" />
+              </button>
+              {libraryToolsOpen && (
+                <>
+                  <button
+                    type="button"
+                    className="fixed inset-0 z-20 cursor-default"
+                    aria-label="Close tools"
+                    onClick={() => setLibraryToolsOpen(false)}
+                  />
+                  <div className="absolute right-0 z-30 mt-1 w-44 overflow-hidden rounded-xl border border-[#E2E0EF] bg-white py-1 shadow-lg">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLibraryToolsOpen(false);
+                        void handleRefreshActivities();
+                      }}
+                      disabled={loading}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
+                    >
+                      <RotateCcw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
+                      Refresh
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLibraryToolsOpen(false);
+                        void handleUndoActivityChange();
+                      }}
+                      disabled={historyUndoStack.length === 0 || isApplyingHistory}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
+                    >
+                      <Undo2 className="h-3.5 w-3.5" />
+                      Undo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLibraryToolsOpen(false);
+                        void handleRedoActivityChange();
+                      }}
+                      disabled={historyRedoStack.length === 0 || isApplyingHistory}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA] disabled:opacity-50"
+                    >
+                      <Redo2 className="h-3.5 w-3.5" />
+                      Redo
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setLibraryToolsOpen(false);
+                        setShowImporter(true);
+                      }}
+                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-[#1F1B4D] hover:bg-[#F4F3FA]"
+                    >
+                      <Upload className="h-3.5 w-3.5" />
+                      Import / export
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex relative">
-        <div className="flex-1 p-3 sm:p-4">
+      {/* Scrollable activity pane — wheel stays here, not on the page background */}
+      <div className="relative flex min-h-0 flex-1 overflow-hidden">
+        <div
+          ref={(node) => {
+            (libraryScrollRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+            (gridMeasureRef as React.MutableRefObject<HTMLDivElement | null>).current = node;
+          }}
+          className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-3 sm:p-4"
+        >
         <PartnerPlanningPanel
           className="mb-3"
           compact
@@ -1349,7 +1486,10 @@ export function ActivityLibrary({
           </div>
         ) : (
           // Grid View
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div
+            className="grid gap-3 sm:gap-4"
+            style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+          >
             {displayGroups.map((group) => (
               <React.Fragment key={`grid-cat-${group.name}`}>
                 <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
@@ -1453,30 +1593,6 @@ export function ActivityLibrary({
         )}
         </div>
       </div>
-
-      {/* Activity Details Modal */}
-      {selectedActivityDetails && (
-        <ActivityDetails
-          activity={selectedActivityDetails}
-          onClose={() => {
-            setSelectedActivityDetails(null);
-            setEditingActivity(null);
-            setInitialResource(null);
-          }}
-          onAddToLesson={() => {
-            onActivitySelect(selectedActivityDetails);
-            setSelectedActivityDetails(null);
-          }}
-          isEditing={selectedActivityDetails === editingActivity}
-          onUpdate={(updatedActivity) => {
-            handleActivityUpdate(updatedActivity);
-            setEditingActivity(null);
-            setSelectedActivityDetails(null);
-          }}
-          initialResource={initialResource}
-          onDelete={deleteActivity}
-        />
-      )}
 
       {/* Activity Creator Modal */}
       {showCreator && (

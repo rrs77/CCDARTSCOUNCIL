@@ -16,6 +16,13 @@
   --ss-lavender: #e5e2ff;
   --ss-white: #ffffff;
   --ss-sidebar: 200px;
+  /* Content measure — mockup shell ~1540; keep readable, not edge-to-edge */
+  --ss-workspace-max: 1280px;
+  --ss-workspace-week-max: 1440px;
+  --ss-dialog-sm: 28rem; /* ~448px */
+  --ss-dialog-md: 36rem; /* ~576px */
+  --ss-dialog-lg: 42rem; /* ~672px */
+  --ss-dialog-xl: 52rem; /* ~832px — rich editors only */
   /* Page titles match sidebar / UI — same family, heavier weight */
   --ss-font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ss-font-ui: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -63,11 +70,26 @@
   border: 0;
 }
 
-/* Header only spans the workspace column; brand lives in the sidebar */
+/* Header only spans the workspace column; brand lives in the sidebar.
+   White bar on lilac workspace = clear chrome band (was same lilac as page). */
 html.ccd-studio header.ccd-app-header {
-  background: var(--ss-lilac) !important;
+  position: fixed;
+  background: var(--ss-white) !important;
   border-bottom: 1px solid var(--ss-line);
-  box-shadow: none !important;
+  box-shadow:
+    0 1px 0 rgba(67, 56, 232, 0.08),
+    0 6px 18px rgba(31, 27, 77, 0.05) !important;
+}
+
+html.ccd-studio header.ccd-app-header::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: linear-gradient(90deg, var(--ss-indigo) 0%, var(--ss-lavender) 55%, transparent 100%);
+  pointer-events: none;
 }
 
 html.ccd-studio header.ccd-app-header .ccd-studio-brand-slot {
@@ -141,16 +163,34 @@ html.ccd-studio {
 .ccd-studio-brand {
   display: flex;
   align-items: center;
-  padding: 4px 8px 10px;
+  padding: 6px 8px 12px;
   min-height: 42px;
 }
 
-/* Full lockup — ribbon mark + CSS “designer” */
+/* Full lockup — ribbon mark + CSS “designer” (expanded menu: 1.5× mark size) */
 .ccd-studio-brand-logo {
   display: inline-flex;
   align-items: center;
+  gap: 0.32em;
   max-width: 100%;
   height: auto;
+}
+
+.ccd-studio-brand-logo .ccd-studio-brand-mark,
+.ccd-studio-brand-logo img {
+  width: 42px;
+  height: 42px;
+  object-fit: contain;
+}
+
+.ccd-studio-brand-word {
+  font-size: 1.725rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  text-transform: lowercase;
+  color: #fff;
+  font-family: var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif);
 }
 
 .ccd-studio-brand-mark {
@@ -158,6 +198,12 @@ html.ccd-studio {
   width: 28px;
   height: 28px;
   object-fit: contain;
+}
+
+.ccd-studio-app.is-collapsed .ccd-studio-brand {
+  justify-content: center;
+  padding: 4px 0 10px;
+  min-height: 42px;
 }
 
 .ccd-studio-nav {
@@ -275,15 +321,49 @@ html.ccd-studio {
 
 .ccd-studio-workspace-inner {
   flex: 1;
-  padding: 14px 22px 40px;
+  width: 100%;
+  margin-inline: auto;
+  padding: 18px 24px 48px;
   min-width: 0;
-  max-width: none;
+  max-width: var(--ss-workspace-max);
+}
+
+/* Week planner may breathe a little wider; still not full ultrawide */
+.ccd-studio-workspace-inner:has(.ss-week-grid) {
+  max-width: var(--ss-workspace-week-max);
 }
 
 .ccd-studio-workspace-inner.hubs-bridge {
-  /* Partner Hubs keep their own sage/forest canvas */
+  /* Partner Hubs keep their own sage/forest canvas — full column */
+  max-width: none;
+  margin-inline: 0;
   padding: 8px 12px 40px;
   background: transparent;
+}
+
+/*
+ * Dialog discipline — oversized Tailwind max-w-5xl/6xl panels look stretched
+ * on wide screens. Cap common dialog shells inside the Studio Score app.
+ */
+html.ccd-studio .fixed.inset-0 > .bg-white.rounded-card,
+html.ccd-studio .fixed.inset-0 > .bg-white.rounded-xl,
+html.ccd-studio .fixed.inset-0 > .bg-white.rounded-2xl,
+html.ccd-studio .fixed.inset-0 > .relative.bg-white.rounded-card,
+html.ccd-studio .fixed.inset-0 > .relative.z-10.bg-white,
+html.ccd-studio .fixed.inset-0 > .relative.z-\[10\].bg-white,
+html.ccd-studio .fixed.inset-0 > .relative.z-\[71\],
+html.ccd-studio .fixed.inset-0 > [role='dialog'].bg-white,
+html.ccd-studio .fixed.inset-0 > .relative[role='dialog'] {
+  max-width: min(var(--ss-dialog-xl), calc(100vw - 2rem)) !important;
+}
+
+/* Compact assign / confirm dialogs stay tighter */
+html.ccd-studio .ss-dialog-md {
+  max-width: min(var(--ss-dialog-md), calc(100vw - 2rem)) !important;
+}
+
+html.ccd-studio .ss-dialog-lg {
+  max-width: min(var(--ss-dialog-lg), calc(100vw - 2rem)) !important;
 }
 
 .ccd-studio-eyebrow {
@@ -297,6 +377,17 @@ html.ccd-studio {
 
 .ccd-studio-eyebrow span {
   color: var(--ss-indigo);
+}
+
+/* Short page intros — don't force early wrap when the workspace is wide enough */
+.ccd-page-lede {
+  max-width: none;
+  text-wrap: pretty;
+}
+@media (min-width: 900px) {
+  .ccd-page-lede.ccd-page-lede--single {
+    white-space: nowrap;
+  }
 }
 
 .ccd-studio-title {
@@ -314,7 +405,8 @@ html.ccd-studio {
   line-height: 1.55;
   margin: 8px 0 0;
   font-size: 13px;
-  max-width: 52ch;
+  max-width: none;
+  text-wrap: pretty;
 }
 
 .ccd-studio-btn {
@@ -353,21 +445,40 @@ html.ccd-studio {
   display: none;
 }
 
-/* Quiet planner week — compact so empty days don’t dominate */
+/* Week board fills the workspace — day columns stretch; empty slots grow */
+.ss-planner-shell {
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100dvh - 7.5rem);
+  min-width: 0;
+}
+
+.ss-planner-board {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  margin-top: 12px;
+}
+
 .ss-week-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 8px;
+  gap: 10px;
+  flex: 1 1 auto;
+  min-height: min(68vh, calc(100dvh - 13.5rem));
+  align-items: stretch;
 }
 
 .ss-day {
-  min-height: 0;
-  padding: 8px 7px 10px;
-  border-radius: 14px;
+  min-height: 100%;
+  height: 100%;
+  padding: 10px 9px 12px;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  background: rgba(255, 255, 255, 0.72);
+  gap: 8px;
+  background: rgba(255, 255, 255, 0.88);
   border: 1px solid #e8e6f2;
 }
 
@@ -466,25 +577,27 @@ html.ccd-studio {
 }
 
 .ss-empty-slot {
-  border: 1px dashed #ddd9ef;
-  border-radius: 10px;
-  min-height: 34px;
+  border: 1.5px dashed #ddd9ef;
+  border-radius: 12px;
+  flex: 1 1 auto;
+  min-height: 72px;
   width: 100%;
-  background: transparent;
+  margin-top: auto;
+  background: rgba(244, 243, 250, 0.55);
   color: #928fb0;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 5px;
+  gap: 6px;
   cursor: pointer;
   font-family: inherit;
-  margin-top: 2px;
 }
 
 .ss-empty-slot:hover {
-  background: rgba(255, 255, 255, 0.6);
+  background: var(--ss-softindigo);
   border-color: #bbb5f8;
   color: var(--ss-indigo);
 }
@@ -670,6 +783,7 @@ html.ccd-studio {
 
   .ccd-studio-workspace-inner {
     padding: 16px 16px 96px;
+    max-width: none;
   }
 
   .ccd-studio-mobile-nav {
@@ -710,6 +824,7 @@ html.ccd-studio {
     grid-template-columns: repeat(5, minmax(148px, 1fr));
     overflow-x: auto;
     padding-bottom: 8px;
+    min-height: min(52vh, calc(100dvh - 16rem));
   }
 
   .ss-month-grid {
@@ -722,11 +837,18 @@ html.ccd-studio {
     display: flex;
     flex-direction: column;
     overflow: visible;
-    gap: 8px;
+    gap: 10px;
+    min-height: 0;
   }
 
   .ss-day {
-    min-height: 0;
+    min-height: 140px;
+    height: auto;
+  }
+
+  .ss-empty-slot {
+    min-height: 56px;
+    flex: 0 0 auto;
   }
 }
 

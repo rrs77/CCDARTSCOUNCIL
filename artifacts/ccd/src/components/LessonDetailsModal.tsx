@@ -198,7 +198,7 @@ export function LessonDetailsModal({
       {/* Scrollable shell: works at any viewport size; bottom padding clears the fixed site footer */}
       <div className="relative z-10 flex min-h-full items-start justify-center p-2 sm:p-4 pt-[max(0.5rem,env(safe-area-inset-top))] pb-[max(6rem,calc(env(safe-area-inset-bottom)+5rem))] sm:items-center">
         <div
-          className="relative bg-white rounded-card shadow-soft w-full max-w-full sm:max-w-2xl md:max-w-4xl lg:max-w-5xl xl:max-w-6xl max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-6rem)] overflow-hidden flex flex-col animate-scale-in"
+          className="relative bg-white rounded-card shadow-soft w-full max-w-3xl max-h-[calc(100dvh-7rem)] sm:max-h-[calc(100dvh-6rem)] overflow-hidden flex flex-col animate-scale-in"
           onClick={(e) => e.stopPropagation()}
         >
         {/* Header — shrink-0 so action menu never scrolls/clips off-screen */}

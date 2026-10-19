@@ -258,12 +258,30 @@ export function UserManagement() {
     if (filterStatus !== 'all') qs.set('status', filterStatus);
     if (filterHub !== 'all') qs.set('hub', filterHub);
 
-    const res = await fetch(getVercelApiUrl(`/api/users/list?${qs}`), {
-      headers: await authHeaders(),
-    });
+    let res: Response;
+    try {
+      res = await fetch(getVercelApiUrl(`/api/users/list?${qs}`), {
+        headers: await authHeaders(),
+      });
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Failed to fetch';
+      throw new Error(
+        msg === 'Failed to fetch' || (err instanceof TypeError)
+          ? 'Cannot reach the Users API (local server on port 8080 not running, or proxy failed).'
+          : msg,
+      );
+    }
     const data = await res.json().catch(() => ({}));
     if (!res.ok) {
-      throw new Error((data as { error?: string })?.error || 'Failed to load users');
+      const apiError =
+        (data as { error?: string; message?: string })?.error ||
+        (data as { message?: string })?.message;
+      if (res.status === 502 || res.status === 503 || res.status === 504) {
+        throw new Error(
+          'Cannot reach the Users API (local server on port 8080 not running, or proxy failed).',
+        );
+      }
+      throw new Error(apiError || 'Failed to load users');
     }
     return data as ListResponse;
   }, [page, sortKey, sortAsc, search, filterRole, filterStatus, filterHub]);
@@ -660,14 +678,26 @@ export function UserManagement() {
   }
 
   if (loadError && users.length === 0) {
+    const isNetwork =
+      /failed to fetch|network|econnrefused|proxy|unreachable|cannot reach|port 8080/i.test(
+        loadError,
+      );
     return (
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-6 text-center">
-        <p className="text-amber-800 font-medium">Could not load users</p>
-        <p className="mt-1 text-sm text-amber-700">{loadError}</p>
+      <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-5 text-center">
+        <p className="font-extrabold text-[#1F1B4D]">Could not load users</p>
+        <p className="mt-1 text-[13px] font-medium text-[#5C5878]">{loadError}</p>
+        {isNetwork ? (
+          <p className="mx-auto mt-2 max-w-md text-[12px] leading-relaxed text-[#5C5878]">
+            The Users admin needs the local API on port 8080 (Vite proxies{' '}
+            <code className="rounded bg-white px-1">/api</code> there). Start it with{' '}
+            <code className="rounded bg-white px-1">PORT=8080 pnpm --filter @workspace/api-server run dev</code>
+            , then try again while signed in as an admin.
+          </p>
+        ) : null}
         <button
           type="button"
           onClick={() => void reload()}
-          className="mt-4 px-4 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1]"
+          className="mt-4 inline-flex h-9 items-center rounded-xl bg-[#4338E8] px-4 text-[12px] font-extrabold text-white hover:bg-[#3529d1]"
         >
           Try again
         </button>

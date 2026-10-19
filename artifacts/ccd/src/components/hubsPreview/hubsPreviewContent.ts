@@ -38,13 +38,27 @@ export interface OrgEntry {
   access: AccessLevel;
 }
 
-export const ORGANISATIONS: OrgEntry[] = PARTNER_HUBS.filter((h) => !MUSIC_HUB_SLUGS.has(h.slug))
-  .map((hub) => ({
+function toOrgEntry(hub: PartnerHubConfig): OrgEntry {
+  return {
     hub,
     disciplines: ORG_DISCIPLINES[hub.slug] ?? [],
     access: (hub.paid ? 'subscription' : 'free') as AccessLevel,
-  }))
-  .sort((a, b) => a.hub.displayName.replace(/^The /, '').localeCompare(b.hub.displayName.replace(/^The /, '')));
+  };
+}
+
+const byDisplayName = (a: OrgEntry, b: OrgEntry) =>
+  a.hub.displayName.replace(/^The /, '').localeCompare(b.hub.displayName.replace(/^The /, ''));
+
+/** All non–Music Hub partners (arts + paid). Prefer ARTS_ORGANISATIONS / PAID_RESOURCES for menus. */
+export const ORGANISATIONS: OrgEntry[] = PARTNER_HUBS.filter((h) => !MUSIC_HUB_SLUGS.has(h.slug))
+  .map(toOrgEntry)
+  .sort(byDisplayName);
+
+/** Free cultural hubs — RSC, National Theatre, ROH, LSO, Tate, etc. */
+export const ARTS_ORGANISATIONS: OrgEntry[] = ORGANISATIONS.filter((o) => !o.hub.paid);
+
+/** Paid / subscription classroom packs — We Teach Drama, iCompose, Drama Resource, etc. */
+export const PAID_RESOURCES: OrgEntry[] = ORGANISATIONS.filter((o) => Boolean(o.hub.paid));
 
 export const NATION_NOTES: Record<string, { title: string; body: string }> = {
   W92000004: {

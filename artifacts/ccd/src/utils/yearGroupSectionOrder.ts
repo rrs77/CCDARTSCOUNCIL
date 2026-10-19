@@ -205,6 +205,50 @@ export function sectionsHaveResolvableGroups<T extends YearGroupLike>(
   );
 }
 
+/**
+ * How many classes sit outside the Other / unallocated pool.
+ * Used to prefer a richer local layout over a stale cloud "all in Other" seed.
+ */
+export function countAllocatedOutsideOther<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(sections: S[], groups: T[]): number {
+  let n = 0;
+  for (const s of sections) {
+    if (s.id === 'other') continue;
+    for (const token of s.yearGroupIds || []) {
+      if (resolveYearGroupFromToken(groups, token)) n += 1;
+    }
+  }
+  return n;
+}
+
+/** True when every resolvable class is only in Other (empty key-stage folders). */
+export function isAllInOtherLayout<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(sections: S[], groups: T[]): boolean {
+  if (!groups.length || !sections.length) return false;
+  return countAllocatedOutsideOther(sections, groups) === 0;
+}
+
+/**
+ * Pick the section layout that should win when local and cloud disagree.
+ * Prefer the layout with more classes outside Other; if tied, prefer `preferred`.
+ */
+export function preferRicherYearGroupSections<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(preferred: S[], other: S[], groups: T[]): S[] {
+  const a = countAllocatedOutsideOther(preferred, groups);
+  const b = countAllocatedOutsideOther(other, groups);
+  if (a !== b) return a > b ? preferred : other;
+  // Prefer non–all-in-Other when scores tie at zero vs structured empty folders
+  if (isAllInOtherLayout(preferred, groups) && !isAllInOtherLayout(other, groups)) return other;
+  if (!isAllInOtherLayout(preferred, groups) && isAllInOtherLayout(other, groups)) return preferred;
+  return preferred;
+}
+
 /** Collapse section tokens to canonical ids; preserve first-seen order; drop unknown duplicate tokens. */
 export function normalizeSectionYearGroupIdList<T extends YearGroupLike>(
   tokens: string[],

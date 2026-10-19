@@ -1122,7 +1122,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
               Loading half-terms…
             </div>
           ) : (
-            <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3 mb-4">
+            <div className="mb-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
               {HALF_TERMS
                 .map((halfTerm) => {
                   const lessons = getLessonsForHalfTerm(halfTerm.id);

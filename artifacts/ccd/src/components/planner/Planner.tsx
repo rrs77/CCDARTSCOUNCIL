@@ -64,7 +64,9 @@ function rangeFor(view: PlannerView, anchor: Date) {
 }
 
 function roomFromView(v: PlannerView): PlannerRoom {
-  return v === 'term' || v === 'units' ? 'units' : 'schedule';
+  if (v === 'term' || v === 'units') return 'units';
+  if (v === 'classic') return 'timetable';
+  return 'schedule';
 }
 
 export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps) {
@@ -124,6 +126,12 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
         changeView('term');
         return;
       }
+      if (next === 'timetable') {
+        const id = classById.has(currentSheetInfo.sheet) ? currentSheetInfo.sheet : classes[0]?.id;
+        if (id) setFocus(id);
+        changeView('classic');
+        return;
+      }
       if (view === 'term' || view === 'units' || view === 'classic') changeView('week');
     },
     [changeView, view, currentSheetInfo.sheet, classById, classes],
@@ -167,7 +175,7 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
         : view === 'month'
           ? 'Month planner'
           : view === 'classic'
-            ? 'Timetable setup'
+            ? 'Timetable builder'
             : view === 'units'
               ? 'Unit progress'
               : className
@@ -203,9 +211,9 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
   const inSchedule = room === 'schedule' && view !== 'classic';
 
   return (
-    <div className="min-w-0">
-      <main className="min-w-0">
-        <header className="flex flex-wrap items-end justify-between gap-3">
+    <div className="ss-planner-shell">
+      <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <header className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
             <h1
               className="text-[clamp(22px,2.4vw,30px)] font-extrabold leading-none tracking-tight text-[#1F1B4D]"
@@ -236,12 +244,13 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           </div>
         </header>
 
-        <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+        <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="flex rounded-xl border border-[#E2E0EF] bg-white p-1" role="tablist" aria-label="Planner area">
               {(
                 [
                   { id: 'schedule' as const, label: 'Schedule' },
+                  { id: 'timetable' as const, label: 'Timetable builder' },
                   { id: 'units' as const, label: 'Units' },
                 ] as const
               ).map((r) => (
@@ -249,10 +258,10 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                   key={r.id}
                   type="button"
                   role="tab"
-                  aria-selected={room === r.id && view !== 'classic'}
+                  aria-selected={room === r.id}
                   onClick={() => goRoom(r.id)}
                   className={`min-h-[36px] rounded-lg px-3.5 text-[13px] font-semibold ${
-                    room === r.id && view !== 'classic' ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
+                    room === r.id ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
                   }`}
                 >
                   {r.label}
@@ -320,10 +329,16 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                   <Printer className="h-4 w-4" />
                 </button>
               )}
-              <button type="button" className={toolBtn} onClick={() => changeView('classic')} title="Timetable setup">
-                <CalendarCog className="h-4 w-4" />
-              </button>
             </div>
+          )}
+          {room === 'timetable' && (
+            <p className="max-w-md text-[12px] font-medium leading-snug text-[#77738F]">
+              Build the weekly slots for{' '}
+              <span className="font-bold text-[#1F1B4D]">
+                {classById.get(focusedClassId)?.name || 'this class'}
+              </span>
+              . Drag classes onto the grid, then return to Schedule to plan lessons.
+            </p>
           )}
           {room === 'units' && view !== 'classic' && (
             <span className="px-1 text-[13px] font-medium text-[#77738F]">{dateLabel}</span>
@@ -334,7 +349,7 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           <button
             type="button"
             onClick={() => setSummaryOpen((o) => !o)}
-            className="mt-3 text-[12px] font-medium text-[#77738F] hover:text-[#4338E8]"
+            className="mt-3 shrink-0 text-[12px] font-medium text-[#77738F] hover:text-[#4338E8]"
             aria-expanded={summaryOpen}
           >
             {weekStats.planned} planned
@@ -343,14 +358,14 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           </button>
         )}
         {summaryOpen && weekStats && (
-          <p className="mt-1 flex flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#77738F]">
+          <p className="mt-1 flex shrink-0 flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#77738F]">
             <span><b className="text-[#1F1B4D]">{weekStats.sessions}</b> sessions</span>
             <span><b className="text-[#1F1B4D]">{weekStats.planned}</b> planned</span>
             <span><b className="text-[#1F1B4D]">{weekStats.taught}</b> taught</span>
           </p>
         )}
 
-        <div className="mt-3">
+        <div className={`ss-planner-board ${view === 'week' ? '' : ''}`}>
           {view === 'week' && (
             <WeekView data={data} visibleIds={visibleIds} anchor={anchor} selectedKey={sheet?.kind === 'details' ? sheet.entry.key : null} onOpenEntry={onOpenEntry} onAdd={onAdd} />
           )}
@@ -388,9 +403,17 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           )}
           {view === 'classic' && (
             <>
-              <div className="mb-3 flex flex-wrap items-center gap-2 rounded-2xl border border-[#E2E0EF] bg-white px-4 py-3 text-[13px] text-[#77738F]">
-                Setup for {classById.get(focusedClassId)?.name || 'this class'} — regular timetable, holidays and events.
-                <button type="button" onClick={() => changeView('week')} className={`${primaryBtn} ml-auto`}>
+              <div className="mb-3 flex flex-wrap items-center gap-3 rounded-2xl border border-[#E2E0EF] bg-[#F4F3FA] px-4 py-3">
+                <CalendarCog className="h-5 w-5 shrink-0 text-[#4338E8]" aria-hidden />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[13px] font-extrabold text-[#1F1B4D]">
+                    Timetable builder · {classById.get(focusedClassId)?.name || 'current class'}
+                  </p>
+                  <p className="text-[12px] font-medium text-[#77738F]">
+                    Recurring week slots, breaks and clubs. Holidays and inset days stay on the calendar.
+                  </p>
+                </div>
+                <button type="button" onClick={() => changeView('week')} className={`${primaryBtn} shrink-0`}>
                   Back to week
                 </button>
               </div>
@@ -454,42 +477,88 @@ function printWeek(
     return `<div class="col"><div class="d">${d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })}</div>${items || '<div class="n">—</div>'}</div>`;
   }).join('');
   const html = `<!doctype html><html><head><meta charset="utf-8"><title>Week planner · ${esc(rangeLabel)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <style>
-@page{size:A4 landscape;margin:14mm 12mm 16mm}
-body{font-family:"Plus Jakarta Sans",system-ui,sans-serif;color:#1F1B4D;margin:0;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.brand{display:flex;align-items:center;gap:14px;padding:14px 18px;background:${esc(headerColor)};color:#fff;border-radius:10px}
-.brand img{height:40px;width:auto;object-fit:contain;background:#fff;border-radius:8px;padding:4px}
-.brand .copy h1{margin:0;font-size:18px;font-weight:800;letter-spacing:-.02em}
-.brand .copy .sub{margin:2px 0 0;font-size:11px;opacity:.92}
-.meta{display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin:12px 2px 0}
-.meta h2{margin:0;font-size:16px;font-weight:800}
-.meta small{color:#77738F;font-size:11px}
-.g{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-top:10px;border-top:2px solid #4338E8;padding-top:10px}
-.col{min-width:0}.d{font-size:11px;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:#77738F;border-bottom:1px solid #E2E0EF;padding-bottom:4px}
-.l{border-left:3px solid;padding:3px 0 3px 7px;margin-top:7px;break-inside:avoid}.a{font-size:10px;font-weight:700}.b{font-size:11.5px;font-weight:600;line-height:1.35}
-.n{color:#9CA3AF;margin-top:8px;font-size:12px}
-.foot{margin-top:14px;padding-top:8px;border-top:1px solid #E2E0EF;display:flex;justify-content:space-between;font-size:10px;color:#77738F}
+@page{size:A4 landscape;margin:12mm 11mm 14mm}
+*{box-sizing:border-box}
+body{
+  font-family:"Plus Jakarta Sans",system-ui,sans-serif;
+  color:#1F1B4D;margin:0;background:#fff;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  position:relative;min-height:100%;
+}
+/* Small translucent mark — top-left watermark, not a banner */
+.logo-mark{
+  position:absolute;top:0;left:0;z-index:0;
+  width:28px;height:28px;object-fit:contain;
+  opacity:.22;pointer-events:none;
+}
+.sheet{position:relative;z-index:1;padding-top:4px}
+.mast{
+  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
+  padding:4px 0 10px 36px;
+  border-bottom:1.5px solid #E2E0EF;
+}
+.mast-left{min-width:0}
+.eyebrow{
+  margin:0 0 2px;font-size:9px;font-weight:700;letter-spacing:.12em;
+  text-transform:uppercase;color:#77738F;
+}
+.mast h1{
+  margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:#1F1B4D;
+}
+.mast .range{margin:3px 0 0;font-size:12px;font-weight:500;color:#5C5878}
+.mast-right{text-align:right;flex-shrink:0}
+.term-pill{
+  display:inline-block;font-size:10px;font-weight:700;color:#4338E8;
+  background:#E9E6FF;border-radius:999px;padding:3px 10px;
+}
+.product-quiet{margin-top:4px;font-size:9px;font-weight:600;color:#9B97B0}
+.accent{height:2px;margin-top:-1.5px;background:linear-gradient(90deg,#4338E8 0%,#E5E2FF 42%,transparent 100%)}
+.g{
+  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:0;margin-top:12px;
+  border:1px solid #E2E0EF;border-radius:10px;overflow:hidden;
+}
+.col{min-width:0;padding:8px 9px 10px;border-right:1px solid #E2E0EF;background:#fff}
+.col:last-child{border-right:0}
+.col:nth-child(odd){background:#FAFAFC}
+.d{
+  font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
+  color:#4338E8;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid #E9E6FF;
+}
+.l{border-left:2.5px solid;padding:4px 0 4px 7px;margin-top:6px;break-inside:avoid}
+.a{font-size:9px;font-weight:700;letter-spacing:.01em}
+.b{font-size:11px;font-weight:600;line-height:1.35;margin-top:1px;color:#1F1B4D}
+.n{color:#C4C0D4;margin-top:10px;font-size:11px;font-weight:500}
+.foot{
+  margin-top:12px;padding-top:8px;border-top:1px solid #E2E0EF;
+  display:flex;justify-content:space-between;gap:12px;
+  font-size:9px;font-weight:500;color:#77738F;
+}
 @media print{
-  .page-foot{position:fixed;bottom:0;left:0;right:0;display:flex;justify-content:space-between;font-size:9px;color:#77738F;padding:0 2mm}
-  .page-foot .pg::after{content:counter(page)}
+  .page-num::after{content:counter(page)}
 }
 </style></head><body>
-<header class="brand">
-  <img src="${esc(absLogo)}" alt="" onerror="this.style.display='none'">
-  <div class="copy">
-    <h1>${esc(productName)}</h1>
-    <div class="sub">${esc(productSubtitle)}</div>
-  </div>
-</header>
-<div class="meta">
-  <h2>Week planner</h2>
-  <small>${esc(term?.name || '')}${term ? ' · ' : ''}${esc(rangeLabel)}</small>
-</div>
-<div class="g">${cols}</div>
-<div class="foot">
-  <span>${esc(companyName)} · © ${esc(copyrightYear)} · Private reflections are not included</span>
-  <span class="page-foot"><span class="pg">Page </span></span>
+<img class="logo-mark" src="${esc(absLogo)}" alt="" onerror="this.style.display='none'">
+<div class="sheet">
+  <header class="mast">
+    <div class="mast-left">
+      <p class="eyebrow">Week planner</p>
+      <h1>${esc(rangeLabel)}</h1>
+      <p class="range">${esc(productName)}${productSubtitle ? ` · ${esc(productSubtitle)}` : ''}</p>
+    </div>
+    <div class="mast-right">
+      ${term ? `<span class="term-pill">${esc(term.name)}</span>` : ''}
+      <div class="product-quiet">${esc(companyName)}</div>
+    </div>
+  </header>
+  <div class="accent" aria-hidden="true"></div>
+  <div class="g">${cols}</div>
+  <footer class="foot">
+    <span>© ${esc(copyrightYear)} ${esc(companyName)} · Private reflections are not included</span>
+    <span class="page-num">Page </span>
+  </footer>
 </div>
 </body></html>`;
   const frame = document.createElement('iframe');

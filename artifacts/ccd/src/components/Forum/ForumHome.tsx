@@ -66,9 +66,8 @@ export function ForumHome({
         <h1 className="text-3xl font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>
           {searchQuery ? `Search: ${searchQuery}` : 'Community'}
         </h1>
-        <p className="mt-2 max-w-2xl text-sm text-gray-600">
-          Discuss curriculum, classroom practice and arts education with other CCDesigner users.
-          Public categories are readable by everyone; posting requires a signed-in account.
+        <p className="ccd-page-lede mt-2 text-sm text-gray-600">
+          Discuss curriculum, classroom practice and arts education with other CCDesigner users. Public categories are readable by everyone; posting requires a signed-in account.
         </p>
         {!user && (
           <button

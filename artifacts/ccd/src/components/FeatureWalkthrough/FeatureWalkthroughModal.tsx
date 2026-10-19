@@ -102,7 +102,7 @@ export function FeatureWalkthroughModal({ isOpen, onClose }: FeatureWalkthroughM
         className={
           isEnlarged
             ? 'relative flex h-full w-full max-w-none flex-col overflow-hidden rounded-none border border-[#FFC93C]/35 shadow-2xl sm:rounded-2xl'
-            : 'relative flex w-full max-w-5xl flex-col overflow-hidden rounded-2xl border border-[#FFC93C]/35 shadow-2xl'
+            : 'relative flex w-full max-w-3xl flex-col overflow-hidden rounded-2xl border border-[#FFC93C]/35 shadow-2xl'
         }
         style={{
           background:

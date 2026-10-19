@@ -2,8 +2,8 @@ import type { LessonPlan } from '../../contexts/DataContext';
 
 export type PlannerView = 'day' | 'week' | 'month' | 'term' | 'units' | 'classic';
 
-/** Rooms: Schedule = calendar; Units = half-term sequence for one class. */
-export type PlannerRoom = 'schedule' | 'units';
+/** Rooms: Schedule = week/day/month; Timetable = recurring slots; Units = half-terms. */
+export type PlannerRoom = 'schedule' | 'timetable' | 'units';
 
 export const SCHEDULE_VIEWS: { id: 'day' | 'week' | 'month'; label: string }[] = [
   { id: 'week', label: 'Week' },

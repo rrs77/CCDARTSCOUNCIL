@@ -101,10 +101,8 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
         <h2 className="text-xl font-semibold tracking-tight text-[#002D24] sm:text-2xl">
           Essex Music Service
         </h2>
-        <p className="max-w-3xl text-base leading-relaxed text-[#002D24]/80">
-          Lead delivery partner for Greater Essex Music Hub. Use the list below to open the East of
-          England hubs, then choose a district on the map for local resources — packs and workshops
-          are listed on district pages, not here.
+        <p className="ccd-page-lede text-base leading-snug text-[#002D24]/80">
+          Lead delivery partner for Greater Essex Music Hub. Use the list below to open the East of England hubs, then choose a district on the map for local resources — packs and workshops are listed on district pages, not here.
         </p>
       </header>
 
@@ -122,9 +120,8 @@ export function EmsPartnerHub({ onAddedToApp }: EmsPartnerHubProps) {
         <h3 className="text-lg font-semibold tracking-tight text-[#002D24] sm:text-xl">
           Essex districts map
         </h3>
-        <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#002D24]/75 sm:text-base">
-          Click a district to open its page. Sample resources (brochure, DJ Workshop, Rap-It!) are
-          on the{' '}
+        <p className="ccd-page-lede mt-2 text-sm leading-snug text-[#002D24]/75 sm:text-base">
+          Click a district to open its page. Sample resources (brochure, DJ Workshop, Rap-It!) are on the{' '}
           <a href={CHELMSFORD_HREF} className="font-semibold text-[#330968] hover:underline">
             Chelmsford district page
           </a>

@@ -21,7 +21,7 @@ export function StackModal({ isOpen, onClose, stack, onOpenLesson }: StackModalP
   return (
     <div className="fixed inset-0 z-[70] flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50" onClick={onClose} />
-      <div className="relative bg-white w-full max-w-5xl max-h-[85vh] rounded-card shadow-soft overflow-hidden">
+      <div className="relative bg-white w-full max-w-3xl max-h-[85vh] rounded-card shadow-soft overflow-hidden">
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8]">
           <div>
             <h3 className="text-white text-lg font-semibold">{stack.name} Lessons</h3>

@@ -165,7 +165,7 @@ export function ForumCategoryPage({
             rows={8}
             value={body}
             onChange={(e) => setBody(e.target.value)}
-            placeholder="Write in Markdown. Be respectful — see Community Guidelines."
+            placeholder="Write in Markdown."
             className="w-full rounded-lg border border-gray-300 px-3 py-2 font-mono text-sm"
           />
           <button

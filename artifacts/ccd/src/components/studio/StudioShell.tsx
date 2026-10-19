@@ -21,10 +21,10 @@ export type StudioNavId =
 
 const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.ReactNode; dataTab: string }[] = [
   { id: 'unit-viewer', label: 'Planner', short: 'Planner', icon: <Calendar className="h-[17px] w-[17px]" />, dataTab: 'unit-viewer' },
+  { id: 'curriculum', label: 'Curriculum & Units', short: 'Units', icon: <BookOpen className="h-[17px] w-[17px]" />, dataTab: 'curriculum' },
   { id: 'lesson-builder', label: 'Lesson Builder', short: 'Builder', icon: <Edit3 className="h-[17px] w-[17px]" />, dataTab: 'lesson-builder' },
   { id: 'activity-library', label: 'Activity Library', short: 'Activities', icon: <Grid3X3 className="h-[17px] w-[17px]" />, dataTab: 'activity-library' },
   { id: 'our-partners', label: 'Partner Hubs', short: 'Hubs', icon: <Globe2 className="h-[17px] w-[17px]" />, dataTab: 'our-partners' },
-  { id: 'curriculum', label: 'Curriculum & Units', short: 'Units', icon: <BookOpen className="h-[17px] w-[17px]" />, dataTab: 'curriculum' },
 ];
 
 interface StudioShellProps {
@@ -73,20 +73,16 @@ export function StudioShell({ active, onNavigate, children, hubsMode, topBar }: 
               decoding="async"
             />
           ) : (
-            <span className="ccd-studio-brand-logo inline-flex items-center gap-[0.28em]" role="img" aria-label="designer">
+            <span className="ccd-studio-brand-logo" role="img" aria-label="designer">
               <img
                 src="/login/ccd-mark.png?v=logo-5"
                 alt=""
-                width={28}
-                height={28}
-                className="h-7 w-7 object-contain"
+                width={42}
+                height={42}
+                className="ccd-studio-brand-mark"
                 decoding="async"
               />
-              <span
-                className="text-[1.15rem] font-extrabold lowercase leading-none tracking-[-0.03em] text-white"
-                style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
-                aria-hidden
-              >
+              <span className="ccd-studio-brand-word" aria-hidden>
                 designer
               </span>
             </span>

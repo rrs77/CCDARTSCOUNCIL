@@ -278,7 +278,7 @@ export function LessonSelectionModal({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-[60]">
-      <div className="bg-white rounded-card shadow-soft w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden">
+      <div className="ss-dialog-lg bg-white rounded-card shadow-soft w-full max-w-2xl max-h-[min(90vh,40rem)] flex flex-col overflow-hidden">
         {/* Header */}
         <div 
           className="p-4 sm:p-6 text-white relative"

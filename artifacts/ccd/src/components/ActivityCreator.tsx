@@ -314,14 +314,16 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
       {/* Full-viewport dim — portaled so it is not clipped by ActivityLibrary overflow-hidden */}
       <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={onClose} />
       <div
-        className="relative z-10 bg-white rounded-card shadow-soft w-full max-w-4xl max-h-[95vh] flex flex-col overflow-hidden"
+        className="relative z-10 flex w-full max-w-xl max-h-[min(90vh,40rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_24px_80px_rgba(31,27,77,0.22)]"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(135deg, #0BA596 0%, #0BA596 100%)' }}>
-          <div className="flex items-center space-x-3">
-            <Tag className="h-6 w-6" />
-            <h2 id="create-activity-title" className="text-xl font-bold">Create New Activity</h2>
+        {/* Header — Studio Score */}
+        <div className="flex items-center justify-between border-b border-[#E2E0EF] bg-[#1F1B4D] px-4 py-3 text-white">
+          <div className="flex items-center gap-2.5">
+            <Tag className="h-4 w-4 text-[#FFC93C]" />
+            <h2 id="create-activity-title" className="text-[15px] font-extrabold tracking-tight">
+              Create activity
+            </h2>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -352,24 +354,21 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
         </div>
 
         {/* Form Content */}
-        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6">
-          <div className="space-y-6">
+        <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto bg-[#F4F3FA]/40 px-4 py-4">
+          <div className="space-y-4">
             {/* Basic Information */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               {/* Activity Name */}
               <div className="col-span-2">
-                <label className="block text-lg font-semibold text-gray-900 mb-2">
-                  Activity Name <span className="text-red-500">*</span>
+                <label className="mb-1.5 block text-[12px] font-bold text-[#1F1B4D]">
+                  Activity name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
                   name="activity"
                   value={activity.activity}
                   onChange={handleChange}
-                  className={`w-full px-4 py-3 border ${errors.activity ? 'border-red-500' : 'border-gray-300'} rounded-button focus:ring-2 focus:ring-[#4338E8] focus:border-transparent text-lg`}
-                  style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
-                  onFocus={(e) => e.target.style.borderColor = '#0BA596'}
-                  onBlur={(e) => e.target.style.borderColor = errors.activity ? '#EF4444' : '#D1D5DB'}
+                  className={`w-full rounded-xl border bg-white px-3 py-2.5 text-[13px] text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/25 ${errors.activity ? 'border-red-500' : 'border-[#E2E0EF]'}`}
                   placeholder="Enter activity name"
                   dir="ltr"
                 />
@@ -383,7 +382,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                 <button
                   type="button"
                   onClick={() => setShowObjectivesBrowser(true)}
-                  className="w-full px-4 py-3 border-2 border-dashed border-gray-300 rounded-button hover:border-[#4338E8] hover:bg-[#E9E6FF] transition-colors duration-200 flex items-center justify-center space-x-2 text-gray-600 hover:text-[#3529d1]"
+                  className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-[#E2E0EF] bg-white px-3 py-3 text-[12px] font-semibold text-[#77738F] transition-colors hover:border-[#4338E8] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
                 >
                   <Tag className="h-5 w-5" />
                   <span className="font-medium">
@@ -417,7 +416,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                 <div className={`border rounded-lg ${errors.category ? 'border-red-500' : 'border-gray-300'} focus-within:border-gray-400 transition-colors duration-200`}
                      style={{ 
                        borderColor: errors.category ? '#EF4444' : '#D1D5DB',
-                       '--tw-ring-color': '#0BA596'
+                       '--tw-ring-color': '#4338E8'
                      } as React.CSSProperties}>
                   <SimpleNestedCategoryDropdown
                     selectedCategory={activity.category}
@@ -472,7 +471,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                         : 'border-gray-200 hover:border-gray-300 hover:bg-gray-25'
                     }`}
                     style={{
-                      borderColor: activity.yearGroups.includes(group.name) ? '#0BA596' : '#E5E7EB',
+                      borderColor: activity.yearGroups.includes(group.name) ? '#4338E8' : '#E5E7EB',
                       backgroundColor: activity.yearGroups.includes(group.name) ? '#E6F7F5' : undefined
                     }}>
                       <div className="flex items-center">
@@ -481,7 +480,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                           checked={activity.yearGroups.includes(group.name)}
                           onChange={(e) => handleYearGroupChange(group.name, e.target.checked)}
                           className="h-5 w-5 border-gray-300 rounded"
-                          style={{ accentColor: '#0BA596' }}
+                          style={{ accentColor: '#4338E8' }}
                         />
                       </div>
                       <div 
@@ -518,8 +517,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                   onChange={handleTimeChange}
                   min="0"
                   className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                  style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
-                  onFocus={(e) => e.target.style.borderColor = '#0BA596'}
+                  style={{ '--tw-ring-color': '#4338E8' } as React.CSSProperties}
+                  onFocus={(e) => e.target.style.borderColor = '#4338E8'}
                   onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
                   placeholder="Enter duration in minutes"
                   dir="ltr"
@@ -544,8 +543,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                         }
                       }}
                       className="flex-1 px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent"
-                      style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
-                      onFocus={(e) => (e.target.style.borderColor = '#0BA596')}
+                      style={{ '--tw-ring-color': '#4338E8' } as React.CSSProperties}
+                      onFocus={(e) => (e.target.style.borderColor = '#4338E8')}
                       onBlur={(e) => (e.target.style.borderColor = '#D1D5DB')}
                       placeholder="Type a topic then click +"
                       dir="ltr"
@@ -597,7 +596,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                     minHeight: '28px'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderBottomColor = '#0BA596';
+                    e.target.style.borderBottomColor = '#4338E8';
                     e.target.style.borderBottomWidth = '2px';
                   }}
                   onBlur={(e) => {
@@ -628,7 +627,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                     minHeight: '28px'
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderBottomColor = '#0BA596';
+                    e.target.style.borderBottomColor = '#4338E8';
                     e.target.style.borderBottomWidth = '2px';
                   }}
                   onBlur={(e) => {
@@ -681,9 +680,9 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                       type="button"
                       onClick={() => imageInputRef.current?.click()}
                       className="px-3 py-2 text-white text-sm font-medium rounded-lg flex items-center space-x-1"
-                      style={{ backgroundColor: '#0BA596' }}
-                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0A9688'}
-                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0BA596'}
+                      style={{ backgroundColor: '#4338E8' }}
+                      onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#3529d1'}
+                      onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#4338E8'}
                     >
                       <Upload className="h-4 w-4" />
                       <span>Upload</span>
@@ -702,8 +701,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                       onChange={handleChange}
                       placeholder="Or paste image URL"
                       className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:border-transparent text-sm"
-                      style={{ '--tw-ring-color': '#0BA596' } as React.CSSProperties}
-                      onFocus={(e) => e.target.style.borderColor = '#0BA596'}
+                      style={{ '--tw-ring-color': '#4338E8' } as React.CSSProperties}
+                      onFocus={(e) => e.target.style.borderColor = '#4338E8'}
                       onBlur={(e) => e.target.style.borderColor = '#D1D5DB'}
                       dir="ltr"
                     />
@@ -748,7 +747,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
                       className="text-sm font-medium text-gray-700 bg-transparent border-none outline-none focus:outline-none focus:ring-0 p-0 flex-1"
                       placeholder="Enter heading (e.g., Additional Link)"
                       style={{ borderBottom: '2px solid transparent' }}
-                      onFocus={(e) => e.target.style.borderBottomColor = '#0BA596'}
+                      onFocus={(e) => e.target.style.borderBottomColor = '#4338E8'}
                       onBlur={(e) => e.target.style.borderBottomColor = 'transparent'}
                     />
                     <Edit3 className="h-3 w-3 text-gray-400 flex-shrink-0" />
@@ -772,27 +771,22 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
         </form>
 
         {/* Footer */}
-        <div className="flex justify-end p-6 border-t border-gray-200 bg-gray-50">
-          <div className="flex space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              onClick={handleSubmit}
-              className="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
-              style={{ backgroundColor: '#0BA596' }}
-              onMouseEnter={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0A9688'}
-              onMouseLeave={(e) => (e.target as HTMLButtonElement).style.backgroundColor = '#0BA596'}
-            >
-              <Save className="h-5 w-5" />
-              <span>Create Activity</span>
-            </button>
-          </div>
+        <div className="flex justify-end gap-2 border-t border-[#E2E0EF] bg-white px-4 py-3">
+          <button
+            type="button"
+            onClick={onClose}
+            className="inline-flex h-9 items-center rounded-xl border border-[#E2E0EF] bg-white px-3.5 text-[12px] font-bold text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D]"
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            onClick={handleSubmit}
+            className="inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[12px] font-extrabold text-white hover:bg-[#3529d1]"
+          >
+            <Save className="h-3.5 w-3.5" />
+            Create activity
+          </button>
         </div>
       </div>
 
@@ -800,7 +794,7 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
       {showObjectivesBrowser && (
         <div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-black/50" aria-hidden="true" onClick={() => setShowObjectivesBrowser(false)} />
-          <div className="relative z-10 bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+          <div className="relative z-10 max-h-[min(90vh,40rem)] w-full max-w-2xl overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-2xl">
             <NestedStandardsBrowser
               isOpen={showObjectivesBrowser}
               onClose={() => setShowObjectivesBrowser(false)}

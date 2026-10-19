@@ -7,6 +7,7 @@ import {
   getOrderedYearGroupsFromSections,
   mergeSectionsWithYearGroups,
   normalizeSectionYearGroupIdList,
+  preferRicherYearGroupSections,
   remapYearGroupSectionsToGroups,
   sectionsHaveResolvableGroups,
   sectionsMatchHeuristicAssignment,
@@ -498,6 +499,9 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
   // assignments are only saved in localStorage and "aren't remembered" across
   // devices, incognito sessions, or cache clears.
   const sectionsSaveTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  /** Bumped on every user-driven section edit so late cloud loads cannot clobber UI. */
+  const sectionsLocalEditAtRef = useRef(0);
+  const YEAR_GROUP_SECTIONS_UPDATED_AT_KEY = 'year-group-sections-updated-at';
   const queueSectionsSupabaseSave = React.useCallback((sections: YearGroupSection[]) => {
     if (sectionsSaveTimerRef.current) clearTimeout(sectionsSaveTimerRef.current);
     sectionsSaveTimerRef.current = setTimeout(() => {
@@ -532,8 +536,10 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         });
         return prev;
       }
+      sectionsLocalEditAtRef.current = Date.now();
       try {
         localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
+        localStorage.setItem(YEAR_GROUP_SECTIONS_UPDATED_AT_KEY, String(sectionsLocalEditAtRef.current));
       } catch (_) {}
       // Fire-and-forget Supabase persistence so the change is remembered across devices.
       queueSectionsSupabaseSave(next);
@@ -988,29 +994,61 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             // for the user's section grouping across devices.
             const remoteSections = (await yearGroupSectionsApi.get()) as YearGroupSection[] | null;
             setYearGroupSectionsState(prev => {
+              // A recent in-session edit must not be wiped by a late cloud response.
+              if (sectionsLocalEditAtRef.current && Date.now() - sectionsLocalEditAtRef.current < 60_000) {
+                if (import.meta.env.DEV) {
+                  console.log('⏭️ Keeping local year-group sections — recent edit in this session');
+                }
+                return prev;
+              }
               const loadedIds = deduplicated.map((g: any) => g.id);
+              const localCandidate =
+                prev.length > 0 && sectionsHaveResolvableGroups(prev, deduplicated)
+                  ? (mergeSectionsWithYearGroups(
+                      remapYearGroupSectionsToGroups(prev, deduplicated) as YearGroupSection[],
+                      loadedIds,
+                      deduplicated,
+                    ) as YearGroupSection[])
+                  : null;
               let next: YearGroupSection[];
+              let shouldPushLocal = false;
               if (Array.isArray(remoteSections) && remoteSections.length > 0) {
-                // Remap by name/id so demo (sheet-name ids) and live (UUID ids) both resolve.
-                const remapped = remapYearGroupSectionsToGroups(
+                const remappedRemote = remapYearGroupSectionsToGroups(
                   remoteSections,
                   deduplicated,
                 ) as YearGroupSection[];
-                next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicated);
-                console.log('📦 Loaded year-group sections from Supabase');
-              } else if (prev.length > 0 && sectionsHaveResolvableGroups(prev, deduplicated)) {
-                // Prefer the user's configured sections (e.g. carried from login into prototype).
-                const remapped = remapYearGroupSectionsToGroups(
-                  prev,
+                const remoteMerged = mergeSectionsWithYearGroups(
+                  remappedRemote,
+                  loadedIds,
                   deduplicated,
                 ) as YearGroupSection[];
-                next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicated);
-                queueSectionsSupabaseSave(next);
+                if (localCandidate) {
+                  // Prefer richer local nesting over a stale cloud "all in Other" seed.
+                  next = preferRicherYearGroupSections(
+                    localCandidate,
+                    remoteMerged,
+                    deduplicated,
+                  ) as YearGroupSection[];
+                  shouldPushLocal =
+                    JSON.stringify(next) === JSON.stringify(localCandidate) &&
+                    JSON.stringify(next) !== JSON.stringify(remoteMerged);
+                  console.log(
+                    shouldPushLocal
+                      ? '📦 Keeping local year-group sections (richer than cloud) — pushing up'
+                      : '📦 Loaded year-group sections from Supabase',
+                  );
+                } else {
+                  next = remoteMerged;
+                  console.log('📦 Loaded year-group sections from Supabase');
+                }
+              } else if (localCandidate) {
+                next = localCandidate;
+                shouldPushLocal = true;
               } else {
                 next = buildDefaultYearGroupSections(deduplicated) as YearGroupSection[];
-                // No remote sections yet — seed Supabase so future loads have a source of truth.
-                queueSectionsSupabaseSave(next);
+                shouldPushLocal = true;
               }
+              if (shouldPushLocal) queueSectionsSupabaseSave(next);
               try {
                 localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
               } catch (_) {}
@@ -1045,23 +1083,45 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
                   // nesting (captured at seed time) is not lost on the localStorage path.
                   const remoteSections = (await yearGroupSectionsApi.get()) as YearGroupSection[] | null;
                   setYearGroupSectionsState(prev => {
+                    if (sectionsLocalEditAtRef.current && Date.now() - sectionsLocalEditAtRef.current < 60_000) {
+                      return prev;
+                    }
                     const loadedIds = deduplicatedGroups.map((g: any) => g.id);
+                    const localCandidate =
+                      prev.length > 0 && sectionsHaveResolvableGroups(prev, deduplicatedGroups)
+                        ? (mergeSectionsWithYearGroups(
+                            remapYearGroupSectionsToGroups(prev, deduplicatedGroups) as YearGroupSection[],
+                            loadedIds,
+                            deduplicatedGroups,
+                          ) as YearGroupSection[])
+                        : null;
                     let next: YearGroupSection[];
+                    let shouldPushLocal = false;
                     if (Array.isArray(remoteSections) && remoteSections.length > 0) {
-                      const remapped = remapYearGroupSectionsToGroups(
-                        remoteSections,
+                      const remoteMerged = mergeSectionsWithYearGroups(
+                        remapYearGroupSectionsToGroups(remoteSections, deduplicatedGroups) as YearGroupSection[],
+                        loadedIds,
                         deduplicatedGroups,
                       ) as YearGroupSection[];
-                      next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicatedGroups);
-                    } else if (prev.length > 0 && sectionsHaveResolvableGroups(prev, deduplicatedGroups)) {
-                      const remapped = remapYearGroupSectionsToGroups(
-                        prev,
-                        deduplicatedGroups,
-                      ) as YearGroupSection[];
-                      next = mergeSectionsWithYearGroups(remapped, loadedIds, deduplicatedGroups);
+                      if (localCandidate) {
+                        next = preferRicherYearGroupSections(
+                          localCandidate,
+                          remoteMerged,
+                          deduplicatedGroups,
+                        ) as YearGroupSection[];
+                        shouldPushLocal =
+                          JSON.stringify(next) === JSON.stringify(localCandidate) &&
+                          JSON.stringify(next) !== JSON.stringify(remoteMerged);
+                      } else {
+                        next = remoteMerged;
+                      }
+                    } else if (localCandidate) {
+                      next = localCandidate;
+                      shouldPushLocal = true;
                     } else {
                       next = mergeSectionsWithYearGroups(prev, loadedIds, deduplicatedGroups);
                     }
+                    if (shouldPushLocal) queueSectionsSupabaseSave(next);
                     try {
                       localStorage.setItem(YEAR_GROUP_SECTIONS_STORAGE_KEY, JSON.stringify(next));
                     } catch (_) {}

@@ -39,7 +39,15 @@ import {
   hubLabel,
   parentFocus,
 } from './ukHubMapData';
-import { DISCIPLINES, type Discipline, NATION_NOTES, ORGANISATIONS, organisationBrand } from './hubsPreviewContent';
+import {
+  ARTS_ORGANISATIONS,
+  DISCIPLINES,
+  type Discipline,
+  NATION_NOTES,
+  type OrgEntry,
+  PAID_RESOURCES,
+  organisationBrand,
+} from './hubsPreviewContent';
 import {
   ACCESS_LABEL,
   type Directory,
@@ -82,7 +90,9 @@ const shortHubName = (hub: MapHub) => hubLabel(hub).replace(/ Music( Education)?
 // ---------------------------------------------------------------------------
 
 type Page = 'browse' | 'hub' | 'area';
-type Section = 'music-hubs' | 'organisations';
+type Section = 'music-hubs' | 'organisations' | 'paid-resources';
+
+const SECTIONS: Section[] = ['music-hubs', 'organisations', 'paid-resources'];
 
 interface Route {
   page: Page;
@@ -96,10 +106,14 @@ type HubTab = 'resources' | 'events' | 'about' | 'contact';
 function readRoute(): Route {
   const p = new URLSearchParams(window.location.search);
   const page = (p.get('page') as Page) || 'browse';
+  const sectionRaw = p.get('section') || '';
+  const section: Section = SECTIONS.includes(sectionRaw as Section)
+    ? (sectionRaw as Section)
+    : 'music-hubs';
   return {
     page: ['browse', 'hub', 'area'].includes(page) ? page : 'browse',
     at: (p.get('at') || '').split('/').filter(Boolean),
-    section: p.get('section') === 'organisations' ? 'organisations' : 'music-hubs',
+    section,
     tab: (['resources', 'events', 'about', 'contact'].includes(p.get('view') || '') ? p.get('view') : 'resources') as HubTab,
   };
 }
@@ -112,7 +126,7 @@ function writeRoute(r: Partial<Route>, replace = false) {
   p.set('page', next.page);
   if (next.at.length) p.set('at', next.at.join('/'));
   else p.delete('at');
-  if (next.section === 'organisations') p.set('section', 'organisations');
+  if (next.section !== 'music-hubs') p.set('section', next.section);
   else p.delete('section');
   if (next.page === 'hub' && next.tab !== 'resources') p.set('view', next.tab);
   else p.delete('view');
@@ -750,22 +764,34 @@ function BrowsePanel({ ix, focus, hover, onHover, go }: {
 // Organisations grid
 // ---------------------------------------------------------------------------
 
-function OrganisationsSection() {
+function OrgDirectorySection({
+  headingId,
+  title,
+  blurb,
+  entries,
+  emptyLabel,
+}: {
+  headingId: string;
+  title: string;
+  blurb: string;
+  entries: OrgEntry[];
+  emptyLabel: string;
+}) {
   const [discipline, setDiscipline] = useState<Discipline | 'All'>('All');
   const [q, setQ] = useState('');
-  const shown = ORGANISATIONS.filter(
+  const shown = entries.filter(
     (o) =>
       (discipline === 'All' || o.disciplines.includes(discipline)) &&
       (!q.trim() || `${o.hub.displayName} ${o.hub.tagline ?? ''}`.toLowerCase().includes(q.trim().toLowerCase())),
   );
   return (
-    <section aria-labelledby="orgs-heading" className="space-y-5">
+    <section aria-labelledby={headingId} className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h2 id="orgs-heading" className={`text-[22px] font-semibold tracking-tight ${ink}`}>
-            Arts organisations
+          <h2 id={headingId} className={`text-[22px] font-semibold tracking-tight ${ink}`}>
+            {title}
           </h2>
-          <p className={`mt-1 text-[15px] ${muted}`}>National organisations and specialist providers with resources for schools.</p>
+          <p className={`mt-1 text-[14px] leading-snug ${muted}`}>{blurb}</p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <div role="radiogroup" aria-label="Filter by discipline" className="flex flex-wrap gap-1.5">
@@ -776,7 +802,7 @@ function OrganisationsSection() {
                 role="radio"
                 aria-checked={discipline === d}
                 onClick={() => setDiscipline(d)}
-                className={`min-h-[40px] rounded-full px-3.5 text-[14px] font-medium transition ${
+                className={`min-h-[36px] rounded-full px-3 text-[13px] font-medium transition ${
                   discipline === d ? 'bg-[#002D24] text-white' : 'bg-white text-[#002D24] ring-1 ring-inset ring-[#002D24]/10 hover:ring-[#002D24]/25'
                 }`}
               >
@@ -784,57 +810,57 @@ function OrganisationsSection() {
               </button>
             ))}
           </div>
-          <label className="flex h-10 items-center gap-2 rounded-full bg-white px-3 ring-1 ring-inset ring-[#002D24]/10 focus-within:ring-[#14B8A6]/60">
+          <label className="flex h-9 items-center gap-2 rounded-full bg-white px-3 ring-1 ring-inset ring-[#002D24]/10 focus-within:ring-[#14B8A6]/60">
             <Search className="h-4 w-4 text-[#002D24]/40" aria-hidden />
-            <span className="sr-only">Filter organisations</span>
-            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name" className="w-36 bg-transparent text-[14px] outline-none" />
+            <span className="sr-only">Filter by name</span>
+            <input value={q} onChange={(e) => setQ(e.target.value)} placeholder="Filter by name" className="w-36 bg-transparent text-[13px] outline-none" />
           </label>
         </div>
       </div>
-      <p className={`text-[14px] ${muted}`}>
-        {shown.length} organisations · A–Z
+      <p className={`text-[13px] ${muted}`}>
+        {shown.length} {shown.length === 1 ? 'listing' : 'listings'} · A–Z
       </p>
       {shown.length === 0 ? (
-        <EmptyState title="No organisations match these filters." action={<SecondaryButton onClick={() => { setDiscipline('All'); setQ(''); }}>Clear filters</SecondaryButton>} />
+        <EmptyState title={emptyLabel} action={<SecondaryButton onClick={() => { setDiscipline('All'); setQ(''); }}>Clear filters</SecondaryButton>} />
       ) : (
-        <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="list">
+        <ul className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4" role="list">
           {shown.map((o) => {
             const h = o.hub;
             const usePlate = !h.logoSrcOnDark && h.logoOnPlate;
             const invert = !h.logoSrcOnDark && !h.logoOnPlate && h.logoInvert;
             return (
               <li key={h.slug}>
-                <article className="group flex h-full flex-col overflow-hidden rounded-2xl border border-[#002D24]/[0.08] bg-white transition hover:-translate-y-0.5 hover:shadow-[0_16px_32px_-20px_rgba(0,45,36,0.35)] motion-reduce:hover:translate-y-0">
-                  <div className="flex h-24 items-center justify-center bg-[#002D24] px-6">
+                <article className="group flex h-full flex-col overflow-hidden rounded-xl border border-[#002D24]/[0.08] bg-white transition hover:border-[#002D24]/20">
+                  <div className="flex h-14 items-center justify-center bg-[#002D24] px-4">
                     {usePlate ? (
                       <span
-                        className="flex h-14 w-full max-w-[12rem] items-center justify-center rounded-xl px-3"
+                        className="flex h-9 w-full max-w-[10rem] items-center justify-center rounded-lg px-2"
                         style={{ backgroundColor: h.logoPanelColor || '#FFFFFF' }}
                       >
-                        <img src={h.logoSrc} alt="" loading="lazy" className="h-9 w-auto max-w-full object-contain" />
+                        <img src={h.logoSrc} alt="" loading="lazy" className="h-6 w-auto max-w-full object-contain" />
                       </span>
                     ) : (
                       <img
                         src={h.logoSrcOnDark || h.logoSrc}
                         alt=""
                         loading="lazy"
-                        className={`h-11 w-auto max-w-[75%] object-contain ${invert ? 'brightness-0 invert' : ''}`}
+                        className={`h-8 w-auto max-w-[70%] object-contain ${invert ? 'brightness-0 invert' : ''}`}
                       />
                     )}
                   </div>
-                  <div className="flex flex-1 flex-col p-4">
-                    <h3 className={`text-[16px] font-semibold leading-snug ${ink}`}>{h.displayName}</h3>
-                    <p className={`mt-0.5 text-[14px] ${muted}`}>{o.disciplines.join(' · ') || 'Arts'}</p>
-                    <p className={`mt-2 line-clamp-2 text-[14px] leading-snug ${muted}`}>{h.tagline}</p>
-                    <div className="mt-auto flex items-center justify-between gap-2 pt-4">
+                  <div className="flex flex-1 flex-col gap-1 p-3">
+                    <h3 className={`text-[14px] font-semibold leading-snug ${ink}`}>{h.displayName}</h3>
+                    <p className={`text-[12px] ${muted}`}>{o.disciplines.join(' · ') || 'Arts'}</p>
+                    {h.tagline && <p className={`line-clamp-1 text-[12px] leading-snug ${muted}`}>{h.tagline}</p>}
+                    <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                       <Badge tone={o.access === 'free' ? 'teal' : 'amber'}>{ACCESS_LABEL[o.access]}</Badge>
                       <button
                         type="button"
                         onClick={() => openPartnerHub(h.slug)}
-                        className="inline-flex min-h-[40px] items-center gap-1 rounded-lg px-2 text-[14px] font-medium text-[#0B6B5F] hover:bg-[#14B8A6]/10"
+                        className="inline-flex min-h-[32px] items-center gap-1 rounded-lg px-1.5 text-[12px] font-medium text-[#0B6B5F] hover:bg-[#14B8A6]/10"
                         aria-label={`Explore resources from ${h.displayName}`}
                       >
-                        Explore resources <ArrowRight className="h-4 w-4" />
+                        Explore <ArrowRight className="h-3.5 w-3.5" />
                       </button>
                     </div>
                   </div>
@@ -844,10 +870,34 @@ function OrganisationsSection() {
           })}
         </ul>
       )}
-      <p className={`text-[13px] ${muted}`}>
+      <p className={`text-[12px] ${muted}`}>
         Listings show publicly available resources. A listing does not mean the organisation has endorsed or partnered with CCDesigner.
       </p>
     </section>
+  );
+}
+
+function OrganisationsSection() {
+  return (
+    <OrgDirectorySection
+      headingId="orgs-heading"
+      title="Arts organisations"
+      blurb="National cultural organisations with free or openly linked classroom resources."
+      entries={ARTS_ORGANISATIONS}
+      emptyLabel="No arts organisations match these filters."
+    />
+  );
+}
+
+function PaidResourcesSection() {
+  return (
+    <OrgDirectorySection
+      headingId="paid-heading"
+      title="Paid resources"
+      blurb="Subscription and paid classroom packs — drama schemes, composition courses and similar teaching products."
+      entries={PAID_RESOURCES}
+      emptyLabel="No paid resources match these filters."
+    />
   );
 }
 
@@ -1647,24 +1697,27 @@ function FeaturedHubs({ ix, go }: { ix: MapIndex; go: (f: MapFocus, page?: Page)
           <section
             key={hub.id}
             aria-labelledby={`featured-${hub.id}`}
-            className="grid items-center gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:grid-cols-[auto_minmax(0,1fr)_auto] sm:p-6"
+            className="flex flex-wrap items-center gap-3 rounded-2xl border border-[#002D24]/[0.07] bg-white px-3.5 py-2.5 sm:gap-4 sm:px-4"
           >
             {brand?.logoSrc && (
-              <span className="flex h-16 w-28 items-center justify-center rounded-2xl px-4" style={{ backgroundColor: brand.color }}>
-                <img src={brand.logoSrc} alt={brand.name} className="max-h-10 w-full object-contain" />
+              <span
+                className="flex h-11 w-20 shrink-0 items-center justify-center rounded-xl px-2.5"
+                style={{ backgroundColor: brand.color }}
+              >
+                <img src={brand.logoSrc} alt={brand.name} className="max-h-7 w-full object-contain" />
               </span>
             )}
-            <div>
-              <div className="flex flex-wrap items-center gap-2">
-                <h2 id={`featured-${hub.id}`} className={`text-[18px] font-semibold ${ink}`}>
+            <div className="min-w-0 flex-1">
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+                <h2 id={`featured-${hub.id}`} className={`text-[15px] font-semibold leading-snug ${ink}`}>
                   {hub.name}
                 </h2>
                 <Badge tone="teal">
-                  <Sparkles className="h-3.5 w-3.5" aria-hidden /> {RELATIONSHIP_LABEL[detail.relationship]}
+                  <Sparkles className="h-3 w-3" aria-hidden /> {RELATIONSHIP_LABEL[detail.relationship]}
                 </Badge>
               </div>
-              <p className={`mt-1 text-[15px] ${muted}`}>
-                {areas} local areas{count ? `, ${count} shared ${count === 1 ? 'resource' : 'resources'}` : ''} and a direct route into your planning.
+              <p className={`mt-0.5 text-[13px] leading-snug ${muted}`}>
+                {areas} local areas{count ? `, ${count} shared ${count === 1 ? 'resource' : 'resources'}` : ''} · open map below or explore the hub
               </p>
             </div>
             <PrimaryButton onClick={() => go({ level: 'hub', id: hub.id }, 'hub')}>
@@ -1768,10 +1821,9 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
     <div className={`space-y-8 ${focus.level === 'lad' ? 'pb-56 lg:pb-0' : ''}`}>
       <header className="space-y-5">
         {atUk ? (
-          <div className="max-w-3xl">
-            <p className="text-[13px] font-semibold uppercase tracking-[0.12em] text-[#0B6B5F]">Exceptional lessons start with a connection</p>
-            <h1 className={`mt-2 text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-[40px] ${ink}`}>Partner Hubs</h1>
-            <p className={`mt-3 text-[17px] leading-relaxed ${muted}`}>
+          <div>
+            <h1 className={`text-[34px] font-semibold leading-[1.1] tracking-tight sm:text-[40px] ${ink}`}>Partner Hubs</h1>
+            <p className={`ccd-page-lede ccd-page-lede--single mt-3 text-[17px] leading-snug ${muted}`}>
               Explore Music Hubs, arts organisations and teaching resources. Bring the ideas you find straight into your planning.
             </p>
           </div>
@@ -1780,11 +1832,12 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
         )}
         <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_auto] lg:items-center">
           <GlobalSearch ix={ix} onFocusMap={go} />
-          <div role="tablist" aria-label="Partner Hubs sections" className="inline-flex h-14 rounded-2xl bg-[#002D24]/[0.05] p-1.5">
+          <div role="tablist" aria-label="Partner Hubs sections" className="inline-flex h-12 max-w-full flex-wrap rounded-2xl bg-[#002D24]/[0.05] p-1 sm:h-14 sm:flex-nowrap">
             {(
               [
                 ['music-hubs', 'Music Hubs'],
                 ['organisations', 'Arts organisations'],
+                ['paid-resources', 'Paid resources'],
               ] as [Section, string][]
             ).map(([k, label]) => (
               <button
@@ -1793,7 +1846,7 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
                 type="button"
                 aria-selected={route.section === k}
                 onClick={() => writeRoute({ section: k })}
-                className={`flex-1 whitespace-nowrap rounded-xl px-5 text-[15px] font-medium transition ${
+                className={`flex-1 whitespace-nowrap rounded-xl px-3 text-[13px] font-medium transition sm:px-4 sm:text-[15px] ${
                   route.section === k ? 'bg-white text-[#002D24] shadow-[0_1px_3px_rgba(0,45,36,0.12)]' : 'text-[#002D24]/60 hover:text-[#002D24]'
                 }`}
               >
@@ -1806,18 +1859,22 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
 
       {route.section === 'organisations' ? (
         <OrganisationsSection />
+      ) : route.section === 'paid-resources' ? (
+        <PaidResourcesSection />
       ) : (
         <>
-          <section aria-labelledby="browse-heading" className="space-y-4">
-            <div className="flex flex-wrap items-end justify-between gap-2">
-              <div>
-                <h2 id="browse-heading" className={`text-[22px] font-semibold tracking-tight ${ink}`}>
-                  {atUk || !ix ? 'Browse by location' : focusName(ix, focus)}
-                </h2>
-                <p className={`mt-1 text-[15px] ${muted}`}>
-                  {atUk ? 'Zoom from the UK to your Music Hub and local area, or choose from the list.' : 'Select an area on the map or in the list.'}
-                </p>
-              </div>
+          {atUk && ix && <FeaturedHubs ix={ix} go={go} />}
+
+          <section aria-labelledby="browse-heading" className="space-y-3">
+            <div className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
+              <h2 id="browse-heading" className={`text-[22px] font-semibold tracking-tight ${ink}`}>
+                {atUk || !ix ? 'Browse by location' : focusName(ix, focus)}
+              </h2>
+              <p className={`text-[14px] leading-snug ${muted}`}>
+                {atUk
+                  ? 'Zoom from the UK to your Music Hub and local area, or choose from the list.'
+                  : 'Select an area on the map or in the list.'}
+              </p>
             </div>
             {error ? (
               <EmptyState title="The map couldn’t load." body="Check your connection and try again." action={<SecondaryButton onClick={() => window.location.reload()}>Try again</SecondaryButton>} />
@@ -1841,7 +1898,6 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
             )}
           </section>
 
-          {atUk && ix && <FeaturedHubs ix={ix} go={go} />}
           {atUk && (
             <p className={`flex items-center gap-2 text-[13px] ${muted}`}>
               <Info className="h-4 w-4" aria-hidden />

@@ -7,13 +7,11 @@ import { ForumHome } from './ForumHome';
 import { ForumCategoryPage } from './ForumCategoryPage';
 import { ForumTopicPage } from './ForumTopicPage';
 import { ForumAdminPage } from './ForumAdminPage';
-import { ForumGuidelines } from './ForumGuidelines';
 import { ForumSeoHead } from './ForumSeoHead';
 
 export type ForumRoute =
   | { name: 'home' }
   | { name: 'search'; q: string }
-  | { name: 'guidelines' }
   | { name: 'admin' }
   | { name: 'category'; slug: string }
   | { name: 'topic'; id: string }
@@ -28,7 +26,8 @@ function parseForumPath(pathname: string, search: string): ForumRoute {
     if (q) return { name: 'search', q };
     return { name: 'home' };
   }
-  if (parts[1] === 'guidelines') return { name: 'guidelines' };
+  // Legacy /forum/guidelines → home (page removed)
+  if (parts[1] === 'guidelines') return { name: 'home' };
   if (parts[1] === 'admin') return { name: 'admin' };
   if (parts[1] === 'new') {
     return { name: 'new', category: new URLSearchParams(search).get('category') || undefined };
@@ -133,13 +132,6 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
                 <Search className="h-4 w-4" />
               </button>
             </form>
-            <button
-              type="button"
-              onClick={() => navigateForum('/forum/guidelines')}
-              className="hidden rounded-lg px-2 py-2 text-sm text-[#E9E6FF] hover:bg-white/10 sm:inline"
-            >
-              Guidelines
-            </button>
             {user && (
               <button
                 type="button"
@@ -188,7 +180,6 @@ export function ForumApp({ embedded = false }: { embedded?: boolean }) {
             compose
           />
         )}
-        {route.name === 'guidelines' && <ForumGuidelines />}
         {route.name === 'admin' && (
           <ForumAdminPage requireSignIn={requireSignIn} navigate={navigateForum} />
         )}

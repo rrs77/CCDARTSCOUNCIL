@@ -107,7 +107,7 @@ export function GreaterEssexRegionNav({
       >
         {title}
       </h3>
-      <p className="mt-2 max-w-3xl text-sm leading-relaxed text-[#002D24]/75 sm:text-base">
+      <p className="ccd-page-lede mt-2 text-sm leading-snug text-[#002D24]/75 sm:text-base">
         {hubsOnly
           ? 'These are the hubs within Greater Essex (East of England). Open any hub below — resources are on district pages after you pick an area on the map.'
           : 'East of England prototype: Greater Essex hubs are listed here so you can move between EMS, Music-on-Sea and Thurrock. Resources sit under district / borough pages.'}
