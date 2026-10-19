@@ -95,7 +95,7 @@ export function SystemCategoriesAdmin() {
           <div>
             <h3 className="text-lg font-semibold text-gray-900">System categories</h3>
             <p className="ccd-page-lede mt-1 text-sm text-gray-600">
-              Shared app catalog for all schools. Teachers customise year-group assignments in Settings → Categories; they cannot delete these rows. Saving does not recreate or delete activities.
+              Shared app catalog for all schools. Teachers customise year-group assignments in Settings → Activity folders; they cannot delete these rows. Saving does not recreate or delete activities.
             </p>
           </div>
         </div>

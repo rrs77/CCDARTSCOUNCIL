@@ -11,7 +11,7 @@ Full-page Settings (`/settings/...`) inside the Studio shell. Autosave with conf
 | Learning objectives | `/settings/objectives` | Custom objectives admin |
 | Preferences | `/settings/preferences` | School name, hover tips, resource labels |
 | Downloads | `/settings/downloads` | My downloads (+ stats chip when allowed) |
-| Users | `/settings/users` | Invite/manage school users (admin / school lead; visible in demo) |
+| Users | `/settings/users` | Invite/manage school users (live API + RLS; demo fallback only if no backend). Org admins scoped to their organisation. |
 | School tools | `/settings/school?panel=…` | Role-gated: hubs, branding, packs, system folders, backup |
 
 ## Control audit

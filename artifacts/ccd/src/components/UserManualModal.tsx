@@ -59,7 +59,7 @@ const MANUAL_SECTIONS: ManualSection[] = [
     icon: Folder,
     steps: [
       'Categories (e.g. "Welcome", "Kodaly Songs") control which activities appear in the sidebar for each class.',
-      'In Settings → Categories, use the Folder dropdown on each category (or search and bulk-assign Uncategorised) instead of dragging into a folder.',
+      'In Settings → Activity folders, use the Folder dropdown on each category (or search and bulk-assign Uncategorised) instead of dragging into a folder.',
       'Click a category, then tick the year groups that should see it.',
       'Tip: use Bulk Assignment to assign many categories to many year groups in two clicks.',
       'A category with no year groups assigned will not appear anywhere in the sidebar.',
@@ -102,10 +102,10 @@ const MANUAL_SECTIONS: ManualSection[] = [
   },
   {
     id: 'custom-objectives',
-    title: 'Custom Objectives',
+    title: 'Learning objectives',
     icon: Target,
     steps: [
-      'Open Settings → Admin (or "Custom Objectives" tab) to manage learning objectives per class.',
+      'Open Settings → Learning objectives (or "Learning objectives" tab) to manage learning objectives per class.',
       'Objectives are listed under the same section headings (EYFS, KS1, KS2, ...) that you configured in Year Groups.',
       'Click a class to expand it and edit its objectives.',
       'Objectives can be referenced when planning lessons and exported with lesson PDFs.',
@@ -116,9 +116,9 @@ const MANUAL_SECTIONS: ManualSection[] = [
     title: 'Settings & Branding',
     icon: SettingsIcon,
     steps: [
-      'Open Settings (cog icon) to manage Year Groups, Categories, Custom Objectives, Resource Packs and more.',
+      'Open Settings (cog icon) to manage Year Groups, Categories, Learning objectives, Resource Packs and more.',
       'Under General/Branding you can change the login title, subtitle, logo letters and button colour.',
-      'Use the Refresh button on Manage Year Groups to pull the latest year-group data from the server if you suspect data is out of sync.',
+      'Use the Refresh button on My classes to pull the latest year-group data from the server if you suspect data is out of sync.',
       'All saves happen automatically — there is no separate "Save" step for most settings.',
     ],
   },
@@ -127,9 +127,9 @@ const MANUAL_SECTIONS: ManualSection[] = [
     title: 'Tips & Troubleshooting',
     icon: Lightbulb,
     steps: [
-      "Can't see activities? Make sure the current class has categories assigned (Settings → Categories) — activities are filtered by enabled categories.",
+      "Can't see activities? Make sure the current class has categories assigned (Settings → Activity folders) — activities are filtered by enabled categories.",
       'Categories disappearing for a class? The class name in Year Groups must match the names used in your category assignments. The app maps short codes (LKG, UKG, Reception) to the matching long names automatically.',
-      'Category year-group links (Settings → Categories) are saved to your account in the cloud, so they follow you across devices when you are signed in.',
+      'Category year-group links (Settings → Activity folders) are saved to your account in the cloud, so they follow you across devices when you are signed in.',
       "Console errors? Open DevTools → Console and look for messages prefixed with ❌ — that's usually the quickest path to a fix.",
       'Working offline? Once installed as a PWA the app caches recent data. Sign in at least once while online to populate the cache.',
     ],

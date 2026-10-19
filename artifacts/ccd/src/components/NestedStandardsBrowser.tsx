@@ -222,7 +222,7 @@ export function NestedStandardsBrowser({
             ) : customYearGroups.length === 0 ? (
               <div className="text-center py-8 text-gray-500">
                 <p>No standards available.</p>
-                <p className="text-sm mt-2">Add custom objectives in Settings → Custom Objectives</p>
+                <p className="text-sm mt-2">Add custom objectives in Settings → Learning objectives</p>
               </div>
             ) : (
               <div className="space-y-3">
