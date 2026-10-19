@@ -42,6 +42,12 @@ function ensureDemo(lessons: InteractiveLesson[], ownerId: string): InteractiveL
 }
 
 function toSummary(lesson: InteractiveLesson): InteractiveLessonSummary {
+  const first = lesson.scenes[0];
+  const sceneTypes: InteractiveLesson['scenes'][number]['type'][] = [];
+  for (const s of lesson.scenes) {
+    if (!sceneTypes.includes(s.type)) sceneTypes.push(s.type);
+  }
+  const headline = first?.overlays?.find((o) => o.style === 'headline')?.text;
   return {
     id: lesson.id,
     title: lesson.title,
@@ -51,6 +57,19 @@ function toSummary(lesson: InteractiveLesson): InteractiveLessonSummary {
     sceneCount: lesson.scenes.length,
     updatedAt: lesson.updatedAt,
     isDemo: lesson.isDemo,
+    sceneTypes,
+    cover: first
+      ? {
+          type: first.type,
+          title: first.title,
+          backgroundColor: first.background?.color || first.backgroundColor,
+          backgroundGradient: first.background?.gradient || first.backgroundGradient,
+          mediaUrl: first.mediaUrl,
+          posterUrl: first.posterUrl,
+          embedUrl: first.embedUrl,
+          headline,
+        }
+      : undefined,
   };
 }
 

@@ -181,7 +181,7 @@ export function Dashboard() {
   const showTabsExplainerButton = isAuthorizedDemoMode();
   const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
-  const wideCanvas = activeTab === 'activity-library';
+  const wideCanvas = activeTab === 'activity-library' || activeTab === 'lesson-viewer';
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
 
@@ -322,9 +322,6 @@ export function Dashboard() {
         <div className="ccd-fade-in-up" key="lv">
           <p className="ccd-studio-eyebrow mb-1">
             CONNECT &amp; CREATE / <span>LESSON VIEWER</span>
-          </p>
-          <p className="mb-4 text-sm text-[#77738F]">
-            Build and present interactive classroom lessons — attach a player-only link to any CCD lesson.
           </p>
           <InteractiveLessonHub />
         </div>
