@@ -109,13 +109,21 @@ interface HalfTermYearMapProps {
   onOpenTerm: (group: YearGroupRef, halfTermId: string) => void;
   /** Bump to reload cell summaries after an assign/remove. */
   refreshKey?: number;
+  /** Return to the teacher year board (demoted map is secondary). */
+  onBack?: () => void;
 }
 
 /**
  * School-wide half-term map: year groups × six half-terms, grouped by key stage.
  * Teachers pick which stages to show (EYFS only, KS1–2, etc.).
+ * Demoted secondary view — primary home is TeacherHalfTermBoard.
  */
-export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: HalfTermYearMapProps) {
+export function HalfTermYearMap({
+  onOpenClass,
+  onOpenTerm,
+  refreshKey = 0,
+  onBack,
+}: HalfTermYearMapProps) {
   const { user } = useAuth();
   const { currentAcademicYear, setCurrentAcademicYear, getAvailableYears, currentSheetInfo } = useData();
   const { customYearGroups, yearGroupSections } = useSettings();
@@ -355,9 +363,20 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm, refreshKey = 0 }: Hal
     <div className="min-w-0 w-full" style={{ fontFamily: UI_FONT }}>
       <div className="mb-5 flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div className="min-w-0 max-w-2xl">
-          <p className="ccd-studio-eyebrow">
-            CONNECT &amp; CREATE / <span>HALF-TERMS</span>
-          </p>
+          {onBack ? (
+            <button
+              type="button"
+              onClick={onBack}
+              className="mb-2 inline-flex items-center gap-1.5 text-[12px] font-bold text-[#4338E8] hover:underline"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+              All classes · year board
+            </button>
+          ) : (
+            <p className="ccd-studio-eyebrow">
+              CONNECT &amp; CREATE / <span>HALF-TERMS</span>
+            </p>
+          )}
           <h1 className="mt-1 text-[1.65rem] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[1.75rem]">
             Half-term map
           </h1>
