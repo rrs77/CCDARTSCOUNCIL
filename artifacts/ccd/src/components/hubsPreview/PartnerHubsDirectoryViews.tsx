@@ -1049,33 +1049,33 @@ export function MusicHubResultCard({
   const [saved, setSaved] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
   return (
-    <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_12px_28px_-16px_rgba(11,107,95,0.35)]">
-      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 flex-col text-left">
-        <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-[#F7F8FA] px-6 py-5">
+    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_10px_22px_-14px_rgba(11,107,95,0.35)]">
+      <button type="button" onClick={onOpen} className="flex min-w-0 flex-col text-left">
+        <div className="relative flex h-[92px] shrink-0 items-center justify-center overflow-hidden bg-white px-3 py-2.5 ring-1 ring-inset ring-[#1F1B4D]/[0.04]">
           {!heroFailed ? (
             <img
               src={hubHeroSrc(id)}
               alt=""
-              className="h-full w-full object-contain transition duration-500 group-hover:scale-[1.02]"
+              className="max-h-[64px] max-w-[88%] object-contain transition duration-500 group-hover:scale-[1.02]"
               loading="lazy"
               onError={() => setHeroFailed(true)}
             />
           ) : (
-            <span className="flex h-full w-full items-center justify-center rounded-lg bg-[#0B6B5F] px-4 text-center text-[13px] font-bold leading-snug text-white">
+            <span className="line-clamp-2 max-w-[90%] rounded-md bg-[#E4F4EF] px-2.5 py-1.5 text-center text-[11px] font-bold leading-snug text-[#0B6B5F]">
               {name}
             </span>
           )}
-          <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-[#1F1B4D] shadow-sm">
+          <span className="absolute left-1.5 top-1.5 inline-flex max-w-[70%] truncate items-center rounded-full bg-white/95 px-1.5 py-0.5 text-[9px] font-bold leading-none text-[#1F1B4D] shadow-sm ring-1 ring-[#1F1B4D]/[0.06]">
             {region}
           </span>
         </div>
-        <div className="relative flex flex-1 flex-col px-3 pb-3 pt-3">
-          <h3 className={`text-[14px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
-          <p className={`mt-0.5 text-[11px] font-medium ${muted}`}>{location}</p>
-          <p className={`mt-1 line-clamp-2 text-[11px] leading-snug ${muted}`}>{detail}</p>
-          <div className="mt-auto flex justify-end pt-2.5">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white">
-              <ArrowRight className="h-3.5 w-3.5" aria-hidden />
+        <div className="relative flex flex-col px-2.5 pb-2 pt-2">
+          <h3 className={`line-clamp-2 min-h-[2.4em] text-[12.5px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
+          <p className={`mt-0.5 truncate text-[10px] font-medium ${muted}`}>{location}</p>
+          <p className={`mt-1 line-clamp-2 min-h-[2.4em] text-[10px] leading-snug ${muted}`}>{detail}</p>
+          <div className="mt-1.5 flex justify-end">
+            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white">
+              <ArrowRight className="h-3 w-3" aria-hidden />
             </span>
           </div>
         </div>
@@ -1088,11 +1088,11 @@ export function MusicHubResultCard({
           e.stopPropagation();
           setSaved((v) => !v);
         }}
-        className={`absolute right-2 top-2 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#1F1B4D]/10 ${
+        className={`absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#1F1B4D]/10 ${
           saved ? 'text-[#E11D48]' : 'text-[#1F1B4D]/40 hover:text-[#E11D48]'
         }`}
       >
-        <Heart className={`h-3.5 w-3.5 ${saved ? 'fill-current' : ''}`} />
+        <Heart className={`h-3 w-3 ${saved ? 'fill-current' : ''}`} />
       </button>
     </article>
   );
