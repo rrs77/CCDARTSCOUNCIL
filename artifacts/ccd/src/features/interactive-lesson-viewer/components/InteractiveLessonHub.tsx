@@ -28,7 +28,6 @@ import { createId, emptyScene } from '../types';
 import { InteractiveLessonEditor } from './editor/InteractiveLessonEditor';
 import { InteractiveLessonPlayer } from './player/InteractiveLessonPlayer';
 import { LessonCoverPreview } from './LessonCoverPreview';
-import { LessonHeroPreview } from './LessonHeroPreview';
 import { readPlayerLaunchFromLocation } from '../utils/playerLinks';
 import '../styles.css';
 
@@ -300,16 +299,15 @@ export function InteractiveLessonHub() {
               </span>
             )}
           </div>
-          <ul className="ilv-hub-features">
-            {FEATURES.map((f) => (
-              <li key={f.label}>
-                {f.icon}
-                {f.label}
-              </li>
-            ))}
-          </ul>
         </div>
-        <LessonHeroPreview />
+        <ul className="ilv-hub-features" aria-label="What you can build">
+          {FEATURES.map((f) => (
+            <li key={f.label}>
+              {f.icon}
+              {f.label}
+            </li>
+          ))}
+        </ul>
       </section>
 
       {error && (
