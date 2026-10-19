@@ -65,12 +65,12 @@ function rangeFor(view: PlannerView, anchor: Date) {
 
 function roomFromView(v: PlannerView): PlannerRoom {
   if (v === 'term' || v === 'units') return 'units';
-  if (v === 'classic') return 'timetable';
+  if (v === 'timetable') return 'timetable';
+  // classic (class calendar) sits under Schedule chrome, not the Timetable tab
   return 'schedule';
 }
 
-export function Planner({ initialView, renderTerm, renderClassic: _renderClassic }: PlannerProps) {
-  void _renderClassic;
+export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps) {
   const { currentSheetInfo, setCurrentSheetInfo } = useData();
   const { settings } = useSettings();
   const [view, setView] = useState<PlannerView>(initialView || 'week');
@@ -88,7 +88,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
     () => new Set(focus === 'all' ? classes.filter((c) => !c.hidden).map((c) => c.id) : [focus]),
     [classes, focus],
   );
-  /** Units / half-terms / timetable use the header class selector — no duplicate My classes rail. */
+  /** Units / class calendar use the header class selector — Timetable is teacher-level (all classes). */
   const focusedClassId =
     room === 'units' || view === 'classic'
       ? classById.has(currentSheetInfo.sheet)
@@ -109,7 +109,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
   const { refreshStorage, reloadPlans } = data;
   const changeView = useCallback(
     (next: PlannerView) => {
-      if (view === 'classic' && next !== 'classic') {
+      if ((view === 'timetable' || view === 'classic') && next !== view) {
         refreshStorage();
         void reloadPlans();
       }
@@ -128,12 +128,11 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
         return;
       }
       if (next === 'timetable') {
-        const id = classById.has(currentSheetInfo.sheet) ? currentSheetInfo.sheet : classes[0]?.id;
-        if (id) setFocus(id);
-        changeView('classic');
+        // Always the full-page teacher timetable — never the class month calendar
+        changeView('timetable');
         return;
       }
-      if (view === 'term' || view === 'units' || view === 'classic') changeView('week');
+      if (view === 'term' || view === 'units' || view === 'timetable' || view === 'classic') changeView('week');
     },
     [changeView, view, currentSheetInfo.sheet, classById, classes],
   );
@@ -175,13 +174,15 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
         ? 'Day planner'
         : view === 'month'
           ? 'Month planner'
-          : view === 'classic'
-            ? 'Timetable'
-            : view === 'units'
-              ? 'Unit progress'
-              : className
-                ? `${className} · half-terms`
-                : 'Half-terms';
+          : view === 'timetable'
+            ? 'Timetable builder'
+            : view === 'classic'
+              ? 'Class calendar'
+              : view === 'units'
+                ? 'Unit progress'
+                : className
+                  ? `${className} · half-terms`
+                  : 'Half-terms';
   const heading =
     view === 'day'
       ? anchor.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })
@@ -213,12 +214,17 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
 
   useEffect(() => {
     const openTt = () => goRoom('timetable');
+    const openCal = () => changeView('classic');
     window.addEventListener('ccd:open-timetable', openTt);
-    return () => window.removeEventListener('ccd:open-timetable', openTt);
-  }, [goRoom]);
+    window.addEventListener('ccd:open-class-calendar', openCal);
+    return () => {
+      window.removeEventListener('ccd:open-timetable', openTt);
+      window.removeEventListener('ccd:open-class-calendar', openCal);
+    };
+  }, [goRoom, changeView]);
 
   return (
-    <div className={`ss-planner-shell ${room === 'timetable' ? 'is-timetable-fullpage' : ''}`}>
+    <div className={`ss-planner-shell ${view === 'timetable' ? 'is-timetable-fullpage' : ''}`}>
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -229,29 +235,37 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               {pageTitle}
             </h1>
             <p className="text-[13px] font-medium text-[#77738F]">
-              {room === 'timetable'
+              {view === 'timetable'
                 ? 'Your week · all My classes'
-                : `${halfTerm?.name} · ${academicYear.replace('-', '–')}${
-                    view === 'week' || view === 'day' || view === 'month' ? ` · ${heading}` : ''
-                  }`}
+                : view === 'classic'
+                  ? `${classById.get(focusedClassId)?.name || 'Class'} · events & key dates`
+                  : `${halfTerm?.name} · ${academicYear.replace('-', '–')}${
+                      view === 'week' || view === 'day' || view === 'month' ? ` · ${heading}` : ''
+                    }`}
             </p>
           </div>
-          {room !== 'timetable' && (
+          {view !== 'timetable' && (
             <div className="flex flex-wrap items-center gap-2">
               {inSchedule && (
                 <button type="button" className={toolBtn} onClick={() => setAnchor(startOfDay(new Date()))}>
                   This week
                 </button>
               )}
-              <button
-                type="button"
-                onClick={() => onAdd(view === 'day' ? anchor : startOfDay(new Date()))}
-                className={primaryBtn}
-                aria-label="Schedule a lesson"
-              >
-                <Plus className="h-4 w-4" />
-                New lesson
-              </button>
+              {view === 'classic' ? (
+                <button type="button" className={toolBtn} onClick={() => changeView('week')}>
+                  Back to schedule
+                </button>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => onAdd(view === 'day' ? anchor : startOfDay(new Date()))}
+                  className={primaryBtn}
+                  aria-label="Schedule a lesson"
+                >
+                  <Plus className="h-4 w-4" />
+                  New lesson
+                </button>
+              )}
             </div>
           )}
         </header>
@@ -262,7 +276,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               {(
                 [
                   { id: 'schedule' as const, label: 'Schedule' },
-                  { id: 'timetable' as const, label: 'Timetable' },
+                  { id: 'timetable' as const, label: 'Timetable builder' },
                   { id: 'units' as const, label: 'Units' },
                 ] as const
               ).map((r) => (
@@ -285,7 +299,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
                 View
                 <select
                   className="min-h-[36px] rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold normal-case tracking-normal text-[#1F1B4D]"
-                  value={view}
+                  value={view === 'classic' ? 'week' : view}
                   aria-label="Planner view"
                   onChange={(e) => changeView(e.target.value as PlannerView)}
                 >
@@ -297,7 +311,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
                 </select>
               </label>
             )}
-            {room === 'units' && view !== 'classic' && (
+            {room === 'units' && (
               <div className="flex rounded-lg p-0.5" role="tablist" aria-label="Units tools">
                 {(
                   [
@@ -343,12 +357,12 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               )}
             </div>
           )}
-          {room === 'units' && view !== 'classic' && (
+          {room === 'units' && (
             <span className="px-1 text-[13px] font-medium text-[#77738F]">{dateLabel}</span>
           )}
         </div>
 
-        {room !== 'timetable' && weekStats && (
+        {room === 'schedule' && view !== 'classic' && weekStats && (
           <button
             type="button"
             onClick={() => setSummaryOpen((o) => !o)}
@@ -360,7 +374,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
             {data.loadingPlans ? ' · Updating…' : ''}
           </button>
         )}
-        {room !== 'timetable' && summaryOpen && weekStats && (
+        {room === 'schedule' && view !== 'classic' && summaryOpen && weekStats && (
           <p className="mt-1 flex shrink-0 flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#77738F]">
             <span><b className="text-[#1F1B4D]">{weekStats.sessions}</b> sessions</span>
             <span><b className="text-[#1F1B4D]">{weekStats.planned}</b> planned</span>
@@ -368,7 +382,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
           </p>
         )}
 
-        <div className={`ss-planner-board ${view === 'week' ? '' : ''} ${room === 'timetable' ? 'is-timetable' : ''}`}>
+        <div className={`ss-planner-board ${view === 'week' ? '' : ''} ${view === 'timetable' ? 'is-timetable' : ''}`}>
           {view === 'week' && (
             <WeekView data={data} visibleIds={visibleIds} anchor={anchor} selectedKey={sheet?.kind === 'details' ? sheet.entry.key : null} onOpenEntry={onOpenEntry} onAdd={onAdd} />
           )}
@@ -391,7 +405,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               data={data}
               classId={focusedClassId}
               academicYear={academicYear}
-              onOpenTimetable={() => changeView('classic')}
+              onOpenTimetable={() => changeView('timetable')}
               onChangeYear={(y) => setAnchor(new Date(Number(y.split('-')[0]), 9, 1))}
             />
           )}
@@ -404,7 +418,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               </p>
             )
           )}
-          {view === 'classic' && (
+          {view === 'timetable' && (
             <TimetableBuilder
               isOpen
               embedded
@@ -413,6 +427,15 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
                 refreshStorage();
               }}
             />
+          )}
+          {view === 'classic' && (
+            <div className="min-h-0 flex-1">
+              {focusedClassId === currentSheetInfo.sheet ? (
+                renderClassic()
+              ) : (
+                <p className="py-10 text-center text-sm text-[#77738F]">Loading calendar…</p>
+              )}
+            </div>
           )}
         </div>
       </main>

@@ -1,6 +1,13 @@
 import type { LessonPlan } from '../../contexts/DataContext';
 
-export type PlannerView = 'day' | 'week' | 'month' | 'term' | 'units' | 'classic';
+/**
+ * Planner surfaces:
+ * - day/week/month = Schedule room
+ * - timetable = full-page weekly Timetable builder (teacher-level)
+ * - term/units = Units room
+ * - classic = optional class calendar (events / key dates) — not the Timetable tab
+ */
+export type PlannerView = 'day' | 'week' | 'month' | 'term' | 'units' | 'timetable' | 'classic';
 
 /** Rooms: Schedule = week/day/month; Timetable = recurring slots; Units = half-terms. */
 export type PlannerRoom = 'schedule' | 'timetable' | 'units';
@@ -12,7 +19,7 @@ export const SCHEDULE_VIEWS: { id: 'day' | 'week' | 'month'; label: string }[] =
 ];
 
 /** @deprecated Prefer SCHEDULE_VIEWS + rooms; kept for any older callers. */
-export const PLANNER_VIEWS: { id: Exclude<PlannerView, 'classic'>; label: string }[] = [
+export const PLANNER_VIEWS: { id: Exclude<PlannerView, 'classic' | 'timetable'>; label: string }[] = [
   { id: 'day', label: 'Day' },
   { id: 'week', label: 'Week' },
   { id: 'month', label: 'Month' },
