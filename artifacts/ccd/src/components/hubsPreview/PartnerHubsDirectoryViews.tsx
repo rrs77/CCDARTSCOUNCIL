@@ -985,18 +985,19 @@ export function MusicHubToolbar({
   );
 }
 
-/** Real hub logos for the card badge circle (official assets only — no text placeholders). */
-const HUB_CARD_LOGOS: Record<string, string> = {
-  'greater-essex': '/music-hubs/logos/greater-essex-music-hub.png',
-  'essex-southend-on-sea-and-thurrock': '/music-hubs/logos/greater-essex-music-hub.png',
-  'tri-borough': '/music-hubs/logos/tri-borough-icon.jpg',
-  triborough: '/music-hubs/logos/tri-borough-icon.jpg',
-};
-
 /** Resolve a hub id to its dedicated cover asset (one file per hub). */
 export function hubCoverSrc(id: string) {
   const coverId = HUB_COVER_ALIASES[id] ?? id;
   return `/music-hubs/covers/${coverId}.jpg`;
+}
+
+/**
+ * Hub card badge logo — favicon/site mark when available, neat monogram fallback otherwise.
+ * Assets live at `/music-hubs/logos/hub/{hubId}.png`.
+ */
+export function hubLogoSrc(id: string) {
+  const logoId = HUB_COVER_ALIASES[id] ?? id;
+  return `/music-hubs/logos/hub/${logoId}.png`;
 }
 
 /** Friendly card title — e.g. "Essex Music Hub", "Cambridgeshire Music". */
@@ -1036,9 +1037,9 @@ export function MusicHubResultCard({
   detail: string;
   onOpen: () => void;
 }) {
-  const logo = HUB_CARD_LOGOS[id];
-  const initial = name.replace(/^The /, '').charAt(0).toUpperCase();
   const [saved, setSaved] = useState(false);
+  const [logoFailed, setLogoFailed] = useState(false);
+  const initial = name.replace(/^The /, '').charAt(0).toUpperCase();
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_12px_28px_-16px_rgba(11,107,95,0.35)]">
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 flex-col text-left">
@@ -1054,9 +1055,15 @@ export function MusicHubResultCard({
           </span>
         </div>
         <div className="relative flex flex-1 flex-col px-3 pb-3 pt-0">
-          {logo ? (
+          {!logoFailed ? (
             <span className="-mt-5 mb-1.5 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-[3px] ring-white">
-              <img src={logo} alt="" className="h-[78%] w-[78%] object-contain" />
+              <img
+                src={hubLogoSrc(id)}
+                alt=""
+                className="h-full w-full object-cover"
+                loading="lazy"
+                onError={() => setLogoFailed(true)}
+              />
             </span>
           ) : (
             <span className="-mt-5 mb-1.5 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#0B6B5F] text-[13px] font-bold text-white ring-[3px] ring-white">
