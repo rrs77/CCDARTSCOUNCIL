@@ -8,15 +8,7 @@ import {
   Save, 
   X, 
   Edit3, 
-  Palette,
-  Image,
-  Upload,
   ChevronDown,
-  Video,
-  Music,
-  FileText,
-  Link as LinkIcon,
-  Volume2,
   Undo2,
   Redo2
 } from 'lucide-react';
@@ -26,15 +18,8 @@ import { useSettings, ResourceLinkConfig } from '../contexts/SettingsContextNew'
 import { RichTextEditor } from './RichTextEditor';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { NestedStandardsBrowser } from './NestedStandardsBrowser';
+import { CompactActivityResources } from './CompactActivityResources';
 import { activityPacksApi, ActivityPack } from '../config/api';
-
-// Helper function to get icon component by name for resource links
-const getIconComponentForResourceLink = (iconName: string) => {
-  const iconMap: { [key: string]: React.ComponentType<any> } = {
-    Video, Music, Volume2, FileText, Palette, LinkIcon, Image
-  };
-  return iconMap[iconName] || FileText; // Default to FileText if icon not found
-};
 import { useAuth } from '../hooks/useAuth';
 
 interface ActivityCreatorProps {
@@ -77,7 +62,6 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const [showObjectivesBrowser, setShowObjectivesBrowser] = useState(false);
   const [availablePacks, setAvailablePacks] = useState<ActivityPack[]>([]);
   const isAdmin = user?.email === 'rob.reichstorer@gmail.com';
@@ -85,9 +69,8 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
   const [formRedoStack, setFormRedoStack] = useState<Array<typeof activity>>([]);
   const applyingFormHistoryRef = useRef(false);
   const prevActivityRef = useRef(activity);
-  /** Longer rich-text / media blocks stay collapsed so the essentials fit on a laptop. */
+  /** Longer rich-text stays collapsed so the essentials fit on a laptop. */
   const [writingOpen, setWritingOpen] = useState(false);
-  const [mediaOpen, setMediaOpen] = useState(false);
 
   const sanitizeText = (value: string): string =>
     (value || '')
@@ -246,22 +229,6 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
     }));
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Convert to base64 for demo purposes
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageUrl = event.target?.result as string;
-      setActivity(prev => ({
-        ...prev,
-        imageLink: imageUrl
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const validateForm = () => {
     const newErrors: Record<string, string> = {};
     
@@ -316,12 +283,10 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
   const writingFilled =
     Boolean(activity.description?.replace(/<[^>]+>/g, '').trim()) ||
     Boolean(activity.activityText?.replace(/<[^>]+>/g, '').trim());
-  const mediaFilled =
-    Boolean(activity.imageLink) ||
-    resourceLinks.some(
-      (link) => link.enabled && Boolean(activity[link.key as keyof typeof activity]),
-    ) ||
-    Boolean(activity.link);
+
+  const setResourceValue = (key: string, value: string) => {
+    setActivity((prev) => ({ ...prev, [key]: value }));
+  };
 
   return createPortal(
     <div
@@ -671,131 +636,33 @@ export function ActivityCreator({ onClose, onSave, categories, levels }: Activit
               )}
             </div>
 
-            {/* Collapsible: media & links */}
-            <div className="space-y-2">
-              <button
-                type="button"
-                className={sectionToggle}
-                aria-expanded={mediaOpen}
-                onClick={() => setMediaOpen((v) => !v)}
-              >
-                <span className="min-w-0">
-                  <span className="block text-[12px] font-extrabold text-[#1F1B4D]">
-                    Image &amp; resource links
-                  </span>
-                  <span className="block text-[11px] text-[#77738F]">
-                    {mediaFilled ? 'Media or links added' : 'Optional image and resource URLs'}
-                  </span>
-                </span>
-                <ChevronDown
-                  className={`h-4 w-4 shrink-0 text-[#77738F] transition-transform ${mediaOpen ? 'rotate-180' : ''}`}
-                />
-              </button>
-              {mediaOpen && (
-                <div className="space-y-3 rounded-lg border border-[#E2E0EF] bg-white p-3">
-                  <div>
-                    <label className={fieldLabel}>Activity image</label>
-                    <div className="flex items-start gap-3">
-                      {activity.imageLink ? (
-                        <div className="relative shrink-0">
-                          <img
-                            src={activity.imageLink}
-                            alt="Activity"
-                            className="h-16 w-16 rounded-lg border border-[#E2E0EF] object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => setActivity((prev) => ({ ...prev, imageLink: '' }))}
-                            className="absolute -right-1.5 -top-1.5 rounded-full bg-red-500 p-0.5 text-white"
-                          >
-                            <X className="h-3 w-3" />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-lg border border-dashed border-[#E2E0EF] bg-[#F4F3FA]">
-                          <Image className="h-5 w-5 text-[#77738F]" />
-                        </div>
-                      )}
-                      <div className="min-w-0 flex-1 space-y-1.5">
-                        <div className="flex flex-wrap gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => imageInputRef.current?.click()}
-                            className="inline-flex h-8 items-center gap-1 rounded-lg bg-[#4338E8] px-2.5 text-[11px] font-bold text-white hover:bg-[#3529d1]"
-                          >
-                            <Upload className="h-3.5 w-3.5" />
-                            Upload
-                          </button>
-                          <input
-                            ref={imageInputRef}
-                            type="file"
-                            accept="image/*"
-                            className="hidden"
-                            onChange={handleImageUpload}
-                          />
-                        </div>
-                        <input
-                          type="url"
-                          name="imageLink"
-                          value={activity.imageLink}
-                          onChange={handleChange}
-                          placeholder="Or paste image URL"
-                          className={fieldInput}
-                          dir="ltr"
-                        />
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <p className={fieldLabel}>Resources</p>
-                    {resourceLinks
-                      .filter((link) => link.enabled)
-                      .map((linkConfig) => {
-                        const IconComponent = getIconComponentForResourceLink(linkConfig.iconName);
-                        return (
-                          <div key={linkConfig.key} className="flex items-center gap-2">
-                            <IconComponent className="h-4 w-4 shrink-0 text-[#77738F]" />
-                            <input
-                              type="text"
-                              name={linkConfig.key}
-                              value={activity[linkConfig.key as keyof typeof activity] as string}
-                              onChange={handleChange}
-                              className={fieldInput}
-                              placeholder={linkConfig.label}
-                              dir="ltr"
-                            />
-                          </div>
-                        );
-                      })}
-                    <div>
-                      <div className="mb-1 flex items-center gap-1.5">
-                        <LinkIcon className="h-3.5 w-3.5 shrink-0 text-[#77738F]" />
-                        <input
-                          type="text"
-                          value={activity.linkHeading || 'Additional Link'}
-                          onChange={(e) =>
-                            setActivity((prev) => ({ ...prev, linkHeading: e.target.value }))
-                          }
-                          className="min-w-0 flex-1 border-0 bg-transparent p-0 text-[11px] font-bold text-[#1F1B4D] outline-none focus:ring-0"
-                          placeholder="Additional Link"
-                        />
-                        <Edit3 className="h-3 w-3 shrink-0 text-[#77738F]" />
-                      </div>
-                      <input
-                        type="text"
-                        name="link"
-                        value={activity.link}
-                        onChange={handleChange}
-                        className={fieldInput}
-                        placeholder="Link URL"
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Resources — compact chips; empty types stay hidden */}
+            <CompactActivityResources
+              values={{
+                videoLink: activity.videoLink,
+                musicLink: activity.musicLink,
+                backingLink: activity.backingLink,
+                resourceLink: activity.resourceLink,
+                vocalsLink: activity.vocalsLink,
+                canvaLink: activity.canvaLink,
+                imageLink: activity.imageLink,
+                link: activity.link,
+              }}
+              onChange={setResourceValue}
+              resourceLinks={resourceLinks}
+              linkHeading={activity.linkHeading || 'Additional Link'}
+              onLinkHeadingChange={(value) =>
+                setActivity((prev) => ({ ...prev, linkHeading: value }))
+              }
+              onImageFile={(file) => {
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                  const imageUrl = event.target?.result as string;
+                  setActivity((prev) => ({ ...prev, imageLink: imageUrl }));
+                };
+                reader.readAsDataURL(file);
+              }}
+            />
           </div>
         </form>
 
