@@ -56,7 +56,6 @@ import {
   PartnerHubsHeaderActions,
   PartnerSectionTabs,
   SelectedAreaPanel,
-  hubCoverSrc,
   musicHubCardDetail,
   musicHubCardTitle,
 } from './PartnerHubsDirectoryViews';
@@ -1867,8 +1866,6 @@ function PartnerHubsBrowse({
   }, [ix, focus]);
 
   const selectedArea = useMemo(() => {
-    // Panel collage uses a hub venue photo — prefer the focused hub, else first in region.
-    const panelPhoto = (hubId?: string) => (hubId ? hubCoverSrc(hubId) : hubCoverSrc('greater-essex'));
     if (!ix) {
       return {
         title: 'England',
@@ -1876,7 +1873,6 @@ function PartnerHubsBrowse({
         blurb: 'Select a region on the map to explore Music Hubs.',
         localAreas: [] as { name: string; focus: MapFocus }[],
         viewFocus: { level: 'uk' } as MapFocus,
-        photoSrc: panelPhoto('greater-essex'),
       };
     }
     if (focus.level === 'region') {
@@ -1889,7 +1885,6 @@ function PartnerHubsBrowse({
         blurb: `${hubs.length} Music Hub${hubs.length === 1 ? '' : 's'} serve schools across this region. Choose a local area or browse the list.`,
         localAreas: lads.slice(0, 8).map((l) => ({ name: l.name, focus: { level: 'lad' as const, id: l.code } })),
         viewFocus: focus,
-        photoSrc: panelPhoto(hubs[0]?.id),
       };
     }
     if (focus.level === 'hub') {
@@ -1909,7 +1904,6 @@ function PartnerHubsBrowse({
           .slice(0, 8)
           .map((l) => ({ name: l.name, focus: { level: 'lad' as const, id: l.code } })),
         viewFocus: focus,
-        photoSrc: panelPhoto(h?.id),
       };
     }
     if (focus.level === 'lad') {
@@ -1923,7 +1917,6 @@ function PartnerHubsBrowse({
           : 'No verified Music Hub listing for this area yet.',
         localAreas: lad ? [{ name: lad.name, focus: { level: 'lad' as const, id: lad.code } }] : [],
         viewFocus: h ? ({ level: 'hub', id: h.id } as MapFocus) : focus,
-        photoSrc: panelPhoto(h?.id),
       };
     }
     // England / UK — region chips zoom the map
@@ -1936,7 +1929,6 @@ function PartnerHubsBrowse({
         focus: { level: 'region' as const, id: r.code },
       })),
       viewFocus: { level: 'nation', id: ENGLAND } as MapFocus,
-      photoSrc: panelPhoto('greater-essex'),
     };
   }, [ix, focus]);
 
@@ -2109,7 +2101,6 @@ function PartnerHubsBrowse({
                             hubCount={selectedArea.hubCount}
                             blurb={selectedArea.blurb}
                             localAreas={selectedArea.localAreas.map((a) => a.name)}
-                            photoSrc={selectedArea.photoSrc}
                             onViewHubs={onViewHubs}
                             onSelectLocalArea={onSelectLocalArea}
                           />

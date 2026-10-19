@@ -1000,6 +1000,15 @@ export function hubLogoSrc(id: string) {
   return `/music-hubs/logos/hub/${logoId}.png`;
 }
 
+/**
+ * Card hero mark — official hub logo on a light panel, or a brand-colour wordmark tile.
+ * Assets live at `/music-hubs/logos/hero/{hubId}.png` (640×360, object-fit: contain).
+ */
+export function hubHeroSrc(id: string) {
+  const logoId = HUB_COVER_ALIASES[id] ?? id;
+  return `/music-hubs/logos/hero/${logoId}.png`;
+}
+
 /** Friendly card title — e.g. "Essex Music Hub", "Cambridgeshire Music". */
 export function musicHubCardTitle(id: string, fullName: string, lead?: string) {
   if (id === 'cambridgeshire-and-peterborough') return 'Cambridgeshire Music';
@@ -1038,38 +1047,29 @@ export function MusicHubResultCard({
   onOpen: () => void;
 }) {
   const [saved, setSaved] = useState(false);
-  const [logoFailed, setLogoFailed] = useState(false);
-  const initial = name.replace(/^The /, '').charAt(0).toUpperCase();
+  const [heroFailed, setHeroFailed] = useState(false);
   return (
     <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_12px_28px_-16px_rgba(11,107,95,0.35)]">
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 flex-col text-left">
-        <div className="relative aspect-[16/9] overflow-hidden bg-[#E4F4EF]">
-          <img
-            src={hubCoverSrc(id)}
-            alt=""
-            className="h-full w-full object-cover transition duration-500 group-hover:scale-[1.03]"
-            loading="lazy"
-          />
+        <div className="relative flex aspect-[16/9] items-center justify-center overflow-hidden bg-[#F7F8FA] px-6 py-5">
+          {!heroFailed ? (
+            <img
+              src={hubHeroSrc(id)}
+              alt=""
+              className="h-full w-full object-contain transition duration-500 group-hover:scale-[1.02]"
+              loading="lazy"
+              onError={() => setHeroFailed(true)}
+            />
+          ) : (
+            <span className="flex h-full w-full items-center justify-center rounded-lg bg-[#0B6B5F] px-4 text-center text-[13px] font-bold leading-snug text-white">
+              {name}
+            </span>
+          )}
           <span className="absolute left-2 top-2 inline-flex items-center gap-1 rounded-full bg-white/95 px-2 py-0.5 text-[10px] font-bold text-[#1F1B4D] shadow-sm">
             {region}
           </span>
         </div>
-        <div className="relative flex flex-1 flex-col px-3 pb-3 pt-0">
-          {!logoFailed ? (
-            <span className="-mt-5 mb-1.5 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-[3px] ring-white">
-              <img
-                src={hubLogoSrc(id)}
-                alt=""
-                className="h-full w-full object-cover"
-                loading="lazy"
-                onError={() => setLogoFailed(true)}
-              />
-            </span>
-          ) : (
-            <span className="-mt-5 mb-1.5 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#0B6B5F] text-[13px] font-bold text-white ring-[3px] ring-white">
-              {initial}
-            </span>
-          )}
+        <div className="relative flex flex-1 flex-col px-3 pb-3 pt-3">
           <h3 className={`text-[14px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
           <p className={`mt-0.5 text-[11px] font-medium ${muted}`}>{location}</p>
           <p className={`mt-1 line-clamp-2 text-[11px] leading-snug ${muted}`}>{detail}</p>
@@ -1172,7 +1172,6 @@ export function SelectedAreaPanel({
   localAreas,
   onViewHubs,
   onSelectLocalArea,
-  photoSrc = '/music-hubs/covers/greater-essex.jpg',
   statLabel,
 }: {
   title: string;
@@ -1181,7 +1180,6 @@ export function SelectedAreaPanel({
   localAreas: string[];
   onViewHubs: () => void;
   onSelectLocalArea?: (name: string) => void;
-  photoSrc?: string;
   /** Override the default “N Music Hubs Across {title}” line. */
   statLabel?: string;
 }) {
@@ -1193,21 +1191,14 @@ export function SelectedAreaPanel({
     <aside className="flex h-full min-h-[260px] flex-col rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:p-6">
       <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#1F1B4D]/45">Selected area</p>
 
-      <div className="mt-3 flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <h3 className="text-[22px] font-bold leading-tight tracking-tight text-[#1F1B4D] sm:text-[24px]">{title}</h3>
-          <p className="mt-2 flex items-center gap-2 text-[14px] font-semibold text-[#1F1B4D]">
-            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E4F4EF] text-[#0B6B5F]" aria-hidden>
-              <Users className="h-3.5 w-3.5" strokeWidth={2.5} />
-            </span>
-            <span>{stat}</span>
-          </p>
-        </div>
-        <img
-          src={photoSrc}
-          alt=""
-          className="h-[4.5rem] w-[6.5rem] shrink-0 rounded-xl object-cover shadow-sm ring-1 ring-[#1F1B4D]/[0.06] sm:h-20 sm:w-28"
-        />
+      <div className="mt-3 min-w-0">
+        <h3 className="text-[22px] font-bold leading-tight tracking-tight text-[#1F1B4D] sm:text-[24px]">{title}</h3>
+        <p className="mt-2 flex items-center gap-2 text-[14px] font-semibold text-[#1F1B4D]">
+          <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-[#E4F4EF] text-[#0B6B5F]" aria-hidden>
+            <Users className="h-3.5 w-3.5" strokeWidth={2.5} />
+          </span>
+          <span>{stat}</span>
+        </p>
       </div>
 
       <p className={`mt-3 text-[13px] leading-relaxed ${muted}`}>{blurb}</p>
