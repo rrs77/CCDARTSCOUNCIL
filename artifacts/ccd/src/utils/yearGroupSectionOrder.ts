@@ -49,12 +49,13 @@ export function getDefaultSectionIdForYearGroup(id: string, name: string): strin
   const n = `${name || ''} ${id || ''}`.trim();
   const lower = n.toLowerCase();
 
-  // EYFS — kindergarten / reception (word-ish matches; avoid false hits on longer ids)
+  // EYFS — kindergarten / reception / nursery (word-ish matches; avoid false hits on longer ids)
   if (
     /\b(lkg|ukg)\b/.test(lower) ||
     lower.includes('lower kindergarten') ||
     lower.includes('upper kindergarten') ||
-    /\breception\b/.test(lower)
+    /\breception\b/.test(lower) ||
+    /\b(nursery|pre[\s-]?school|preschool)\b/.test(lower)
   ) {
     return 'eyfs';
   }
