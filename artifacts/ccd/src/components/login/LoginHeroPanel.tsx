@@ -45,7 +45,7 @@ export function LoginHeroPanel({ logoLetters: _logoLetters = 'CCD' }: LoginHeroP
         />
       </div>
 
-      <div className="relative z-10 flex min-h-[300px] flex-col justify-between gap-8 px-5 py-6 pb-8 sm:min-h-[340px] sm:px-8 sm:py-8 sm:pb-10 lg:h-full lg:min-h-full lg:max-w-[58%] lg:px-12 lg:py-12 lg:pb-12 xl:px-14">
+      <div className="relative z-10 flex min-h-[300px] flex-col justify-between gap-8 px-5 py-6 pb-8 sm:min-h-[340px] sm:px-8 sm:py-8 sm:pb-10 lg:h-full lg:min-h-full lg:max-w-[min(42rem,58%)] lg:px-14 lg:py-14 lg:pb-14 xl:px-16">
         <div className="flex flex-wrap items-center gap-3 ccd-login-hero-fade">
           <Logo size="hero" light className="drop-shadow-[0_1px_8px_rgba(0,0,0,0.35)]" />
         </div>
