@@ -1605,8 +1605,7 @@ export function LessonPlannerCalendar({
               onClick={(e) => {
                 e.stopPropagation();
                 if (item.kind === 'timetable' && item.tClass) {
-                  setEditingTimetableClass(item.tClass);
-                  setShowTimetableBuilder(true);
+                  window.dispatchEvent(new CustomEvent('ccd:open-timetable'));
                 } else if (item.plan) {
                   setSelectedDateWithPlans({ date, plans: [item.plan] });
                   setIsLessonSummaryOpen(true);
@@ -2446,7 +2445,8 @@ export function LessonPlannerCalendar({
                     role="menuitem"
                     onClick={() => {
                       setShowActionsMenu(false);
-                      setShowTimetableBuilder(true);
+                      // Full-page Timetable lives in the Planner room — not a modal over this calendar
+                      window.dispatchEvent(new CustomEvent('ccd:open-timetable'));
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#E9E6FF]"
                   >

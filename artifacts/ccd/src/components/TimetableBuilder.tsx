@@ -150,6 +150,8 @@ export function TimetableBuilder({
   const [showRotationLabel, setShowRotationLabel] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
   const settingsRef = useRef<HTMLDivElement>(null);
+  const gridViewportRef = useRef<HTMLDivElement>(null);
+  const [gridViewportH, setGridViewportH] = useState(0);
 
   const getStorageKey = (termId: string) => teacherTermKey(termId);
   const globalFlagKey = () => teacherGlobalFlagKey();
@@ -182,11 +184,6 @@ export function TimetableBuilder({
     [dayStart, dayEnd, slotInterval]
   );
   const slotDurationMinutes = slotInterval;
-  // Slot rows enforce a minimum height, so event top/height must use the same
-  // effective px-per-minute as the grid — not the nominal PX_PER_MINUTE constant.
-  const slotHeightPx = Math.max(slotDurationMinutes * PX_PER_MINUTE, MIN_SLOT_HEIGHT_PX);
-  const effectivePxPerMinute = slotHeightPx / slotDurationMinutes;
-  const gridHeightPx = slotStartTimes.length * slotHeightPx;
 
   const [isGlobalTimetable, setIsGlobalTimetable] = useState<boolean>(() => {
     try {
@@ -195,6 +192,28 @@ export function TimetableBuilder({
       return false;
     }
   });
+
+  useEffect(() => {
+    const el = gridViewportRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const h = entries[0]?.contentRect.height ?? 0;
+      setGridViewportH(h);
+    });
+    ro.observe(el);
+    setGridViewportH(el.clientHeight);
+    return () => ro.disconnect();
+  }, [isOpen, embedded]);
+
+  // Fit the school day into the available page height when possible —
+  // full-page feel instead of a tall sparse scroll.
+  const fittedSlotH =
+    gridViewportH > 0 && slotStartTimes.length > 0
+      ? gridViewportH / slotStartTimes.length
+      : slotDurationMinutes * PX_PER_MINUTE;
+  const slotHeightPx = Math.max(MIN_SLOT_HEIGHT_PX, fittedSlotH);
+  const effectivePxPerMinute = slotHeightPx / slotDurationMinutes;
+  const gridHeightPx = slotStartTimes.length * slotHeightPx;
 
   const loadTimetable = React.useCallback(async (termId: string) => {
     try {
@@ -443,17 +462,12 @@ export function TimetableBuilder({
   if (!isOpen) return null;
 
   const dayHeaders = viewMode === 'days' ? SCHOOL_DAY_SHORT : DAY_SHORT_NAMES;
-  const shellClass = embedded
-    ? 'ss-timetable-shell flex h-full min-h-0 flex-col overflow-hidden rounded-[20px] border border-[#E2E0EF] bg-white'
-    : 'fixed inset-0 z-[70] flex items-center justify-center bg-[#1F1B4D]/45 p-3 sm:p-5';
-  const panelClass = embedded
-    ? 'flex h-full min-h-0 flex-col'
-    : 'flex max-h-[94vh] w-full max-w-[1100px] flex-col overflow-hidden rounded-[20px] border border-[#E2E0EF] bg-white shadow-[0_24px_80px_rgba(31,27,77,0.18)]';
+  const termHint = isGlobalTimetable ? 'All terms' : TERM_LABELS[selectedTermId];
 
   const settingsPopover = (
     <div
       ref={settingsRef}
-      className="absolute right-0 top-full z-40 mt-2 w-[300px] rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-lg"
+      className="absolute right-0 top-full z-40 mt-2 w-[300px] rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-[0_16px_40px_rgba(31,27,77,0.12)]"
     >
       <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Term</p>
       <select
@@ -498,7 +512,6 @@ export function TimetableBuilder({
           </button>
         </div>
       )}
-
       <div className="my-3 border-t border-[#E2E0EF]" />
       <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Grid</p>
       <div className="mt-1.5 grid grid-cols-2 gap-2">
@@ -565,61 +578,26 @@ export function TimetableBuilder({
     </div>
   );
 
-  const body = (
-    <div className={panelClass}>
-      {/* Header */}
-      <div className="flex shrink-0 flex-wrap items-center gap-3 border-b border-[#E2E0EF] px-4 py-3 sm:px-5">
-        <div className="min-w-0 flex-1">
-          <h2
-            className="text-[18px] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[20px]"
-            style={{ fontFamily: "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)" }}
-          >
-            Your weekly timetable
-          </h2>
-          <p className="text-[12px] font-medium text-[#77738F]">
-            All My classes · drag onto the week
-            {isGlobalTimetable ? '' : ` · ${TERM_LABELS[selectedTermId]}`}
-          </p>
-        </div>
-        <div className="relative flex items-center gap-2">
+  const page = (
+    <div className="ss-timetable-page">
+      <div className="ss-timetable-toolbar">
+        <div className="ss-timetable-palette">
+          <div className="ss-timetable-palette-meta">
+            <span className="ss-timetable-kicker">My classes</span>
+            <span className="ss-timetable-term">{termHint}</span>
+          </div>
+          {myClasses.length === 0 ? (
+            <p className="ss-timetable-empty-hint">Add classes in Settings → My classes, then drag them onto the week.</p>
+          ) : (
+            <div className="ss-timetable-chips">
+              {myClasses.map((yg) => (
+                <DraggableYearGroup key={yg.id} yearGroup={yg} chip />
+              ))}
+            </div>
+          )}
           <button
             type="button"
-            onClick={() => setSettingsOpen((o) => !o)}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D]"
-            aria-expanded={settingsOpen}
-            aria-label="Timetable settings"
-            title="Settings"
-          >
-            <Settings className="h-4 w-4" />
-          </button>
-          {settingsOpen && settingsPopover}
-          <button
-            type="button"
-            onClick={() => saveTimetable(timetableClasses)}
-            disabled={isSaving}
-            className="inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[13px] font-bold text-white hover:bg-[#3529d1] disabled:cursor-not-allowed disabled:opacity-60"
-          >
-            <Save className="h-4 w-4" />
-            {isSaving ? 'Saving…' : 'Save'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-[#E2E0EF] bg-white text-[#77738F] hover:border-[#bcb7f4] hover:text-[#1F1B4D]"
-            aria-label={embedded ? 'Back to schedule' : 'Close'}
-            title={embedded ? 'Back to schedule' : 'Close'}
-          >
-            <X className="h-5 w-5" />
-          </button>
-        </div>
-      </div>
-
-      {/* Class palette */}
-      <div className="shrink-0 border-b border-[#E2E0EF] bg-[#F4F3FA]/80 px-4 py-3 sm:px-5">
-        <div className="mb-2 flex items-center justify-between gap-2">
-          <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">My classes</p>
-          <button
-            type="button"
+            className="ss-timetable-break"
             onClick={() => {
               if (selectedSlot) handleAddNonCurriculum(selectedSlot.day, selectedSlot.time);
               else {
@@ -635,86 +613,95 @@ export function TimetableBuilder({
                 });
               }
             }}
-            className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#4338E8] hover:text-[#3529d1]"
           >
             <Plus className="h-3.5 w-3.5" />
             Break / club
           </button>
         </div>
-        {myClasses.length === 0 ? (
-          <p className="rounded-xl border border-dashed border-[#E2E0EF] bg-white px-3 py-3 text-[12px] text-[#77738F]">
-            Add classes in Settings → My classes, then drag them here.
-          </p>
-        ) : (
-          <div className="-mx-1 flex gap-2 overflow-x-auto px-1 pb-1">
-            {myClasses.map((yg) => (
-              <DraggableYearGroup key={yg.id} yearGroup={yg} chip />
-            ))}
-          </div>
-        )}
+        <div className="ss-timetable-actions relative">
+          <button
+            type="button"
+            onClick={() => setSettingsOpen((o) => !o)}
+            className="ss-timetable-icon-btn"
+            aria-expanded={settingsOpen}
+            aria-label="Timetable settings"
+            title="Settings"
+          >
+            <Settings className="h-4 w-4" />
+          </button>
+          {settingsOpen && settingsPopover}
+          <button
+            type="button"
+            onClick={() => saveTimetable(timetableClasses)}
+            disabled={isSaving}
+            className="ss-timetable-save"
+          >
+            <Save className="h-4 w-4" />
+            {isSaving ? 'Saving…' : 'Save'}
+          </button>
+          {!embedded && (
+            <button type="button" onClick={onClose} className="ss-timetable-icon-btn" aria-label="Close">
+              <X className="h-5 w-5" />
+            </button>
+          )}
+        </div>
       </div>
 
-      {/* Week grid */}
-      <div className="flex min-h-0 flex-1 flex-col overflow-hidden bg-white">
+      <div className="ss-timetable-board">
         <div
-          className="grid shrink-0 border-b border-[#E2E0EF] bg-[#F4F3FA]/60"
-          style={{ gridTemplateColumns: `56px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
+          className="ss-timetable-dayhead"
+          style={{ gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
         >
-          <div className="flex items-center justify-center border-r border-[#E2E0EF] px-1 py-2.5">
-            {showRotationLabel ? (
-              <span className="text-[10px] font-extrabold uppercase tracking-wide text-[#77738F]">Rot.</span>
-            ) : (
-              <span className="sr-only">Time</span>
-            )}
+          <div className="ss-timetable-corner">
+            {showRotationLabel ? <span>Rot.</span> : null}
           </div>
           {displayDayIndices.map((dayIndex, index) => (
-            <div
-              key={dayIndex}
-              className="border-r border-[#E2E0EF] py-2.5 text-center last:border-r-0"
-            >
-              <span className="text-[13px] font-extrabold text-[#1F1B4D]">{dayHeaders[index]}</span>
+            <div key={dayIndex} className="ss-timetable-dow">
+              {dayHeaders[index]}
             </div>
           ))}
         </div>
-        <div
-          className="grid min-h-0 flex-1 overflow-auto"
-          style={{ gridTemplateColumns: `56px repeat(${displayDayIndices.length}, minmax(0, 1fr))` }}
-        >
-          <div className="sticky left-0 z-20 flex flex-col border-r border-[#E2E0EF] bg-[#F4F3FA]/90" style={{ height: gridHeightPx }}>
-            {slotStartTimes.map((slotTime) => (
-              <div
-                key={slotTime}
-                className="flex shrink-0 items-start justify-end border-b border-[#E2E0EF]/80 pr-1.5 pt-0.5"
-                style={{ height: slotHeightPx }}
-              >
-                <span className="text-[10px] font-semibold tabular-nums text-[#77738F]">{slotTime}</span>
-              </div>
+
+        <div ref={gridViewportRef} className="ss-timetable-grid-viewport">
+          <div
+            className="ss-timetable-grid"
+            style={{
+              gridTemplateColumns: `52px repeat(${displayDayIndices.length}, minmax(0, 1fr))`,
+              height: gridHeightPx,
+            }}
+          >
+            <div className="ss-timetable-ruler" style={{ height: gridHeightPx }}>
+              {slotStartTimes.map((slotTime) => (
+                <div key={slotTime} className="ss-timetable-tick" style={{ height: slotHeightPx }}>
+                  <span>{slotTime}</span>
+                </div>
+              ))}
+            </div>
+            {displayDayIndices.map((dayIndex, index) => (
+              <TimetableDayColumn
+                key={dayIndex}
+                day={dayIndex}
+                dayLabel={dayHeaders[index]}
+                classes={getClassesForDay(dayIndex)}
+                dayStartMinutes={dayStartMinutes}
+                dayEndMinutes={dayEndMinutes}
+                pxPerMinute={effectivePxPerMinute}
+                slotHeightPx={slotHeightPx}
+                gridHeightPx={gridHeightPx}
+                slotStartTimes={slotStartTimes}
+                slotDurationMinutes={slotDurationMinutes}
+                onAddYearGroup={(timeSlot) => (yearGroup: any) => handleAddYearGroup(dayIndex, timeSlot, yearGroup)}
+                onAddNonCurriculum={(timeSlot) => () => handleAddNonCurriculum(dayIndex, timeSlot)}
+                onEdit={(cls) => setEditingClass(cls)}
+                onDelete={handleDeleteClass}
+                onResize={handleResizeClass}
+                onMoveClass={handleMoveClass}
+                onSelectSlot={(timeSlot) => setSelectedSlot({ day: dayIndex, time: timeSlot })}
+                timeToMinutes={timeToMinutes}
+                minutesToTime={minutesToTime}
+              />
             ))}
           </div>
-          {displayDayIndices.map((dayIndex, index) => (
-            <TimetableDayColumn
-              key={dayIndex}
-              day={dayIndex}
-              dayLabel={dayHeaders[index]}
-              classes={getClassesForDay(dayIndex)}
-              dayStartMinutes={dayStartMinutes}
-              dayEndMinutes={dayEndMinutes}
-              pxPerMinute={effectivePxPerMinute}
-              slotHeightPx={slotHeightPx}
-              gridHeightPx={gridHeightPx}
-              slotStartTimes={slotStartTimes}
-              slotDurationMinutes={slotDurationMinutes}
-              onAddYearGroup={(timeSlot) => (yearGroup: any) => handleAddYearGroup(dayIndex, timeSlot, yearGroup)}
-              onAddNonCurriculum={(timeSlot) => () => handleAddNonCurriculum(dayIndex, timeSlot)}
-              onEdit={(cls) => setEditingClass(cls)}
-              onDelete={handleDeleteClass}
-              onResize={handleResizeClass}
-              onMoveClass={handleMoveClass}
-              onSelectSlot={(timeSlot) => setSelectedSlot({ day: dayIndex, time: timeSlot })}
-              timeToMinutes={timeToMinutes}
-              minutesToTime={minutesToTime}
-            />
-          ))}
         </div>
       </div>
 
@@ -732,10 +719,14 @@ export function TimetableBuilder({
     </div>
   );
 
-  if (embedded) {
-    return <div className={shellClass}>{body}</div>;
-  }
-  return <div className={shellClass}>{body}</div>;
+  // Full-page inside Studio shell when embedded; otherwise a workspace-covering layer
+  // (never a small dialog perched on the classic calendar).
+  if (embedded) return page;
+  return (
+    <div className="ss-timetable-overlay" role="dialog" aria-modal="true" aria-label="Timetable builder">
+      {page}
+    </div>
+  );
 }
 
 

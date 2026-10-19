@@ -176,7 +176,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
         : view === 'month'
           ? 'Month planner'
           : view === 'classic'
-            ? 'Timetable builder'
+            ? 'Timetable'
             : view === 'units'
               ? 'Unit progress'
               : className
@@ -211,8 +211,14 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
 
   const inSchedule = room === 'schedule' && view !== 'classic';
 
+  useEffect(() => {
+    const openTt = () => goRoom('timetable');
+    window.addEventListener('ccd:open-timetable', openTt);
+    return () => window.removeEventListener('ccd:open-timetable', openTt);
+  }, [goRoom]);
+
   return (
-    <div className="ss-planner-shell">
+    <div className={`ss-planner-shell ${room === 'timetable' ? 'is-timetable-fullpage' : ''}`}>
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-baseline gap-x-3 gap-y-1">
@@ -223,26 +229,31 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               {pageTitle}
             </h1>
             <p className="text-[13px] font-medium text-[#77738F]">
-              {halfTerm?.name} · {academicYear.replace('-', '–')}
-              {view === 'week' || view === 'day' || view === 'month' ? ` · ${heading}` : ''}
+              {room === 'timetable'
+                ? 'Your week · all My classes'
+                : `${halfTerm?.name} · ${academicYear.replace('-', '–')}${
+                    view === 'week' || view === 'day' || view === 'month' ? ` · ${heading}` : ''
+                  }`}
             </p>
           </div>
-          <div className="flex flex-wrap items-center gap-2">
-            {inSchedule && (
-              <button type="button" className={toolBtn} onClick={() => setAnchor(startOfDay(new Date()))}>
-                This week
+          {room !== 'timetable' && (
+            <div className="flex flex-wrap items-center gap-2">
+              {inSchedule && (
+                <button type="button" className={toolBtn} onClick={() => setAnchor(startOfDay(new Date()))}>
+                  This week
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => onAdd(view === 'day' ? anchor : startOfDay(new Date()))}
+                className={primaryBtn}
+                aria-label="Schedule a lesson"
+              >
+                <Plus className="h-4 w-4" />
+                New lesson
               </button>
-            )}
-            <button
-              type="button"
-              onClick={() => onAdd(view === 'day' ? anchor : startOfDay(new Date()))}
-              className={primaryBtn}
-              aria-label="Schedule a lesson"
-            >
-              <Plus className="h-4 w-4" />
-              New lesson
-            </button>
-          </div>
+            </div>
+          )}
         </header>
 
         <div className="mt-3 flex shrink-0 flex-wrap items-center justify-between gap-3">
@@ -251,7 +262,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               {(
                 [
                   { id: 'schedule' as const, label: 'Schedule' },
-                  { id: 'timetable' as const, label: 'Timetable builder' },
+                  { id: 'timetable' as const, label: 'Timetable' },
                   { id: 'units' as const, label: 'Units' },
                 ] as const
               ).map((r) => (
@@ -332,17 +343,12 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
               )}
             </div>
           )}
-          {room === 'timetable' && (
-            <p className="max-w-md text-[12px] font-medium leading-snug text-[#77738F]">
-              Drag My classes onto the week, then return to Schedule to plan lessons.
-            </p>
-          )}
           {room === 'units' && view !== 'classic' && (
             <span className="px-1 text-[13px] font-medium text-[#77738F]">{dateLabel}</span>
           )}
         </div>
 
-        {weekStats && (
+        {room !== 'timetable' && weekStats && (
           <button
             type="button"
             onClick={() => setSummaryOpen((o) => !o)}
@@ -354,7 +360,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
             {data.loadingPlans ? ' · Updating…' : ''}
           </button>
         )}
-        {summaryOpen && weekStats && (
+        {room !== 'timetable' && summaryOpen && weekStats && (
           <p className="mt-1 flex shrink-0 flex-wrap gap-x-4 gap-y-1 text-[13px] text-[#77738F]">
             <span><b className="text-[#1F1B4D]">{weekStats.sessions}</b> sessions</span>
             <span><b className="text-[#1F1B4D]">{weekStats.planned}</b> planned</span>
@@ -362,7 +368,7 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
           </p>
         )}
 
-        <div className={`ss-planner-board ${view === 'week' ? '' : ''}`}>
+        <div className={`ss-planner-board ${view === 'week' ? '' : ''} ${room === 'timetable' ? 'is-timetable' : ''}`}>
           {view === 'week' && (
             <WeekView data={data} visibleIds={visibleIds} anchor={anchor} selectedKey={sheet?.kind === 'details' ? sheet.entry.key : null} onOpenEntry={onOpenEntry} onAdd={onAdd} />
           )}
@@ -399,16 +405,14 @@ export function Planner({ initialView, renderTerm, renderClassic: _renderClassic
             )
           )}
           {view === 'classic' && (
-            <div className="ss-timetable-room flex min-h-0 flex-1 flex-col">
-              <TimetableBuilder
-                isOpen
-                embedded
-                onClose={() => changeView('week')}
-                onTimetableUpdate={() => {
-                  refreshStorage();
-                }}
-              />
-            </div>
+            <TimetableBuilder
+              isOpen
+              embedded
+              onClose={() => changeView('week')}
+              onTimetableUpdate={() => {
+                refreshStorage();
+              }}
+            />
           )}
         </div>
       </main>
