@@ -49,6 +49,7 @@ import {
   emptyScene,
   formatTimecode,
   lessonDurationMs,
+  sceneClockMs,
 } from '../../types';
 import { SceneRenderer } from '../SceneRenderer';
 import { LyricsPanel } from './LyricsPanel';
@@ -73,7 +74,7 @@ import { isGoogleSlidesUrl, normalizeGoogleSlidesEmbedUrl } from '../../utils/go
 import type { AdvanceMode } from '../../types';
 import { defaultAdvanceMode, resolveAdvanceMode } from '../../types';
 import { absoluteLayoutMs, useLessonAudioMixer } from '../../hooks/useLessonAudioMixer';
-import { sceneLayoutOffsets } from '../../utils/timelineAudio';
+import { sceneLayoutMs, sceneLayoutOffsets } from '../../utils/timelineAudio';
 import {
   normaliseCloudLink,
   sceneTypeToCloudKind,
@@ -130,7 +131,7 @@ const RAIL: { id: RailPanel; label: string; icon: React.ReactNode }[] = [
   { id: 'audio', label: 'Audio', icon: <Music className="h-4 w-4" /> },
   { id: 'image', label: 'Image', icon: <ImageIcon className="h-4 w-4" /> },
   { id: 'text', label: 'Text', icon: <Type className="h-4 w-4" /> },
-  { id: 'lyrics', label: 'Lyrics', icon: <Mic2 className="h-4 w-4" /> },
+  { id: 'lyrics', label: 'Lyric video', icon: <Mic2 className="h-4 w-4" /> },
   { id: 'youtube', label: 'YouTube', icon: <Youtube className="h-4 w-4" /> },
   { id: 'canva', label: 'Canva', icon: <Palette className="h-4 w-4" /> },
   { id: 'powerpoint', label: 'PPT', icon: <FileSpreadsheet className="h-4 w-4" /> },
@@ -221,6 +222,23 @@ export function InteractiveLessonEditor({
   const scene = lesson.scenes[sceneIndex];
   const totalMs = lessonDurationMs(lesson);
 
+  // Keep playhead / scene-local time inside the current lesson bounds when scenes change.
+  useEffect(() => {
+    if (lesson.scenes.length === 0) {
+      if (sceneIndex !== 0) setSceneIndex(0);
+      if (sceneTimeMs !== 0) setSceneTimeMs(0);
+      return;
+    }
+    if (sceneIndex >= lesson.scenes.length) {
+      setSceneIndex(lesson.scenes.length - 1);
+      setSceneTimeMs(0);
+      return;
+    }
+    const sc = lesson.scenes[sceneIndex];
+    const maxLocal = Math.max(0, sc.durationMs || 0);
+    if (sceneTimeMs > maxLocal) setSceneTimeMs(maxLocal);
+  }, [lesson.scenes, sceneIndex, sceneTimeMs]);
+
   const pushHistory = useCallback(
     (next: InteractiveLesson) => {
       setPast((p) => [...p.slice(-39), deepClone(lesson)]);
@@ -235,9 +253,11 @@ export function InteractiveLessonEditor({
       if (!scene) return;
       const nextScene = typeof patch === 'function' ? patch(scene) : { ...scene, ...patch };
       const scenes = lesson.scenes.map((s, i) => (i === sceneIndex ? nextScene : s));
+      const maxLocal = Math.max(0, nextScene.durationMs || 0);
+      if (sceneTimeMs > maxLocal) setSceneTimeMs(maxLocal);
       pushHistory({ ...lesson, scenes });
     },
-    [lesson, scene, sceneIndex, pushHistory],
+    [lesson, scene, sceneIndex, pushHistory, sceneTimeMs],
   );
 
   const undo = () => {
@@ -761,9 +781,24 @@ export function InteractiveLessonEditor({
     return trackPx / Math.max(1, layoutTotal);
   }, [clipWidth, layoutTotal, lesson.scenes.length]);
 
-  const elapsedMs =
-    lesson.scenes.slice(0, sceneIndex).reduce((s, sc) => s + Math.max(0, sc.durationMs), 0) + sceneTimeMs;
-  const absoluteMs = absoluteLayoutMs(lesson, sceneIndex, sceneTimeMs);
+  // Playback clock (matches lessonDurationMs) — do not sum raw durationMs (manual scenes are 0).
+  const elapsedMs = useMemo(() => {
+    const before = lesson.scenes
+      .slice(0, sceneIndex)
+      .reduce((s, sc) => s + sceneClockMs(sc), 0);
+    const clock = scene ? sceneClockMs(scene) : 0;
+    return before + Math.min(Math.max(0, sceneTimeMs), clock);
+  }, [lesson.scenes, scene, sceneIndex, sceneTimeMs]);
+  const displayElapsedMs = Math.min(elapsedMs, Math.max(0, totalMs));
+  // Layout clock for audio track + playhead alignment on the scene strip.
+  const clampedLocalMs = Math.min(
+    Math.max(0, sceneTimeMs),
+    scene ? Math.max(0, scene.durationMs || 0) : 0,
+  );
+  const absoluteMs = Math.min(
+    absoluteLayoutMs(lesson, sceneIndex, clampedLocalMs),
+    Math.max(0, layoutTotal),
+  );
   useLessonAudioMixer(lesson, absoluteMs, playing, sceneIndex);
 
   const renameMedia = (id: string, name: string) => {
@@ -819,15 +854,24 @@ export function InteractiveLessonEditor({
   };
 
   const seekLessonMs = (ms: number) => {
-    let remaining = Math.max(0, Math.min(ms, totalMs));
+    if (lesson.scenes.length === 0) {
+      setSceneIndex(0);
+      setSceneTimeMs(0);
+      return;
+    }
+    const { starts, total } = sceneLayoutOffsets(lesson.scenes);
+    const clamped = Math.max(0, Math.min(ms, total));
     for (let i = 0; i < lesson.scenes.length; i++) {
-      const dur = lesson.scenes[i].durationMs;
-      if (remaining <= dur || i === lesson.scenes.length - 1) {
+      const start = starts[i] || 0;
+      const dur = sceneLayoutMs(lesson.scenes[i]);
+      const end = start + dur;
+      if (clamped < end || i === lesson.scenes.length - 1) {
+        const local = Math.max(0, clamped - start);
+        const maxLocal = Math.max(0, lesson.scenes[i].durationMs || 0);
         setSceneIndex(i);
-        setSceneTimeMs(Math.min(remaining, dur));
+        setSceneTimeMs(Math.min(local, maxLocal || local));
         return;
       }
-      remaining -= dur;
     }
   };
 
@@ -870,7 +914,7 @@ export function InteractiveLessonEditor({
 
   // Portal to body — dashboard TabsContent uses transform, which would trap position:fixed.
   return createPortal(
-    <div className="ilv-root ilv-editor" role="dialog" aria-modal="true" aria-label="Interactive lesson editor">
+    <div className="ilv-root ilv-editor" role="dialog" aria-modal="true" aria-label="Slides editor">
       <header className="ilv-editor-header">
         <div className="ilv-editor-header-left">
           <button type="button" className="ilv-btn ilv-btn-secondary" onClick={onClose} aria-label="Back">
@@ -1882,7 +1926,7 @@ export function InteractiveLessonEditor({
               Play from here
             </button>
             <span className="tabular-nums text-sm font-semibold text-[var(--ss-ink)]">
-              {formatTimecode(elapsedMs)} / {formatTimecode(totalMs)}
+              {formatTimecode(displayElapsedMs)} / {formatTimecode(totalMs)}
             </span>
           </div>
           <label className="flex items-center gap-2 text-xs text-[var(--ss-muted)]">
@@ -1917,7 +1961,7 @@ export function InteractiveLessonEditor({
                 0,
                 Math.min(1, (e.clientX - rect.left + track.scrollLeft) / Math.max(track.scrollWidth, 1)),
               );
-              seekLessonMs(ratio * totalMs);
+              seekLessonMs(ratio * layoutTotal);
               setPlaying(false);
             }}
             onDrop={(e) => {
@@ -1938,7 +1982,10 @@ export function InteractiveLessonEditor({
             <div
               className="ilv-playhead"
               style={{
-                left: totalMs > 0 ? `${(elapsedMs / totalMs) * 100}%` : 0,
+                left:
+                  layoutTotal > 0
+                    ? `${Math.min(100, Math.max(0, (absoluteMs / layoutTotal) * 100))}%`
+                    : 0,
               }}
             />
             {lesson.scenes.length === 0 ? (
@@ -2036,17 +2083,8 @@ export function InteractiveLessonEditor({
             pxPerMs={pxPerMs}
             onChange={(patch) => pushHistory({ ...lesson, ...patch })}
             onSeek={(ms) => {
-              let remaining = Math.max(0, ms);
-              for (let i = 0; i < lesson.scenes.length; i++) {
-                const dur = Math.max(1, lesson.scenes[i].durationMs || 4000);
-                if (remaining <= dur || i === lesson.scenes.length - 1) {
-                  setSceneIndex(i);
-                  setSceneTimeMs(Math.min(remaining, dur));
-                  setPlaying(false);
-                  return;
-                }
-                remaining -= dur;
-              }
+              seekLessonMs(ms);
+              setPlaying(false);
             }}
           />
 

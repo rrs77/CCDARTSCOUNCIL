@@ -101,8 +101,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'We Teach Drama',
     shortName: 'We Teach Drama',
     siteUrl: 'https://www.weteachdrama.com/',
-    /** Colour mark with transparent background for org cards */
-    logoSrc: '/partners/weteachdrama/wtd-logo-from-site.png',
+    /** Official weTD wordmark from weteachdrama.com on brand purple (uncropped). */
+    logoSrc: '/partners/paid-logos/we-teach-drama-header.png',
     interactive: true,
     paid: true,
     tagline: 'Drama schemes and classroom resources',
@@ -110,11 +110,10 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
       'We Teach Drama publishes classroom schemes, CPD and design resources for secondary drama teachers — from KS3 cover packs and theatre design challenge mats to GCSE AQA set-text revision (including Blood Brothers) and practitioner packs for ages 14–18.',
       'Add to CCDesigner seeds original local planning outlines with key-stage standards attached. Paid PDFs are never copied — purchase resources on the official We Teach Drama site.',
     ],
-    primaryColor: '#1f2937',
+    primaryColor: '#2D1B4E',
     accentColor: '#F59E0B',
-    /** Colour transparent logo — no white plate on dark strip */
     logoOnPlate: true,
-    logoPanelColor: 'transparent',
+    logoPanelColor: '#2D1B4E',
   },
   {
     slug: 'ems',
@@ -184,8 +183,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'iCompose',
     shortName: 'iCompose',
     siteUrl: 'https://www.icancompose.com/',
-    /** White lockup for dark org-card strip */
-    logoSrc: '/partners/icompose.svg',
+    /** Official I Can Compose mark from icancompose.com */
+    logoSrc: '/partners/paid-logos/icompose.svg',
     interactive: true,
     paid: true,
     tagline: 'Online composition courses for secondary musicians',
@@ -195,7 +194,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#0a1628',
     accentColor: '#5BA3D9',
-    logoOnPlate: false,
+    logoOnPlate: true,
+    logoPanelColor: '#FFFFFF',
   },
   {
     slug: 'dramaresource',
@@ -204,7 +204,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'Drama Resource (David Farmer)',
     shortName: 'Drama Resource',
     siteUrl: 'https://dramaresource.com/',
-    logoSrc: '/partners/drama-resource.svg',
+    /** Official white wordmark from dramaresource.com on brand green */
+    logoSrc: '/partners/paid-logos/drama-resource-white-clear.png',
     interactive: true,
     paid: true,
     tagline: 'Creative ideas for teaching drama — David Farmer',

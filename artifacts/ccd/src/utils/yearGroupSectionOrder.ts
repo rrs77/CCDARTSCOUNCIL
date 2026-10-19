@@ -40,28 +40,60 @@ export function resolveYearGroupFromToken<T extends YearGroupLike>(
   );
 }
 
-/** Suggest a key-stage section by name/id pattern (hint only — never auto-allocate for real users). */
+/**
+ * Suggest a key-stage section by name/id pattern.
+ * Used as a display fallback when Settings has not placed the class in a stage yet.
+ * Check higher year numbers first so "Year 11" is not matched as "Year 1".
+ */
 export function getDefaultSectionIdForYearGroup(id: string, name: string): string {
-  const n = name || id || '';
+  const n = `${name || ''} ${id || ''}`.trim();
   const lower = n.toLowerCase();
-  if (['lkg', 'ukg', 'lower kindergarten', 'upper kindergarten', 'reception'].some((k) => lower.includes(k))) {
+
+  // EYFS — kindergarten / reception (word-ish matches; avoid false hits on longer ids)
+  if (
+    /\b(lkg|ukg)\b/.test(lower) ||
+    lower.includes('lower kindergarten') ||
+    lower.includes('upper kindergarten') ||
+    /\breception\b/.test(lower)
+  ) {
     return 'eyfs';
   }
-  if (lower.includes('year 1') || lower.includes('year1')) return 'ks1';
-  if (lower.includes('year 2') || lower.includes('year2')) return 'ks1';
-  if (['year 3', 'year 4', 'year 5', 'year 6'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks2';
+
+  // Explicit stage / qualification labels
+  if (/\b(gcse|ks4|key stage 4)\b/.test(lower)) return 'ks4';
+  if (/\b(a[\s-]?level|ks5|key stage 5|sixth form)\b/.test(lower)) return 'ks5';
+  if (/\b(ks3|key stage 3)\b/.test(lower)) return 'ks3';
+  if (/\b(ks2|key stage 2)\b/.test(lower)) return 'ks2';
+  if (/\b(ks1|key stage 1)\b/.test(lower)) return 'ks1';
+  if (/\b(eyfs|early years)\b/.test(lower)) return 'eyfs';
+
+  // Year N — highest first so Year 11 ≠ Year 1
+  const yearMatch = lower.match(/\byear\s*(\d{1,2})\b/) || lower.match(/\by(\d{1,2})\b/);
+  if (yearMatch) {
+    const y = Number(yearMatch[1]);
+    if (y === 1 || y === 2) return 'ks1';
+    if (y >= 3 && y <= 6) return 'ks2';
+    if (y >= 7 && y <= 9) return 'ks3';
+    if (y === 10 || y === 11) return 'ks4';
+    if (y >= 12 && y <= 14) return 'ks5';
   }
-  if (['year 7', 'year 8', 'year 9'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks3';
-  }
-  if (['year 10', 'year 11'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks4';
-  }
-  if (['year 12', 'year 13', 'year 14'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks5';
-  }
+
   return 'other';
+}
+
+/**
+ * Resolve which section a class belongs to for display:
+ * 1) Settings key-stage membership (EYFS–KS5) wins — drag-into-stage stays authoritative
+ * 2) If the class is missing or only in Other/Unallocated, infer from name/id
+ * Does not write back to Settings.
+ */
+export function resolveDisplaySectionIdForYearGroup<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(sections: S[], group: T, groups: T[]): string {
+  const fromSettings = findSectionIdForYearGroup(sections, group.id, groups);
+  if (fromSettings && fromSettings !== 'other') return fromSettings;
+  return getDefaultSectionIdForYearGroup(group.id, group.name);
 }
 
 function emptySectionBuckets(): Map<string, string[]> {

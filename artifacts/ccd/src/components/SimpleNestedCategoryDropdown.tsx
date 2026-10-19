@@ -112,11 +112,13 @@ export function SimpleNestedCategoryDropdown({
     return filtered;
   }, [categories, currentSheetInfo, customYearGroups, showAllCategories]);
 
-  // Check if filtering is active
+  // Key-stage filtering UI only when we are actually filtering by year group.
+  // When showAllCategories is true, use the grouped list so every category is reachable.
   const isFilteringActive = useMemo(() => {
+    if (showAllCategories) return false;
     const yearGroupKeys = getCurrentYearGroupKeys();
     return yearGroupKeys.length > 0;
-  }, [currentSheetInfo, customYearGroups]);
+  }, [currentSheetInfo, customYearGroups, showAllCategories]);
 
   // Get count of filtered vs total categories
   const filteredCount = filteredCategories.length;

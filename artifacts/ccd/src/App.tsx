@@ -70,6 +70,7 @@ import {
 } from './components/login/prototypeCopy';
 import { ForumApp, isForumPath } from './components/Forum/ForumApp';
 import { OmniMusicPartnerHub } from './components/partners/OmniMusicPartnerHub';
+import { isBoltOnsPath } from './components/boltOns/routes';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
@@ -108,7 +109,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   }, [user, loading]);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
-  // (`/roh`, `/lso`, …), Music Hubs, and the forum stay on their path.
+  // (`/roh`, `/lso`, …), Music Hubs, bolt-ons, and the forum stay on their path.
   useEffect(() => {
     if (
       user &&
@@ -117,6 +118,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       !onForum &&
       musicHubRoute === null &&
       typeof window !== 'undefined' &&
+      !isBoltOnsPath(window.location.pathname) &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
@@ -125,20 +127,16 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   const [showHelpGuide, setShowHelpGuide] = useState(false);
   const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
 
-  // Demo / prototype entry only — welcome modal. Tabs explainer opens on
-  // explicit click near the Dashboard tabs (not chained after welcome).
-  // Real teacher logins must not see these popups.
+  // C6: landing already has one decision panel — do not stack a welcome modal
+  // after demo login. Mark seen so older sessions stay quiet.
   useEffect(() => {
     if (!user || partnerHub || onForum || musicHubRoute !== null || !isAuthorizedDemoMode()) return;
-    let welcomeSeen = false;
     try {
-      welcomeSeen = sessionStorage.getItem(WELCOME_PROTOTYPE_STORAGE_KEY) === '1';
+      sessionStorage.setItem(WELCOME_PROTOTYPE_STORAGE_KEY, '1');
     } catch {
-      // still show welcome
+      /* ignore */
     }
-    if (!welcomeSeen) {
-      setShowPrototypeWelcome(true);
-    }
+    setShowPrototypeWelcome(false);
   }, [user, partnerHub, onForum, musicHubRoute]);
 
   // Demo-only: Dashboard "About these tabs" button re-opens the explainer anytime.

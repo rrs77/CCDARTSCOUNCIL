@@ -97,12 +97,20 @@ function DragPreview({ itemType, item }: DragPreviewProps) {
         </div>
       );
     case 'lesson':
-    case 'lesson-card': {
+    case 'lesson-card':
+    case 'planner-lesson': {
       const title = item?.title || item?.name || 'Lesson';
+      const time = item?.time ? String(item.time) : '';
       return (
-        <div className={baseClass}>
+        <div
+          className={`${baseClass} rotate-1 shadow-[0_12px_28px_rgba(31,27,77,0.22)]`}
+          style={{ minWidth: 160 }}
+        >
           <BookOpen className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
-          <span className="truncate">{title}</span>
+          <span className="min-w-0 flex-1 truncate">
+            {time ? <span className="mr-1.5 font-bold text-[#4338E8]">{time}</span> : null}
+            {title}
+          </span>
         </div>
       );
     }

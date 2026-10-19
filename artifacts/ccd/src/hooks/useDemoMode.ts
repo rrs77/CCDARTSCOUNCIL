@@ -1,40 +1,34 @@
 import { useMemo } from 'react';
 import { isDemoModeActive } from '../utils/demoMode';
-import toast from 'react-hot-toast';
 
+/**
+ * UI helpers for the (legacy) demo/preview session flag.
+ *
+ * Preview/demo mode no longer gates exporting, printing, or sharing — any
+ * signed-in user (including the Demo Visitor account) must be able to use
+ * those features. `isDemo` is therefore always false for feature gates.
+ *
+ * `isDemoModeActive()` still exists for data/auth seeding (localStorage
+ * snapshot, synthetic session); do not use it to lock PDF/share/print UI.
+ */
 export function useDemoMode() {
-  const isDemo = useMemo(() => isDemoModeActive(), []);
+  // Never treat demo/preview as a feature lock for signed-in sessions.
+  const isDemo = useMemo(() => false, []);
 
-  const showUpgradePrompt = (featureName: string) => {
-    toast(
-      `${featureName} is available with a full account. Sign up free to unlock exporting, printing, and sharing.`,
-      {
-        duration: 5000,
-        style: {
-          background: '#312e81',
-          color: '#e0e7ff',
-          borderRadius: '12px',
-          padding: '14px 18px',
-          fontSize: '14px',
-          maxWidth: '420px',
-          border: '1px solid #4338ca',
-        },
-      }
-    );
+  /** @deprecated Preview gates are gone; kept as a no-op for call-site compatibility. */
+  const showUpgradePrompt = (_featureName: string) => {
+    // Intentionally empty — export/print/share are available to all signed-in users.
   };
 
-  const gateFeature = (featureName: string, callback: () => void) => {
-    if (isDemo) {
-      showUpgradePrompt(featureName);
-      return;
-    }
+  const gateFeature = (_featureName: string, callback: () => void) => {
     callback();
   };
 
-  // The prototype now carries a full snapshot of real account content and
-  // supports the complete editing workflow, so descriptions are no longer
-  // truncated for demo visitors.
+  // Descriptions are never truncated for demo visitors.
   const truncateForDemo = (text: string, _limit = 90): string => text;
 
-  return { isDemo, showUpgradePrompt, gateFeature, truncateForDemo };
+  /** True when the tab still carries the legacy demo seed flag (data path only). */
+  const isDemoSession = useMemo(() => isDemoModeActive(), []);
+
+  return { isDemo, isDemoSession, showUpgradePrompt, gateFeature, truncateForDemo };
 }

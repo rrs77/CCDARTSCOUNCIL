@@ -1,9 +1,19 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useDrop } from 'react-dnd';
 import { AlertTriangle, CalendarPlus, Check, CalendarClock, Plus } from 'lucide-react';
 import type { LessonPlan } from '../../contexts/DataContext';
 import type { PlannerData } from './usePlannerData';
 import { PlannerLessonCard } from './PlannerLessonCard';
 import { buildDayEntries, eventsOn, lessonTitle, nextFreeSlots } from './plannerEntries';
+import { lessonActivities, lessonActivityCount } from '../../utils/lessonEntries';
+import {
+  PLANNER_LESSON_DND,
+  fillOutlineSlot,
+  movePlanToDate,
+  resolveDropTime,
+  type PlannerLessonDragItem,
+} from './plannerDnd';
+import { useDropFlash, useDropZoneStyle } from '../dnd';
 import {
   addDays,
   HALF_TERMS,
@@ -27,6 +37,51 @@ export interface ViewProps {
   selectedKey?: string | null;
   onOpenEntry: (entry: DayEntry) => void;
   onAdd: (date: Date, classId?: string, time?: string) => void;
+}
+
+/** Persist a dragged lesson onto `targetDate`, optionally adjusting time for within-day order. */
+function useMovePlan(data: PlannerData) {
+  return useCallback(
+    (item: PlannerLessonDragItem, targetDate: Date, timeOpts?: { beforeTime?: string; afterTime?: string }) => {
+      const plan = data.plans.find((p) => p.id === item.planId);
+      if (!plan) return;
+      const targetKey = ymd(targetDate);
+      const sameDay = item.fromYmd === targetKey;
+      const nextTime = resolveDropTime({
+        keepTime: sameDay && !timeOpts?.beforeTime && !timeOpts?.afterTime ? item.time : item.time,
+        beforeTime: timeOpts?.beforeTime,
+        afterTime: timeOpts?.afterTime,
+      });
+      // No-op if nothing changes
+      if (sameDay && nextTime === (plan.time || item.time) && !timeOpts?.beforeTime && !timeOpts?.afterTime) {
+        return;
+      }
+      const next = movePlanToDate(plan, targetDate, nextTime);
+      void data.savePlans([next], `Moved to ${targetDate.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short' })}.`);
+    },
+    [data],
+  );
+}
+
+/** Drop a lesson onto an empty timetable outline — snaps date, time and class. */
+function useFillOutline(data: PlannerData) {
+  return useCallback(
+    (item: PlannerLessonDragItem, targetDate: Date, entry: DayEntry) => {
+      const plan = data.plans.find((p) => p.id === item.planId);
+      if (!plan || !entry.slot) return;
+      const next = fillOutlineSlot(plan, targetDate, {
+        classId: entry.classId,
+        time: entry.time || entry.slot.startTime,
+      });
+      const label = targetDate.toLocaleDateString('en-GB', {
+        weekday: 'short',
+        day: 'numeric',
+        month: 'short',
+      });
+      void data.savePlans([next], `Filled ${label} · ${entry.time || entry.slot.startTime}.`);
+    },
+    [data],
+  );
 }
 
 const EVENT_TONE: Record<PlannerEvent['type'], string> = {
@@ -66,58 +121,182 @@ function useEnsureVisibleLessons(data: PlannerData, entries: DayEntry[]) {
   }, [ids, ensureLessons]);
 }
 
+/* ---------------- Shared day column (week + day drop target) ---------------- */
+
+function DayColumn({
+  date,
+  entries,
+  events,
+  isToday,
+  data,
+  visibleIds,
+  selectedKey,
+  unitLabel,
+  onOpenEntry,
+  onAdd,
+  onMove,
+  onFillOutline,
+  roomy = false,
+}: {
+  date: Date;
+  entries: DayEntry[];
+  events: PlannerEvent[];
+  isToday?: boolean;
+  data: PlannerData;
+  visibleIds: Set<string>;
+  selectedKey?: string | null;
+  unitLabel: (plan?: LessonPlan) => string | undefined;
+  onOpenEntry: (entry: DayEntry) => void;
+  onAdd: (date: Date) => void;
+  onMove: (item: PlannerLessonDragItem, targetDate: Date, timeOpts?: { beforeTime?: string; afterTime?: string }) => void;
+  onFillOutline: (item: PlannerLessonDragItem, targetDate: Date, entry: DayEntry) => void;
+  roomy?: boolean;
+}) {
+  const { flashClass, triggerFlash } = useDropFlash();
+  const [{ isOver, canDrop }, drop] = useDrop(
+    () => ({
+      accept: PLANNER_LESSON_DND,
+      drop: (item: PlannerLessonDragItem, monitor) => {
+        // Child card drop targets handle relative placement / outline fill first
+        if (monitor.didDrop()) return;
+        onMove(item, date);
+        triggerFlash();
+        return { moved: true };
+      },
+      collect: (m) => ({ isOver: m.isOver({ shallow: false }), canDrop: m.canDrop() }),
+    }),
+    [date, onMove, triggerFlash],
+  );
+  const zoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'cell' });
+
+  const onDropRelative = useCallback(
+    (item: PlannerLessonDragItem, place: 'before' | 'after', relative: DayEntry) => {
+      const t = relative.time || relative.plan?.time;
+      onMove(item, date, place === 'before' ? { beforeTime: t } : { afterTime: t });
+      triggerFlash();
+    },
+    [date, onMove, triggerFlash],
+  );
+
+  // Keyboard: focused card — Alt+← / Alt+→ moves to adjacent weekday
+  const onCardKeyDown = useCallback(
+    (e: React.KeyboardEvent, entry: DayEntry) => {
+      if (!entry.plan || !e.altKey) return;
+      if (e.key !== 'ArrowLeft' && e.key !== 'ArrowRight') return;
+      e.preventDefault();
+      const delta = e.key === 'ArrowLeft' ? -1 : 1;
+      const target = addDays(date, delta);
+      // Skip weekends for schedule columns
+      const dow = target.getDay();
+      const adjusted =
+        dow === 0 ? addDays(target, delta > 0 ? 1 : -2) : dow === 6 ? addDays(target, delta > 0 ? 2 : -1) : target;
+      onMove(
+        {
+          type: PLANNER_LESSON_DND,
+          planId: entry.plan.id,
+          classId: entry.classId,
+          title: entry.plan.title || 'Lesson',
+          fromYmd: ymd(date),
+          time: entry.time || entry.plan.time,
+        },
+        adjusted,
+      );
+    },
+    [date, onMove],
+  );
+
+  return (
+    <section
+      ref={drop as unknown as React.Ref<HTMLElement>}
+      aria-label={date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
+      className={`ss-day ${isToday ? 'is-today' : ''} ${zoneClass} ${flashClass} ${isOver && canDrop ? 'is-drop-over' : ''}`}
+    >
+      <header className="ss-day-head shrink-0">
+        <span className="ss-day-num">{date.getDate()}</span>
+        <span className="ss-day-dow">{date.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
+        {isToday && <span className="ss-today-pill">Today</span>}
+      </header>
+      {events.map((ev) => (
+        <EventPill key={ev.id} event={ev} />
+      ))}
+      {entries.map((entry) => (
+        <PlannerLessonCard
+          key={entry.key}
+          entry={entry}
+          size={roomy ? 'roomy' : 'compact'}
+          cls={data.classById.get(entry.classId)}
+          title={lessonTitle(entry.plan, data.lessonCache[entry.classId])}
+          unitLabel={unitLabel(entry.plan)}
+          hasReflection={!!(entry.plan && data.reflections[entry.plan.id])}
+          selected={selectedKey === entry.key}
+          showClass={visibleIds.size !== 1}
+          onOpen={onOpenEntry}
+          onKeyMove={(e) => onCardKeyDown(e, entry)}
+          onDropRelative={
+            entry.plan ? (item, place) => onDropRelative(item, place, entry) : undefined
+          }
+          onDropOntoOutline={
+            !entry.plan && entry.slot
+              ? (item) => {
+                  onFillOutline(item, date, entry);
+                  triggerFlash();
+                }
+              : undefined
+          }
+        />
+      ))}
+      <button
+        type="button"
+        onClick={() => onAdd(date)}
+        className="ss-empty-slot"
+        aria-label={`Add a one-off lesson on ${date.toLocaleDateString('en-GB')}`}
+      >
+        <Plus className="h-4 w-4" />
+        Add one-off lesson
+      </button>
+    </section>
+  );
+}
+
 /* ---------------- Week ---------------- */
 
 export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, onAdd }: ViewProps) {
   const mondayKey = startOfWeek(anchor).getTime();
   const days = useMemo(() => {
     const all = Array.from({ length: 7 }, (_, i) => addDays(new Date(mondayKey), i));
-    return all.map((d) => ({ date: d, entries: buildDayEntries(d, visibleIds, data.plans, data.slots), events: eventsOn(d, data.events) }));
+    return all.map((d) => ({
+      date: d,
+      entries: buildDayEntries(d, visibleIds, data.plans, data.slots, data.events),
+      events: eventsOn(d, data.events),
+    }));
   }, [mondayKey, visibleIds, data.plans, data.slots, data.events]);
   const shown = days.filter((d, i) => i < 5 || d.entries.length > 0);
   const allEntries = useMemo(() => days.flatMap((d) => d.entries), [days]);
   useEnsureVisibleLessons(data, allEntries);
   const unitLabel = useUnitLabel(data);
   const today = new Date();
+  const onMove = useMovePlan(data);
+  const onFillOutline = useFillOutline(data);
 
   return (
     <div className="ss-week-grid -mx-1 overflow-x-auto px-1 pb-1 lg:mx-0 lg:overflow-visible lg:px-0">
-      {shown.filter((_, i) => i < 5 || shown.length <= 5).map(({ date, entries, events }) => {
-        const isToday = sameDay(date, today);
-        return (
-          <section
-            key={ymd(date)}
-            aria-label={date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-            className={`ss-day ${isToday ? 'is-today' : ''}`}
-          >
-            <header className="ss-day-head shrink-0">
-              <span className="ss-day-num">{date.getDate()}</span>
-              <span className="ss-day-dow">{date.toLocaleDateString('en-GB', { weekday: 'short' })}</span>
-              {isToday && <span className="ss-today-pill">Today</span>}
-            </header>
-            {events.map((ev) => (
-              <EventPill key={ev.id} event={ev} />
-            ))}
-            {entries.map((entry) => (
-              <PlannerLessonCard
-                key={entry.key}
-                entry={entry}
-                cls={data.classById.get(entry.classId)}
-                title={lessonTitle(entry.plan, data.lessonCache[entry.classId])}
-                unitLabel={unitLabel(entry.plan)}
-                hasReflection={!!(entry.plan && data.reflections[entry.plan.id])}
-                selected={selectedKey === entry.key}
-                showClass={visibleIds.size !== 1}
-                onOpen={onOpenEntry}
-              />
-            ))}
-            <button type="button" onClick={() => onAdd(date)} className="ss-empty-slot" aria-label={`Add lesson on ${date.toLocaleDateString('en-GB')}`}>
-              <Plus className="h-4 w-4" />
-              Add lesson
-            </button>
-          </section>
-        );
-      })}
+      {shown.filter((_, i) => i < 5 || shown.length <= 5).map(({ date, entries, events }) => (
+        <DayColumn
+          key={ymd(date)}
+          date={date}
+          entries={entries}
+          events={events}
+          isToday={sameDay(date, today)}
+          data={data}
+          visibleIds={visibleIds}
+          selectedKey={selectedKey}
+          unitLabel={unitLabel}
+          onOpenEntry={onOpenEntry}
+          onAdd={onAdd}
+          onMove={onMove}
+          onFillOutline={onFillOutline}
+        />
+      ))}
     </div>
   );
 }
@@ -128,15 +307,34 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
   const dayKey = startOfDay(anchor).getTime();
   const date = new Date(dayKey);
   const entries = useMemo(
-    () => buildDayEntries(new Date(dayKey), visibleIds, data.plans, data.slots),
-    [dayKey, visibleIds, data.plans, data.slots],
+    () => buildDayEntries(new Date(dayKey), visibleIds, data.plans, data.slots, data.events),
+    [dayKey, visibleIds, data.plans, data.slots, data.events],
   );
   const events = eventsOn(date, data.events);
   useEnsureVisibleLessons(data, entries);
   const unitLabel = useUnitLabel(data);
+  const onMove = useMovePlan(data);
+  const onFillOutline = useFillOutline(data);
+  const { flashClass, triggerFlash } = useDropFlash();
+  const [{ isOver, canDrop }, drop] = useDrop(
+    () => ({
+      accept: PLANNER_LESSON_DND,
+      drop: (item: PlannerLessonDragItem, monitor) => {
+        if (monitor.didDrop()) return;
+        onMove(item, date);
+        triggerFlash();
+      },
+      collect: (m) => ({ isOver: m.isOver({ shallow: false }), canDrop: m.canDrop() }),
+    }),
+    [date, onMove, triggerFlash],
+  );
+  const zoneClass = useDropZoneStyle({ isOver, canDrop, variant: 'panel' });
 
   return (
-    <div className="mx-auto max-w-3xl space-y-3 rounded-[20px] bg-white/70 p-4 sm:p-5">
+    <div
+      ref={drop as unknown as React.Ref<HTMLDivElement>}
+      className={`mx-auto max-w-3xl space-y-3 rounded-[20px] bg-white/70 p-4 sm:p-5 ${zoneClass} ${flashClass}`}
+    >
       <h3 className="text-[17px] font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>
         {date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
         <span className="ml-2 text-[12px] font-semibold text-[#77738F]">· your teaching</span>
@@ -149,7 +347,7 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
       ))}
       {entries.length === 0 && (
         <p className="rounded-2xl border border-dashed border-[#E2E0EF] bg-[#F4F3FA] px-4 py-8 text-center text-sm text-[#77738F]">
-          Nothing planned for this day.
+          Nothing planned for this day. Drop a lesson here or add one.
         </p>
       )}
       {entries.map((entry) => (
@@ -168,13 +366,30 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
             selected={selectedKey === entry.key}
             showClass={visibleIds.size !== 1}
             onOpen={onOpenEntry}
+            onDropRelative={
+              entry.plan
+                ? (item, place) => {
+                    const t = entry.time || entry.plan?.time;
+                    onMove(item, date, place === 'before' ? { beforeTime: t } : { afterTime: t });
+                    triggerFlash();
+                  }
+                : undefined
+            }
+            onDropOntoOutline={
+              !entry.plan && entry.slot
+                ? (item) => {
+                    onFillOutline(item, date, entry);
+                    triggerFlash();
+                  }
+                : undefined
+            }
           />
         </div>
       ))}
       <div className="grid grid-cols-1 sm:grid-cols-[72px_1fr] sm:gap-4">
         <span className="hidden sm:block" />
-        <button type="button" onClick={() => onAdd(date)} className="ss-empty-slot" aria-label="Add a lesson">
-          <Plus className="h-4 w-4" /> Add a lesson
+        <button type="button" onClick={() => onAdd(date)} className="ss-empty-slot" aria-label="Add a one-off lesson">
+          <Plus className="h-4 w-4" /> Add a one-off lesson
         </button>
       </div>
     </div>
@@ -182,6 +397,76 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
 }
 
 /* ---------------- Month ---------------- */
+
+function MonthDayCell({
+  date,
+  inMonth,
+  isToday,
+  closed,
+  entries,
+  data,
+  onPickDay,
+  onMove,
+}: {
+  date: Date;
+  inMonth: boolean;
+  isToday: boolean;
+  closed?: PlannerEvent;
+  entries: DayEntry[];
+  data: PlannerData;
+  onPickDay: (d: Date) => void;
+  onMove: (item: PlannerLessonDragItem, targetDate: Date) => void;
+}) {
+  const { flashClass, triggerFlash } = useDropFlash();
+  const [{ isOver, canDrop }, drop] = useDrop(
+    () => ({
+      accept: PLANNER_LESSON_DND,
+      canDrop: () => !closed,
+      drop: (item: PlannerLessonDragItem) => {
+        onMove(item, date);
+        triggerFlash();
+      },
+      collect: (m) => ({ isOver: m.isOver(), canDrop: m.canDrop() }),
+    }),
+    [date, closed, onMove, triggerFlash],
+  );
+  const zoneClass = useDropZoneStyle({ isOver, canDrop: canDrop && !closed, variant: 'cell' });
+
+  return (
+    <button
+      type="button"
+      ref={drop as unknown as React.Ref<HTMLButtonElement>}
+      onClick={() => onPickDay(date)}
+      className={`ss-month-day ${closed ? 'is-closed' : ''} ${inMonth ? 'in-month' : 'out-month'} ${
+        isToday ? 'is-today' : ''
+      } ${zoneClass} ${flashClass}`}
+    >
+      <span className={`ss-month-num ${inMonth ? '' : 'is-muted'}`}>
+        <span className={isToday ? 'is-badge' : ''}>{date.getDate()}</span>
+        {closed && <span className="ss-month-closed">{closed.title}</span>}
+      </span>
+      <span className="ss-month-dots">
+        {entries.slice(0, 6).map((e) => (
+          <i key={e.key} style={{ background: data.classById.get(e.classId)?.color }} />
+        ))}
+      </span>
+      <span className="ss-month-lessons">
+        {entries.slice(0, 3).map((e) => {
+          const cls = data.classById.get(e.classId);
+          const color = cls?.color || '#475569';
+          return (
+            <span key={e.key} className="ss-month-chip" style={{ background: tint(color, 0.12) }}>
+              <i style={{ background: color }} />
+              <b style={{ color: readableInk(color) }}>{cls?.name}</b>
+              <em>{lessonTitle(e.plan, data.lessonCache[e.classId])}</em>
+            </span>
+          );
+        })}
+        {entries.length > 3 && <span className="ss-month-more">+{entries.length - 3}</span>}
+      </span>
+    </button>
+  );
+}
 
 export function MonthView({ data, visibleIds, anchor, onPickDay }: Omit<ViewProps, 'onOpenEntry' | 'onAdd'> & { onPickDay: (d: Date) => void }) {
   const year = anchor.getFullYear();
@@ -198,6 +483,7 @@ export function MonthView({ data, visibleIds, anchor, onPickDay }: Omit<ViewProp
     return out;
   }, [year, month]);
   const today = new Date();
+  const onMove = useMovePlan(data);
 
   return (
     <div className="ss-month">
@@ -209,40 +495,20 @@ export function MonthView({ data, visibleIds, anchor, onPickDay }: Omit<ViewProp
         ))}
         {weeks.flat().map((date) => {
           const inMonth = date.getMonth() === anchor.getMonth();
-          const entries = buildDayEntries(date, visibleIds, data.plans, data.slots).filter((e) => e.plan);
+          const entries = buildDayEntries(date, visibleIds, data.plans, data.slots, data.events).filter((e) => e.plan);
           const closed = eventsOn(date, data.events).find((e) => e.type === 'holiday' || e.type === 'inset');
-          const isToday = sameDay(date, today);
           return (
-            <button
-              type="button"
+            <MonthDayCell
               key={ymd(date)}
-              onClick={() => onPickDay(date)}
-              className={`ss-month-day ${closed ? 'is-closed' : ''} ${inMonth ? 'in-month' : 'out-month'} ${isToday ? 'is-today' : ''}`}
-            >
-              <span className={`ss-month-num ${inMonth ? '' : 'is-muted'}`}>
-                <span className={isToday ? 'is-badge' : ''}>{date.getDate()}</span>
-                {closed && <span className="ss-month-closed">{closed.title}</span>}
-              </span>
-              <span className="ss-month-dots">
-                {entries.slice(0, 6).map((e) => (
-                  <i key={e.key} style={{ background: data.classById.get(e.classId)?.color }} />
-                ))}
-              </span>
-              <span className="ss-month-lessons">
-                {entries.slice(0, 3).map((e) => {
-                  const cls = data.classById.get(e.classId);
-                  const color = cls?.color || '#475569';
-                  return (
-                    <span key={e.key} className="ss-month-chip" style={{ background: tint(color, 0.12) }}>
-                      <i style={{ background: color }} />
-                      <b style={{ color: readableInk(color) }}>{cls?.name}</b>
-                      <em>{lessonTitle(e.plan, data.lessonCache[e.classId])}</em>
-                    </span>
-                  );
-                })}
-                {entries.length > 3 && <span className="ss-month-more">+{entries.length - 3}</span>}
-              </span>
-            </button>
+              date={date}
+              inMonth={inMonth}
+              isToday={sameDay(date, today)}
+              closed={closed}
+              entries={entries}
+              data={data}
+              onPickDay={onPickDay}
+              onMove={onMove}
+            />
           );
         })}
       </div>
@@ -322,8 +588,8 @@ export function UnitsView({
         date: d,
         week: isoWeek(d),
         className: classId,
-        activities: (l.orderedActivities?.length ? l.orderedActivities : Object.values(l.grouped || {}).flat()).map((a) => ({ ...a, lessonNumber: n })),
-        duration: l.totalTime || 0,
+        activities: lessonActivities(l).map((a) => ({ ...a, lessonNumber: n })),
+        duration: l?.totalTime || 0,
         notes: '',
         status: 'planned',
         lessonNumber: n,
@@ -358,7 +624,7 @@ export function UnitsView({
       {!hasSlots && !isPastYear && (
         <div className="flex flex-col gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-sm text-[#8A5300] sm:flex-row sm:items-center">
           <AlertTriangle className="h-5 w-5 shrink-0" />
-          <span className="flex-1">Add {cls.name}’s regular lesson times to the timetable so remaining lessons can be scheduled automatically.</span>
+          <span className="flex-1">Add regular lesson times for {cls.name} in your weekly timetable so remaining lessons can be scheduled automatically.</span>
           <button type="button" onClick={onOpenTimetable} className="min-h-[40px] rounded-xl bg-white px-3 font-semibold text-[#1F1B4D] ring-1 ring-[#FDE68A]">
             Open timetable
           </button>
@@ -430,7 +696,7 @@ export function UnitsView({
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-[#1F2937]">{l?.title || l?.lessonName || `Lesson ${n}`}</span>
                       <span className="block text-xs text-[#77738F]">
-                        {plural(Object.values(l?.grouped || {}).flat().length, 'activity', 'activities')} · {l?.totalTime || 0} min
+                        {plural(lessonActivityCount(l), 'activity', 'activities')} · {l?.totalTime || 0} min
                       </span>
                     </span>
                     <span

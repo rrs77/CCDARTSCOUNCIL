@@ -7,8 +7,8 @@ import { PortalPopover } from './PortalPopover';
 
 const LYRIC_ANIMS: { id: TextAnimationType; label: string }[] = [
   { id: 'none', label: 'None' },
-  { id: 'karaoke-wipe', label: 'Karaoke wipe' },
-  { id: 'karaoke-fill', label: 'Karaoke fill' },
+  { id: 'karaoke-wipe', label: 'Lyric wipe' },
+  { id: 'karaoke-fill', label: 'Lyric fill' },
   { id: 'bounce-in', label: 'Bounce in' },
   { id: 'word-pop', label: 'Word pop' },
   { id: 'typewriter', label: 'Typewriter' },
@@ -66,7 +66,7 @@ export function LyricsCanvasToolbar({
       className="ilv-lyrics-canvas-toolbar"
       style={{ position: 'fixed', top: pos.top, left: pos.left, zIndex: 11000, width: 520 }}
       role="toolbar"
-      aria-label="Lyrics display"
+      aria-label="Lyric video display"
       onPointerDown={(e) => e.stopPropagation()}
       onClick={(e) => e.stopPropagation()}
     >

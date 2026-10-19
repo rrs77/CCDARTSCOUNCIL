@@ -44,6 +44,12 @@ import { setupOCRFilmComputerMusic } from './setupOCRFilmComputerMusic';
 import { setupWTDBloodBrothers } from './setupWTDBloodBrothers';
 import { setupLSOYear6Example } from './setupLSOYear6';
 import { setupROHRomeoJuliet } from './setupROHRomeoJuliet';
+import { filterLessonEntries } from './lessonEntries';
+import {
+  saveTeacherTimetable,
+  TEACHER_TIMETABLE_MIGRATION_KEY,
+  type TimetableEntry,
+} from './timetableStorage';
 
 type Row = Record<string, any>;
 
@@ -297,9 +303,8 @@ function attachPhaseStandardsToSnapshotLesson(
   const isYear6Music = sheetName === 'Year 6 Music';
   if (!isEyfs && !isYear6Music) return;
 
-  for (const [num, lesson] of Object.entries(allLessonsData)) {
+  for (const [num, lesson] of Object.entries(filterLessonEntries(allLessonsData))) {
     if (!lesson || typeof lesson !== 'object') continue;
-    if (['teachingUnits', 'lessonStandards'].includes(num)) continue;
 
     if (isEyfs) {
       // Store ELG texts in lessonStandards (legacy EYFS path) AND custom objective
@@ -386,7 +391,12 @@ export async function seedDemoData(): Promise<void> {
     for (const row of tables.lessons || []) {
       if (SKIP_SHEETS.has(row.sheet_name)) continue;
       const raw = row.data || {};
-      const allLessonsData: Row = structuredClone(raw.allLessonsData ?? raw);
+      // Snapshot rows store lessons flat under `data` (e.g. { lesson1: {...} }).
+      // Never nest sheet metadata back into `data` — lessonsApi.getBySheet spreads
+      // `data` as allLessonsData, and keys like allLessonsData/lessonStandards would
+      // show up as fake lessons in the Week planner picker.
+      const cloned = structuredClone(raw.allLessonsData ?? raw);
+      const allLessonsData: Row = filterLessonEntries(cloned);
       if (!allLessonsData || Object.keys(allLessonsData).length === 0) continue;
 
       const lessonStandardsMap: Record<string, string[]> = {
@@ -394,15 +404,18 @@ export async function seedDemoData(): Promise<void> {
       };
       attachPhaseStandardsToSnapshotLesson(row.sheet_name, allLessonsData, lessonStandardsMap);
 
+      const lessonNumbers = (row.lesson_numbers || Object.keys(allLessonsData)).filter(
+        (n: string) => !!allLessonsData[n],
+      );
       const bundle = {
         allLessonsData,
-        lessonNumbers: row.lesson_numbers || Object.keys(allLessonsData),
+        lessonNumbers,
         teachingUnits: raw.teachingUnits || row.teaching_units || [],
         lessonStandards: lessonStandardsMap,
       };
       localStorage.setItem(`lesson-data-${row.sheet_name}`, JSON.stringify(bundle));
       sheetNames.push({ sheet: row.sheet_name });
-      dbLessons.push({ ...row, data: { ...(typeof raw === 'object' ? raw : {}), allLessonsData, lessonStandards: lessonStandardsMap } });
+      dbLessons.push({ ...row, data: allLessonsData, lesson_numbers: lessonNumbers });
     }
 
     for (const { sheet, data } of generatedPerSheet) {
@@ -738,6 +751,61 @@ export async function seedDemoData(): Promise<void> {
         updated_at: p.updatedAt,
       })),
     );
+
+    // ---- 7b. Teacher timetable — filled slots (match this week's plans) + empty outlines
+    // Empty slots render as dashed outline cards on the Week planner so teachers
+    // can tell "booked lesson" from "timetable slot waiting for a lesson".
+    const addMinutes = (hhmm: string, mins: number) => {
+      const [h, m] = hhmm.split(':').map(Number);
+      const total = h * 60 + m + mins;
+      return `${String(Math.floor(total / 60) % 24).padStart(2, '0')}:${String(total % 60).padStart(2, '0')}`;
+    };
+    const mkSlot = (
+      id: string,
+      day: number,
+      startTime: string,
+      sheet: string,
+      location = 'Hall',
+    ): TimetableEntry => ({
+      id,
+      day,
+      startTime,
+      endTime: addMinutes(startTime, 45),
+      className: sheet,
+      yearGroupId: sheet,
+      location,
+      color: '',
+      type: 'curriculum',
+    });
+    // day = Date.getDay(): Mon=1 … Fri=5. Times match scheduleSpec where filled.
+    const timetableEntries: TimetableEntry[] = [
+      // Filled (have matching plans this week)
+      mkSlot('demo-tt-lkg-mon-0900', 1, '09:00', 'LKG'),
+      mkSlot('demo-tt-y8-mon-1100', 1, '11:00', 'Year 8 Music', 'Music room'),
+      mkSlot('demo-tt-rec-tue-0930', 2, '09:30', 'Reception Drama'),
+      mkSlot('demo-tt-y10-tue-1100', 2, '11:00', 'Year 10 Music (OCR)', 'Music room'),
+      mkSlot('demo-tt-y6-tue-1400', 2, '14:00', 'Year 6 Music', 'Music room'),
+      mkSlot('demo-tt-lkgm-wed-0900', 3, '09:00', 'Lower Kindergarten Music'),
+      mkSlot('demo-tt-y8-wed-1100', 3, '11:00', 'Year 8 Music', 'Music room'),
+      mkSlot('demo-tt-y9d-wed-1300', 3, '13:00', 'Year 9 Drama'),
+      mkSlot('demo-tt-ukg-thu-0945', 4, '09:45', 'UKG'),
+      mkSlot('demo-tt-y10-fri-1100', 5, '11:00', 'Year 10 Music (OCR)', 'Music room'),
+      mkSlot('demo-tt-y9m-fri-1330', 5, '13:30', 'Year 9 Music', 'Music room'),
+      // Empty outlines (no matching plans) — dashed cards on the week view
+      mkSlot('demo-tt-lkg-mon-1400', 1, '14:00', 'LKG'),
+      mkSlot('demo-tt-rec-tue-1030', 2, '10:30', 'Reception Drama'),
+      mkSlot('demo-tt-lkgm-wed-1430', 3, '14:30', 'Lower Kindergarten Music'),
+      mkSlot('demo-tt-ukg-thu-1130', 4, '11:30', 'UKG'),
+      mkSlot('demo-tt-y9m-fri-0900', 5, '09:00', 'Year 9 Music', 'Music room'),
+      mkSlot('demo-tt-y8-fri-1500', 5, '15:00', 'Year 8 Music', 'Music room'),
+    ];
+    const classRefs = yearGroupsForSettings.map((g) => ({ id: g.id, name: g.name }));
+    localStorage.setItem(TEACHER_TIMETABLE_MIGRATION_KEY, '1');
+    saveTeacherTimetable(timetableEntries, {
+      termId: 'A1',
+      useGlobal: true,
+      classes: classRefs,
+    });
 
     // ---- 8. Current sheet ----
     localStorage.setItem(
