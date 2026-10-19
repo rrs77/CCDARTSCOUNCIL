@@ -347,6 +347,29 @@ html.ccd-studio {
   margin-inline: 0;
 }
 
+.ccd-studio-workspace-inner.editor-flush {
+  /* Full-page activity editor: no outer padding/frame — editor top bar is the page header */
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: calc(100vh - 3.5rem);
+  max-height: calc(100vh - 3.5rem);
+  overflow: hidden;
+}
+
+.ccd-studio-workspace-inner.editor-flush > .ccd-fade-in-up {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.ccd-studio-workspace-inner.editor-flush > .ccd-fade-in-up > * {
+  flex: 1;
+  min-height: 0;
+}
+
 /*
  * Dialog discipline — oversized Tailwind max-w-5xl/6xl panels look stretched
  * on wide screens. Cap common dialog shells inside the Studio Score app.

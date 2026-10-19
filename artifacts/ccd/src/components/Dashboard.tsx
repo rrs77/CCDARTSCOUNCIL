@@ -83,6 +83,7 @@ export function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [, setUnits] = useState<Unit[]>([]);
   const [, setLessonBuilderHasUnsavedChanges] = useState(false);
+  const [activityEditorOpen, setActivityEditorOpen] = useState(false);
 
   const handleTabChange = (newTab: string) => setActiveTab(newTab);
 
@@ -182,6 +183,7 @@ export function Dashboard() {
   const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
   const wideCanvas = activeTab === 'activity-library';
+  const editorFlush = activeTab === 'activity-library' && activityEditorOpen;
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
 
@@ -189,8 +191,14 @@ export function Dashboard() {
   void setUnits;
 
   return (
-    <StudioShell active={navId} onNavigate={shellNavigate} hubsMode={hubsMode} wideCanvas={wideCanvas}>
-      {showTabsExplainerButton && activeTab !== 'our-partners' && (
+    <StudioShell
+      active={navId}
+      onNavigate={shellNavigate}
+      hubsMode={hubsMode}
+      wideCanvas={wideCanvas}
+      editorFlush={editorFlush}
+    >
+      {showTabsExplainerButton && activeTab !== 'our-partners' && !editorFlush && (
         <div className="mb-3 flex justify-end">
           <button
             type="button"
@@ -299,21 +307,26 @@ export function Dashboard() {
       )}
 
       {activeTab === 'activity-library' && (
-        <div className="ccd-fade-in-up" key="al">
-          <p className="ccd-studio-eyebrow mb-1">
-            YOUR TEACHING / <span>ACTIVITY LIBRARY</span>
-          </p>
-          <p className="mb-4 text-sm text-[#77738F]">
-            Showing folders and activities for{' '}
-            <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>. Switch
-            class in the header to see that class&apos;s library. Manage which folders each class sees in Settings.
-          </p>
+        <div className={`ccd-fade-in-up ${editorFlush ? 'h-full min-h-0' : ''}`} key="al">
+          {!editorFlush && (
+            <>
+              <p className="ccd-studio-eyebrow mb-1">
+                YOUR TEACHING / <span>ACTIVITY LIBRARY</span>
+              </p>
+              <p className="mb-4 text-sm text-[#77738F]">
+                Showing folders and activities for{' '}
+                <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>. Switch
+                class in the header to see that class&apos;s library. Manage which folders each class sees in Settings.
+              </p>
+            </>
+          )}
           <ActivityLibrary
             onActivitySelect={handleActivityAdd}
             selectedActivities={[]}
             className={currentSheetInfo.sheet}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
+            onEditorOpenChange={setActivityEditorOpen}
           />
         </div>
       )}

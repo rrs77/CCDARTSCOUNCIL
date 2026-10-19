@@ -40,11 +40,21 @@ interface StudioShellProps {
   hubsMode?: boolean;
   /** Drop workspace max-width (Activity Library grid needs the full column) */
   wideCanvas?: boolean;
+  /** Flush padding when a full-page editor (create/edit activity) owns the canvas */
+  editorFlush?: boolean;
   /** Slim class/settings bar from Header */
   topBar?: React.ReactNode;
 }
 
-export function StudioShell({ active, onNavigate, children, hubsMode, wideCanvas, topBar }: StudioShellProps) {
+export function StudioShell({
+  active,
+  onNavigate,
+  children,
+  hubsMode,
+  wideCanvas,
+  editorFlush,
+  topBar,
+}: StudioShellProps) {
   const [collapsed, setCollapsed] = useState(true);
 
   useEffect(() => {
@@ -141,7 +151,7 @@ export function StudioShell({ active, onNavigate, children, hubsMode, wideCanvas
       <div className="ccd-studio-workspace">
         {topBar}
         <div
-          className={`ccd-studio-workspace-inner ${hubsMode ? 'hubs-bridge' : ''} ${wideCanvas ? 'wide-canvas' : ''}`}
+          className={`ccd-studio-workspace-inner ${hubsMode ? 'hubs-bridge' : ''} ${wideCanvas ? 'wide-canvas' : ''} ${editorFlush ? 'editor-flush' : ''}`}
         >
           {children}
         </div>

@@ -84,6 +84,8 @@ interface ActivityLibraryProps {
   className: string;
   selectedCategory?: string;
   onCategoryChange?: (category: string) => void;
+  /** Notify parent when the full-page create/edit editor is open (hide library chrome). */
+  onEditorOpenChange?: (open: boolean) => void;
 }
 
 type ActivityHistoryAction =
@@ -96,7 +98,8 @@ export function ActivityLibrary({
   selectedActivities, 
   className,
   selectedCategory = 'all',
-  onCategoryChange
+  onCategoryChange,
+  onEditorOpenChange,
 }: ActivityLibraryProps) {
   const isViewOnly = useIsViewOnly();
   const { 
@@ -923,6 +926,13 @@ export function ActivityLibrary({
   const toolBtn =
     'inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#77738F] transition-colors hover:bg-[#E9E6FF] hover:text-[#1F1B4D] disabled:opacity-40';
   const toolBtnOn = 'bg-[#E9E6FF] text-[#4338E8]';
+
+  const editorOpen = showCreator || Boolean(editingActivity);
+
+  React.useEffect(() => {
+    onEditorOpenChange?.(editorOpen);
+    return () => onEditorOpenChange?.(false);
+  }, [editorOpen, onEditorOpenChange]);
 
   // Full-page create / edit (option A) — beside the studio sidebar, not a modal.
   if (showCreator) {
