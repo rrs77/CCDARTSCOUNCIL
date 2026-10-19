@@ -220,6 +220,7 @@ export function Dashboard() {
   const showTabsExplainerButton = isAuthorizedDemoMode();
   const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
+  const wideCanvas = activeTab === 'activity-library' || activeTab === 'lesson-viewer';
   const editorFlush = activeTab === 'activity-library' && activityEditorOpen;
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
