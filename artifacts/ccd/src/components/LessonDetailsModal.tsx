@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { sanitizeHtml } from '../utils/sanitize';
-import { X, Download, Edit3, Save, Check, Tag, Clock, Users, ExternalLink, FileText, Trash2, Share2, Target, Link, Loader2, Lock } from 'lucide-react';
+import { X, Download, Edit3, Save, Check, Tag, Clock, Users, ExternalLink, FileText, Trash2, Share2, Target, Link, Loader2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { ActivityDetails } from './ActivityDetails';
@@ -11,7 +11,6 @@ import { LessonPrintModal } from './LessonPrintModal';
 import { ResourceViewer } from './ResourceViewer';
 import { openActivityResource, shouldOpenResourceInNewTab } from '../utils/openActivityResource';
 import { useShareLesson } from '../hooks/useShareLesson';
-import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
 import type { Activity, LessonData } from '../contexts/DataContext';
 import { AttachInteractiveLesson } from '../features/interactive-lesson-viewer';
@@ -66,7 +65,6 @@ export function LessonDetailsModal({
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showPrintModal, setShowPrintModal] = useState(false);
   const { shareLesson, isSharing: isSharingLink } = useShareLesson();
-  const { isDemo, showUpgradePrompt } = useDemoMode();
 
   // Keep the page behind from scrolling while this modal is open, and unlock on close.
   useEffect(() => {
@@ -78,10 +76,6 @@ export function LessonDetailsModal({
   }, []);
 
   const handleCopyLink = async () => {
-    if (isDemo) {
-      showUpgradePrompt('Lesson sharing');
-      return;
-    }
     try {
       const url = await shareLesson(lessonNumber);
       if (url) {
@@ -299,20 +293,12 @@ export function LessonDetailsModal({
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  if (isDemo) {
-                    showUpgradePrompt('PDF export');
-                    return;
-                  }
                   setShowPrintModal(true);
                 }}
                 className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2"
-                title={isDemo ? 'Export PDF (sign up to unlock)' : 'Export PDF'}
+                title="Export PDF"
               >
-                {isDemo ? (
-                  <Lock className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                ) : (
-                  <Download className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                )}
+                <Download className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
                 <span className="text-sm font-medium hidden sm:inline">Export PDF</span>
               </button>
               {/* Copy Link Button */}
@@ -325,7 +311,7 @@ export function LessonDetailsModal({
                 }}
                 disabled={isSharingLink}
                 className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-all duration-200 group flex items-center space-x-2 disabled:opacity-60"
-                title={isDemo ? 'Copy link (sign up to unlock)' : 'Copy link to lesson PDF'}
+                title="Copy link to lesson PDF"
               >
                 {isSharingLink ? (
                   <>
@@ -334,11 +320,7 @@ export function LessonDetailsModal({
                   </>
                 ) : (
                   <>
-                    {isDemo ? (
-                      <Lock className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                    ) : (
-                      <Link className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
-                    )}
+                    <Link className="h-5 w-5 group-hover:scale-110 transition-transform duration-200" />
                     <span className="text-sm font-medium hidden sm:inline">Copy Link</span>
                   </>
                 )}
@@ -661,25 +643,6 @@ export function LessonDetailsModal({
                           {/* Full Description */}
                           {(() => {
                             const raw = activity.description || '';
-                            if (isDemo) {
-                              const plain = raw.includes('<')
-                                ? (() => { const d = document.createElement('div'); d.innerHTML = raw; return d.textContent || d.innerText || ''; })()
-                                : raw;
-                              const truncated = plain.length > 120 ? plain.substring(0, 120) + '...' : plain;
-                              return (
-                                <div className="relative select-none mb-3">
-                                  <div className="text-sm text-gray-700 leading-relaxed prose prose-sm max-w-none">
-                                    {truncated}
-                                  </div>
-                                  {plain.length > 120 && (
-                                    <div className="absolute inset-x-0 bottom-0 h-8 bg-gradient-to-t from-white to-transparent" />
-                                  )}
-                                  <p className="mt-1 text-xs text-indigo-500 italic">
-                                    Sign up for a free account to view full activity details.
-                                  </p>
-                                </div>
-                              );
-                            }
                             return (
                               <div 
                                 className="text-sm text-gray-700 leading-relaxed mb-3 prose prose-sm max-w-none"

@@ -1,5 +1,5 @@
 import { sanitizeHtml } from '../utils/sanitize';
-import React, { useState, useRef, useEffect, useMemo } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   Clock, 
   Video, 
@@ -27,7 +27,6 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { useDrag } from 'react-dnd';
 import { RichTextEditor } from './RichTextEditor';
 import type { Activity } from '../contexts/DataContext';
-import { isDemoModeActive } from '../utils/demoMode';
 import { openActivityResource } from '../utils/openActivityResource';
 
 interface ActivityCardProps {
@@ -81,8 +80,7 @@ export function ActivityCard({
   const [editedActivity, setEditedActivity] = useState<Activity>(activity);
   const [showResources, setShowResources] = useState(false);
   const [isExpanded, setIsExpanded] = useState(false);
-  const demoActive = useMemo(() => isDemoModeActive(), []);
-  
+
   // Normalize category name to match what's in the categories list (same logic as dropdown)
   const getNormalizedCategoryName = (categoryName: string) => {
     if (!categoryName) return categoryName;
@@ -133,20 +131,9 @@ export function ActivityCard({
 
   const formatDescription = (text: string) => {
     if (!text) return '';
-    
-    let processed = text;
-    if (demoActive) {
-      const plain = text.includes('<')
-        ? (() => { const d = document.createElement('div'); d.innerHTML = text; return d.textContent || d.innerText || ''; })()
-        : text;
-      processed = plain.length > 90 ? plain.substring(0, 90) + '...' : plain;
-      return processed;
-    }
-    
     if (text.includes('<')) {
       return sanitizeHtml(text);
     }
-    
     return text.replace(/\n/g, '<br>');
   };
 
@@ -443,8 +430,8 @@ className={`bg-white rounded-md shadow-soft border-l-4 p-3 transition-all durati
           
           {activity.description && (
             <div 
-              className={`text-sm text-gray-600 leading-relaxed flex-grow overflow-y-auto max-h-16 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100 ${demoActive ? 'select-none' : ''}`}
-              dangerouslySetInnerHTML={{ __html: demoActive ? formatDescription(activity.description) : sanitizeHtml(activity.description) }}
+              className="text-sm text-gray-600 leading-relaxed flex-grow overflow-y-auto max-h-16 scrollbar-thin scrollbar-thumb-gray-300 scrollbar-track-gray-100"
+              dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.description) }}
               style={{ cursor: 'pointer' }}
             />
           )}
