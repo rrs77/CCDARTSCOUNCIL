@@ -16,6 +16,12 @@ import type { Activity, LessonPlan } from '../contexts/DataContext';
 import { StudioShell, type StudioNavId } from './studio/StudioShell';
 import { MoreToolsPanel } from './studio/MoreToolsPanel';
 import { HalfTermDesigner } from './halfTerm/HalfTermDesigner';
+import { BoltOnsView } from './boltOns/BoltOnsView';
+import type { BoltOnsPageId } from './boltOns/types';
+import {
+  clearBoltOnsUrlIfPresent,
+  resolveBoltOnsPageFromLocation,
+} from './boltOns/routes';
 
 interface Unit {
   id: string;
@@ -47,7 +53,19 @@ const ALLOWED = new Set([
   'contact-us',
   'curriculum',
   'more',
+  'bolt-ons',
+  'assessify',
+  'perifeedback',
 ]);
+
+const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
+
+function initialDashboardTab(): string {
+  const fromBoltOns = resolveBoltOnsPageFromLocation();
+  if (fromBoltOns) return fromBoltOns;
+  if (isPartnerHubsLink()) return 'our-partners';
+  return 'unit-viewer';
+}
 
 export function Dashboard() {
   const {
@@ -61,11 +79,15 @@ export function Dashboard() {
     deleteUserLessonPlan,
   } = useData();
   const { getThemeForClass } = useSettings();
-  const [activeTab, setActiveTabRaw] = useState<string>(() =>
-    isPartnerHubsLink() ? 'our-partners' : 'unit-viewer',
-  );
+  const [activeTab, setActiveTabRaw] = useState<string>(initialDashboardTab);
   const newPartnerHubs = newPartnerHubsEnabled();
-  const setActiveTab = (tab: string) => setActiveTabRaw(tab === 'calendar' ? 'unit-viewer' : tab);
+  const setActiveTab = (tab: string) => {
+    const next = tab === 'calendar' ? 'unit-viewer' : tab;
+    setActiveTabRaw(next);
+    if (!BOLT_ON_TABS.has(next)) {
+      clearBoltOnsUrlIfPresent();
+    }
+  };
 
   useEffect(() => {
     const tab = activeTab === 'calendar' ? 'unit-viewer' : activeTab;
@@ -86,15 +108,31 @@ export function Dashboard() {
 
   useEffect(() => {
     try {
+      const fromPath = resolveBoltOnsPageFromLocation();
+      if (fromPath) {
+        setActiveTab(fromPath);
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab && ALLOWED.has(tab)) {
         setActiveTab(tab);
-        window.history.replaceState({}, '', window.location.pathname || '/');
+        if (!BOLT_ON_TABS.has(tab)) {
+          window.history.replaceState({}, '', window.location.pathname || '/');
+        }
       }
     } catch {
       /* ignore */
     }
+  }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const page = resolveBoltOnsPageFromLocation();
+      if (page) setActiveTab(page);
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
   }, []);
 
   useEffect(() => {
@@ -325,6 +363,14 @@ export function Dashboard() {
         <div className="ccd-fade-in-up" key="more">
           <MoreToolsPanel onNavigate={shellNavigate} />
         </div>
+      )}
+
+      {BOLT_ON_TABS.has(activeTab) && (
+        <BoltOnsView
+          key="boltons"
+          page={activeTab as BoltOnsPageId}
+          onNavigate={(page) => handleTabChange(page)}
+        />
       )}
     </StudioShell>
   );

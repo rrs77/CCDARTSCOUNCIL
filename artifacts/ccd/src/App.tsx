@@ -70,6 +70,7 @@ import {
 } from './components/login/prototypeCopy';
 import { ForumApp, isForumPath } from './components/Forum/ForumApp';
 import { OmniMusicPartnerHub } from './components/partners/OmniMusicPartnerHub';
+import { isBoltOnsPath } from './components/boltOns/routes';
 
 function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig | null }) {
   const { user, loading } = useAuth();
@@ -108,7 +109,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   }, [user, loading]);
 
   // Authenticated users on school homepage URLs rewrite to `/`. Partner hubs
-  // (`/roh`, `/lso`, …), Music Hubs, and the forum stay on their path.
+  // (`/roh`, `/lso`, …), Music Hubs, bolt-ons, and the forum stay on their path.
   useEffect(() => {
     if (
       user &&
@@ -117,6 +118,7 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       !onForum &&
       musicHubRoute === null &&
       typeof window !== 'undefined' &&
+      !isBoltOnsPath(window.location.pathname) &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
