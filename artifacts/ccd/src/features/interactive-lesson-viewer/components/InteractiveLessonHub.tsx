@@ -431,14 +431,19 @@ export function InteractiveLessonHub() {
           )}
 
           <aside className="ilv-lesson-tile ilv-hub-features-card" aria-label="What you can build">
-            <div className="ilv-lesson-tile-body" style={{ justifyContent: 'center', minHeight: 180 }}>
-              <h3 className="ilv-lesson-tile-title">What you can build</h3>
-              <p className="ilv-lesson-tile-desc mt-2" style={{ WebkitLineClamp: 6 }}>
-                {FEATURES.map((f) => f.label).join(' · ')}
+            <div className="ilv-hub-features-card-body">
+              <h3 className="ilv-hub-features-card-title">What you can build</h3>
+              <p className="ilv-hub-features-card-lede">
+                Present full-screen to the class, then attach a player-only link from any lesson.
               </p>
-              <p className="mt-3 text-[12px] text-[var(--ss-muted)]">
-                Features sit beside the library — not above it as a second hero.
-              </p>
+              <ul className="ilv-hub-features ilv-hub-features--card">
+                {FEATURES.map((f) => (
+                  <li key={f.label}>
+                    {f.icon}
+                    {f.label}
+                  </li>
+                ))}
+              </ul>
             </div>
           </aside>
 

@@ -329,7 +329,7 @@ export function Dashboard() {
               <p className="mb-4 text-sm text-[#77738F]">
                 Folders and activities for{' '}
                 <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>.
-                Primary actions use the same indigo as the rest of the app.
+                Switch class in the header to see that class&apos;s library.
               </p>
             </>
           )}

@@ -107,8 +107,8 @@ export function MoreToolsPanel({ onNavigate }: Props) {
       </p>
       <h1 className="ccd-studio-title">More tools</h1>
       <p className="ccd-studio-sub">
-        Extras that don&apos;t belong in the main create path. Primary areas stay in the sidebar —
-        this page no longer repeats them.
+        Shortcuts for settings, calendar, help and community. Planning and lesson tools stay in the
+        sidebar.
       </p>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">
