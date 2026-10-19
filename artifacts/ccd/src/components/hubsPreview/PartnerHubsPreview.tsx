@@ -49,11 +49,15 @@ import {
 } from './hubsPreviewContent';
 import {
   ArtsOrganisationsDirectoryView,
+  MusicHubListRow,
   MusicHubResultCard,
   MusicHubToolbar,
+  MusicHubsResultsHeader,
   PaidResourcesDirectoryView,
+  PartnerHubsHeaderActions,
   PartnerSectionTabs,
   SelectedAreaPanel,
+  musicHubCardTitle,
 } from './PartnerHubsDirectoryViews';
 import {
   ACCESS_LABEL,
@@ -176,8 +180,8 @@ export const isPartnerHubsLink = () => {
 
 // ---------------------------------------------------------------------------
 
-const ink = 'text-[#002D24]';
-const muted = 'text-[#002D24]/65';
+const ink = 'text-[#1F1B4D]';
+const muted = 'text-[#1F1B4D]/65';
 
 function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'teal' | 'amber' | 'brand' }) {
   const cls = {
@@ -198,13 +202,13 @@ function Crumbs({ items }: { items: { label: string; onClick?: () => void }[] })
     <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-[14px]">
       {items.map((it, i) => (
         <span key={i} className="flex items-center gap-1">
-          {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#002D24]/30" aria-hidden />}
+          {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#1F1B4D]/30" aria-hidden />}
           {it.onClick ? (
-            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#002D24]/60 hover:text-[#002D24] hover:underline">
+            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#1F1B4D]/60 hover:text-[#1F1B4D] hover:underline">
               {it.label}
             </button>
           ) : (
-            <span aria-current="page" className="px-1 font-medium text-[#002D24]">
+            <span aria-current="page" className="px-1 font-medium text-[#1F1B4D]">
               {it.label}
             </span>
           )}
@@ -229,7 +233,7 @@ function PrimaryButton({
     <button
       type={type}
       onClick={onClick}
-      className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#002D24] px-4 text-[15px] font-medium text-white shadow-[0_1px_2px_rgba(0,45,36,0.2)] transition hover:bg-[#0B3B30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14B8A6] ${className}`}
+      className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[15px] font-medium text-white shadow-[0_1px_2px_rgba(67,56,232,0.25)] transition hover:bg-[#3529d1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4338E8] ${className}`}
     >
       {children}
     </button>
@@ -247,7 +251,7 @@ function SecondaryButton({
   href?: string;
   className?: string;
 }) {
-  const cls = `inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#002D24]/12 bg-white px-4 text-[15px] font-medium text-[#002D24] transition hover:border-[#002D24]/25 hover:bg-[#F6F8F6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14B8A6] ${className}`;
+  const cls = `inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#1F1B4D]/12 bg-white px-4 text-[15px] font-medium text-[#1F1B4D] transition hover:border-[#1F1B4D]/25 hover:bg-[#F4F3FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4338E8] ${className}`;
   if (href)
     return (
       <a href={href} target="_blank" rel="noreferrer" className={cls}>
@@ -381,8 +385,8 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
       <label htmlFor="hubs-search" className="sr-only">
         Search hubs, places, organisations and resources
       </label>
-      <div className="flex h-14 items-center gap-3 rounded-2xl border border-[#002D24]/10 bg-white px-4 shadow-[0_1px_2px_rgba(0,45,36,0.04),0_8px_24px_-12px_rgba(0,45,36,0.18)] focus-within:border-[#14B8A6]/60 focus-within:ring-4 focus-within:ring-[#14B8A6]/10">
-        <Search className="h-5 w-5 shrink-0 text-[#002D24]/45" aria-hidden />
+      <div className="flex h-12 items-center gap-3 rounded-2xl border border-[#1F1B4D]/10 bg-white px-4 shadow-[0_1px_2px_rgba(31,27,77,0.04),0_8px_24px_-12px_rgba(31,27,77,0.12)] focus-within:border-[#4338E8]/50 focus-within:ring-4 focus-within:ring-[#4338E8]/12">
+        <Search className="h-5 w-5 shrink-0 text-[#1F1B4D]/40" aria-hidden />
         <input
           id="hubs-search"
           role="combobox"
@@ -409,10 +413,10 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
             } else if (e.key === 'Escape') setOpen(false);
           }}
           placeholder="Search hubs, places, organisations and resources…"
-          className="h-full min-w-0 flex-1 bg-transparent text-[16px] text-[#002D24] outline-none placeholder:text-[#002D24]/40"
+          className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-[#1F1B4D] outline-none placeholder:text-[#1F1B4D]/40"
         />
         {q && (
-          <button type="button" aria-label="Clear search" onClick={() => setQ('')} className="rounded-full p-1.5 text-[#002D24]/45 hover:bg-[#002D24]/5">
+          <button type="button" aria-label="Clear search" onClick={() => setQ('')} className="rounded-full p-1.5 text-[#1F1B4D]/45 hover:bg-[#4338E8]/10">
             <X className="h-4 w-4" />
           </button>
         )}
@@ -421,7 +425,7 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
         <div
           id="hubs-search-list"
           role="listbox"
-          className="absolute inset-x-0 top-[calc(100%+8px)] z-30 max-h-[420px] overflow-auto rounded-2xl border border-[#002D24]/10 bg-white p-2 shadow-[0_24px_48px_-16px_rgba(0,45,36,0.28)]"
+          className="absolute inset-x-0 top-[calc(100%+8px)] z-30 max-h-[420px] overflow-auto rounded-2xl border border-[#1F1B4D]/10 bg-white p-2 shadow-[0_24px_48px_-16px_rgba(31,27,77,0.28)]"
         >
           {hits.length === 0 && <p className={`px-3 py-4 text-[15px] ${muted}`}>No matches for “{q.trim()}”.</p>}
           {hits.map((h, i) => {
@@ -429,7 +433,7 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
             lastGroup = h.group;
             return (
               <div key={`${h.group}-${h.label}-${i}`}>
-                {header && <p className="px-3 pb-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#002D24]/45">{h.group}</p>}
+                {header && <p className="px-3 pb-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#1F1B4D]/45">{h.group}</p>}
                 <div
                   id={`hubs-hit-${i}`}
                   role="option"
@@ -439,13 +443,13 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
                     e.preventDefault();
                     choose(h);
                   }}
-                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 ${i === active ? 'bg-[#E8F0EA]' : ''}`}
+                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 ${i === active ? 'bg-[#E9E6FF]' : ''}`}
                 >
                   <span className="min-w-0">
                     <span className={`block truncate text-[15px] font-medium ${ink}`}>{h.label}</span>
                     <span className={`block truncate text-[14px] ${muted}`}>{h.detail}</span>
                   </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-[#002D24]/35" aria-hidden />
+                  <ArrowRight className="h-4 w-4 shrink-0 text-[#1F1B4D]/35" aria-hidden />
                 </div>
               </div>
             );
@@ -1824,6 +1828,7 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
   }, [ix, focus]);
 
   const [musicDiscipline, setMusicDiscipline] = useState<Discipline | 'All'>('All');
+  const [hubsView, setHubsView] = useState<'grid' | 'list'>('grid');
 
   const selectedArea = useMemo(() => {
     if (!ix) {
@@ -1833,6 +1838,7 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
         blurb: 'Select a region on the map to explore Music Hubs.',
         localAreas: [] as string[],
         viewFocus: { level: 'uk' } as MapFocus,
+        photoSrc: '/login/hero-arts-clean.jpg',
       };
     }
     if (focus.level === 'region') {
@@ -1843,21 +1849,37 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
         title: r?.name || 'Region',
         hubCount: hubs.length,
         blurb: `${hubs.length} Music Hub${hubs.length === 1 ? '' : 's'} serve schools across this region. Choose a local area or open the hub list below.`,
-        localAreas: lads.map((l) => l.name),
+        localAreas: lads.map((l) => l.name).slice(0, 8),
         viewFocus: focus,
+        photoSrc: '/login/hero-arts-clean.jpg',
       };
     }
     if (focus.level === 'hub') {
       const h = ix.hub(focus.id);
       const lads = h ? ix.ladsInHub(h.id) : [];
+      const isCambs = h?.id === 'cambridgeshire-and-peterborough';
+      const cambsOrder = [
+        'Cambridge',
+        'South Cambridgeshire',
+        'East Cambridgeshire',
+        'Huntingdonshire',
+        'Fenland',
+        'Peterborough',
+      ];
+      const localAreas = isCambs
+        ? cambsOrder.filter((n) => lads.some((l) => l.name === n))
+        : lads.map((l) => l.name);
       return {
-        title: h ? hubLabel(h) : 'Music Hub',
-        hubCount: h ? 1 : 0,
-        blurb: h?.leadOrganisation
-          ? `Lead organisation: ${h.leadOrganisation}. Open the hub page for resources, workshops and local services.`
-          : 'Open this Music Hub for resources and local services.',
-        localAreas: lads.map((l) => l.name),
+        title: isCambs ? 'Cambridgeshire' : h ? shortHubName(h) : 'Music Hub',
+        hubCount: lads.length || (h ? 1 : 0),
+        blurb: isCambs
+          ? 'A thriving music education community with opportunities for schools, ensembles, CPD and more.'
+          : h?.leadOrganisation
+            ? `Lead organisation: ${h.leadOrganisation}. Open the hub page for resources, workshops and local services.`
+            : 'Open this Music Hub for resources and local services.',
+        localAreas: isCambs ? localAreas.filter((n) => n !== 'Peterborough') : localAreas,
         viewFocus: focus,
+        photoSrc: '/login/hero-arts-clean.jpg',
       };
     }
     if (focus.level === 'lad') {
@@ -1871,6 +1893,7 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
           : 'No verified Music Hub listing for this area yet.',
         localAreas: lad ? [lad.name] : [],
         viewFocus: h ? ({ level: 'hub', id: h.id } as MapFocus) : focus,
+        photoSrc: '/login/hero-arts-clean.jpg',
       };
     }
     return {
@@ -1879,25 +1902,45 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
       blurb: 'Zoom into a region on the map to see Music Hubs and local authority areas, or browse the list below.',
       localAreas: ix.data.regions.map((r) => r.name).slice(0, 6),
       viewFocus: { level: 'nation', id: ENGLAND } as MapFocus,
+      photoSrc: '/login/hero-arts-clean.jpg',
     };
   }, [ix, focus]);
 
+  const sortedHubs = useMemo(
+    () =>
+      [...musicHubsForList].sort((a, b) =>
+        musicHubCardTitle(a.id, hubLabel(a), a.leadOrganisation ?? undefined).localeCompare(
+          musicHubCardTitle(b.id, hubLabel(b), b.leadOrganisation ?? undefined),
+        ),
+      ),
+    [musicHubsForList],
+  );
+
   return (
     <div className={`space-y-6 ${focus.level === 'lad' ? 'pb-56 lg:pb-0' : ''}`}>
-      <header className="space-y-4">
-        {atUk ? (
-          <div>
-            <h1 className="text-[32px] font-bold leading-[1.1] tracking-tight text-[#1F1B4D] sm:text-[38px]">
+      <header className="space-y-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            {!atUk && <Crumbs items={browseCrumbs} />}
+            <h1
+              className={`text-[32px] font-bold leading-[1.1] tracking-tight text-[#1F1B4D] sm:text-[40px] ${
+                atUk ? '' : 'mt-2'
+              }`}
+            >
               Partner Hubs
             </h1>
-            <p className={`ccd-page-lede ccd-page-lede--single mt-2 text-[16px] leading-snug ${muted}`}>
+            <p className="ccd-page-lede ccd-page-lede--single mt-2 max-w-2xl text-[16px] leading-snug text-[#1F1B4D]/65">
               Explore Music Hubs, arts organisations and teaching resources. Bring the ideas you find straight into your
               planning.
             </p>
           </div>
-        ) : (
-          <Crumbs items={browseCrumbs} />
-        )}
+          <PartnerHubsHeaderActions
+            onBrowseMap={() => {
+              writeRoute({ section: 'music-hubs', page: 'browse' });
+              go({ level: 'uk' });
+            }}
+          />
+        </div>
         <PartnerSectionTabs section={route.section} onSection={(s) => writeRoute({ section: s })} />
       </header>
 
@@ -1923,9 +1966,9 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
             <div className="h-[480px] animate-pulse rounded-2xl bg-[#EEF0F8]" aria-label="Loading map" />
           ) : (
             <>
-              <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-[#F4F3FA] p-2 sm:p-3">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)] lg:items-stretch">
-                  <div className="overflow-hidden rounded-xl bg-white">
+              <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04),0_12px_32px_-20px_rgba(31,27,77,0.18)]">
+                <div className="grid lg:grid-cols-[minmax(0,1.25fr)_minmax(280px,0.9fr)] lg:items-stretch">
+                  <div className="min-h-[320px] overflow-hidden sm:min-h-[400px] lg:min-h-[460px]">
                     <UkHubMap
                       ix={ix}
                       focus={focus}
@@ -1933,7 +1976,7 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
                       onHover={setHover}
                       onFocus={(f) => go(f)}
                       showBreadcrumb={false}
-                      className="h-[340px] sm:h-[420px] lg:h-[460px] !rounded-xl !border-0"
+                      className="h-full min-h-[320px] !rounded-none !border-0 sm:min-h-[400px] lg:min-h-[460px]"
                     />
                   </div>
                   <SelectedAreaPanel
@@ -1941,6 +1984,7 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
                     hubCount={selectedArea.hubCount}
                     blurb={selectedArea.blurb}
                     localAreas={selectedArea.localAreas}
+                    photoSrc={selectedArea.photoSrc}
                     onViewHubs={() => {
                       if (selectedArea.viewFocus.level === 'hub') {
                         go(selectedArea.viewFocus, 'hub');
@@ -1953,32 +1997,25 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
               </div>
 
               <section className="space-y-4" aria-labelledby="music-hubs-results">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                  <div>
-                    <h2 id="music-hubs-results" className="text-[22px] font-bold tracking-tight text-[#1F1B4D]">
-                      Music Hubs
-                    </h2>
-                    <p className={`mt-0.5 text-[14px] ${muted}`}>
-                      {musicHubsForList.length} hub{musicHubsForList.length === 1 ? '' : 's'}
-                      {atUk ? ' across England' : ` · ${focusName(ix, focus)}`}. Find local areas, resources and
-                      opportunities.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex min-h-[34px] items-center gap-1 rounded-full bg-white px-3 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10">
-                      Sort by: A–Z <ChevronRight className="h-3.5 w-3.5 rotate-90 opacity-50" aria-hidden />
-                    </span>
-                  </div>
-                </div>
-                {musicHubsForList.length === 0 ? (
+                <MusicHubsResultsHeader
+                  title="Music Hubs"
+                  subtitle={
+                    atUk
+                      ? `${sortedHubs.length} hubs across England. Find local areas, resources and CPD opportunities.`
+                      : `${sortedHubs.length} hub${sortedHubs.length === 1 ? '' : 's'} · ${focusName(ix, focus)}. Find local areas, resources and CPD opportunities.`
+                  }
+                  view={hubsView}
+                  onView={setHubsView}
+                />
+                {sortedHubs.length === 0 ? (
                   <BrowsePanel ix={ix} focus={focus} hover={hover} onHover={setHover} go={go} />
-                ) : (
-                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="list">
-                    {musicHubsForList.map((h) => (
+                ) : hubsView === 'grid' ? (
+                  <ul className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3" role="list">
+                    {sortedHubs.map((h) => (
                       <li key={h.id}>
                         <MusicHubResultCard
                           id={h.id}
-                          name={hubLabel(h)}
+                          name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
                           region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
                           location={h.authorities.slice(0, 2).join(', ') || h.aceAreaName || 'England'}
                           detail={
@@ -1986,6 +2023,19 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
                               ? `${h.leadOrganisation} delivers music education across ${h.lads.length} local areas.`
                               : `Music education hub covering ${h.lads.length} local areas.`
                           }
+                          onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <ul className="space-y-2" role="list">
+                    {sortedHubs.map((h) => (
+                      <li key={h.id}>
+                        <MusicHubListRow
+                          name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
+                          region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
+                          location={h.authorities.slice(0, 2).join(', ') || h.aceAreaName || 'England'}
                           onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
                         />
                       </li>
