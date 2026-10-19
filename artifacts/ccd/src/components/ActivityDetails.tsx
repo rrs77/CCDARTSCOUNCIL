@@ -283,7 +283,7 @@ export function ActivityDetails({
       const descText = isDemo ? truncateForDemo(activity.description.replace(/<[^>]*>/g, ''), 120) : activity.description;
       return wrapWithDemoProtection(
         <div
-          className="prose prose-sm max-w-none"
+          className="prose prose-sm max-w-none [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
           dangerouslySetInnerHTML={{ __html: isDemo ? descText : sanitizeHtml(activity.description) }}
           dir="ltr"
         />
@@ -298,7 +298,7 @@ export function ActivityDetails({
     
     return wrapWithDemoProtection(
       <div
-        className="prose prose-sm max-w-none"
+        className="prose prose-sm max-w-none [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(formattedDescription) }}
         dir="ltr"
       />
@@ -321,7 +321,7 @@ export function ActivityDetails({
     if (activity.activityText) {
       return (
         <div
-          className="prose prose-sm max-w-none"
+          className="prose prose-sm max-w-none [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.activityText) }}
           dir="ltr"
         />
