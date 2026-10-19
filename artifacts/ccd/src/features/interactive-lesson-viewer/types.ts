@@ -524,6 +524,18 @@ export interface InteractiveLesson {
   isDemo?: boolean;
 }
 
+/** Lightweight first-scene snapshot for library tile covers. */
+export interface InteractiveLessonCover {
+  type: SceneType;
+  title: string;
+  backgroundColor?: string;
+  backgroundGradient?: string;
+  mediaUrl?: string;
+  posterUrl?: string;
+  embedUrl?: string;
+  headline?: string;
+}
+
 export interface InteractiveLessonSummary {
   id: string;
   title: string;
@@ -533,6 +545,9 @@ export interface InteractiveLessonSummary {
   sceneCount: number;
   updatedAt: string;
   isDemo?: boolean;
+  cover?: InteractiveLessonCover;
+  /** Distinct scene types in order of first appearance (for cover chips). */
+  sceneTypes?: SceneType[];
 }
 
 export const SCENE_TYPE_COLORS: Record<SceneType, string> = {
