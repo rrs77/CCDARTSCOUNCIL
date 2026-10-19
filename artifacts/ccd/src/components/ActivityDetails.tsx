@@ -1,18 +1,21 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { sanitizeHtml } from '../utils/sanitize';
-import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Upload, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette, ArrowLeft } from 'lucide-react';
+import { X, Clock, Video, Music, FileText, Link as LinkIcon, Image, Volume2, Maximize2, Minimize2, ExternalLink, Tag, Plus, Save, Upload, Edit3, Check, Trash2, Info, BookOpen, FolderOpen, Palette, ArrowLeft, Clapperboard } from 'lucide-react';
 import { EditableText } from './EditableText';
 import { RichTextEditor } from './RichTextEditor';
 import { ResourceViewer } from './ResourceViewer';
 import { NestedStandardsBrowser } from './NestedStandardsBrowser';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
+import { CompactActivityResources } from './CompactActivityResources';
 import type { Activity } from '../contexts/DataContext';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useDemoMode } from '../hooks/useDemoMode';
 import { openActivityResource, shouldOpenResourceInNewTab } from '../utils/openActivityResource';
+import { SlidesLibraryPicker } from '../features/interactive-lesson-viewer';
+import { buildPlayerUrl } from '../features/interactive-lesson-viewer/utils/playerLinks';
 import toast from 'react-hot-toast';
 
 interface ActivityDetailsProps {
@@ -64,7 +67,7 @@ export function ActivityDetails({
   }
   
   const { nestedStandards, lessonStandards, addStandardToLesson, removeStandardFromLesson, updateActivity: updateActivityGlobal } = useData();
-  const { customYearGroups, mapActivityLevelToYearGroup } = useSettings();
+  const { customYearGroups, mapActivityLevelToYearGroup, resourceLinks } = useSettings();
   const { isDemo, truncateForDemo } = useDemoMode();
   const [selectedResource, setSelectedResource] = useState<{ url: string; title: string; type: string } | null>(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
@@ -78,10 +81,10 @@ export function ActivityDetails({
   const [isEditMode, setIsEditMode] = useState(isLessonBuilderContext ? initialEditMode : isEditing);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [standardsHasChanges, setStandardsHasChanges] = useState(false);
+  const [slidesPickerOpen, setSlidesPickerOpen] = useState(false);
   const [standardsLastSaved, setStandardsLastSaved] = useState<Date | null>(null);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
-  const imageInputRef = useRef<HTMLInputElement>(null);
 
   // Check if user is in view-only mode
   const isViewOnly = useIsViewOnly();
@@ -201,24 +204,6 @@ export function ActivityDetails({
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (isReadOnly) return; // Prevent uploads in read-only mode
-    
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    // Convert to base64 for demo purposes
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const imageUrl = event.target?.result as string;
-      setEditedActivity(prev => ({
-        ...prev,
-        imageLink: imageUrl
-      }));
-    };
-    reader.readAsDataURL(file);
-  };
-
   const handleDelete = () => {
     if (isReadOnly) return; // Prevent deletion in read-only mode
     setShowDeleteConfirm(true);
@@ -283,7 +268,7 @@ export function ActivityDetails({
       const descText = isDemo ? truncateForDemo(activity.description.replace(/<[^>]*>/g, ''), 120) : activity.description;
       return wrapWithDemoProtection(
         <div
-          className="prose prose-sm max-w-none"
+          className="prose prose-sm max-w-none [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
           dangerouslySetInnerHTML={{ __html: isDemo ? descText : sanitizeHtml(activity.description) }}
           dir="ltr"
         />
@@ -298,7 +283,7 @@ export function ActivityDetails({
     
     return wrapWithDemoProtection(
       <div
-        className="prose prose-sm max-w-none"
+        className="prose prose-sm max-w-none [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
         dangerouslySetInnerHTML={{ __html: sanitizeHtml(formattedDescription) }}
         dir="ltr"
       />
@@ -321,7 +306,7 @@ export function ActivityDetails({
     if (activity.activityText) {
       return (
         <div
-          className="prose prose-sm max-w-none"
+          className="prose prose-sm max-w-none [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
           dangerouslySetInnerHTML={{ __html: sanitizeHtml(activity.activityText) }}
           dir="ltr"
         />
@@ -868,99 +853,51 @@ export function ActivityDetails({
               </div>
             )}
 
-            {/* Image Upload (only in edit mode and not read-only) */}
-            {isEditMode && !isReadOnly && (
-              <div className="mb-6">
-                <h3 className="text-lg font-semibold text-gray-900 mb-3">Activity Image</h3>
-                <div className="flex items-center space-x-4">
-                  {editedActivity.imageLink ? (
-                    <div className="relative">
-                      <img 
-                        src={editedActivity.imageLink} 
-                        alt="Activity" 
-                        className="w-32 h-32 object-cover rounded-lg border border-gray-200"
-                      />
-                      <button
-                        onClick={() => setEditedActivity(prev => ({ ...prev, imageLink: '' }))}
-                        className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="w-32 h-32 border-2 border-dashed border-gray-300 rounded-lg flex items-center justify-center bg-gray-50">
-                      <Image className="h-8 w-8 text-gray-400" />
-                    </div>
-                  )}
-                  
-                  <div className="flex-1">
-                    <p className="text-sm text-gray-600 mb-2">
-                      Upload an image for this activity or provide an image URL
-                    </p>
-                    <div className="flex space-x-2">
-                      <button
-                        onClick={() => imageInputRef.current?.click()}
-                        className="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium rounded-lg flex items-center space-x-1"
-                      >
-                        <Upload className="h-4 w-4" />
-                        <span>Upload</span>
-                      </button>
-                      <input
-                        ref={imageInputRef}
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={handleImageUpload}
-                      />
-                      <input
-                        type="url"
-                        value={editedActivity.imageLink}
-                        onChange={(e) => setEditedActivity(prev => ({ ...prev, imageLink: e.target.value }))}
-                        placeholder="Or paste image URL"
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-sm"
-                        dir="ltr"
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Resources */}
+            {/* Resources — compact editor in edit mode; chip buttons when viewing */}
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                <EditableText 
-                  id="activity-resources-heading" 
-                  fallback="Resources"
-                />
-              </h3>
-              
               {isEditMode && !isReadOnly ? (
-                <div className="space-y-4">
-                  {[
-                    { key: 'videoLink', label: 'Video URL', icon: Video },
-                    { key: 'musicLink', label: 'Music URL', icon: Music },
-                    { key: 'backingLink', label: 'Backing Track URL', icon: Volume2 },
-                    { key: 'resourceLink', label: 'Resource URL', icon: FileText },
-                    { key: 'link', label: 'Additional Link', icon: LinkIcon },
-                    { key: 'vocalsLink', label: 'Vocals URL', icon: Volume2 },
-                    { key: 'canvaLink', label: 'Canva Design URL', icon: Palette },
-                  ].map(({ key, label, icon: Icon }) => (
-                    <div key={key} className="flex items-center space-x-3">
-                      <Icon className="h-5 w-5 text-gray-500 flex-shrink-0" />
-                      <input
-                        type="url"
-                        value={editedActivity[key as keyof Activity] as string}
-                        onChange={(e) => setEditedActivity(prev => ({ ...prev, [key]: e.target.value }))}
-                        className="flex-1 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
-                        placeholder={label}
-                        dir="ltr"
-                      />
-                    </div>
-                  ))}
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => setSlidesPickerOpen(true)}
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2.5 text-sm font-bold text-[#1F1B4D] hover:border-[#4338E8]"
+                  >
+                    <Clapperboard className="h-4 w-4 text-[#4338E8]" />
+                    Add slides from library
+                  </button>
+                <CompactActivityResources
+                  values={{
+                    videoLink: editedActivity.videoLink,
+                    musicLink: editedActivity.musicLink,
+                    backingLink: editedActivity.backingLink,
+                    resourceLink: editedActivity.resourceLink,
+                    vocalsLink: editedActivity.vocalsLink,
+                    canvaLink: editedActivity.canvaLink,
+                    imageLink: editedActivity.imageLink,
+                    link: editedActivity.link,
+                  }}
+                  onChange={(key, value) =>
+                    setEditedActivity((prev) => ({ ...prev, [key]: value }))
+                  }
+                  resourceLinks={resourceLinks}
+                  onImageFile={(file) => {
+                    const reader = new FileReader();
+                    reader.onload = (event) => {
+                      const imageUrl = event.target?.result as string;
+                      setEditedActivity((prev) => ({ ...prev, imageLink: imageUrl }));
+                    };
+                    reader.readAsDataURL(file);
+                  }}
+                />
                 </div>
               ) : (
                 <>
+                  <h3 className="mb-3 text-lg font-semibold text-gray-900">
+                    <EditableText
+                      id="activity-resources-heading"
+                      fallback="Resources"
+                    />
+                  </h3>
                   {resources.length > 0 ? (
                     <div className="grid grid-cols-2 gap-2">
                       {resources.map((resource, index) => {
@@ -983,11 +920,11 @@ export function ActivityDetails({
                       })}
                     </div>
                   ) : (
-                    <div className="text-center py-8">
-                      <FileText className="h-12 w-12 text-gray-300 mx-auto mb-3" />
+                    <div className="py-8 text-center">
+                      <FileText className="mx-auto mb-3 h-12 w-12 text-gray-300" />
                       <p className="text-gray-500">
-                        <EditableText 
-                          id="activity-no-resources-message" 
+                        <EditableText
+                          id="activity-no-resources-message"
                           fallback="No additional resources available"
                         />
                       </p>
@@ -1132,6 +1069,23 @@ export function ActivityDetails({
           </div>
         </div>
       )}
+
+      <SlidesLibraryPicker
+        open={slidesPickerOpen}
+        onClose={() => setSlidesPickerOpen(false)}
+        title="Add slides to activity"
+        onAttach={(id) => {
+          const url = `${window.location.origin}${buildPlayerUrl(id)}`;
+          setEditedActivity((prev) => ({
+            ...prev,
+            resourceLink: prev.resourceLink || url,
+            link: prev.link || url,
+          }));
+          setHasUnsavedChanges(true);
+          setIsEditMode(true);
+          toast.success('Slides player link added to resources');
+        }}
+      />
     </>,
     document.body
   );

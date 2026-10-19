@@ -26,7 +26,7 @@ import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { LessonExporter } from './LessonExporter';
 import { HalfTermCard } from './HalfTermCard';
-import { LessonSelectionModal } from './LessonSelectionModal';
+import { AssignSchemePanel } from './halfTerm/AssignSchemePanel';
 import { HalfTermView } from './HalfTermView';
 import { LessonDetailsModal } from './LessonDetailsModal';
 import { LessonPrintModal } from './LessonPrintModal';
@@ -197,6 +197,8 @@ export function UnitViewer({ initialHalfTermId = null, hidePageChrome = false }:
     setSelectedHalfTerm(initialHalfTermId);
     setShowLessonSelectionModal(true);
   }, [initialHalfTermId, loading, currentSheetInfo.sheet]);
+
+  // Note: half-term assignment now uses AssignSchemePanel (schemes only).
 
   // Load units from localStorage
   useEffect(() => {
@@ -1245,38 +1247,20 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
           />
         )}
 
-        {/* Lesson Selection Modal */}
-        {showLessonSelectionModal && selectedHalfTerm && (() => {
-          const lessonsForHalfTerm = getLessonsForHalfTerm(selectedHalfTerm);
-          console.log('🎯 UNIT VIEWER - Opening LessonSelectionModal:', {
-            selectedHalfTerm,
-            lessonsForHalfTerm,
-            lessonsCount: lessonsForHalfTerm.length,
-            halfTerms: halfTerms.map(ht => ({ id: ht.id, name: ht.name, lessons: ht.lessons }))
-          });
-          return (
-            <LessonSelectionModal
-              isOpen={showLessonSelectionModal}
-              onClose={() => {
-                setShowLessonSelectionModal(false);
-                setSelectedHalfTerm(null);
-              }}
-              halfTermId={selectedHalfTerm}
-              halfTermName={HALF_TERMS.find(term => term.id === selectedHalfTerm)?.name || ''}
-              halfTermMonths={HALF_TERMS.find(term => term.id === selectedHalfTerm)?.months || ''}
-              halfTermColor={TERM_COLORS[selectedHalfTerm]}
-              selectedLessons={lessonsForHalfTerm}
-              onSave={(lessons, isComplete) => {
-                // Preserve existing stacks when updating half-term
-                const existingHalfTerm = halfTerms.find(term => term.id === selectedHalfTerm);
-                const existingStacks = existingHalfTerm?.stacks || [];
-                updateHalfTerm(selectedHalfTerm, lessons, isComplete ?? false, existingStacks);
-                setShowLessonSelectionModal(false);
-                setSelectedHalfTerm(null);
-              }}
-            />
-          );
-        })()}
+        {/* Scheme-of-work assignment (whole units/stacks only — not single lessons) */}
+        {showLessonSelectionModal && selectedHalfTerm ? (
+          <AssignSchemePanel
+            target={{
+              classId: currentSheetInfo.sheet,
+              className: currentSheetInfo.display || currentSheetInfo.sheet,
+              halfTermId: selectedHalfTerm,
+            }}
+            onClose={() => {
+              setShowLessonSelectionModal(false);
+              setSelectedHalfTerm(null);
+            }}
+          />
+        ) : null}
 
         {/* Lesson Details Modal */}
         {selectedLessonForDetails && (() => {

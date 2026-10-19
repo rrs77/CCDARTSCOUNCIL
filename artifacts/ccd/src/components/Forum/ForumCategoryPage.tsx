@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { getCategory, listTopics, createTopic } from '../../utils/forumApi';
 import type { ForumCategory, ForumTopicListItem } from '../../types/forum';
 import { useAuth } from '../../hooks/useAuth';
+import { ForumLoadError } from './ForumLoadError';
 
 export function ForumCategoryPage({
   slug,
@@ -91,6 +92,26 @@ export function ForumCategoryPage({
     );
   }
 
+  if (error && !category) {
+    return (
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => navigate('/forum')}
+          className="text-sm text-[#1F1B4D] hover:underline"
+        >
+          ← All categories
+        </button>
+        <ForumLoadError
+          title="Could not open this category"
+          message={error}
+          onRetry={() => void load()}
+          showLocalDevHint
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="space-y-6">
       <button
@@ -141,10 +162,8 @@ export function ForumCategoryPage({
         </div>
       )}
 
-      {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
+      {error && category && (
+        <ForumLoadError title="Something went wrong" message={error} onRetry={() => void load()} />
       )}
 
       {showCompose && category && (
