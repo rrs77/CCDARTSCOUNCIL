@@ -1313,10 +1313,10 @@ export function ActivityLibrary({
                 setShowCreator(true);
               }}
               disabled={isViewOnly}
-              className="ml-1 inline-flex h-8 items-center gap-1 rounded-lg bg-[#FFC93C] px-2.5 text-[11px] font-bold text-[#1F1B4D] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ml-1 inline-flex h-8 items-center gap-1 rounded-lg bg-[#4338E8] px-2.5 text-[11px] font-bold text-white hover:bg-[#3529d1] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-3.5 w-3.5" />
-              Create
+              Create activity
             </button>
 
             <div className="relative">

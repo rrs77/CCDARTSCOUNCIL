@@ -20,7 +20,7 @@ export function AssessifyPage() {
       <header className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="max-w-2xl">
           <p className="ccd-studio-eyebrow">
-            Assessify / <span>Assessment &amp; progress</span>
+            YOUR TOOLS / <span>ASSESSIFY</span>
           </p>
           <h1 className="ccd-studio-title">Assessify</h1>
           <p className="ccd-studio-sub max-w-xl">

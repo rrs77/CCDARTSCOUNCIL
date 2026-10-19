@@ -22,8 +22,7 @@ export function BoltOnsCatalogue({ onNavigate }: Props) {
       <header className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
         <div className="max-w-2xl">
           <p className="ccd-studio-eyebrow">
-            <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[#4338E8]" aria-hidden />
-            The Rhythmstix suite
+            YOUR TOOLS / <span>BOLT-ONS</span>
           </p>
           <h1 className="ccd-studio-title">Tools that grow with your teaching.</h1>
           <p className="ccd-studio-sub max-w-xl">

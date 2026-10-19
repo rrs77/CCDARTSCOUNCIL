@@ -4,7 +4,7 @@ import type { LessonPlan } from '../../contexts/DataContext';
  * Planner surfaces:
  * - day/week/month = Schedule room
  * - timetable = full-page weekly Timetable builder (teacher-level)
- * - term/units = Units room
+ * - term/units = legacy (redirect to Half-terms sidebar tab; C2)
  * - classic = optional class calendar (events / key dates) — not the Timetable tab
  */
 export type PlannerView = 'day' | 'week' | 'month' | 'term' | 'units' | 'timetable' | 'classic';

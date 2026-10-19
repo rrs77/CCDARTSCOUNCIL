@@ -218,14 +218,14 @@ export function PlannerLessonCard({
             )}
           </span>
           {entry.location ? (
-            <span className="pl-1 flex items-center gap-1 text-[11px] text-[#77738F] min-w-0">
+            <span className="pl-1 flex items-center gap-1 text-[11px] text-[#A8A4BC] min-w-0">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden />
               <span className="truncate">{entry.location}</span>
             </span>
           ) : (
-            <span className="pl-1 text-[11px] text-[#9B97B0]">Timetable slot</span>
+            <span className="pl-1 text-[11px] text-[#B0ACC4]">Empty slot</span>
           )}
-          <span className="mt-0.5 flex items-center gap-1 pl-1 text-[12.5px] font-semibold text-[#4338E8]">
+          <span className="mt-0.5 flex items-center gap-1 pl-1 text-[12.5px] font-semibold text-[#9B97B0] group-hover:text-[#4338E8]">
             <Plus className="h-3.5 w-3.5" aria-hidden />
             Add lesson
           </span>

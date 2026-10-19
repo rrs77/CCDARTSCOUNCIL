@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { UnitViewer } from './UnitViewer';
 import { LessonPlanBuilder } from './LessonPlanBuilder';
 import { LessonPlannerCalendar } from './LessonPlannerCalendar';
 import { ActivityLibrary } from './ActivityLibrary';
@@ -260,30 +259,6 @@ export function Dashboard() {
       {activeTab === 'unit-viewer' && (
         <div className="ccd-fade-in-up" key="uv">
           <Planner
-            renderTerm={() => (
-              <div className="min-w-0 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#E2E0EF] bg-white px-3 py-2.5">
-                  <p className="text-[12px] text-[#77738F]">
-                    Editing <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong> only.
-                    Open the full map to see every year group.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      try {
-                        window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'curriculum' } }));
-                      } catch {
-                        handleTabChange('curriculum');
-                      }
-                    }}
-                    className="inline-flex h-8 items-center rounded-lg bg-[#4338E8] px-2.5 text-[12px] font-extrabold text-white hover:bg-[#3529d1]"
-                  >
-                    All year groups →
-                  </button>
-                </div>
-                <UnitViewer />
-              </div>
-            )}
             renderClassic={() => (
               <LessonPlannerCalendar
                 onDateSelect={handleDateSelect}
@@ -308,7 +283,7 @@ export function Dashboard() {
       {activeTab === 'lesson-library' && (
         <div className="ccd-fade-in-up" key="ll">
           <p className="ccd-studio-eyebrow mb-1">
-            YOUR TEACHING / <span>LESSONS</span>
+            CONNECT &amp; CREATE / <span>LESSONS</span>
           </p>
           <p className="mb-4 text-sm text-[#77738F]">
             Lessons saved from Lesson Builder for{' '}
@@ -326,7 +301,7 @@ export function Dashboard() {
       {activeTab === 'lesson-builder' && (
         <div className="ccd-fade-in-up" key="lb">
           <p className="ccd-studio-eyebrow mb-1">
-            YOUR TEACHING / <span>LESSON BUILDER</span>
+            CONNECT &amp; CREATE / <span>LESSON BUILDER</span>
           </p>
           <p className="mb-3 text-sm text-[#77738F]">
             Drag activities into a lesson, then <strong className="text-[#1F1B4D]">Save Lesson</strong>. It appears under{' '}
@@ -349,12 +324,12 @@ export function Dashboard() {
           {!editorFlush && (
             <>
               <p className="ccd-studio-eyebrow mb-1">
-                YOUR TEACHING / <span>ACTIVITY LIBRARY</span>
+                CONNECT &amp; CREATE / <span>ACTIVITY LIBRARY</span>
               </p>
               <p className="mb-4 text-sm text-[#77738F]">
-                Showing folders and activities for{' '}
-                <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>. Switch
-                class in the header to see that class&apos;s library. Manage which folders each class sees in Settings.
+                Folders and activities for{' '}
+                <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>.
+                Switch class in the header to see that class&apos;s library.
               </p>
             </>
           )}

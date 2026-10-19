@@ -120,16 +120,15 @@ export function LoginForm() {
       });
   }, []);
 
+  // C6: one decision panel on the login card (The facts / Feature walkthrough) —
+  // do not stack PartnersFundingStartModal on top of landing.
   useEffect(() => {
-    // Mid-flow returns (`?return=/forum/admin&signin=1`) must not be blocked
-    // by the first-visit Partners / funding welcome modal.
-    if (midFlowSignIn) return;
     try {
-      if (sessionStorage.getItem(PARTNERS_FUNDING_VIDEO_STORAGE_KEY) === '1') return;
+      sessionStorage.setItem(PARTNERS_FUNDING_VIDEO_STORAGE_KEY, '1');
     } catch {
-      // sessionStorage may be unavailable; still show the notice
+      /* ignore */
     }
-    setShowPartnersFundingStart(true);
+    setShowPartnersFundingStart(false);
   }, [midFlowSignIn]);
 
   const dismissPartnersFundingStart = () => {
@@ -141,7 +140,7 @@ export function LoginForm() {
     setShowPartnersFundingStart(false);
   };
 
-  /** Notice primary CTA → open animated walkthrough in the old FeatureDemoVideoModal slot. */
+  /** Kept for modal prop compatibility if ever re-enabled. */
   const startWalkthroughFromStart = () => {
     dismissPartnersFundingStart();
     setShowFeatureWalkthrough(true);
