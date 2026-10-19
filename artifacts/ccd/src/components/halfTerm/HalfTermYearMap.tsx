@@ -426,10 +426,11 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
         <div className="overflow-x-auto rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_1px_3px_rgba(31,27,77,0.04)]">
           <table
             className="w-full border-collapse text-left"
-            style={{ tableLayout: 'fixed', minWidth: 760 }}
+            style={{ tableLayout: 'fixed', minWidth: 880 }}
           >
             <colgroup>
-              <col style={{ width: '10rem' }} />
+              {/* ~240px: full names like “Upper Kindergarten” at laptop widths; long names wrap to 2 lines */}
+              <col style={{ width: '15rem' }} />
               {HALF_TERMS.map((term) => (
                 <col key={term.id} />
               ))}
@@ -521,12 +522,13 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
                           <button
                             type="button"
                             onClick={() => onOpenClass(row.group)}
-                            className="group flex w-full min-w-0 items-center gap-1.5 rounded-lg px-1 py-1.5 text-left transition hover:bg-[#E9E6FF]/60"
+                            title={row.group.name}
+                            className="group flex w-full min-w-0 items-start gap-1.5 rounded-lg px-1 py-1.5 text-left transition hover:bg-[#E9E6FF]/60"
                           >
-                            <span className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-[#1F1B4D] group-hover:text-[#4338E8]">
+                            <span className="min-w-0 flex-1 break-words text-[13px] font-extrabold leading-snug text-[#1F1B4D] [display:-webkit-box] [-webkit-box-orient:vertical] [-webkit-line-clamp:2] overflow-hidden group-hover:text-[#4338E8]">
                               {row.group.name}
                             </span>
-                            <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#C4C0D8] group-hover:text-[#4338E8]" />
+                            <ChevronRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#C4C0D8] group-hover:text-[#4338E8]" />
                           </button>
                         </th>
                         {HALF_TERMS.map((term) => {
