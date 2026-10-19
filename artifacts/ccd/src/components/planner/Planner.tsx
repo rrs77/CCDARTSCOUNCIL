@@ -333,11 +333,8 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
           )}
           {room === 'timetable' && (
             <p className="max-w-md text-[12px] font-medium leading-snug text-[#77738F]">
-              Build the weekly slots for{' '}
-              <span className="font-bold text-[#1F1B4D]">
-                {classById.get(focusedClassId)?.name || 'this class'}
-              </span>
-              . Drag classes onto the grid, then return to Schedule to plan lessons.
+              Build <span className="font-bold text-[#1F1B4D]">your weekly timetable</span> for all
+              My classes. Drag classes onto the grid, then return to Schedule to plan lessons.
             </p>
           )}
           {room === 'units' && view !== 'classic' && (
@@ -407,10 +404,10 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
                 <CalendarCog className="h-5 w-5 shrink-0 text-[#4338E8]" aria-hidden />
                 <div className="min-w-0 flex-1">
                   <p className="text-[13px] font-extrabold text-[#1F1B4D]">
-                    Timetable builder · {classById.get(focusedClassId)?.name || 'current class'}
+                    Timetable builder · all My classes
                   </p>
                   <p className="text-[12px] font-medium text-[#77738F]">
-                    Recurring week slots, breaks and clubs. Holidays and inset days stay on the calendar.
+                    Your weekly slots across every class you teach. Holidays and inset days stay on the calendar.
                   </p>
                 </div>
                 <button type="button" onClick={() => changeView('week')} className={`${primaryBtn} shrink-0`}>

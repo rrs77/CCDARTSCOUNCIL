@@ -62,7 +62,7 @@ const TOOLS: {
   {
     id: 'timetable',
     title: 'Timetable builder',
-    desc: 'Planner → Timetable builder — set weekly slots for the selected class.',
+    desc: 'Planner → Timetable builder — set your weekly slots for all My classes.',
     icon: <CalendarCog className="h-5 w-5" />,
     action: 'tab',
     tab: 'unit-viewer',

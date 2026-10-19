@@ -577,7 +577,7 @@ export function UnitsView({
       {!hasSlots && !isPastYear && (
         <div className="flex flex-col gap-3 rounded-2xl border border-[#FDE68A] bg-[#FFFBEB] px-4 py-3 text-sm text-[#8A5300] sm:flex-row sm:items-center">
           <AlertTriangle className="h-5 w-5 shrink-0" />
-          <span className="flex-1">Add {cls.name}’s regular lesson times to the timetable so remaining lessons can be scheduled automatically.</span>
+          <span className="flex-1">Add regular lesson times for {cls.name} in your weekly timetable so remaining lessons can be scheduled automatically.</span>
           <button type="button" onClick={onOpenTimetable} className="min-h-[40px] rounded-xl bg-white px-3 font-semibold text-[#1F1B4D] ring-1 ring-[#FDE68A]">
             Open timetable
           </button>

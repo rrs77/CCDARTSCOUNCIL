@@ -6,6 +6,16 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
+import {
+  TERM_IDS as SHARED_TERM_IDS,
+  loadTeacherTimetable,
+  migrateLegacyTimetablesToTeacher,
+  saveTeacherTimetable,
+  teacherGlobalFlagKey,
+  teacherTermKey,
+  teacherTimeConfigKey,
+  type TimetableEntry,
+} from '../utils/timetableStorage';
 
 interface TimetableClass {
   id: string;
@@ -23,7 +33,8 @@ interface TimetableClass {
 interface TimetableBuilderProps {
   isOpen: boolean;
   onClose: () => void;
-  className: string; // Current class/sheet name
+  /** @deprecated Teacher-level timetable — kept optional for callers/theme fallback only. */
+  className?: string;
   onTimetableUpdate?: (classes: TimetableClass[]) => void;
   initialEditClass?: TimetableClass | null; // Optional class to edit when opening
 }
@@ -35,7 +46,7 @@ const SCHOOL_DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 const SCHOOL_DAY_SHORT = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri'];
 
 // Terms in order (for "previous term" and "same for year")
-const TERM_IDS = ['A1', 'A2', 'SP1', 'SP2', 'SM1', 'SM2'] as const;
+const TERM_IDS = SHARED_TERM_IDS;
 const TERM_LABELS: Record<string, string> = {
   A1: 'Autumn 1',
   A2: 'Autumn 2',
@@ -120,6 +131,11 @@ export function TimetableBuilder({
   const { customYearGroups, getThemeForClass, yearGroupSections } = useSettings();
   const [timetableKeyStagesExpanded, setTimetableKeyStagesExpanded] = useState<Set<string>>(new Set());
 
+  const myClasses = useMemo(
+    () => customYearGroups.map((g) => ({ id: g.id, name: g.name, color: g.color })),
+    [customYearGroups],
+  );
+
   const yearGroupsByKeyStage = useMemo(() => {
     const sections = [...yearGroupSections].sort((a, b) => a.sortOrder - b.sortOrder);
     return sections
@@ -128,11 +144,25 @@ export function TimetableBuilder({
         label: section.label,
         sortOrder: section.sortOrder,
         yearGroups: (section.yearGroupIds || [])
-          .map(id => customYearGroups.find(g => g.id === id))
+          .map(id => customYearGroups.find(g => g.id === id || g.name === id))
           .filter((g): g is NonNullable<typeof g> => Boolean(g))
       }))
       .filter(s => s.yearGroups.length > 0);
   }, [yearGroupSections, customYearGroups]);
+
+  // Expand first key stage once sections are available so My classes are visible to drag
+  useEffect(() => {
+    if (timetableKeyStagesExpanded.size > 0) return;
+    const first = yearGroupsByKeyStage[0]?.sectionId;
+    if (first) setTimetableKeyStagesExpanded(new Set([first]));
+  }, [yearGroupsByKeyStage, timetableKeyStagesExpanded.size]);
+
+  // Classes in Settings that aren't in a section — still show under "My classes"
+  const unsectionedClasses = useMemo(() => {
+    const assigned = new Set<string>();
+    yearGroupsByKeyStage.forEach((s) => s.yearGroups.forEach((g) => assigned.add(g.id)));
+    return customYearGroups.filter((g) => !assigned.has(g.id));
+  }, [yearGroupsByKeyStage, customYearGroups]);
 
   const toggleTimetableKeyStage = (sectionId: string) => {
     setTimetableKeyStagesExpanded(prev => {
@@ -150,10 +180,10 @@ export function TimetableBuilder({
   const [selectedSlot, setSelectedSlot] = useState<{day: number, time: string} | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'days'>('days');
 
-  const getStorageKey = (termId: string) => `timetable-${className}-${termId}`;
-  const globalFlagKey = () => `timetable-${className}-global`;
+  const getStorageKey = (termId: string) => teacherTermKey(termId);
+  const globalFlagKey = () => teacherGlobalFlagKey();
 
-  const timeConfigKey = (key: string) => `timetable-${className}-${key}`;
+  const timeConfigKey = (key: string) => teacherTimeConfigKey(key);
   const [dayStart, setDayStart] = useState<string>(() => {
     try { return localStorage.getItem(timeConfigKey('dayStart')) || DEFAULT_DAY_START; } catch { return DEFAULT_DAY_START; }
   });
@@ -171,6 +201,8 @@ export function TimetableBuilder({
   const persistTimeConfig = (key: string, value: string) => {
     try { localStorage.setItem(timeConfigKey(key), value); } catch { /* ignore */ }
   };
+
+  const themeFallbackClass = className || myClasses[0]?.id || 'LKG';
 
   const dayStartMinutes = parseTimeToMinutes(dayStart);
   const dayEndMinutes = parseTimeToMinutes(dayEnd);
@@ -195,94 +227,54 @@ export function TimetableBuilder({
 
   const loadTimetable = React.useCallback(async (termId: string) => {
     try {
-      const useGlobal = localStorage.getItem(globalFlagKey()) === 'true';
-      let saved: string | null;
-      if (useGlobal) {
-        saved = localStorage.getItem(`timetable-${className}`);
-      } else {
-        saved = localStorage.getItem(getStorageKey(termId));
-      }
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        setTimetableClasses(Array.isArray(parsed) ? parsed : []);
-        return;
-      }
-      if (!useGlobal) {
-        const legacy = localStorage.getItem(`timetable-${className}`);
-        if (legacy) {
-          const parsed = JSON.parse(legacy);
-          const classes = Array.isArray(parsed) ? parsed : [];
-          setTimetableClasses(classes);
-          localStorage.setItem(getStorageKey(termId), JSON.stringify(classes));
-          return;
-        }
-        if (isSupabaseConfigured()) {
-          const { data, error } = await supabase
-            .from(TABLES.TIMETABLE_CLASSES || 'timetable_classes')
-            .select('*')
-            .eq('class_name', className);
-          if (!error && data?.length) {
-            const classes = data.map((item: any) => ({
-              id: item.id,
-              day: item.day,
-              startTime: item.start_time,
-              endTime: item.end_time,
-              className: item.class_name_display || item.class_name,
-              location: item.location || '',
-              color: item.color || getThemeForClass(className).primary,
-              type: item.type || 'curriculum',
-              yearGroupId: item.year_group_id,
-              recurringUnitId: item.recurring_unit_id
-            }));
-            setTimetableClasses(classes);
-            localStorage.setItem(getStorageKey(termId), JSON.stringify(classes));
-            return;
-          }
-        }
-      }
-      setTimetableClasses([]);
+      migrateLegacyTimetablesToTeacher(myClasses);
+      const classes = loadTeacherTimetable(termId) as TimetableClass[];
+      setTimetableClasses(classes);
     } catch (error) {
       console.error('Error loading timetable:', error);
       setTimetableClasses([]);
     }
-  }, [className, getThemeForClass]);
+  }, [myClasses]);
 
   useEffect(() => {
     if (!isOpen) return;
+    migrateLegacyTimetablesToTeacher(myClasses);
     loadTimetable(selectedTermId);
     if (initialEditClass) setEditingClass(initialEditClass);
     else setEditingClass(null);
-  }, [isOpen, className, selectedTermId, initialEditClass, loadTimetable]);
+  }, [isOpen, selectedTermId, initialEditClass, loadTimetable, myClasses]);
 
   useEffect(() => {
     const flag = localStorage.getItem(globalFlagKey()) === 'true';
     setIsGlobalTimetable(flag);
-  }, [isOpen, className]);
+  }, [isOpen]);
 
   const saveTimetable = async (classes: TimetableClass[], termId?: string) => {
     const useGlobal = localStorage.getItem(globalFlagKey()) === 'true';
     const term = termId ?? selectedTermId;
     setIsSaving(true);
     try {
-      if (useGlobal) {
-        localStorage.setItem(`timetable-${className}`, JSON.stringify(classes));
-      } else {
-        localStorage.setItem(getStorageKey(term), JSON.stringify(classes));
-      }
+      saveTeacherTimetable(classes as TimetableEntry[], {
+        termId: term,
+        useGlobal,
+        classes: myClasses,
+      });
       if (termId === undefined) {
         setTimetableClasses(classes);
       }
       if (onTimetableUpdate && termId === undefined) {
         onTimetableUpdate(classes);
       }
+      // Best-effort cloud mirror keyed by teacher scope (not a single class)
       if (isSupabaseConfigured()) {
+        const scope = 'teacher';
         await supabase
           .from(TABLES.TIMETABLE_CLASSES || 'timetable_classes')
           .delete()
-          .eq('class_name', className);
+          .eq('class_name', scope);
         if (classes.length > 0) {
           const insertData = classes.map(cls => ({
-            class_name: className,
+            class_name: scope,
             day: cls.day,
             start_time: cls.startTime,
             end_time: cls.endTime,
@@ -338,7 +330,11 @@ export function TimetableBuilder({
       return;
     }
     localStorage.setItem(globalFlagKey(), 'true');
-    localStorage.setItem(`timetable-${className}`, JSON.stringify(classes));
+    saveTeacherTimetable(classes as TimetableEntry[], {
+      termId: selectedTermId,
+      useGlobal: true,
+      classes: myClasses,
+    });
     setIsGlobalTimetable(true);
     setTimetableClasses(classes);
     if (onTimetableUpdate) onTimetableUpdate(classes);
@@ -349,7 +345,11 @@ export function TimetableBuilder({
     const current = timetableClasses.map(c => ({ ...c, id: `class-${Date.now()}-${Math.random().toString(36).slice(2)}` }));
     localStorage.setItem(globalFlagKey(), 'false');
     setIsGlobalTimetable(false);
-    localStorage.setItem(getStorageKey(selectedTermId), JSON.stringify(current));
+    saveTeacherTimetable(current as TimetableEntry[], {
+      termId: selectedTermId,
+      useGlobal: false,
+      classes: myClasses,
+    });
     loadTimetable(selectedTermId);
     alert('Each term now has its own timetable. Change the semester to see or edit that term\'s timetable.');
   };
@@ -364,7 +364,7 @@ export function TimetableBuilder({
       endTime: formatMinutesToTime(endM),
       className: yearGroup.name,
       location: '',
-      color: yearGroup.color || getThemeForClass(className).primary,
+      color: yearGroup.color || getThemeForClass(yearGroup.id || themeFallbackClass).primary,
       type: 'curriculum',
       yearGroupId: yearGroup.id
     };
@@ -488,7 +488,7 @@ export function TimetableBuilder({
         <div className="flex items-center justify-between p-6 border-b border-gray-200 bg-gradient-to-r from-[#1F1B4D] to-[#4338E8] text-white">
           <div>
             <h2 className="text-2xl font-bold">Timetable Builder</h2>
-            <p className="text-[#E9E6FF] mt-1">{className}</p>
+            <p className="text-[#E9E6FF] mt-1">Your weekly timetable · all My classes</p>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -636,7 +636,7 @@ export function TimetableBuilder({
                       endTime: '10:00',
                       className: '',
                       location: '',
-                      color: getThemeForClass(className).primary,
+                      color: getThemeForClass(themeFallbackClass).primary,
                       type: 'curriculum'
                     });
                   }}
@@ -647,41 +647,59 @@ export function TimetableBuilder({
                 </button>
               </div>
 
-              {/* Year Groups for Dragging – same key stage structure as Settings */}
+              {/* My classes for dragging – Settings → My classes, grouped by key stage */}
               <div className="mb-4">
                 <h4 className="text-xs font-semibold text-gray-500 uppercase mb-2">Drag to Add</h4>
-                <div className="space-y-1">
-                  {yearGroupsByKeyStage.map(({ sectionId, label, yearGroups: sectionYearGroups }) => {
-                    const isExpanded = timetableKeyStagesExpanded.has(sectionId);
-                    return (
-                      <div key={sectionId} className="rounded-lg border border-gray-200 overflow-hidden">
-                        <button
-                          type="button"
-                          onClick={() => toggleTimetableKeyStage(sectionId)}
-                          className="w-full flex items-center gap-2 px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-left text-sm font-semibold text-gray-800"
-                        >
-                          {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
-                          <span>{label}</span>
-                          <span className="text-xs font-normal text-gray-500">({sectionYearGroups.length})</span>
-                        </button>
-                        {isExpanded && (
-                          <div className="p-2 pt-0 space-y-2 border-t border-gray-100">
-                            {sectionYearGroups.map(yearGroup => (
-                              <DraggableYearGroup key={yearGroup.id} yearGroup={yearGroup} />
-                            ))}
-                          </div>
-                        )}
+                {myClasses.length === 0 ? (
+                  <p className="text-xs text-gray-500 rounded-lg border border-dashed border-gray-200 bg-white px-3 py-4">
+                    Add classes in Settings → My classes, then drag them onto the grid.
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    {yearGroupsByKeyStage.map(({ sectionId, label, yearGroups: sectionYearGroups }) => {
+                      const isExpanded = timetableKeyStagesExpanded.has(sectionId);
+                      return (
+                        <div key={sectionId} className="rounded-lg border border-gray-200 overflow-hidden">
+                          <button
+                            type="button"
+                            onClick={() => toggleTimetableKeyStage(sectionId)}
+                            className="w-full flex items-center gap-2 px-2.5 py-2 bg-gray-100 hover:bg-gray-200 text-left text-sm font-semibold text-gray-800"
+                          >
+                            {isExpanded ? <ChevronDown className="h-4 w-4 text-gray-500" /> : <ChevronRight className="h-4 w-4 text-gray-500" />}
+                            <span>{label}</span>
+                            <span className="text-xs font-normal text-gray-500">({sectionYearGroups.length})</span>
+                          </button>
+                          {isExpanded && (
+                            <div className="p-2 pt-0 space-y-2 border-t border-gray-100">
+                              {sectionYearGroups.map(yearGroup => (
+                                <DraggableYearGroup key={yearGroup.id} yearGroup={yearGroup} />
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                    {unsectionedClasses.length > 0 && (
+                      <div className="rounded-lg border border-gray-200 overflow-hidden">
+                        <div className="px-2.5 py-2 bg-gray-100 text-sm font-semibold text-gray-800">
+                          My classes <span className="text-xs font-normal text-gray-500">({unsectionedClasses.length})</span>
+                        </div>
+                        <div className="p-2 space-y-2 border-t border-gray-100">
+                          {unsectionedClasses.map((yearGroup) => (
+                            <DraggableYearGroup key={yearGroup.id} yearGroup={yearGroup} />
+                          ))}
+                        </div>
                       </div>
-                    );
-                  })}
-                </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Scheduled Classes */}
               {classList.length === 0 ? (
                 <div className="text-center py-8 text-gray-500 text-sm">
                   <p>No classes scheduled</p>
-                  <p className="text-xs mt-1">Drag year groups or click + to add</p>
+                  <p className="text-xs mt-1">Drag My classes onto the grid, or click + to add</p>
                 </div>
               ) : (
                 <div className="space-y-2">
@@ -830,7 +848,7 @@ export function TimetableBuilder({
             onClose={() => setEditingClass(null)}
             onDelete={() => editingClass.id.startsWith('new-') ? setEditingClass(null) : handleDeleteClass(editingClass.id)}
             yearGroups={customYearGroups}
-            theme={getThemeForClass(className)}
+            theme={getThemeForClass(themeFallbackClass)}
             isNew={editingClass.id.startsWith('new-')}
           />
         )}

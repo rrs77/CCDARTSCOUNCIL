@@ -5,6 +5,7 @@ import { useSettings } from '../../contexts/SettingsContextNew';
 import { useAuth } from '../../hooks/useAuth';
 import { halfTermsApi, lessonsApi } from '../../config/api';
 import { filterLessonEntries, sortedLessonNumbers } from '../../utils/lessonEntries';
+import { readSlotsForClass } from '../../utils/timetableStorage';
 import { plannerApi } from './plannerApi';
 import {
   CLASS_PALETTE,
@@ -100,15 +101,23 @@ export function usePlannerData(range: { from: Date; to: Date }) {
 
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes]);
 
-  /** Recurring slots and school events still live where the classic calendar keeps them. */
+  /** Recurring slots come from the teacher-level timetable (sliced per My class). */
   const { slots, events } = useMemo(() => {
     void storageTick;
     const s: TimetableSlot[] = [];
     const e: PlannerEvent[] = [];
     const seenEvents = new Set<string>();
     classes.forEach((c) => {
-      readJson<TimetableSlot[]>(`timetable-${c.id}`, []).forEach((slot) =>
-        s.push({ ...slot, className: c.id, id: `${c.id}:${slot.id}` }),
+      readSlotsForClass({ id: c.id, name: c.name }).forEach((slot) =>
+        s.push({
+          id: `${c.id}:${slot.id}`,
+          day: slot.day,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          className: c.id,
+          location: slot.location || '',
+          color: slot.color || '',
+        }),
       );
       readJson<Record<string, any>[]>(`calendar-events-${c.id}`, []).forEach((ev) => {
         const key = `${ev.title}|${ev.startDate}`;

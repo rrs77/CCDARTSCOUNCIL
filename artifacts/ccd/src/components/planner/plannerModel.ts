@@ -47,7 +47,7 @@ export interface PlannerFolder {
   classes: PlannerClass[];
 }
 
-/** Recurring timetable slot from the existing calendar (`timetable-{class}` in localStorage). */
+/** Recurring timetable slot from the teacher-level timetable (sliced per My class). */
 export interface TimetableSlot {
   id: string;
   day: number;
