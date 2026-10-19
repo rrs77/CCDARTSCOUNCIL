@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { Lock, Megaphone, Users, Globe2 } from 'lucide-react';
 import { listCategories, listTopics } from '../../utils/forumApi';
 import type { ForumCategory, ForumTopicListItem } from '../../types/forum';
 import { useAuth } from '../../hooks/useAuth';
+import { ForumLoadError } from './ForumLoadError';
 
 function scopeIcon(scope: string) {
   if (scope === 'hub' || scope === 'members') return <Users className="h-3.5 w-3.5" />;
@@ -27,6 +28,9 @@ export function ForumHome({
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'recent' | 'pinned' | 'unanswered'>('recent');
+  const [reloadKey, setReloadKey] = useState(0);
+
+  const reload = useCallback(() => setReloadKey((k) => k + 1), []);
 
   useEffect(() => {
     let cancelled = false;
@@ -48,7 +52,11 @@ export function ForumHome({
         setCaps(cats.caps || tops.caps || []);
         setTopics(tops.topics);
       } catch (e) {
-        if (!cancelled) setError(e instanceof Error ? e.message : 'Failed to load forum');
+        if (!cancelled) {
+          setCategories([]);
+          setTopics([]);
+          setError(e instanceof Error ? e.message : 'Failed to load forum');
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -56,7 +64,7 @@ export function ForumHome({
     return () => {
       cancelled = true;
     };
-  }, [user, searchQuery, filter]);
+  }, [user, searchQuery, filter, reloadKey]);
 
   const canModerate = caps.includes('forum.moderate') || caps.includes('forum.manage_categories');
 
@@ -81,12 +89,10 @@ export function ForumHome({
       </section>
 
       {error && (
-        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-          {error}
-        </div>
+        <ForumLoadError message={error} onRetry={reload} showLocalDevHint />
       )}
 
-      {!searchQuery && (
+      {!error && !searchQuery && (
         <section>
           <h2 className="mb-3 text-lg font-semibold text-[#1F1B4D]">Categories</h2>
           {loading && <p className="text-sm text-gray-500">Loading…</p>}
@@ -131,6 +137,7 @@ export function ForumHome({
         </section>
       )}
 
+      {!error && (
       <section>
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-lg font-semibold text-[#1F1B4D]">
@@ -186,6 +193,7 @@ export function ForumHome({
           )}
         </ul>
       </section>
+      )}
     </div>
   );
 }
