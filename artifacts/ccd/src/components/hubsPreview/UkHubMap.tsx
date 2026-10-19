@@ -712,14 +712,20 @@ export function UkHubMap({
       {tipItem && !moving && (
         <div
           aria-hidden
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[12px] font-semibold text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[12px] font-semibold leading-snug text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
           style={{
             left: `${((tipItem.label[0] - settled.box[0]) / settled.box[2]) * 100}%`,
             top: `${((tipItem.label[1] - settled.box[1]) / settled.box[3]) * 100}%`,
             marginTop: '-14px',
           }}
         >
-          {mapLabel(tipItem.name)}
+          <span className="block">{mapLabel(tipItem.name)}</span>
+          {showRegionCounts && tipItem.focus.level === 'region' && (
+            <span className="mt-0.5 block text-[11px] font-medium text-white/80">
+              {ix.hubsInRegion(tipItem.id).length} Music Hub
+              {ix.hubsInRegion(tipItem.id).length === 1 ? '' : 's'}
+            </span>
+          )}
           <span className="absolute left-1/2 top-full -translate-x-1/2 border-4 border-transparent border-t-[#1A1A40]" />
         </div>
       )}
