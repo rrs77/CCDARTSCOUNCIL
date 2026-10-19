@@ -27,17 +27,18 @@ const PALETTES = {
     bg: 'radial-gradient(120% 90% at 55% 35%, #FBFBFF 0%, #F0F1FA 55%, #E8EAF6 100%)',
   },
   green: {
-    region: ['#D8EBD9', '#CFE6D1', '#C5E0C8', '#DEEFE0'],
-    hub: ['#CDE4CF', '#C2DDC5', '#B7D6BB', '#D4E9D6', '#C8E1CB'],
-    district: ['#D3E7D5', '#C9E0CC', '#BFD9C2', '#DCECDD', '#CEE4D1'],
-    nation: '#E8F2E9',
-    muted: '#EFF5F0',
-    hover: '#8FCF96',
-    selected: '#2F6B3A',
-    coast: '#C5D9C8',
-    ink: '#14301A',
-    count: '#0B6B5F',
-    bg: 'radial-gradient(120% 90% at 55% 35%, #FBFDFB 0%, #F1F7F2 55%, #E5EFE7 100%)',
+    // Soft green England — fewer tone steps so the map reads cleaner
+    region: ['#C9E6CC', '#BFE0C3', '#B5DABA', '#D0EBD3'],
+    hub: ['#B8DDBD', '#AED7B4', '#A4D1AB', '#C2E4C6', '#B4DBBA'],
+    district: ['#C0E1C4', '#B6DBC0', '#ACD5B7', '#CAE7CE', '#B8DEB9'],
+    nation: '#E6F1E8',
+    muted: '#F0F5F1',
+    hover: '#7EC48A',
+    selected: '#1F6B3A',
+    coast: '#BDD4C1',
+    ink: '#1A3A22',
+    count: '#0F5C52',
+    bg: 'radial-gradient(120% 90% at 55% 35%, #FCFFFC 0%, #F3F8F4 55%, #E8F1EA 100%)',
   },
 } as const;
 
@@ -457,13 +458,20 @@ export function UkHubMap({
   };
 
   // ---------- labels with simple collision avoidance ----------
+  // At UK England overview with region counts, skip busy English region name labels —
+  // count bubbles carry the signal; keep Scotland / Wales / NI only.
   const labels = useMemo(() => {
+    const ukOverview =
+      showRegionCounts && (focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND));
     const px = settled.px;
     const fs = (ctx.hubId || (ctx.nationId && ctx.nationId !== ENGLAND) ? 12.5 : 13) * px;
     const [vx, vy, vw, vh] = settled.box;
     const placed: BBox[] = [];
     const out: { id: string; x: number; y: number; lines: string[]; fs: number; selected: boolean }[] = [];
-    const sorted = [...items].sort((a, b) => {
+    const labelItems = ukOverview
+      ? items.filter((it) => it.focus.level === 'nation')
+      : items;
+    const sorted = [...labelItems].sort((a, b) => {
       if (a.id === ctx.ladId) return -1;
       if (b.id === ctx.ladId) return 1;
       return b.priority - a.priority;
@@ -485,7 +493,7 @@ export function UkHubMap({
       out.push({ id: it.id, x, y, lines, fs, selected });
     }
     return out;
-  }, [items, settled, ctx]);
+  }, [items, settled, ctx, showRegionCounts, focus.level, focus]);
 
   const ladsDrawn = ix.data.lads;
   const hubOutlines = level !== 'uk' && !(ctx.nationId && ctx.nationId !== ENGLAND);
@@ -681,15 +689,16 @@ export function UkHubMap({
               const n = ix.hubsInRegion(r.code).length;
               if (!n) return null;
               const [x, y] = r.label;
-              const rad = Math.max(11, 10 * settled.px);
+              // Larger dark-green cluster bubbles (target mockup)
+              const rad = Math.max(15, 14.5 * settled.px);
               return (
-                <g key={`count-${r.code}`} transform={`translate(${x}, ${y + 14 * settled.px})`}>
-                  <circle r={rad} fill={tones.count} stroke="#FFFFFF" strokeWidth={2 * settled.px} />
+                <g key={`count-${r.code}`} transform={`translate(${x}, ${y})`}>
+                  <circle r={rad} fill={tones.count} stroke="#FFFFFF" strokeWidth={2.5 * settled.px} />
                   <text
                     textAnchor="middle"
                     dominantBaseline="central"
-                    fontSize={Math.max(10, 11 * settled.px)}
-                    fontWeight={700}
+                    fontSize={Math.max(12, 13 * settled.px)}
+                    fontWeight={800}
                     fill="#FFFFFF"
                     fontFamily="Plus Jakarta Sans, Inter, system-ui, sans-serif"
                   >

@@ -65,7 +65,7 @@ function OrgTag({ label }: { label: string }) {
 }
 
 /**
- * Wide wordmark strip — partner logos are landscape marks; a tiny square makes them unreadable.
+ * Wide wordmark strip — partner logos are landscape marks; keep full mark readable (never crop).
  */
 function OrgLogoStrip({ hub }: { hub: PartnerHubConfig }) {
   const src = hub.logoSrcOnDark || hub.logoSrc;
@@ -75,18 +75,18 @@ function OrgLogoStrip({ hub }: { hub: PartnerHubConfig }) {
     ? hub.logoPanelColor && hub.logoPanelColor !== 'transparent'
       ? hub.logoPanelColor
       : '#FFFFFF'
-    : hub.primaryColor || '#1F1B4D';
+    : hub.logoPanelColor || hub.primaryColor || '#1F1B4D';
   const needsInvert = onDark && !hub.logoSrcOnDark && hub.logoInvert;
   return (
     <div
-      className="flex h-[4.25rem] w-full items-center justify-center rounded-xl px-4"
-      style={{ backgroundColor: bg === 'transparent' ? '#F4F3FA' : bg }}
+      className="flex h-[5.25rem] w-full items-center justify-center overflow-hidden rounded-xl px-4 py-2.5"
+      style={{ backgroundColor: bg === 'transparent' ? '#FFFFFF' : bg }}
     >
       <img
         src={src}
         alt=""
         loading="lazy"
-        className={`h-9 w-auto max-w-[85%] object-contain sm:h-10 ${needsInvert ? 'brightness-0 invert' : ''}`}
+        className={`h-full max-h-[4.5rem] w-auto max-w-[92%] object-contain ${needsInvert ? 'brightness-0 invert' : ''}`}
       />
     </div>
   );
@@ -598,132 +598,41 @@ function paidSubjectFromPartner(slug: string, name: string): Discipline | 'Cross
   return 'Music';
 }
 
-/** Music Hub orgs must never appear in Paid resources — those live on hub pages. */
-const HUB_OWNED_PAID_SLUGS = new Set(['ems', 'triborough', 'jazznorth']);
-
-/** Showcase providers from the Studio mockup (one card each). */
-const PAID_SHOWCASE: Array<{
-  id: string;
-  title: string;
-  description: string;
-  type: (typeof PAID_RESOURCE_TYPES)[number];
-  pricePence: number;
-  priceLabel: string;
-  subject: Discipline;
-  ages: string[];
-  logoLabel: string;
-  logoBg: string;
-}> = [
-  {
-    id: 'charanga',
-    title: 'Charanga Music Scheme',
-    description: 'Complete music scheme for EYFS–KS2.',
-    type: 'Scheme of work',
-    pricePence: 17500,
-    priceLabel: 'From £175 / year',
-    subject: 'Music',
-    ages: ['EYFS', 'KS1', 'KS2'],
-    logoLabel: 'Charanga',
-    logoBg: '#1D4ED8',
-  },
-  {
-    id: 'step-into-dance',
-    title: 'Step Into Dance',
-    description: 'Creative dance schemes and CPD.',
-    type: 'Scheme of work',
-    pricePence: 12000,
-    priceLabel: 'From £120 / year',
-    subject: 'Dance',
-    ages: ['KS1', 'KS2', 'KS3'],
-    logoLabel: 'Step Into Dance',
-    logoBg: '#9D174D',
-  },
-  {
-    id: 'kapow-primary-art',
-    title: 'Kapow Primary Art',
-    description: 'Whole-school art and design scheme.',
-    type: 'Scheme of work',
-    pricePence: 8900,
-    priceLabel: 'From £89 / year',
-    subject: 'Art & design',
-    ages: ['EYFS', 'KS1', 'KS2'],
-    logoLabel: 'Kapow',
-    logoBg: '#0F766E',
-  },
-  {
-    id: 'music-tech-schools',
-    title: 'Music Tech for Schools',
-    description: 'Digital music resources and courses.',
-    type: 'CPD course',
-    pricePence: 6000,
-    priceLabel: 'From £60',
-    subject: 'Music',
-    ages: ['KS2', 'KS3', 'KS4'],
-    logoLabel: 'Music Tech',
-    logoBg: '#4338E8',
-  },
-  {
-    id: 'youth-theatre-toolkit',
-    title: 'Youth Theatre Toolkit',
-    description: 'Drama strategies and performance projects.',
-    type: 'Lesson packs',
-    pricePence: 6000,
-    priceLabel: 'From £60',
-    subject: 'Drama',
-    ages: ['KS3', 'KS4', 'KS5'],
-    logoLabel: 'Youth Theatre',
-    logoBg: '#B45309',
-  },
-];
+/**
+ * Paid resources tab — only these three companies (owner brief).
+ * Music Hub offerings and other catalogues are excluded.
+ */
+const PAID_TAB_SLUGS = new Set(['dramaresource', 'icompose', 'weteachdrama']);
 
 /**
- * One card per company/provider — never per workshop/course, never Music Hub orgs.
+ * One card per company — Drama Resource, iCompose, We Teach Drama only.
  */
 function buildPaidListings(): PaidListing[] {
-  const partnerCards: PaidListing[] = PAID_RESOURCES.filter(
-    (o) => !HUB_OWNED_PAID_SLUGS.has(o.hub.slug),
-  ).map((o) => {
-    const products = getPaidProductsForPartner(o.hub.slug as PaidPartnerSlug).filter(
-      (p) => !HUB_OWNED_PAID_SLUGS.has(p.partnerSlug),
-    );
-    const priced = products.filter((p) => p.pricePence > 0);
-    const from = priced.sort((a, b) => a.pricePence - b.pricePence)[0] ?? products[0];
-    const type = from ? paidTypeFromMeta(from.title, from.meta) : 'Lesson packs';
-    return {
-      id: o.hub.slug,
-      title: o.hub.displayName,
-      partnerSlug: o.hub.slug,
-      partnerName: o.hub.displayName,
-      description: o.hub.tagline || 'Schemes, packs and courses for the classroom.',
-      type,
-      pricePence: from?.pricePence ?? 0,
-      priceLabel: from
-        ? from.pricePence === 0
-          ? 'Free'
-          : `From ${formatPricePence(from.pricePence)} / year`
-        : 'See pricing',
-      subject: (o.disciplines[0] as Discipline) || paidSubjectFromPartner(o.hub.slug, o.hub.displayName),
-      ages: ['EYFS', 'KS1', 'KS2', 'KS3', 'KS4'],
-      hub: o.hub,
-    };
-  });
-
-  const showcase: PaidListing[] = PAID_SHOWCASE.map((s) => ({
-    id: s.id,
-    title: s.title,
-    partnerSlug: s.id,
-    partnerName: s.title,
-    description: s.description,
-    type: s.type,
-    pricePence: s.pricePence,
-    priceLabel: s.priceLabel,
-    subject: s.subject,
-    ages: s.ages,
-    logoLabel: s.logoLabel,
-    logoBg: s.logoBg,
-  }));
-
-  return [...partnerCards, ...showcase].sort((a, b) => a.title.localeCompare(b.title));
+  return PAID_RESOURCES.filter((o) => PAID_TAB_SLUGS.has(o.hub.slug))
+    .map((o) => {
+      const products = getPaidProductsForPartner(o.hub.slug as PaidPartnerSlug);
+      const priced = products.filter((p) => p.pricePence > 0);
+      const from = priced.sort((a, b) => a.pricePence - b.pricePence)[0] ?? products[0];
+      const type = from ? paidTypeFromMeta(from.title, from.meta) : 'Lesson packs';
+      return {
+        id: o.hub.slug,
+        title: o.hub.displayName,
+        partnerSlug: o.hub.slug,
+        partnerName: o.hub.displayName,
+        description: o.hub.tagline || 'Schemes, packs and courses for the classroom.',
+        type,
+        pricePence: from?.pricePence ?? 0,
+        priceLabel: from
+          ? from.pricePence === 0
+            ? 'Free'
+            : `From ${formatPricePence(from.pricePence)} / year`
+          : 'See pricing',
+        subject: (o.disciplines[0] as Discipline) || paidSubjectFromPartner(o.hub.slug, o.hub.displayName),
+        ages: ['EYFS', 'KS1', 'KS2', 'KS3', 'KS4'],
+        hub: o.hub,
+      };
+    })
+    .sort((a, b) => a.title.localeCompare(b.title));
 }
 
 const PAID_TYPE_TONE: Record<(typeof PAID_RESOURCE_TYPES)[number], string> = {
@@ -1098,12 +1007,12 @@ export function MusicHubToolbar({
   );
 }
 
+/** Real hub logos for the card badge circle (official assets only — no text placeholders). */
 const HUB_CARD_LOGOS: Record<string, string> = {
-  'greater-essex': '/music-hubs/logos/essex-music-service.svg',
-  'essex-southend-on-sea-and-thurrock': '/music-hubs/logos/essex-music-service.svg',
-  'west-of-england': '/music-hubs/logos/west-of-england-music-hub.svg',
-  'tri-borough': '/music-hubs/logos/tri-borough-music-hub.png',
-  triborough: '/music-hubs/logos/tri-borough-music-hub.png',
+  'greater-essex': '/music-hubs/logos/greater-essex-music-hub.png',
+  'essex-southend-on-sea-and-thurrock': '/music-hubs/logos/greater-essex-music-hub.png',
+  'tri-borough': '/music-hubs/logos/tri-borough-icon.jpg',
+  triborough: '/music-hubs/logos/tri-borough-icon.jpg',
 };
 
 /** Resolve a hub id to its dedicated cover asset (one file per hub). */
@@ -1174,9 +1083,15 @@ export function MusicHubResultCard({
           </span>
         </div>
         <div className="relative flex flex-1 flex-col px-3 pb-3 pt-0">
-          <span className="-mt-5 mb-1.5 flex h-10 w-10 items-center justify-center overflow-hidden rounded-full bg-[#0B6B5F] text-[13px] font-bold text-white ring-[3px] ring-white">
-            {logo ? <img src={logo} alt="" className="h-6 w-6 object-contain brightness-0 invert" /> : initial}
-          </span>
+          {logo ? (
+            <span className="-mt-5 mb-1.5 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-white shadow-sm ring-[3px] ring-white">
+              <img src={logo} alt="" className="h-[78%] w-[78%] object-contain" />
+            </span>
+          ) : (
+            <span className="-mt-5 mb-1.5 flex h-11 w-11 items-center justify-center overflow-hidden rounded-full bg-[#0B6B5F] text-[13px] font-bold text-white ring-[3px] ring-white">
+              {initial}
+            </span>
+          )}
           <h3 className={`text-[14px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
           <p className={`mt-0.5 text-[11px] font-medium ${muted}`}>{location}</p>
           <p className={`mt-1 line-clamp-2 text-[11px] leading-snug ${muted}`}>{detail}</p>
