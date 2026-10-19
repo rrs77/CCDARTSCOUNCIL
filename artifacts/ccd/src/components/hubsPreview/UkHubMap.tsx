@@ -538,7 +538,9 @@ export function UkHubMap({
           y += dxy[1];
         }
         if (x < vx || x > vx + vw || y < vy || y > vy + vh) continue;
-        const lines = splitLabel(r.name);
+        const displayName =
+          r.name === 'Yorkshire and The Humber' ? 'Yorkshire & The Humber' : r.name;
+        const lines = splitLabel(displayName);
         const sub = `${n}`;
         const w = Math.max(...lines.map((s) => s.length), 2) * fs * 0.58 + fs * 0.8;
         const h = lines.length * fs * 1.15 + fs * 1.15;
