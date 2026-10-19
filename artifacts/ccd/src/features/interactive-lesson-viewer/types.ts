@@ -13,15 +13,33 @@ export type SceneType =
   | 'vimeo'
   | 'canva'
   | 'powerpoint'
+  | 'googleslides'
   | 'embed';
 
 export type TransitionType = 'none' | 'fade' | 'slide' | 'zoom' | 'dissolve';
 
+/** How the classroom player advances past this scene. */
+export type AdvanceMode = 'manual' | 'timer' | 'media-end';
+
 export type TextPreset = 'headline' | 'subtitle' | 'body';
+
+export type TextAlign = 'left' | 'center' | 'right' | 'justify';
+export type TextListType = 'none' | 'bullet' | 'numbered';
 
 export interface SceneTransition {
   type: TransitionType;
   durationMs: number;
+}
+
+export interface TextEffects {
+  shadow?: boolean;
+  shadowColor?: string;
+  shadowIntensity?: number; // 0–100
+  outline?: boolean;
+  outlineColor?: string;
+  outlineWidth?: number;
+  highlight?: boolean;
+  highlightColor?: string;
 }
 
 export interface TextOverlay {
@@ -32,8 +50,25 @@ export interface TextOverlay {
   x: number;
   y: number;
   width: number;
+  /** Height as % of stage — optional; derived from content when omitted. */
+  height?: number;
   color: string;
   fontSize?: number;
+  fontFamily?: string;
+  fontWeight?: number | string;
+  fontStyle?: 'normal' | 'italic';
+  textDecoration?: 'none' | 'underline' | 'line-through' | 'underline line-through';
+  textTransform?: 'none' | 'uppercase';
+  textAlign?: TextAlign;
+  letterSpacing?: number; // em-ish px offset
+  lineHeight?: number;
+  opacity?: number; // 0–1
+  rotation?: number; // degrees
+  locked?: boolean;
+  listType?: TextListType;
+  effects?: TextEffects;
+  /** Stacking order within the scene (higher = front). */
+  zIndex?: number;
 }
 
 export interface LyricLine {
@@ -51,7 +86,7 @@ export interface Scene {
   transition: SceneTransition;
   /** Direct media / file URL (video, audio, image, exported MP4). */
   mediaUrl?: string;
-  /** Embed / share link (YouTube, Vimeo, Canva, Office Online, generic). */
+  /** Embed / share link (YouTube, Vimeo, Canva, Office Online, Google Slides, generic). */
   embedUrl?: string;
   posterUrl?: string;
   backgroundColor?: string;
@@ -59,6 +94,13 @@ export interface Scene {
   lyrics?: LyricLine[];
   /** Trade-off / helper note shown in editor for Canva / PPT / embeds. */
   notes?: string;
+  /** Classroom advance behaviour. Defaults by type when omitted. */
+  advanceMode?: AdvanceMode;
+  /** Used when advanceMode === 'timer' (milliseconds). */
+  advanceAfterMs?: number;
+  /** YouTube clip window (seconds). */
+  youtubeStartSec?: number;
+  youtubeEndSec?: number;
 }
 
 export interface MediaLibraryItem {
@@ -109,6 +151,7 @@ export const SCENE_TYPE_COLORS: Record<SceneType, string> = {
   vimeo: '#1AB7EA',
   canva: '#00C4CC',
   powerpoint: '#D24726',
+  googleslides: '#F4B400',
   embed: '#77738F',
 };
 
@@ -123,6 +166,7 @@ export const SCENE_TYPE_LABELS: Record<SceneType, string> = {
   vimeo: 'Vimeo',
   canva: 'Canva',
   powerpoint: 'PowerPoint',
+  googleslides: 'Slides',
   embed: 'Embed',
 };
 
@@ -131,9 +175,45 @@ export const BRAND_TEXT_COLORS = [
   '#4338E8',
   '#FFFFFF',
   '#FFC93C',
+  '#F4F3FA',
+  '#D5F3EA',
+  '#FFF1C2',
   '#77738F',
   '#002D24',
+  '#7C3AED', // CC logo purple
 ] as const;
+
+export const DEFAULT_SOLID_COLORS = [
+  '#000000',
+  '#FFFFFF',
+  '#1F1B4D',
+  '#4338E8',
+  '#EF4444',
+  '#F59E0B',
+  '#10B981',
+  '#3B82F6',
+  '#EC4899',
+  '#8B5CF6',
+  '#14B8A6',
+  '#F97316',
+  '#64748B',
+  '#F4F3FA',
+  '#FFC93C',
+  '#002D24',
+] as const;
+
+export const TEXT_FONT_OPTIONS: { id: string; label: string; stack: string }[] = [
+  { id: 'plus-jakarta', label: 'Plus Jakarta Sans', stack: "'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'lexend', label: 'Lexend', stack: "'Lexend', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'atkinson', label: 'Atkinson Hyperlegible', stack: "'Atkinson Hyperlegible', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'nunito', label: 'Nunito', stack: "'Nunito', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'poppins', label: 'Poppins', stack: "'Poppins', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'fredoka', label: 'Fredoka', stack: "'Fredoka', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'baloo', label: 'Baloo 2', stack: "'Baloo 2', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'patrick', label: 'Patrick Hand', stack: "'Patrick Hand', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'montserrat', label: 'Montserrat', stack: "'Montserrat', ui-sans-serif, system-ui, sans-serif" },
+  { id: 'playfair', label: 'Playfair Display', stack: "'Playfair Display', ui-serif, Georgia, serif" },
+];
 
 export const TEXT_PRESET_DEFAULTS: Record<
   TextPreset,
@@ -156,6 +236,21 @@ export function createId(prefix = 'il'): string {
   return `${prefix}_${Math.random().toString(36).slice(2, 10)}_${Date.now().toString(36)}`;
 }
 
+export function defaultAdvanceMode(type: SceneType): AdvanceMode {
+  if (type === 'video' || type === 'audio' || type === 'lyrics') return 'media-end';
+  if (
+    type === 'youtube' ||
+    type === 'vimeo' ||
+    type === 'canva' ||
+    type === 'powerpoint' ||
+    type === 'googleslides' ||
+    type === 'embed'
+  ) {
+    return 'manual';
+  }
+  return 'timer';
+}
+
 export function emptyScene(type: SceneType, partial?: Partial<Scene>): Scene {
   const defaults: Record<SceneType, number> = {
     video: 7000,
@@ -164,12 +259,14 @@ export function emptyScene(type: SceneType, partial?: Partial<Scene>): Scene {
     title: 4000,
     text: 4000,
     lyrics: 32000,
-    youtube: 120000,
-    vimeo: 120000,
-    canva: 15000,
-    powerpoint: 15000,
-    embed: 10000,
+    youtube: 0,
+    vimeo: 0,
+    canva: 0,
+    powerpoint: 0,
+    googleslides: 0,
+    embed: 0,
   };
+  const advanceMode = defaultAdvanceMode(type);
   return {
     id: createId('scene'),
     type,
@@ -178,12 +275,26 @@ export function emptyScene(type: SceneType, partial?: Partial<Scene>): Scene {
     transition: { type: 'fade', durationMs: 500 },
     overlays: [],
     backgroundColor: type === 'title' || type === 'text' ? '#1F1B4D' : '#FFFFFF',
+    advanceMode,
+    advanceAfterMs: advanceMode === 'timer' ? defaults[type] || 5000 : undefined,
     ...partial,
   };
 }
 
+export function resolveAdvanceMode(scene: Scene): AdvanceMode {
+  return scene.advanceMode || defaultAdvanceMode(scene.type);
+}
+
+/** Duration contribution for lesson totals — manual scenes count as 0 clock time. */
+export function sceneClockMs(scene: Scene): number {
+  const mode = resolveAdvanceMode(scene);
+  if (mode === 'manual') return 0;
+  if (mode === 'timer') return Math.max(0, scene.advanceAfterMs ?? scene.durationMs);
+  return Math.max(0, scene.durationMs);
+}
+
 export function lessonDurationMs(lesson: InteractiveLesson): number {
-  return lesson.scenes.reduce((sum, s) => sum + Math.max(0, s.durationMs), 0);
+  return lesson.scenes.reduce((sum, s) => sum + sceneClockMs(s), 0);
 }
 
 export function formatTimecode(ms: number): string {
@@ -193,4 +304,14 @@ export function formatTimecode(ms: number): string {
   const whole = Math.floor(secs);
   const tenths = Math.round((secs - whole) * 10);
   return `${String(mins).padStart(2, '0')}:${String(whole).padStart(2, '0')}.${tenths}`;
+}
+
+export function formatSceneDurationLabel(scene: Scene): string {
+  const mode = resolveAdvanceMode(scene);
+  if (mode === 'manual') return 'Manual';
+  if (mode === 'timer') {
+    const ms = scene.advanceAfterMs ?? scene.durationMs;
+    return `${(ms / 1000).toFixed(1)}s`;
+  }
+  return `${(Math.max(0, scene.durationMs) / 1000).toFixed(1)}s`;
 }

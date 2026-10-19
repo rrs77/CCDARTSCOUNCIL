@@ -5,6 +5,7 @@ import { useCanEditInteractiveLessons } from '../hooks/useCanEditInteractiveLess
 import {
   deleteInteractiveLesson,
   getInteractiveLesson,
+  getPublishedInteractiveLessonForPlayer,
   listInteractiveLessons,
   saveInteractiveLesson,
 } from '../data/store';
@@ -13,6 +14,7 @@ import type { InteractiveLesson, InteractiveLessonSummary } from '../types';
 import { createId, emptyScene } from '../types';
 import { InteractiveLessonEditor } from './editor/InteractiveLessonEditor';
 import { InteractiveLessonPlayer } from './player/InteractiveLessonPlayer';
+import { readPlayerLaunchFromLocation } from '../utils/playerLinks';
 import '../styles.css';
 
 export function InteractiveLessonHub() {
@@ -22,6 +24,8 @@ export function InteractiveLessonHub() {
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<InteractiveLesson | null>(null);
   const [playing, setPlaying] = useState<InteractiveLesson | null>(null);
+  const [playerOnly, setPlayerOnly] = useState(false);
+  const [unavailable, setUnavailable] = useState('');
   const [error, setError] = useState('');
 
   const userId = user?.id || 'anonymous';
@@ -41,6 +45,39 @@ export function InteractiveLessonHub() {
   useEffect(() => {
     void refresh();
   }, [refresh]);
+
+  // Deep-link: /?tab=lesson-viewer&play=<id>&mode=player → classroom player only
+  useEffect(() => {
+    const { playId, playerOnly: only } = readPlayerLaunchFromLocation();
+    if (!playId) return;
+    let cancelled = false;
+    void (async () => {
+      const { lesson, reason } = await getPublishedInteractiveLessonForPlayer(playId);
+      if (cancelled) return;
+      if (lesson) {
+        setPlayerOnly(only);
+        setPlaying(lesson);
+        setUnavailable('');
+      } else if (reason === 'unpublished') {
+        setUnavailable('This interactive lesson is not available yet. Ask the author to publish it.');
+      } else {
+        setUnavailable('Interactive lesson not found.');
+      }
+      // Consume deep-link params so refresh doesn't re-open forever
+      try {
+        const params = new URLSearchParams(window.location.search);
+        params.delete('play');
+        params.delete('mode');
+        const qs = params.toString();
+        window.history.replaceState({}, '', `${window.location.pathname || '/'}${qs ? `?${qs}` : ''}`);
+      } catch {
+        /* ignore */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const createNew = async () => {
     if (!canEdit) return;
@@ -118,6 +155,11 @@ export function InteractiveLessonHub() {
 
   return (
     <div className="ilv-root ilv-hub">
+      {unavailable && (
+        <div className="mb-4 rounded-[12px] border border-[var(--ss-line)] bg-[var(--ss-suntint)] px-4 py-3 text-sm text-[var(--ss-ink)]">
+          {unavailable}
+        </div>
+      )}
       <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="ilv-title text-[26px] text-[var(--ss-ink)]">Lesson Viewer</h2>
@@ -225,7 +267,24 @@ export function InteractiveLessonHub() {
       )}
 
       {playing && (
-        <InteractiveLessonPlayer lesson={playing} onClose={() => setPlaying(null)} />
+        <InteractiveLessonPlayer
+          lesson={playing}
+          playerOnly={playerOnly}
+          canEdit={canEdit}
+          onEdit={
+            canEdit
+              ? () => {
+                  setPlaying(null);
+                  setPlayerOnly(false);
+                  void openEditor(playing.id);
+                }
+              : undefined
+          }
+          onClose={() => {
+            setPlaying(null);
+            setPlayerOnly(false);
+          }}
+        />
       )}
     </div>
   );

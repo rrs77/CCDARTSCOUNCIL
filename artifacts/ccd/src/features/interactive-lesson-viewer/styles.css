@@ -415,7 +415,7 @@
   border-radius: 10px;
   background: var(--ss-lilac);
   cursor: grab;
-  overflow: hidden;
+  overflow: visible;
   user-select: none;
   position: relative;
   z-index: 1;
@@ -424,6 +424,171 @@
   border-color: var(--ss-indigo);
   outline: 2px solid var(--ss-focus);
   outline-offset: 1px;
+  z-index: 4;
+}
+.ilv-scene-clip.is-menu-open {
+  z-index: 6;
+}
+.ilv-clip-actions {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease;
+}
+/* Selected clip: delete/more always visible. Others: on hover / menu open. */
+.ilv-scene-clip.is-active .ilv-clip-actions,
+.ilv-scene-clip.is-menu-open .ilv-clip-actions,
+.ilv-scene-clip:hover .ilv-clip-actions {
+  opacity: 1;
+  pointer-events: auto;
+}
+.ilv-clip-action {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
+  border-radius: 8px;
+  border: 1px solid var(--ss-line);
+  background: var(--ss-white);
+  color: var(--ss-ink);
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(31, 27, 77, 0.08);
+}
+.ilv-clip-action:hover,
+.ilv-clip-action.is-on {
+  background: var(--ss-softindigo);
+  border-color: var(--ss-indigo);
+  color: var(--ss-indigo);
+}
+.ilv-clip-menu {
+  position: absolute;
+  top: 34px;
+  right: 4px;
+  z-index: 8;
+  min-width: 148px;
+  padding: 0.3rem;
+  border-radius: 10px;
+  border: 1px solid var(--ss-line);
+  background: var(--ss-white);
+  box-shadow: 0 8px 24px rgba(31, 27, 77, 0.14);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.ilv-clip-menu button {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  width: 100%;
+  min-height: 36px;
+  padding: 0.35rem 0.55rem;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ss-ink);
+  font-family: var(--ss-font);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  text-align: left;
+}
+.ilv-clip-menu button:hover:not(:disabled) {
+  background: var(--ss-lilac);
+}
+.ilv-clip-menu button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.ilv-clip-menu button.is-danger {
+  color: #b42318;
+}
+.ilv-clip-menu button.is-danger:hover:not(:disabled) {
+  background: #fef3f2;
+}
+.ilv-empty-timeline {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-height: 72px;
+  padding: 0.75rem 1.1rem;
+  border: 1px dashed #ddd9ef;
+  border-radius: 10px;
+  background: var(--ss-lilac);
+  color: var(--ss-ink);
+  font-family: var(--ss-font);
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.ilv-empty-timeline:hover {
+  border-color: var(--ss-indigo);
+  background: var(--ss-softindigo);
+  color: var(--ss-indigo);
+}
+.ilv-stage-empty {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  background: #1f1b4d;
+  color: #fff;
+  text-align: center;
+  padding: 1.5rem;
+}
+.ilv-stage-empty-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+.ilv-stage-empty-sub {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.65);
+  margin-bottom: 0.35rem;
+}
+.ilv-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 1.25rem;
+  z-index: 240;
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  padding: 0.55rem 0.85rem 0.55rem 1rem;
+  border-radius: 12px;
+  background: var(--ss-ink);
+  color: #fff;
+  font-family: var(--ss-font);
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: 0 10px 28px rgba(31, 27, 77, 0.28);
+}
+.ilv-toast-undo {
+  border: none;
+  border-radius: 8px;
+  background: var(--ss-indigo);
+  color: #fff;
+  font-family: var(--ss-font);
+  font-size: 0.8rem;
+  font-weight: 700;
+  min-height: 32px;
+  padding: 0 0.7rem;
+  cursor: pointer;
+}
+.ilv-toast-undo:hover {
+  background: var(--ss-indigo-hover);
 }
 .ilv-scene-thumb {
   height: 64px;
@@ -772,13 +937,38 @@
   color: #fff;
   font-size: 11px;
   font-weight: 700;
-  padding: 0 0.4rem;
+  padding: 0 0.25rem 0 0.4rem;
   display: flex;
   align-items: center;
+  gap: 0.2rem;
   overflow: hidden;
   cursor: grab;
   white-space: nowrap;
+}
+.ilv-lyric-block-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
   text-overflow: ellipsis;
+}
+.ilv-lyric-delete {
+  flex: 0 0 auto;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.22);
+  color: #fff;
+  cursor: pointer;
+}
+.ilv-lyric-block:hover .ilv-lyric-delete {
+  display: inline-flex;
+}
+.ilv-lyric-delete:hover {
+  background: rgba(0, 0, 0, 0.4);
 }
 
 @media (max-width: 768px) {

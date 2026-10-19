@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Mic, Pointer, Sparkles, AlignLeft } from 'lucide-react';
+import { Mic, Pointer, Sparkles, AlignLeft, Trash2 } from 'lucide-react';
 import type { LyricLine, Scene } from '../../types';
 import {
   applyTapSync,
@@ -176,11 +176,12 @@ export function LyricsPanel({
               className="ilv-lyric-block"
               style={{
                 left: line.startMs * pxPerMs,
-                width: Math.max(24, (line.endMs - line.startMs) * pxPerMs),
+                width: Math.max(28, (line.endMs - line.startMs) * pxPerMs),
                 top: 18,
               }}
               title={line.text}
               onPointerDown={(e) => {
+                if ((e.target as HTMLElement).closest('.ilv-lyric-delete')) return;
                 e.stopPropagation();
                 const startX = e.clientX;
                 const origStart = line.startMs;
@@ -198,7 +199,19 @@ export function LyricsPanel({
                 window.addEventListener('pointerup', up);
               }}
             >
-              {line.text}
+              <span className="ilv-lyric-block-text">{line.text}</span>
+              <button
+                type="button"
+                className="ilv-lyric-delete"
+                aria-label={`Delete lyric: ${line.text}`}
+                title="Delete line"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onChange(lyrics.filter((l) => l.id !== line.id));
+                }}
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
             </div>
           ))}
         </div>
@@ -233,6 +246,15 @@ export function LyricsPanel({
               onClick={() => onChange(nudgeLyric(lyrics, line.id, 100, duration))}
             >
               +
+            </button>
+            <button
+              type="button"
+              className="ilv-tool-btn"
+              title="Delete line"
+              aria-label={`Delete lyric line ${i + 1}`}
+              onClick={() => onChange(lyrics.filter((l) => l.id !== line.id))}
+            >
+              <Trash2 className="h-3.5 w-3.5" />
             </button>
           </li>
         ))}

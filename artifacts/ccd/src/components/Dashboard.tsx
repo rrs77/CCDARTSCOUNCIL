@@ -84,7 +84,14 @@ export function Dashboard() {
       ]);
       if (tab && allowed.has(tab)) {
         setActiveTab(tab);
-        window.history.replaceState({}, '', window.location.pathname || '/');
+        // Preserve player deep-link params for Lesson Viewer hub to consume.
+        const keep = new URLSearchParams();
+        const play = params.get('play');
+        const mode = params.get('mode');
+        if (play) keep.set('play', play);
+        if (mode) keep.set('mode', mode);
+        const qs = keep.toString();
+        window.history.replaceState({}, '', `${window.location.pathname || '/'}${qs ? `?${qs}` : ''}`);
       }
     } catch {
       /* ignore */

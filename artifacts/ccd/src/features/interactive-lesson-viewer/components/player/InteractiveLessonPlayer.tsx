@@ -9,15 +9,25 @@ import {
   Play,
   X,
   Mic2,
+  Pencil,
 } from 'lucide-react';
 import type { InteractiveLesson } from '../../types';
-import { formatTimecode, lessonDurationMs } from '../../types';
+import {
+  formatTimecode,
+  lessonDurationMs,
+  resolveAdvanceMode,
+  sceneClockMs,
+} from '../../types';
 import { SceneRenderer } from '../SceneRenderer';
 
 interface InteractiveLessonPlayerProps {
   lesson: InteractiveLesson;
   onClose: () => void;
   startSceneIndex?: number;
+  /** Player-only mode: no editor chrome; optional Edit for admins. */
+  playerOnly?: boolean;
+  canEdit?: boolean;
+  onEdit?: () => void;
 }
 
 function transitionClass(type: string): string {
@@ -39,6 +49,9 @@ export function InteractiveLessonPlayer({
   lesson,
   onClose,
   startSceneIndex = 0,
+  playerOnly = false,
+  canEdit = false,
+  onEdit,
 }: InteractiveLessonPlayerProps) {
   const [sceneIndex, setSceneIndex] = useState(startSceneIndex);
   const [playing, setPlaying] = useState(true);
@@ -51,11 +64,12 @@ export function InteractiveLessonPlayer({
     window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
   const scene = lesson.scenes[sceneIndex];
+  const advanceMode = scene ? resolveAdvanceMode(scene) : 'manual';
   const totalMs = useMemo(() => lessonDurationMs(lesson), [lesson]);
   const elapsedMs = useMemo(() => {
-    const before = lesson.scenes.slice(0, sceneIndex).reduce((s, sc) => s + sc.durationMs, 0);
-    return before + sceneTimeMs;
-  }, [lesson.scenes, sceneIndex, sceneTimeMs]);
+    const before = lesson.scenes.slice(0, sceneIndex).reduce((s, sc) => s + sceneClockMs(sc), 0);
+    return before + (advanceMode === 'manual' ? 0 : sceneTimeMs);
+  }, [lesson.scenes, sceneIndex, sceneTimeMs, advanceMode]);
 
   const goTo = useCallback(
     (idx: number) => {
@@ -71,29 +85,49 @@ export function InteractiveLessonPlayer({
   const next = useCallback(() => goTo(sceneIndex + 1), [goTo, sceneIndex]);
   const prev = useCallback(() => goTo(sceneIndex - 1), [goTo, sceneIndex]);
 
+  const advanceFromMediaEnd = useCallback(() => {
+    if (sceneIndex < lesson.scenes.length - 1) goTo(sceneIndex + 1);
+    else {
+      setPlaying(false);
+    }
+  }, [goTo, lesson.scenes.length, sceneIndex]);
+
+  // Timer / media-end clock — never auto-advance manual scenes.
   useEffect(() => {
     if (!playing || !scene) return;
+    if (advanceMode === 'manual') return;
+
+    const limit =
+      advanceMode === 'timer'
+        ? Math.max(500, scene.advanceAfterMs ?? (scene.durationMs || 5000))
+        : Math.max(500, scene.durationMs || 5000);
+
+    // For media-end with video/audio/youtube, SceneRenderer fires onMediaEnded.
+    // Still run a soft clock for UI timecode; only auto-advance on timer mode here.
     const started = performance.now() - sceneTimeMs;
     let raf = 0;
     const tick = (now: number) => {
       const t = now - started;
-      if (t >= scene.durationMs) {
-        if (sceneIndex < lesson.scenes.length - 1) {
-          goTo(sceneIndex + 1);
-        } else {
-          setSceneTimeMs(scene.durationMs);
+      setSceneTimeMs(Math.min(t, limit));
+      if (advanceMode === 'timer' && t >= limit) {
+        if (sceneIndex < lesson.scenes.length - 1) goTo(sceneIndex + 1);
+        else {
+          setSceneTimeMs(limit);
           setPlaying(false);
         }
         return;
       }
-      setSceneTimeMs(t);
+      if (advanceMode === 'media-end' && t >= limit && scene.type !== 'youtube' && scene.type !== 'video' && scene.type !== 'audio') {
+        // Fallback when no media API is available
+        advanceFromMediaEnd();
+        return;
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
-    // intentionally omit sceneTimeMs to avoid reset loops
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, sceneIndex, scene?.id, scene?.durationMs, goTo, lesson.scenes.length]);
+  }, [playing, sceneIndex, scene?.id, advanceMode, scene?.advanceAfterMs, scene?.durationMs, goTo, lesson.scenes.length]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -114,7 +148,6 @@ export function InteractiveLessonPlayer({
     return () => window.removeEventListener('keydown', onKey);
   }, [next, prev, onClose]);
 
-  // Touch swipe
   useEffect(() => {
     let startX = 0;
     const el = document.getElementById('ilv-player-stage');
@@ -152,7 +185,13 @@ export function InteractiveLessonPlayer({
 
   if (!scene) return null;
 
-  // Portal to body so dashboard transform ancestors can't trap position:fixed.
+  const advanceHint =
+    advanceMode === 'manual'
+      ? 'Manual — press Next when ready'
+      : advanceMode === 'timer'
+        ? `Advances after ${(((scene.advanceAfterMs ?? scene.durationMs) || 0) / 1000).toFixed(0)}s`
+        : 'Advances when media ends';
+
   return createPortal(
     <div id="ilv-player-root" className="ilv-root ilv-player" role="dialog" aria-modal="true" aria-label={lesson.title}>
       <div className="ilv-player-header">
@@ -160,11 +199,32 @@ export function InteractiveLessonPlayer({
           <h2 className="text-base font-extrabold tracking-tight text-white">{lesson.title}</h2>
           <p className="text-xs text-white/60">
             Scene {sceneIndex + 1} of {lesson.scenes.length} · {scene.title}
+            <span className="ml-2 text-white/40">· {advanceHint}</span>
           </p>
         </div>
-        <button type="button" className="ilv-ctrl" onClick={onClose} aria-label="Close player" style={{ border: '1px solid rgba(226,224,239,0.25)', borderRadius: 12, padding: '0.5rem', background: 'transparent', color: '#fff' }}>
-          <X className="h-5 w-5" />
-        </button>
+        <div className="flex items-center gap-2">
+          {playerOnly && canEdit && onEdit && (
+            <button type="button" className="ilv-ctrl" onClick={onEdit} title="Edit lesson">
+              <Pencil className="h-4 w-4" />
+              <span className="hidden sm:inline">Edit</span>
+            </button>
+          )}
+          <button
+            type="button"
+            className="ilv-ctrl"
+            onClick={onClose}
+            aria-label="Close player"
+            style={{
+              border: '1px solid rgba(226,224,239,0.25)',
+              borderRadius: 12,
+              padding: '0.5rem',
+              background: 'transparent',
+              color: '#fff',
+            }}
+          >
+            <X className="h-5 w-5" />
+          </button>
+        </div>
       </div>
 
       <div id="ilv-player-stage" className="ilv-player-stage" onClick={() => setPlaying((p) => !p)}>
@@ -177,11 +237,11 @@ export function InteractiveLessonPlayer({
             showLyrics={showLyrics}
             transitionClass={transitionClass(scene.transition.type)}
             reducedMotion={reducedMotion}
+            onMediaEnded={advanceMode === 'media-end' ? advanceFromMediaEnd : undefined}
           />
         </div>
       </div>
 
-      {/* Bottom controls — classroom presenter (prev/next, play, lyrics, fullscreen) */}
       <div className="ilv-player-controls" onClick={(e) => e.stopPropagation()}>
         <div className="flex items-center gap-2">
           <button type="button" className="ilv-ctrl" onClick={prev} disabled={sceneIndex === 0} aria-label="Previous scene">
@@ -205,7 +265,9 @@ export function InteractiveLessonPlayer({
             <ChevronRight className="h-5 w-5" />
           </button>
           <span className="ml-2 tabular-nums text-sm text-white/80">
-            {formatTimecode(elapsedMs)} / {formatTimecode(totalMs)}
+            {advanceMode === 'manual'
+              ? `Scene ${sceneIndex + 1} / ${lesson.scenes.length}`
+              : `${formatTimecode(elapsedMs)} / ${formatTimecode(totalMs)}`}
           </span>
         </div>
 

@@ -138,6 +138,33 @@ export async function getInteractiveLesson(id: string): Promise<InteractiveLesso
   return null;
 }
 
+/**
+ * Read-only classroom fetch: published (or demo) lessons only.
+ * Used by player deep links — never returns drafts to non-owners.
+ */
+export async function getPublishedInteractiveLessonForPlayer(
+  id: string,
+): Promise<{ lesson: InteractiveLesson | null; reason?: 'not-found' | 'unpublished' }> {
+  const lesson = await getInteractiveLesson(id);
+  if (!lesson) return { lesson: null, reason: 'not-found' };
+  if (lesson.isDemo || lesson.status === 'published') return { lesson };
+  // Remote published-only check when sync is on
+  if (useRemoteSync()) {
+    try {
+      const { data, error } = await supabase
+        .from(TABLE)
+        .select('*')
+        .eq('id', id)
+        .eq('status', 'published')
+        .maybeSingle();
+      if (!error && data) return { lesson: rowToLesson(data as Record<string, unknown>) };
+    } catch {
+      /* fall through */
+    }
+  }
+  return { lesson: null, reason: 'unpublished' };
+}
+
 export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<InteractiveLesson> {
   const next = { ...lesson, updatedAt: new Date().toISOString() };
   const local = readLocal().filter((l) => l.id !== next.id);

@@ -9,6 +9,13 @@ import {
   isLikelyCanvaEmbed,
   normalizeCanvaEmbedUrl,
 } from '../utils/canvaEmbed';
+import { youtubeEmbedSrc, parseYouTubeUrl } from '../utils/youtubeEmbed';
+import {
+  isGoogleSlidesUrl,
+  normalizeGoogleSlidesEmbedUrl,
+  parseGoogleSlidesUrl,
+} from '../utils/googleSlidesEmbed';
+import { TEXT_FONT_OPTIONS } from '../types';
 
 interface SceneRendererProps {
   scene: Scene;
@@ -19,22 +26,14 @@ interface SceneRendererProps {
   selectedOverlayId?: string | null;
   onSelectOverlay?: (id: string | null) => void;
   onMoveOverlay?: (id: string, x: number, y: number) => void;
+  onUpdateOverlay?: (id: string, patch: Partial<TextOverlay>) => void;
   transitionClass?: string;
   reducedMotion?: boolean;
+  /** Fired when video/audio/YouTube reaches its end (for media-end advance). */
+  onMediaEnded?: () => void;
 }
 
 const PLACEHOLDER_RE = /^(add title|add subtitle|add text|lesson title|subtitle|body text)$/i;
-
-function youtubeEmbed(url: string): string {
-  try {
-    if (url.includes('/embed/')) return url;
-    const u = new URL(url);
-    const id = u.searchParams.get('v') || u.pathname.split('/').pop();
-    return id ? `https://www.youtube.com/embed/${id}?rel=0` : url;
-  } catch {
-    return url;
-  }
-}
 
 function vimeoEmbed(url: string): string {
   try {
@@ -143,6 +142,114 @@ function BrandEmbedCard({
   );
 }
 
+function YouTubeFrame({
+  url,
+  title,
+  startSec,
+  endSec,
+  playing,
+  onEnded,
+}: {
+  url: string;
+  title: string;
+  startSec?: number;
+  endSec?: number;
+  playing?: boolean;
+  onEnded?: () => void;
+}) {
+  const iframeRef = useRef<HTMLIFrameElement>(null);
+  const src = youtubeEmbedSrc(url, { startSec, endSec, autoplay: playing });
+
+  useEffect(() => {
+    if (!onEnded) return;
+    const onMessage = (event: MessageEvent) => {
+      if (!String(event.origin).includes('youtube.com')) return;
+      try {
+        const data = typeof event.data === 'string' ? JSON.parse(event.data) : event.data;
+        // YouTube IFrame API posts infoDelivery / onStateChange (0 = ended)
+        if (data?.event === 'onStateChange' && (data?.info === 0 || data?.info?.playerState === 0)) {
+          onEnded();
+        }
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('message', onMessage);
+    // Ask the iframe to listen for state changes when possible
+    const t = window.setTimeout(() => {
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: 'listening', id: 1, channel: 'widget' }),
+        '*',
+      );
+      iframeRef.current?.contentWindow?.postMessage(
+        JSON.stringify({ event: 'command', func: 'addEventListener', args: ['onStateChange'] }),
+        '*',
+      );
+    }, 800);
+    return () => {
+      window.clearTimeout(t);
+      window.removeEventListener('message', onMessage);
+    };
+  }, [onEnded, src]);
+
+  // Soft end detection via clip window when API messages are blocked
+  useEffect(() => {
+    if (!onEnded || endSec == null || !playing) return;
+    const start = startSec || 0;
+    const ms = Math.max(500, (endSec - start) * 1000);
+    const t = window.setTimeout(onEnded, ms);
+    return () => window.clearTimeout(t);
+  }, [onEnded, endSec, startSec, playing, src]);
+
+  return (
+    <iframe
+      ref={iframeRef}
+      title={title}
+      src={src}
+      className="absolute inset-0 h-full w-full border-0"
+      allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+      allowFullScreen
+    />
+  );
+}
+
+function GoogleSlidesFrame({ url, title }: { url: string; title: string }) {
+  const embed = normalizeGoogleSlidesEmbedUrl(url);
+  const parsed = parseGoogleSlidesUrl(url);
+  const [blocked, setBlocked] = useState(!isGoogleSlidesUrl(url) && !embed.includes('/embed'));
+
+  if (blocked) {
+    return (
+      <div className="ilv-embed-fallback">
+        <p className="ilv-embed-fallback-title">Google Slides couldn’t load</p>
+        <p className="ilv-embed-fallback-body">
+          Share the deck as “Anyone with the link can view”, or File → Share → Publish to the web, then paste the
+          link again.
+        </p>
+        {parsed && (
+          <a className="ilv-btn ilv-btn-secondary" href={parsed.openUrl} target="_blank" rel="noopener noreferrer">
+            <ExternalLink className="h-4 w-4" />
+            Open in Google Slides
+          </a>
+        )}
+        <button type="button" className="ilv-btn ilv-btn-ghost text-xs text-white/80" onClick={() => setBlocked(false)}>
+          Try embed again
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <iframe
+      title={title}
+      src={embed}
+      className="absolute inset-0 h-full w-full border-0 bg-white"
+      allowFullScreen
+      onError={() => setBlocked(true)}
+    />
+  );
+}
+
 export function SceneRenderer({
   scene,
   timeMs = 0,
@@ -154,11 +261,17 @@ export function SceneRenderer({
   onMoveOverlay,
   transitionClass = '',
   reducedMotion = false,
+  onMediaEnded,
 }: SceneRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
   const stageRef = useRef<HTMLDivElement>(null);
   const dragRef = useRef<{ id: string; ox: number; oy: number } | null>(null);
+  const endedRef = useRef(false);
+
+  useEffect(() => {
+    endedRef.current = false;
+  }, [scene.id]);
 
   useEffect(() => {
     const media = videoRef.current || audioRef.current;
@@ -178,8 +291,20 @@ export function SceneRenderer({
     }
   }, [playing, timeMs, scene.mediaUrl, scene.id]);
 
+  useEffect(() => {
+    const media = videoRef.current || audioRef.current;
+    if (!media || !onMediaEnded) return;
+    const onEnded = () => {
+      if (endedRef.current) return;
+      endedRef.current = true;
+      onMediaEnded();
+    };
+    media.addEventListener('ended', onEnded);
+    return () => media.removeEventListener('ended', onEnded);
+  }, [onMediaEnded, scene.id, scene.mediaUrl]);
+
   const onPointerDown = (e: React.PointerEvent, overlay: TextOverlay) => {
-    if (!interactive || !stageRef.current) return;
+    if (!interactive || !stageRef.current || overlay.locked) return;
     e.stopPropagation();
     onSelectOverlay?.(overlay.id);
     const rect = stageRef.current.getBoundingClientRect();
@@ -256,12 +381,13 @@ export function SceneRenderer({
         )}
 
       {scene.type === 'youtube' && scene.embedUrl && (
-        <iframe
+        <YouTubeFrame
+          url={scene.embedUrl}
           title={scene.title}
-          src={youtubeEmbed(scene.embedUrl)}
-          className="absolute inset-0 h-full w-full border-0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-          allowFullScreen
+          startSec={scene.youtubeStartSec}
+          endSec={scene.youtubeEndSec}
+          playing={playing}
+          onEnded={onMediaEnded}
         />
       )}
 
@@ -312,6 +438,20 @@ export function SceneRenderer({
           )
         ))}
 
+      {scene.type === 'googleslides' &&
+        (scene.embedUrl ? (
+          <GoogleSlidesFrame url={scene.embedUrl} title={scene.title} />
+        ) : (
+          <BrandEmbedCard
+            kind="embed"
+            posterUrl={scene.posterUrl}
+            notes={
+              scene.notes ||
+              'Paste a Google Slides link shared as “Anyone with the link can view”, or publish to the web.'
+            }
+          />
+        ))}
+
       {scene.type === 'embed' &&
         (scene.embedUrl ? (
           <iframe
@@ -334,20 +474,45 @@ export function SceneRenderer({
       {scene.overlays.map((ov) => {
         const preset = TEXT_PRESET_DEFAULTS[ov.style];
         const isPlaceholder = PLACEHOLDER_RE.test(ov.text.trim());
+        const font =
+          TEXT_FONT_OPTIONS.find((f) => f.id === ov.fontFamily || f.stack === ov.fontFamily)?.stack ||
+          ov.fontFamily ||
+          TEXT_FONT_OPTIONS[0].stack;
+        const shadow =
+          ov.effects?.shadow
+            ? `0 ${Math.max(1, (ov.effects.shadowIntensity || 40) / 20)}px ${Math.max(2, (ov.effects.shadowIntensity || 40) / 8)}px ${ov.effects.shadowColor || 'rgba(0,0,0,0.45)'}`
+            : undefined;
+        const outline =
+          ov.effects?.outline
+            ? `${ov.effects.outlineWidth || 1}px ${ov.effects.outlineColor || '#000'}`
+            : undefined;
         return (
           <div
             key={ov.id}
             data-style={ov.style}
             className={`ilv-overlay-box ${selectedOverlayId === ov.id ? 'is-selected' : ''} ${
               isPlaceholder ? 'is-placeholder' : ''
-            }`}
+            } ${ov.locked ? 'is-locked' : ''}`}
             style={{
               left: `${ov.x}%`,
               top: `${ov.y}%`,
               width: `${ov.width}%`,
               color: ov.color,
               fontSize: ov.fontSize || preset.fontSize,
-              fontWeight: preset.fontWeight,
+              fontWeight: ov.fontWeight || preset.fontWeight,
+              fontFamily: font,
+              fontStyle: ov.fontStyle || 'normal',
+              textDecoration: ov.textDecoration || 'none',
+              textTransform: ov.textTransform || 'none',
+              textAlign: ov.textAlign || 'left',
+              letterSpacing: ov.letterSpacing != null ? `${ov.letterSpacing}px` : undefined,
+              lineHeight: ov.lineHeight || undefined,
+              opacity: ov.opacity != null ? ov.opacity : 1,
+              transform: ov.rotation ? `rotate(${ov.rotation}deg)` : undefined,
+              textShadow: shadow,
+              WebkitTextStroke: outline,
+              background: ov.effects?.highlight ? ov.effects.highlightColor || 'rgba(255,201,60,0.35)' : undefined,
+              zIndex: ov.zIndex || 1,
               pointerEvents: interactive ? 'auto' : 'none',
             }}
             onPointerDown={(e) => onPointerDown(e, ov)}

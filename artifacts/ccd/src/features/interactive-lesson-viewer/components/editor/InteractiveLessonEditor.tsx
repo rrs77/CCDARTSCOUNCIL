@@ -10,6 +10,7 @@ import {
   Play,
   Pause,
   Share2,
+  Copy,
   Plus,
   Video,
   Music,
@@ -23,6 +24,7 @@ import {
   Trash2,
   ChevronDown,
   ArrowLeft,
+  Presentation,
 } from 'lucide-react';
 import type {
   InteractiveLesson,
@@ -46,6 +48,11 @@ import { InteractiveLessonPlayer } from '../player/InteractiveLessonPlayer';
 import { saveInteractiveLesson } from '../../data/store';
 import { SceneThumb } from './SceneThumb';
 import { isCanvaUrl, normalizeCanvaEmbedUrl } from '../../utils/canvaEmbed';
+import { buildPlayerEmbedSnippet, buildPlayerUrl } from '../../utils/playerLinks';
+import { parseYouTubeUrl, isYouTubeUrl } from '../../utils/youtubeEmbed';
+import { isGoogleSlidesUrl, normalizeGoogleSlidesEmbedUrl } from '../../utils/googleSlidesEmbed';
+import type { AdvanceMode } from '../../types';
+import { defaultAdvanceMode, resolveAdvanceMode } from '../../types';
 
 type RailPanel =
   | 'video'
@@ -55,6 +62,7 @@ type RailPanel =
   | 'lyrics'
   | 'canva'
   | 'powerpoint'
+  | 'googleslides'
   | 'embed'
   | 'uploads'
   | 'transitions'
@@ -77,6 +85,7 @@ const RAIL: { id: RailPanel; label: string; icon: React.ReactNode }[] = [
   { id: 'lyrics', label: 'Lyrics', icon: <Mic2 className="h-4 w-4" /> },
   { id: 'canva', label: 'Canva', icon: <Palette className="h-4 w-4" /> },
   { id: 'powerpoint', label: 'PPT', icon: <FileSpreadsheet className="h-4 w-4" /> },
+  { id: 'googleslides', label: 'Slides', icon: <Presentation className="h-4 w-4" /> },
   { id: 'embed', label: 'Embed', icon: <Code2 className="h-4 w-4" /> },
   { id: 'uploads', label: 'Uploads', icon: <Upload className="h-4 w-4" /> },
   { id: 'transitions', label: 'Trans.', icon: <Blend className="h-4 w-4" /> },
@@ -106,6 +115,8 @@ export function InteractiveLessonEditor({
   const [urlDraft, setUrlDraft] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveMsg, setSaveMsg] = useState('');
+  const [toast, setToast] = useState<{ message: string; undo?: boolean } | null>(null);
+  const [publishMenu, setPublishMenu] = useState(false);
 
   useEffect(() => {
     const prev = document.body.style.overflow;
@@ -114,6 +125,12 @@ export function InteractiveLessonEditor({
       document.body.style.overflow = prev;
     };
   }, []);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = window.setTimeout(() => setToast(null), 4000);
+    return () => window.clearTimeout(t);
+  }, [toast]);
 
   const scene = lesson.scenes[sceneIndex];
   const totalMs = lessonDurationMs(lesson);
@@ -218,6 +235,43 @@ export function InteractiveLessonEditor({
     setSceneIndex(to);
   };
 
+  const deleteSceneAt = useCallback(
+    (index: number) => {
+      if (index < 0 || index >= lesson.scenes.length) return;
+      const scenes = lesson.scenes.filter((_, i) => i !== index);
+      pushHistory({ ...lesson, scenes });
+      if (scenes.length === 0) {
+        setSceneIndex(0);
+      } else if (index >= scenes.length) {
+        setSceneIndex(scenes.length - 1);
+      } else {
+        setSceneIndex(index);
+      }
+      setSceneTimeMs(0);
+      setPlaying(false);
+      setSelectedOverlayId(null);
+      setToast({ message: 'Scene deleted', undo: true });
+    },
+    [lesson, pushHistory],
+  );
+
+  const duplicateSceneAt = useCallback(
+    (index: number) => {
+      const src = lesson.scenes[index];
+      if (!src) return;
+      const copy = deepClone(src);
+      copy.id = createId('scene');
+      copy.title = `${src.title} copy`;
+      const scenes = [...lesson.scenes];
+      scenes.splice(index + 1, 0, copy);
+      pushHistory({ ...lesson, scenes });
+      setSceneIndex(index + 1);
+      setSceneTimeMs(0);
+      setPlaying(false);
+    },
+    [lesson, pushHistory],
+  );
+
   const addTextOverlay = (style: TextOverlay['style'] = 'headline') => {
     const ov: TextOverlay = {
       id: createId('ov'),
@@ -244,26 +298,53 @@ export function InteractiveLessonEditor({
       kind === 'powerpoint' ||
       kind === 'embed';
     let finalUrl = url.trim();
-    if (kind === 'canva' || isCanvaUrl(finalUrl)) {
+    let resolvedKind: SceneType = kind === 'canva' || isCanvaUrl(finalUrl) ? 'canva' : kind;
+    let posterUrl: string | undefined;
+    let youtubeStartSec: number | undefined;
+    let youtubeEndSec: number | undefined;
+    if (resolvedKind === 'canva' || isCanvaUrl(finalUrl)) {
       finalUrl = normalizeCanvaEmbedUrl(finalUrl);
+      resolvedKind = 'canva';
+    } else if (resolvedKind === 'youtube' || isYouTubeUrl(finalUrl) || (rail === 'video' && isYouTubeUrl(finalUrl))) {
+      const yt = parseYouTubeUrl(finalUrl);
+      if (yt) {
+        finalUrl = yt.embedUrl;
+        posterUrl = yt.thumbUrl;
+        youtubeStartSec = yt.startSec;
+        youtubeEndSec = yt.endSec;
+        resolvedKind = 'youtube';
+      }
+    } else if (resolvedKind === 'googleslides' || isGoogleSlidesUrl(finalUrl)) {
+      finalUrl = normalizeGoogleSlidesEmbedUrl(finalUrl);
+      resolvedKind = 'googleslides';
     }
+    const itemKind = resolvedKind;
     const item: MediaLibraryItem = {
       id: createId('media'),
       name: finalUrl.split('/').pop() || 'Media',
-      kind: kind === 'canva' || isCanvaUrl(url) ? 'canva' : kind,
+      kind: itemKind,
       url: finalUrl,
+      thumbUrl: posterUrl,
       addedAt: new Date().toISOString(),
     };
     const mediaLibrary = [...lesson.mediaLibrary, item];
-    const resolvedKind: SceneType = kind === 'canva' || isCanvaUrl(url) ? 'canva' : kind;
+    const isEmbedType =
+      itemKind === 'youtube' ||
+      itemKind === 'vimeo' ||
+      itemKind === 'canva' ||
+      itemKind === 'powerpoint' ||
+      itemKind === 'googleslides' ||
+      itemKind === 'embed';
     const patched: Scene[] = lesson.scenes.map((s, i) =>
       i === sceneIndex
         ? {
             ...s,
-            type: resolvedKind,
-            ...(isEmbed || resolvedKind === 'canva'
-              ? { embedUrl: finalUrl }
-              : { mediaUrl: finalUrl }),
+            type: itemKind,
+            advanceMode: s.advanceMode || defaultAdvanceMode(itemKind),
+            ...(posterUrl ? { posterUrl } : {}),
+            ...(youtubeStartSec != null ? { youtubeStartSec } : {}),
+            ...(youtubeEndSec != null ? { youtubeEndSec } : {}),
+            ...(isEmbedType ? { embedUrl: finalUrl } : { mediaUrl: finalUrl }),
           }
         : s,
     );
@@ -280,6 +361,21 @@ export function InteractiveLessonEditor({
   };
 
   const selectedOverlay = scene?.overlays.find((o) => o.id === selectedOverlayId);
+
+
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const el = e.target as HTMLElement | null;
+      if (el?.closest('input, textarea, select, [contenteditable="true"]')) return;
+      if (e.key === 'Delete' || e.key === 'Backspace') {
+        if (!lesson.scenes.length) return;
+        e.preventDefault();
+        deleteSceneAt(sceneIndex);
+      }
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, [deleteSceneAt, lesson.scenes.length, sceneIndex]);
 
   const clipWidth = useMemo(() => 96 + timelineZoom * 40, [timelineZoom]);
 
@@ -314,17 +410,6 @@ export function InteractiveLessonEditor({
     }
   };
 
-
-  if (!scene) {
-    return (
-      <div className="ilv-root p-6">
-        <p>No scenes yet.</p>
-        <button type="button" className="ilv-btn ilv-btn-primary mt-3" onClick={() => addScene('title')}>
-          Add title scene
-        </button>
-      </div>
-    );
-  }
 
   // Portal to body — dashboard TabsContent uses transform, which would trap position:fixed.
   return createPortal(
@@ -375,15 +460,68 @@ export function InteractiveLessonEditor({
             <Play className="h-4 w-4" />
             Play
           </button>
-          <button
-            type="button"
-            className="ilv-btn ilv-btn-primary"
-            disabled={saving}
-            onClick={() => void publish(lesson.status === 'published' ? 'draft' : 'published')}
-          >
-            <Share2 className="h-4 w-4" />
-            {lesson.status === 'published' ? 'Unpublish' : 'Publish'}
-          </button>
+          <div className="relative">
+            <button
+              type="button"
+              className="ilv-btn ilv-btn-primary"
+              disabled={saving}
+              onClick={() => setPublishMenu((v) => !v)}
+            >
+              <Share2 className="h-4 w-4" />
+              Publish
+              <ChevronDown className="h-3.5 w-3.5" />
+            </button>
+            {publishMenu && (
+              <div className="ilv-clip-menu" style={{ top: '110%', right: 0, left: 'auto' }}>
+                <button
+                  type="button"
+                  role="menuitem"
+                  disabled={saving}
+                  onClick={() => {
+                    setPublishMenu(false);
+                    void publish(lesson.status === 'published' ? 'draft' : 'published');
+                  }}
+                >
+                  <Share2 className="h-3.5 w-3.5" />
+                  {lesson.status === 'published' ? 'Unpublish' : 'Publish for teachers'}
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={async () => {
+                    setPublishMenu(false);
+                    const url = buildPlayerUrl(lesson.id);
+                    try {
+                      await navigator.clipboard.writeText(url);
+                      setSaveMsg('Player link copied');
+                    } catch {
+                      setSaveMsg(url);
+                    }
+                  }}
+                >
+                  <Copy className="h-3.5 w-3.5" />
+                  Copy player link
+                </button>
+                <button
+                  type="button"
+                  role="menuitem"
+                  onClick={async () => {
+                    setPublishMenu(false);
+                    const snip = buildPlayerEmbedSnippet(lesson.id);
+                    try {
+                      await navigator.clipboard.writeText(snip);
+                      setSaveMsg('Embed code copied');
+                    } catch {
+                      setSaveMsg(snip);
+                    }
+                  }}
+                >
+                  <Code2 className="h-3.5 w-3.5" />
+                  Copy embed code
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </header>
 
@@ -425,18 +563,61 @@ export function InteractiveLessonEditor({
             <button type="button" className="ilv-tool-btn" title="Shapes" onClick={() => setTool('shapes')}>
               <Square className="h-4 w-4" />
             </button>
-            <div className="ml-auto flex items-center gap-2">
-              <input
-                className="ilv-input min-h-[32px] w-[120px] py-1 text-xs"
-                type="number"
-                min={1000}
-                step={500}
-                value={scene.durationMs}
-                onChange={(e) => updateScene({ durationMs: Math.max(1000, Number(e.target.value) || 1000) })}
-                title="Scene duration (ms)"
-              />
-              <span className="text-[10px] font-semibold uppercase text-[var(--ss-muted)]">ms</span>
-            </div>
+            {scene && (
+              <div className="ml-auto flex flex-wrap items-center gap-2">
+                <label className="flex items-center gap-1 text-[10px] font-semibold uppercase text-[var(--ss-muted)]">
+                  Advance
+                  <select
+                    className="ilv-select min-h-[32px] w-[150px] py-1 normal-case"
+                    value={resolveAdvanceMode(scene)}
+                    onChange={(e) => {
+                      const mode = e.target.value as AdvanceMode;
+                      updateScene({
+                        advanceMode: mode,
+                        advanceAfterMs:
+                          mode === 'timer' ? scene.advanceAfterMs || scene.durationMs || 5000 : scene.advanceAfterMs,
+                        durationMs: mode === 'manual' ? 0 : scene.durationMs || 5000,
+                      });
+                    }}
+                  >
+                    <option value="manual">Manual (Next)</option>
+                    <option value="timer">After X seconds</option>
+                    <option value="media-end">When media ends</option>
+                  </select>
+                </label>
+                {resolveAdvanceMode(scene) === 'timer' && (
+                  <>
+                    <input
+                      className="ilv-input min-h-[32px] w-[88px] py-1 text-xs"
+                      type="number"
+                      min={1}
+                      step={1}
+                      value={Math.round((scene.advanceAfterMs ?? scene.durationMs ?? 5000) / 1000)}
+                      onChange={(e) => {
+                        const sec = Math.max(1, Number(e.target.value) || 1);
+                        updateScene({ advanceAfterMs: sec * 1000, durationMs: sec * 1000 });
+                      }}
+                      title="Advance after seconds"
+                    />
+                    <span className="text-[10px] font-semibold uppercase text-[var(--ss-muted)]">sec</span>
+                  </>
+                )}
+                {resolveAdvanceMode(scene) === 'media-end' && (
+                  <>
+                    <input
+                      className="ilv-input min-h-[32px] w-[100px] py-1 text-xs"
+                      type="number"
+                      min={1000}
+                      step={500}
+                      value={scene.durationMs || 5000}
+                      onChange={(e) => updateScene({ durationMs: Math.max(1000, Number(e.target.value) || 1000) })}
+                      title="Fallback duration (ms)"
+                    />
+                    <span className="text-[10px] font-semibold uppercase text-[var(--ss-muted)]">ms</span>
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           <div className="ilv-stage">
@@ -444,27 +625,38 @@ export function InteractiveLessonEditor({
               className="ilv-stage-canvas"
               style={{ ['--ilv-zoom' as string]: String(zoom) }}
             >
-              <SceneRenderer
-                key={`${scene.id}-${playing ? 'p' : 's'}-${sceneIndex}`}
-                scene={scene}
-                timeMs={sceneTimeMs}
-                playing={playing}
-                showLyrics
-                interactive
-                selectedOverlayId={selectedOverlayId}
-                onSelectOverlay={setSelectedOverlayId}
-                onMoveOverlay={(id, x, y) => {
-                  updateScene({
-                    overlays: scene.overlays.map((o) => (o.id === id ? { ...o, x, y } : o)),
-                  });
-                }}
-                transitionClass={transitionClass(scene.transition.type)}
-              />
+              {scene ? (
+                <SceneRenderer
+                  key={`${scene.id}-${playing ? 'p' : 's'}-${sceneIndex}`}
+                  scene={scene}
+                  timeMs={sceneTimeMs}
+                  playing={playing}
+                  showLyrics
+                  interactive
+                  selectedOverlayId={selectedOverlayId}
+                  onSelectOverlay={setSelectedOverlayId}
+                  onMoveOverlay={(id, x, y) => {
+                    updateScene({
+                      overlays: scene.overlays.map((o) => (o.id === id ? { ...o, x, y } : o)),
+                    });
+                  }}
+                  transitionClass={transitionClass(scene.transition.type)}
+                />
+              ) : (
+                <div className="ilv-stage-empty">
+                  <p className="ilv-stage-empty-title">No scenes yet</p>
+                  <p className="ilv-stage-empty-sub">Add a scene to start building this lesson.</p>
+                  <button type="button" className="ilv-btn ilv-btn-primary" onClick={() => addScene('title')}>
+                    <Plus className="h-4 w-4" />
+                    Add scene
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </div>
 
-        {rail && (
+        {rail && scene && (
           <div className="ilv-panel">
             <div className="flex items-center justify-between border-b border-[var(--ss-line)] px-3 py-2">
               <strong className="text-sm font-extrabold tracking-tight">
@@ -807,26 +999,59 @@ export function InteractiveLessonEditor({
               left: totalMs > 0 ? `${(elapsedMs / totalMs) * 100}%` : 0,
             }}
           />
-          {lesson.scenes.map((sc, i) => (
-            <SceneThumb
-              key={sc.id}
-              scene={sc}
-              index={i}
-              active={i === sceneIndex}
-              width={clipWidth}
-              onSelect={() => {
-                setSceneIndex(i);
-                setSceneTimeMs(0);
-                setPlaying(false);
-              }}
-              onReorder={reorderScene}
-            />
-          ))}
-          <button type="button" className="ilv-add-scene" title="Add scene" onClick={() => addScene('title')}>
-            <Plus className="h-5 w-5" />
-          </button>
+          {lesson.scenes.length === 0 ? (
+            <button type="button" className="ilv-empty-timeline" onClick={() => addScene('title')}>
+              <Plus className="h-5 w-5" />
+              Add scene
+            </button>
+          ) : (
+            lesson.scenes.map((sc, i) => (
+              <SceneThumb
+                key={sc.id}
+                scene={sc}
+                index={i}
+                active={i === sceneIndex}
+                width={clipWidth}
+                canMoveLeft={i > 0}
+                canMoveRight={i < lesson.scenes.length - 1}
+                onSelect={() => {
+                  setSceneIndex(i);
+                  setSceneTimeMs(0);
+                  setPlaying(false);
+                }}
+                onReorder={reorderScene}
+                onDelete={() => deleteSceneAt(i)}
+                onDuplicate={() => duplicateSceneAt(i)}
+                onMoveLeft={() => reorderScene(i, i - 1)}
+                onMoveRight={() => reorderScene(i, i + 1)}
+              />
+            ))
+          )}
+          {lesson.scenes.length > 0 && (
+            <button type="button" className="ilv-add-scene" title="Add scene" onClick={() => addScene('title')}>
+              <Plus className="h-5 w-5" />
+            </button>
+          )}
         </div>
       </div>
+
+      {toast && (
+        <div className="ilv-toast" role="status">
+          <span>{toast.message}</span>
+          {toast.undo && (
+            <button
+              type="button"
+              className="ilv-toast-undo"
+              onClick={() => {
+                undo();
+                setToast(null);
+              }}
+            >
+              Undo
+            </button>
+          )}
+        </div>
+      )}
 
       {showPlayer && (
         <InteractiveLessonPlayer
