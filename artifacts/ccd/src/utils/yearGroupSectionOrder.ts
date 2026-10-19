@@ -152,28 +152,57 @@ export function buildDemoYearGroupSections<T extends YearGroupLike>(
   const bySection = emptySectionBuckets();
   yearGroups.forEach((g) => {
     const hinted = getDefaultSectionIdForYearGroup(g.id, g.name);
+    // Keep all key stages (incl. KS3–KS5) so GCSE / A-level library folders are reachable.
     const sectionId =
-      hinted === 'eyfs' || hinted === 'ks1' || hinted === 'ks2' ? hinted : 'other';
+      hinted === 'eyfs' ||
+      hinted === 'ks1' ||
+      hinted === 'ks2' ||
+      hinted === 'ks3' ||
+      hinted === 'ks4' ||
+      hinted === 'ks5'
+        ? hinted
+        : 'other';
     (bySection.get(sectionId) ?? bySection.get('other')!).push(g.id);
   });
   return sectionsFromBuckets(bySection);
 }
 
+/** Keep GCSE / A-level / explicit KS3–5 labels in their stage when demoting demos. */
+function shouldKeepInSecondaryStage(group: YearGroupLike | undefined): boolean {
+  if (!group) return false;
+  const lower = `${group.id || ''} ${group.name || ''}`.toLowerCase();
+  return (
+    /\b(gcse|a[\s-]?level|ocr|ks3|ks4|ks5|key stage [345]|year\s*1[0-3]\b|year\s*[789]\b)/.test(
+      lower,
+    )
+  );
+}
+
 /**
- * Demo helper: move classes out of KS3/KS4/KS5 into Other so the Header only
- * surfaces a primary (EYFS/KS1/KS2) allocated subset unless the user re-drags.
+ * Demo helper: move generic secondary classes out of KS3/KS4/KS5 into Other so
+ * the Header stays uncluttered, but keep explicit GCSE / A-level / Year 7–13
+ * classes in their key stage so Activity Library hierarchy is reachable.
  */
 export function demoteSecondarySectionsToOther<S extends YearGroupSectionLike>(
   sections: S[],
   groups: YearGroupLike[],
 ): S[] {
   const secondaryIds = new Set(['ks3', 'ks4', 'ks5']);
+  const groupById = new Map(groups.map((g) => [g.id, g]));
   const moved: string[] = [];
   const working = sections.map((s) => {
     if (!secondaryIds.has(s.id)) return s;
     const ids = normalizeSectionYearGroupIdList(s.yearGroupIds || [], groups);
-    moved.push(...ids);
-    return { ...s, yearGroupIds: [] as string[] };
+    const keep: string[] = [];
+    for (const id of ids) {
+      const g = groupById.get(id) || groups.find((x) => x.name === id);
+      if (shouldKeepInSecondaryStage(g) || shouldKeepInSecondaryStage({ id, name: id })) {
+        keep.push(id);
+      } else {
+        moved.push(id);
+      }
+    }
+    return { ...s, yearGroupIds: keep };
   });
   if (moved.length === 0) return working;
   if (!working.some((s) => s.id === 'other')) {
