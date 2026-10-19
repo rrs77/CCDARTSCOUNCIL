@@ -486,11 +486,18 @@ html.ccd-studio .ss-dialog-lg {
   gap: 8px;
   background: rgba(255, 255, 255, 0.88);
   border: 1px solid #e8e6f2;
+  transition: background 0.14s, border-color 0.14s, box-shadow 0.14s;
 }
 
 .ss-day.is-today {
   background: var(--ss-lavender);
   border-color: #d8d4f5;
+}
+
+.ss-day.is-drop-over {
+  background: #e9e6ff !important;
+  border-color: #4338e8 !important;
+  box-shadow: inset 0 0 0 2px rgba(67, 56, 232, 0.35);
 }
 
 .ss-day-head {
@@ -537,7 +544,15 @@ html.ccd-studio .ss-dialog-lg {
   font: inherit;
   color: inherit;
   box-shadow: none;
-  transition: border-color 0.14s, background 0.14s;
+  transition: border-color 0.14s, background 0.14s, opacity 0.14s, transform 0.14s, box-shadow 0.14s;
+}
+
+.ss-lesson-card.is-draggable {
+  cursor: grab;
+}
+
+.ss-lesson-card.is-draggable:active {
+  cursor: grabbing;
 }
 
 .ss-lesson-card:hover {
@@ -548,6 +563,18 @@ html.ccd-studio .ss-dialog-lg {
 .ss-lesson-card.is-selected {
   border-color: var(--ss-indigo);
   box-shadow: 0 0 0 2px rgba(67, 56, 232, 0.2);
+}
+
+.ss-lesson-card.is-dragging {
+  opacity: 0.35;
+  transform: scale(0.98);
+  border-style: dashed;
+}
+
+.ss-lesson-card.is-drop-target {
+  border-color: var(--ss-indigo);
+  background: #e9e6ff;
+  box-shadow: 0 0 0 2px rgba(67, 56, 232, 0.25);
 }
 
 .ss-lesson-card strong {

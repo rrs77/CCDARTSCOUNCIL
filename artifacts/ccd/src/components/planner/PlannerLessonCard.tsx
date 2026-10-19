@@ -1,7 +1,10 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { getEmptyImage } from 'react-dnd-html5-backend';
+import { useDrag, useDrop } from 'react-dnd';
 import { MapPin, MessageSquareText, Plus } from 'lucide-react';
 import type { DayEntry, PlannerClass } from './plannerModel';
-import { readableInk, tint } from './plannerModel';
+import { readableInk, tint, ymd } from './plannerModel';
+import { PLANNER_LESSON_DND, type PlannerLessonDragItem } from './plannerDnd';
 
 interface Props {
   entry: DayEntry;
@@ -14,6 +17,13 @@ interface Props {
   /** When false (single-class focus), hide the class chip — colour bar is enough. */
   showClass?: boolean;
   onOpen: (entry: DayEntry) => void;
+  /**
+   * When set, this card is a drop target for reordering within / onto a day.
+   * `place` is relative to this card.
+   */
+  onDropRelative?: (item: PlannerLessonDragItem, place: 'before' | 'after') => void;
+  /** Optional keyboard shortcut handler (e.g. Alt+←/→ to move days). */
+  onKeyMove?: (e: React.KeyboardEvent) => void;
 }
 
 export function PlannerLessonCard({
@@ -26,6 +36,8 @@ export function PlannerLessonCard({
   size = 'compact',
   showClass = true,
   onOpen,
+  onDropRelative,
+  onKeyMove,
 }: Props) {
   const color = cls?.color || '#475569';
   const ink = readableInk(color);
@@ -35,14 +47,96 @@ export function PlannerLessonCard({
   const statusDot =
     status === 'completed' ? 'bg-[#1E6B3E]' : status === 'draft' ? 'bg-[#D97706]' : null;
 
+  const ref = useRef<HTMLButtonElement>(null);
+  const suppressClick = useRef(false);
+
+  const [{ isDragging }, drag, preview] = useDrag(
+    () => ({
+      type: PLANNER_LESSON_DND,
+      item: (): PlannerLessonDragItem => ({
+        type: PLANNER_LESSON_DND,
+        planId: plan!.id,
+        classId: entry.classId,
+        title: title || plan!.title || 'Lesson',
+        fromYmd: ymd(new Date(plan!.date)),
+        time: entry.time || plan?.time,
+      }),
+      canDrag: () => !!plan,
+      end: (_item, monitor) => {
+        if (monitor.didDrop()) suppressClick.current = true;
+      },
+      collect: (monitor) => ({ isDragging: monitor.isDragging() }),
+    }),
+    [plan, entry.classId, entry.time, title],
+  );
+
+  useEffect(() => {
+    preview(getEmptyImage(), { captureDraggingState: true });
+  }, [preview]);
+
+  const [{ isOver, canDrop }, drop] = useDrop(
+    () => ({
+      accept: PLANNER_LESSON_DND,
+      canDrop: (item: PlannerLessonDragItem) => !!plan && item.planId !== plan.id && !!onDropRelative,
+      hover: (item: PlannerLessonDragItem, monitor) => {
+        if (!ref.current || !monitor.isOver({ shallow: true })) return;
+        // stash hover half on the item for the drop handler
+        const rect = ref.current.getBoundingClientRect();
+        const client = monitor.getClientOffset();
+        if (!client) return;
+        const mid = rect.top + rect.height / 2;
+        (item as PlannerLessonDragItem & { _place?: 'before' | 'after' })._place =
+          client.y < mid ? 'before' : 'after';
+      },
+      drop: (item: PlannerLessonDragItem) => {
+        if (!onDropRelative || !plan) return;
+        const place =
+          (item as PlannerLessonDragItem & { _place?: 'before' | 'after' })._place || 'before';
+        onDropRelative(item, place);
+        return { handled: true };
+      },
+      collect: (m) => ({ isOver: m.isOver({ shallow: true }), canDrop: m.canDrop() }),
+    }),
+    [plan, onDropRelative],
+  );
+
+  const setRef = (node: HTMLButtonElement | null) => {
+    ref.current = node;
+    drag(node);
+    if (onDropRelative) drop(node);
+  };
+
   return (
     <button
       type="button"
-      onClick={() => onOpen(entry)}
-      title={plan ? [title, unitLabel, entry.location, status === 'completed' ? 'Taught' : status === 'draft' ? 'Draft' : null].filter(Boolean).join(' · ') : 'Choose a lesson'}
+      ref={setRef}
+      onClick={() => {
+        if (suppressClick.current) {
+          suppressClick.current = false;
+          return;
+        }
+        onOpen(entry);
+      }}
+      onKeyDown={onKeyMove}
+      title={
+        plan
+          ? [
+              title,
+              unitLabel,
+              entry.location,
+              status === 'completed' ? 'Taught' : status === 'draft' ? 'Draft' : null,
+              'Drag to another day · Alt+←/→ to move',
+            ]
+              .filter(Boolean)
+              .join(' · ')
+          : 'Choose a lesson'
+      }
+      aria-grabbed={plan ? isDragging : undefined}
       className={`ss-lesson-card group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4338E8] ${
-        plan ? '' : 'border-dashed'
-      } ${selected ? 'is-selected' : ''} ${roomy ? 'min-h-[120px]' : ''}`}
+        plan ? 'is-draggable' : 'border-dashed'
+      } ${selected ? 'is-selected' : ''} ${roomy ? 'min-h-[120px]' : ''} ${
+        isDragging ? 'is-dragging' : ''
+      } ${isOver && canDrop ? 'is-drop-target' : ''}`}
     >
       <span className="absolute left-0 top-2 bottom-2 w-1 rounded-r" style={{ background: color }} aria-hidden />
       {plan ? (
