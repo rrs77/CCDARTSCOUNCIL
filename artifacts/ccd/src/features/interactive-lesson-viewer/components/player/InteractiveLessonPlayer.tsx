@@ -12,7 +12,7 @@ import {
   Pencil,
   Music2,
 } from 'lucide-react';
-import type { InteractiveLesson, KaraokeTrackDefault } from '../../types';
+import type { InteractiveLesson, KaraokeTrackDefault, Scene } from '../../types';
 import {
   formatTimecode,
   lessonDurationMs,
@@ -30,6 +30,11 @@ interface InteractiveLessonPlayerProps {
   playerOnly?: boolean;
   canEdit?: boolean;
   onEdit?: () => void;
+}
+
+/** Lyric-video scenes that have timed lyric lines — only then show Lyrics on/off. */
+function isLyricEnabledScene(scene: Scene | undefined): boolean {
+  return Boolean(scene && scene.type === 'lyrics' && scene.lyrics && scene.lyrics.length > 0);
 }
 
 function transitionClass(type: string): string {
@@ -95,13 +100,14 @@ export function InteractiveLessonPlayer({
   useLessonAudioMixer(lesson, absoluteMs, playing, sceneIndex);
 
   const karaoke = scene?.karaokeTracks;
+  const lyricEnabled = isLyricEnabledScene(scene);
   const mediaOverride = useMemo(() => {
     if (!karaoke) return null;
     if (vocalVersion === 'backing' && karaoke.backingUrl) return karaoke.backingUrl;
     if (vocalVersion === 'vocals' && karaoke.vocalUrl) return karaoke.vocalUrl;
     return null;
   }, [karaoke, vocalVersion]);
-  const hasKaraokeToggle = Boolean(karaoke?.vocalUrl && karaoke?.backingUrl);
+  const hasKaraokeToggle = Boolean(lyricEnabled && karaoke?.vocalUrl && karaoke?.backingUrl);
 
   const goTo = useCallback(
     (idx: number) => {
@@ -172,13 +178,13 @@ export function InteractiveLessonPlayer({
         prev();
       } else if (e.key === 'Escape') {
         onClose();
-      } else if (e.key.toLowerCase() === 'l') {
+      } else if (e.key.toLowerCase() === 'l' && lyricEnabled) {
         setShowLyrics((v) => !v);
       }
     };
     window.addEventListener('keydown', onKey);
     return () => window.removeEventListener('keydown', onKey);
-  }, [next, prev, onClose]);
+  }, [next, prev, onClose, lyricEnabled]);
 
   useEffect(() => {
     let startX = 0;
@@ -331,16 +337,18 @@ export function InteractiveLessonPlayer({
         </div>
 
         <div className="flex items-center gap-2">
-          <button
-            type="button"
-            className={`ilv-ctrl ${showLyrics ? 'is-on' : ''}`}
-            onClick={() => setShowLyrics((v) => !v)}
-            aria-pressed={showLyrics}
-            title="Toggle lyrics (L)"
-          >
-            <Mic2 className="h-4 w-4" />
-            <span className="hidden sm:inline">{showLyrics ? 'Lyrics on' : 'Lyrics off'}</span>
-          </button>
+          {lyricEnabled && (
+            <button
+              type="button"
+              className={`ilv-ctrl ${showLyrics ? 'is-on' : ''}`}
+              onClick={() => setShowLyrics((v) => !v)}
+              aria-pressed={showLyrics}
+              title="Toggle lyrics (L)"
+            >
+              <Mic2 className="h-4 w-4" />
+              <span className="hidden sm:inline">{showLyrics ? 'Lyrics on' : 'Lyrics off'}</span>
+            </button>
+          )}
           {hasKaraokeToggle && (
             <button
               type="button"

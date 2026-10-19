@@ -30,7 +30,7 @@ import { isLsoLibraryCategory, LSO_LOGO_SRC } from '../utils/lsoBranding';
 import { isRohLibraryCategory, ROH_LOGO_SRC } from '../utils/rohBranding';
 import { isWtdLibraryCategory, WTD_LOGO_SRC } from '../utils/wtdBranding';
 import { ActivityImporter } from './ActivityImporter';
-import { ActivityCreator } from './ActivityCreator';
+import { ActivityEditorPage } from './ActivityEditorPage';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
@@ -84,6 +84,8 @@ interface ActivityLibraryProps {
   className: string;
   selectedCategory?: string;
   onCategoryChange?: (category: string) => void;
+  /** Notify parent when the full-page create/edit editor is open (hide library chrome). */
+  onEditorOpenChange?: (open: boolean) => void;
 }
 
 type ActivityHistoryAction =
@@ -96,7 +98,8 @@ export function ActivityLibrary({
   selectedActivities, 
   className,
   selectedCategory = 'all',
-  onCategoryChange
+  onCategoryChange,
+  onEditorOpenChange,
 }: ActivityLibraryProps) {
   const isViewOnly = useIsViewOnly();
   const { 
@@ -538,7 +541,7 @@ export function ActivityLibrary({
       // Level filtering removed - show all levels
       const matchesLevel = true;
       
-      // OR-style: category assigned in Settings, or activity tagged for this year group.
+      // Settings folder visibility AND activity year-group tags (when present).
       const visibleForYearGroup = activityVisibleForYearGroup({
         activityCategory: activity.category,
         availableCategoriesForYearGroup,
@@ -746,12 +749,9 @@ export function ActivityLibrary({
       return;
     }
     // Convert any "EYFS U" levels to "UKG"
-    if (activity.level === "EYFS U") {
-      activity.level = "UKG";
-    }
-    
-    setEditingActivity(activity);
-    setSelectedActivityDetails(activity);
+    const next = activity.level === 'EYFS U' ? { ...activity, level: 'UKG' } : activity;
+    setSelectedActivityDetails(null);
+    setEditingActivity(next);
   };
 
   const handleImportActivities = async (activities: Activity[]) => {
@@ -927,14 +927,50 @@ export function ActivityLibrary({
     'inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#77738F] transition-colors hover:bg-[#E9E6FF] hover:text-[#1F1B4D] disabled:opacity-40';
   const toolBtnOn = 'bg-[#E9E6FF] text-[#4338E8]';
 
-  // When editing/viewing details, replace the library with an in-workspace editor
-  // (avoids a cramped modal and stops the page background from scrolling underneath).
+  const editorOpen = showCreator || Boolean(editingActivity);
+
+  React.useEffect(() => {
+    onEditorOpenChange?.(editorOpen);
+    return () => onEditorOpenChange?.(false);
+  }, [editorOpen, onEditorOpenChange]);
+
+  // Full-page create / edit (option A) — beside the studio sidebar, not a modal.
+  if (showCreator) {
+    return (
+      <ActivityEditorPage
+        mode="create"
+        onCancel={() => setShowCreator(false)}
+        onSave={async (activity) => {
+          await handleCreateActivity(activity);
+        }}
+      />
+    );
+  }
+
+  if (editingActivity) {
+    return (
+      <ActivityEditorPage
+        mode="edit"
+        initialActivity={editingActivity}
+        onCancel={() => {
+          setEditingActivity(null);
+          setSelectedActivityDetails(null);
+        }}
+        onSave={async (updatedActivity) => {
+          await handleActivityUpdate(updatedActivity);
+          setEditingActivity(null);
+          setSelectedActivityDetails(null);
+        }}
+      />
+    );
+  }
+
+  // Viewing details (read) — keep ActivityDetails as an in-workspace page.
   if (selectedActivityDetails) {
     return (
       <div className="flex h-[calc(100dvh-7.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white">
         <ActivityDetails
           activity={selectedActivityDetails}
-          presentation="page"
           onClose={() => {
             setSelectedActivityDetails(null);
             setEditingActivity(null);
@@ -944,7 +980,7 @@ export function ActivityLibrary({
             onActivitySelect(selectedActivityDetails);
             setSelectedActivityDetails(null);
           }}
-          isEditing={selectedActivityDetails === editingActivity}
+          isEditing={false}
           onUpdate={(updatedActivity) => {
             handleActivityUpdate(updatedActivity);
             setEditingActivity(null);
@@ -1340,7 +1376,7 @@ export function ActivityLibrary({
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
             {displayGroups.map((group) => (
               <React.Fragment key={`cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white">
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1408,7 +1444,7 @@ export function ActivityLibrary({
                       {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
                         <div
                           data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
+                          className="col-span-full py-2 bg-white border-b border-[#E2E0EF]"
                         >
                           <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
                         </div>
@@ -1492,7 +1528,7 @@ export function ActivityLibrary({
           >
             {displayGroups.map((group) => (
               <React.Fragment key={`grid-cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
+                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white">
                   {isLsoLibraryCategory(group.name) && (
                     <div
                       className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
@@ -1559,7 +1595,7 @@ export function ActivityLibrary({
                       {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
                         <div
                           data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
+                          className="col-span-full py-2 bg-white border-b border-[#E2E0EF]"
                         >
                           <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
                         </div>
@@ -1593,16 +1629,6 @@ export function ActivityLibrary({
         )}
         </div>
       </div>
-
-      {/* Activity Creator Modal */}
-      {showCreator && (
-        <ActivityCreator 
-          onSave={handleCreateActivity}
-          onClose={() => setShowCreator(false)}
-          categories={uniqueCategories}
-          levels={uniqueLevels}
-        />
-      )}
 
       {/* Activity Importer Modal */}
       {showImporter && (

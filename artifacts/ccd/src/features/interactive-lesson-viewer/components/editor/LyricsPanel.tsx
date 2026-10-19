@@ -18,9 +18,9 @@ export function LyricsPanel({ scene, sceneTimeMs, onOpenStudio }: LyricsPanelPro
   return (
     <div className="space-y-3 p-3">
       <div>
-        <h3 className="text-sm font-extrabold tracking-tight text-[var(--ss-ink)]">Lyrics</h3>
+        <h3 className="text-sm font-extrabold tracking-tight text-[var(--ss-ink)]">Lyric video</h3>
         <p className="mt-0.5 text-xs text-[var(--ss-muted)]">
-          Timing, waveform, tap-sync, Whisper, and display live in Lyrics Studio — not squeezed into this column.
+          Timing, waveform, tap-sync, Whisper, and display live in Lyric video Studio — not squeezed into this column.
         </p>
       </div>
 
@@ -34,7 +34,7 @@ export function LyricsPanel({ scene, sceneTimeMs, onOpenStudio }: LyricsPanelPro
                 : `${lyrics.length} line${lyrics.length === 1 ? '' : 's'} · ${formatTimecode(scene.durationMs)}`}
             </p>
             <p className="mt-0.5 truncate text-[11px] text-[var(--ss-muted)]">
-              {active ? `Now: “${active.text}”` : 'Open Studio to paste, sync, or style karaoke.'}
+              {active ? `Now: “${active.text}”` : 'Open Studio to paste, sync, or style your lyric video.'}
             </p>
             {(karaoke?.vocalUrl || karaoke?.backingUrl || scene.mediaUrl) && (
               <p className="mt-1 text-[10px] font-semibold uppercase tracking-wide text-[var(--ss-muted)]">
@@ -49,7 +49,7 @@ export function LyricsPanel({ scene, sceneTimeMs, onOpenStudio }: LyricsPanelPro
 
       <button type="button" className="ilv-btn ilv-btn-primary w-full" onClick={onOpenStudio}>
         <Sparkles className="h-4 w-4" />
-        Open Lyrics Studio
+        Open Lyric video Studio
       </button>
 
       {lyrics.length > 0 && (

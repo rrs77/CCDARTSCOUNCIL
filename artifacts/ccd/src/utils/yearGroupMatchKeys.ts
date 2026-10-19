@@ -4,6 +4,9 @@
  * Settings stores category.yearGroups under yearGroup.id (e.g. LKG, Year6).
  * Sheets / activity tags may use id, display name, or aliases
  * (Lower Kindergarten, Year 6 Music, etc.). Match all of them.
+ *
+ * Important: never treat "Year 10" as a match for "Year 1" — naive
+ * `includes('year 1')` would match inside "year 10".
  */
 
 export type YearGroupLike = { id?: string; name?: string };
@@ -25,13 +28,53 @@ const ALIAS_GROUPS: string[][] = [
   ['year1', 'year 1', 'year 1 music', 'y1'],
 ];
 
+/** Extract a Year N number when present (word-boundary safe). */
+export function extractYearNumber(normalized: string): string | null {
+  const n = normalizeYgKey(normalized);
+  if (!n) return null;
+  const m =
+    n.match(/\byear\s*(\d+)\b/) ||
+    n.match(/^year(\d+)\b/) ||
+    n.match(/^y(\d+)$/);
+  return m ? m[1] : null;
+}
+
+/** Subject / suffix after a Year N token, e.g. "year 1 drama" → "drama". */
+function subjectAfterYear(normalized: string): string {
+  const n = normalizeYgKey(normalized);
+  return n
+    .replace(/^y(?:ear)?\s*\d+\s*/i, '')
+    .replace(/\s*\([^)]*\)\s*/g, ' ')
+    .trim()
+    .replace(/\s+/g, ' ');
+}
+
 function aliasTokensFor(normalized: string): string[] {
   const out = new Set<string>([normalized]);
+  const yn = extractYearNumber(normalized);
+
   for (const group of ALIAS_GROUPS) {
-    if (group.some((g) => g === normalized || normalized.includes(g) || g.includes(normalized))) {
-      group.forEach((g) => out.add(g));
+    const groupYear = extractYearNumber(group[0]);
+    if (groupYear) {
+      // Year-N aliases only apply when the year numbers match exactly.
+      if (yn && yn === groupYear) {
+        group.forEach((g) => out.add(g));
+      }
+      continue;
     }
+
+    // Non-year aliases (LKG / Reception / …): exact or whole-phrase contains.
+    const hit = group.some((g) => {
+      if (g === normalized) return true;
+      // Require word-ish boundaries so short tokens don't false-positive.
+      if (normalized === g) return true;
+      if (normalized.startsWith(`${g} `) || normalized.endsWith(` ${g}`)) return true;
+      if (normalized.includes(` ${g} `)) return true;
+      return false;
+    });
+    if (hit) group.forEach((g) => out.add(g));
   }
+
   // Compact forms: "year 6" ↔ "year6"
   const compact = normalized.replace(/\s+/g, '');
   if (compact !== normalized) out.add(compact);
@@ -44,6 +87,24 @@ export function yearGroupTokensMatch(a: string, b: string): boolean {
   const nb = normalizeYgKey(b);
   if (!na || !nb) return false;
   if (na === nb) return true;
+
+  const ya = extractYearNumber(na);
+  const yb = extractYearNumber(nb);
+  // "Year 10 …" must never match "Year 1 …"
+  if (ya && yb && ya !== yb) return false;
+
+  if (ya && yb && ya === yb) {
+    const sa = subjectAfterYear(na);
+    const sb = subjectAfterYear(nb);
+    // Generic "Year 1" matches "Year 1 Drama" / "Year 1 Music".
+    // Subject-specific labels only match the same subject (drama ≠ music).
+    if (!sa || !sb) return true;
+    if (sa === sb) return true;
+    // Allow OCR/GCSE parenthetical variants already stripped above.
+    if (sa.startsWith(sb) || sb.startsWith(sa)) return true;
+    return false;
+  }
+
   const aAliases = aliasTokensFor(na);
   const bAliases = aliasTokensFor(nb);
   return aAliases.some((x) => bAliases.includes(x));
@@ -80,10 +141,12 @@ export function resolveYearGroupMatchKeys(
       const name = normalizeYgKey(yg.name);
       const id = normalizeYgKey(yg.id);
       return (
-        sheetNorm.includes(name) ||
-        name.includes(sheetNorm) ||
-        sheetNorm.includes(id) ||
-        id.includes(sheetNorm)
+        sheetNorm === name ||
+        sheetNorm === id ||
+        sheetNorm.startsWith(`${name} `) ||
+        name.startsWith(`${sheetNorm} `) ||
+        sheetNorm.startsWith(`${id} `) ||
+        id.startsWith(`${sheetNorm} `)
       );
     });
   }
@@ -123,21 +186,25 @@ export function resolveYearGroupMatchKeys(
       keys.add('UKG');
       keys.add('Upper Kindergarten');
     }
-    if (nameLower.includes('reception') || idLower === 'reception') {
+    if (nameLower === 'reception' || nameLower.startsWith('reception ') || idLower === 'reception') {
       keys.add('Reception');
     }
 
-    const yearMatch = nameLower.match(/year\s*(\d+)/) || idLower.match(/year\s*(\d+)/);
+    const yearMatch = nameLower.match(/\byear\s*(\d+)\b/) || idLower.match(/\byear\s*(\d+)\b/);
     if (yearMatch) {
       const n = yearMatch[1];
       keys.add(`Year${n}`);
       keys.add(`Year ${n}`);
-      keys.add(`Year ${n} Music`);
+      // Subject-specific extras from the class name (Music / Drama / …)
+      const subject = subjectAfterYear(nameLower);
+      if (subject) {
+        const titled = subject.replace(/\b\w/g, (c) => c.toUpperCase());
+        keys.add(`Year ${n} ${titled}`);
+      }
     }
   } else {
     // Sheet-only fallback aliases so tags / legacy keys still match
     for (const token of aliasTokensFor(sheetNorm)) {
-      // Prefer canonical casing for common codes
       if (token === 'lkg') keys.add('LKG');
       else if (token === 'ukg') keys.add('UKG');
       else if (token === 'reception') keys.add('Reception');

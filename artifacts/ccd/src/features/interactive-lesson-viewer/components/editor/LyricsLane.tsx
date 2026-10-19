@@ -40,10 +40,10 @@ export function LyricsLane({
   if (scene.type !== 'lyrics' && lyrics.length === 0) return null;
 
   return (
-    <div className="ilv-lyrics-lane" aria-label="Lyrics timeline lane">
+    <div className="ilv-lyrics-lane" aria-label="Lyric video timeline lane">
       <div className="ilv-lyrics-lane-label">
         <Mic2 className="h-3.5 w-3.5" />
-        Lyrics
+        Lyric video
       </div>
       <div
         className="ilv-lyrics-lane-track"

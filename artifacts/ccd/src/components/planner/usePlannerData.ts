@@ -4,10 +4,13 @@ import { useData, type LessonData, type LessonPlan } from '../../contexts/DataCo
 import { useSettings } from '../../contexts/SettingsContextNew';
 import { useAuth } from '../../hooks/useAuth';
 import { halfTermsApi, lessonsApi } from '../../config/api';
+import { filterLessonEntries, sortedLessonNumbers } from '../../utils/lessonEntries';
+import { readSlotsForClass } from '../../utils/timetableStorage';
 import { plannerApi } from './plannerApi';
 import {
   CLASS_PALETTE,
   DEFAULT_PREFS,
+  halfTermFor,
   type PlannerClass,
   type PlannerEvent,
   type PlannerFolder,
@@ -99,15 +102,24 @@ export function usePlannerData(range: { from: Date; to: Date }) {
 
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes]);
 
-  /** Recurring slots and school events still live where the classic calendar keeps them. */
+  /** Recurring slots come from the teacher-level timetable (sliced per My class / term). */
+  const termId = halfTermFor(range.from);
   const { slots, events } = useMemo(() => {
     void storageTick;
     const s: TimetableSlot[] = [];
     const e: PlannerEvent[] = [];
     const seenEvents = new Set<string>();
     classes.forEach((c) => {
-      readJson<TimetableSlot[]>(`timetable-${c.id}`, []).forEach((slot) =>
-        s.push({ ...slot, className: c.id, id: `${c.id}:${slot.id}` }),
+      readSlotsForClass({ id: c.id, name: c.name }, termId).forEach((slot) =>
+        s.push({
+          id: `${c.id}:${slot.id}`,
+          day: slot.day,
+          startTime: slot.startTime,
+          endTime: slot.endTime,
+          className: c.id,
+          location: slot.location || '',
+          color: slot.color || '',
+        }),
       );
       readJson<Record<string, any>[]>(`calendar-events-${c.id}`, []).forEach((ev) => {
         const key = `${ev.title}|${ev.startDate}`;
@@ -117,9 +129,23 @@ export function usePlannerData(range: { from: Date; to: Date }) {
       });
     });
     return { slots: s, events: e };
-  }, [classes, storageTick]);
+  }, [classes, storageTick, termId]);
 
   const refreshStorage = useCallback(() => setStorageTick((t) => t + 1), []);
+
+  // Pick up Timetable Builder saves in the same tab (and other tabs via storage).
+  useEffect(() => {
+    const onStorage = (ev: StorageEvent) => {
+      if (ev.key && ev.key.startsWith('timetable-')) refreshStorage();
+    };
+    const onCustom = () => refreshStorage();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('ccd:timetable-updated', onCustom);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('ccd:timetable-updated', onCustom);
+    };
+  }, [refreshStorage]);
 
   const fromKey = range.from.getTime();
   const toKey = range.to.getTime();
@@ -197,7 +223,9 @@ export function usePlannerData(range: { from: Date; to: Date }) {
             year === currentAcademicYear
               ? readJson<{ allLessonsData?: Record<string, LessonData>; lessonNumbers?: string[] }>(`lesson-data-${classId}`, {})
               : {};
-          const lessons = sheet?.allLessonsData || local.allLessonsData || {};
+          // Strip sheet-metadata keys that may have been nested into the lessons map
+          // (e.g. demo DB rows that once stored { lesson1, allLessonsData, lessonStandards }).
+          const lessons = filterLessonEntries(sheet?.allLessonsData || local.allLessonsData || {});
           // Prefer the full library for the class — never truncate to a short lessonNumbers list.
           const lessonNumbers = [
             ...new Set([
@@ -209,11 +237,13 @@ export function usePlannerData(range: { from: Date; to: Date }) {
           ]
             .filter((n) => !!lessons[n])
             .sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b)));
+          // Keep order stable even when explicit lessonNumbers lists are empty.
+          const numbers = lessonNumbers.length ? lessonNumbers : sortedLessonNumbers(lessons);
           setLessonCache((prev) => ({
             ...prev,
             [key]: {
               lessons,
-              lessonNumbers,
+              lessonNumbers: numbers,
               halfTerms: (terms || []).map((t: { id: string; lessons: string[] }) => ({ id: t.id, lessons: t.lessons || [] })),
             },
           }));

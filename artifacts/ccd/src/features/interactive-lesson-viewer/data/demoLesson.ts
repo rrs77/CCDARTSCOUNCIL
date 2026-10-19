@@ -11,9 +11,9 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
 
   return {
     id: 'demo-interactive-lesson',
-    title: 'CCDesigner Interactive Demo',
+    title: 'CCDesigner Slides Demo',
     description:
-      'Classroom-ready sample: intro sting, title, karaoke with timed lyrics, YouTube, audio, Canva and PowerPoint embeds.',
+      'Classroom-ready sample slides: intro sting, title, lyric video with timed lyrics, YouTube, audio, Canva and PowerPoint embeds.',
     ownerId,
     ownerEmail: 'demo@ccd.preview',
     status: 'published',
@@ -32,7 +32,7 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
       },
       {
         id: createId('media'),
-        name: 'Sample karaoke bed (placeholder)',
+        name: 'Sample lyric video bed (placeholder)',
         kind: 'audio',
         url: KARAOKE_AUDIO,
         durationMs: 32000,
@@ -97,7 +97,7 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
       {
         id: 'demo-scene-karaoke',
         type: 'lyrics',
-        title: 'Karaoke sample',
+        title: 'Lyric video sample',
         durationMs: 32000,
         advanceMode: 'media-end',
         transition: { type: 'dissolve', durationMs: 700 },
@@ -121,11 +121,11 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
           backgroundColor: 'rgba(31,27,77,0.55)',
         },
         notes:
-          'SAMPLE — royalty-free placeholder tone (not a commercial song). Timed lyrics for classroom karaoke demo.',
+          'SAMPLE — royalty-free placeholder tone (not a commercial song). Timed lyrics for classroom lyric video demo.',
         overlays: [
           {
             id: 'ov-kara-label',
-            text: 'Sample karaoke · placeholder audio',
+            text: 'Sample lyric video · placeholder audio',
             style: 'body',
             x: 6,
             y: 8,

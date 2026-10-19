@@ -22,16 +22,29 @@ async function authHeaders(): Promise<HeadersInit> {
 }
 
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
-  const res = await fetch(getVercelApiUrl(path), {
-    ...init,
-    headers: {
-      ...(await authHeaders()),
-      ...(init?.headers || {}),
-    },
-  });
+  let res: Response;
+  try {
+    res = await fetch(getVercelApiUrl(path), {
+      ...init,
+      headers: {
+        ...(await authHeaders()),
+        ...(init?.headers || {}),
+      },
+    });
+  } catch (err) {
+    const detail = err instanceof Error ? err.message : 'network error';
+    throw new Error(
+      `Cannot reach the forum API (${detail}). Start the local api-server on port 8080, or check your connection.`,
+    );
+  }
   const json = await res.json().catch(() => ({}));
   if (!res.ok) {
-    throw new Error((json as { error?: string }).error || `Request failed (${res.status})`);
+    const msg =
+      (json as { error?: string }).error ||
+      (res.status === 404
+        ? 'Forum API route not found. Restart the local api-server so /api/forum is mounted.'
+        : `Request failed (${res.status})`);
+    throw new Error(msg);
   }
   return json as T;
 }
