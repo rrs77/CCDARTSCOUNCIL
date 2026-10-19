@@ -21,16 +21,16 @@ const TOOLS: {
 }[] = [
   {
     id: 'lessons',
-    title: 'Lesson Library',
-    desc: 'Browse saved lessons and reusable plans for the current class.',
+    title: 'Lessons',
+    desc: 'Saved lessons from Lesson Builder for the class in the header — also on the Lessons tab.',
     icon: <FolderOpen className="h-5 w-5" />,
     action: 'tab',
     tab: 'lesson-library',
   },
   {
     id: 'curriculum',
-    title: 'Curriculum & Units',
-    desc: 'Half-term units and progression for the selected class.',
+    title: 'Half-terms',
+    desc: 'Year map of half-terms for every class — open a cell to plan that term.',
     icon: <BookOpen className="h-5 w-5" />,
     action: 'tab',
     tab: 'curriculum',

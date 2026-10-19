@@ -4,6 +4,7 @@ import {
   Calendar,
   ChevronLeft,
   Edit3,
+  FolderOpen,
   Globe2,
   Grid3X3,
   MoreHorizontal,
@@ -21,8 +22,9 @@ export type StudioNavId =
 
 const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.ReactNode; dataTab: string }[] = [
   { id: 'unit-viewer', label: 'Planner', short: 'Planner', icon: <Calendar className="h-[17px] w-[17px]" />, dataTab: 'unit-viewer' },
-  { id: 'curriculum', label: 'Curriculum & Units', short: 'Units', icon: <BookOpen className="h-[17px] w-[17px]" />, dataTab: 'curriculum' },
+  { id: 'curriculum', label: 'Half-terms', short: 'Terms', icon: <BookOpen className="h-[17px] w-[17px]" />, dataTab: 'curriculum' },
   { id: 'lesson-builder', label: 'Lesson Builder', short: 'Builder', icon: <Edit3 className="h-[17px] w-[17px]" />, dataTab: 'lesson-builder' },
+  { id: 'lesson-library', label: 'Lessons', short: 'Lessons', icon: <FolderOpen className="h-[17px] w-[17px]" />, dataTab: 'lesson-library' },
   { id: 'activity-library', label: 'Activity Library', short: 'Activities', icon: <Grid3X3 className="h-[17px] w-[17px]" />, dataTab: 'activity-library' },
   { id: 'our-partners', label: 'Partner Hubs', short: 'Hubs', icon: <Globe2 className="h-[17px] w-[17px]" />, dataTab: 'our-partners' },
 ];
@@ -53,10 +55,8 @@ export function StudioShell({ active, onNavigate, children, hubsMode, topBar }: 
   }, [collapsed]);
 
   const mobileActive =
-    active === 'lesson-library' || active === 'contact-us' || active === 'more' || active === 'curriculum'
-      ? active === 'curriculum'
-        ? 'curriculum'
-        : 'more'
+    active === 'contact-us' || active === 'more'
+      ? 'more'
       : active;
 
   return (
@@ -110,8 +110,8 @@ export function StudioShell({ active, onNavigate, children, hubsMode, topBar }: 
           <button
             type="button"
             data-tab="more"
-            className={`ccd-studio-nav-item ${active === 'more' || active === 'lesson-library' || active === 'contact-us' ? 'is-active' : ''}`}
-            aria-current={active === 'more' || active === 'lesson-library' || active === 'contact-us' ? 'page' : undefined}
+            className={`ccd-studio-nav-item ${active === 'more' || active === 'contact-us' ? 'is-active' : ''}`}
+            aria-current={active === 'more' || active === 'contact-us' ? 'page' : undefined}
             onClick={() => onNavigate('more')}
           >
             <MoreHorizontal className="h-[17px] w-[17px]" />
@@ -139,7 +139,7 @@ export function StudioShell({ active, onNavigate, children, hubsMode, topBar }: 
       </div>
 
       <nav className="ccd-studio-mobile-nav" aria-label="Mobile navigation">
-        {PRIMARY.filter((p) => p.id !== 'curriculum').map((item) => (
+        {PRIMARY.filter((p) => p.id !== 'our-partners' && p.id !== 'curriculum').map((item) => (
           <button
             key={item.id}
             type="button"
@@ -153,7 +153,7 @@ export function StudioShell({ active, onNavigate, children, hubsMode, topBar }: 
         ))}
         <button
           type="button"
-          className={mobileActive === 'more' || mobileActive === 'curriculum' ? 'is-active' : ''}
+          className={mobileActive === 'more' ? 'is-active' : ''}
           onClick={() => onNavigate('more')}
         >
           <MoreHorizontal className="h-5 w-5" />

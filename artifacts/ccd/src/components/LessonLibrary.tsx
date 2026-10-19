@@ -948,7 +948,7 @@ export function LessonLibrary({
 style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
           <div className="flex items-center space-x-3">
             <BookOpen className="h-6 w-6" />
-            <h2 className="text-xl font-bold">Lesson Library</h2>
+            <h2 className="text-xl font-bold">Lessons</h2>
           </div>
         </div>
         <div className="p-8 text-center">
@@ -968,7 +968,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
               <BookOpen className="h-6 w-6" />
-              <h2 className="text-xl font-bold">Lesson Library</h2>
+              <h2 className="text-xl font-bold">Lessons</h2>
             </div>
             <div className="flex items-center gap-2">
             {/* Create Lesson Button in Header */}
@@ -1059,7 +1059,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
           <div className="flex items-center space-x-3">
             {showTrash ? <Trash2 className="h-6 w-6" /> : <BookOpen className="h-6 w-6" />}
             <div>
-              <h2 className="text-xl font-bold">{showTrash ? 'Trash' : 'Lesson Library'}</h2>
+              <h2 className="text-xl font-bold">{showTrash ? 'Trash' : 'Lessons'}</h2>
               <p className="text-[#E9E6FF] text-sm">
                 {showTrash 
                   ? `${Object.keys(trashLessons || {}).length} deleted lesson${Object.keys(trashLessons || {}).length !== 1 ? 's' : ''}`
@@ -1073,7 +1073,7 @@ style={{ background: 'linear-gradient(to right, #2DD4BF, #4338E8)' }}>
             {/* Toggle between Library and Trash */}
             <button
               onClick={() => setShowTrash(!showTrash)}
-              title={showButtonHelp ? (showTrash ? 'Back to Lesson Library' : 'View deleted lessons (Trash)') : undefined}
+              title={showButtonHelp ? (showTrash ? 'Back to Lessons' : 'View deleted lessons (Trash)') : undefined}
               className={`px-4 py-2 rounded-lg transition-colors duration-200 flex items-center space-x-2 ${
                 showTrash 
                   ? 'bg-white bg-opacity-20 hover:bg-opacity-30' 

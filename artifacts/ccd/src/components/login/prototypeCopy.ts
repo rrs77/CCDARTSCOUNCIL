@@ -94,13 +94,13 @@ export const TABS_EXPLAINER_ITEMS: ReadonlyArray<{
   },
   {
     id: 'lesson-library',
-    label: 'Lesson Library',
-    description: 'Browse and open your saved lesson plans.',
+    label: 'Lessons',
+    description: 'Saved lessons from Lesson Builder for the selected class — filter by half-term and assign to the term map.',
   },
   {
     id: 'lesson-builder',
     label: 'Lesson Builder',
-    description: 'Build and edit lessons from activities.',
+    description: 'Build and edit lessons from activities, then save them to Lessons.',
   },
   {
     id: 'activity-library',

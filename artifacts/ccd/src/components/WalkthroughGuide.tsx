@@ -105,7 +105,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
         icon: <BookOpen className="h-7 w-7 text-indigo-500" />,
       },
       {
-        title: 'Lesson Library',
+        title: 'Lessons',
         description:
           'Every lesson you or your team has built lives here. Reuse, duplicate, edit, or assign lessons to the calendar.',
         target: '[data-tab="lesson-library"]',
@@ -115,7 +115,7 @@ export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
       {
         title: 'Lesson Builder',
         description:
-          'Build a new lesson by dragging activities in from the library. Re-order, edit, and save — your lesson then shows up in the Lesson Library, ready to schedule in the Planner.',
+          'Build a new lesson by dragging activities in from the library. Re-order, edit, and save — it appears under Lessons, ready to assign to a half-term or schedule in the Planner.',
         target: '[data-tab="lesson-builder"]',
         position: 'bottom',
         icon: <Edit3 className="h-7 w-7 text-[#4338E8]" />,

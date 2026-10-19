@@ -251,6 +251,14 @@ export function Dashboard() {
 
       {activeTab === 'lesson-library' && (
         <div className="ccd-fade-in-up" key="ll">
+          <p className="ccd-studio-eyebrow mb-1">
+            YOUR TEACHING / <span>LESSONS</span>
+          </p>
+          <p className="mb-4 text-sm text-[#77738F]">
+            Lessons saved from Lesson Builder for{' '}
+            <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>.
+            Filter by half-term, open a plan, or assign it into the Half-terms map.
+          </p>
           <LessonLibrary
             className={currentSheetInfo.sheet}
             onAssignToUnit={handleAssignLessonToHalfTerm}
@@ -261,6 +269,20 @@ export function Dashboard() {
 
       {activeTab === 'lesson-builder' && (
         <div className="ccd-fade-in-up" key="lb">
+          <p className="ccd-studio-eyebrow mb-1">
+            YOUR TEACHING / <span>LESSON BUILDER</span>
+          </p>
+          <p className="mb-3 text-sm text-[#77738F]">
+            Drag activities into a lesson, then <strong className="text-[#1F1B4D]">Save Lesson</strong>. It appears under{' '}
+            <button
+              type="button"
+              onClick={() => handleTabChange('lesson-library')}
+              className="font-semibold text-[#4338E8] underline-offset-2 hover:underline"
+            >
+              Lessons
+            </button>
+            .
+          </p>
           {/* DnD: LessonDropZone + ActivityCard remain inside LessonPlanBuilder; DndRoot wraps the app */}
           <LessonPlanBuilder onUnsavedChangesChange={setLessonBuilderHasUnsavedChanges} />
         </div>

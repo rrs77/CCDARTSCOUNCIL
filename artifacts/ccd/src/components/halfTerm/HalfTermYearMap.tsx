@@ -260,16 +260,16 @@ export function HalfTermYearMap({ onOpenClass, onOpenTerm }: HalfTermYearMapProp
             className="text-[11px] font-extrabold uppercase tracking-[0.14em] text-[#77738F]"
             style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
           >
-            Plan &amp; progress / Half-terms
+            Plan &amp; progress / Term view
           </p>
           <h1
             className="mt-1 text-[1.65rem] font-extrabold tracking-tight text-[#1F1B4D]"
             style={{ fontFamily: "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)" }}
           >
-            Half-term plans
+            Half-term map
           </h1>
           <p className="ccd-page-lede ccd-page-lede--single mt-1 text-[13px] leading-snug text-[#77738F]">
-            Choose the key stages you teach, then open a cell to plan that class and half-term.
+            One row per class, one column per half-term. Filter stages, then open a cell to add or review lessons for that term.
           </p>
         </div>
 
