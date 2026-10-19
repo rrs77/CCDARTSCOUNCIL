@@ -4,6 +4,7 @@ import { useData, type LessonData, type LessonPlan } from '../../contexts/DataCo
 import { useSettings } from '../../contexts/SettingsContextNew';
 import { useAuth } from '../../hooks/useAuth';
 import { halfTermsApi, lessonsApi } from '../../config/api';
+import { filterLessonEntries, sortedLessonNumbers } from '../../utils/lessonEntries';
 import { plannerApi } from './plannerApi';
 import {
   CLASS_PALETTE,
@@ -197,7 +198,9 @@ export function usePlannerData(range: { from: Date; to: Date }) {
             year === currentAcademicYear
               ? readJson<{ allLessonsData?: Record<string, LessonData>; lessonNumbers?: string[] }>(`lesson-data-${classId}`, {})
               : {};
-          const lessons = sheet?.allLessonsData || local.allLessonsData || {};
+          // Strip sheet-metadata keys that may have been nested into the lessons map
+          // (e.g. demo DB rows that once stored { lesson1, allLessonsData, lessonStandards }).
+          const lessons = filterLessonEntries(sheet?.allLessonsData || local.allLessonsData || {});
           // Prefer the full library for the class — never truncate to a short lessonNumbers list.
           const lessonNumbers = [
             ...new Set([
@@ -209,11 +212,13 @@ export function usePlannerData(range: { from: Date; to: Date }) {
           ]
             .filter((n) => !!lessons[n])
             .sort((a, b) => Number(a) - Number(b) || String(a).localeCompare(String(b)));
+          // Keep order stable even when explicit lessonNumbers lists are empty.
+          const numbers = lessonNumbers.length ? lessonNumbers : sortedLessonNumbers(lessons);
           setLessonCache((prev) => ({
             ...prev,
             [key]: {
               lessons,
-              lessonNumbers,
+              lessonNumbers: numbers,
               halfTerms: (terms || []).map((t: { id: string; lessons: string[] }) => ({ id: t.id, lessons: t.lessons || [] })),
             },
           }));

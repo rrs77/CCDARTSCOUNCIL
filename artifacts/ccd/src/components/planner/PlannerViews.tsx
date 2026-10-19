@@ -4,6 +4,7 @@ import type { LessonPlan } from '../../contexts/DataContext';
 import type { PlannerData } from './usePlannerData';
 import { PlannerLessonCard } from './PlannerLessonCard';
 import { buildDayEntries, eventsOn, lessonTitle, nextFreeSlots } from './plannerEntries';
+import { lessonActivities, lessonActivityCount } from '../../utils/lessonEntries';
 import {
   addDays,
   HALF_TERMS,
@@ -322,8 +323,8 @@ export function UnitsView({
         date: d,
         week: isoWeek(d),
         className: classId,
-        activities: (l.orderedActivities?.length ? l.orderedActivities : Object.values(l.grouped || {}).flat()).map((a) => ({ ...a, lessonNumber: n })),
-        duration: l.totalTime || 0,
+        activities: lessonActivities(l).map((a) => ({ ...a, lessonNumber: n })),
+        duration: l?.totalTime || 0,
         notes: '',
         status: 'planned',
         lessonNumber: n,
@@ -430,7 +431,7 @@ export function UnitsView({
                     <span className="min-w-0">
                       <span className="block truncate text-sm font-semibold text-[#1F2937]">{l?.title || l?.lessonName || `Lesson ${n}`}</span>
                       <span className="block text-xs text-[#77738F]">
-                        {plural(Object.values(l?.grouped || {}).flat().length, 'activity', 'activities')} · {l?.totalTime || 0} min
+                        {plural(lessonActivityCount(l), 'activity', 'activities')} · {l?.totalTime || 0} min
                       </span>
                     </span>
                     <span
