@@ -36,30 +36,57 @@ export function setSessionOnlyCookie() {
   document.cookie = `${SESSION_ONLY_COOKIE}=1; path=/; SameSite=Lax`;
 }
 
-// Create Supabase client. When using Supabase Auth, session is persisted (localStorage or sessionStorage when "require password each time").
-//
-// SAFETY: in Preview / Demo mode the exported client is a localStorage-backed
-// mock (see utils/demoDb.ts). No real Supabase client is even constructed, so
-// no read or write from a demo visitor can ever reach the live database.
-export const supabase: SupabaseClient = isDemoModeActive()
-  ? (createDemoSupabaseClient() as SupabaseClient)
-  : createClient(
-      supabaseUrl,
-      supabaseAnonKey,
-      {
-        auth: {
-          persistSession: useSupabaseAuth,
-          autoRefreshToken: useSupabaseAuth,
-          detectSessionInUrl: useSupabaseAuth,
-          ...(useSupabaseAuth && { storage: customAuthStorage }),
-        },
-        global: {
-          headers: {
-            'apikey': supabaseAnonKey
-          }
-        }
+// Live client is always constructed so we can detect a real signed-in session
+// even if a leftover Preview/Demo flag is still set in sessionStorage.
+// Data reads/writes in demo mode still go through the mock (see Proxy below).
+const liveSupabase: SupabaseClient = createClient(
+  supabaseUrl,
+  supabaseAnonKey,
+  {
+    auth: {
+      persistSession: useSupabaseAuth,
+      autoRefreshToken: useSupabaseAuth,
+      detectSessionInUrl: useSupabaseAuth,
+      ...(useSupabaseAuth && { storage: customAuthStorage }),
+    },
+    global: {
+      headers: {
+        'apikey': supabaseAnonKey
       }
-    );
+    }
+  }
+);
+
+let demoSupabase: SupabaseClient | null = null;
+
+function getDemoSupabase(): SupabaseClient {
+  if (!demoSupabase) {
+    demoSupabase = createDemoSupabaseClient() as SupabaseClient;
+  }
+  return demoSupabase;
+}
+
+/**
+ * Real Supabase client — always use this for auth session checks / sign-in /
+ * sign-out / password updates. Never the demo mock.
+ */
+export function getLiveSupabase(): SupabaseClient {
+  return liveSupabase;
+}
+
+/**
+ * App-facing client. In Preview/Demo mode routes to the localStorage mock so
+ * visitor writes never hit the live project. Outside demo mode, the live client.
+ * Re-evaluates on every access so clearing demo mode after a real login
+ * immediately switches back to live (unlike the old module-load freeze).
+ */
+export const supabase: SupabaseClient = new Proxy({} as SupabaseClient, {
+  get(_target, prop, _receiver) {
+    const client = isDemoModeActive() ? getDemoSupabase() : liveSupabase;
+    const value = Reflect.get(client as object, prop, client);
+    return typeof value === 'function' ? (value as (...args: unknown[]) => unknown).bind(client) : value;
+  },
+});
 
 export const isSupabaseAuthEnabled = () => useSupabaseAuth;
 

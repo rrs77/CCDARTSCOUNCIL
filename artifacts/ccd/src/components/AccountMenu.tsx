@@ -2,7 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ChevronDown, KeyRound, Loader2, LogOut, Settings, X } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { navigateToSettings } from './settings';
-import { supabase } from '../config/supabase';
+import { getLiveSupabase } from '../config/supabase';
 import { isDemoModeActive } from '../utils/demoMode';
 import {
   initialsFromDisplayName,
@@ -66,17 +66,18 @@ export function AccountMenu({ compact = true, onNavigate }: AccountMenuProps) {
     }
     setSavingPassword(true);
     try {
-      if (isDemoModeActive()) {
+      if (isDemoModeActive() && (!user?.id || user.id === 'demo-visitor')) {
         toast.success('Password updated (demo — not saved to the server).');
         setPasswordOpen(false);
         setPassword('');
         setConfirm('');
         return;
       }
-      const { error } = await supabase.auth.updateUser({ password });
+      const live = getLiveSupabase();
+      const { error } = await live.auth.updateUser({ password });
       if (error) throw new Error(error.message);
-      if (profile?.id) {
-        await supabase
+      if (profile?.id && profile.id !== 'demo-visitor') {
+        await live
           .from('profiles')
           .update({
             must_change_password: false,
