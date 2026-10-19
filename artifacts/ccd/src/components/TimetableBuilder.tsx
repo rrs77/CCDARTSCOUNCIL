@@ -302,8 +302,13 @@ export function TimetableBuilder({
       if (termId === undefined) {
         setTimetableClasses(classes);
       }
-      if (onTimetableUpdate && termId === undefined) {
+      if (onTimetableUpdate) {
         onTimetableUpdate(classes);
+      }
+      try {
+        window.dispatchEvent(new CustomEvent('ccd:timetable-updated'));
+      } catch {
+        /* ignore */
       }
       // Best-effort cloud mirror keyed by teacher scope (not a single class)
       if (isSupabaseConfigured()) {

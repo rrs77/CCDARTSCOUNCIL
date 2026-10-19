@@ -10,6 +10,7 @@ import { plannerApi } from './plannerApi';
 import {
   CLASS_PALETTE,
   DEFAULT_PREFS,
+  halfTermFor,
   type PlannerClass,
   type PlannerEvent,
   type PlannerFolder,
@@ -101,14 +102,15 @@ export function usePlannerData(range: { from: Date; to: Date }) {
 
   const classById = useMemo(() => new Map(classes.map((c) => [c.id, c])), [classes]);
 
-  /** Recurring slots come from the teacher-level timetable (sliced per My class). */
+  /** Recurring slots come from the teacher-level timetable (sliced per My class / term). */
+  const termId = halfTermFor(range.from);
   const { slots, events } = useMemo(() => {
     void storageTick;
     const s: TimetableSlot[] = [];
     const e: PlannerEvent[] = [];
     const seenEvents = new Set<string>();
     classes.forEach((c) => {
-      readSlotsForClass({ id: c.id, name: c.name }).forEach((slot) =>
+      readSlotsForClass({ id: c.id, name: c.name }, termId).forEach((slot) =>
         s.push({
           id: `${c.id}:${slot.id}`,
           day: slot.day,
@@ -127,9 +129,23 @@ export function usePlannerData(range: { from: Date; to: Date }) {
       });
     });
     return { slots: s, events: e };
-  }, [classes, storageTick]);
+  }, [classes, storageTick, termId]);
 
   const refreshStorage = useCallback(() => setStorageTick((t) => t + 1), []);
+
+  // Pick up Timetable Builder saves in the same tab (and other tabs via storage).
+  useEffect(() => {
+    const onStorage = (ev: StorageEvent) => {
+      if (ev.key && ev.key.startsWith('timetable-')) refreshStorage();
+    };
+    const onCustom = () => refreshStorage();
+    window.addEventListener('storage', onStorage);
+    window.addEventListener('ccd:timetable-updated', onCustom);
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener('ccd:timetable-updated', onCustom);
+    };
+  }, [refreshStorage]);
 
   const fromKey = range.from.getTime();
   const toKey = range.to.getTime();

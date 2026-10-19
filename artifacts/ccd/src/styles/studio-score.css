@@ -589,6 +589,17 @@ html.ccd-studio .ss-dialog-lg {
   box-shadow: 0 0 0 2px rgba(67, 56, 232, 0.25);
 }
 
+/* Empty timetable outline — dashed placeholder waiting for a lesson */
+.ss-lesson-card.is-outline {
+  background: rgba(255, 255, 255, 0.72);
+  border-color: #d4d0ea;
+}
+
+.ss-lesson-card.is-outline:hover {
+  background: #f7f6ff;
+  border-color: #bcb7f4;
+}
+
 .ss-lesson-card strong {
   font-size: 12px;
   font-weight: 800;

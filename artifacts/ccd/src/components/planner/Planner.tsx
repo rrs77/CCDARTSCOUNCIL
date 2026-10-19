@@ -205,10 +205,12 @@ export function Planner({ initialView, renderTerm, renderClassic }: PlannerProps
   const weekStats = useMemo(() => {
     if (view !== 'week') return null;
     const mon = startOfWeek(anchor);
-    const entries = Array.from({ length: 5 }, (_, i) => buildDayEntries(addDays(mon, i), visibleIds, data.plans, data.slots)).flat();
+    const entries = Array.from({ length: 5 }, (_, i) =>
+      buildDayEntries(addDays(mon, i), visibleIds, data.plans, data.slots, data.events),
+    ).flat();
     const planned = entries.filter((e) => e.plan).length;
     return { sessions: entries.length, planned, empty: entries.length - planned, taught: entries.filter((e) => e.plan?.status === 'completed').length };
-  }, [view, anchor, visibleIds, data.plans, data.slots]);
+  }, [view, anchor, visibleIds, data.plans, data.slots, data.events]);
 
   const inSchedule = room === 'schedule' && view !== 'classic';
 
@@ -483,7 +485,7 @@ function printWeek(
   const term = HALF_TERMS.find((h) => h.id === halfTermFor(anchor));
   const cols = Array.from({ length: 5 }, (_, i) => {
     const d = addDays(mon, i);
-    const items = buildDayEntries(d, visibleIds, data.plans, data.slots)
+    const items = buildDayEntries(d, visibleIds, data.plans, data.slots, data.events)
       .filter((e) => e.plan)
       .map((e) => {
         const c = data.classById.get(e.classId);

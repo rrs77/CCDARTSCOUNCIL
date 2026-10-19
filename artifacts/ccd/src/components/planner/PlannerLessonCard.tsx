@@ -22,6 +22,8 @@ interface Props {
    * `place` is relative to this card.
    */
   onDropRelative?: (item: PlannerLessonDragItem, place: 'before' | 'after') => void;
+  /** Drop a scheduled lesson onto this empty timetable outline to fill it. */
+  onDropOntoOutline?: (item: PlannerLessonDragItem) => void;
   /** Optional keyboard shortcut handler (e.g. Alt+←/→ to move days). */
   onKeyMove?: (e: React.KeyboardEvent) => void;
 }
@@ -37,13 +39,15 @@ export function PlannerLessonCard({
   showClass = true,
   onOpen,
   onDropRelative,
+  onDropOntoOutline,
   onKeyMove,
 }: Props) {
-  const color = cls?.color || '#475569';
+  const color = cls?.color || entry.slot?.color || '#475569';
   const ink = readableInk(color);
   const plan = entry.plan;
   const status = plan?.status;
   const roomy = size === 'roomy';
+  const isOutline = !plan && !!entry.slot;
   const statusDot =
     status === 'completed' ? 'bg-[#1E6B3E]' : status === 'draft' ? 'bg-[#D97706]' : null;
 
@@ -77,10 +81,12 @@ export function PlannerLessonCard({
   const [{ isOver, canDrop }, drop] = useDrop(
     () => ({
       accept: PLANNER_LESSON_DND,
-      canDrop: (item: PlannerLessonDragItem) => !!plan && item.planId !== plan.id && !!onDropRelative,
+      canDrop: (item: PlannerLessonDragItem) => {
+        if (plan) return item.planId !== plan.id && !!onDropRelative;
+        return isOutline && !!onDropOntoOutline && item.planId !== undefined;
+      },
       hover: (item: PlannerLessonDragItem, monitor) => {
-        if (!ref.current || !monitor.isOver({ shallow: true })) return;
-        // stash hover half on the item for the drop handler
+        if (!plan || !ref.current || !monitor.isOver({ shallow: true })) return;
         const rect = ref.current.getBoundingClientRect();
         const client = monitor.getClientOffset();
         if (!client) return;
@@ -89,6 +95,10 @@ export function PlannerLessonCard({
           client.y < mid ? 'before' : 'after';
       },
       drop: (item: PlannerLessonDragItem) => {
+        if (!plan && isOutline && onDropOntoOutline) {
+          onDropOntoOutline(item);
+          return { handled: true, filledOutline: true };
+        }
         if (!onDropRelative || !plan) return;
         const place =
           (item as PlannerLessonDragItem & { _place?: 'before' | 'after' })._place || 'before';
@@ -97,14 +107,16 @@ export function PlannerLessonCard({
       },
       collect: (m) => ({ isOver: m.isOver({ shallow: true }), canDrop: m.canDrop() }),
     }),
-    [plan, onDropRelative],
+    [plan, isOutline, onDropRelative, onDropOntoOutline],
   );
 
   const setRef = (node: HTMLButtonElement | null) => {
     ref.current = node;
     drag(node);
-    if (onDropRelative) drop(node);
+    if (onDropRelative || onDropOntoOutline) drop(node);
   };
+
+  const timeLabel = entry.endTime ? `${entry.time}–${entry.endTime}` : entry.time;
 
   return (
     <button
@@ -129,11 +141,18 @@ export function PlannerLessonCard({
             ]
               .filter(Boolean)
               .join(' · ')
-          : 'Choose a lesson'
+          : [
+              cls?.name || entry.classId,
+              timeLabel,
+              entry.location,
+              'Add a lesson to this timetable slot',
+            ]
+              .filter(Boolean)
+              .join(' · ')
       }
       aria-grabbed={plan ? isDragging : undefined}
       className={`ss-lesson-card group relative focus:outline-none focus-visible:ring-2 focus-visible:ring-[#4338E8] ${
-        plan ? 'is-draggable' : 'border-dashed'
+        plan ? 'is-draggable' : 'is-outline border-dashed'
       } ${selected ? 'is-selected' : ''} ${roomy ? 'min-h-[120px]' : ''} ${
         isDragging ? 'is-dragging' : ''
       } ${isOver && canDrop ? 'is-drop-target' : ''}`}
@@ -185,9 +204,9 @@ export function PlannerLessonCard({
         </>
       ) : (
         <>
-          <span className="flex items-center gap-1.5 min-w-0">
-            {entry.time && (
-              <span className="text-xs font-semibold tabular-nums text-[#77738F] shrink-0">{entry.time}</span>
+          <span className="flex w-full items-center gap-1.5 min-w-0 pl-1">
+            {timeLabel && (
+              <span className="ss-timepill indigo shrink-0">{timeLabel}</span>
             )}
             {showClass && (
               <span
@@ -198,9 +217,17 @@ export function PlannerLessonCard({
               </span>
             )}
           </span>
-          <span className="mt-0.5 flex items-center gap-1 text-[12.5px] font-medium text-[#4338E8]">
+          {entry.location ? (
+            <span className="pl-1 flex items-center gap-1 text-[11px] text-[#77738F] min-w-0">
+              <MapPin className="h-3 w-3 shrink-0" aria-hidden />
+              <span className="truncate">{entry.location}</span>
+            </span>
+          ) : (
+            <span className="pl-1 text-[11px] text-[#9B97B0]">Timetable slot</span>
+          )}
+          <span className="mt-0.5 flex items-center gap-1 pl-1 text-[12.5px] font-semibold text-[#4338E8]">
             <Plus className="h-3.5 w-3.5" aria-hidden />
-            Choose a lesson
+            Add lesson
           </span>
         </>
       )}
