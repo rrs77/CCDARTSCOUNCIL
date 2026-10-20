@@ -10,13 +10,16 @@ import {
   FileText,
   Info,
   KeyRound,
+  LayoutGrid,
   Library,
+  List,
   Lock,
   Mail,
   MapPin,
   Music2,
   Pencil,
   Phone,
+  Rows3,
   Search,
   Sparkles,
   X,
@@ -49,14 +52,21 @@ import {
 } from './hubsPreviewContent';
 import {
   ArtsOrganisationsDirectoryView,
+  HUBS_GRID_CARD_MIN_PX,
+  HUBS_GRID_COLS_MAX,
+  HUBS_GRID_COLS_MIN,
+  MusicHubListRow,
   MusicHubResultCard,
   MusicHubToolbar,
   PaidResourcesDirectoryView,
+  PartnerHubsHeaderActions,
   PartnerSectionTabs,
-  SelectedAreaPanel,
+  musicHubCardDetail,
+  musicHubCardTitle,
 } from './PartnerHubsDirectoryViews';
 import {
   ACCESS_LABEL,
+  type Contact,
   type Directory,
   type HubResource,
   type HubRole,
@@ -176,8 +186,8 @@ export const isPartnerHubsLink = () => {
 
 // ---------------------------------------------------------------------------
 
-const ink = 'text-[#002D24]';
-const muted = 'text-[#002D24]/65';
+const ink = 'text-[#1F1B4D]';
+const muted = 'text-[#1F1B4D]/65';
 
 function Badge({ children, tone = 'neutral' }: { children: React.ReactNode; tone?: 'neutral' | 'teal' | 'amber' | 'brand' }) {
   const cls = {
@@ -198,13 +208,13 @@ function Crumbs({ items }: { items: { label: string; onClick?: () => void }[] })
     <nav aria-label="Breadcrumb" className="flex flex-wrap items-center gap-1 text-[14px]">
       {items.map((it, i) => (
         <span key={i} className="flex items-center gap-1">
-          {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#002D24]/30" aria-hidden />}
+          {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#1F1B4D]/30" aria-hidden />}
           {it.onClick ? (
-            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#002D24]/60 hover:text-[#002D24] hover:underline">
+            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#1F1B4D]/60 hover:text-[#1F1B4D] hover:underline">
               {it.label}
             </button>
           ) : (
-            <span aria-current="page" className="px-1 font-medium text-[#002D24]">
+            <span aria-current="page" className="px-1 font-medium text-[#1F1B4D]">
               {it.label}
             </span>
           )}
@@ -229,7 +239,7 @@ function PrimaryButton({
     <button
       type={type}
       onClick={onClick}
-      className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#002D24] px-4 text-[15px] font-medium text-white shadow-[0_1px_2px_rgba(0,45,36,0.2)] transition hover:bg-[#0B3B30] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14B8A6] ${className}`}
+      className={`inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[15px] font-medium text-white shadow-[0_1px_2px_rgba(67,56,232,0.25)] transition hover:bg-[#3529d1] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4338E8] ${className}`}
     >
       {children}
     </button>
@@ -247,7 +257,7 @@ function SecondaryButton({
   href?: string;
   className?: string;
 }) {
-  const cls = `inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#002D24]/12 bg-white px-4 text-[15px] font-medium text-[#002D24] transition hover:border-[#002D24]/25 hover:bg-[#F6F8F6] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#14B8A6] ${className}`;
+  const cls = `inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl border border-[#1F1B4D]/12 bg-white px-4 text-[15px] font-medium text-[#1F1B4D] transition hover:border-[#1F1B4D]/25 hover:bg-[#F4F3FA] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#4338E8] ${className}`;
   if (href)
     return (
       <a href={href} target="_blank" rel="noreferrer" className={cls}>
@@ -381,8 +391,8 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
       <label htmlFor="hubs-search" className="sr-only">
         Search hubs, places, organisations and resources
       </label>
-      <div className="flex h-14 items-center gap-3 rounded-2xl border border-[#002D24]/10 bg-white px-4 shadow-[0_1px_2px_rgba(0,45,36,0.04),0_8px_24px_-12px_rgba(0,45,36,0.18)] focus-within:border-[#14B8A6]/60 focus-within:ring-4 focus-within:ring-[#14B8A6]/10">
-        <Search className="h-5 w-5 shrink-0 text-[#002D24]/45" aria-hidden />
+      <div className="flex h-12 items-center gap-3 rounded-2xl border border-[#1F1B4D]/10 bg-white px-4 shadow-[0_1px_2px_rgba(31,27,77,0.04),0_8px_24px_-12px_rgba(31,27,77,0.12)] focus-within:border-[#4338E8]/50 focus-within:ring-4 focus-within:ring-[#4338E8]/12">
+        <Search className="h-5 w-5 shrink-0 text-[#1F1B4D]/40" aria-hidden />
         <input
           id="hubs-search"
           role="combobox"
@@ -409,10 +419,10 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
             } else if (e.key === 'Escape') setOpen(false);
           }}
           placeholder="Search hubs, places, organisations and resources…"
-          className="h-full min-w-0 flex-1 bg-transparent text-[16px] text-[#002D24] outline-none placeholder:text-[#002D24]/40"
+          className="h-full min-w-0 flex-1 bg-transparent text-[15px] text-[#1F1B4D] outline-none placeholder:text-[#1F1B4D]/40"
         />
         {q && (
-          <button type="button" aria-label="Clear search" onClick={() => setQ('')} className="rounded-full p-1.5 text-[#002D24]/45 hover:bg-[#002D24]/5">
+          <button type="button" aria-label="Clear search" onClick={() => setQ('')} className="rounded-full p-1.5 text-[#1F1B4D]/45 hover:bg-[#4338E8]/10">
             <X className="h-4 w-4" />
           </button>
         )}
@@ -421,7 +431,7 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
         <div
           id="hubs-search-list"
           role="listbox"
-          className="absolute inset-x-0 top-[calc(100%+8px)] z-30 max-h-[420px] overflow-auto rounded-2xl border border-[#002D24]/10 bg-white p-2 shadow-[0_24px_48px_-16px_rgba(0,45,36,0.28)]"
+          className="absolute inset-x-0 top-[calc(100%+8px)] z-30 max-h-[420px] overflow-auto rounded-2xl border border-[#1F1B4D]/10 bg-white p-2 shadow-[0_24px_48px_-16px_rgba(31,27,77,0.28)]"
         >
           {hits.length === 0 && <p className={`px-3 py-4 text-[15px] ${muted}`}>No matches for “{q.trim()}”.</p>}
           {hits.map((h, i) => {
@@ -429,7 +439,7 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
             lastGroup = h.group;
             return (
               <div key={`${h.group}-${h.label}-${i}`}>
-                {header && <p className="px-3 pb-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#002D24]/45">{h.group}</p>}
+                {header && <p className="px-3 pb-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#1F1B4D]/45">{h.group}</p>}
                 <div
                   id={`hubs-hit-${i}`}
                   role="option"
@@ -439,13 +449,13 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
                     e.preventDefault();
                     choose(h);
                   }}
-                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 ${i === active ? 'bg-[#E8F0EA]' : ''}`}
+                  className={`flex cursor-pointer items-center justify-between gap-3 rounded-xl px-3 py-2.5 ${i === active ? 'bg-[#E9E6FF]' : ''}`}
                 >
                   <span className="min-w-0">
                     <span className={`block truncate text-[15px] font-medium ${ink}`}>{h.label}</span>
                     <span className={`block truncate text-[14px] ${muted}`}>{h.detail}</span>
                   </span>
-                  <ArrowRight className="h-4 w-4 shrink-0 text-[#002D24]/35" aria-hidden />
+                  <ArrowRight className="h-4 w-4 shrink-0 text-[#1F1B4D]/35" aria-hidden />
                 </div>
               </div>
             );
@@ -551,14 +561,24 @@ function AreaList({ lads, selected, hover, onHover, onSelect, filter }: {
 function AreaPreview({ hub, lad, onExplore, onClose }: { hub: MapHub; lad: MapLad; onExplore: () => void; onClose: () => void }) {
   const dir = useDirectory();
   const svc = dir.serviceFor(lad);
-  const shared = dir.resourcesForHub(hub.id).length;
+  const { local, shared } = dir.resourcesForArea(hub.id, lad.code);
   const body = (
     <>
       <p className={`text-[17px] font-semibold ${ink}`}>{lad.name}</p>
       <p className={`mt-0.5 text-[14px] ${muted}`}>{svc ? `Served by ${svc.name}` : `Part of ${hubLabel(hub)}`}</p>
-      {shared > 0 && (
+      {(local.length > 0 || shared.length > 0) && (
         <p className={`mt-2 text-[14px] ${ink}`}>
-          {shared} shared {shortHubName(hub)} resource{shared === 1 ? '' : 's'}
+          {local.length > 0 && (
+            <>
+              {local.length} local resource{local.length === 1 ? '' : 's'}
+              {shared.length > 0 ? ' · ' : ''}
+            </>
+          )}
+          {shared.length > 0 && (
+            <>
+              {shared.length} shared across {shortHubName(hub)}
+            </>
+          )}
         </p>
       )}
       <PrimaryButton className="mt-3 w-full" onClick={onExplore}>
@@ -1012,7 +1032,7 @@ function AccessCodeForm({ r, onUnlocked }: { r: HubResource; onUnlocked: () => v
   );
 }
 
-const STEPS = ['Preview', 'Add to my library', 'Use in a lesson', 'Place in Planner', 'Reflect after teaching'];
+const STEPS = ['Preview', 'Add to CCDesigner', 'Use in a lesson', 'Place in Planner', 'Reflect after teaching'];
 
 function ResourceSheet({ r, onClose, hubId, areaCode }: { r: HubResource; onClose: () => void; hubId: string; areaCode?: string }) {
   const dir = useDirectory();
@@ -1151,7 +1171,7 @@ function ResourceSheet({ r, onClose, hubId, areaCode }: { r: HubResource; onClos
             <div className="mt-5 flex flex-wrap gap-2">
               {!added ? (
                 <PrimaryButton onClick={add} className={busy ? 'pointer-events-none opacity-70' : ''}>
-                  <Library className="h-4 w-4" /> {busy ? 'Adding…' : 'Add to my library'}
+                  <Library className="h-4 w-4" /> {busy ? 'Adding…' : 'Add to CCDesigner'}
                 </PrimaryButton>
               ) : (
                 <>
@@ -1363,7 +1383,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
           }}
           className="h-[420px] sm:h-[520px] lg:h-[600px]"
         />
-        <div className="flex flex-col gap-4 lg:max-h-[600px]">
+        <div className="flex flex-col gap-4">
           <div>
             <h3 className={`text-[18px] font-semibold ${ink}`}>Find your area</h3>
             <p className={`mt-0.5 text-[14px] ${muted}`}>
@@ -1371,7 +1391,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
             </p>
           </div>
           <FindArea value={filter} onChange={setFilter} label="Search areas" />
-          <div className="min-h-0 flex-1 overflow-auto pr-0.5">
+          <div className="pr-0.5">
             <AreaList
               lads={lads}
               selected={area?.code}
@@ -1498,28 +1518,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
           )}
           {tab === 'contact' &&
             (contact ? (
-              <div className="max-w-md space-y-3 rounded-2xl border border-[#002D24]/[0.08] bg-white p-5 text-[15px]">
-                {contact.lines?.length ? <p className={`font-semibold ${ink}`}>{contact.lines.join(' · ')}</p> : null}
-                {contact.phone && (
-                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`tel:${contact.phone.replace(/\s/g, '')}`}>
-                    <Phone className="h-4 w-4 text-[#002D24]/50" /> {contact.phone}
-                  </a>
-                )}
-                {contact.email && (
-                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`mailto:${contact.email}`}>
-                    <Mail className="h-4 w-4 text-[#002D24]/50" /> {contact.email}
-                  </a>
-                )}
-                {contact.sourceUrl && (
-                  <p className={`text-[13px] ${muted}`}>
-                    From the{' '}
-                    <a href={contact.sourceUrl} target="_blank" rel="noreferrer" className="underline">
-                      official contact page
-                    </a>
-                    .
-                  </p>
-                )}
-              </div>
+              <ContactCard contact={contact} />
             ) : (
               <EmptyState
                 title="Contact details haven’t been verified yet."
@@ -1560,6 +1559,60 @@ function MiniMap({ ix, hub, lad, onClick }: { ix: MapIndex; hub: MapHub; lad: Ma
   );
 }
 
+function ContactCard({ contact }: { contact: Contact }) {
+  return (
+    <div className="max-w-md space-y-3 rounded-2xl border border-[#002D24]/[0.08] bg-white p-5 text-[15px]">
+      {contact.lines?.length ? <p className={`font-semibold ${ink}`}>{contact.lines.join(' · ')}</p> : null}
+      {contact.address && (
+        <p className={`flex items-start gap-2 ${ink}`}>
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/50" aria-hidden />
+          <span>{contact.address}</span>
+        </p>
+      )}
+      {contact.phone && (
+        <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`tel:${contact.phone.replace(/\s/g, '')}`}>
+          <Phone className="h-4 w-4 text-[#002D24]/50" /> {contact.phone}
+        </a>
+      )}
+      {contact.email && (
+        <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`mailto:${contact.email}`}>
+          <Mail className="h-4 w-4 text-[#002D24]/50" /> {contact.email}
+        </a>
+      )}
+      {contact.website && (
+        <a className={`flex items-center gap-2 ${ink} hover:underline`} href={contact.website} target="_blank" rel="noreferrer">
+          <ExternalLink className="h-4 w-4 text-[#002D24]/50" /> Website
+        </a>
+      )}
+      {contact.socials && contact.socials.length > 0 && (
+        <ul className="flex flex-wrap gap-2 pt-1">
+          {contact.socials.map((s) => (
+            <li key={s.href}>
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-[36px] items-center rounded-lg bg-[#F6F9F7] px-3 text-[14px] font-medium text-[#002D24] ring-1 ring-inset ring-[#002D24]/[0.08] hover:bg-[#E8F0EA]"
+              >
+                {s.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {contact.sourceUrl && (
+        <p className={`text-[13px] ${muted}`}>
+          From the{' '}
+          <a href={contact.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+            official contact page
+          </a>
+          .
+        </p>
+      )}
+    </div>
+  );
+}
+
 function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
   ix: MapIndex;
   hub: MapHub;
@@ -1580,11 +1633,12 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
     (!q.trim() || `${r.title} ${r.description} ${r.subject}`.toLowerCase().includes(q.trim().toLowerCase()));
   const sharedShown = shared.filter(match);
   const localShown = local.filter(match);
+  const links = areaDetail?.links ?? [];
 
   return (
     <div className="space-y-6">
       <Crumbs items={[...regionCrumbs, { label: short, onClick: () => go({ level: 'hub', id: hub.id }, 'hub') }, { label: lad.name }]} />
-      <header className="grid gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_240px] md:items-center">
+      <header className="grid gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_240px] md:items-start">
         <div>
           <p className={`text-[14px] font-medium ${muted}`}>Local area</p>
           <h1 className={`mt-0.5 text-[30px] font-semibold leading-tight tracking-tight sm:text-[34px] ${ink}`}>{lad.name}</h1>
@@ -1601,7 +1655,7 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
             </p>
           )}
           {paragraphs(areaDetail?.about).map((p, i) => (
-            <p key={i} className={`mt-3 max-w-[60ch] text-[15px] leading-relaxed ${ink}`}>
+            <p key={i} className={`mt-3 max-w-[68ch] text-[15px] leading-relaxed ${ink}`}>
               {p}
             </p>
           ))}
@@ -1620,6 +1674,41 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
         </div>
         <MiniMap ix={ix} hub={hub} lad={lad} onClick={() => go({ level: 'lad', id: lad.code }, 'hub')} />
       </header>
+
+      {(areaDetail?.contact || links.length > 0) && (
+        <section aria-labelledby="area-contact-heading" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          {areaDetail?.contact && (
+            <div>
+              <h2 id="area-contact-heading" className={`mb-3 text-[20px] font-semibold tracking-tight ${ink}`}>
+                Contact
+              </h2>
+              <ContactCard contact={areaDetail.contact} />
+            </div>
+          )}
+          {links.length > 0 && (
+            <div>
+              <h2 id="area-links-heading" className={`mb-3 text-[20px] font-semibold tracking-tight ${ink}`}>
+                Official links
+              </h2>
+              <ul className="space-y-2 rounded-2xl border border-[#002D24]/[0.08] bg-white p-4">
+                {links.map((link) => (
+                  <li key={link.href + link.label}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-2 text-[15px] font-medium ${ink} hover:underline`}
+                    >
+                      {link.label}
+                      <ExternalLink className="h-3.5 w-3.5 text-[#002D24]/45" aria-hidden />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <PhaseFilter value={phase} onChange={setPhase} />
@@ -1778,12 +1867,16 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
     document.title = `${title} · CCDesigner`;
   }, [ix, focus, route.page]);
 
-  const regionCrumbs = (hub: MapHub) => [
-    { label: 'Partner Hubs', onClick: () => go({ level: 'uk' }) },
-    { label: 'England', onClick: () => go({ level: 'nation', id: ENGLAND }) },
-    { label: ix!.region(hub.region)!.name, onClick: () => go({ level: 'region', id: hub.region }) },
-  ];
+  const regionCrumbs = useCallback(
+    (hub: MapHub) => [
+      { label: 'Partner Hubs', onClick: () => go({ level: 'uk' }) },
+      { label: 'England', onClick: () => go({ level: 'nation', id: ENGLAND }) },
+      { label: ix!.region(hub.region)!.name, onClick: () => go({ level: 'region', id: hub.region }) },
+    ],
+    [go, ix],
+  );
 
+  // Detail pages — must not share hooks with the browse view (hooks-after-return crash).
   if (ix && route.page !== 'browse') {
     const lad = focus.level === 'lad' ? ix.lad(focus.id) : undefined;
     const hub = focus.level === 'hub' ? ix.hub(focus.id) : lad?.hub ? ix.hub(lad.hub) : undefined;
@@ -1795,109 +1888,141 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
     }
   }
 
-  const atUk = focus.level === 'uk';
+  return (
+    <PartnerHubsBrowse
+      ix={ix}
+      error={error}
+      route={route}
+      focus={focus}
+      hover={hover}
+      setHover={setHover}
+      go={go}
+    />
+  );
+}
+
+function PartnerHubsBrowse({
+  ix,
+  error,
+  route,
+  focus,
+  hover,
+  setHover,
+  go,
+}: {
+  ix: MapIndex | null;
+  error: boolean;
+  route: Route;
+  focus: MapFocus;
+  hover: string | null;
+  setHover: (id: string | null) => void;
+  go: (f: MapFocus, page?: Page) => void;
+}) {
+  const resultsRef = useRef<HTMLElement | null>(null);
+  const hubsGridMeasureRef = useRef<HTMLDivElement | null>(null);
+  const [hubsView, setHubsView] = useState<'grid' | 'list' | 'compact'>('grid');
+  const hubsColsForWidth = useCallback((width: number) => {
+    if (width <= 0) return 4;
+    return Math.max(
+      HUBS_GRID_COLS_MIN,
+      Math.min(HUBS_GRID_COLS_MAX, Math.floor(width / HUBS_GRID_CARD_MIN_PX)),
+    );
+  }, []);
+  const [hubsGridCols, setHubsGridCols] = useState(() =>
+    typeof window === 'undefined' ? 5 : Math.max(HUBS_GRID_COLS_MIN, Math.min(HUBS_GRID_COLS_MAX, Math.floor((window.innerWidth - 80) / HUBS_GRID_CARD_MIN_PX))),
+  );
+  const [hubsGridColsPinned, setHubsGridColsPinned] = useState(false);
+
+  useEffect(() => {
+    const el = hubsGridMeasureRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      if (hubsGridColsPinned) return;
+      setHubsGridCols(hubsColsForWidth(w));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [hubsGridColsPinned, hubsColsForWidth]);
+
+  const atMapLanding =
+    focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND);
+  const atRegion = focus.level === 'region';
+
   const browseCrumbs: { label: string; onClick?: () => void }[] = [];
-  if (ix && !atUk) {
-    const chain: MapFocus[] = [];
-    for (let f: MapFocus | null = focus; f; f = parentFocus(ix, f)) chain.unshift(f);
-    chain.forEach((f, i) =>
-      browseCrumbs.push({
-        label: i === 0 ? 'Partner Hubs' : focusName(ix, f),
-        onClick: i < chain.length - 1 ? () => go(f) : undefined,
-      }),
+  if (ix && atRegion) {
+    browseCrumbs.push(
+      { label: 'Partner Hubs', onClick: () => go({ level: 'uk' }) },
+      { label: 'England', onClick: () => go({ level: 'uk' }) },
+      { label: focusName(ix, focus) },
     );
   }
 
-  const musicHubsForList = useMemo(() => {
-    if (!ix) return [] as MapHub[];
-    if (focus.level === 'region') return ix.hubsInRegion(focus.id);
-    if (focus.level === 'hub') {
-      const h = ix.hub(focus.id);
-      return h ? [h] : [];
-    }
-    if (focus.level === 'lad') {
-      const lad = ix.lad(focus.id);
-      const h = lad?.hub ? ix.hub(lad.hub) : undefined;
-      return h ? [h] : [];
-    }
-    return [...ix.data.hubs].sort((a, b) => hubLabel(a).localeCompare(hubLabel(b)));
-  }, [ix, focus]);
+  const regionHubs = useMemo(() => {
+    if (!ix || !atRegion) return [] as MapHub[];
+    return [...ix.hubsInRegion(focus.id)].sort((a, b) =>
+      musicHubCardTitle(a.id, hubLabel(a), a.leadOrganisation ?? undefined).localeCompare(
+        musicHubCardTitle(b.id, hubLabel(b), b.leadOrganisation ?? undefined),
+      ),
+    );
+  }, [ix, focus, atRegion]);
 
-  const [musicDiscipline, setMusicDiscipline] = useState<Discipline | 'All'>('All');
+  const regionRows = useMemo(() => {
+    if (!ix) return [] as { code: string; name: string; count: number }[];
+    return [...ix.data.regions]
+      .map((r) => ({ code: r.code, name: r.name, count: ix.hubsInRegion(r.code).length }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [ix]);
 
-  const selectedArea = useMemo(() => {
-    if (!ix) {
-      return {
-        title: 'England',
-        hubCount: 0,
-        blurb: 'Select a region on the map to explore Music Hubs.',
-        localAreas: [] as string[],
-        viewFocus: { level: 'uk' } as MapFocus,
-      };
+  const onMapFocus = (f: MapFocus) => {
+    // Map landing: only open regions (or jump to hub/area for search-driven deep links).
+    if (atMapLanding && f.level === 'lad') {
+      const lad = ix?.lad(f.id);
+      if (lad?.region) {
+        go({ level: 'region', id: lad.region });
+        return;
+      }
     }
-    if (focus.level === 'region') {
-      const r = ix.region(focus.id);
-      const hubs = ix.hubsInRegion(focus.id);
-      const lads = ix.data.lads.filter((l) => l.region === focus.id);
-      return {
-        title: r?.name || 'Region',
-        hubCount: hubs.length,
-        blurb: `${hubs.length} Music Hub${hubs.length === 1 ? '' : 's'} serve schools across this region. Choose a local area or open the hub list below.`,
-        localAreas: lads.map((l) => l.name),
-        viewFocus: focus,
-      };
+    if (f.level === 'hub') {
+      go(f, 'hub');
+      return;
     }
-    if (focus.level === 'hub') {
-      const h = ix.hub(focus.id);
-      const lads = h ? ix.ladsInHub(h.id) : [];
-      return {
-        title: h ? hubLabel(h) : 'Music Hub',
-        hubCount: h ? 1 : 0,
-        blurb: h?.leadOrganisation
-          ? `Lead organisation: ${h.leadOrganisation}. Open the hub page for resources, workshops and local services.`
-          : 'Open this Music Hub for resources and local services.',
-        localAreas: lads.map((l) => l.name),
-        viewFocus: focus,
-      };
-    }
-    if (focus.level === 'lad') {
-      const lad = ix.lad(focus.id);
-      const h = lad?.hub ? ix.hub(lad.hub) : undefined;
-      return {
-        title: lad?.name || 'Local area',
-        hubCount: h ? 1 : 0,
-        blurb: h
-          ? `Served by ${hubLabel(h)}. Explore the hub for curriculum support, ensembles and CPD.`
-          : 'No verified Music Hub listing for this area yet.',
-        localAreas: lad ? [lad.name] : [],
-        viewFocus: h ? ({ level: 'hub', id: h.id } as MapFocus) : focus,
-      };
-    }
-    return {
-      title: 'England',
-      hubCount: ix.data.hubs.length,
-      blurb: 'Zoom into a region on the map to see Music Hubs and local authority areas, or browse the list below.',
-      localAreas: ix.data.regions.map((r) => r.name).slice(0, 6),
-      viewFocus: { level: 'nation', id: ENGLAND } as MapFocus,
-    };
-  }, [ix, focus]);
+    go(f);
+  };
+
+  const backToMap = () => go({ level: 'uk' });
+
+  const regionName = ix && atRegion ? focusName(ix, focus) : '';
+  const regionHubCount = regionHubs.length;
 
   return (
-    <div className={`space-y-6 ${focus.level === 'lad' ? 'pb-56 lg:pb-0' : ''}`}>
-      <header className="space-y-4">
-        {atUk ? (
-          <div>
-            <h1 className="text-[32px] font-bold leading-[1.1] tracking-tight text-[#1F1B4D] sm:text-[38px]">
+    <div className="space-y-6">
+      <header className="space-y-5">
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+          <div className="min-w-0">
+            {atRegion && <Crumbs items={browseCrumbs} />}
+            <p className="ccd-studio-eyebrow mb-1">
+              CONNECT &amp; CREATE / <span>PARTNER HUBS</span>
+            </p>
+            <h1
+              className={`text-[32px] font-bold leading-[1.1] tracking-tight text-[#1F1B4D] sm:text-[40px] ${
+                atRegion ? 'mt-2' : ''
+              }`}
+            >
               Partner Hubs
             </h1>
-            <p className={`ccd-page-lede ccd-page-lede--single mt-2 text-[16px] leading-snug ${muted}`}>
+            <p className="ccd-page-lede ccd-page-lede--single mt-2 max-w-2xl text-[16px] leading-snug text-[#1F1B4D]/65">
               Explore Music Hubs, arts organisations and teaching resources. Bring the ideas you find straight into your
               planning.
             </p>
           </div>
-        ) : (
-          <Crumbs items={browseCrumbs} />
-        )}
+          <PartnerHubsHeaderActions
+            onBrowseMap={() => {
+              writeRoute({ section: 'music-hubs', page: 'browse' });
+              go({ level: 'uk' });
+            }}
+          />
+        </div>
         <PartnerSectionTabs section={route.section} onSection={(s) => writeRoute({ section: s })} />
       </header>
 
@@ -1906,11 +2031,11 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
       ) : route.section === 'paid-resources' ? (
         <PaidResourcesSection />
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-5">
           <MusicHubToolbar
-            discipline={musicDiscipline}
-            onDiscipline={setMusicDiscipline}
-            searchSlot={<GlobalSearch ix={ix} onFocusMap={go} />}
+            searchSlot={<GlobalSearch ix={ix} onFocusMap={onMapFocus} />}
+            view={hubsView}
+            onView={setHubsView}
           />
 
           {error ? (
@@ -1920,87 +2045,285 @@ function PartnerHubsPage({ ix, error }: { ix: MapIndex | null; error: boolean })
               action={<SecondaryButton onClick={() => window.location.reload()}>Try again</SecondaryButton>}
             />
           ) : !ix ? (
-            <div className="h-[480px] animate-pulse rounded-2xl bg-[#EEF0F8]" aria-label="Loading map" />
-          ) : (
-            <>
-              <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-[#F4F3FA] p-2 sm:p-3">
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1.2fr)_minmax(280px,0.85fr)] lg:items-stretch">
-                  <div className="overflow-hidden rounded-xl bg-white">
-                    <UkHubMap
-                      ix={ix}
-                      focus={focus}
-                      hover={hover}
-                      onHover={setHover}
-                      onFocus={(f) => go(f)}
-                      showBreadcrumb={false}
-                      className="h-[340px] sm:h-[420px] lg:h-[460px] !rounded-xl !border-0"
-                    />
-                  </div>
-                  <SelectedAreaPanel
-                    title={selectedArea.title}
-                    hubCount={selectedArea.hubCount}
-                    blurb={selectedArea.blurb}
-                    localAreas={selectedArea.localAreas}
-                    onViewHubs={() => {
-                      if (selectedArea.viewFocus.level === 'hub') {
-                        go(selectedArea.viewFocus, 'hub');
-                      } else {
-                        go(selectedArea.viewFocus);
-                      }
-                    }}
+            <div className="h-[420px] animate-pulse rounded-2xl bg-[#EEF0F8]" aria-label="Loading map" />
+          ) : atMapLanding ? (
+            <section className="space-y-4" aria-labelledby="music-hubs-map-heading">
+              <div className="min-w-0">
+                <h2
+                  id="music-hubs-map-heading"
+                  className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[24px]"
+                >
+                  {ix.data.hubs.length} Music Hubs across England
+                </h2>
+                <p className={`mt-1 max-w-2xl text-[14px] leading-snug ${muted}`}>
+                  Choose a region on the map — or from the list — to see the Music Hubs that serve schools there.
+                </p>
+              </div>
+
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_260px] lg:items-stretch">
+                <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
+                  <UkHubMap
+                    ix={ix}
+                    focus={{ level: 'nation', id: ENGLAND }}
+                    hover={hover}
+                    onHover={setHover}
+                    onFocus={onMapFocus}
+                    showBreadcrumb={false}
+                    regionLabelMode="names"
+                    frameEngland
+                    showControls={false}
+                    showAttribution={false}
+                    showFeatureLabels={false}
+                    palette="green"
+                    className="h-[440px] !rounded-2xl !border-0 sm:h-[520px] lg:h-[560px]"
+                  />
+                </div>
+
+                <div className="flex min-h-0 flex-col rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-3 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:p-4">
+                  <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#1F1B4D]/45">
+                    Regions
+                  </h3>
+                  <ul
+                    className="mt-2 flex flex-1 flex-col gap-1 overflow-y-auto"
+                    role="list"
+                    aria-label="Music Hub regions"
+                  >
+                    {regionRows.map((r) => {
+                      const active = hover === r.code;
+                      return (
+                        <li key={r.code}>
+                          <button
+                            type="button"
+                            onMouseEnter={() => setHover(r.code)}
+                            onMouseLeave={() => setHover(null)}
+                            onFocus={() => setHover(r.code)}
+                            onBlur={() => setHover(null)}
+                            onClick={() => go({ level: 'region', id: r.code })}
+                            className={`flex w-full items-center justify-between gap-2 rounded-lg px-2.5 py-2 text-left transition ${
+                              active
+                                ? 'bg-[#E4F4EF] text-[#0B6B5F] ring-1 ring-[#0B6B5F]/25'
+                                : 'text-[#1F1B4D] hover:bg-[#F4FBF7]'
+                            }`}
+                          >
+                            <span className="min-w-0 truncate text-[13px] font-semibold">{r.name}</span>
+                            <span
+                              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
+                                active ? 'bg-[#0B6B5F] text-white' : 'bg-[#E4F4EF] text-[#0B6B5F]'
+                              }`}
+                            >
+                              {r.count}
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
+              </div>
+
+              <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
+                <Info className="h-3.5 w-3.5" aria-hidden />
+                Hub areas from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
+              </p>
+            </section>
+          ) : atRegion ? (
+            <section ref={resultsRef} className="min-w-0 space-y-4" aria-labelledby="music-hubs-results">
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={backToMap}
+                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-semibold text-[#0B6B5F] ring-1 ring-inset ring-[#0B6B5F]/20 transition hover:bg-[#E4F4EF]"
+                >
+                  ← Back to map
+                </button>
+              </div>
+
+              <div className="flex flex-col gap-4 rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-4 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:flex-row sm:items-center sm:gap-5 sm:p-5">
+                <div className="min-w-0 flex-1">
+                  <h2
+                    id="music-hubs-results"
+                    className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[26px]"
+                  >
+                    {regionName}
+                  </h2>
+                  <p className={`mt-1 max-w-lg text-[14px] leading-snug ${muted}`}>
+                    {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'} serve schools across this region.
+                    Open a hub to explore resources and local services.
+                  </p>
+                  <p className="mt-2 text-[13px] font-semibold text-[#0B6B5F]">
+                    {regionHubCount} hub{regionHubCount === 1 ? '' : 's'} in {regionName}
+                  </p>
+                </div>
+                <div className="ml-auto h-[150px] w-full max-w-[260px] shrink-0 overflow-hidden rounded-xl ring-1 ring-[#1F1B4D]/[0.08] sm:w-[260px]">
+                  <UkHubMap
+                    ix={ix}
+                    focus={focus}
+                    hover={hover}
+                    onHover={setHover}
+                    onFocus={onMapFocus}
+                    showBreadcrumb={false}
+                    regionLabelMode="none"
+                    showFeatureLabels={false}
+                    showControls={false}
+                    showAttribution={false}
+                    palette="green"
+                    className="h-full w-full !rounded-xl !border-0"
                   />
                 </div>
               </div>
 
-              <section className="space-y-4" aria-labelledby="music-hubs-results">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                  <div>
-                    <h2 id="music-hubs-results" className="text-[22px] font-bold tracking-tight text-[#1F1B4D]">
-                      Music Hubs
-                    </h2>
-                    <p className={`mt-0.5 text-[14px] ${muted}`}>
-                      {musicHubsForList.length} hub{musicHubsForList.length === 1 ? '' : 's'}
-                      {atUk ? ' across England' : ` · ${focusName(ix, focus)}`}. Find local areas, resources and
-                      opportunities.
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex min-h-[34px] items-center gap-1 rounded-full bg-white px-3 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10">
-                      Sort by: A–Z <ChevronRight className="h-3.5 w-3.5 rotate-90 opacity-50" aria-hidden />
-                    </span>
-                  </div>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2">
+                <div className="min-w-0 shrink-0 pr-1">
+                  <h3 className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base">
+                    {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'}
+                  </h3>
+                  <p className="text-[10px] font-medium leading-tight text-[#77738F]">A–Z</p>
                 </div>
-                {musicHubsForList.length === 0 ? (
-                  <BrowsePanel ix={ix} focus={focus} hover={hover} onHover={setHover} go={go} />
-                ) : (
-                  <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-3" role="list">
-                    {musicHubsForList.map((h) => (
-                      <li key={h.id}>
+                {(hubsView === 'grid' || hubsView === 'compact') && (
+                  <label
+                    className="flex items-center gap-1.5 rounded-lg border border-[#E2E0EF] bg-white px-2 py-1"
+                    title={
+                      hubsGridColsPinned
+                        ? `${hubsGridCols} columns (drag to change; click Auto to fit width)`
+                        : `${hubsGridCols} columns (auto-fits to width)`
+                    }
+                  >
+                    <span className="text-[10px] font-bold tabular-nums text-[#5C5878]">{hubsGridCols}</span>
+                    <input
+                      type="range"
+                      min={HUBS_GRID_COLS_MIN}
+                      max={HUBS_GRID_COLS_MAX}
+                      step={1}
+                      value={hubsGridCols}
+                      onChange={(e) => {
+                        const next = Math.max(
+                          HUBS_GRID_COLS_MIN,
+                          Math.min(HUBS_GRID_COLS_MAX, Math.round(Number(e.target.value))),
+                        );
+                        setHubsGridCols(next);
+                        setHubsGridColsPinned(true);
+                      }}
+                      className="h-1 w-16 cursor-pointer accent-[#0B6B5F] sm:w-20"
+                      aria-label="Music Hubs per row"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHubsGridColsPinned(false);
+                        const w = hubsGridMeasureRef.current?.clientWidth ?? 0;
+                        setHubsGridCols(hubsColsForWidth(w));
+                      }}
+                      className={`rounded px-1 text-[9px] font-extrabold uppercase tracking-wide ${
+                        hubsGridColsPinned ? 'text-[#0B6B5F] hover:bg-[#E4F4EF]' : 'text-[#77738F]'
+                      }`}
+                    >
+                      Auto
+                    </button>
+                  </label>
+                )}
+                <div className="ml-auto flex flex-wrap items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setHubsView('grid')}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+                      hubsView === 'grid' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#E4F4EF]'
+                    }`}
+                    title="Grid view"
+                    aria-pressed={hubsView === 'grid'}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHubsView('list')}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+                      hubsView === 'list' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#E4F4EF]'
+                    }`}
+                    title="List view"
+                    aria-pressed={hubsView === 'list'}
+                  >
+                    <List className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHubsView('compact')}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+                      hubsView === 'compact' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#E4F4EF]'
+                    }`}
+                    title="Compact view"
+                    aria-pressed={hubsView === 'compact'}
+                  >
+                    <Rows3 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
+              </div>
+
+              {regionHubs.length === 0 ? (
+                <EmptyState
+                  title="No Music Hubs listed here yet."
+                  body="Try another region from the map."
+                  action={<SecondaryButton onClick={backToMap}>Back to map</SecondaryButton>}
+                />
+              ) : hubsView === 'list' ? (
+                <ul className="space-y-2" role="list">
+                  {regionHubs.map((h) => (
+                    <li key={h.id}>
+                      <MusicHubListRow
+                        name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
+                        region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
+                        location={h.authorities[0] || h.aceAreaName || 'England'}
+                        onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                      />
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div ref={hubsGridMeasureRef}>
+                  <ul
+                    className={`grid items-start ${hubsView === 'compact' ? 'gap-1.5' : 'gap-2'}`}
+                    style={{ gridTemplateColumns: `repeat(${hubsGridCols}, minmax(0, 1fr))` }}
+                    role="list"
+                  >
+                    {regionHubs.map((h) => (
+                      <li key={h.id} className="min-w-0">
                         <MusicHubResultCard
                           id={h.id}
-                          name={hubLabel(h)}
+                          name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
                           region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
-                          location={h.authorities.slice(0, 2).join(', ') || h.aceAreaName || 'England'}
-                          detail={
-                            h.leadOrganisation
-                              ? `${h.leadOrganisation} delivers music education across ${h.lads.length} local areas.`
-                              : `Music education hub covering ${h.lads.length} local areas.`
-                          }
+                          location={h.authorities[0] || h.aceAreaName || 'England'}
+                          detail={musicHubCardDetail(h.id, h.leadOrganisation ?? undefined, h.lads.length)}
                           onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                          compact={hubsView === 'compact'}
                         />
                       </li>
                     ))}
                   </ul>
-                )}
-              </section>
-            </>
-          )}
+                </div>
+              )}
 
-          {atUk && (
-            <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
-              <Info className="h-3.5 w-3.5" aria-hidden />
-              Hub areas from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
-            </p>
+              <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
+                <Info className="h-3.5 w-3.5" aria-hidden />
+                Hub areas from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
+              </p>
+            </section>
+          ) : (
+            // lad / other browse focuses: keep a simple redirect path via panel
+            <div className="grid gap-4 lg:grid-cols-[minmax(260px,360px)_minmax(0,1fr)] lg:items-start">
+              <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
+                <UkHubMap
+                  ix={ix}
+                  focus={focus}
+                  hover={hover}
+                  onHover={setHover}
+                  onFocus={onMapFocus}
+                  showBreadcrumb={false}
+                  showRegionCounts={false}
+                  palette="green"
+                  className="h-[300px] !rounded-2xl !border-0 sm:h-[340px]"
+                />
+              </div>
+              <BrowsePanel ix={ix} focus={focus} hover={hover} onHover={setHover} go={go} />
+            </div>
           )}
         </div>
       )}

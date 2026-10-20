@@ -42,7 +42,7 @@ In Supabase → `profiles` for Rob’s user id, confirm:
 
 ## Demo content
 
-Shipped as `demo-interactive-lesson` (published): intro sting MP4, title, karaoke sample (placeholder tone + timed lyrics), YouTube, audio, Canva/PPT placeholders, image+text.
+Shipped as `demo-interactive-lesson` (published): intro sting MP4, title, lyric video sample (placeholder tone + timed lyrics), YouTube, audio, Canva/PPT placeholders, image+text.
 
 Media under `public/interactive-lessons/`.
 

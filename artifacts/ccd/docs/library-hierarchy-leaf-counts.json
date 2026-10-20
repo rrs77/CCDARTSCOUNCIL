@@ -1,0 +1,331 @@
+[
+  {
+    "name": "EYFS Art Explorations",
+    "subject": "Art",
+    "keyStage": "eyfs",
+    "color": "#F59E0B",
+    "activities": 6
+  },
+  {
+    "name": "EYFS Dance Play",
+    "subject": "Dance",
+    "keyStage": "eyfs",
+    "color": "#EC4899",
+    "activities": 6
+  },
+  {
+    "name": "EYFS Drama Starters",
+    "subject": "Drama",
+    "keyStage": "eyfs",
+    "color": "#A78BFA",
+    "activities": 6
+  },
+  {
+    "name": "Action/Games Songs",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#f59e0b",
+    "activities": 11
+  },
+  {
+    "name": "Core Songs",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#84cc16",
+    "activities": 21
+  },
+  {
+    "name": "General Game",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#06b6d4",
+    "activities": 5
+  },
+  {
+    "name": "Goodbye",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#14b8a6",
+    "activities": 12
+  },
+  {
+    "name": "IWB Games",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#f59e0b",
+    "activities": 0
+  },
+  {
+    "name": "Kodaly Action Songs",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#f97316",
+    "activities": 1
+  },
+  {
+    "name": "Kodaly Games",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#ec4899",
+    "activities": 0
+  },
+  {
+    "name": "Kodaly Rhythms",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#8b5cf6",
+    "activities": 0
+  },
+  {
+    "name": "Kodaly Songs",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#3b82f6",
+    "activities": 28
+  },
+  {
+    "name": "Parachute Games",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#ef4444",
+    "activities": 6
+  },
+  {
+    "name": "Percussion Games",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#06b6d4",
+    "activities": 11
+  },
+  {
+    "name": "Rhythm Sticks",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#d97706",
+    "activities": 9
+  },
+  {
+    "name": "Scarf Songs",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#10b981",
+    "activities": 14
+  },
+  {
+    "name": "Teaching Units",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#6366f1",
+    "activities": 8
+  },
+  {
+    "name": "Welcome",
+    "subject": "Music",
+    "keyStage": "eyfs",
+    "color": "#10b981",
+    "activities": 7
+  },
+  {
+    "name": "KS1 Art",
+    "subject": "Art",
+    "keyStage": "ks1",
+    "color": "#D97706",
+    "activities": 6
+  },
+  {
+    "name": "KS1 Dance",
+    "subject": "Dance",
+    "keyStage": "ks1",
+    "color": "#DB2777",
+    "activities": 6
+  },
+  {
+    "name": "Drama Games",
+    "subject": "Drama",
+    "keyStage": "ks1",
+    "color": "#8b5cf6",
+    "activities": 163
+  },
+  {
+    "name": "KS1 Drama",
+    "subject": "Drama",
+    "keyStage": "ks1",
+    "color": "#2a5ec6",
+    "activities": 0
+  },
+  {
+    "name": "KS1 Music Making",
+    "subject": "Music",
+    "keyStage": "ks1",
+    "color": "#0D9488",
+    "activities": 6
+  },
+  {
+    "name": "KS2 Art",
+    "subject": "Art",
+    "keyStage": "ks2",
+    "color": "#B45309",
+    "activities": 6
+  },
+  {
+    "name": "KS2 Dance",
+    "subject": "Dance",
+    "keyStage": "ks2",
+    "color": "#BE185D",
+    "activities": 6
+  },
+  {
+    "name": "KS2 Drama",
+    "subject": "Drama",
+    "keyStage": "ks2",
+    "color": "#7C3AED",
+    "activities": 6
+  },
+  {
+    "name": "Breathing Exercises",
+    "subject": "Music",
+    "keyStage": "ks2",
+    "color": "#FB7185",
+    "activities": 42
+  },
+  {
+    "name": "Facial Warm-Ups / Diction",
+    "subject": "Music",
+    "keyStage": "ks2",
+    "color": "#E879F9",
+    "activities": 55
+  },
+  {
+    "name": "KS2 Music Making",
+    "subject": "Music",
+    "keyStage": "ks2",
+    "color": "#0F766E",
+    "activities": 6
+  },
+  {
+    "name": "Physical Starters",
+    "subject": "Music",
+    "keyStage": "ks2",
+    "color": "#F472B6",
+    "activities": 73
+  },
+  {
+    "name": "Pitch Exercises",
+    "subject": "Music",
+    "keyStage": "ks2",
+    "color": "#C084FC",
+    "activities": 82
+  },
+  {
+    "name": "Vocal Warm-Ups",
+    "subject": "Music",
+    "keyStage": "ks2",
+    "color": "#EC4899",
+    "activities": 26
+  },
+  {
+    "name": "Vocal Warmups",
+    "subject": "Music",
+    "keyStage": "ks2",
+    "color": "#ec4899",
+    "activities": 0
+  },
+  {
+    "name": "KS3 Art",
+    "subject": "Art",
+    "keyStage": "ks3",
+    "color": "#92400E",
+    "activities": 6
+  },
+  {
+    "name": "KS3 Dance",
+    "subject": "Dance",
+    "keyStage": "ks3",
+    "color": "#9D174D",
+    "activities": 6
+  },
+  {
+    "name": "KS3 Drama",
+    "subject": "Drama",
+    "keyStage": "ks3",
+    "color": "#6D28D9",
+    "activities": 6
+  },
+  {
+    "name": "KS3 Music",
+    "subject": "Music",
+    "keyStage": "ks3",
+    "color": "#115E59",
+    "activities": 6
+  },
+  {
+    "name": "KS4 Art & Design (GCSE)",
+    "subject": "Art",
+    "keyStage": "ks4",
+    "color": "#78350F",
+    "activities": 6
+  },
+  {
+    "name": "KS4 Dance (GCSE)",
+    "subject": "Dance",
+    "keyStage": "ks4",
+    "color": "#831843",
+    "activities": 6
+  },
+  {
+    "name": "KS4 Drama (GCSE)",
+    "subject": "Drama",
+    "keyStage": "ks4",
+    "color": "#5B21B6",
+    "activities": 6
+  },
+  {
+    "name": "KS4 Music (GCSE)",
+    "subject": "Music",
+    "keyStage": "ks4",
+    "color": "#134E4A",
+    "activities": 6
+  },
+  {
+    "name": "KS4 Photography (GCSE)",
+    "subject": "Photography",
+    "keyStage": "ks4",
+    "color": "#4F46E5",
+    "activities": 6
+  },
+  {
+    "name": "KS5 Art & Design (A level)",
+    "subject": "Art",
+    "keyStage": "ks5",
+    "color": "#451A03",
+    "activities": 6
+  },
+  {
+    "name": "KS5 Dance (A level)",
+    "subject": "Dance",
+    "keyStage": "ks5",
+    "color": "#500724",
+    "activities": 6
+  },
+  {
+    "name": "KS5 Drama (A level)",
+    "subject": "Drama",
+    "keyStage": "ks5",
+    "color": "#4C1D95",
+    "activities": 6
+  },
+  {
+    "name": "KS5 Music (A level)",
+    "subject": "Music",
+    "keyStage": "ks5",
+    "color": "#042F2E",
+    "activities": 6
+  },
+  {
+    "name": "KS5 Photography (A level)",
+    "subject": "Photography",
+    "keyStage": "ks5",
+    "color": "#3730A3",
+    "activities": 6
+  }
+]

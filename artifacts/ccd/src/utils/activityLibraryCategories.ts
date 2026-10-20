@@ -80,38 +80,58 @@ export function activityMatchesSelectedLibraryCategory(
 
 import { activityTagsMatchYearGroupKeys } from './yearGroupMatchKeys';
 
+function activityHasSpecificYearGroupTags(activityYearGroups: unknown): boolean {
+  const tags = Array.isArray(activityYearGroups) ? activityYearGroups : [];
+  return tags.some((tag) => {
+    const t = String(tag || '').trim();
+    if (!t) return false;
+    return t.toLowerCase() !== 'all';
+  });
+}
+
 /**
- * Year-group visibility (OR-style).
+ * Year-group visibility when a class is selected in the header.
  *
- * Show the activity if EITHER:
- * - its category is assigned to this year group in Settings, OR
- * - the activity's own `yearGroups` tags match the current year group
- *   (id / name / aliases: LKG↔Lower Kindergarten, Year6↔Year 6, etc.)
+ * Rules (AND):
+ * 1. Respect Settings class-folder visibility — the activity's category must be
+ *    assigned to this year group (or `availableCategoriesForYearGroup === null`
+ *    for a deliberate "All classes" view).
+ * 2. If the activity has specific year-group tags, those tags must include this
+ *    class (id / name / safe aliases). Tagged Year-10 activities never appear
+ *    for Year 1 Drama.
+ * 3. Untagged / legacy "All" activities follow Settings category assignment only.
  *
- * Activity tags must remain a fallback: many EYFS/Reception activities rely on
- * tags when category year-group keys are legacy (LKG/UKG/Reception) or empty.
- * Settings-only filtering emptied the library for those classes.
+ * When no year-group keys are resolved (no class selected), return false so we
+ * never default to showing every activity.
  */
 export function activityVisibleForYearGroup(options: {
   activityCategory: string;
   availableCategoriesForYearGroup: string[] | null;
   activityYearGroups: unknown;
   yearGroupKeys: string[];
-  /** Kept for call-site compatibility; no longer used to block tag fallback. */
+  /** Kept for call-site compatibility; no longer used to bypass tag checks. */
   settingsCategoryNames?: string[];
   normalizeKey?: (value: string) => string;
 }): boolean {
-  if (
-    activityCategoryAllowedForYearGroup(
-      options.activityCategory,
-      options.availableCategoriesForYearGroup,
-    )
-  ) {
-    return true;
+  const keys = options.yearGroupKeys || [];
+
+  // Deliberate "All classes" view: null available list + no keys → show all.
+  // A selected class always produces keys; empty keys means "not ready / none".
+  if (keys.length === 0) {
+    return options.availableCategoriesForYearGroup === null;
   }
 
-  return activityTagsMatchYearGroupKeys(
-    options.activityYearGroups,
-    options.yearGroupKeys || [],
+  const categoryOk = activityCategoryAllowedForYearGroup(
+    options.activityCategory,
+    options.availableCategoriesForYearGroup,
   );
+
+  if (!categoryOk) return false;
+
+  if (activityHasSpecificYearGroupTags(options.activityYearGroups)) {
+    return activityTagsMatchYearGroupKeys(options.activityYearGroups, keys);
+  }
+
+  // Untagged legacy activities: Settings folder assignment is enough.
+  return true;
 }

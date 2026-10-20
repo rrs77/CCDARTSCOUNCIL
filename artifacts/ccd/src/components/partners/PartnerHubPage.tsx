@@ -1,7 +1,7 @@
 import React from 'react';
 import { ArrowLeft, ExternalLink, Shield } from 'lucide-react';
 import type { PartnerHubConfig } from '../../config/partnerHubs';
-import { backToCCDesigner } from '../../config/partnerHubs';
+import { backToCCDesigner, backToPaidResources } from '../../config/partnerHubs';
 import { PartnerHubContactFooter } from './PartnerHubContactFooter';
 import { PARTNER_CONTACTS } from '../../config/partnerContacts';
 import { PaidBasketButton, PaidBasketDrawer } from './PaidBasketDrawer';
@@ -58,12 +58,14 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
           <div className="flex flex-wrap items-center justify-between gap-3">
             <button
               type="button"
-              onClick={() => backToCCDesigner('our-partners')}
+              onClick={() =>
+                hub.paid ? backToPaidResources() : backToCCDesigner('our-partners')
+              }
               className="inline-flex w-fit items-center gap-1.5 rounded-lg border border-white/25 bg-white/10 px-3 py-1.5 text-sm font-semibold text-white backdrop-blur-sm transition-colors hover:bg-white/20 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
-              aria-label="Back to CCDesigner"
+              aria-label={hub.paid ? 'Back to Paid resources' : 'Back to CCDesigner'}
             >
               <ArrowLeft className="h-4 w-4" aria-hidden />
-              Back to CCDesigner
+              {hub.paid ? 'Back to Paid resources' : 'Back to CCDesigner'}
             </button>
             {hub.paid && <PaidBasketButton />}
           </div>
@@ -142,7 +144,7 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
                 } catch {
                   /* ignore */
                 }
-                window.location.assign('/');
+                window.location.assign('/settings/school?panel=hub-admin');
               }}
               className="inline-flex items-center rounded-lg bg-[#002D24] px-3 py-2 text-sm font-semibold text-white hover:opacity-95"
             >

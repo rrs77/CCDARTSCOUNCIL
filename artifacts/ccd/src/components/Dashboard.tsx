@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { UnitViewer } from './UnitViewer';
 import { LessonPlanBuilder } from './LessonPlanBuilder';
 import { LessonPlannerCalendar } from './LessonPlannerCalendar';
 import { ActivityLibrary } from './ActivityLibrary';
@@ -17,6 +16,20 @@ import type { Activity, LessonPlan } from '../contexts/DataContext';
 import { StudioShell, type StudioNavId } from './studio/StudioShell';
 import { MoreToolsPanel } from './studio/MoreToolsPanel';
 import { HalfTermDesigner } from './halfTerm/HalfTermDesigner';
+import { BoltOnsView } from './boltOns/BoltOnsView';
+import type { BoltOnsPageId } from './boltOns/types';
+import {
+  clearBoltOnsUrlIfPresent,
+  resolveBoltOnsPageFromLocation,
+} from './boltOns/routes';
+import { SettingsPage, useSettingsAccess } from './settings';
+import {
+  clearSettingsUrlIfPresent,
+  isSettingsPath,
+  resolveSettingsSectionFromLocation,
+  syncSettingsUrl,
+} from './settings/routes';
+import { DEFAULT_SETTINGS_SECTION } from './settings/settingsSections';
 
 interface Unit {
   id: string;
@@ -49,7 +62,24 @@ const ALLOWED = new Set([
   'curriculum',
   'more',
   'lesson-viewer',
+  'bolt-ons',
+  'assessify',
+  'perifeedback',
+  'settings',
 ]);
+
+const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
+
+function initialDashboardTab(): string {
+  const fromBoltOns = resolveBoltOnsPageFromLocation();
+  if (fromBoltOns) return fromBoltOns;
+  if (typeof window !== 'undefined' && isSettingsPath(window.location.pathname)) {
+    return 'settings';
+  }
+  if (resolveSettingsSectionFromLocation()) return 'settings';
+  if (isPartnerHubsLink()) return 'our-partners';
+  return 'unit-viewer';
+}
 
 export function Dashboard() {
   const {
@@ -63,11 +93,22 @@ export function Dashboard() {
     deleteUserLessonPlan,
   } = useData();
   const { getThemeForClass } = useSettings();
-  const [activeTab, setActiveTabRaw] = useState<string>(() =>
-    isPartnerHubsLink() ? 'our-partners' : 'unit-viewer',
-  );
+  const settingsAccess = useSettingsAccess();
+  const [activeTab, setActiveTabRaw] = useState<string>(initialDashboardTab);
   const newPartnerHubs = newPartnerHubsEnabled();
-  const setActiveTab = (tab: string) => setActiveTabRaw(tab === 'calendar' ? 'unit-viewer' : tab);
+  const setActiveTab = (tab: string) => {
+    const next = tab === 'calendar' ? 'unit-viewer' : tab;
+    setActiveTabRaw(next);
+    if (!BOLT_ON_TABS.has(next)) {
+      clearBoltOnsUrlIfPresent();
+    }
+    if (next === 'settings') {
+      const section = resolveSettingsSectionFromLocation() || DEFAULT_SETTINGS_SECTION;
+      syncSettingsUrl(section);
+    } else {
+      clearSettingsUrlIfPresent();
+    }
+  };
 
   useEffect(() => {
     const tab = activeTab === 'calendar' ? 'unit-viewer' : activeTab;
@@ -83,15 +124,28 @@ export function Dashboard() {
   const [selectedCategory, setSelectedCategory] = useState('all');
   const [, setUnits] = useState<Unit[]>([]);
   const [, setLessonBuilderHasUnsavedChanges] = useState(false);
+  const [activityEditorOpen, setActivityEditorOpen] = useState(false);
 
   const handleTabChange = (newTab: string) => setActiveTab(newTab);
 
   useEffect(() => {
     try {
+      const fromPath = resolveBoltOnsPageFromLocation();
+      if (fromPath) {
+        setActiveTab(fromPath);
+        return;
+      }
+      if (isSettingsPath(window.location.pathname) || resolveSettingsSectionFromLocation()) {
+        setActiveTab('settings');
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab && ALLOWED.has(tab)) {
         setActiveTab(tab);
+        // Bolt-ons sync their own /bolt-ons paths via BoltOnsView.
+        if (BOLT_ON_TABS.has(tab)) return;
+        if (tab === 'settings') return;
         // Preserve player deep-link params for Lesson Viewer hub to consume.
         const keep = new URLSearchParams();
         const play = params.get('play');
@@ -105,6 +159,25 @@ export function Dashboard() {
       /* ignore */
     }
   }, []);
+
+  useEffect(() => {
+    const onPopState = () => {
+      const page = resolveBoltOnsPageFromLocation();
+      if (page) {
+        setActiveTab(page);
+        return;
+      }
+      if (isSettingsPath(window.location.pathname)) {
+        setActiveTab('settings');
+        return;
+      }
+      if (activeTab === 'settings') {
+        setActiveTab('unit-viewer');
+      }
+    };
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, [activeTab]);
 
   useEffect(() => {
     const openContact = () => setActiveTab('contact-us');
@@ -181,7 +254,9 @@ export function Dashboard() {
   const showTabsExplainerButton = isAuthorizedDemoMode();
   const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
-  const wideCanvas = activeTab === 'activity-library';
+  const wideCanvas =
+    activeTab === 'activity-library' || activeTab === 'lesson-viewer' || activeTab === 'settings';
+  const editorFlush = activeTab === 'activity-library' && activityEditorOpen;
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
 
@@ -189,8 +264,14 @@ export function Dashboard() {
   void setUnits;
 
   return (
-    <StudioShell active={navId} onNavigate={shellNavigate} hubsMode={hubsMode} wideCanvas={wideCanvas}>
-      {showTabsExplainerButton && activeTab !== 'our-partners' && (
+    <StudioShell
+      active={navId}
+      onNavigate={shellNavigate}
+      hubsMode={hubsMode}
+      wideCanvas={wideCanvas}
+      editorFlush={editorFlush}
+    >
+      {showTabsExplainerButton && activeTab !== 'our-partners' && !editorFlush && (
         <div className="mb-3 flex justify-end">
           <button
             type="button"
@@ -214,30 +295,6 @@ export function Dashboard() {
       {activeTab === 'unit-viewer' && (
         <div className="ccd-fade-in-up" key="uv">
           <Planner
-            renderTerm={() => (
-              <div className="min-w-0 space-y-3">
-                <div className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-[#E2E0EF] bg-white px-3 py-2.5">
-                  <p className="text-[12px] text-[#77738F]">
-                    Editing <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong> only.
-                    Open the full map to see every year group.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      try {
-                        window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'curriculum' } }));
-                      } catch {
-                        handleTabChange('curriculum');
-                      }
-                    }}
-                    className="inline-flex h-8 items-center rounded-lg bg-[#4338E8] px-2.5 text-[12px] font-extrabold text-white hover:bg-[#3529d1]"
-                  >
-                    All year groups →
-                  </button>
-                </div>
-                <UnitViewer />
-              </div>
-            )}
             renderClassic={() => (
               <LessonPlannerCalendar
                 onDateSelect={handleDateSelect}
@@ -262,7 +319,7 @@ export function Dashboard() {
       {activeTab === 'lesson-library' && (
         <div className="ccd-fade-in-up" key="ll">
           <p className="ccd-studio-eyebrow mb-1">
-            YOUR TEACHING / <span>LESSONS</span>
+            CONNECT &amp; CREATE / <span>LESSONS</span>
           </p>
           <p className="mb-4 text-sm text-[#77738F]">
             Lessons saved from Lesson Builder for{' '}
@@ -280,7 +337,7 @@ export function Dashboard() {
       {activeTab === 'lesson-builder' && (
         <div className="ccd-fade-in-up" key="lb">
           <p className="ccd-studio-eyebrow mb-1">
-            YOUR TEACHING / <span>LESSON BUILDER</span>
+            CONNECT &amp; CREATE / <span>LESSON BUILDER</span>
           </p>
           <p className="mb-3 text-sm text-[#77738F]">
             Drag activities into a lesson, then <strong className="text-[#1F1B4D]">Save Lesson</strong>. It appears under{' '}
@@ -299,21 +356,26 @@ export function Dashboard() {
       )}
 
       {activeTab === 'activity-library' && (
-        <div className="ccd-fade-in-up" key="al">
-          <p className="ccd-studio-eyebrow mb-1">
-            YOUR TEACHING / <span>ACTIVITY LIBRARY</span>
-          </p>
-          <p className="mb-4 text-sm text-[#77738F]">
-            Showing folders and activities for{' '}
-            <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>. Switch
-            class in the header to see that class&apos;s library. Manage which folders each class sees in Settings.
-          </p>
+        <div className={`ccd-fade-in-up ${editorFlush ? 'h-full min-h-0' : ''}`} key="al">
+          {!editorFlush && (
+            <>
+              <p className="ccd-studio-eyebrow mb-1">
+                CONNECT &amp; CREATE / <span>ACTIVITY LIBRARY</span>
+              </p>
+              <p className="mb-4 text-sm text-[#77738F]">
+                Folders and activities for{' '}
+                <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>.
+                Switch class in the header to see that class&apos;s library.
+              </p>
+            </>
+          )}
           <ActivityLibrary
             onActivitySelect={handleActivityAdd}
             selectedActivities={[]}
             className={currentSheetInfo.sheet}
             selectedCategory={selectedCategory}
             onCategoryChange={setSelectedCategory}
+            onEditorOpenChange={setActivityEditorOpen}
           />
         </div>
       )}
@@ -321,10 +383,7 @@ export function Dashboard() {
       {activeTab === 'lesson-viewer' && (
         <div className="ccd-fade-in-up" key="lv">
           <p className="ccd-studio-eyebrow mb-1">
-            CONNECT &amp; CREATE / <span>LESSON VIEWER</span>
-          </p>
-          <p className="mb-4 text-sm text-[#77738F]">
-            Build and present interactive classroom lessons — attach a player-only link to any CCD lesson.
+            CONNECT &amp; CREATE / <span>SLIDES</span>
           </p>
           <InteractiveLessonHub />
         </div>
@@ -346,6 +405,23 @@ export function Dashboard() {
         <div className="ccd-fade-in-up" key="more">
           <MoreToolsPanel onNavigate={shellNavigate} />
         </div>
+      )}
+
+      {activeTab === 'settings' && (
+        <div className="ccd-fade-in-up h-full min-h-0" key="settings">
+          <SettingsPage
+            access={settingsAccess}
+            initialSection={resolveSettingsSectionFromLocation() || DEFAULT_SETTINGS_SECTION}
+          />
+        </div>
+      )}
+
+      {BOLT_ON_TABS.has(activeTab) && (
+        <BoltOnsView
+          key="boltons"
+          page={activeTab as BoltOnsPageId}
+          onNavigate={(page) => handleTabChange(page)}
+        />
       )}
     </StudioShell>
   );

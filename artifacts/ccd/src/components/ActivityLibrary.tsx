@@ -19,6 +19,7 @@ import {
   Type,
   Star,
   ChevronDown,
+  ChevronRight,
   Undo2,
   Redo2,
 } from 'lucide-react';
@@ -30,7 +31,7 @@ import { isLsoLibraryCategory, LSO_LOGO_SRC } from '../utils/lsoBranding';
 import { isRohLibraryCategory, ROH_LOGO_SRC } from '../utils/rohBranding';
 import { isWtdLibraryCategory, WTD_LOGO_SRC } from '../utils/wtdBranding';
 import { ActivityImporter } from './ActivityImporter';
-import { ActivityCreator } from './ActivityCreator';
+import { ActivityEditorPage } from './ActivityEditorPage';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
@@ -47,6 +48,20 @@ import {
   categoryAssignedToYearGroupKeys,
   resolveYearGroupMatchKeys,
 } from '../utils/yearGroupMatchKeys';
+import {
+  buildLibraryHierarchyTree,
+  hierarchyCategoryKey,
+  hierarchyKeyStageKey,
+  hierarchySubjectKey,
+  isLibraryKeyStageId,
+  loadExpandedHierarchyKeys,
+  saveExpandedHierarchyKeys,
+  type LibraryKeyStageId,
+} from '../utils/libraryHierarchy';
+import {
+  getDefaultSectionIdForYearGroup,
+  resolveDisplaySectionIdForYearGroup,
+} from '../utils/yearGroupSectionOrder';
 import { isDemoModeActive } from '../utils/demoMode';
 import {
   CCD_ACTIVITY_STARS_UPDATED_EVENT,
@@ -84,6 +99,8 @@ interface ActivityLibraryProps {
   className: string;
   selectedCategory?: string;
   onCategoryChange?: (category: string) => void;
+  /** Notify parent when the full-page create/edit editor is open (hide library chrome). */
+  onEditorOpenChange?: (open: boolean) => void;
 }
 
 type ActivityHistoryAction =
@@ -96,7 +113,8 @@ export function ActivityLibrary({
   selectedActivities, 
   className,
   selectedCategory = 'all',
-  onCategoryChange
+  onCategoryChange,
+  onEditorOpenChange,
 }: ActivityLibraryProps) {
   const isViewOnly = useIsViewOnly();
   const { 
@@ -108,9 +126,41 @@ export function ActivityLibrary({
     refreshData,
     currentSheetInfo
   } = useData();
-  const { getCategoryColor, categories, updateCategories, customYearGroups, mapActivityLevelToYearGroup } = useSettings();
+  const {
+    getCategoryColor,
+    categories,
+    updateCategories,
+    customYearGroups,
+    mapActivityLevelToYearGroup,
+    yearGroupSections,
+  } = useSettings();
+
+  /** Session-persisted expand state; all headings start collapsed. */
+  const [expandedHierarchy, setExpandedHierarchy] = useState<Set<string>>(() => loadExpandedHierarchyKeys());
+  const toggleHierarchyKey = useCallback((key: string) => {
+    setExpandedHierarchy((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      saveExpandedHierarchyKeys(next);
+      return next;
+    });
+  }, []);
   
   const normalizeKey = React.useCallback((value: string | undefined | null) => (value || '').trim().toLowerCase(), []);
+
+  /** Key stage of the currently selected class (for nesting Vocal Warm-Ups etc.). */
+  const viewerKeyStage = useMemo((): LibraryKeyStageId | null => {
+    const sheetId = className || currentSheetInfo?.sheet;
+    if (!sheetId) return null;
+    const yg = customYearGroups.find(
+      (g) => g.id === sheetId || g.name === sheetId || normalizeKey(g.name) === normalizeKey(sheetId),
+    );
+    const sectionId = yg
+      ? resolveDisplaySectionIdForYearGroup(yearGroupSections, yg, customYearGroups)
+      : getDefaultSectionIdForYearGroup(sheetId, currentSheetInfo?.display || sheetId);
+    return isLibraryKeyStageId(sectionId) ? sectionId : null;
+  }, [className, currentSheetInfo, customYearGroups, yearGroupSections, normalizeKey]);
 
   // Keys that match Settings category.yearGroups ticks + activity tags (id/name/aliases).
   const getCurrentYearGroupKeys = React.useCallback((): string[] => {
@@ -538,7 +588,7 @@ export function ActivityLibrary({
       // Level filtering removed - show all levels
       const matchesLevel = true;
       
-      // OR-style: category assigned in Settings, or activity tagged for this year group.
+      // Settings folder visibility AND activity year-group tags (when present).
       const visibleForYearGroup = activityVisibleForYearGroup({
         activityCategory: activity.category,
         availableCategoriesForYearGroup,
@@ -635,6 +685,112 @@ export function ActivityLibrary({
     });
     return [...topics].sort((a, b) => a.localeCompare(b));
   }, [displayGroups]);
+
+  const hierarchyTree = useMemo(() => {
+    const metaByName = new Map(
+      categories.map((c) => [
+        c.name,
+        { name: c.name, group: c.group, groups: c.groups },
+      ]),
+    );
+    // Ensure activity-only categories still resolve
+    for (const g of displayGroups) {
+      if (!metaByName.has(g.name)) {
+        metaByName.set(g.name, { name: g.name, group: undefined, groups: undefined });
+      }
+    }
+    return buildLibraryHierarchyTree(displayGroups, metaByName, viewerKeyStage);
+  }, [displayGroups, categories, viewerKeyStage]);
+
+  const renderCategoryHeading = (categoryName: string, activityCount: number, ksId: string, subject: string) => {
+    const catKey = hierarchyCategoryKey(ksId, subject, categoryName);
+    const expanded = expandedHierarchy.has(catKey);
+    return (
+      <div
+        key={`head-${catKey}`}
+        className="col-span-full flex flex-wrap items-center gap-2 py-2 px-2 border-b-2 bg-white cursor-pointer hover:bg-[#F8F7FC]"
+        style={{ borderBottomColor: `${getCategoryColor(categoryName)}55` }}
+        onClick={() => toggleHierarchyKey(catKey)}
+        role="button"
+        aria-expanded={expanded}
+        tabIndex={0}
+        onKeyDown={(e) => {
+          if (e.key === 'Enter' || e.key === ' ') {
+            e.preventDefault();
+            toggleHierarchyKey(catKey);
+          }
+        }}
+      >
+        {expanded ? (
+          <ChevronDown className="h-4 w-4 text-gray-500 flex-shrink-0" />
+        ) : (
+          <ChevronRight className="h-4 w-4 text-gray-500 flex-shrink-0" />
+        )}
+        {isLsoLibraryCategory(categoryName) && (
+          <div
+            className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+            style={{ backgroundColor: '#0b1f4a' }}
+            title="London Symphony Orchestra"
+          >
+            <img src={LSO_LOGO_SRC} alt="LSO" className="h-6 w-auto" />
+          </div>
+        )}
+        {isRohLibraryCategory(categoryName) && (
+          <div
+            className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+            style={{ backgroundColor: '#1a1033' }}
+            title="Royal Ballet and Opera"
+          >
+            <img src={ROH_LOGO_SRC} alt="ROH" className="h-6 w-auto brightness-0 invert" />
+          </div>
+        )}
+        {isWtdLibraryCategory(categoryName) && (
+          <div
+            className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
+            style={{ backgroundColor: '#111111' }}
+            title="We Teach Drama"
+          >
+            <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
+          </div>
+        )}
+        <div
+          className="w-2.5 h-2.5 rounded-full flex-shrink-0"
+          style={{ backgroundColor: getCategoryColor(categoryName) }}
+        />
+        <h3
+          className="text-base font-bold"
+          style={{ color: getCategoryColor(categoryName) || '#4338E8' }}
+        >
+          {categoryName}
+        </h3>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            toggleStarredFirstForCategory(categoryName);
+          }}
+          className={`p-1.5 rounded-lg transition-colors ${
+            starredFirstCategories.has(categoryName)
+              ? 'bg-amber-100 ring-1 ring-amber-300'
+              : 'hover:bg-gray-100 text-gray-500'
+          }`}
+          title={
+            starredFirstCategories.has(categoryName)
+              ? 'Turn off starred-first for this category'
+              : 'Put starred activities at the top in this category'
+          }
+        >
+          <Star
+            className={`h-4 w-4 ${
+              starredFirstCategories.has(categoryName) ? 'fill-amber-400 text-amber-500' : 'text-gray-400'
+            }`}
+            strokeWidth={starredFirstCategories.has(categoryName) ? 0 : 1.75}
+          />
+        </button>
+        <span className="text-sm text-gray-500 ml-auto">{activityCount}</span>
+      </div>
+    );
+  };
 
   const toggleSort = (field: 'name' | 'category' | 'time' | 'level') => {
     if (sortBy === field) {
@@ -746,12 +902,9 @@ export function ActivityLibrary({
       return;
     }
     // Convert any "EYFS U" levels to "UKG"
-    if (activity.level === "EYFS U") {
-      activity.level = "UKG";
-    }
-    
-    setEditingActivity(activity);
-    setSelectedActivityDetails(activity);
+    const next = activity.level === 'EYFS U' ? { ...activity, level: 'UKG' } : activity;
+    setSelectedActivityDetails(null);
+    setEditingActivity(next);
   };
 
   const handleImportActivities = async (activities: Activity[]) => {
@@ -927,14 +1080,50 @@ export function ActivityLibrary({
     'inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#77738F] transition-colors hover:bg-[#E9E6FF] hover:text-[#1F1B4D] disabled:opacity-40';
   const toolBtnOn = 'bg-[#E9E6FF] text-[#4338E8]';
 
-  // When editing/viewing details, replace the library with an in-workspace editor
-  // (avoids a cramped modal and stops the page background from scrolling underneath).
+  const editorOpen = showCreator || Boolean(editingActivity);
+
+  React.useEffect(() => {
+    onEditorOpenChange?.(editorOpen);
+    return () => onEditorOpenChange?.(false);
+  }, [editorOpen, onEditorOpenChange]);
+
+  // Full-page create / edit (option A) — beside the studio sidebar, not a modal.
+  if (showCreator) {
+    return (
+      <ActivityEditorPage
+        mode="create"
+        onCancel={() => setShowCreator(false)}
+        onSave={async (activity) => {
+          await handleCreateActivity(activity);
+        }}
+      />
+    );
+  }
+
+  if (editingActivity) {
+    return (
+      <ActivityEditorPage
+        mode="edit"
+        initialActivity={editingActivity}
+        onCancel={() => {
+          setEditingActivity(null);
+          setSelectedActivityDetails(null);
+        }}
+        onSave={async (updatedActivity) => {
+          await handleActivityUpdate(updatedActivity);
+          setEditingActivity(null);
+          setSelectedActivityDetails(null);
+        }}
+      />
+    );
+  }
+
+  // Viewing details (read) — keep ActivityDetails as an in-workspace page.
   if (selectedActivityDetails) {
     return (
       <div className="flex h-[calc(100dvh-7.5rem)] min-h-[28rem] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white">
         <ActivityDetails
           activity={selectedActivityDetails}
-          presentation="page"
           onClose={() => {
             setSelectedActivityDetails(null);
             setEditingActivity(null);
@@ -944,7 +1133,7 @@ export function ActivityLibrary({
             onActivitySelect(selectedActivityDetails);
             setSelectedActivityDetails(null);
           }}
-          isEditing={selectedActivityDetails === editingActivity}
+          isEditing={false}
           onUpdate={(updatedActivity) => {
             handleActivityUpdate(updatedActivity);
             setEditingActivity(null);
@@ -1124,10 +1313,10 @@ export function ActivityLibrary({
                 setShowCreator(true);
               }}
               disabled={isViewOnly}
-              className="ml-1 inline-flex h-8 items-center gap-1 rounded-lg bg-[#FFC93C] px-2.5 text-[11px] font-bold text-[#1F1B4D] hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ml-1 inline-flex h-8 items-center gap-1 rounded-lg bg-[#4338E8] px-2.5 text-[11px] font-bold text-white hover:bg-[#3529d1] disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Plus className="h-3.5 w-3.5" />
-              Create
+              Create activity
             </button>
 
             <div className="relative">
@@ -1335,274 +1524,185 @@ export function ActivityLibrary({
             )}
           </div>
         ) : (
-          viewMode === 'list' ? (
-          // List View — grouped by category with starred-first control per heading
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-            {displayGroups.map((group) => (
-              <React.Fragment key={`cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
-                  {isLsoLibraryCategory(group.name) && (
-                    <div
-                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
-                      style={{ backgroundColor: '#0b1f4a' }}
-                      title="London Symphony Orchestra"
-                    >
-                      <img src={LSO_LOGO_SRC} alt="LSO" className="h-6 w-auto" />
-                    </div>
-                  )}
-                  {isRohLibraryCategory(group.name) && (
-                    <div
-                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
-                      style={{ backgroundColor: '#1a1033' }}
-                      title="Royal Ballet and Opera"
-                    >
-                      <img
-                        src={ROH_LOGO_SRC}
-                        alt="ROH"
-                        className="h-6 w-auto brightness-0 invert"
-                      />
-                    </div>
-                  )}
-                  {isWtdLibraryCategory(group.name) && (
-                    <div
-                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
-                      style={{ backgroundColor: '#111111' }}
-                      title="We Teach Drama"
-                    >
-                      <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
-                    </div>
-                  )}
-                  <h3 className="text-lg font-bold text-[#4338E8]">{group.name}</h3>
-                  <button
-                    type="button"
-                    onClick={() => toggleStarredFirstForCategory(group.name)}
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      starredFirstCategories.has(group.name)
-                        ? 'bg-amber-100 ring-1 ring-amber-300'
-                        : 'hover:bg-gray-100 text-gray-500'
-                    }`}
-                    title={
-                      starredFirstCategories.has(group.name)
-                        ? 'Turn off starred-first for this category'
-                        : 'Put starred activities at the top in this category'
-                    }
-                  >
-                    <Star
-                      className={`h-5 w-5 ${
-                        starredFirstCategories.has(group.name) ? 'fill-amber-400 text-amber-500' : 'text-gray-400'
-                      }`}
-                      strokeWidth={starredFirstCategories.has(group.name) ? 0 : 1.75}
-                    />
-                  </button>
-                  <span className="text-sm text-gray-500">{group.activities.length} activities</span>
-                </div>
-                {group.activities.map((activity, index) => {
-                  const firstLetter = activity.activity.charAt(0).toUpperCase();
-                  const isNewLetter =
-                    index === 0 ||
-                    group.activities[index - 1].activity.charAt(0).toUpperCase() !== firstLetter;
-                  const isStarred = starredIds.has(getActivityStarKey(activity));
-
-                  return (
-                    <React.Fragment key={generateActivityKey(activity, index)}>
-                      {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
-                        <div
-                          data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
-                        >
-                          <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
-                        </div>
-                      )}
-                      <div
-                        className="bg-white shadow-soft hover:shadow-hover transition-shadow duration-200 p-3 relative group"
-                        style={{
-                          borderLeft: `4px solid ${getCategoryColor(activity.category)}`,
-                          borderRadius: '6px',
-                          minHeight: '80px'
-                        }}
-                      >
-                        <div
-                          className="h-full flex flex-col justify-between cursor-pointer"
-                          onClick={() => handleActivityClick(activity)}
-                        >
-                          <h3 className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 break-words mb-2" title={activity.activity}>
-                            {activity.activity}
-                          </h3>
-                          <div className="flex items-center justify-between gap-2">
-                            <div className="flex items-center text-xs text-gray-500">
-                              <span className="flex items-center whitespace-nowrap">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {activity.time || 0}m
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-0.5">
-                              <button
-                                type="button"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  toggleActivityStarred(activity);
-                                }}
-                                className="p-1 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
-                                title={isStarred ? 'Remove from starred' : 'Star this activity'}
-                              >
-                                <Star
-                                  className={`h-3.5 w-3.5 ${isStarred ? 'fill-amber-400 text-amber-500' : ''}`}
-                                  strokeWidth={isStarred ? 0 : 1.75}
-                                />
-                              </button>
-                              {!isViewOnly && (
-                                <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleEditActivity(activity);
-                                    }}
-                                    className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                                    title="Edit activity"
-                                  >
-                                    <Edit3 className="h-3 w-3" />
-                                  </button>
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      handleActivityDelete(activity._id || activity.id || '');
-                                    }}
-                                    className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                                    title="Delete activity"
-                                  >
-                                    <Trash2 className="h-3 w-3" />
-                                  </button>
-                                </div>
-                              )}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-              </React.Fragment>
-            ))}
-          </div>
-        ) : (
-          // Grid View
           <div
-            className="grid gap-3 sm:gap-4"
-            style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+            className={
+              viewMode === 'list'
+                ? 'grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4'
+                : 'grid gap-3 sm:gap-4'
+            }
+            style={
+              viewMode === 'list'
+                ? undefined
+                : { gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }
+            }
           >
-            {displayGroups.map((group) => (
-              <React.Fragment key={`grid-cat-${group.name}`}>
-                <div className="col-span-full flex flex-wrap items-center gap-2 py-2 px-1 border-b-2 border-[#E2E0EF] bg-white/95 backdrop-blur sticky top-0 z-10">
-                  {isLsoLibraryCategory(group.name) && (
-                    <div
-                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
-                      style={{ backgroundColor: '#0b1f4a' }}
-                      title="London Symphony Orchestra"
-                    >
-                      <img src={LSO_LOGO_SRC} alt="LSO" className="h-6 w-auto" />
-                    </div>
-                  )}
-                  {isRohLibraryCategory(group.name) && (
-                    <div
-                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
-                      style={{ backgroundColor: '#1a1033' }}
-                      title="Royal Ballet and Opera"
-                    >
-                      <img
-                        src={ROH_LOGO_SRC}
-                        alt="ROH"
-                        className="h-6 w-auto brightness-0 invert"
-                      />
-                    </div>
-                  )}
-                  {isWtdLibraryCategory(group.name) && (
-                    <div
-                      className="flex items-center justify-center rounded-md px-2 py-1 flex-shrink-0"
-                      style={{ backgroundColor: '#111111' }}
-                      title="We Teach Drama"
-                    >
-                      <img src={WTD_LOGO_SRC} alt="We Teach Drama" className="h-6 w-auto" />
-                    </div>
-                  )}
-                  <h3 className="text-lg font-bold text-[#4338E8]">{group.name}</h3>
+            {hierarchyTree.map((ksNode) => {
+              const ksKey = hierarchyKeyStageKey(ksNode.keyStageId);
+              const ksExpanded = expandedHierarchy.has(ksKey);
+              return (
+                <React.Fragment key={ksKey}>
                   <button
                     type="button"
-                    onClick={() => toggleStarredFirstForCategory(group.name)}
-                    className={`p-1.5 rounded-lg transition-colors ${
-                      starredFirstCategories.has(group.name)
-                        ? 'bg-amber-100 ring-1 ring-amber-300'
-                        : 'hover:bg-gray-100 text-gray-500'
-                    }`}
-                    title={
-                      starredFirstCategories.has(group.name)
-                        ? 'Turn off starred-first for this category'
-                        : 'Put starred activities at the top in this category'
-                    }
+                    className="col-span-full flex items-center gap-2 py-2.5 px-3 border-b-2 border-[#1F1B4D]/20 bg-[#F3F1FF] text-left hover:bg-[#E9E6FF]"
+                    onClick={() => toggleHierarchyKey(ksKey)}
+                    aria-expanded={ksExpanded}
                   >
-                    <Star
-                      className={`h-5 w-5 ${
-                        starredFirstCategories.has(group.name) ? 'fill-amber-400 text-amber-500' : 'text-gray-400'
-                      }`}
-                      strokeWidth={starredFirstCategories.has(group.name) ? 0 : 1.75}
-                    />
+                    {ksExpanded ? (
+                      <ChevronDown className="h-5 w-5 text-[#1F1B4D] flex-shrink-0" />
+                    ) : (
+                      <ChevronRight className="h-5 w-5 text-[#1F1B4D] flex-shrink-0" />
+                    )}
+                    <span className="text-lg font-extrabold text-[#1F1B4D]">{ksNode.keyStageLabel}</span>
+                    <span className="text-sm text-gray-500 ml-auto">{ksNode.count}</span>
                   </button>
-                  <span className="text-sm text-gray-500">{group.activities.length} activities</span>
-                </div>
-                {group.activities.map((activity, index) => {
-                  const firstLetter = activity.activity.charAt(0).toUpperCase();
-                  const isNewLetter =
-                    index === 0 ||
-                    group.activities[index - 1].activity.charAt(0).toUpperCase() !== firstLetter;
-
-                  return (
-                    <React.Fragment key={generateActivityKey(activity, index)}>
-                      {isNewLetter && sortBy === 'name' && /[A-Z]/.test(firstLetter) && (
-                        <div
-                          data-letter-index={firstLetter}
-                          className="col-span-full py-2 sticky top-0 bg-white z-[9] border-b border-[#E2E0EF]"
-                        >
-                          <h4 className="text-base font-semibold text-[#4338E8]">{firstLetter}</h4>
-                        </div>
-                      )}
-                      <div className="h-full">
-                        <ActivityCard
-                          activity={activity}
-                          onUpdate={handleActivityUpdate}
-                          onDelete={handleActivityDelete}
-                          isEditing={isActivityBeingEdited(activity)}
-                          onEditToggle={() => handleEditActivity(activity)}
-                          categoryColor={getCategoryColor(activity.category)}
-                          viewMode="grid"
-                          onActivityClick={handleActivityClick}
-                          onResourceClick={handleResourceClick}
-                          draggable={true}
-                          selectable={false}
-                          isSelected={false}
-                          onSelectionChange={() => {}}
-                          isStarred={starredIds.has(getActivityStarKey(activity))}
-                          onStarToggle={toggleActivityStarred}
-                        />
-                      </div>
-                    </React.Fragment>
-                  );
-                })}
-              </React.Fragment>
-            ))}
+                  {ksExpanded &&
+                    ksNode.subjects.map((subNode) => {
+                      const subKey = hierarchySubjectKey(ksNode.keyStageId, subNode.subject);
+                      const subExpanded = expandedHierarchy.has(subKey);
+                      return (
+                        <React.Fragment key={subKey}>
+                          <button
+                            type="button"
+                            className="col-span-full flex items-center gap-2 py-2 px-3 pl-6 border-b border-[#E2E0EF] bg-[#FAFAFE] text-left hover:bg-[#F3F1FF]"
+                            onClick={() => toggleHierarchyKey(subKey)}
+                            aria-expanded={subExpanded}
+                          >
+                            {subExpanded ? (
+                              <ChevronDown className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4 text-gray-600 flex-shrink-0" />
+                            )}
+                            <span className="text-base font-bold text-[#4338E8]">{subNode.subject}</span>
+                            <span className="text-sm text-gray-500 ml-auto">{subNode.count}</span>
+                          </button>
+                          {subExpanded &&
+                            subNode.categories.map((cat) => {
+                              const catKey = hierarchyCategoryKey(
+                                ksNode.keyStageId,
+                                subNode.subject,
+                                cat.name,
+                              );
+                              const catExpanded = expandedHierarchy.has(catKey);
+                              const activities = cat.activities as Activity[];
+                              return (
+                                <React.Fragment key={catKey}>
+                                  {renderCategoryHeading(
+                                    cat.name,
+                                    cat.count,
+                                    ksNode.keyStageId,
+                                    subNode.subject,
+                                  )}
+                                  {catExpanded &&
+                                    activities.map((activity, index) => {
+                                      if (viewMode === 'list') {
+                                        const isStarred = starredIds.has(getActivityStarKey(activity));
+                                        return (
+                                          <div
+                                            key={generateActivityKey(activity, index)}
+                                            className="bg-white shadow-soft hover:shadow-hover transition-shadow duration-200 p-3 relative group"
+                                            style={{
+                                              borderLeft: `4px solid ${getCategoryColor(activity.category)}`,
+                                              borderRadius: '6px',
+                                              minHeight: '80px',
+                                            }}
+                                          >
+                                            <div
+                                              className="h-full flex flex-col justify-between cursor-pointer"
+                                              onClick={() => handleActivityClick(activity)}
+                                            >
+                                              <h3
+                                                className="text-sm font-semibold text-gray-900 leading-snug line-clamp-2 break-words mb-2"
+                                                title={activity.activity}
+                                              >
+                                                {activity.activity}
+                                              </h3>
+                                              <div className="flex items-center justify-between gap-2">
+                                                <div className="flex items-center text-xs text-gray-500">
+                                                  <span className="flex items-center whitespace-nowrap">
+                                                    <Clock className="h-3 w-3 mr-1" />
+                                                    {activity.time || 0}m
+                                                  </span>
+                                                </div>
+                                                <div className="flex items-center gap-0.5">
+                                                  <button
+                                                    type="button"
+                                                    onClick={(e) => {
+                                                      e.stopPropagation();
+                                                      toggleActivityStarred(activity);
+                                                    }}
+                                                    className="p-1 text-gray-400 hover:text-amber-600 hover:bg-amber-50 rounded transition-colors"
+                                                    title={isStarred ? 'Remove from starred' : 'Star this activity'}
+                                                  >
+                                                    <Star
+                                                      className={`h-3.5 w-3.5 ${isStarred ? 'fill-amber-400 text-amber-500' : ''}`}
+                                                      strokeWidth={isStarred ? 0 : 1.75}
+                                                    />
+                                                  </button>
+                                                  {!isViewOnly && (
+                                                    <div className="flex space-x-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                      <button
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleEditActivity(activity);
+                                                        }}
+                                                        className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                                                        title="Edit activity"
+                                                      >
+                                                        <Edit3 className="h-3 w-3" />
+                                                      </button>
+                                                      <button
+                                                        onClick={(e) => {
+                                                          e.stopPropagation();
+                                                          handleActivityDelete(activity._id || activity.id || '');
+                                                        }}
+                                                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                                                        title="Delete activity"
+                                                      >
+                                                        <Trash2 className="h-3 w-3" />
+                                                      </button>
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        );
+                                      }
+                                      return (
+                                        <div key={generateActivityKey(activity, index)} className="h-full">
+                                          <ActivityCard
+                                            activity={activity}
+                                            onUpdate={handleActivityUpdate}
+                                            onDelete={handleActivityDelete}
+                                            isEditing={isActivityBeingEdited(activity)}
+                                            onEditToggle={() => handleEditActivity(activity)}
+                                            categoryColor={getCategoryColor(activity.category)}
+                                            viewMode="grid"
+                                            onActivityClick={handleActivityClick}
+                                            onResourceClick={handleResourceClick}
+                                            draggable={true}
+                                            selectable={false}
+                                            isSelected={false}
+                                            onSelectionChange={() => {}}
+                                            isStarred={starredIds.has(getActivityStarKey(activity))}
+                                            onStarToggle={toggleActivityStarred}
+                                          />
+                                        </div>
+                                      );
+                                    })}
+                                </React.Fragment>
+                              );
+                            })}
+                        </React.Fragment>
+                      );
+                    })}
+                </React.Fragment>
+              );
+            })}
           </div>
-          )
         )}
         </div>
       </div>
-
-      {/* Activity Creator Modal */}
-      {showCreator && (
-        <ActivityCreator 
-          onSave={handleCreateActivity}
-          onClose={() => setShowCreator(false)}
-          categories={uniqueCategories}
-          levels={uniqueLevels}
-        />
-      )}
 
       {/* Activity Importer Modal */}
       {showImporter && (

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Lock, Eye, EyeOff } from 'lucide-react';
 import { LogoSVG } from './Logo';
-import { supabase, isSupabaseConfigured, isSupabaseAuthEnabled } from '../config/supabase';
+import { getLiveSupabase, isSupabaseConfigured, isSupabaseAuthEnabled } from '../config/supabase';
 
 const SETUP_TYPES = new Set(['recovery', 'invite', 'signup', 'magiclink', 'email']);
 
@@ -66,17 +66,18 @@ export function ResetPasswordPage() {
         isOtpType(typeParam);
 
       try {
+        const live = getLiveSupabase();
         if (code) {
-          const { error: exchangeError } = await supabase.auth.exchangeCodeForSession(code);
+          const { error: exchangeError } = await live.auth.exchangeCodeForSession(code);
           if (exchangeError) throw exchangeError;
         } else if (tokenHash && isOtpType(typeParam)) {
-          const { error: otpError } = await supabase.auth.verifyOtp({
+          const { error: otpError } = await live.auth.verifyOtp({
             token_hash: tokenHash,
             type: typeParam,
           });
           if (otpError) throw otpError;
         } else if (accessToken) {
-          const { error: sessionError } = await supabase.auth.setSession({
+          const { error: sessionError } = await live.auth.setSession({
             access_token: accessToken,
             refresh_token: refreshToken,
           });
@@ -85,25 +86,25 @@ export function ResetPasswordPage() {
 
         let {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await live.auth.getSession();
         if (!session && looksLikeSetup) {
           await new Promise((resolve) => setTimeout(resolve, 800));
           ({
             data: { session },
-          } = await supabase.auth.getSession());
+          } = await live.auth.getSession());
         }
         applyReady(Boolean(session));
       } catch {
         const {
           data: { session },
-        } = await supabase.auth.getSession();
+        } = await getLiveSupabase().auth.getSession();
         applyReady(Boolean(session));
       }
     };
 
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = getLiveSupabase().auth.onAuthStateChange((event, session) => {
       if (event === 'PASSWORD_RECOVERY' || event === 'SIGNED_IN' || session) {
         applyReady(true);
       }
@@ -130,13 +131,14 @@ export function ResetPasswordPage() {
     }
     setLoading(true);
     try {
-      const { error: err } = await supabase.auth.updateUser({ password });
+      const live = getLiveSupabase();
+      const { error: err } = await live.auth.updateUser({ password });
       if (err) throw new Error(err.message);
       const {
         data: { user: updatedUser },
-      } = await supabase.auth.getUser();
+      } = await live.auth.getUser();
       if (updatedUser?.id) {
-        await supabase
+        await live
           .from('profiles')
           .update({
             must_change_password: false,
@@ -146,7 +148,7 @@ export function ResetPasswordPage() {
           .eq('id', updatedUser.id);
       }
       setSuccess(true);
-      await supabase.auth.signOut();
+      await live.auth.signOut();
       setTimeout(() => {
         window.location.href = '/';
       }, 2500);

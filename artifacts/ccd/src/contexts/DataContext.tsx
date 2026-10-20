@@ -1698,6 +1698,23 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
     }
   };
 
+  // Mirror into library-activities so demo / seed reloads stay in sync with in-session creates.
+  const persistActivityToLibraryStorage = (activityToStore: Activity) => {
+    try {
+      const savedActivities = localStorage.getItem('library-activities');
+      const activities: Activity[] = savedActivities ? JSON.parse(savedActivities) : [];
+      const id = activityToStore._id || activityToStore.id;
+      const idx = activities.findIndex(
+        (a) => (a._id && a._id === id) || (a.id && a.id === id),
+      );
+      if (idx >= 0) activities[idx] = activityToStore;
+      else activities.push(activityToStore);
+      localStorage.setItem('library-activities', JSON.stringify(activities));
+    } catch (err) {
+      console.warn('Could not persist activity to library-activities:', err);
+    }
+  };
+
   // Add a new activity
   const addActivity = async (activity: Activity): Promise<Activity> => {
     try {
@@ -1716,8 +1733,13 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
           
           // Update local state with Supabase data
           setAllActivities(prev => [...prev, newActivity]);
+
+          // Demo mode loads from library-activities on refresh — keep it in sync with
+          // the demo Supabase mock so creates survive a page reload in-session.
+          if (isDemoModeActive()) {
+            persistActivityToLibraryStorage(newActivity);
+          }
           
-          // DO NOT save to localStorage when Supabase is configured - data should only be in Supabase
           return newActivity;
         } catch (error) {
           console.error('❌ Failed to add activity to Supabase:', error);
@@ -1731,16 +1753,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
           
           // Update local state
           setAllActivities(prev => [...prev, newActivity]);
-          
-          // Save to localStorage as fallback only
-          const savedActivities = localStorage.getItem('library-activities');
-          if (savedActivities) {
-            const activities = JSON.parse(savedActivities);
-            activities.push(newActivity);
-            localStorage.setItem('library-activities', JSON.stringify(activities));
-          } else {
-            localStorage.setItem('library-activities', JSON.stringify([newActivity]));
-          }
+          persistActivityToLibraryStorage(newActivity);
           
           return newActivity;
         }
@@ -1755,16 +1768,7 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
         
         // Update local state
         setAllActivities(prev => [...prev, newActivity]);
-        
-        // Save to localStorage
-        const savedActivities = localStorage.getItem('library-activities');
-        if (savedActivities) {
-          const activities = JSON.parse(savedActivities);
-          activities.push(newActivity);
-          localStorage.setItem('library-activities', JSON.stringify(activities));
-        } else {
-          localStorage.setItem('library-activities', JSON.stringify([newActivity]));
-        }
+        persistActivityToLibraryStorage(newActivity);
         
         return newActivity;
       }
