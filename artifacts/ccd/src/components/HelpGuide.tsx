@@ -19,7 +19,12 @@ export type HelpGuideSection =
   | 'facts'
   | 'account'
   | 'forum'
-  | 'partners';
+  | 'partners'
+  | 'settings'
+  | 'halfterms'
+  | 'planner'
+  | 'slides'
+  | 'users';
 
 interface HelpGuideProps {
   isOpen: boolean;
@@ -461,12 +466,12 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
           <p>From the <strong>Calendar</strong> tab:</p>
           <ul className="list-disc pl-5 space-y-2">
             <li><strong>Export PDF:</strong> Click the button to generate a PDF of the current view (week or month)</li>
-            <li><strong>Branding:</strong> The PDF uses your school name, logo letters, and colours from Settings → Branding</li>
+            <li><strong>Branding:</strong> The PDF uses your school name, logo letters, and colours from Settings → School tools → Login & footer</li>
             <li><strong>Lesson links:</strong> Activity and resource links in lesson entries are included as clickable links in the PDF</li>
             <li><strong>Layout:</strong> Choose week or month view before exporting to get the layout you want</li>
           </ul>
           <div className="bg-amber-50 border-l-4 border-amber-500 p-3 rounded mt-3">
-            <p className="text-sm text-amber-900"><strong>Tip:</strong> Set up branding in User Settings first so your exported calendars look professional and on-brand.</p>
+            <p className="text-sm text-amber-900"><strong>Tip:</strong> Set up branding in Settings first so your exported calendars look professional and on-brand.</p>
           </div>
         </div>
       )
@@ -481,7 +486,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li>From the Unit Designer you can export a half-term or unit plan</li>
             <li>Printed plans include activities, notes, and curriculum objectives</li>
             <li><strong>The Facts:</strong> Use the in-page PDF viewer on /the-facts/ for Print or Save — see the The Facts help topic</li>
-            <li><strong>Partner files:</strong> Downloads through CCDesigner appear under Settings → My Downloads</li>
+            <li><strong>Partner files:</strong> Downloads through CCDesigner appear under Settings → Downloads</li>
           </ul>
         </div>
       )
@@ -527,7 +532,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
             <li><strong>Year group selector:</strong> Use the dropdown in the header to switch between year groups (e.g. Reception, Year 1, Year 2)</li>
             <li><strong>Separate data:</strong> Lessons, units, and calendar are stored per year group so each class has its own plan</li>
             <li><strong>Copy lessons:</strong> Use <strong>Copy Lesson</strong> in the Lesson Library to copy lessons from one year group to another</li>
-            <li><strong>Settings:</strong> Add or edit year groups in User Settings → Year Groups</li>
+            <li><strong>Settings:</strong> Add or edit year groups in Settings → My classes</li>
           </ul>
         </div>
       )
@@ -594,7 +599,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       title: "Roles and user management",
       content: (
         <div className="space-y-3">
-          <p>Admins open <strong>Settings → Users</strong> (or Admin → Users) to invite people and set roles.</p>
+          <p>Admins open <strong>Settings → Users</strong> to invite people and set roles.</p>
           <ul className="list-disc pl-5 space-y-2">
             <li><strong>Teacher / creator</strong> — plan lessons and use the forum</li>
             <li><strong>Organisation</strong> — school or partner organisation account</li>
@@ -609,8 +614,8 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         <div className="space-y-3">
           <p>Partner and hub resources are downloaded through CCDesigner so use can be recorded.</p>
           <ul className="list-disc pl-5 space-y-2">
-            <li><strong>Settings → My Downloads</strong> — your own download history</li>
-            <li><strong>Settings → Download analytics</strong> — organisation or global totals (admins)</li>
+            <li><strong>Settings → Downloads</strong> — your own download history</li>
+            <li><strong>Settings → Downloads (analytics chip)</strong> — organisation or global totals (admins)</li>
           </ul>
           <div className="p-3 rounded" style={{backgroundColor: '#E6F7F5', borderLeft: '4px solid #0BA596'}}>
             <p className="text-sm" style={{color: '#0BA596'}}><strong>Note:</strong> You may be asked to sign in before a gated file opens. Your place on the page is remembered.</p>
@@ -647,7 +652,7 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       title: "Forum admin",
       content: (
         <div className="space-y-3">
-          <p>Owners and moderators use <strong>/forum/admin</strong>, the shield icon on the forum header (when signed in), or <strong>Settings → Admin → Forum</strong>.</p>
+          <p>Owners and moderators use <strong>/forum/admin</strong>, the shield icon on the forum header (when signed in), or <strong>/forum/admin</strong>.</p>
           <ul className="list-disc pl-5 space-y-2">
             <li>Publish or unpublish categories (seeded categories start as drafts)</li>
             <li>Lock a category, review reports, and set notification preferences</li>
@@ -684,11 +689,119 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       title: "Hub administration",
       content: (
         <div className="space-y-3">
-          <p>Organisation owners and super admins open <strong>Settings → Admin → Hub admin</strong> to manage members, resources, and the public hub page.</p>
+          <p>Organisation owners and super admins open <strong>Settings → School tools → Partner hubs</strong> to manage members, resources, and the public hub page.</p>
           <p><strong>Royal Ballet and Opera (/roh)</strong> and <strong>RSC Education (/rsc)</strong> each have organisation hubs so editors can update their pages after being granted hub membership (or as super admin).</p>
         </div>
       )
     }
+  ];
+
+
+  const settingsSteps: GuideStep[] = [
+    {
+      title: 'Open Settings',
+      content: (
+        <div className="space-y-3">
+          <p>Open <strong>Settings</strong> from the gear in the header or your account menu. It is a full page with a left nav — not a modal.</p>
+          <div className="rounded-xl border border-[#E2E0EF] bg-[#FAFAFC] p-3">
+            <p className="text-[13px] font-medium text-[#5C5878]">Sections: My classes · Activity folders · Learning objectives · Preferences · Downloads · Users · School tools.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'My classes & folders',
+      content: (
+        <div className="space-y-3">
+          <p><strong>My classes</strong> groups classes by key stage (colour accents). Expand a stage to edit classes; subject sub-groups stay collapsed until you open them.</p>
+          <p><strong>Activity folders</strong> control which folders each class sees in the Activity Library. Changes save as you go.</p>
+        </div>
+      ),
+    },
+    {
+      title: 'Preferences',
+      content: (
+        <div className="space-y-3">
+          <p>Set your <strong>school name</strong>, toggle <strong>button tips</strong>, and edit <strong>activity resource labels</strong> as compact tiles (icon, label, Show).</p>
+        </div>
+      ),
+    },
+  ];
+
+  const halfTermSteps: GuideStep[] = [
+    {
+      title: 'Half-term year board',
+      content: (
+        <div className="space-y-3">
+          <p>Open <strong>Half-terms</strong> from the sidebar. The year board shows terms across the year for each class.</p>
+          <div className="rounded-xl border border-[#E2E0EF] bg-[#E9E6FF]/50 p-3 text-[13px] font-medium text-[#2A2299]">
+            Assign schemes from the Add-scheme picker — key stages sit in a two-column grid and start collapsed.
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Class boards',
+      content: (
+        <div className="space-y-3">
+          <p>Drill into a class board to place schemes into slots for each half-term. Drag or assign from the multi-panel picker.</p>
+        </div>
+      ),
+    },
+  ];
+
+  const plannerSteps: GuideStep[] = [
+    {
+      title: 'Planner outline slots',
+      content: (
+        <div className="space-y-3">
+          <p>The <strong>Planner</strong> lays out weekly teaching for a class. Outline slots hold lessons and activities in teaching order.</p>
+          <ul className="list-disc pl-5 space-y-1 text-[14px]">
+            <li>Pick a class, then fill slots from your Lesson Library or Activity Library</li>
+            <li>Timetable slots live under Planner → Timetable</li>
+            <li>Reflections and notes stay with each week</li>
+          </ul>
+        </div>
+      ),
+    },
+  ];
+
+  const slidesSteps: GuideStep[] = [
+    {
+      title: 'Interactive slides',
+      content: (
+        <div className="space-y-3">
+          <p>Open <strong>Slides</strong> (Interactive Lesson Viewer) from the sidebar to present classroom slides.</p>
+          <ul className="list-disc pl-5 space-y-1 text-[14px]">
+            <li>Browse hub and library lessons</li>
+            <li>Editors can build slides in the Interactive Lesson Editor</li>
+            <li>Present full-screen for the class</li>
+          </ul>
+        </div>
+      ),
+    },
+  ];
+
+  const usersSteps: GuideStep[] = [
+    {
+      title: 'Users (admins)',
+      content: (
+        <div className="space-y-3">
+          <p>School leads and admins open <strong>Settings → Users</strong> to invite people, set roles, assign classes, reset passwords, and suspend access.</p>
+          <div className="rounded-xl border border-[#E2E0EF] bg-[#FAFAFC] p-3 text-[13px] font-medium text-[#5C5878]">
+            Super admins see everyone. Organisation / hub admins only manage people in their own organisation (for example Chelmsford Music Hub).
+          </div>
+        </div>
+      ),
+    },
+    {
+      title: 'Invite & set password',
+      content: (
+        <div className="space-y-3">
+          <p>Use <strong>Invite user</strong> or <strong>Import CSV</strong>. Invitees open the email link and choose a password on <strong>/reset-password</strong>. They can also change password anytime from the account menu.</p>
+        </div>
+      ),
+    },
   ];
 
   // Get the current steps based on active section
@@ -714,6 +827,16 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         return forumSteps;
       case 'partners':
         return partnersSteps;
+      case 'settings':
+        return settingsSteps;
+      case 'halfterms':
+        return halfTermSteps;
+      case 'planner':
+        return plannerSteps;
+      case 'slides':
+        return slidesSteps;
+      case 'users':
+        return usersSteps;
       default:
         return activitySteps;
     }
@@ -772,6 +895,11 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
     'lesson',
     'unit',
     'assign',
+    'halfterms',
+    'planner',
+    'slides',
+    'settings',
+    'users',
     'print',
     'share',
     'facts',
@@ -806,6 +934,11 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
       case 'account': return accountSteps;
       case 'forum': return forumSteps;
       case 'partners': return partnersSteps;
+      case 'settings': return settingsSteps;
+      case 'halfterms': return halfTermSteps;
+      case 'planner': return plannerSteps;
+      case 'slides': return slidesSteps;
+      case 'users': return usersSteps;
       default: return activitySteps;
     }
   };
@@ -846,6 +979,16 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         return <MessageSquare className="h-5 w-5" />;
       case 'partners':
         return <Globe className="h-5 w-5" />;
+      case 'settings':
+        return <Layers className="h-5 w-5" />;
+      case 'halfterms':
+        return <Calendar className="h-5 w-5" />;
+      case 'planner':
+        return <Clock className="h-5 w-5" />;
+      case 'slides':
+        return <Layers className="h-5 w-5" />;
+      case 'users':
+        return <Users className="h-5 w-5" />;
       default:
         return <Tag className="h-5 w-5" />;
     }
@@ -907,111 +1050,41 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         {isHomeView && (
           <div className="flex-1 overflow-y-auto bg-gradient-to-r from-[#E9E6FF] to-blue-50 border-b border-gray-200">
             <div className="p-6 max-w-4xl mx-auto">
-              <p className="text-sm text-gray-700 leading-relaxed mb-4">
-                A comprehensive planning platform to streamline your curriculum development. Build reusable activities, organise them into structured lessons, group lessons into units and stacks, schedule everything on the calendar, and print or share your plans. You can also open The Facts briefing, use the Community Forum, download partner resources, and manage your account from Settings.
+              <p className="text-[15px] font-medium leading-relaxed text-[#1F1B4D] mb-1">
+                Studio Score help
               </p>
-              <p className="text-xs text-gray-500 mb-3">Click a topic to open that section:</p>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('activity'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-[#a9a3ff]"
-                >
-                  <div className="flex items-center space-x-1.5 text-[#4338E8]">
-                    <Tag className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Activity Library</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('lesson'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-[#a9a3ff]"
-                >
-                  <div className="flex items-center space-x-1.5 text-[#4338E8]">
-                    <Edit3 className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Lesson Builder</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('unit'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-indigo-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-indigo-600">
-                    <FolderOpen className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Unit Designer & Stacks</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('assign'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-purple-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-purple-600">
-                    <Calendar className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Calendar & Half-Terms</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('print'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-green-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-green-600">
-                    <Download className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Print & Export</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('share'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-orange-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-orange-600">
-                    <Link2 className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Share Plans & Multi-Class</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('facts'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-emerald-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-emerald-700">
-                    <BookOpen className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">The Facts</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('account'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-slate-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-slate-700">
-                    <Users className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Accounts &amp; Downloads</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('forum'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-cyan-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-cyan-700">
-                    <MessageSquare className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Community Forum</h4>
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => { setActiveSection('partners'); setCurrentStep(0); setIsHomeView(false); }}
-                  className="rounded-lg p-2 shadow-sm border border-gray-200 bg-white text-left transition-colors duration-200 hover:ring-2 hover:ring-rose-400"
-                >
-                  <div className="flex items-center space-x-1.5 text-rose-700">
-                    <Globe className="h-3.5 w-3.5" />
-                    <h4 className="font-semibold text-xs">Partners &amp; Hubs</h4>
-                  </div>
-                </button>
+              <p className="text-[13px] font-medium text-[#5C5878] leading-relaxed mb-5">
+                Build activities, lessons and half-term plans; present slides; manage classes and users. Pick a topic:
+              </p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {[
+                  { id: 'activity' as HelpGuideSection, title: 'Activity Library', blurb: 'Folders, hierarchy and creating activities', accent: '#4338E8', tint: '#E9E6FF' },
+                  { id: 'lesson' as HelpGuideSection, title: 'Lesson Builder', blurb: 'Assemble activities into lessons', accent: '#4338E8', tint: '#E9E6FF' },
+                  { id: 'halfterms' as HelpGuideSection, title: 'Half-terms', blurb: 'Year board and scheme assignment', accent: '#0D9488', tint: '#E6F7F4' },
+                  { id: 'planner' as HelpGuideSection, title: 'Planner', blurb: 'Weekly outline slots and timetable', accent: '#D97706', tint: '#FFF4E5' },
+                  { id: 'slides' as HelpGuideSection, title: 'Slides', blurb: 'Interactive classroom presentations', accent: '#7C3AED', tint: '#F1E9FF' },
+                  { id: 'settings' as HelpGuideSection, title: 'Settings', blurb: 'Classes, folders, preferences', accent: '#2A2299', tint: '#E9E6FF' },
+                  { id: 'users' as HelpGuideSection, title: 'Users', blurb: 'Invite, roles and passwords', accent: '#DB2777', tint: '#FCE7F3' },
+                  { id: 'partners' as HelpGuideSection, title: 'Partner Hubs', blurb: 'Hub pages and resources', accent: '#DC2626', tint: '#FEECEC' },
+                  { id: 'account' as HelpGuideSection, title: 'Account', blurb: 'Sign-in, password and downloads', accent: '#6B7280', tint: '#F3F4F6' },
+                  { id: 'unit' as HelpGuideSection, title: 'Units & stacks', blurb: 'Group lessons into units', accent: '#4338E8', tint: '#E9E6FF' },
+                  { id: 'forum' as HelpGuideSection, title: 'Forum', blurb: 'Community topics and replies', accent: '#0D9488', tint: '#E6F7F4' },
+                  { id: 'facts' as HelpGuideSection, title: 'The Facts', blurb: 'Evidence briefing PDF', accent: '#059669', tint: '#ECFDF5' },
+                ].map((card) => (
+                  <button
+                    key={card.id}
+                    type="button"
+                    onClick={() => { setActiveSection(card.id); setCurrentStep(0); setIsHomeView(false); }}
+                    className="rounded-2xl border border-[#E2E0EF] bg-white p-3.5 text-left shadow-[0_1px_0_rgba(31,27,77,0.04)] transition hover:border-[#bcb7f4] hover:shadow-md"
+                    style={{ borderLeftWidth: 4, borderLeftColor: card.accent }}
+                  >
+                    <div className="mb-2 inline-flex rounded-lg px-2 py-1 text-[11px] font-extrabold" style={{ background: card.tint, color: card.accent }}>
+                      Guide
+                    </div>
+                    <h4 className="text-[14px] font-extrabold tracking-tight text-[#1F1B4D]">{card.title}</h4>
+                    <p className="mt-1 text-[12px] font-medium leading-snug text-[#5C5878]">{card.blurb}</p>
+                  </button>
+                ))}
               </div>
             </div>
             <div className="p-4 border-t border-gray-200 bg-white/60 flex flex-wrap items-center justify-between gap-2">
@@ -1039,117 +1112,42 @@ export function HelpGuide({ isOpen, onClose, initialSection }: HelpGuideProps) {
         {!isHomeView && (
           <>
         {/* Section Tabs */}
-        <div className="flex flex-wrap border-b border-gray-200 bg-gray-50 gap-x-1">
-          <button
-            onClick={() => { setActiveSection('activity'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'activity' 
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Tag className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">1. Activities</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('lesson'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'lesson' 
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Edit3 className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">2. Lessons</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('unit'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'unit' 
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <FolderOpen className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">3. Units & Stacks</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('assign'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'assign' 
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Calendar className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">4. Calendar</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('print'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'print' 
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Download className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">5. Print & Export</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('share'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'share' 
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white' 
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Link2 className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">6. Share & Classes</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('facts'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'facts'
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <BookOpen className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">7. The Facts</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('account'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'account'
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Users className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">8. Accounts</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('forum'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'forum'
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <MessageSquare className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">9. Forum</span>
-          </button>
-          <button
-            onClick={() => { setActiveSection('partners'); setCurrentStep(0); }}
-            className={`flex items-center space-x-2 px-3 py-3 font-medium text-sm transition-colors duration-200 ${
-              activeSection === 'partners'
-                ? 'border-b-2 border-[#4338E8] text-[#4338E8] bg-white'
-                : 'text-gray-600 hover:text-gray-900'
-            }`}
-          >
-            <Globe className="h-4 w-4 flex-shrink-0" />
-            <span className="whitespace-nowrap">10. Partners</span>
-          </button>
+        <div className="flex flex-wrap gap-x-0.5 border-b border-[#E2E0EF] bg-[#FAFAFC] px-1">
+          {sectionOrder.map((sectionId) => {
+            const labels: Partial<Record<HelpGuideSection, string>> = {
+              activity: 'Activities',
+              lesson: 'Lessons',
+              unit: 'Units',
+              assign: 'Calendar',
+              halfterms: 'Half-terms',
+              planner: 'Planner',
+              slides: 'Slides',
+              settings: 'Settings',
+              users: 'Users',
+              print: 'Print',
+              share: 'Share',
+              facts: 'Facts',
+              account: 'Account',
+              forum: 'Forum',
+              partners: 'Hubs',
+            };
+            const active = activeSection === sectionId;
+            return (
+              <button
+                key={sectionId}
+                type="button"
+                onClick={() => { setActiveSection(sectionId); setCurrentStep(0); }}
+                className={`flex items-center gap-1.5 px-2.5 py-2.5 text-[12px] font-bold transition-colors ${
+                  active
+                    ? 'border-b-2 border-[#4338E8] bg-white text-[#4338E8]'
+                    : 'text-[#5C5878] hover:text-[#1F1B4D]'
+                }`}
+              >
+                <span className="flex-shrink-0">{getSectionIcon(sectionId)}</span>
+                <span className="whitespace-nowrap">{labels[sectionId] || sectionId}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Content */}

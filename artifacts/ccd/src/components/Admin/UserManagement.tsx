@@ -259,98 +259,161 @@ export function UserManagement() {
     };
   }, []);
 
-  const fetchUsers = useCallback(async (): Promise<ListResponse> => {
-    if (demoMode) {
-      const data = filterDemoUsers({
-        q: search,
-        role: filterRole,
-        status: filterStatus,
-        school: filterSchool,
-        sort: sortKey,
-        order: sortAsc ? 'asc' : 'desc',
+  /** Client-side profiles read (RLS) when the service-role list API is unavailable. */
+  const fetchUsersViaSupabase = useCallback(async (): Promise<ListResponse | null> => {
+    if (demoMode) return null;
+    try {
+      let query = supabase.from('profiles').select('*', { count: 'exact' });
+      const q = search.trim();
+      if (q) {
+        // Match name/email; also tolerate common typo gmaill ↔ gmail
+        const qAlt = q.replace(/gmaill/gi, 'gmail').replace(/@gmail\.com$/i, '@gmaill.com');
+        const parts = [
+          `email.ilike.%${q}%`,
+          `display_name.ilike.%${q}%`,
+          `school_or_org.ilike.%${q}%`,
+        ];
+        if (qAlt !== q) {
+          parts.push(`email.ilike.%${qAlt}%`);
+        }
+        query = query.or(parts.join(','));
+      }
+      if (filterRole !== 'all') query = query.eq('role', filterRole);
+      if (filterStatus !== 'all') query = query.eq('status', filterStatus);
+      if (filterSchool !== 'all') query = query.eq('school_or_org', filterSchool);
+      const ascending = sortAsc;
+      const col =
+        sortKey === 'school_or_org'
+          ? 'school_or_org'
+          : sortKey === 'updated_at'
+            ? 'updated_at'
+            : sortKey;
+      query = query.order(col, { ascending, nullsFirst: false });
+      const from = (page - 1) * PAGE_SIZE;
+      const to = from + PAGE_SIZE - 1;
+      const { data, error, count } = await query.range(from, to);
+      if (error) throw error;
+      if (!data || data.length === 0) {
+        // Empty under RLS may mean no permission — treat as unavailable
+        const { data: self } = await supabase.from('profiles').select('id').limit(1);
+        if (!self || self.length === 0) return null;
+      }
+      const users = (data || []) as Profile[];
+      const schools = Array.from(
+        new Set(users.map((u) => u.school_or_org).filter((s): s is string => Boolean(s))),
+      ).sort();
+      if (schools.length) setSchoolOptions((prev) => Array.from(new Set([...prev, ...schools])).sort());
+      const activeAdminCount = users.filter(
+        (u) =>
+          (u.role === 'admin' || u.role === 'superuser' || u.role === 'super_admin') &&
+          u.status !== 'suspended',
+      ).length;
+      return {
+        users,
+        total: count ?? users.length,
         page,
         pageSize: PAGE_SIZE,
-      });
-      const schools = Array.from(
-        new Set(getDemoUsersStore().map((u) => u.school_or_org).filter(Boolean) as string[]),
-      ).sort();
-      setSchoolOptions(schools);
-      return { ...data, scope: 'demo' };
+        activeAdminCount,
+        scope: 'supabase-rls',
+      };
+    } catch {
+      return null;
     }
+  }, [demoMode, search, filterRole, filterStatus, filterSchool, sortKey, sortAsc, page]);
 
+  const demoFallback = useCallback((): ListResponse => {
+    const data = filterDemoUsers({
+      q: search,
+      role: filterRole,
+      status: filterStatus,
+      school: filterSchool,
+      sort: sortKey,
+      order: sortAsc ? 'asc' : 'desc',
+      page,
+      pageSize: PAGE_SIZE,
+    });
+    setSchoolOptions(
+      Array.from(
+        new Set(getDemoUsersStore().map((u) => u.school_or_org).filter(Boolean) as string[]),
+      ).sort(),
+    );
+    return { ...data, scope: 'demo-fallback' };
+  }, [search, filterRole, filterStatus, filterSchool, sortKey, sortAsc, page]);
+
+  const fetchUsers = useCallback(async (): Promise<ListResponse> => {
+    // Always prefer the real users API (service role). Demo mode still tries the API
+    // when a session exists; only fall back when the backend is unreachable.
     const qs = new URLSearchParams();
     qs.set('page', String(page));
     qs.set('pageSize', String(PAGE_SIZE));
-    qs.set('sort', sortKey);
+    qs.set('sort', sortKey === 'school_or_org' || sortKey === 'updated_at' ? 'created_at' : sortKey);
     qs.set('order', sortAsc ? 'asc' : 'desc');
-    if (search) qs.set('q', search);
+    if (search) qs.set('q', search.replace(/gmaill/gi, 'gmail'));
     if (filterRole !== 'all') qs.set('role', filterRole);
     if (filterStatus !== 'all') qs.set('status', filterStatus);
     if (filterHub !== 'all') qs.set('hub', filterHub);
     if (filterSchool !== 'all') qs.set('school', filterSchool);
 
-    let res: Response;
     try {
-      res = await fetch(getVercelApiUrl(`/api/users/list?${qs}`), {
+      const res = await fetch(getVercelApiUrl(`/api/users/list?${qs}`), {
         headers: await authHeaders(),
       });
-    } catch (err) {
-      // Offline / no API — fall back to demo roster so Settings → Users still works
-      const data = filterDemoUsers({
-        q: search,
-        role: filterRole,
-        status: filterStatus,
-        school: filterSchool,
-        sort: sortKey,
-        order: sortAsc ? 'asc' : 'desc',
-        page,
-        pageSize: PAGE_SIZE,
-      });
-      setSchoolOptions(
-        Array.from(
-          new Set(getDemoUsersStore().map((u) => u.school_or_org).filter(Boolean) as string[]),
-        ).sort(),
-      );
-      toast('Showing sample users (API unreachable).', { icon: 'ℹ️' });
-      return { ...data, scope: 'demo-fallback' };
-    }
-    const data = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      const apiError =
-        (data as { error?: string; message?: string })?.error ||
-        (data as { message?: string })?.message;
-      if (res.status === 502 || res.status === 503 || res.status === 504 || res.status === 401) {
-        const fallback = filterDemoUsers({
-          q: search,
-          role: filterRole,
-          status: filterStatus,
-          school: filterSchool,
-          sort: sortKey,
-          order: sortAsc ? 'asc' : 'desc',
-          page,
-          pageSize: PAGE_SIZE,
-        });
-        setSchoolOptions(
-          Array.from(
-            new Set(getDemoUsersStore().map((u) => u.school_or_org).filter(Boolean) as string[]),
-          ).sort(),
-        );
-        toast('Showing sample users (API unavailable).', { icon: 'ℹ️' });
-        return { ...fallback, scope: 'demo-fallback' };
+      const data = await res.json().catch(() => ({}));
+      if (res.ok) {
+        const list = data as ListResponse;
+        const schools = Array.from(
+          new Set(
+            (list.users || [])
+              .map((u) => u.school_or_org)
+              .filter((s): s is string => Boolean(s && s.trim())),
+          ),
+        ).sort();
+        if (schools.length) {
+          setSchoolOptions((prev) => Array.from(new Set([...prev, ...schools])).sort());
+        }
+        return list;
       }
-      throw new Error(apiError || 'Failed to load users');
+      // Auth/permission or misconfig — try RLS client read before demo
+      if (res.status === 401 || res.status === 403 || res.status === 500 || res.status === 502 || res.status === 503 || res.status === 504) {
+        const viaClient = await fetchUsersViaSupabase();
+        if (viaClient && viaClient.users.length > 0) return viaClient;
+        if (demoMode || res.status >= 500) {
+          toast('Live users API unavailable — showing sample roster.', { icon: 'ℹ️' });
+          return demoFallback();
+        }
+        throw new Error(
+          (data as { error?: string })?.error ||
+            'Failed to load users. Confirm SUPABASE_SERVICE_ROLE_KEY on the API server.',
+        );
+      }
+      throw new Error((data as { error?: string })?.error || 'Failed to load users');
+    } catch (err) {
+      const viaClient = await fetchUsersViaSupabase();
+      if (viaClient && viaClient.users.length > 0) return viaClient;
+      if (demoMode) {
+        toast('Live users API unreachable — showing sample roster.', { icon: 'ℹ️' });
+        return demoFallback();
+      }
+      const msg = err instanceof Error ? err.message : 'Failed to fetch';
+      if (/failed to fetch|network|econnrefused|proxy|unreachable|cannot reach/i.test(msg)) {
+        toast('Live users API unreachable — showing sample roster.', { icon: 'ℹ️' });
+        return demoFallback();
+      }
+      throw err instanceof Error ? err : new Error(msg);
     }
-    const list = data as ListResponse;
-    const schools = Array.from(
-      new Set(
-        (list.users || [])
-          .map((u) => u.school_or_org)
-          .filter((s): s is string => Boolean(s && s.trim())),
-      ),
-    ).sort();
-    if (schools.length) setSchoolOptions((prev) => Array.from(new Set([...prev, ...schools])).sort());
-    return list;
-  }, [page, sortKey, sortAsc, search, filterRole, filterStatus, filterHub, filterSchool, demoMode]);
+  }, [
+    page,
+    sortKey,
+    sortAsc,
+    search,
+    filterRole,
+    filterStatus,
+    filterHub,
+    filterSchool,
+    demoMode,
+    fetchUsersViaSupabase,
+    demoFallback,
+  ]);
 
   const reload = useCallback(async () => {
     setLoadError(null);
@@ -786,6 +849,11 @@ export function UserManagement() {
           email: emailTrimmed,
           display_name: createName.trim() || undefined,
           role: createRole,
+          organisation_id: currentProfile?.organisation_id || undefined,
+          organisation_name:
+            currentProfile?.organisation_name || currentProfile?.school_or_org || undefined,
+          school_or_org:
+            currentProfile?.organisation_name || currentProfile?.school_or_org || undefined,
           allowed_year_groups:
             createAllowedYearGroups.length > 0 ? createAllowedYearGroups : undefined,
           admin_preset_categories:

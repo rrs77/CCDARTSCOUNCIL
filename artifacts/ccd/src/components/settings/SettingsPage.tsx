@@ -31,9 +31,13 @@ interface SettingsPageProps {
 
 function readSchoolPanelFromUrl(): SchoolToolsPanelId | null {
   try {
-    const panel = new URLSearchParams(window.location.search).get('panel');
-    // Legacy ?panel=users → open top-level Users (handled by path/section resolver)
-    if (panel === 'users') return null;
+    const params = new URLSearchParams(window.location.search);
+    const panel = params.get('panel');
+    // Legacy /settings/school?panel=users → top-level Users
+    if (panel === 'users' && typeof window !== 'undefined') {
+      window.history.replaceState({}, '', '/settings/users');
+      return null;
+    }
     if (
       panel === 'hub-admin' ||
       panel === 'hub-content' ||

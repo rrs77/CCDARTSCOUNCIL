@@ -399,7 +399,7 @@ function ReuseForm({ plan, title, data, onDone }: { plan: LessonPlan; title: str
     void data.savePlans([copy], `Added to ${targetName}.`).then(onDone);
   };
 
-  if (!others.length) return <p className="mt-4 text-sm text-[#374151]">Add another class in Settings → Year groups first.</p>;
+  if (!others.length) return <p className="mt-4 text-sm text-[#374151]">Add another class in Settings → My classes first.</p>;
   return (
     <section className="mt-4 space-y-3">
       <label className="block text-[13px] font-semibold text-[#374151]">

@@ -344,7 +344,7 @@ export function ObjectiveSelector({
                 {searchTerm ? 'No objectives match your search' : 'No objectives available yet'}
               </p>
               <p className="text-sm text-gray-400 mt-2">
-                Create objectives in Settings → Custom Objectives Admin
+                Create objectives in Settings → Learning objectives
               </p>
             </div>
           ) : (

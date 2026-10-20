@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, BookOpen, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
+import { Menu, X, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useData } from '../contexts/DataContext';

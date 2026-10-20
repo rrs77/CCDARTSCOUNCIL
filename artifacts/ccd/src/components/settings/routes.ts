@@ -92,8 +92,18 @@ export function resolveSettingsSectionFromLocation(
   pathname = typeof window !== 'undefined' ? window.location.pathname : '/',
   search = typeof window !== 'undefined' ? window.location.search : '',
 ): SettingsSectionId | null {
+  try {
+    const params = new URLSearchParams(search);
+    // Legacy school tools → Users
+    if (params.get('panel') === 'users') return 'users';
+  } catch {
+    /* ignore */
+  }
   const fromPath = sectionFromSettingsPath(pathname);
-  if (fromPath) return fromPath;
+  if (fromPath) {
+    // /settings/school?panel=users already handled above; keep school otherwise
+    return fromPath;
+  }
   try {
     const params = new URLSearchParams(search);
     const fromSection = sectionFromLegacyTab(params.get('section'));
