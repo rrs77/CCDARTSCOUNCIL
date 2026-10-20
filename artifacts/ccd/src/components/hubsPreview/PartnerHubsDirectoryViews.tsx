@@ -362,9 +362,13 @@ function artFormCount(form: ArtFormFilter, pool: OrgEntry[]) {
 
 type OrgViewMode = 'grid' | 'list' | 'compact';
 
-const ORG_GRID_COLS_MIN = 2;
-const ORG_GRID_COLS_MAX = 7;
-const ORG_GRID_CARD_MIN_PX = 210;
+/** Shared Activity Library–style density for Partner Hubs card grids. */
+export const HUBS_GRID_COLS_MIN = 2;
+export const HUBS_GRID_COLS_MAX = 7;
+export const HUBS_GRID_CARD_MIN_PX = 210;
+const ORG_GRID_COLS_MIN = HUBS_GRID_COLS_MIN;
+const ORG_GRID_COLS_MAX = HUBS_GRID_COLS_MAX;
+const ORG_GRID_CARD_MIN_PX = HUBS_GRID_CARD_MIN_PX;
 const ORG_VIEW_STORAGE_KEY = 'ccd-orgs-directory-view';
 const ORG_COLS_STORAGE_KEY = 'ccd-orgs-directory-grid-cols';
 const ORG_COLS_PINNED_KEY = 'ccd-orgs-directory-grid-cols-pinned';
@@ -851,7 +855,12 @@ const PAID_TYPE_TONE: Record<(typeof PAID_RESOURCE_TYPES)[number], string> = {
   'CPD course': 'bg-[#FCE7F3] text-[#9D174D]',
 };
 
-/** Paid resources — subject/age/type facets + priced product cards (composite mockup). */
+const PAID_VIEW_STORAGE_KEY = 'ccd-paid-directory-view';
+const PAID_COLS_STORAGE_KEY = 'ccd-paid-directory-grid-cols';
+const PAID_COLS_PINNED_KEY = 'ccd-paid-directory-grid-cols-pinned';
+type PaidViewMode = 'grid' | 'list' | 'compact';
+
+/** Paid resources — Activity Library–sized cards + size slider / grid / list / compact. */
 export function PaidResourcesDirectoryView() {
   const listings = useMemo(() => buildPaidListings(), []);
   const restoredRef = useRef(false);
@@ -859,8 +868,92 @@ export function PaidResourcesDirectoryView() {
   const [ages, setAges] = useState<Set<string>>(new Set());
   const [resourceType, setResourceType] = useState<PaidTypeFilter>('All');
   const [q, setQ] = useState('');
-  const [view, setView] = useState<'grid' | 'list'>('grid');
+  const [view, setView] = useState<PaidViewMode>(() => {
+    try {
+      const raw = localStorage.getItem(PAID_VIEW_STORAGE_KEY);
+      if (raw === 'grid' || raw === 'list' || raw === 'compact') return raw;
+    } catch {
+      /* ignore */
+    }
+    return 'grid';
+  });
   const [saved, setSaved] = useState<Set<string>>(new Set());
+
+  const colsForWidth = useCallback((width: number) => {
+    if (width <= 0) return 4;
+    return Math.max(
+      ORG_GRID_COLS_MIN,
+      Math.min(ORG_GRID_COLS_MAX, Math.floor(width / ORG_GRID_CARD_MIN_PX)),
+    );
+  }, []);
+
+  const [gridCols, setGridCols] = useState(() => {
+    if (typeof window === 'undefined') return 5;
+    try {
+      const pinned = localStorage.getItem(PAID_COLS_PINNED_KEY) === '1';
+      const raw = localStorage.getItem(PAID_COLS_STORAGE_KEY);
+      if (pinned && raw) {
+        const n = Number(raw);
+        if (Number.isFinite(n)) {
+          return Math.max(ORG_GRID_COLS_MIN, Math.min(ORG_GRID_COLS_MAX, Math.round(n)));
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    return colsForWidth(window.innerWidth - 360);
+  });
+  const [gridColsPinned, setGridColsPinned] = useState(() => {
+    try {
+      return localStorage.getItem(PAID_COLS_PINNED_KEY) === '1';
+    } catch {
+      return false;
+    }
+  });
+  const gridMeasureRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(PAID_VIEW_STORAGE_KEY, view);
+    } catch {
+      /* ignore */
+    }
+  }, [view]);
+
+  useEffect(() => {
+    const el = gridMeasureRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      if (gridColsPinned) return;
+      setGridCols(colsForWidth(w));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [gridColsPinned, colsForWidth]);
+
+  const setGridColsFromSlider = (value: number) => {
+    const next = Math.max(ORG_GRID_COLS_MIN, Math.min(ORG_GRID_COLS_MAX, Math.round(value)));
+    setGridCols(next);
+    setGridColsPinned(true);
+    try {
+      localStorage.setItem(PAID_COLS_STORAGE_KEY, String(next));
+      localStorage.setItem(PAID_COLS_PINNED_KEY, '1');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const resetGridColsAuto = () => {
+    setGridColsPinned(false);
+    try {
+      localStorage.removeItem(PAID_COLS_PINNED_KEY);
+    } catch {
+      /* ignore */
+    }
+    const w = gridMeasureRef.current?.clientWidth ?? 0;
+    setGridCols(colsForWidth(w));
+  };
 
   // Restore filters + scroll after returning from a paid Partner Hub.
   useEffect(() => {
@@ -885,7 +978,7 @@ export function PaidResourcesDirectoryView() {
       setResourceType(f.resourceType as PaidTypeFilter);
     }
     if (typeof f.q === 'string') setQ(f.q);
-    if (f.view === 'grid' || f.view === 'list') setView(f.view);
+    if (f.view === 'grid' || f.view === 'list' || f.view === 'compact') setView(f.view);
     const y = stashed.scrollY;
     if (y > 0) {
       requestAnimationFrame(() => {
@@ -972,11 +1065,92 @@ export function PaidResourcesDirectoryView() {
     openPartnerHub(l.hub.slug);
   };
 
+  const toolBtn =
+    'inline-flex h-8 w-8 items-center justify-center rounded-lg text-[#5C5878] hover:bg-[#FEF3C7] hover:text-[#B45309]';
+  const toolBtnOn = 'bg-[#FEF3C7] text-[#B45309]';
+
+  const renderPaidCard = (l: PaidListing, density: 'grid' | 'compact') => {
+    const isSaved = saved.has(l.id);
+    const tight = density === 'compact';
+    return (
+      <article
+        className={`group relative flex h-full flex-col overflow-hidden rounded-lg border border-[#1F1B4D]/[0.08] bg-white shadow-soft transition hover:border-[#B45309]/40 hover:shadow-hover ${
+          tight ? 'min-h-[7.5rem]' : 'min-h-[9.5rem]'
+        }`}
+      >
+        <div className={`relative ${tight ? 'p-1.5 pb-0' : 'p-2 pb-0'}`}>
+          {l.hub ? (
+            <OrgLogoStrip hub={l.hub} size={density} />
+          ) : (
+            <div
+              className={`flex w-full items-center justify-center overflow-hidden rounded-lg px-2 text-[11px] font-bold text-white ${
+                tight ? 'h-9' : 'h-12'
+              }`}
+              style={{ backgroundColor: l.logoBg || '#92400E' }}
+            >
+              {l.logoLabel || l.partnerName}
+            </div>
+          )}
+          <button
+            type="button"
+            aria-label={isSaved ? 'Remove from saved' : 'Save resource'}
+            aria-pressed={isSaved}
+            onClick={() => toggleSaved(l.id)}
+            className={`absolute flex items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#1F1B4D]/10 transition ${
+              tight ? 'right-2.5 top-2.5 h-6 w-6' : 'right-3.5 top-3.5 h-7 w-7'
+            } ${isSaved ? 'text-[#E11D48]' : 'text-[#1F1B4D]/40 hover:text-[#E11D48]'}`}
+          >
+            <Heart className={`${tight ? 'h-3 w-3' : 'h-3.5 w-3.5'} ${isSaved ? 'fill-current' : ''}`} />
+          </button>
+        </div>
+        <div className={`flex flex-1 flex-col ${tight ? 'px-2 pb-2 pt-1.5' : 'px-2.5 pb-2.5 pt-2'}`}>
+          <p className={`font-semibold text-[#B45309] ${tight ? 'text-[10px]' : 'text-[11px]'}`}>{l.subject}</p>
+          <h3
+            className={`mt-0.5 font-bold leading-snug tracking-tight line-clamp-2 ${ink} ${
+              tight ? 'text-[12px]' : 'text-[13px]'
+            }`}
+            title={l.title}
+          >
+            {l.title}
+          </h3>
+          <p
+            className={`mt-1 leading-snug ${muted} ${
+              tight ? 'line-clamp-1 text-[10px]' : 'line-clamp-2 text-[11px]'
+            }`}
+          >
+            {l.description}
+          </p>
+          <span
+            className={`mt-1.5 w-fit rounded-full font-bold ${PAID_TYPE_TONE[l.type]} ${
+              tight ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]'
+            }`}
+          >
+            {l.type}
+          </span>
+          <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
+            <p className={`font-bold text-[#92400E] ${tight ? 'text-[11px]' : 'text-[12px]'}`}>{l.priceLabel}</p>
+            <button
+              type="button"
+              aria-label={`Open ${l.title}`}
+              onClick={() => openListing(l)}
+              disabled={!l.hub}
+              className={`flex shrink-0 items-center justify-center rounded-full bg-[#FEF3C7] text-[#92400E] transition enabled:group-hover:bg-[#B45309] enabled:group-hover:text-white disabled:opacity-50 ${
+                tight ? 'h-6 w-6' : 'h-7 w-7'
+              }`}
+            >
+              <ArrowRight className={tight ? 'h-3 w-3' : 'h-3.5 w-3.5'} />
+            </button>
+          </div>
+        </div>
+      </article>
+    );
+  };
+
   return (
     <div className="space-y-5">
       <DirectorySearch value={q} onChange={setQ} placeholder="Search paid resources…" />
 
-      <DirectoryTopBar view={view} onView={setView} accent="#B45309">
+      <div className="flex flex-wrap items-center gap-2">
         <FilterChip
           label={subject === 'All' ? 'Subject' : subject}
           active={subject !== 'All'}
@@ -995,7 +1169,7 @@ export function PaidResourcesDirectoryView() {
           accent="#B45309"
           onClick={() => setResourceType(resourceType === 'All' ? 'Scheme of work' : 'All')}
         />
-      </DirectoryTopBar>
+      </div>
 
       <div className="grid gap-5 lg:grid-cols-[240px_minmax(0,1fr)]">
         <aside className="space-y-6 rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-4 sm:p-5">
@@ -1051,79 +1225,147 @@ export function PaidResourcesDirectoryView() {
           </FacetGroup>
         </aside>
 
-        <div className="space-y-4">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <h2 className="text-[22px] font-bold tracking-tight text-[#1F1B4D]">
-              {shown.length} paid resource{shown.length === 1 ? '' : 's'}
-            </h2>
-            <button
-              type="button"
-              className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10"
-            >
-              Sort by: Popular
-              <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
-            </button>
+        <div className="min-w-0 space-y-3">
+          <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2">
+            <div className="min-w-0 shrink-0 pr-1">
+              <h2 className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base">
+                {shown.length} paid resource{shown.length === 1 ? '' : 's'}
+              </h2>
+              <p className="text-[10px] font-medium leading-tight text-[#77738F]">Popular</p>
+            </div>
+
+            {(view === 'grid' || view === 'compact') && (
+              <label
+                className="flex items-center gap-1.5 rounded-lg border border-[#E2E0EF] bg-white px-2 py-1"
+                title={
+                  gridColsPinned
+                    ? `${gridCols} columns (drag to change; click Auto to fit width)`
+                    : `${gridCols} columns (auto-fits to width)`
+                }
+              >
+                <span className="text-[10px] font-bold tabular-nums text-[#5C5878]">{gridCols}</span>
+                <input
+                  type="range"
+                  min={ORG_GRID_COLS_MIN}
+                  max={ORG_GRID_COLS_MAX}
+                  step={1}
+                  value={gridCols}
+                  onChange={(e) => setGridColsFromSlider(Number(e.target.value))}
+                  className="h-1 w-16 cursor-pointer accent-[#B45309] sm:w-20"
+                  aria-label="Paid resources per row"
+                />
+                <button
+                  type="button"
+                  onClick={resetGridColsAuto}
+                  className={`rounded px-1 text-[9px] font-extrabold uppercase tracking-wide ${
+                    gridColsPinned ? 'text-[#B45309] hover:bg-[#FEF3C7]' : 'text-[#77738F]'
+                  }`}
+                >
+                  Auto
+                </button>
+              </label>
+            )}
+
+            <div className="ml-auto flex flex-wrap items-center gap-0.5">
+              <button
+                type="button"
+                onClick={() => setView('grid')}
+                className={`${toolBtn} ${view === 'grid' ? toolBtnOn : ''}`}
+                title="Grid view"
+                aria-pressed={view === 'grid'}
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('list')}
+                className={`${toolBtn} ${view === 'list' ? toolBtnOn : ''}`}
+                title="List view"
+                aria-pressed={view === 'list'}
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+              <button
+                type="button"
+                onClick={() => setView('compact')}
+                className={`${toolBtn} ${view === 'compact' ? toolBtnOn : ''}`}
+                title="Compact view"
+                aria-pressed={view === 'compact'}
+              >
+                <Rows3 className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
 
-          <ul
-            className={
-              view === 'grid' ? 'grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3' : 'space-y-2'
-            }
-            role="list"
-          >
-            {shown.map((l) => {
-              const isSaved = saved.has(l.id);
-              return (
-                <li key={l.id}>
-                  <article className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white transition hover:border-[#B45309]/40 hover:shadow-[0_14px_32px_-18px_rgba(180,83,9,0.35)]">
-                    <div className="relative p-3 pb-0">
-                      {l.hub ? (
-                        <OrgLogoStrip hub={l.hub} />
-                      ) : (
-                        <div
-                          className="flex h-[4.25rem] items-center justify-center rounded-xl px-4 text-[13px] font-bold text-white"
-                          style={{ backgroundColor: l.logoBg || '#92400E' }}
+          <div ref={gridMeasureRef}>
+            {view === 'list' ? (
+              <ul className="overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white" role="list">
+                {shown.map((l) => {
+                  const isSaved = saved.has(l.id);
+                  return (
+                    <li key={l.id} className="border-b border-[#1F1B4D]/[0.06] last:border-0">
+                      <div className="flex w-full items-center gap-2.5 px-3 py-2 hover:bg-[#FFFBEB]">
+                        <button
+                          type="button"
+                          onClick={() => openListing(l)}
+                          disabled={!l.hub}
+                          className="flex min-w-0 flex-1 items-center gap-2.5 text-left disabled:opacity-50"
                         >
-                          {l.logoLabel || l.partnerName}
-                        </div>
-                      )}
-                      <button
-                        type="button"
-                        aria-label={isSaved ? 'Remove from saved' : 'Save resource'}
-                        aria-pressed={isSaved}
-                        onClick={() => toggleSaved(l.id)}
-                        className={`absolute right-5 top-5 flex h-8 w-8 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#1F1B4D]/10 transition ${
-                          isSaved ? 'text-[#E11D48]' : 'text-[#1F1B4D]/40 hover:text-[#E11D48]'
-                        }`}
-                      >
-                        <Heart className={`h-4 w-4 ${isSaved ? 'fill-current' : ''}`} />
-                      </button>
-                    </div>
-                    <div className="flex flex-1 flex-col px-4 pb-4 pt-3">
-                      <p className="text-[12px] font-semibold text-[#B45309]">{l.subject}</p>
-                      <h3 className={`mt-0.5 text-[15px] font-bold leading-snug tracking-tight ${ink}`}>{l.title}</h3>
-                      <p className={`mt-1.5 line-clamp-2 text-[12px] leading-snug ${muted}`}>{l.description}</p>
-                      <span className={`mt-2 w-fit rounded-full px-2.5 py-0.5 text-[11px] font-bold ${PAID_TYPE_TONE[l.type]}`}>
-                        {l.type}
-                      </span>
-                      <div className="mt-auto flex items-center justify-between gap-2 pt-3">
-                        <p className="text-[14px] font-bold text-[#92400E]">{l.priceLabel}</p>
+                          {l.hub ? (
+                            <OrgLogoMark hub={l.hub} />
+                          ) : (
+                            <span
+                              className="flex h-9 w-14 shrink-0 items-center justify-center rounded-md text-[9px] font-bold text-white"
+                              style={{ backgroundColor: l.logoBg || '#92400E' }}
+                            >
+                              {(l.logoLabel || l.partnerName).slice(0, 3)}
+                            </span>
+                          )}
+                          <span className="min-w-0 flex-1">
+                            <span className={`block truncate text-[13px] font-bold ${ink}`}>{l.title}</span>
+                            <span className="block truncate text-[11px] font-semibold text-[#B45309]">
+                              {l.subject} · {l.type}
+                            </span>
+                            <span className={`block truncate text-[11px] ${muted}`}>{l.priceLabel}</span>
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={isSaved ? 'Remove from saved' : 'Save resource'}
+                          aria-pressed={isSaved}
+                          onClick={() => toggleSaved(l.id)}
+                          className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full transition ${
+                            isSaved ? 'text-[#E11D48]' : 'text-[#1F1B4D]/35 hover:text-[#E11D48]'
+                          }`}
+                        >
+                          <Heart className={`h-3.5 w-3.5 ${isSaved ? 'fill-current' : ''}`} />
+                        </button>
                         <button
                           type="button"
                           aria-label={`Open ${l.title}`}
                           onClick={() => openListing(l)}
                           disabled={!l.hub}
-                          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7] text-[#92400E] transition enabled:group-hover:bg-[#B45309] enabled:group-hover:text-white disabled:opacity-50"
+                          className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#FEF3C7] text-[#92400E] disabled:opacity-50"
                         >
-                          <ArrowRight className="h-4 w-4" />
+                          <ArrowRight className="h-3.5 w-3.5" />
                         </button>
                       </div>
-                    </div>
-                  </article>
-                </li>
-              );
-            })}
-          </ul>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <ul
+                className="grid gap-3"
+                style={{ gridTemplateColumns: `repeat(${gridCols}, minmax(0, 1fr))` }}
+                role="list"
+              >
+                {shown.map((l) => (
+                  <li key={l.id}>{renderPaidCard(l, view === 'compact' ? 'compact' : 'grid')}</li>
+                ))}
+              </ul>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -1219,8 +1461,8 @@ export function MusicHubToolbar({
   onView,
 }: {
   searchSlot?: React.ReactNode;
-  view?: 'grid' | 'list';
-  onView?: (v: 'grid' | 'list') => void;
+  view?: 'grid' | 'list' | 'compact';
+  onView?: (v: 'grid' | 'list' | 'compact') => void;
 }) {
   return (
     <div className="flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -1247,18 +1489,41 @@ export function MusicHubToolbar({
           </button>
         ))}
         {onView && (
-          <button
-            type="button"
-            onClick={() => onView(view === 'list' ? 'grid' : 'list')}
-            className={`inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition ${
-              view === 'list'
-                ? 'bg-[#0B6B5F] text-white'
-                : 'bg-white text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/12'
-            }`}
-          >
-            <List className="h-3.5 w-3.5" aria-hidden />
-            List view
-          </button>
+          <div className="ml-auto inline-flex items-center gap-0.5 rounded-xl border border-[#E2E0EF] bg-white p-0.5">
+            <button
+              type="button"
+              onClick={() => onView('grid')}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${
+                view === 'grid' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#F4FBF7]'
+              }`}
+              title="Grid view"
+              aria-pressed={view === 'grid'}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => onView('list')}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${
+                view === 'list' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#F4FBF7]'
+              }`}
+              title="List view"
+              aria-pressed={view === 'list'}
+            >
+              <List className="h-3.5 w-3.5" aria-hidden />
+            </button>
+            <button
+              type="button"
+              onClick={() => onView('compact')}
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-lg transition ${
+                view === 'compact' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#F4FBF7]'
+              }`}
+              title="Compact view"
+              aria-pressed={view === 'compact'}
+            >
+              <Rows3 className="h-3.5 w-3.5" aria-hidden />
+            </button>
+          </div>
         )}
       </div>
     </div>
@@ -1349,6 +1614,7 @@ export function MusicHubResultCard({
   location,
   detail,
   onOpen,
+  compact = false,
 }: {
   id: string;
   name: string;
@@ -1356,20 +1622,25 @@ export function MusicHubResultCard({
   location: string;
   detail: string;
   onOpen: () => void;
+  compact?: boolean;
 }) {
   const [saved, setSaved] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
   const wordmark = hubWordmark(id);
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white text-left shadow-[0_1px_2px_rgba(31,27,77,0.04)] transition hover:border-[#0B6B5F]/35 hover:shadow-[0_10px_22px_-14px_rgba(11,107,95,0.35)]">
+    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-[#1F1B4D]/[0.08] bg-white text-left shadow-soft transition hover:border-[#0B6B5F]/35 hover:shadow-hover">
       <button type="button" onClick={onOpen} className="flex min-w-0 flex-col text-left">
         <div
-          className="relative flex h-[92px] shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-[#1F1B4D]/[0.04]"
+          className={`relative flex shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-[#1F1B4D]/[0.04] ${
+            compact ? 'h-12' : 'h-[72px]'
+          }`}
           style={wordmark ? { backgroundColor: wordmark.tint } : { backgroundColor: '#FFFFFF' }}
         >
           {wordmark ? (
             <span
-              className="line-clamp-3 px-3 text-center text-[13px] font-bold leading-snug tracking-tight sm:text-[14px]"
+              className={`line-clamp-2 px-2 text-center font-bold leading-snug tracking-tight ${
+                compact ? 'text-[10px]' : 'text-[12px]'
+              }`}
               style={{ color: wordmark.color }}
             >
               {wordmark.label}
@@ -1378,26 +1649,44 @@ export function MusicHubResultCard({
             <img
               src={hubHeroSrc(id)}
               alt=""
-              className="h-[80%] max-h-[74px] w-[82%] object-contain transition duration-500 group-hover:scale-[1.02]"
+              className={`w-[82%] object-contain transition duration-500 group-hover:scale-[1.02] ${
+                compact ? 'h-[78%] max-h-8' : 'h-[80%] max-h-[56px]'
+              }`}
               loading="lazy"
               onError={() => setHeroFailed(true)}
             />
           ) : (
-            <span className="line-clamp-3 px-3 text-center text-[13px] font-bold leading-snug text-[#0B6B5F]">
+            <span
+              className={`line-clamp-2 px-2 text-center font-bold leading-snug text-[#0B6B5F] ${
+                compact ? 'text-[10px]' : 'text-[12px]'
+              }`}
+            >
               {name}
             </span>
           )}
-          <span className="absolute left-1.5 top-1.5 inline-flex max-w-[70%] truncate items-center rounded-full bg-white/95 px-1.5 py-0.5 text-[9px] font-bold leading-none text-[#1F1B4D] shadow-sm ring-1 ring-[#1F1B4D]/[0.06]">
+          <span className="absolute left-1 top-1 inline-flex max-w-[70%] truncate items-center rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold leading-none text-[#1F1B4D] shadow-sm ring-1 ring-[#1F1B4D]/[0.06]">
             {region}
           </span>
         </div>
-        <div className="relative flex flex-col px-2.5 pb-2 pt-2">
-          <h3 className={`line-clamp-2 min-h-[2.4em] text-[12.5px] font-bold leading-snug tracking-tight ${ink}`}>{name}</h3>
-          <p className={`mt-0.5 truncate text-[10px] font-medium ${muted}`}>{location}</p>
-          <p className={`mt-1 line-clamp-2 min-h-[2.4em] text-[10px] leading-snug ${muted}`}>{detail}</p>
+        <div className={`relative flex flex-col ${compact ? 'px-2 pb-1.5 pt-1.5' : 'px-2.5 pb-2 pt-2'}`}>
+          <h3
+            className={`line-clamp-2 font-bold leading-snug tracking-tight ${ink} ${
+              compact ? 'text-[11px]' : 'text-[12.5px]'
+            }`}
+          >
+            {name}
+          </h3>
+          <p className={`mt-0.5 truncate font-medium ${muted} ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
+            {location}
+          </p>
+          {!compact && <p className={`mt-1 line-clamp-2 text-[10px] leading-snug ${muted}`}>{detail}</p>}
           <div className="mt-1.5 flex justify-end">
-            <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white">
-              <ArrowRight className="h-3 w-3" aria-hidden />
+            <span
+              className={`flex shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white ${
+                compact ? 'h-5 w-5' : 'h-6 w-6'
+              }`}
+            >
+              <ArrowRight className={compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} aria-hidden />
             </span>
           </div>
         </div>
@@ -1410,11 +1699,11 @@ export function MusicHubResultCard({
           e.stopPropagation();
           setSaved((v) => !v);
         }}
-        className={`absolute right-1.5 top-1.5 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#1F1B4D]/10 ${
-          saved ? 'text-[#E11D48]' : 'text-[#1F1B4D]/40 hover:text-[#E11D48]'
-        }`}
+        className={`absolute z-10 flex items-center justify-center rounded-full bg-white/95 shadow-sm ring-1 ring-[#1F1B4D]/10 ${
+          compact ? 'right-1 top-1 h-5 w-5' : 'right-1.5 top-1.5 h-6 w-6'
+        } ${saved ? 'text-[#E11D48]' : 'text-[#1F1B4D]/40 hover:text-[#E11D48]'}`}
       >
-        <Heart className={`h-3 w-3 ${saved ? 'fill-current' : ''}`} />
+        <Heart className={`${compact ? 'h-2.5 w-2.5' : 'h-3 w-3'} ${saved ? 'fill-current' : ''}`} />
       </button>
     </article>
   );

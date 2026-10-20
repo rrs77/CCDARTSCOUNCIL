@@ -10,13 +10,16 @@ import {
   FileText,
   Info,
   KeyRound,
+  LayoutGrid,
   Library,
+  List,
   Lock,
   Mail,
   MapPin,
   Music2,
   Pencil,
   Phone,
+  Rows3,
   Search,
   Sparkles,
   X,
@@ -49,6 +52,9 @@ import {
 } from './hubsPreviewContent';
 import {
   ArtsOrganisationsDirectoryView,
+  HUBS_GRID_CARD_MIN_PX,
+  HUBS_GRID_COLS_MAX,
+  HUBS_GRID_COLS_MIN,
   MusicHubListRow,
   MusicHubResultCard,
   MusicHubToolbar,
@@ -1833,7 +1839,31 @@ function PartnerHubsBrowse({
   go: (f: MapFocus, page?: Page) => void;
 }) {
   const resultsRef = useRef<HTMLElement | null>(null);
-  const [hubsView, setHubsView] = useState<'grid' | 'list'>('grid');
+  const hubsGridMeasureRef = useRef<HTMLDivElement | null>(null);
+  const [hubsView, setHubsView] = useState<'grid' | 'list' | 'compact'>('grid');
+  const hubsColsForWidth = useCallback((width: number) => {
+    if (width <= 0) return 4;
+    return Math.max(
+      HUBS_GRID_COLS_MIN,
+      Math.min(HUBS_GRID_COLS_MAX, Math.floor(width / HUBS_GRID_CARD_MIN_PX)),
+    );
+  }, []);
+  const [hubsGridCols, setHubsGridCols] = useState(() =>
+    typeof window === 'undefined' ? 5 : Math.max(HUBS_GRID_COLS_MIN, Math.min(HUBS_GRID_COLS_MAX, Math.floor((window.innerWidth - 80) / HUBS_GRID_CARD_MIN_PX))),
+  );
+  const [hubsGridColsPinned, setHubsGridColsPinned] = useState(false);
+
+  useEffect(() => {
+    const el = hubsGridMeasureRef.current;
+    if (!el || typeof ResizeObserver === 'undefined') return;
+    const ro = new ResizeObserver((entries) => {
+      const w = entries[0]?.contentRect.width ?? 0;
+      if (hubsGridColsPinned) return;
+      setHubsGridCols(hubsColsForWidth(w));
+    });
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, [hubsGridColsPinned, hubsColsForWidth]);
 
   const atMapLanding =
     focus.level === 'uk' || (focus.level === 'nation' && focus.id === ENGLAND);
@@ -2062,14 +2092,90 @@ function PartnerHubsBrowse({
                 </div>
               </div>
 
-              <div className="flex flex-wrap items-center justify-end gap-3">
-                <button
-                  type="button"
-                  className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10"
-                >
-                  Sort by: A–Z
-                  <ChevronRight className="h-3.5 w-3.5 rotate-90 opacity-50" aria-hidden />
-                </button>
+              <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2">
+                <div className="min-w-0 shrink-0 pr-1">
+                  <h3 className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base">
+                    {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'}
+                  </h3>
+                  <p className="text-[10px] font-medium leading-tight text-[#77738F]">A–Z</p>
+                </div>
+                {(hubsView === 'grid' || hubsView === 'compact') && (
+                  <label
+                    className="flex items-center gap-1.5 rounded-lg border border-[#E2E0EF] bg-white px-2 py-1"
+                    title={
+                      hubsGridColsPinned
+                        ? `${hubsGridCols} columns (drag to change; click Auto to fit width)`
+                        : `${hubsGridCols} columns (auto-fits to width)`
+                    }
+                  >
+                    <span className="text-[10px] font-bold tabular-nums text-[#5C5878]">{hubsGridCols}</span>
+                    <input
+                      type="range"
+                      min={HUBS_GRID_COLS_MIN}
+                      max={HUBS_GRID_COLS_MAX}
+                      step={1}
+                      value={hubsGridCols}
+                      onChange={(e) => {
+                        const next = Math.max(
+                          HUBS_GRID_COLS_MIN,
+                          Math.min(HUBS_GRID_COLS_MAX, Math.round(Number(e.target.value))),
+                        );
+                        setHubsGridCols(next);
+                        setHubsGridColsPinned(true);
+                      }}
+                      className="h-1 w-16 cursor-pointer accent-[#0B6B5F] sm:w-20"
+                      aria-label="Music Hubs per row"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setHubsGridColsPinned(false);
+                        const w = hubsGridMeasureRef.current?.clientWidth ?? 0;
+                        setHubsGridCols(hubsColsForWidth(w));
+                      }}
+                      className={`rounded px-1 text-[9px] font-extrabold uppercase tracking-wide ${
+                        hubsGridColsPinned ? 'text-[#0B6B5F] hover:bg-[#E4F4EF]' : 'text-[#77738F]'
+                      }`}
+                    >
+                      Auto
+                    </button>
+                  </label>
+                )}
+                <div className="ml-auto flex flex-wrap items-center gap-0.5">
+                  <button
+                    type="button"
+                    onClick={() => setHubsView('grid')}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+                      hubsView === 'grid' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#E4F4EF]'
+                    }`}
+                    title="Grid view"
+                    aria-pressed={hubsView === 'grid'}
+                  >
+                    <LayoutGrid className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHubsView('list')}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+                      hubsView === 'list' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#E4F4EF]'
+                    }`}
+                    title="List view"
+                    aria-pressed={hubsView === 'list'}
+                  >
+                    <List className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setHubsView('compact')}
+                    className={`inline-flex h-8 w-8 items-center justify-center rounded-lg ${
+                      hubsView === 'compact' ? 'bg-[#E4F4EF] text-[#0B6B5F]' : 'text-[#5C5878] hover:bg-[#E4F4EF]'
+                    }`}
+                    title="Compact view"
+                    aria-pressed={hubsView === 'compact'}
+                  >
+                    <Rows3 className="h-3.5 w-3.5" />
+                  </button>
+                </div>
               </div>
 
               {regionHubs.length === 0 ? (
@@ -2092,23 +2198,27 @@ function PartnerHubsBrowse({
                   ))}
                 </ul>
               ) : (
-                <ul
-                  className="grid grid-cols-1 items-start gap-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
-                  role="list"
-                >
-                  {regionHubs.map((h) => (
-                    <li key={h.id} className="min-w-0">
-                      <MusicHubResultCard
-                        id={h.id}
-                        name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
-                        region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
-                        location={h.authorities[0] || h.aceAreaName || 'England'}
-                        detail={musicHubCardDetail(h.id, h.leadOrganisation ?? undefined, h.lads.length)}
-                        onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
-                      />
-                    </li>
-                  ))}
-                </ul>
+                <div ref={hubsGridMeasureRef}>
+                  <ul
+                    className={`grid items-start ${hubsView === 'compact' ? 'gap-1.5' : 'gap-2'}`}
+                    style={{ gridTemplateColumns: `repeat(${hubsGridCols}, minmax(0, 1fr))` }}
+                    role="list"
+                  >
+                    {regionHubs.map((h) => (
+                      <li key={h.id} className="min-w-0">
+                        <MusicHubResultCard
+                          id={h.id}
+                          name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
+                          region={ix.region(h.region)?.name || h.aceAreaName || 'England'}
+                          location={h.authorities[0] || h.aceAreaName || 'England'}
+                          detail={musicHubCardDetail(h.id, h.leadOrganisation ?? undefined, h.lads.length)}
+                          onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
+                          compact={hubsView === 'compact'}
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                </div>
               )}
 
               <p className={`flex items-center gap-2 text-[12px] ${muted}`}>

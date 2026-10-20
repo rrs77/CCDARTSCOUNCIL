@@ -431,7 +431,7 @@ export interface PaidResourcesReturnFilters {
   ages: string[];
   resourceType: string;
   q: string;
-  view: 'grid' | 'list';
+  view: 'grid' | 'list' | 'compact';
 }
 
 export interface PaidResourcesReturnState {
