@@ -250,8 +250,8 @@ export function LessonLibrary({
   }, [userPacks]);
 
   // Show "Add unit" only for packs whose year_group_sections include the current class (same for all packs: bought or assigned).
-  const currentSectionId = yearGroupSections.find(
-    s => sectionContainsCanonicalId(s.yearGroupIds, currentSheetInfo.sheet, customYearGroups)
+  const currentSectionId = (yearGroupSections || []).find(
+    s => sectionContainsCanonicalId(s.yearGroupIds || [], currentSheetInfo?.sheet || '', customYearGroups)
   )?.id ?? null;
   const packsVisibleForSection = packsWithStacks.filter(
     p => !p.year_group_sections?.length || (currentSectionId != null && p.year_group_sections.includes(currentSectionId))
@@ -295,8 +295,8 @@ export function LessonLibrary({
 
   // Get which half-term a lesson is assigned to (using dynamic data)
   const getLessonHalfTerm = (lessonNumber: string): string | null => {
-    for (const halfTerm of halfTerms) {
-      if (halfTerm.lessons.includes(lessonNumber)) {
+    for (const halfTerm of halfTerms || []) {
+      if (Array.isArray(halfTerm?.lessons) && halfTerm.lessons.includes(lessonNumber)) {
         return halfTerm.id;
       }
     }
