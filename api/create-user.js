@@ -12,6 +12,7 @@ import {
   createServiceClient,
   getClientIp,
   hashIpForStorage,
+  isFullUserAdmin,
   jsonResponse,
   optionsResponse,
   requireAdmin,
@@ -77,8 +78,19 @@ export async function POST(request) {
 
     const roleVal = role && CREATE_USER_ROLES.includes(role) ? role : 'teacher';
     const actorIsSuper = SUPER_ADMIN_ROLES.has(admin.profile?.role);
+    const actorIsFullAdmin = isFullUserAdmin(admin.profile);
     if ((roleVal === 'superuser' || roleVal === 'super_admin') && !actorIsSuper) {
       return safeJson({ error: 'Only a super admin can create another super admin.' }, 403);
+    }
+    // Org / hub admins cannot mint system admins
+    if (
+      !actorIsFullAdmin &&
+      (roleVal === 'admin' || roleVal === 'organisation' || roleVal === 'superuser' || roleVal === 'super_admin')
+    ) {
+      return safeJson(
+        { error: 'Your role can invite teachers and viewers for your organisation only.' },
+        403,
+      );
     }
 
     const displayName =
@@ -95,6 +107,43 @@ export async function POST(request) {
         },
         500,
       );
+    }
+
+    // Scope org-admin invites to their organisation (and first hub they administer).
+    let scopedOrganisationId =
+      typeof organisation_id === 'string' ? organisation_id.trim() || null : null;
+    let scopedOrganisationName =
+      typeof organisation_name === 'string' ? organisation_name.trim() || null : null;
+    if (!actorIsFullAdmin) {
+      const actorOrg = admin.profile?.organisation_id || null;
+      const { data: hubAdminRows } = await supabase
+        .from('hub_memberships')
+        .select('organisation_id')
+        .eq('user_id', admin.userId)
+        .eq('role', 'hub_administrator')
+        .limit(5);
+      const hubOrgIds = (hubAdminRows || [])
+        .map((r) => r.organisation_id)
+        .filter(Boolean);
+      const allowedOrgs = new Set([actorOrg, ...hubOrgIds].filter(Boolean));
+      if (allowedOrgs.size === 0) {
+        return safeJson(
+          { error: 'Your account is not linked to an organisation. Ask a super admin to assign one.' },
+          403,
+        );
+      }
+      if (scopedOrganisationId && !allowedOrgs.has(scopedOrganisationId)) {
+        return safeJson({ error: 'You can only invite users to your own organisation.' }, 403);
+      }
+      if (!scopedOrganisationId) {
+        scopedOrganisationId = actorOrg || hubOrgIds[0];
+      }
+      if (!scopedOrganisationName) {
+        scopedOrganisationName =
+          admin.profile?.organisation_name ||
+          admin.profile?.school_or_org ||
+          null;
+      }
     }
 
     const { data: existingProfiles, error: existingErr } = await supabase
@@ -187,9 +236,8 @@ export async function POST(request) {
       status: 'invited',
       must_change_password: true,
       ...perms,
-      organisation_id: typeof organisation_id === 'string' ? organisation_id.trim() || null : null,
-      organisation_name:
-        typeof organisation_name === 'string' ? organisation_name.trim() || null : null,
+      organisation_id: scopedOrganisationId,
+      organisation_name: scopedOrganisationName,
       marketing_consent: marketing_consent === true,
       marketing_consent_at: marketing_consent === true ? new Date().toISOString() : null,
       updated_at: new Date().toISOString(),

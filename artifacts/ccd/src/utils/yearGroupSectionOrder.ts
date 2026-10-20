@@ -40,28 +40,60 @@ export function resolveYearGroupFromToken<T extends YearGroupLike>(
   );
 }
 
-/** Suggest a key-stage section by name/id pattern (hint only — never auto-allocate for real users). */
+/**
+ * Suggest a key-stage section by name/id pattern.
+ * Used as a display fallback when Settings has not placed the class in a stage yet.
+ * Check higher year numbers first so "Year 11" is not matched as "Year 1".
+ */
 export function getDefaultSectionIdForYearGroup(id: string, name: string): string {
-  const n = name || id || '';
+  const n = `${name || ''} ${id || ''}`.trim();
   const lower = n.toLowerCase();
-  if (['lkg', 'ukg', 'lower kindergarten', 'upper kindergarten', 'reception'].some((k) => lower.includes(k))) {
+
+  // EYFS — kindergarten / reception (word-ish matches; avoid false hits on longer ids)
+  if (
+    /\b(lkg|ukg)\b/.test(lower) ||
+    lower.includes('lower kindergarten') ||
+    lower.includes('upper kindergarten') ||
+    /\breception\b/.test(lower)
+  ) {
     return 'eyfs';
   }
-  if (lower.includes('year 1') || lower.includes('year1')) return 'ks1';
-  if (lower.includes('year 2') || lower.includes('year2')) return 'ks1';
-  if (['year 3', 'year 4', 'year 5', 'year 6'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks2';
+
+  // Explicit stage / qualification labels
+  if (/\b(gcse|ks4|key stage 4)\b/.test(lower)) return 'ks4';
+  if (/\b(a[\s-]?level|ks5|key stage 5|sixth form)\b/.test(lower)) return 'ks5';
+  if (/\b(ks3|key stage 3)\b/.test(lower)) return 'ks3';
+  if (/\b(ks2|key stage 2)\b/.test(lower)) return 'ks2';
+  if (/\b(ks1|key stage 1)\b/.test(lower)) return 'ks1';
+  if (/\b(eyfs|early years)\b/.test(lower)) return 'eyfs';
+
+  // Year N — highest first so Year 11 ≠ Year 1
+  const yearMatch = lower.match(/\byear\s*(\d{1,2})\b/) || lower.match(/\by(\d{1,2})\b/);
+  if (yearMatch) {
+    const y = Number(yearMatch[1]);
+    if (y === 1 || y === 2) return 'ks1';
+    if (y >= 3 && y <= 6) return 'ks2';
+    if (y >= 7 && y <= 9) return 'ks3';
+    if (y === 10 || y === 11) return 'ks4';
+    if (y >= 12 && y <= 14) return 'ks5';
   }
-  if (['year 7', 'year 8', 'year 9'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks3';
-  }
-  if (['year 10', 'year 11'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks4';
-  }
-  if (['year 12', 'year 13', 'year 14'].some((y) => lower.includes(y.replace(' ', '')) || lower.includes(y))) {
-    return 'ks5';
-  }
+
   return 'other';
+}
+
+/**
+ * Resolve which section a class belongs to for display:
+ * 1) Settings key-stage membership (EYFS–KS5) wins — drag-into-stage stays authoritative
+ * 2) If the class is missing or only in Other/Unallocated, infer from name/id
+ * Does not write back to Settings.
+ */
+export function resolveDisplaySectionIdForYearGroup<
+  S extends YearGroupSectionLike,
+  T extends YearGroupLike
+>(sections: S[], group: T, groups: T[]): string {
+  const fromSettings = findSectionIdForYearGroup(sections, group.id, groups);
+  if (fromSettings && fromSettings !== 'other') return fromSettings;
+  return getDefaultSectionIdForYearGroup(group.id, group.name);
 }
 
 function emptySectionBuckets(): Map<string, string[]> {
@@ -120,28 +152,57 @@ export function buildDemoYearGroupSections<T extends YearGroupLike>(
   const bySection = emptySectionBuckets();
   yearGroups.forEach((g) => {
     const hinted = getDefaultSectionIdForYearGroup(g.id, g.name);
+    // Keep all key stages (incl. KS3–KS5) so GCSE / A-level library folders are reachable.
     const sectionId =
-      hinted === 'eyfs' || hinted === 'ks1' || hinted === 'ks2' ? hinted : 'other';
+      hinted === 'eyfs' ||
+      hinted === 'ks1' ||
+      hinted === 'ks2' ||
+      hinted === 'ks3' ||
+      hinted === 'ks4' ||
+      hinted === 'ks5'
+        ? hinted
+        : 'other';
     (bySection.get(sectionId) ?? bySection.get('other')!).push(g.id);
   });
   return sectionsFromBuckets(bySection);
 }
 
+/** Keep GCSE / A-level / explicit KS3–5 labels in their stage when demoting demos. */
+function shouldKeepInSecondaryStage(group: YearGroupLike | undefined): boolean {
+  if (!group) return false;
+  const lower = `${group.id || ''} ${group.name || ''}`.toLowerCase();
+  return (
+    /\b(gcse|a[\s-]?level|ocr|ks3|ks4|ks5|key stage [345]|year\s*1[0-3]\b|year\s*[789]\b)/.test(
+      lower,
+    )
+  );
+}
+
 /**
- * Demo helper: move classes out of KS3/KS4/KS5 into Other so the Header only
- * surfaces a primary (EYFS/KS1/KS2) allocated subset unless the user re-drags.
+ * Demo helper: move generic secondary classes out of KS3/KS4/KS5 into Other so
+ * the Header stays uncluttered, but keep explicit GCSE / A-level / Year 7–13
+ * classes in their key stage so Activity Library hierarchy is reachable.
  */
 export function demoteSecondarySectionsToOther<S extends YearGroupSectionLike>(
   sections: S[],
   groups: YearGroupLike[],
 ): S[] {
   const secondaryIds = new Set(['ks3', 'ks4', 'ks5']);
+  const groupById = new Map(groups.map((g) => [g.id, g]));
   const moved: string[] = [];
   const working = sections.map((s) => {
     if (!secondaryIds.has(s.id)) return s;
     const ids = normalizeSectionYearGroupIdList(s.yearGroupIds || [], groups);
-    moved.push(...ids);
-    return { ...s, yearGroupIds: [] as string[] };
+    const keep: string[] = [];
+    for (const id of ids) {
+      const g = groupById.get(id) || groups.find((x) => x.name === id);
+      if (shouldKeepInSecondaryStage(g) || shouldKeepInSecondaryStage({ id, name: id })) {
+        keep.push(id);
+      } else {
+        moved.push(id);
+      }
+    }
+    return { ...s, yearGroupIds: keep };
   });
   if (moved.length === 0) return working;
   if (!working.some((s) => s.id === 'other')) {

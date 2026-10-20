@@ -1,5 +1,6 @@
 import { supabase, TABLES, isSupabaseConfigured } from './supabase';
 import { isDemoModeActive } from '../utils/demoMode';
+import { filterLessonEntries } from '../utils/lessonEntries';
 import type { Activity, LessonData, LessonPlan } from '../contexts/DataContext';
 
 // Synthetic, UUID-shaped user id for Preview/Demo sessions. It satisfies the
@@ -392,9 +393,12 @@ export const lessonsApi = {
           if (import.meta.env.DEV) console.log('🔍 Lessons from Supabase:', data.sheet_name, data.academic_year, data.data ? Object.keys(data.data).length : 0, 'lessons');
           // Merge lesson data
           if (data.data) {
+            // data.data must be a flat lessons map. Older demo seeds nested
+            // sheet metadata (allLessonsData, lessonStandards) into this blob;
+            // drop those so pickers never treat them as lessons.
             mergedData.allLessonsData = {
               ...mergedData.allLessonsData,
-              ...data.data
+              ...filterLessonEntries(data.data),
             };
           }
           // Merge lesson numbers (deduplicate)
@@ -438,7 +442,7 @@ export const lessonsApi = {
     if (error) throw error;
     if (!data) return null;
     return {
-      allLessonsData: (data.data || {}) as Record<string, any>,
+      allLessonsData: filterLessonEntries((data.data || {}) as Record<string, unknown>),
       lessonNumbers: (data.lesson_numbers || []) as string[],
       teachingUnits: (data.teaching_units || []) as string[],
       notes: (data.notes || '') as string,

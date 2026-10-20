@@ -130,7 +130,9 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [cloneData, setCloneData] = useState({ sourceId: '', targetName: '', targetColor: '#3B82F6' });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
+  /** Subject-area KS folders start collapsed (ids in the set = collapsed). */
   const [collapsedSectionIds, setCollapsedSectionIds] = useState<Set<string>>(new Set());
+  const [subjectSectionsSeeded, setSubjectSectionsSeeded] = useState(false);
 
   const yearGroupIndexById = React.useMemo(() => {
     const map = new Map<string, number>();
@@ -197,6 +199,13 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     return [...sectionMap.values()].filter((section) => section.items.length > 0);
   }, [yearGroups, sectionOrder, sectionLabelByCustomYearGroupName]);
 
+  // First paint: collapse every Subject Areas KS folder (and keep objective groups collapsed).
+  React.useEffect(() => {
+    if (subjectSectionsSeeded || groupedYearGroups.length === 0) return;
+    setCollapsedSectionIds(new Set(groupedYearGroups.map((s) => s.id)));
+    setSubjectSectionsSeeded(true);
+  }, [groupedYearGroups, subjectSectionsSeeded]);
+
   // Helper function to auto-resize textarea
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
     textarea.style.height = 'auto';
@@ -260,16 +269,13 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     }
   }, [isOpen, embedded]);
 
-  // Auto-expand all areas when a year group is selected
+  // Keep objective groups collapsed when switching subject — only strand/group
+  // titles show until the teacher opens a group ("N objectives").
   useEffect(() => {
     if (selectedYearGroup) {
-      const yearGroup = yearGroups.find(yg => yg.id === selectedYearGroup);
-      if (yearGroup && Array.isArray(yearGroup.areas)) {
-        const allAreaIds = new Set((yearGroup.areas as { id: string }[]).map(area => area.id));
-        setExpandedAreas(allAreaIds);
-      }
+      setExpandedAreas(new Set());
     }
-  }, [selectedYearGroup, yearGroups]);
+  }, [selectedYearGroup]);
 
   const loadData = async () => {
     setLoading(true);
@@ -277,12 +283,11 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
       const data = await customObjectivesApi.getCompleteStructure();
       setYearGroups(data);
       
-      // Expand first year group by default (guard missing areas)
+      // Select first subject by default; leave all objective groups collapsed
+      // so "I can" statements stay hidden until a group is clicked.
       if (data.length > 0 && !selectedYearGroup) {
-        const first = data[0];
-        setSelectedYearGroup(first.id);
-        const areas = Array.isArray(first.areas) ? first.areas : [];
-        setExpandedAreas(new Set(areas.map((area: { id: string }) => area.id)));
+        setSelectedYearGroup(data[0].id);
+        setExpandedAreas(new Set());
       }
     } catch (error) {
       console.error('Failed to load custom objectives:', error);
@@ -1460,10 +1465,10 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     </>
   );
 
-  // Embedded mode - render directly without modal wrapper
+  // Embedded mode — fill the Settings pane (independent scroll in each column)
   if (embedded) {
     return (
-      <div className="bg-white rounded-xl border border-gray-200 shadow-sm flex flex-col overflow-hidden" style={{ height: '600px' }}>
+      <div className="ss-objectives-admin bg-white rounded-xl border border-[#E2E0EF] shadow-sm flex flex-col overflow-hidden min-h-0 flex-1 h-full">
         {content}
       </div>
     );

@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef, ReactNode } from 'react';
 import { wordpressAPI } from '../config/api';
-import { supabase, isSupabaseAuthEnabled } from '../config/supabase';
+import { supabase, getLiveSupabase, isSupabaseAuthEnabled } from '../config/supabase';
 import type { AppUser, Profile } from '../types/auth';
 import {
   isDemoModeActive,
@@ -8,6 +8,7 @@ import {
   clearDemoMode,
   getDemoOriginSchool,
 } from '../utils/demoMode';
+import { titleCaseSlug } from '../utils/accountDisplay';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -39,16 +40,54 @@ function useAuth() {
  * Logout clears the flag, the seeded data, and redirects back to the
  * originating school homepage.
  */
-// The demo visitor gets a full `teacher` role so every create / edit /
-// duplicate workflow works in the prototype. All of their changes stay in
-// browser storage (mock Supabase client + seeded localStorage) and are wiped
-// when the session ends, so nothing can reach the live account.
-const DEMO_USER: AppUser = {
-  id: 'demo-visitor',
-  email: 'demo@ccd.preview',
-  name: 'Demo Visitor',
-  role: 'teacher',
-};
+/**
+ * Demo / Preview session identity.
+ * Display name is never the literal "Demo Visitor" — derive from the school
+ * slug when available so the header account menu looks like a real teacher.
+ * Role is admin + can_manage_users so Settings → Users is visible in demo.
+ * All writes stay in browser storage and are wiped when the session ends.
+ */
+function buildDemoSession(): { user: AppUser; profile: Profile } {
+  const schoolLabel = titleCaseSlug(getDemoOriginSchool()) || 'Curriculum Designer';
+  const displayName = 'Alex Morgan';
+  const email = 'admin@curriculum.demo';
+  let mustChange = false;
+  try {
+    mustChange = sessionStorage.getItem('ccd-demo-must-change-password') === '1';
+  } catch {
+    /* ignore */
+  }
+  const profile: Profile = {
+    id: 'demo-visitor',
+    email,
+    display_name: displayName,
+    first_name: 'Alex',
+    last_name: 'Morgan',
+    school_or_org: schoolLabel,
+    role: 'admin',
+    status: mustChange ? 'invited' : 'active',
+    must_change_password: mustChange,
+    can_edit_activities: true,
+    can_edit_lessons: true,
+    can_manage_year_groups: true,
+    can_manage_users: true,
+    can_view_download_analytics: true,
+    invitation_status: mustChange ? 'pending' : 'complete',
+    allowed_year_groups: null,
+    created_at: new Date().toISOString(),
+    updated_at: new Date().toISOString(),
+  };
+  const user: AppUser = {
+    id: profile.id,
+    email,
+    name: displayName,
+    role: 'admin',
+    profile,
+  };
+  return { user, profile };
+}
+
+const DEMO_USER_ID = 'demo-visitor';
 
 
 interface AuthProviderProps {
@@ -134,7 +173,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const lastHandledUserIdRef = useRef<string | null>(null);
 
   const fetchSupabaseProfile = useCallback(async (authUserId: string): Promise<Profile | null> => {
-    const { data, error } = await supabase
+    // Always use the live client for the signed-in user's profile — never the demo mock.
+    const { data, error } = await getLiveSupabase()
       .from('profiles')
       .select('*')
       .eq('id', authUserId)
@@ -174,7 +214,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     timeoutMs: number,
   ): Promise<{ kind: 'ok'; profile: Profile | null } | { kind: 'error' }> => {
     try {
-      const queryPromise = supabase
+      const queryPromise = getLiveSupabase()
         .from('profiles')
         .select('*')
         .eq('id', authUserId)
@@ -227,12 +267,12 @@ export function AuthProvider({ children }: AuthProviderProps) {
     checkAuthStatus();
   }, []);
 
-  // Supabase auth state subscription. Handles token refresh and cross-tab sign-in/out.
-  // Skips re-hydrating the same user that login()/checkAuthStatus() already handled
-  // so we don't fire a redundant profile fetch on every successful sign-in.
+  // Supabase auth state subscription on the LIVE client. Handles token refresh
+  // and cross-tab sign-in/out. A real session always clears demo mode so the
+  // header never shows Alex Morgan / admin@curriculum.demo over a real login.
   useEffect(() => {
     if (!isSupabaseAuthEnabled()) return;
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+    const { data: { subscription } } = getLiveSupabase().auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_OUT') {
         resolvedRef.current = true;
         lastHandledUserIdRef.current = null;
@@ -244,6 +284,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return;
       }
       if (!session?.user) return;
+      // Real session wins — drop any leftover Preview/Demo identity.
+      if (isDemoModeActive()) {
+        clearDemoMode();
+      }
       // Already handled this user – nothing to do (avoids the duplicate profile fetch).
       if (lastHandledUserIdRef.current === session.user.id) return;
       lastHandledUserIdRef.current = session.user.id;
@@ -271,26 +315,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }, AUTH_CHECK_TIMEOUT_MS);
 
     try {
-      // Demo / Preview mode short-circuits all auth backends so visitors
-      // who completed the prototype password gate can explore without
-      // real credentials. Unauthorized ?demo=1 / stale flags are rejected.
-      if (isAuthorizedDemoMode()) {
-        resolvedRef.current = true;
-        setUser(DEMO_USER);
-        setProfile(null);
-        syncUserIdToStorage(DEMO_USER.id);
-        setLoading(false);
-        return;
-      }
-
+      // Real Supabase session ALWAYS wins over Preview/Demo. A leftover
+      // ccd-demo-mode flag must never replace Rob (or any signed-in user)
+      // with the synthetic Alex Morgan / admin@curriculum.demo identity.
       if (isSupabaseAuthEnabled()) {
+        const live = getLiveSupabase();
         // Cap getSession so we never hang on a slow Supabase auth response
-        const sessionPromise = supabase.auth.getSession();
+        const sessionPromise = live.auth.getSession();
         const timeoutPromise = new Promise<{ data: { session: null } }>((resolve) =>
           setTimeout(() => resolve({ data: { session: null } }), GET_SESSION_TIMEOUT_MS)
         );
         const { data: { session } } = await Promise.race([sessionPromise, timeoutPromise]);
         if (session?.user) {
+          if (isDemoModeActive()) {
+            clearDemoMode();
+          }
           resolvedRef.current = true;
           lastHandledUserIdRef.current = session.user.id;
           // Hydrate from cache so the app renders immediately – no spinner waiting on the profile query.
@@ -303,6 +342,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
           void revalidateProfile(session.user.id);
           return;
         }
+      }
+
+      // Demo / Preview only when there is no real signed-in session.
+      // Unauthorized ?demo=1 / stale flags are rejected.
+      if (isAuthorizedDemoMode()) {
+        resolvedRef.current = true;
+        const demo = buildDemoSession();
+        setUser(demo.user);
+        setProfile(demo.profile);
+        syncUserIdToStorage(demo.user.id);
+        setLoading(false);
+        return;
+      }
+
+      if (isSupabaseAuthEnabled()) {
         resolvedRef.current = true;
         setUser(null);
         setProfile(null);
@@ -371,7 +425,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       // LoginForm handles its own submit loading state.
 
       if (isSupabaseAuthEnabled()) {
-        const { data, error } = await supabase.auth.signInWithPassword({
+        // Always sign in via the live client — never the demo mock — so a real
+        // password check works even if ccd-demo-mode is still set.
+        const { data, error } = await getLiveSupabase().auth.signInWithPassword({
           email: username.trim(),
           password
         });
@@ -387,7 +443,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         // Only clear demo after a successful auth — failed attempts must not wipe seeded data.
         try {
           const priorUserId = localStorage.getItem('rhythmstix_user_id');
-          if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
+          if (isDemoModeActive() || priorUserId === DEMO_USER_ID) {
             clearDemoMode();
           }
         } catch {
@@ -416,7 +472,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (authResponse.token) {
             try {
               const priorUserId = localStorage.getItem('rhythmstix_user_id');
-              if (isDemoModeActive() || priorUserId === DEMO_USER.id) {
+              if (isDemoModeActive() || priorUserId === DEMO_USER_ID) {
                 clearDemoMode();
               }
             } catch {
@@ -461,7 +517,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       clearDemoMode();
     }
     if (!wasDemo && isSupabaseAuthEnabled()) {
-      await supabase.auth.signOut();
+      await getLiveSupabase().auth.signOut();
     }
     localStorage.removeItem('rhythmstix_auth_token');
     syncUserIdToStorage(null);

@@ -66,7 +66,7 @@ export function AssignPacksModal({ user, onSave, onClose }: AssignPacksModalProp
           </p>
           {packs.length === 0 ? (
             <p className="text-sm text-amber-700 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
-              No packs available. Add packs in Settings → Admin → Activity Packs first.
+              No packs available. Add packs in Settings → School tools → Activity packs first.
             </p>
           ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">

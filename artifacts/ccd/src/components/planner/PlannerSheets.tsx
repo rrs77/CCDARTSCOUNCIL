@@ -19,6 +19,7 @@ import type { PlannerData } from './usePlannerData';
 import {
   HALF_TERMS,
   isoWeek,
+  normalizeTime,
   planStatusLabel,
   plural,
   readableInk,
@@ -32,6 +33,12 @@ import {
 import { lessonTitle } from './plannerEntries';
 import { PolishWithAIModal, type PolishSuggestionId } from '../studio/PolishWithAIModal';
 import { applyLessonPolishDraft } from '../../utils/applyLessonPolish';
+import {
+  filterLessonEntries,
+  lessonActivities,
+  lessonActivityCount,
+  lessonBadgeLabel,
+} from '../../utils/lessonEntries';
 
 const fieldClass =
   'w-full rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-sm text-[#1F1B4D] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/35 focus:border-[#4338E8]';
@@ -134,6 +141,13 @@ export function LessonDetailsSheet({
 
   const setStatus = (status: LessonPlan['status']) =>
     data.savePlans([{ ...plan, status }], status === 'completed' ? 'Marked as taught.' : `Marked as ${planStatusLabel[status].toLowerCase()}.`);
+
+  /** Remove the lesson from this timetable outline — the dashed slot returns. */
+  const clearFromSlot = () => {
+    void data
+      .savePlans([{ ...plan, status: 'cancelled' }], entry.slot ? 'Cleared — timetable slot is empty again.' : 'Lesson cleared.')
+      .then(onClose);
+  };
 
   const date = new Date(plan.date);
   const isPast = date < new Date(new Date().toDateString());
@@ -280,6 +294,15 @@ export function LessonDetailsSheet({
             <button type="button" className={btn} onClick={() => onOpenLibrary(plan.className)}>
               <ExternalLink className="h-4 w-4" /> Open lessons for {cls?.name || 'class'}
             </button>
+            {plan.status !== 'cancelled' && (
+              <button
+                type="button"
+                className={`${btn} border-[#FECACA] text-[#B91C1C] hover:bg-[#FEF2F2]`}
+                onClick={clearFromSlot}
+              >
+                {entry.slot ? 'Clear from slot' : 'Remove from planner'}
+              </button>
+            )}
           </div>
           <PolishWithAIModal
             open={polishOpen}
@@ -376,7 +399,7 @@ function ReuseForm({ plan, title, data, onDone }: { plan: LessonPlan; title: str
     void data.savePlans([copy], `Added to ${targetName}.`).then(onDone);
   };
 
-  if (!others.length) return <p className="mt-4 text-sm text-[#374151]">Add another class in Settings → Year groups first.</p>;
+  if (!others.length) return <p className="mt-4 text-sm text-[#374151]">Add another class in Settings → My classes first.</p>;
   return (
     <section className="mt-4 space-y-3">
       <label className="block text-[13px] font-semibold text-[#374151]">
@@ -429,13 +452,20 @@ export function SchedulePickerSheet({
       '',
   );
   const [date, setDate] = useState(ymd(initial.date));
-  const [time, setTime] = useState(initial.time || '');
+  const [time, setTime] = useState(initial.time ? normalizeTime(initial.time) : '');
   const [query, setQuery] = useState('');
   const [classMenuOpen, setClassMenuOpen] = useState(false);
   const [openSections, setOpenSections] = useState<Set<string>>(() => new Set());
   const classMenuRef = useRef<HTMLDivElement>(null);
   const cache = data.lessonCache[classId];
   const { ensureLessons } = data;
+
+  // Keep picker pre-filtered when opening from a timetable outline.
+  useEffect(() => {
+    if (initial.classId) setClassId(initial.classId);
+    setDate(ymd(initial.date));
+    setTime(initial.time ? normalizeTime(initial.time) : '');
+  }, [initial.classId, initial.date, initial.time]);
 
   const folderGroups = useMemo(() => {
     const folders = data.folders?.length
@@ -473,7 +503,9 @@ export function SchedulePickerSheet({
   const library = useMemo(() => {
     const fromCache = cache && cache !== 'loading' ? cache.lessons : {};
     const fromLive = isCurrentSheet ? allLessonsData || {} : {};
-    const lessons = { ...fromCache, ...fromLive };
+    // Always drop sheet-metadata keys (allLessonsData, lessonStandards, …) so they
+    // never appear as fake rows in the picker.
+    const lessons = filterLessonEntries({ ...fromCache, ...fromLive });
     const numbers = [
       ...new Set([
         ...(cache && cache !== 'loading' ? cache.lessonNumbers : []),
@@ -522,7 +554,7 @@ export function SchedulePickerSheet({
     const l = library.lessons[n];
     if (!l) return;
     const d = new Date(`${date}T12:00:00`);
-    const activities = (l.orderedActivities?.length ? l.orderedActivities : Object.values(l.grouped || {}).flat()).map((a) => ({
+    const activities = lessonActivities(l).map((a) => ({
       ...a,
       lessonNumber: n,
     }));
@@ -537,7 +569,8 @@ export function SchedulePickerSheet({
       status: 'planned',
       lessonNumber: n,
       title: l.title || l.lessonName || `Lesson ${n}`,
-      time: time || undefined,
+      // Keep the timetable slot's start time so the outline matches after save.
+      time: time ? normalizeTime(time) : undefined,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -662,15 +695,18 @@ export function SchedulePickerSheet({
             <button
               key={n}
               type="button"
+              data-lesson-pick={n}
               onClick={() => choose(n)}
               className="flex w-full items-center gap-3 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2.5 text-left hover:border-[#bcb7f4] hover:bg-[#F4F3FA]"
             >
-              <span className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-[#E9E6FF] text-xs font-bold text-[#1F1B4D]">{n}</span>
+              <span className="grid h-8 w-8 shrink-0 place-items-center overflow-hidden rounded-full bg-[#E9E6FF] text-xs font-bold tabular-nums text-[#1F1B4D]">
+                {lessonBadgeLabel(n, l)}
+              </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate text-sm font-semibold text-[#1F2937]">{l.title || l.lessonName || `Lesson ${n}`}</span>
                 <span className="block text-xs text-[#77738F]">
                   {halfTermLabel.get(n) ? `${halfTermLabel.get(n)} · ` : ''}
-                  {plural(Object.values(l.grouped || {}).flat().length, 'activity', 'activities')} · {l.totalTime || 0} min
+                  {plural(lessonActivityCount(l), 'activity', 'activities')} · {l.totalTime || 0} min
                 </span>
               </span>
               {scheduled.has(n) && <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[11.5px] font-semibold text-[#1E6B3E]">Scheduled</span>}

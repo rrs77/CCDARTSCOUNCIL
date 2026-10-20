@@ -1,9 +1,6 @@
 import React from 'react';
 import {
-  BookOpen,
-  CalendarCog,
-  Clapperboard,
-  FolderOpen,
+  Calendar,
   HelpCircle,
   Mail,
   MessageSquare,
@@ -12,79 +9,55 @@ import {
 } from 'lucide-react';
 import type { StudioNavId } from './StudioShell';
 
+/** C4: extras only — no Lessons / Slides / Half-terms / Timetable duplicates of the sidebar. */
 const TOOLS: {
   id: string;
   title: string;
   desc: string;
   icon: React.ReactNode;
-  action: 'tab' | 'settings' | 'forum' | 'help' | 'walkthrough';
+  action: 'tab' | 'settings' | 'forum' | 'help' | 'walkthrough' | 'class-calendar';
   tab?: StudioNavId;
 }[] = [
   {
-    id: 'lessons',
-    title: 'Lessons',
-    desc: 'Saved lessons from Lesson Builder for the class in the header — also on the Lessons tab.',
-    icon: <FolderOpen className="h-5 w-5" />,
-    action: 'tab',
-    tab: 'lesson-library',
+    id: 'settings',
+    title: 'Settings',
+    desc: 'My classes, activity folders, objectives and preferences.',
+    icon: <Settings className="h-5 w-5" />,
+    action: 'settings',
   },
   {
-    id: 'lesson-viewer',
-    title: 'Lesson Viewer',
-    desc: 'Interactive classroom player — Canva, YouTube, Slides, karaoke and more.',
-    icon: <Clapperboard className="h-5 w-5" />,
-    action: 'tab',
-    tab: 'lesson-viewer',
+    id: 'class-calendar',
+    title: 'Class calendar',
+    desc: 'Events and key dates for the selected class.',
+    icon: <Calendar className="h-5 w-5" />,
+    action: 'class-calendar',
   },
   {
-    id: 'curriculum',
-    title: 'Half-terms',
-    desc: 'Year map of half-terms for every class — open a cell to plan that term.',
-    icon: <BookOpen className="h-5 w-5" />,
-    action: 'tab',
-    tab: 'curriculum',
+    id: 'forum',
+    title: 'Community forum',
+    desc: 'Teacher–provider conversation and support.',
+    icon: <MessageSquare className="h-5 w-5" />,
+    action: 'forum',
   },
   {
     id: 'contact',
     title: 'Contact',
-    desc: 'Existing contact and support flows.',
+    desc: 'Request access and get in touch.',
     icon: <Mail className="h-5 w-5" />,
     action: 'tab',
     tab: 'contact-us',
   },
   {
-    id: 'settings',
-    title: 'Settings',
-    desc: 'Classes, activity folders per class, objectives and preferences.',
-    icon: <Settings className="h-5 w-5" />,
-    action: 'settings',
-  },
-  {
-    id: 'timetable',
-    title: 'Timetable builder',
-    desc: 'Planner → Timetable builder — set weekly slots for the selected class.',
-    icon: <CalendarCog className="h-5 w-5" />,
-    action: 'tab',
-    tab: 'unit-viewer',
-  },
-  {
-    id: 'forum',
-    title: 'Forum & support',
-    desc: 'Teacher–provider conversation.',
-    icon: <MessageSquare className="h-5 w-5" />,
-    action: 'forum',
-  },
-  {
     id: 'help',
     title: 'Help guide',
-    desc: 'How CCDesigner fits together.',
+    desc: 'How the main areas fit together.',
     icon: <HelpCircle className="h-5 w-5" />,
     action: 'help',
   },
   {
     id: 'walk',
     title: 'Feature walkthrough',
-    desc: 'Guided tour of the main areas.',
+    desc: 'Guided tour of create and plan flows.',
     icon: <Sparkles className="h-5 w-5" />,
     action: 'walkthrough',
   },
@@ -100,13 +73,13 @@ export function MoreToolsPanel({ onNavigate }: Props) {
       onNavigate(tool.tab);
       return;
     }
+    if (tool.action === 'class-calendar') {
+      onNavigate('unit-viewer');
+      window.setTimeout(() => window.dispatchEvent(new CustomEvent('ccd:open-class-calendar')), 0);
+      return;
+    }
     if (tool.action === 'settings') {
-      try {
-        sessionStorage.setItem('ccd-open-settings-tab', 'yeargroups');
-      } catch {
-        /* ignore */
-      }
-      window.dispatchEvent(new CustomEvent('ccd:open-settings'));
+      onNavigate('settings');
       return;
     }
     if (tool.action === 'forum') {
@@ -114,7 +87,7 @@ export function MoreToolsPanel({ onNavigate }: Props) {
       return;
     }
     if (tool.action === 'help') {
-      window.dispatchEvent(new CustomEvent('ccd:open-help'));
+      void import('../help').then(({ navigateToHelp }) => navigateToHelp());
       return;
     }
     if (tool.action === 'walkthrough') {
@@ -125,11 +98,12 @@ export function MoreToolsPanel({ onNavigate }: Props) {
   return (
     <div>
       <p className="ccd-studio-eyebrow">
-        WORKSPACE / <span>ALL TOOLS</span>
+        YOUR TOOLS / <span>MORE</span>
       </p>
-      <h1 className="ccd-studio-title">All your tools</h1>
+      <h1 className="ccd-studio-title">More tools</h1>
       <p className="ccd-studio-sub">
-        Everything stays available. The Activity Library still filters by the class selected in the header — change class there, or manage folder visibility in Settings.
+        Shortcuts for settings, calendar, help and community. Planning and lesson tools stay in the
+        sidebar.
       </p>
 
       <div className="mt-8 grid gap-3 sm:grid-cols-2">

@@ -29,7 +29,29 @@ Optional for forum email:
 
 Push `feature/user-mgmt-download-tracking` (or merge PR). Vercel serves SPA + `api/forum/**` serverless routes.
 
-## 4. Smoke test
+## 4. Local development (Vite + api-server)
+
+Production rewrites in `vercel.json` send `/api/forum/**` (and hubs / music-hubs /
+interactive-lessons) through `api/router.js`. The local Express server mirrors
+that via `artifacts/api-server/src/mountVercelApi.ts`.
+
+1. From the repo root, ensure `.env` (or `.env.local`) has at least:
+   - `SUPABASE_URL` or `VITE_SUPABASE_URL`
+   - `SUPABASE_SERVICE_ROLE_KEY`
+   - Prefer also `SUPABASE_JWT_SECRET` and `SUPABASE_ANON_KEY` / `VITE_SUPABASE_ANON_KEY`
+2. Apply `supabase/migrations/20260904_community_forum.sql` (and its prerequisites
+   `20260902_*` / `20260903_*`) if forum tables do not exist yet.
+3. Start both processes:
+   - api-server: `cd artifacts/api-server && PORT=8080 pnpm run dev` (rebuilds after mount changes)
+   - CCD Vite: `cd artifacts/ccd && pnpm run dev` (proxies `/api` → `http://127.0.0.1:8080`)
+4. Open `http://127.0.0.1:5173/forum`. Signed-out browsing should list published
+   public categories. If the service role key or migration is missing, the UI shows
+   a friendly unavailable / empty state instead of failing to open.
+
+After changing `mountVercelApi.ts`, restart (or rebuild) the api-server — Vite
+HMR does not reload Express.
+
+## 5. Smoke test
 
 1. Open `/forum` signed out — public categories (once published) list.
 2. Sign in as teacher — create topic / reply.
