@@ -55,11 +55,117 @@
               "description": [
                 "Greater Essex Music Hub brings together Essex Music Service, Music-on-Sea (Southend) and Thurrock Music Service to support schools, young people and communities."
               ],
-              "siteUrl": "https://www.essexmusicservice.org.uk/site/",
+              "siteUrl": "https://www.greateressexmusichub.org.uk/site/",
               "logoSrc": "/music-hubs/logos/essex-music-service.svg",
               "primaryColor": "#330968",
               "accentColor": "#7a00df",
               "logoPanelColor": "#330968",
+              "content": {
+                "about": [
+                  "Greater Essex Music Hub is a partnership of organisations, including the music services of Essex, Southend-on-Sea and Thurrock, and schools. It helps children and young people from all backgrounds and every part of the hub’s area to deepen their engagement with music.",
+                  "Essex Music Service (Essex County Council) is the Hub Lead Organisation.",
+                  "Contact (published on Essex Music Service contact page): 0333 013 8953 · musichub@essex.gov.uk. EMS headquarters postal address is not published on that page."
+                ],
+                "schoolsEducation": [
+                  "The hub works with schools across Essex, Southend-on-Sea and Thurrock. Curriculum partnerships, specialist tuition and CPD are published on the Greater Essex Music Hub and partner service websites."
+                ],
+                "training": [
+                  "Teacher CPD and workforce support are listed under Opportunities for Schools on the Greater Essex Music Hub website."
+                ],
+                "links": [
+                  {
+                    "label": "Greater Essex Music Hub",
+                    "href": "https://www.greateressexmusichub.org.uk/site/"
+                  },
+                  {
+                    "label": "Opportunities for schools",
+                    "href": "https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/"
+                  },
+                  {
+                    "label": "Opportunities for students",
+                    "href": "https://www.greateressexmusichub.org.uk/site/opportunities-for-students/"
+                  },
+                  {
+                    "label": "Essex Music Service",
+                    "href": "https://www.essexmusicservice.org.uk/site/"
+                  },
+                  {
+                    "label": "EMS contact",
+                    "href": "https://www.essexmusicservice.org.uk/site/contact/"
+                  },
+                  {
+                    "label": "Music-on-Sea",
+                    "href": "https://www.musiconsea.co.uk/site/"
+                  },
+                  {
+                    "label": "Thurrock music education",
+                    "href": "https://www.thurrock.gov.uk/music"
+                  },
+                  {
+                    "label": "Facebook (EMS)",
+                    "href": "https://www.facebook.com/MusicServiceEssex"
+                  },
+                  {
+                    "label": "X (EMS)",
+                    "href": "https://x.com/MusicServEssex"
+                  },
+                  {
+                    "label": "YouTube (EMS)",
+                    "href": "https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"
+                  },
+                  {
+                    "label": "SoundCloud (EMS)",
+                    "href": "https://soundcloud.com/user-695076106"
+                  }
+                ],
+                "resources": [
+                  {
+                    "id": "gemh-schools-brochure",
+                    "title": "Schools brochure",
+                    "description": "EMS schools overview — Add to CCDesigner.",
+                    "access": "FREE",
+                    "href": "/partners/ems/ems-schools-brochure.pdf",
+                    "providedBy": "Essex Music Service",
+                    "packId": "ems-schools-brochure"
+                  },
+                  {
+                    "id": "gemh-dj-workshop",
+                    "title": "DJ Workshop",
+                    "description": "Featured EMS workshop — Add to CCDesigner.",
+                    "access": "FREE",
+                    "href": "https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/",
+                    "providedBy": "Essex Music Service",
+                    "packId": "ems-dj-workshop"
+                  },
+                  {
+                    "id": "gemh-rap-it",
+                    "title": "Rap-It!",
+                    "description": "Literacy-linked rap workshop — Add to CCDesigner.",
+                    "access": "FREE",
+                    "href": "https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/",
+                    "providedBy": "Essex Music Service",
+                    "packId": "ems-rap-it-workshop"
+                  },
+                  {
+                    "id": "gemh-opportunities-schools",
+                    "title": "Opportunities for schools",
+                    "description": "Greater Essex Music Hub support for schools.",
+                    "access": "FREE",
+                    "href": "https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/",
+                    "providedBy": "Greater Essex Music Hub",
+                    "packId": "ems-schools-brochure"
+                  },
+                  {
+                    "id": "gemh-opportunities-students",
+                    "title": "Opportunities for students",
+                    "description": "Greater Essex Music Hub student pathways.",
+                    "access": "FREE",
+                    "href": "https://www.greateressexmusichub.org.uk/site/opportunities-for-students/",
+                    "providedBy": "Greater Essex Music Hub",
+                    "packId": "ems-schools-brochure"
+                  }
+                ]
+              },
               "children": [
                 {
                   "id": "ems",
@@ -101,19 +207,124 @@
                         "href": "https://www.essexmusicservice.org.uk/site/"
                       },
                       {
-                        "label": "Workshops",
-                        "href": "https://www.essexmusicservice.org.uk/site/workshops/"
+                        "label": "EMS contact",
+                        "href": "https://www.essexmusicservice.org.uk/site/contact/"
                       },
                       {
-                        "label": "Curriculum",
-                        "href": "https://www.essexmusicservice.org.uk/site/curriculum/"
+                        "label": "Music curriculum and CPD resources",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/"
                       },
                       {
-                        "label": "Chelmsford district (resources)",
-                        "href": "/essex/chelmsford"
+                        "label": "Instrumental and vocal provision",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/"
+                      },
+                      {
+                        "label": "Inclusion and financial support",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/inclusion/"
+                      },
+                      {
+                        "label": "Community music charges",
+                        "href": "https://www.essexmusicservice.org.uk/site/community-music-charges/"
+                      },
+                      {
+                        "label": "Making music near you",
+                        "href": "https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/"
+                      },
+                      {
+                        "label": "Greater Essex Music Hub",
+                        "href": "https://www.greateressexmusichub.org.uk/site/"
+                      },
+                      {
+                        "label": "Facebook",
+                        "href": "https://www.facebook.com/MusicServiceEssex"
+                      },
+                      {
+                        "label": "X (Twitter)",
+                        "href": "https://x.com/MusicServEssex"
+                      },
+                      {
+                        "label": "YouTube",
+                        "href": "https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"
+                      },
+                      {
+                        "label": "SoundCloud",
+                        "href": "https://soundcloud.com/user-695076106"
                       }
                     ],
-                    "resources": []
+                    "resources": [
+                      {
+                        "id": "ems-hub-schools-brochure",
+                        "title": "Schools brochure",
+                        "description": "EMS schools overview — Add to CCDesigner.",
+                        "access": "FREE",
+                        "href": "/partners/ems/ems-schools-brochure.pdf",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-schools-brochure"
+                      },
+                      {
+                        "id": "ems-hub-brochure-2025",
+                        "title": "EMS Schools brochure 2025–26 (official PDF)",
+                        "description": "Official schools brochure PDF from Essex Music Service.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-schools-brochure"
+                      },
+                      {
+                        "id": "ems-hub-dj",
+                        "title": "DJ Workshop",
+                        "description": "Featured EMS workshop — Add to CCDesigner.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-dj-workshop"
+                      },
+                      {
+                        "id": "ems-hub-rap-it",
+                        "title": "Rap-It!",
+                        "description": "Literacy-linked rap workshop — Add to CCDesigner.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-rap-it-workshop"
+                      },
+                      {
+                        "id": "ems-hub-curriculum",
+                        "title": "Music curriculum and CPD resources",
+                        "description": "Charanga, YuStudio, Focus on Sound and CPD.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-schools-brochure"
+                      },
+                      {
+                        "id": "ems-hub-instrumental",
+                        "title": "Instrumental and vocal provision",
+                        "description": "Whole-class, small-group and workshop offer.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-schools-brochure"
+                      },
+                      {
+                        "id": "ems-hub-inclusion",
+                        "title": "Inclusion and financial support",
+                        "description": "Hub inclusion and financial support.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/school-provision/inclusion/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-schools-brochure"
+                      },
+                      {
+                        "id": "ems-hub-charges",
+                        "title": "Community music charges",
+                        "description": "Official EMS fees for community provision.",
+                        "access": "FREE",
+                        "href": "https://www.essexmusicservice.org.uk/site/community-music-charges/",
+                        "providedBy": "Essex Music Service",
+                        "packId": "ems-schools-brochure"
+                      }
+                    ]
                   },
                   "children": [
                     {

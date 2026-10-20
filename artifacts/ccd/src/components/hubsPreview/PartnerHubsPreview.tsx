@@ -561,14 +561,24 @@ function AreaList({ lads, selected, hover, onHover, onSelect, filter }: {
 function AreaPreview({ hub, lad, onExplore, onClose }: { hub: MapHub; lad: MapLad; onExplore: () => void; onClose: () => void }) {
   const dir = useDirectory();
   const svc = dir.serviceFor(lad);
-  const shared = dir.resourcesForHub(hub.id).length;
+  const { local, shared } = dir.resourcesForArea(hub.id, lad.code);
   const body = (
     <>
       <p className={`text-[17px] font-semibold ${ink}`}>{lad.name}</p>
       <p className={`mt-0.5 text-[14px] ${muted}`}>{svc ? `Served by ${svc.name}` : `Part of ${hubLabel(hub)}`}</p>
-      {shared > 0 && (
+      {(local.length > 0 || shared.length > 0) && (
         <p className={`mt-2 text-[14px] ${ink}`}>
-          {shared} shared {shortHubName(hub)} resource{shared === 1 ? '' : 's'}
+          {local.length > 0 && (
+            <>
+              {local.length} local resource{local.length === 1 ? '' : 's'}
+              {shared.length > 0 ? ' · ' : ''}
+            </>
+          )}
+          {shared.length > 0 && (
+            <>
+              {shared.length} shared across {shortHubName(hub)}
+            </>
+          )}
         </p>
       )}
       <PrimaryButton className="mt-3 w-full" onClick={onExplore}>
