@@ -30,6 +30,13 @@ import {
   syncSettingsUrl,
 } from './settings/routes';
 import { DEFAULT_SETTINGS_SECTION } from './settings/settingsSections';
+import { HelpPage } from './help';
+import {
+  clearHelpUrlIfPresent,
+  isHelpPath,
+  syncHelpUrl,
+  topicFromHelpPath,
+} from './help/routes';
 
 interface Unit {
   id: string;
@@ -66,6 +73,7 @@ const ALLOWED = new Set([
   'assessify',
   'perifeedback',
   'settings',
+  'help',
 ]);
 
 const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
@@ -73,6 +81,9 @@ const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
 function initialDashboardTab(): string {
   const fromBoltOns = resolveBoltOnsPageFromLocation();
   if (fromBoltOns) return fromBoltOns;
+  if (typeof window !== 'undefined' && isHelpPath(window.location.pathname)) {
+    return 'help';
+  }
   if (typeof window !== 'undefined' && isSettingsPath(window.location.pathname)) {
     return 'settings';
   }
@@ -103,10 +114,16 @@ export function Dashboard() {
       clearBoltOnsUrlIfPresent();
     }
     if (next === 'settings') {
+      clearHelpUrlIfPresent();
       const section = resolveSettingsSectionFromLocation() || DEFAULT_SETTINGS_SECTION;
       syncSettingsUrl(section);
+    } else if (next === 'help') {
+      clearSettingsUrlIfPresent();
+      const topic = typeof window !== 'undefined' ? topicFromHelpPath(window.location.pathname) : null;
+      syncHelpUrl(topic);
     } else {
       clearSettingsUrlIfPresent();
+      clearHelpUrlIfPresent();
     }
   };
 
@@ -135,6 +152,10 @@ export function Dashboard() {
         setActiveTab(fromPath);
         return;
       }
+      if (isHelpPath(window.location.pathname)) {
+        setActiveTab('help');
+        return;
+      }
       if (isSettingsPath(window.location.pathname) || resolveSettingsSectionFromLocation()) {
         setActiveTab('settings');
         return;
@@ -145,7 +166,7 @@ export function Dashboard() {
         setActiveTab(tab);
         // Bolt-ons sync their own /bolt-ons paths via BoltOnsView.
         if (BOLT_ON_TABS.has(tab)) return;
-        if (tab === 'settings') return;
+        if (tab === 'settings' || tab === 'help') return;
         // Preserve player deep-link params for Lesson Viewer hub to consume.
         const keep = new URLSearchParams();
         const play = params.get('play');
@@ -167,11 +188,15 @@ export function Dashboard() {
         setActiveTab(page);
         return;
       }
+      if (isHelpPath(window.location.pathname)) {
+        setActiveTab('help');
+        return;
+      }
       if (isSettingsPath(window.location.pathname)) {
         setActiveTab('settings');
         return;
       }
-      if (activeTab === 'settings') {
+      if (activeTab === 'settings' || activeTab === 'help') {
         setActiveTab('unit-viewer');
       }
     };
@@ -255,7 +280,10 @@ export function Dashboard() {
   const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
   const wideCanvas =
-    activeTab === 'activity-library' || activeTab === 'lesson-viewer' || activeTab === 'settings';
+    activeTab === 'activity-library' ||
+    activeTab === 'lesson-viewer' ||
+    activeTab === 'settings' ||
+    activeTab === 'help';
   const editorFlush = activeTab === 'activity-library' && activityEditorOpen;
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
@@ -271,7 +299,7 @@ export function Dashboard() {
       wideCanvas={wideCanvas}
       editorFlush={editorFlush}
     >
-      {showTabsExplainerButton && activeTab !== 'our-partners' && !editorFlush && (
+      {showTabsExplainerButton && activeTab !== 'our-partners' && activeTab !== 'help' && !editorFlush && (
         <div className="mb-3 flex justify-end">
           <button
             type="button"
@@ -413,6 +441,12 @@ export function Dashboard() {
             access={settingsAccess}
             initialSection={resolveSettingsSectionFromLocation() || DEFAULT_SETTINGS_SECTION}
           />
+        </div>
+      )}
+
+      {activeTab === 'help' && (
+        <div className="ccd-fade-in-up h-full min-h-0 -mx-1 sm:mx-0" key="help">
+          <HelpPage initialTopic={topicFromHelpPath(window.location.pathname)} />
         </div>
       )}
 

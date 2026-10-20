@@ -23,7 +23,7 @@ import { LoginForm } from './components/LoginForm';
 import { LoadingSpinner } from './components/LoadingSpinner';
 import { Footer } from './components/Footer';
 import { useAuth } from './hooks/useAuth';
-import { HelpGuide, type HelpGuideSection } from './components/HelpGuide';
+import { isHelpPath } from './components/help';
 import { SchoolHomepage } from './components/SchoolHomepage';
 import { PreviewBanner } from './components/PreviewBanner';
 import { getSchoolForPath, type SchoolHomepageConfig } from './config/schoolHomepages';
@@ -121,13 +121,12 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       typeof window !== 'undefined' &&
       !isBoltOnsPath(window.location.pathname) &&
       !isSettingsPath(window.location.pathname) &&
+      !isHelpPath(window.location.pathname) &&
       window.location.pathname !== '/'
     ) {
       window.history.replaceState({}, '', '/');
     }
   }, [user, schoolHomepage, partnerHub, onForum, musicHubRoute]);
-  const [showHelpGuide, setShowHelpGuide] = useState(false);
-  const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
 
   // C6: landing already has one decision panel — do not stack a welcome modal
   // after demo login. Mark seen so older sessions stay quiet.
@@ -215,13 +214,6 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
   if (onForum) {
     return <ForumApp />;
   }
-
-  const handleOpenGuide = (
-    section?: 'activity' | 'lesson' | 'unit' | 'assign'
-  ) => {
-    setHelpGuideSection(section);
-    setShowHelpGuide(true);
-  };
 
   const showPreviewBanner = shouldShowPreviewBanner();
 
@@ -408,11 +400,6 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
         <Dashboard />
       </main>
       <Footer />
-      <HelpGuide
-        isOpen={showHelpGuide}
-        onClose={() => setShowHelpGuide(false)}
-        initialSection={helpGuideSection}
-      />
       <PrototypeWelcomeModal
         isOpen={showPrototypeWelcome}
         onClose={dismissPrototypeWelcome}

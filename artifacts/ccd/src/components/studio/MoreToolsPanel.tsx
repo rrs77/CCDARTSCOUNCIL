@@ -87,7 +87,7 @@ export function MoreToolsPanel({ onNavigate }: Props) {
       return;
     }
     if (tool.action === 'help') {
-      window.dispatchEvent(new CustomEvent('ccd:open-help'));
+      void import('../help').then(({ navigateToHelp }) => navigateToHelp());
       return;
     }
     if (tool.action === 'walkthrough') {
