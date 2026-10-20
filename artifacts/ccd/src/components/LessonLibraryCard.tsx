@@ -138,7 +138,9 @@ export function LessonLibraryCard({
   const [showDuplicateConfirm, setShowDuplicateConfirm] = useState(false);
   const [localShareUrl, setLocalShareUrl] = useState<string | null>(null);
 
-  const isAssigned = halfTerms.some((halfTerm) => halfTerm.lessons.includes(lessonNumber));
+  const isAssigned = halfTerms.some((halfTerm) =>
+    Array.isArray(halfTerm?.lessons) && halfTerm.lessons.includes(lessonNumber),
+  );
 
   const totalActivities = useMemo(() => {
     try {

@@ -1,7 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { sanitizeHtml } from '../utils/sanitize';
-import { X, Download, Edit3, Save, Check, Tag, Clock, Users, ExternalLink, FileText, Trash2, Share2, Target, Link, Loader2 } from 'lucide-react';
+import { X, Download, Edit3, Save, Check, Tag, Clock, Users, ExternalLink, FileText, Trash2, Share2, Target, Link, Loader2, Lock } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { ActivityDetails } from './ActivityDetails';
@@ -11,6 +11,7 @@ import { LessonPrintModal } from './LessonPrintModal';
 import { ResourceViewer } from './ResourceViewer';
 import { openActivityResource, shouldOpenResourceInNewTab } from '../utils/openActivityResource';
 import { useShareLesson } from '../hooks/useShareLesson';
+import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
 import type { Activity, LessonData } from '../contexts/DataContext';
 import { AttachInteractiveLesson } from '../features/interactive-lesson-viewer';
@@ -56,6 +57,7 @@ export function LessonDetailsModal({
     updateLessonData,
   } = useData();
   const { getCategoryColor } = useSettings();
+  const { isDemo, showUpgradePrompt } = useDemoMode();
   const [selectedActivity, setSelectedActivity] = useState<Activity | null>(null);
   const [initialResource, setInitialResource] = useState<{url: string, title: string, type: string} | null>(null);
   const [selectedResource, setSelectedResource] = useState<{url: string, title: string, type: string} | null>(null);
@@ -543,22 +545,23 @@ export function LessonDetailsModal({
 
           {/* Categories and Activities */}
           <div className="space-y-8">
-            {lessonData.categoryOrder.map((category) => {
-              const activities = lessonData.grouped[category] || [];
+            {(Array.isArray(lessonData.categoryOrder) ? lessonData.categoryOrder : Object.keys(lessonData.grouped || {})).map((category) => {
+              const activities = (lessonData.grouped && lessonData.grouped[category]) || [];
+              const categoryColor = getCategoryColor(category || '') || '#6b7280';
               
               return (
-                <div key={category} className="bg-white rounded-card shadow-soft border border-gray-200 overflow-hidden">
+                <div key={category || 'uncategorised'} className="bg-white rounded-card shadow-soft border border-gray-200 overflow-hidden">
                   {/* Category Header */}
                   <div 
                     className="p-4 border-b border-gray-200"
                     style={{ 
-                      background: `linear-gradient(to right, ${getCategoryColor(category)}20, ${getCategoryColor(category)}05)`,
-                      borderLeft: `4px solid ${getCategoryColor(category)}`
+                      background: `linear-gradient(to right, ${categoryColor}20, ${categoryColor}05)`,
+                      borderLeft: `4px solid ${categoryColor}`
                     }}
                   >
                     <div className="flex items-center justify-between">
-                      <h3 className="text-xl font-bold text-gray-900">{category}</h3>
-                      <span className="bg-white px-3 py-1 rounded-full text-sm font-medium shadow-sm" style={{ color: getCategoryColor(category) }}>
+                      <h3 className="text-xl font-bold text-gray-900">{category || 'Uncategorised'}</h3>
+                      <span className="bg-white px-3 py-1 rounded-full text-sm font-medium shadow-sm" style={{ color: categoryColor }}>
                         {activities.length} {activities.length === 1 ? 'activity' : 'activities'}
                       </span>
                     </div>
@@ -691,7 +694,7 @@ export function LessonDetailsModal({
           <aside className="flex w-full shrink-0 flex-col border-t border-[#E2E0EF] bg-[#F8F7FC] lg:w-[320px] lg:border-t-0 lg:border-l overflow-y-auto">
             <div className="space-y-4 p-4 sm:p-5">
               <AttachInteractiveLesson
-                sheet={currentSheetInfo.sheet}
+                sheet={currentSheetInfo?.sheet || ''}
                 lessonNumber={lessonNumber}
                 existingId={lessonData.interactiveLessonId || null}
                 onAttached={(id) => {
