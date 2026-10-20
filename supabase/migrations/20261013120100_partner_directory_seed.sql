@@ -140,7 +140,7 @@ INSERT INTO public.music_hubs (
   'greater-essex', 'Greater Essex Music Hub', NULL, 'Essex, Southend-on-Sea & Thurrock', 'E92000001', 'E12000006', ARRAY['E12000006']::text[], NULL,
   'Essex Music Service', 'Essex County Council', (SELECT id FROM public.organisations WHERE id = 'ems'), 'https://www.greateressexmusichub.org.uk/site/', 'Greater Essex Music Hub is a partnership of organisations, including the music services of Essex, Southend-on-Sea and Thurrock, and schools. It helps children and young people from all backgrounds and every part of the hub’s area to deepen their engagement with music.
 
-Essex Music Service (Essex County Council) is the Hub Lead Organisation.', '{"lines":["Essex Music Service","Greater Essex Music Hub"],"phone":"0333 013 8953","email":"musichub@essex.gov.uk","sourceUrl":"https://www.essexmusicservice.org.uk/site/contact/"}'::jsonb, true, 'https://www.greateressexmusichub.org.uk/site/',
+Essex Music Service (Essex County Council) is the Hub Lead Organisation.', '{"lines":["Essex Music Service","Greater Essex Music Hub"],"phone":"0333 013 8953","email":"musichub@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/contact/"}'::jsonb, true, 'https://www.greateressexmusichub.org.uk/site/',
   'demonstration', 'published'
 ) ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.music_hubs (
@@ -410,10 +410,10 @@ INSERT INTO public.music_hub_services (id, hub_id, name, role, organisation_id, 
 VALUES ('essex-music-service', 'greater-essex', 'Essex Music Service', 'lead', (SELECT id FROM public.organisations WHERE id = 'ems'), 'https://www.essexmusicservice.org.uk/site/', true, 0)
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.music_hub_services (id, hub_id, name, role, organisation_id, site_url, verified, sort_order)
-VALUES ('music-on-sea', 'greater-essex', 'Music-on-Sea', 'partner', NULL, 'https://www.musiconsea.co.uk/', true, 1)
+VALUES ('music-on-sea', 'greater-essex', 'Music-on-Sea', 'partner', NULL, 'https://www.musiconsea.co.uk/site/', true, 1)
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.music_hub_services (id, hub_id, name, role, organisation_id, site_url, verified, sort_order)
-VALUES ('thurrock-music-service', 'greater-essex', 'Thurrock Music Service', 'partner', NULL, NULL, true, 2)
+VALUES ('thurrock-music-service', 'greater-essex', 'Thurrock Music Service', 'partner', NULL, 'https://www.thurrock.gov.uk/music', true, 2)
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.music_hub_services (id, hub_id, name, role, site_url, verified, sort_order)
 VALUES ('blmk-lead', 'blmk', 'Inspiring Music', 'lead', NULL, true, 0)
@@ -913,6 +913,178 @@ INSERT INTO public.music_hub_areas (code, slug, name, nation_code, region_code, 
 ('W06000024', 'merthyr-tydfil', 'Merthyr Tydfil', 'W92000004', NULL, NULL, NULL, NULL)
 ON CONFLICT (code) DO NOTHING;
 
+-- Verified area about / contact / site (additive: only fills empty fields)
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Basildon sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Basildon Bands! Community Music Centre: Are you the 21st Century answer to Yazoo, Depeche Mode or Alison Moyet? Join Basildon Bands!
+
+The centre focuses on developing band instruments and putting bands together. Sessions run Fridays after school during term-time, 3.45pm to 5.45pm, at De la Salle School, Ghyllgrove, Basildon.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/basildon-bands-community-music-centre/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Basildon Bands! Community Music Centre","Essex Music Service"],"address":"De la Salle School Basildon Ghyllgrove Basildon","phone":"0333 013 8953","email":"music.service@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/basildon-bands-community-music-centre/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/basildon-bands-community-music-centre/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000066';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Braintree sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Braintree Community Music Centre offers music lessons, bands and ensembles for ages 5 to 18 — helping children develop musical skills, confidence and friendships through fun, weekly music-making.
+
+Sessions run Saturdays, 9.00am to 1.00pm, at I-Construct Innovation Hub, Enterprise Drive, Braintree. Contact: Erin Gore.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/braintree/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Braintree Community Music Centre","Essex Music Service","Contact: Erin Gore"],"address":"I-Construct Innovation Hub Enterprise Drive Braintree","phone":"0333 013 8953","email":"Erin.Gore@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/braintree/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/braintree/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000067';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Brentwood sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Brentwood Community Music Centre focuses on group music-making — instrumental learning and musicianship strengthened through learning with others.
+
+Sessions run after school on Thursdays (term time only), 5–7.30pm, at Becket Keys School, Runcie Building, Sawyers Hall Lane, Brentwood CM15 9DA. Contact: Tracey Jenkins.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/brentwood-community-music-centre/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Brentwood Community Music Centre","Essex Music Service","Contact: Tracey Jenkins"],"address":"Becket Keys School Runcie Building Sawyers Hall Lane Brentwood CM15 9DA","phone":"0333 013 8953","email":"tracey.jenkins@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/brentwood-community-music-centre/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/brentwood-community-music-centre/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000068';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Castle Point sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Benfleet Community Music Centre serves the Castle Point area with community music provision on Saturdays during term time.
+
+Sessions run Saturdays (term time only) 8:30am–12pm at Thundersley Primary School, 2 Dark Lane, Thundersley, Benfleet SS7 3PT. Contact: Kathleen Curtis.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/benfleet/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Benfleet Community Music Centre","Essex Music Service","Contact: Kathleen Curtis"],"address":"Benfleet Community Music Centre Thundersley Primary School 2 Dark Lane Thundersley Benfleet SS7 3PT","phone":"0333 013 8953","email":"Kathleen.Curtis@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/benfleet/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/benfleet/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000069';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Chelmsford sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Chelmsford Community Music Centre offers a combination of individual, small group, and ensemble music provision in Chelmsford after school on Tuesdays during term-time.
+
+Regular sessions take place on Tuesdays after school at Chelmsford County High School for Girls, open to students from across Mid Essex and further afield. Students aged 5–18 are welcome. Offer includes 1-to-1 provision, a junior musicianship programme and a string group. Contact: Kathleen Curtis.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/chelmsford/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Chelmsford Community Music Centre","Essex Music Service","Contact: Kathleen Curtis"],"address":"Chelmsford County High School for Girls Broomfield Road Chelmsford","phone":"0333 013 8953","email":"Kathleen.Curtis@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/chelmsford/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/chelmsford/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000070';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Colchester sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Colchester Community Music Centre provides community music provision on Saturdays during term time at Colchester County High School for Girls, Norman Way, Colchester CO3 3US.
+
+Sessions run Saturdays (term time only) 9am–12pm. Contact: Melissa Bailey. Additional Colchester venues published by EMS include Colchester Townhouse and West Colchester Community Music Centre.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/colchester/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Colchester Community Music Centre","Essex Music Service","Contact: Melissa Bailey"],"address":"Colchester Community Music Centre Colchester County High School for Girls Norman Way Colchester. CO3 3US","phone":"0333 013 8953","email":"Melissa.Bailey2@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/colchester/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/colchester/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000071';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Epping Forest sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Epping Forest Community Music Centre offers a combination of individual, small group, and ensemble music provision at Epping St John’s School on Mondays after school during term time, including a free choir.
+
+Sessions run Mondays (term-time only) 4.00–6.00pm at Epping St John''s School, Bury Ln, Epping CM16 5JB. Contact: Kay Archer.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/epping-forest-community-music-centre/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Epping Forest Community Music Centre","Essex Music Service","Contact: Kay Archer"],"address":"Epping St John''s School Bury Ln Epping CM16 5JB","phone":"0333 013 8953","email":"kay.archer@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/epping-forest-community-music-centre/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/epping-forest-community-music-centre/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000072';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Harlow sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Livewire Music School (Harlow Juniors) is the junior programme for young people exploring and learning music together in the Harlow area, Tuesdays after school during term time.
+
+Sessions run Tuesdays after school (term time only) 3.30–5pm at Hare Street Community Primary School, Little Grove Field, Harlow. Published contact name: Becky Gentry; published centre email: kay.archer@essex.gov.uk.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/livewire-music-school/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Livewire Music School (Harlow Juniors)","Essex Music Service","Contact: Becky Gentry"],"address":"Hare Street Community Primary School Little Grove Field Harlow","phone":"0333 013 8953","email":"kay.archer@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/livewire-music-school/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/livewire-music-school/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000073';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Maldon sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Maldon Community Music Centre offers a combination of individual, small group, and ensemble music provision in Maldon after school on Tuesdays during term-time. The focus is on group music-making — instrumental learning and musicianship is strengthened through learning with others.
+
+Regular sessions take place on Tuesday evenings at the Plume Academy in Maldon during term time. Students aged 5–18 are welcome. Offer includes All in Band, guitar group, music technology group, theory/aural/musicianship, and the Essex Youth Wind Quintet. Contact: Tina Spivey.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/maldon-music-school-community-music-centre/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Maldon Community Music Centre","Essex Music Service","Contact: Tina Spivey"],"address":"Plume Academy Fambridge Road Maldon CM9 6AB","phone":"0333 013 8953","email":"tina.spivey@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/maldon-music-school-community-music-centre/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/maldon-music-school-community-music-centre/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000074';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Rochford sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Rayleigh Community Music Centre serves the Rochford area. EMS publishes 1-to-1 lessons and a rock band for those looking to play music in a group.
+
+Regular sessions take place on Wednesdays after school (term time only) 4pm–7pm at The FitzWimarc School, Hockley Road, Rayleigh SS6 8EB. Contact: Kathleen Curtis.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/rayleigh-community-music-centre/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Rayleigh Community Music Centre","Essex Music Service","Contact: Kathleen Curtis"],"address":"The FitzWimarc School Hockley Road Rayleigh. SS6 8EB","phone":"0333 013 8953","email":"kathleen.curtis@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/rayleigh-community-music-centre/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/rayleigh-community-music-centre/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000075';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Tendring sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Tendring Community Music Centre offers a combination of individual, small group, and ensemble music provision in Manningtree on Saturday mornings during term-time, open to students from across the Tendring and Colchester areas. Students aged 5–18 are welcome.
+
+Offer includes All in Band, Brass Ensemble, rock/soul/pop band, Junior Wind Ensemble, and groups for theory, aural and musicianship. Sessions run Saturdays (term time only) 8:30am–1pm at Manningtree High School, Colchester Road, Lawford, Manningtree CO11 2BW. Published contact name: Tess Greene; published centre email: sam.geden@essex.gov.uk.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/tendring-community-music-centre/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Tendring Community Music Centre","Essex Music Service","Contact: Tess Greene"],"address":"Tendring Community Music Centre Manningtree High School Colchester Road Lawford Manningtree CO11 2BW","phone":"0333 013 8953","email":"sam.geden@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/tendring-community-music-centre/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/tendring-community-music-centre/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000076';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Uttlesford sits within the Essex Music Service delivery area for Greater Essex Music Hub.
+
+Essex Music Service is the lead partner with Saffron Hall and Saffron Walden County High School for Saffron Centre for Young Musicians (SCYM).
+
+Sessions run Saturdays during term time at Saffron Centre for Young Musicians c/o Saffron Hall, Uttlesford District Council Offices, London Road, Saffron Walden, Essex CB11 4ER. Contact: Helen Moss.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.essexmusicservice.org.uk/site/music-centres/saffron/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Saffron Centre for Young Musicians (SCYM)","Essex Music Service","Contact: Helen Moss"],"address":"Saffron Centre for Young Musicians c/o Saffron Hall Uttlesford District Council Offices London Road Saffron Walden Essex CB11 4ER","phone":"0333 013 8953","email":"helen.moss@essex.gov.uk","website":"https://www.essexmusicservice.org.uk/site/music-centres/saffron/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicServiceEssex"},{"label":"X (Twitter)","href":"https://x.com/MusicServEssex"},{"label":"YouTube","href":"https://www.youtube.com/channel/UC5vBOfpSBQb4iUaLpHGEgwg"},{"label":"SoundCloud","href":"https://soundcloud.com/user-695076106"}],"sourceUrl":"https://www.essexmusicservice.org.uk/site/music-centres/saffron/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E07000077';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Southend-on-Sea is served by Music-on-Sea (Southend Music Service) as part of Greater Essex Music Hub, alongside Essex Music Service and Thurrock Music Service.
+
+Southend Music Service ‘Music on Sea’ is committed to supporting the delivery of and providing high musical opportunities to children and young people across Southend City Council.
+
+Vision (published): all children and young people should have the opportunity to learn to sing, play an instrument and create music together, as well as progress their musical interests and talent, including through professional pathways.
+
+Music on Sea aims to support schools and other education settings to deliver high quality music education, including opportunities in and outside of school.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.musiconsea.co.uk/site/'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Music-on-Sea","Southend Music Service"],"phone":"01702 215861","email":"musiconsea@southend.gov.uk","website":"https://www.musiconsea.co.uk/site/","socials":[{"label":"Facebook","href":"https://www.facebook.com/MusicOnSea"},{"label":"X (Twitter)","href":"https://www.twitter.com/MusicOnSea"},{"label":"Instagram","href":"https://www.instagram.com/MusicOnSea"}],"sourceUrl":"https://www.musiconsea.co.uk/site/contactus/"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E06000033';
+UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), 'Thurrock is served by Thurrock Music Service as part of Greater Essex Music Hub, alongside Essex Music Service and Music-on-Sea.
+
+Thurrock Council publishes: Our team of highly qualified music teachers visit Thurrock''s schools to provide a high level of instrumental and vocal tuition. Pupils are taught on a range of instruments. Contact your child''s school for more information.
+
+Thurrock Music Services is listed as a lead partner of the Thurrock Music Education Hub (thurrockmusic.co.uk) for instrument hire, music schools, examinations, ensembles, events and festivals.'),
+  site_url = COALESCE(NULLIF(site_url, ''), 'https://www.thurrock.gov.uk/music'),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN '{"lines":["Thurrock Music Services"],"address":"High House Production Park, Vellacott Close, Purfleet-on-Thames, RM19 1RJ","phone":"01375 413 680","email":"music.services@thurrock.gov.uk","website":"https://www.thurrock.gov.uk/music","socials":[{"label":"Facebook (Thurrock Council)","href":"https://www.facebook.com/thurrockcouncil/"},{"label":"X (Thurrock Council)","href":"https://twitter.com/thurrockcouncil/"},{"label":"YouTube (Thurrock Council)","href":"https://www.youtube.com/thurrockcouncil"}],"sourceUrl":"https://www.thurrock.gov.uk/music"}'::jsonb
+    ELSE contact
+  END
+WHERE code = 'E06000034';
+
 -- Published partner resources (files already shipped in /demo-resources) and their scopes
 INSERT INTO public.resources (
   id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
@@ -921,7 +1093,7 @@ INSERT INTO public.resources (
 )
 SELECT 'ems-schools-brochure', 'Schools brochure', 'Essex Music Service’s offer to schools: curriculum platforms, instrumental and vocal pathways, workshops and CPD.', 'pdf', 'ems', 'ems-schools-brochure.pdf', '/demo-resources/ems-schools-brochure.pdf', false, true,
   'ems', 'published', true, ARRAY['KS3']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"KS3 (set up for Years 7–8)","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
-  'free', 'Essex Music Service', 'Shared by Essex Music Service for planning. © Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/'
+  'free', 'Essex Music Service', 'Shared by Essex Music Service for planning. © Essex Music Service.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
 WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
@@ -934,7 +1106,7 @@ INSERT INTO public.resources (
 )
 SELECT 'ems-dj-workshop', 'DJ Workshop', 'Featured EMS workshop: beat-matching, structure and performance. Course notes plus a ready-made lesson sequence.', 'workshop', 'ems', 'ems-dj-workshop-course-notes.pdf', '/demo-resources/ems-dj-workshop-course-notes.pdf', false, true,
   'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
-  'free', 'Essex Music Service', 'Shared by Essex Music Service for planning. © Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/workshops/'
+  'free', 'Essex Music Service', 'Shared by Essex Music Service for planning. © Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
 WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
@@ -947,9 +1119,2219 @@ INSERT INTO public.resources (
 )
 SELECT 'ems-rap-it-workshop', 'Rap-It!', 'Literacy-linked rap writing and performance workshop from Essex Music Service, with course notes and lessons.', 'workshop', 'ems', 'ems-rap-it-workshop-course-notes.pdf', '/demo-resources/ems-rap-it-workshop-course-notes.pdf', false, true,
   'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
-  'free', 'Essex Music Service', 'Shared by Essex Music Service for planning. © Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/workshops/'
+  'free', 'Essex Music Service', 'Shared by Essex Music Service for planning. © Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
 WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
 ON CONFLICT (id) DO NOTHING;
 INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
 SELECT 'ems-rap-it-workshop', 'hub', 'greater-essex' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'ems-rap-it-workshop')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-cmc', 'Basildon Bands! Community Music Centre', 'Local community music centre for Basildon. Fridays after school during term-time 3.45pm to 5.45pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/basildon-bands-community-music-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/basildon-bands-community-music-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-cmc', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-charges', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-brochure-2025', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-curriculum-cpd', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-instrumental-vocal', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-inclusion', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-outside-school', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-near-you', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-dj', 'DJ Workshop (Basildon schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-dj', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-rap-it', 'Rap-It! (Basildon schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-rap-it', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-gemh-schools', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'basildon-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'basildon-gemh-students', 'area', 'E07000066' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'basildon-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-cmc', 'Braintree Community Music Centre', 'Local community music centre for Braintree. Saturday, 9.00am to 1.00pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/braintree/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/braintree/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-cmc', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-charges', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-brochure-2025', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-curriculum-cpd', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-instrumental-vocal', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-inclusion', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-outside-school', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-near-you', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-dj', 'DJ Workshop (Braintree schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-dj', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-rap-it', 'Rap-It! (Braintree schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-rap-it', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-gemh-schools', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-gemh-students', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'braintree-extra-0', 'Witham Community Music Centre', 'Additional EMS-listed provision for the Braintree area.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/witham-communitymusic-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/music-centres/witham-communitymusic-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'braintree-extra-0', 'area', 'E07000067' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'braintree-extra-0')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-cmc', 'Brentwood Community Music Centre', 'Local community music centre for Brentwood. After School (term time only) Thursdays 5 - 7.30pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/brentwood-community-music-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/brentwood-community-music-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-cmc', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-charges', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-brochure-2025', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-curriculum-cpd', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-instrumental-vocal', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-inclusion', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-outside-school', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-near-you', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-dj', 'DJ Workshop (Brentwood schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-dj', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-rap-it', 'Rap-It! (Brentwood schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-rap-it', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-gemh-schools', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'brentwood-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'brentwood-gemh-students', 'area', 'E07000068' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'brentwood-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-cmc', 'Benfleet Community Music Centre', 'Local community music centre for Castle Point. Saturday (term time only) 8:30am – 12pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/benfleet/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/benfleet/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-cmc', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-charges', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-brochure-2025', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-curriculum-cpd', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-instrumental-vocal', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-inclusion', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-outside-school', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-near-you', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-dj', 'DJ Workshop (Castle Point schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-dj', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-rap-it', 'Rap-It! (Castle Point schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-rap-it', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-gemh-schools', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'castle-point-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'castle-point-gemh-students', 'area', 'E07000069' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'castle-point-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-cmc', 'Chelmsford Community Music Centre', 'Local community music centre for Chelmsford. Tuesday 4.30pm – 7pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/chelmsford/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/chelmsford/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-cmc', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-charges', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-brochure-2025', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-curriculum-cpd', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-instrumental-vocal', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-inclusion', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-outside-school', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-near-you', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-dj', 'DJ Workshop (Chelmsford schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-dj', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-rap-it', 'Rap-It! (Chelmsford schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-rap-it', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-gemh-schools', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'chelmsford-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'chelmsford-gemh-students', 'area', 'E07000070' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'chelmsford-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-cmc', 'Colchester Community Music Centre', 'Local community music centre for Colchester. Saturday (term time only) 9am – 12pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/colchester/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/colchester/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-cmc', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-charges', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-brochure-2025', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-curriculum-cpd', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-instrumental-vocal', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-inclusion', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-outside-school', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-near-you', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-dj', 'DJ Workshop (Colchester schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-dj', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-rap-it', 'Rap-It! (Colchester schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-rap-it', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-gemh-schools', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-gemh-students', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-extra-0', 'Colchester Townhouse', 'Additional EMS-listed provision for the Colchester area.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/colchester-townhouse/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/music-centres/colchester-townhouse/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-extra-0', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-extra-0')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'colchester-extra-1', 'West Colchester Community Music Centre', 'Additional EMS-listed provision for the Colchester area.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/west-colchester-community-music-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/music-centres/west-colchester-community-music-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'colchester-extra-1', 'area', 'E07000071' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'colchester-extra-1')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-cmc', 'Epping Forest Community Music Centre', 'Local community music centre for Epping Forest. Monday (term-time only) 4.00-6.00pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/epping-forest-community-music-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/epping-forest-community-music-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-cmc', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-charges', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-brochure-2025', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-curriculum-cpd', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-instrumental-vocal', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-inclusion', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-outside-school', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-near-you', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-dj', 'DJ Workshop (Epping Forest schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-dj', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-rap-it', 'Rap-It! (Epping Forest schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-rap-it', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-gemh-schools', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'epping-forest-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'epping-forest-gemh-students', 'area', 'E07000072' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'epping-forest-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-cmc', 'Livewire Music School (Harlow Juniors)', 'Local community music centre for Harlow. Tuesdays after school (term time only) 3.30 - 5pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/livewire-music-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/livewire-music-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-cmc', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-charges', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-brochure-2025', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-curriculum-cpd', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-instrumental-vocal', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-inclusion', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-outside-school', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-near-you', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-dj', 'DJ Workshop (Harlow schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-dj', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-rap-it', 'Rap-It! (Harlow schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-rap-it', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-gemh-schools', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-gemh-students', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'harlow-extra-0', 'Livewire Choir (Harlow Playhouse)', 'Additional EMS-listed provision for the Harlow area.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/livewire-choir-harlow-playhouse/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/music-centres/livewire-choir-harlow-playhouse/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'harlow-extra-0', 'area', 'E07000073' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'harlow-extra-0')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-cmc', 'Maldon Community Music Centre', 'Local community music centre for Maldon. Tuesday (term time only) 5pm – 7:30pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/maldon-music-school-community-music-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/maldon-music-school-community-music-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-cmc', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-charges', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-brochure-2025', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-curriculum-cpd', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-instrumental-vocal', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-inclusion', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-outside-school', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-near-you', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-dj', 'DJ Workshop (Maldon schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-dj', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-rap-it', 'Rap-It! (Maldon schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-rap-it', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-gemh-schools', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'maldon-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'maldon-gemh-students', 'area', 'E07000074' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'maldon-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-cmc', 'Rayleigh Community Music Centre', 'Local community music centre for Rochford. Wednesday (term time only) 4pm – 7pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/rayleigh-community-music-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/rayleigh-community-music-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-cmc', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-charges', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-brochure-2025', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-curriculum-cpd', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-instrumental-vocal', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-inclusion', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-outside-school', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-near-you', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-dj', 'DJ Workshop (Rochford schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-dj', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-rap-it', 'Rap-It! (Rochford schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-rap-it', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-gemh-schools', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'rochford-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'rochford-gemh-students', 'area', 'E07000075' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'rochford-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-cmc', 'Tendring Community Music Centre', 'Local community music centre for Tendring. Saturday (term time only) 8:30am – 1pm', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/tendring-community-music-centre/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/tendring-community-music-centre/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-cmc', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-charges', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-brochure-2025', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-curriculum-cpd', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-instrumental-vocal', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-inclusion', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-outside-school', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-near-you', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-dj', 'DJ Workshop (Tendring schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-dj', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-rap-it', 'Rap-It! (Tendring schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-rap-it', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-gemh-schools', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-gemh-students', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-extra-0', 'We Are Music (Harwich)', 'Additional EMS-listed provision for the Tendring area.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/we-are-music-harwich/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/music-centres/we-are-music-harwich/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-extra-0', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-extra-0')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'tendring-extra-1', 'We Are Music (Jaywick)', 'Additional EMS-listed provision for the Tendring area.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/we-are-music-jaywick/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service.', 'https://www.essexmusicservice.org.uk/site/music-centres/we-are-music-jaywick/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'tendring-extra-1', 'area', 'E07000076' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'tendring-extra-1')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-cmc', 'Saffron Centre for Young Musicians (SCYM)', 'Local community music centre for Uttlesford. Saturdays during term time', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-centres/saffron/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Centre","phase_label":"Ages 5–18","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-centres/saffron/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-cmc', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-cmc')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-charges', 'Community music charges', 'Official EMS fees for community instrumental and group provision.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/community-music-charges/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/community-music-charges/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-charges', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-charges')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-brochure-2025', 'EMS Schools brochure 2025–26', 'Official Essex Music Service schools brochure (PDF).', 'pdf', 'ems', 'DS25_8824-Music-Service-Schools-Digital-1.pdf', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"PDF","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/files/2025/06/DS25_8824-Music-Service-Schools-Digital-1.pdf'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-brochure-2025', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-brochure-2025')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-curriculum-cpd', 'Music curriculum and CPD resources', 'Charanga, YuStudio, Focus on Sound and related CPD for schools.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-curriculum-and-cpd-resources/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-curriculum-cpd', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-curriculum-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-instrumental-vocal', 'Instrumental and vocal provision', 'Whole-class, small-group and workshop offer including DJ and Rap-It!.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"EYFS–KS4","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-instrumental-vocal', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-instrumental-vocal')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-inclusion', 'Inclusion and financial support', 'Hub inclusion commitment and financial support information.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-inclusion', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-outside-school', 'Music outside of school', 'EMS pathways beyond the classroom.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/music-outside-of-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-outside-school', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-outside-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-near-you', 'Making music near you', 'Local music-making opportunities for families.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/music-information-for-parents/making-music-near-you/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-near-you', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-near-you')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-dj', 'DJ Workshop (Uttlesford schools)', 'EMS DJ workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3']::text[], ARRAY['Music technology']::text[], '{"type":"Workshop","phase_label":"KS2–KS3","library_pack":"ems-dj-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-dj', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-dj')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-rap-it', 'Rap-It! (Uttlesford schools)', 'Literacy-linked rap workshop — Add to CCDesigner for demo lesson export.', 'workshop', 'ems', '', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/', false, true,
+  'ems', 'published', true, ARRAY['KS2', 'KS3', 'KS4']::text[], ARRAY['Music', 'English']::text[], '{"type":"Workshop","phase_label":"KS2–KS4","library_pack":"ems-rap-it-workshop"}'::jsonb, NOW(),
+  'free', 'Essex Music Service', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.essexmusicservice.org.uk/site/school-provision/instrumental-and-vocal-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-rap-it', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-rap-it')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-gemh-schools', 'Opportunities for schools (GEMH)', 'Greater Essex Music Hub support for schools.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-gemh-schools', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-gemh-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'uttlesford-gemh-students', 'Opportunities for students (GEMH)', 'Greater Essex Music Hub student pathways.', 'workshop', 'ems', '', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/', false, true,
+  'ems', 'published', true, ARRAY['KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"KS1–KS5","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Greater Essex Music Hub', 'Published by Essex Music Service / Greater Essex Music Hub.', 'https://www.greateressexmusichub.org.uk/site/opportunities-for-students/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'uttlesford-gemh-students', 'area', 'E07000077' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'uttlesford-gemh-students')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-about', 'About Music-on-Sea', 'Official About page for Southend Music Service / Music on Sea.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/aboutus/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/aboutus/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-about', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-about')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-schools', 'Music in schools', 'Whole-class, curriculum support, tuition and CPD pathways for Southend schools.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/music-in-schools/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/music-in-schools/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-schools', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-schools')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-wcet', 'Whole class provision (WCET)', 'Music-on-Sea whole class ensemble tuition offer.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/music-in-schools/whole-class-provision/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/music-in-schools/whole-class-provision/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-wcet', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-wcet')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-curriculum', 'Curriculum delivery support', 'Provision to support curriculum delivery in Southend schools.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/music-in-schools/provision-support-curriculum-delivery/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/music-in-schools/provision-support-curriculum-delivery/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-curriculum', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-curriculum')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-tuition', 'Instrumental and vocal tuition in school', 'In-school instrumental and vocal tuition from Music-on-Sea.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/music-in-schools/music-tuition-school/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/music-in-schools/music-tuition-school/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-tuition', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-tuition')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-cpd', 'Networks and professional development', 'Teacher networks and CPD from Music-on-Sea.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/music-in-schools/networks-professional-development/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/music-in-schools/networks-professional-development/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-cpd', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-cpd')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-families', 'Information for families', 'Tuition, ensembles, instrument hire and financial assistance for families.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/information-for-families/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/information-for-families/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-families', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-families')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-ensembles', 'Ensembles', 'Family-facing ensembles information from Music-on-Sea.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/information-for-families/ensembles/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/information-for-families/ensembles/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-ensembles', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-ensembles')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-hire', 'Instrument hire', 'Instrument hire information for Music-on-Sea families.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/information-for-families/instrument-hire/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/information-for-families/instrument-hire/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-hire', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-hire')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-finance', 'Financial assistance', 'Financial assistance information for Music-on-Sea families.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/information-for-families/financial-assistance/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/information-for-families/financial-assistance/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-finance', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-finance')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'southend-inclusion', 'Inclusion', 'Inclusion policy and resources from Music-on-Sea.', 'workshop', 'ems', '', 'https://www.musiconsea.co.uk/site/policy-and-resources/inclusion/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Music-on-Sea', 'Published by Music-on-Sea / Southend Music Service.', 'https://www.musiconsea.co.uk/site/policy-and-resources/inclusion/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'southend-inclusion', 'area', 'E06000033' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'southend-inclusion')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-council-music', 'Music education in Thurrock', 'Thurrock Council music education overview and school tuition note.', 'workshop', 'ems', 'music', 'https://www.thurrock.gov.uk/music', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://www.thurrock.gov.uk/music'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-council-music', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-council-music')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-hub', 'Thurrock Music Education Hub', 'Hub site for instrument hire, music schools, exams, ensembles and festivals.', 'workshop', 'ems', '', 'https://thurrockmusic.co.uk/', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-hub', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-hub')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-hire', 'Instrument hire (Thurrock)', 'Instrument hire via Thurrock Music Education Hub.', 'workshop', 'ems', 'instrumenthire.php', 'https://thurrockmusic.co.uk/instrumenthire.php', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/instrumenthire.php'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-hire', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-hire')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-school', 'At music school (Thurrock)', 'Music school information from Thurrock Music Education Hub.', 'workshop', 'ems', 'atmusicschool.php', 'https://thurrockmusic.co.uk/atmusicschool.php', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/atmusicschool.php'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-school', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-school')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-exams', 'Exams (Thurrock)', 'Music examinations information.', 'workshop', 'ems', 'exams.php', 'https://thurrockmusic.co.uk/exams.php', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/exams.php'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-exams', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-exams')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-ensembles', 'Ensembles (Thurrock)', 'Orchestras, ensembles and choirs.', 'workshop', 'ems', 'ensembles.php', 'https://thurrockmusic.co.uk/ensembles.php', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/ensembles.php'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-ensembles', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-ensembles')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-events', 'Dates / events (Thurrock)', 'Music events and activities calendar.', 'workshop', 'ems', 'dates.php', 'https://thurrockmusic.co.uk/dates.php', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/dates.php'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-events', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-events')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-festivals', 'Music festivals (Thurrock)', 'Music festivals information.', 'workshop', 'ems', 'musicfestivals.php', 'https://thurrockmusic.co.uk/musicfestivals.php', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/musicfestivals.php'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-festivals', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-festivals')
+ON CONFLICT DO NOTHING;
+INSERT INTO public.resources (
+  id, title, description, resource_type, partner_slug, filename, download_url, requires_auth, is_active,
+  organisation_id, status, is_free, key_stages, subjects, metadata, published_at,
+  access_level, contributor_name, licence, source_url
+)
+SELECT 'thurrock-parents', 'Advice for parents (Thurrock)', 'Tips for parents of young musicians.', 'workshop', 'ems', 'adviceparents.php', 'https://thurrockmusic.co.uk/adviceparents.php', false, true,
+  'ems', 'published', true, ARRAY['EYFS', 'KS1', 'KS2', 'KS3', 'KS4', 'KS5']::text[], ARRAY['Music']::text[], '{"type":"Guide","phase_label":"All phases","library_pack":"ems-schools-brochure"}'::jsonb, NOW(),
+  'free', 'Thurrock Music Service', 'Published by Thurrock Council / Thurrock Music Education Hub.', 'https://thurrockmusic.co.uk/adviceparents.php'
+WHERE EXISTS (SELECT 1 FROM public.organisations WHERE id = 'ems')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.resource_scopes (resource_id, scope_type, scope_id)
+SELECT 'thurrock-parents', 'area', 'E06000034' WHERE EXISTS (SELECT 1 FROM public.resources WHERE id = 'thurrock-parents')
 ON CONFLICT DO NOTHING;

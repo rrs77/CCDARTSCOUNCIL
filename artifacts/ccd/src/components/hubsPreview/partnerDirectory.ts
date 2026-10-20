@@ -33,10 +33,19 @@ export const RELATIONSHIP_LABEL: Record<Relationship, string> = {
   confirmed_contributor: 'Confirmed contributor',
 };
 
+export interface ContactSocial {
+  label: string;
+  href: string;
+}
+
 export interface Contact {
   lines?: string[];
+  /** Venue or postal address, only when published on an official page. */
+  address?: string;
   phone?: string;
   email?: string;
+  website?: string;
+  socials?: ContactSocial[];
   sourceUrl?: string;
 }
 
@@ -63,6 +72,8 @@ export interface AreaDetail {
   about?: string;
   siteUrl?: string;
   contact?: Contact;
+  /** Official outbound links verified on the organisation’s own site. */
+  links?: { label: string; href: string }[];
 }
 
 export type ScopeType = 'national' | 'nation' | 'region' | 'hub' | 'area';
@@ -134,11 +145,23 @@ function bundledRecords(data: UkHubMapData): Records {
     siteUrl: s.siteUrl,
     organisationId: s.organisationId,
   }));
+  const areaSeed = (seed as { areas?: Record<string, Partial<AreaDetail> & { serviceId?: string }> }).areas ?? {};
   const areas: AreaDetail[] = data.lads.flatMap((l) => {
     const s = seed.services.find(
       (x) => x.hubId === l.hub && ('county' in x.covers ? l.county === x.covers.county : l.name === x.covers.name),
     );
-    return s ? [{ code: l.code, serviceId: s.id }] : [];
+    const extra = areaSeed[l.code];
+    if (!s && !extra) return [];
+    return [
+      {
+        code: l.code,
+        serviceId: extra?.serviceId ?? s?.id,
+        about: extra?.about,
+        siteUrl: extra?.siteUrl,
+        contact: extra?.contact,
+        links: extra?.links,
+      },
+    ];
   });
   const resources: HubResource[] = seed.resources.map((r) => ({
     id: r.id,

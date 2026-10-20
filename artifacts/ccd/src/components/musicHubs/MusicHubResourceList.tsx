@@ -137,7 +137,7 @@ export function MusicHubResourceList({
                     className="inline-flex items-center gap-1.5 rounded-lg bg-[#002D24] px-3 py-2 text-xs font-semibold text-white hover:opacity-95 disabled:opacity-50"
                   >
                     <PlusCircle className="h-3.5 w-3.5" aria-hidden />
-                    Copy to My Resources
+                    Add to CCDesigner
                   </button>
                 )}
               </div>
