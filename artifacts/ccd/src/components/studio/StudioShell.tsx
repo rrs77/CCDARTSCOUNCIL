@@ -26,7 +26,8 @@ export type StudioNavId =
   | 'bolt-ons'
   | 'assessify'
   | 'perifeedback'
-  | 'settings';
+  | 'settings'
+  | 'help';
 
 const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.ReactNode; dataTab: string }[] = [
   { id: 'unit-viewer', label: 'Planner', short: 'Planner', icon: <Calendar className="h-[17px] w-[17px]" />, dataTab: 'unit-viewer' },
@@ -84,7 +85,11 @@ export function StudioShell({
   }, [collapsed]);
 
   const mobileActive =
-    active === 'contact-us' || active === 'more' || active === 'settings' || isBoltOnsNav(active)
+    active === 'contact-us' ||
+    active === 'more' ||
+    active === 'settings' ||
+    active === 'help' ||
+    isBoltOnsNav(active)
       ? 'more'
       : active;
 

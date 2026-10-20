@@ -6,7 +6,7 @@ import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { navigateToSettings } from './settings';
 import { WalkthroughGuide } from './WalkthroughGuide';
-import { HelpGuide, type HelpGuideSection } from './HelpGuide';
+import { navigateToHelp } from './help';
 import { LogoSVG } from './Logo';
 import { AccountMenu } from './AccountMenu';
 import { usePWAInstall } from '../hooks/usePWAInstall';
@@ -32,8 +32,6 @@ export function Header() {
   const { canInstall, isInstalled, install } = usePWAInstall();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [showWalkthrough, setShowWalkthrough] = useState(false);
-  const [showHelpGuide, setShowHelpGuide] = useState(false);
-  const [helpGuideSection, setHelpGuideSection] = useState<HelpGuideSection | undefined>(undefined);
   /** Persistent class context on every tab (C1). Planner can be All-class or One-class. */
   const [studioTab, setStudioTab] = useState(() =>
     typeof document !== 'undefined' ? document.documentElement.dataset.ccdTab || 'unit-viewer' : 'unit-viewer',
@@ -79,6 +77,12 @@ export function Header() {
     const openSettings = () => navigateToSettings();
     window.addEventListener('ccd:open-settings', openSettings);
     return () => window.removeEventListener('ccd:open-settings', openSettings);
+  }, []);
+
+  useEffect(() => {
+    const openHelp = () => navigateToHelp();
+    window.addEventListener('ccd:open-help', openHelp);
+    return () => window.removeEventListener('ccd:open-help', openHelp);
   }, []);
 
   useEffect(() => {
@@ -435,12 +439,13 @@ export function Header() {
                 <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5" />
               </a>
 
-              {/* Help Button — opens the Help Guide (topic list + step-by-step). */}
+              {/* Help Button — full-page Help centre at /help */}
               <button
-                onClick={() => setShowHelpGuide(true)}
+                type="button"
+                onClick={() => navigateToHelp()}
                 className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="Help Guide"
-                aria-label="Open help guide"
+                title="Help"
+                aria-label="Open help"
                 data-help-button
               >
                 <HelpCircle className="h-4 w-4 lg:h-5 lg:w-5" />
@@ -562,12 +567,13 @@ export function Header() {
                       </button>
                     )}
                     <button
+                      type="button"
                       onClick={() => {
-                        setShowHelpGuide(true);
+                        navigateToHelp();
                         setMobileMenuOpen(false);
                       }}
                       className="p-2 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                      aria-label="Open help guide"
+                      aria-label="Open help"
                     >
                       <HelpCircle className="h-5 w-5" />
                     </button>
@@ -592,12 +598,6 @@ export function Header() {
         onClose={() => setShowWalkthrough(false)}
       />
 
-      {/* Help Guide */}
-      <HelpGuide
-        isOpen={showHelpGuide}
-        onClose={() => setShowHelpGuide(false)}
-        initialSection={helpGuideSection}
-      />
     </>
   );
 
