@@ -62,6 +62,11 @@ import { useSettings } from '../contexts/SettingsContextNew';
 import { generatePdfViaProxy } from '../utils/pdfApi';
 import { TimetableModal } from './TimetableModal';
 import { TimetableBuilder } from './TimetableBuilder';
+import {
+  readSlotsForClass,
+  upsertClassSlice,
+  type TimetableEntry,
+} from '../utils/timetableStorage';
 import { EventModal } from './EventModal';
 import { LessonDetailsModal } from './LessonDetailsModal';
 import { LessonPrintModal } from './LessonPrintModal';
@@ -250,18 +255,19 @@ export function LessonPlannerCalendar({
     }
   }, [className]);
 
-  // Load timetable classes from localStorage
+  // Load this class's slice of the teacher-level timetable
   useEffect(() => {
-    const savedTimetable = localStorage.getItem(`timetable-${className}`);
-    if (savedTimetable) {
-      try {
-        setTimetableClasses(JSON.parse(savedTimetable));
-      } catch (error) {
-        console.error('Error loading timetable:', error);
-        setTimetableClasses([]);
-      }
+    try {
+      const yg = (Array.isArray(customYearGroups) ? customYearGroups : []).find(
+        (g) => g.id === className || g.name === className,
+      );
+      const cls = { id: yg?.id || className, name: yg?.name || className };
+      setTimetableClasses(readSlotsForClass(cls) as TimetableClass[]);
+    } catch (error) {
+      console.error('Error loading timetable:', error);
+      setTimetableClasses([]);
     }
-    
+
     // Load calendar events from localStorage
     const savedEvents = localStorage.getItem(`calendar-events-${className}`);
     if (savedEvents) {
@@ -330,12 +336,27 @@ export function LessonPlannerCalendar({
         /* ignore */
       }
     }
+    // customYearGroups is read for id/name resolution only; className drives reload
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- avoid reloading events when settings array identity changes
   }, [className]);
 
-  // Save timetable classes to localStorage
+  // Persist this class's slice into the teacher-level timetable
   const saveTimetableClasses = (classes: TimetableClass[]) => {
-    localStorage.setItem(`timetable-${className}`, JSON.stringify(classes));
+    const yearGroups = Array.isArray(customYearGroups) ? customYearGroups : [];
+    const yg = yearGroups.find((g) => g.id === className || g.name === className);
+    const cls = { id: yg?.id || className, name: yg?.name || className };
+    const allClasses = yearGroups.map((g) => ({ id: g.id, name: g.name }));
+    if (!allClasses.some((c) => c.id === cls.id)) allClasses.push(cls);
+    upsertClassSlice(cls, classes as TimetableEntry[], allClasses);
     setTimetableClasses(classes);
+  };
+
+  /** After Timetable Builder saves the full teacher timetable, refresh this sheet's slice. */
+  const reloadTimetableSlice = () => {
+    const yearGroups = Array.isArray(customYearGroups) ? customYearGroups : [];
+    const yg = yearGroups.find((g) => g.id === className || g.name === className);
+    const cls = { id: yg?.id || className, name: yg?.name || className };
+    setTimetableClasses(readSlotsForClass(cls) as TimetableClass[]);
   };
 
   // Save calendar events to localStorage
@@ -1584,8 +1605,7 @@ export function LessonPlannerCalendar({
               onClick={(e) => {
                 e.stopPropagation();
                 if (item.kind === 'timetable' && item.tClass) {
-                  setEditingTimetableClass(item.tClass);
-                  setShowTimetableBuilder(true);
+                  window.dispatchEvent(new CustomEvent('ccd:open-timetable'));
                 } else if (item.plan) {
                   setSelectedDateWithPlans({ date, plans: [item.plan] });
                   setIsLessonSummaryOpen(true);
@@ -2425,7 +2445,8 @@ export function LessonPlannerCalendar({
                     role="menuitem"
                     onClick={() => {
                       setShowActionsMenu(false);
-                      setShowTimetableBuilder(true);
+                      // Full-page Timetable lives in the Planner room — not a modal over this calendar
+                      window.dispatchEvent(new CustomEvent('ccd:open-timetable'));
                     }}
                     className="w-full flex items-center gap-2.5 px-3 py-2.5 text-left text-sm text-gray-700 hover:bg-[#E9E6FF]"
                   >
@@ -2936,8 +2957,9 @@ export function LessonPlannerCalendar({
             setEditingTimetableClass(null);
           }}
           className={className}
-          onTimetableUpdate={(classes) => {
-            saveTimetableClasses(classes);
+          onTimetableUpdate={() => {
+            // Builder already saved the teacher timetable; reload this class's slice
+            reloadTimetableSlice();
           }}
           initialEditClass={editingTimetableClass as any}
         />

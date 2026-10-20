@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Lock, Loader2 } from 'lucide-react';
-import { supabase } from '../../config/supabase';
+import { getLiveSupabase } from '../../config/supabase';
 import { useAuth } from '../../hooks/useAuth';
 import toast from 'react-hot-toast';
 
@@ -31,9 +31,10 @@ export function ForcePasswordChangeGate({ children }: { children: React.ReactNod
     }
     setSaving(true);
     try {
-      const { error: authErr } = await supabase.auth.updateUser({ password });
+      const live = getLiveSupabase();
+      const { error: authErr } = await live.auth.updateUser({ password });
       if (authErr) throw new Error(authErr.message);
-      const { error: profErr } = await supabase
+      const { error: profErr } = await live
         .from('profiles')
         .update({
           must_change_password: false,

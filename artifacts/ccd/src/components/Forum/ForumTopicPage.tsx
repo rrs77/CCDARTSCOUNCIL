@@ -13,6 +13,7 @@ import { sanitizeStoredHtml } from '../../utils/forumMarkdown';
 import type { ForumPost } from '../../types/forum';
 import { useAuth } from '../../hooks/useAuth';
 import { ForumSeoHead } from './ForumSeoHead';
+import { ForumLoadError } from './ForumLoadError';
 
 export function ForumTopicPage({
   topicId,
@@ -94,7 +95,23 @@ export function ForumTopicPage({
   };
 
   if (error && !topic) {
-    return <div className="text-sm text-red-700">{error}</div>;
+    return (
+      <div className="space-y-4">
+        <button
+          type="button"
+          onClick={() => navigate('/forum')}
+          className="text-sm text-[#1F1B4D] hover:underline"
+        >
+          ← Community Forum
+        </button>
+        <ForumLoadError
+          title="Could not open this topic"
+          message={error}
+          onRetry={() => void load()}
+          showLocalDevHint
+        />
+      </div>
+    );
   }
   if (!topic) return <p className="text-sm text-gray-500">Loading topic…</p>;
 

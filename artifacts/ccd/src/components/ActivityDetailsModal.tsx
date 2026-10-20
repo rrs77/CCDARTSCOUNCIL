@@ -150,7 +150,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Description</h3>
               <div 
-                className="prose prose-sm max-w-none text-gray-700"
+                className="prose prose-sm max-w-none text-gray-700 [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
                 dangerouslySetInnerHTML={{ __html: formatDescription(activity.description) }}
               />
             </div>
@@ -161,7 +161,7 @@ export function ActivityDetailsModal({ isOpen, onClose, activity, onEdit }: Acti
             <div className="mb-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-3">Activity Instructions</h3>
               <div 
-                className="prose prose-sm max-w-none text-gray-700"
+                className="prose prose-sm max-w-none text-gray-700 [&_p]:my-1.5 [&_ul]:my-2 [&_ol]:my-2 [&_li]:my-0.5 [&_strong]:font-semibold"
                 dangerouslySetInnerHTML={{ __html: formatDescription(activity.activityText) }}
               />
             </div>

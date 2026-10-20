@@ -29,7 +29,14 @@ export function AuthGuard({
   }
 
   if (requireCanManageUsers) {
-    const canManage = profile?.role === 'admin' || profile?.role === 'superuser' || profile?.can_manage_users === true;
+    const canManage =
+      profile?.role === 'admin' ||
+      profile?.role === 'superuser' ||
+      profile?.role === 'super_admin' ||
+      profile?.can_manage_users === true ||
+      user.role === 'admin' ||
+      user.role === 'superuser' ||
+      user.role === 'super_admin';
     if (!canManage) return <>{fallback}</>;
   }
 

@@ -9,7 +9,6 @@ import type { CustomObjective, CustomObjectiveArea, CustomObjectiveYearGroup } f
 import { supabase } from '../config/supabase';
 import { generatePdfViaProxy } from '../utils/pdfApi';
 import { useShareLesson } from '../hooks/useShareLesson';
-import { isDemoModeActive } from '../utils/demoMode';
 import toast from 'react-hot-toast';
 
 // A4 dimensions and PDFBolt margin settings
@@ -1203,7 +1202,24 @@ export function LessonPrintModal({
     return n || num;
   };
 
-  // Export PDF via the server-side PDF proxy (keeps PDFBolt API key out of the browser)
+  /** Browser print → Save as PDF when the Vercel/PDFBolt proxy is unreachable (local/dev). */
+  const openPrintFallback = async (htmlRaw: string) => {
+    const printWin = window.open('', '_blank');
+    if (!printWin) {
+      toast.error('Please allow pop-ups to export via Print → Save as PDF');
+      return false;
+    }
+    printWin.document.write(htmlRaw);
+    printWin.document.close();
+    printWin.focus();
+    setTimeout(() => {
+      printWin.print();
+    }, 150);
+    return true;
+  };
+
+  // Export PDF via the server-side PDF proxy (keeps PDFBolt API key out of the browser).
+  // Falls back to browser print → Save as PDF when the API is unavailable in local/dev.
   const handleExport = async () => {
     const downloadFileName = exportMode === 'single' && lessonNumber
       ? `${currentSheetInfo.sheet}_Lesson_${getLessonDisplayNumber(lessonNumber)}.pdf`
@@ -1216,30 +1232,40 @@ export function LessonPrintModal({
       const footerContent = encodeUnicodeBase64(footerRaw);
       const headerContent = encodeUnicodeBase64(headerRaw);
 
-      const pdfBlob = await generatePdfViaProxy({
-        html: htmlContent,
-        printBackground: true,
-        waitUntil: 'networkidle',
-        format: 'A4',
-        margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
-        displayHeaderFooter: true,
-        footerTemplate: footerContent,
-        headerTemplate: headerContent,
-        emulateMediaType: 'screen',
-      });
+      try {
+        const pdfBlob = await generatePdfViaProxy({
+          html: htmlContent,
+          printBackground: true,
+          waitUntil: 'networkidle',
+          format: 'A4',
+          margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+          displayHeaderFooter: true,
+          footerTemplate: footerContent,
+          headerTemplate: headerContent,
+          emulateMediaType: 'screen',
+        });
 
-      const url = window.URL.createObjectURL(pdfBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = downloadFileName;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      window.URL.revokeObjectURL(url);
+        const url = window.URL.createObjectURL(pdfBlob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = downloadFileName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
 
-      setExportSuccess(true);
-      toast.success('PDF exported.', { duration: 3000, icon: '📄' });
-      setTimeout(() => setExportSuccess(false), 3000);
+        setExportSuccess(true);
+        toast.success('PDF exported.', { duration: 3000, icon: '📄' });
+        setTimeout(() => setExportSuccess(false), 3000);
+      } catch (proxyError: unknown) {
+        console.warn('PDF proxy failed, falling back to print dialog:', proxyError);
+        const opened = await openPrintFallback(htmlRaw);
+        if (opened) {
+          toast.success('Opened print dialog — choose “Save as PDF” to export', { duration: 5000 });
+          setExportSuccess(true);
+          setTimeout(() => setExportSuccess(false), 3000);
+        }
+      }
     } catch (error: any) {
       console.error('Export failed:', error);
       toast.error(error?.message || 'Failed to export PDF', { duration: 5000 });
@@ -1563,41 +1589,17 @@ export function LessonPrintModal({
     return false;
   };
 
-  const demoActive = isDemoModeActive();
-  useEffect(() => {
-    if (demoActive) {
-      toast(
-        'PDF export is available with a full account. Sign up free to unlock exporting, printing, and sharing.',
-        {
-          duration: 5000,
-          style: {
-            background: '#312e81',
-            color: '#e0e7ff',
-            borderRadius: '12px',
-            padding: '14px 18px',
-            fontSize: '14px',
-            maxWidth: '420px',
-            border: '1px solid #4338ca',
-          },
-        }
-      );
-      onClose();
-    }
-  }, [demoActive]);
-
   const autoDownloadDone = useRef(false);
   useEffect(() => {
-    if (demoActive) return;
     if (!autoDownload || lessonsToRender.length === 0 || isExporting || autoDownloadDone.current) return;
     autoDownloadDone.current = true;
     handleExport()
       .then(() => onClose())
       .catch(() => { autoDownloadDone.current = false; });
-  }, [autoDownload, lessonsToRender.length, isExporting, demoActive]);
+  }, [autoDownload, lessonsToRender.length, isExporting]);
 
   const systemPrintDone = useRef(false);
   useEffect(() => {
-    if (demoActive) return;
     if (!systemPrintOnly || lessonsToRender.length === 0 || systemPrintDone.current) return;
     systemPrintDone.current = true;
     const run = async () => {
@@ -1629,7 +1631,6 @@ export function LessonPrintModal({
 
   const pdfDownloadDone = useRef(false);
   useEffect(() => {
-    if (demoActive) return;
     if (!pdfDownloadOnly || lessonsToRender.length === 0 || pdfDownloadDone.current) return;
     pdfDownloadDone.current = true;
     handleExport()
@@ -1637,7 +1638,7 @@ export function LessonPrintModal({
       .catch(() => { pdfDownloadDone.current = false; });
   }, [pdfDownloadOnly, lessonsToRender.length]);
 
-  if (demoActive || systemPrintOnly || pdfDownloadOnly) {
+  if (systemPrintOnly || pdfDownloadOnly) {
     return null;
   }
 

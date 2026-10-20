@@ -49,9 +49,9 @@ export function LyricsWaveformDock({
   };
 
   return (
-    <div className="ilv-waveform-dock" aria-label="Lyrics waveform timeline">
+    <div className="ilv-waveform-dock" aria-label="Lyric video waveform timeline">
       <div className="ilv-waveform-dock-head">
-        <strong>Lyrics waveform</strong>
+        <strong>Lyric video waveform</strong>
         <span className="tabular-nums">
           {formatTimecode(sceneTimeMs)} / {formatTimecode(duration)}
         </span>
@@ -113,7 +113,7 @@ export function LyricsWaveformDock({
       </div>
       {lyrics.length === 0 && (
         <p className="ilv-waveform-empty">
-          Open Lyrics in the rail to paste, auto-align, or tap-sync lines — they appear on this waveform.
+          Open Lyric video in the rail to paste, auto-align, or tap-sync lines — they appear on this waveform.
         </p>
       )}
     </div>

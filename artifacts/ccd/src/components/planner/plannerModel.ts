@@ -1,6 +1,13 @@
 import type { LessonPlan } from '../../contexts/DataContext';
 
-export type PlannerView = 'day' | 'week' | 'month' | 'term' | 'units' | 'classic';
+/**
+ * Planner surfaces:
+ * - day/week/month = Schedule room
+ * - timetable = full-page weekly Timetable builder (teacher-level)
+ * - term/units = legacy (redirect to Half-terms sidebar tab; C2)
+ * - classic = optional class calendar (events / key dates) — not the Timetable tab
+ */
+export type PlannerView = 'day' | 'week' | 'month' | 'term' | 'units' | 'timetable' | 'classic';
 
 /** Rooms: Schedule = week/day/month; Timetable = recurring slots; Units = half-terms. */
 export type PlannerRoom = 'schedule' | 'timetable' | 'units';
@@ -12,7 +19,7 @@ export const SCHEDULE_VIEWS: { id: 'day' | 'week' | 'month'; label: string }[] =
 ];
 
 /** @deprecated Prefer SCHEDULE_VIEWS + rooms; kept for any older callers. */
-export const PLANNER_VIEWS: { id: Exclude<PlannerView, 'classic'>; label: string }[] = [
+export const PLANNER_VIEWS: { id: Exclude<PlannerView, 'classic' | 'timetable'>; label: string }[] = [
   { id: 'day', label: 'Day' },
   { id: 'week', label: 'Week' },
   { id: 'month', label: 'Month' },
@@ -47,7 +54,7 @@ export interface PlannerFolder {
   classes: PlannerClass[];
 }
 
-/** Recurring timetable slot from the existing calendar (`timetable-{class}` in localStorage). */
+/** Recurring timetable slot from the teacher-level timetable (sliced per My class). */
 export interface TimetableSlot {
   id: string;
   day: number;
@@ -106,6 +113,14 @@ export const SERIF = "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-seri
 export const pad = (n: number) => String(n).padStart(2, '0');
 
 export const ymd = (d: Date) => `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+
+/** Normalize `9:00` / `09:00` / `9:0` so timetable slots match scheduled plans. */
+export const normalizeTime = (t?: string | null): string => {
+  if (!t) return '';
+  const m = String(t).trim().match(/^(\d{1,2}):(\d{1,2})/);
+  if (!m) return String(t).trim();
+  return `${pad(parseInt(m[1], 10) || 0)}:${pad(parseInt(m[2], 10) || 0)}`;
+};
 
 export const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
 

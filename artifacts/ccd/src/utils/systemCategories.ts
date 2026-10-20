@@ -40,7 +40,11 @@ export const DEFAULT_SYSTEM_CATEGORIES: CategoryLike[] = [
   { name: 'Kodaly Games', color: '#ec4899', position: 13, yearGroups: {}, source: 'system' },
   { name: 'IWB Games', color: '#f59e0b', position: 14, yearGroups: {}, source: 'system' },
   { name: 'Drama Games', color: '#8b5cf6', position: 15, yearGroups: {}, source: 'system' },
-  { name: 'Vocal Warmups', color: '#ec4899', position: 16, yearGroups: {}, source: 'system' },
+  { name: 'Vocal Warmups', color: '#9D174D', position: 16, yearGroups: {}, source: 'system' },
+  { name: 'Breathing Exercises', color: '#0F766E', position: 17, yearGroups: {}, source: 'system' },
+  { name: 'Facial Warm-Ups / Diction', color: '#C2410C', position: 18, yearGroups: {}, source: 'system' },
+  { name: 'Physical Starters', color: '#A16207', position: 19, yearGroups: {}, source: 'system' },
+  { name: 'Pitch Exercises', color: '#1D4ED8', position: 20, yearGroups: {}, source: 'system' },
 ];
 
 export const SYSTEM_CATEGORY_NAMES = new Set(
