@@ -103,6 +103,19 @@ ON CONFLICT (code) DO NOTHING;`);
 }
 push('');
 
+push('-- Verified area about / contact / site (additive: only fills empty fields)');
+for (const [code, a] of Object.entries(seed.areas ?? {})) {
+  push(`UPDATE public.music_hub_areas SET
+  about = COALESCE(NULLIF(about, ''), ${q(a.about ?? null)}),
+  site_url = COALESCE(NULLIF(site_url, ''), ${q(a.siteUrl ?? null)}),
+  contact = CASE
+    WHEN contact IS NULL OR contact = '{}'::jsonb THEN ${q(a.contact ?? {})}
+    ELSE contact
+  END
+WHERE code = ${q(code)};`);
+}
+push('');
+
 push('-- Published partner resources (files already shipped in /demo-resources) and their scopes');
 for (const r of seed.resources) {
   const meta = { type: r.type, phase_label: r.phaseLabel, library_pack: r.libraryPack };

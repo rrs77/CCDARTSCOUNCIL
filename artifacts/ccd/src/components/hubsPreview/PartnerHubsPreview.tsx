@@ -66,6 +66,7 @@ import {
 } from './PartnerHubsDirectoryViews';
 import {
   ACCESS_LABEL,
+  type Contact,
   type Directory,
   type HubResource,
   type HubRole,
@@ -1021,7 +1022,7 @@ function AccessCodeForm({ r, onUnlocked }: { r: HubResource; onUnlocked: () => v
   );
 }
 
-const STEPS = ['Preview', 'Add to my library', 'Use in a lesson', 'Place in Planner', 'Reflect after teaching'];
+const STEPS = ['Preview', 'Add to CCDesigner', 'Use in a lesson', 'Place in Planner', 'Reflect after teaching'];
 
 function ResourceSheet({ r, onClose, hubId, areaCode }: { r: HubResource; onClose: () => void; hubId: string; areaCode?: string }) {
   const dir = useDirectory();
@@ -1160,7 +1161,7 @@ function ResourceSheet({ r, onClose, hubId, areaCode }: { r: HubResource; onClos
             <div className="mt-5 flex flex-wrap gap-2">
               {!added ? (
                 <PrimaryButton onClick={add} className={busy ? 'pointer-events-none opacity-70' : ''}>
-                  <Library className="h-4 w-4" /> {busy ? 'Adding…' : 'Add to my library'}
+                  <Library className="h-4 w-4" /> {busy ? 'Adding…' : 'Add to CCDesigner'}
                 </PrimaryButton>
               ) : (
                 <>
@@ -1372,7 +1373,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
           }}
           className="h-[420px] sm:h-[520px] lg:h-[600px]"
         />
-        <div className="flex flex-col gap-4 lg:max-h-[600px]">
+        <div className="flex flex-col gap-4">
           <div>
             <h3 className={`text-[18px] font-semibold ${ink}`}>Find your area</h3>
             <p className={`mt-0.5 text-[14px] ${muted}`}>
@@ -1380,7 +1381,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
             </p>
           </div>
           <FindArea value={filter} onChange={setFilter} label="Search areas" />
-          <div className="min-h-0 flex-1 overflow-auto pr-0.5">
+          <div className="pr-0.5">
             <AreaList
               lads={lads}
               selected={area?.code}
@@ -1507,28 +1508,7 @@ function HubPage({ ix, hub, area, tab, go, regionCrumbs }: {
           )}
           {tab === 'contact' &&
             (contact ? (
-              <div className="max-w-md space-y-3 rounded-2xl border border-[#002D24]/[0.08] bg-white p-5 text-[15px]">
-                {contact.lines?.length ? <p className={`font-semibold ${ink}`}>{contact.lines.join(' · ')}</p> : null}
-                {contact.phone && (
-                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`tel:${contact.phone.replace(/\s/g, '')}`}>
-                    <Phone className="h-4 w-4 text-[#002D24]/50" /> {contact.phone}
-                  </a>
-                )}
-                {contact.email && (
-                  <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`mailto:${contact.email}`}>
-                    <Mail className="h-4 w-4 text-[#002D24]/50" /> {contact.email}
-                  </a>
-                )}
-                {contact.sourceUrl && (
-                  <p className={`text-[13px] ${muted}`}>
-                    From the{' '}
-                    <a href={contact.sourceUrl} target="_blank" rel="noreferrer" className="underline">
-                      official contact page
-                    </a>
-                    .
-                  </p>
-                )}
-              </div>
+              <ContactCard contact={contact} />
             ) : (
               <EmptyState
                 title="Contact details haven’t been verified yet."
@@ -1569,6 +1549,60 @@ function MiniMap({ ix, hub, lad, onClick }: { ix: MapIndex; hub: MapHub; lad: Ma
   );
 }
 
+function ContactCard({ contact }: { contact: Contact }) {
+  return (
+    <div className="max-w-md space-y-3 rounded-2xl border border-[#002D24]/[0.08] bg-white p-5 text-[15px]">
+      {contact.lines?.length ? <p className={`font-semibold ${ink}`}>{contact.lines.join(' · ')}</p> : null}
+      {contact.address && (
+        <p className={`flex items-start gap-2 ${ink}`}>
+          <MapPin className="mt-0.5 h-4 w-4 shrink-0 text-[#002D24]/50" aria-hidden />
+          <span>{contact.address}</span>
+        </p>
+      )}
+      {contact.phone && (
+        <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`tel:${contact.phone.replace(/\s/g, '')}`}>
+          <Phone className="h-4 w-4 text-[#002D24]/50" /> {contact.phone}
+        </a>
+      )}
+      {contact.email && (
+        <a className={`flex items-center gap-2 ${ink} hover:underline`} href={`mailto:${contact.email}`}>
+          <Mail className="h-4 w-4 text-[#002D24]/50" /> {contact.email}
+        </a>
+      )}
+      {contact.website && (
+        <a className={`flex items-center gap-2 ${ink} hover:underline`} href={contact.website} target="_blank" rel="noreferrer">
+          <ExternalLink className="h-4 w-4 text-[#002D24]/50" /> Website
+        </a>
+      )}
+      {contact.socials && contact.socials.length > 0 && (
+        <ul className="flex flex-wrap gap-2 pt-1">
+          {contact.socials.map((s) => (
+            <li key={s.href}>
+              <a
+                href={s.href}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex min-h-[36px] items-center rounded-lg bg-[#F6F9F7] px-3 text-[14px] font-medium text-[#002D24] ring-1 ring-inset ring-[#002D24]/[0.08] hover:bg-[#E8F0EA]"
+              >
+                {s.label}
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+      {contact.sourceUrl && (
+        <p className={`text-[13px] ${muted}`}>
+          From the{' '}
+          <a href={contact.sourceUrl} target="_blank" rel="noreferrer" className="underline">
+            official contact page
+          </a>
+          .
+        </p>
+      )}
+    </div>
+  );
+}
+
 function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
   ix: MapIndex;
   hub: MapHub;
@@ -1589,11 +1623,12 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
     (!q.trim() || `${r.title} ${r.description} ${r.subject}`.toLowerCase().includes(q.trim().toLowerCase()));
   const sharedShown = shared.filter(match);
   const localShown = local.filter(match);
+  const links = areaDetail?.links ?? [];
 
   return (
     <div className="space-y-6">
       <Crumbs items={[...regionCrumbs, { label: short, onClick: () => go({ level: 'hub', id: hub.id }, 'hub') }, { label: lad.name }]} />
-      <header className="grid gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_240px] md:items-center">
+      <header className="grid gap-5 rounded-3xl border border-[#002D24]/[0.07] bg-white p-5 sm:p-6 md:grid-cols-[minmax(0,1fr)_240px] md:items-start">
         <div>
           <p className={`text-[14px] font-medium ${muted}`}>Local area</p>
           <h1 className={`mt-0.5 text-[30px] font-semibold leading-tight tracking-tight sm:text-[34px] ${ink}`}>{lad.name}</h1>
@@ -1610,7 +1645,7 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
             </p>
           )}
           {paragraphs(areaDetail?.about).map((p, i) => (
-            <p key={i} className={`mt-3 max-w-[60ch] text-[15px] leading-relaxed ${ink}`}>
+            <p key={i} className={`mt-3 max-w-[68ch] text-[15px] leading-relaxed ${ink}`}>
               {p}
             </p>
           ))}
@@ -1629,6 +1664,41 @@ function AreaPage({ ix, hub, lad, go, regionCrumbs }: {
         </div>
         <MiniMap ix={ix} hub={hub} lad={lad} onClick={() => go({ level: 'lad', id: lad.code }, 'hub')} />
       </header>
+
+      {(areaDetail?.contact || links.length > 0) && (
+        <section aria-labelledby="area-contact-heading" className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]">
+          {areaDetail?.contact && (
+            <div>
+              <h2 id="area-contact-heading" className={`mb-3 text-[20px] font-semibold tracking-tight ${ink}`}>
+                Contact
+              </h2>
+              <ContactCard contact={areaDetail.contact} />
+            </div>
+          )}
+          {links.length > 0 && (
+            <div>
+              <h2 id="area-links-heading" className={`mb-3 text-[20px] font-semibold tracking-tight ${ink}`}>
+                Official links
+              </h2>
+              <ul className="space-y-2 rounded-2xl border border-[#002D24]/[0.08] bg-white p-4">
+                {links.map((link) => (
+                  <li key={link.href + link.label}>
+                    <a
+                      href={link.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      className={`inline-flex items-center gap-2 text-[15px] font-medium ${ink} hover:underline`}
+                    >
+                      {link.label}
+                      <ExternalLink className="h-3.5 w-3.5 text-[#002D24]/45" aria-hidden />
+                    </a>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+        </section>
+      )}
 
       <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
         <PhaseFilter value={phase} onChange={setPhase} />
