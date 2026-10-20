@@ -285,37 +285,6 @@ function AgeCheckboxRow({
   );
 }
 
-function DirectoryTopBar({
-  children,
-  view,
-  onView,
-  accent = '#1A1A40',
-}: {
-  children: React.ReactNode;
-  view: 'grid' | 'list';
-  onView: (v: 'grid' | 'list') => void;
-  accent?: string;
-}) {
-  return (
-    <div className="flex flex-wrap items-center gap-2">
-      {children}
-      <button
-        type="button"
-        onClick={() => onView(view === 'grid' ? 'list' : 'grid')}
-        className={`ml-auto inline-flex min-h-[40px] items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold transition ${
-          view === 'list'
-            ? 'text-white'
-            : 'bg-white text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/12'
-        }`}
-        style={view === 'list' ? { backgroundColor: accent } : undefined}
-      >
-        {view === 'list' ? <List className="h-3.5 w-3.5" /> : <LayoutGrid className="h-3.5 w-3.5" />}
-        {view === 'list' ? 'List view' : 'List view'}
-      </button>
-    </div>
-  );
-}
-
 function ViewToggle({
   view,
   onView,
