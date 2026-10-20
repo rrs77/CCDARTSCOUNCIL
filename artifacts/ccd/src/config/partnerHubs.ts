@@ -420,3 +420,98 @@ export function backToCCDesigner(tab: string = 'our-partners'): void {
   if (typeof window === 'undefined') return;
   window.location.assign(`/?tab=${encodeURIComponent(tab)}`);
 }
+
+/** Default deep link: Partner Hubs → Paid resources listing. */
+export const PAID_RESOURCES_LISTING_PATH = '/?page=browse&section=paid-resources';
+
+const PAID_RESOURCES_RETURN_KEY = 'ccd-paid-resources-return-v1';
+
+export interface PaidResourcesReturnFilters {
+  subject: string;
+  ages: string[];
+  resourceType: string;
+  q: string;
+  view: 'grid' | 'list';
+}
+
+export interface PaidResourcesReturnState {
+  /** In-app path+search to reopen (must start with /). */
+  path: string;
+  scrollY: number;
+  filters?: PaidResourcesReturnFilters;
+}
+
+function safePaidReturnPath(raw: string | null | undefined): string | null {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('/') || trimmed.startsWith('//')) return null;
+  if (/^[a-zA-Z][a-zA-Z+\-.]*:/.test(trimmed)) return null;
+  return trimmed.split('#')[0] || null;
+}
+
+/** Stash Paid resources listing filters + scroll before opening a paid hub. */
+export function stashPaidResourcesReturn(state: PaidResourcesReturnState): void {
+  if (typeof window === 'undefined') return;
+  const path = safePaidReturnPath(state.path) || PAID_RESOURCES_LISTING_PATH;
+  try {
+    sessionStorage.setItem(
+      PAID_RESOURCES_RETURN_KEY,
+      JSON.stringify({
+        path,
+        scrollY: Math.max(0, Math.round(state.scrollY) || 0),
+        filters: state.filters,
+      } satisfies PaidResourcesReturnState),
+    );
+  } catch {
+    /* ignore */
+  }
+}
+
+/**
+ * Read and clear the Paid resources return stash (filters + scroll).
+ * Used by the Paid resources listing after navigating back from a paid hub.
+ */
+export function consumePaidResourcesReturn(): PaidResourcesReturnState | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    const raw = sessionStorage.getItem(PAID_RESOURCES_RETURN_KEY);
+    if (!raw) return null;
+    sessionStorage.removeItem(PAID_RESOURCES_RETURN_KEY);
+    const parsed = JSON.parse(raw) as PaidResourcesReturnState;
+    const path = safePaidReturnPath(parsed?.path) || PAID_RESOURCES_LISTING_PATH;
+    return {
+      path,
+      scrollY: typeof parsed?.scrollY === 'number' ? Math.max(0, parsed.scrollY) : 0,
+      filters: parsed?.filters,
+    };
+  } catch {
+    try {
+      sessionStorage.removeItem(PAID_RESOURCES_RETURN_KEY);
+    } catch {
+      /* ignore */
+    }
+    return null;
+  }
+}
+
+/**
+ * Peek the return path without clearing filters (so the listing can restore them).
+ * Falls back to the Paid resources deep link.
+ */
+export function peekPaidResourcesReturnPath(): string {
+  if (typeof window === 'undefined') return PAID_RESOURCES_LISTING_PATH;
+  try {
+    const raw = sessionStorage.getItem(PAID_RESOURCES_RETURN_KEY);
+    if (!raw) return PAID_RESOURCES_LISTING_PATH;
+    const parsed = JSON.parse(raw) as PaidResourcesReturnState;
+    return safePaidReturnPath(parsed?.path) || PAID_RESOURCES_LISTING_PATH;
+  } catch {
+    return PAID_RESOURCES_LISTING_PATH;
+  }
+}
+
+/** Return from a paid Partner Hub to Partner Hubs → Paid resources (filters/scroll restored on load). */
+export function backToPaidResources(): void {
+  if (typeof window === 'undefined') return;
+  window.location.assign(peekPaidResourcesReturnPath());
+}

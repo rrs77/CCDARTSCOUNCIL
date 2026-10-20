@@ -12,7 +12,12 @@ import {
   ShoppingBag,
   Users,
 } from 'lucide-react';
-import { openPartnerHub, type PartnerHubConfig } from '../../config/partnerHubs';
+import {
+  consumePaidResourcesReturn,
+  openPartnerHub,
+  stashPaidResourcesReturn,
+  type PartnerHubConfig,
+} from '../../config/partnerHubs';
 import {
   formatPricePence,
   getPaidProductsForPartner,
@@ -849,12 +854,45 @@ const PAID_TYPE_TONE: Record<(typeof PAID_RESOURCE_TYPES)[number], string> = {
 /** Paid resources — subject/age/type facets + priced product cards (composite mockup). */
 export function PaidResourcesDirectoryView() {
   const listings = useMemo(() => buildPaidListings(), []);
+  const restoredRef = useRef(false);
   const [subject, setSubject] = useState<ArtFormFilter>('All');
   const [ages, setAges] = useState<Set<string>>(new Set());
   const [resourceType, setResourceType] = useState<PaidTypeFilter>('All');
   const [q, setQ] = useState('');
   const [view, setView] = useState<'grid' | 'list'>('grid');
   const [saved, setSaved] = useState<Set<string>>(new Set());
+
+  // Restore filters + scroll after returning from a paid Partner Hub.
+  useEffect(() => {
+    if (restoredRef.current) return;
+    restoredRef.current = true;
+    const stashed = consumePaidResourcesReturn();
+    if (!stashed?.filters) {
+      if (stashed && stashed.scrollY > 0) {
+        requestAnimationFrame(() => window.scrollTo(0, stashed.scrollY));
+      }
+      return;
+    }
+    const f = stashed.filters;
+    if (ART_FORMS.includes(f.subject as (typeof ART_FORMS)[number]) || f.subject === 'All') {
+      setSubject(f.subject as ArtFormFilter);
+    }
+    if (Array.isArray(f.ages)) setAges(new Set(f.ages.filter(Boolean)));
+    if (
+      PAID_RESOURCE_TYPES.includes(f.resourceType as (typeof PAID_RESOURCE_TYPES)[number]) ||
+      f.resourceType === 'All'
+    ) {
+      setResourceType(f.resourceType as PaidTypeFilter);
+    }
+    if (typeof f.q === 'string') setQ(f.q);
+    if (f.view === 'grid' || f.view === 'list') setView(f.view);
+    const y = stashed.scrollY;
+    if (y > 0) {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => window.scrollTo(0, y));
+      });
+    }
+  }, []);
 
   const subjectCounts = useMemo(() => {
     const c: Record<string, number> = { All: listings.length };
@@ -916,7 +954,22 @@ export function PaidResourcesDirectoryView() {
   };
 
   const openListing = (l: PaidListing) => {
-    if (l.hub) openPartnerHub(l.hub.slug);
+    if (!l.hub) return;
+    const params = new URLSearchParams(window.location.search);
+    params.set('page', 'browse');
+    params.set('section', 'paid-resources');
+    stashPaidResourcesReturn({
+      path: `${window.location.pathname}?${params.toString()}`,
+      scrollY: window.scrollY,
+      filters: {
+        subject,
+        ages: [...ages],
+        resourceType,
+        q,
+        view,
+      },
+    });
+    openPartnerHub(l.hub.slug);
   };
 
   return (
