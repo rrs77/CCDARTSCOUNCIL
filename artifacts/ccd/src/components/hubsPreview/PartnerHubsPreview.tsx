@@ -61,6 +61,7 @@ import {
   PaidResourcesDirectoryView,
   PartnerHubsHeaderActions,
   PartnerSectionTabs,
+  SelectedAreaPanel,
   musicHubCardDetail,
   musicHubCardTitle,
 } from './PartnerHubsDirectoryViews';
@@ -1967,6 +1968,21 @@ function PartnerHubsBrowse({
     );
   }, [ix, focus, atRegion]);
 
+  // Boroughs / districts in this region (for the restored clickable local-area chips).
+  const regionLocalAreas = useMemo(() => {
+    if (!ix || !atRegion) return [] as { name: string; focus: MapFocus }[];
+    const seen = new Set<string>();
+    const out: { name: string; focus: MapFocus }[] = [];
+    for (const h of regionHubs) {
+      for (const l of ix.ladsInHub(h.id)) {
+        if (seen.has(l.code)) continue;
+        seen.add(l.code);
+        out.push({ name: l.name, focus: { level: 'lad', id: l.code } });
+      }
+    }
+    return out.sort((a, b) => a.name.localeCompare(b.name));
+  }, [ix, atRegion, regionHubs]);
+
   const regionRows = useMemo(() => {
     if (!ix) return [] as { code: string; name: string; count: number }[];
     return [...ix.data.regions]
@@ -1986,6 +2002,13 @@ function PartnerHubsBrowse({
     if (f.level === 'hub') {
       go(f, 'hub');
       return;
+    }
+    if (f.level === 'lad') {
+      const lad = ix?.lad(f.id);
+      if (lad?.hub) {
+        go(f, 'hub');
+        return;
+      }
     }
     go(f);
   };
@@ -2138,23 +2161,26 @@ function PartnerHubsBrowse({
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4 rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-4 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:flex-row sm:items-center sm:gap-5 sm:p-5">
-                <div className="min-w-0 flex-1">
-                  <h2
-                    id="music-hubs-results"
-                    className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[26px]"
-                  >
-                    {regionName}
-                  </h2>
-                  <p className={`mt-1 max-w-lg text-[14px] leading-snug ${muted}`}>
-                    {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'} serve schools across this region.
-                    Open a hub to explore resources and local services.
-                  </p>
-                  <p className="mt-2 text-[13px] font-semibold text-[#0B6B5F]">
-                    {regionHubCount} hub{regionHubCount === 1 ? '' : 's'} in {regionName}
-                  </p>
-                </div>
-                <div className="ml-auto h-[150px] w-full max-w-[260px] shrink-0 overflow-hidden rounded-xl ring-1 ring-[#1F1B4D]/[0.08] sm:w-[260px]">
+              <div className="min-w-0">
+                <h2
+                  id="music-hubs-results"
+                  className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[26px]"
+                >
+                  {regionName}
+                </h2>
+                <p className={`mt-1 max-w-2xl text-[14px] leading-snug ${muted}`}>
+                  {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'} serve schools across this region.
+                  Click a hub on the map — or a local area — to open boroughs and districts.
+                </p>
+              </div>
+
+              {/*
+                Restore the pre-0308d2d / pre-6cda310 large interactive region map.
+                6cda310 replaced this with a 260×150 locator and dropped map click-through
+                to hubs and boroughs. Keep the hub card list below (Rob’s preferred layout).
+              */}
+              <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(260px,320px)] lg:items-stretch">
+                <div className="overflow-hidden rounded-2xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)]">
                   <UkHubMap
                     ix={ix}
                     focus={focus}
@@ -2163,13 +2189,24 @@ function PartnerHubsBrowse({
                     onFocus={onMapFocus}
                     showBreadcrumb={false}
                     regionLabelMode="none"
-                    showFeatureLabels={false}
+                    showFeatureLabels
                     showControls={false}
                     showAttribution={false}
                     palette="green"
-                    className="h-full w-full !rounded-xl !border-0"
+                    className="h-[420px] !rounded-2xl !border-0 sm:h-[520px] lg:h-[560px]"
                   />
                 </div>
+                <SelectedAreaPanel
+                  title={regionName}
+                  hubCount={regionHubCount}
+                  blurb={`Open a Music Hub from the map or list, or jump straight to a local area (borough / district) served in ${regionName}.`}
+                  localAreas={regionLocalAreas.slice(0, 12).map((a) => a.name)}
+                  onViewHubs={() => resultsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })}
+                  onSelectLocalArea={(name) => {
+                    const hit = regionLocalAreas.find((a) => a.name === name);
+                    if (hit) go(hit.focus, 'hub');
+                  }}
+                />
               </div>
 
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2">
