@@ -197,7 +197,7 @@ export function LessonDetailsSheet({
                 {activities.length > 12 && <li className="text-xs text-[#77738F]">+{activities.length - 12} more</li>}
               </ol>
             ) : (
-              <p className="text-sm text-[#77738F]">No activities yet. Build this lesson in the Lesson Builder.</p>
+              <p className="text-sm text-[#77738F]">No activities yet. Build this lesson in Lessons.</p>
             )}
             {lesson?.learningOutcome && (
               <p className="mt-3 rounded-xl bg-[#E9E6FF] px-3 py-2 text-sm text-[#1F2937]">
@@ -279,7 +279,7 @@ export function LessonDetailsSheet({
                   onClose();
                 }}
               >
-                Edit in Lesson Builder
+                Edit in Lessons
               </button>
             )}
             <button type="button" className={`${btn} border-[#4338E8]/30 text-[#4338E8]`} onClick={() => setPolishOpen(true)}>
@@ -688,7 +688,7 @@ export function SchedulePickerSheet({
           <p className="py-6 text-center text-sm text-[#77738F]">Loading lessons…</p>
         ) : lessons.length === 0 ? (
           <p className="py-6 text-center text-sm text-[#77738F]">
-            No lessons found for {cls?.name}. Create one in the Lesson Builder or Lesson Library first.
+            No lessons found for {cls?.name}. Create one in Lessons first.
           </p>
         ) : (
           lessons.map(({ n, l }) => (

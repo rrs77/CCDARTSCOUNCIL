@@ -746,7 +746,7 @@ export function UkHubMap({
         {regionLanding
           ? ix.data.regions.map((r) => {
               const active = hover === r.code;
-              const fill = regionFill(r.code, r.tone, active);
+              const fill = regionFill(r.code, r.tone ?? 0, active);
               return (
                 <g
                   key={r.code}

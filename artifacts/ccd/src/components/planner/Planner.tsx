@@ -502,7 +502,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
           onEditInBuilder={(plan) => {
             const c = classById.get(plan.className);
             if (c) setCurrentSheetInfo({ sheet: c.id, display: c.name, eyfs: `${c.id} Statements` });
-            window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-builder' } }));
+            window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-library' } }));
           }}
         />
       )}
