@@ -241,13 +241,24 @@ async function databaseRecords(): Promise<Records> {
       siteUrl: str(s.site_url),
       organisationId: str(s.organisation_id),
     })),
-    areas: ((areas.data ?? []) as Row[]).map((a) => ({
-      code: String(a.code),
-      serviceId: str(a.service_id),
-      about: str(a.about),
-      siteUrl: str(a.site_url),
-      contact: a.contact && Object.keys(a.contact as object).length ? (a.contact as Contact) : undefined,
-    })),
+    areas: ((areas.data ?? []) as Row[]).map((a) => {
+      // Area "links" have no dedicated column; data-updates store them on contact.links.
+      const raw = a.contact && typeof a.contact === 'object' ? ({ ...(a.contact as Row) } as Row) : null;
+      const linkRows = Array.isArray(raw?.links) ? (raw!.links as { label?: unknown; href?: unknown }[]) : [];
+      const links = linkRows
+        .map((l) => ({ label: str(l.label), href: str(l.href) }))
+        .filter((l): l is { label: string; href: string } => Boolean(l.label && l.href));
+      if (raw) delete raw.links;
+      const contactKeys = raw ? Object.keys(raw).filter((k) => raw[k] != null && raw[k] !== '') : [];
+      return {
+        code: String(a.code),
+        serviceId: str(a.service_id),
+        about: str(a.about),
+        siteUrl: str(a.site_url),
+        contact: contactKeys.length ? (raw as Contact) : undefined,
+        links: links.length ? links : undefined,
+      };
+    }),
     resources: resourceRows.map((r) => {
       const meta = (r.metadata ?? {}) as Row;
       const access = (str(r.access_level) ?? 'free') as AccessLevel;

@@ -38,8 +38,9 @@ AS $$
   );
 $$;
 
+-- organisation_id is TEXT on profiles and hub_memberships (not uuid).
 CREATE OR REPLACE FUNCTION public.current_user_org_ids()
-RETURNS uuid[]
+RETURNS text[]
 LANGUAGE sql
 SECURITY DEFINER
 SET search_path = public
@@ -59,7 +60,7 @@ AS $$
           AND hm.organisation_id IS NOT NULL
       ) s
     ),
-    ARRAY[]::uuid[]
+    ARRAY[]::text[]
   );
 $$;
 

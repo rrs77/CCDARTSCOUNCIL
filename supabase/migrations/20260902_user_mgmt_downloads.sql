@@ -5,7 +5,8 @@
 -- superuser, creator.
 -- =============================================================================
 
--- 1) Roles: add organisation (+ keep creator if already present)
+-- 1) Roles: full app set (must include every live value — teacher, super_admin —
+-- and every ProfileRole the app uses). Safe to re-run after 20260903.
 ALTER TABLE public.profiles DROP CONSTRAINT IF EXISTS profiles_role_check;
 ALTER TABLE public.profiles
   ADD CONSTRAINT profiles_role_check
@@ -16,7 +17,8 @@ ALTER TABLE public.profiles
     'student',
     'superuser',
     'creator',
-    'organisation'
+    'organisation',
+    'super_admin'
   ));
 
 -- 2) Profile extensions (consent, org scope, forced password change, anonymisation)
