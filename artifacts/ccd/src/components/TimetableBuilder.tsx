@@ -184,7 +184,7 @@ export function TimetableBuilder({
         label: section.label,
         classes: (section.yearGroupIds || [])
           .map((id) => myClasses.find((g) => g.id === id || g.name === id))
-          .filter((g): g is (typeof myClasses)[number] => Boolean(g) && match(g.name)),
+          .filter((g): g is (typeof myClasses)[number] => g != null && match(g.name)),
       }))
       .filter((s) => s.classes.length > 0);
     const assigned = new Set(grouped.flatMap((s) => s.classes.map((c) => c.id)));

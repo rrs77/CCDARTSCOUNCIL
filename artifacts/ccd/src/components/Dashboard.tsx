@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { LessonPlanBuilder } from './LessonPlanBuilder';
 import { LessonPlannerCalendar } from './LessonPlannerCalendar';
 import { ActivityLibrary } from './ActivityLibrary';
-import { LessonLibrary } from './LessonLibrary';
+import { LessonsWorkspace } from './LessonsWorkspace';
 import { CircleHelp } from 'lucide-react';
 import { OurPartners } from './OurPartners';
 import { PartnerHubsPreview, isPartnerHubsLink, newPartnerHubsEnabled } from './hubsPreview/PartnerHubsPreview';
@@ -61,7 +60,7 @@ const HALF_TERMS = [
 const ALLOWED = new Set([
   'unit-viewer',
   'lesson-library',
-  'lesson-builder',
+  'lesson-builder', // legacy alias → redirected to lesson-library
   'activity-library',
   'calendar',
   'our-partners',
@@ -75,6 +74,13 @@ const ALLOWED = new Set([
   'settings',
   'help',
 ]);
+
+/** Old Lesson Builder / Calendar links land on unified Lessons / Planner. */
+function canonicalizeTab(tab: string): string {
+  if (tab === 'lesson-builder') return 'lesson-library';
+  if (tab === 'calendar') return 'unit-viewer';
+  return tab;
+}
 
 const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
 
@@ -108,7 +114,7 @@ export function Dashboard() {
   const [activeTab, setActiveTabRaw] = useState<string>(initialDashboardTab);
   const newPartnerHubs = newPartnerHubsEnabled();
   const setActiveTab = (tab: string) => {
-    const next = tab === 'calendar' ? 'unit-viewer' : tab;
+    const next = canonicalizeTab(tab);
     setActiveTabRaw(next);
     if (!BOLT_ON_TABS.has(next)) {
       clearBoltOnsUrlIfPresent();
@@ -128,7 +134,7 @@ export function Dashboard() {
   };
 
   useEffect(() => {
-    const tab = activeTab === 'calendar' ? 'unit-viewer' : activeTab;
+    const tab = canonicalizeTab(activeTab);
     try {
       document.documentElement.dataset.ccdTab = tab;
       window.dispatchEvent(new CustomEvent('ccd:active-tab', { detail: { tab } }));
@@ -223,7 +229,7 @@ export function Dashboard() {
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-    setActiveTab('lesson-builder');
+    setActiveTab('lesson-library');
   };
 
   const handleCreateLessonPlan = (date: Date) => {
@@ -243,7 +249,7 @@ export function Dashboard() {
       updatedAt: new Date(),
     };
     void addOrUpdateUserLessonPlan(newPlan);
-    setActiveTab('lesson-builder');
+    setActiveTab('lesson-library');
   };
 
   const handleDeleteLessonPlan = (planId: string) => {
@@ -259,7 +265,7 @@ export function Dashboard() {
   };
 
   const handleActivityAdd = (_activity: Activity) => {
-    /* Standalone Activity Library tab; Lesson Builder keeps its own DnD path */
+    /* Standalone Activity Library tab; Lessons workspace keeps its own DnD path */
   };
 
   const handleAssignLessonToHalfTerm = (lessonNumber: string, halfTermId: string) => {
@@ -277,10 +283,11 @@ export function Dashboard() {
   };
 
   const showTabsExplainerButton = isAuthorizedDemoMode();
-  const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
+  const navId = canonicalizeTab(activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
   const wideCanvas =
     activeTab === 'activity-library' ||
+    activeTab === 'lesson-library' ||
     activeTab === 'lesson-viewer' ||
     activeTab === 'settings' ||
     activeTab === 'help';
@@ -344,42 +351,12 @@ export function Dashboard() {
         </div>
       )}
 
-      {activeTab === 'lesson-library' && (
+      {(activeTab === 'lesson-library' || activeTab === 'lesson-builder') && (
         <div className="ccd-fade-in-up" key="ll">
-          <p className="ccd-studio-eyebrow mb-1">
-            CONNECT &amp; CREATE / <span>LESSONS</span>
-          </p>
-          <p className="mb-4 text-sm text-[#77738F]">
-            Lessons saved from Lesson Builder for{' '}
-            <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>.
-            Filter by half-term, open a plan, or assign it into the Half-terms map.
-          </p>
-          <LessonLibrary
-            className={currentSheetInfo.sheet}
+          <LessonsWorkspace
             onAssignToUnit={handleAssignLessonToHalfTerm}
-            onNavigateToBuilder={() => handleTabChange('lesson-builder')}
+            onUnsavedChangesChange={setLessonBuilderHasUnsavedChanges}
           />
-        </div>
-      )}
-
-      {activeTab === 'lesson-builder' && (
-        <div className="ccd-fade-in-up" key="lb">
-          <p className="ccd-studio-eyebrow mb-1">
-            CONNECT &amp; CREATE / <span>LESSON BUILDER</span>
-          </p>
-          <p className="mb-3 text-sm text-[#77738F]">
-            Drag activities into a lesson, then <strong className="text-[#1F1B4D]">Save Lesson</strong>. It appears under{' '}
-            <button
-              type="button"
-              onClick={() => handleTabChange('lesson-library')}
-              className="font-semibold text-[#4338E8] underline-offset-2 hover:underline"
-            >
-              Lessons
-            </button>
-            .
-          </p>
-          {/* DnD: LessonDropZone + ActivityCard remain inside LessonPlanBuilder; DndRoot wraps the app */}
-          <LessonPlanBuilder onUnsavedChangesChange={setLessonBuilderHasUnsavedChanges} />
         </div>
       )}
 
