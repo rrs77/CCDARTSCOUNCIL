@@ -59,10 +59,11 @@ export function LessonPrintPreview({
           }}
         >
           <iframe
+            key={html.length + html.slice(0, 64)}
             title="Lesson print preview"
             srcDoc={html}
             className="h-full w-full border-0"
-            style={{ width: A4_WIDTH_PX, height: A4_HEIGHT_PX, background: '#fff' }}
+            style={{ width: A4_WIDTH_PX, height: Math.max(A4_HEIGHT_PX, A4_HEIGHT_PX), background: '#fff' }}
             sandbox="allow-same-origin"
           />
         </div>
