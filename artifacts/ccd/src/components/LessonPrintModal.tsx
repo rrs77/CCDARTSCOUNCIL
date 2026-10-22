@@ -10,25 +10,27 @@ import { supabase } from '../config/supabase';
 import { generatePdfViaProxy } from '../utils/pdfApi';
 import { useShareLesson } from '../hooks/useShareLesson';
 import toast from 'react-hot-toast';
+import {
+  A4_HEIGHT_PX,
+  A4_WIDTH_PX,
+  PDFBOLT_MARGINS,
+} from '../utils/lessonPdfHtml';
 
-// A4 dimensions and PDFBolt margin settings
-// These MUST match the PDFBolt API settings exactly for accurate preview
-const A4_WIDTH_MM = 210;
-const A4_HEIGHT_MM = 297;
-const MM_TO_PX = 3.7795275591; // 1mm = 3.7795275591 pixels at 96 DPI
-
-// A4 dimensions in pixels at 96 DPI
-const A4_WIDTH_PX = A4_WIDTH_MM * MM_TO_PX; // ~794px
-const A4_HEIGHT_PX = A4_HEIGHT_MM * MM_TO_PX; // ~1122px
-
-// PDFBolt margin settings (in pixels) - MUST match API call
-const PDFBOLT_MARGIN_TOP_PX = 15;
-const PDFBOLT_MARGIN_BOTTOM_PX = 55; // Includes footer space
-const PDFBOLT_MARGIN_LEFT_PX = 20;
-const PDFBOLT_MARGIN_RIGHT_PX = 20;
+// PDFBolt margin settings (in pixels) — shared with lessonPdfHtml / live print preview
+const PDFBOLT_MARGIN_TOP_PX = parseInt(PDFBOLT_MARGINS.top, 10);
+const PDFBOLT_MARGIN_BOTTOM_PX = parseInt(PDFBOLT_MARGINS.bottom, 10);
+const PDFBOLT_MARGIN_LEFT_PX = parseInt(PDFBOLT_MARGINS.left, 10);
+const PDFBOLT_MARGIN_RIGHT_PX = parseInt(PDFBOLT_MARGINS.right, 10);
 
 // Available content area height (A4 height minus top and bottom margins)
-const PAGE_CONTENT_HEIGHT_PX = A4_HEIGHT_PX - PDFBOLT_MARGIN_TOP_PX - PDFBOLT_MARGIN_BOTTOM_PX; // ~1052px
+const PAGE_CONTENT_HEIGHT_PX = A4_HEIGHT_PX - PDFBOLT_MARGIN_TOP_PX - PDFBOLT_MARGIN_BOTTOM_PX;
+
+// Re-export for any UI that still references local A4 width naming
+const _A4_WIDTH_PX = A4_WIDTH_PX;
+void _A4_WIDTH_PX;
+void PAGE_CONTENT_HEIGHT_PX;
+void PDFBOLT_MARGIN_LEFT_PX;
+void PDFBOLT_MARGIN_RIGHT_PX;
 
 interface LessonPrintModalProps {
   lessonNumber?: string;
