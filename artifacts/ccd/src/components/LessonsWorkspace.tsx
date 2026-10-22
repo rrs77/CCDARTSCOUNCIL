@@ -4,12 +4,14 @@ import {
   Calendar,
   Clock,
   FolderOpen,
+  Pencil,
   Plus,
   Search,
   Tag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { LessonPlanBuilder } from './LessonPlanBuilder';
+import { StandaloneLessonCreator } from './StandaloneLessonCreator';
 import { AssignToHalfTermModal } from './AssignToHalfTermModal';
 import { useData } from '../contexts/DataContext';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
@@ -47,6 +49,8 @@ export function LessonsWorkspace({
     currentSheetInfo,
     halfTerms,
     loading,
+    currentAcademicYear,
+    updateLessonData,
   } = useData();
 
   const [searchQuery, setSearchQuery] = useState('');
@@ -54,6 +58,11 @@ export function LessonsWorkspace({
   const [editingLessonNumber, setEditingLessonNumber] = useState<string | undefined>();
   const [builderKey, setBuilderKey] = useState(0);
   const [assignLessonNumber, setAssignLessonNumber] = useState<string | null>(null);
+  const [showLessonForm, setShowLessonForm] = useState(false);
+  const [editingLessonForForm, setEditingLessonForForm] = useState<{
+    lessonNumber: string;
+    lessonData: any;
+  } | null>(null);
 
   const getLessonHalfTerm = (lessonNumber: string): string | null => {
     for (const halfTerm of halfTerms || []) {
@@ -102,18 +111,61 @@ export function LessonsWorkspace({
     return list;
   }, [allLessonsData, lessonNumbers, searchQuery, selectedHalfTerm, halfTerms]);
 
-  const openLesson = (lessonNumber: string) => {
+  const openLessonInBuilder = (lessonNumber: string) => {
     setEditingLessonNumber(lessonNumber);
     setBuilderKey((k) => k + 1);
   };
 
-  const createLesson = () => {
+  const openLessonForm = (lessonNumber?: string) => {
     if (isViewOnly) {
-      toast.error('View-only mode: cannot create lessons.');
+      toast.error('View-only mode: cannot edit lessons.');
       return;
     }
-    setEditingLessonNumber(undefined);
-    setBuilderKey((k) => k + 1);
+    if (lessonNumber && allLessonsData[lessonNumber]) {
+      setEditingLessonForForm({
+        lessonNumber,
+        lessonData: allLessonsData[lessonNumber],
+      });
+    } else {
+      setEditingLessonForForm(null);
+    }
+    setShowLessonForm(true);
+  };
+
+  const createLesson = () => openLessonForm();
+
+  const handleSaveStandaloneLesson = async (lessonData: any) => {
+    const loadingToast = toast.loading('Saving lesson…');
+    try {
+      const maxLessonNumber = Math.max(
+        0,
+        ...Object.keys(allLessonsData || {}).map((num) => {
+          const numStr = num.replace('lesson', '');
+          return parseInt(numStr, 10) || 0;
+        }),
+      );
+      const newLessonNumber = `lesson${maxLessonNumber + 1}`;
+      const lessonDataWithFlag = {
+        ...lessonData,
+        isUserCreated: true,
+        academicYear: currentAcademicYear,
+      };
+      if (!updateLessonData) throw new Error('Save function not available');
+      await updateLessonData(newLessonNumber, lessonDataWithFlag);
+      setShowLessonForm(false);
+      setEditingLessonForForm(null);
+      setEditingLessonNumber(newLessonNumber);
+      setBuilderKey((k) => k + 1);
+      toast.success(`Lesson "${lessonData.title || newLessonNumber}" created`, {
+        id: loadingToast,
+        duration: 3000,
+      });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to create lesson',
+        { id: loadingToast, duration: 5000 },
+      );
+    }
   };
 
   const handleAssign = (halfTermId: string) => {
@@ -137,7 +189,7 @@ export function LessonsWorkspace({
           Saved lessons for{' '}
           <strong className="text-[#1F1B4D]">{classLabel}</strong>
           {' · '}
-          open one to edit, or create a new plan from activity blocks.
+          create or edit a full plan (objectives + print preview), or open activities in the canvas.
         </p>
       </div>
 
@@ -211,7 +263,7 @@ export function LessonsWorkspace({
                 <p className="mt-1 text-[12px] leading-relaxed text-[#77738F]">
                   {searchQuery || selectedHalfTerm !== 'all'
                     ? 'Try another search or half-term filter.'
-                    : 'Create a lesson, then drag activities into the canvas.'}
+                    : 'Create a lesson plan, then refine activities in the canvas.'}
                 </p>
                 {!searchQuery && selectedHalfTerm === 'all' ? (
                   <button
@@ -260,7 +312,7 @@ export function LessonsWorkspace({
                       >
                         <button
                           type="button"
-                          onClick={() => openLesson(num)}
+                          onClick={() => openLessonForm(num)}
                           className="w-full text-left"
                         >
                           <div className="flex items-start gap-2">
@@ -290,11 +342,29 @@ export function LessonsWorkspace({
                             </div>
                           </div>
                         </button>
+                        <div className="mt-1.5 flex gap-1">
+                          <button
+                            type="button"
+                            onClick={() => openLessonForm(num)}
+                            disabled={isViewOnly}
+                            className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] disabled:opacity-50"
+                          >
+                            <Pencil className="h-3 w-3" />
+                            Edit plan
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openLessonInBuilder(num)}
+                            className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8]"
+                          >
+                            Activities
+                          </button>
+                        </div>
                         {onAssignToUnit && !isViewOnly ? (
                           <button
                             type="button"
                             onClick={() => setAssignLessonNumber(num)}
-                            className="mt-1.5 inline-flex h-7 w-full items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8]"
+                            className="mt-1 inline-flex h-7 w-full items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8]"
                           >
                             <Calendar className="h-3 w-3" />
                             {term ? 'Reassign half-term' : 'Assign to half-term'}
@@ -330,6 +400,18 @@ export function LessonsWorkspace({
           onAssign={handleAssign}
           lessonNumber={assignLessonNumber}
           halfTerms={(halfTerms || []) as any}
+        />
+      )}
+
+      {showLessonForm && (
+        <StandaloneLessonCreator
+          onClose={() => {
+            setShowLessonForm(false);
+            setEditingLessonForForm(null);
+          }}
+          onSave={handleSaveStandaloneLesson}
+          editingLesson={editingLessonForForm || undefined}
+          yearGroup={currentSheetInfo.sheet}
         />
       )}
     </div>

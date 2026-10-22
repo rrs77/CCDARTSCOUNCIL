@@ -2,17 +2,19 @@ import React, { useState, useMemo, useRef } from 'react';
 import { sanitizeHtml } from '../utils/sanitize';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
-import { X, Plus, Trash2, Eye, BookOpen, Target, Link2, Clock, Search, GripVertical, ChevronDown, ChevronUp, List, Layers, Upload, Save, HelpCircle } from 'lucide-react';
+import { X, Plus, Trash2, Eye, BookOpen, Target, Link2, Clock, Search, GripVertical, ChevronDown, ChevronUp, List, Layers, Upload, Save, HelpCircle, Columns2, Pencil, ArrowLeft } from 'lucide-react';
 import { RichTextEditor } from './RichTextEditor';
 import { ActivityCard } from './ActivityCard';
 import { SimpleNestedCategoryDropdown } from './SimpleNestedCategoryDropdown';
 import { ActivitySearchModal } from './ActivitySearchModal';
 import { ObjectiveSelector } from './ObjectiveSelector';
 import { LessonImportModal, ParsedLessonData } from './LessonImportModal';
+import { LessonPrintPreview } from './LessonPrintPreview';
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useAuth } from '../hooks/useAuth';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
+import type { LessonPdfData } from '../utils/lessonPdfHtml';
 
 // Example content for each section - shown in ? modal when creating new lessons
 const SECTION_EXAMPLES: Record<string, { title: string; content: string }> = {
@@ -174,14 +176,15 @@ function CompactDraggableActivity({ activity, index, onRemove, onReorder }: Comp
 }
 
 export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = ({ onSave, onClose, editingLesson, yearGroup }) => {
-  const { allActivities, updateLessonData } = useData();
-  const { categories, customYearGroups } = useSettings();
+  const { allActivities, updateLessonData, currentSheetInfo } = useData();
+  const { categories, customYearGroups, getCategoryColor } = useSettings();
   const { user } = useAuth();
   
   const isAdmin = user?.role === 'admin' || user?.role === 'superuser';
   
   const [activeTab, setActiveTab] = useState<'main' | 'extended'>('main');
-  const [showPreview, setShowPreview] = useState(false);
+  /** Edit form / A4 print preview / side-by-side split (live PDF HTML). */
+  const [viewMode, setViewMode] = useState<'edit' | 'preview' | 'split'>('split');
   const [showImportModal, setShowImportModal] = useState(false);
   
   // Initialize lesson state - populate if editing
@@ -450,6 +453,50 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
     });
   };
 
+  /** Unsaved form → PDF HTML shape for live print preview. */
+  const livePdfLessonData = useMemo((): LessonPdfData => {
+    const grouped: Record<string, Activity[]> = {};
+    const categoryOrder: string[] = [];
+    selectedActivities.forEach((activity) => {
+      const category = activity.category || 'Other';
+      if (!grouped[category]) {
+        grouped[category] = [];
+        categoryOrder.push(category);
+      }
+      grouped[category].push(activity);
+    });
+    return {
+      title: lesson.lessonTitle,
+      lessonName: lesson.lessonName,
+      totalTime: lesson.duration,
+      assessmentObjectives: lesson.assessmentObjectives,
+      learningOutcome: lesson.learningOutcome,
+      successCriteria: lesson.successCriteria,
+      introduction: lesson.introduction,
+      mainActivity: lesson.mainActivity,
+      plenary: lesson.plenary,
+      vocabulary: lesson.vocabulary,
+      keyQuestions: lesson.keyQuestions,
+      resources: lesson.resources,
+      differentiation: lesson.differentiation,
+      assessment: lesson.assessment,
+      orderedActivities: selectedActivities,
+      grouped,
+      categoryOrder,
+    };
+  }, [lesson, selectedActivities]);
+
+  const printPreviewOptions = useMemo(
+    () => ({
+      lessonData: livePdfLessonData,
+      sheetDisplay: currentSheetInfo?.display || currentSheetInfo?.sheet || yearGroup || 'Class',
+      lessonNumber: editingLesson?.lessonNumber || 'new',
+      getCategoryColor: (cat: string) => getCategoryColor?.(cat) || '#0f766e',
+      printTitle: lesson.lessonTitle || 'Lesson Plan',
+    }),
+    [livePdfLessonData, currentSheetInfo, yearGroup, editingLesson, getCategoryColor, lesson.lessonTitle],
+  );
+
   const handleSubmit = async () => {
     console.log('📝 Submit button clicked');
     console.log('📊 Current lesson data:', lesson);
@@ -525,42 +572,103 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
     }
   };
 
+  const showEditor = viewMode === 'edit' || viewMode === 'split';
+  const showPrintPreview = viewMode === 'preview' || viewMode === 'split';
+
   return (
     <>
-      {/* Main Create Lesson Modal */}
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-2 sm:p-4 z-[100]">
-        <div className="bg-white rounded-card shadow-soft w-full max-w-3xl max-h-[98vh] sm:max-h-[95vh] flex flex-col overflow-hidden">
+      {/* Full-screen Create / Edit Lesson */}
+      <div className="fixed inset-0 z-[100] flex flex-col bg-[#F4F3FA]">
         {/* Header */}
-        <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(135deg, #0BA596 0%, #0BA596 100%)' }}>
-          <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-            <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white flex-shrink-0" />
-            <h2 className="text-base sm:text-xl font-bold text-white truncate">
-              {editingLesson ? `Editing: ${editingLesson.lessonData?.title || `Lesson ${editingLesson.lessonNumber}`}` : 'Create Lesson Plan'}
-            </h2>
-          </div>
-          <div className="flex items-center space-x-2">
-            {/* Import Button - Admin Only */}
-            {isAdmin && (
+        <div className="shrink-0 border-b border-[#E2E0EF] bg-white px-3 py-3 sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <button
-                onClick={() => setShowImportModal(true)}
-                className="flex items-center space-x-1.5 px-3 py-1.5 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
-                title="Import Lesson Content"
+                type="button"
+                onClick={onClose}
+                className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-bold text-[#5C5878] hover:border-[#bcb7f4] hover:text-[#1F1B4D]"
               >
-                <Upload className="h-4 w-4 text-white" />
-                <span className="text-sm text-white hidden sm:inline">Import</span>
+                <ArrowLeft className="h-4 w-4" />
+                <span className="hidden sm:inline">Back</span>
               </button>
-            )}
-            <button
-              onClick={onClose}
-              className="p-1.5 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors duration-200 flex-shrink-0"
-            >
-              <X className="h-5 w-5 text-white" />
-            </button>
+              <div className="flex min-w-0 items-center gap-2">
+                <div className="grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#0BA596]/15 text-[#0BA596]">
+                  <BookOpen className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#77738F]">
+                    {editingLesson ? 'Edit lesson' : 'Create lesson'}
+                  </p>
+                  <h2 className="truncate text-[15px] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[17px]">
+                    {editingLesson
+                      ? editingLesson.lessonData?.title || `Lesson ${editingLesson.lessonNumber}`
+                      : lesson.lessonTitle || 'New lesson plan'}
+                  </h2>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <div
+                className="inline-flex rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] p-0.5"
+                role="group"
+                aria-label="Editor view mode"
+              >
+                {(
+                  [
+                    { id: 'edit' as const, label: 'Edit', icon: Pencil },
+                    { id: 'preview' as const, label: 'Preview', icon: Eye },
+                    { id: 'split' as const, label: 'Split', icon: Columns2 },
+                  ] as const
+                ).map(({ id, label, icon: Icon }) => (
+                  <button
+                    key={id}
+                    type="button"
+                    onClick={() => setViewMode(id)}
+                    aria-pressed={viewMode === id}
+                    className={`inline-flex h-8 items-center gap-1.5 rounded-[10px] px-2.5 text-[12px] font-extrabold transition ${
+                      viewMode === id
+                        ? 'bg-white text-[#1F1B4D] shadow-sm'
+                        : 'text-[#77738F] hover:text-[#1F1B4D]'
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {label}
+                  </button>
+                ))}
+              </div>
+              {isAdmin && (
+                <button
+                  type="button"
+                  onClick={() => setShowImportModal(true)}
+                  className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold text-[#5C5878] hover:border-[#bcb7f4]"
+                  title="Import Lesson Content"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span className="hidden sm:inline">Import</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={onClose}
+                className="grid h-9 w-9 place-items-center rounded-xl text-[#77738F] hover:bg-[#F4F3FA] hover:text-[#1F1B4D]"
+                aria-label="Close"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
           </div>
         </div>
 
+        <div className="flex min-h-0 flex-1 flex-col lg:flex-row">
+          {showEditor ? (
+            <div
+              className={`flex min-h-0 min-w-0 flex-col bg-white ${
+                viewMode === 'split' ? 'lg:w-1/2 lg:border-r lg:border-[#E2E0EF]' : 'w-full'
+              }`}
+            >
         {/* Tabs */}
-        <div className="flex bg-gray-50 border-0" style={{ border: 'none', borderBottom: 'none', outline: 'none' }}>
+        <div className="flex shrink-0 bg-gray-50 border-0" style={{ border: 'none', borderBottom: 'none', outline: 'none' }}>
           <button
             onClick={() => setActiveTab('main')}
             className={`flex-1 px-6 py-3 text-sm font-medium transition-colors ${
@@ -1231,292 +1339,62 @@ export const StandaloneLessonCreator: React.FC<StandaloneLessonCreatorProps> = (
             </div>
             ) : null}
           </div>
+            </div>
+          ) : null}
 
-        {/* Footer */}
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-gray-50">
-          <button
-            type="button"
-            onClick={() => setShowPreview(!showPreview)}
-            className="flex items-center space-x-2 px-4 py-2 text-[#4338E8] hover:bg-[#E9E6FF] rounded-lg text-sm font-medium transition-colors"
-          >
-            <Eye className="h-4 w-4" />
-            <span>Preview Card</span>
-          </button>
-          
-          <div className="flex items-center space-x-3">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white font-medium rounded-lg transition-colors duration-200"
+          {showPrintPreview ? (
+            <div
+              className={`flex min-h-0 min-w-0 flex-col ${
+                viewMode === 'split' ? 'lg:w-1/2' : 'w-full'
+              }`}
             >
-              Cancel
-            </button>
-            <button
-              type="button"
-              onClick={handleSubmit}
-              className="px-6 py-3 text-white font-medium rounded-lg transition-colors duration-200 flex items-center space-x-2"
-              style={{ backgroundColor: '#0BA596' }}
-              onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#0A9688'}
-              onMouseLeave={(e) => e.currentTarget.style.backgroundColor = '#0BA596'}
-            >
-              <Save className="h-5 w-5" />
-              <span>{editingLesson ? 'Save Changes' : 'Create Lesson'}</span>
-            </button>
-          </div>
+              <div className="flex shrink-0 items-center justify-between border-b border-[#E2E0EF] bg-white px-4 py-2.5">
+                <div>
+                  <p className="text-[11px] font-bold uppercase tracking-[0.06em] text-[#77738F]">
+                    Print preview
+                  </p>
+                  <p className="text-[13px] font-semibold text-[#1F1B4D]">
+                    A4 · same HTML as PDF export · live from unsaved fields
+                  </p>
+                </div>
+              </div>
+              <LessonPrintPreview
+                options={printPreviewOptions}
+                className="min-h-0 flex-1"
+              />
+            </div>
+          ) : null}
         </div>
+
+        {/* Sticky action bar */}
+        <div className="shrink-0 border-t border-[#E2E0EF] bg-white/95 px-4 py-3 backdrop-blur sm:px-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="text-[12px] font-medium text-[#77738F]">
+              {viewMode === 'preview'
+                ? 'Preview updates as you edit — switch to Edit or Split to change fields.'
+                : 'Changes save only when you click Save / Create Lesson.'}
+            </p>
+            <div className="flex items-center gap-2 sm:gap-3">
+              <button
+                type="button"
+                onClick={onClose}
+                className="inline-flex h-10 items-center rounded-xl bg-[#5C5878] px-5 text-[13px] font-extrabold text-white hover:bg-[#4a4666]"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSubmit}
+                className="inline-flex h-10 items-center gap-2 rounded-xl px-5 text-[13px] font-extrabold text-white hover:brightness-95"
+                style={{ backgroundColor: '#0BA596' }}
+              >
+                <Save className="h-4 w-4" />
+                <span>{editingLesson ? 'Save Changes' : 'Create Lesson'}</span>
+              </button>
+            </div>
+          </div>
         </div>
       </div>
-
-      {/* Full Lesson Preview Modal - Separate overlay with higher z-index */}
-      {showPreview && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[110] p-2 sm:p-4 animate-fade-in">
-          <div className="bg-white rounded-xl sm:rounded-2xl shadow-2xl w-full max-w-4xl max-h-[95vh] flex flex-col animate-scale-in">
-            {/* Header */}
-            <div className="flex items-center justify-between px-4 sm:px-6 py-4 border-b border-gray-200 text-white" style={{ background: 'linear-gradient(135deg, #0BA596 0%, #0BA596 100%)' }}>
-              <div className="flex items-center space-x-3">
-                <BookOpen className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-                <h3 className="text-lg sm:text-xl font-bold text-white">Full Lesson Preview</h3>
-              </div>
-              <button
-                onClick={() => setShowPreview(false)}
-                className="p-2 hover:bg-white hover:bg-opacity-20 rounded-lg transition-colors"
-              >
-                <X className="h-5 w-5 text-white" />
-              </button>
-            </div>
-            
-            {/* Scrollable Content */}
-            <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-              {/* Lesson Header Info */}
-              <div className="bg-gradient-to-r from-[#E9E6FF] to-[#D8D4F5] rounded-lg p-4 border border-[#E2E0EF]">
-                <h2 className="text-xl sm:text-2xl font-bold text-gray-900 mb-2">
-                  {lesson.lessonTitle || 'Untitled Lesson'}
-                </h2>
-                <div className="flex flex-wrap items-center gap-4 text-sm text-gray-700">
-                  {lesson.lessonName && (
-                    <div className="flex items-center space-x-1">
-                      <BookOpen className="h-4 w-4 text-[#4338E8]" />
-                      <span className="font-medium">{lesson.lessonName}</span>
-                    </div>
-                  )}
-                  <div className="flex items-center space-x-1">
-                    <Clock className="h-4 w-4 text-[#4338E8]" />
-                    <span className="font-medium">{lesson.duration} minutes</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Assessment Objectives */}
-              {lesson.assessmentObjectives && lesson.assessmentObjectives.length > 0 && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-[#4338E8]" />
-                    <span>Assessment Objectives</span>
-                  </h4>
-                  <div className="bg-[#E9E6FF] rounded-lg p-4 border border-[#E2E0EF]">
-                    <ul className="space-y-2">
-                      {lesson.assessmentObjectives.map((objective: string, index: number) => (
-                        <li key={index} className="flex items-start space-x-2 text-sm text-gray-700">
-                          <span className="flex-shrink-0 w-5 h-5 rounded-full bg-purple-100 flex items-center justify-center text-xs font-medium text-purple-700">
-                            {index + 1}
-                          </span>
-                          <span>{objective}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-                </div>
-              )}
-
-              {/* Learning Outcome */}
-              {lesson.learningOutcome && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-[#4338E8]" />
-                    <span>Learning Outcome</span>
-                  </h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200 overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
-                    style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.learningOutcome) }}
-                  />
-                </div>
-              )}
-
-              {/* Success Criteria */}
-              {lesson.successCriteria && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Target className="h-5 w-5 text-[#4338E8]" />
-                    <span>Success Criteria</span>
-                  </h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200 overflow-hidden [&_ul]:list-none [&_ul]:pl-0 [&_ul]:ml-0 [&_ul]:my-0 [&_li]:list-none [&_li]:pl-0 [&_li]:ml-0 [&_li]:before:content-none [&_li]:before:hidden [&_ul_li]:pl-0 [&_ul_li]:ml-0"
-                    style={{ listStyle: 'none', paddingLeft: '16px', paddingRight: '16px', overflow: 'hidden' }}
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.successCriteria) }}
-                  />
-                </div>
-              )}
-
-              {/* Introduction */}
-              {lesson.introduction && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Introduction</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.introduction) }}
-                  />
-                </div>
-              )}
-
-              {/* Main Activity */}
-              {lesson.mainActivity && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Main Activity</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.mainActivity) }}
-                  />
-                </div>
-              )}
-
-              {/* Plenary */}
-              {lesson.plenary && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Plenary</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.plenary) }}
-                  />
-                </div>
-              )}
-
-              {/* Vocabulary */}
-              {lesson.vocabulary && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Vocabulary</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.vocabulary) }}
-                  />
-                </div>
-              )}
-
-              {/* Key Questions */}
-              {lesson.keyQuestions && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Key Questions</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.keyQuestions) }}
-                  />
-                </div>
-              )}
-
-              {/* Resources */}
-              {lesson.resources && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Resources</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.resources) }}
-                  />
-                </div>
-              )}
-
-              {/* Differentiation */}
-              {lesson.differentiation && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Differentiation</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.differentiation) }}
-                  />
-                </div>
-              )}
-
-              {/* Assessment */}
-              {lesson.assessment && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900">Assessment</h4>
-                  <div 
-                    className="prose prose-sm max-w-none text-gray-700 bg-gray-50 rounded-lg p-4 border border-gray-200"
-                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(lesson.assessment) }}
-                  />
-                </div>
-              )}
-
-              {/* Links Section */}
-              {(lesson.videoLink || lesson.resourceLink || lesson.imageLink || (lesson.additionalLinks && lesson.additionalLinks.length > 0)) && (
-                <div className="space-y-2">
-                  <h4 className="text-base sm:text-lg font-semibold text-gray-900 flex items-center space-x-2">
-                    <Link2 className="h-5 w-5 text-[#4338E8]" />
-                    <span>Links & Resources</span>
-                  </h4>
-                  <div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-2">
-                    {lesson.videoLink && (
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center space-x-2">
-                          <span className="w-3 h-3 bg-red-500 rounded-full flex-shrink-0"></span>
-                          <span className="text-sm font-medium text-gray-800">Video</span>
-                        </div>
-                        <a href={lesson.videoLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
-                          {lesson.videoLink}
-                        </a>
-                      </div>
-                    )}
-                    {lesson.resourceLink && (
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center space-x-2">
-                          <Link2 className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-800">Resource</span>
-                        </div>
-                        <a href={lesson.resourceLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
-                          {lesson.resourceLink}
-                        </a>
-                      </div>
-                    )}
-                    {lesson.imageLink && (
-                      <div className="flex flex-col gap-0.5">
-                        <div className="flex items-center space-x-2">
-                          <Link2 className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
-                          <span className="text-sm font-medium text-gray-800">Image</span>
-                        </div>
-                        <a href={lesson.imageLink} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
-                          {lesson.imageLink}
-                        </a>
-                      </div>
-                    )}
-                    {lesson.additionalLinks && lesson.additionalLinks.length > 0 && lesson.additionalLinks.map((link: any, index: number) => (
-                      link.url && (
-                        <div key={index} className="flex flex-col gap-0.5">
-                          <div className="flex items-center space-x-2">
-                            <Link2 className="h-4 w-4 text-[#4338E8] flex-shrink-0" />
-                            <span className="text-sm font-medium text-gray-800">{link.label || `Link ${index + 1}`}</span>
-                          </div>
-                          <a href={link.url} target="_blank" rel="noopener noreferrer" className="ml-5 text-[#4338E8] hover:text-[#1F1B4D] hover:underline text-sm break-all">
-                            {link.url}
-                          </a>
-                        </div>
-                      )
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Footer */}
-            <div className="px-4 sm:px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
-              <button
-                onClick={() => setShowPreview(false)}
-                className="px-6 py-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] text-sm font-medium transition-colors"
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Activity Search Modal */}
       <ActivitySearchModal
