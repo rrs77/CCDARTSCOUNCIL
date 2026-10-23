@@ -1,0 +1,164 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Plus Jakarta Sans", ui-sans-serif, system-ui, sans-serif;
+  --color-indigo: #4338ca;
+  --color-indigo-soft: #eef2ff;
+  --color-lavender: #f3f0fb;
+  --color-lavender-deep: #e8e3f5;
+  --color-ink: #1e1b4b;
+  --color-muted: #64748b;
+  --color-amber-over: #f59e0b;
+  --ease-spring: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-out-soft: cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+
+:root {
+  --planner-bg: #f3f0fb;
+  --planner-indigo: #4338ca;
+  --planner-radius: 1.25rem;
+  --planner-radius-sm: 0.875rem;
+  --planner-radius-lg: 1.75rem;
+  color-scheme: light;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  font-family: var(--font-sans);
+  background: var(--planner-bg);
+  color: var(--color-ink);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* Soft atmospheric wash — not flat lavender */
+.planner-shell {
+  background:
+    radial-gradient(1200px 600px at 12% -10%, #ddd6fe 0%, transparent 55%),
+    radial-gradient(900px 500px at 92% 8%, #e0e7ff 0%, transparent 50%),
+    radial-gradient(800px 480px at 70% 100%, #fce7f3 0%, transparent 45%),
+    linear-gradient(165deg, #f5f2fc 0%, #eeeaf8 48%, #f7f5fc 100%);
+  min-height: 100vh;
+}
+
+.card-surface {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 1px 2px rgba(67, 56, 202, 0.04),
+    0 8px 24px rgba(67, 56, 202, 0.06);
+}
+
+.card-surface-strong {
+  background: #ffffff;
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  box-shadow:
+    0 1px 2px rgba(67, 56, 202, 0.05),
+    0 12px 32px rgba(67, 56, 202, 0.08);
+}
+
+/* Drag ghost polish */
+.dnd-ghost {
+  box-shadow: 0 18px 40px rgba(67, 56, 202, 0.22);
+  transform: rotate(1.5deg) scale(1.03);
+}
+
+/* Smooth scrollbars */
+.soft-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.soft-scroll::-webkit-scrollbar-thumb {
+  background: rgba(67, 56, 202, 0.18);
+  border-radius: 999px;
+}
+.soft-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+/* Print A4 */
+@media print {
+  body {
+    background: white !important;
+  }
+  .no-print {
+    display: none !important;
+  }
+  .print-only {
+    display: block !important;
+  }
+  .a4-sheet {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+@keyframes pulse-soft {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.animate-pulse-soft {
+  animation: pulse-soft 1.6s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.ai-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(67, 56, 202, 0.06) 0%,
+    rgba(67, 56, 202, 0.16) 50%,
+    rgba(67, 56, 202, 0.06) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.4s linear infinite;
+}
+
+/* Stronger drag handle affordance */
+.drag-handle {
+  opacity: 0.45;
+  transition: opacity 160ms var(--ease-out-soft), background-color 160ms var(--ease-out-soft);
+}
+.group:hover .drag-handle,
+.drag-handle:focus-visible {
+  opacity: 1;
+}
+
+/* Drop target pulse */
+@keyframes drop-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(67, 56, 202, 0.25);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(67, 56, 202, 0.08);
+  }
+}
+.drop-active {
+  animation: drop-pulse 1.2s ease-in-out infinite;
+}
