@@ -53,3 +53,10 @@ Use the floating bottom nav to jump between Planner / Lesson plan / Year / Setti
 - Seeded demo data loads by default (Rhythm Explorers unit + Lesson 1).
 - “Flesh out with AI” and re-prompt use canned copy for the prototype.
 - No photos or people imagery — subject colour blocks only.
+- Design iteration notes: see `REFINEMENTS.md`.
+
+## Open a PR
+
+Branch is `feat/planner-mock` (based on `feat/lessons-unified`):
+
+https://github.com/rrs77/CCDARTSCOUNCIL/compare/feat/lessons-unified...feat/planner-mock?expand=1
