@@ -63,9 +63,12 @@
 | `LessonPrintPreview` | `artifacts/ccd/src/components/LessonPrintPreview.tsx` | Live A4 iframe from shared HTML builder. |
 | `LessonPrintModal` | `artifacts/ccd/src/components/LessonPrintModal.tsx` | Export / share / multi-lesson PDF; **still contains duplicate HTML construction** in places — must converge on shared template. |
 | Shared HTML | `artifacts/ccd/src/utils/lessonPdfHtml.ts` → `buildLessonPdfHtml` | Canonical PDF/print HTML. Expects flat plan fields + `orderedActivities` / `grouped`. |
-| Client share | `artifacts/ccd/src/utils/shareLesson.ts` | PDFBolt + upload; caller supplies `generateHTMLContent`. |
-| API PDF | `artifacts/api-server/src/routes/pdf.ts` | Proxies HTML → PDFBolt; does not own template markup. |
+| Client share | `artifacts/ccd/src/utils/shareLesson.ts`, `hooks/useShareLesson.ts` | PDFBolt + upload; caller supplies `generateHTMLContent`. **Not** an api-server route — product wording “shareLesson.ts” means this client util (paired with `pdf.ts` for HTML→PDF). |
+| API PDF | `artifacts/api-server/src/routes/pdf.ts` | `POST /api/pdf/generate` (and related) proxies HTML → PDFBolt; does **not** own template markup. No server `shareLesson.ts`. |
 | AI today | `artifacts/ccd/src/components/studio/PolishWithAIModal.tsx`, `utils/applyLessonPolish.ts` | **Design preview only** — no model call. Applies scripted note patches / sequence reorder. Wired from `LessonPlanBuilder` and `PlannerSheets`. |
+| Settings audit | `artifacts/ccd/src/components/settings/SETTINGS_AUDIT.md` | What each Settings section currently controls. |
+| Library hierarchy doc | `artifacts/ccd/docs/ACTIVITY_LIBRARY_HIERARCHY.md` | Key Stage → Subject → Category contract. |
+| Optional subjects admin | `artifacts/ccd/src/components/SubjectManagement.tsx` + Supabase `subjects` / `subject_categories` | Legacy/alternate subject CRUD; Settings folders + `libraryHierarchy` are the path Activity Library actually uses today. Prefer Settings-driven folders/categories for the planner; do not fork a second subject model. |
 
 **Gaps:**
 
@@ -84,9 +87,9 @@
 | `AssignToHalfTermModal` | `artifacts/ccd/src/components/AssignToHalfTermModal.tsx` | Modal assign lesson → half-term. |
 | `UnitViewer` | `artifacts/ccd/src/components/UnitViewer.tsx` | Older units UI over localStorage units. |
 | `ActivityStack` | `DataContext` + `activityStacksApi` | Named activity bundles (not scheme units). |
-| `useLessonStacks` / lesson stacks | `hooks/useLessonStacks.ts`, `config/lessonStacksApi.ts` | Lesson stacks for packs / half-term schemes. |
-| Year / half-term board | `halfTerm/TeacherHalfTermBoard.tsx`, `HalfTermDesigner.tsx`, `halfTermConstants.ts` | **Next screen** for scheme of work by half-term; uses academic year + term structure. |
-| Term dates | Settings / half-term year config (per academic year in DataContext `halfTermsByYear`, `currentAcademicYear`) | Dates/structure set per year — Year overview must read these, not invent new calendars. |
+| `useLessonStacks` / lesson stacks | `hooks/useLessonStacks.ts`, `config/lessonStacksApi.ts` → `lesson_stacks` | Named **schemes of lesson numbers** (colour, objectives). **Not** the same as `Unit` (localStorage tray). Planner “My units” should use/extend `Unit` (and keep half-term lesson lists in sync); do not conflate with `ActivityStack` or `StackedLesson` unless product later merges them. |
+| Year / half-term board | `halfTerm/TeacherHalfTermBoard.tsx`, `HalfTermDesigner.tsx`, `HalfTermYearMap.tsx`, `halfTermConstants.ts` | **Next screen** for scheme of work by half-term; strongest existing Year overview. |
+| Term structure / dates | `HALF_TERMS` ids/names + `defaultHalfTermRanges(academicYear)` in `halfTermConstants.ts`; assignment rows in DataContext `halfTermsByYear` / `halfTermsApi` | **Gap:** approximate UK date windows are **code defaults**, not a Settings “term dates” editor today. Product wants dates set up each year in Settings — Year overview must consume whatever becomes the settings source; until that exists, flag implementing a Settings term-dates editor (additive) rather than hard-coding new calendars in the Lessons UI. |
 
 **Gap:** mockup “My units” tray (subject tag, lesson count, term, expand to drag lesson thumbnails) is not on the Lessons three-column screen. Assignment today is half-term-centric and/or separate Units UI. Multiple units per half-term is partially supported via multiple lessons on a term and separate `Unit` records, but UX does not match the tray.
 
@@ -373,6 +376,9 @@ Extend `LessonPdfData` in `lessonPdfHtml.ts` to render `sections` in order (acti
 6. **ActivityEditorPage vs stepped modal** — avoid two divergent editors.
 7. **Demo mode / RLS** — AI and saves must respect `isDemoModeActive()` and view-only (`useIsViewOnly`).
 8. **Additive migrations only** — per `docs/CCD_AGENT_HANDOFF.md`.
+9. **Stacks vs units vs activity stacks** — three concepts (`lesson_stacks` / `StackedLesson`, `Unit` localStorage, `ActivityStack`). My units tray ≠ LessonStackBuilder unless explicitly unified.
+10. **Term dates not in Settings yet** — `defaultHalfTermRanges` is hardcoded; product “term dates in Settings” is a real settings gap for Phase 5 / Year overview, not already solved.
+11. **Teacher Settings today** (see `SETTINGS_AUDIT.md`) do **not** yet expose plan templates, custom lesson-section types, or editable half-term date ranges — those Settings surfaces must be added (settings-driven), not assumed present.
 
 ---
 
@@ -430,7 +436,8 @@ Extend `LessonPdfData` in `lessonPdfHtml.ts` to render `sections` in order (acti
 - [ ] Choose plan template (per KS, settings-driven).
 - [ ] Preview lesson swipe modal for sequence.
 - [ ] Drag lesson into unit tray; My units shows subject, count, term; multi-unit same half-term.
-- [ ] Year overview navigates to existing half-term scheme screen using Settings/year term data.
+- [ ] Year overview navigates to existing half-term scheme screen (`HalfTermDesigner` / `TeacherHalfTermBoard`) using academic year + half-term data.
+- [ ] If product requires editable term dates: additive Settings editor wired into `defaultHalfTermRanges` consumers — do not leave new hard-coded calendars in Lessons UI.
 - [ ] Walkthrough/help copy updated if hooks exist.
 
 ### Phase 6 — Hardening
