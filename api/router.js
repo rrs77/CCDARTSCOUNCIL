@@ -41,6 +41,10 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
 import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
 
+/* Lesson attachments (DreamHost + cloud import) — mirror SF files/* shape */
+import * as lessonAttachments from '../server/api/lesson-attachments/index.js';
+import * as lessonAttachmentFile from '../server/api/lesson-attachments/file/[...path].js';
+
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -186,6 +190,15 @@ function targetFor(pathname) {
     return null;
   }
 
+  /* ---------- Lesson attachments ---------- */
+
+  if (area === 'lesson-attachments') {
+    if (rest[0] === 'file' && rest.length >= 2) {
+      return lessonAttachmentFile;
+    }
+    return lessonAttachments;
+  }
+
   return null;
 }
 
@@ -199,7 +212,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|interactive-lessons|lesson-attachments)(\/|$)/.test(route) ||
     route.includes('..')
   ) {
     return null;
