@@ -1601,8 +1601,8 @@ export function MusicHubResultCard({
   const [heroFailed, setHeroFailed] = useState(false);
   const wordmark = hubWordmark(id);
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-[#1F1B4D]/[0.08] bg-white text-left shadow-soft transition hover:border-[#0B6B5F]/35 hover:shadow-hover">
-      <button type="button" onClick={onOpen} className="flex min-w-0 flex-col text-left">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-[#1F1B4D]/[0.08] bg-white text-left shadow-soft transition hover:border-[#0B6B5F]/35 hover:shadow-hover">
+      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 flex-col text-left">
         <div
           className={`relative flex shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-[#1F1B4D]/[0.04] ${
             compact ? 'h-12' : 'h-[72px]'
@@ -1637,7 +1637,7 @@ export function MusicHubResultCard({
             {region}
           </span>
         </div>
-        <div className={`relative flex flex-col ${compact ? 'px-2 pb-1.5 pt-1.5' : 'px-2.5 pb-2 pt-2'}`}>
+        <div className={`relative flex flex-1 flex-col ${compact ? 'px-2 pb-1.5 pt-1.5' : 'px-2.5 pb-2 pt-2'}`}>
           <h3
             className={`line-clamp-2 font-bold leading-snug tracking-tight ${ink} ${
               compact ? 'text-[13px]' : 'text-[14px]'
@@ -1649,12 +1649,12 @@ export function MusicHubResultCard({
             {location}
           </p>
           {alsoCovers && (
-            <span className="mt-1 inline-flex items-center rounded-full bg-[#F4F3FA] px-2 py-0.5 text-[13px] font-medium text-[#5C5878] ring-1 ring-inset ring-[#1F1B4D]/[0.08]">
+            <span className="mt-1 inline-flex self-start items-center rounded-full bg-[#F4F3FA] px-2 py-0.5 text-[13px] font-medium text-[#5C5878] ring-1 ring-inset ring-[#1F1B4D]/[0.08]">
               Also covers {alsoCovers}
             </span>
           )}
           {!compact && <p className={`mt-1 line-clamp-2 text-[13px] leading-snug ${muted}`}>{detail}</p>}
-          <div className="mt-1.5 flex justify-end">
+          <div className="mt-auto flex justify-end pt-1.5">
             <span
               className={`flex shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white ${
                 compact ? 'h-5 w-5' : 'h-6 w-6'

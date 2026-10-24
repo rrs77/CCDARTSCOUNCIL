@@ -2282,7 +2282,7 @@ function PartnerHubsBrowse({
               ) : (
                 <div ref={hubsGridMeasureRef}>
                   <ul
-                    className="grid items-start gap-6 max-[639px]:!grid-cols-1"
+                    className="grid items-stretch gap-6 max-[639px]:!grid-cols-1"
                     style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
                     role="list"
                   >
@@ -2292,7 +2292,7 @@ function PartnerHubsBrowse({
                         data-hub-card={h.id}
                         onPointerEnter={() => setHover(h.id)}
                         onPointerLeave={() => setHover(null)}
-                        className={`min-w-0 scroll-mt-24 rounded-2xl transition-shadow ${
+                        className={`flex min-w-0 scroll-mt-24 flex-col rounded-2xl transition-shadow ${
                           hover === h.id || pinnedHub === h.id
                             ? 'shadow-[0_0_0_3px_#0B6B5F]'
                             : ''
