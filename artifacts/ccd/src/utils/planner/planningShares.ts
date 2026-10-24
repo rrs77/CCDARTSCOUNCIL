@@ -221,6 +221,48 @@ export async function createPlanningShareGrant(input: {
   return grant;
 }
 
+/** Ensure the current user is a member of a planning share group (idempotent). */
+export async function ensurePlanningGroupMembership(input: {
+  groupId: string;
+  userId: string;
+  organisationId?: string | null;
+}): Promise<void> {
+  const groupId = input.groupId.trim();
+  if (!groupId || !input.userId) return;
+  try {
+    await supabase.from('planning_group_members').upsert(
+      {
+        group_id: groupId,
+        user_id: input.userId,
+        organisation_id: input.organisationId || null,
+      },
+      { onConflict: 'group_id,user_id' },
+    );
+  } catch {
+    /* membership is best-effort when table missing / offline */
+  }
+  try {
+    const raw = localStorage.getItem('ccd-planning-group-members-v1');
+    const list: Array<{ groupId: string; userId: string }> = raw ? JSON.parse(raw) : [];
+    if (!list.some((m) => m.groupId === groupId && m.userId === input.userId)) {
+      list.push({ groupId, userId: input.userId });
+      localStorage.setItem('ccd-planning-group-members-v1', JSON.stringify(list));
+    }
+  } catch {
+    /* ignore */
+  }
+}
+
+function localGroupIdsForUser(userId: string): Set<string> {
+  try {
+    const raw = localStorage.getItem('ccd-planning-group-members-v1');
+    const list: Array<{ groupId: string; userId: string }> = raw ? JSON.parse(raw) : [];
+    return new Set(list.filter((m) => m.userId === userId).map((m) => m.groupId));
+  } catch {
+    return new Set();
+  }
+}
+
 /** Items shared with the current user (recipient view). */
 export async function listSharedWithMe(user: {
   id: string;
@@ -228,36 +270,66 @@ export async function listSharedWithMe(user: {
   schoolOrOrg?: string | null;
 }): Promise<PlanningShareGrant[]> {
   const org = user.organisationId || user.schoolOrOrg || '';
+  let memberGroupIds = localGroupIdsForUser(user.id);
+  try {
+    const { data: memberships } = await supabase
+      .from('planning_group_members')
+      .select('group_id')
+      .eq('user_id', user.id);
+    if (Array.isArray(memberships)) {
+      memberGroupIds = new Set([
+        ...memberGroupIds,
+        ...memberships.map((m: { group_id: string }) => m.group_id),
+      ]);
+    }
+  } catch {
+    /* local memberships only */
+  }
+
   try {
     const { data: grants, error } = await supabase
       .from('planning_shares')
-      .select('*, planning_share_resources ( title, resource_type, resource_id )')
+      .select(
+        '*, planning_share_resources ( title, resource_type, resource_id, organisation_id )',
+      )
       .or(
         [
           `and(audience_type.eq.person,audience_id.eq.${user.id})`,
           org ? `and(audience_type.eq.school,audience_id.eq.${org})` : '',
           org ? `and(audience_type.eq.hub_org,audience_id.eq.${org})` : '',
-          org ? `and(audience_type.eq.group,audience_id.eq.${org})` : '',
           'audience_type.eq.year_group',
+          'audience_type.eq.group',
         ]
           .filter(Boolean)
           .join(','),
       )
       .order('created_at', { ascending: false })
-      .limit(50);
+      .limit(80);
     if (!error && Array.isArray(grants)) {
-      return grants.map((g: any) => ({
-        id: g.id,
-        resourceId: g.resource_id,
-        audienceType: g.audience_type,
-        audienceId: g.audience_id,
-        audienceLabel: g.audience_label || '',
-        permission: g.permission,
-        sharedBy: g.shared_by,
-        createdAt: g.created_at,
-        title: g.planning_share_resources?.title || 'Shared planning',
-        resourceType: g.planning_share_resources?.resource_type,
-      }));
+      return grants
+        .filter((g: any) => {
+          if (g.audience_type === 'group') {
+            return memberGroupIds.has(String(g.audience_id || ''));
+          }
+          if (g.audience_type === 'year_group') {
+            const resOrg = g.planning_share_resources?.organisation_id || '';
+            return !!org && !!resOrg && org === resOrg;
+          }
+          return true;
+        })
+        .slice(0, 50)
+        .map((g: any) => ({
+          id: g.id,
+          resourceId: g.resource_id,
+          audienceType: g.audience_type,
+          audienceId: g.audience_id,
+          audienceLabel: g.audience_label || '',
+          permission: g.permission,
+          sharedBy: g.shared_by,
+          createdAt: g.created_at,
+          title: g.planning_share_resources?.title || 'Shared planning',
+          resourceType: g.planning_share_resources?.resource_type,
+        }));
     }
   } catch {
     /* local */
@@ -268,10 +340,14 @@ export async function listSharedWithMe(user: {
     .filter((g) => {
       if (g.sharedBy === user.id) return false;
       if (g.audienceType === 'person') return g.audienceId === user.id;
-      if (g.audienceType === 'school' || g.audienceType === 'hub_org' || g.audienceType === 'group') {
+      if (g.audienceType === 'school' || g.audienceType === 'hub_org') {
         return !!org && g.audienceId === org;
       }
-      if (g.audienceType === 'year_group') return true;
+      if (g.audienceType === 'group') return memberGroupIds.has(g.audienceId);
+      if (g.audienceType === 'year_group') {
+        const res = store.resources.find((r) => r.id === g.resourceId);
+        return !!org && !!res?.organisationId && res.organisationId === org;
+      }
       return false;
     })
     .map((g) => {

@@ -4,6 +4,7 @@ import { useAuth } from '../../hooks/useAuth';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import {
   createPlanningShareGrant,
+  ensurePlanningGroupMembership,
   upsertPlanningResource,
   type PlanningResourceType,
   type ShareAudienceType,
@@ -70,15 +71,17 @@ export function SharePlanningModal({
 
   const onAudienceTypeChange = (next: ShareAudienceType) => {
     setAudienceType(next);
-    if (next === 'school' || next === 'hub_org' || next === 'group') {
+    if (next === 'school' || next === 'hub_org') {
       setAudienceId(orgId || 'school');
       setAudienceLabel(
         next === 'hub_org'
           ? profile?.school_or_org || 'Hub / organisation'
-          : next === 'group'
-            ? 'My group'
-            : profile?.school_or_org || 'My school',
+          : profile?.school_or_org || 'My school',
       );
+    } else if (next === 'group') {
+      // Group id is membership-backed (planning_group_members), not org id.
+      setAudienceId('');
+      setAudienceLabel('My teaching group');
     } else if (next === 'year_group') {
       const first = yearOptions[0];
       setAudienceId(first?.id || '');
@@ -109,6 +112,13 @@ export function SharePlanningModal({
         organisationId: orgId || null,
         payload: { note },
       });
+      if (audienceType === 'group') {
+        await ensurePlanningGroupMembership({
+          groupId: audienceId.trim(),
+          userId: user.id,
+          organisationId: orgId || null,
+        });
+      }
       await createPlanningShareGrant({
         resourceId: resource.id,
         sharedBy: user.id,
@@ -180,6 +190,9 @@ export function SharePlanningModal({
                   ))
                 )}
               </select>
+              <p className="mt-1 text-[11px] font-medium text-[#77738F]">
+                Visible to colleagues at your school for this year group (org-scoped).
+              </p>
             </Field>
           ) : audienceType === 'person' ? (
             <Field label="Person (email or user id)">
@@ -192,6 +205,27 @@ export function SharePlanningModal({
                 placeholder="colleague@school.org"
               />
             </Field>
+          ) : audienceType === 'group' ? (
+            <>
+              <Field label="Group id">
+                <TextField
+                  value={audienceId}
+                  onChange={(e) => setAudienceId(e.target.value)}
+                  placeholder="e.g. year6-music-team"
+                />
+                <p className="mt-1 text-[11px] font-medium text-[#77738F]">
+                  Recipients must be members of this group (planning_group_members). Sharing
+                  adds you as a member so you can manage the grant.
+                </p>
+              </Field>
+              <Field label="Group label">
+                <TextField
+                  value={audienceLabel}
+                  onChange={(e) => setAudienceLabel(e.target.value)}
+                  placeholder="Year 6 music team"
+                />
+              </Field>
+            </>
           ) : (
             <Field label="Audience label">
               <TextField
