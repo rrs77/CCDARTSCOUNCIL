@@ -181,7 +181,7 @@ export function IlvCloudFilesPanel({
             key={s.id}
             type="button"
             className={`ilv-cloud-files-btn ${s.connected ? '' : 'is-disconnected'}`}
-            disabled={busy || (s.id !== 'device' && !cfg)}
+            disabled={busy || !s.connected}
             title={s.connected ? s.label : `${s.label} — not connected`}
             aria-label={s.connected ? s.label : `${s.label}, not connected`}
             onClick={() => void onCloud(s.id)}
@@ -217,10 +217,10 @@ export function IlvCloudFilesPanel({
       {classroomOpen && (
         <div className="ilv-cloud-classroom" role="dialog" aria-label="Google Classroom materials">
           <div className="flex items-center justify-between gap-2">
-            <strong className="text-xs">Classroom materials</strong>
+            <strong className="text-[13px]">Classroom materials</strong>
             <button
               type="button"
-              className="ilv-btn ilv-btn-secondary text-[11px]"
+              className="ilv-btn ilv-btn-secondary text-[13px]"
               onClick={() => setClassroomOpen(false)}
             >
               Close
@@ -239,9 +239,9 @@ export function IlvCloudFilesPanel({
             ))}
           </select>
           {classroomBusy ? (
-            <p className="text-[11px] text-[var(--ss-muted)]">Loading…</p>
+            <p className="text-[13px] text-[var(--ss-muted)]">Loading…</p>
           ) : classroomMaterials.length === 0 ? (
-            <p className="text-[11px] text-[var(--ss-muted)]">No materials in this course.</p>
+            <p className="text-[13px] text-[var(--ss-muted)]">No materials in this course.</p>
           ) : (
             <ul className="ilv-cloud-classroom-list">
               {classroomMaterials.map((m) => (

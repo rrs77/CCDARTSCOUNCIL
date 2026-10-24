@@ -165,6 +165,19 @@ BEGIN
     RETURN;
   END IF;
 
+  -- The requester must be an active (not anonymised, not suspended) member of
+  -- the organisation they are asking about.
+  IF NOT EXISTS (
+    SELECT 1
+    FROM public.profiles p
+    WHERE p.id = p_requester_id
+      AND p.organisation_id::text = v_org
+      AND p.anonymised_at IS NULL
+      AND p.status IS DISTINCT FROM 'suspended'
+  ) THEN
+    RAISE EXCEPTION 'requester is not an active member of this organisation' USING ERRCODE = '42501';
+  END IF;
+
   v_last := public.claim_year_group_access_slot(p_requester_id);
   IF v_last IS NULL THEN
     RETURN; -- still cooling down

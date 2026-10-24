@@ -2103,7 +2103,7 @@
   align-items: center;
   gap: 0.35rem;
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 13px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.04em;
@@ -2111,7 +2111,7 @@
 }
 .ilv-cloud-files-hint {
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 13px;
   color: var(--ss-muted);
   line-height: 1.35;
 }
@@ -2129,7 +2129,7 @@
   border-radius: 999px;
   border: 1px solid var(--ss-line);
   background: #fff;
-  font-size: 0.72rem;
+  font-size: 13px;
   font-weight: 600;
   color: var(--ss-ink);
   cursor: pointer;
@@ -2148,7 +2148,7 @@
 .ilv-cloud-files-nc {
   font-style: normal;
   font-weight: 500;
-  font-size: 0.62rem;
+  font-size: 13px;
   color: var(--ss-muted);
   opacity: 0.9;
 }
@@ -2158,7 +2158,7 @@
   align-items: center;
   gap: 0.35rem;
   margin: 0;
-  font-size: 0.72rem;
+  font-size: 13px;
 }
 .ilv-cloud-files-error {
   color: #b91c1c;
