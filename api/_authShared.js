@@ -26,28 +26,72 @@ export const SUPER_ADMIN_ROLES = new Set(['super_admin', 'superuser']);
 
 const rateBuckets = new Map();
 
-export function corsHeaders(extra = {}) {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    ...extra,
-  };
+/**
+ * CORS allowlist from env (comma-separated) plus app / Vercel URLs.
+ * Env: CORS_ALLOWED_ORIGINS (preferred) or ALLOWED_ORIGINS.
+ */
+export function parseCorsAllowlist() {
+  const raw =
+    process.env.CORS_ALLOWED_ORIGINS ||
+    process.env.ALLOWED_ORIGINS ||
+    '';
+  const fromEnv = raw
+    .split(',')
+    .map((s) => s.trim().replace(/\/$/, ''))
+    .filter(Boolean);
+  const extras = [];
+  if (process.env.VITE_APP_URL) {
+    extras.push(String(process.env.VITE_APP_URL).replace(/\/$/, ''));
+  }
+  if (process.env.APP_URL) {
+    extras.push(String(process.env.APP_URL).replace(/\/$/, ''));
+  }
+  if (process.env.VERCEL_URL) {
+    extras.push(
+      `https://${String(process.env.VERCEL_URL).replace(/^https?:\/\//, '')}`,
+    );
+  }
+  return [...new Set([...fromEnv, ...extras])];
 }
 
-export function jsonResponse(body, status = 200, extraHeaders = {}) {
+/**
+ * Reflect Origin only when allow-listed. Omitting ACAO blocks credentialed
+ * cross-origin callers that are not on the list.
+ */
+export function resolveCorsOrigin(request) {
+  const origin = (request?.headers?.get?.('origin') || '').replace(/\/$/, '');
+  if (!origin) return null;
+  if (parseCorsAllowlist().includes(origin)) return origin;
+  return null;
+}
+
+export function corsHeaders(extra = {}, request = null) {
+  const headers = {
+    'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+    Vary: 'Origin',
+    ...extra,
+  };
+  const allowed = resolveCorsOrigin(request);
+  if (allowed) {
+    headers['Access-Control-Allow-Origin'] = allowed;
+  }
+  return headers;
+}
+
+export function jsonResponse(body, status = 200, extraHeaders = {}, request = null) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      ...corsHeaders(),
+      ...corsHeaders({}, request),
       ...extraHeaders,
     },
   });
 }
 
-export function optionsResponse() {
-  return new Response(null, { status: 204, headers: corsHeaders() });
+export function optionsResponse(request = null) {
+  return new Response(null, { status: 204, headers: corsHeaders({}, request) });
 }
 
 export function getSupabaseUrl() {

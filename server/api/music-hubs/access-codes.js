@@ -13,8 +13,8 @@ import { generateAccessCode, hashAccessCode } from '../../../api/_resourceAccess
 const PUBLIC_COLUMNS =
   'id, organisation_id, label, active, expires_at, max_redemptions, redemption_count, grant_days, created_at';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 const positiveIntOrNull = (v) => (Number.isInteger(v) && v > 0 ? v : null);

@@ -18,8 +18,8 @@ import {
   userMayAccessStoredFile,
 } from '../../../api/_dreamhost.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 function storagePathFromRequest(request, context) {

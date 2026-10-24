@@ -4,9 +4,15 @@
 
 import {
   assertRateLimit,
+  corsHeaders as sharedCorsHeaders,
   getClientIp,
+  jsonResponse as sharedJsonResponse,
+  optionsResponse as sharedOptionsResponse,
   requireAuth,
+  resolveCorsOrigin,
 } from './_authShared.js';
+
+export { resolveCorsOrigin };
 
 export const PDFBOLT_API_URL = 'https://api.pdfbolt.com/v1/direct';
 export const DEFAULT_SUPABASE_URL = 'https://wiudrzdkbpyziaodqoog.supabase.co';
@@ -33,66 +39,22 @@ const PDFBOLT_ALLOWED_KEYS = new Set([
   'emulateMediaType',
 ]);
 
-function parseCorsAllowlist() {
-  const raw =
-    process.env.CORS_ALLOWED_ORIGINS ||
-    process.env.ALLOWED_ORIGINS ||
-    '';
-  const fromEnv = raw
-    .split(',')
-    .map((s) => s.trim().replace(/\/$/, ''))
-    .filter(Boolean);
-  const extras = [];
-  if (process.env.VITE_APP_URL) {
-    extras.push(String(process.env.VITE_APP_URL).replace(/\/$/, ''));
-  }
-  if (process.env.APP_URL) {
-    extras.push(String(process.env.APP_URL).replace(/\/$/, ''));
-  }
-  if (process.env.VERCEL_URL) {
-    extras.push(`https://${String(process.env.VERCEL_URL).replace(/^https?:\/\//, '')}`);
-  }
-  return [...new Set([...fromEnv, ...extras])];
-}
-
-/**
- * Reflect Origin only when it is on the allowlist; otherwise omit ACAO
- * (browsers treat missing ACAO as blocked for credentialed cross-origin).
- */
-export function resolveCorsOrigin(request) {
-  const origin = (request?.headers?.get?.('origin') || '').replace(/\/$/, '');
-  if (!origin) return null;
-  const allow = parseCorsAllowlist();
-  if (allow.includes(origin)) return origin;
-  return null;
-}
-
 export function corsHeaders(extra = {}, request = null) {
-  const headers = {
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    'Vary': 'Origin',
-    ...extra,
-  };
-  const allowed = resolveCorsOrigin(request);
-  if (allowed) {
-    headers['Access-Control-Allow-Origin'] = allowed;
-  }
-  return headers;
+  return sharedCorsHeaders(
+    {
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      ...extra,
+    },
+    request,
+  );
 }
 
 export function jsonResponse(body, status = 200, request = null) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      ...corsHeaders({}, request),
-    },
-  });
+  return sharedJsonResponse(body, status, {}, request);
 }
 
 export function optionsResponse(request = null) {
-  return new Response(null, { status: 204, headers: corsHeaders({}, request) });
+  return sharedOptionsResponse(request);
 }
 
 export function getPdfBoltApiKey() {

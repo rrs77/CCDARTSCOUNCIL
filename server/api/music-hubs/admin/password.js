@@ -14,8 +14,8 @@ import {
   optionsResponse,
 } from '../../../../api/_musicHubUnlock.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 function adminAuthorized(request) {

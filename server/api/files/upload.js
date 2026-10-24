@@ -20,8 +20,8 @@ import {
   uploadToDreamHost,
 } from '../../../api/_dreamhost.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function POST(request) {

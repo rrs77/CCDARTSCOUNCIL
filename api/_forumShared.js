@@ -89,25 +89,28 @@ export const ROLE_FORUM_CAPS = {
   ]),
 };
 
-export function forumCorsHeaders() {
-  return corsHeaders({
-    'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
-  });
+export function forumCorsHeaders(request = null) {
+  return corsHeaders(
+    {
+      'Access-Control-Allow-Methods': 'GET, POST, PATCH, PUT, DELETE, OPTIONS',
+    },
+    request,
+  );
 }
 
-export function forumJson(body, status = 200, extra = {}) {
+export function forumJson(body, status = 200, extra = {}, request = null) {
   return new Response(JSON.stringify(body), {
     status,
     headers: {
       'Content-Type': 'application/json',
-      ...forumCorsHeaders(),
+      ...forumCorsHeaders(request),
       ...extra,
     },
   });
 }
 
-export function forumOptions() {
-  return new Response(null, { status: 204, headers: forumCorsHeaders() });
+export function forumOptions(request = null) {
+  return new Response(null, { status: 204, headers: forumCorsHeaders(request) });
 }
 
 export function slugify(input, { max = 80 } = {}) {

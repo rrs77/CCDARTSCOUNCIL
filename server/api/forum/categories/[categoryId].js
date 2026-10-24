@@ -13,8 +13,8 @@ import {
   slugify,
 } from '../../../../api/_forumShared.js';
 
-export async function OPTIONS() {
-  return forumOptions();
+export async function OPTIONS(request) {
+  return forumOptions(request);
 }
 
 function getCategoryId(request) {

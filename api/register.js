@@ -18,8 +18,8 @@ import {
 } from './_authShared.js';
 import { verifyEmailTemplate, sendResendEmail } from './_emailTemplates.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function POST(request) {
