@@ -13,7 +13,13 @@ export const BACKUP_JSON_CONTENT_LENGTH_LIMIT =
   Math.floor(BACKUP_MAX_BODY_BYTES * (4 / 3)) + 8192;
 export const BACKUP_ROW_CAP = 10_000;
 
-/** Identity / tenancy / timestamp fields stripped unless an explicit org restore. */
+/** Organisation id shape for restore / export filters. */
+export const ORGANISATION_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+const UUID_RE =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+
+/** Identity / tenancy / timestamp fields always stripped from client payload. */
 export const STRIP_ALWAYS = Object.freeze([
   'user_id',
   'owner_id',
@@ -23,11 +29,27 @@ export const STRIP_ALWAYS = Object.freeze([
   'anonymised_at',
 ]);
 
-export const STRIP_UNLESS_ORG = Object.freeze([
-  'id',
-  'organisation_id',
-  ...STRIP_ALWAYS,
-]);
+/**
+ * @param {string | null | undefined} value
+ * @returns {string | null}
+ */
+export function normalizeOrganisationId(value) {
+  if (typeof value !== 'string') return null;
+  const trimmed = value.trim();
+  if (!trimmed || !ORGANISATION_ID_RE.test(trimmed)) return null;
+  return trimmed;
+}
+
+/**
+ * Keep a zod-validated UUID id for ON CONFLICT(id); drop anything else.
+ * @param {Record<string, unknown>} row
+ */
+function keepValidatedUuidId(row) {
+  if (typeof row.id === 'string' && UUID_RE.test(row.id)) {
+    return;
+  }
+  delete row.id;
+}
 
 export const BACKUP_CORE_TABLES = Object.freeze([
   { key: 'yearGroups', table: 'year_groups' },
@@ -101,10 +123,25 @@ const lessonRowSchema = z
 
 const namedIdRow = z
   .object({
-    id: z.string().optional().nullable(),
+    id: z.string().uuid().optional().nullable(),
     name: z.string().optional().nullable(),
     sort_order: z.union([z.number(), z.string()]).optional().nullable(),
     color: z.string().optional().nullable(),
+  })
+  .passthrough();
+
+/** Stacks: `data` must be a plain object (RPC no longer COALESCEs whole row). */
+const stackRowSchema = z
+  .object({
+    id: z.string().uuid().optional().nullable(),
+    name: z.string().optional().nullable(),
+    data: z.record(z.string(), z.unknown()),
+  })
+  .passthrough();
+
+const uuidIdRow = z
+  .object({
+    id: z.string().uuid().optional().nullable(),
   })
   .passthrough();
 
@@ -113,16 +150,16 @@ export const TABLE_ROW_SCHEMAS = Object.freeze({
   activities: activityRowSchema,
   lessons: lessonRowSchema,
   standards: looseProps,
-  halfTerms: looseProps,
-  lessonPlans: looseProps,
+  halfTerms: uuidIdRow,
+  lessonPlans: uuidIdRow,
   customCategories: namedIdRow,
   categoryGroups: namedIdRow,
   yearGroups: namedIdRow,
-  lessonStacks: looseProps,
-  activityStacks: looseProps,
-  customObjectiveYearGroups: looseProps,
-  customObjectiveAreas: looseProps,
-  customObjectives: looseProps,
+  lessonStacks: stackRowSchema,
+  activityStacks: stackRowSchema,
+  customObjectiveYearGroups: namedIdRow,
+  customObjectiveAreas: uuidIdRow,
+  customObjectives: uuidIdRow,
   activityCustomObjectives: looseProps,
 });
 
@@ -158,12 +195,9 @@ function stripRow(row, { targetOrg }) {
   for (const k of STRIP_ALWAYS) {
     delete out[k];
   }
-  if (targetOrg) {
-    out.organisation_id = targetOrg;
-  } else {
-    delete out.organisation_id;
-    delete out.id;
-  }
+  // Always force org from validated server target; never trust client org/owner.
+  out.organisation_id = targetOrg;
+  keepValidatedUuidId(out);
   return out;
 }
 
@@ -213,6 +247,10 @@ function normalizeLesson(row) {
 export function sanitizeRestorePayload(raw, { targetOrg = null } = {}) {
   if (!raw || typeof raw !== 'object') {
     return { ok: false, error: 'Invalid backup payload.' };
+  }
+  const org = normalizeOrganisationId(targetOrg);
+  if (!org) {
+    return { ok: false, error: 'organisationId is required.' };
   }
   const source =
     raw.data && typeof raw.data === 'object' && !Array.isArray(raw.data)
@@ -264,7 +302,7 @@ export function sanitizeRestorePayload(raw, { targetOrg = null } = {}) {
           error: `Invalid row in ${key}[${i}]: ${parsed.error.issues[0]?.message || 'schema'}`,
         };
       }
-      let row = stripRow(parsed.data, { targetOrg });
+      let row = stripRow(parsed.data, { targetOrg: org });
       if (!row) continue;
       if (key === 'activities') row = normalizeActivity(row);
       if (key === 'lessons') {
@@ -274,10 +312,19 @@ export function sanitizeRestorePayload(raw, { targetOrg = null } = {}) {
           lesson_numbers: row.lesson_numbers ?? [],
           teaching_units: row.teaching_units ?? [],
         };
+        row.organisation_id = org;
+      }
+      if (key === 'lessonStacks' || key === 'activityStacks') {
+        if (!row.data || typeof row.data !== 'object' || Array.isArray(row.data)) {
+          return {
+            ok: false,
+            error: `Invalid row in ${key}[${i}]: data must be an object`,
+          };
+        }
       }
       if (key === 'lessonPlans') {
         row = {
-          id: targetOrg ? row.id : undefined,
+          id: row.id,
           date: row.date,
           week: row.week,
           class_name: row.class_name ?? row.className,
@@ -291,8 +338,9 @@ export function sanitizeRestorePayload(raw, { targetOrg = null } = {}) {
           title: row.title,
           term: row.term,
           time: row.time,
+          organisation_id: org,
         };
-        if (!targetOrg) delete row.id;
+        keepValidatedUuidId(row);
       }
       cleaned.push(row);
     }
@@ -371,15 +419,64 @@ export async function exportCurriculumBackup(service, opts = {}) {
  * @param {{ organisationId?: string | null, dryRun?: boolean }} [opts]
  */
 export async function restoreCurriculumBackupRpc(service, sanitizedPayload, opts = {}) {
+  const organisationId = normalizeOrganisationId(opts.organisationId);
+  if (!organisationId) {
+    const err = new Error('organisationId is required.');
+    err.status = 400;
+    throw err;
+  }
   const { data, error } = await service.rpc('restore_curriculum_backup', {
     p_payload: sanitizedPayload,
-    p_organisation_id: opts.organisationId || null,
+    p_organisation_id: organisationId,
     p_dry_run: Boolean(opts.dryRun),
   });
   if (error) {
-    const err = new Error(error.message || 'Restore RPC failed.');
-    err.status = 500;
+    const msg = error.message || 'Restore RPC failed.';
+    const err = new Error(msg);
+    if (/organisation_id (required|not found)/i.test(msg) || /invalid payload/i.test(msg)) {
+      err.status = 400;
+    } else if (/custom_objective|missing/i.test(msg)) {
+      err.status = 400;
+    } else {
+      err.status = 500;
+    }
     throw err;
   }
   return data;
+}
+
+/**
+ * Persist a pre-restore snapshot into private curriculum_backups (service-role).
+ * @returns {{ id: string, storageKey: string }}
+ */
+export async function saveCurriculumBackupSnapshot(service, {
+  userId,
+  organisationId,
+  payload,
+  rowCounts,
+}) {
+  const org = normalizeOrganisationId(organisationId);
+  if (!org) {
+    const err = new Error('organisationId is required.');
+    err.status = 400;
+    throw err;
+  }
+  const storageKey = `backups/${Date.now()}-${userId}.json`;
+  const { data, error } = await service
+    .from('curriculum_backups')
+    .insert({
+      created_by: userId,
+      organisation_id: org,
+      storage_key: storageKey,
+      payload,
+      row_counts: rowCounts || {},
+    })
+    .select('id, storage_key')
+    .single();
+  if (error || !data?.id) {
+    const err = new Error(error?.message || 'Failed to persist pre-restore snapshot.');
+    err.status = 500;
+    throw err;
+  }
+  return { id: data.id, storageKey: data.storage_key || storageKey };
 }
