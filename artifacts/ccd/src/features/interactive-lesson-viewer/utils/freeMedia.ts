@@ -1,7 +1,12 @@
 /**
- * Client-side Free Media search — Openverse, Wikimedia Commons, optional Freesound.
- * CORS-friendly public APIs only; no serverless proxy.
+ * Client-side Free Media search — Openverse, Wikimedia Commons, Freesound.
+ * Openverse / Wikimedia are public CORS APIs. Freesound goes through the
+ * authenticated server proxy (/api/interactive-lessons/freesound) so the
+ * API key is never exposed as VITE_*.
  */
+
+import { supabase } from '../../../config/supabase';
+import { getVercelApiUrl } from '../../../utils/apiUrl';
 
 export type FreeMediaType = 'image' | 'audio';
 export type FreeMediaProvider = 'openverse' | 'wikimedia' | 'freesound';
@@ -24,19 +29,12 @@ export type AudioProvider = 'openverse' | 'freesound';
 const OPENVERSE_IMAGES = 'https://api.openverse.org/v1/images/';
 const OPENVERSE_AUDIO = 'https://api.openverse.org/v1/audio/';
 const WIKIMEDIA_API = 'https://commons.wikimedia.org/w/api.php';
-const FREESOUND_SEARCH = 'https://freesound.org/apiv2/search/text/';
 
 const PAGE_SIZE = 20;
 
-/** Vite-exposed Freesound client token (optional). */
-export function getFreesoundApiKey(): string | undefined {
-  // Bracket access so we don't need to extend vite-env.d.ts for this optional key.
-  const key = import.meta.env['VITE_FREESOUND_API_KEY'] as string | undefined;
-  return typeof key === 'string' && key.trim() ? key.trim() : undefined;
-}
-
+/** Freesound is available via the authenticated server proxy (no client key). */
 export function isFreesoundAvailable(): boolean {
-  return Boolean(getFreesoundApiKey());
+  return true;
 }
 
 function cleanTitle(raw: string | undefined | null, fallback = 'Untitled'): string {
@@ -225,7 +223,7 @@ export async function searchWikimediaImages(
 }
 
 /* -------------------------------------------------------------------------- */
-/* Freesound (optional)                                                       */
+/* Freesound (authenticated server proxy)                                     */
 /* -------------------------------------------------------------------------- */
 
 interface FreesoundHit {
@@ -240,25 +238,33 @@ interface FreesoundHit {
 
 interface FreesoundPage {
   results?: FreesoundHit[];
+  configured?: boolean;
+  error?: string;
 }
 
 export async function searchFreesoundAudio(
   query: string,
   signal?: AbortSignal
 ): Promise<FreeMediaItem[]> {
-  const token = getFreesoundApiKey();
-  if (!token) return [];
+  const headers: Record<string, string> = { Accept: 'application/json' };
+  try {
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      headers.Authorization = `Bearer ${data.session.access_token}`;
+    }
+  } catch {
+    /* ignore */
+  }
 
-  const params = new URLSearchParams({
-    query,
-    token,
-    page_size: String(PAGE_SIZE),
-    fields: 'id,name,previews,images,license,username,url',
-    // Prefer CC0 / public domain dedications
-    filter: 'license:"Creative Commons 0"',
-  });
-
-  const res = await fetch(`${FREESOUND_SEARCH}?${params}`, { signal });
+  const params = new URLSearchParams({ q: query });
+  const res = await fetch(
+    `${getVercelApiUrl('/api/interactive-lessons/freesound')}?${params}`,
+    { signal, headers },
+  );
+  if (res.status === 503) {
+    // Server key not configured — treat as empty, not a hard failure.
+    return [];
+  }
   if (!res.ok) {
     throw new Error(`Freesound search failed (${res.status})`);
   }

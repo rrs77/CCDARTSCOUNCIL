@@ -40,6 +40,11 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 /* Interactive Lesson Viewer (kept out of /api entrypoints for Hobby function limit) */
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
 import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
+import * as ilvFreesound from '../server/api/interactive-lessons/freesound.js';
+
+/* Lesson attachments (DreamHost + cloud import) — mirror SF files/* shape */
+import * as lessonAttachments from '../server/api/lesson-attachments/index.js';
+import * as lessonAttachmentFile from '../server/api/lesson-attachments/file/[...path].js';
 
 /* Planning group membership (service-role writes; kept out of /api entrypoints) */
 import * as planningGroupMembers from '../server/api/planning-groups/members.js';
@@ -186,7 +191,19 @@ function targetFor(pathname) {
     if (rest.length === 1 && rest[0] === 'flesh-out') {
       return ilvFleshOut;
     }
+    if (rest.length === 1 && rest[0] === 'freesound') {
+      return ilvFreesound;
+    }
     return null;
+  }
+
+  /* ---------- Lesson attachments ---------- */
+
+  if (area === 'lesson-attachments') {
+    if (rest[0] === 'file' && rest.length >= 2) {
+      return lessonAttachmentFile;
+    }
+    return lessonAttachments;
   }
 
   /* ---------- Planning groups ---------- */
@@ -211,7 +228,9 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|planning-groups)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|interactive-lessons|lesson-attachments|planning-groups)(\/|$)/.test(
+      route,
+    ) ||
     route.includes('..')
   ) {
     return null;
