@@ -165,12 +165,12 @@ function rowToLesson(row: Record<string, unknown>): InteractiveLesson {
     attachedLessonKeys: (row.attached_lesson_keys as string[]) || data.attachedLessonKeys || [],
     createdAt: String(row.created_at || data.createdAt || new Date().toISOString()),
     updatedAt: String(row.updated_at || data.updatedAt || new Date().toISOString()),
-    isDemo: Boolean(data.isDemo),
+    isDemo: data.isDemo === true,
     derivedFromDemo: Boolean(data.derivedFromDemo),
     source:
       (row.source as InteractiveLesson['source']) ||
       data.source ||
-      (data.isDemo ? 'demo' : undefined),
+      (data.isDemo === true ? 'demo' : undefined),
     hubId: (row.hub_id as string) || data.hubId,
     hubName: (row.hub_name as string) || data.hubName,
     tags: (row.tags as string[]) || data.tags,
