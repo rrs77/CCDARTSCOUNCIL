@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ChevronRight, Minus, Plus } from 'lucide-react';
+import { ChevronRight, Minus, Plus, RotateCcw } from 'lucide-react';
 import {
   type BBox,
   ENGLAND,
@@ -95,6 +95,14 @@ interface Props {
   showAttribution?: boolean;
   /** Draw feature name labels (hubs/districts). Off for compact locator maps. */
   showFeatureLabels?: boolean;
+  /** Where the zoom controls sit. Default top-left. */
+  controlsPosition?: 'top-left' | 'bottom-right';
+  /** Show a reset-view button with the zoom controls. */
+  showReset?: boolean;
+  /** Draw accessible pin buttons at each feature's label point (region detail view). */
+  pins?: boolean;
+  /** Called when a pin is clicked/activated. Falls back to onFocus(item.focus). */
+  onPinActivate?: (id: string) => void;
 }
 
 interface Item {
@@ -143,6 +151,10 @@ export function UkHubMap({
   showControls = true,
   showAttribution = true,
   showFeatureLabels = true,
+  controlsPosition = 'top-left',
+  showReset = false,
+  pins = false,
+  onPinActivate,
 }: Props) {
   const labelMode: 'counts' | 'names' | 'none' =
     regionLabelMode ?? (showRegionCounts ? 'counts' : 'none');
@@ -410,6 +422,8 @@ export function UkHubMap({
     const target = clampBox([x + w / 2 - (w * factor) / 2, y + h / 2 - (h * factor) / 2, w * factor, h * factor]);
     flyTo(target, 320);
   };
+
+  const resetView = () => flyTo(fit(frameBBox(focus)), 320);
 
   // ---------- what is interactive at this level ----------
   const level = focus.level;
@@ -991,7 +1005,7 @@ export function UkHubMap({
       {tipItem && !moving && !regionLanding && (
         <div
           aria-hidden
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[12px] font-semibold leading-snug text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[13px] font-semibold leading-snug text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
           style={{
             left: `${((tipItem.label[0] - settled.box[0]) / settled.box[2]) * 100}%`,
             top: `${((tipItem.label[1] - settled.box[1]) / settled.box[3]) * 100}%`,
@@ -1036,9 +1050,48 @@ export function UkHubMap({
         </nav>
       )}
 
+      {pins && !moving &&
+        items.map((it) => {
+          const lx = (it.label[0] - settled.box[0]) / settled.box[2];
+          const ly = (it.label[1] - settled.box[1]) / settled.box[3];
+          if (lx < -0.02 || lx > 1.02 || ly < -0.02 || ly > 1.02) return null;
+          const on = hover === it.id;
+          return (
+            <button
+              key={`pin-${it.id}`}
+              type="button"
+              data-pin-id={it.id}
+              aria-label={`${it.name} — show hub card`}
+              aria-pressed={on || undefined}
+              onPointerEnter={() => onHover(it.id)}
+              onPointerLeave={() => onHover(null)}
+              onFocus={() => onHover(it.id)}
+              onBlur={() => onHover(null)}
+              onClick={() => (onPinActivate ? onPinActivate(it.id) : onFocus(it.focus))}
+              className="absolute z-[5] flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0B6B5F]"
+              style={{ left: `${lx * 100}%`, top: `${ly * 100}%` }}
+            >
+              <span
+                aria-hidden
+                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-[0_2px_8px_rgba(31,27,77,0.35)] transition-transform ${
+                  on ? 'scale-125 bg-[#1F1B4D]' : 'bg-[#0B6B5F]'
+                }`}
+              >
+                <span className="h-2.5 w-2.5 rounded-full bg-white" />
+              </span>
+            </button>
+          );
+        })}
+
       {showControls && (
         <div
-          className={`absolute ${showBreadcrumb ? 'left-3 top-14' : 'left-3 top-3'} flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
+          className={`absolute z-[6] ${
+            controlsPosition === 'bottom-right'
+              ? 'bottom-3 right-3'
+              : showBreadcrumb
+                ? 'left-3 top-14'
+                : 'left-3 top-3'
+          } flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
         >
           <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
             <Plus className="h-4 w-4" />
@@ -1047,6 +1100,14 @@ export function UkHubMap({
           <button type="button" aria-label="Zoom out" onClick={() => zoomButton(1.7)} className="ukmap-ctl">
             <Minus className="h-4 w-4" />
           </button>
+          {showReset && (
+            <>
+              <span className="mx-2 h-px bg-[#1F1B4D]/[0.08]" aria-hidden />
+              <button type="button" aria-label="Reset map view" onClick={resetView} className="ukmap-ctl">
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       )}
 
