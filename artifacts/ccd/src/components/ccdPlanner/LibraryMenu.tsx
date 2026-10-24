@@ -69,7 +69,10 @@ function DraggableLibraryRow({
         onClick={onOpen}
         className="min-w-0 flex-1 px-1 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
       >
-        <span className="line-clamp-2 text-sm font-semibold text-slate-800">
+        <span
+          className="line-clamp-2 text-sm font-semibold leading-snug text-slate-800"
+          title={activity.activity || undefined}
+        >
           {activity.activity}
         </span>
         <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-slate-400">

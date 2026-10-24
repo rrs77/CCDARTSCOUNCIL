@@ -703,7 +703,12 @@ export function SchedulePickerSheet({
                 {lessonBadgeLabel(n, l)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-[#1F2937]">{l.title || l.lessonName || `Lesson ${n}`}</span>
+                <span
+                  className="block line-clamp-2 text-sm font-semibold leading-snug text-[#1F2937]"
+                  title={l.title || l.lessonName || `Lesson ${n}`}
+                >
+                  {l.title || l.lessonName || `Lesson ${n}`}
+                </span>
                 <span className="block text-xs text-[#77738F]">
                   {halfTermLabel.get(n) ? `${halfTermLabel.get(n)} · ` : ''}
                   {plural(lessonActivityCount(l), 'activity', 'activities')} · {l.totalTime || 0} min

@@ -3,20 +3,24 @@ import {
   ChevronRight,
   Plus,
 } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useData, type Unit } from '../../contexts/DataContext';
+import {
+  loadPlannerTerms,
+} from '../../utils/planner/plannerCurriculumStore';
+import type { PlannerTermDates } from '../../types/plannerCurriculum';
 import { chipStyle } from '../../utils/planner/contrastText';
 import { cn } from '@/lib/utils';
 
-const HALF_TERMS = [
-  { id: 'A1', name: 'Autumn 1' },
-  { id: 'A2', name: 'Autumn 2' },
-  { id: 'SP1', name: 'Spring 1' },
-  { id: 'SP2', name: 'Spring 2' },
-  { id: 'SM1', name: 'Summer 1' },
-  { id: 'SM2', name: 'Summer 2' },
-];
+function formatTermHint(term: PlannerTermDates): string {
+  try {
+    const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
+    return `${new Date(term.start).toLocaleDateString(undefined, opts)} – ${new Date(term.end).toLocaleDateString(undefined, opts)}`;
+  } catch {
+    return '';
+  }
+}
 
 export function MyUnitsMenu({
   open,
@@ -36,10 +40,23 @@ export function MyUnitsMenu({
     updateUnit,
     allLessonsData,
     currentSheetInfo,
+    currentAcademicYear,
   } = useData();
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [liveMessage, setLiveMessage] = useState('');
+  const [termsTick, setTermsTick] = useState(0);
   const rootRef = useRef<HTMLDivElement>(null);
+
+  const terms = useMemo(
+    () => loadPlannerTerms(currentAcademicYear),
+    [currentAcademicYear, termsTick, open],
+  );
+
+  useEffect(() => {
+    const onUpdate = () => setTermsTick((n) => n + 1);
+    window.addEventListener('ccd:planner-curriculum-updated', onUpdate);
+    return () => window.removeEventListener('ccd:planner-curriculum-updated', onUpdate);
+  }, []);
 
   useEffect(() => {
     if (!open) return;
@@ -57,7 +74,7 @@ export function MyUnitsMenu({
       description: '',
       lessonNumbers: [],
       color: '#4338E8',
-      term: 'A1',
+      term: terms[0]?.id || '',
       classSheet: currentSheetInfo?.sheet,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -85,9 +102,10 @@ export function MyUnitsMenu({
     toast.success('Lesson added to unit');
   };
 
-  const setTerm = (unit: Unit, term: string) => {
-    updateUnit({ ...unit, term, updatedAt: new Date() });
-    setLiveMessage(`${unit.name} assigned to ${HALF_TERMS.find((t) => t.id === term)?.name || term}`);
+  const setTerm = (unit: Unit, termId: string) => {
+    updateUnit({ ...unit, term: termId, updatedAt: new Date() });
+    const label = terms.find((t) => t.id === termId)?.name || termId;
+    setLiveMessage(`${unit.name} assigned to ${label}`);
   };
 
   return (
@@ -150,7 +168,7 @@ export function MyUnitsMenu({
             ) : (
               (units || []).map((unit) => {
                 const isOpen = expanded[unit.id] ?? false;
-                const term = HALF_TERMS.find((t) => t.id === unit.term);
+                const term = terms.find((t) => t.id === unit.term);
                 const style = chipStyle(unit.color || '#4338E8');
                 return (
                   <div
@@ -167,18 +185,21 @@ export function MyUnitsMenu({
                       onClick={() =>
                         setExpanded((p) => ({ ...p, [unit.id]: !isOpen }))
                       }
-                      className="flex h-11 w-full items-center gap-2 px-3 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
+                      className="flex min-h-[44px] w-full items-center gap-2 px-3 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
                     >
                       {isOpen ? (
-                        <ChevronDown className="h-4 w-4 text-slate-400" />
+                        <ChevronDown className="h-4 w-4 shrink-0 text-slate-400" />
                       ) : (
-                        <ChevronRight className="h-4 w-4 text-slate-400" />
+                        <ChevronRight className="h-4 w-4 shrink-0 text-slate-400" />
                       )}
-                      <span className="min-w-0 flex-1 truncate text-sm font-bold text-slate-800">
+                      <span
+                        className="min-w-0 flex-1 line-clamp-2 text-sm font-bold leading-snug text-slate-800"
+                        title={unit.name}
+                      >
                         {unit.name}
                       </span>
                       <span
-                        className="inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+                        className="inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold"
                         style={style}
                       >
                         {unit.lessonNumbers.length} lessons
@@ -195,9 +216,10 @@ export function MyUnitsMenu({
                         className="h-9 flex-1 rounded-lg border border-indigo-50 bg-indigo-50/30 px-2 text-xs font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                       >
                         <option value="">No term</option>
-                        {HALF_TERMS.map((t) => (
+                        {terms.map((t) => (
                           <option key={t.id} value={t.id}>
                             {t.name}
+                            {formatTermHint(t) ? ` (${formatTermHint(t)})` : ''}
                           </option>
                         ))}
                       </select>
@@ -219,15 +241,16 @@ export function MyUnitsMenu({
                         ) : (
                           unit.lessonNumbers.map((num) => {
                             const data = allLessonsData?.[num];
+                            const label = data?.title || num;
                             return (
                               <li key={num}>
                                 <button
                                   type="button"
                                   onClick={() => onSelectLesson(num)}
-                                  className="flex h-11 w-full items-center rounded-xl px-3 text-left text-sm font-semibold text-slate-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                                  className="flex min-h-[44px] w-full items-center rounded-xl px-3 py-2 text-left text-sm font-semibold text-slate-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                                 >
-                                  <span className="truncate">
-                                    {data?.title || num}
+                                  <span className="line-clamp-2 leading-snug" title={label}>
+                                    {label}
                                   </span>
                                 </button>
                               </li>

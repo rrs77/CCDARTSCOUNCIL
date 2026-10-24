@@ -31,15 +31,9 @@ import { LessonPlanModal } from './ccdPlanner/LessonPlanModal';
 import { PlannerLessonCanvas } from './ccdPlanner/PlannerLessonCanvas';
 import { RunThroughModal } from './ccdPlanner/RunThroughModal';
 import { TemplatePickerModal } from './ccdPlanner/TemplatePickerModal';
-
-const HALF_TERMS = [
-  { id: 'A1', name: 'Autumn 1', months: 'Sep–Oct' },
-  { id: 'A2', name: 'Autumn 2', months: 'Nov–Dec' },
-  { id: 'SP1', name: 'Spring 1', months: 'Jan–Feb' },
-  { id: 'SP2', name: 'Spring 2', months: 'Mar–Apr' },
-  { id: 'SM1', name: 'Summer 1', months: 'Apr–May' },
-  { id: 'SM2', name: 'Summer 2', months: 'Jun–Jul' },
-];
+import { YearOverviewScreen } from './ccdPlanner/YearOverviewScreen';
+import { loadPlannerTerms } from '../utils/planner/plannerCurriculumStore';
+import { syncSettingsUrl } from './settings/routes';
 
 const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)";
 const DISPLAY_FONT =
@@ -91,10 +85,23 @@ export function LessonsWorkspace({
   const [runThroughOpen, setRunThroughOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [liveMessage, setLiveMessage] = useState('');
+  const [showYearOverview, setShowYearOverview] = useState(false);
+  const [termsTick, setTermsTick] = useState(0);
+
+  const plannerTerms = useMemo(
+    () => loadPlannerTerms(currentAcademicYear),
+    [currentAcademicYear, termsTick],
+  );
 
   React.useEffect(() => {
     setKeyStage(derivedKs);
   }, [derivedKs]);
+
+  React.useEffect(() => {
+    const onUpdate = () => setTermsTick((n) => n + 1);
+    window.addEventListener('ccd:planner-curriculum-updated', onUpdate);
+    return () => window.removeEventListener('ccd:planner-curriculum-updated', onUpdate);
+  }, []);
 
   const getLessonHalfTerm = (lessonNumber: string): string | null => {
     for (const halfTerm of halfTerms || []) {
@@ -356,13 +363,34 @@ export function LessonsWorkspace({
 
   const goYearOverview = () => {
     setUnitsOpen(false);
-    window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'curriculum' } }));
+    setShowYearOverview(true);
+    setLiveMessage('Opened year overview');
+  };
+
+  const goEditTermDates = () => {
+    syncSettingsUrl('curriculum');
+    window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'settings' } }));
   };
 
   /** Extension point: open Interactive Lesson Viewer (Slides) hub — PR #32. */
   const goLessonViewer = () => {
     window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-viewer' } }));
   };
+
+  if (showYearOverview) {
+    return (
+      <div style={{ fontFamily: UI_FONT }}>
+        <YearOverviewScreen
+          onBack={() => setShowYearOverview(false)}
+          onOpenLesson={(num) => {
+            setShowYearOverview(false);
+            openLessonInBuilder(num);
+          }}
+          onEditTermDates={goEditTermDates}
+        />
+      </div>
+    );
+  }
 
   return (
     <div
@@ -530,9 +558,9 @@ export function LessonsWorkspace({
                 <option value="all" className="text-[#1F1B4D]">
                   All half-terms
                 </option>
-                {HALF_TERMS.map((t) => (
+                {plannerTerms.map((t) => (
                   <option key={t.id} value={t.id} className="text-[#1F1B4D]">
-                    {t.name} ({t.months})
+                    {t.name}
                   </option>
                 ))}
               </select>
@@ -574,7 +602,7 @@ export function LessonsWorkspace({
                     0,
                   );
                   const termId = getLessonHalfTerm(num);
-                  const term = HALF_TERMS.find((t) => t.id === termId);
+                  const term = plannerTerms.find((t) => t.id === termId);
                   const active = editingLessonNumber === num;
                   return (
                     <li key={num}>

@@ -26,6 +26,16 @@ export interface CurriculumStatement {
   text: string;
 }
 
+/** Half-term / term dates edited in Settings — drives Year overview + My units. */
+export interface PlannerTermDates {
+  id: string;
+  name: string;
+  /** ISO date YYYY-MM-DD */
+  start: string;
+  /** ISO date YYYY-MM-DD */
+  end: string;
+}
+
 export interface PlannerCurriculumState {
   frameworks: CurriculumFramework[];
   strands: CurriculumStrand[];
@@ -44,6 +54,8 @@ export interface PlannerCurriculumState {
       customTypeId?: string;
     }>;
   }>;
+  /** Term / half-term dates (Settings). Empty → seeded from academic-year defaults. */
+  terms: PlannerTermDates[];
 }
 
 export const EMPTY_PLANNER_CURRICULUM: PlannerCurriculumState = {
@@ -52,6 +64,7 @@ export const EMPTY_PLANNER_CURRICULUM: PlannerCurriculumState = {
   statements: [],
   sectionTypes: [],
   planTemplates: [],
+  terms: [],
 };
 
 export const PLANNER_KEY_STAGE_OPTIONS: { id: PlannerKeyStageId; label: string }[] = [

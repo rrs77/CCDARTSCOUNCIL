@@ -11,7 +11,9 @@ import {
   type PlannerKeyStageId,
 } from '../../types/plannerCurriculum';
 import {
+  defaultPlannerTerms,
   loadPlannerCurriculum,
+  loadPlannerTerms,
   savePlannerCurriculum,
   uid,
 } from '../../utils/planner/plannerCurriculumStore';
@@ -24,6 +26,7 @@ import {
   ModalShell,
 } from '../ccdPlanner/ModalShell';
 import { Button, Field, TextField, TextInput } from '../ccdPlanner/ui';
+import { useData } from '../../contexts/DataContext';
 
 type Dialog =
   | { kind: 'framework'; id?: string; name: string }
@@ -47,11 +50,20 @@ type Dialog =
 
 /**
  * Settings → Curriculum: user-defined frameworks, strands, statements,
- * custom section types, and plan templates. Nothing hard-coded for lesson plans.
+ * custom section types, plan templates, and term dates. Nothing hard-coded
+ * for lesson plans.
  */
 export function CurriculumSettingsEditor() {
   const { categoryFolders, categories, getCategoryColor } = useSettings();
-  const [state, setState] = useState<PlannerCurriculumState>(() => loadPlannerCurriculum());
+  const { currentAcademicYear } = useData();
+  const [state, setState] = useState<PlannerCurriculumState>(() => {
+    const loaded = loadPlannerCurriculum();
+    const terms =
+      loaded.terms.length > 0
+        ? loaded.terms
+        : loadPlannerTerms(currentAcademicYear);
+    return { ...loaded, terms };
+  });
   const [dialog, setDialog] = useState<Dialog | null>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<{
     type: 'framework' | 'strand' | 'statement' | 'sectionType' | 'template';
@@ -63,16 +75,38 @@ export function CurriculumSettingsEditor() {
   const [filterKeyStage, setFilterKeyStage] = useState<PlannerKeyStageId | 'all'>('all');
 
   useEffect(() => {
-    const onUpdate = () => setState(loadPlannerCurriculum());
+    const onUpdate = () => {
+      const loaded = loadPlannerCurriculum();
+      const terms =
+        loaded.terms.length > 0
+          ? loaded.terms
+          : loadPlannerTerms(currentAcademicYear);
+      setState({ ...loaded, terms });
+    };
     window.addEventListener('ccd:planner-curriculum-updated', onUpdate);
     return () => window.removeEventListener('ccd:planner-curriculum-updated', onUpdate);
-  }, []);
+  }, [currentAcademicYear]);
 
   const persist = useCallback((next: PlannerCurriculumState) => {
     setState(next);
     savePlannerCurriculum(next);
     toast.success('Curriculum saved');
   }, []);
+
+  const updateTerm = (
+    id: string,
+    patch: Partial<{ name: string; start: string; end: string }>,
+  ) => {
+    const terms = (state.terms.length > 0
+      ? state.terms
+      : defaultPlannerTerms(currentAcademicYear)
+    ).map((t) => (t.id === id ? { ...t, ...patch } : t));
+    persist({ ...state, terms });
+  };
+
+  const resetTermDefaults = () => {
+    persist({ ...state, terms: defaultPlannerTerms(currentAcademicYear) });
+  };
 
   const subjects = useMemo(() => {
     const fromFolders = (categoryFolders || []).map((f) => ({
@@ -226,6 +260,56 @@ export function CurriculumSettingsEditor() {
         shown in lesson plans. Colours apply to chips, stripes and borders — text keeps
         readable contrast.
       </p>
+
+      <section className="rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-sm">
+        <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
+          <div>
+            <h3 className="text-sm font-extrabold text-[#1F1B4D]">Term / half-term dates</h3>
+            <p className="mt-1 text-xs text-slate-400">
+              Year overview columns and My units use these dates
+              {currentAcademicYear ? ` · ${currentAcademicYear}` : ''}.
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={resetTermDefaults}>
+            Reset to defaults
+          </Button>
+        </div>
+        <ul className="mt-3 space-y-2">
+          {(state.terms.length > 0
+            ? state.terms
+            : defaultPlannerTerms(currentAcademicYear)
+          ).map((t) => (
+            <li
+              key={t.id}
+              className="grid grid-cols-1 gap-2 rounded-2xl bg-slate-50 p-2 sm:grid-cols-[1.2fr_1fr_1fr]"
+            >
+              <Field label="Name">
+                <TextField
+                  value={t.name}
+                  onChange={(e) => updateTerm(t.id, { name: e.target.value })}
+                  aria-label={`Name for term ${t.id}`}
+                />
+              </Field>
+              <Field label="Start">
+                <TextField
+                  type="date"
+                  value={t.start}
+                  onChange={(e) => updateTerm(t.id, { start: e.target.value })}
+                  aria-label={`Start date for ${t.name}`}
+                />
+              </Field>
+              <Field label="End">
+                <TextField
+                  type="date"
+                  value={t.end}
+                  onChange={(e) => updateTerm(t.id, { end: e.target.value })}
+                  aria-label={`End date for ${t.name}`}
+                />
+              </Field>
+            </li>
+          ))}
+        </ul>
+      </section>
 
       <section className="rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-2">
