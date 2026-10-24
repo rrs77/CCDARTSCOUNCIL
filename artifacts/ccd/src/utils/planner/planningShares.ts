@@ -5,6 +5,7 @@
  */
 
 import { supabase } from '../../config/supabase';
+import { getVercelApiUrl } from '../apiUrl';
 
 export type PlanningResourceType = 'lesson' | 'unit' | 'scheme' | 'year_overview';
 export type ShareAudienceType = 'person' | 'group' | 'school' | 'year_group' | 'hub_org';
@@ -221,35 +222,66 @@ export async function createPlanningShareGrant(input: {
   return grant;
 }
 
-/** Ensure the current user is a member of a planning share group (idempotent). */
+/**
+ * Ensure membership via authenticated server route (service role write).
+ * Clients cannot INSERT into planning_group_members (RLS revoke).
+ */
 export async function ensurePlanningGroupMembership(input: {
   groupId: string;
   userId: string;
   organisationId?: string | null;
+  label?: string;
 }): Promise<void> {
   const groupId = input.groupId.trim();
   if (!groupId || !input.userId) return;
+
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   try {
-    await supabase.from('planning_group_members').upsert(
-      {
-        group_id: groupId,
-        user_id: input.userId,
-        organisation_id: input.organisationId || null,
-      },
-      { onConflict: 'group_id,user_id' },
-    );
-  } catch {
-    /* membership is best-effort when table missing / offline */
-  }
-  try {
-    const raw = localStorage.getItem('ccd-planning-group-members-v1');
-    const list: Array<{ groupId: string; userId: string }> = raw ? JSON.parse(raw) : [];
-    if (!list.some((m) => m.groupId === groupId && m.userId === input.userId)) {
-      list.push({ groupId, userId: input.userId });
-      localStorage.setItem('ccd-planning-group-members-v1', JSON.stringify(list));
+    const { data } = await supabase.auth.getSession();
+    if (data.session?.access_token) {
+      headers.Authorization = `Bearer ${data.session.access_token}`;
     }
   } catch {
-    /* ignore */
+    /* offline / demo */
+  }
+
+  try {
+    const res = await fetch(getVercelApiUrl('/api/planning-groups/members'), {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({
+        groupId,
+        userId: input.userId,
+        label: input.label,
+        organisationId: input.organisationId || null,
+      }),
+    });
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '');
+      let msg = errText;
+      try {
+        const d = JSON.parse(errText || '{}') as { error?: string };
+        if (d.error) msg = d.error;
+      } catch {
+        /* keep */
+      }
+      throw new Error(msg || `Group membership failed (${res.status})`);
+    }
+  } catch (e) {
+    // Local demo fallback when API / DreamHost stack is unavailable.
+    try {
+      const raw = localStorage.getItem('ccd-planning-group-members-v1');
+      const list: Array<{ groupId: string; userId: string }> = raw ? JSON.parse(raw) : [];
+      if (!list.some((m) => m.groupId === groupId && m.userId === input.userId)) {
+        list.push({ groupId, userId: input.userId });
+        localStorage.setItem('ccd-planning-group-members-v1', JSON.stringify(list));
+      }
+    } catch {
+      /* ignore */
+    }
+    if (import.meta.env.DEV) {
+      console.warn('ensurePlanningGroupMembership:', e);
+    }
   }
 }
 
@@ -269,7 +301,8 @@ export async function listSharedWithMe(user: {
   organisationId?: string | null;
   schoolOrOrg?: string | null;
 }): Promise<PlanningShareGrant[]> {
-  const org = user.organisationId || user.schoolOrOrg || '';
+  // RLS uses organisation_id only (security-fixes profiles lock).
+  const org = (user.organisationId || '').trim();
   let memberGroupIds = localGroupIdsForUser(user.id);
   try {
     const { data: memberships } = await supabase
