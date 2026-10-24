@@ -10,8 +10,9 @@ import {
 /** App wrapper: lesson → sanitised Rhythmstix A4 HTML for preview and print. */
 export function renderLessonTemplateHtml(
   lesson: Record<string, any>,
-  opts: { templateId: RhythmstixTemplateId; template?: RhythmstixTemplate; yearGroup?: string; lessonNumber?: string },
+  opts: { templateId: RhythmstixTemplateId; template?: RhythmstixTemplate; yearGroup?: string; subject?: string; lessonNumber?: string },
 ): string {
-  const doc = buildRhythmstixDoc(lesson, opts);
+  const baseUrl = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : undefined;
+  const doc = buildRhythmstixDoc(lesson, { ...opts, baseUrl });
   return renderRhythmstixHtml(doc, { sanitizeHtml, logoHtml: planLogoHtml(40) });
 }

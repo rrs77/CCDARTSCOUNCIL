@@ -44,6 +44,7 @@ import {
   getRhythmstixTemplate,
   resolveLessonTemplateId,
   templateIdForYearGroup,
+  templateIdForKeyStage,
   type RhythmstixTemplate,
   type RhythmstixTemplateId,
 } from '../../utils/lessonTemplates/rhythmstixTemplates';
@@ -70,6 +71,7 @@ export function LessonPlanPanel({
   lessonData,
   onSave,
   yearGroup,
+  keyStage,
 }: {
   open: boolean;
   onClose: () => void;
@@ -77,6 +79,8 @@ export function LessonPlanPanel({
   lessonData?: LessonData | null;
   onSave: (data: LessonData) => void | Promise<void>;
   yearGroup?: string;
+  /** Toolbar key stage; used when the class name has no year in it. */
+  keyStage?: string;
 }) {
   const titleId = useId();
   const [tab, setTab] = useState<ViewTab>('plan');
@@ -115,8 +119,8 @@ export function LessonPlanPanel({
   }, [open, lessonData]);
 
   const displayTitle = (draft?.title || '').trim() || DEFAULT_LESSON_TITLE;
-  const templateId = resolveLessonTemplateId(draft, yearGroup);
-  const yearDefaultTemplateId = templateIdForYearGroup(yearGroup);
+  const templateId = resolveLessonTemplateId(draft, yearGroup, keyStage);
+  const yearDefaultTemplateId = templateIdForYearGroup(yearGroup) || templateIdForKeyStage(keyStage);
   const setTemplateId = (id: RhythmstixTemplateId) => {
     setDraft((d) => (d ? { ...d, lessonTemplateId: id } : d));
     setLiveMessage(`Template set to ${getRhythmstixTemplate(id, lessonTemplates).name}`);

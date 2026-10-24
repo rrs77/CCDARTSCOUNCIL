@@ -763,6 +763,13 @@ button[data-state="active"] {
     visibility: visible !important;
   }
 
+  html.ccd-printing-lesson,
+  html.ccd-printing-lesson body {
+    background: #fff !important;
+    min-height: 0 !important;
+    height: auto !important;
+  }
+
   html.ccd-printing-lesson #ccd-print-root {
     display: block !important;
     position: static !important;

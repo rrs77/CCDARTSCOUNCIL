@@ -661,6 +661,7 @@ export function LessonsWorkspace({
             lessonNumber={editingLessonForForm?.lessonNumber}
             lessonData={editingLessonForForm?.lessonData}
             yearGroup={yearGroupChipLabel}
+            keyStage={keyStage}
           />
         ) : (
           <PlannerLessonCanvas

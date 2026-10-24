@@ -11,6 +11,10 @@ import {
   rhythmstixPlanTemplate,
   templateFromDbRow,
   templateIdForYearGroup,
+  templateIdForKeyStage,
+  yearsLabelFor,
+  splitLongBlock,
+  labelForLink,
   safeHexColour,
   withLessonTemplate,
 } from './rhythmstixTemplates.ts';
@@ -41,8 +45,34 @@ describe('year group → template', () => {
     ['Year 3', 'lks2'], ['Y4 Music', 'lks2'], ['Year 5', 'uks2'], ['Year 6', 'uks2'],
     ['Year 7', 'ks3'], ['Y9', 'ks3'], ['Year 10', 'ks4'], ['Y11', 'ks4'], ['Year 12', 'ks5'],
     ['Y13', 'ks5'], ['GCSE Drama', 'ks4'], ['A-level Music', 'ks5'], ['', null], ['Choir', null],
+    ['Yr 3', 'lks2'], ['Yr 3 Music', 'lks2'], ['yr3', 'lks2'], ['Yr 1', 'ks1'], ['Yrs 5 & 6', 'uks2'],
+    ['Years 3-4', 'lks2'], ['Years 3–4', 'lks2'], ['Years 5–6', 'uks2'], ['Years 7-9', 'ks3'],
+    ['Years 10–11', 'ks4'], ['Years 12-13', 'ks5'], ['Year 11 Music (GCSE)', 'ks4'], ['Year 2 Drama', 'ks1'],
+    ['Lower Kindergarten', 'eyfs'], ['Upper Kindergarten Music', 'eyfs'], ['LKG', 'eyfs'], ['UKG', 'eyfs'],
+    ['Reception Music', 'eyfs'], ['Nursery', 'eyfs'], ['FS2', 'eyfs'], ['Early Years', 'eyfs'],
+    ['KS1', 'ks1'], ['KS2', 'lks2'], ['Key Stage 2', 'lks2'], ['Upper KS2', 'uks2'], ['LKS2', 'lks2'],
+    ['UKS2', 'uks2'], ['KS3', 'ks3'], ['KS4', 'ks4'], ['KS5', 'ks5'], ['Sixth Form', 'ks5'],
+    ['Record club', null],
   ];
   for (const [yg, id] of cases) it(`${yg || '(blank)'} → ${id}`, () => assert.equal(templateIdForYearGroup(yg), id));
+  it('KS2 is consistent between year-group and key-stage mapping', () => {
+    assert.equal(templateIdForYearGroup('KS2'), templateIdForKeyStage('ks2'));
+    assert.equal(templateIdForKeyStage('ks2'), 'lks2');
+    assert.equal(templateIdForKeyStage('ks4'), 'ks4');
+  });
+  it('falls back to the toolbar key stage when the class name has no year', () => {
+    assert.equal(resolveLessonTemplateId({}, 'Brass Group', 'ks3'), 'ks3');
+    assert.equal(resolveLessonTemplateId({}, 'Brass Group'), 'eyfs');
+    assert.equal(resolveLessonTemplateId({}, 'Year 8 Music', 'ks1'), 'ks3');
+  });
+  it('labels EYFS classes', () => {
+    const e = RHYTHMSTIX_TEMPLATES[0];
+    assert.equal(yearsLabelFor(e, 'Lower Kindergarten Music'), 'LOWER KINDERGARTEN');
+    assert.equal(yearsLabelFor(e, 'UKG'), 'UPPER KINDERGARTEN');
+    assert.equal(yearsLabelFor(e, 'Nursery'), 'NURSERY');
+    assert.equal(yearsLabelFor(e, 'EYFS'), 'RECEPTION');
+    assert.equal(yearsLabelFor(RHYTHMSTIX_TEMPLATES[4], 'Year 8 Music'), 'YEARS 7–9');
+  });
   it('has exactly the seven templates in order', () => {
     assert.deepEqual(RHYTHMSTIX_TEMPLATES.map((t) => t.id), ['eyfs', 'ks1', 'lks2', 'uks2', 'ks3', 'ks4', 'ks5']);
   });
@@ -70,6 +100,10 @@ describe('switching templates', () => {
     const eyfs = renderRhythmstixHtml(buildRhythmstixDoc(lesson, { templateId: 'eyfs', yearGroup: 'Reception' }));
     const ks3 = renderRhythmstixHtml(buildRhythmstixDoc(lesson, { templateId: 'ks3', yearGroup: 'Year 8' }));
     assert.match(eyfs, /data-rx-template="eyfs"/);
+    assert.match(eyfs, /<p class="rx-kicker">Lesson plan<\/p>/);
+    assert.match(ks3, /Lesson plan • Illustrative template/);
+    assert.match(ks3, /Explore • Create • Refine • Evaluate/);
+    assert.match(ks3, /YEARS 7–9 &nbsp;•&nbsp; 45 minutes/);
     assert.match(eyfs, /EYFS MUSIC/);
     assert.match(eyfs, /ASSESSMENT — LOOK &amp; LISTEN FOR/);
     assert.match(eyfs, /Check understanding/);
@@ -110,10 +144,72 @@ describe('document mapping', () => {
     assert.ok(sizes.length > 5);
     assert.ok(sizes.every((s) => s >= 13), `sizes: ${sizes}`);
   });
-  it('does not invent outcomes when none are authored', () => {
+  it('does not invent content when none is authored: prompts instead, empty boxes omitted', () => {
     const d = buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: 'eyfs' });
     assert.deepEqual(d.iCan, []);
-    assert.doesNotMatch(renderRhythmstixHtml(d), /I CAN…/);
+    const html = renderRhythmstixHtml(d);
+    assert.equal((html.match(/Teacher to add an I CAN statement/g) || []).length, 4);
+    assert.match(html, /Key vocabulary/);
+    assert.match(html, /Teacher to add resources/);
+    assert.match(html, /Non-specialist teacher toolkit/);
+    assert.doesNotMatch(html, /Support, challenge and safety/);
+    assert.doesNotMatch(html, /SOURCE &amp; ADAPTATION/);
+  });
+  it('dedupes vocabulary, resources and key questions held both on the lesson and in sections', () => {
+    const l = {
+      grouped: {}, categoryOrder: [], totalTime: 30,
+      vocabulary: 'chord, riff', resources: '/examples/ks3-four-chords-lesson-guide.pdf', keyQuestions: 'Why four chords?',
+      sections: [
+        { id: '1', kind: 'vocabulary', title: 'Vocabulary', bodyHtml: 'chord, riff' },
+        { id: '2', kind: 'free_text', title: 'Resources', bodyHtml: '/examples/ks3-four-chords-lesson-guide.pdf' },
+        { id: '3', kind: 'free_text', title: 'Key questions', bodyHtml: 'Why four chords?' },
+      ],
+    };
+    const d = buildRhythmstixDoc(l, { templateId: 'ks3', baseUrl: 'https://app.example' });
+    assert.equal(d.vocabularyHtml, 'chord, riff');
+    assert.deepEqual(d.keyQuestions, ['Why four chords?']);
+    assert.deepEqual(d.resourceLines, []);
+    assert.deepEqual(d.resourceLinks, [{ label: 'KS3 four chords lesson guide (PDF)', url: 'https://app.example/examples/ks3-four-chords-lesson-guide.pdf' }]);
+    const html = renderRhythmstixHtml(d);
+    assert.equal((html.match(/Why four chords\?/g) || []).length, 1);
+    assert.doesNotMatch(html, />\/examples\//);
+  });
+  it('labels links and refuses unsafe ones', () => {
+    assert.equal(labelForLink('https://www.rhythmstix.co.uk/'), 'rhythmstix.co.uk');
+    assert.equal(labelForLink('/files/Samba_grooves-eyfs.mp3'), 'Samba grooves EYFS (MP3)');
+    const d = buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0, resources: 'javascript:alert(1)\nTambourines', resourceLink: 'javascript:alert(1)' }, { templateId: 'ks1' });
+    assert.deepEqual(d.resourceLinks, []);
+    assert.deepEqual(d.resourceLines, ['javascript:alert(1)', 'Tambourines']);
+    assert.doesNotMatch(renderRhythmstixHtml(d), /href="javascript/);
+  });
+  it('splits a whole legacy lesson into steps at numbered headings', () => {
+    const body = [
+      'Learning Outcomes', 'By the end of the lesson:', '', 'Lesson Structure',
+      '1. Warm-Up Game – Pass the Emotion (10 minutes)', 'Children stand in a circle.',
+      '2. Revisiting the Painting – What Happened Before? (10 minutes)', 'Show the painting again.',
+      '3. Freeze frames', 'Hold the frame.',
+      'Key Vocabulary', 'Role', 'Scene',
+    ].join('\n');
+    const { steps, routed } = splitLongBlock('Main activity', body);
+    assert.deepEqual(steps.map((s) => [s.title, s.minutes]), [
+      ['Warm-Up Game – Pass the Emotion', 10], ['Revisiting the Painting – What Happened Before?', 10], ['Freeze frames', undefined],
+    ]);
+    assert.deepEqual(routed.map(([r]) => r), ['vocabularyHtml']);
+    const d = buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 45, sections: [{ id: 'm', kind: 'free_text', title: 'Main activity', bodyHtml: body }] }, { templateId: 'ks1' });
+    assert.equal(d.steps.length, 3);
+    assert.match(d.vocabularyHtml, /Role<br>Scene/);
+  });
+  it('breaks very long unstructured text into parts', () => {
+    const para = 'Lorem ipsum dolor sit amet. '.repeat(30);
+    const { steps } = splitLongBlock('Main activity', [para, para, para].join('\n\n'));
+    assert.ok(steps.length >= 2);
+    assert.equal(steps[1].title, 'Main activity (continued)');
+  });
+  it('adds the continued kicker when the sequence flows past page 1', () => {
+    const long = { ...lesson, sections: Array.from({ length: 8 }, (_, i) => ({ id: String(i), kind: 'free_text', title: `Step ${i}`, durationMins: 5, bodyHtml: 'Do the thing carefully. '.repeat(20) })) };
+    const html = renderRhythmstixHtml(buildRhythmstixDoc(long, { templateId: 'eyfs' }));
+    assert.equal((html.match(/Lesson sequence • continued/g) || []).length, 1);
+    assert.match(html, /Teacher cue: <span class="rx-fill">/);
   });
 });
 

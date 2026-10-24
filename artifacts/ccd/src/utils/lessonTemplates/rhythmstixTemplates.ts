@@ -176,41 +176,92 @@ export function getRhythmstixTemplate(
   return list.find((t) => t.id === id) || RHYTHMSTIX_TEMPLATES.find((t) => t.id === id) || RHYTHMSTIX_TEMPLATES[0];
 }
 
-/**
- * Year group → default template.
- * EYFS/Nursery/Reception → eyfs, Y1–2 ks1, Y3–4 lks2, Y5–6 uks2,
- * Y7–9 ks3, Y10–11 ks4, Y12–13 ks5. Returns null when nothing matches.
- */
-export function templateIdForYearGroup(yearGroup: string | null | undefined): RhythmstixTemplateId | null {
-  const s = String(yearGroup || '').trim().toLowerCase();
-  if (!s) return null;
-  if (/\b(eyfs|reception|nursery|early years|lkg|ukg|foundation|fs[12]?|yr|pre-?school)\b/.test(s)) return 'eyfs';
-  const m = s.match(/\b(?:year|yr|y)\s*-?\s*(\d{1,2})\b/);
-  if (m) {
-    const y = Number(m[1]);
-    if (y <= 0) return 'eyfs';
-    if (y <= 2) return 'ks1';
-    if (y <= 4) return 'lks2';
-    if (y <= 6) return 'uks2';
-    if (y <= 9) return 'ks3';
-    if (y <= 11) return 'ks4';
-    if (y <= 13) return 'ks5';
-  }
-  if (/\b(a[\s-]?level|ks5|key stage 5|sixth form|post-?16)\b/.test(s)) return 'ks5';
-  if (/\b(gcse|btec|ks4|key stage 4)\b/.test(s)) return 'ks4';
-  if (/\b(ks3|key stage 3)\b/.test(s)) return 'ks3';
-  if (/\b(lks2|lower ks2)\b/.test(s)) return 'lks2';
-  if (/\b(uks2|upper ks2|ks2|key stage 2)\b/.test(s)) return 'uks2';
-  if (/\b(ks1|key stage 1)\b/.test(s)) return 'ks1';
+function normYearText(yearGroup: string | null | undefined): string {
+  return String(yearGroup || '')
+    .toLowerCase()
+    .replace(/[–—_]/g, '-')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+const EYFS_RE =
+  /\b(eyfs|reception|rec|nursery|early years|foundation( stage)?|fs ?[12]|pre-?school|lkg|ukg|(lower|upper) kindergarten|kindergarten)\b/;
+
+/** First year number in a label: "Year 3", "Yr 3", "Y3", "Years 3-4", "Yrs 5 & 6", "Year 11 Music (GCSE)". */
+export function yearNumberFromLabel(yearGroup: string | null | undefined): number | null {
+  const s = normYearText(yearGroup);
+  const m = s.match(/(?:^|[^a-z])(?:years?|yrs?|y)\s*\.?\s*-?\s*(\d{1,2})(?!\d)/);
+  return m ? Number(m[1]) : null;
+}
+
+function templateForYear(y: number): RhythmstixTemplateId | null {
+  if (y <= 0) return 'eyfs';
+  if (y <= 2) return 'ks1';
+  if (y <= 4) return 'lks2';
+  if (y <= 6) return 'uks2';
+  if (y <= 9) return 'ks3';
+  if (y <= 11) return 'ks4';
+  if (y <= 13) return 'ks5';
   return null;
 }
 
-/** Library key stage id (eyfs/ks1/ks2/ks3/ks4/ks5) → template. KS2 defaults to Years 3–4. */
+/**
+ * Year group / class label → default template.
+ * EYFS, Nursery, Reception, Lower/Upper Kindergarten (LKG/UKG) → eyfs;
+ * Y1–2 ks1; Y3–4 lks2; Y5–6 uks2; Y7–9 ks3; Y10–11 ks4; Y12–13 ks5.
+ * "Yr 3", "Y3", "Years 3-4" and "Years 3–4" all read the first year number.
+ * A bare "KS2" (no year) gives lks2, the same as templateIdForKeyStage, so
+ * teachers start on the Years 3–4 layout and can switch to Years 5–6.
+ * Returns null when nothing matches.
+ */
+export function templateIdForYearGroup(yearGroup: string | null | undefined): RhythmstixTemplateId | null {
+  const s = normYearText(yearGroup);
+  if (!s) return null;
+  const y = yearNumberFromLabel(s);
+  if (y !== null) {
+    const t = templateForYear(y);
+    if (t) return t;
+  }
+  if (EYFS_RE.test(s)) return 'eyfs';
+  if (/\b(a-? ?levels?|ks ?5|key stage 5|sixth form|post-?16)\b/.test(s)) return 'ks5';
+  if (/\b(gcse|btec|ks ?4|key stage 4)\b/.test(s)) return 'ks4';
+  if (/\b(ks ?3|key stage 3)\b/.test(s)) return 'ks3';
+  if (/\b(lks ?2|lower ks ?2|lower key stage 2)\b/.test(s)) return 'lks2';
+  if (/\b(uks ?2|upper ks ?2|upper key stage 2)\b/.test(s)) return 'uks2';
+  if (/\b(ks ?2|key stage 2)\b/.test(s)) return 'lks2';
+  if (/\b(ks ?1|key stage 1)\b/.test(s)) return 'ks1';
+  return null;
+}
+
+/** Library key stage id (eyfs/ks1/ks2/ks3/ks4/ks5) → template. KS2 gives Years 3–4 (lks2), as above. */
 export function templateIdForKeyStage(ks: string | null | undefined): RhythmstixTemplateId | null {
   const s = String(ks || '').trim().toLowerCase();
   if (isRhythmstixTemplateId(s)) return s;
-  if (s === 'ks2') return 'lks2';
-  return null;
+  return templateIdForYearGroup(s);
+}
+
+/**
+ * Years label for the meta line. Uses the template's label ("YEARS 7–9"),
+ * except EYFS, where the class's own stage is kept: NURSERY, RECEPTION,
+ * LOWER KINDERGARTEN, UPPER KINDERGARTEN (default RECEPTION).
+ */
+export function yearsLabelFor(t: RhythmstixTemplate, yearGroup?: string | null): string {
+  if (t.id !== 'eyfs') return t.yearsLabel;
+  const s = normYearText(yearGroup);
+  if (/\b(lkg|lower kindergarten)\b/.test(s)) return 'LOWER KINDERGARTEN';
+  if (/\b(ukg|upper kindergarten)\b/.test(s)) return 'UPPER KINDERGARTEN';
+  if (/\bnursery|pre-?school|fs ?1\b/.test(s)) return 'NURSERY';
+  return t.yearsLabel;
+}
+
+/** Subject from the class label or lesson (Music unless the label names another subject). */
+export function subjectFromLabel(label: string | null | undefined, fallback = 'Music'): string {
+  const s = String(label || '').toLowerCase();
+  const found = [
+    ['music', 'Music'], ['drama', 'Drama'], ['dance', 'Dance'], ['computing', 'Computing'],
+    ['art', 'Art'], ['pe', 'PE'],
+  ].filter(([k]) => new RegExp(`\\b${k}\\b`).test(s)).map(([, v]) => v);
+  return found.length ? found.join(' & ') : fallback;
 }
 
 /**
@@ -273,7 +324,7 @@ export interface RhythmstixDoc {
   intentHtml: string;
   iCan: string[];
   vocabularyHtml: string;
-  resourcesHtml: string;
+  resourceLines: string[];
   resourceLinks: RxLink[];
   steps: RxStep[];
   keyQuestions: string[];
@@ -288,17 +339,31 @@ export interface RhythmstixDoc {
 
 type AnyLesson = Record<string, any>;
 
-function stripTags(html: string): string {
-  return String(html || '')
-    .replace(/<br\s*\/?>/gi, '\n')
-    .replace(/<\/(p|li|div|h\d)>/gi, '\n')
-    .replace(/<[^>]+>/g, '')
+function decodeEntities(s: string): string {
+  return s
     .replace(/&nbsp;/g, ' ')
-    .replace(/&amp;/g, '&')
     .replace(/&lt;/g, '<')
     .replace(/&gt;/g, '>')
     .replace(/&quot;/g, '"')
-    .replace(/&#39;/g, "'");
+    .replace(/&#39;/g, "'")
+    .replace(/&amp;/g, '&');
+}
+
+function stripTags(html: string): string {
+  return decodeEntities(
+    String(html || '')
+      .replace(/<br\s*\/?>/gi, '\n')
+      .replace(/<\/(p|li|div|h\d|tr)>/gi, '\n')
+      .replace(/<[^>]+>/g, ''),
+  );
+}
+
+/** Comparable form of a block of text (for de-duplication). */
+export function normText(s: unknown): string {
+  return stripTags(String(s ?? ''))
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N}]+/gu, ' ')
+    .trim();
 }
 
 /** Split rich text / newline / bullet lists into clean items. */
@@ -311,87 +376,270 @@ export function splitItems(raw: unknown): string[] {
     .filter(Boolean);
 }
 
-function isHttpUrl(u: unknown): u is string {
-  return typeof u === 'string' && /^https?:\/\/[^\s]+$/i.test(u.trim());
+function pushUnique(list: string[], items: string[]) {
+  for (const i of items) {
+    const n = normText(i);
+    if (n && !list.some((x) => normText(x) === n)) list.push(i);
+  }
 }
 
-function pushLink(list: RxLink[], label: string, url: unknown) {
-  if (!isHttpUrl(url)) return;
-  const u = url.trim();
+/** Append a rich block unless the same text is already there. */
+function appendUnique(cur: string, next: string): string {
+  const n = normText(next);
+  if (!n) return cur;
+  if (normText(cur).includes(n)) return cur;
+  if (n.includes(normText(cur)) && normText(cur)) return next;
+  return cur ? `${cur}<br>${next}` : next;
+}
+
+const FILE_RE = /\.(pdf|docx?|pptx?|xlsx?|mp3|mp4|m4a|wav|png|jpe?g|gif|zip|txt)$/i;
+const PATH_OR_URL_RE = /(https?:\/\/[^\s<>"')]+|\/[A-Za-z0-9\-._~%/]+\.[A-Za-z0-9]{2,4})/g;
+
+/** Human label for a URL or path: "/examples/ks3-four-chords-lesson-guide.pdf" → "KS3 four chords lesson guide (PDF)". */
+export function labelForLink(url: string): string {
+  let path = url;
+  try {
+    path = /^https?:/i.test(url) ? new URL(url).pathname : url;
+  } catch {
+    /* keep raw */
+  }
+  const last = decodeURIComponent(path.split('/').filter(Boolean).pop() || '');
+  const ext = (last.match(FILE_RE)?.[1] || '').toUpperCase();
+  let base = last.replace(FILE_RE, '').replace(/[-_]+/g, ' ').replace(/\s+/g, ' ').trim();
+  if (!base) {
+    try {
+      return new URL(url).hostname.replace(/^www\./, '');
+    } catch {
+      return url;
+    }
+  }
+  base = base.replace(/\b(ks\d|eyfs|gcse|lks2|uks2|pdf|midi|daw)\b/gi, (m) => m.toUpperCase());
+  base = base.charAt(0).toUpperCase() + base.slice(1);
+  return ext ? `${base} (${ext === 'JPEG' ? 'JPG' : ext})` : base;
+}
+
+/** Absolute http(s) URL for a link, or null when unsafe. Relative "/x" paths resolve against baseUrl. */
+export function safeLinkUrl(raw: unknown, baseUrl?: string): string | null {
+  if (typeof raw !== 'string') return null;
+  const u = raw.trim();
+  if (/^https?:\/\/[^\s]+$/i.test(u)) return u;
+  if (/^\/(?!\/)[^\s]*$/.test(u)) {
+    if (baseUrl && /^https?:\/\//i.test(baseUrl)) {
+      try {
+        return new URL(u, baseUrl).toString();
+      } catch {
+        return null;
+      }
+    }
+    return u;
+  }
+  return null;
+}
+
+function pushLink(list: RxLink[], label: string | null, url: unknown, baseUrl?: string) {
+  const u = safeLinkUrl(url, baseUrl);
+  if (!u) return;
   if (list.some((l) => l.url === u)) return;
-  list.push({ label: label || u, url: u });
+  list.push({ label: label || labelForLink(u), url: u });
 }
 
-const ROUTE: Array<[RegExp, keyof RhythmstixDoc | 'toolkit']> = [
-  [/^key questions?$/i, 'keyQuestions'],
+/** Split resources text into prose lines and links (paths/URLs become titled links). */
+function absorbResources(doc: RhythmstixDoc, raw: unknown, baseUrl?: string) {
+  for (const line of stripTags(String(raw ?? '')).split('\n')) {
+    const found = line.match(PATH_OR_URL_RE) || [];
+    for (const f of found) pushLink(doc.resourceLinks, null, f, baseUrl);
+    const rest = line.replace(PATH_OR_URL_RE, '').replace(/^[\s,;:–—-]+|[\s,;:–—-]+$/g, '').trim();
+    if (rest) pushUnique(doc.resourceLines, [rest]);
+  }
+}
+
+type Route = 'keyQuestions' | 'assessment' | 'support' | 'challenge' | 'safety' | 'sourceHtml' | 'vocabularyHtml' | 'resources' | 'iCan' | 'intent';
+const ROUTE: Array<[RegExp, Route]> = [
+  [/^key questions?:?$/i, 'keyQuestions'],
   [/^(assessment|afl|assessment for learning|look (&|and) listen for|look for)/i, 'assessment'],
   [/^(support|differentiation)$/i, 'support'],
   [/^challenge$/i, 'challenge'],
   [/^safety|health (&|and) safety/i, 'safety'],
   [/^(source|attribution|source (&|and) adaptation)/i, 'sourceHtml'],
-  [/^vocabulary|^key vocabulary/i, 'vocabularyHtml'],
-  [/^resources$/i, 'resourcesHtml'],
+  [/^(key )?vocabulary:?$/i, 'vocabularyHtml'],
+  [/^resources:?$/i, 'resources'],
   [/^(i can|success criteria)/i, 'iCan'],
+  [/^(learning (outcomes?|objectives?|intentions?)|lesson intent|intent):?$/i, 'intent'],
 ];
+const routeFor = (title: string): Route | undefined => ROUTE.find(([re]) => re.test(title.trim()))?.[1];
 
-function activityLinks(a: AnyLesson | undefined): RxLink[] {
+function activityLinks(a: AnyLesson | undefined, baseUrl?: string): RxLink[] {
   const out: RxLink[] = [];
   if (!a) return out;
   const name = String(a.activity || 'Activity');
-  pushLink(out, `${name} — resource`, a.resourceLink);
-  pushLink(out, `${name} — link`, a.link);
-  pushLink(out, `${name} — video`, a.videoLink);
-  pushLink(out, `${name} — music`, a.musicLink);
-  pushLink(out, `${name} — backing track`, a.backingLink);
+  pushLink(out, `${name}: resource`, a.resourceLink, baseUrl);
+  pushLink(out, `${name}: link`, a.link, baseUrl);
+  pushLink(out, `${name}: video`, a.videoLink, baseUrl);
+  pushLink(out, `${name}: music`, a.musicLink, baseUrl);
+  pushLink(out, `${name}: backing track`, a.backingLink, baseUrl);
   return out;
+}
+
+const escapeLine = (s: string) =>
+  s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+/**
+ * Split one long free-text block (e.g. a whole legacy "Main activity") into
+ * steps at numbered headings like "1. Warm-Up Game – Pass the Emotion (10 minutes)".
+ * Un-numbered headings that name a reference block ("Key Vocabulary",
+ * "Key questions", "Resources", "Assessment", "Learning Outcomes") are routed
+ * to that block instead of printing inside a step.
+ */
+export function splitLongBlock(
+  title: string,
+  bodyHtml: string,
+): { steps: Array<{ title: string; minutes?: number; bodyHtml: string }>; routed: Array<[Route, string]> } {
+  const lines = stripTags(bodyHtml).split('\n').map((l) => l.replace(/\s+$/, ''));
+  const HEAD = /^\s*(\d{1,2})[.)]\s+(.{2,90}?)\s*(?:[(\[–—-]\s*(\d{1,3})\s*(?:mins?|minutes?)\s*[)\]]?)?\s*$/i;
+  const heads = lines.filter((l) => HEAD.test(l) && l.trim().length <= 110).length;
+  const steps: Array<{ title: string; minutes?: number; bodyHtml: string }> = [];
+  const routed: Array<[Route, string]> = [];
+  if (heads < 2) {
+    // No structure: keep as one step, but break very long text into readable parts.
+    const text = lines.join('\n').trim();
+    if (text.length <= 1800) return { steps: [{ title, bodyHtml }], routed };
+    const paras = text.split(/\n\s*\n/);
+    let buf = '';
+    let part = 0;
+    const flush = () => {
+      if (!buf.trim()) return;
+      steps.push({ title: part === 0 ? title : `${title} (continued)`, bodyHtml: escapeLine(buf.trim()).replace(/\n/g, '<br>') });
+      part += 1;
+      buf = '';
+    };
+    for (const p of paras) {
+      if (buf && buf.length + p.length > 1200) flush();
+      buf += (buf ? '\n\n' : '') + p;
+    }
+    flush();
+    return { steps, routed };
+  }
+  let cur: { title: string; minutes?: number; lines: string[]; route?: Route } = { title, lines: [] };
+  const close = () => {
+    const text = cur.lines.join('\n').replace(/^\s*lesson structure:?\s*$/gim, '').trim();
+    if (cur.route) {
+      // A lone lead-in such as "By the end of the lesson:" with nothing after it adds nothing.
+      if (text && !(text.length < 60 && /:$/.test(text))) routed.push([cur.route, escapeLine(text).replace(/\n/g, '<br>')]);
+      return;
+    }
+    if (text || cur.title !== title) {
+      steps.push({ title: cur.title, minutes: cur.minutes, bodyHtml: escapeLine(text).replace(/\n/g, '<br>') });
+    }
+  };
+  for (const l of lines) {
+    const m = l.trim().length <= 110 ? l.match(HEAD) : null;
+    const plain = l.trim().replace(/:$/, '');
+    const r = plain.length <= 40 && !m ? routeFor(plain) : undefined;
+    if (m) {
+      close();
+      cur = { title: m[2].replace(/\s*[–—-]\s*$/, '').trim(), minutes: m[3] ? Number(m[3]) : undefined, lines: [] };
+    } else if (r) {
+      close();
+      cur = { title: plain, lines: [], route: r };
+    } else {
+      cur.lines.push(l);
+    }
+  }
+  close();
+  // Drop an empty leading preamble.
+  return { steps, routed };
 }
 
 /**
  * Map CCDesigner lesson data into the template's document model.
- * Never invents content: empty fields become omitted blocks.
+ * Never invents content: missing fields become teacher prompts or omitted blocks.
  */
 export function buildRhythmstixDoc(
   lesson: AnyLesson,
-  opts: { templateId: RhythmstixTemplateId; template?: RhythmstixTemplate; yearGroup?: string; subject?: string; lessonNumber?: string },
+  opts: {
+    templateId: RhythmstixTemplateId;
+    template?: RhythmstixTemplate;
+    yearGroup?: string;
+    subject?: string;
+    lessonNumber?: string;
+    baseUrl?: string;
+  },
 ): RhythmstixDoc {
   const template = opts.template || getRhythmstixTemplate(opts.templateId);
-  const subject = String(opts.subject || lesson.subject || lesson.primarySubject || 'Music').trim();
+  const subject = String(opts.subject || lesson.subject || subjectFromLabel(opts.yearGroup)).trim();
+  const base = opts.baseUrl;
   const doc: RhythmstixDoc = {
     template,
     subject,
     title: String(lesson.title || '').trim() || 'Untitled lesson',
-    strap: String(lesson.lessonName || '').trim() || template.defaultStrap,
+    strap: template.defaultStrap,
     meta: [],
-    intentHtml: String(lesson.learningOutcome || lesson.introduction || ''),
-    iCan: splitItems(lesson.successCriteria),
-    vocabularyHtml: String(lesson.vocabulary || ''),
-    resourcesHtml: String(lesson.resources || ''),
+    intentHtml: String(lesson.learningOutcome || ''),
+    iCan: [],
+    vocabularyHtml: '',
+    resourceLines: [],
     resourceLinks: [],
     steps: [],
-    keyQuestions: splitItems(lesson.keyQuestions),
-    assessment: splitItems(lesson.assessment),
+    keyQuestions: [],
+    assessment: [],
     toolkit: [],
-    support: String(lesson.differentiation || ''),
+    support: '',
     challenge: '',
     safety: '',
     sourceHtml: '',
     sourceLinks: [],
   };
+  pushUnique(doc.iCan, splitItems(lesson.successCriteria));
+  doc.vocabularyHtml = appendUnique('', String(lesson.vocabulary || ''));
+  absorbResources(doc, lesson.resources, base);
+  pushUnique(doc.keyQuestions, splitItems(lesson.keyQuestions));
+  pushUnique(doc.assessment, splitItems(lesson.assessment));
+  doc.support = appendUnique('', String(lesson.differentiation || ''));
 
-  const yg = String(opts.yearGroup || '').trim();
-  doc.meta.push(yg ? yg.toUpperCase() : template.yearsLabel);
+  // Meta: "YEARS 7–9 • 60 minutes • focus" (primary examples also name the subject).
+  doc.meta.push(yearsLabelFor(template, opts.yearGroup));
   const minutes = Number(lesson.totalTime) || 0;
   if (minutes > 0) doc.meta.push(`${minutes} minutes`);
-  if (subject) doc.meta.push(subject);
-  const strand = String(lesson.strand || lesson.unitName || '').trim();
-  if (strand) doc.meta.push(strand);
+  if (template.stage === 'primary' && subject) doc.meta.push(subject);
+  const focus = String(lesson.strand || lesson.focus || lesson.unitName || '').trim();
+  if (focus) doc.meta.push(focus);
 
-  pushLink(doc.resourceLinks, 'Resource', lesson.resourceLink);
-  pushLink(doc.resourceLinks, 'Video', lesson.videoLink);
-  for (const extra of splitItems(lesson.additionalLinks)) pushLink(doc.resourceLinks, extra, extra);
+  pushLink(doc.resourceLinks, null, lesson.resourceLink, base);
+  pushLink(doc.resourceLinks, null, lesson.videoLink, base);
+  for (const extra of splitItems(lesson.additionalLinks)) pushLink(doc.resourceLinks, null, extra, base);
 
   const toolkitLabels = template.toolkitLabels.map((l) => l.toLowerCase());
-  const append = (cur: string, next: string) => (cur ? `${cur}<br>${next}` : next);
+
+  const route = (r: Route, body: string) => {
+    if (r === 'keyQuestions') pushUnique(doc.keyQuestions, splitItems(body));
+    else if (r === 'assessment') pushUnique(doc.assessment, splitItems(body));
+    else if (r === 'iCan') pushUnique(doc.iCan, splitItems(body));
+    else if (r === 'support') doc.support = appendUnique(doc.support, body);
+    else if (r === 'challenge') doc.challenge = appendUnique(doc.challenge, body);
+    else if (r === 'safety') doc.safety = appendUnique(doc.safety, body);
+    else if (r === 'sourceHtml') doc.sourceHtml = appendUnique(doc.sourceHtml, body);
+    else if (r === 'vocabularyHtml') doc.vocabularyHtml = appendUnique(doc.vocabularyHtml, body);
+    else if (r === 'resources') absorbResources(doc, body, base);
+    else if (r === 'intent') doc.intentHtml = appendUnique(doc.intentHtml, body);
+  };
+
+  const addStep = (title: string, minutes: unknown, bodyHtml: string, act?: AnyLesson, cue?: string) => {
+    const links = activityLinks(act, base);
+    links.forEach((l) => pushLink(doc.sourceLinks, l.label, l.url, base));
+    const m = Number(minutes);
+    const parts = act ? { steps: [{ title, bodyHtml }], routed: [] as Array<[Route, string]> } : splitLongBlock(title, bodyHtml);
+    parts.routed.forEach(([r, b]) => route(r, b));
+    parts.steps.forEach((p, i) => {
+      const pm = (p as { minutes?: number }).minutes;
+      doc.steps.push({
+        title: p.title || 'Activity',
+        minutes: pm ?? (i === 0 && Number.isFinite(m) && m > 0 ? m : undefined),
+        bodyHtml: p.bodyHtml,
+        cue: i === 0 ? cue || (act?.teacherCue ? String(act.teacherCue) : undefined) : undefined,
+        links: i === 0 ? links : [],
+      });
+    });
+  };
 
   const sections: AnyLesson[] = Array.isArray(lesson.sections) ? lesson.sections : [];
   const activities: AnyLesson[] = sections.length
@@ -400,19 +648,6 @@ export function buildRhythmstixDoc(
       ? lesson.orderedActivities
       : (lesson.categoryOrder || []).flatMap((c: string) => lesson.grouped?.[c] || []);
 
-  const addStep = (title: string, minutes: unknown, bodyHtml: string, act?: AnyLesson, cue?: string) => {
-    const links = activityLinks(act);
-    links.forEach((l) => pushLink(doc.sourceLinks, l.label, l.url));
-    const m = Number(minutes);
-    doc.steps.push({
-      title: title || 'Activity',
-      minutes: Number.isFinite(m) && m > 0 ? m : undefined,
-      bodyHtml,
-      cue: cue || (act?.teacherCue ? String(act.teacherCue) : undefined),
-      links,
-    });
-  };
-
   for (const s of sections) {
     const title = String(s.title || '').trim();
     const body = String(s.bodyHtml || '');
@@ -420,37 +655,26 @@ export function buildRhythmstixDoc(
       addStep(title || s.activity?.activity, s.durationMins ?? s.activity?.time, body || String(s.activity?.description || ''), s.activity);
       continue;
     }
-    if (s.kind === 'vocabulary') { doc.vocabularyHtml = append(doc.vocabularyHtml, body); continue; }
-    if (s.kind === 'afl') { doc.assessment.push(...splitItems(body)); continue; }
-    if (s.kind === 'differentiation') { doc.support = append(doc.support, body); continue; }
+    if (s.kind === 'vocabulary') { route('vocabularyHtml', body); continue; }
+    if (s.kind === 'afl') { route('assessment', body); continue; }
+    if (s.kind === 'differentiation') { route('support', body); continue; }
     const tk = toolkitLabels.indexOf(title.toLowerCase());
     if (tk >= 0 || /^toolkit\s*:/i.test(title) || (template.stage === 'primary' && / = /.test(title))) {
-      doc.toolkit.push({ label: (tk >= 0 ? template.toolkitLabels[tk] : title.replace(/^toolkit\s*:\s*/i, '')).toUpperCase(), bodyHtml: body });
+      if (normText(body)) doc.toolkit.push({ label: (tk >= 0 ? template.toolkitLabels[tk] : title.replace(/^toolkit\s*:\s*/i, '')).toUpperCase(), bodyHtml: body });
       continue;
     }
-    const route = ROUTE.find(([re]) => re.test(title))?.[1];
-    if (route === 'keyQuestions') doc.keyQuestions.push(...splitItems(body));
-    else if (route === 'assessment') doc.assessment.push(...splitItems(body));
-    else if (route === 'iCan') doc.iCan.push(...splitItems(body));
-    else if (route === 'support') doc.support = append(doc.support, body);
-    else if (route === 'challenge') doc.challenge = append(doc.challenge, body);
-    else if (route === 'safety') doc.safety = append(doc.safety, body);
-    else if (route === 'sourceHtml') doc.sourceHtml = append(doc.sourceHtml, body);
-    else if (route === 'vocabularyHtml') doc.vocabularyHtml = append(doc.vocabularyHtml, body);
-    else if (route === 'resourcesHtml') doc.resourcesHtml = append(doc.resourcesHtml, body);
-    else if (s.kind === 'homework') addStep(title || 'Homework / next steps', s.durationMins, body);
-    else addStep(title, s.durationMins, body);
+    const r = routeFor(title);
+    if (r) route(r, body);
+    else if (normText(body) || s.durationMins) addStep(title || (s.kind === 'homework' ? 'Homework / next steps' : 'Activity'), s.durationMins, body);
   }
   for (const a of activities) addStep(String(a.activity || ''), a.time, String(a.description || ''), a);
 
   if (!sections.length && !activities.length) {
-    if (lesson.introduction && lesson.introduction !== doc.intentHtml) addStep('Introduction', undefined, String(lesson.introduction));
+    if (lesson.introduction) addStep('Introduction', undefined, String(lesson.introduction));
     if (lesson.mainActivity) addStep('Main activity', undefined, String(lesson.mainActivity));
     if (lesson.plenary) addStep('Plenary', undefined, String(lesson.plenary));
   }
-
-  const origin = opts.lessonNumber ? `CCDesigner lesson ${opts.lessonNumber}` : 'CCDesigner';
-  if (!doc.sourceHtml) doc.sourceHtml = `Prepared in ${origin}. Activity sources and links are listed below; retain provider credit when sharing.`;
+  // Intent duplicated by a routed "Learning outcomes" block? keep one.
   return doc;
 }
 
@@ -474,49 +698,63 @@ export interface RenderOptions {
   logoHtml?: string;
 }
 
-/** Scoped CSS for the document. All text ≥ 13px. */
+/** Rough printed height (px at 96dpi, 14px text, ~95 chars/line) used to place the "continued" break. */
+function estHeight(html: string, charsPerLine = 92): number {
+  const text = stripTags(html);
+  const lines = text.split('\n').reduce((n, l) => n + Math.max(1, Math.ceil(l.length / charsPerLine)), 0);
+  return lines * 20;
+}
+
+const PROMPT = (s: string) => `<p class="rx-prompt">${escapeText(s)}</p>`;
 export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string {
   const cssText = (v: string) => v.replace(/["\\<>{}]/g, '').toUpperCase();
   const base = RHYTHMSTIX_TEMPLATES.find((b) => b.id === t.id) || RHYTHMSTIX_TEMPLATES[0];
   t = { ...t, accent: safeHexColour(t.accent, base.accent), tint: safeHexColour(t.tint, base.tint) };
   return `
-.rx-doc{--rx-accent:${t.accent};--rx-tint:${t.tint};--rx-teal:#1F7A70;--rx-gold:#C9A227;
+.rx-doc{--rx-accent:${t.accent};--rx-tint:${t.tint};--rx-teal:#1F7A70;--rx-gold:#B08A1E;
   font-family:Aptos,"Segoe UI",Calibri,Arial,sans-serif;color:#111;background:#fff;font-size:14px;line-height:1.45;width:100%;max-width:none;box-sizing:border-box}
 .rx-doc *{box-sizing:border-box}
+.rx-doc p{margin:0}
 .rx-doc a{color:var(--rx-teal);font-weight:700}
 .rx-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--rx-gold);padding-bottom:10px;margin-bottom:14px}
 .rx-logo-slot{min-height:40px;min-width:160px;display:flex;align-items:center}
-.rx-wordmark{font-weight:800;letter-spacing:.35em;font-size:16px;color:#111}
+.rx-wordmark{font-weight:800;letter-spacing:.2em;font-size:16px;color:#111}
 .rx-phase{font-size:13px;font-weight:700;color:var(--rx-accent);text-transform:uppercase;text-align:right}
-.rx-kicker{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--rx-accent);text-transform:uppercase;margin:0 0 2px}
+.rx-kicker{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--rx-accent);text-transform:uppercase;margin:0 0 4px}
 .rx-title{font-size:30px;font-weight:800;line-height:1.15;margin:0}
 .rx-strap{font-size:19px;font-weight:700;color:var(--rx-teal);margin:2px 0 4px}
-.rx-meta{font-size:13px;font-weight:700;color:var(--rx-teal);text-transform:uppercase;margin:0 0 10px}
+.rx-meta{font-size:13px;font-weight:700;color:var(--rx-teal);margin:0 0 10px}
 .rx-box{border:1px solid var(--rx-accent);border-radius:4px;padding:8px 12px;margin:10px 0}
 .rx-box.tint{background:var(--rx-tint)}
 .rx-label{font-size:13px;font-weight:800;color:var(--rx-accent);text-transform:uppercase;margin:0 0 4px}
+.rx-prompt{font-size:13px;color:#6b6b6b;font-style:italic}
 .rx-ican{margin:14px 0;border:1px solid var(--rx-accent);border-radius:4px;overflow:hidden;break-inside:avoid}
 .rx-ican-h{background:#1d1d1f;color:#fff;font-weight:800;font-size:14px;padding:5px 10px}
 .rx-ican-grid{display:grid;grid-template-columns:1fr 1fr}
-.rx-ican-grid div{padding:7px 10px;background:var(--rx-tint);color:var(--rx-teal);font-weight:700;border-top:1px solid var(--rx-accent)}
-.rx-ican-grid div:nth-child(odd){border-right:1px solid var(--rx-accent)}
+.rx-ican-grid>div{padding:8px 10px;color:var(--rx-teal);font-weight:700;border-top:1px solid var(--rx-accent)}
+.rx-ican-grid>div:nth-child(odd){border-right:1px solid var(--rx-accent)}
+.rx-ican-grid>div:nth-child(4n+1),.rx-ican-grid>div:nth-child(4n+4){background:var(--rx-tint)}
+.rx-ican-grid>div:nth-child(4n+2),.rx-ican-grid>div:nth-child(4n+3){background:#fff}
 .rx-two{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid #c9c9c9;margin:10px 0;break-inside:avoid}
 .rx-two>div{padding:8px 12px}
 .rx-two>div+div{border-left:1px solid #c9c9c9}
 .rx-cell-a{background:#EEF6F4}.rx-cell-b{background:#FAF6EA}
-.rx-h2{font-size:22px;font-weight:800;margin:18px 0 0}
+.rx-h2{font-size:22px;font-weight:800;margin:18px 0 2px}
 .rx-sub{font-size:14px;color:var(--rx-teal);margin:0 0 8px}
-.rx-step{border-bottom:1px solid #ddd;padding:8px 0 10px;break-inside:avoid}
-.rx-step-h{display:flex;justify-content:space-between;gap:12px;font-weight:800;font-size:17px}
+.rx-step{border-bottom:1px solid #ddd;padding:8px 0 10px}
+.rx-step.short{break-inside:avoid}
+.rx-step-h{display:flex;justify-content:space-between;gap:12px;font-weight:800;font-size:17px;break-after:avoid}
 .rx-step-t{font-size:13px;font-weight:700;color:var(--rx-accent);white-space:nowrap}
 .rx-cue{font-size:13px;font-weight:700;color:var(--rx-gold);margin-top:4px}
+.rx-cue .rx-fill{font-weight:400;font-style:italic;color:#6b6b6b}
 .rx-links{font-size:13px;margin-top:4px}
+.rx-cont{break-before:page;page-break-before:always}
 .rx-ref{break-before:page;page-break-before:always;padding-top:4px}
 .rx-grid2{display:grid;grid-template-columns:1fr 1fr;border:1px solid #c9c9c9;margin:10px 0}
 .rx-grid2>div{padding:8px 12px;border-bottom:1px solid #c9c9c9;break-inside:avoid}
 .rx-grid2>div:nth-child(odd){border-right:1px solid #c9c9c9;background:#EEF6F4}
 .rx-grid2>div:nth-child(even){background:#FAF6EA}
-.rx-grid3{display:grid;grid-template-columns:1fr 1fr 1fr;border:1px solid #c9c9c9;margin:10px 0;break-inside:avoid}
+.rx-grid3{display:grid;border:1px solid #c9c9c9;margin:10px 0;break-inside:avoid}
 .rx-grid3>div{padding:8px 12px}
 .rx-grid3>div+div{border-left:1px solid #c9c9c9}
 .rx-grid3>div:nth-child(1){background:#EEF6F4}.rx-grid3>div:nth-child(3){background:#FAF6EA}
@@ -533,9 +771,13 @@ export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string 
     @bottom-center{content:"www.rhythmstix.co.uk";font-size:13px;color:#1F7A70}
     @bottom-right{content:"Page " counter(page);font-size:13px;color:#555}}
   @page:first{@top-right{content:none}}
+  html,body{background:#fff !important}
   .rx-foot{display:none}
 }`;
 }
+
+/** Usable page-1 / page height (px) for the continued-sequence break. A4 minus margins ≈ 1010px. */
+const PAGE_PX = 1010;
 
 export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {}): string {
   const t = doc.template;
@@ -545,42 +787,71 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   const li = (items: string[]) => `<ul class="rx-list">${items.map((i) => `<li>${escapeText(i)}</li>`).join('')}</ul>`;
   const checks = (items: string[]) => `<ul class="rx-checks">${items.map((i) => `<li>${escapeText(i)}</li>`).join('')}</ul>`;
   const subjectUpper = escapeText(doc.subject.toUpperCase());
+  const secondary = t.stage === 'secondary';
 
   const parts: string[] = [];
+  let used = 0; // estimated px used on page 1
   parts.push(`<style>${rhythmstixCss(t, doc.subject)}</style>`);
   parts.push(`<div class="rx-doc" data-rx-template="${t.id}">`);
   parts.push(
     `<header class="rx-head"><div class="rx-logo-slot" data-logo-slot="top-left">${opts.logoHtml || '<span class="rx-wordmark">CCDesigner</span>'}</div>` +
       `<div class="rx-phase">${escapeText(t.headerPhase)} ${subjectUpper} &nbsp;|&nbsp; TEACHING RESOURCE</div></header>`,
   );
-  parts.push(`<p class="rx-kicker">Lesson plan</p><h1 class="rx-title">${escapeText(doc.title)}</h1>`);
+  // Kicker as in the examples: KS3–KS5 say "LESSON PLAN • ILLUSTRATIVE TEMPLATE".
+  parts.push(`<p class="rx-kicker">${secondary ? 'Lesson plan • Illustrative template' : 'Lesson plan'}</p><h1 class="rx-title">${escapeText(doc.title)}</h1>`);
   parts.push(`<p class="rx-strap">${escapeText(doc.strap)}</p><p class="rx-meta">${doc.meta.map(escapeText).join(' &nbsp;•&nbsp; ')}</p>`);
-  if (doc.intentHtml.trim()) parts.push(`<div class="rx-box tint"><p class="rx-label">Lesson intent</p>${rich(doc.intentHtml)}</div>`);
+  used += 175 + Math.max(0, Math.ceil(doc.title.length / 40) - 1) * 36;
 
-  if (doc.iCan.length) {
-    parts.push(`<section class="rx-ican"><div class="rx-ican-h">I CAN…</div><div class="rx-ican-grid">${doc.iCan
-      .map((i) => `<div>✓ ${escapeText(i)}</div>`)
-      .join('')}${doc.iCan.length % 2 ? '<div></div>' : ''}</div></section>`);
-  }
+  parts.push(
+    `<div class="rx-box tint"><p class="rx-label">Lesson intent</p>${
+      normText(doc.intentHtml) ? rich(doc.intentHtml) : PROMPT('Teacher to add: what pupils will learn and do in this lesson.')
+    }</div>`,
+  );
+  used += 50 + estHeight(doc.intentHtml);
 
-  if (doc.vocabularyHtml.trim() || doc.resourcesHtml.trim() || doc.resourceLinks.length) {
-    parts.push(
-      `<div class="rx-two"><div class="rx-cell-a"><p class="rx-label">Key vocabulary</p>${doc.vocabularyHtml.trim() ? rich(doc.vocabularyHtml) : ''}</div>` +
-        `<div class="rx-cell-b"><p class="rx-label">Resources</p>${doc.resourcesHtml.trim() ? rich(doc.resourcesHtml) : ''}${
-          doc.resourceLinks.length ? `<div class="rx-links">${doc.resourceLinks.map(link).join('<br>')}</div>` : ''
-        }</div></div>`,
-    );
-  }
+  // I CAN… always four cells, as in every example; empty cells are teacher prompts.
+  const ican = doc.iCan.slice();
+  const cells = Math.max(4, ican.length + (ican.length % 2));
+  parts.push(
+    `<section class="rx-ican"><div class="rx-ican-h">I CAN…</div><div class="rx-ican-grid">${Array.from({ length: cells }, (_, i) =>
+      ican[i] ? `<div>✓ ${escapeText(ican[i])}</div>` : `<div><span class="rx-prompt">Teacher to add an I CAN statement</span></div>`,
+    ).join('')}</div></section>`,
+  );
+  used += 40 + (cells / 2) * 40;
+
+  // Key vocabulary / Resources: always shown, as in the examples.
+  const vocab = normText(doc.vocabularyHtml) ? rich(doc.vocabularyHtml) : PROMPT('Teacher to add key vocabulary.');
+  const resText = doc.resourceLines.length ? doc.resourceLines.map((l) => `<p>${escapeText(l)}</p>`).join('') : '';
+  const resLinks = doc.resourceLinks.length ? `<div class="rx-links">${doc.resourceLinks.map(link).join('<br>')}</div>` : '';
+  parts.push(
+    `<div class="rx-two"><div class="rx-cell-a"><p class="rx-label">Key vocabulary</p>${vocab}</div>` +
+      `<div class="rx-cell-b"><p class="rx-label">Resources</p>${resText || resLinks ? resText + resLinks : PROMPT('Teacher to add resources.')}</div></div>`,
+  );
+  used += 56 + Math.max(estHeight(doc.vocabularyHtml, 45), (doc.resourceLines.length + doc.resourceLinks.length) * 20);
 
   parts.push(`<h2 class="rx-h2">Lesson sequence</h2><p class="rx-sub">${escapeText(t.sequenceSubtitle)}</p>`);
+  used += 60;
   if (!doc.steps.length) parts.push(`<p class="rx-empty">No activities in this lesson yet.</p>`);
+  let continued = false;
   doc.steps.forEach((s, i) => {
+    const h = 66 + estHeight(s.bodyHtml) + (s.links.length ? 18 : 0);
+    const short = h < 360;
+    // Examples: a step that won't fit starts page 2 under "LESSON SEQUENCE • CONTINUED".
+    if (!continued && i > 0 && used + (short ? h : 160) > PAGE_PX) {
+      continued = true;
+      parts.push(
+        `<div class="rx-cont"><p class="rx-kicker">Lesson sequence • continued</p>${
+          secondary ? `<h2 class="rx-h2" style="margin-top:4px">From exploration to confident practice</h2><p class="rx-sub">Retain the teacher’s own activity order, source links and timings.</p>` : ''
+        }</div>`,
+      );
+    }
+    if (!continued) used += h;
     parts.push(
-      `<div class="rx-step"><div class="rx-step-h"><span>${i + 1}.&nbsp; ${escapeText(s.title)}</span>${
-        s.minutes ? `<span class="rx-step-t">${s.minutes} min</span>` : ''
-      }</div>${s.bodyHtml.trim() ? `<div>${rich(s.bodyHtml)}</div>` : ''}${
-        s.cue ? `<div class="rx-cue">Teacher cue: ${escapeText(s.cue)}</div>` : ''
-      }${s.links.length ? `<div class="rx-links">${s.links.map(link).join(' &nbsp; ')}</div>` : ''}</div>`,
+      `<div class="rx-step${short ? ' short' : ''}"><div class="rx-step-h"><span>${i + 1}.&nbsp; ${escapeText(s.title)}</span><span class="rx-step-t">${
+        s.minutes ? `${s.minutes} min` : '<span class="rx-prompt">add timing</span>'
+      }</span></div>${normText(s.bodyHtml) ? `<div>${rich(s.bodyHtml)}</div>` : ''}<div class="rx-cue">Teacher cue: ${
+        s.cue ? escapeText(s.cue) : '<span class="rx-fill">teacher to add a question or prompt</span>'
+      }</div>${s.links.length ? `<div class="rx-links">${s.links.map(link).join(' &nbsp; ')}</div>` : ''}</div>`,
     );
   });
 
@@ -588,33 +859,58 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   parts.push(`<section class="rx-ref"><p class="rx-kicker">Reference page</p>`);
   parts.push(`<h2 class="rx-h2">${escapeText(t.referenceHeading)}</h2><p class="rx-sub">${escapeText(t.referenceSubtitle)}</p>`);
   parts.push(
-    `<div class="rx-two"><div class="rx-cell-b"><p class="rx-label">Key questions</p>${doc.keyQuestions.length ? li(doc.keyQuestions) : ''}</div>` +
-      `<div class="rx-cell-a"><p class="rx-label">${escapeText(t.assessmentLabel)}</p>${doc.assessment.length ? checks(doc.assessment) : ''}</div></div>`,
+    `<div class="rx-two"><div class="rx-cell-b"><p class="rx-label">Key questions</p>${
+      doc.keyQuestions.length ? li(doc.keyQuestions) : PROMPT('Teacher to add 3–5 key questions.')
+    }</div>` +
+      `<div class="rx-cell-a"><p class="rx-label">${escapeText(t.assessmentLabel)}</p>${
+        doc.assessment.length ? checks(doc.assessment) : PROMPT('Teacher to add what to look and listen for.')
+      }</div></div>`,
   );
 
-  const toolkitCards: RxCard[] =
-    t.stage === 'secondary'
-      ? [
-          ...t.toolkitLabels.map((label) => doc.toolkit.find((c) => c.label === label) || { label, bodyHtml: '' }),
-          ...doc.toolkit.filter((c) => !t.toolkitLabels.includes(c.label)),
-        ]
-      : doc.toolkit;
-  if (toolkitCards.length) {
-    parts.push(`<h2 class="rx-h2">${escapeText(t.toolkitHeading)}</h2>${t.toolkitSubtitle ? `<p class="rx-sub">${escapeText(t.toolkitSubtitle)}</p>` : ''}`);
-    parts.push(`<div class="rx-grid2">${toolkitCards.map((c) => `<div><p class="rx-label">${escapeText(c.label)}</p>${c.bodyHtml.trim() ? rich(c.bodyHtml) : ''}</div>`).join('')}</div>`);
+  // Toolkit: secondary has fixed labels; primary always shows four concept cards.
+  let toolkitCards: Array<RxCard & { prompt?: string }>;
+  if (secondary) {
+    toolkitCards = [
+      ...t.toolkitLabels.map((label) => doc.toolkit.find((c) => c.label === label) || { label, bodyHtml: '', prompt: 'Teacher to complete.' }),
+      ...doc.toolkit.filter((c) => !t.toolkitLabels.includes(c.label)),
+    ];
+  } else {
+    toolkitCards = doc.toolkit.slice();
+    while (toolkitCards.length < 4 || toolkitCards.length % 2) {
+      toolkitCards.push({ label: 'CONCEPT = MEANING', bodyHtml: '', prompt: 'Teacher to add a subject concept, explained for non-specialists.' });
+    }
   }
+  parts.push(`<h2 class="rx-h2">${escapeText(t.toolkitHeading)}</h2>${t.toolkitSubtitle ? `<p class="rx-sub">${escapeText(t.toolkitSubtitle)}</p>` : ''}`);
+  parts.push(
+    `<div class="rx-grid2">${toolkitCards
+      .map((c) => `<div><p class="rx-label">${escapeText(c.label)}</p>${normText(c.bodyHtml) ? rich(c.bodyHtml) : PROMPT(c.prompt || 'Teacher to complete.')}</div>`)
+      .join('')}</div>`,
+  );
 
-  parts.push(`<h2 class="rx-h2">Support, challenge and safety</h2>`);
-  parts.push(
-    `<div class="rx-grid3"><div><p class="rx-label">Support</p>${doc.support.trim() ? rich(doc.support) : ''}</div>` +
-      `<div><p class="rx-label">Challenge</p>${doc.challenge.trim() ? rich(doc.challenge) : ''}</div>` +
-      `<div><p class="rx-label">Safety</p>${doc.safety.trim() ? rich(doc.safety) : ''}</div></div>`,
-  );
-  parts.push(
-    `<div class="rx-source"><p class="rx-label" style="color:var(--rx-teal)">${escapeText(t.sourceLabel)}</p>${rich(doc.sourceHtml)}${
-      doc.sourceLinks.length ? `<div class="rx-links">${doc.sourceLinks.map(link).join('<br>')}</div>` : ''
-    }</div>`,
-  );
+  // Support / Challenge / Safety: only boxes with real content.
+  const scs = (
+    [
+      ['Support', doc.support],
+      ['Challenge', doc.challenge],
+      ['Safety', doc.safety],
+    ] as Array<[string, string]>
+  ).filter(([, v]) => normText(v));
+  if (scs.length) {
+    parts.push(`<h2 class="rx-h2">Support, challenge and safety</h2>`);
+    parts.push(
+      `<div class="rx-grid3" style="grid-template-columns:repeat(${scs.length},1fr)">${scs
+        .map(([k, v]) => `<div><p class="rx-label">${k}</p>${rich(v)}</div>`)
+        .join('')}</div>`,
+    );
+  }
+  // Source: only with real attribution or links.
+  if (normText(doc.sourceHtml) || doc.sourceLinks.length) {
+    parts.push(
+      `<div class="rx-source"><p class="rx-label" style="color:var(--rx-teal)">${escapeText(t.sourceLabel)}</p>${
+        normText(doc.sourceHtml) ? rich(doc.sourceHtml) : '<p>Activity sources (retain provider credit when sharing):</p>'
+      }${doc.sourceLinks.length ? `<div class="rx-links">${doc.sourceLinks.map(link).join('<br>')}</div>` : ''}</div>`,
+    );
+  }
   parts.push(`</section>`);
   parts.push(`<footer class="rx-foot"><span>© Rhythmstix 2026</span><span>www.rhythmstix.co.uk</span><span></span></footer>`);
   parts.push(`</div>`);
