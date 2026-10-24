@@ -189,18 +189,16 @@ BEGIN
           AND s.audience_id = v_org
         )
         OR (
-          -- Year group: same non-blank org; if viewer has year-group data,
-          -- audience_id must be in allowed_year_groups; otherwise whole-school
-          -- within org (UI labels this "Whole school").
+          -- Year group: same non-blank org; viewer must have a non-empty
+          -- allowed_year_groups that includes audience_id. NULL/empty list
+          -- grants NO year-group shares (owner: none until admin sets them up).
           s.audience_type = 'year_group'
           AND v_org IS NOT NULL
           AND v_res_org IS NOT NULL
           AND length(trim(v_res_org)) > 0
           AND v_org = trim(v_res_org)
-          AND (
-            cardinality(v_year_groups) = 0
-            OR s.audience_id = ANY (v_year_groups)
-          )
+          AND cardinality(v_year_groups) > 0
+          AND s.audience_id = ANY (v_year_groups)
         )
         OR (
           s.audience_type = 'group'
@@ -394,7 +392,6 @@ CREATE POLICY planning_shares_owner_all
     AND (
       audience_type NOT IN ('school', 'hub_org')
       OR (
-        -- school: audience_id must be the sharer's organisation_id
         audience_type = 'school'
         AND audience_id = (
           SELECT NULLIF(trim(p.organisation_id), '')
@@ -403,7 +400,6 @@ CREATE POLICY planning_shares_owner_all
         )
       )
       OR (
-        -- hub_org: audience_id is the org, and the sharer must be a hub member of that org
         audience_type = 'hub_org'
         AND audience_id = (
           SELECT NULLIF(trim(p.organisation_id), '')

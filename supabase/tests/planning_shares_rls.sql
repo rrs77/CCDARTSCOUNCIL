@@ -1,6 +1,6 @@
--- Local RLS checks for 20261024130000_planning_shares.sql.
+-- Local RLS checks for 20261024180000_planning_shares.sql.
 -- Run against a scratch Postgres with Supabase stand-ins (never production):
---   psql -v ON_ERROR_STOP=1 -d <scratch> -f supabase/migrations/20261024130000_planning_shares.sql
+--   psql -v ON_ERROR_STOP=1 -d <scratch> -f supabase/migrations/20261024180000_planning_shares.sql
 --   psql -v ON_ERROR_STOP=1 -d <scratch> -f supabase/tests/planning_shares_rls.sql
 -- Everything runs inside a transaction that is rolled back.
 BEGIN;
@@ -259,40 +259,58 @@ UPDATE public.profiles
 SET organisation_id = 'org-b', school_or_org = NULL
 WHERE id = '10000000-0000-0000-0000-000000000003';
 
--- (5) year_group match vs whole-school when no year-group data
+-- (5) year_group: NULL / empty allowed_year_groups → NO access; matching list → yes
+-- Dedicated resource with ONLY a year_group grant (no school/person/group grants).
+RESET ROLE;
+INSERT INTO public.planning_share_resources (id, owner_id, resource_type, resource_id, title, organisation_id)
+VALUES (
+  '20000000-0000-0000-0000-000000000010',
+  '10000000-0000-0000-0000-000000000001',
+  'lesson',
+  'lesson-yg-only',
+  'Year-group only lesson',
+  'org-a'
+);
+INSERT INTO public.planning_shares (id, resource_id, shared_by, audience_type, audience_id, permission)
+VALUES (
+  '30000000-0000-0000-0000-000000000010',
+  '20000000-0000-0000-0000-000000000010',
+  '10000000-0000-0000-0000-000000000001',
+  'year_group',
+  'yg-1',
+  'view'
+);
+
+-- Matching non-empty allowed_year_groups
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('10000000-0000-0000-0000-000000000002');
 INSERT INTO results
 SELECT 'year_group: matching allowed_year_groups can read',
-  EXISTS (
-    SELECT 1 FROM public.planning_shares
-    WHERE id = '30000000-0000-0000-0000-000000000002'
-  );
+  public.can_read_planning_resource('20000000-0000-0000-0000-000000000010');
 
--- Colleague only has yg-1/yg-2; forge a yg-99 share and ensure helper filters it
+-- NULL allowed_year_groups → no year-group access
+SELECT pg_temp.as_user('10000000-0000-0000-0000-000000000004');
+INSERT INTO results
+SELECT 'year_group: NULL allowed_year_groups denies',
+  NOT public.can_read_planning_resource('20000000-0000-0000-0000-000000000010');
+
+-- Empty array allowed_year_groups → no year-group access
 RESET ROLE;
-INSERT INTO public.planning_shares (id, resource_id, shared_by, audience_type, audience_id, permission)
-VALUES (
-  '30000000-0000-0000-0000-000000000099',
-  '20000000-0000-0000-0000-000000000001',
-  '10000000-0000-0000-0000-000000000001',
-  'year_group',
-  'yg-99',
-  'view'
-);
-
--- Admin has NULL allowed_year_groups → whole-school within org
+UPDATE public.profiles
+SET allowed_year_groups = ARRAY[]::text[]
+WHERE id = '10000000-0000-0000-0000-000000000004';
 SET LOCAL ROLE authenticated;
 SELECT pg_temp.as_user('10000000-0000-0000-0000-000000000004');
 INSERT INTO results
-SELECT 'year_group: empty allowed_year_groups = whole school in org',
-  public.can_read_planning_resource('20000000-0000-0000-0000-000000000001');
+SELECT 'year_group: empty allowed_year_groups denies',
+  NOT public.can_read_planning_resource('20000000-0000-0000-0000-000000000010');
 
-SELECT pg_temp.as_user('10000000-0000-0000-0000-000000000002');
--- still can read resource because other grants (school/group/person) match;
--- specifically check helper path for yg-99 alone by temporarily... we assert
--- that can_read is true via other grants, and that yg-99 alone wouldn't suffice
--- for an outsider — already covered. Extra: admin can manage group.
+-- Restore admin year groups for later group-manage checks
+RESET ROLE;
+UPDATE public.profiles
+SET allowed_year_groups = NULL
+WHERE id = '10000000-0000-0000-0000-000000000004';
+
 SELECT pg_temp.as_user('10000000-0000-0000-0000-000000000004');
 INSERT INTO results
 SELECT 'groups: same-org admin can_manage_planning_group',

@@ -28,6 +28,82 @@ const isAuthUserId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a
 /** Whether user-scoped Supabase reads and writes can run (signed in, or demo). */
 export const hasScopedUser = () => isAuthUserId(getCurrentUserId());
 
+const ORG_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+/**
+ * Resolve the signed-in user's organisation_id for org-scoped upserts.
+ * Prefer profile cache, then profiles table.
+ */
+export async function resolveOrganisationId(): Promise<string | null> {
+  try {
+    const cached = localStorage.getItem('rhythmstix_organisation_id');
+    if (cached && ORG_ID_RE.test(cached)) return cached;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const raw = localStorage.getItem('rhythmstix_profile_cache');
+    if (raw) {
+      const parsed = JSON.parse(raw) as { profile?: { organisation_id?: string | null } };
+      const org = parsed?.profile?.organisation_id;
+      if (typeof org === 'string' && ORG_ID_RE.test(org.trim())) {
+        localStorage.setItem('rhythmstix_organisation_id', org.trim());
+        return org.trim();
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  const uid = getCurrentUserId();
+  if (!isAuthUserId(uid) || isDemoModeActive()) return null;
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('organisation_id')
+      .eq('id', uid)
+      .maybeSingle();
+    if (error) throw error;
+    const org = typeof data?.organisation_id === 'string' ? data.organisation_id.trim() : '';
+    if (org && ORG_ID_RE.test(org)) {
+      localStorage.setItem('rhythmstix_organisation_id', org);
+      return org;
+    }
+  } catch (error) {
+    console.warn('Failed to resolve organisation_id:', error);
+  }
+  return null;
+}
+
+/** True once half_terms.user_id exists (migration 20261024270000). Avoids PostgREST 400. */
+let halfTermsScopeColumns: boolean | null = null;
+async function halfTermsHasScopeColumns(): Promise<boolean> {
+  if (halfTermsScopeColumns != null) return halfTermsScopeColumns;
+  if (isDemoModeActive()) {
+    halfTermsScopeColumns = true;
+    return true;
+  }
+  try {
+    const { error } = await supabase.from('half_terms').select('user_id,organisation_id').limit(1);
+    if (error) {
+      const msg = `${error.message || ''} ${error.details || ''} ${error.hint || ''}`.toLowerCase();
+      if (
+        error.code === 'PGRST204' ||
+        msg.includes('user_id') ||
+        msg.includes('organisation_id') ||
+        msg.includes('column')
+      ) {
+        halfTermsScopeColumns = false;
+        return false;
+      }
+    }
+    halfTermsScopeColumns = true;
+    return true;
+  } catch {
+    halfTermsScopeColumns = false;
+    return false;
+  }
+}
+
 let pageUnloading = false;
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
@@ -822,9 +898,9 @@ export const halfTermsApi = {
         return [];
       }
 
-      // Live schema: sheet_name, academic_year, term_id, … — no user_id column.
-      // Filtering on user_id caused PostgREST 400 (column does not exist).
-      // Auth is still required above; rows are keyed by sheet_name (+ academic_year).
+      // Prefer user_id (+ organisation_id) when migration 20261024270000 is applied.
+      // Probe avoids PostgREST 400 on environments that have not migrated yet.
+      const scoped = await halfTermsHasScopeColumns();
       let query = supabase
         .from('half_terms')
         .select('*')
@@ -833,6 +909,9 @@ export const halfTermsApi = {
       // Filter by academic year if provided
       if (academicYear) {
         query = query.eq('academic_year', academicYear);
+      }
+      if (scoped) {
+        query = query.eq('user_id', userId);
       }
       
       const { data, error } = await query;
@@ -899,7 +978,12 @@ export const halfTermsApi = {
         console.warn('⚠️ halfTermsApi.updateHalfTerm: unauthenticated session — refusing unscoped write (fail closed)');
         throw new Error('Unauthenticated: cannot update half-term without a signed-in user');
       }
-      // Do not set user_id — column does not exist on live half_terms (PostgREST 400).
+      const scoped = await halfTermsHasScopeColumns();
+      if (scoped) {
+        upsertData.user_id = htUserId;
+        const orgId = await resolveOrganisationId();
+        if (orgId) upsertData.organisation_id = orgId;
+      }
       
       // Add stacks if provided
       if (stacks !== undefined) {
@@ -908,14 +992,14 @@ export const halfTermsApi = {
       
       console.log('🔄 Upserting to Supabase with data:', upsertData);
       
-      // Unique key on live table: (sheet_name, academic_year, term_id) — no user_id
-      const updateResult = await supabase
+      let updateQuery = supabase
           .from(TABLES.HALF_TERMS)
           .update(upsertData)
           .eq('sheet_name', sheet)
           .eq('academic_year', year)
-          .eq('term_id', halfTermId)
-          .select();
+          .eq('term_id', halfTermId);
+      if (scoped) updateQuery = updateQuery.eq('user_id', htUserId);
+      const updateResult = await updateQuery.select();
       
       let data, error;
       
@@ -940,16 +1024,21 @@ export const halfTermsApi = {
         error = insertResult.error;
         
         if (error) {
-          // Duplicate on (sheet_name, academic_year, term_id) — retry update by those keys.
-          // Live half_terms has no user_id column for tenant scoping.
+          // Duplicate — only retry if scoped to this user (never overwrite another tenant).
           if (error.code === '23505' || error.message?.includes('duplicate key')) {
-            console.log('⚠️ Insert failed with duplicate key, retrying update (sheet_name + academic_year + term_id)...');
+            if (!scoped) {
+              throw new Error(
+                `Half-term ${halfTermId} conflict: cannot safely resolve duplicate without user_id scope`,
+              );
+            }
+            console.log('⚠️ Insert failed with duplicate key, retrying scoped update (user_id + sheet_name + academic_year + term_id)...');
             const retryResult = await supabase
               .from(TABLES.HALF_TERMS)
               .update(upsertData)
               .eq('sheet_name', sheet)
               .eq('academic_year', year)
               .eq('term_id', halfTermId)
+              .eq('user_id', htUserId)
               .select();
             
             if (retryResult.error) {
@@ -957,9 +1046,11 @@ export const halfTermsApi = {
             }
             if (retryResult.data && retryResult.data.length > 0) {
               data = retryResult.data[0];
-              console.log(`✅ Updated half-term ${halfTermId} for ${sheet} (retry matched sheet_name + academic_year + term_id)`);
+              console.log(`✅ Updated half-term ${halfTermId} for ${sheet} (scoped retry)`);
             } else {
-              throw new Error(`Half-term ${halfTermId} conflict: duplicate key but update matched no rows`);
+              throw new Error(
+                `Half-term ${halfTermId} conflict: duplicate key belongs to another tenant; refusing unsafe cross-tenant update`,
+              );
             }
           } else {
             throw error;
@@ -1013,16 +1104,24 @@ export const halfTermsApi = {
         console.warn('⚠️ halfTermsApi.initializeHalfTerms: unauthenticated session — refusing unscoped write (fail closed)');
         return [];
       }
-      // Omit user_id — column does not exist on live half_terms (would 400).
-      const halfTermsToInsert = defaultHalfTerms.map(term => ({
+      const scoped = await halfTermsHasScopeColumns();
+      const orgId = scoped ? await resolveOrganisationId() : null;
+      const halfTermsToInsert = defaultHalfTerms.map(term => {
+        const row: Record<string, unknown> = {
           id: term.id,
           sheet_name: sheet,
           academic_year: year,
           name: term.name,
           lessons: [],
           is_complete: false,
-          term_id: term.id
-      }));
+          term_id: term.id,
+        };
+        if (scoped) {
+          row.user_id = initUserId;
+          if (orgId) row.organisation_id = orgId;
+        }
+        return row;
+      });
       
       // For initialization, we'll use insert with ignoreDuplicates to avoid conflicts
       const { data, error } = await supabase
