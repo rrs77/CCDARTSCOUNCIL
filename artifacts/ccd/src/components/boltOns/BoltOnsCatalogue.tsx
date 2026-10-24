@@ -1,14 +1,24 @@
 import React from 'react';
 import {
-  ArrowUpRight,
+  BookOpen,
+  CalendarDays,
+  Check,
+  LayoutGrid,
+  MapPin,
+  Music2,
+  Paperclip,
   Pencil,
+  Sparkles,
   Target,
 } from 'lucide-react';
+import { ADDON_PLANS, EXPLORE_COMPARE } from './addonPlans';
 import type { BoltOnsPageId } from './types';
 import {
-  AssessifyMiniDashboard,
-  FooterNote,
-  PeriFeedbackMiniNote,
+  ConceptFooter,
+  ExampleTag,
+  PremTag,
+  ProductIcon,
+  YesMark,
   showConceptToast,
 } from './shared';
 
@@ -16,192 +26,293 @@ interface Props {
   onNavigate: (page: BoltOnsPageId) => void;
 }
 
+function LimitedBadge() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-[#FEF3C7] px-2.5 py-0.5 text-[13px] font-bold text-[#7A4F00]">
+      Limited
+    </span>
+  );
+}
+
+function CellValue({
+  value,
+}: {
+  value: 'yes' | 'no' | 'limited' | string;
+}) {
+  if (value === 'yes') return <YesMark />;
+  if (value === 'no') {
+    return (
+      <span className="font-bold text-[#8A86A3]" aria-label="Not included">
+        —
+      </span>
+    );
+  }
+  if (value === 'limited') return <LimitedBadge />;
+  return <b className="text-[13px] text-[#1F1B4D]">{value}</b>;
+}
+
 export function BoltOnsCatalogue({ onNavigate }: Props) {
   return (
-    <div className="ccd-boltons">
-      <header className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-        <div className="max-w-2xl">
-          <p className="ccd-studio-eyebrow">
-            YOUR TOOLS / <span>BOLT-ONS</span>
-          </p>
-          <h1 className="ccd-studio-title">Tools that grow with your teaching.</h1>
-          <p className="ccd-studio-sub max-w-xl">
-            CCDesigner plans your lessons. These optional bolt-ons help you see progress and share success.
-          </p>
-        </div>
-        <span className="inline-flex w-fit items-center rounded-full bg-[#E9E6FF] px-3 py-1.5 text-[12px] font-bold text-[#4338E8]">
-          One connected creative teaching toolkit
+    <div>
+      {/* Hero — CCDesigner stays free */}
+      <section
+        className="relative mb-5 overflow-hidden rounded-2xl bg-gradient-to-br from-[#1F1B4D] via-[#2E2878] to-[#4338E8] px-5 py-6 text-white shadow-[0_16px_40px_rgba(31,27,77,0.18)] sm:px-7 sm:py-6"
+        aria-labelledby="boltons-hero-title"
+      >
+        <span className="mb-2 inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-[13px] font-bold">
+          <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
+          Always free
         </span>
-      </header>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <article className="flex flex-col overflow-hidden rounded-[22px] border border-[#D9D4FF] bg-gradient-to-br from-[#EFEDFF] to-white p-5 shadow-[0_10px_28px_rgba(67,56,232,0.07)] sm:p-6">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h2 className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[22px]">
-                Assessify
-              </h2>
-              <p className="mt-0.5 text-[13px] font-semibold text-[#6554D8]">
-                Every step of progress, made visible.
-              </p>
+        <h1 id="boltons-hero-title" className="text-[28px] font-extrabold leading-tight tracking-tight">
+          CCDesigner is free.
+        </h1>
+        <p className="mt-1 max-w-xl text-[15px] leading-snug text-[#E4E2F7]">
+          Plan every arts lesson at no cost. Add a bolt-on only when you want to track progress or keep parents in
+          the loop.
+        </p>
+        <div
+          className="mt-4 grid max-w-md grid-cols-2 gap-2"
+          aria-label="Included free"
+        >
+          {[
+            { icon: CalendarDays, label: 'Week planner' },
+            { icon: Pencil, label: 'Lesson builder' },
+            { icon: BookOpen, label: 'Activity library' },
+            { icon: MapPin, label: 'Partner hubs' },
+          ].map((item) => (
+            <div
+              key={item.label}
+              className="flex items-center gap-2.5 rounded-xl border border-white/15 bg-white/10 px-3 py-2 text-[13px] font-semibold"
+            >
+              <item.icon className="h-4 w-4 shrink-0 text-[#C8F542]" aria-hidden />
+              {item.label}
             </div>
-            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#4338E8] ring-1 ring-[#D9D4FF]">
-              Free + Premium
-            </span>
-          </div>
-          <div className="mb-5 hidden sm:block">
-            <AssessifyMiniDashboard />
-          </div>
-          <p className="text-[15px] font-extrabold text-[#1F1B4D]">Assessment without the paperwork.</p>
-          <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-[#77738F]">
-            Subject-specific rubrics, meaningful pupil feedback and a clear view of creative progression — with
-            powerful AI help in Premium.
-          </p>
-          <button
-            type="button"
-            onClick={() => onNavigate('assessify')}
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#4338E8] px-4 text-[13px] font-extrabold text-white transition hover:bg-[#3529d1]"
+          ))}
+        </div>
+      </section>
+
+      <div className="mb-3 flex flex-wrap items-baseline gap-3">
+        <h2 className="text-[18px] font-extrabold tracking-tight text-[#1F1B4D]">Bolt-ons</h2>
+        <p className="text-[13px] text-[#5F5B7A]">Optional tools that work alongside your planner.</p>
+      </div>
+
+      <div className="mb-5 grid gap-4 lg:grid-cols-2">
+        {/* Assessify card */}
+        <article className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_12px_32px_rgba(31,27,77,0.06)] lg:grid lg:grid-cols-[5fr_6fr]">
+          <div
+            className="hidden border-b border-[#EEEDF6] bg-gradient-to-b from-[#EFEDFF] to-white p-4 sm:block lg:border-b-0 lg:border-r"
+            aria-hidden
           >
-            Explore Assessify →
-          </button>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#6554D8] ring-1 ring-[#D9D4FF]">
-              Creative subjects
-            </span>
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#6554D8] ring-1 ring-[#D9D4FF]">
-              AI in Premium
-            </span>
+            <div className="overflow-hidden rounded-xl border border-[#E2E0EF] bg-white">
+              <div className="flex items-center gap-2 border-b border-[#EEEDF6] bg-[#FAFAFD] px-3.5 py-2.5 text-[13px] font-bold text-[#1F1B4D]">
+                <span>Year 4 · Music</span>
+                <span className="ml-auto">
+                  <ExampleTag />
+                </span>
+              </div>
+              <div className="grid gap-3 p-3.5">
+                <div className="grid grid-cols-2 gap-2">
+                  {[
+                    { label: 'Rhythm', pct: 81 },
+                    { label: 'Creating', pct: 89 },
+                  ].map((row) => (
+                    <div key={row.label} className="rounded-xl border border-[#EEEDF6] p-2.5">
+                      <span className="text-[13px] text-[#5F5B7A]">{row.label}</span>
+                      <b className="mt-0.5 block text-[18px] font-extrabold tracking-tight text-[#1F1B4D]">
+                        {row.pct}%
+                      </b>
+                      <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-[#EFEDFF]">
+                        <div className="h-full rounded-full bg-[#4338E8]" style={{ width: `${row.pct}%` }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 rounded-xl bg-[#EFEDFF] px-3 py-2.5 text-[13px] font-semibold text-[#3730A3]">
+                  <Sparkles className="h-4 w-4" aria-hidden />
+                  Next steps for 3 pupils
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <ProductIcon variant="assessify" />
+              <div>
+                <h3 className="text-[20px] font-extrabold text-[#1F1B4D]">{ADDON_PLANS.assessify.name}</h3>
+                <p className="text-[13px] text-[#5F5B7A]">{ADDON_PLANS.assessify.tagline}</p>
+              </div>
+            </div>
+            <ul className="space-y-2">
+              {[
+                { icon: Check, title: 'Subject-specific rubrics', sub: 'Music, drama, dance and art criteria' },
+                { icon: Paperclip, title: 'Evidence in one place', sub: 'Photos, audio and notes per pupil' },
+                { icon: Sparkles, title: 'Next steps with AI', sub: 'Suggested per pupil in Premium' },
+              ].map((b) => (
+                <li key={b.title} className="flex items-center gap-3 text-[13px]">
+                  <span className="inline-grid h-8 w-8 place-items-center rounded-[10px] bg-[#EFEDFF] text-[#4338E8]">
+                    <b.icon className="h-[18px] w-[18px]" aria-hidden />
+                  </span>
+                  <span>
+                    <b className="font-extrabold text-[#1F1B4D]">{b.title}</b>
+                    <span className="text-[#5F5B7A]"> · {b.sub}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-[#EEEDF6] pt-3">
+              <PremTag />
+              <button
+                type="button"
+                onClick={() => onNavigate('assessify')}
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[14px] font-bold text-white shadow-[0_6px_16px_rgba(67,56,232,0.3)] hover:bg-[#3529d1]"
+              >
+                Explore Assessify →
+              </button>
+            </div>
           </div>
         </article>
 
-        <article className="flex flex-col overflow-hidden rounded-[22px] border border-[#BFE8E1] bg-gradient-to-br from-[#E9F8F5] to-white p-5 shadow-[0_10px_28px_rgba(19,142,136,0.07)] sm:p-6">
-          <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
-            <div>
-              <h2 className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[22px]">
-                PeriFeedback
-              </h2>
-              <p className="mt-0.5 text-[13px] font-semibold text-[#138E88]">
-                Better lessons. Clearer communication.
-              </p>
-            </div>
-            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#0F766E] ring-1 ring-[#BFE8E1]">
-              Free + Premium
-            </span>
-          </div>
-          <div className="mb-5 hidden sm:block">
-            <PeriFeedbackMiniNote />
-          </div>
-          <p className="text-[15px] font-extrabold text-[#1F1B4D]">From a great lesson to a great update.</p>
-          <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-[#77738F]">
-            Record what happened, set practice goals and — with Premium — keep parents informed with professional
-            lesson updates.
-          </p>
-          <button
-            type="button"
-            onClick={() => onNavigate('perifeedback')}
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#1F1B4D] px-4 text-[13px] font-extrabold text-white transition hover:bg-[#16133a]"
+        {/* PeriFeedback card */}
+        <article className="flex flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_12px_32px_rgba(31,27,77,0.06)] lg:grid lg:grid-cols-[5fr_6fr]">
+          <div
+            className="hidden border-b border-[#EEEDF6] bg-gradient-to-b from-[#E6F6F3] to-white p-4 sm:block lg:border-b-0 lg:border-r"
+            aria-hidden
           >
-            Explore PeriFeedback →
-          </button>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#0F766E] ring-1 ring-[#BFE8E1]">
-              Visiting tutors
-            </span>
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#0F766E] ring-1 ring-[#BFE8E1]">
-              Parent updates in Premium
-            </span>
+            <div className="overflow-hidden rounded-xl border border-[#E2E0EF] bg-white">
+              <div className="flex items-center gap-2 border-b border-[#EEEDF6] bg-[#FAFAFD] px-3.5 py-2.5 text-[13px] font-bold text-[#1F1B4D]">
+                <span>Lesson note · Piano</span>
+                <span className="ml-auto">
+                  <ExampleTag />
+                </span>
+              </div>
+              <div className="grid gap-3 p-3.5">
+                <div>
+                  <p className="mb-1 text-[13px] font-semibold text-[#5F5B7A]">What went well</p>
+                  <p className="rounded-[10px] border border-[#D9D4FF] bg-white px-3 py-2.5 text-[13px] leading-snug text-[#1F1B4D]">
+                    Steadier pulse and a confident right hand.
+                  </p>
+                </div>
+                <p className="flex items-center gap-2 text-[13px] font-bold text-[#166534]">
+                  <Check className="h-4 w-4" strokeWidth={3} aria-hidden />
+                  Practice goal saved
+                </p>
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-1 flex-col gap-3 p-4 sm:p-5">
+            <div className="flex items-center gap-3">
+              <ProductIcon variant="perifeedback" />
+              <div>
+                <h3 className="text-[20px] font-extrabold text-[#1F1B4D]">{ADDON_PLANS.perifeedback.name}</h3>
+                <p className="text-[13px] text-[#5F5B7A]">{ADDON_PLANS.perifeedback.tagline}</p>
+              </div>
+            </div>
+            <ul className="space-y-2">
+              {[
+                { icon: Pencil, title: 'Lesson notes in a minute', sub: 'Quick to fill between lessons' },
+                { icon: Target, title: 'Practice goals', sub: 'Set and track week to week' },
+                { icon: Music2, title: 'Parent updates', sub: 'Friendly summaries in Premium' },
+              ].map((b) => (
+                <li key={b.title} className="flex items-center gap-3 text-[13px]">
+                  <span className="inline-grid h-8 w-8 place-items-center rounded-[10px] bg-[#E6F6F3] text-[#0F766E]">
+                    <b.icon className="h-[18px] w-[18px]" aria-hidden />
+                  </span>
+                  <span>
+                    <b className="font-extrabold text-[#1F1B4D]">{b.title}</b>
+                    <span className="text-[#5F5B7A]"> · {b.sub}</span>
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="mt-auto flex flex-wrap items-center justify-between gap-2 border-t border-[#EEEDF6] pt-3">
+              <PremTag />
+              <button
+                type="button"
+                onClick={() => onNavigate('perifeedback')}
+                className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#0F766E] px-4 text-[14px] font-bold text-white shadow-[0_6px_16px_rgba(15,118,110,0.3)] hover:bg-[#0c5f59]"
+              >
+                Explore PeriFeedback →
+              </button>
+            </div>
           </div>
         </article>
       </div>
 
-      <section className="mt-10" aria-labelledby="boltons-built-heading">
-        <h2 id="boltons-built-heading" className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D]">
-          Built around how teachers actually work
+      <div className="mb-3 flex flex-wrap items-baseline gap-3">
+        <h2 id="cmp" className="text-[18px] font-extrabold tracking-tight text-[#1F1B4D]">
+          Free vs Premium
         </h2>
-        <p className="mt-1 text-[13px] text-[#77738F]">Useful on their own. Even better alongside CCDesigner.</p>
-        <div className="mt-4 grid gap-3 sm:grid-cols-3">
-          {[
-            {
-              icon: <Pencil className="h-4 w-4" />,
-              title: 'Keep planning free',
-              body: 'CCDesigner stays your free creative lesson planning and resource hub.',
-            },
-            {
-              icon: <Target className="h-4 w-4" />,
-              title: 'Make progress visible',
-              body: 'Assessify brings assessment criteria, evidence and individual next steps together.',
-            },
-            {
-              icon: <ArrowUpRight className="h-4 w-4" />,
-              title: 'Share meaningful updates',
-              body: 'PeriFeedback Premium turns weekly teaching notes into parent-friendly communication.',
-            },
-          ].map((item) => (
-            <div
-              key={item.title}
-              className="rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-[0_6px_18px_rgba(31,27,77,0.04)]"
-            >
-              <span className="inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[#E9E6FF] text-[#4338E8]">
-                {item.icon}
-              </span>
-              <h3 className="mt-3 text-[14px] font-extrabold text-[#1F1B4D]">{item.title}</h3>
-              <p className="mt-1 text-[12px] leading-relaxed text-[#77738F]">{item.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+        <p className="text-[13px] text-[#5F5B7A]">CCDesigner itself stays free on every plan.</p>
+      </div>
 
-      <section className="mt-10" aria-labelledby="boltons-journey-heading">
-        <div className="mb-3 flex flex-wrap items-end justify-between gap-2">
-          <h2 id="boltons-journey-heading" className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D]">
-            One connected teaching journey
-          </h2>
-          <p className="text-[11px] font-semibold text-[#77738F]">An integration concept, not a current sync claim</p>
-        </div>
-        <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center">
-          {[
-            { n: '01', title: 'Plan', product: 'CCDesigner', flow: 'Activities → lessons → units' },
-            { n: '02', title: 'Review', product: 'Assessify', flow: 'Assessment → next steps → progress' },
-            { n: '03', title: 'Communicate', product: 'PeriFeedback', flow: 'Lesson notes → practice → parents' },
-          ].map((step, i) => (
-            <React.Fragment key={step.n}>
-              <div className="rounded-2xl border border-[#E2E0EF] bg-[#F8F8FD] p-4">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#4338E8]">
-                  {step.n} · {step.title}
-                </p>
-                <p className="mt-1 text-[14px] font-extrabold text-[#1F1B4D]">{step.product}</p>
-                <p className="mt-0.5 text-[12px] text-[#77738F]">{step.flow}</p>
-              </div>
-              {i < 2 ? (
-                <span className="hidden text-center text-[#C4C0D8] sm:block" aria-hidden>
-                  →
+      <div className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_12px_32px_rgba(31,27,77,0.05)]">
+        <table className="w-full border-collapse" aria-labelledby="cmp">
+          <thead>
+            <tr>
+              <th scope="col" className="px-4 py-2.5 text-left text-[14px] font-bold text-[#1F1B4D]">
+                Feature
+              </th>
+              <th scope="col" className="px-3 py-2.5 text-center text-[14px] font-bold text-[#1F1B4D]">
+                Free
+              </th>
+              <th
+                scope="col"
+                className="bg-[#F1EFFF] px-3 py-2.5 text-center text-[14px] font-bold text-[#1F1B4D] shadow-[inset_0_3px_0_#4338E8]"
+              >
+                Premium{' '}
+                <ExampleTag>Price not set</ExampleTag>
+              </th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr className="bg-[#FAFAFD]">
+              <td colSpan={3} className="px-4 py-1.5 text-[13px] font-extrabold uppercase tracking-wide text-[#4338E8]">
+                <span className="inline-flex items-center gap-2">
+                  <LayoutGrid className="h-4 w-4" aria-hidden /> Assessify
                 </span>
-              ) : null}
-            </React.Fragment>
-          ))}
-        </div>
-      </section>
+              </td>
+            </tr>
+            {EXPLORE_COMPARE.assessify.map((row) => (
+              <tr key={row.feature} className="border-t border-[#F0EFF7]">
+                <td className="px-4 py-2.5 text-[13px] text-[#1F1B4D]">{row.feature}</td>
+                <td className="px-3 py-2.5 text-center">
+                  <CellValue value={row.free} />
+                </td>
+                <td className="bg-[#F7F6FF] px-3 py-2.5 text-center">
+                  <CellValue value={row.premium} />
+                </td>
+              </tr>
+            ))}
+            <tr className="bg-[#FAFAFD]">
+              <td colSpan={3} className="px-4 py-1.5 text-[13px] font-extrabold uppercase tracking-wide text-[#4338E8]">
+                <span className="inline-flex items-center gap-2">
+                  <Music2 className="h-4 w-4" aria-hidden /> PeriFeedback
+                </span>
+              </td>
+            </tr>
+            {EXPLORE_COMPARE.perifeedback.map((row) => (
+              <tr key={row.feature} className="border-t border-[#F0EFF7]">
+                <td className="px-4 py-2.5 text-[13px] text-[#1F1B4D]">{row.feature}</td>
+                <td className="px-3 py-2.5 text-center">
+                  <CellValue value={row.free} />
+                </td>
+                <td className="bg-[#F7F6FF] px-3 py-2.5 text-center">
+                  <CellValue value={row.premium} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
-      <section className="mt-10 overflow-hidden rounded-[22px] bg-gradient-to-br from-[#1F1B4D] via-[#2A2468] to-[#4338E8] p-6 text-white sm:p-8">
-        <p className="text-[10px] font-extrabold uppercase tracking-[0.16em] text-white/70">
-          Start free. Add power when you need it.
-        </p>
-        <h2 className="mt-2 max-w-xl text-[22px] font-extrabold tracking-tight sm:text-[26px]">
-          Try the essentials. Unlock more when your workload grows.
-        </h2>
-        <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-white/80">
-          No need to move away from CCDesigner, and no need to pay for a tool you do not use.
-        </p>
-        <button
-          type="button"
-          onClick={() => showConceptToast('Compare plans')}
-          className="mt-5 inline-flex h-11 items-center rounded-xl bg-white px-4 text-[13px] font-extrabold text-[#1F1B4D] transition hover:bg-[#F4F3FA]"
-        >
-          Compare plans →
-        </button>
-      </section>
-
-      <FooterNote />
+      <ConceptFooter />
+      <button
+        type="button"
+        className="sr-only"
+        onClick={() => showConceptToast('Compare plans')}
+      >
+        Compare plans
+      </button>
     </div>
   );
 }

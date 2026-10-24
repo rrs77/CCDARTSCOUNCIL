@@ -2,7 +2,6 @@ import { useEffect } from 'react';
 import {
   BookOpen,
   Calendar,
-  Edit3,
   FolderOpen,
   Handshake,
   Mail,
@@ -21,7 +20,6 @@ import {
 const TAB_ICONS: Record<TabsExplainerTabId, LucideIcon> = {
   'unit-viewer': BookOpen,
   'lesson-library': FolderOpen,
-  'lesson-builder': Edit3,
   'activity-library': Tag,
   calendar: Calendar,
   'our-partners': Handshake,

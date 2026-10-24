@@ -4,6 +4,8 @@ import {
   BookOpen,
   Calendar,
   CheckCircle,
+  ChevronDown,
+  ChevronRight,
   Plus,
   Search,
 } from 'lucide-react';
@@ -78,6 +80,8 @@ export function TeacherHalfTermBoard({
   const [searchQuery, setSearchQuery] = useState('');
   const [showTermCopyModal, setShowTermCopyModal] = useState(false);
   const [filter, setFilter] = useState<HalfTermBoardFilter>({ kind: 'all' });
+  /** Per half-term: expand the collapsed “N classes with nothing planned” row. */
+  const [expandedEmptyTerms, setExpandedEmptyTerms] = useState<Set<string>>(() => new Set());
 
   // Deep-link / external one-class focus wins when set
   useEffect(() => {
@@ -194,6 +198,15 @@ export function TeacherHalfTermBoard({
     setFilter(next);
     if (next.kind === 'class') onFocusClassChange?.(next.classId);
     else onFocusClassChange?.(null);
+  };
+
+  const toggleEmptyExpanded = (termId: string) => {
+    setExpandedEmptyTerms((prev) => {
+      const next = new Set(prev);
+      if (next.has(termId)) next.delete(termId);
+      else next.add(termId);
+      return next;
+    });
   };
 
   const focusClassName =
@@ -398,92 +411,159 @@ export function TeacherHalfTermBoard({
                         No classes in this filter.
                       </p>
                     ) : (
-                      classRows.map(({ cls, schemes, lessonCount, empty, isComplete }) => {
-                        const chipColor = classDisplayColor(cls);
-                        return (
-                          <div
-                            key={cls.id}
-                            className="rounded-xl border border-[#E2E0EF]/90 bg-white/90 px-2.5 py-2"
-                          >
-                            <div className="mb-1.5 flex items-center gap-2">
-                              <span
-                                className="inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-extrabold text-white"
-                                style={{ background: chipColor }}
-                                title={cls.name}
-                              >
-                                <span
-                                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/80"
-                                  aria-hidden
-                                />
-                                <span className="truncate">{cls.name}</span>
-                              </span>
-                              {isComplete ? (
-                                <CheckCircle className="h-3.5 w-3.5 shrink-0 text-[#0B6B5F]" />
-                              ) : null}
-                              <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
-                                {empty
-                                  ? '—'
-                                  : `${schemes.length} scheme${schemes.length === 1 ? '' : 's'}${
-                                      lessonCount ? ` · ${lessonCount}` : ''
-                                    }`}
-                              </span>
-                            </div>
+                      (() => {
+                        // Single-class focus: always show that row (even if empty).
+                        const showAllRows = filter.kind === 'class';
+                        const planned = classRows.filter((r) => !r.empty);
+                        const emptyRows = classRows.filter((r) => r.empty);
+                        const emptyExpanded = expandedEmptyTerms.has(term.id);
 
-                            {empty ? (
-                              <button
-                                type="button"
-                                onClick={() => onAddScheme(term.id, [cls.id])}
-                                className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-[#FAFAFC] text-[12px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:bg-[#F7F6FC] hover:text-[#4338E8]"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                Add
-                              </button>
-                            ) : (
-                              <div className="flex flex-col gap-1.5">
-                                {schemes.map((stack) => (
-                                  <button
-                                    key={stack.id}
-                                    type="button"
-                                    onClick={() =>
-                                      onManageClassTerm(cls.id, cls.name, term.id)
-                                    }
-                                    className="flex w-full items-start gap-2 rounded-lg border border-[#E2E0EF] bg-white px-2.5 py-2 text-left transition hover:border-[#bcb7f4]"
-                                  >
-                                    <span
-                                      className="mt-0.5 h-7 w-1 shrink-0 rounded-full"
-                                      style={{ background: stack.color || color }}
-                                      aria-hidden
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
-                                        {stack.name}
-                                      </p>
-                                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#77738F]">
-                                        <span className="inline-flex items-center gap-1">
-                                          <BookOpen className="h-3 w-3" />
-                                          {stack.lessons.length} lesson
-                                          {stack.lessons.length === 1 ? '' : 's'}
-                                        </span>
-                                        {stack.totalTime ? (
-                                          <span>{formatDuration(stack.totalTime)}</span>
-                                        ) : null}
-                                      </p>
-                                    </div>
-                                  </button>
-                                ))}
+                        const renderClassRow = ({
+                          cls,
+                          schemes,
+                          lessonCount,
+                          empty,
+                          isComplete,
+                        }: (typeof classRows)[number]) => {
+                          const chipColor = classDisplayColor(cls);
+                          return (
+                            <div
+                              key={cls.id}
+                              className="rounded-xl border border-[#E2E0EF]/90 bg-white/90 px-2.5 py-2"
+                            >
+                              <div className="mb-1.5 flex items-center gap-2">
+                                <span
+                                  className="inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-extrabold text-white"
+                                  style={{ background: chipColor }}
+                                  title={cls.name}
+                                >
+                                  <span
+                                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/80"
+                                    aria-hidden
+                                  />
+                                  <span className="truncate">{cls.name}</span>
+                                </span>
+                                {isComplete ? (
+                                  <CheckCircle className="h-3.5 w-3.5 shrink-0 text-[#0B6B5F]" />
+                                ) : null}
+                                <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
+                                  {empty
+                                    ? '—'
+                                    : `${schemes.length} scheme${schemes.length === 1 ? '' : 's'}${
+                                        lessonCount ? ` · ${lessonCount}` : ''
+                                      }`}
+                                </span>
+                              </div>
+
+                              {empty ? (
                                 <button
                                   type="button"
                                   onClick={() => onAddScheme(term.id, [cls.id])}
-                                  className="inline-flex h-7 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#4338E8] hover:bg-[#F4F3FA]"
+                                  className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-[#FAFAFC] text-[12px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:bg-[#F7F6FC] hover:text-[#4338E8]"
                                 >
-                                  <Plus className="h-3 w-3" />
-                                  Add another
+                                  <Plus className="h-3.5 w-3.5" />
+                                  Add
                                 </button>
+                              ) : (
+                                <div className="flex flex-col gap-1.5">
+                                  {schemes.map((stack) => (
+                                    <button
+                                      key={stack.id}
+                                      type="button"
+                                      onClick={() =>
+                                        onManageClassTerm(cls.id, cls.name, term.id)
+                                      }
+                                      className="flex w-full items-start gap-2 rounded-lg border border-[#E2E0EF] bg-white px-2.5 py-2 text-left transition hover:border-[#bcb7f4]"
+                                    >
+                                      <span
+                                        className="mt-0.5 h-7 w-1 shrink-0 rounded-full"
+                                        style={{ background: stack.color || color }}
+                                        aria-hidden
+                                      />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
+                                          {stack.name}
+                                        </p>
+                                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#77738F]">
+                                          <span className="inline-flex items-center gap-1">
+                                            <BookOpen className="h-3 w-3" />
+                                            {stack.lessons.length} lesson
+                                            {stack.lessons.length === 1 ? '' : 's'}
+                                          </span>
+                                          {stack.totalTime ? (
+                                            <span>{formatDuration(stack.totalTime)}</span>
+                                          ) : null}
+                                        </p>
+                                      </div>
+                                    </button>
+                                  ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => onAddScheme(term.id, [cls.id])}
+                                    className="inline-flex h-7 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#4338E8] hover:bg-[#F4F3FA]"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                    Add another
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        };
+
+                        if (showAllRows) {
+                          return <>{classRows.map(renderClassRow)}</>;
+                        }
+
+                        return (
+                          <>
+                            {planned.map(renderClassRow)}
+                            {emptyRows.length > 0 ? (
+                              <div className="rounded-xl border border-dashed border-[#D8D5E8] bg-[#FAFAFC] px-2.5 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleEmptyExpanded(term.id)}
+                                  className="flex w-full items-center gap-2 text-left"
+                                  aria-expanded={emptyExpanded}
+                                >
+                                  {emptyExpanded ? (
+                                    <ChevronDown className="h-4 w-4 shrink-0 text-[#77738F]" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" />
+                                  )}
+                                  <span className="min-w-0 flex-1 text-[12px] font-extrabold text-[#5C5878]">
+                                    {emptyRows.length} class
+                                    {emptyRows.length === 1 ? '' : 'es'} with nothing planned
+                                  </span>
+                                  {!emptyExpanded ? (
+                                    <span className="text-[11px] font-bold text-[#4338E8]">
+                                      Expand to add
+                                    </span>
+                                  ) : (
+                                    <span className="text-[11px] font-bold text-[#77738F]">
+                                      Collapse
+                                    </span>
+                                  )}
+                                </button>
+                                {emptyExpanded ? (
+                                  <div className="mt-2 flex flex-col gap-2">
+                                    {emptyRows.map(renderClassRow)}
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => onAddScheme(term.id)}
+                                    className="mt-2 inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-white text-[12px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:text-[#4338E8]"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                    Add scheme to a class
+                                  </button>
+                                )}
                               </div>
-                            )}
-                          </div>
+                            ) : null}
+                          </>
                         );
-                      })
+                      })()
                     )}
                   </div>
 

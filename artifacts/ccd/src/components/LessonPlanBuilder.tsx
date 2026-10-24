@@ -63,12 +63,15 @@ interface LessonPlanBuilderProps {
   editingLessonNumber?: string;
   onEditComplete?: () => void;
   onUnsavedChangesChange?: (hasChanges: boolean) => void;
+  /** Compact chrome when nested inside LessonsWorkspace (no page-level padding/min-height). */
+  embedded?: boolean;
 }
 
 export function LessonPlanBuilder({ 
   editingLessonNumber, 
   onEditComplete,
-  onUnsavedChangesChange 
+  onUnsavedChangesChange,
+  embedded = false,
 }: LessonPlanBuilderProps = {}) {
   const isViewOnly = useIsViewOnly();
   const {
@@ -85,7 +88,7 @@ export function LessonPlanBuilder({
   // Early return if essential data is not loaded
   if (!currentSheetInfo || !categories || !Array.isArray(categories) || !Array.isArray(allActivities)) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
+      <div className={`flex items-center justify-center ${embedded ? 'min-h-[20rem] py-10' : 'min-h-screen'}`}>
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading lesson builder...</p>
@@ -331,6 +334,19 @@ export function LessonPlanBuilder({
       saveDraftToStorage(currentLessonPlan);
     }
   }, [currentLessonPlan, editingLessonNumber]);
+
+  // Flush draft to localStorage before Print/PDF so an async export cannot lose work.
+  useEffect(() => {
+    const onPersist = () => {
+      try {
+        saveDraftToStorage(currentLessonPlan);
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('ccd:persist-lesson-draft-before-print', onPersist);
+    return () => window.removeEventListener('ccd:persist-lesson-draft-before-print', onPersist);
+  }, [currentLessonPlan]);
 
   // Handle beforeunload (browser close/navigation) - only warn on actual page close
   useEffect(() => {
@@ -900,12 +916,21 @@ export function LessonPlanBuilder({
 
   return (
     <>
-      <div className="min-h-screen" style={{ backgroundColor: '#F9FAFB' }}>
-        <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8">
+      <div
+        className={embedded ? 'min-h-0' : 'min-h-screen'}
+        style={{ backgroundColor: embedded ? 'transparent' : '#F9FAFB' }}
+      >
+        <div
+          className={
+            embedded
+              ? 'mx-auto px-3 py-3 sm:px-4 sm:py-4'
+              : 'max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8'
+          }
+        >
           {/* Main Content */}
           
           {/* Editing Mode Header */}
-          {currentLessonPlan.isEditingExisting && (
+          {currentLessonPlan.isEditingExisting && !embedded && (
             <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex items-start sm:items-center gap-3 flex-1 min-w-0">
@@ -945,10 +970,16 @@ export function LessonPlanBuilder({
             </div>
           )}
           
-          <div className="grid grid-cols-1 gap-4 lg:grid-cols-2 lg:gap-5">
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-2 lg:gap-4">
             {/* Activity Library Panel — flat Studio Score surface, not a nested app chrome */}
             <div className="lg:col-span-1 flex flex-col">
-              <div className="flex max-h-none flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]">
+              <div
+                className={`flex max-h-none flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white ${
+                  embedded
+                    ? 'lg:max-h-[calc(100vh-10rem)]'
+                    : 'lg:sticky lg:top-8 lg:max-h-[calc(100vh-4rem)]'
+                }`}
+              >
                 <div className="flex flex-col gap-2 border-b border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2.5 sm:px-4">
                   <h3
                     className="text-sm font-extrabold tracking-tight text-[#1F1B4D]"

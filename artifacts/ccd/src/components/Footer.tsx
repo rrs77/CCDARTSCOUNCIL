@@ -18,7 +18,7 @@ export function Footer() {
   const footerBg = b.footerBackgroundColor || '#4338E8';
   const privacyUrl = b.footerPrivacyUrl || 'https://www.rhythmstix.co.uk/policy';
   const copyrightYear = b.footerCopyrightYear || '2026';
-  const companyName = b.footerCompanyName || 'Rhythmstix';
+  const companyName = b.footerCompanyName || 'CCDesigner';
   const showSocial = b.showSocialMedia !== false;
   // Use custom social links if set; otherwise fall back to legacy URLs
   const customLinks = b.footerSocialLinks?.filter(l => l.url?.trim());

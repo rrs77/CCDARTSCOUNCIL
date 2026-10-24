@@ -7,7 +7,7 @@ import { AssessifyPage } from './AssessifyPage';
 import { PeriFeedbackPage } from './PeriFeedbackPage';
 
 const TITLES: Record<BoltOnsPageId, string> = {
-  'bolt-ons': '+ Bolt-ons',
+  'bolt-ons': 'Bolt-ons',
   assessify: 'Assessify',
   perifeedback: 'PeriFeedback',
 };
@@ -28,12 +28,12 @@ export function BoltOnsView({ page, onNavigate }: Props) {
   }, [page]);
 
   return (
-    <div className="ccd-fade-in-up">
-      <BoltOnsBreadcrumb
-        pageLabel={TITLES[page]}
-        onCatalogue={page === 'bolt-ons' ? undefined : () => onNavigate('bolt-ons')}
-      />
-      <div className="mb-6">
+    <div className="ccd-fade-in-up ccd-boltons">
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+        <BoltOnsBreadcrumb
+          pageLabel={TITLES[page]}
+          onCatalogue={page === 'bolt-ons' ? undefined : () => onNavigate('bolt-ons')}
+        />
         <BoltOnsSwitcher active={page} onNavigate={onNavigate} />
       </div>
       {page === 'bolt-ons' ? <BoltOnsCatalogue onNavigate={onNavigate} /> : null}

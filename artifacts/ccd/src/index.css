@@ -839,3 +839,49 @@ html[data-ccd-record] [data-ccd-prototype-chrome] {
 @media (prefers-reduced-motion: reduce) {
   .ukmap path, .ukmap g { transition: none !important; }
 }
+
+/* ===========================================================================
+ * Planner (ported from artifacts/planner-mock) — scoped utilities
+ * ======================================================================== */
+.planner-shell-surface {
+  background:
+    radial-gradient(1200px 600px at 12% -10%, #ddd6fe 0%, transparent 55%),
+    radial-gradient(900px 500px at 92% 8%, #e0e7ff 0%, transparent 50%),
+    radial-gradient(800px 480px at 70% 100%, #fce7f3 0%, transparent 45%),
+    linear-gradient(165deg, #f5f2fc 0%, #eeeaf8 48%, #f7f5fc 100%);
+}
+.card-surface {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.8);
+  box-shadow:
+    0 1px 2px rgba(67, 56, 202, 0.04),
+    0 8px 24px rgba(67, 56, 202, 0.06);
+}
+.card-surface-strong {
+  background: #ffffff;
+  border: 1px solid rgba(99, 102, 241, 0.08);
+  box-shadow:
+    0 1px 2px rgba(67, 56, 202, 0.05),
+    0 12px 32px rgba(67, 56, 202, 0.08);
+}
+.soft-scroll::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+.soft-scroll::-webkit-scrollbar-thumb {
+  background: rgba(67, 56, 202, 0.18);
+  border-radius: 999px;
+}
+.soft-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+.dnd-ghost {
+  box-shadow: 0 18px 40px rgba(67, 56, 202, 0.22);
+  transform: rotate(1.5deg) scale(1.03);
+}
+@media (prefers-reduced-motion: reduce) {
+  .dnd-ghost {
+    transform: none;
+  }
+}

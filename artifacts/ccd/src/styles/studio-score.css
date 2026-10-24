@@ -16,13 +16,15 @@
   --ss-lavender: #e5e2ff;
   --ss-white: #ffffff;
   --ss-sidebar: 200px;
-  /* Content measure — mockup shell ~1540; keep readable, not edge-to-edge */
-  --ss-workspace-max: 1280px;
-  --ss-workspace-week-max: 1440px;
+  /* Full-width workspace — no page max-width; modals keep ModalShell 760 */
+  --ss-workspace-max: none;
+  --ss-workspace-week-max: none;
   --ss-dialog-sm: 28rem; /* ~448px */
   --ss-dialog-md: 36rem; /* ~576px */
   --ss-dialog-lg: 42rem; /* ~672px */
-  --ss-dialog-xl: 52rem; /* ~832px — rich editors only */
+  /* ModalShell is always 760px — do not use xl for planner dialogs */
+  --ss-dialog-shell: 47.5rem; /* 760px — ModalShell */
+  --ss-dialog-xl: 52rem; /* ~832px — legacy rich editors only; not ModalShell */
   /* Page titles match sidebar / UI — same family, heavier weight */
   --ss-font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ss-font-ui: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
@@ -398,15 +400,15 @@ html.ccd-studio {
 .ccd-studio-workspace-inner {
   flex: 1;
   width: 100%;
-  margin-inline: auto;
+  margin-inline: 0;
   padding: 18px 24px 48px;
   min-width: 0;
-  max-width: var(--ss-workspace-max);
+  max-width: none;
 }
 
-/* Week planner may breathe a little wider; still not full ultrawide */
+/* Week planner — same full column as other studio pages */
 .ccd-studio-workspace-inner:has(.ss-week-grid) {
-  max-width: var(--ss-workspace-week-max);
+  max-width: none;
 }
 
 .ccd-studio-workspace-inner.hubs-bridge {
@@ -477,8 +479,15 @@ html.ccd-studio .fixed.inset-0 > .relative.z-10.bg-white,
 html.ccd-studio .fixed.inset-0 > .relative.z-\[10\].bg-white,
 html.ccd-studio .fixed.inset-0 > .relative.z-\[71\],
 html.ccd-studio .fixed.inset-0 > [role='dialog'].bg-white,
-html.ccd-studio .fixed.inset-0 > .relative[role='dialog'] {
+html.ccd-studio .fixed.inset-0 > .relative[role='dialog']:not([data-modal-shell]) {
   max-width: min(var(--ss-dialog-xl), calc(100vw - 2rem)) !important;
+}
+
+/* ModalShell spec: 760px — never widen via --ss-dialog-xl */
+html.ccd-studio .fixed.inset-0 > [data-modal-shell],
+html.ccd-studio [data-ccd-modal-shell] [data-modal-shell] {
+  max-width: min(760px, calc(100vw - 2rem)) !important;
+  width: 100%;
 }
 
 /* Compact assign / confirm dialogs stay tighter */
@@ -492,7 +501,7 @@ html.ccd-studio .ss-dialog-lg {
 
 .ccd-studio-eyebrow {
   font-size: 10px;
-  color: #777397;
+  color: #5F5B7A;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -773,11 +782,13 @@ html.ccd-studio .ss-dialog-lg {
   color: var(--ss-indigo);
 }
 
-/* Compact month grid */
+/* Month grid — same full-width stretch as week */
 .ss-month-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
+  width: 100%;
+  min-height: min(68vh, calc(100dvh - 13.5rem));
 }
 
 .ss-month-dow {

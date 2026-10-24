@@ -5,13 +5,14 @@ import { useSettings, CategoryFolder } from '../contexts/SettingsContextNew';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 
-const COLLAPSED_KEY = 'category-folders-collapsed';
+/** Session-only: which folders the user expanded. Default = all collapsed. */
+const EXPANDED_SESSION_KEY = 'category-folders-expanded-session';
 
 type CategoryDropItem = { categoryName?: string; index?: number };
 
-function loadCollapsed(): Set<string> {
+function loadExpanded(): Set<string> {
   try {
-    const raw = localStorage.getItem(COLLAPSED_KEY);
+    const raw = sessionStorage.getItem(EXPANDED_SESSION_KEY);
     if (raw) return new Set(JSON.parse(raw) as string[]);
   } catch {
     /* ignore */
@@ -19,8 +20,12 @@ function loadCollapsed(): Set<string> {
   return new Set();
 }
 
-function saveCollapsed(set: Set<string>) {
-  localStorage.setItem(COLLAPSED_KEY, JSON.stringify([...set]));
+function saveExpanded(set: Set<string>) {
+  try {
+    sessionStorage.setItem(EXPANDED_SESSION_KEY, JSON.stringify([...set]));
+  } catch {
+    /* ignore */
+  }
 }
 
 interface DraggableFolderProps {
@@ -246,19 +251,20 @@ export function CategoryFoldersPanel({
     reorderCategoryFolders,
   } = useSettings();
 
-  const [collapsed, setCollapsed] = useState<Set<string>>(() => loadCollapsed());
+  // Opt-in expand: nothing in the set ⇒ every folder starts collapsed on open.
+  const [expanded, setExpanded] = useState<Set<string>>(() => loadExpanded());
   const [showNewFolder, setShowNewFolder] = useState(false);
   const [newFolderName, setNewFolderName] = useState('');
   const [newFolderColor, setNewFolderColor] = useState('#4338E8');
 
   const sortedFolders = [...categoryFolders].sort((a, b) => a.position - b.position);
 
-  const toggleCollapsed = (key: string) => {
-    setCollapsed((prev) => {
+  const toggleExpanded = (key: string) => {
+    setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(key)) next.delete(key);
       else next.add(key);
-      saveCollapsed(next);
+      saveExpanded(next);
       return next;
     });
   };
@@ -327,14 +333,14 @@ export function CategoryFoldersPanel({
       <div className="space-y-2">
         {sortedFolders.map((folder, index) => {
           const key = folder.id;
-          const isCollapsed = collapsed.has(key);
+          const isCollapsed = !expanded.has(key);
           return (
-            <div key={folder.id} className="space-y-1">
+            <div key={folder.id} className="space-y-0">
               <DraggableFolderRow
                 folder={folder}
                 index={index}
                 isCollapsed={isCollapsed}
-                onToggleCollapse={() => toggleCollapsed(key)}
+                onToggleCollapse={() => toggleExpanded(key)}
                 onReorder={reorderCategoryFolders}
                 onAssignCategory={onAssignCategory}
                 categoryCount={getCategoryCount(folder.name)}
@@ -343,7 +349,7 @@ export function CategoryFoldersPanel({
                 onDelete={removeCategoryFolder}
               />
               {!isCollapsed && (
-                <div className="ml-4 pl-2 border-l-2 border-gray-200 space-y-2">
+                <div className="ml-2 border-l border-gray-200 pl-2 sm:ml-4">
                   {renderFolderCategories(folder.name, false)}
                 </div>
               )}
@@ -351,15 +357,15 @@ export function CategoryFoldersPanel({
           );
         })}
 
-        <div className="space-y-1">
+        <div className="space-y-0">
           <UncategorisedDropZone
-            isCollapsed={collapsed.has('__uncategorised__')}
-            onToggleCollapse={() => toggleCollapsed('__uncategorised__')}
+            isCollapsed={!expanded.has('__uncategorised__')}
+            onToggleCollapse={() => toggleExpanded('__uncategorised__')}
             categoryCount={getCategoryCount(null)}
             onAssignCategory={onAssignCategory}
           />
-          {!collapsed.has('__uncategorised__') && (
-            <div className="ml-4 pl-2 border-l-2 border-dashed border-gray-200 space-y-2">
+          {expanded.has('__uncategorised__') && (
+            <div className="ml-2 border-l border-dashed border-gray-200 pl-2 sm:ml-4">
               {renderFolderCategories(null, false)}
             </div>
           )}

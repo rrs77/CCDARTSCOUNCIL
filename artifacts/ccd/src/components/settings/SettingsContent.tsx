@@ -3,6 +3,7 @@ import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Sav
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../../contexts/SettingsContextNew';
 import { DataSourceSettings } from '../DataSourceSettings';
 import { CustomObjectivesAdmin } from '../CustomObjectivesAdmin';
+import { CurriculumSettingsEditor } from './CurriculumSettingsEditor';
 import { ActivityPacksAdmin } from '../ActivityPacksAdmin';
 import { useAuth } from '../../hooks/useAuth';
 import { useIsViewOnly } from '../../hooks/useIsViewOnly';
@@ -114,7 +115,7 @@ function CategoryFolderSelect({
       onClick={(e) => e.stopPropagation()}
       className={
         className ??
-        'h-10 min-w-[8.5rem] max-w-full px-2 border border-gray-300 rounded-lg text-sm bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none'
+        'h-9 min-h-[36px] w-auto max-w-[9rem] shrink-0 px-1.5 border border-gray-300 rounded-md text-xs bg-white focus:ring-2 focus:ring-[#4338E8] focus:border-transparent focus:outline-none'
       }
     >
       <option value="">{emptyLabel || 'Not in a folder'}</option>
@@ -189,7 +190,7 @@ function DraggableCategory({ category, index, onReorder, onDragEnd, children }: 
       ref={ref}
       style={{ opacity: isDragging ? 0.5 : 1 }}
       data-handler-id={handlerId}
-      className={`rounded-lg transition-all ${isDragging ? 'ring-2 ring-[#a9a3ff] shadow-lg' : ''} ${dropZoneClass} ${flashClass}`}
+      className={`transition-colors ${isDragging ? 'bg-[#E9E6FF]/40 ring-1 ring-inset ring-[#a9a3ff]' : ''} ${dropZoneClass} ${flashClass}`}
     >
       {children}
     </div>
@@ -250,6 +251,7 @@ const SECTION_TO_TAB: Record<SettingsSectionId, string> = {
   classes: 'yeargroups',
   folders: 'categories',
   objectives: 'admin',
+  curriculum: 'curriculum',
   preferences: 'resource-links',
   downloads: 'my-downloads',
   users: 'users',
@@ -2512,7 +2514,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             </div>
                           )}
                           {visible.length === 0 ? (
-                            <div className="min-h-[3rem] rounded-lg border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center py-3 px-2">
+                            <div className="min-h-[3rem] flex items-center justify-center border border-dashed border-gray-200 py-3 px-2">
                               <p className="text-sm text-gray-500 text-center">
                                 {!folderName && uncategorisedQueryNorm
                                   ? 'No categories match your search.'
@@ -2520,8 +2522,10 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                               </p>
                             </div>
                           ) : (
-                            visible.map(({ category, index }) => {
+                            <div className="divide-y divide-gray-200 overflow-hidden rounded-md border border-gray-200 bg-white">
+                            {visible.map(({ category, index }) => {
                       const isEditing = editingCategory === `category-index-${index}`;
+                      const isYearEdit = editingCategoryYearGroups === `category-index-${index}`;
                       
                       return (
                       <DraggableCategory
@@ -2548,13 +2552,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                         }}
                       >
                       <div 
-                        className={`p-3 rounded-lg transition-colors duration-200 ${
-                          bulkYearGroupMode && selectedCategoriesForBulk.has(category.name) ? 'bg-[#E9E6FF] border-[#bcb7f4] border-2' :
-                          'bg-gray-50 hover:bg-gray-100'
-                        } ${!bulkYearGroupMode ? 'cursor-grab active:cursor-grabbing' : ''}`}
+                        className={`transition-colors duration-150 ${
+                          bulkYearGroupMode && selectedCategoriesForBulk.has(category.name)
+                            ? 'bg-[#E9E6FF]'
+                            : 'hover:bg-gray-50/80'
+                        } ${!bulkYearGroupMode && !isEditing ? 'cursor-grab active:cursor-grabbing' : ''}`}
                       >
                         {isEditing ? (
-                          <div className="flex flex-col space-y-3">
+                          <div className="flex flex-col space-y-3 px-2 py-2">
                             {/* Name and Color Row */}
                           <div className="flex items-center space-x-3">
                             <div className="flex-shrink-0 cursor-move">
@@ -2704,227 +2709,223 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                             </div>
                           </div>
                         ) : (
-                          <div className="flex items-start gap-4">
-                            <div className="flex items-start gap-3 flex-1 min-w-0">
-                              <div className="flex-shrink-0 cursor-move pt-0.5">
-                              <GripVertical className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <div 
-                                className="w-5 h-5 rounded-full flex-shrink-0 mt-0.5 border border-gray-200"
-                              style={{ backgroundColor: category.color }}
-                            ></div>
-                            <div className="flex-1 min-w-0">
-                                <div className="font-semibold text-gray-900 mb-2 flex items-center gap-2 flex-wrap" dir="ltr">
-                                  <span>{category.name}</span>
-                                  {isSystemCategory(category) ? (
-                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-slate-100 text-slate-600 border border-slate-200">App</span>
-                                  ) : (
-                                    <span className="text-[10px] uppercase tracking-wide font-semibold px-1.5 py-0.5 rounded bg-[#E9E6FF] text-[#4338E8] border border-[#E2E0EF]">Mine</span>
-                                  )}
-                                </div>
-                                <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:items-center mb-2">
-                                  {!folderName && (
-                                    <label className="inline-flex items-center gap-2 text-xs text-gray-600">
-                                      <input
-                                        type="checkbox"
-                                        checked={selectedUncategorisedNames.has(category.name)}
-                                        onChange={(e) => {
-                                          setSelectedUncategorisedNames((prev) => {
-                                            const next = new Set(prev);
-                                            if (e.target.checked) next.add(category.name);
-                                            else next.delete(category.name);
-                                            return next;
-                                          });
-                                        }}
-                                        className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
-                                      />
-                                      <span>Select</span>
-                                    </label>
-                                  )}
-                                  <label htmlFor={`view-folder-${index}`} className="text-xs font-medium text-gray-600">
-                                    Folder
-                                  </label>
-                                  <CategoryFolderSelect
-                                    id={`view-folder-${index}`}
-                                    value={category.group || ''}
-                                    folders={categoryFolders}
-                                    onChange={(next) => assignCategoriesToFolder([category.name], next || null)}
-                                  />
-                                </div>
-                                
-                                {/* Year Groups Display */}
-                                <div className="flex flex-wrap items-center gap-1.5">
-                                  {editingCategoryYearGroups === `category-index-${index}` ? (
-                                  // Edit mode: show checkboxes for year groups - show ALL year groups
-                                  <div className="flex flex-wrap gap-2 w-full">
-                                    {customYearGroups && Array.isArray(customYearGroups) && customYearGroups.length > 0 ? customYearGroups.map(yearGroup => {
-                                      // Use year group ID as the key (or name if ID not available)
-                                      const yearGroupKey = yearGroup.id || yearGroup.name;
-                                      
-                                      const categoryYearGroups = category.yearGroups || {};
-                                      const isEnabled = categoryYearGroups[yearGroupKey] === true;
-                                      
-                                      return (
-                                        <label key={yearGroup.id || yearGroup.name} className="flex items-center gap-1.5 cursor-pointer px-2 py-1 rounded hover:bg-gray-50">
-                                          <input
-                                            type="checkbox"
-                                            checked={isEnabled}
-                                            onChange={async (e) => {
-                                          const updatedCategories = [...tempCategories];
-                                          updatedCategories[index] = { 
-                                            ...updatedCategories[index], 
-                                                yearGroups: {
-                                                  ...(updatedCategories[index].yearGroups || {}),
-                                                  [yearGroupKey]: e.target.checked
-                                                }
-                                          };
-                                          tempCategoriesRef.current = updatedCategories;
-                                          setTempCategories(updatedCategories);
-                                          updateCategories(updatedCategories);
-                                          // Immediately sync to Supabase to ensure persistence
-                                          console.log('🔄 Immediate sync triggered for year group assignment (view mode):', {
-                                            category: updatedCategories[index].name,
-                                            yearGroupKey,
-                                            checked: e.target.checked,
-                                            yearGroups: updatedCategories[index].yearGroups
-                                          });
-                                          try {
-                                            const synced = await forceSyncToSupabase({ categories: updatedCategories });
-                                            if (synced) {
-                                              console.log('✅ Immediate sync successful for year group assignment');
-                                            } else {
-                                              console.warn('⚠️ Immediate sync returned false');
-                                            }
-                                          } catch (error) {
-                                            console.error('❌ Failed to sync year group assignment:', error);
-                                          }
-                                        }}
-                                            className="rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8] focus:ring-offset-0 checked:border-0 checked:bg-[#4338E8]"
-                                          />
-                                          <span className={`text-xs ${isEnabled ? 'text-gray-900 font-medium' : 'text-gray-500'}`}>{yearGroup.name}</span>
-                                        </label>
-                                      );
-                                    }) : null}
-                                    <div className="flex gap-2 items-center w-full mt-2">
-                                      <button
-                                        onClick={async () => {
-                                        const updatedCategories = [...tempCategories];
-                                          updatedCategories[index] = { 
-                                            ...updatedCategories[index], 
-                                            yearGroups: {} // Clear all year group assignments
-                                          };
-                                          tempCategoriesRef.current = updatedCategories;
-                                          setTempCategories(updatedCategories);
-                                          updateCategories(updatedCategories);
-                                          // Immediately sync to Supabase to ensure persistence
-                                          try {
-                                            await forceSyncToSupabase({ categories: updatedCategories });
-                                          } catch (error) {
-                                            console.error('❌ Failed to sync year group assignment clear:', error);
-                                          }
-                                        }}
-                                        className="text-xs text-red-600 hover:text-red-800 px-2 py-1 hover:bg-red-50 rounded"
-                                        title="Remove all year group assignments"
-                                      >
-                                        Clear All
-                                      </button>
-                                      <button
-                                        onClick={() => {
-                                          console.log('✅ Closing edit mode for category:', category.name);
-                                          setEditingCategoryYearGroups(null);
-                                        }}
-                                        className="text-xs text-[#4338E8] hover:text-[#1F1B4D] px-2 py-1 hover:bg-[#E9E6FF] rounded font-medium"
-                                      >
-                                        Done
-                                      </button>
-                                </div>
-                              </div>
-                                ) : (
-                                  // View mode: show year group tags and edit button
-                                  <>
-                                    <div className="flex flex-wrap items-center gap-1.5">
-                                      {customYearGroups && Array.isArray(customYearGroups) ? customYearGroups
-                                        .filter(yearGroup => {
-                                          // Use yearGroup.id consistently (which is the name from the API)
-                                          const yearGroupKey = yearGroup.id || yearGroup.name;
-                                          return category.yearGroups?.[yearGroupKey] === true;
-                                        })
-                                        .map(yearGroup => (
-                                          <span 
-                                            key={yearGroup.id} 
-                                            className="px-2 py-1 bg-[#E9E6FF] text-[#1F1B4D] text-xs font-medium rounded-full"
-                                            title={yearGroup.name}
-                                          >
-                                            {yearGroup.name}
-                                          </span>
-                                        )) : null}
-                                      {(!category.yearGroups || Object.values(category.yearGroups).every(v => !v)) && (
-                                        <span className="text-xs text-gray-400 italic">No year groups assigned</span>
-                                      )}
-                                    </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.preventDefault();
-                                        e.stopPropagation();
-                                        console.log('🔄 Opening edit mode for category:', category.name, 'index:', index);
-                                        setEditingCategoryYearGroups(`category-index-${index}`);
-                                      }}
-                                      className="px-2 py-1 bg-[#E9E6FF] text-[#4338E8] text-xs font-medium rounded-full hover:bg-[#E9E6FF] transition-colors border border-[#E2E0EF] mt-1"
-                                      title="Click to assign or edit year groups"
-                                    >
-                                      {(!category.yearGroups || Object.values(category.yearGroups).every(v => !v)) 
-                                        ? '+ Assign Year Groups' 
-                                        : 'Edit Year Groups'}
-                                    </button>
-                                  </>
-                                  )}
-                            </div>
-                              </div>
-                            </div>
-                            {/* Edit/Delete Actions */}
-                            <div className="flex items-center gap-1 flex-shrink-0">
-                              {bulkYearGroupMode ? (
-                                <input
-                                  type="checkbox"
-                                  checked={selectedCategoriesForBulk.has(category.name)}
-                                  onChange={(e) => {
-                                    const newSelected = new Set(selectedCategoriesForBulk);
-                                    if (e.target.checked) {
-                                      newSelected.add(category.name);
-                                    } else {
-                                      newSelected.delete(category.name);
-                                    }
-                                    setSelectedCategoriesForBulk(newSelected);
-                                  }}
-                                  className="w-4 h-4 rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8] focus:ring-offset-0 checked:border-0 checked:bg-[#4338E8]"
-                                />
+                          <>
+                            {/* One-line activity row (~44px); wraps only on narrow widths */}
+                            <div className="flex min-h-[44px] flex-wrap items-center gap-x-1.5 gap-y-1 px-1.5 py-0.5 sm:flex-nowrap sm:gap-x-2">
+                              <span className="inline-flex h-11 w-8 shrink-0 items-center justify-center text-gray-400" aria-hidden>
+                                <GripVertical className="h-4 w-4" />
+                              </span>
+                              <span
+                                className="h-3 w-3 shrink-0 rounded-full border border-gray-200"
+                                style={{ backgroundColor: category.color }}
+                                aria-hidden
+                              />
+                              <span
+                                className="min-w-0 max-w-[14rem] flex-1 truncate text-sm font-semibold text-gray-900 sm:max-w-[18rem]"
+                                title={category.name}
+                                dir="ltr"
+                              >
+                                {category.name}
+                              </span>
+                              {isSystemCategory(category) ? (
+                                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide rounded bg-slate-100 px-1.5 py-0.5 text-slate-600 border border-slate-200">
+                                  App
+                                </span>
                               ) : (
-                                <>
-                              <button
-                                    onClick={() => setEditingCategory(`category-index-${index}`)}
-                                className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors duration-200"
-                              >
-                                <Edit3 className="h-4 w-4" />
-                              </button>
-                              {!isSystemCategory(category) && (
-                              <button
-                                onClick={() => handleDeleteCategory(index)}
-                                disabled={profile?.admin_preset_categories?.includes(category.name) === true}
-                                title={profile?.admin_preset_categories?.includes(category.name) ? 'Assigned by admin; cannot remove' : 'Delete category'}
-                                className="p-1.5 text-red-500 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:bg-transparent"
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </button>
+                                <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide rounded bg-[#E9E6FF] px-1.5 py-0.5 text-[#4338E8] border border-[#E2E0EF]">
+                                  Mine
+                                </span>
                               )}
-                                </>
+                              {!folderName && (
+                                <label className="inline-flex h-11 items-center gap-1 text-xs text-gray-600 shrink-0">
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedUncategorisedNames.has(category.name)}
+                                    onChange={(e) => {
+                                      setSelectedUncategorisedNames((prev) => {
+                                        const next = new Set(prev);
+                                        if (e.target.checked) next.add(category.name);
+                                        else next.delete(category.name);
+                                        return next;
+                                      });
+                                    }}
+                                    className="h-4 w-4 rounded border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
+                                    aria-label={`Select ${category.name}`}
+                                  />
+                                </label>
                               )}
+                              <CategoryFolderSelect
+                                id={`view-folder-${index}`}
+                                value={category.group || ''}
+                                folders={categoryFolders}
+                                onChange={(next) => assignCategoriesToFolder([category.name], next || null)}
+                              />
+                              <div className="flex min-w-0 flex-1 flex-wrap items-center gap-1 sm:flex-none">
+                                {customYearGroups && Array.isArray(customYearGroups)
+                                  ? customYearGroups
+                                      .filter((yearGroup) => {
+                                        const yearGroupKey = yearGroup.id || yearGroup.name;
+                                        return category.yearGroups?.[yearGroupKey] === true;
+                                      })
+                                      .map((yearGroup) => (
+                                        <span
+                                          key={yearGroup.id}
+                                          className="rounded-full bg-[#E9E6FF] px-1.5 py-0.5 text-[10px] font-medium text-[#1F1B4D]"
+                                          title={yearGroup.name}
+                                        >
+                                          {yearGroup.name}
+                                        </span>
+                                      ))
+                                  : null}
+                                <button
+                                  type="button"
+                                  onClick={(e) => {
+                                    e.preventDefault();
+                                    e.stopPropagation();
+                                    setEditingCategoryYearGroups(
+                                      isYearEdit ? null : `category-index-${index}`,
+                                    );
+                                  }}
+                                  className="inline-flex h-11 items-center rounded-md px-2 text-[11px] font-semibold text-[#4338E8] hover:bg-[#E9E6FF] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#4338E8]"
+                                  title="Assign or edit year groups"
+                                >
+                                  {(!category.yearGroups ||
+                                  Object.values(category.yearGroups).every((v) => !v))
+                                    ? '+ Year groups'
+                                    : 'Edit Year Groups'}
+                                </button>
+                              </div>
+                              <div className="ml-auto flex shrink-0 items-center">
+                                {bulkYearGroupMode ? (
+                                  <input
+                                    type="checkbox"
+                                    checked={selectedCategoriesForBulk.has(category.name)}
+                                    onChange={(e) => {
+                                      const newSelected = new Set(selectedCategoriesForBulk);
+                                      if (e.target.checked) newSelected.add(category.name);
+                                      else newSelected.delete(category.name);
+                                      setSelectedCategoriesForBulk(newSelected);
+                                    }}
+                                    className="mx-2 h-4 w-4 rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
+                                    aria-label={`Select ${category.name} for bulk`}
+                                  />
+                                ) : (
+                                  <>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingCategory(`category-index-${index}`)}
+                                      className="inline-flex h-11 w-11 items-center justify-center text-gray-500 hover:bg-gray-100 hover:text-gray-700 rounded-md"
+                                      aria-label={`Edit ${category.name}`}
+                                      title="Edit"
+                                    >
+                                      <Edit3 className="h-4 w-4" />
+                                    </button>
+                                    {!isSystemCategory(category) && (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeleteCategory(index)}
+                                        disabled={
+                                          profile?.admin_preset_categories?.includes(category.name) === true
+                                        }
+                                        title={
+                                          profile?.admin_preset_categories?.includes(category.name)
+                                            ? 'Assigned by admin; cannot remove'
+                                            : 'Delete category'
+                                        }
+                                        className="inline-flex h-11 w-11 items-center justify-center text-red-500 hover:bg-red-50 hover:text-red-700 rounded-md disabled:cursor-not-allowed disabled:opacity-50"
+                                        aria-label={`Delete ${category.name}`}
+                                      >
+                                        <Trash2 className="h-4 w-4" />
+                                      </button>
+                                    )}
+                                  </>
+                                )}
+                              </div>
                             </div>
-                          </div>
+                            {isYearEdit ? (
+                              <div className="border-t border-gray-100 bg-gray-50/60 px-3 py-2">
+                                <div className="flex flex-wrap gap-2">
+                                  {customYearGroups && Array.isArray(customYearGroups) && customYearGroups.length > 0
+                                    ? customYearGroups.map((yearGroup) => {
+                                        const yearGroupKey = yearGroup.id || yearGroup.name;
+                                        const isEnabled = category.yearGroups?.[yearGroupKey] === true;
+                                        return (
+                                          <label
+                                            key={yearGroup.id || yearGroup.name}
+                                            className="inline-flex min-h-[44px] items-center gap-1.5 rounded-md px-2 hover:bg-white cursor-pointer"
+                                          >
+                                            <input
+                                              type="checkbox"
+                                              checked={isEnabled}
+                                              onChange={async (e) => {
+                                                const updatedCategories = [...tempCategories];
+                                                updatedCategories[index] = {
+                                                  ...updatedCategories[index],
+                                                  yearGroups: {
+                                                    ...(updatedCategories[index].yearGroups || {}),
+                                                    [yearGroupKey]: e.target.checked,
+                                                  },
+                                                };
+                                                tempCategoriesRef.current = updatedCategories;
+                                                setTempCategories(updatedCategories);
+                                                updateCategories(updatedCategories);
+                                                try {
+                                                  await forceSyncToSupabase({ categories: updatedCategories });
+                                                } catch (error) {
+                                                  console.error('❌ Failed to sync year group assignment:', error);
+                                                }
+                                              }}
+                                              className="rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
+                                            />
+                                            <span
+                                              className={`text-xs ${isEnabled ? 'font-medium text-gray-900' : 'text-gray-500'}`}
+                                            >
+                                              {yearGroup.name}
+                                            </span>
+                                          </label>
+                                        );
+                                      })
+                                    : null}
+                                </div>
+                                <div className="mt-1 flex gap-2">
+                                  <button
+                                    type="button"
+                                    onClick={async () => {
+                                      const updatedCategories = [...tempCategories];
+                                      updatedCategories[index] = {
+                                        ...updatedCategories[index],
+                                        yearGroups: {},
+                                      };
+                                      tempCategoriesRef.current = updatedCategories;
+                                      setTempCategories(updatedCategories);
+                                      updateCategories(updatedCategories);
+                                      try {
+                                        await forceSyncToSupabase({ categories: updatedCategories });
+                                      } catch (error) {
+                                        console.error('❌ Failed to sync year group clear:', error);
+                                      }
+                                    }}
+                                    className="inline-flex h-11 items-center px-2 text-xs text-red-600 hover:bg-red-50 rounded-md"
+                                  >
+                                    Clear All
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setEditingCategoryYearGroups(null)}
+                                    className="inline-flex h-11 items-center px-2 text-xs font-semibold text-[#4338E8] hover:bg-[#E9E6FF] rounded-md"
+                                  >
+                                    Done
+                                  </button>
+                                </div>
+                              </div>
+                            ) : null}
+                          </>
                         )}
                       </div>
                       </DraggableCategory>
                       );
-                    })
+                    })}
+                            </div>
                           )}
                           {addInFolderName === folderKey ? (
                             <div className="p-3 rounded-lg border border-[#E2E0EF] bg-[#E9E6FF]/60 space-y-3">
@@ -3164,6 +3165,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
             </div>
           )}
 
+          {activeTab === 'curriculum' && <CurriculumSettingsEditor />}
+
           {activeTab === 'my-downloads' && (
             <MyDownloads />
           )}
@@ -3209,25 +3212,21 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
                 <button
                   onClick={() => {
-                    if (confirm('Reset branding to defaults (Rhythmstix)?')) {
+                    if (confirm('Reset branding to defaults (CCDesigner)?')) {
                       const defaults = {
                         logoLetters: 'CCD',
-                        loginTitle: 'Creative Curriculum Designer',
-                        loginSubtitle: 'From Rhythmstix',
-                        loginSubtitleUrl: 'https://www.rhythmstix.co.uk',
+                        loginTitle: 'CCDesigner',
+                        loginSubtitle: 'Lesson planning for performing arts',
+                        loginSubtitleUrl: '',
                         loginBackgroundColor: 'rgb(77, 181, 168)',
                         loginButtonColor: '#008272',
-                        footerCompanyName: 'Rhythmstix',
+                        footerCompanyName: 'CCDesigner',
                         footerCopyrightYear: '2026',
-                        footerContactEmail: 'rob@rhythmstix.co.uk',
-                        footerPrivacyUrl: 'https://www.rhythmstix.co.uk/policy',
+                        footerContactEmail: '',
+                        footerPrivacyUrl: '',
                         footerBackgroundColor: '#4338E8',
-                        showSocialMedia: true,
-                        footerSocialLinks: [
-                          { platform: 'youtube', url: 'https://www.youtube.com/channel/UCooHhU7FKALUQ4CtqjDFMsw' },
-                          { platform: 'linkedin', url: 'https://www.linkedin.com/in/robert-reich-storer-974449144' },
-                          { platform: 'facebook', url: 'https://www.facebook.com/Rhythmstix-Music-108327688309431' },
-                        ]
+                        showSocialMedia: false,
+                        footerSocialLinks: [] as { platform: string; url: string }[],
                       };
                       updateSettings({ branding: defaults });
                       setTempSettings(prev => ({ ...prev, branding: defaults }));
@@ -3267,17 +3266,17 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       value={tempSettings.branding?.loginTitle ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, loginTitle: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="Creative Curriculum Designer"
+                      placeholder="CCDesigner"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Subtitle (e.g. From Rhythmstix)</label>
+                    <label className="block text-sm text-gray-600 mb-1">Subtitle</label>
                     <input
                       type="text"
                       value={tempSettings.branding?.loginSubtitle ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, loginSubtitle: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="From Rhythmstix"
+                      placeholder="Lesson planning for performing arts"
                     />
                   </div>
                   <div>
@@ -3320,7 +3319,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       value={tempSettings.branding?.footerCompanyName ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, footerCompanyName: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="Rhythmstix"
+                      placeholder="CCDesigner"
                     />
                   </div>
                   <div>

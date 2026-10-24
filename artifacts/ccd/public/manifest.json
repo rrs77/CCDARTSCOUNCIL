@@ -1,6 +1,6 @@
 {
-  "name": "Creative Curriculum Designer",
-  "short_name": "CCD",
+  "name": "CCDesigner",
+  "short_name": "CCDesigner",
   "description": "Plan lessons and activities for EYFS, KS1, and KS2. Works offline!",
   "start_url": "/",
   "scope": "/",

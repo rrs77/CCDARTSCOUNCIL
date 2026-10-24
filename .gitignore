@@ -48,6 +48,9 @@ artifacts/*/.env.local
 # public/ is Vercel build output (scripts/vercel-build.sh). Do not commit it.
 # Must NOT be gitignored — Vercel refuses Output Directory paths listed in .gitignore.
 
+# Committed Vite bundles under the api-server public tree — do not track.
+artifacts/api-server/public/assets/
+
 # System Files
 .DS_Store
 Thumbs.db

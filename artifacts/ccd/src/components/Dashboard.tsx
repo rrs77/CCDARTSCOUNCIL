@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { LessonPlanBuilder } from './LessonPlanBuilder';
 import { LessonPlannerCalendar } from './LessonPlannerCalendar';
 import { ActivityLibrary } from './ActivityLibrary';
-import { LessonLibrary } from './LessonLibrary';
+import { LessonsWorkspace } from './LessonsWorkspace';
 import { CircleHelp } from 'lucide-react';
 import { OurPartners } from './OurPartners';
 import { PartnerHubsPreview, isPartnerHubsLink, newPartnerHubsEnabled } from './hubsPreview/PartnerHubsPreview';
@@ -13,8 +12,7 @@ import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { isAuthorizedDemoMode } from '../utils/demoMode';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
-import { StudioShell, type StudioNavId } from './studio/StudioShell';
-import { MoreToolsPanel } from './studio/MoreToolsPanel';
+import { StudioShell, type StudioNavId, type StudioToolAction } from './studio/StudioShell';
 import { HalfTermDesigner } from './halfTerm/HalfTermDesigner';
 import { BoltOnsView } from './boltOns/BoltOnsView';
 import type { BoltOnsPageId } from './boltOns/types';
@@ -37,6 +35,11 @@ import {
   syncHelpUrl,
   topicFromHelpPath,
 } from './help/routes';
+import {
+  resolveMainTabFromLocation,
+  syncMainUrl,
+  tabFromMainPath,
+} from './studio/mainRoutes';
 
 interface Unit {
   id: string;
@@ -61,13 +64,12 @@ const HALF_TERMS = [
 const ALLOWED = new Set([
   'unit-viewer',
   'lesson-library',
-  'lesson-builder',
+  'lesson-builder', // legacy alias → redirected to lesson-library
   'activity-library',
   'calendar',
   'our-partners',
   'contact-us',
   'curriculum',
-  'more',
   'lesson-viewer',
   'bolt-ons',
   'assessify',
@@ -75,6 +77,14 @@ const ALLOWED = new Set([
   'settings',
   'help',
 ]);
+
+/** Old Lesson Builder / Calendar / More tools links land on unified Lessons / Planner. */
+function canonicalizeTab(tab: string): string {
+  if (tab === 'lesson-builder') return 'lesson-library';
+  if (tab === 'calendar') return 'unit-viewer';
+  if (tab === 'more' || tab === 'more-tools') return 'unit-viewer';
+  return tab;
+}
 
 const BOLT_ON_TABS = new Set(['bolt-ons', 'assessify', 'perifeedback']);
 
@@ -88,6 +98,8 @@ function initialDashboardTab(): string {
     return 'settings';
   }
   if (resolveSettingsSectionFromLocation()) return 'settings';
+  const fromMain = resolveMainTabFromLocation();
+  if (fromMain) return fromMain;
   if (isPartnerHubsLink()) return 'our-partners';
   return 'unit-viewer';
 }
@@ -108,7 +120,7 @@ export function Dashboard() {
   const [activeTab, setActiveTabRaw] = useState<string>(initialDashboardTab);
   const newPartnerHubs = newPartnerHubsEnabled();
   const setActiveTab = (tab: string) => {
-    const next = tab === 'calendar' ? 'unit-viewer' : tab;
+    const next = canonicalizeTab(tab);
     setActiveTabRaw(next);
     if (!BOLT_ON_TABS.has(next)) {
       clearBoltOnsUrlIfPresent();
@@ -121,14 +133,18 @@ export function Dashboard() {
       clearSettingsUrlIfPresent();
       const topic = typeof window !== 'undefined' ? topicFromHelpPath(window.location.pathname) : null;
       syncHelpUrl(topic);
+    } else if (BOLT_ON_TABS.has(next)) {
+      clearSettingsUrlIfPresent();
+      clearHelpUrlIfPresent();
     } else {
       clearSettingsUrlIfPresent();
       clearHelpUrlIfPresent();
+      syncMainUrl(next);
     }
   };
 
   useEffect(() => {
-    const tab = activeTab === 'calendar' ? 'unit-viewer' : activeTab;
+    const tab = canonicalizeTab(activeTab);
     try {
       document.documentElement.dataset.ccdTab = tab;
       window.dispatchEvent(new CustomEvent('ccd:active-tab', { detail: { tab } }));
@@ -160,21 +176,29 @@ export function Dashboard() {
         setActiveTab('settings');
         return;
       }
+      const fromMain = resolveMainTabFromLocation();
+      if (fromMain) {
+        setActiveTabRaw(canonicalizeTab(fromMain));
+        // Clean legacy ?tab= once we have a path (keep Lesson Viewer play/mode).
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('tab')) {
+          const keep = new URLSearchParams();
+          const play = params.get('play');
+          const mode = params.get('mode');
+          if (play) keep.set('play', play);
+          if (mode) keep.set('mode', mode);
+          const qs = keep.toString();
+          const path = window.location.pathname || '/';
+          window.history.replaceState({}, '', `${path}${qs ? `?${qs}` : ''}`);
+        }
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab && ALLOWED.has(tab)) {
         setActiveTab(tab);
-        // Bolt-ons sync their own /bolt-ons paths via BoltOnsView.
         if (BOLT_ON_TABS.has(tab)) return;
         if (tab === 'settings' || tab === 'help') return;
-        // Preserve player deep-link params for Lesson Viewer hub to consume.
-        const keep = new URLSearchParams();
-        const play = params.get('play');
-        const mode = params.get('mode');
-        if (play) keep.set('play', play);
-        if (mode) keep.set('mode', mode);
-        const qs = keep.toString();
-        window.history.replaceState({}, '', `${window.location.pathname || '/'}${qs ? `?${qs}` : ''}`);
       }
     } catch {
       /* ignore */
@@ -194,6 +218,11 @@ export function Dashboard() {
       }
       if (isSettingsPath(window.location.pathname)) {
         setActiveTab('settings');
+        return;
+      }
+      const fromMain = tabFromMainPath(window.location.pathname);
+      if (fromMain) {
+        setActiveTabRaw(canonicalizeTab(fromMain));
         return;
       }
       if (activeTab === 'settings' || activeTab === 'help') {
@@ -223,7 +252,7 @@ export function Dashboard() {
 
   const handleDateSelect = (date: Date) => {
     setSelectedDate(date);
-    setActiveTab('lesson-builder');
+    setActiveTab('lesson-library');
   };
 
   const handleCreateLessonPlan = (date: Date) => {
@@ -243,7 +272,7 @@ export function Dashboard() {
       updatedAt: new Date(),
     };
     void addOrUpdateUserLessonPlan(newPlan);
-    setActiveTab('lesson-builder');
+    setActiveTab('lesson-library');
   };
 
   const handleDeleteLessonPlan = (planId: string) => {
@@ -259,7 +288,7 @@ export function Dashboard() {
   };
 
   const handleActivityAdd = (_activity: Activity) => {
-    /* Standalone Activity Library tab; Lesson Builder keeps its own DnD path */
+    /* Standalone Activity Library tab; Lessons workspace keeps its own DnD path */
   };
 
   const handleAssignLessonToHalfTerm = (lessonNumber: string, halfTermId: string) => {
@@ -277,16 +306,45 @@ export function Dashboard() {
   };
 
   const showTabsExplainerButton = isAuthorizedDemoMode();
-  const navId = (activeTab === 'calendar' ? 'unit-viewer' : activeTab) as StudioNavId;
+  const navId = canonicalizeTab(activeTab) as StudioNavId;
   const hubsMode = activeTab === 'our-partners';
   const wideCanvas =
     activeTab === 'activity-library' ||
+    activeTab === 'lesson-library' ||
+    activeTab === 'lesson-builder' ||
     activeTab === 'lesson-viewer' ||
+    activeTab === 'unit-viewer' ||
+    activeTab === 'curriculum' ||
     activeTab === 'settings' ||
     activeTab === 'help';
   const editorFlush = activeTab === 'activity-library' && activityEditorOpen;
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
+
+  const shellToolAction = (action: StudioToolAction) => {
+    if (action === 'class-calendar') {
+      handleTabChange('unit-viewer');
+      window.setTimeout(() => {
+        try {
+          window.dispatchEvent(new CustomEvent('ccd:open-class-calendar'));
+        } catch {
+          /* ignore */
+        }
+      }, 0);
+      return;
+    }
+    if (action === 'forum') {
+      window.location.assign('/forum');
+      return;
+    }
+    if (action === 'walkthrough') {
+      try {
+        window.dispatchEvent(new CustomEvent('ccd:start-walkthrough'));
+      } catch {
+        /* ignore */
+      }
+    }
+  };
 
   void getThemeForClass;
   void setUnits;
@@ -295,6 +353,7 @@ export function Dashboard() {
     <StudioShell
       active={navId}
       onNavigate={shellNavigate}
+      onToolAction={shellToolAction}
       hubsMode={hubsMode}
       wideCanvas={wideCanvas}
       editorFlush={editorFlush}
@@ -344,42 +403,12 @@ export function Dashboard() {
         </div>
       )}
 
-      {activeTab === 'lesson-library' && (
+      {(activeTab === 'lesson-library' || activeTab === 'lesson-builder') && (
         <div className="ccd-fade-in-up" key="ll">
-          <p className="ccd-studio-eyebrow mb-1">
-            CONNECT &amp; CREATE / <span>LESSONS</span>
-          </p>
-          <p className="mb-4 text-sm text-[#77738F]">
-            Lessons saved from Lesson Builder for{' '}
-            <strong className="text-[#1F1B4D]">{currentSheetInfo.display || currentSheetInfo.sheet}</strong>.
-            Filter by half-term, open a plan, or assign it into the Half-terms map.
-          </p>
-          <LessonLibrary
-            className={currentSheetInfo.sheet}
+          <LessonsWorkspace
             onAssignToUnit={handleAssignLessonToHalfTerm}
-            onNavigateToBuilder={() => handleTabChange('lesson-builder')}
+            onUnsavedChangesChange={setLessonBuilderHasUnsavedChanges}
           />
-        </div>
-      )}
-
-      {activeTab === 'lesson-builder' && (
-        <div className="ccd-fade-in-up" key="lb">
-          <p className="ccd-studio-eyebrow mb-1">
-            CONNECT &amp; CREATE / <span>LESSON BUILDER</span>
-          </p>
-          <p className="mb-3 text-sm text-[#77738F]">
-            Drag activities into a lesson, then <strong className="text-[#1F1B4D]">Save Lesson</strong>. It appears under{' '}
-            <button
-              type="button"
-              onClick={() => handleTabChange('lesson-library')}
-              className="font-semibold text-[#4338E8] underline-offset-2 hover:underline"
-            >
-              Lessons
-            </button>
-            .
-          </p>
-          {/* DnD: LessonDropZone + ActivityCard remain inside LessonPlanBuilder; DndRoot wraps the app */}
-          <LessonPlanBuilder onUnsavedChangesChange={setLessonBuilderHasUnsavedChanges} />
         </div>
       )}
 
@@ -426,12 +455,6 @@ export function Dashboard() {
       {activeTab === 'contact-us' && (
         <div className="ccd-fade-in-up" key="contact">
           <ContactUsPanel />
-        </div>
-      )}
-
-      {activeTab === 'more' && (
-        <div className="ccd-fade-in-up" key="more">
-          <MoreToolsPanel onNavigate={shellNavigate} />
         </div>
       )}
 

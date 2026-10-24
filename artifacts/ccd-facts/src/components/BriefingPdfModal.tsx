@@ -63,7 +63,7 @@ export function BriefingPdfModal({
           >
             <header className="briefing-modal-header">
               <div className="briefing-modal-heading">
-                <p className="briefing-modal-kicker">Creative Curriculum Designer</p>
+                <p className="briefing-modal-kicker">CCDesigner</p>
                 <h2 id="briefing-modal-title" className="briefing-modal-title">
                   The facts
                 </h2>

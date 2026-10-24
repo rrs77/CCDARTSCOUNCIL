@@ -46,6 +46,7 @@ const COMBINED_AREAS = [
   "hubs",
   "music-hubs",
   "interactive-lessons",
+  "planning-groups",
 ] as const;
 
 function resolveApiDir(): string {
@@ -193,6 +194,8 @@ function isCombinedApiPath(pathname: string): boolean {
  *
  * - Combined areas (forum, hubs, music-hubs, interactive-lessons) go through
  *   api/router.js exactly as on Vercel (including dynamic [topicId]/[postId]).
+ *   Flesh-out AI: GET/POST /api/interactive-lessons/flesh-out (needs OPENAI_API_KEY
+ *   in the api-server env; Vite proxies /api → :8080 via VITE_API_PROXY_TARGET).
  * - Standalone /api entrypoints (users, downloads, register, PDF) are mounted
  *   by file.
  * - Dynamic resource downloads: /api/resources/:resourceId/download

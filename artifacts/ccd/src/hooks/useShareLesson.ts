@@ -343,8 +343,8 @@ export function useShareLesson() {
 
     // Footer content
     const branding = settings?.branding || {};
-    const productName = branding.loginTitle || 'Creative Curriculum Designer';
-    const footerCompany = branding.footerCompanyName || 'Rhythmstix';
+    const productName = branding.loginTitle || 'CCDesigner';
+    const footerCompany = branding.footerCompanyName || 'CCDesigner';
     const footerYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
     const footerText = lessonData.customFooter || 
       [productName, `Lesson ${termSpecificNumber}`, currentSheetInfo.display, halfTermName, `© ${footerCompany} ${footerYear}`]

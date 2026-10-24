@@ -374,7 +374,7 @@ export function AssignSchemeMultiPanel({
         onClick={onClose}
       />
 
-      <div className="relative z-[1] flex max-h-[min(94vh,920px)] w-full max-w-[68rem] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
+      <div className="relative z-[1] flex h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
         {/* Header */}
         <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-7">
           <div className="flex items-start justify-between gap-3">
@@ -406,7 +406,19 @@ export function AssignSchemeMultiPanel({
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: termColor }} aria-hidden />
+          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]" aria-hidden>
+            <div
+              className="h-full rounded-full transition-all duration-200"
+              style={{
+                background: termColor,
+                width: selectedStackId
+                  ? '100%'
+                  : selectedClassIds.size === 0
+                    ? '33%'
+                    : '66%',
+              }}
+            />
+          </div>
 
           {/* Step labels */}
           <div className="mt-3.5 flex flex-wrap gap-2">

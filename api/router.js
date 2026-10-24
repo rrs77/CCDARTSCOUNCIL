@@ -39,6 +39,10 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 
 /* Interactive Lesson Viewer (kept out of /api entrypoints for Hobby function limit) */
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
+import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
+
+/* Planning group membership (service-role writes; kept out of /api entrypoints) */
+import * as planningGroupMembers from '../server/api/planning-groups/members.js';
 
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -179,6 +183,18 @@ function targetFor(pathname) {
     if (rest.length === 1 && rest[0] === 'transcribe') {
       return ilvTranscribe;
     }
+    if (rest.length === 1 && rest[0] === 'flesh-out') {
+      return ilvFleshOut;
+    }
+    return null;
+  }
+
+  /* ---------- Planning groups ---------- */
+
+  if (area === 'planning-groups') {
+    if (rest.length === 1 && rest[0] === 'members') {
+      return planningGroupMembers;
+    }
     return null;
   }
 
@@ -195,7 +211,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|interactive-lessons|planning-groups)(\/|$)/.test(route) ||
     route.includes('..')
   ) {
     return null;

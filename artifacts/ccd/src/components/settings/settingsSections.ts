@@ -6,6 +6,7 @@ export type SettingsSectionId =
   | 'classes'
   | 'folders'
   | 'objectives'
+  | 'curriculum'
   | 'preferences'
   | 'downloads'
   | 'users'
@@ -54,6 +55,22 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     requires: 'always',
   },
   {
+    id: 'curriculum',
+    label: 'Curriculum',
+    title: 'Curriculum',
+    helper: 'Frameworks, strands and statements for lesson plans — all user-defined.',
+    keywords: [
+      'curriculum',
+      'framework',
+      'strand',
+      'statement',
+      'template',
+      'section',
+      'planner',
+    ],
+    requires: 'always',
+  },
+  {
     id: 'preferences',
     label: 'Preferences',
     title: 'Preferences',
@@ -73,7 +90,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     id: 'users',
     label: 'Users',
     title: 'Users',
-    helper: 'Invite and manage who can use Studio Score.',
+    helper: 'Invite and manage who can use CCDesigner.',
     keywords: [
       'user',
       'people',

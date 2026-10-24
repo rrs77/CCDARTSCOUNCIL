@@ -333,7 +333,7 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
   return (
     <div
       ref={drop as unknown as React.Ref<HTMLDivElement>}
-      className={`mx-auto max-w-3xl space-y-3 rounded-[20px] bg-white/70 p-4 sm:p-5 ${zoneClass} ${flashClass}`}
+      className={`w-full min-h-[min(68vh,calc(100dvh-13.5rem))] space-y-3 rounded-[20px] bg-white/70 p-4 sm:p-5 ${zoneClass} ${flashClass}`}
     >
       <h3 className="text-[17px] font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>
         {date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
@@ -694,7 +694,12 @@ export function UnitsView({
                   <li key={n} className="grid grid-cols-[32px_1fr] items-center gap-x-3 gap-y-1 border-b border-[#E2E0EF] px-4 py-2.5 last:border-b-0 sm:grid-cols-[32px_1fr_190px]">
                     <span className="grid h-8 w-8 place-items-center rounded-full bg-[#E9E6FF] text-xs font-bold text-[#1F1B4D]">{i + 1}</span>
                     <span className="min-w-0">
-                      <span className="block truncate text-sm font-semibold text-[#1F2937]">{l?.title || l?.lessonName || `Lesson ${n}`}</span>
+                      <span
+                        className="block line-clamp-2 text-sm font-semibold leading-snug text-[#1F2937]"
+                        title={l?.title || l?.lessonName || `Lesson ${n}`}
+                      >
+                        {l?.title || l?.lessonName || `Lesson ${n}`}
+                      </span>
                       <span className="block text-xs text-[#77738F]">
                         {plural(lessonActivityCount(l), 'activity', 'activities')} · {l?.totalTime || 0} min
                       </span>

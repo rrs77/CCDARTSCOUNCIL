@@ -92,7 +92,7 @@ export function generateIcsFromLessonPlans(
   return [
     'BEGIN:VCALENDAR',
     'VERSION:2.0',
-    'PRODID:-//Creative Curriculum Designer//EN',
+    'PRODID:-//CCDesigner//EN',
     'CALSCALE:GREGORIAN',
     'METHOD:PUBLISH',
     `X-WR-CALNAME:${escapeIcalText(calendarName)}`,

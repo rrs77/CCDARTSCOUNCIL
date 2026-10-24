@@ -10,25 +10,27 @@ import { supabase } from '../config/supabase';
 import { generatePdfViaProxy } from '../utils/pdfApi';
 import { useShareLesson } from '../hooks/useShareLesson';
 import toast from 'react-hot-toast';
+import {
+  A4_HEIGHT_PX,
+  A4_WIDTH_PX,
+  PDFBOLT_MARGINS,
+} from '../utils/lessonPdfHtml';
 
-// A4 dimensions and PDFBolt margin settings
-// These MUST match the PDFBolt API settings exactly for accurate preview
-const A4_WIDTH_MM = 210;
-const A4_HEIGHT_MM = 297;
-const MM_TO_PX = 3.7795275591; // 1mm = 3.7795275591 pixels at 96 DPI
-
-// A4 dimensions in pixels at 96 DPI
-const A4_WIDTH_PX = A4_WIDTH_MM * MM_TO_PX; // ~794px
-const A4_HEIGHT_PX = A4_HEIGHT_MM * MM_TO_PX; // ~1122px
-
-// PDFBolt margin settings (in pixels) - MUST match API call
-const PDFBOLT_MARGIN_TOP_PX = 15;
-const PDFBOLT_MARGIN_BOTTOM_PX = 55; // Includes footer space
-const PDFBOLT_MARGIN_LEFT_PX = 20;
-const PDFBOLT_MARGIN_RIGHT_PX = 20;
+// PDFBolt margin settings (in pixels) — shared with lessonPdfHtml / live print preview
+const PDFBOLT_MARGIN_TOP_PX = parseInt(PDFBOLT_MARGINS.top, 10);
+const PDFBOLT_MARGIN_BOTTOM_PX = parseInt(PDFBOLT_MARGINS.bottom, 10);
+const PDFBOLT_MARGIN_LEFT_PX = parseInt(PDFBOLT_MARGINS.left, 10);
+const PDFBOLT_MARGIN_RIGHT_PX = parseInt(PDFBOLT_MARGINS.right, 10);
 
 // Available content area height (A4 height minus top and bottom margins)
-const PAGE_CONTENT_HEIGHT_PX = A4_HEIGHT_PX - PDFBOLT_MARGIN_TOP_PX - PDFBOLT_MARGIN_BOTTOM_PX; // ~1052px
+const PAGE_CONTENT_HEIGHT_PX = A4_HEIGHT_PX - PDFBOLT_MARGIN_TOP_PX - PDFBOLT_MARGIN_BOTTOM_PX;
+
+// Re-export for any UI that still references local A4 width naming
+const _A4_WIDTH_PX = A4_WIDTH_PX;
+void _A4_WIDTH_PX;
+void PAGE_CONTENT_HEIGHT_PX;
+void PDFBOLT_MARGIN_LEFT_PX;
+void PDFBOLT_MARGIN_RIGHT_PX;
 
 interface LessonPrintModalProps {
   lessonNumber?: string;
@@ -70,8 +72,8 @@ export function LessonPrintModal({
   } = useData();
   const { getCategoryColor, settings } = useSettings();
   const branding = settings?.branding || {};
-  const productName = branding.loginTitle || 'Creative Curriculum Designer';
-  const footerCompany = branding.footerCompanyName || 'Rhythmstix';
+  const productName = branding.loginTitle || 'CCDesigner';
+  const footerCompany = branding.footerCompanyName || 'CCDesigner';
   const footerYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
   const { shareLesson: shareSingleLesson, isSharing: isSharingSingle, getStoredShareUrl } = useShareLesson();
   const [isExporting, setIsExporting] = useState(false);
@@ -672,8 +674,19 @@ export function LessonPrintModal({
             <div class="subtitle">${escapeHtmlText(lessonSubtitle)}</div>
             <div class="meta">
               <span class="meta-item">📚 ${currentSheetInfo.display}</span>
-              <span class="meta-item">⏱ ${lessonData.totalTime || 45} mins</span>
-              <span class="meta-item">📅 ${halfTermName || unitName || 'Term 1'}</span>
+              <span class="meta-item">⏱ ${
+                lessonData.totalTime && lessonData.totalTime > 0
+                  ? lessonData.totalTime
+                  : (lessonData.orderedActivities || []).reduce(
+                      (s: number, a: { time?: number }) => s + (a.time || 0),
+                      0,
+                    ) || '—'
+              } mins</span>
+              ${
+                halfTermName || unitName
+                  ? `<span class="meta-item">📅 ${escapeHtmlText(halfTermName || unitName || '')}</span>`
+                  : ''
+              }
             </div>
           </div>
           
@@ -1202,19 +1215,55 @@ export function LessonPrintModal({
     return n || num;
   };
 
-  /** Browser print → Save as PDF when the Vercel/PDFBolt proxy is unreachable (local/dev). */
-  const openPrintFallback = async (htmlRaw: string) => {
+  /** Ask open lesson editors to flush drafts so print never loses unsaved work. */
+  const persistDraftsBeforePrint = () => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('ccd:persist-lesson-draft-before-print', {
+          detail: { sheet: currentSheetInfo.sheet, lessonNumbers: lessonsToRender },
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
+  /**
+   * Open the print window *before* any await so pop-up blockers do not stop the fallback.
+   * Caller fills/replaces document content once HTML is ready.
+   */
+  const openPrintWindowEarly = (): Window | null => {
     const printWin = window.open('', '_blank');
     if (!printWin) {
       toast.error('Please allow pop-ups to export via Print → Save as PDF');
-      return false;
+      return null;
     }
+    try {
+      printWin.document.write(
+        '<!DOCTYPE html><html><head><title>Preparing print…</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;color:#334155"><p>Preparing print preview…</p></body></html>',
+      );
+      printWin.document.close();
+    } catch {
+      /* ignore */
+    }
+    return printWin;
+  };
+
+  const writeAndPrintWindow = (printWin: Window, htmlRaw: string) => {
+    printWin.document.open();
     printWin.document.write(htmlRaw);
     printWin.document.close();
     printWin.focus();
     setTimeout(() => {
       printWin.print();
     }, 150);
+  };
+
+  /** Browser print → Save as PDF when the Vercel/PDFBolt proxy is unreachable (local/dev). */
+  const openPrintFallback = async (htmlRaw: string, existingWin?: Window | null) => {
+    const printWin = existingWin && !existingWin.closed ? existingWin : openPrintWindowEarly();
+    if (!printWin) return false;
+    writeAndPrintWindow(printWin, htmlRaw);
     return true;
   };
 
@@ -1224,6 +1273,10 @@ export function LessonPrintModal({
     const downloadFileName = exportMode === 'single' && lessonNumber
       ? `${currentSheetInfo.sheet}_Lesson_${getLessonDisplayNumber(lessonNumber)}.pdf`
       : `${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
+
+    persistDraftsBeforePrint();
+    // Open before any await — pop-up blockers require a sync user-gesture window.
+    const fallbackWin = openPrintWindowEarly();
 
     setIsExporting(true);
     try {
@@ -1245,6 +1298,13 @@ export function LessonPrintModal({
           emulateMediaType: 'screen',
         });
 
+        // PDF download succeeded — close the early fallback tab if we opened one.
+        try {
+          if (fallbackWin && !fallbackWin.closed) fallbackWin.close();
+        } catch {
+          /* ignore */
+        }
+
         const url = window.URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -1259,7 +1319,7 @@ export function LessonPrintModal({
         setTimeout(() => setExportSuccess(false), 3000);
       } catch (proxyError: unknown) {
         console.warn('PDF proxy failed, falling back to print dialog:', proxyError);
-        const opened = await openPrintFallback(htmlRaw);
+        const opened = await openPrintFallback(htmlRaw, fallbackWin);
         if (opened) {
           toast.success('Opened print dialog — choose “Save as PDF” to export', { duration: 5000 });
           setExportSuccess(true);
@@ -1268,6 +1328,11 @@ export function LessonPrintModal({
       }
     } catch (error: any) {
       console.error('Export failed:', error);
+      try {
+        if (fallbackWin && !fallbackWin.closed) fallbackWin.close();
+      } catch {
+        /* ignore */
+      }
       toast.error(error?.message || 'Failed to export PDF', { duration: 5000 });
     } finally {
       setIsExporting(false);
@@ -1402,7 +1467,7 @@ export function LessonPrintModal({
         if (msg.includes('BLOB_READ_WRITE_TOKEN') || msg.includes('Blob store')) {
           errorMessage = 'Vercel Blob Storage not set up. In Vercel Dashboard: Storage → Create Blob Store, then redeploy.';
         } else if (msg.includes('PDFBOLT_API_KEY') || msg.includes('VITE_PDFBOLT_API_KEY')) {
-          errorMessage = 'PDF API key missing. Set PDFBOLT_API_KEY (or VITE_PDFBOLT_API_KEY) in Vercel environment variables, then redeploy.';
+          errorMessage = 'PDF API key missing. Set PDFBOLT_API_KEY in Vercel environment variables, then redeploy.';
         } else if (msg.includes('bucket')) {
           errorMessage = 'Storage not configured. Create a Blob store in Vercel Dashboard → Storage.';
         } else if (msg.includes('Service role key') || msg.includes('SUPABASE_SERVICE_ROLE')) {
@@ -1602,31 +1667,39 @@ export function LessonPrintModal({
   useEffect(() => {
     if (!systemPrintOnly || lessonsToRender.length === 0 || systemPrintDone.current) return;
     systemPrintDone.current = true;
+    persistDraftsBeforePrint();
+    // Sync open under the effect's scheduling still benefits from early window
+    // (user gesture chain from the Print click that mounted this modal).
+    const printWin = openPrintWindowEarly();
+    if (!printWin) {
+      onClose();
+      return;
+    }
     const run = async () => {
       try {
         const [fullHtml] = await generateHTMLContent();
-        const printWin = window.open('', '_blank');
-        if (!printWin) {
-          toast.error('Please allow pop-ups to use Print');
-          onClose();
-          return;
-        }
-        printWin.document.write(fullHtml);
-        printWin.document.close();
-        printWin.focus();
-        // Small delay so content is painted before print dialog
+        writeAndPrintWindow(printWin, fullHtml);
         setTimeout(() => {
-          printWin.print();
           onClose();
-          setTimeout(() => printWin.close(), 500);
-        }, 150);
+          setTimeout(() => {
+            try {
+              if (!printWin.closed) printWin.close();
+            } catch {
+              /* ignore */
+            }
+          }, 500);
+        }, 200);
       } catch (e) {
+        try {
+          if (!printWin.closed) printWin.close();
+        } catch {
+          /* ignore */
+        }
         toast.error('Failed to open print dialog');
         onClose();
       }
     };
-    const t = setTimeout(run, 100);
-    return () => clearTimeout(t);
+    void run();
   }, [systemPrintOnly, lessonsToRender.length]);
 
   const pdfDownloadDone = useRef(false);

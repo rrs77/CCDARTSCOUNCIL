@@ -107,8 +107,8 @@ export function UnitViewer({ initialHalfTermId = null, hidePageChrome = false }:
     updateLessonData
   } = useData();
   const { getThemeForClass, settings } = useSettings();
-  const productName = settings?.branding?.loginTitle || 'Creative Curriculum Designer';
-  const footerCompany = settings?.branding?.footerCompanyName || 'Rhythmstix';
+  const productName = settings?.branding?.loginTitle || 'CCDesigner';
+  const footerCompany = settings?.branding?.footerCompanyName || 'CCDesigner';
   const footerYear = settings?.branding?.footerCopyrightYear || new Date().getFullYear().toString();
   const { stacks } = useLessonStacks();
   const [units, setUnits] = useState<Unit[]>([]);

@@ -73,15 +73,23 @@ export function buildDayEntries(
   return entries.sort((a, b) => timeToMinutes(a.time) - timeToMinutes(b.time));
 }
 
+/** Display number for lesson keys like `lesson5` → `5`. */
+export function lessonDisplayNumber(lessonNumber: string | undefined | null): string {
+  if (!lessonNumber) return '';
+  const stripped = String(lessonNumber).replace(/^lesson/i, '').trim();
+  return stripped || String(lessonNumber);
+}
+
 export function lessonTitle(plan: LessonPlan | undefined, cache?: ClassLessons | 'loading') {
   if (!plan) return '';
   const data = cache && cache !== 'loading' && plan.lessonNumber ? cache.lessons[plan.lessonNumber] : undefined;
-  return (
-    plan.title ||
-    data?.title ||
-    data?.lessonName ||
-    (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : 'Untitled lesson')
-  );
+  const fromData = (data?.title || data?.lessonName || '').trim();
+  const fromPlan = (plan.title || '').trim();
+  if (fromPlan && !/^lesson\s*lesson\d+/i.test(fromPlan)) return fromPlan;
+  if (fromData) return fromData;
+  if (fromPlan) return fromPlan;
+  const num = lessonDisplayNumber(plan.lessonNumber);
+  return num ? `Lesson ${num}` : 'New lesson';
 }
 
 /** Next `count` timetable dates for a class from `from`, skipping holidays, INSET days and taken slots. */

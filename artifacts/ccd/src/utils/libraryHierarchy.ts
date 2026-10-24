@@ -230,6 +230,89 @@ export function keyStagesFromActivityTags(
   return LIBRARY_KEY_STAGES.map((k) => k.id).filter((id) => stages.has(id));
 }
 
+type ActivityLike = {
+  yearGroups?: unknown;
+  yeargroups?: unknown;
+  level?: string | null;
+  category?: string | null;
+  teachingUnit?: string | null;
+  activity?: string | null;
+};
+
+function activityYearGroupTags(activity: ActivityLike): unknown {
+  return activity.yearGroups ?? activity.yeargroups;
+}
+
+type LessonLikeForKeyStage = {
+  title?: string | null;
+  lessonName?: string | null;
+  orderedActivities?: ActivityLike[] | null;
+  grouped?: Record<string, ActivityLike[]> | null;
+};
+
+/** Early-years cues in activity titles when tags/categories are missing. */
+function eyfsActivityNameCue(name: string): boolean {
+  const n = String(name || '').toLowerCase();
+  return (
+    /\b(lkg|ukg|eyfs|reception|nursery|kindergarten)\b/.test(n) ||
+    /\b(puppet|parachute|scarf songs?|bubble songs?|see[\s-]?saw|hello song|goodbye song|welcome song)\b/.test(
+      n,
+    )
+  );
+}
+
+/** Key stages for one activity: explicit tags first, else category defaults / name cues. */
+export function keyStagesForActivity(activity: ActivityLike | null | undefined): LibraryKeyStageId[] {
+  if (!activity) return [];
+  const tagged = keyStagesFromActivityTags(activityYearGroupTags(activity), activity.level);
+  if (tagged.length > 0) return tagged;
+  const cat = String(activity.category || activity.teachingUnit || '').trim();
+  if (cat) {
+    const fromCat = defaultKeyStagesForCategory(cat);
+    // Category defaults that fall through to bare eyfs are fine; keep them.
+    if (fromCat.length > 0) return fromCat;
+  }
+  const name = String(activity.activity || '');
+  const fromName = keyStageFromYearGroupTag(name);
+  if (fromName) return [fromName];
+  if (eyfsActivityNameCue(name)) return ['eyfs'];
+  return [];
+}
+
+/**
+ * Key stages implied by a lesson's activities (tags, category defaults, title).
+ * Empty only when the lesson has no activities and no title cue.
+ */
+export function keyStagesForLesson(lesson: LessonLikeForKeyStage | null | undefined): LibraryKeyStageId[] {
+  if (!lesson) return [];
+  const acts: ActivityLike[] = lesson.orderedActivities?.length
+    ? lesson.orderedActivities
+    : Object.values(lesson.grouped || {}).flat();
+  const stages = new Set<LibraryKeyStageId>();
+  for (const a of acts) {
+    for (const ks of keyStagesForActivity(a)) stages.add(ks);
+  }
+  // Title / name heuristics (e.g. "LKG — …", "Year 8 …")
+  const titleBlob = `${lesson.title || ''} ${lesson.lessonName || ''}`;
+  const fromTitle = keyStageFromYearGroupTag(titleBlob);
+  if (fromTitle) stages.add(fromTitle);
+  return LIBRARY_KEY_STAGES.map((k) => k.id).filter((id) => stages.has(id));
+}
+
+/**
+ * True when the lesson should appear under the toolbar key-stage filter.
+ * Empty lessons (no activities / no stage cue) stay visible so teachers can draft.
+ * Lessons whose activities only map to other stages (e.g. LKG/EYFS) are hidden for KS3+.
+ */
+export function lessonMatchesKeyStage(
+  lesson: LessonLikeForKeyStage | null | undefined,
+  keyStage: LibraryKeyStageId,
+): boolean {
+  const stages = keyStagesForLesson(lesson);
+  if (stages.length === 0) return true;
+  return stages.includes(keyStage);
+}
+
 /** Default stages when an activity is tagged All / untagged, by subject category. */
 export function defaultKeyStagesForCategory(categoryName: string): LibraryKeyStageId[] {
   const n = normalizeKey(categoryName);
@@ -305,16 +388,6 @@ export interface HierarchyNode {
     count: number;
   }[];
   count: number;
-}
-
-type ActivityLike = {
-  yearGroups?: unknown;
-  yeargroups?: unknown;
-  level?: string | null;
-};
-
-function activityYearGroupTags(activity: ActivityLike): unknown {
-  return activity.yearGroups ?? activity.yeargroups;
 }
 
 /**

@@ -848,9 +848,9 @@ export function LessonPlannerCalendar({
       ).join('')}</div>`;
     };
     const branding = settings?.branding || {};
-    const productName = branding.loginTitle || settings?.schoolName || 'Creative Curriculum Designer';
-    const productSubtitle = branding.loginSubtitle || 'Rhythmstix';
-    const companyName = branding.footerCompanyName || 'Rhythmstix';
+    const productName = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+    const productSubtitle = branding.loginSubtitle || 'CCDesigner';
+    const companyName = branding.footerCompanyName || 'CCDesigner';
     const copyrightYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
     const contactEmail = branding.footerContactEmail || '';
     const headerColor = branding.loginButtonColor || branding.loginBackgroundColor || '#0d9488';
@@ -892,6 +892,9 @@ export function LessonPlannerCalendar({
       .print-lesson-block .title { font-weight: 600; }
       .print-resource-links a { color: #0d9488; text-decoration: underline; }
       .brand-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #64748b; text-align: center; }
+      @page { margin: 12mm; }
+      .print-lesson-block .acts { margin: 4px 0 0; padding: 0 0 0 12px; font-size: 9px; color: #475569; }
+      .print-lesson-block .acts li { margin: 0; }
     `;
 
     let bodyHtml = '';
@@ -928,49 +931,8 @@ export function LessonPlannerCalendar({
           }).join('')}
         </div>
       `;
-    } else if (viewMode === 'week') {
-      const hours = Array.from({ length: 11 }, (_, i) => i + 8);
-      bodyHtml = `
-        <div class="print-section-title">${escape(viewLabel)} View • ${escape(viewTitle)}</div>
-        <table>
-          <thead><tr><th style="width:60px">Time</th>${weekDays.map(d => `<th>${format(d, 'EEE d')}</th>`).join('')}</tr></thead>
-          <tbody>
-            ${hours.map(hour => `
-              <tr>
-                <td style="background:#f1f5f9;font-weight:500">${hour}:00</td>
-                ${weekDays.map(date => {
-                  const plans = getLessonPlansForDate(date);
-                  const dayOfWeek = getDay(date);
-                  const tClasses = timetableClasses.filter(t => t.day === dayOfWeek);
-                  const slotClasses = tClasses.filter(t => {
-                    const sh = parseInt(t.startTime.split(':')[0], 10);
-                    const eh = parseInt(t.endTime.split(':')[0], 10);
-                    return hour >= sh && hour < eh;
-                  });
-                  const slotPlans = plans.filter(p => {
-                    const t = p.time || '00:00';
-                    const ph = parseInt(t.split(':')[0], 10);
-                    return ph === hour;
-                  });
-                  const isH = isHoliday(date);
-                  const isI = isInsetDay(date);
-                  let cell = '';
-                  if (isH) cell = '<span style="color:#b91c1c">Holiday</span>';
-                  else if (isI) cell = '<span style="color:#6d28d9">Inset</span>';
-                  else {
-                    slotClasses.forEach(t => { cell += `<div style="font-size:10px;padding:2px">${escape(t.className)}</div>`; });
-                    slotPlans.forEach(p => {
-                      cell += `<div style="font-size:10px;padding:2px">${escape(p.title || `Lesson ${p.lessonNumber || ''}`)}${renderResourceLinksHtml(p, true)}</div>`;
-                    });
-                  }
-                  return `<td style="vertical-align:top">${cell || '&nbsp;'}</td>`;
-                }).join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    } else if (viewMode === 'week-lessons') {
+    } else if (viewMode === 'week' || viewMode === 'week-lessons') {
+      // Rich week print (times + activities) — same layout for week and week-lessons.
       const schoolWeekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
       const schoolWeekEnd = endOfWeek(schoolWeekStart, { weekStartsOn: 1 });
       const schoolWeekDays = eachDayOfInterval({ start: schoolWeekStart, end: schoolWeekEnd }).slice(0, 5);
@@ -1004,7 +966,16 @@ export function LessonPlannerCalendar({
                 const color = plan.unitId ? '#8B5CF6' : '#EC4899';
                 const time = plan.time || '';
                 const title = plan.title || `Lesson ${plan.lessonNumber || ''}`;
-                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${renderResourceLinksHtml(plan, false)}</div>`;
+                const acts = (plan.activities?.length
+                  ? plan.activities
+                  : (plan.lessonNumber && allLessonsData[plan.lessonNumber])
+                    ? (allLessonsData[plan.lessonNumber].orderedActivities || Object.values(allLessonsData[plan.lessonNumber].grouped || {}).flat())
+                    : []
+                ).map((a: Activity) => (a?.activity || a?.description || '').trim()).filter(Boolean).slice(0, 8);
+                const actsHtml = acts.length
+                  ? `<ul class="acts">${acts.map((n: string) => `<li>${escape(n)}</li>`).join('')}</ul>`
+                  : '';
+                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${actsHtml}${renderResourceLinksHtml(plan, false)}</div>`;
               }
             });
             return `<div class="print-day-col">${colContent}</div>`;
@@ -1063,8 +1034,9 @@ export function LessonPlannerCalendar({
     `;
 
     const brandFooter = `
-      <div class="brand-footer">
-        ${escape(companyName)} • © ${escape(copyrightYear)}${contactEmail ? ` • ${escape(contactEmail)}` : ''}
+      <div class="brand-footer" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <span>${escape(companyName)} • © ${escape(copyrightYear)}${contactEmail ? ` • ${escape(contactEmail)}` : ''}</span>
+        <span>Page 1</span>
       </div>
     `;
 
@@ -1078,11 +1050,12 @@ export function LessonPlannerCalendar({
       return btoa(binaryString);
     };
 
+    // PDFBolt/Chromium fills .pageNumber; browser print fallback uses "Page 1" in the body footer below.
     const footerContent = `
       <div style="width:100%;font-size:9px;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;color:#5F6368;font-family:'Inter',sans-serif;">
         <span>${escape(productName)}</span>
         <span>${escape(className)} • ${escape(viewLabel)}</span>
-        <span style="background:#E8EAEF;color:#0f766e;padding:4px 12px;border-radius:50px;font-weight:500;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+        <span style="background:#E8EAEF;color:#0f766e;padding:4px 12px;border-radius:50px;font-weight:500;">Page <span class="pageNumber"></span></span>
       </div>
     `;
 
@@ -1827,7 +1800,11 @@ export function LessonPlannerCalendar({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setDayViewDate(addDays(safeDate, -1))}
+                  onClick={() => {
+                    let d = addDays(safeDate, -1);
+                    while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, -1);
+                    setDayViewDate(d);
+                  }}
                   className={dayNavBtn}
                   aria-label="Previous day"
                 >
@@ -1842,7 +1819,11 @@ export function LessonPlannerCalendar({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDayViewDate(addDays(safeDate, 1))}
+                  onClick={() => {
+                    let d = addDays(safeDate, 1);
+                    while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+                    setDayViewDate(d);
+                  }}
                   className={dayNavBtn}
                   aria-label="Next day"
                 >
@@ -2334,6 +2315,11 @@ export function LessonPlannerCalendar({
   const setCalendarViewMode = (mode: 'month' | 'week' | 'day' | 'week-lessons') => {
     try {
       setViewMode(mode);
+      if (mode === 'day') {
+        let d = dayViewDate instanceof Date && !Number.isNaN(dayViewDate.getTime()) ? dayViewDate : new Date();
+        while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+        setDayViewDate(d);
+      }
     } catch (error) {
       console.error(`Error switching to ${mode} view:`, error);
     }
@@ -2535,7 +2521,9 @@ export function LessonPlannerCalendar({
                 } else if (viewMode === 'week' || viewMode === 'week-lessons') {
                   setCurrentDate(subWeeks(currentDate, 1));
                 } else {
-                  setDayViewDate(addDays(dayViewDate, -1));
+                  let d = addDays(dayViewDate, -1);
+                  while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, -1);
+                  setDayViewDate(d);
                 }
               }}
               aria-label="Previous period"
@@ -2546,8 +2534,11 @@ export function LessonPlannerCalendar({
 
             <button
               onClick={() => {
-                setCurrentDate(new Date());
-                setDayViewDate(new Date());
+                const today = new Date();
+                setCurrentDate(today);
+                let d = today;
+                while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+                setDayViewDate(d);
               }}
               className="inline-flex min-h-[40px] md:min-h-[44px] items-center px-3 sm:px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors duration-200 hover:border-[#1F1B4D] hover:text-[#1F1B4D]"
             >
@@ -2561,7 +2552,9 @@ export function LessonPlannerCalendar({
                 } else if (viewMode === 'week' || viewMode === 'week-lessons') {
                   setCurrentDate(addWeeks(currentDate, 1));
                 } else {
-                  setDayViewDate(addDays(dayViewDate, 1));
+                  let d = addDays(dayViewDate, 1);
+                  while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+                  setDayViewDate(d);
                 }
               }}
               aria-label="Next period"
