@@ -98,6 +98,8 @@ export interface LessonData {
   sections?: import('../types/lessonSections').LessonSection[];
   /** Optional plan template id chosen for this key stage. */
   planTemplateId?: string;
+  /** Rhythmstix print/PDF template chosen by the teacher (eyfs|ks1|lks2|uks2|ks3|ks4|ks5). Default comes from the year group. */
+  lessonTemplateId?: string;
   /** Primary subject for unit tray colouring (Settings subject/folder). */
   primarySubjectId?: string;
   /** AI flesh-out metadata (never locks fields). */
