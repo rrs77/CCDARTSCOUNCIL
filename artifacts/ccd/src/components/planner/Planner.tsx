@@ -683,32 +683,32 @@ body{
 .sheet{position:relative;z-index:1;padding-top:4px}
 .mast{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:4px 0 10px 36px;border-bottom:1.5px solid #E2E0EF}
 .mast-left{min-width:0}
-.eyebrow{margin:0 0 2px;font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#77738F}
+.eyebrow{margin:0 0 2px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#77738F}
 .mast h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:#1F1B4D}
-.mast .range{margin:3px 0 0;font-size:12px;font-weight:500;color:#5C5878}
+.mast .range{margin:3px 0 0;font-size:13px;font-weight:500;color:#5C5878}
 .mast-right{text-align:right;flex-shrink:0}
-.term-pill{display:inline-block;font-size:10px;font-weight:700;color:#4338E8;background:#E9E6FF;border-radius:999px;padding:3px 10px}
-.product-quiet{margin-top:4px;font-size:9px;font-weight:600;color:#9B97B0}
+.term-pill{display:inline-block;font-size:13px;font-weight:700;color:#4338E8;background:#E9E6FF;border-radius:999px;padding:3px 10px}
+.product-quiet{margin-top:4px;font-size:13px;font-weight:600;color:#9B97B0}
 .accent{height:2px;margin-top:-1.5px;background:linear-gradient(90deg,#4338E8 0%,#E5E2FF 42%,transparent 100%)}
 .g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin-top:12px;border:1px solid #E2E0EF;border-radius:10px;overflow:hidden}
 .col{min-width:0;padding:8px 9px 10px;border-right:1px solid #E2E0EF;background:#fff}
 .col:last-child{border-right:0}
 .col:nth-child(odd){background:#FAFAFC}
-.d{font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid #E9E6FF}
+.d{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid #E9E6FF}
 .l{border-left:2.5px solid;padding:4px 0 4px 7px;margin-top:6px;break-inside:avoid}
-.a{font-size:9px;font-weight:700;letter-spacing:.01em}
-.b{font-size:11px;font-weight:600;line-height:1.35;margin-top:1px;color:#1F1B4D}
-.acts{margin:3px 0 0;padding:0 0 0 12px;font-size:9px;font-weight:500;color:#5C5878;line-height:1.35}
+.a{font-size:13px;font-weight:700;letter-spacing:.01em}
+.b{font-size:13px;font-weight:600;line-height:1.35;margin-top:1px;color:#1F1B4D}
+.acts{margin:3px 0 0;padding:0 0 0 12px;font-size:13px;font-weight:500;color:#5C5878;line-height:1.35}
 .acts li{margin:0}
-.n{color:#C4C0D4;margin-top:10px;font-size:11px;font-weight:500}
+.n{color:#C4C0D4;margin-top:10px;font-size:13px;font-weight:500}
 .day-stack{margin-top:12px;border:1px solid #E2E0EF;border-radius:10px;padding:12px 14px}
 .month-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:12px}
 .month-heads{display:contents}
 .month-head{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding:0 4px 2px}
 .month-cell{border:1px solid #E2E0EF;border-radius:8px;padding:6px 7px;min-height:72px;break-inside:avoid}
 .month-cell.is-empty{border-style:dashed;background:#FAFAFC;min-height:48px}
-.month-cell .dn{font-size:9px;font-weight:800;color:#4338E8;margin-bottom:4px}
-.foot{margin-top:12px;padding-top:8px;border-top:1px solid #E2E0EF;display:flex;justify-content:space-between;gap:12px;font-size:9px;font-weight:500;color:#77738F}
+.month-cell .dn{font-size:13px;font-weight:800;color:#4338E8;margin-bottom:4px}
+.foot{margin-top:12px;padding-top:8px;border-top:1px solid #E2E0EF;display:flex;justify-content:space-between;gap:12px;font-size:13px;font-weight:500;color:#77738F}
 </style></head><body>
 <img class="logo-mark" src="${esc(absLogo)}" alt="" onerror="this.style.display='none'">
 <div class="sheet">

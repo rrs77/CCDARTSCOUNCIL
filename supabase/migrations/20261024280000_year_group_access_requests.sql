@@ -171,7 +171,7 @@ BEGIN
     SELECT 1
     FROM public.profiles p
     WHERE p.id = p_requester_id
-      AND p.organisation_id::text = v_org
+      AND trim(p.organisation_id::text) = v_org
       AND p.anonymised_at IS NULL
       AND p.status IS DISTINCT FROM 'suspended'
   ) THEN

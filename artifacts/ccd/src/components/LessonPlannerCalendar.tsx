@@ -851,10 +851,10 @@ export function LessonPlannerCalendar({
       if (links.length === 0) return '';
       if (compact) {
         return links.slice(0, 3).map(r =>
-          `<a href="${escapeUrl(r.url)}" target="_blank" rel="noopener noreferrer" style="font-size:9px;color:#0d9488;text-decoration:underline;display:block;margin-top:1px">${escape(r.label)}</a>`
+          `<a href="${escapeUrl(r.url)}" target="_blank" rel="noopener noreferrer" style="font-size:13px;color:#0d9488;text-decoration:underline;display:block;margin-top:1px">${escape(r.label)}</a>`
         ).join('');
       }
-      return `<div class="print-resource-links" style="margin-top:6px;font-size:9px">${links.map(r =>
+      return `<div class="print-resource-links" style="margin-top:6px;font-size:13px">${links.map(r =>
         `<a href="${escapeUrl(r.url)}" target="_blank" rel="noopener noreferrer" style="color:#0d9488;text-decoration:underline;margin-right:8px;display:inline-block">${escape(r.label)}</a>`
       ).join('')}</div>`;
     };
@@ -881,14 +881,14 @@ export function LessonPlannerCalendar({
 
     const printStyles = `
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Inter', -apple-system, sans-serif; font-size: 11px; line-height: 1.4; color: #1a1a1a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; line-height: 1.4; color: #1a1a1a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .brand-header { background: ${escape(headerColor)}; color: white; padding: 20px 24px; border-radius: 8px 8px 0 0; margin-bottom: 0; }
       .brand-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-      .brand-header .subtitle { font-size: 12px; opacity: 0.95; }
-      .brand-header .meta { font-size: 10px; opacity: 0.9; margin-top: 8px; }
+      .brand-header .subtitle { font-size: 13px; opacity: 0.95; }
+      .brand-header .meta { font-size: 13px; opacity: 0.9; margin-top: 8px; }
       .print-content { padding: 20px 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
       .print-section-title { font-size: 16px; font-weight: 600; color: #0f766e; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb; }
-      table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
       th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
       th { background: #f1f5f9; font-weight: 600; }
       .print-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; }
@@ -898,19 +898,19 @@ export function LessonPlannerCalendar({
       .print-day.holiday { background: #fef2f2; }
       .print-day.inset { background: #f5f3ff; }
       .print-day-num { font-weight: 600; margin-bottom: 4px; }
-      .print-day-content { font-size: 10px; }
+      .print-day-content { font-size: 13px; }
       .print-day-content .plan, .print-day-content .event { margin: 2px 0; padding: 2px 4px; border-radius: 4px; }
-      .print-day-content .badge { padding: 1px 4px; border-radius: 4px; font-size: 9px; }
+      .print-day-content .badge { padding: 1px 4px; border-radius: 4px; font-size: 13px; }
       .print-lessons-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
       .print-day-col { border: 1px solid #e2e8f0; padding: 12px; }
-      .print-day-col h3 { font-size: 12px; margin: 0 0 8px 0; color: #64748b; }
+      .print-day-col h3 { font-size: 13px; margin: 0 0 8px 0; color: #64748b; }
       .print-lesson-block { padding: 8px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid; page-break-inside: avoid; }
-      .print-lesson-block .time { font-size: 10px; color: #64748b; }
+      .print-lesson-block .time { font-size: 13px; color: #64748b; }
       .print-lesson-block .title { font-weight: 600; }
       .print-resource-links a { color: #0d9488; text-decoration: underline; }
-      .brand-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #64748b; text-align: center; }
+      .brand-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #64748b; text-align: center; }
       @page { margin: 12mm; }
-      .print-lesson-block .acts { margin: 4px 0 0; padding: 0 0 0 12px; font-size: 9px; color: #475569; }
+      .print-lesson-block .acts { margin: 4px 0 0; padding: 0 0 0 12px; font-size: 13px; color: #475569; }
       .print-lesson-block .acts li { margin: 0; }
     `;
 
@@ -943,7 +943,7 @@ export function LessonPlannerCalendar({
               const unitColor = p.unitId ? units.find(u => u.id === p.unitId)?.color || theme.primary : theme.primary;
               content += `<div class="plan" style="background:${escape(unitColor)}20;color:${escape(unitColor)}">${escape(p.title || `Lesson ${p.lessonNumber || ''}`)}${renderResourceLinksHtml(p, true)}</div>`;
             });
-            if (plans.length > 2) content += `<div style="font-size:9px;color:#64748b">+${plans.length - 2} more</div>`;
+            if (plans.length > 2) content += `<div style="font-size:13px;color:#64748b">+${plans.length - 2} more</div>`;
             return `<div class="${classes}"><div class="print-day-num">${format(date, 'd')}</div><div class="print-day-content">${content}</div></div>`;
           }).join('')}
         </div>
@@ -1069,7 +1069,7 @@ export function LessonPlannerCalendar({
 
     // PDFBolt/Chromium fills .pageNumber; browser print fallback uses "Page 1" in the body footer below.
     const footerContent = `
-      <div style="width:100%;font-size:9px;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;color:#5F6368;font-family:'Inter',sans-serif;">
+      <div style="width:100%;font-size:13px;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;color:#5F6368;font-family:'Inter',sans-serif;">
         <span>${escape(productName)}</span>
         <span>${escape(className)} • ${escape(viewLabel)}</span>
         <span style="background:#E8EAEF;color:#0f766e;padding:4px 12px;border-radius:50px;font-weight:500;">Page <span class="pageNumber"></span></span>
