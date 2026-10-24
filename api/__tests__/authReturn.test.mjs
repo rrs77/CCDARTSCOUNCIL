@@ -13,7 +13,7 @@ const {
   queryReturnPath,
   resolvePostAuthReturn,
   shouldNavigateToReturn,
-} = await import('../../artifacts/ccd/src/utils/authReturn.ts');
+} = await import('../../artifacts/ccd/src/utils/authReturnHelpers.mjs');
 
 describe('safeReturnPath', () => {
   it('accepts in-app forum admin path', () => {
@@ -32,6 +32,12 @@ describe('safeReturnPath', () => {
 
   it('rejects missing leading slash', () => {
     assert.equal(safeReturnPath('forum/admin'), null);
+  });
+
+  it('rejects control characters', () => {
+    assert.equal(safeReturnPath('/forum/\nadmin'), null);
+    assert.equal(safeReturnPath('/forum/\u0000'), null);
+    assert.equal(safeReturnPath('/forum/\u007f'), null);
   });
 });
 

@@ -11,8 +11,8 @@ import { toCsv } from '../../../../api/_downloadShared.js';
 import { corsHeaders } from '../../../../api/_authShared.js';
 import { requireHubAccess } from '../../../../api/_hubShared.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 function hubIdFrom(request, context) {
@@ -46,7 +46,7 @@ export async function GET(request, context) {
     if (error) {
       return new Response(JSON.stringify({ error: error.message }), {
         status: 500,
-        headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+        headers: { 'Content-Type': 'application/json', ...corsHeaders({}, request) },
       });
     }
 
@@ -66,14 +66,14 @@ export async function GET(request, context) {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': `attachment; filename="${filename}"`,
         'Cache-Control': 'no-store',
-        ...corsHeaders(),
+        ...corsHeaders({}, request),
       },
     });
   } catch (e) {
     console.error(e);
     return new Response(JSON.stringify({ error: 'Export failed.' }), {
       status: 500,
-      headers: { 'Content-Type': 'application/json', ...corsHeaders() },
+      headers: { 'Content-Type': 'application/json', ...corsHeaders({}, request) },
     });
   }
 }

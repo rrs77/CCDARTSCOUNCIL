@@ -18,7 +18,7 @@ Creative Curriculum Designer is a pnpm monorepo centered on a React/Vite fronten
 - **Browser to Supabase** — the client is untrusted and talks directly to Supabase Auth and PostgREST. Authentication and authorization must hold without relying on hidden frontend controls.
 - **Authenticated users to privileged UI/actions** — the app exposes teacher/admin capabilities in the same frontend bundle. Role checks must not depend on insecure client-only identities or defaults.
 - **Rich text / imported content to DOM rendering** — lesson and activity fields cross from user-controlled HTML into `dangerouslySetInnerHTML` sinks. This boundary requires strict sanitization or safe rendering.
-- **Production code to dev-only/backward-compatibility paths** — demo mode, local auth fallback, and `.migration-backup/` artifacts exist in the repo. These should be treated as out of scope unless clearly reachable in the shipped production app.
+- **Production code to dev-only/backward-compatibility paths** — demo mode and local auth fallback exist in the repo. These should be treated as out of scope unless clearly reachable in the shipped production app.
 - **School-to-school data isolation inside shared Supabase tables** — multiple schools use the same deployment, so lesson data, planning records, branding, and curriculum settings must be partitioned by a trustworthy tenant identifier rather than generic class names or singleton keys.
 - **Browser to third-party export providers** — PDF generation/storage providers are outside the trust boundary. Provider credentials must stay server-side because every browser user is untrusted.
 
@@ -28,7 +28,7 @@ Creative Curriculum Designer is a pnpm monorepo centered on a React/Vite fronten
 - **Highest-risk areas:** `artifacts/ccd/src/contexts/AuthContext.tsx`, `artifacts/ccd/src/config/api.ts`, export/share flows in `artifacts/ccd/src/components/LessonPrintModal.tsx` and `artifacts/ccd/src/components/LessonPlannerCalendar.tsx`, lesson/activity rich-text components under `artifacts/ccd/src/components/`
 - **Public surface:** login, preview/demo entry points, password-reset page
 - **Authenticated/admin surface:** settings, user-management affordances, lesson/activity creation and editing, direct Supabase queries from `config/api.ts`, and export/share actions that invoke PDF generation
-- **Usually ignore unless reachability changes:** `.migration-backup/`, mock/demo-only helpers, and `artifacts/api-server` beyond its current health endpoint
+- **Usually ignore unless reachability changes:** mock/demo-only helpers, and `artifacts/api-server` beyond its current health endpoint
 
 ## Threat Categories
 

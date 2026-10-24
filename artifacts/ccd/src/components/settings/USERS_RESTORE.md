@@ -16,19 +16,28 @@ There was **never** a separate `/set-password` route. Invitees use **`/reset-pas
 
 ## Org / hub scoping (API)
 
-- **Full admins** (`admin` / `superuser` / `super_admin`): see all users; can invite any role (super only by super).
-- **`can_manage_users` without full admin** (school / hub leads): list filtered to their `organisation_id` + hubs where they are `hub_administrator`. Create-user forces their organisation and blocks minting system admins.
+- **Full admins** (`superuser` / `super_admin` only): see all users; can invite any role (super only by super).
+- **Org managers** (`role=admin` or `can_manage_users`): list filtered to their `organisation_id` + hubs where they are `hub_administrator`. Create-user forces their organisation and blocks minting system admins.
 
 ## Live data vs demo
 
 1. Prefer `GET /api/users/list` (needs `SUPABASE_SERVICE_ROLE_KEY` on api-server).
-2. Else client `profiles` SELECT under RLS (migration `20261019_profiles_admin_read_scope.sql`).
+2. Else client `profiles` SELECT under RLS (migration `20261019120100_profiles_admin_read_scope.sql`).
 3. Else demo roster (includes Rob as `super_admin` + Chelmsford Music Hub org admin for UI demos).
 
-## Rob as super admin
+## Granting super_admin (manual, by user id)
 
-Migration `20260903_hub_administration.sql` (and re-applied in `20261019_profiles_admin_read_scope.sql`) sets `rob.reichstorer@gmail.com` → `super_admin` when that profile exists. Also matches typo `@gmaill.com` in the new migration. **Email is never checked at request time** — only roles.
+Do **not** grant by email in migrations (squatting risk). After the account exists and `email_confirmed_at` is set:
+
+```bash
+# Dry-run
+node scripts/grant-super-admin.mjs <auth.users.uuid>
+# Apply
+node scripts/grant-super-admin.mjs <auth.users.uuid> --apply
+```
+
+Requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. Email is never checked at request time — only roles.
 
 ## Env / migrations needed
 
-See PR notes: run `20260902`, `20260903`, `20260914`, `20261019_profiles_admin_read_scope.sql`; set `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `VITE_APP_URL`, optional Resend.
+See PR notes: run `20260902`, `20260903`, `20260914`, `20261019120100_profiles_admin_read_scope.sql`; set `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `VITE_APP_URL`, optional Resend.

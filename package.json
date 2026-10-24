@@ -14,14 +14,15 @@
     "build:vercel": "sh scripts/vercel-build.sh",
     "typecheck:libs": "tsc --build",
     "typecheck": "pnpm run typecheck:libs && pnpm -r --filter \"./artifacts/**\" --filter \"./scripts\" --if-present run typecheck",
-    "test:api": "node --experimental-strip-types --test api/__tests__/*.test.mjs"
+    "test:api": "node --test api/__tests__/*.test.mjs"
   },
   "private": true,
   "dependencies": {
-    "@supabase/supabase-js": "^2.105.1"
+    "@supabase/supabase-js": "^2.105.1",
+    "zod": "catalog:"
   },
   "devDependencies": {
-    "typescript": "~5.9.2",
-    "prettier": "^3.8.1"
+    "prettier": "^3.8.1",
+    "typescript": "~5.9.2"
   }
 }

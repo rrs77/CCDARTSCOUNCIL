@@ -7,6 +7,7 @@ import {
   assertRateLimit,
   canViewGlobalAnalytics,
   canViewOrgAnalytics,
+  corsHeaders,
   createServiceClient,
   jsonResponse,
   loadProfile,
@@ -18,8 +19,8 @@ import {
 } from '../_authShared.js';
 import { formatUkDateTime, sanitizeSpreadsheetCell, toCsv } from '../_downloadShared.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function GET(request) {
@@ -135,7 +136,7 @@ export async function GET(request) {
           'Content-Type': 'application/vnd.ms-excel; charset=utf-8',
           'Content-Disposition': 'attachment; filename="ccd-downloads.xlsx"',
           'Cache-Control': 'no-store',
-          'Access-Control-Allow-Origin': '*',
+          ...corsHeaders({}, request),
         },
       });
     }
@@ -147,7 +148,7 @@ export async function GET(request) {
         'Content-Type': 'text/csv; charset=utf-8',
         'Content-Disposition': 'attachment; filename="ccd-downloads.csv"',
         'Cache-Control': 'no-store',
-        'Access-Control-Allow-Origin': '*',
+        ...corsHeaders({}, request),
       },
     });
   } catch (e) {

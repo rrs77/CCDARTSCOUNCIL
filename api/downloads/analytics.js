@@ -18,8 +18,8 @@ import {
 import { formatUkDateTime } from '../_downloadShared.js';
 import { loadHubMembership, hasMinHubRole } from '../_hubShared.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function GET(request) {
