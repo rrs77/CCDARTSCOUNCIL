@@ -333,7 +333,7 @@ export function LessonsWorkspace({
     toast.success('Added to lesson');
   };
 
-  const applyTemplate = async (template: PlanTemplate) => {
+  const applyTemplate = async (template: PlanTemplate, lessonTemplateId?: string) => {
     if (isViewOnly) return;
     const blueprints = template.defaultSectionBlueprints || [];
     const sections = blueprints.map((b) => ({
@@ -351,8 +351,9 @@ export function LessonsWorkspace({
         grouped: {},
         categoryOrder: [],
         totalTime: 0,
-        title: template.name,
+        title: lessonTemplateId ? '' : template.name,
         planTemplateId: template.id,
+        ...(lessonTemplateId ? { lessonTemplateId } : {}),
         sections,
       },
     });
@@ -723,8 +724,9 @@ export function LessonsWorkspace({
         open={templateOpen}
         onClose={() => setTemplateOpen(false)}
         keyStage={keyStage}
-        onApply={(tpl) => {
-          void applyTemplate(tpl);
+        yearGroup={yearGroupChipLabel}
+        onApply={(tpl, rxId) => {
+          void applyTemplate(tpl, rxId);
         }}
       />
 

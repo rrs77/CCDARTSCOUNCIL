@@ -844,6 +844,11 @@ button[data-state="active"] {
     border-top: 1px solid #e5e7eb;
     padding-top: 0.5rem;
   }
+
+  /* Rhythmstix lesson templates: margins come from @page (A4, full width). */
+  html:not(.ccd-printing-lesson) [data-lesson-plan-print][data-lesson-template] {
+    padding: 0 !important;
+  }
 }
 
 /* Screen: print clone root stays empty / out of flow */

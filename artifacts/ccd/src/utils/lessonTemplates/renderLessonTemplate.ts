@@ -1,4 +1,5 @@
 import { sanitizeHtml } from '../sanitize';
+import { planLogoHtml } from '../planLogo';
 import {
   buildRhythmstixDoc,
   renderRhythmstixHtml,
@@ -12,5 +13,5 @@ export function renderLessonTemplateHtml(
   opts: { templateId: RhythmstixTemplateId; template?: RhythmstixTemplate; yearGroup?: string; lessonNumber?: string },
 ): string {
   const doc = buildRhythmstixDoc(lesson, opts);
-  return renderRhythmstixHtml(doc, { sanitizeHtml });
+  return renderRhythmstixHtml(doc, { sanitizeHtml, logoHtml: planLogoHtml(40) });
 }

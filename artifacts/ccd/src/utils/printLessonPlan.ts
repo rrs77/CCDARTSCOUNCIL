@@ -49,15 +49,21 @@ export function printLessonPlanFromDom(source?: HTMLElement | null): void {
   const clone = el.cloneNode(true) as HTMLElement;
   clone.classList.add('print-content');
   clone.setAttribute('data-lesson-plan-print', 'true');
-  clone.style.cssText =
-    'display:block;width:100%;max-width:none;margin:0;padding:12mm;background:#fff;color:#111;';
-  // CCDesigner logo, top-left of every printed plan.
-  const logo = document.createElement('img');
-  logo.src = planLogoUrl();
-  logo.alt = PLAN_LOGO_ALT;
-  logo.className = 'ccd-plan-logo';
-  logo.style.cssText = 'display:block;height:30px;width:auto;margin:0 0 8px 0;';
-  clone.insertBefore(logo, clone.firstChild);
+  // Rhythmstix templates set their own A4 margins via @page and carry the logo in
+  // their header slot; legacy surfaces keep 12mm and get the logo prepended.
+  const templated = clone.hasAttribute('data-lesson-template');
+  clone.style.cssText = `display:block;width:100%;max-width:none;margin:0;padding:${
+    templated ? '0' : '12mm'
+  };background:#fff;color:#111;`;
+  if (!templated) {
+    // CCDesigner logo, top-left of every printed plan.
+    const logo = document.createElement('img');
+    logo.src = planLogoUrl();
+    logo.alt = PLAN_LOGO_ALT;
+    logo.className = 'ccd-plan-logo';
+    logo.style.cssText = 'display:block;height:30px;width:auto;margin:0 0 8px 0;';
+    clone.insertBefore(logo, clone.firstChild);
+  }
   root.appendChild(clone);
   document.documentElement.classList.add('ccd-printing-lesson');
 

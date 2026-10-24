@@ -461,6 +461,8 @@ export function escapeText(s: unknown): string {
 export interface RenderOptions {
   /** Sanitiser for teacher-authored rich HTML (DOMPurify in the app). Defaults to escaping. */
   sanitizeHtml?: (html: string) => string;
+  /** Trusted logo markup for the top-left slot (planLogoHtml in the app). Falls back to a text wordmark. */
+  logoHtml?: string;
 }
 
 /** Scoped CSS for the document. All text ≥ 13px. */
@@ -537,7 +539,7 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   parts.push(`<style>${rhythmstixCss(t, doc.subject)}</style>`);
   parts.push(`<div class="rx-doc" data-rx-template="${t.id}">`);
   parts.push(
-    `<header class="rx-head"><div class="rx-logo-slot" data-logo-slot="top-left"><span class="rx-wordmark">RHYTHMSTIX</span></div>` +
+    `<header class="rx-head"><div class="rx-logo-slot" data-logo-slot="top-left">${opts.logoHtml || '<span class="rx-wordmark">CCDesigner</span>'}</div>` +
       `<div class="rx-phase">${escapeText(t.headerPhase)} ${subjectUpper} &nbsp;|&nbsp; TEACHING RESOURCE</div></header>`,
   );
   parts.push(`<p class="rx-kicker">Lesson plan</p><h1 class="rx-title">${escapeText(doc.title)}</h1>`);

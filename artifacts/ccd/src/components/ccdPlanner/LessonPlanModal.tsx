@@ -38,6 +38,16 @@ import { CurriculumStatementsPanel } from './CurriculumStatementsPanel';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { printLessonPlanFromDom } from '../../utils/printLessonPlan';
+import { LessonTemplateSelect } from './LessonTemplateSelect';
+import { renderLessonTemplateHtml } from '../../utils/lessonTemplates/renderLessonTemplate';
+import {
+  getRhythmstixTemplate,
+  resolveLessonTemplateId,
+  templateIdForYearGroup,
+  type RhythmstixTemplate,
+  type RhythmstixTemplateId,
+} from '../../utils/lessonTemplates/rhythmstixTemplates';
+import { cachedLessonTemplates, loadLessonTemplates } from '../../utils/lessonTemplates/lessonTemplateStore';
 
 type ViewTab = 'plan' | 'preview' | 'print';
 
@@ -75,6 +85,17 @@ export function LessonPlanPanel({
   const [draft, setDraft] = useState<LessonData | null>(null);
   const [liveMessage, setLiveMessage] = useState('');
   const curriculum = useMemo(() => loadPlannerCurriculum(), [open]);
+  const [lessonTemplates, setLessonTemplates] = useState<RhythmstixTemplate[]>(() => cachedLessonTemplates());
+  useEffect(() => {
+    if (!open) return;
+    let alive = true;
+    void loadLessonTemplates().then((list) => {
+      if (alive) setLessonTemplates(list);
+    });
+    return () => {
+      alive = false;
+    };
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
@@ -94,6 +115,27 @@ export function LessonPlanPanel({
   }, [open, lessonData]);
 
   const displayTitle = (draft?.title || '').trim() || DEFAULT_LESSON_TITLE;
+  const templateId = resolveLessonTemplateId(draft, yearGroup);
+  const yearDefaultTemplateId = templateIdForYearGroup(yearGroup);
+  const setTemplateId = (id: RhythmstixTemplateId) => {
+    setDraft((d) => (d ? { ...d, lessonTemplateId: id } : d));
+    setLiveMessage(`Template set to ${getRhythmstixTemplate(id, lessonTemplates).name}`);
+  };
+  const templateHtml = useMemo(
+    () =>
+      draft && (tab === 'preview' || tab === 'print')
+        ? renderLessonTemplateHtml(
+            { ...draft, title: displayTitle },
+            {
+              templateId,
+              template: getRhythmstixTemplate(templateId, lessonTemplates),
+              yearGroup,
+              lessonNumber,
+            },
+          )
+        : '',
+    [draft, tab, templateId, lessonTemplates, yearGroup, lessonNumber, displayTitle],
+  );
 
   const sections = draft?.sections || [];
   const selectedIds = new Set(draft?.customObjectives || []);
@@ -451,6 +493,15 @@ export function LessonPlanPanel({
             )}
             <Pill className="bg-slate-100 text-slate-600">{draft.totalTime || 0} min</Pill>
           </div>
+          <div className="mt-2">
+            <LessonTemplateSelect
+              id={`${titleId}-template`}
+              value={templateId}
+              defaultId={yearDefaultTemplateId}
+              templates={lessonTemplates}
+              onChange={setTemplateId}
+            />
+          </div>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <Segmented<ViewTab>
@@ -695,57 +746,13 @@ export function LessonPlanPanel({
           {tab === 'preview' || tab === 'print' ? (
             <div className="soft-scroll min-h-0 flex-1 overflow-y-auto p-6">
               <article
-                className={cn(
-                  'mx-auto max-w-2xl space-y-4 print-content print:max-w-none',
-                )}
+                className="print-content w-full max-w-none"
                 data-lesson-plan-print="true"
-              >
-                <header>
-                  <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">
-                    {tab === 'print' ? 'Print · CCDesigner' : 'Preview'}
-                  </p>
-                  <h3 className="text-2xl font-extrabold text-slate-900">
-                    {displayTitle}
-                  </h3>
-                  {draft.learningOutcome ? (
-                    <div className="mt-3 rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-900">
-                      <RichHtml
-                        className="text-sm font-medium text-indigo-900"
-                        html={draft.learningOutcome}
-                        empty=""
-                      />
-                    </div>
-                  ) : null}
-                  {draft.successCriteria ? (
-                    <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                      <p className="mb-1 text-[13px] font-bold uppercase tracking-wide text-[#5F5B7A]">
-                        Success criteria
-                      </p>
-                      <RichHtml html={draft.successCriteria} empty="" />
-                    </div>
-                  ) : null}
-                </header>
-                <ol className="space-y-3">
-                  {sections.map((b, i) => (
-                    <li
-                      key={b.id}
-                      className="rounded-2xl border border-slate-100 bg-white p-4 shadow-sm"
-                    >
-                      <p className="text-xs font-bold text-indigo-500">
-                        {i + 1}. {b.title}
-                        {b.durationMins || b.activity?.time
-                          ? ` · ${b.durationMins || b.activity?.time}m`
-                          : ''}
-                      </p>
-                      <RichHtml
-                        className="mt-1"
-                        html={b.bodyHtml || b.activity?.description || ''}
-                        empty=""
-                      />
-                    </li>
-                  ))}
-                </ol>
-              </article>
+                data-lesson-template={templateId}
+                aria-label={`${tab === 'print' ? 'Print' : 'Preview'} — ${getRhythmstixTemplate(templateId, lessonTemplates).name} template`}
+                // Built from lesson data; teacher rich text is DOMPurify-sanitised in renderLessonTemplateHtml.
+                dangerouslySetInnerHTML={{ __html: templateHtml }}
+              />
             </div>
           ) : null}
         </div>
@@ -780,7 +787,15 @@ export function LessonPlanPanel({
         <Button variant="ghost" size="sm" onClick={onClose}>
           Cancel
         </Button>
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <LessonTemplateSelect
+            id={`${titleId}-template-export`}
+            value={templateId}
+            defaultId={yearDefaultTemplateId}
+            templates={lessonTemplates}
+            onChange={setTemplateId}
+            compact
+          />
           <Button variant="secondary" size="sm" onClick={() => setTab('preview')}>
             Preview
           </Button>

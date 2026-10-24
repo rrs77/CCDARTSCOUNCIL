@@ -102,6 +102,9 @@ describe('document mapping', () => {
   it('has a logo slot top-left and no text under 13px', () => {
     const html = renderRhythmstixHtml(doc);
     assert.match(html, /data-logo-slot="top-left"/);
+    const withLogo = renderRhythmstixHtml(doc, { logoHtml: '<img class="ccd-plan-logo" src="data:image/png;base64,AA" alt="CCDesigner">' });
+    assert.match(withLogo, /data-logo-slot="top-left"><img class="ccd-plan-logo"/);
+    assert.doesNotMatch(withLogo, /RHYTHMSTIX<\/span>/);
     const sizes = [...html.matchAll(/font-size:\s*(\d+(?:\.\d+)?)px/g)].map((m) => Number(m[1]));
     assert.ok(sizes.length > 5);
     assert.ok(sizes.every((s) => s >= 13), `sizes: ${sizes}`);
