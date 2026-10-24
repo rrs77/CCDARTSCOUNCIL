@@ -26,8 +26,11 @@ import {
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
-/** Set true only when R1–R7 hardening is present (this file). */
-const RESTORE_ENABLED = true;
+/**
+ * Real restore stays OFF until org-scoped RPC + pre-export storage (items 1–5)
+ * pass Security Reviewer. Export and dryRun remain available.
+ */
+const RESTORE_ENABLED = false;
 
 export async function OPTIONS(request) {
   return optionsResponse(request);
