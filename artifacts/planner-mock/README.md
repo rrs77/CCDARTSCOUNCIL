@@ -43,7 +43,7 @@ A packaged copy is also saved under `/opt/cursor/artifacts/planner-mock-static/`
 2. **Activity card** — Edit toggle, 5 steps (Overview → Curriculum → How to run it → Resources → Assessment), autosave + undo.
 3. **Lesson plan modal** — insert flexible sections between blocks, AI flesh-out with accept/reject, re-prompt, Plan / Preview / Print (A4).
 4. **Year overview** — half-term columns from Settings dates, units, curriculum coverage chips.
-5. **Settings** — subject colours, add/hide subjects, section types, term dates, class defaults — all live.
+5. **Settings** — subject colours, add/hide subjects, section types, term dates, class defaults, and curriculum frameworks / strands / statements — all live.
 6. **Empty state** — “Start from a template”.
 
 Use the floating bottom nav to jump between Planner / Lesson plan / Year / Settings / Empty.
