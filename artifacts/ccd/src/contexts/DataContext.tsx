@@ -94,6 +94,14 @@ export interface LessonData {
   assessmentObjectives?: string[];
   _trashedStandards?: string[];
   _trashedAt?: string;
+  /** Ordered mix of activities and flexible teacher sections (planner). */
+  sections?: import('../types/lessonSections').LessonSection[];
+  /** Optional plan template id chosen for this key stage. */
+  planTemplateId?: string;
+  /** Primary subject for unit tray colouring (Settings subject/folder). */
+  primarySubjectId?: string;
+  /** AI flesh-out metadata (never locks fields). */
+  aiFleshOut?: import('../types/lessonSections').LessonAiFleshOutState;
 }
 
 interface SheetInfo {
@@ -123,13 +131,17 @@ export interface LessonPlan {
   updatedAt: Date;
 }
 
-interface Unit {
+export interface Unit {
   id: string;
   name: string;
   description: string;
   lessonNumbers: string[];
   color: string;
   term?: string;
+  /** Settings subject/folder id or name key */
+  subjectId?: string;
+  /** Owning class/sheet */
+  classSheet?: string;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -34,6 +34,15 @@ export type LessonPdfActivity = {
   canvaLink?: string;
 };
 
+export type LessonPdfSection = {
+  id?: string;
+  kind: string;
+  title: string;
+  bodyHtml?: string;
+  activity?: LessonPdfActivity;
+  durationMins?: number;
+};
+
 export type LessonPdfData = {
   title?: string;
   lessonName?: string;
@@ -55,6 +64,8 @@ export type LessonPdfData = {
   grouped?: Record<string, LessonPdfActivity[]>;
   categoryOrder?: string[];
   lessonStandards?: string[];
+  /** Flexible planner sections — when present, rendered in order (activities + free sections). */
+  sections?: LessonPdfSection[];
 };
 
 export type BuildLessonPdfHtmlOptions = {
@@ -379,97 +390,120 @@ export function renderLessonPdfPage(options: BuildLessonPdfHtmlOptions): string 
     html += `</div></div>`;
   }
 
-  const hasPlanDetails =
-    (lessonData.assessmentObjectives && lessonData.assessmentObjectives.length > 0) ||
-    lessonData.introduction ||
-    lessonData.mainActivity ||
-    lessonData.plenary ||
-    lessonData.vocabulary ||
-    lessonData.keyQuestions ||
-    lessonData.resources ||
-    lessonData.differentiation ||
-    lessonData.assessment;
+  const flexibleSections = Array.isArray(lessonData.sections) ? lessonData.sections : [];
 
-  if (hasPlanDetails) {
-    if (lessonData.assessmentObjectives && lessonData.assessmentObjectives.length > 0) {
-      const objectivesList = lessonData.assessmentObjectives
-        .map(
-          (obj, i) =>
-            `<div style="margin-bottom: 6px;"><strong style="color: #7c3aed;">${i + 1}.</strong> ${escapeHtmlText(obj)}</div>`,
-        )
-        .join('');
-      html += renderCleanSection('Assessment Objectives', objectivesList);
-    }
-    if (lessonData.introduction) {
-      html += renderCleanSection('Introduction', sanitizeHtml(lessonData.introduction));
-    }
-    if (lessonData.mainActivity) {
-      html += renderCleanSection('Main Activity', sanitizeHtml(lessonData.mainActivity));
-    }
-    if (lessonData.plenary) {
-      html += renderCleanSection('Plenary', sanitizeHtml(lessonData.plenary));
-    }
-    if (lessonData.vocabulary) {
-      const formattedVocab = sanitizeHtml(lessonData.vocabulary).replace(
-        /^([^-:]+)(\s*[-:]\s*)/gm,
-        '<strong>$1</strong>$2',
-      );
-      html += renderCleanSection('Vocabulary', formattedVocab);
-    }
-    if (lessonData.keyQuestions) {
-      html += renderCleanSection('Key Questions', sanitizeHtml(lessonData.keyQuestions));
-    }
-    if (lessonData.resources) {
-      html += renderCleanSection('Resources', sanitizeHtml(lessonData.resources));
-    }
-    if (lessonData.differentiation) {
-      const formattedDiff = sanitizeHtml(lessonData.differentiation)
-        .replace(/Support:/gi, '<strong>Support:</strong>')
-        .replace(/Challenge:/gi, '<strong>Challenge:</strong>');
-      html += renderCleanSection('Differentiation', formattedDiff);
-    }
-    if (lessonData.assessment) {
-      html += renderCleanSection('Assessment', sanitizeHtml(lessonData.assessment));
-    }
-  }
-
-  const activitiesToPrint =
-    lessonData.orderedActivities && lessonData.orderedActivities.length > 0
-      ? lessonData.orderedActivities
-      : (lessonData.categoryOrder || Object.keys(lessonData.grouped || {})).flatMap(
-          (category) => lessonData.grouped?.[category] || [],
-        );
-
-  const categoriesInOrder: string[] = [];
-  const activitiesByCategory: Record<string, LessonPdfActivity[]> = {};
-  activitiesToPrint.forEach((activity) => {
-    const cat = activity.category || 'Other';
-    if (!activitiesByCategory[cat]) {
-      activitiesByCategory[cat] = [];
-      categoriesInOrder.push(cat);
-    }
-    activitiesByCategory[cat].push(activity);
-  });
-
-  if (categoriesInOrder.length > 0) {
+  if (flexibleSections.length > 0) {
     html += `
       <div class="activity-section">
         <div style="display: flex; align-items: center; margin-bottom: 12px;">
-          <h3 style="font-size: 14px; font-weight: 700; color: #1f2937; margin: 0;">Activities from Library</h3>
+          <h3 style="font-size: 14px; font-weight: 700; color: #1f2937; margin: 0;">Lesson sequence</h3>
         </div>
     `;
-    categoriesInOrder.forEach((category) => {
-      const activities = activitiesByCategory[category] || [];
-      if (activities.length === 0) return;
-      const categoryColor = getCategoryColor(category);
-      html += `<div class="category-group">`;
-      html += `<div class="activity-category" style="color: ${categoryColor};">${escapeHtmlText(category)}</div>`;
-      activities.forEach((activity) => {
-        html += renderActivityCard(activity, categoryColor);
+    for (const section of flexibleSections) {
+      if (section.kind === 'activity' && section.activity) {
+        const cat = section.activity.category || 'Activity';
+        html += renderActivityCard(section.activity, getCategoryColor(cat));
+      } else if ((section.bodyHtml || '').trim() || section.title) {
+        html += renderCleanSection(
+          escapeHtmlText(section.title || 'Section'),
+          sanitizeHtml(section.bodyHtml || ''),
+        );
+      }
+    }
+    html += `</div>`;
+  } else {
+    const hasPlanDetails =
+      (lessonData.assessmentObjectives && lessonData.assessmentObjectives.length > 0) ||
+      lessonData.introduction ||
+      lessonData.mainActivity ||
+      lessonData.plenary ||
+      lessonData.vocabulary ||
+      lessonData.keyQuestions ||
+      lessonData.resources ||
+      lessonData.differentiation ||
+      lessonData.assessment;
+
+    if (hasPlanDetails) {
+      if (lessonData.assessmentObjectives && lessonData.assessmentObjectives.length > 0) {
+        const objectivesList = lessonData.assessmentObjectives
+          .map(
+            (obj, i) =>
+              `<div style="margin-bottom: 6px;"><strong style="color: #7c3aed;">${i + 1}.</strong> ${escapeHtmlText(obj)}</div>`,
+          )
+          .join('');
+        html += renderCleanSection('Assessment Objectives', objectivesList);
+      }
+      if (lessonData.introduction) {
+        html += renderCleanSection('Introduction', sanitizeHtml(lessonData.introduction));
+      }
+      if (lessonData.mainActivity) {
+        html += renderCleanSection('Main Activity', sanitizeHtml(lessonData.mainActivity));
+      }
+      if (lessonData.plenary) {
+        html += renderCleanSection('Plenary', sanitizeHtml(lessonData.plenary));
+      }
+      if (lessonData.vocabulary) {
+        const formattedVocab = sanitizeHtml(lessonData.vocabulary).replace(
+          /^([^-:]+)(\s*[-:]\s*)/gm,
+          '<strong>$1</strong>$2',
+        );
+        html += renderCleanSection('Vocabulary', formattedVocab);
+      }
+      if (lessonData.keyQuestions) {
+        html += renderCleanSection('Key Questions', sanitizeHtml(lessonData.keyQuestions));
+      }
+      if (lessonData.resources) {
+        html += renderCleanSection('Resources', sanitizeHtml(lessonData.resources));
+      }
+      if (lessonData.differentiation) {
+        const formattedDiff = sanitizeHtml(lessonData.differentiation)
+          .replace(/Support:/gi, '<strong>Support:</strong>')
+          .replace(/Challenge:/gi, '<strong>Challenge:</strong>');
+        html += renderCleanSection('Differentiation', formattedDiff);
+      }
+      if (lessonData.assessment) {
+        html += renderCleanSection('Assessment', sanitizeHtml(lessonData.assessment));
+      }
+    }
+
+    const activitiesToPrint =
+      lessonData.orderedActivities && lessonData.orderedActivities.length > 0
+        ? lessonData.orderedActivities
+        : (lessonData.categoryOrder || Object.keys(lessonData.grouped || {})).flatMap(
+            (category) => lessonData.grouped?.[category] || [],
+          );
+
+    const categoriesInOrder: string[] = [];
+    const activitiesByCategory: Record<string, LessonPdfActivity[]> = {};
+    activitiesToPrint.forEach((activity) => {
+      const cat = activity.category || 'Other';
+      if (!activitiesByCategory[cat]) {
+        activitiesByCategory[cat] = [];
+        categoriesInOrder.push(cat);
+      }
+      activitiesByCategory[cat].push(activity);
+    });
+
+    if (categoriesInOrder.length > 0) {
+      html += `
+        <div class="activity-section">
+          <div style="display: flex; align-items: center; margin-bottom: 12px;">
+            <h3 style="font-size: 14px; font-weight: 700; color: #1f2937; margin: 0;">Activities from Library</h3>
+          </div>
+      `;
+      categoriesInOrder.forEach((category) => {
+        const activities = activitiesByCategory[category] || [];
+        if (activities.length === 0) return;
+        const categoryColor = getCategoryColor(category);
+        html += `<div class="category-group">`;
+        html += `<div class="activity-category" style="color: ${categoryColor};">${escapeHtmlText(category)}</div>`;
+        activities.forEach((activity) => {
+          html += renderActivityCard(activity, categoryColor);
+        });
+        html += `</div>`;
       });
       html += `</div>`;
-    });
-    html += `</div>`;
+    }
   }
 
   if (lessonData.notes) {

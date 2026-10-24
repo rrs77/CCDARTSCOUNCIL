@@ -3,7 +3,8 @@ import {
   BookOpen,
   Calendar,
   Clock,
-  FolderOpen,
+  Eye,
+  FileText,
   Pencil,
   Plus,
   Search,
@@ -11,10 +12,23 @@ import {
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { LessonPlanBuilder } from './LessonPlanBuilder';
-import { StandaloneLessonCreator } from './StandaloneLessonCreator';
 import { AssignToHalfTermModal } from './AssignToHalfTermModal';
-import { useData } from '../contexts/DataContext';
+import { useData, type Activity, type LessonData } from '../contexts/DataContext';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
+import {
+  LIBRARY_KEY_STAGES,
+  type LibraryKeyStageId,
+  isLibraryKeyStageId,
+  keyStageFromYearGroupTag,
+} from '../utils/libraryHierarchy';
+import { ensureLessonSections, legacyLessonToSections } from '../utils/planner/legacyLessonToSections';
+import type { PlanTemplate } from '../types/lessonSections';
+import { LibraryMenu } from './ccdPlanner/LibraryMenu';
+import { MyUnitsMenu } from './ccdPlanner/MyUnitsMenu';
+import { ActivityStepsModal } from './ccdPlanner/ActivityStepsModal';
+import { LessonPlanModal } from './ccdPlanner/LessonPlanModal';
+import { RunThroughModal } from './ccdPlanner/RunThroughModal';
+import { TemplatePickerModal } from './ccdPlanner/TemplatePickerModal';
 
 const HALF_TERMS = [
   { id: 'A1', name: 'Autumn 1', months: 'Sep–Oct' },
@@ -35,8 +49,8 @@ interface LessonsWorkspaceProps {
 }
 
 /**
- * Unified Lessons tab: saved-lesson rail + activity-block builder canvas.
- * Replaces the separate Lessons list and Lesson Builder tabs.
+ * Lesson planner: full-width canvas. Library and My units open from toolbar
+ * menus (like Classes) — not a three-column layout.
  */
 export function LessonsWorkspace({
   onAssignToUnit,
@@ -53,16 +67,32 @@ export function LessonsWorkspace({
     updateLessonData,
   } = useData();
 
+  const derivedKs = useMemo((): LibraryKeyStageId => {
+    const fromSheet = keyStageFromYearGroupTag(currentSheetInfo?.sheet || '');
+    return fromSheet && isLibraryKeyStageId(fromSheet) ? fromSheet : 'ks2';
+  }, [currentSheetInfo?.sheet]);
+
+  const [keyStage, setKeyStage] = useState<LibraryKeyStageId>(derivedKs);
+  const [libraryOpen, setLibraryOpen] = useState(false);
+  const [unitsOpen, setUnitsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHalfTerm, setSelectedHalfTerm] = useState('all');
   const [editingLessonNumber, setEditingLessonNumber] = useState<string | undefined>();
   const [builderKey, setBuilderKey] = useState(0);
   const [assignLessonNumber, setAssignLessonNumber] = useState<string | null>(null);
-  const [showLessonForm, setShowLessonForm] = useState(false);
+  const [lessonPlanOpen, setLessonPlanOpen] = useState(false);
   const [editingLessonForForm, setEditingLessonForForm] = useState<{
     lessonNumber: string;
-    lessonData: any;
+    lessonData: LessonData;
   } | null>(null);
+  const [activityForSteps, setActivityForSteps] = useState<Activity | null>(null);
+  const [runThroughOpen, setRunThroughOpen] = useState(false);
+  const [templateOpen, setTemplateOpen] = useState(false);
+  const [liveMessage, setLiveMessage] = useState('');
+
+  React.useEffect(() => {
+    setKeyStage(derivedKs);
+  }, [derivedKs]);
 
   const getLessonHalfTerm = (lessonNumber: string): string | null => {
     for (const halfTerm of halfTerms || []) {
@@ -94,12 +124,12 @@ export function LessonsWorkspace({
       if (!q) return true;
       const title = (data.title || '').toLowerCase();
       if (num.toLowerCase().includes(q) || title.includes(q)) return true;
-      return Object.values(data.grouped || {}).some((acts: unknown) =>
-        Array.isArray(acts) &&
-        acts.some(
-          (a: { activity?: string }) =>
-            (a.activity || '').toLowerCase().includes(q),
-        ),
+      return Object.values(data.grouped || {}).some(
+        (acts: unknown) =>
+          Array.isArray(acts) &&
+          acts.some(
+            (a: { activity?: string }) => (a.activity || '').toLowerCase().includes(q),
+          ),
       );
     });
 
@@ -111,9 +141,19 @@ export function LessonsWorkspace({
     return list;
   }, [allLessonsData, lessonNumbers, searchQuery, selectedHalfTerm, halfTerms]);
 
+  const activeLessonData = editingLessonNumber
+    ? allLessonsData?.[editingLessonNumber]
+    : null;
+
+  const activeSections = useMemo(() => {
+    if (!activeLessonData) return [];
+    return ensureLessonSections(activeLessonData).sections;
+  }, [activeLessonData]);
+
   const openLessonInBuilder = (lessonNumber: string) => {
     setEditingLessonNumber(lessonNumber);
     setBuilderKey((k) => k + 1);
+    setLiveMessage(`Opened ${lessonNumber} on the canvas`);
   };
 
   const openLessonForm = (lessonNumber?: string) => {
@@ -129,40 +169,48 @@ export function LessonsWorkspace({
     } else {
       setEditingLessonForForm(null);
     }
-    setShowLessonForm(true);
+    setLessonPlanOpen(true);
   };
 
   const createLesson = () => openLessonForm();
 
-  const handleSaveStandaloneLesson = async (lessonData: any) => {
+  const handleSaveLessonPlan = async (lessonData: LessonData) => {
     const loadingToast = toast.loading('Saving lesson…');
     try {
-      const maxLessonNumber = Math.max(
-        0,
-        ...Object.keys(allLessonsData || {}).map((num) => {
-          const numStr = num.replace('lesson', '');
-          return parseInt(numStr, 10) || 0;
-        }),
-      );
-      const newLessonNumber = `lesson${maxLessonNumber + 1}`;
-      const lessonDataWithFlag = {
-        ...lessonData,
-        isUserCreated: true,
-        academicYear: currentAcademicYear,
-      };
       if (!updateLessonData) throw new Error('Save function not available');
-      await updateLessonData(newLessonNumber, lessonDataWithFlag);
-      setShowLessonForm(false);
+      const withSections = ensureLessonSections(lessonData);
+      if (editingLessonForForm?.lessonNumber) {
+        await updateLessonData(editingLessonForForm.lessonNumber, {
+          ...withSections,
+          academicYear: currentAcademicYear,
+        });
+        setEditingLessonNumber(editingLessonForForm.lessonNumber);
+        toast.success('Lesson saved', { id: loadingToast });
+      } else {
+        const maxLessonNumber = Math.max(
+          0,
+          ...Object.keys(allLessonsData || {}).map((num) => {
+            const numStr = num.replace('lesson', '');
+            return parseInt(numStr, 10) || 0;
+          }),
+        );
+        const newLessonNumber = `lesson${maxLessonNumber + 1}`;
+        await updateLessonData(newLessonNumber, {
+          ...withSections,
+          isUserCreated: true,
+          academicYear: currentAcademicYear,
+        });
+        setEditingLessonNumber(newLessonNumber);
+        toast.success(`Lesson "${lessonData.title || newLessonNumber}" created`, {
+          id: loadingToast,
+        });
+      }
+      setLessonPlanOpen(false);
       setEditingLessonForForm(null);
-      setEditingLessonNumber(newLessonNumber);
       setBuilderKey((k) => k + 1);
-      toast.success(`Lesson "${lessonData.title || newLessonNumber}" created`, {
-        id: loadingToast,
-        duration: 3000,
-      });
     } catch (error) {
       toast.error(
-        error instanceof Error ? error.message : 'Failed to create lesson',
+        error instanceof Error ? error.message : 'Failed to save lesson',
         { id: loadingToast, duration: 5000 },
       );
     }
@@ -174,44 +222,220 @@ export function LessonsWorkspace({
     setAssignLessonNumber(null);
   };
 
+  const addActivityToActiveLesson = async (activity: Activity) => {
+    if (isViewOnly) {
+      toast.error('View-only mode');
+      return;
+    }
+    if (!editingLessonNumber || !allLessonsData[editingLessonNumber]) {
+      toast('Open a lesson on the canvas first, then add from Library.');
+      setActivityForSteps(activity);
+      return;
+    }
+    const current = ensureLessonSections(allLessonsData[editingLessonNumber]);
+    const sections = [
+      ...current.sections,
+      {
+        id: `activity-${Date.now()}`,
+        kind: 'activity' as const,
+        title: activity.activity || 'Activity',
+        bodyHtml: activity.description || '',
+        activity,
+        durationMins: activity.time,
+        lastWrittenBy: 'teacher' as const,
+      },
+    ];
+    const orderedActivities = [
+      ...(current.orderedActivities || []),
+      activity,
+    ];
+    const cat = activity.category || 'Activities';
+    const grouped = { ...(current.grouped || {}) };
+    grouped[cat] = [...(grouped[cat] || []), activity];
+    const categoryOrder = current.categoryOrder?.includes(cat)
+      ? current.categoryOrder
+      : [...(current.categoryOrder || []), cat];
+    const totalTime = (current.totalTime || 0) + (activity.time || 0);
+    if (!updateLessonData) {
+      toast.error('Save function not available');
+      return;
+    }
+    await updateLessonData(editingLessonNumber, {
+      ...current,
+      sections,
+      orderedActivities,
+      grouped,
+      categoryOrder,
+      totalTime,
+    });
+    setBuilderKey((k) => k + 1);
+    setLiveMessage(`Added ${activity.activity} to lesson`);
+    toast.success('Added to lesson');
+  };
+
+  const applyTemplate = async (template: PlanTemplate) => {
+    if (isViewOnly) return;
+    const blueprints = template.defaultSectionBlueprints || [];
+    const sections = blueprints.map((b) => ({
+      id: `sec-${Math.random().toString(36).slice(2, 8)}`,
+      kind: b.kind,
+      title: b.title,
+      customTypeId: b.customTypeId,
+      bodyHtml: '',
+      lastWrittenBy: 'teacher' as const,
+    }));
+    openLessonForm();
+    setEditingLessonForForm({
+      lessonNumber: '',
+      lessonData: {
+        grouped: {},
+        categoryOrder: [],
+        totalTime: 0,
+        title: template.name,
+        planTemplateId: template.id,
+        sections,
+      },
+    });
+    setLessonPlanOpen(true);
+    setLiveMessage(`Applied template ${template.name}`);
+  };
+
   const classLabel = currentSheetInfo.display || currentSheetInfo.sheet;
+
+  const goYearOverview = () => {
+    setUnitsOpen(false);
+    window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'curriculum' } }));
+  };
 
   return (
     <div
       className="flex min-h-[calc(100vh-7.5rem)] flex-col gap-3"
       style={{ fontFamily: UI_FONT }}
+      data-testid="lessons-planner"
     >
-      <div className="shrink-0">
-        <p className="ccd-studio-eyebrow mb-1">
-          CONNECT &amp; CREATE / <span>LESSONS</span>
-        </p>
-        <p className="text-sm text-[#77738F]">
-          Saved lessons for{' '}
-          <strong className="text-[#1F1B4D]">{classLabel}</strong>
-          {' · '}
-          create or edit a full plan (objectives + print preview), or open activities in the canvas.
-        </p>
+      <div className="shrink-0 space-y-3">
+        <div>
+          <p className="ccd-studio-eyebrow mb-1">
+            CONNECT &amp; CREATE / <span>LESSONS</span>
+          </p>
+          <p className="text-sm text-[#77738F]">
+            Lesson planner for{' '}
+            <strong className="text-[#1F1B4D]">{classLabel}</strong>
+            {' · '}
+            full-width canvas — open Library or My units from the toolbar.
+          </p>
+        </div>
+
+        {/* Toolbar — Library / My units as Classes-style menus */}
+        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#E2E0EF] bg-white/90 p-2 shadow-sm">
+          <LibraryMenu
+            keyStage={keyStage}
+            onKeyStageChange={setKeyStage}
+            open={libraryOpen}
+            onOpenChange={(v) => {
+              setLibraryOpen(v);
+              if (v) setUnitsOpen(false);
+            }}
+            onOpenActivity={(a) => {
+              setActivityForSteps(a);
+              setLibraryOpen(false);
+            }}
+            onAddToLesson={(a) => {
+              void addActivityToActiveLesson(a);
+            }}
+          />
+          <MyUnitsMenu
+            open={unitsOpen}
+            onOpenChange={(v) => {
+              setUnitsOpen(v);
+              if (v) setLibraryOpen(false);
+            }}
+            activeLessonNumber={editingLessonNumber}
+            onSelectLesson={(num) => {
+              openLessonInBuilder(num);
+              setUnitsOpen(false);
+            }}
+            onYearOverview={goYearOverview}
+          />
+
+          <div className="mx-1 hidden h-8 w-px bg-[#E2E0EF] sm:block" aria-hidden />
+
+          <button
+            type="button"
+            onClick={() => setTemplateOpen(true)}
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          >
+            <FileText className="h-4 w-4 text-indigo-600" />
+            <span className="hidden sm:inline">Choose plan template</span>
+            <span className="sm:hidden">Template</span>
+          </button>
+          <button
+            type="button"
+            disabled={!editingLessonNumber}
+            onClick={() => setRunThroughOpen(true)}
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          >
+            <Eye className="h-4 w-4 text-indigo-600" />
+            Run-through
+          </button>
+          <button
+            type="button"
+            onClick={() => openLessonForm(editingLessonNumber)}
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-sm font-bold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          >
+            <Pencil className="h-4 w-4" />
+            <span className="hidden sm:inline">Lesson plan</span>
+            <span className="sm:hidden">Plan</span>
+          </button>
+          <button
+            type="button"
+            onClick={createLesson}
+            disabled={isViewOnly}
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl border-2 border-indigo-200 bg-indigo-50 px-3 text-sm font-bold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          >
+            <Plus className="h-4 w-4" />
+            New
+          </button>
+
+          <div className="ml-auto hidden items-center gap-2 lg:flex">
+            <label className="sr-only" htmlFor="planner-toolbar-ks">
+              Key stage
+            </label>
+            <select
+              id="planner-toolbar-ks"
+              value={keyStage}
+              onChange={(e) => {
+                const v = e.target.value;
+                if (isLibraryKeyStageId(v)) setKeyStage(v);
+              }}
+              className="h-11 rounded-xl border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            >
+              {LIBRARY_KEY_STAGES.map((ks) => (
+                <option key={ks.id} value={ks.id}>
+                  {ks.label}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[minmax(15.5rem,18rem)_minmax(0,1fr)]">
-        {/* Saved lessons rail */}
-        <aside className="flex max-h-[min(70vh,42rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_1px_3px_rgba(31,27,77,0.05)] xl:max-h-[calc(100vh-9.5rem)] xl:sticky xl:top-2">
+      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[minmax(14rem,16rem)_minmax(0,1fr)]">
+        {/* Compact saved-lessons rail (not a third planner column) */}
+        <aside className="flex max-h-[min(40vh,22rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_1px_3px_rgba(31,27,77,0.05)] xl:max-h-[calc(100vh-11rem)] xl:sticky xl:top-2">
           <div className="shrink-0 border-b border-[#E2E0EF] bg-gradient-to-r from-[#2DD4BF] to-[#4338E8] px-3 py-3 text-white">
             <div className="flex items-center justify-between gap-2">
-              <div className="flex min-w-0 items-center gap-2">
-                <FolderOpen className="h-4 w-4 shrink-0 opacity-90" aria-hidden />
-                <h2
-                  className="truncate text-[15px] font-extrabold tracking-tight"
-                  style={{ fontFamily: DISPLAY_FONT }}
-                >
-                  Your lessons
-                </h2>
-              </div>
+              <h2
+                className="truncate text-[15px] font-extrabold tracking-tight"
+                style={{ fontFamily: DISPLAY_FONT }}
+              >
+                Your lessons
+              </h2>
               <button
                 type="button"
                 onClick={createLesson}
                 disabled={isViewOnly}
-                className="inline-flex h-8 shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2.5 text-[12px] font-extrabold text-white hover:bg-white/30 disabled:opacity-50"
+                className="inline-flex h-11 shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2.5 text-[12px] font-extrabold text-white hover:bg-white/30 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Create
@@ -225,13 +449,13 @@ export function LessonsWorkspace({
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search lessons…"
-                  className="h-8 w-full rounded-lg border border-white/25 bg-white/15 py-1 pl-8 pr-2 text-[12px] font-medium text-white placeholder:text-white/65 focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/25"
+                  className="h-11 w-full rounded-lg border border-white/25 bg-white/15 py-1 pl-8 pr-2 text-[12px] font-medium text-white placeholder:text-white/65 focus:border-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
                 />
               </div>
               <select
                 value={selectedHalfTerm}
                 onChange={(e) => setSelectedHalfTerm(e.target.value)}
-                className="h-8 w-full rounded-lg border border-white/25 bg-white/15 px-2 text-[12px] font-semibold text-white focus:border-white/50 focus:outline-none focus:ring-2 focus:ring-white/25"
+                className="h-11 w-full rounded-lg border border-white/25 bg-white/15 px-2 text-[12px] font-semibold text-white focus:border-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
                 aria-label="Filter by half-term"
               >
                 <option value="all" className="text-[#1F1B4D]">
@@ -260,33 +484,15 @@ export function LessonsWorkspace({
                     ? 'No lessons match'
                     : `No lessons for ${classLabel}`}
                 </p>
-                <p className="mt-1 text-[12px] leading-relaxed text-[#77738F]">
-                  {searchQuery || selectedHalfTerm !== 'all'
-                    ? 'Try another search or half-term filter.'
-                    : 'Create a lesson plan, then refine activities in the canvas.'}
-                </p>
-                {!searchQuery && selectedHalfTerm === 'all' ? (
-                  <button
-                    type="button"
-                    onClick={createLesson}
-                    disabled={isViewOnly}
-                    className="mt-4 inline-flex h-9 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[12px] font-extrabold text-white hover:bg-[#3529d1] disabled:opacity-50"
-                  >
-                    <Plus className="h-3.5 w-3.5" />
-                    Create lesson
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSearchQuery('');
-                      setSelectedHalfTerm('all');
-                    }}
-                    className="mt-4 text-[12px] font-bold text-[#4338E8] hover:underline"
-                  >
-                    Clear filters
-                  </button>
-                )}
+                <button
+                  type="button"
+                  onClick={createLesson}
+                  disabled={isViewOnly}
+                  className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[12px] font-extrabold text-white hover:bg-[#3529d1] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  Create lesson
+                </button>
               </div>
             ) : (
               <ul className="space-y-1.5">
@@ -312,8 +518,8 @@ export function LessonsWorkspace({
                       >
                         <button
                           type="button"
-                          onClick={() => openLessonForm(num)}
-                          className="w-full text-left"
+                          onClick={() => openLessonInBuilder(num)}
+                          className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           <div className="flex items-start gap-2">
                             <span className="mt-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-[#E9E6FF] px-1 text-[10px] font-extrabold text-[#4338E8]">
@@ -347,7 +553,7 @@ export function LessonsWorkspace({
                             type="button"
                             onClick={() => openLessonForm(num)}
                             disabled={isViewOnly}
-                            className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] disabled:opacity-50"
+                            className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                           >
                             <Pencil className="h-3 w-3" />
                             Edit plan
@@ -355,16 +561,16 @@ export function LessonsWorkspace({
                           <button
                             type="button"
                             onClick={() => openLessonInBuilder(num)}
-                            className="inline-flex h-7 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8]"
+                            className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                           >
-                            Activities
+                            Canvas
                           </button>
                         </div>
                         {onAssignToUnit && !isViewOnly ? (
                           <button
                             type="button"
                             onClick={() => setAssignLessonNumber(num)}
-                            className="mt-1 inline-flex h-7 w-full items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8]"
+                            className="mt-1 inline-flex h-11 w-full items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                           >
                             <Calendar className="h-3 w-3" />
                             {term ? 'Reassign half-term' : 'Assign to half-term'}
@@ -379,8 +585,8 @@ export function LessonsWorkspace({
           </div>
         </aside>
 
-        {/* Builder: activity blocks + lesson canvas */}
-        <div className="min-w-0 rounded-2xl border border-[#E2E0EF] bg-[#F9FAFB] shadow-[0_1px_3px_rgba(31,27,77,0.04)] overflow-hidden">
+        {/* Full-width lesson canvas */}
+        <div className="min-w-0 overflow-hidden rounded-2xl border border-[#E2E0EF] bg-[#F9FAFB] shadow-[0_1px_3px_rgba(31,27,77,0.04)]">
           <LessonPlanBuilder
             key={`${builderKey}-${editingLessonNumber ?? 'new'}`}
             editingLessonNumber={editingLessonNumber}
@@ -393,6 +599,10 @@ export function LessonsWorkspace({
         </div>
       </div>
 
+      <div className="sr-only" aria-live="polite">
+        {liveMessage}
+      </div>
+
       {assignLessonNumber && (
         <AssignToHalfTermModal
           isOpen
@@ -403,17 +613,49 @@ export function LessonsWorkspace({
         />
       )}
 
-      {showLessonForm && (
-        <StandaloneLessonCreator
-          onClose={() => {
-            setShowLessonForm(false);
-            setEditingLessonForForm(null);
-          }}
-          onSave={handleSaveStandaloneLesson}
-          editingLesson={editingLessonForForm || undefined}
-          yearGroup={currentSheetInfo.sheet}
-        />
-      )}
+      <LessonPlanModal
+        open={lessonPlanOpen}
+        onClose={() => {
+          setLessonPlanOpen(false);
+          setEditingLessonForForm(null);
+        }}
+        onSave={handleSaveLessonPlan}
+        lessonNumber={editingLessonForForm?.lessonNumber}
+        lessonData={editingLessonForForm?.lessonData}
+        yearGroup={currentSheetInfo.sheet}
+      />
+
+      <ActivityStepsModal
+        open={!!activityForSteps}
+        activity={activityForSteps}
+        onClose={() => setActivityForSteps(null)}
+        onAddToLesson={(a) => {
+          void addActivityToActiveLesson(a);
+        }}
+      />
+
+      <RunThroughModal
+        open={runThroughOpen}
+        onClose={() => setRunThroughOpen(false)}
+        title={activeLessonData?.title || editingLessonNumber || 'Lesson'}
+        sections={
+          activeSections.length > 0
+            ? activeSections
+            : activeLessonData
+              ? legacyLessonToSections(activeLessonData)
+              : []
+        }
+        durationMins={activeLessonData?.totalTime}
+      />
+
+      <TemplatePickerModal
+        open={templateOpen}
+        onClose={() => setTemplateOpen(false)}
+        keyStage={keyStage}
+        onApply={(tpl) => {
+          void applyTemplate(tpl);
+        }}
+      />
     </div>
   );
 }

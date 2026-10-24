@@ -6,6 +6,7 @@ export type SettingsSectionId =
   | 'classes'
   | 'folders'
   | 'objectives'
+  | 'curriculum'
   | 'preferences'
   | 'downloads'
   | 'users'
@@ -51,6 +52,22 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     title: 'Learning objectives',
     helper: 'Objectives for lessons and activities.',
     keywords: ['objective', 'curriculum', 'standard', 'target'],
+    requires: 'always',
+  },
+  {
+    id: 'curriculum',
+    label: 'Curriculum',
+    title: 'Curriculum',
+    helper: 'Frameworks, strands and statements for lesson plans — all user-defined.',
+    keywords: [
+      'curriculum',
+      'framework',
+      'strand',
+      'statement',
+      'template',
+      'section',
+      'planner',
+    ],
     requires: 'always',
   },
   {

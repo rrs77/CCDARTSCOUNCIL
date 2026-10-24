@@ -3,6 +3,7 @@ import { Settings, Palette, RotateCcw, X, Plus, Trash2, GripVertical, Edit3, Sav
 import { useSettings, Category, ResourceLinkConfig, SOCIAL_PLATFORMS, YearGroupSection } from '../../contexts/SettingsContextNew';
 import { DataSourceSettings } from '../DataSourceSettings';
 import { CustomObjectivesAdmin } from '../CustomObjectivesAdmin';
+import { CurriculumSettingsEditor } from './CurriculumSettingsEditor';
 import { ActivityPacksAdmin } from '../ActivityPacksAdmin';
 import { useAuth } from '../../hooks/useAuth';
 import { useIsViewOnly } from '../../hooks/useIsViewOnly';
@@ -250,6 +251,7 @@ const SECTION_TO_TAB: Record<SettingsSectionId, string> = {
   classes: 'yeargroups',
   folders: 'categories',
   objectives: 'admin',
+  curriculum: 'curriculum',
   preferences: 'resource-links',
   downloads: 'my-downloads',
   users: 'users',
@@ -3163,6 +3165,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               <CustomObjectivesAdmin embedded={true} />
             </div>
           )}
+
+          {activeTab === 'curriculum' && <CurriculumSettingsEditor />}
 
           {activeTab === 'my-downloads' && (
             <MyDownloads />
