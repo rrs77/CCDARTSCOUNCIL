@@ -93,13 +93,12 @@ export async function GET(request, context) {
       .split(';')[0]
       .trim()
       .toLowerCase();
-    if (upstreamType && !upstreamType.startsWith('audio/')) {
+    if (!upstreamType || !upstreamType.startsWith('audio/')) {
       return jsonResponse({ error: 'Preview is not audio.' }, 502, {}, request);
     }
 
     const headers = new Headers();
-    // Force a known audio type for the panel player.
-    headers.set('Content-Type', upstreamType.startsWith('audio/') ? upstreamType : 'audio/mpeg');
+    headers.set('Content-Type', upstreamType);
     const len = audioRes.headers.get('Content-Length');
     if (len) headers.set('Content-Length', len);
     headers.set('Cache-Control', 'private, max-age=300');
