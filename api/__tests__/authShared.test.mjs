@@ -85,9 +85,10 @@ describe('permissions', () => {
     assert.equal(canViewGlobalAnalytics({ role: 'super_admin', status: 'active' }), true);
   });
 
-  it('isFullUserAdmin is true for system admins only', () => {
-    assert.equal(isFullUserAdmin({ role: 'admin', status: 'active' }), true);
+  it('isFullUserAdmin is true for super_admin/superuser only', () => {
+    assert.equal(isFullUserAdmin({ role: 'admin', status: 'active' }), false);
     assert.equal(isFullUserAdmin({ role: 'superuser', status: 'active' }), true);
+    assert.equal(isFullUserAdmin({ role: 'super_admin', status: 'active' }), true);
     assert.equal(
       isFullUserAdmin({ role: 'teacher', status: 'active', can_manage_users: true }),
       false,

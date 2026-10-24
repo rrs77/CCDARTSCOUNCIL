@@ -1,6 +1,7 @@
 -- Admin / org-admin profile read policies for Settings → Users.
--- Extends historical "Admins can read all profiles" to super_admin / can_manage_users
--- and adds org-scoped SELECT for hub/school admins (organisation_id peers).
+-- Full user admin = super_admin / superuser only (not role=admin).
+-- Org managers (can_manage_users / role=admin) read/update only their orgs.
+-- Does NOT grant super_admin by email — use scripts/grant-super-admin.mjs offline.
 -- Safe to re-run.
 
 CREATE OR REPLACE FUNCTION public.current_user_is_full_user_admin()
@@ -15,7 +16,7 @@ AS $$
     WHERE id = auth.uid()
       AND status IS DISTINCT FROM 'suspended'
       AND anonymised_at IS NULL
-      AND role IN ('admin', 'superuser', 'super_admin')
+      AND role IN ('superuser', 'super_admin')
   );
 $$;
 
@@ -85,9 +86,9 @@ CREATE POLICY "User managers read org-scoped profiles"
   ON public.profiles FOR SELECT
   USING (
     public.current_user_can_manage_users()
+    AND NOT public.current_user_is_full_user_admin()
     AND (
-      public.current_user_is_full_user_admin()
-      OR id = auth.uid()
+      id = auth.uid()
       OR organisation_id = ANY (public.current_user_org_ids())
       OR id IN (
         SELECT hm.user_id
@@ -100,32 +101,20 @@ CREATE POLICY "User managers read org-scoped profiles"
 DROP POLICY IF EXISTS "Admins can update any profile" ON public.profiles;
 CREATE POLICY "Admins can update any profile"
   ON public.profiles FOR UPDATE
-  USING (public.current_user_can_manage_users())
-  WITH CHECK (public.current_user_can_manage_users());
+  USING (
+    public.current_user_can_manage_users()
+    AND (
+      public.current_user_is_full_user_admin()
+      OR organisation_id = ANY (public.current_user_org_ids())
+    )
+  )
+  WITH CHECK (
+    public.current_user_can_manage_users()
+    AND (
+      public.current_user_is_full_user_admin()
+      OR organisation_id = ANY (public.current_user_org_ids())
+    )
+  );
 
--- Idempotent: ensure Rob is super_admin when the account exists (also in 20260903).
-DO $$
-DECLARE
-  normalised TEXT := lower(trim('rob.reichstorer@gmail.com'));
-  -- also match common typo "gmaill"
-  alt TEXT := lower(trim('rob.reichstorer@gmaill.com'));
-  target_id UUID;
-BEGIN
-  SELECT id INTO target_id
-  FROM public.profiles
-  WHERE lower(trim(email)) IN (normalised, alt)
-  LIMIT 1;
-
-  IF target_id IS NULL THEN
-    RAISE NOTICE 'profiles_admin_read_scope: no profile for Rob — skip super_admin grant';
-  ELSE
-    UPDATE public.profiles
-    SET
-      role = 'super_admin',
-      can_manage_users = true,
-      status = COALESCE(NULLIF(status, 'suspended'), 'active'),
-      updated_at = now()
-    WHERE id = target_id;
-    RAISE NOTICE 'profiles_admin_read_scope: super_admin ensured for %', target_id;
-  END IF;
-END $$;
+-- No email-based super_admin grant in this migration (avoids squatting).
+-- One-off: node scripts/grant-super-admin.mjs <auth.users.id> (see script header).

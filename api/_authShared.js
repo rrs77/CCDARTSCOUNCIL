@@ -416,9 +416,10 @@ export function isSuperAdminProfile(profile) {
 }
 
 /** System admins who may list/manage all users (not hub-scoped). */
+/** Full user admin = super_admin / superuser only (matches SQL current_user_is_full_user_admin). */
 export function isFullUserAdmin(profile) {
   if (!profile || isSuspended(profile)) return false;
-  return ADMIN_ROLES.has(profile.role);
+  return SUPER_ADMIN_ROLES.has(profile.role);
 }
 
 export function canManageUsers(profile) {

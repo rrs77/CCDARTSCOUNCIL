@@ -16,8 +16,8 @@ There was **never** a separate `/set-password` route. Invitees use **`/reset-pas
 
 ## Org / hub scoping (API)
 
-- **Full admins** (`admin` / `superuser` / `super_admin`): see all users; can invite any role (super only by super).
-- **`can_manage_users` without full admin** (school / hub leads): list filtered to their `organisation_id` + hubs where they are `hub_administrator`. Create-user forces their organisation and blocks minting system admins.
+- **Full admins** (`superuser` / `super_admin` only): see all users; can invite any role (super only by super).
+- **Org managers** (`role=admin` or `can_manage_users`): list filtered to their `organisation_id` + hubs where they are `hub_administrator`. Create-user forces their organisation and blocks minting system admins.
 
 ## Live data vs demo
 
