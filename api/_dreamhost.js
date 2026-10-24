@@ -19,7 +19,8 @@ import {
   writeAuditLog,
 } from './_authShared.js';
 
-const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
+/** Shared with dreamhost/api/upload-pdf.php MAX_FILE_SIZE. */
+export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
 
 /** UUID v4-ish path segment (Supabase user ids). */
 const USER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;

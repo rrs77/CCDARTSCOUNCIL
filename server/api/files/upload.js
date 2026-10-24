@@ -19,6 +19,7 @@ import {
   dreamHostNotConfiguredResponse,
   FILE_VISIBILITY,
   isDreamHostConfigured,
+  MAX_UPLOAD_BYTES,
   registerStoredFile,
   uploadToDreamHost,
 } from '../../../api/_dreamhost.js';
@@ -63,6 +64,10 @@ export async function POST(request) {
 
     if (!buffer.byteLength) {
       return jsonResponse({ error: 'Empty file.' }, 400);
+    }
+
+    if (buffer.byteLength > MAX_UPLOAD_BYTES) {
+      return jsonResponse({ error: 'File too large.' }, 413);
     }
 
     // Ignore client contentType — require PDF magic bytes server-side.
