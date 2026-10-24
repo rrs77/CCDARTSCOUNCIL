@@ -8,6 +8,11 @@
  *    Token binds user, org, server path, max size, exp, nonce.
  *    Nonce is single-use via exclusive file under ccd_private/upload_nonces/.
  *
+ * Required storage location (no web-root fallback):
+ *   DREAMHOST_PDF_UPLOAD_DIR  — absolute path outside the web root, OR
+ *   ../ccd_private_pdfs/ relative to the site root (sibling of the public tree).
+ * Deploy upload-pdf.php under the site api/ path; keep secrets in ccd_private/.
+ *
  * Env / config (server-only):
  *   DREAMHOST_PDF_API_KEY / PDF_API_KEY
  *   DREAMHOST_UPLOAD_TOKEN_SECRET  — HMAC-SHA256 (same as Vercel)
@@ -18,6 +23,8 @@
 header('Content-Type: application/json');
 
 define('MAX_FILE_SIZE', 100 * 1024 * 1024); // Keep in sync with api/_dreamhost.js MAX_UPLOAD_BYTES
+define('STREAM_CHUNK_BYTES', 1024 * 1024); // 1 MiB
+define('NONCE_MAX_AGE_SEC', 35 * 60); // upload TTL (5m) + complete grace (30m)
 define('PATH_REGEX', '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.pdf$/i');
 define('UUID_REGEX', '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i');
 
@@ -33,7 +40,8 @@ function ccd_cors_headers(): void
         header('Access-Control-Allow-Origin: ' . $origin);
         header('Vary: Origin');
         header('Access-Control-Allow-Methods: POST, OPTIONS');
-        header('Access-Control-Allow-Headers: Content-Type, X-Upload-Token, X-API-Key');
+        // Browser direct uploads use X-Upload-Token only (not X-API-Key).
+        header('Access-Control-Allow-Headers: Content-Type, X-Upload-Token');
         header('Access-Control-Max-Age: 600');
     }
 }
@@ -48,6 +56,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
     echo json_encode(['error' => 'Method not allowed']);
+    exit();
+}
+
+function ccd_fail(int $status, string $error, array $extra = []): void
+{
+    http_response_code($status);
+    echo json_encode(array_merge(['error' => $error], $extra));
     exit();
 }
 
@@ -124,7 +139,6 @@ function ccd_verify_upload_token(string $token, string $secret): ?array
     if (!preg_match(PATH_REGEX, $path)) {
         return null;
     }
-    // Path must be under the bound user id.
     if (stripos($path, $userId . '/') !== 0) {
         return null;
     }
@@ -144,9 +158,40 @@ function ccd_verify_upload_token(string $token, string $secret): ?array
     ];
 }
 
+/** Delete nonce files older than NONCE_MAX_AGE_SEC (best-effort). */
+function ccd_cleanup_nonces(string $nonceDir): void
+{
+    if (!is_dir($nonceDir)) {
+        return;
+    }
+    $cutoff = time() - NONCE_MAX_AGE_SEC;
+    $dh = @opendir($nonceDir);
+    if ($dh === false) {
+        return;
+    }
+    while (($entry = readdir($dh)) !== false) {
+        if ($entry === '.' || $entry === '..') {
+            continue;
+        }
+        if (!preg_match(UUID_REGEX, $entry)) {
+            continue;
+        }
+        $full = $nonceDir . '/' . $entry;
+        if (!is_file($full)) {
+            continue;
+        }
+        $mtime = @filemtime($full);
+        if ($mtime !== false && $mtime < $cutoff) {
+            @unlink($full);
+        }
+    }
+    closedir($dh);
+}
+
 /** Single-use nonce: exclusive create under private nonces dir. */
 function ccd_consume_nonce(string $nonceDir, string $nonce): bool
 {
+    ccd_cleanup_nonces($nonceDir);
     if (!is_dir($nonceDir) && !mkdir($nonceDir, 0750, true)) {
         return false;
     }
@@ -160,39 +205,60 @@ function ccd_consume_nonce(string $nonceDir, string $nonce): bool
     return true;
 }
 
+/**
+ * Required private upload directory — never falls back to api/../pdfs.
+ */
 function ccd_upload_dir(): string
 {
     $uploadDirEnv = getenv('DREAMHOST_PDF_UPLOAD_DIR') ?: '';
     if ($uploadDirEnv !== '') {
-        return rtrim($uploadDirEnv, '/\\') . '/';
+        $dir = rtrim($uploadDirEnv, '/\\') . '/';
+        if (!is_dir($dir) && !@mkdir($dir, 0750, true)) {
+            ccd_fail(500, 'Upload directory not configured');
+        }
+        return $dir;
     }
     $outside = dirname(__DIR__, 2) . '/ccd_private_pdfs/';
-    return is_dir(dirname($outside)) || @mkdir($outside, 0750, true)
-        ? (rtrim($outside, '/\\') . '/')
-        : (__DIR__ . '/../pdfs/');
+    if (!is_dir($outside) && !@mkdir($outside, 0750, true)) {
+        ccd_fail(500, 'Upload directory not configured (set DREAMHOST_PDF_UPLOAD_DIR or create ccd_private_pdfs outside the web root)');
+    }
+    return rtrim($outside, '/\\') . '/';
 }
 
-function ccd_write_pdf_exclusive(string $uploadDir, string $fileName, string $pdfData, int $maxBytes): void
+function ccd_private_tmp_dir(): string
 {
-    if (strlen($pdfData) > $maxBytes || strlen($pdfData) > MAX_FILE_SIZE) {
-        http_response_code(413);
-        echo json_encode(['error' => 'File too large']);
-        exit();
+    $base = dirname(__DIR__, 2) . '/ccd_private/upload_tmp';
+    if (!is_dir($base) && !@mkdir($base, 0750, true)) {
+        ccd_fail(500, 'Temp upload directory unavailable');
     }
-    if (strncmp($pdfData, '%PDF-', 5) !== 0) {
-        http_response_code(400);
-        echo json_encode(['error' => 'Not a PDF']);
-        exit();
+    return rtrim($base, '/\\') . '/';
+}
+
+/**
+ * Validate a temp file as PDF (magic + finfo), then rename into the exclusive final path.
+ */
+function ccd_finalize_pdf_from_temp(string $uploadDir, string $fileName, string $tmpPath, int $byteLength): void
+{
+    $fh = @fopen($tmpPath, 'rb');
+    if ($fh === false) {
+        @unlink($tmpPath);
+        ccd_fail(500, 'Failed to read temp file');
     }
+    $magic = fread($fh, 5);
+    fclose($fh);
+    if ($magic === false || strncmp($magic, '%PDF-', 5) !== 0) {
+        @unlink($tmpPath);
+        ccd_fail(400, 'Not a PDF');
+    }
+
     if (function_exists('finfo_open')) {
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
         if ($finfo) {
-            $mime = finfo_buffer($finfo, $pdfData);
+            $mime = finfo_file($finfo, $tmpPath);
             finfo_close($finfo);
             if ($mime !== 'application/pdf') {
-                http_response_code(400);
-                echo json_encode(['error' => 'Not a PDF']);
-                exit();
+                @unlink($tmpPath);
+                ccd_fail(400, 'Not a PDF');
             }
         }
     }
@@ -200,36 +266,97 @@ function ccd_write_pdf_exclusive(string $uploadDir, string $fileName, string $pd
     $parts = explode('/', $fileName);
     $userDir = $uploadDir . $parts[0];
     if (!is_dir($userDir) && !mkdir($userDir, 0750, true)) {
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to create directory']);
-        exit();
+        @unlink($tmpPath);
+        ccd_fail(500, 'Failed to create directory');
     }
 
     $filePath = $uploadDir . $fileName;
-    $fh = @fopen($filePath, 'xb');
-    if ($fh === false) {
-        http_response_code(file_exists($filePath) ? 409 : 500);
-        echo json_encode([
-            'error' => file_exists($filePath) ? 'File already exists' : 'Failed to create file',
-            'success' => false,
-        ]);
-        exit();
+    if (file_exists($filePath)) {
+        @unlink($tmpPath);
+        ccd_fail(409, 'File already exists', ['success' => false]);
     }
 
-    $written = fwrite($fh, $pdfData);
-    fclose($fh);
-    if ($written === false || $written !== strlen($pdfData)) {
-        @unlink($filePath);
-        http_response_code(500);
-        echo json_encode(['error' => 'Failed to save file']);
-        exit();
+    if (!@rename($tmpPath, $filePath)) {
+        @unlink($tmpPath);
+        ccd_fail(500, 'Failed to save file', ['success' => false]);
     }
 
     echo json_encode([
         'success' => true,
         'path' => $fileName,
-        'bytes' => strlen($pdfData),
+        'bytes' => $byteLength,
     ]);
+}
+
+/**
+ * Stream php://input in 1MB chunks to a private temp file; 413 once maxBytes exceeded.
+ */
+function ccd_stream_body_to_temp(int $maxBytes): array
+{
+    $limit = min($maxBytes, MAX_FILE_SIZE);
+    $tmpPath = ccd_private_tmp_dir() . 'up_' . bin2hex(random_bytes(16));
+    $in = fopen('php://input', 'rb');
+    if ($in === false) {
+        ccd_fail(400, 'Empty body');
+    }
+    $out = @fopen($tmpPath, 'xb');
+    if ($out === false) {
+        fclose($in);
+        ccd_fail(500, 'Failed to create temp file');
+    }
+
+    $total = 0;
+    while (!feof($in)) {
+        $chunk = fread($in, STREAM_CHUNK_BYTES);
+        if ($chunk === false) {
+            fclose($in);
+            fclose($out);
+            @unlink($tmpPath);
+            ccd_fail(500, 'Failed to read upload body');
+        }
+        if ($chunk === '') {
+            break;
+        }
+        $total += strlen($chunk);
+        if ($total > $limit) {
+            fclose($in);
+            fclose($out);
+            @unlink($tmpPath);
+            ccd_fail(413, 'File too large');
+        }
+        if (fwrite($out, $chunk) === false) {
+            fclose($in);
+            fclose($out);
+            @unlink($tmpPath);
+            ccd_fail(500, 'Failed to write temp file');
+        }
+    }
+    fclose($in);
+    fclose($out);
+
+    if ($total < 1) {
+        @unlink($tmpPath);
+        ccd_fail(400, 'Empty body');
+    }
+
+    return [$tmpPath, $total];
+}
+
+/**
+ * Write decoded bytes via temp + magic/finfo + rename (API-key JSON path).
+ */
+function ccd_write_pdf_from_string(string $uploadDir, string $fileName, string $pdfData, int $maxBytes): void
+{
+    $len = strlen($pdfData);
+    if ($len > $maxBytes || $len > MAX_FILE_SIZE) {
+        ccd_fail(413, 'File too large');
+    }
+    $tmpPath = ccd_private_tmp_dir() . 'up_' . bin2hex(random_bytes(16));
+    if (@file_put_contents($tmpPath, $pdfData) !== $len) {
+        @unlink($tmpPath);
+        ccd_fail(500, 'Failed to write temp file');
+    }
+    ccd_finalize_pdf_from_temp($uploadDir, $fileName, $tmpPath, $len);
 }
 
 [$apiKey, $tokenSecret] = ccd_load_secrets();
@@ -240,79 +367,56 @@ $uploadToken = $headers['X-Upload-Token'] ?? $headers['x-upload-token'] ?? '';
 $uploadDir = ccd_upload_dir();
 $nonceDir = dirname(__DIR__, 2) . '/ccd_private/upload_nonces';
 
-// ---- Mode 2: signed browser direct upload ----
+// ---- Mode 2: signed browser direct upload (streamed) ----
 if (is_string($uploadToken) && $uploadToken !== '') {
     $claims = ccd_verify_upload_token($uploadToken, $tokenSecret);
     if ($claims === null) {
-        http_response_code(401);
-        echo json_encode(['error' => 'Invalid or expired upload token']);
-        exit();
+        ccd_fail(401, 'Invalid or expired upload token');
     }
 
     if (!ccd_consume_nonce($nonceDir, $claims['nonce'])) {
-        http_response_code(409);
-        echo json_encode(['error' => 'Upload token already used']);
-        exit();
+        ccd_fail(409, 'Upload token already used');
     }
 
+    // Early reject when Content-Length is present and already over max.
     $contentLength = isset($_SERVER['CONTENT_LENGTH']) ? (int) $_SERVER['CONTENT_LENGTH'] : 0;
     if ($contentLength > 0 && $contentLength > $claims['maxBytes']) {
-        http_response_code(413);
-        echo json_encode(['error' => 'File too large']);
-        exit();
+        ccd_fail(413, 'File too large');
     }
 
-    $pdfData = file_get_contents('php://input');
-    if ($pdfData === false || $pdfData === '') {
-        http_response_code(400);
-        echo json_encode(['error' => 'Empty body']);
-        exit();
-    }
-
-    ccd_write_pdf_exclusive($uploadDir, $claims['path'], $pdfData, $claims['maxBytes']);
+    [$tmpPath, $byteLength] = ccd_stream_body_to_temp($claims['maxBytes']);
+    ccd_finalize_pdf_from_temp($uploadDir, $claims['path'], $tmpPath, $byteLength);
     exit();
 }
 
 // ---- Mode 1: server-to-server API key + JSON ----
 if ($apiKey === '') {
-    http_response_code(503);
-    echo json_encode(['error' => 'Upload not configured']);
-    exit();
+    ccd_fail(503, 'Upload not configured');
 }
 
 if (!is_string($providedKey) || $providedKey === '' || !hash_equals($apiKey, $providedKey)) {
-    http_response_code(401);
-    echo json_encode(['error' => 'Invalid API key']);
-    exit();
+    ccd_fail(401, 'Invalid API key');
 }
 
 $input = file_get_contents('php://input');
 $data = json_decode($input, true);
 
 if (!$data) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid JSON data']);
-    exit();
+    ccd_fail(400, 'Invalid JSON data');
 }
 
 if (empty($data['fileData']) || empty($data['fileName'])) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Missing fileData or fileName']);
-    exit();
+    ccd_fail(400, 'Missing fileData or fileName');
 }
 
 $fileName = (string) $data['fileName'];
 if (!preg_match(PATH_REGEX, $fileName)) {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid fileName path']);
-    exit();
+    ccd_fail(400, 'Invalid fileName path');
 }
 
 $pdfData = base64_decode($data['fileData'], true);
 if ($pdfData === false || $pdfData === '') {
-    http_response_code(400);
-    echo json_encode(['error' => 'Invalid base64 data']);
-    exit();
+    ccd_fail(400, 'Invalid base64 data');
 }
 
-ccd_write_pdf_exclusive($uploadDir, $fileName, $pdfData, MAX_FILE_SIZE);
+ccd_write_pdf_from_string($uploadDir, $fileName, $pdfData, MAX_FILE_SIZE);
