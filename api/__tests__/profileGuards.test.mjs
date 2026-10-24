@@ -161,6 +161,36 @@ describe('canManagerEditProfile (V5)', () => {
       }),
       false,
     );
+    assert.equal(
+      canManagerEditProfile({
+        actor: self,
+        targetOld: { ...self, allowed_year_groups: null },
+        targetNew: { allowed_year_groups: ['Year 1'], organisation_id: 'ems' },
+      }),
+      false,
+    );
+    assert.equal(
+      canManagerEditProfile({
+        actor: self,
+        targetOld: { ...self, admin_preset_categories: null },
+        targetNew: {
+          admin_preset_categories: ['Warm-ups'],
+          organisation_id: 'ems',
+        },
+      }),
+      false,
+    );
+    assert.equal(
+      canManagerEditProfile({
+        actor: self,
+        targetOld: { ...self, admin_preset_activity_pack_ids: null },
+        targetNew: {
+          admin_preset_activity_pack_ids: ['pack-1'],
+          organisation_id: 'ems',
+        },
+      }),
+      false,
+    );
   });
 
   it('denies editing users outside the manager org', () => {

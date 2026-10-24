@@ -94,7 +94,7 @@ BEGIN
       END IF;
     END IF;
 
-    -- Managers cannot change their own can_* / forum_can_* flags.
+    -- Managers cannot change their own can_* / forum_can_* / preset fields.
     IF OLD.id = auth.uid() THEN
       IF NEW.can_edit_activities IS DISTINCT FROM OLD.can_edit_activities
          OR NEW.can_edit_lessons IS DISTINCT FROM OLD.can_edit_lessons
@@ -105,6 +105,9 @@ BEGIN
          OR NEW.forum_can_moderate IS DISTINCT FROM OLD.forum_can_moderate
          OR NEW.forum_can_manage_categories IS DISTINCT FROM OLD.forum_can_manage_categories
          OR NEW.forum_can_manage_settings IS DISTINCT FROM OLD.forum_can_manage_settings
+         OR NEW.allowed_year_groups IS DISTINCT FROM OLD.allowed_year_groups
+         OR NEW.admin_preset_categories IS DISTINCT FROM OLD.admin_preset_categories
+         OR NEW.admin_preset_activity_pack_ids IS DISTINCT FROM OLD.admin_preset_activity_pack_ids
       THEN
         RAISE EXCEPTION 'managers cannot change their own capability flags'
           USING ERRCODE = '42501';
