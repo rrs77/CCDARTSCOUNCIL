@@ -22,13 +22,13 @@ There was **never** a separate `/set-password` route. Invitees use **`/reset-pas
 ## Live data vs demo
 
 1. Prefer `GET /api/users/list` (needs `SUPABASE_SERVICE_ROLE_KEY` on api-server).
-2. Else client `profiles` SELECT under RLS (migration `20261019_profiles_admin_read_scope.sql`).
+2. Else client `profiles` SELECT under RLS (migration `20261019120100_profiles_admin_read_scope.sql`).
 3. Else demo roster (includes Rob as `super_admin` + Chelmsford Music Hub org admin for UI demos).
 
 ## Rob as super admin
 
-Migration `20260903_hub_administration.sql` (and re-applied in `20261019_profiles_admin_read_scope.sql`) sets `rob.reichstorer@gmail.com` → `super_admin` when that profile exists. Also matches typo `@gmaill.com` in the new migration. **Email is never checked at request time** — only roles.
+Migration `20260903_hub_administration.sql` (and re-applied in `20261019120100_profiles_admin_read_scope.sql`) sets `rob.reichstorer@gmail.com` → `super_admin` when that profile exists. Also matches typo `@gmaill.com` in the new migration. **Email is never checked at request time** — only roles.
 
 ## Env / migrations needed
 
-See PR notes: run `20260902`, `20260903`, `20260914`, `20261019_profiles_admin_read_scope.sql`; set `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `VITE_APP_URL`, optional Resend.
+See PR notes: run `20260902`, `20260903`, `20260914`, `20261019120100_profiles_admin_read_scope.sql`; set `SUPABASE_SERVICE_ROLE_KEY`, `SUPABASE_URL`, `VITE_APP_URL`, optional Resend.
