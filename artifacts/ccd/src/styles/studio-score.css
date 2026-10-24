@@ -417,6 +417,13 @@ html.ccd-studio {
   margin-inline: 0;
   padding: 8px 12px 40px;
   background: transparent;
+  /* Hubs view scrolls inside the studio workspace (which is overflow:hidden),
+     so the sticky region map sticks to this scroller. Scoped to hubs only. */
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  container-type: size;
+  container-name: hubs-scroller;
 }
 
 .ccd-studio-workspace-inner.wide-canvas {

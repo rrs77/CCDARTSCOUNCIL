@@ -210,7 +210,7 @@ function Crumbs({ items }: { items: { label: string; onClick?: () => void }[] })
         <span key={i} className="flex items-center gap-1">
           {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#1F1B4D]/30" aria-hidden />}
           {it.onClick ? (
-            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#1F1B4D]/60 hover:text-[#1F1B4D] hover:underline">
+            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#1F1B4D]/75 hover:text-[#1F1B4D] hover:underline">
               {it.label}
             </button>
           ) : (
@@ -439,7 +439,7 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
             lastGroup = h.group;
             return (
               <div key={`${h.group}-${h.label}-${i}`}>
-                {header && <p className="px-3 pb-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#1F1B4D]/45">{h.group}</p>}
+                {header && <p className="px-3 pb-1 pt-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#1F1B4D]/45">{h.group}</p>}
                 <div
                   id={`hubs-hit-${i}`}
                   role="option"
@@ -877,14 +877,14 @@ function OrgDirectorySection({
                   </div>
                   <div className="flex flex-1 flex-col gap-1 p-3">
                     <h3 className={`text-[14px] font-semibold leading-snug ${ink}`}>{h.displayName}</h3>
-                    <p className={`text-[12px] ${muted}`}>{o.disciplines.join(' · ') || 'Arts'}</p>
-                    {h.tagline && <p className={`line-clamp-1 text-[12px] leading-snug ${muted}`}>{h.tagline}</p>}
+                    <p className={`text-[13px] ${muted}`}>{o.disciplines.join(' · ') || 'Arts'}</p>
+                    {h.tagline && <p className={`line-clamp-1 text-[13px] leading-snug ${muted}`}>{h.tagline}</p>}
                     <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                       <Badge tone={o.access === 'free' ? 'teal' : 'amber'}>{ACCESS_LABEL[o.access]}</Badge>
                       <button
                         type="button"
                         onClick={() => openPartnerHub(h.slug)}
-                        className="inline-flex min-h-[32px] items-center gap-1 rounded-lg px-1.5 text-[12px] font-medium text-[#0B6B5F] hover:bg-[#14B8A6]/10"
+                        className="inline-flex min-h-[32px] items-center gap-1 rounded-lg px-1.5 text-[13px] font-medium text-[#0B6B5F] hover:bg-[#14B8A6]/10"
                         aria-label={`Explore resources from ${h.displayName}`}
                       >
                         Explore <ArrowRight className="h-3.5 w-3.5" />
@@ -897,7 +897,7 @@ function OrgDirectorySection({
           })}
         </ul>
       )}
-      <p className={`text-[12px] ${muted}`}>
+      <p className={`text-[13px] ${muted}`}>
         Listings show publicly available resources. A listing does not mean the organisation has endorsed or partnered with CCDesigner.
       </p>
     </section>
@@ -2099,7 +2099,7 @@ function PartnerHubsBrowse({
                 </div>
 
                 <div className="flex min-h-0 flex-col rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-3 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:p-4">
-                  <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#1F1B4D]/45">
+                  <h3 className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#1F1B4D]/45">
                     Regions
                   </h3>
                   <ul
@@ -2126,7 +2126,7 @@ function PartnerHubsBrowse({
                           >
                             <span className="min-w-0 truncate text-[13px] font-semibold">{r.name}</span>
                             <span
-                              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
+                              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[13px] font-bold tabular-nums ${
                                 active ? 'bg-[#0B6B5F] text-white' : 'bg-[#E4F4EF] text-[#0B6B5F]'
                               }`}
                             >
@@ -2140,7 +2140,7 @@ function PartnerHubsBrowse({
                 </div>
               </div>
 
-              <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
+              <p className={`flex items-center gap-2 text-[13px] ${muted}`}>
                 <Info className="h-3.5 w-3.5" aria-hidden />
                 Hub areas from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
               </p>
@@ -2186,7 +2186,7 @@ function PartnerHubsBrowse({
               <div className="grid gap-6 min-[1200px]:grid-cols-[clamp(360px,40%,520px)_minmax(0,1fr)] min-[1200px]:items-start">
                 <div
                   style={{ ['--region-aspect' as string]: String(regionAspect) }}
-                  className={`${regionMapOpen ? 'block' : 'hidden'} relative h-[240px] overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:block sm:h-[320px] min-[1200px]:sticky min-[1200px]:top-[calc(var(--ccd-sticky-header-h,65px)+16px)] min-[1200px]:h-auto min-[1200px]:aspect-[var(--region-aspect,4/5)] min-[1200px]:max-h-[calc(100vh-var(--ccd-sticky-header-h,65px)-40px)]`}
+                  className={`${regionMapOpen ? 'block' : 'hidden'} relative h-[240px] overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:block sm:h-[320px] min-[1200px]:sticky min-[1200px]:top-4 min-[1200px]:h-auto min-[1200px]:aspect-[var(--region-aspect,4/5)] min-[1200px]:max-h-[calc(100cqh-40px)]`}
                 >
                   <UkHubMap
                     ix={ix}
@@ -2221,7 +2221,7 @@ function PartnerHubsBrowse({
                   <h3 className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base">
                     {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'}
                   </h3>
-                  <p className="text-[13px] font-medium leading-tight text-[#77738F]">A–Z</p>
+                  <p className="text-[13px] font-medium leading-tight text-[#5C5878]">A–Z</p>
                 </div>
                 <div className="ml-auto flex flex-wrap items-center gap-0.5">
                   <button

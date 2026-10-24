@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { musicHubCardTitle } from './hubDisplayName';
 import { ChevronRight, Minus, Plus, RotateCcw } from 'lucide-react';
 import {
   type BBox,
@@ -117,9 +118,6 @@ interface Item {
   priority: number;
 }
 
-function mapLabel(text: string) {
-  return text.replace(/ Music( Education)? Hub$/, '').replace(/ \(BLMK\)/, '').replace(/^Bedfordshire, Luton and Milton Keynes$/, 'BLMK');
-}
 
 function splitLabel(text: string): string[] {
   if (text.length <= 16) return [text];
@@ -489,11 +487,11 @@ export function UkHubMap({
         }
         return {
         id: h.id,
-        name: hubLabel(h),
+        name: musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined),
         lads: h.lads,
         focus: { level: 'hub', id: h.id } as MapFocus,
         label,
-        labelText: mapLabel(hubLabel(h)),
+        labelText: musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined),
         priority: h.bbox[2] * h.bbox[3],
         };
       });
@@ -1018,7 +1016,7 @@ export function UkHubMap({
           <div
             key={`pill-${p.id}`}
             aria-hidden
-            className={`pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-2.5 py-1 text-[12.5px] font-semibold leading-none shadow-[0_1px_3px_rgba(26,58,34,0.12)] transition-[background,border-color,color,box-shadow] duration-150 ${
+            className={`pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-2.5 py-1 text-[13px] font-semibold leading-none shadow-[0_1px_3px_rgba(26,58,34,0.12)] transition-[background,border-color,color,box-shadow] duration-150 ${
               p.active
                 ? 'border-[#0B6B5F]/35 bg-[#0B6B5F] text-white shadow-[0_4px_14px_-4px_rgba(11,107,95,0.45)]'
                 : 'border-[#1A3A22]/10 bg-white text-[#1A3A22]'
@@ -1039,9 +1037,9 @@ export function UkHubMap({
             marginTop: '-14px',
           }}
         >
-          <span className="block">{mapLabel(tipItem.name)}</span>
+          <span className="block">{tipItem.name}</span>
           {showRegionCounts && tipItem.focus.level === 'region' && (
-            <span className="mt-0.5 block text-[11px] font-medium text-white/80">
+            <span className="mt-0.5 block text-[13px] font-medium text-white/80">
               {ix.hubsInRegion(tipItem.id).length} Music Hub
               {ix.hubsInRegion(tipItem.id).length === 1 ? '' : 's'}
             </span>
@@ -1145,7 +1143,7 @@ export function UkHubMap({
       )}
 
       {showAttribution && (
-        <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[10px] leading-tight text-[#1F1B4D]/40">
+        <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[13px] leading-tight text-[#1F1B4D]/40">
           Contains OS data © Crown copyright and database right 2024 · ONS (OGL v3) · Hub areas: Arts Council England
         </p>
       )}
