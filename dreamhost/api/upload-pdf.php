@@ -235,7 +235,8 @@ function ccd_private_tmp_dir(): string
 }
 
 /**
- * Validate a temp file as PDF (magic + finfo), then rename into the exclusive final path.
+ * Validate a temp file as PDF (magic + finfo), then atomically link into place.
+ * link(temp, final) fails if final exists (no overwrite) → 409; then unlink(temp).
  */
 function ccd_finalize_pdf_from_temp(string $uploadDir, string $fileName, string $tmpPath, int $byteLength): void
 {
@@ -271,15 +272,16 @@ function ccd_finalize_pdf_from_temp(string $uploadDir, string $fileName, string 
     }
 
     $filePath = $uploadDir . $fileName;
-    if (file_exists($filePath)) {
+    // Atomic exclusive create: link fails if destination already exists.
+    if (!@link($tmpPath, $filePath)) {
+        $exists = file_exists($filePath);
         @unlink($tmpPath);
-        ccd_fail(409, 'File already exists', ['success' => false]);
-    }
-
-    if (!@rename($tmpPath, $filePath)) {
-        @unlink($tmpPath);
+        if ($exists) {
+            ccd_fail(409, 'File already exists', ['success' => false]);
+        }
         ccd_fail(500, 'Failed to save file', ['success' => false]);
     }
+    @unlink($tmpPath);
 
     echo json_encode([
         'success' => true,
