@@ -758,11 +758,16 @@ export function LessonPlannerCalendar({
 
   // Handle view lesson details
   const handleViewLessonDetails = (lessonNumber: string) => {
+    // Close the day pop-up so it doesn't sit on top of the lesson window (or its print/export).
+    setIsLessonSummaryOpen(false);
+    setRemoveFromDayDropdownOpen(false);
     setSelectedLessonForDetails(lessonNumber);
   };
 
   // Handle print lesson
   const handlePrintLesson = (lessonNumber: string) => {
+    setIsLessonSummaryOpen(false);
+    setRemoveFromDayDropdownOpen(false);
     setSelectedLessonForDetails(lessonNumber);
     setShowPrintModal(true);
   };

@@ -265,6 +265,10 @@ export function LessonPrintModal({
       }
     }
     
+    // Single-lesson PDF gets its own layout tweaks (full width, flowing sections,
+    // 13px minimum text). Unit/half-term print is unchanged.
+    const isSingleLesson = exportMode === 'single' && lessonsToRender.length === 1;
+
     let htmlContent = `
       <!DOCTYPE html>
       <html>
@@ -624,6 +628,17 @@ export function LessonPrintModal({
             content: none !important;
           }
           
+          /* Single-lesson PDF: full A4 content width, sections flow across pages */
+          body.single-lesson .lesson-page { max-width: none; width: 100%; min-height: 0; }
+          body.single-lesson .category-group { break-inside: auto; page-break-inside: auto; }
+          body.single-lesson .activity-card { break-inside: auto; page-break-inside: auto; }
+          body.single-lesson .activity-category,
+          body.single-lesson .activity-header { break-after: avoid; page-break-after: avoid; }
+          body.single-lesson .activity-resources,
+          body.single-lesson .goal-box,
+          body.single-lesson .lesson-header { break-inside: avoid; page-break-inside: avoid; }
+          body.single-lesson .print-header-note { font-size: 13px; opacity: 0.9; margin-bottom: 4px; }
+
           /* Print styles */
           @media print {
             body { background: white; }
@@ -632,7 +647,7 @@ export function LessonPrintModal({
           }
         </style>
       </head>
-      <body>
+      <body class="${isSingleLesson ? 'single-lesson' : ''}">
         <div class="lesson-page">
     `;
 
@@ -678,7 +693,23 @@ export function LessonPrintModal({
       htmlContent += `
           <!-- Lesson Header -->
           <div class="lesson-header">
-            <h1>${escapeHtmlText((exportUseCustomHeaderFooter && exportCustomHeader) ? exportCustomHeader : (lessonData.customHeader || lessonTitle))}</h1>
+            ${(() => {
+              if (!isSingleLesson) {
+                return `<h1>${escapeHtmlText((exportUseCustomHeaderFooter && exportCustomHeader) ? exportCustomHeader : (lessonData.customHeader || lessonTitle))}</h1>`;
+              }
+              // Single lesson: the H1 is always this lesson's own title. The lesson's saved
+              // print header (lessonData.customHeader) was previously used as the H1, and in
+              // the demo data it is stale text copied from another lesson ("A2 Performance To
+              // Parents"), so it is never shown as the title. A header typed in this export
+              // dialog is shown as a small line above the title.
+              const typedHeader =
+                exportUseCustomHeaderFooter && exportCustomHeader.trim() !== (lessonData.customHeader || '').trim()
+                  ? exportCustomHeader
+                  : '';
+              const headerNote = typedHeader.trim();
+              const realTitle = (lessonData.title || '').trim() || lessonTitle;
+              return `${headerNote && headerNote !== realTitle ? `<div class="print-header-note">${escapeHtmlText(headerNote)}</div>` : ''}<h1>${escapeHtmlText(realTitle)}</h1>`;
+            })()}
             <div class="subtitle">${escapeHtmlText(lessonSubtitle)}</div>
             <div class="meta">
               <span class="meta-item">📚 ${currentSheetInfo.display}</span>
@@ -771,7 +802,7 @@ export function LessonPrintModal({
               </svg>
               <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">Learning Goals</h3>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div style="display: grid; grid-template-columns: ${isSingleLesson ? '1fr' : 'repeat(2, 1fr)'}; gap: 10px;">
         `;
         
         // Show EYFS Learning Goals if they exist
@@ -786,9 +817,12 @@ export function LessonPrintModal({
           
           Object.entries(groupedEyfs).forEach(([area, statements]) => {
             if (statements && statements.length > 0) {
+              // Statements without an "Area:" prefix use the statement as its own area —
+              // on the single-lesson PDF don't repeat it as a heading above itself.
+              const areaIsStatement = statements.every((st) => st.trim() === area.trim());
               htmlContent += `
-                <div style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
-                  <h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${area}</h4>
+                <div class="goal-box" style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
+                  ${isSingleLesson && areaIsStatement ? '' : `<h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${area}</h4>`}
                   <ul style="list-style: none; padding: 0; margin: 0;">
               `;
               statements.forEach(statement => {
@@ -848,7 +882,7 @@ export function LessonPrintModal({
               <svg style="width: 18px; height: 18px; color: #0f766e; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">Learning Goals</h3>
+              <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">${isSingleLesson && (hasEyfsStandards || hasCustomObjectives) ? 'Outcomes &amp; Success Criteria' : 'Learning Goals'}</h3>
             </div>
         `;
         
@@ -892,8 +926,9 @@ export function LessonPrintModal({
         htmlContent += `</div>`;
       }
 
-      // Add Standards section at the top (as tags/pills like in UI)
-      if (lessonStandardsList.length > 0) {
+      // Add Standards section at the top (as tags/pills like in UI).
+      // Single-lesson PDF: skip when the same statements were already listed as Learning Goals.
+      if (lessonStandardsList.length > 0 && !(isSingleLesson && hasEyfsStandards)) {
         htmlContent += `
           <div style="margin-bottom: 16px;">
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
@@ -1184,6 +1219,12 @@ export function LessonPrintModal({
       </div>
     `;
 
+    if (isSingleLesson) {
+      // 13px minimum for every print size on the single-lesson PDF (CSS and inline styles).
+      const min13 = (html: string) =>
+        html.replace(/font-size:\s*(\d+(?:\.\d+)?)px/g, (m, n) => (parseFloat(n) < 13 ? 'font-size: 13px' : m));
+      return [min13(htmlContent), min13(footerContent), headerContent];
+    }
     return [htmlContent, footerContent, headerContent];
   };
 
