@@ -773,11 +773,13 @@ html.ccd-studio .ss-dialog-lg {
   color: var(--ss-indigo);
 }
 
-/* Compact month grid */
+/* Month grid — same full-width stretch as week */
 .ss-month-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: 4px;
+  width: 100%;
+  min-height: min(68vh, calc(100dvh - 13.5rem));
 }
 
 .ss-month-dow {

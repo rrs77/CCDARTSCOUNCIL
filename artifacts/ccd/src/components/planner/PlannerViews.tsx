@@ -333,7 +333,7 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
   return (
     <div
       ref={drop as unknown as React.Ref<HTMLDivElement>}
-      className={`w-full space-y-3 rounded-[20px] bg-white/70 p-4 sm:p-5 ${zoneClass} ${flashClass}`}
+      className={`w-full min-h-[min(68vh,calc(100dvh-13.5rem))] space-y-3 rounded-[20px] bg-white/70 p-4 sm:p-5 ${zoneClass} ${flashClass}`}
     >
       <h3 className="text-[17px] font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>
         {date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
