@@ -12,7 +12,6 @@ import {
   Tag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
-import { LessonPlanBuilder } from './LessonPlanBuilder';
 import { AssignToHalfTermModal } from './AssignToHalfTermModal';
 import { useData, type Activity, type LessonData } from '../contexts/DataContext';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
@@ -21,6 +20,7 @@ import {
   type LibraryKeyStageId,
   isLibraryKeyStageId,
   keyStageFromYearGroupTag,
+  keyStageLabel,
 } from '../utils/libraryHierarchy';
 import { ensureLessonSections, legacyLessonToSections } from '../utils/planner/legacyLessonToSections';
 import type { PlanTemplate } from '../types/lessonSections';
@@ -28,6 +28,7 @@ import { LibraryMenu } from './ccdPlanner/LibraryMenu';
 import { MyUnitsMenu } from './ccdPlanner/MyUnitsMenu';
 import { ActivityStepsModal } from './ccdPlanner/ActivityStepsModal';
 import { LessonPlanModal } from './ccdPlanner/LessonPlanModal';
+import { PlannerLessonCanvas } from './ccdPlanner/PlannerLessonCanvas';
 import { RunThroughModal } from './ccdPlanner/RunThroughModal';
 import { TemplatePickerModal } from './ccdPlanner/TemplatePickerModal';
 
@@ -55,7 +56,7 @@ interface LessonsWorkspaceProps {
  */
 export function LessonsWorkspace({
   onAssignToUnit,
-  onUnsavedChangesChange,
+  onUnsavedChangesChange: _onUnsavedChangesChange,
 }: LessonsWorkspaceProps) {
   const isViewOnly = useIsViewOnly();
   const {
@@ -300,6 +301,56 @@ export function LessonsWorkspace({
     setLessonPlanOpen(true);
     setLiveMessage(`Applied template ${template.name}`);
   };
+
+  const saveCanvasLesson = async (lessonData: LessonData) => {
+    if (!editingLessonNumber || !updateLessonData) return;
+    const withSections = ensureLessonSections(lessonData);
+    await updateLessonData(editingLessonNumber, {
+      ...withSections,
+      academicYear: currentAcademicYear,
+    });
+    setBuilderKey((k) => k + 1);
+  };
+
+  const duplicateActiveLesson = async () => {
+    if (isViewOnly || !editingLessonNumber || !activeLessonData || !updateLessonData) return;
+    const loadingToast = toast.loading('Duplicating lesson…');
+    try {
+      const maxLessonNumber = Math.max(
+        0,
+        ...Object.keys(allLessonsData || {}).map((num) => {
+          const numStr = num.replace('lesson', '');
+          return parseInt(numStr, 10) || 0;
+        }),
+      );
+      const newLessonNumber = `lesson${maxLessonNumber + 1}`;
+      const source = ensureLessonSections(activeLessonData);
+      await updateLessonData(newLessonNumber, {
+        ...source,
+        title: `${source.title || editingLessonNumber} (copy)`,
+        isUserCreated: true,
+        academicYear: currentAcademicYear,
+      });
+      setEditingLessonNumber(newLessonNumber);
+      setBuilderKey((k) => k + 1);
+      setLiveMessage(`Duplicated as ${newLessonNumber}`);
+      toast.success('Lesson duplicated', { id: loadingToast });
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to duplicate',
+        { id: loadingToast },
+      );
+    }
+  };
+
+  React.useEffect(() => {
+    const onAnnounce = (e: Event) => {
+      const message = (e as CustomEvent<{ message?: string }>).detail?.message;
+      if (message) setLiveMessage(message);
+    };
+    window.addEventListener('ccd:planner-canvas-announce', onAnnounce);
+    return () => window.removeEventListener('ccd:planner-canvas-announce', onAnnounce);
+  }, []);
 
   const classLabel = currentSheetInfo.display || currentSheetInfo.sheet;
 
@@ -603,16 +654,22 @@ export function LessonsWorkspace({
           </div>
         </aside>
 
-        {/* Full-width lesson canvas */}
-        <div className="min-w-0 overflow-hidden rounded-2xl border border-[#E2E0EF] bg-[#F9FAFB] shadow-[0_1px_3px_rgba(31,27,77,0.04)]">
-          <LessonPlanBuilder
-            key={`${builderKey}-${editingLessonNumber ?? 'new'}`}
-            editingLessonNumber={editingLessonNumber}
-            onEditComplete={() => {
-              /* stay on lesson after save */
-            }}
-            onUnsavedChangesChange={onUnsavedChangesChange}
-            embedded
+        {/* Full-width lesson canvas (mock LessonCanvas port — not three-column) */}
+        <div className="planner-shell-surface flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
+          <PlannerLessonCanvas
+            key={`${builderKey}-${editingLessonNumber ?? 'empty'}`}
+            lessonNumber={editingLessonNumber}
+            lessonData={activeLessonData}
+            keyStageLabel={keyStageLabel(keyStage)}
+            classLabel={classLabel}
+            yearGroupLabel={currentSheetInfo.sheet}
+            canEdit={!isViewOnly}
+            onSave={saveCanvasLesson}
+            onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}
+            onOpenActivity={(a) => setActivityForSteps(a)}
+            onDuplicate={
+              editingLessonNumber && !isViewOnly ? () => void duplicateActiveLesson() : undefined
+            }
           />
         </div>
       </div>

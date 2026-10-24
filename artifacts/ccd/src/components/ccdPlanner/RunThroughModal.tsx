@@ -1,14 +1,15 @@
+/**
+ * Run-through — swipe/pager through activity (+ section) cards.
+ * Port of planner-mock PreviewLessonModal with locked product naming:
+ * "Run-through" (Preview remains the A4 print view).
+ */
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useState } from 'react';
 import type { LessonSection } from '../../types/lessonSections';
 import { chipStyle } from '../../utils/planner/contrastText';
-import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
+import { Button, CloseX, ModalShell, Pill } from './ui';
 
-/**
- * Run-through — swipe/pager through activity (+ section) cards.
- * Product naming: "Run-through" (not Preview — Preview is the A4 view).
- */
 export function RunThroughModal({
   open,
   onClose,
@@ -38,28 +39,43 @@ export function RunThroughModal({
     setIndex(clamped);
     const s = sections[clamped];
     setLiveMessage(
-      s
-        ? `Step ${clamped + 1} of ${sections.length}: ${s.title}`
-        : '',
+      s ? `Step ${clamped + 1} of ${sections.length}: ${s.title}` : '',
     );
   };
 
   return (
     <ModalShell open={open} onClose={onClose} labelledBy={titleId}>
-      <ModalHeader
-        title={title || 'Lesson'}
-        subtitle={`${durationMins ?? 0} min · Run-through`}
-        onClose={onClose}
-        titleId={titleId}
-      />
-      <ModalBody>
+      <div className="flex items-center justify-between border-b border-indigo-50 px-5 py-4">
+        <div className="min-w-0 pr-2">
+          <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">
+            Run-through
+          </p>
+          <h2
+            id={titleId}
+            className="line-clamp-2 text-lg font-extrabold text-slate-900"
+            title={title}
+          >
+            {title || 'Lesson'}
+          </h2>
+          <p className="text-xs text-slate-400">
+            {durationMins ?? 0} min · swipe through activities
+          </p>
+        </div>
+        <CloseX onClick={onClose} />
+      </div>
+
+      <div className="soft-scroll relative min-h-0 flex-1 overflow-y-auto px-5 py-6">
         {sections.length === 0 ? (
           <p className="py-16 text-center text-sm text-slate-400">
             Add activities to run through this lesson.
           </p>
         ) : (
           <>
-            <div className="mb-4 flex items-center justify-center gap-1.5" role="tablist" aria-label="Steps">
+            <div
+              className="mb-4 flex items-center justify-center gap-1.5"
+              role="tablist"
+              aria-label="Steps"
+            >
               {sections.map((s, i) => (
                 <button
                   key={s.id}
@@ -74,6 +90,7 @@ export function RunThroughModal({
                 />
               ))}
             </div>
+
             <div className="relative min-h-[220px] overflow-hidden">
               <AnimatePresence mode="wait">
                 {block ? (
@@ -104,20 +121,22 @@ export function RunThroughModal({
                           Activity
                         </span>
                       ) : (
-                        <span className="inline-flex items-center rounded-full bg-violet-50 px-2.5 py-0.5 text-xs font-semibold text-violet-700">
-                          Section
-                        </span>
+                        <Pill className="bg-violet-50 text-violet-700">Section</Pill>
                       )}
-                      {block.durationMins ? (
-                        <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-semibold text-slate-600">
-                          {block.durationMins} min
-                        </span>
-                      ) : null}
+                      {block.durationMins || block.activity?.time ? (
+                        <Pill className="bg-slate-100 text-slate-600">
+                          {block.durationMins || block.activity?.time || 0} min
+                        </Pill>
+                      ) : (
+                        <Pill className="bg-violet-50 text-violet-700">Section</Pill>
+                      )}
                     </div>
                     <p className="text-xs font-bold text-indigo-500">
                       Step {index + 1} of {sections.length}
                     </p>
-                    <h3 className="mt-1 text-xl font-extrabold text-slate-900">{block.title}</h3>
+                    <h3 className="mt-1 text-xl font-extrabold text-slate-900">
+                      {block.title}
+                    </h3>
                     <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
                       {block.bodyHtml || block.activity?.description || '—'}
                     </p>
@@ -130,27 +149,26 @@ export function RunThroughModal({
         <div className="sr-only" aria-live="polite">
           {liveMessage}
         </div>
-      </ModalBody>
-      <ModalFooter>
-        <button
-          type="button"
+      </div>
+
+      <div className="flex items-center justify-between border-t border-indigo-50 px-5 py-3">
+        <Button
+          variant="secondary"
+          size="sm"
           disabled={index === 0 || sections.length === 0}
           onClick={() => go(index - 1)}
-          className="inline-flex h-11 items-center gap-1 rounded-full border-2 border-indigo-200 px-4 text-sm font-semibold text-indigo-700 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
-          <ChevronLeft className="h-4 w-4" />
-          Previous
-        </button>
-        <button
-          type="button"
+          <ChevronLeft className="h-4 w-4" /> Back
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
           disabled={index >= sections.length - 1 || sections.length === 0}
           onClick={() => go(index + 1)}
-          className="inline-flex h-11 items-center gap-1 rounded-full bg-indigo-600 px-4 text-sm font-semibold text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
-          Next
-          <ChevronRight className="h-4 w-4" />
-        </button>
-      </ModalFooter>
+          Next <ChevronRight className="h-4 w-4" />
+        </Button>
+      </div>
     </ModalShell>
   );
 }

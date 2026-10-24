@@ -16,7 +16,14 @@ import {
   uid,
 } from '../../utils/planner/plannerCurriculumStore';
 import { chipStyle, contrastTextOn } from '../../utils/planner/contrastText';
-import { ModalConfirm, ModalBody, ModalFooter, ModalHeader, ModalShell } from '../ccdPlanner/ModalShell';
+import {
+  ModalConfirm,
+  ModalBody,
+  ModalFooter,
+  ModalHeader,
+  ModalShell,
+} from '../ccdPlanner/ModalShell';
+import { Button, Field, TextField, TextInput } from '../ccdPlanner/ui';
 
 type Dialog =
   | { kind: 'framework'; id?: string; name: string }
@@ -223,14 +230,14 @@ export function CurriculumSettingsEditor() {
       <section className="rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-sm">
         <div className="mb-3 flex items-center justify-between gap-2">
           <h3 className="text-sm font-extrabold text-[#1F1B4D]">Frameworks</h3>
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="sm"
             onClick={() => setDialog({ kind: 'framework', name: '' })}
-            className="inline-flex h-11 items-center gap-1 rounded-full bg-indigo-600 px-3 text-xs font-bold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
             <Plus className="h-4 w-4" />
             Add
-          </button>
+          </Button>
         </div>
         {state.frameworks.length === 0 ? (
           <p className="text-sm text-slate-400">No frameworks yet.</p>
@@ -267,8 +274,9 @@ export function CurriculumSettingsEditor() {
       <section className="rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-sm">
         <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-sm font-extrabold text-[#1F1B4D]">Strands & statements</h3>
-          <button
-            type="button"
+          <Button
+            variant="primary"
+            size="sm"
             disabled={state.frameworks.length === 0 || subjects.length === 0}
             onClick={() =>
               setDialog({
@@ -279,11 +287,10 @@ export function CurriculumSettingsEditor() {
                 keyStage: 'ks2',
               })
             }
-            className="inline-flex h-11 items-center gap-1 rounded-full bg-indigo-600 px-3 text-xs font-bold text-white disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
           >
             <Plus className="h-4 w-4" />
             Add strand
-          </button>
+          </Button>
         </div>
         <div className="mb-3 flex flex-wrap gap-2">
           <select
@@ -547,9 +554,8 @@ export function CurriculumSettingsEditor() {
         />
         <ModalBody>
           {dialog?.kind === 'framework' || dialog?.kind === 'sectionType' ? (
-            <label className="block space-y-1">
-              <span className="text-xs font-semibold uppercase text-slate-500">Name</span>
-              <input
+            <Field label="Name">
+              <TextField
                 value={dialog.kind === 'framework' ? dialog.name : dialog.label}
                 onChange={(e) =>
                   setDialog(
@@ -558,20 +564,17 @@ export function CurriculumSettingsEditor() {
                       : { ...dialog, label: e.target.value },
                   )
                 }
-                className="h-11 w-full rounded-2xl border border-indigo-100 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
               />
-            </label>
+            </Field>
           ) : null}
           {dialog?.kind === 'strand' ? (
             <div className="space-y-3">
-              <label className="block space-y-1">
-                <span className="text-xs font-semibold uppercase text-slate-500">Name</span>
-                <input
+              <Field label="Name">
+                <TextField
                   value={dialog.name}
                   onChange={(e) => setDialog({ ...dialog, name: e.target.value })}
-                  className="h-11 w-full rounded-2xl border border-indigo-100 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                 />
-              </label>
+              </Field>
               <label className="block space-y-1">
                 <span className="text-xs font-semibold uppercase text-slate-500">Framework</span>
                 <select
@@ -622,26 +625,22 @@ export function CurriculumSettingsEditor() {
             </div>
           ) : null}
           {dialog?.kind === 'statement' ? (
-            <label className="block space-y-1">
-              <span className="text-xs font-semibold uppercase text-slate-500">Statement</span>
-              <textarea
+            <Field label="Statement">
+              <TextInput
                 value={dialog.text}
                 onChange={(e) => setDialog({ ...dialog, text: e.target.value })}
                 rows={5}
-                className="w-full rounded-2xl border border-indigo-100 px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
               />
-            </label>
+            </Field>
           ) : null}
           {dialog?.kind === 'template' ? (
             <div className="space-y-3">
-              <label className="block space-y-1">
-                <span className="text-xs font-semibold uppercase text-slate-500">Name</span>
-                <input
+              <Field label="Name">
+                <TextField
                   value={dialog.name}
                   onChange={(e) => setDialog({ ...dialog, name: e.target.value })}
-                  className="h-11 w-full rounded-2xl border border-indigo-100 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                 />
-              </label>
+              </Field>
               <label className="block space-y-1">
                 <span className="text-xs font-semibold uppercase text-slate-500">Key stage</span>
                 <select
@@ -661,32 +660,22 @@ export function CurriculumSettingsEditor() {
                   ))}
                 </select>
               </label>
-              <label className="block space-y-1">
-                <span className="text-xs font-semibold uppercase text-slate-500">Description</span>
-                <input
+              <Field label="Description">
+                <TextField
                   value={dialog.description}
                   onChange={(e) => setDialog({ ...dialog, description: e.target.value })}
-                  className="h-11 w-full rounded-2xl border border-indigo-100 px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                 />
-              </label>
+              </Field>
             </div>
           ) : null}
         </ModalBody>
         <ModalFooter>
-          <button
-            type="button"
-            onClick={() => setDialog(null)}
-            className="inline-flex h-11 items-center rounded-full border-2 border-indigo-200 px-4 text-sm font-semibold text-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-          >
+          <Button variant="secondary" size="sm" onClick={() => setDialog(null)}>
             Cancel
-          </button>
-          <button
-            type="button"
-            onClick={saveDialog}
-            className="inline-flex h-11 items-center rounded-full bg-indigo-600 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-          >
+          </Button>
+          <Button variant="primary" size="sm" onClick={saveDialog}>
             Save
-          </button>
+          </Button>
         </ModalFooter>
       </ModalShell>
 

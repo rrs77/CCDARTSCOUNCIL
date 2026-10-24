@@ -88,7 +88,8 @@ export function ModalShell({
                 : { type: 'spring', stiffness: 380, damping: 32 }
             }
             className={cn(
-              'relative z-10 flex flex-col overflow-hidden rounded-[28px] bg-white shadow-2xl shadow-indigo-900/20',
+              // Match feat/planner-mock ModalShell: 28px radius, indigo shadow
+              'relative z-10 flex flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl shadow-indigo-900/20',
               'focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2',
               MODAL_SHELL_SIZE,
               className,
@@ -123,7 +124,7 @@ export function ModalHeader({
   return (
     <div
       className={cn(
-        'flex shrink-0 items-start justify-between gap-3 border-b border-indigo-50 px-6 py-4',
+        'flex shrink-0 items-start justify-between gap-3 border-b border-indigo-50 px-5 py-4 sm:px-6',
         className,
       )}
     >
@@ -154,7 +155,7 @@ export function ModalBody({
   className?: string;
 }) {
   return (
-    <div className={cn('min-h-0 flex-1 overflow-y-auto px-6 py-4', className)}>
+    <div className={cn('soft-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6', className)}>
       {children}
     </div>
   );
@@ -170,7 +171,7 @@ export function ModalFooter({
   return (
     <div
       className={cn(
-        'flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-indigo-50 px-6 py-3',
+        'flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-indigo-50 px-5 py-3 sm:px-6',
         className,
       )}
     >
