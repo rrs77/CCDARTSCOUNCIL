@@ -1473,9 +1473,15 @@ export function LessonPrintModal({
             })()
           : `${timestamp}_${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
 
-      // Convert blob to base64 for Vercel API
+      // Convert blob to base64 for Vercel API (chunked — avoid spread stack overflow on large PDFs)
       const arrayBuffer = await pdfBlob.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+      const bytes = new Uint8Array(arrayBuffer);
+      const CHUNK = 0x8000;
+      let binary = '';
+      for (let i = 0; i < bytes.length; i += CHUNK) {
+        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
+      }
+      const base64 = btoa(binary);
 
       // Upload via authenticated DreamHost route (server builds path; no overwrite)
       const uploadHeaders: Record<string, string> = {
