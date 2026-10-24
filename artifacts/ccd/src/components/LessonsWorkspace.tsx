@@ -621,7 +621,7 @@ export function LessonsWorkspace({
                 const v = e.target.value;
                 if (isLibraryKeyStageId(v)) setKeyStage(v);
               }}
-              className="h-8 rounded-lg border border-[#E2E0EF] bg-white px-1.5 text-[11px] font-bold text-[#1F1B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:rounded-xl pointer-coarse:px-2 pointer-coarse:text-xs"
+              className="h-8 rounded-lg border border-[#E2E0EF] bg-white px-1.5 text-[13px] font-bold text-[#1F1B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:rounded-xl pointer-coarse:px-2 pointer-coarse:text-xs"
             >
               {LIBRARY_KEY_STAGES.map((ks) => (
                 <option key={ks.id} value={ks.id}>

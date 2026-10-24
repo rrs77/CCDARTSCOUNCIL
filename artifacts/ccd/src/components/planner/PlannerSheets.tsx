@@ -67,7 +67,7 @@ export function PlannerSheet({ onClose, children, label }: { onClose: () => void
       >
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#D1D5DB] md:hidden" aria-hidden />
         <div className="flex items-start justify-between gap-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#77738F]">{label}</span>
+          <span className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#77738F]">{label}</span>
           <button type="button" onClick={onClose} className="-mt-1 rounded-lg p-1.5 text-[#77738F] hover:bg-[#F4F3FA]" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
@@ -267,7 +267,7 @@ export function LessonDetailsSheet({
                   />
                 </label>
               ))}
-              <p className="mt-2 flex items-center gap-2 rounded-xl bg-[#E9E6FF] px-3 py-2 text-[12.5px] text-[#374151]">
+              <p className="mt-2 flex items-center gap-2 rounded-xl bg-[#E9E6FF] px-3 py-2 text-[13px] text-[#374151]">
                 <Lock className="h-4 w-4 shrink-0 text-[#1F1B4D]" />
                 Private to you. Saved against {cls?.name || 'this class'} on this date, not the lesson itself.
               </p>
@@ -708,10 +708,10 @@ export function SchedulePickerSheet({
                       ) : (
                         <ChevronRight className="h-3.5 w-3.5 text-[#77738F]" />
                       )}
-                      <span className="flex-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
+                      <span className="flex-1 text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
                         {folder.name}
                       </span>
-                      <span className="text-[10px] font-bold text-[#C4C0D8]">{folder.classes.length}</span>
+                      <span className="text-[13px] font-bold text-[#C4C0D8]">{folder.classes.length}</span>
                     </button>
                     {open &&
                       folder.classes.map((c) => (
@@ -761,7 +761,7 @@ export function SchedulePickerSheet({
         />
       </div>
       {!loading && lessons.length > 0 && (
-        <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#77738F]">
+        <p className="mt-2 text-[13px] font-semibold uppercase tracking-wide text-[#77738F]">
           {lessons.length} lesson{lessons.length === 1 ? '' : 's'}
         </p>
       )}
@@ -796,7 +796,7 @@ export function SchedulePickerSheet({
                   {plural(lessonActivityCount(l), 'activity', 'activities')} · {l.totalTime || 0} min
                 </span>
               </span>
-              {scheduled.has(n) && <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[11.5px] font-semibold text-[#1E6B3E]">Scheduled</span>}
+              {scheduled.has(n) && <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[13px] font-semibold text-[#1E6B3E]">Scheduled</span>}
               <BookOpen className="h-4 w-4 shrink-0 text-[#6B7280]" />
             </button>
           ))

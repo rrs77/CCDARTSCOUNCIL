@@ -486,7 +486,7 @@ export function LessonPlanPanel({
               <div className="soft-scroll min-h-0 overflow-y-auto pr-1">
                 <h3 className="mb-2 text-sm font-extrabold text-slate-800">Lesson sequence</h3>
                 <label className="mb-3 block space-y-1">
-                  <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                  <span className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">
                     Title
                   </span>
                   <input
@@ -524,7 +524,7 @@ export function LessonPlanPanel({
                         <span className="text-slate-300" aria-hidden>
                           <GripVertical className="h-4 w-4" />
                         </span>
-                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-50 text-[11px] font-bold text-indigo-700">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-indigo-50 text-[13px] font-bold text-indigo-700">
                           {index + 1}
                         </span>
                         <input
@@ -539,7 +539,7 @@ export function LessonPlanPanel({
                           aria-label={`Rename section: ${section.title}`}
                         />
                         {(section.durationMins || section.activity?.time) ? (
-                          <span className="text-[11px] font-semibold text-slate-400">
+                          <span className="text-[13px] font-semibold text-slate-400">
                             {section.durationMins || section.activity?.time}m
                           </span>
                         ) : null}
@@ -644,7 +644,7 @@ export function LessonPlanPanel({
 
               <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
                 {aiPickedNote ? (
-                  <p className="shrink-0 rounded-xl bg-violet-50 px-3 py-2 text-[12px] font-semibold text-violet-800">
+                  <p className="shrink-0 rounded-xl bg-violet-50 px-3 py-2 text-[13px] font-semibold text-violet-800">
                     Picked by AI, edit as needed
                   </p>
                 ) : null}
@@ -696,7 +696,7 @@ export function LessonPlanPanel({
             <div className="soft-scroll min-h-0 flex-1 overflow-y-auto p-6">
               <article
                 className={cn(
-                  'mx-auto max-w-2xl space-y-4 print-content',
+                  'mx-auto max-w-2xl space-y-4 print-content print:max-w-none',
                 )}
                 data-lesson-plan-print="true"
               >
@@ -718,7 +718,7 @@ export function LessonPlanPanel({
                   ) : null}
                   {draft.successCriteria ? (
                     <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
-                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#5F5B7A]">
+                      <p className="mb-1 text-[13px] font-bold uppercase tracking-wide text-[#5F5B7A]">
                         Success criteria
                       </p>
                       <RichHtml html={draft.successCriteria} empty="" />
@@ -758,7 +758,7 @@ export function LessonPlanPanel({
           >
             <div className="border-b border-violet-100 px-4 py-3">
               <p className="text-sm font-extrabold text-violet-900">Flesh out with AI</p>
-              <p className="text-[11px] text-violet-700">Results stay editable.</p>
+              <p className="text-[13px] text-violet-700">Results stay editable.</p>
             </div>
             <FleshOutPanel
               onApply={applyFleshOut}
@@ -968,7 +968,7 @@ function FleshOutPanel({
       {available === false ? (
         <div
           role="alert"
-          className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900"
+          className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] font-semibold text-rose-900"
         >
           {availabilityMessage ||
             'OPENAI_API_KEY is not configured on the server. Flesh out is unavailable.'}
@@ -977,7 +977,7 @@ function FleshOutPanel({
       {available && offlineDemo ? (
         <div
           role="status"
-          className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-950"
+          className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] font-semibold text-amber-950"
         >
           {availabilityMessage ||
             'AI needs the API server running or VITE_API_PROXY_TARGET set. Offline demo mode is active.'}
@@ -986,7 +986,7 @@ function FleshOutPanel({
       {error ? (
         <div
           role="alert"
-          className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900"
+          className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[13px] font-semibold text-rose-900"
         >
           {error}{' '}
           {/Settings|curriculum/i.test(error) ? (
@@ -997,7 +997,7 @@ function FleshOutPanel({
         </div>
       ) : null}
       {emptyCurriculumBlocked ? (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-950">
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] font-semibold text-amber-950">
           Auto-pick needs statements in{' '}
           <a href="/settings/curriculum" className="underline">
             Settings → Curriculum
@@ -1006,7 +1006,7 @@ function FleshOutPanel({
         </div>
       ) : null}
       <label className="block space-y-1">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
+        <span className="text-[13px] font-bold uppercase tracking-wide text-violet-700">
           Instruction
         </span>
         <textarea
@@ -1017,14 +1017,14 @@ function FleshOutPanel({
         />
       </label>
       <fieldset className="space-y-1.5">
-        <legend className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
+        <legend className="text-[13px] font-bold uppercase tracking-wide text-violet-700">
           Generate
         </legend>
         {checks.map(({ key, label, hint }) => (
           <label
             key={key}
             className={cn(
-              'flex min-h-[40px] cursor-pointer items-start gap-2 rounded-xl bg-white/80 px-2.5 py-2 text-[12px] font-semibold text-violet-950',
+              'flex min-h-[40px] cursor-pointer items-start gap-2 rounded-xl bg-white/80 px-2.5 py-2 text-[13px] font-semibold text-violet-950',
               key === 'autoPickCurriculum' && 'ring-1 ring-violet-200',
               key === 'wholeLesson' && scopeId !== 'whole_plan' && 'opacity-40',
             )}
@@ -1040,14 +1040,14 @@ function FleshOutPanel({
             <span>
               {label}
               {hint ? (
-                <span className="mt-0.5 block text-[10px] font-medium text-violet-600">{hint}</span>
+                <span className="mt-0.5 block text-[13px] font-medium text-violet-600">{hint}</span>
               ) : null}
             </span>
           </label>
         ))}
       </fieldset>
       <label className="block space-y-1">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
+        <span className="text-[13px] font-bold uppercase tracking-wide text-violet-700">
           Scope
         </span>
         <select
@@ -1090,7 +1090,7 @@ function FleshOutPanel({
           Redo AI
         </button>
       </div>
-      <p className="text-[11px] leading-relaxed text-violet-700">
+      <p className="text-[13px] leading-relaxed text-violet-700">
         {offlineDemo
           ? 'Offline demo fills empty fields locally (no OpenAI key in the browser). Start the API server with OPENAI_API_KEY for live AI.'
           : 'Uses the server OPENAI_API_KEY only (never in the browser). Only ticked sections are generated. Empty teacher fields are filled first; re-run a single section from Scope anytime.'}

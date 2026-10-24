@@ -164,7 +164,7 @@ export function PlannerLessonCard({
             {entry.time && <span className={`ss-timepill ${status === 'draft' ? 'sun' : ''}`}>{entry.time}</span>}
             {showClass && (
               <span
-                className="text-[11px] font-bold rounded-md px-1.5 py-px truncate min-w-0"
+                className="text-[13px] font-bold rounded-md px-1.5 py-px truncate min-w-0"
                 style={{ color: ink, background: tint(color, 0.13) }}
               >
                 {cls?.name || entry.classId}
@@ -212,7 +212,7 @@ export function PlannerLessonCard({
             )}
             {showClass && (
               <span
-                className="text-[11px] font-bold rounded-md px-1.5 py-px truncate min-w-0"
+                className="text-[13px] font-bold rounded-md px-1.5 py-px truncate min-w-0"
                 style={{ color: ink, background: tint(color, 0.13) }}
               >
                 {cls?.name || entry.classId}
@@ -220,14 +220,14 @@ export function PlannerLessonCard({
             )}
           </span>
           {entry.location ? (
-            <span className="pl-1 flex items-center gap-1 text-[11px] text-[#A8A4BC] min-w-0">
+            <span className="pl-1 flex items-center gap-1 text-[13px] text-[#A8A4BC] min-w-0">
               <MapPin className="h-3 w-3 shrink-0" aria-hidden />
               <span className="truncate">{entry.location}</span>
             </span>
           ) : (
-            <span className="pl-1 text-[11px] text-[#B0ACC4]">Empty slot</span>
+            <span className="pl-1 text-[13px] text-[#B0ACC4]">Empty slot</span>
           )}
-          <span className="mt-0.5 flex items-center gap-1 pl-1 text-[12.5px] font-semibold text-[#9B97B0] group-hover:text-[#4338E8]">
+          <span className="mt-0.5 flex items-center gap-1 pl-1 text-[13px] font-semibold text-[#9B97B0] group-hover:text-[#4338E8]">
             <Plus className="h-3.5 w-3.5" aria-hidden />
             Add lesson
           </span>

@@ -113,7 +113,7 @@ export function YourLessonsMenu({
               type="button"
               onClick={onCreate}
               disabled={isViewOnly}
-              className="inline-flex h-11 shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2.5 text-[12px] font-extrabold text-white hover:bg-white/30 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
+              className="inline-flex h-11 shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2.5 text-[13px] font-extrabold text-white hover:bg-white/30 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
             >
               <Plus className="h-3.5 w-3.5" />
               Create
@@ -166,7 +166,7 @@ export function YourLessonsMenu({
                 type="button"
                 onClick={onCreate}
                 disabled={isViewOnly}
-                className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[12px] font-extrabold text-white hover:bg-[#3529d1] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[13px] font-extrabold text-white hover:bg-[#3529d1] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
               >
                 <Plus className="h-3.5 w-3.5" />
                 Create lesson
@@ -203,14 +203,14 @@ export function YourLessonsMenu({
                         className="w-full min-h-[44px] text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                       >
                         <div className="flex items-start gap-2">
-                          <span className="mt-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-[#E9E6FF] px-1 text-[10px] font-extrabold text-[#4338E8]">
+                          <span className="mt-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-[#E9E6FF] px-1 text-[13px] font-extrabold text-[#4338E8]">
                             {index + 1}
                           </span>
                           <div className="min-w-0 flex-1">
                             <p className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
                               {data.title || `Lesson ${num}`}
                             </p>
-                            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-[#5F5B7A]">
+                            <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] font-semibold text-[#5F5B7A]">
                               <span className="inline-flex items-center gap-0.5">
                                 <Clock className="h-3 w-3" />
                                 {data.totalTime || 0}m
@@ -237,7 +237,7 @@ export function YourLessonsMenu({
                             onOpenChange(false);
                           }}
                           disabled={isViewOnly}
-                          className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                          className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[13px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           <Pencil className="h-3 w-3" />
                           Edit plan
@@ -248,7 +248,7 @@ export function YourLessonsMenu({
                             onOpenCanvas(num);
                             onOpenChange(false);
                           }}
-                          className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                          className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[13px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           Canvas
                         </button>
@@ -270,7 +270,7 @@ export function YourLessonsMenu({
                             onAssign(num);
                             onOpenChange(false);
                           }}
-                          className="mt-1 inline-flex h-11 w-full items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                          className="mt-1 inline-flex h-11 w-full items-center justify-center gap-1 rounded-lg text-[13px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           <Calendar className="h-3 w-3" />
                           {term ? 'Reassign half-term' : 'Assign to half-term'}

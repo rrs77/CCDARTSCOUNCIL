@@ -515,7 +515,7 @@ export function TimetableBuilder({
       ref={settingsRef}
       className="absolute right-0 top-full z-40 mt-2 w-[300px] rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-[0_16px_40px_rgba(31,27,77,0.12)]"
     >
-      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Term</p>
+      <p className="text-[13px] font-extrabold uppercase tracking-wide text-[#77738F]">Term</p>
       <select
         value={selectedTermId}
         onChange={(e) => setSelectedTermId(e.target.value)}
@@ -543,7 +543,7 @@ export function TimetableBuilder({
           <button
             type="button"
             onClick={copyFromPreviousTerm}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#E9E6FF] px-3 py-2 text-[12px] font-semibold text-[#4338E8] hover:bg-[#E2E0EF]"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#E9E6FF] px-3 py-2 text-[13px] font-semibold text-[#4338E8] hover:bg-[#E2E0EF]"
           >
             <Copy className="h-3.5 w-3.5" />
             Copy from previous term
@@ -551,7 +551,7 @@ export function TimetableBuilder({
           <button
             type="button"
             onClick={setSameForWholeYear}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-[12px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-[13px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
           >
             <CopyPlus className="h-3.5 w-3.5" />
             Apply to whole year
@@ -559,10 +559,10 @@ export function TimetableBuilder({
         </div>
       )}
       <div className="my-3 border-t border-[#E2E0EF]" />
-      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Grid</p>
+      <p className="text-[13px] font-extrabold uppercase tracking-wide text-[#77738F]">Grid</p>
       <div className="mt-1.5 grid grid-cols-2 gap-2">
         <label className="block">
-          <span className="text-[11px] font-medium text-[#77738F]">Day start</span>
+          <span className="text-[13px] font-medium text-[#77738F]">Day start</span>
           <input
             type="time"
             value={normalizeTimeForInput(dayStart)}
@@ -575,7 +575,7 @@ export function TimetableBuilder({
           />
         </label>
         <label className="block">
-          <span className="text-[11px] font-medium text-[#77738F]">Day end</span>
+          <span className="text-[13px] font-medium text-[#77738F]">Day end</span>
           <input
             type="time"
             value={normalizeTimeForInput(dayEnd)}
@@ -589,7 +589,7 @@ export function TimetableBuilder({
         </label>
       </div>
       <label className="mt-2 block">
-        <span className="text-[11px] font-medium text-[#77738F]">Slot interval</span>
+        <span className="text-[13px] font-medium text-[#77738F]">Slot interval</span>
         <select
           value={slotInterval}
           onChange={(e) => {
@@ -617,7 +617,7 @@ export function TimetableBuilder({
       <button
         type="button"
         onClick={() => setViewMode(viewMode === 'days' ? 'week' : 'days')}
-        className="mt-2 w-full rounded-xl border border-[#E2E0EF] px-3 py-2 text-[12px] font-semibold text-[#77738F] hover:bg-[#F4F3FA]"
+        className="mt-2 w-full rounded-xl border border-[#E2E0EF] px-3 py-2 text-[13px] font-semibold text-[#77738F] hover:bg-[#F4F3FA]"
       >
         {viewMode === 'days' ? 'Show weekend days' : 'School days only (Mon–Fri)'}
       </button>
@@ -898,11 +898,11 @@ function TimetableSlotRow({
       {isOver ? (
         <span className="text-xs font-medium text-[#4338E8]">Drop here</span>
       ) : canDrop ? (
-        <span className="text-[10px] font-medium text-[#4338E8]/70" aria-hidden>
+        <span className="text-[13px] font-medium text-[#4338E8]/70" aria-hidden>
           Drop year group here
         </span>
       ) : (
-        <span className="text-[10px] font-semibold text-[#9B97B0] opacity-70">+ Break / club</span>
+        <span className="text-[13px] font-semibold text-[#9B97B0] opacity-70">+ Break / club</span>
       )}
     </div>
   );

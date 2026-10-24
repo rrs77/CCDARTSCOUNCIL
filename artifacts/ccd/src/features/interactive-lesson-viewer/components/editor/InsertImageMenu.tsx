@@ -252,7 +252,7 @@ export function InsertImageMenu({
           </div>
         )}
 
-        {hint && <p className="mt-1 text-[10px] leading-snug text-[var(--ss-muted)]">{hint}</p>}
+        {hint && <p className="mt-1 text-[13px] leading-snug text-[var(--ss-muted)]">{hint}</p>}
       </div>
     </PortalPopover>
   );

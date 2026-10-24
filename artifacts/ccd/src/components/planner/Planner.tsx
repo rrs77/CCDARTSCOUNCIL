@@ -52,7 +52,7 @@ const navBtn =
 const toolBtn =
   'inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-semibold text-[#1F1B4D] hover:border-[#bcb7f4]';
 const primaryBtn =
-  'inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[12px] font-bold text-white hover:bg-[#3529d1]';
+  'inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[13px] font-bold text-white hover:bg-[#3529d1]';
 
 function rangeFor(view: PlannerView, anchor: Date) {
   if (view === 'day') return { from: startOfDay(anchor), to: addDays(anchor, 1) };
@@ -384,7 +384,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
               <button
                 type="button"
                 onClick={() => setFocus('all')}
-                className={`min-h-[32px] rounded-full px-3.5 text-[12px] font-bold ${
+                className={`min-h-[32px] rounded-full px-3.5 text-[13px] font-bold ${
                   focus === 'all' ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
                 }`}
               >
@@ -404,14 +404,14 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
                     }
                   }
                 }}
-                className={`min-h-[32px] rounded-full px-3.5 text-[12px] font-bold ${
+                className={`min-h-[32px] rounded-full px-3.5 text-[13px] font-bold ${
                   focus !== 'all' ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
                 }`}
               >
                 One class
               </button>
             </div>
-            <p className="hidden text-[12px] text-[#77738F] sm:block">
+            <p className="hidden text-[13px] text-[#77738F] sm:block">
               Tip: pick one class when you want Activities, Lessons and Half-terms to stay in the same context.
             </p>
           </div>
@@ -441,10 +441,10 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
               ))}
             </div>
             {inSchedule && (
-              <label className="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide text-[#77738F]">
+              <label className="inline-flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wide text-[#77738F]">
                 View
                 <select
-                  className="min-h-[36px] rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold normal-case tracking-normal text-[#1F1B4D]"
+                  className="min-h-[36px] rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-bold normal-case tracking-normal text-[#1F1B4D]"
                   value={view}
                   aria-label="Planner view"
                   onChange={(e) => changeView(e.target.value as PlannerView)}
@@ -486,7 +486,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
           <button
             type="button"
             onClick={() => setSummaryOpen((o) => !o)}
-            className="mt-3 shrink-0 text-[12px] font-medium text-[#77738F] hover:text-[#4338E8]"
+            className="mt-3 shrink-0 text-[13px] font-medium text-[#77738F] hover:text-[#4338E8]"
             aria-expanded={summaryOpen}
           >
             {weekStats.planned} planned
@@ -704,7 +704,7 @@ body{
 .day-stack{margin-top:12px;border:1px solid #E2E0EF;border-radius:10px;padding:12px 14px}
 .month-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:12px}
 .month-heads{display:contents}
-.month-head{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding:0 4px 2px}
+.month-head{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding:0 4px 2px}
 .month-cell{border:1px solid #E2E0EF;border-radius:8px;padding:6px 7px;min-height:72px;break-inside:avoid}
 .month-cell.is-empty{border-style:dashed;background:#FAFAFC;min-height:48px}
 .month-cell .dn{font-size:9px;font-weight:800;color:#4338E8;margin-bottom:4px}

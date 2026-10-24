@@ -1251,7 +1251,7 @@ export function InteractiveLessonEditor({
             />
             {scene && (
               <div className="ml-auto flex flex-wrap items-center gap-2">
-                <label className="flex items-center gap-1 text-[10px] font-semibold uppercase text-[var(--ss-muted)]">
+                <label className="flex items-center gap-1 text-[13px] font-semibold uppercase text-[var(--ss-muted)]">
                   Advance
                   <select
                     className="ilv-select min-h-[32px] w-[150px] py-1 normal-case"
@@ -1285,7 +1285,7 @@ export function InteractiveLessonEditor({
                       }}
                       title="Advance after seconds"
                     />
-                    <span className="text-[10px] font-semibold uppercase text-[var(--ss-muted)]">sec</span>
+                    <span className="text-[13px] font-semibold uppercase text-[var(--ss-muted)]">sec</span>
                   </>
                 )}
                 {resolveAdvanceMode(scene) === 'media-end' && (
@@ -1299,7 +1299,7 @@ export function InteractiveLessonEditor({
                       onChange={(e) => updateScene({ durationMs: Math.max(1000, Number(e.target.value) || 1000) })}
                       title="Fallback duration (ms)"
                     />
-                    <span className="text-[10px] font-semibold uppercase text-[var(--ss-muted)]">ms</span>
+                    <span className="text-[13px] font-semibold uppercase text-[var(--ss-muted)]">ms</span>
                   </>
                 )}
               </div>
@@ -1310,7 +1310,7 @@ export function InteractiveLessonEditor({
           )}
           {selectedObject && (
             <div className="ilv-object-toolbar" role="toolbar" aria-label="Object properties">
-              <label className="flex items-center gap-1 text-[10px] font-semibold uppercase text-[var(--ss-muted)]">
+              <label className="flex items-center gap-1 text-[13px] font-semibold uppercase text-[var(--ss-muted)]">
                 Opacity
                 <input
                   className="ilv-input min-h-[28px] w-[64px] py-0.5 text-xs"
@@ -1345,7 +1345,7 @@ export function InteractiveLessonEditor({
               >
                 <FlipVertical className="h-3.5 w-3.5" />
               </button>
-              <label className="flex items-center gap-1 text-[10px] font-semibold uppercase text-[var(--ss-muted)]">
+              <label className="flex items-center gap-1 text-[13px] font-semibold uppercase text-[var(--ss-muted)]">
                 W
                 <input
                   className="ilv-input min-h-[28px] w-[56px] py-0.5 text-xs"
@@ -1359,7 +1359,7 @@ export function InteractiveLessonEditor({
                   aria-label="Width percent"
                 />
               </label>
-              <label className="flex items-center gap-1 text-[10px] font-semibold uppercase text-[var(--ss-muted)]">
+              <label className="flex items-center gap-1 text-[13px] font-semibold uppercase text-[var(--ss-muted)]">
                 H
                 <input
                   className="ilv-input min-h-[28px] w-[56px] py-0.5 text-xs"
@@ -1373,7 +1373,7 @@ export function InteractiveLessonEditor({
                   aria-label="Height percent"
                 />
               </label>
-              <label className="flex items-center gap-1 text-[10px] font-semibold uppercase text-[var(--ss-muted)]">
+              <label className="flex items-center gap-1 text-[13px] font-semibold uppercase text-[var(--ss-muted)]">
                 Rot
                 <input
                   className="ilv-input min-h-[28px] w-[56px] py-0.5 text-xs"
@@ -1799,9 +1799,9 @@ export function InteractiveLessonEditor({
                     }
                   />
                   {rail === 'canva' && (
-                    <p className="text-[11px] leading-snug text-[var(--ss-muted)]">
+                    <p className="text-[13px] leading-snug text-[var(--ss-muted)]">
                       Edit or view links are blocked in iframes. Only the Embed URL (
-                      <code className="text-[10px]">/view?embed</code>) works. Short links (canva.link) must be
+                      <code className="text-[13px]">/view?embed</code>) works. Short links (canva.link) must be
                       opened and replaced with the full embed URL.
                     </p>
                   )}
@@ -1838,7 +1838,7 @@ export function InteractiveLessonEditor({
                     </div>
                   )}
                   {rail === 'googleslides' && (
-                    <p className="text-[11px] leading-snug text-[var(--ss-muted)]">
+                    <p className="text-[13px] leading-snug text-[var(--ss-muted)]">
                       Share the deck as <strong>Anyone with the link can view</strong>, or use File → Share → Publish to
                       the web. Advance stays Manual so teachers click through slides in class.
                     </p>
@@ -1915,7 +1915,7 @@ export function InteractiveLessonEditor({
                       onReplaceUrl={replaceMediaUrl}
                       onDelete={deleteMedia}
                     />
-                    <p className="mt-2 text-[10px] text-[var(--ss-muted)]">
+                    <p className="mt-2 text-[13px] text-[var(--ss-muted)]">
                       Drop files here to upload ({ILV_FILE_ACCEPT.split(',').slice(0, 3).join(', ')}…)
                     </p>
                   </div>

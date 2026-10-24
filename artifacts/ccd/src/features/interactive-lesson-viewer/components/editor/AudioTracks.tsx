@@ -388,7 +388,7 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
         <div className="flex flex-wrap gap-1.5">
           <button
             type="button"
-            className="ilv-btn ilv-btn-secondary text-[11px]"
+            className="ilv-btn ilv-btn-secondary text-[13px]"
             onClick={() => {
               const audio = lesson.mediaLibrary.find((m) => m.kind === 'audio');
               if (audio) addClip('voiceover', audio.url, audio.name, audio.id, audio.durationMs);
@@ -400,7 +400,7 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
           </button>
           <button
             type="button"
-            className="ilv-btn ilv-btn-secondary text-[11px]"
+            className="ilv-btn ilv-btn-secondary text-[13px]"
             onClick={() => {
               const audio = lesson.mediaLibrary.find((m) => m.kind === 'audio');
               if (audio) addClip('music', audio.url, audio.name, audio.id, audio.durationMs);
@@ -412,7 +412,7 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
           </button>
           <button
             type="button"
-            className={`ilv-btn text-[11px] ${recording ? 'ilv-btn-primary' : 'ilv-btn-secondary'}`}
+            className={`ilv-btn text-[13px] ${recording ? 'ilv-btn-primary' : 'ilv-btn-secondary'}`}
             onClick={() => (recording ? stopRecording() : void startRecording('voiceover'))}
           >
             <Mic className="h-3 w-3" />
@@ -427,7 +427,7 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
       </div>
 
       <div className="ilv-audio-mix-opts">
-        <label className="flex items-center gap-1.5 text-[11px] font-semibold">
+        <label className="flex items-center gap-1.5 text-[13px] font-semibold">
           <input
             type="checkbox"
             checked={mix.duckMusicUnderVoiceover !== false}
@@ -435,7 +435,7 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
           />
           Duck music under voiceover
         </label>
-        <label className="flex items-center gap-1 text-[11px] font-semibold text-[var(--ss-muted)]">
+        <label className="flex items-center gap-1 text-[13px] font-semibold text-[var(--ss-muted)]">
           Amount
           <input
             className="ilv-input min-h-[28px] w-16 py-0.5 text-xs"
@@ -449,7 +449,7 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
             }
           />
         </label>
-        <label className="flex items-center gap-1 text-[11px] font-semibold text-[var(--ss-muted)]">
+        <label className="flex items-center gap-1 text-[13px] font-semibold text-[var(--ss-muted)]">
           Manual scenes
           <select
             className="ilv-select min-h-[28px] py-0.5 text-xs"
@@ -534,7 +534,7 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
               Loop across lesson span
             </label>
           )}
-          <p className="text-[10px] text-[var(--ss-muted)]">
+          <p className="text-[13px] text-[var(--ss-muted)]">
             Double-click clip to add a volume curve point. Double-click a point to delete.
           </p>
           <button type="button" className="ilv-btn ilv-btn-secondary text-xs" onClick={() => removeClip(selected.id)}>

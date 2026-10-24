@@ -330,7 +330,7 @@ export function TeacherHalfTermBoard({
           <button
             type="button"
             onClick={onOpenMap}
-            className="ml-auto text-[12px] font-bold text-[#77738F] underline-offset-2 hover:text-[#4338E8] hover:underline"
+            className="ml-auto text-[13px] font-bold text-[#77738F] underline-offset-2 hover:text-[#4338E8] hover:underline"
           >
             Class map
           </button>
@@ -381,14 +381,14 @@ export function TeacherHalfTermBoard({
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
                       {unallocatedCount > 0 ? (
                         <span
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#FFF4E5] px-2 py-1 text-[11px] font-extrabold text-[#9A5B00]"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#FFF4E5] px-2 py-1 text-[13px] font-extrabold text-[#9A5B00]"
                           title={`${unallocatedCount} class${unallocatedCount === 1 ? '' : 'es'} with no scheme`}
                         >
                           <AlertCircle className="h-3.5 w-3.5" />
                           {unallocatedCount} unallocated
                         </span>
                       ) : classRows.length > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-[#D5F3EA] px-2 py-1 text-[11px] font-extrabold text-[#0B6B5F]">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-[#D5F3EA] px-2 py-1 text-[13px] font-extrabold text-[#0B6B5F]">
                           <CheckCircle className="h-3.5 w-3.5" />
                           Covered
                         </span>
@@ -401,7 +401,7 @@ export function TeacherHalfTermBoard({
                             filter.kind === 'class' ? [filter.classId] : undefined,
                           )
                         }
-                        className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-extrabold text-white transition hover:brightness-95"
+                        className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[13px] font-extrabold text-white transition hover:brightness-95"
                         style={{ background: color }}
                       >
                         <Plus className="h-3.5 w-3.5" />
@@ -438,7 +438,7 @@ export function TeacherHalfTermBoard({
                             >
                               <div className="mb-1.5 flex items-center gap-2">
                                 <span
-                                  className="inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-extrabold text-white"
+                                  className="inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-[13px] font-extrabold text-white"
                                   style={{ background: chipColor }}
                                   title={cls.name}
                                 >
@@ -451,7 +451,7 @@ export function TeacherHalfTermBoard({
                                 {isComplete ? (
                                   <CheckCircle className="h-3.5 w-3.5 shrink-0 text-[#0B6B5F]" />
                                 ) : null}
-                                <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
+                                <span className="ml-auto text-[13px] font-bold tabular-nums text-[#9B97B0]">
                                   {empty
                                     ? '—'
                                     : `${schemes.length} scheme${schemes.length === 1 ? '' : 's'}${
@@ -464,7 +464,7 @@ export function TeacherHalfTermBoard({
                                 <button
                                   type="button"
                                   onClick={() => onAddScheme(term.id, [cls.id])}
-                                  className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-[#FAFAFC] text-[12px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:bg-[#F7F6FC] hover:text-[#4338E8]"
+                                  className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-[#FAFAFC] text-[13px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:bg-[#F7F6FC] hover:text-[#4338E8]"
                                 >
                                   <Plus className="h-3.5 w-3.5" />
                                   Add
@@ -489,7 +489,7 @@ export function TeacherHalfTermBoard({
                                         <p className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
                                           {stack.name}
                                         </p>
-                                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#77738F]">
+                                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[13px] font-semibold text-[#77738F]">
                                           <span className="inline-flex items-center gap-1">
                                             <BookOpen className="h-3 w-3" />
                                             {stack.lessons.length} lesson
@@ -505,7 +505,7 @@ export function TeacherHalfTermBoard({
                                   <button
                                     type="button"
                                     onClick={() => onAddScheme(term.id, [cls.id])}
-                                    className="inline-flex h-7 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#4338E8] hover:bg-[#F4F3FA]"
+                                    className="inline-flex h-7 items-center justify-center gap-1 rounded-lg text-[13px] font-bold text-[#4338E8] hover:bg-[#F4F3FA]"
                                   >
                                     <Plus className="h-3 w-3" />
                                     Add another
@@ -536,16 +536,16 @@ export function TeacherHalfTermBoard({
                                   ) : (
                                     <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" />
                                   )}
-                                  <span className="min-w-0 flex-1 text-[12px] font-extrabold text-[#5C5878]">
+                                  <span className="min-w-0 flex-1 text-[13px] font-extrabold text-[#5C5878]">
                                     {emptyRows.length} class
                                     {emptyRows.length === 1 ? '' : 'es'} with nothing planned
                                   </span>
                                   {!emptyExpanded ? (
-                                    <span className="text-[11px] font-bold text-[#4338E8]">
+                                    <span className="text-[13px] font-bold text-[#4338E8]">
                                       Expand to add
                                     </span>
                                   ) : (
-                                    <span className="text-[11px] font-bold text-[#77738F]">
+                                    <span className="text-[13px] font-bold text-[#77738F]">
                                       Collapse
                                     </span>
                                   )}
@@ -558,7 +558,7 @@ export function TeacherHalfTermBoard({
                                   <button
                                     type="button"
                                     onClick={() => onAddScheme(term.id)}
-                                    className="mt-2 inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-white text-[12px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:text-[#4338E8]"
+                                    className="mt-2 inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-white text-[13px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:text-[#4338E8]"
                                   >
                                     <Plus className="h-3.5 w-3.5" />
                                     Add scheme to a class
@@ -572,7 +572,7 @@ export function TeacherHalfTermBoard({
                     )}
                   </div>
 
-                  <div className="mt-3 border-t border-[#E2E0EF]/80 pt-2 text-[11px] font-bold text-[#5C5878]">
+                  <div className="mt-3 border-t border-[#E2E0EF]/80 pt-2 text-[13px] font-bold text-[#5C5878]">
                     {assignedClassCount}/{classRows.length} class
                     {classRows.length === 1 ? '' : 'es'} planned
                   </div>
@@ -612,7 +612,7 @@ function Chip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-extrabold transition ${
+      className={`inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[13px] font-extrabold transition ${
         active
           ? 'bg-[#4338E8] text-white shadow-sm'
           : 'border border-[#E2E0EF] bg-white text-[#5C5878] hover:border-[#bcb7f4] hover:text-[#1F1B4D]'

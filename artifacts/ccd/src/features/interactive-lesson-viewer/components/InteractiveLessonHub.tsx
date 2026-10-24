@@ -338,7 +338,7 @@ export function InteractiveLessonHub() {
             placeholder="Search title, tags, subject…"
           />
         </label>
-        <p className="text-[12px] font-medium text-[var(--ss-muted)]">
+        <p className="text-[13px] font-medium text-[var(--ss-muted)]">
           {loading ? 'Loading…' : `${items.length} deck${items.length === 1 ? '' : 's'}`}
         </p>
       </div>
@@ -419,7 +419,7 @@ export function InteractiveLessonHub() {
                         {builtIn ? 'Make a copy' : 'Edit'}
                       </button>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 text-[12px] text-[var(--ss-muted)]">
+                      <span className="inline-flex items-center gap-1 px-2 text-[13px] text-[var(--ss-muted)]">
                         <Eye className="h-3.5 w-3.5" />
                         View only
                       </span>

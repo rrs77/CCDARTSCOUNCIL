@@ -360,7 +360,7 @@ export function Header() {
                   <ChevronDown className={`h-4 w-4 flex-shrink-0 text-gray-500 transition-transform ${yearGroupDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 <span
-                  className={`hidden lg:inline-flex shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${
+                  className={`hidden lg:inline-flex shrink-0 rounded-full px-2.5 py-1 text-[13px] font-extrabold uppercase tracking-wide ${
                     allClassPlannerView
                       ? 'bg-amber-100 text-amber-900'
                       : 'bg-[#E9E6FF] text-[#4338E8]'

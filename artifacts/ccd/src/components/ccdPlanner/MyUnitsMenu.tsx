@@ -172,7 +172,7 @@ export function MyUnitsMenu({
             {(units || []).length === 0 ? (
               <div className="px-2 py-8 text-center">
                 <p className="text-sm text-slate-500">No units yet.</p>
-                <p className="mt-2 text-[12px] text-[#5F5B7A]">
+                <p className="mt-2 text-[13px] text-[#5F5B7A]">
                   Use the + button above to create one.
                 </p>
               </div>
@@ -210,7 +210,7 @@ export function MyUnitsMenu({
                         {unit.name}
                       </span>
                       <span
-                        className="inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold"
+                        className="inline-flex shrink-0 items-center rounded-full border px-2 py-0.5 text-[13px] font-semibold"
                         style={style}
                       >
                         {unit.lessonNumbers.length} lessons
@@ -238,7 +238,7 @@ export function MyUnitsMenu({
                         <button
                           type="button"
                           onClick={() => addActiveLesson(unit)}
-                          className="h-11 shrink-0 rounded-lg bg-indigo-50 px-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                          className="h-11 shrink-0 rounded-lg bg-indigo-50 px-2 text-[13px] font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           Add current
                         </button>
@@ -249,7 +249,7 @@ export function MyUnitsMenu({
                           aria-label={`Rename ${unit.name}`}
                           title={`Rename ${unit.name}`}
                           onClick={() => setDialog({ kind: 'rename', unit })}
-                          className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                          className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-[13px] font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden />
                           Rename
@@ -259,7 +259,7 @@ export function MyUnitsMenu({
                           aria-label={`Delete ${unit.name}`}
                           title={`Delete ${unit.name}`}
                           onClick={() => setDialog({ kind: 'delete', unit })}
-                          className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2 text-[12px] font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                          className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2 text-[13px] font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                         >
                           <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
                           Delete
@@ -269,7 +269,7 @@ export function MyUnitsMenu({
                     {isOpen ? (
                       <ul className="space-y-1 border-t border-slate-50 px-2 py-2">
                         {unit.lessonNumbers.length === 0 ? (
-                          <li className="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 px-3 py-4 text-center text-[11px] font-semibold text-indigo-400">
+                          <li className="rounded-xl border-2 border-dashed border-indigo-200 bg-indigo-50/30 px-3 py-4 text-center text-[13px] font-semibold text-indigo-400">
                             Use “Add current” to place the open lesson here
                             {term ? ` · ${term.name}` : ''}
                           </li>

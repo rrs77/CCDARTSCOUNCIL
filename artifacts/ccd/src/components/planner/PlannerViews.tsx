@@ -340,7 +340,7 @@ export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, on
     >
       <h3 className="text-[17px] font-extrabold tracking-tight text-[#1F1B4D]" style={{ fontFamily: 'var(--ss-font-display)' }}>
         {date.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}
-        <span className="ml-2 text-[12px] font-semibold text-[#77738F]">· your teaching</span>
+        <span className="ml-2 text-[13px] font-semibold text-[#77738F]">· your teaching</span>
       </h3>
       {events.map((ev) => (
         <div key={ev.id} className="grid grid-cols-1 gap-1 sm:grid-cols-[72px_1fr] sm:gap-4">

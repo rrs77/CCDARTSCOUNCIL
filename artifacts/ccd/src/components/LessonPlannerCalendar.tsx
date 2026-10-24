@@ -1549,7 +1549,7 @@ export function LessonPlannerCalendar({
             style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX, height: HOUR_HEIGHT_PX }}
           >
             {showHourLabels && (
-              <span className="absolute -left-14 -top-2.5 w-12 text-right text-[11px] text-gray-500 tabular-nums">
+              <span className="absolute -left-14 -top-2.5 w-12 text-right text-[13px] text-gray-500 tabular-nums">
                 {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
               </span>
             )}
@@ -1559,7 +1559,7 @@ export function LessonPlannerCalendar({
         {(isHolidayDate || isInsetDayDate) && (
           <div className="absolute inset-x-1 top-2 z-[1] text-center pointer-events-none">
             <span
-              className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded ${
+              className={`inline-block text-[13px] font-medium px-1.5 py-0.5 rounded ${
                 isHolidayDate ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-800'
               }`}
             >
@@ -1608,12 +1608,12 @@ export function LessonPlannerCalendar({
                 }
               }}
             >
-              <div className={`px-1.5 py-0.5 leading-tight ${compact ? 'text-[10px]' : 'text-xs'}`}>
+              <div className={`px-1.5 py-0.5 leading-tight ${compact ? 'text-[13px]' : 'text-xs'}`}>
                 <div className="font-semibold truncate" style={{ color: item.color }}>
                   {item.title}
                 </div>
                 {!compact && item.subtitle && (
-                  <div className="text-[10px] text-gray-600 truncate">{item.subtitle}</div>
+                  <div className="text-[13px] text-gray-600 truncate">{item.subtitle}</div>
                 )}
               </div>
             </div>
@@ -1668,7 +1668,7 @@ export function LessonPlannerCalendar({
                   today ? 'bg-white' : ''
                 }`}
               >
-                <div className={`text-[10px] leading-none uppercase tracking-wide ${today ? 'text-[#1F1B4D] font-semibold' : 'text-gray-500'}`}>
+                <div className={`text-[13px] leading-none uppercase tracking-wide ${today ? 'text-[#1F1B4D] font-semibold' : 'text-gray-500'}`}>
                   {format(date, 'EEE')}
                 </div>
                 <div
@@ -1687,7 +1687,7 @@ export function LessonPlannerCalendar({
         {hasAllDay && (
           <div className="flex border-b border-[#E2E0EF] min-h-[36px]" style={{ backgroundColor: '#FAFCFA' }}>
             <div className="w-14 sm:w-16 shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-[#E2E0EF]">
-              <span className="text-[10px] uppercase tracking-wide text-gray-400">All day</span>
+              <span className="text-[13px] uppercase tracking-wide text-gray-400">All day</span>
             </div>
             {allDayByDate.map(({ date, events, untimedPlans }) => (
               <div key={`allday-${date.toISOString()}`} className="flex-1 min-w-0 border-l border-[#E2E0EF] px-1 py-1 space-y-0.5">
@@ -1699,7 +1699,7 @@ export function LessonPlannerCalendar({
                         setEditingEvent(event);
                         setShowEventModal(true);
                       }}
-                      className="block w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate font-medium"
+                      className="block w-full text-left text-[13px] px-1.5 py-0.5 rounded truncate font-medium"
                       style={{ backgroundColor: `${event.color}22`, color: event.color }}
                       title={event.title}
                     >
@@ -1718,7 +1718,7 @@ export function LessonPlannerCalendar({
                         setSelectedDateWithPlans({ date, plans: [plan] });
                         setIsLessonSummaryOpen(true);
                       }}
-                      className="block w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate font-medium"
+                      className="block w-full text-left text-[13px] px-1.5 py-0.5 rounded truncate font-medium"
                       style={{ backgroundColor: `${unitColor}22`, color: unitColor }}
                       title={plan.title || `Lesson ${plan.lessonNumber || ''}`}
                     >
@@ -1739,7 +1739,7 @@ export function LessonPlannerCalendar({
               {dayViewHours.map((hour) => (
                 <div
                   key={hour}
-                  className="absolute right-2 text-[11px] text-gray-500 tabular-nums -translate-y-1/2"
+                  className="absolute right-2 text-[13px] text-gray-500 tabular-nums -translate-y-1/2"
                   style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX }}
                 >
                   {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
@@ -1798,17 +1798,17 @@ export function LessonPlannerCalendar({
                 </h2>
                 <div className="flex items-center flex-wrap gap-2 mt-1">
                   {today && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#1F1B4D] text-white font-medium">
+                    <span className="text-[13px] px-2 py-0.5 rounded-full bg-[#1F1B4D] text-white font-medium">
                       Today
                     </span>
                   )}
                   {isHolidayDate && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-medium">
+                    <span className="text-[13px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-medium">
                       Holiday
                     </span>
                   )}
                   {isInsetDayDate && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium">
+                    <span className="text-[13px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium">
                       Inset Day
                     </span>
                   )}
@@ -1899,7 +1899,7 @@ export function LessonPlannerCalendar({
                 {dayViewHours.map((hour) => (
                   <div
                     key={hour}
-                    className="absolute right-2 text-[11px] text-gray-500 tabular-nums -translate-y-1/2"
+                    className="absolute right-2 text-[13px] text-gray-500 tabular-nums -translate-y-1/2"
                     style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX }}
                   >
                     {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
@@ -1936,7 +1936,7 @@ export function LessonPlannerCalendar({
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div
             key={day}
-            className="text-center font-medium text-[11px] sm:text-xs tracking-wide uppercase text-gray-500 py-2"
+            className="text-center font-medium text-[13px] sm:text-xs tracking-wide uppercase text-gray-500 py-2"
           >
             {day}
           </div>
@@ -2483,7 +2483,7 @@ export function LessonPlannerCalendar({
               >
                 Populate with key dates from
               </label>
-              <p className="mt-0.5 text-[11px] text-gray-500">
+              <p className="mt-0.5 text-[13px] text-gray-500">
                 Start with primary Music · Drama · Dance · Art (dummy), or partner examples —
                 tick to attend &amp; remind
               </p>
