@@ -39,6 +39,7 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 
 /* Interactive Lesson Viewer (kept out of /api entrypoints for Hobby function limit) */
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
+import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
 
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -178,6 +179,9 @@ function targetFor(pathname) {
   if (area === 'interactive-lessons') {
     if (rest.length === 1 && rest[0] === 'transcribe') {
       return ilvTranscribe;
+    }
+    if (rest.length === 1 && rest[0] === 'flesh-out') {
+      return ilvFleshOut;
     }
     return null;
   }

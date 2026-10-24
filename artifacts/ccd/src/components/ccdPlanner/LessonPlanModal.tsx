@@ -17,6 +17,14 @@ import {
 } from '../../types/lessonSections';
 import { ensureLessonSections } from '../../utils/planner/legacyLessonToSections';
 import { loadPlannerCurriculum } from '../../utils/planner/plannerCurriculumStore';
+import {
+  checkFleshOutAvailable,
+  formatDifferentiationHtml,
+  formatTeacherQuestionsHtml,
+  requestFleshOut,
+  type FleshOutOptions,
+} from '../../utils/planner/fleshOutApi';
+import { keyStageFromYearGroupTag } from '../../utils/libraryHierarchy';
 import { AttachInteractiveLesson } from '../../features/interactive-lesson-viewer';
 import {
   Button,
@@ -28,6 +36,7 @@ import {
 import { RichHtml } from './RichHtml';
 import { CurriculumStatementsPanel } from './CurriculumStatementsPanel';
 import { cn } from '@/lib/utils';
+import toast from 'react-hot-toast';
 
 type ViewTab = 'plan' | 'preview' | 'print';
 
@@ -146,50 +155,173 @@ export function LessonPlanPanel({
     );
   };
 
-  const applyFleshOut = (instruction: string, scope: 'whole_plan' | { sectionId: string }) => {
+  const [aiPickedNote, setAiPickedNote] = useState(false);
+
+  const applyFleshOut = async (
+    instruction: string,
+    scope: 'whole_plan' | { sectionId: string },
+    options: FleshOutOptions,
+  ) => {
     if (!draft) return;
     const before = {
       sections: structuredClone(sections),
       learningOutcome: draft.learningOutcome,
       successCriteria: draft.successCriteria,
     };
+
+    const curr = loadPlannerCurriculum();
+    const ks =
+      keyStageFromYearGroupTag(yearGroup || '') ||
+      (curr.strands[0]?.keyStage as string | undefined) ||
+      'ks2';
+
+    const curriculumStatements = curr.statements.map((st) => {
+      const strand = curr.strands.find((s) => s.id === st.strandId);
+      return {
+        id: st.id,
+        text: st.text,
+        strand: strand?.name,
+        keyStage: strand?.keyStage,
+        subject: strand?.subjectId,
+      };
+    });
+
+    const activities = sections
+      .filter((s) => s.kind === 'activity' && s.activity)
+      .map((s) => s.activity!);
+
+    const res = await requestFleshOut({
+      instruction,
+      lesson: {
+        title: draft.title,
+        keyStage: ks,
+        yearGroup: yearGroup || '',
+        subject: curriculumStatements[0]?.subject || '',
+        learningOutcome: draft.learningOutcome,
+        successCriteria: draft.successCriteria,
+        activities,
+        sections,
+      },
+      curriculumStatements,
+      options: {
+        ...options,
+        wholeLesson: scope === 'whole_plan' ? options.wholeLesson : false,
+        sectionId: scope === 'whole_plan' ? undefined : scope.sectionId,
+      },
+    });
+
+    if (!res.ok) {
+      toast.error(res.message);
+      setLiveMessage(res.message);
+      return;
+    }
+
+    const { result, pickedByAi } = res;
     let nextSections = sections.map((s) => ({ ...s }));
     let learningOutcome = draft.learningOutcome || '';
     let successCriteria = draft.successCriteria || '';
 
-    const fill = (html: string | undefined, addition: string): string => {
-      const t = (html || '').trim();
-      return t ? t : addition;
+    const fillOrReplace = (current: string | undefined, next: string, force: boolean) => {
+      if (!next) return current || '';
+      if (force || !(current || '').trim()) return next;
+      return current || '';
     };
 
-    // Demo / offline stub — deterministic, no API keys
-    if (scope === 'whole_plan') {
-      learningOutcome = fill(
-        learningOutcome,
-        `Learners will explore the lesson focus through practical activities. (${instruction})`,
-      );
-      successCriteria = fill(
-        successCriteria,
-        '• I can take part\n• I can explain one idea\n• I can reflect with a partner',
-      );
+    if (options.includeOutcomes && result.learningOutcome) {
+      learningOutcome = fillOrReplace(learningOutcome, result.learningOutcome, false);
+    }
+    if (options.includeSuccessCriteria && result.successCriteria) {
+      successCriteria = fillOrReplace(successCriteria, result.successCriteria, false);
+    }
+
+    if (options.includeTeacherQuestions) {
+      const html = formatTeacherQuestionsHtml(result.teacherQuestions);
+      if (html) {
+        const existing = nextSections.find(
+          (s) => /question/i.test(s.title) || s.kind === 'afl',
+        );
+        if (existing) {
+          nextSections = nextSections.map((s) =>
+            s.id === existing.id
+              ? {
+                  ...s,
+                  bodyHtml: fillOrReplace(s.bodyHtml, html, false),
+                  lastWrittenBy: 'ai' as const,
+                }
+              : s,
+          );
+        } else {
+          nextSections = [
+            ...nextSections,
+            {
+              id: uid('sec'),
+              kind: 'afl' as const,
+              title: 'Teacher questions',
+              bodyHtml: html,
+              lastWrittenBy: 'ai' as const,
+              createdAt: new Date().toISOString(),
+            },
+          ];
+        }
+      }
+    }
+
+    if (options.includeDifferentiation) {
+      const html = formatDifferentiationHtml(result.differentiation);
+      if (html) {
+        const existing = nextSections.find((s) => s.kind === 'differentiation');
+        if (existing) {
+          nextSections = nextSections.map((s) =>
+            s.id === existing.id
+              ? {
+                  ...s,
+                  bodyHtml: fillOrReplace(s.bodyHtml, html, false),
+                  lastWrittenBy: 'ai' as const,
+                }
+              : s,
+          );
+        } else {
+          nextSections = [
+            ...nextSections,
+            {
+              id: uid('sec'),
+              kind: 'differentiation' as const,
+              title: 'Differentiation',
+              bodyHtml: html,
+              lastWrittenBy: 'ai' as const,
+              createdAt: new Date().toISOString(),
+            },
+          ];
+        }
+      }
+    }
+
+    if (options.wholeLesson && result.wholeLessonSections.length) {
+      const byId = new Map(result.wholeLessonSections.map((s) => [s.sectionId, s]));
       nextSections = nextSections.map((s) => {
-        if (s.kind === 'activity') return s;
-        if ((s.bodyHtml || '').trim()) return s;
+        const hit = byId.get(s.id);
+        if (!hit) return s;
         return {
           ...s,
-          bodyHtml: `Teacher note for “${s.title}”: ${instruction}`,
+          title: hit.title || s.title,
+          durationMins: hit.durationMins ?? s.durationMins,
+          bodyHtml: hit.bodyHtml,
           lastWrittenBy: 'ai' as const,
         };
       });
-    } else {
-      nextSections = nextSections.map((s) => {
-        if (s.id !== scope.sectionId) return s;
-        return {
-          ...s,
-          bodyHtml: `${s.bodyHtml || ''}\n\nAI: ${instruction}`.trim(),
-          lastWrittenBy: 'ai' as const,
-        };
-      });
+    } else if (scope !== 'whole_plan' && result.sectionBodies.length) {
+      const body = result.sectionBodies[0];
+      nextSections = nextSections.map((s) =>
+        s.id === body.sectionId
+          ? { ...s, bodyHtml: body.bodyHtml, lastWrittenBy: 'ai' as const }
+          : s,
+      );
+    }
+
+    let customObjectives = draft.customObjectives || [];
+    if (options.autoPickCurriculum && result.selectedStatementIds.length) {
+      customObjectives = [...new Set([...customObjectives, ...result.selectedStatementIds])];
+      setAiPickedNote(true);
     }
 
     const after = {
@@ -214,9 +346,16 @@ export function LessonPlanPanel({
       sections: nextSections,
       learningOutcome,
       successCriteria,
+      customObjectives,
+      curriculumType: options.autoPickCurriculum ? 'CUSTOM' : draft.curriculumType,
       aiFleshOut: { history, historyIndex: history.length - 1 },
     });
-    setLiveMessage('Flesh out applied — all fields remain editable');
+    setLiveMessage(
+      pickedByAi
+        ? 'Flesh out applied — curriculum statements picked by AI (edit as needed)'
+        : 'Flesh out applied — all fields remain editable',
+    );
+    toast.success('Flesh out applied');
   };
 
   const undoAi = () => {
@@ -470,16 +609,22 @@ export function LessonPlanPanel({
               </div>
 
               <div className="flex min-h-0 flex-col gap-3 lg:min-h-[min(70vh,640px)]">
+                {aiPickedNote ? (
+                  <p className="rounded-xl bg-violet-50 px-3 py-2 text-[12px] font-semibold text-violet-800">
+                    Picked by AI, edit as needed
+                  </p>
+                ) : null}
                 <CurriculumStatementsPanel
                   className="min-h-[280px] flex-1"
                   selectedIds={selectedIds}
-                  onSelectedIdsChange={(next) =>
+                  onSelectedIdsChange={(next) => {
+                    setAiPickedNote(false);
                     setDraft({
                       ...draft,
                       customObjectives: [...next],
                       curriculumType: 'CUSTOM',
-                    })
-                  }
+                    });
+                  }}
                 />
                 <div className="shrink-0 space-y-3">
                   <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
@@ -572,7 +717,7 @@ export function LessonPlanPanel({
         {/* Overlay drawer — does not shrink sequence / curriculum columns */}
         {fleshOpen ? (
           <aside
-            className="absolute inset-y-0 right-0 z-10 flex w-[min(100%,280px)] flex-col border-l border-violet-100 bg-violet-50/95 shadow-xl shadow-violet-900/10 backdrop-blur-sm"
+            className="absolute inset-y-0 right-0 z-10 flex w-[min(100%,320px)] flex-col border-l border-violet-100 bg-violet-50/95 shadow-xl shadow-violet-900/10 backdrop-blur-sm"
             aria-label="Flesh out with AI"
           >
             <div className="border-b border-violet-100 px-4 py-3">
@@ -687,18 +832,87 @@ function FleshOutPanel({
   canRedo,
   sections,
 }: {
-  onApply: (instruction: string, scope: 'whole_plan' | { sectionId: string }) => void;
+  onApply: (
+    instruction: string,
+    scope: 'whole_plan' | { sectionId: string },
+    options: FleshOutOptions,
+  ) => void | Promise<void>;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
   canRedo: boolean;
   sections: LessonSection[];
 }) {
-  const [instruction, setInstruction] = useState('Make it more practical');
+  const [instruction, setInstruction] = useState('Make it practical and specific to this lesson');
   const [scopeId, setScopeId] = useState<string>('whole_plan');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [available, setAvailable] = useState<boolean | null>(null);
+  const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null);
+  const [opts, setOpts] = useState<FleshOutOptions>({
+    includeOutcomes: true,
+    includeSuccessCriteria: true,
+    includeTeacherQuestions: true,
+    includeDifferentiation: true,
+    autoPickCurriculum: false,
+    wholeLesson: false,
+  });
+
+  useEffect(() => {
+    let cancelled = false;
+    void checkFleshOutAvailable().then((r) => {
+      if (cancelled) return;
+      setAvailable(r.available);
+      setAvailabilityMessage(r.message || null);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const toggle = (key: keyof FleshOutOptions) => {
+    setOpts((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  const run = async () => {
+    setError(null);
+    setBusy(true);
+    try {
+      await onApply(
+        instruction.trim() || 'Flesh out this plan',
+        scopeId === 'whole_plan' ? 'whole_plan' : { sectionId: scopeId },
+        {
+          ...opts,
+          wholeLesson: scopeId === 'whole_plan' ? opts.wholeLesson : false,
+        },
+      );
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const checks: { key: keyof FleshOutOptions; label: string }[] = [
+    { key: 'includeOutcomes', label: 'Lesson outcomes' },
+    { key: 'includeSuccessCriteria', label: 'Success criteria' },
+    { key: 'includeTeacherQuestions', label: 'Teacher questions' },
+    { key: 'includeDifferentiation', label: 'Differentiation' },
+    { key: 'autoPickCurriculum', label: 'Auto-pick curriculum statements' },
+    { key: 'wholeLesson', label: 'Flesh out whole lesson (sequenced plan)' },
+  ];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
+      {available === false ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900">
+          {availabilityMessage ||
+            'OPENAI_API_KEY is not configured on the server. Flesh out is unavailable.'}
+        </div>
+      ) : null}
+      {error ? (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900">
+          {error}
+        </div>
+      ) : null}
       <label className="block space-y-1">
         <span className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
           Instruction
@@ -706,10 +920,33 @@ function FleshOutPanel({
         <textarea
           value={instruction}
           onChange={(e) => setInstruction(e.target.value)}
-          rows={4}
+          rows={3}
           className="w-full rounded-2xl border border-violet-200 bg-white px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
         />
       </label>
+      <fieldset className="space-y-1.5">
+        <legend className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
+          Generate
+        </legend>
+        {checks.map(({ key, label }) => (
+          <label
+            key={key}
+            className={cn(
+              'flex min-h-[40px] cursor-pointer items-start gap-2 rounded-xl bg-white/80 px-2.5 py-2 text-[12px] font-semibold text-violet-950',
+              key === 'wholeLesson' && scopeId !== 'whole_plan' && 'opacity-40',
+            )}
+          >
+            <input
+              type="checkbox"
+              className="mt-0.5"
+              checked={!!opts[key]}
+              disabled={key === 'wholeLesson' && scopeId !== 'whole_plan'}
+              onChange={() => toggle(key)}
+            />
+            <span>{label}</span>
+          </label>
+        ))}
+      </fieldset>
       <label className="block space-y-1">
         <span className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
           Scope
@@ -722,28 +959,24 @@ function FleshOutPanel({
           <option value="whole_plan">Whole plan</option>
           {sections.map((s) => (
             <option key={s.id} value={s.id}>
-              {s.title}
+              Re-run: {s.title}
             </option>
           ))}
         </select>
       </label>
       <button
         type="button"
-        onClick={() =>
-          onApply(
-            instruction.trim() || 'Flesh out this plan',
-            scopeId === 'whole_plan' ? 'whole_plan' : { sectionId: scopeId },
-          )
-        }
-        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+        disabled={busy || available === false}
+        onClick={() => void run().catch((e) => setError(e?.message || 'Flesh out failed'))}
+        className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
       >
         <Sparkles className="h-4 w-4" />
-        Apply
+        {busy ? 'Generating…' : 'Apply'}
       </button>
       <div className="flex gap-2">
         <button
           type="button"
-          disabled={!canUndo}
+          disabled={!canUndo || busy}
           onClick={onUndo}
           className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-violet-200 text-sm font-semibold text-violet-800 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
         >
@@ -751,7 +984,7 @@ function FleshOutPanel({
         </button>
         <button
           type="button"
-          disabled={!canRedo}
+          disabled={!canRedo || busy}
           onClick={onRedo}
           className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-violet-200 text-sm font-semibold text-violet-800 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
         >
@@ -759,7 +992,8 @@ function FleshOutPanel({
         </button>
       </div>
       <p className="text-[11px] leading-relaxed text-violet-700">
-        Empty fields are filled by default. Teacher edits are not overwritten unless you re-apply to that section.
+        Uses the server OPENAI_API_KEY. Only ticked sections are generated. Empty teacher fields
+        are filled first; re-run a single section from Scope anytime.
       </p>
     </div>
   );
