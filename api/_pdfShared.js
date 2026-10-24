@@ -84,9 +84,15 @@ export async function generatePdfBuffer(apiKey, body) {
   });
 
   if (!upstream.ok) {
-    const errorText = await upstream.text();
-    const err = new Error(`PDFBolt error: ${upstream.status} ${errorText}`);
-    err.status = upstream.status;
+    const errorText = await upstream.text().catch(() => '');
+    // Log upstream detail server-side; never return raw provider text to clients.
+    console.error(
+      'PDFBolt upstream error:',
+      upstream.status,
+      String(errorText).slice(0, 300),
+    );
+    const err = new Error('PDF generation failed.');
+    err.status = upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502;
     throw err;
   }
 

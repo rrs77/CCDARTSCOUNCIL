@@ -93,7 +93,21 @@ export async function POST(request) {
       path: storagePath,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'PDF generation failed';
-    return jsonResponse({ error: message }, 500, request);
+    console.error(
+      'generate-pdf failed:',
+      error instanceof Error ? error.message : error,
+    );
+    const status = error?.status && Number.isFinite(error.status) ? error.status : 500;
+    const clientMessage =
+      status === 413
+        ? 'HTML payload exceeds maximum allowed size.'
+        : status === 503
+          ? 'PDF generation is not configured.'
+          : 'PDF generation failed.';
+    return jsonResponse(
+      { error: clientMessage },
+      status >= 400 && status < 600 ? status : 500,
+      request,
+    );
   }
 }

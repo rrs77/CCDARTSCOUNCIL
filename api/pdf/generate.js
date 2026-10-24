@@ -74,8 +74,15 @@ export async function POST(request) {
       ),
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'PDF generation failed';
+    console.error(
+      'pdf/generate failed:',
+      error instanceof Error ? error.message : error,
+    );
     const status = error?.status && Number.isFinite(error.status) ? error.status : 500;
-    return jsonResponse({ error: message }, status, request);
+    return jsonResponse(
+      { error: 'PDF generation failed.' },
+      status >= 400 && status < 600 ? status : 500,
+      request,
+    );
   }
 }
