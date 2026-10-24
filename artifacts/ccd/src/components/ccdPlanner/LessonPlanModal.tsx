@@ -170,21 +170,40 @@ export function LessonPlanPanel({
     };
 
     const curr = loadPlannerCurriculum();
-    const ks =
+    const ks = (
       keyStageFromYearGroupTag(yearGroup || '') ||
       (curr.strands[0]?.keyStage as string | undefined) ||
-      'ks2';
+      'ks2'
+    ).toLowerCase();
 
-    const curriculumStatements = curr.statements.map((st) => {
+    // Only offer Settings statements for this lesson's key stage (and subject when known).
+    const allStatements = curr.statements.map((st) => {
       const strand = curr.strands.find((s) => s.id === st.strandId);
       return {
         id: st.id,
         text: st.text,
         strand: strand?.name,
-        keyStage: strand?.keyStage,
-        subject: strand?.subjectId,
+        keyStage: (strand?.keyStage || '').toLowerCase(),
+        subject: strand?.subjectId || '',
       };
     });
+    const byKeyStage = allStatements.filter((s) => !s.keyStage || s.keyStage === ks);
+    const subjectHint =
+      byKeyStage.find((s) => s.subject)?.subject ||
+      curr.strands.find((s) => s.keyStage === ks)?.subjectId ||
+      '';
+    const curriculumStatements =
+      subjectHint && byKeyStage.some((s) => s.subject === subjectHint)
+        ? byKeyStage.filter((s) => !s.subject || s.subject === subjectHint)
+        : byKeyStage;
+
+    if (options.autoPickCurriculum && curriculumStatements.length === 0) {
+      const msg =
+        'No curriculum statements in Settings for this lesson’s key stage. Add frameworks, strands and statements in Settings → Curriculum, then try again.';
+      toast.error(msg);
+      setLiveMessage(msg);
+      throw new Error(msg);
+    }
 
     const activities = sections
       .filter((s) => s.kind === 'activity' && s.activity)
@@ -196,7 +215,7 @@ export function LessonPlanPanel({
         title: draft.title,
         keyStage: ks,
         yearGroup: yearGroup || '',
-        subject: curriculumStatements[0]?.subject || '',
+        subject: subjectHint,
         learningOutcome: draft.learningOutcome,
         successCriteria: draft.successCriteria,
         activities,
@@ -213,10 +232,18 @@ export function LessonPlanPanel({
     if (!res.ok) {
       toast.error(res.message);
       setLiveMessage(res.message);
-      return;
+      throw new Error(res.message);
     }
 
-    const { result, pickedByAi } = res;
+    // Defence in depth: never apply IDs that were not in the Settings list we sent.
+    const allowedIds = new Set(curriculumStatements.map((s) => s.id));
+    const result = {
+      ...res.result,
+      selectedStatementIds: (res.result.selectedStatementIds || []).filter((id) =>
+        allowedIds.has(id),
+      ),
+    };
+    const pickedByAi = res.pickedByAi && result.selectedStatementIds.length > 0;
     let nextSections = sections.map((s) => ({ ...s }));
     let learningOutcome = draft.learningOutcome || '';
     let successCriteria = draft.successCriteria || '';
@@ -734,6 +761,7 @@ export function LessonPlanPanel({
                 (draft.aiFleshOut?.history.length ?? 0) - 1
               }
               sections={sections}
+              curriculumStatementCount={curriculum.statements.length}
             />
           </aside>
         ) : null}
@@ -831,6 +859,7 @@ function FleshOutPanel({
   canUndo,
   canRedo,
   sections,
+  curriculumStatementCount,
 }: {
   onApply: (
     instruction: string,
@@ -842,6 +871,7 @@ function FleshOutPanel({
   canUndo: boolean;
   canRedo: boolean;
   sections: LessonSection[];
+  curriculumStatementCount: number;
 }) {
   const [instruction, setInstruction] = useState('Make it practical and specific to this lesson');
   const [scopeId, setScopeId] = useState<string>('whole_plan');
@@ -874,8 +904,17 @@ function FleshOutPanel({
     setOpts((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
+  const emptyCurriculumBlocked =
+    opts.autoPickCurriculum && curriculumStatementCount === 0;
+
   const run = async () => {
     setError(null);
+    if (emptyCurriculumBlocked) {
+      setError(
+        'No curriculum statements in Settings yet. Add them under Settings → Curriculum, then turn Auto-pick back on.',
+      );
+      return;
+    }
     setBusy(true);
     try {
       await onApply(
@@ -886,31 +925,59 @@ function FleshOutPanel({
           wholeLesson: scopeId === 'whole_plan' ? opts.wholeLesson : false,
         },
       );
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : 'Flesh out failed';
+      setError(msg);
+      throw e;
     } finally {
       setBusy(false);
     }
   };
 
-  const checks: { key: keyof FleshOutOptions; label: string }[] = [
+  const checks: { key: keyof FleshOutOptions; label: string; hint?: string }[] = [
     { key: 'includeOutcomes', label: 'Lesson outcomes' },
     { key: 'includeSuccessCriteria', label: 'Success criteria' },
     { key: 'includeTeacherQuestions', label: 'Teacher questions' },
     { key: 'includeDifferentiation', label: 'Differentiation' },
-    { key: 'autoPickCurriculum', label: 'Auto-pick curriculum statements' },
+    {
+      key: 'autoPickCurriculum',
+      label: 'Auto-pick curriculum statements',
+      hint: 'Match this plan to your Settings → Curriculum list (IDs only)',
+    },
     { key: 'wholeLesson', label: 'Flesh out whole lesson (sequenced plan)' },
   ];
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
       {available === false ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900">
+        <div
+          role="alert"
+          className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900"
+        >
           {availabilityMessage ||
             'OPENAI_API_KEY is not configured on the server. Flesh out is unavailable.'}
         </div>
       ) : null}
       {error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900">
-          {error}
+        <div
+          role="alert"
+          className="rounded-2xl border border-rose-200 bg-rose-50 px-3 py-2 text-[12px] font-semibold text-rose-900"
+        >
+          {error}{' '}
+          {/Settings|curriculum/i.test(error) ? (
+            <a href="/settings/curriculum" className="underline">
+              Open Settings → Curriculum
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+      {emptyCurriculumBlocked ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-950">
+          Auto-pick needs statements in{' '}
+          <a href="/settings/curriculum" className="underline">
+            Settings → Curriculum
+          </a>
+          . Add a framework, strand and statement for this key stage first.
         </div>
       ) : null}
       <label className="block space-y-1">
@@ -928,11 +995,12 @@ function FleshOutPanel({
         <legend className="text-[11px] font-bold uppercase tracking-wide text-violet-700">
           Generate
         </legend>
-        {checks.map(({ key, label }) => (
+        {checks.map(({ key, label, hint }) => (
           <label
             key={key}
             className={cn(
               'flex min-h-[40px] cursor-pointer items-start gap-2 rounded-xl bg-white/80 px-2.5 py-2 text-[12px] font-semibold text-violet-950',
+              key === 'autoPickCurriculum' && 'ring-1 ring-violet-200',
               key === 'wholeLesson' && scopeId !== 'whole_plan' && 'opacity-40',
             )}
           >
@@ -942,8 +1010,14 @@ function FleshOutPanel({
               checked={!!opts[key]}
               disabled={key === 'wholeLesson' && scopeId !== 'whole_plan'}
               onChange={() => toggle(key)}
+              data-testid={key === 'autoPickCurriculum' ? 'flesh-out-auto-pick' : undefined}
             />
-            <span>{label}</span>
+            <span>
+              {label}
+              {hint ? (
+                <span className="mt-0.5 block text-[10px] font-medium text-violet-600">{hint}</span>
+              ) : null}
+            </span>
           </label>
         ))}
       </fieldset>
@@ -966,7 +1040,7 @@ function FleshOutPanel({
       </label>
       <button
         type="button"
-        disabled={busy || available === false}
+        disabled={busy || available === false || emptyCurriculumBlocked}
         onClick={() => void run().catch((e) => setError(e?.message || 'Flesh out failed'))}
         className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
       >
@@ -992,8 +1066,8 @@ function FleshOutPanel({
         </button>
       </div>
       <p className="text-[11px] leading-relaxed text-violet-700">
-        Uses the server OPENAI_API_KEY. Only ticked sections are generated. Empty teacher fields
-        are filled first; re-run a single section from Scope anytime.
+        Uses the server OPENAI_API_KEY only (never in the browser). Only ticked sections are
+        generated. Empty teacher fields are filled first; re-run a single section from Scope anytime.
       </p>
     </div>
   );
