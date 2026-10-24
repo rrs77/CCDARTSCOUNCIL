@@ -129,8 +129,7 @@ export function LibraryMenu({
     const load = () => {
       void listSharedWithMe({
         id: user.id,
-        organisationId: (user.profile as { organisation_id?: string } | undefined)?.organisation_id,
-        schoolOrOrg: user.profile?.school_or_org,
+        organisationId: user.profile?.organisation_id || null,
       }).then((rows) => {
         if (!cancelled) setSharedWithMe(rows);
       });

@@ -13,14 +13,6 @@ import {
 import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
 import { Button, Field, TextField, TextInput } from './ui';
 
-const AUDIENCE_OPTIONS: { id: ShareAudienceType; label: string; hint: string }[] = [
-  { id: 'person', label: 'Person', hint: 'A colleague (email or user id)' },
-  { id: 'group', label: 'Group', hint: 'Your teaching group / team' },
-  { id: 'school', label: 'School', hint: 'Everyone at your school' },
-  { id: 'year_group', label: 'Year group', hint: 'Scoped to a year group / class' },
-  { id: 'hub_org', label: 'Hub / arts organisation', hint: 'Members of your hub or arts org' },
-];
-
 const PERMISSIONS: { id: SharePermission; label: string }[] = [
   { id: 'view', label: 'View' },
   { id: 'copy', label: 'Can copy' },
@@ -49,43 +41,74 @@ export function SharePlanningModal({
   const { user } = useAuth();
   const { customYearGroups } = useSettings();
   const profile = user?.profile;
-  const orgId = (profile as { organisation_id?: string } | undefined)?.organisation_id
-    || profile?.school_or_org
-    || '';
+  // Sharing RLS uses organisation_id only (never school_or_org).
+  const orgId = (profile?.organisation_id || '').trim();
+  const allowedYearGroups = profile?.allowed_year_groups ?? null;
+  const hasProfileYearGroups = Array.isArray(allowedYearGroups) && allowedYearGroups.length > 0;
+  // When profiles lack year-group data, year_group shares are whole-school within org.
+  const yearGroupOptionLabel = hasProfileYearGroups ? 'Year group' : 'Whole school';
+  const yearGroupOptionHint = hasProfileYearGroups
+    ? 'Scoped to colleagues whose allowed year groups include this class'
+    : 'Profiles have no year-group data — shares reach your whole school (organisation_id)';
+
+  const audienceOptions = useMemo(
+    () =>
+      [
+        { id: 'person' as const, label: 'Person', hint: 'A colleague (email or user id)' },
+        { id: 'group' as const, label: 'Group', hint: 'Your teaching group / team' },
+        { id: 'school' as const, label: 'School', hint: 'Everyone at your school' },
+        {
+          id: 'year_group' as const,
+          label: yearGroupOptionLabel,
+          hint: yearGroupOptionHint,
+        },
+        {
+          id: 'hub_org' as const,
+          label: 'Hub / arts organisation',
+          hint: 'Members of your hub or arts org',
+        },
+      ] satisfies { id: ShareAudienceType; label: string; hint: string }[],
+    [yearGroupOptionLabel, yearGroupOptionHint],
+  );
 
   const [audienceType, setAudienceType] = useState<ShareAudienceType>('school');
   const [audienceId, setAudienceId] = useState(orgId);
-  const [audienceLabel, setAudienceLabel] = useState(profile?.school_or_org || 'My school');
+  const [audienceLabel, setAudienceLabel] = useState(orgId ? 'My school' : '');
   const [permission, setPermission] = useState<SharePermission>('view');
   const [busy, setBusy] = useState(false);
   const [note, setNote] = useState('');
 
-  const yearOptions = useMemo(
-    () =>
-      (customYearGroups || []).map((g) => ({
-        id: g.id || g.name,
-        label: g.name || g.id,
-      })),
-    [customYearGroups],
-  );
+  const yearOptions = useMemo(() => {
+    if (!hasProfileYearGroups) return [];
+    const fromSettings = (customYearGroups || []).map((g) => ({
+      id: g.id || g.name,
+      label: g.name || g.id,
+    }));
+    // Prefer intersection with profile.allowed_year_groups when both exist.
+    const allowed = new Set(allowedYearGroups || []);
+    const filtered = fromSettings.filter((y) => allowed.has(y.id) || allowed.has(y.label));
+    if (filtered.length) return filtered;
+    return (allowedYearGroups || []).map((id) => ({ id, label: id }));
+  }, [customYearGroups, hasProfileYearGroups, allowedYearGroups]);
 
   const onAudienceTypeChange = (next: ShareAudienceType) => {
     setAudienceType(next);
     if (next === 'school' || next === 'hub_org') {
-      setAudienceId(orgId || 'school');
-      setAudienceLabel(
-        next === 'hub_org'
-          ? profile?.school_or_org || 'Hub / organisation'
-          : profile?.school_or_org || 'My school',
-      );
+      setAudienceId(orgId);
+      setAudienceLabel(next === 'hub_org' ? 'Hub / organisation' : 'My school');
     } else if (next === 'group') {
-      // Group id is membership-backed (planning_group_members), not org id.
       setAudienceId('');
       setAudienceLabel('My teaching group');
     } else if (next === 'year_group') {
-      const first = yearOptions[0];
-      setAudienceId(first?.id || '');
-      setAudienceLabel(first?.label || '');
+      if (!hasProfileYearGroups) {
+        // Whole school within organisation_id (RLS treats empty allowed_year_groups as org-wide).
+        setAudienceId(orgId || 'whole-school');
+        setAudienceLabel('Whole school');
+      } else {
+        const first = yearOptions[0];
+        setAudienceId(first?.id || '');
+        setAudienceLabel(first?.label || '');
+      }
     } else {
       setAudienceId('');
       setAudienceLabel('');
@@ -95,6 +118,10 @@ export function SharePlanningModal({
   const submit = async () => {
     if (!user?.id) {
       toast.error('Sign in to share planning');
+      return;
+    }
+    if (!orgId && (audienceType === 'school' || audienceType === 'hub_org' || audienceType === 'year_group')) {
+      toast.error('Your profile needs an organisation_id before sharing with school / hub / year group');
       return;
     }
     if (!audienceId.trim()) {
@@ -109,6 +136,7 @@ export function SharePlanningModal({
         resourceId,
         title: title || 'Untitled planning',
         summary: summary || note,
+        // Server trigger overwrites from owner's profile.organisation_id.
         organisationId: orgId || null,
         payload: { note },
       });
@@ -117,6 +145,7 @@ export function SharePlanningModal({
           groupId: audienceId.trim(),
           userId: user.id,
           organisationId: orgId || null,
+          label: audienceLabel.trim() || audienceId.trim(),
         });
       }
       await createPlanningShareGrant({
@@ -158,42 +187,53 @@ export function SharePlanningModal({
               onChange={(e) => onAudienceTypeChange(e.target.value as ShareAudienceType)}
               className="h-11 w-full rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-semibold text-[#1F1B4D]"
             >
-              {AUDIENCE_OPTIONS.map((o) => (
+              {audienceOptions.map((o) => (
                 <option key={o.id} value={o.id}>
                   {o.label}
                 </option>
               ))}
             </select>
             <p className="mt-1 text-[11px] font-medium text-[#77738F]">
-              {AUDIENCE_OPTIONS.find((o) => o.id === audienceType)?.hint}
+              {audienceOptions.find((o) => o.id === audienceType)?.hint}
             </p>
           </Field>
 
           {audienceType === 'year_group' ? (
-            <Field label="Year group">
-              <select
-                value={audienceId}
-                onChange={(e) => {
-                  const opt = yearOptions.find((y) => y.id === e.target.value);
-                  setAudienceId(e.target.value);
-                  setAudienceLabel(opt?.label || e.target.value);
-                }}
-                className="h-11 w-full rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-semibold"
-              >
-                {yearOptions.length === 0 ? (
-                  <option value="">No year groups in Settings</option>
-                ) : (
-                  yearOptions.map((y) => (
-                    <option key={y.id} value={y.id}>
-                      {y.label}
-                    </option>
-                  ))
-                )}
-              </select>
-              <p className="mt-1 text-[11px] font-medium text-[#77738F]">
-                Visible to colleagues at your school for this year group (org-scoped).
-              </p>
-            </Field>
+            hasProfileYearGroups ? (
+              <Field label="Year group">
+                <select
+                  value={audienceId}
+                  onChange={(e) => {
+                    const opt = yearOptions.find((y) => y.id === e.target.value);
+                    setAudienceId(e.target.value);
+                    setAudienceLabel(opt?.label || e.target.value);
+                  }}
+                  className="h-11 w-full rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-semibold"
+                >
+                  {yearOptions.length === 0 ? (
+                    <option value="">No year groups available</option>
+                  ) : (
+                    yearOptions.map((y) => (
+                      <option key={y.id} value={y.id}>
+                        {y.label}
+                      </option>
+                    ))
+                  )}
+                </select>
+                <p className="mt-1 text-[11px] font-medium text-[#77738F]">
+                  Visible to colleagues at your organisation whose allowed year groups include this
+                  class.
+                </p>
+              </Field>
+            ) : (
+              <Field label="Whole school">
+                <TextField value={orgId || '—'} disabled />
+                <p className="mt-1 text-[11px] font-medium text-[#77738F]">
+                  No year-group data on profiles — this share reaches everyone with your
+                  organisation_id.
+                </p>
+              </Field>
+            )
           ) : audienceType === 'person' ? (
             <Field label="Person (email or user id)">
               <TextField
@@ -214,8 +254,8 @@ export function SharePlanningModal({
                   placeholder="e.g. year6-music-team"
                 />
                 <p className="mt-1 text-[11px] font-medium text-[#77738F]">
-                  Recipients must be members of this group (planning_group_members). Sharing
-                  adds you as a member so you can manage the grant.
+                  Membership is managed server-side (group owner or same-org admin). Sharing adds
+                  you as a member via the planning-groups API.
                 </p>
               </Field>
               <Field label="Group label">
@@ -231,34 +271,30 @@ export function SharePlanningModal({
               <TextField
                 value={audienceLabel}
                 onChange={(e) => setAudienceLabel(e.target.value)}
+                placeholder="My school"
               />
             </Field>
           )}
 
           <Field label="Permission">
-            <div className="flex flex-wrap gap-2">
+            <select
+              value={permission}
+              onChange={(e) => setPermission(e.target.value as SharePermission)}
+              className="h-11 w-full rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-semibold"
+            >
               {PERMISSIONS.map((p) => (
-                <button
-                  key={p.id}
-                  type="button"
-                  onClick={() => setPermission(p.id)}
-                  className={`inline-flex h-10 items-center rounded-xl border px-3 text-[13px] font-bold ${
-                    permission === p.id
-                      ? 'border-[#4338E8] bg-[#E9E6FF] text-[#4338E8]'
-                      : 'border-[#E2E0EF] bg-white text-[#5C5878]'
-                  }`}
-                >
+                <option key={p.id} value={p.id}>
                   {p.label}
-                </button>
+                </option>
               ))}
-            </div>
+            </select>
           </Field>
 
           <Field label="Note (optional)">
             <TextInput
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Why you’re sharing…"
+              placeholder="Why you are sharing this"
             />
           </Field>
         </div>
@@ -267,7 +303,7 @@ export function SharePlanningModal({
         <Button variant="ghost" onClick={onClose} disabled={busy}>
           Cancel
         </Button>
-        <Button variant="primary" onClick={() => void submit()} disabled={busy}>
+        <Button onClick={() => void submit()} disabled={busy}>
           {busy ? 'Sharing…' : 'Share'}
         </Button>
       </ModalFooter>
