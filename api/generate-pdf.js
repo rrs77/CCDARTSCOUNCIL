@@ -1,13 +1,14 @@
 /**
  * POST /api/generate-pdf
- * Generate PDF via PDFBolt, upload to Supabase Storage, return public URL (Copy Link).
+ * Generate PDF via PDFBolt, upload to storage, return share URL (Copy Link).
  *
  * Env: PDFBOLT_API_KEY, SUPABASE_SERVICE_ROLE_KEY
  * Optional: SUPABASE_URL / VITE_SUPABASE_URL, SUPABASE_JWT_SECRET
  */
 import { createClient } from '@supabase/supabase-js';
+import { randomUUID } from 'node:crypto';
+import { requireAuth } from './_authShared.js';
 import {
-  assertAuthorized,
   DEFAULT_SUPABASE_URL,
   generatePdfBuffer,
   getPdfBoltApiKey,
@@ -34,7 +35,7 @@ export async function POST(request) {
     );
   }
 
-  const auth = await assertAuthorized(request);
+  const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
 
   let body;
@@ -68,13 +69,8 @@ export async function POST(request) {
     process.env.VITE_SUPABASE_URL ||
     DEFAULT_SUPABASE_URL;
 
-  const fileNameRaw =
-    typeof body.fileName === 'string' && body.fileName
-      ? body.fileName
-      : `shared-pdfs/${Date.now()}_lesson.pdf`;
-  const storagePath = fileNameRaw.startsWith('shared-pdfs/')
-    ? fileNameRaw
-    : `shared-pdfs/${fileNameRaw}`;
+  // C2: path is always server-built — never trust client fileName.
+  const storagePath = `${auth.userId}/${randomUUID()}.pdf`;
 
   try {
     const pdfBuffer = await generatePdfBuffer(
@@ -94,7 +90,7 @@ export async function POST(request) {
       .from('lesson-pdfs')
       .upload(storagePath, pdfBuffer, {
         contentType: 'application/pdf',
-        upsert: true,
+        upsert: false,
       });
 
     if (uploadError) {
