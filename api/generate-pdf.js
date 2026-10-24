@@ -5,7 +5,6 @@
  * Env: PDFBOLT_API_KEY, DREAMHOST_PDF_UPLOAD_URL, DREAMHOST_PDF_API_KEY
  * Optional: DREAMHOST_PDF_BASE_URL, SUPABASE_JWT_SECRET
  */
-import { requireAuth } from './_authShared.js';
 import {
   buildOwnedStoragePath,
   buildProxyFileUrl,
@@ -14,6 +13,7 @@ import {
   uploadToDreamHost,
 } from './_dreamhost.js';
 import {
+  assertAuthorized,
   generatePdfBuffer,
   getPdfBoltApiKey,
   jsonResponse,
@@ -26,8 +26,8 @@ export const config = {
   maxDuration: 60,
 };
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function POST(request) {
@@ -36,10 +36,12 @@ export async function POST(request) {
     return jsonResponse(
       { error: 'PDF generation is not configured. Set PDFBOLT_API_KEY in Vercel env.' },
       503,
+      request,
     );
   }
 
-  const auth = await requireAuth(request);
+  // assertAuthorized → requireAuth + rate limit (C2 path ownership via auth.userId)
+  const auth = await assertAuthorized(request);
   if (!auth.ok) return auth.response;
 
   if (!isDreamHostConfigured()) {
@@ -50,15 +52,19 @@ export async function POST(request) {
   try {
     body = await request.json();
   } catch {
-    return jsonResponse({ error: 'Invalid JSON body.' }, 400);
+    return jsonResponse({ error: 'Invalid JSON body.' }, 400, request);
   }
 
   const encodedHtml = body?.html;
   if (typeof encodedHtml !== 'string' || encodedHtml.length === 0) {
-    return jsonResponse({ error: 'Missing html content' }, 400);
+    return jsonResponse({ error: 'Missing html content' }, 400, request);
   }
   if (Buffer.byteLength(encodedHtml, 'utf8') > MAX_HTML_BYTES) {
-    return jsonResponse({ error: 'HTML payload exceeds maximum allowed size.' }, 413);
+    return jsonResponse(
+      { error: 'HTML payload exceeds maximum allowed size.' },
+      413,
+      request,
+    );
   }
 
   const storagePath = buildOwnedStoragePath(auth.userId);
@@ -88,6 +94,6 @@ export async function POST(request) {
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'PDF generation failed';
-    return jsonResponse({ error: message }, 500);
+    return jsonResponse({ error: message }, 500, request);
   }
 }
