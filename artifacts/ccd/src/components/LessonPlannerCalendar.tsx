@@ -78,6 +78,12 @@ import { toast } from 'react-hot-toast';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
 import { downloadIcsFile, generateIcsFromLessonPlans } from '../utils/exportIcal';
 import {
+  ModalShell,
+  ModalHeader,
+  ModalBody,
+  ModalConfirm,
+} from './ccdPlanner/ModalShell';
+import {
   PartnerKeyDatesModal,
   ImportantDatesConfirmPopup,
 } from './partners/PartnerKeyDatesModal';
@@ -186,6 +192,11 @@ export function LessonPlannerCalendar({
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [assignmentDate, setAssignmentDate] = useState<Date | null>(null);
   const [removeFromDayDropdownOpen, setRemoveFromDayDropdownOpen] = useState(false);
+  const [diaryRemoveConfirm, setDiaryRemoveConfirm] = useState<{
+    planId: string;
+    title: string;
+    dateStr: string;
+  } | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [nowTick, setNowTick] = useState(() => new Date());
@@ -1985,104 +1996,83 @@ export function LessonPlannerCalendar({
     
     const timeSlots = Object.keys(groupedPlans).sort();
     
-    return createPortal(
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div
-          className="fixed inset-0 bg-black/50"
-          aria-hidden="true"
-          onClick={() => {
+    const dayTitleId = 'ccd-class-calendar-day-title';
+    return (
+      <>
+      <ModalShell
+        open
+        onClose={() => {
+          setIsLessonSummaryOpen(false);
+          setRemoveFromDayDropdownOpen(false);
+        }}
+        labelledBy={dayTitleId}
+      >
+        <ModalHeader
+          title={format(date, 'MMMM d, yyyy')}
+          subtitle={`${plans.length} ${plans.length === 1 ? 'lesson' : 'lessons'} planned`}
+          titleId={dayTitleId}
+          onClose={() => {
             setIsLessonSummaryOpen(false);
             setRemoveFromDayDropdownOpen(false);
           }}
-        />
-        <div
-          className="relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden w-[90%] max-w-4xl max-h-[90vh] flex flex-col"
-          onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div 
-            className="p-4 text-white relative"
-            style={{ 
-              background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)` 
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold mb-1">
-                  {format(date, 'MMMM d, yyyy')}
-                </h2>
-                <p className="text-white text-opacity-90 text-sm">
-                  {plans.length} {plans.length === 1 ? 'lesson' : 'lessons'} planned
-                </p>
-              </div>
-              <div className="flex items-center gap-2 relative">
-                {plans.length > 0 && (
-                  <>
-                    <button
-                      onClick={() => {
-                        const dateStr = format(date, 'MMMM d, yyyy');
-                        if (plans.length === 1) {
-                          const plan = plans[0];
-                          const title = plan.title || (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : 'this lesson');
-                          if (window.confirm(`You are removing "${title}" from the diary for ${dateStr}. The lesson will still be in your library.`)) {
-                            handleDeletePlan(plan.id, { skipConfirm: true });
-                          }
-                        } else {
-                          setRemoveFromDayDropdownOpen((open) => !open);
-                        }
-                      }}
-                      className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
-                      title="Remove from day"
-                    >
-                      <Trash2 className="h-5 w-5 text-white" />
-                    </button>
-                    {removeFromDayDropdownOpen && plans.length > 1 && (
-                      <div 
-                        className="absolute right-0 top-full mt-2 z-50 py-1 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[200px]"
-                        role="menu"
-                      >
-                        <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
-                          Remove from {format(date, 'MMM d')}
-                        </div>
-                        {plans.map((plan) => {
-                          const title = plan.title || (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : `Week ${plan.week} Lesson`);
-                          const dateStr = format(date, 'MMMM d, yyyy');
-                          return (
-                            <button
-                              key={plan.id}
-                              onClick={() => {
-                                if (window.confirm(`You are removing "${title}" from the diary for ${dateStr}. The lesson will still be in your library.`)) {
-                                  handleDeletePlan(plan.id, { skipConfirm: true });
-                                  setRemoveFromDayDropdownOpen(false);
-                                }
-                              }}
-                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                              role="menuitem"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500 shrink-0" />
-                              {title}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-                <button
-                  onClick={() => {
-                    setIsLessonSummaryOpen(false);
-                    setRemoveFromDayDropdownOpen(false);
-                  }}
-                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
+          {plans.length > 0 ? (
+            <div className="relative mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const dateStr = format(date, 'MMMM d, yyyy');
+                  if (plans.length === 1) {
+                    const plan = plans[0];
+                    const title =
+                      plan.title ||
+                      (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : 'this lesson');
+                    setDiaryRemoveConfirm({ planId: plan.id, title, dateStr });
+                  } else {
+                    setRemoveFromDayDropdownOpen((open) => !open);
+                  }
+                }}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                title="Remove from day"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                Remove from day
+              </button>
+              {removeFromDayDropdownOpen && plans.length > 1 ? (
+                <div
+                  className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                  role="menu"
                 >
-                  <X className="h-5 w-5 text-white" />
-                </button>
-              </div>
+                  <div className="border-b border-gray-100 px-3 py-2 text-xs text-gray-500">
+                    Remove from {format(date, 'MMM d')}
+                  </div>
+                  {plans.map((plan) => {
+                    const title =
+                      plan.title ||
+                      (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : `Week ${plan.week} Lesson`);
+                    const dateStr = format(date, 'MMMM d, yyyy');
+                    return (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        onClick={() => {
+                          setDiaryRemoveConfirm({ planId: plan.id, title, dateStr });
+                          setRemoveFromDayDropdownOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        <Trash2 className="h-4 w-4 shrink-0 text-red-500" aria-hidden />
+                        {title}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
-          </div>
-          
-          {/* Lesson Plans */}
-          <div className="p-6 overflow-y-auto flex-1">
+          ) : null}
+        </ModalHeader>
+        <ModalBody>
             {timeSlots.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">No lessons scheduled for this date</p>
@@ -2277,8 +2267,9 @@ export function LessonPlannerCalendar({
             )}
             
             {/* Add New Lesson/Stack Button */}
-            <div className="mt-6 text-center space-y-3">
+            <div className="mt-6 space-y-3 text-center">
               <button
+                type="button"
                 onClick={() => {
                   setAssignmentDate(selectedDateWithPlans.date);
                   setIsLessonSummaryOpen(false);
@@ -2293,10 +2284,26 @@ export function LessonPlannerCalendar({
                 Choose from lesson library or stacks, spread over multiple days
               </div>
             </div>
-          </div>
-        </div>
-      </div>,
-      document.body,
+        </ModalBody>
+      </ModalShell>
+      <ModalConfirm
+        open={!!diaryRemoveConfirm}
+        onClose={() => setDiaryRemoveConfirm(null)}
+        onConfirm={() => {
+          if (diaryRemoveConfirm) {
+            handleDeletePlan(diaryRemoveConfirm.planId, { skipConfirm: true });
+          }
+        }}
+        title="Remove from diary?"
+        message={
+          diaryRemoveConfirm
+            ? `Remove “${diaryRemoveConfirm.title}” from the diary for ${diaryRemoveConfirm.dateStr}? The lesson stays in your library.`
+            : ''
+        }
+        confirmLabel="Remove from diary"
+        danger
+      />
+      </>
     );
   };
 

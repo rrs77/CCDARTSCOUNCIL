@@ -590,7 +590,23 @@ export function Header() {
           setShowWalkthrough(false);
           try {
             if (window.location.pathname.replace(/\/+$/, '') === '/walkthrough') {
-              window.history.pushState({}, '', '/planner');
+              // Leave the main shell; restore a safe in-app path (not /forum).
+              const tab = document.documentElement.dataset.ccdTab || 'unit-viewer';
+              const path =
+                tab === 'lesson-library'
+                  ? '/lessons'
+                  : tab === 'help'
+                    ? '/help'
+                    : tab === 'contact-us'
+                      ? '/contact'
+                      : tab === 'settings'
+                        ? '/settings'
+                        : tab === 'activity-library'
+                          ? '/activities'
+                          : tab === 'curriculum'
+                            ? '/half-terms'
+                            : '/planner';
+              window.history.pushState({}, '', path);
             }
           } catch {
             /* ignore */

@@ -7,6 +7,7 @@ import { getEmptyImage } from 'react-dnd-html5-backend';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
+import { ModalPrompt } from './ccdPlanner/ModalShell';
 import {
   TERM_IDS as SHARED_TERM_IDS,
   loadTeacherTimetable,
@@ -147,6 +148,7 @@ export function TimetableBuilder({
   const [editingClass, setEditingClass] = useState<TimetableClass | null>(initialEditClass || null);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ day: number; time: string } | null>(null);
+  const [breakPrompt, setBreakPrompt] = useState<{ day: number; time: string } | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'days'>('days');
   const [showRotationLabel, setShowRotationLabel] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -418,9 +420,9 @@ export function TimetableBuilder({
     saveTimetable([...timetableClasses, newClass]);
   };
 
-  const handleAddNonCurriculum = (day: number, timeSlot: string) => {
-    const name = prompt('Enter name for non-curriculum time (e.g., Break, Lunch, Club):');
-    if (!name) return;
+  const handleAddNonCurriculum = (day: number, timeSlot: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
     const startM = parseTimeToMinutes(timeSlot);
     const endM = Math.min(dayEndMinutes, startM + slotDurationMinutes);
     const newClass: TimetableClass = {
@@ -428,12 +430,11 @@ export function TimetableBuilder({
       day,
       startTime: timeSlot,
       endTime: formatMinutesToTime(endM),
-      className: name,
+      className: trimmed,
       location: '',
-      color: '#9CA3AF', // Gray for non-curriculum
-      type: name.toLowerCase().includes('club') ? 'club' : 'non-curriculum'
+      color: '#9CA3AF',
+      type: trimmed.toLowerCase().includes('club') ? 'club' : 'non-curriculum',
     };
-    
     saveTimetable([...timetableClasses, newClass]);
   };
 
@@ -624,19 +625,14 @@ export function TimetableBuilder({
   );
 
   const openBreakClub = () => {
-    if (selectedSlot) handleAddNonCurriculum(selectedSlot.day, selectedSlot.time);
-    else {
-      setEditingClass({
-        id: `new-${Date.now()}`,
-        day: 1,
-        startTime: dayStart,
-        endTime: formatMinutesToTime(parseTimeToMinutes(dayStart) + slotInterval),
-        className: '',
-        location: '',
-        color: '#9CA3AF',
-        type: 'non-curriculum',
-      });
+    if (selectedSlot) {
+      setBreakPrompt({ day: selectedSlot.day, time: selectedSlot.time });
+      return;
     }
+    setBreakPrompt({
+      day: 1,
+      time: dayStart,
+    });
   };
 
   const page = (
@@ -788,12 +784,18 @@ export function TimetableBuilder({
                   slotStartTimes={slotStartTimes}
                   slotDurationMinutes={slotDurationMinutes}
                   onAddYearGroup={(timeSlot) => (yearGroup: any) => handleAddYearGroup(dayIndex, timeSlot, yearGroup)}
-                  onAddNonCurriculum={(timeSlot) => () => handleAddNonCurriculum(dayIndex, timeSlot)}
+                  onAddNonCurriculum={(timeSlot) => () =>
+                    setBreakPrompt({ day: dayIndex, time: timeSlot })
+                  }
                   onEdit={(cls) => setEditingClass(cls)}
                   onDelete={handleDeleteClass}
                   onResize={handleResizeClass}
                   onMoveClass={handleMoveClass}
-                  onSelectSlot={(timeSlot) => setSelectedSlot({ day: dayIndex, time: timeSlot })}
+                  onSelectSlot={(timeSlot) => {
+                    setSelectedSlot({ day: dayIndex, time: timeSlot });
+                    // Empty grid cells open Break / club — useful click, not a dead target
+                    setBreakPrompt({ day: dayIndex, time: timeSlot });
+                  }}
                   timeToMinutes={timeToMinutes}
                   minutesToTime={minutesToTime}
                 />
@@ -802,6 +804,20 @@ export function TimetableBuilder({
           </div>
         </div>
       </div>
+
+      <ModalPrompt
+        open={!!breakPrompt}
+        onClose={() => setBreakPrompt(null)}
+        onSubmit={(name) => {
+          if (breakPrompt) handleAddNonCurriculum(breakPrompt.day, breakPrompt.time, name);
+        }}
+        title="Break / club"
+        message="Name this non-curriculum block (e.g. Break, Lunch, Choir club)."
+        label="Name"
+        placeholder="Break"
+        initialValue="Break"
+        confirmLabel="Add"
+      />
 
       {editingClass && (
         <EditTimetableClassModal
@@ -872,14 +888,21 @@ function TimetableSlotRow({
         isOver ? 'border-[#bcb7f4]' : 'hover:bg-[#F4F3FA]/80'
       } ${slotZoneClass} ${flashClass}`}
       style={{ height: heightPx }}
-      onClick={(e) => { e.stopPropagation(); onSelectSlot(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelectSlot();
+      }}
+      title="Add break / club at this time"
+      aria-label={`Add break or club at ${slotTime}`}
     >
       {isOver ? (
         <span className="text-xs font-medium text-[#4338E8]">Drop here</span>
       ) : canDrop ? (
-        <span className="text-[10px] font-medium text-[#4338E8]/70" aria-hidden>Drop year group here</span>
+        <span className="text-[10px] font-medium text-[#4338E8]/70" aria-hidden>
+          Drop year group here
+        </span>
       ) : (
-        <span className="text-xs text-gray-300 opacity-0 hover:opacity-100" aria-hidden>+</span>
+        <span className="text-[10px] font-semibold text-[#9B97B0] opacity-70">+ Break / club</span>
       )}
     </div>
   );

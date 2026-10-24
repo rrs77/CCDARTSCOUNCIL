@@ -38,6 +38,7 @@ import { RichHtml } from './RichHtml';
 import { CurriculumStatementsPanel } from './CurriculumStatementsPanel';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
+import { printLessonPlanFromDom } from '../../utils/printLessonPlan';
 
 type ViewTab = 'plan' | 'preview' | 'print';
 
@@ -709,10 +710,9 @@ export function LessonPlanPanel({
             <div className="soft-scroll min-h-0 flex-1 overflow-y-auto p-6">
               <article
                 className={cn(
-                  'mx-auto max-w-2xl space-y-4',
-                  tab === 'print' && 'print-content',
+                  'mx-auto max-w-2xl space-y-4 print-content',
                 )}
-                data-lesson-plan-print={tab === 'print' ? 'true' : undefined}
+                data-lesson-plan-print="true"
               >
                 <header>
                   <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">
@@ -803,8 +803,8 @@ export function LessonPlanPanel({
             size="sm"
             onClick={() => {
               setTab('print');
-              // Wait for Print tab + print-content class to paint before Chrome print.
-              window.setTimeout(() => window.print(), 350);
+              // Wait for Print tab to paint, then clone to #ccd-print-root for Chrome.
+              window.setTimeout(() => printLessonPlanFromDom(), 120);
             }}
           >
             <Printer className="h-3.5 w-3.5" />

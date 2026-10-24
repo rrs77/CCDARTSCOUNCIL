@@ -192,7 +192,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
         onClick={onClose}
       />
 
-      <div className="relative z-[1] flex h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
+      <div className="relative z-[1] flex h-auto max-h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
         {/* Header */}
         <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-6">
           <div className="mb-3 flex items-start justify-between gap-3">
@@ -221,10 +221,17 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]" aria-hidden>
+          <div
+            className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={50}
+            aria-label="Step 1 of 2"
+          >
             <div
               className="h-full rounded-full transition-all duration-200"
-              style={{ background: termColor, width: '33%' }}
+              style={{ background: termColor, width: '50%' }}
             />
           </div>
           <p className="mt-3 text-[13px] leading-snug text-[#5C5878]">

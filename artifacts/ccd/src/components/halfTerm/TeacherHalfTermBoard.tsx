@@ -159,15 +159,16 @@ export function TeacherHalfTermBoard({
             created_at: '',
           };
         });
+        const looseLessons = ht?.lessons?.length ?? 0;
         const lessonCount =
-          schemes.reduce((n, s) => n + (s.lessons?.length || 0), 0) ||
-          (ht?.lessons?.length ?? 0);
+          schemes.reduce((n, s) => n + (s.lessons?.length || 0), 0) || looseLessons;
         return {
           cls,
           schemes,
           lessonCount,
           isComplete: !!ht?.isComplete,
-          empty: stackIds.length === 0,
+          // Count schemes OR individual half-term lessons as planned
+          empty: stackIds.length === 0 && looseLessons === 0,
         };
       });
 
@@ -224,12 +225,16 @@ export function TeacherHalfTermBoard({
         <div className="min-w-0">
           <h1 className="text-[1.85rem] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[2.1rem]">
             Half-terms
+            {focusClassName ? (
+              <span className="block text-[1.05rem] font-bold text-[#4338E8] sm:inline sm:ml-2 sm:text-[1.25rem]">
+                · {focusClassName}
+              </span>
+            ) : null}
           </h1>
           <p className="mt-1 text-[14px] font-medium text-[#77738F]">
-            All your classes · {currentAcademicYear.replace('-', '–')}
-            {focusClassName ? (
-              <span className="text-[#4338E8]"> · {focusClassName}</span>
-            ) : null}
+            {focusClassName
+              ? `${focusClassName} · ${currentAcademicYear.replace('-', '–')}`
+              : `All your classes · ${currentAcademicYear.replace('-', '–')}`}
           </p>
         </div>
 

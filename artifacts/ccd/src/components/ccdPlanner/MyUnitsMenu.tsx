@@ -15,11 +15,18 @@ import type { PlannerTermDates } from '../../types/plannerCurriculum';
 import { chipStyle } from '../../utils/planner/contrastText';
 import { formatUkDateRangeShort } from '../../utils/planner/ukDate';
 import { PlannerPopover } from './PlannerPopover';
+import { ModalConfirm, ModalPrompt } from './ModalShell';
 import { cn } from '@/lib/utils';
 
 function formatTermHint(term: PlannerTermDates): string {
   return formatUkDateRangeShort(term.start, term.end);
 }
+
+type UnitDialog =
+  | { kind: 'create' }
+  | { kind: 'rename'; unit: Unit }
+  | { kind: 'delete'; unit: Unit }
+  | null;
 
 export function MyUnitsMenu({
   open,
@@ -45,6 +52,7 @@ export function MyUnitsMenu({
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [liveMessage, setLiveMessage] = useState('');
   const [termsTick, setTermsTick] = useState(0);
+  const [dialog, setDialog] = useState<UnitDialog>(null);
 
   const terms = useMemo(
     () => loadPlannerTerms(currentAcademicYear),
@@ -57,9 +65,7 @@ export function MyUnitsMenu({
     return () => window.removeEventListener('ccd:planner-curriculum-updated', onUpdate);
   }, []);
 
-  const createUnit = () => {
-    const name = window.prompt('Name for the new unit', 'New unit');
-    if (name === null) return;
+  const createUnit = (name: string) => {
     const trimmed = name.trim() || 'New unit';
     const unit: Unit = {
       id: `unit-${Date.now()}`,
@@ -73,13 +79,12 @@ export function MyUnitsMenu({
       updatedAt: new Date(),
     };
     updateUnit(unit);
+    setExpanded((p) => ({ ...p, [unit.id]: true }));
     setLiveMessage(`Created ${trimmed}`);
     toast.success(`Created “${trimmed}”`, { duration: 3000, position: 'top-center' });
   };
 
-  const renameUnit = (unit: Unit) => {
-    const name = window.prompt('Rename unit', unit.name);
-    if (name === null) return;
+  const renameUnit = (unit: Unit, name: string) => {
     const trimmed = name.trim();
     if (!trimmed || trimmed === unit.name) return;
     updateUnit({ ...unit, name: trimmed, updatedAt: new Date() });
@@ -88,7 +93,6 @@ export function MyUnitsMenu({
   };
 
   const removeUnit = (unit: Unit) => {
-    if (!window.confirm(`Delete unit “${unit.name}”? Lessons stay in Your lessons.`)) return;
     deleteUnitFromContext(unit.id);
     setLiveMessage(`Deleted ${unit.name}`);
     toast.success(`Deleted “${unit.name}”`, { position: 'top-center' });
@@ -119,6 +123,7 @@ export function MyUnitsMenu({
   };
 
   return (
+    <>
     <PlannerPopover
       open={open}
       onOpenChange={onOpenChange}
@@ -155,7 +160,7 @@ export function MyUnitsMenu({
               <button
                 type="button"
                 aria-label="New unit"
-                onClick={createUnit}
+                onClick={() => setDialog({ kind: 'create' })}
                 className="inline-flex h-11 w-11 items-center justify-center rounded-full text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
               >
                 <Plus className="h-4 w-4" />
@@ -179,7 +184,7 @@ export function MyUnitsMenu({
                 return (
                   <div
                     key={unit.id}
-                    className="rounded-2xl border border-slate-100 bg-white shadow-sm"
+                    className="rounded-2xl border border-slate-100 bg-white shadow-sm overflow-visible"
                   >
                     <div
                       className="h-1.5"
@@ -243,7 +248,7 @@ export function MyUnitsMenu({
                           type="button"
                           aria-label={`Rename ${unit.name}`}
                           title={`Rename ${unit.name}`}
-                          onClick={() => renameUnit(unit)}
+                          onClick={() => setDialog({ kind: 'rename', unit })}
                           className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                         >
                           <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -253,7 +258,7 @@ export function MyUnitsMenu({
                           type="button"
                           aria-label={`Delete ${unit.name}`}
                           title={`Delete ${unit.name}`}
-                          onClick={() => removeUnit(unit)}
+                          onClick={() => setDialog({ kind: 'delete', unit })}
                           className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2 text-[12px] font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
                         >
                           <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
@@ -298,5 +303,43 @@ export function MyUnitsMenu({
             {liveMessage}
           </div>
     </PlannerPopover>
+
+    <ModalPrompt
+      open={dialog?.kind === 'create'}
+      onClose={() => setDialog(null)}
+      onSubmit={createUnit}
+      title="New unit"
+      label="Unit name"
+      initialValue="New unit"
+      placeholder="e.g. Rhythm and pulse"
+      confirmLabel="Create"
+    />
+    <ModalPrompt
+      open={dialog?.kind === 'rename'}
+      onClose={() => setDialog(null)}
+      onSubmit={(name) => {
+        if (dialog?.kind === 'rename') renameUnit(dialog.unit, name);
+      }}
+      title="Rename unit"
+      label="Unit name"
+      initialValue={dialog?.kind === 'rename' ? dialog.unit.name : ''}
+      confirmLabel="Rename"
+    />
+    <ModalConfirm
+      open={dialog?.kind === 'delete'}
+      onClose={() => setDialog(null)}
+      onConfirm={() => {
+        if (dialog?.kind === 'delete') removeUnit(dialog.unit);
+      }}
+      title="Delete unit?"
+      message={
+        dialog?.kind === 'delete'
+          ? `Delete unit “${dialog.unit.name}”? Lessons stay in Your lessons.`
+          : ''
+      }
+      confirmLabel="Delete"
+      danger
+    />
+    </>
   );
 }

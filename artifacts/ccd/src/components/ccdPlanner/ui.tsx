@@ -17,6 +17,7 @@ export {
   ModalBody,
   ModalFooter,
   ModalConfirm,
+  ModalPrompt,
   MODAL_SHELL_SIZE,
 } from './ModalShell';
 

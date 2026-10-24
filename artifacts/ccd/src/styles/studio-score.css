@@ -483,11 +483,13 @@ html.ccd-studio .fixed.inset-0 > .relative[role='dialog']:not([data-modal-shell]
   max-width: min(var(--ss-dialog-xl), calc(100vw - 2rem)) !important;
 }
 
-/* ModalShell spec: 760px — never widen via --ss-dialog-xl */
+/* ModalShell spec: 760px wide, height fits content (max 760) — never widen via --ss-dialog-xl */
 html.ccd-studio .fixed.inset-0 > [data-modal-shell],
 html.ccd-studio [data-ccd-modal-shell] [data-modal-shell] {
   max-width: min(760px, calc(100vw - 2rem)) !important;
   width: 100%;
+  height: auto !important;
+  max-height: min(760px, 88vh) !important;
 }
 
 /* Compact assign / confirm dialogs stay tighter */

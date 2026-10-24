@@ -2,8 +2,10 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { X } from 'lucide-react';
 import {
   useCallback,
+  useEffect,
   useId,
   useRef,
+  useState,
   type ReactNode,
 } from 'react';
 import { createPortal } from 'react-dom';
@@ -14,9 +16,10 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
  * Shared modal shell for genuine planner dialogs only: activity stepped card,
  * template picker, Settings editors and confirms. (Run-through also uses it.)
  * Lesson plan is inline in the lesson canvas — not ModalShell.
- * One size: 760px wide × min(88vh, 760px) tall.
+ * Width 760px; height fits content up to max 760 (not a fixed 760-tall box).
  */
-export const MODAL_SHELL_SIZE = 'h-[min(88vh,760px)] w-full max-w-[760px]';
+export const MODAL_SHELL_SIZE =
+  'h-auto max-h-[min(88vh,760px)] w-full max-w-[760px]';
 
 export function ModalShell({
   open,
@@ -148,7 +151,12 @@ export function ModalBody({
   className?: string;
 }) {
   return (
-    <div className={cn('soft-scroll min-h-0 flex-1 overflow-y-auto px-5 py-4 sm:px-6', className)}>
+    <div
+      className={cn(
+        'soft-scroll min-h-0 overflow-y-auto px-5 py-4 sm:px-6',
+        className,
+      )}
+    >
       {children}
     </div>
   );
@@ -180,6 +188,7 @@ export function ModalConfirm({
   title,
   message,
   confirmLabel = 'Confirm',
+  cancelLabel = 'Cancel',
   danger = false,
 }: {
   open: boolean;
@@ -188,6 +197,7 @@ export function ModalConfirm({
   title: string;
   message: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   danger?: boolean;
 }) {
   const titleId = useId();
@@ -203,7 +213,7 @@ export function ModalConfirm({
           onClick={onClose}
           className="inline-flex h-11 min-w-[44px] items-center justify-center rounded-full border-2 border-indigo-200 px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
-          Cancel
+          {cancelLabel}
         </button>
         <button
           type="button"
@@ -215,6 +225,95 @@ export function ModalConfirm({
             'inline-flex h-11 min-w-[44px] items-center justify-center rounded-full px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
             danger ? 'bg-rose-600 hover:bg-rose-700' : 'bg-indigo-600 hover:bg-indigo-700',
           )}
+        >
+          {confirmLabel}
+        </button>
+      </ModalFooter>
+    </ModalShell>
+  );
+}
+
+/** In-app text prompt (replaces window.prompt). */
+export function ModalPrompt({
+  open,
+  onClose,
+  onSubmit,
+  title,
+  message,
+  label,
+  initialValue = '',
+  placeholder,
+  confirmLabel = 'Save',
+  required = true,
+}: {
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (value: string) => void;
+  title: string;
+  message?: string;
+  label?: string;
+  initialValue?: string;
+  placeholder?: string;
+  confirmLabel?: string;
+  required?: boolean;
+}) {
+  const titleId = useId();
+  const inputId = useId();
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [value, setValue] = useState(initialValue);
+
+  useEffect(() => {
+    if (open) setValue(initialValue);
+  }, [open, initialValue]);
+
+  return (
+    <ModalShell open={open} onClose={onClose} labelledBy={titleId} initialFocusRef={inputRef}>
+      <ModalHeader title={title} onClose={onClose} titleId={titleId} />
+      <ModalBody>
+        {message ? (
+          <p className="mb-3 text-sm leading-relaxed text-slate-600">{message}</p>
+        ) : null}
+        {label ? (
+          <label htmlFor={inputId} className="mb-1.5 block text-xs font-bold uppercase tracking-wide text-slate-500">
+            {label}
+          </label>
+        ) : null}
+        <input
+          ref={inputRef}
+          id={inputId}
+          type="text"
+          value={value}
+          placeholder={placeholder}
+          onChange={(e) => setValue(e.target.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              const trimmed = value.trim();
+              if (required && !trimmed) return;
+              onSubmit(trimmed);
+              onClose();
+            }
+          }}
+          className="h-11 w-full rounded-2xl border border-indigo-100 px-3 text-sm font-semibold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+        />
+      </ModalBody>
+      <ModalFooter>
+        <button
+          type="button"
+          onClick={onClose}
+          className="inline-flex h-11 min-w-[44px] items-center justify-center rounded-full border-2 border-indigo-200 px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+        >
+          Cancel
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const trimmed = value.trim();
+            if (required && !trimmed) return;
+            onSubmit(trimmed);
+            onClose();
+          }}
+          className="inline-flex h-11 min-w-[44px] items-center justify-center rounded-full bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
           {confirmLabel}
         </button>
