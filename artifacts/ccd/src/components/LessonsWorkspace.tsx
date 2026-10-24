@@ -1,15 +1,10 @@
 import React, { useMemo, useState } from 'react';
 import {
-  BookOpen,
-  Calendar,
   Clapperboard,
-  Clock,
   Eye,
   FileText,
   Pencil,
   Plus,
-  Search,
-  Tag,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AssignToHalfTermModal } from './AssignToHalfTermModal';
@@ -26,6 +21,7 @@ import { ensureLessonSections, legacyLessonToSections } from '../utils/planner/l
 import type { PlanTemplate } from '../types/lessonSections';
 import { LibraryMenu } from './ccdPlanner/LibraryMenu';
 import { MyUnitsMenu } from './ccdPlanner/MyUnitsMenu';
+import { YourLessonsMenu } from './ccdPlanner/YourLessonsMenu';
 import { ActivityStepsModal } from './ccdPlanner/ActivityStepsModal';
 import { LessonPlanPanel } from './ccdPlanner/LessonPlanModal';
 import { PlannerLessonCanvas } from './ccdPlanner/PlannerLessonCanvas';
@@ -36,8 +32,6 @@ import { loadPlannerTerms } from '../utils/planner/plannerCurriculumStore';
 import { syncSettingsUrl } from './settings/routes';
 
 const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)";
-const DISPLAY_FONT =
-  "var(--ss-font-display, 'Bricolage Grotesque', ui-sans-serif, system-ui, sans-serif)";
 
 interface LessonsWorkspaceProps {
   onAssignToUnit?: (lessonNumber: string, halfTermId: string) => void;
@@ -71,6 +65,7 @@ export function LessonsWorkspace({
   const [keyStage, setKeyStage] = useState<LibraryKeyStageId>(derivedKs);
   const [libraryOpen, setLibraryOpen] = useState(false);
   const [unitsOpen, setUnitsOpen] = useState(false);
+  const [lessonsOpen, setLessonsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHalfTerm, setSelectedHalfTerm] = useState('all');
   const [editingLessonNumber, setEditingLessonNumber] = useState<string | undefined>();
@@ -403,23 +398,52 @@ export function LessonsWorkspace({
           <p className="ccd-studio-eyebrow mb-1">
             CONNECT &amp; CREATE / <span>LESSONS</span>
           </p>
-          <p className="text-sm text-[#77738F]">
+          <p className="text-[13px] text-[#5F5B7A]">
             Lesson planner for{' '}
             <strong className="text-[#1F1B4D]">{classLabel}</strong>
             {' · '}
-            full-width canvas — open Library or My units from the toolbar.
+            open Your lessons, Library or My units from the toolbar.
           </p>
         </div>
 
         {/* Toolbar — compact chrome; year-group/KS select always pinned far right */}
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white/90 p-1.5 shadow-sm">
+          <YourLessonsMenu
+            open={lessonsOpen}
+            onOpenChange={(v) => {
+              setLessonsOpen(v);
+              if (v) {
+                setLibraryOpen(false);
+                setUnitsOpen(false);
+              }
+            }}
+            loading={loading}
+            filteredLessons={filteredLessons}
+            allLessonsData={allLessonsData || {}}
+            plannerTerms={plannerTerms}
+            getLessonHalfTerm={getLessonHalfTerm}
+            editingLessonNumber={editingLessonNumber}
+            searchQuery={searchQuery}
+            onSearchQueryChange={setSearchQuery}
+            selectedHalfTerm={selectedHalfTerm}
+            onSelectedHalfTermChange={setSelectedHalfTerm}
+            isViewOnly={isViewOnly}
+            classLabel={classLabel}
+            onCreate={createLesson}
+            onOpenCanvas={openLessonInBuilder}
+            onOpenPlan={(num) => openLessonForm(num)}
+            onAssign={onAssignToUnit ? (num) => setAssignLessonNumber(num) : undefined}
+          />
           <LibraryMenu
             keyStage={keyStage}
             onKeyStageChange={setKeyStage}
             open={libraryOpen}
             onOpenChange={(v) => {
               setLibraryOpen(v);
-              if (v) setUnitsOpen(false);
+              if (v) {
+                setUnitsOpen(false);
+                setLessonsOpen(false);
+              }
             }}
             onOpenActivity={(a) => {
               setActivityForSteps(a);
@@ -433,7 +457,10 @@ export function LessonsWorkspace({
             open={unitsOpen}
             onOpenChange={(v) => {
               setUnitsOpen(v);
-              if (v) setLibraryOpen(false);
+              if (v) {
+                setLibraryOpen(false);
+                setLessonsOpen(false);
+              }
             }}
             activeLessonNumber={editingLessonNumber}
             onSelectLesson={(num) => {
@@ -468,12 +495,13 @@ export function LessonsWorkspace({
             type="button"
             data-planner-extension="lesson-viewer"
             title="Open Lesson Viewer (Slides)"
+            aria-label="Lesson Viewer"
             onClick={goLessonViewer}
-            className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
+            className="inline-flex h-8 min-w-[44px] items-center justify-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
           >
             <Clapperboard className="h-3.5 w-3.5 text-indigo-600 pointer-coarse:h-4 pointer-coarse:w-4" />
             <span className="hidden sm:inline">Lesson Viewer</span>
-            <span className="sm:hidden">Slides</span>
+            <span className="sr-only sm:hidden">Lesson Viewer</span>
           </button>
           <button
             type="button"
@@ -517,173 +545,9 @@ export function LessonsWorkspace({
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-1 gap-3 xl:grid-cols-[minmax(14rem,16rem)_minmax(0,1fr)]">
-        {/* Compact saved-lessons rail (not a third planner column) */}
-        <aside className="flex max-h-[min(40vh,22rem)] flex-col overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_1px_3px_rgba(31,27,77,0.05)] xl:max-h-[calc(100vh-11rem)] xl:sticky xl:top-2">
-          <div className="shrink-0 border-b border-[#E2E0EF] bg-gradient-to-r from-[#2DD4BF] to-[#4338E8] px-3 py-3 text-white">
-            <div className="flex items-center justify-between gap-2">
-              <h2
-                className="truncate text-[15px] font-extrabold tracking-tight"
-                style={{ fontFamily: DISPLAY_FONT }}
-              >
-                Your lessons
-              </h2>
-              <button
-                type="button"
-                onClick={createLesson}
-                disabled={isViewOnly}
-                className="inline-flex h-11 shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2.5 text-[12px] font-extrabold text-white hover:bg-white/30 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Create
-              </button>
-            </div>
-            <div className="mt-2.5 flex flex-col gap-2">
-              <div className="relative">
-                <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/70" />
-                <input
-                  type="search"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search lessons…"
-                  className="h-11 w-full rounded-lg border border-white/25 bg-white/15 py-1 pl-8 pr-2 text-[12px] font-medium text-white placeholder:text-white/65 focus:border-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
-                />
-              </div>
-              <select
-                value={selectedHalfTerm}
-                onChange={(e) => setSelectedHalfTerm(e.target.value)}
-                className="h-11 w-full rounded-lg border border-white/25 bg-white/15 px-2 text-[12px] font-semibold text-white focus:border-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
-                aria-label="Filter by half-term"
-              >
-                <option value="all" className="text-[#1F1B4D]">
-                  All half-terms
-                </option>
-                {plannerTerms.map((t) => (
-                  <option key={t.id} value={t.id} className="text-[#1F1B4D]">
-                    {t.name}
-                  </option>
-                ))}
-              </select>
-            </div>
-          </div>
-
-          <div className="min-h-0 flex-1 overflow-y-auto p-2">
-            {loading ? (
-              <div className="flex flex-col items-center justify-center gap-2 py-12 text-center">
-                <div className="h-7 w-7 animate-spin rounded-full border-2 border-[#4338E8] border-t-transparent" />
-                <p className="text-[12px] font-medium text-[#77738F]">Loading lessons…</p>
-              </div>
-            ) : filteredLessons.length === 0 ? (
-              <div className="flex flex-col items-center px-3 py-10 text-center">
-                <BookOpen className="mb-3 h-10 w-10 text-[#D8D5E8]" aria-hidden />
-                <p className="text-[13px] font-extrabold text-[#1F1B4D]">
-                  {searchQuery || selectedHalfTerm !== 'all'
-                    ? 'No lessons match'
-                    : `No lessons for ${classLabel}`}
-                </p>
-                <button
-                  type="button"
-                  onClick={createLesson}
-                  disabled={isViewOnly}
-                  className="mt-4 inline-flex h-11 items-center gap-1.5 rounded-xl bg-[#4338E8] px-3.5 text-[12px] font-extrabold text-white hover:bg-[#3529d1] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                >
-                  <Plus className="h-3.5 w-3.5" />
-                  Create lesson
-                </button>
-              </div>
-            ) : (
-              <ul className="space-y-1.5">
-                {filteredLessons.map((num, index) => {
-                  const data = allLessonsData[num];
-                  if (!data) return null;
-                  const activityCount = Object.values(data.grouped || {}).reduce(
-                    (sum: number, acts: unknown) =>
-                      sum + (Array.isArray(acts) ? acts.length : 0),
-                    0,
-                  );
-                  const termId = getLessonHalfTerm(num);
-                  const term = plannerTerms.find((t) => t.id === termId);
-                  const active = editingLessonNumber === num;
-                  return (
-                    <li key={num}>
-                      <div
-                        className={`rounded-xl border px-2.5 py-2 transition ${
-                          active
-                            ? 'border-[#4338E8] bg-[#F4F3FA] shadow-sm'
-                            : 'border-[#E2E0EF]/90 bg-white hover:border-[#bcb7f4]'
-                        }`}
-                      >
-                        <button
-                          type="button"
-                          onClick={() => openLessonInBuilder(num)}
-                          className="w-full text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                        >
-                          <div className="flex items-start gap-2">
-                            <span className="mt-0.5 inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-md bg-[#E9E6FF] px-1 text-[10px] font-extrabold text-[#4338E8]">
-                              {index + 1}
-                            </span>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
-                                {data.title || `Lesson ${num}`}
-                              </p>
-                              <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-[#77738F]">
-                                <span className="inline-flex items-center gap-0.5">
-                                  <Clock className="h-3 w-3" />
-                                  {data.totalTime || 0}m
-                                </span>
-                                <span className="inline-flex items-center gap-0.5">
-                                  <Tag className="h-3 w-3" />
-                                  {activityCount}
-                                </span>
-                                {term ? (
-                                  <span className="inline-flex items-center gap-0.5 text-[#4338E8]">
-                                    <Calendar className="h-3 w-3" />
-                                    {term.name}
-                                  </span>
-                                ) : null}
-                              </p>
-                            </div>
-                          </div>
-                        </button>
-                        <div className="mt-1.5 flex gap-1">
-                          <button
-                            type="button"
-                            onClick={() => openLessonForm(num)}
-                            disabled={isViewOnly}
-                            className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                          >
-                            <Pencil className="h-3 w-3" />
-                            Edit plan
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => openLessonInBuilder(num)}
-                            className="inline-flex h-11 flex-1 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                          >
-                            Canvas
-                          </button>
-                        </div>
-                        {onAssignToUnit && !isViewOnly ? (
-                          <button
-                            type="button"
-                            onClick={() => setAssignLessonNumber(num)}
-                            className="mt-1 inline-flex h-11 w-full items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA] hover:text-[#4338E8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                          >
-                            <Calendar className="h-3 w-3" />
-                            {term ? 'Reassign half-term' : 'Assign to half-term'}
-                          </button>
-                        ) : null}
-                      </div>
-                    </li>
-                  );
-                })}
-              </ul>
-            )}
-          </div>
-        </aside>
-
-        {/* Full-width lesson area: canvas OR inline lesson plan (not ModalShell) */}
-        <div className="planner-shell-surface flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
+      {/* Lesson area — centred max width; Your lessons is a toolbar menu */}
+      <div className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col">
+        <div className="planner-shell-surface flex min-h-[28rem] min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
           {lessonPlanOpen ? (
             <LessonPlanPanel
               open={lessonPlanOpen}

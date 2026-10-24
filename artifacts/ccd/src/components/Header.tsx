@@ -453,10 +453,10 @@ export function Header() {
 
               {/* Settings Button — full-page Settings */}
               <button
-                onClick={() => navigateToSettings()}
-                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="Settings"
-                aria-label="Open settings"
+                onClick={() => navigateToSettings('curriculum')}
+                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
+                title="Settings — Curriculum"
+                aria-label="Settings — Curriculum"
                 data-walkthrough="settings"
               >
                 <Settings className="h-4 w-4 lg:h-5 lg:w-5" />
