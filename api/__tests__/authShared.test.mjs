@@ -3,7 +3,8 @@
  * Run: node --test api/__tests__/authShared.test.mjs
  */
 
-import { describe, it } from 'node:test';
+import { createHmac } from 'node:crypto';
+import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   canManageUsers,
@@ -11,7 +12,40 @@ import {
   canViewOrgAnalytics,
   assertRateLimit,
   isFullUserAdmin,
+  requireAuth,
+  getBearerToken,
 } from '../_authShared.js';
+
+const TEST_SECRET = 'ccd-test-jwt-secret-do-not-use-in-prod';
+
+function b64urlJson(obj) {
+  return Buffer.from(JSON.stringify(obj)).toString('base64url');
+}
+
+function signJwt(payload, secret = TEST_SECRET, header = { alg: 'HS256', typ: 'JWT' }) {
+  const h = b64urlJson(header);
+  const p = b64urlJson(payload);
+  const sig = createHmac('sha256', secret).update(`${h}.${p}`).digest('base64url');
+  return `${h}.${p}.${sig}`;
+}
+
+function authRequest(token, url = 'https://ccd.example/api/test') {
+  const headers = token ? { Authorization: `Bearer ${token}` } : {};
+  return new Request(url, { headers });
+}
+
+function validClaims(extra = {}) {
+  const now = Math.floor(Date.now() / 1000);
+  return {
+    sub: '11111111-1111-4111-8111-111111111111',
+    aud: 'authenticated',
+    role: 'authenticated',
+    email: 'teacher@example.com',
+    exp: now + 3600,
+    iat: now,
+    ...extra,
+  };
+}
 
 describe('permissions', () => {
   it('admin can manage users', () => {
@@ -67,5 +101,81 @@ describe('assertRateLimit', () => {
       assert.equal(assertRateLimit(key, { limit: 3, windowMs: 60_000 }).ok, true);
     }
     assert.equal(assertRateLimit(key, { limit: 3, windowMs: 60_000 }).ok, false);
+  });
+});
+
+describe('getBearerToken', () => {
+  it('reads Authorization header and ignores query by default', () => {
+    const req = new Request(
+      'https://ccd.example/api/x?access_token=from-query',
+      { headers: { Authorization: 'Bearer from-header' } },
+    );
+    assert.equal(getBearerToken(req), 'from-header');
+    assert.equal(getBearerToken(req, { allowQuery: false }), 'from-header');
+  });
+
+  it('allows query token only when allowQuery is true', () => {
+    const req = new Request('https://ccd.example/api/x?access_token=from-query');
+    assert.equal(getBearerToken(req), '');
+    assert.equal(getBearerToken(req, { allowQuery: true }), 'from-query');
+  });
+});
+
+describe('requireAuth JWT claims', () => {
+  let prevSecret;
+  before(() => {
+    prevSecret = process.env.SUPABASE_JWT_SECRET;
+    process.env.SUPABASE_JWT_SECRET = TEST_SECRET;
+  });
+  after(() => {
+    if (prevSecret === undefined) delete process.env.SUPABASE_JWT_SECRET;
+    else process.env.SUPABASE_JWT_SECRET = prevSecret;
+  });
+
+  it('accepts a valid HS256 authenticated token', async () => {
+    const token = signJwt(validClaims());
+    const result = await requireAuth(authRequest(token));
+    assert.equal(result.ok, true);
+    assert.equal(result.userId, '11111111-1111-4111-8111-111111111111');
+  });
+
+  it('rejects wrong alg', async () => {
+    const token = signJwt(validClaims(), TEST_SECRET, { alg: 'none', typ: 'JWT' });
+    const result = await requireAuth(authRequest(token));
+    assert.equal(result.ok, false);
+    assert.equal(result.response.status, 401);
+  });
+
+  it('rejects missing aud/role', async () => {
+    const token = signJwt(validClaims({ aud: 'anon', role: 'anon' }));
+    const result = await requireAuth(authRequest(token));
+    assert.equal(result.ok, false);
+    assert.equal(result.response.status, 401);
+  });
+
+  it('rejects expired tokens beyond skew', async () => {
+    const token = signJwt(validClaims({ exp: Math.floor(Date.now() / 1000) - 120 }));
+    const result = await requireAuth(authRequest(token));
+    assert.equal(result.ok, false);
+    assert.equal(result.response.status, 401);
+  });
+
+  it('accepts tokens within 30s expiry skew', async () => {
+    const token = signJwt(validClaims({ exp: Math.floor(Date.now() / 1000) - 10 }));
+    const result = await requireAuth(authRequest(token));
+    assert.equal(result.ok, true);
+  });
+
+  it('rejects bad signatures without throwing', async () => {
+    const token = signJwt(validClaims(), 'wrong-secret');
+    const result = await requireAuth(authRequest(token));
+    assert.equal(result.ok, false);
+    assert.equal(result.response.status, 401);
+  });
+
+  it('rejects malformed tokens without throwing', async () => {
+    const result = await requireAuth(authRequest('not.a.jwt!!!'));
+    assert.equal(result.ok, false);
+    assert.equal(result.response.status, 401);
   });
 });

@@ -143,34 +143,50 @@ export function assertRateLimit(key, { limit = 30, windowMs = 60_000 } = {}) {
   return { ok: true };
 }
 
-function decodeJwtPayload(token) {
-  const parts = token.split('.');
-  if (parts.length !== 3) return null;
+const JWT_CLOCK_SKEW_MS = 30_000;
+
+function decodeJwtPart(part) {
   try {
-    const json = atob(parts[1].replace(/-/g, '+').replace(/_/g, '/'));
+    const json = atob(part.replace(/-/g, '+').replace(/_/g, '/'));
     return JSON.parse(json);
   } catch {
     return null;
   }
 }
 
-async function verifyHs256(token, secret) {
+function decodeJwtHeader(token) {
   const parts = token.split('.');
-  if (parts.length !== 3) return false;
-  const enc = new TextEncoder();
-  const key = await crypto.subtle.importKey(
-    'raw',
-    enc.encode(secret),
-    { name: 'HMAC', hash: 'SHA-256' },
-    false,
-    ['verify'],
-  );
-  const data = enc.encode(`${parts[0]}.${parts[1]}`);
-  const sig = Uint8Array.from(
-    atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
-    (c) => c.charCodeAt(0),
-  );
-  return crypto.subtle.verify('HMAC', key, sig, data);
+  if (parts.length !== 3) return null;
+  return decodeJwtPart(parts[0]);
+}
+
+function decodeJwtPayload(token) {
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  return decodeJwtPart(parts[1]);
+}
+
+async function verifyHs256(token, secret) {
+  try {
+    const parts = token.split('.');
+    if (parts.length !== 3) return false;
+    const enc = new TextEncoder();
+    const key = await crypto.subtle.importKey(
+      'raw',
+      enc.encode(secret),
+      { name: 'HMAC', hash: 'SHA-256' },
+      false,
+      ['verify'],
+    );
+    const data = enc.encode(`${parts[0]}.${parts[1]}`);
+    const sig = Uint8Array.from(
+      atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
+      (c) => c.charCodeAt(0),
+    );
+    return await crypto.subtle.verify('HMAC', key, sig, data);
+  } catch {
+    return false;
+  }
 }
 
 /**
@@ -213,17 +229,35 @@ export async function requireAuth(request, options = {}) {
 
   const jwtSecret = process.env.SUPABASE_JWT_SECRET;
   if (jwtSecret) {
-    const valid = await verifyHs256(token, jwtSecret);
+    const header = decodeJwtHeader(token);
+    if (!header || header.alg !== 'HS256') {
+      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
+    }
+
+    let valid = false;
+    try {
+      valid = await verifyHs256(token, jwtSecret);
+    } catch {
+      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
+    }
     if (!valid) {
       return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
     }
+
     const claims = decodeJwtPayload(token);
     const userId = claims?.sub;
-    if (!userId) {
+    if (!userId || typeof userId !== 'string') {
       return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
     }
-    if (claims.exp && claims.exp * 1000 < Date.now()) {
+    if (typeof claims.exp !== 'number') {
+      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
+    }
+    // Allow 30s clock skew on expiry.
+    if (claims.exp * 1000 < Date.now() - JWT_CLOCK_SKEW_MS) {
       return { ok: false, response: jsonResponse({ error: 'Unauthorized. Session expired.' }, 401) };
+    }
+    if (claims.aud !== 'authenticated' || claims.role !== 'authenticated') {
+      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
     }
     return {
       ok: true,
