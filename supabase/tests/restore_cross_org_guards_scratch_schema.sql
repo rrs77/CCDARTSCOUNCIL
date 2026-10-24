@@ -224,6 +224,8 @@ ALTER TABLE public.curriculum_backups ENABLE ROW LEVEL SECURITY;
 
 GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
+-- Policy subqueries (own-org / curriculum RLS) need to read the caller's profile row.
+GRANT SELECT ON public.profiles TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.branding_settings TO authenticated;
 GRANT SELECT ON public.organisations TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.activities TO authenticated;
