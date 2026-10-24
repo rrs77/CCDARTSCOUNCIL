@@ -48,6 +48,11 @@ describe('safeInAppReturnPath (share return)', () => {
     assert.equal(safeInAppReturnPath('https://evil.example/x'), null);
     assert.equal(safeInAppReturnPath('//evil.example/x'), null);
   });
+
+  it('rejects control characters', () => {
+    assert.equal(safeInAppReturnPath('/shared/\n' + OWNER), null);
+    assert.equal(safeInAppReturnPath(SHARE + '\u0000'), null);
+  });
 });
 
 describe('buildSignInRedirectLocation', () => {
@@ -133,7 +138,7 @@ describe('client file share helpers', () => {
       toFileShareAppPath,
       storagePathFromShareAppPath,
       fileProxyApiPathFromStorage,
-    } = await import('../../artifacts/ccd/src/utils/fileShareAccess.ts');
+    } = await import('../../artifacts/ccd/src/utils/fileShareAccessHelpers.mjs');
 
     assert.equal(isFileShareAppPath(SHARE), true);
     assert.equal(isFileShareApiPath(API), true);

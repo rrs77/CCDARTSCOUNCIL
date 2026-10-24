@@ -96,13 +96,14 @@ export function optionsResponse(request = null) {
 
 /**
  * Same-origin relative return path only (share / download post-login).
- * Rejects absolute, protocol-relative, and scheme URLs.
+ * Rejects absolute, protocol-relative, scheme URLs, and control characters.
  */
 export function safeInAppReturnPath(raw) {
   if (typeof raw !== 'string') return null;
   const trimmed = raw.trim();
   if (!trimmed.startsWith('/')) return null;
   if (trimmed.startsWith('//')) return null;
+  if (/[\u0000-\u001f\u007f]/.test(trimmed)) return null;
   if (/^[a-zA-Z][a-zA-Z+\-.]*:/.test(trimmed)) return null;
   if (trimmed.includes('\\')) return null;
   let decoded = trimmed;
@@ -111,6 +112,7 @@ export function safeInAppReturnPath(raw) {
   } catch {
     /* keep trimmed */
   }
+  if (/[\u0000-\u001f\u007f]/.test(decoded)) return null;
   if (!decoded.startsWith('/') || decoded.startsWith('//')) return null;
   if (/^[a-zA-Z][a-zA-Z+\-.]*:/.test(decoded)) return null;
   return trimmed.split('#')[0] || null;
@@ -465,7 +467,7 @@ export function profileRoleRank(role) {
   return Number.isFinite(rank) ? rank : 0;
 }
 
-/** Capability / forum flags managers must not change on their own row. */
+/** Capability / forum / preset fields managers must not change on their own row. */
 export const SELF_LOCKED_PROFILE_FLAGS = Object.freeze([
   'can_edit_activities',
   'can_edit_lessons',
@@ -476,7 +478,18 @@ export const SELF_LOCKED_PROFILE_FLAGS = Object.freeze([
   'forum_can_moderate',
   'forum_can_manage_categories',
   'forum_can_manage_settings',
+  'allowed_year_groups',
+  'admin_preset_categories',
+  'admin_preset_activity_pack_ids',
 ]);
+
+/** Distinct-from check for scalars and JSON-ish arrays (self-edit guards). */
+function profileFieldChanged(nextVal, oldVal) {
+  if (Array.isArray(nextVal) || Array.isArray(oldVal)) {
+    return JSON.stringify(nextVal ?? null) !== JSON.stringify(oldVal ?? null);
+  }
+  return nextVal !== oldVal;
+}
 
 /**
  * V5: whether a manager may apply targetNew over targetOld.
@@ -524,12 +537,12 @@ export function canManagerEditProfile({ actor, targetOld, targetNew }) {
     }
   }
 
-  // Managers cannot escalate their own capability / forum flags.
+  // Managers cannot escalate their own capability / forum / preset fields.
   if (isSelf && targetNew) {
     for (const flag of SELF_LOCKED_PROFILE_FLAGS) {
       if (
         Object.prototype.hasOwnProperty.call(targetNew, flag) &&
-        targetNew[flag] !== targetOld[flag]
+        profileFieldChanged(targetNew[flag], targetOld[flag])
       ) {
         return false;
       }
