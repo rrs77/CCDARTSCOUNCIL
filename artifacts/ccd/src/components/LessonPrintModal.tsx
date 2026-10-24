@@ -1477,12 +1477,21 @@ export function LessonPrintModal({
       const arrayBuffer = await pdfBlob.arrayBuffer();
       const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
 
-      // Upload via Vercel API to bypass RLS
+      // Upload via authenticated DreamHost route (server builds path; no overwrite)
+      const uploadHeaders: Record<string, string> = {
+        'Content-Type': 'application/json',
+      };
+      try {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session?.access_token) {
+          uploadHeaders.Authorization = `Bearer ${sessionData.session.access_token}`;
+        }
+      } catch {
+        /* server returns 401 if missing */
+      }
       const uploadResponse = await fetch('/api/upload-pdf', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: uploadHeaders,
         body: JSON.stringify({
           fileName,
           fileData: base64
