@@ -642,6 +642,47 @@ REVOKE ALL ON FUNCTION private._restore_assert_aco_refs_in_org(jsonb, text) FROM
 REVOKE ALL ON FUNCTION private._restore_assert_aco_refs_in_org(jsonb, text) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION private._restore_assert_aco_refs_in_org(jsonb, text) TO service_role;
 
+-- R2: every lesson user_id must be NULL or a profile in the target org
+CREATE OR REPLACE FUNCTION private._restore_assert_lesson_user_ids_in_org(
+  p_payload jsonb,
+  p_org text
+) RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  IF p_payload IS NULL OR NOT (p_payload ? 'lessons')
+     OR jsonb_typeof(p_payload->'lessons') <> 'array' THEN
+    RETURN;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1
+    FROM jsonb_array_elements(p_payload->'lessons') r
+    WHERE NULLIF(r->>'user_id', '') IS NOT NULL
+      AND (
+        NULLIF(r->>'user_id', '') !~* '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+        OR NOT EXISTS (
+          SELECT 1
+          FROM public.profiles p
+          WHERE p.id = (NULLIF(r->>'user_id', ''))::uuid
+            AND p.organisation_id IS NOT DISTINCT FROM p_org
+        )
+      )
+  ) THEN
+    RAISE EXCEPTION 'lesson user_id not in organisation'
+      USING ERRCODE = '42501';
+  END IF;
+END;
+$$;
+
+DROP FUNCTION IF EXISTS public._restore_assert_lesson_user_ids_in_org(jsonb, text);
+
+REVOKE ALL ON FUNCTION private._restore_assert_lesson_user_ids_in_org(jsonb, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._restore_assert_lesson_user_ids_in_org(jsonb, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._restore_assert_lesson_user_ids_in_org(jsonb, text) TO service_role;
+
 
 CREATE OR REPLACE FUNCTION public.restore_curriculum_backup(
   p_payload jsonb,
@@ -704,6 +745,9 @@ BEGIN
   IF to_regclass('public.activity_custom_objectives') IS NOT NULL THEN
     PERFORM private._restore_assert_aco_refs_in_org(p_payload, v_org);
   END IF;
+
+  -- (d) Lesson owners must belong to the target org (NULL user_id allowed)
+  PERFORM private._restore_assert_lesson_user_ids_in_org(p_payload, v_org);
 
 
   -- year_groups

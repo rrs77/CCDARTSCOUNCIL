@@ -144,7 +144,8 @@ CREATE TABLE IF NOT EXISTS public.half_terms (
   lessons JSONB DEFAULT '[]'::jsonb,
   is_complete BOOLEAN DEFAULT false,
   term_id TEXT,
-  organisation_id TEXT
+  organisation_id TEXT,
+  user_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS public.lesson_plans (
@@ -162,7 +163,8 @@ CREATE TABLE IF NOT EXISTS public.lesson_plans (
   title TEXT,
   term TEXT,
   time TEXT,
-  organisation_id TEXT
+  organisation_id TEXT,
+  user_id UUID
 );
 
 CREATE TABLE IF NOT EXISTS public.lesson_stacks (
@@ -231,4 +233,15 @@ GRANT SELECT ON public.organisations TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.activities TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.lessons TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.eyfs_statements TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.half_terms TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.lesson_plans TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.year_groups TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.category_groups TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.custom_categories TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.lesson_stacks TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.activity_stacks TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.custom_objective_year_groups TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.custom_objective_areas TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.custom_objectives TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.activity_custom_objectives TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO postgres;

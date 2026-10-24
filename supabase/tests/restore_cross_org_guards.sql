@@ -181,6 +181,93 @@ WHERE organisation_id = 'org_a'
   AND sheet_name = 'YearSheet'
   AND academic_year = '2025-2026';
 
+-- R3: restore 2 users × 2 years on the same sheet → 4 rows
+DELETE FROM public.lessons
+WHERE sheet_name = 'GridSheet' AND organisation_id = 'org_a';
+
+DO $$
+DECLARE res jsonb; n int;
+BEGIN
+  res := public.restore_curriculum_backup(
+    jsonb_build_object(
+      'lessons', jsonb_build_array(
+        jsonb_build_object(
+          'sheet_name', 'GridSheet',
+          'academic_year', '2025-2026',
+          'user_id', '00000000-0000-4000-8000-0000000000a1',
+          'data', '{"u":"a1","y":"2526"}'::jsonb,
+          'lesson_numbers', '[]'::jsonb,
+          'teaching_units', '[]'::jsonb
+        ),
+        jsonb_build_object(
+          'sheet_name', 'GridSheet',
+          'academic_year', '2026-2027',
+          'user_id', '00000000-0000-4000-8000-0000000000a1',
+          'data', '{"u":"a1","y":"2627"}'::jsonb,
+          'lesson_numbers', '[]'::jsonb,
+          'teaching_units', '[]'::jsonb
+        ),
+        jsonb_build_object(
+          'sheet_name', 'GridSheet',
+          'academic_year', '2025-2026',
+          'user_id', '00000000-0000-4000-8000-0000000000c1',
+          'data', '{"u":"c1","y":"2526"}'::jsonb,
+          'lesson_numbers', '[]'::jsonb,
+          'teaching_units', '[]'::jsonb
+        ),
+        jsonb_build_object(
+          'sheet_name', 'GridSheet',
+          'academic_year', '2026-2027',
+          'user_id', '00000000-0000-4000-8000-0000000000c1',
+          'data', '{"u":"c1","y":"2627"}'::jsonb,
+          'lesson_numbers', '[]'::jsonb,
+          'teaching_units', '[]'::jsonb
+        )
+      )
+    ),
+    'org_a',
+    false
+  );
+  SELECT COUNT(*) INTO n
+  FROM public.lessons
+  WHERE organisation_id = 'org_a' AND sheet_name = 'GridSheet';
+  INSERT INTO results VALUES (
+    'restore 2 users x 2 years same sheet writes 4 rows',
+    COALESCE((res->>'ok')::boolean, false) AND n = 4
+  );
+END $$;
+
+-- R2: lesson user_id from another org raises 42501
+DO $$
+DECLARE err text; state text;
+BEGIN
+  BEGIN
+    PERFORM public.restore_curriculum_backup(
+      jsonb_build_object(
+        'lessons', jsonb_build_array(
+          jsonb_build_object(
+            'sheet_name', 'ForeignOwner',
+            'academic_year', '2025-2026',
+            'user_id', '00000000-0000-4000-8000-0000000000b1',
+            'data', '{}'::jsonb,
+            'lesson_numbers', '[]'::jsonb,
+            'teaching_units', '[]'::jsonb
+          )
+        )
+      ),
+      'org_a',
+      true
+    );
+    INSERT INTO results VALUES ('foreign lesson user_id raises 42501', false);
+  EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS err = MESSAGE_TEXT, state = RETURNED_SQLSTATE;
+    INSERT INTO results VALUES (
+      'foreign lesson user_id raises 42501',
+      state = '42501' OR err ILIKE '%user_id%'
+    );
+  END;
+END $$;
+
 DELETE FROM public.activities
 WHERE activity = 'Clap' AND category = 'Warm-up'
   AND lesson_number IN ('1', '')

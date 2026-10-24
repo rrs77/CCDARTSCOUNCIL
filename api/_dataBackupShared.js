@@ -229,15 +229,22 @@ function normalizeActivity(row) {
 }
 
 function normalizeLesson(row) {
-  if (row.sheet_name) {
-    return {
-      sheet_name: row.sheet_name,
-      data: row.data ?? {},
-      lesson_numbers: row.lesson_numbers ?? [],
-      teaching_units: row.teaching_units ?? [],
-    };
+  if (!row.sheet_name) return null;
+  const out = {
+    sheet_name: row.sheet_name,
+    academic_year: row.academic_year ?? null,
+    data: row.data ?? {},
+    lesson_numbers: row.lesson_numbers ?? [],
+    teaching_units: row.teaching_units ?? [],
+  };
+  // Keep lessons.user_id when it is a valid UUID (needed for 4-col unique / ownership).
+  if (typeof row.user_id === 'string' && UUID_RE.test(row.user_id)) {
+    out.user_id = row.user_id;
   }
-  return null;
+  if (row.organisation_id != null) {
+    out.organisation_id = row.organisation_id;
+  }
+  return out;
 }
 
 /**
@@ -306,13 +313,27 @@ export function sanitizeRestorePayload(raw, { targetOrg = null } = {}) {
       if (!row) continue;
       if (key === 'activities') row = normalizeActivity(row);
       if (key === 'lessons') {
-        row = normalizeLesson(row) || {
+        // stripRow removes user_id; re-apply validated UUID + keep academic_year.
+        const rawUserId = parsed.data.user_id;
+        const rawYear = parsed.data.academic_year;
+        row = normalizeLesson({
+          ...row,
+          academic_year: rawYear ?? row.academic_year ?? null,
+          user_id:
+            typeof rawUserId === 'string' && UUID_RE.test(rawUserId)
+              ? rawUserId
+              : undefined,
+        }) || {
           sheet_name: row.sheet_name,
+          academic_year: rawYear ?? null,
           data: row.data ?? {},
           lesson_numbers: row.lesson_numbers ?? [],
           teaching_units: row.teaching_units ?? [],
         };
         row.organisation_id = org;
+        if (typeof rawUserId === 'string' && UUID_RE.test(rawUserId)) {
+          row.user_id = rawUserId;
+        }
       }
       if (key === 'lessonStacks' || key === 'activityStacks') {
         if (!row.data || typeof row.data !== 'object' || Array.isArray(row.data)) {
