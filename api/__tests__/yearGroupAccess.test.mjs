@@ -149,6 +149,37 @@ describe('processYearGroupAccessRequest', () => {
     assert.equal(claimCalls, 0);
   });
 
+  it('returns generic 403 when the claim RPC refuses with 42501', async () => {
+    const result = await processYearGroupAccessRequest({
+      requester,
+      ...baseDeps({
+        claimAndRecord: async () => {
+          const e = new Error('claim_and_record_year_group_access failed');
+          e.code = '42501';
+          throw e;
+        },
+      }),
+    });
+    assert.equal(result.status, 403);
+    assert.doesNotMatch(JSON.stringify(result.body), /claim_and_record|member|42501/);
+  });
+
+  it('rethrows other claim RPC errors without exposing them in a body', async () => {
+    await assert.rejects(
+      processYearGroupAccessRequest({
+        requester,
+        ...baseDeps({
+          claimAndRecord: async () => {
+            const e = new Error('claim_and_record_year_group_access failed');
+            e.code = 'XX000';
+            throw e;
+          },
+        }),
+      }),
+      (e) => e.code === 'XX000',
+    );
+  });
+
   it('returns 429 when claimAndRecord returns null', async () => {
     const result = await processYearGroupAccessRequest({
       requester,

@@ -145,7 +145,13 @@ export async function POST(request) {
           p_requester_id: requesterId,
           p_organisation_id: orgId,
         });
-        if (error) throw new Error(error.message);
+        if (error) {
+          // Never echo the DB message to the client; keep only the SQLSTATE.
+          console.error('claim_and_record_year_group_access failed:', error.code, error.message);
+          const err = new Error('claim_and_record_year_group_access failed');
+          err.code = error.code;
+          throw err;
+        }
         const row = Array.isArray(data) ? data[0] : data;
         if (!row?.request_id) return null;
         return { requestId: row.request_id, claimedAt: row.claimed_at };

@@ -139,7 +139,19 @@ export async function processYearGroupAccessRequest({
       organisationId,
     });
   } catch (err) {
-    // Insert/claim rolled back together — surface as 500; slot must not stick.
+    // Insert/claim rolled back together; slot must not stick.
+    // 42501 = RPC refused (requester not an active member of the org) -> 403.
+    // Any other error surfaces as a generic 500; DB messages are never returned.
+    if (err && err.code === '42501') {
+      return {
+        ok: false,
+        status: 403,
+        body: { error: 'You are not allowed to request year-group access for this organisation.' },
+        notifiedAdminIds: [],
+        emailsAttempted: 0,
+        profileMutations: 0,
+      };
+    }
     throw err;
   }
 
