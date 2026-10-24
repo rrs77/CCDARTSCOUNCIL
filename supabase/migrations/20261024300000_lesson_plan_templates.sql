@@ -18,6 +18,23 @@ CREATE TABLE IF NOT EXISTS public.lesson_plan_templates (
   updated_at timestamptz NOT NULL DEFAULT now()
 );
 
+-- Colours in config reach CSS: only 6-digit hex is allowed (or absent).
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'lesson_plan_templates_config_colours_hex'
+      AND conrelid = 'public.lesson_plan_templates'::regclass
+  ) THEN
+    ALTER TABLE public.lesson_plan_templates
+      ADD CONSTRAINT lesson_plan_templates_config_colours_hex CHECK (
+        (NOT (config ? 'accent') OR (jsonb_typeof(config->'accent') = 'string' AND (config->>'accent') ~ '^#[0-9A-Fa-f]{6}$'))
+        AND (NOT (config ? 'tint') OR (jsonb_typeof(config->'tint') = 'string' AND (config->>'tint') ~ '^#[0-9A-Fa-f]{6}$'))
+      );
+  END IF;
+END
+$$;
+
 -- One shared default per key; one per key per org.
 CREATE UNIQUE INDEX IF NOT EXISTS lesson_plan_templates_default_key
   ON public.lesson_plan_templates (template_key) WHERE organisation_id IS NULL;
