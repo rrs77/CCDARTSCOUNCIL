@@ -30,16 +30,23 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   role TEXT NOT NULL DEFAULT 'teacher',
   status TEXT NOT NULL DEFAULT 'active',
   organisation_id TEXT REFERENCES public.organisations(id),
-  can_manage_users BOOLEAN NOT NULL DEFAULT false
+  can_manage_users BOOLEAN NOT NULL DEFAULT false,
+  anonymised_at TIMESTAMPTZ
 );
 
 CREATE OR REPLACE FUNCTION public.is_super_admin()
-RETURNS boolean LANGUAGE sql STABLE AS $$
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
   SELECT EXISTS (
     SELECT 1 FROM public.profiles p
     WHERE p.id = auth.uid() AND p.role IN ('super_admin', 'superuser')
   );
 $$;
+GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated, anon, service_role;
 
 CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
   SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid;
@@ -214,4 +221,7 @@ GRANT USAGE ON SCHEMA public TO anon, authenticated, service_role;
 GRANT ALL ON ALL TABLES IN SCHEMA public TO service_role;
 GRANT SELECT, INSERT, UPDATE, DELETE ON public.branding_settings TO authenticated;
 GRANT SELECT ON public.organisations TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.activities TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.lessons TO authenticated;
+GRANT SELECT, INSERT, UPDATE, DELETE ON public.eyfs_statements TO authenticated;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO postgres;

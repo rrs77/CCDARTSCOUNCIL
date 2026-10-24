@@ -105,8 +105,11 @@ WHERE id::text = 'aaaaaaaa-bbbb-4ccc-8ddd-0000000000b1';
 DELETE FROM public.lessons
 WHERE sheet_name = 'SharedSheet' AND organisation_id IN ('org_a', 'org_b');
 
-INSERT INTO public.lessons (sheet_name, data, lesson_numbers, teaching_units, organisation_id)
-VALUES ('SharedSheet', '{"owner":"b"}'::jsonb, '[]'::jsonb, '[]'::jsonb, 'org_b');
+INSERT INTO public.lessons (sheet_name, academic_year, user_id, data, lesson_numbers, teaching_units, organisation_id)
+VALUES (
+  'SharedSheet', '2025-2026', '00000000-0000-4000-8000-0000000000b1',
+  '{"owner":"b"}'::jsonb, '[]'::jsonb, '[]'::jsonb, 'org_b'
+);
 
 DO $$
 DECLARE res jsonb;
@@ -116,6 +119,8 @@ BEGIN
       'lessons', jsonb_build_array(
         jsonb_build_object(
           'sheet_name', 'SharedSheet',
+          'academic_year', '2025-2026',
+          'user_id', '00000000-0000-4000-8000-0000000000a1',
           'data', '{"owner":"a"}'::jsonb,
           'lesson_numbers', '[]'::jsonb,
           'teaching_units', '[]'::jsonb
@@ -139,6 +144,42 @@ SELECT 'org_a lesson natural key written separately',
        COUNT(*) = 1 AND bool_and(data->>'owner' = 'a')
 FROM public.lessons
 WHERE sheet_name = 'SharedSheet' AND organisation_id = 'org_a';
+
+-- Two academic years same teacher/org/sheet must both exist (4-col unique)
+DELETE FROM public.lessons
+WHERE sheet_name = 'YearSheet' AND organisation_id = 'org_a';
+
+INSERT INTO public.lessons AS t (
+  sheet_name, academic_year, user_id, data, lesson_numbers, teaching_units, organisation_id
+) VALUES
+  ('YearSheet', '2025-2026', '00000000-0000-4000-8000-0000000000a1', '{"y":"2526"}'::jsonb, '[]'::jsonb, '[]'::jsonb, 'org_a'),
+  ('YearSheet', '2026-2027', '00000000-0000-4000-8000-0000000000a1', '{"y":"2627"}'::jsonb, '[]'::jsonb, '[]'::jsonb, 'org_a')
+ON CONFLICT (organisation_id, sheet_name, academic_year, user_id) DO UPDATE
+  SET data = EXCLUDED.data
+WHERE t.organisation_id = 'org_a';
+
+INSERT INTO results
+SELECT 'two academic years same sheet/teacher allowed',
+       COUNT(*) = 2
+FROM public.lessons
+WHERE organisation_id = 'org_a' AND sheet_name = 'YearSheet';
+
+-- Two teachers same org/sheet/year must both exist
+INSERT INTO public.lessons AS t (
+  sheet_name, academic_year, user_id, data, lesson_numbers, teaching_units, organisation_id
+) VALUES
+  ('YearSheet', '2025-2026', '00000000-0000-4000-8000-0000000000c1', '{"teacher":"c"}'::jsonb, '[]'::jsonb, '[]'::jsonb, 'org_a')
+ON CONFLICT (organisation_id, sheet_name, academic_year, user_id) DO UPDATE
+  SET data = EXCLUDED.data
+WHERE t.organisation_id = 'org_a';
+
+INSERT INTO results
+SELECT 'two teachers same org/sheet/year allowed',
+       COUNT(*) = 2
+FROM public.lessons
+WHERE organisation_id = 'org_a'
+  AND sheet_name = 'YearSheet'
+  AND academic_year = '2025-2026';
 
 DELETE FROM public.activities
 WHERE activity = 'Clap' AND category = 'Warm-up'

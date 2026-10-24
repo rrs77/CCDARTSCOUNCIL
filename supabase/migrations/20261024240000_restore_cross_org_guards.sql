@@ -60,16 +60,20 @@ CREATE POLICY "Users manage own branding keys"
   USING (key = 'user:' || auth.uid()::text || ':custom_categories')
   WITH CHECK (key = 'user:' || auth.uid()::text || ':custom_categories');
 
--- School members/admins can read their own organisation even when inactive
--- (status-agnostic; complements any "active only" public read policy).
+-- School members/admins can read their own organisation even when inactive.
+-- Exclude suspended / anonymised actors. Unique name avoids MIS 235500 clashes.
 DROP POLICY IF EXISTS "Org members read own organisation" ON public.organisations;
-CREATE POLICY "Org members read own organisation"
+DROP POLICY IF EXISTS "ccd_org_members_read_own_organisation_202610242400" ON public.organisations;
+CREATE POLICY "ccd_org_members_read_own_organisation_202610242400"
   ON public.organisations FOR SELECT
   TO authenticated
   USING (
     EXISTS (
       SELECT 1 FROM public.profiles p
-      WHERE p.id = auth.uid() AND p.organisation_id = organisations.id
+      WHERE p.id = auth.uid()
+        AND p.organisation_id = organisations.id
+        AND p.status IS DISTINCT FROM 'suspended'
+        AND p.anonymised_at IS NULL
     )
   );
 
@@ -222,27 +226,33 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_activities_org_natural
   ON public.activities (organisation_id, activity, category, lesson_number)
   NULLS NOT DISTINCT;
 
+-- Lessons: app keeps one row per (sheet_name, academic_year, user_id) within an org
+-- (api.ts lessonsApi.updateSheet). Drop the too-tight (org, sheet) unique if present.
+DROP INDEX IF EXISTS public.uq_lessons_org_sheet;
+
 DO $$
 DECLARE
   n int;
 BEGIN
   SELECT COUNT(*) INTO n FROM (
-    SELECT organisation_id, sheet_name
+    SELECT organisation_id, sheet_name, academic_year, user_id
     FROM public.lessons
-    GROUP BY organisation_id, sheet_name
+    GROUP BY organisation_id, sheet_name, academic_year, user_id
     HAVING COUNT(*) > 1
   ) d;
   IF n > 0 THEN
     RAISE EXCEPTION
-      'Cannot create uq_lessons_org_sheet: % duplicate (organisation_id, sheet_name) groups. Resolve duplicates before applying.',
+      'Cannot create uq_lessons_org_sheet_year_user: % duplicate (organisation_id, sheet_name, academic_year, user_id) groups. Resolve duplicates before applying.',
       n;
   END IF;
 END $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_lessons_org_sheet
-  ON public.lessons (organisation_id, sheet_name)
+CREATE UNIQUE INDEX IF NOT EXISTS uq_lessons_org_sheet_year_user
+  ON public.lessons (organisation_id, sheet_name, academic_year, user_id)
   NULLS NOT DISTINCT;
 
+-- EYFS: app upserts only (organisation_id, sheet_name) — no academic_year / user_id
+-- (eyfsApi.updateSheet). Keep that shape.
 DO $$
 DECLARE
   n int;
@@ -411,7 +421,7 @@ BEGIN
     RETURN;
   END IF;
   v_idx := CASE p_table
-    WHEN 'lessons' THEN 'uq_lessons_org_sheet'
+    WHEN 'lessons' THEN 'uq_lessons_org_sheet_year_user'
     WHEN 'eyfs_statements' THEN 'uq_eyfs_statements_org_sheet'
     ELSE NULL
   END;
@@ -842,16 +852,20 @@ BEGIN
       );
     ELSE
       DELETE FROM public.lessons WHERE organisation_id = v_org;
-      INSERT INTO public.lessons AS t (sheet_name, data, lesson_numbers, teaching_units, organisation_id)
+      INSERT INTO public.lessons AS t (
+        sheet_name, academic_year, user_id, data, lesson_numbers, teaching_units, organisation_id
+      )
       SELECT
         r->>'sheet_name',
+        NULLIF(r->>'academic_year', ''),
+        NULLIF(r->>'user_id', '')::uuid,
         COALESCE(r->'data', '{}'::jsonb),
         COALESCE(r->'lesson_numbers', '[]'::jsonb),
         COALESCE(r->'teaching_units', '[]'::jsonb),
         v_org
       FROM jsonb_array_elements(p_payload->'lessons') r
       WHERE COALESCE(r->>'sheet_name', '') <> ''
-      ON CONFLICT (organisation_id, sheet_name) DO UPDATE
+      ON CONFLICT (organisation_id, sheet_name, academic_year, user_id) DO UPDATE
         SET data = EXCLUDED.data,
             lesson_numbers = EXCLUDED.lesson_numbers,
             teaching_units = EXCLUDED.teaching_units,

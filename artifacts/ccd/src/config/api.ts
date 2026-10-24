@@ -552,6 +552,8 @@ export const lessonsApi = {
       if (!organisationId) {
         throw new Error('organisation_id is required to save lessons.');
       }
+      // Unique: (organisation_id, sheet_name, academic_year, user_id) — one row per
+      // teacher + academic year + sheet within an org.
       const lessonData: Record<string, unknown> = {
         sheet_name: sheet,
         academic_year: year,
@@ -560,34 +562,22 @@ export const lessonsApi = {
         teaching_units: data.teachingUnits ?? [],
         notes: data.notes ?? '',
         organisation_id: organisationId,
+        user_id: userId,
       };
-      if (userIsAuth) {
-        lessonData.user_id = userId;
-      }
 
-      if (existingRecord) {
-        // Update existing record, always scoped by user_id to prevent cross-tenant overwrites
-        let updateQuery = supabase
-          .from(TABLES.LESSONS)
-          .update(lessonData)
-          .eq('sheet_name', sheet)
-          .eq('academic_year', year);
-        if (userIsAuth) {
-          updateQuery = updateQuery.eq('user_id', userId);
-        }
-        const { error: updateError } = await updateQuery;
-        
-        if (updateError) throw updateError;
-        console.log(`✅ Updated lessons for ${sheet} (${year})`);
-      } else {
-        // Insert new record
-        const { error: insertError } = await supabase
-          .from(TABLES.LESSONS)
-          .insert(lessonData);
-        
-        if (insertError) throw insertError;
-        console.log(`✅ Created lessons for ${sheet} (${year})`);
-      }
+      const { error: upsertError } = await supabase
+        .from(TABLES.LESSONS)
+        .upsert(lessonData, {
+          onConflict: 'organisation_id,sheet_name,academic_year,user_id',
+          ignoreDuplicates: false,
+        });
+
+      if (upsertError) throw upsertError;
+      console.log(
+        existingRecord
+          ? `✅ Updated lessons for ${sheet} (${year})`
+          : `✅ Created lessons for ${sheet} (${year})`,
+      );
       
       return { success: true };
     } catch (error) {
