@@ -2,7 +2,9 @@
 -- MIS RLS follow-ups (after 20261024210000)
 -- 1) Gate DELETE: super-admin only
 -- 2) connection_id must belong to the same organisation_id
--- 3) Request status: non-super may only set 'withdrawn' or edit message
+-- 3) Request INSERT: non-super force status=submitted, requested_by=auth.uid()
+-- 4) Request UPDATE: non-super may only withdraw or edit message
+--    (requester_name / requester_email / school_name immutable)
 -- Safe to re-run. Do not apply to live DB from this agent.
 -- =============================================================================
 
@@ -117,7 +119,32 @@ CREATE TRIGGER mis_year_group_mappings_connection_org
   FOR EACH ROW EXECUTE FUNCTION public.mis_enforce_connection_org_match();
 
 -- ---------------------------------------------------------------------------
--- 3) Request status: non-super may only withdraw or edit message
+-- 3) Request INSERT: non-super must land as submitted by auth.uid()
+-- ---------------------------------------------------------------------------
+CREATE OR REPLACE FUNCTION public.mis_force_integration_request_insert()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF auth.role() = 'service_role' OR public.is_super_admin() THEN
+    RETURN NEW;
+  END IF;
+
+  NEW.status := 'submitted';
+  NEW.requested_by := auth.uid();
+  NEW.updated_at := now();
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS mis_integration_requests_force_insert ON public.mis_integration_requests;
+CREATE TRIGGER mis_integration_requests_force_insert
+  BEFORE INSERT ON public.mis_integration_requests
+  FOR EACH ROW EXECUTE FUNCTION public.mis_force_integration_request_insert();
+
+-- ---------------------------------------------------------------------------
+-- 4) Request UPDATE: non-super may only withdraw or edit message
 -- ---------------------------------------------------------------------------
 CREATE OR REPLACE FUNCTION public.mis_protect_integration_request_update()
 RETURNS trigger
@@ -136,14 +163,18 @@ BEGIN
       NEW.status;
   END IF;
 
-  -- Disallow changing org / provider / connection / requester identity
+  -- Immutable for school managers (identity + routing + requester/school fields)
   IF NEW.organisation_id IS DISTINCT FROM OLD.organisation_id
      OR NEW.provider_id IS DISTINCT FROM OLD.provider_id
      OR NEW.connection_id IS DISTINCT FROM OLD.connection_id
      OR NEW.requested_by IS DISTINCT FROM OLD.requested_by
      OR NEW.requested_apps IS DISTINCT FROM OLD.requested_apps
+     OR NEW.requester_name IS DISTINCT FROM OLD.requester_name
+     OR NEW.requester_email IS DISTINCT FROM OLD.requester_email
+     OR NEW.school_name IS DISTINCT FROM OLD.school_name
   THEN
-    RAISE EXCEPTION 'School managers may only update message or withdraw an integration request';
+    RAISE EXCEPTION
+      'School managers may only update message or withdraw an integration request';
   END IF;
 
   NEW.updated_at := now();
@@ -160,5 +191,7 @@ COMMENT ON FUNCTION public.mis_protect_gate_delete() IS
   'Activation gate rows may only be deleted by is_super_admin() or service_role.';
 COMMENT ON FUNCTION public.mis_enforce_connection_org_match() IS
   'Ensures mis_integration_requests / mis_year_group_mappings.connection_id belongs to organisation_id.';
+COMMENT ON FUNCTION public.mis_force_integration_request_insert() IS
+  'Non-super INSERT: force status=submitted and requested_by=auth.uid().';
 COMMENT ON FUNCTION public.mis_protect_integration_request_update() IS
-  'Non-super users may only withdraw a request or edit its message.';
+  'Non-super users may only withdraw a request or edit its message; requester/school fields immutable.';

@@ -74,8 +74,8 @@ Migrations (not applied to live DB by this agent):
 
 - `supabase/migrations/20261024205000_mis_integrations.sql`
 - `supabase/migrations/20261024210000_mis_integrations_super_admin_scope.sql`
-- `supabase/migrations/20261024250000_mis_rls_followups.sql` — gate DELETE super-only; connection_id org match; request withdraw-only for school managers
-- `supabase/migrations/20261024260000_full_user_admin_super_only.sql` — `current_user_is_full_user_admin()` = super only; org-scoped helpers; forum/lessons/downloads/branding
+- `supabase/migrations/20261024235000_mis_rls_followups.sql` — gate DELETE super-only; connection_id org match; INSERT force submitted/requested_by; UPDATE withdraw/message only (requester/school immutable)
+- `supabase/migrations/20261024235500_full_user_admin_super_only.sql` — `current_user_is_full_user_admin()` = super only; org-scoped helpers; forum/lessons/downloads/branding
 
 - `mis_user_in_org` / `mis_user_can_manage_org` use the caller’s own `profiles.organisation_id` only (never `school_or_org`). Platform operators use `is_super_admin()`.
 - Gates/secrets/DELETE: `is_super_admin()` or `service_role` only.

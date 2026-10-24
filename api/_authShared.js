@@ -12,7 +12,7 @@ export const DEFAULT_SUPABASE_URL = 'https://wiudrzdkbpyziaodqoog.supabase.co';
  * (create / invite / suspend / anonymise in-scope). Platform-wide list/manage
  * still requires isFullUserAdmin (super_admin / superuser only).
  */
-export const ADMIN_ROLES = new Set(['admin', 'superuser', 'super_admin']);
+export const ORG_ADMIN_ROLES = new Set(['admin', 'superuser', 'super_admin']);
 
 /** Roles that can view organisation-scoped download analytics (own org). */
 export const ORG_ANALYTICS_ROLES = new Set([
@@ -440,7 +440,7 @@ export function isFullUserAdmin(profile) {
  */
 export function canManageUsers(profile) {
   if (!profile || isSuspended(profile)) return false;
-  if (ADMIN_ROLES.has(profile.role)) return true;
+  if (ORG_ADMIN_ROLES.has(profile.role)) return true;
   return profile.can_manage_users === true;
 }
 

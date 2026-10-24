@@ -1,5 +1,5 @@
 /**
- * Static checks for 20261024250000 / 20261024260000 security migrations.
+ * Static checks for 20261024235000 / 20261024235500 security migrations.
  * Run: node --test api/__tests__/mis-rls-followups.test.mjs
  */
 import assert from 'node:assert/strict';
@@ -9,7 +9,7 @@ import { fileURLToPath } from 'node:url';
 import { dirname, join } from 'node:path';
 import {
   GLOBAL_ANALYTICS_ROLES,
-  ADMIN_ROLES,
+  ORG_ADMIN_ROLES,
   canViewGlobalAnalytics,
   isFullUserAdmin,
 } from '../_authShared.js';
@@ -17,19 +17,20 @@ import {
 const root = join(dirname(fileURLToPath(import.meta.url)), '../..');
 const misFollowups = join(
   root,
-  'supabase/migrations/20261024250000_mis_rls_followups.sql',
+  'supabase/migrations/20261024235000_mis_rls_followups.sql',
 );
 const fullAdmin = join(
   root,
-  'supabase/migrations/20261024260000_full_user_admin_super_only.sql',
+  'supabase/migrations/20261024235500_full_user_admin_super_only.sql',
 );
 
-test('follow-up migrations exist after 20261024220000 and avoid 24220000', () => {
+test('follow-up migrations use 24235000/24235500 (after 24220000, not 24220000)', () => {
   assert.ok(existsSync(misFollowups));
   assert.ok(existsSync(fullAdmin));
-  assert.ok('20261024250000' > '20261024220000');
-  assert.ok('20261024260000' > '20261024250000');
-  assert.equal(existsSync(join(root, 'supabase/migrations/20261024220000_mis_rls_followups.sql')), false);
+  assert.ok('20261024235000' > '20261024220000');
+  assert.ok('20261024235500' > '20261024235000');
+  assert.equal(existsSync(join(root, 'supabase/migrations/20261024250000_mis_rls_followups.sql')), false);
+  assert.equal(existsSync(join(root, 'supabase/migrations/20261024260000_full_user_admin_super_only.sql')), false);
 });
 
 test('1) gate DELETE is super-admin only', () => {
@@ -49,11 +50,21 @@ test('2) connection_id must match organisation_id', () => {
   assert.match(sql, /mis_year_group_mappings_connection_org/);
 });
 
-test('3) non-super request updates limited to withdrawn / message', () => {
+test('M1) INSERT forces status=submitted and requested_by=auth.uid() for non-super', () => {
+  const sql = readFileSync(misFollowups, 'utf8');
+  assert.match(sql, /mis_force_integration_request_insert/);
+  assert.match(sql, /BEFORE INSERT ON public\.mis_integration_requests/);
+  assert.match(sql, /NEW\.status := 'submitted'/);
+  assert.match(sql, /NEW\.requested_by := auth\.uid\(\)/);
+});
+
+test('M2) UPDATE immutable includes requester_name/email and school_name', () => {
   const sql = readFileSync(misFollowups, 'utf8');
   assert.match(sql, /mis_protect_integration_request_update/);
+  assert.match(sql, /NEW\.requester_name IS DISTINCT FROM OLD\.requester_name/);
+  assert.match(sql, /NEW\.requester_email IS DISTINCT FROM OLD\.requester_email/);
+  assert.match(sql, /NEW\.school_name IS DISTINCT FROM OLD\.school_name/);
   assert.match(sql, /withdrawn/);
-  assert.match(sql, /School managers may only set integration request status to withdrawn/);
 });
 
 test('4) current_user_is_full_user_admin is super_admin/superuser only', () => {
@@ -75,11 +86,14 @@ test('4b) JS isFullUserAdmin comment + behaviour match SQL', () => {
   assert.equal(isFullUserAdmin({ role: 'super_admin', status: 'active' }), true);
 });
 
-test('5) GLOBAL_ANALYTICS_ROLES excludes school admin', () => {
+test('5) GLOBAL_ANALYTICS_ROLES excludes school admin; ORG_ADMIN_ROLES keeps it', () => {
   assert.equal(GLOBAL_ANALYTICS_ROLES.has('admin'), false);
   assert.equal(GLOBAL_ANALYTICS_ROLES.has('super_admin'), true);
   assert.equal(canViewGlobalAnalytics({ role: 'admin', status: 'active' }), false);
-  assert.equal(ADMIN_ROLES.has('admin'), true); // org-scoped manage still OK
+  assert.equal(ORG_ADMIN_ROLES.has('admin'), true);
+  const src = readFileSync(join(root, 'api/_authShared.js'), 'utf8');
+  assert.match(src, /export const ORG_ADMIN_ROLES/);
+  assert.equal(/export const ADMIN_ROLES\b/.test(src), false);
 });
 
 test('6) forum_is_moderator and interactive lessons drop blanket admin', () => {
@@ -108,10 +122,14 @@ test('6b) forum reports notify supers / forum_can_moderate only', () => {
   assert.equal(src.includes(".in('role', ['admin', 'superuser', 'super_admin'])"), false);
 });
 
-test('6c) users/list activeAdminCount scopes school admins', () => {
+test('6c) users/list last-admin count scoped to caller organisation_id', () => {
   const src = readFileSync(join(root, 'api/users/list.js'), 'utf8');
   assert.match(src, /in\('role', \['superuser', 'super_admin'\]\)/);
-  assert.match(src, /resolveActorScopeUserIds/);
+  assert.match(src, /callerOrg/);
+  assert.match(src, /\.eq\('organisation_id', callerOrg\)/);
+  // last-admin block must not reuse hub-wide resolveActorScopeUserIds
+  const lastAdminBlock = src.slice(src.indexOf('Protect-last-admin'));
+  assert.equal(lastAdminBlock.includes('resolveActorScopeUserIds'), false);
 });
 
 test('no duplicate migration prefixes including new files', () => {

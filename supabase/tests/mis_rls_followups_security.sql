@@ -1,8 +1,15 @@
--- Scratch tests for 20261024250000 + 20261024260000 (never production).
+-- Scratch tests for 20261024235000 + 20261024235500 (never production).
 -- Expects prior MIS + profiles helpers already applied.
 BEGIN;
 
 CREATE TEMP TABLE results (name TEXT, ok BOOLEAN);
+
+INSERT INTO results
+SELECT 'force insert trigger present',
+  EXISTS (
+    SELECT 1 FROM pg_trigger
+    WHERE tgname = 'mis_integration_requests_force_insert'
+  );
 
 -- Static: full_user_admin body
 INSERT INTO results

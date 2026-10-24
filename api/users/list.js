@@ -182,7 +182,7 @@ export async function GET(request) {
       invitation_status: invitationStatus(u),
     }));
 
-    // Protect-last-admin count: platform supers globally; school admins only in-scope.
+    // Protect-last-admin count: platform supers globally; school managers by own org only.
     const fullAdmin = isFullUserAdmin(admin.profile);
     let activeAdminQuery = service
       .from('profiles')
@@ -192,10 +192,13 @@ export async function GET(request) {
     if (fullAdmin) {
       activeAdminQuery = activeAdminQuery.in('role', ['superuser', 'super_admin']);
     } else {
+      const callerOrg = (admin.profile?.organisation_id || '').trim();
       activeAdminQuery = activeAdminQuery.in('role', ['admin', 'superuser', 'super_admin']);
-      const scopeIds = await resolveActorScopeUserIds(service, admin);
-      if (Array.isArray(scopeIds) && scopeIds.length > 0) {
-        activeAdminQuery = activeAdminQuery.in('id', scopeIds);
+      if (callerOrg) {
+        activeAdminQuery = activeAdminQuery.eq('organisation_id', callerOrg);
+      } else {
+        // No org → only count self (cannot see peer org admins).
+        activeAdminQuery = activeAdminQuery.eq('id', admin.userId);
       }
     }
     const { count: activeAdminCount, error: adminCountErr } = await activeAdminQuery;
