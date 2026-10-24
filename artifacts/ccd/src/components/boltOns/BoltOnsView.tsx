@@ -33,9 +33,12 @@ export function BoltOnsView({ page, onNavigate }: Props) {
         pageLabel={TITLES[page]}
         onCatalogue={page === 'bolt-ons' ? undefined : () => onNavigate('bolt-ons')}
       />
-      <div className="mb-6">
-        <BoltOnsSwitcher active={page} onNavigate={onNavigate} />
-      </div>
+      {/* On the catalogue the two product cards already link to each bolt-on, so the tab row is hidden there. */}
+      {page === 'bolt-ons' ? null : (
+        <div className="mb-6">
+          <BoltOnsSwitcher active={page} onNavigate={onNavigate} />
+        </div>
+      )}
       {page === 'bolt-ons' ? <BoltOnsCatalogue onNavigate={onNavigate} /> : null}
       {page === 'assessify' ? <AssessifyPage /> : null}
       {page === 'perifeedback' ? <PeriFeedbackPage /> : null}
