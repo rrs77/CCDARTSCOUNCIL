@@ -153,14 +153,14 @@ export function StudioShell({
           {collapsed ? (
             <img
               src="/login/ccd-mark.png?v=logo-5"
-              alt="designer"
+              alt="CCDesigner"
               width={28}
               height={28}
               className="ccd-studio-brand-mark"
               decoding="async"
             />
           ) : (
-            <span className="ccd-studio-brand-logo" role="img" aria-label="designer">
+            <span className="ccd-studio-brand-logo" role="img" aria-label="CCDesigner">
               <img
                 src="/login/ccd-mark.png?v=logo-5"
                 alt=""

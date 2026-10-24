@@ -848,9 +848,15 @@ export function LessonPlannerCalendar({
       ).join('')}</div>`;
     };
     const branding = settings?.branding || {};
-    const productName = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+    const rawProduct = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+    const productName = /Creative\s+Curriculum\s+Designer/i.test(rawProduct)
+      ? 'CCDesigner'
+      : rawProduct;
     const productSubtitle = branding.loginSubtitle || 'CCDesigner';
-    const companyName = branding.footerCompanyName || 'CCDesigner';
+    const rawCompany = branding.footerCompanyName || 'CCDesigner';
+    const companyName = /Creative\s+Curriculum\s+Designer/i.test(rawCompany)
+      ? 'CCDesigner'
+      : rawCompany;
     const copyrightYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
     const contactEmail = branding.footerContactEmail || '';
     const headerColor = branding.loginButtonColor || branding.loginBackgroundColor || '#0d9488';

@@ -26,6 +26,8 @@ import {
   tint,
   ymd,
   academicYearFor,
+  isWeekend,
+  nextWeekday,
   type DayEntry,
   type PlannerEvent,
 } from './plannerModel';
@@ -304,7 +306,8 @@ export function WeekView({ data, visibleIds, anchor, selectedKey, onOpenEntry, o
 /* ---------------- Day ---------------- */
 
 export function DayView({ data, visibleIds, anchor, selectedKey, onOpenEntry, onAdd }: ViewProps) {
-  const dayKey = startOfDay(anchor).getTime();
+  // Mon–Fri only — weekends snap forward like Week/Month schedule columns.
+  const dayKey = startOfDay(isWeekend(anchor) ? nextWeekday(anchor) : anchor).getTime();
   const date = new Date(dayKey);
   const entries = useMemo(
     () => buildDayEntries(new Date(dayKey), visibleIds, data.plans, data.slots, data.events),

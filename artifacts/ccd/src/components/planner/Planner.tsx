@@ -20,6 +20,8 @@ import {
   formatRange,
   HALF_TERMS,
   halfTermFor,
+  isWeekend,
+  nextWeekday,
   SCHEDULE_VIEWS,
   readableInk,
   startOfDay,
@@ -29,6 +31,10 @@ import {
   type PlannerRoom,
   type PlannerView,
 } from './plannerModel';
+import {
+  scheduleViewFromPath,
+  syncPlannerViewUrl,
+} from '../studio/plannerRoutes';
 
 interface PlannerProps {
   initialView?: PlannerView;
@@ -73,10 +79,16 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
   const { currentSheetInfo, setCurrentSheetInfo } = useData();
   const { settings } = useSettings();
   // C2: term/units views moved to Half-terms — never open them inside Planner
+  const fromPath = typeof window !== 'undefined' ? scheduleViewFromPath() : null;
   const safeInitial =
-    initialView && initialView !== 'term' && initialView !== 'units' ? initialView : 'week';
+    fromPath ||
+    (initialView && initialView !== 'term' && initialView !== 'units' ? initialView : 'week');
   const [view, setView] = useState<PlannerView>(safeInitial);
-  const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
+  const [anchor, setAnchor] = useState(() => {
+    const today = startOfDay(new Date());
+    // Day view is Mon–Fri only — never land on a weekend with "Add one-off".
+    return safeInitial === 'day' ? nextWeekday(today) : today;
+  });
   const [focus, setFocus] = useState<string>('all');
   const [sheet, setSheet] = useState<Sheet>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -152,11 +164,44 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
         refreshStorage();
         void reloadPlans();
       }
+      if (next === 'day') {
+        setAnchor((a) => (isWeekend(a) ? nextWeekday(a) : a));
+      }
       setView(next);
       setSheet(null);
+      syncPlannerViewUrl(next);
     },
     [view, refreshStorage, reloadPlans],
   );
+
+  // Keep Day view on a weekday if anchor drifts (e.g. "This week" on Sat/Sun).
+  useEffect(() => {
+    if (view !== 'day') return;
+    if (!isWeekend(anchor)) return;
+    setAnchor(nextWeekday(anchor));
+  }, [view, anchor]);
+
+  // Browser back/forward for /planner/week|day|month
+  useEffect(() => {
+    const onPop = () => {
+      const v = scheduleViewFromPath();
+      if (v) {
+        setView(v);
+        if (v === 'day') setAnchor((a) => (isWeekend(a) ? nextWeekday(a) : a));
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // Ensure URL matches initial schedule view when landing on /planner
+  useEffect(() => {
+    if (view === 'week' || view === 'day' || view === 'month') {
+      syncPlannerViewUrl(view);
+    }
+    // once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goRoom = useCallback(
     (next: PlannerRoom) => {
@@ -299,7 +344,14 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
           {view !== 'timetable' && (
             <div className="flex flex-wrap items-center gap-2">
               {inSchedule && (
-                <button type="button" className={toolBtn} onClick={() => setAnchor(startOfDay(new Date()))}>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  onClick={() => {
+                    const today = startOfDay(new Date());
+                    setAnchor(view === 'day' ? nextWeekday(today) : today);
+                  }}
+                >
                   This week
                 </button>
               )}
@@ -463,7 +515,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
               visibleIds={visibleIds}
               anchor={anchor}
               onPickDay={(d) => {
-                setAnchor(d);
+                setAnchor(isWeekend(d) ? nextWeekday(d) : startOfDay(d));
                 changeView('day');
               }}
             />
@@ -688,7 +740,8 @@ function printSchedule(
   const esc = (s: string) =>
     s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const branding = settings?.branding || {};
-  const productName = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+  const rawName = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+  const productName = /Creative\s+Curriculum\s+Designer/i.test(rawName) ? 'CCDesigner' : rawName;
   const productSubtitle = branding.loginSubtitle || '';
   const companyName = branding.footerCompanyName || 'CCDesigner';
   const copyrightYear = branding.footerCopyrightYear || String(new Date().getFullYear());

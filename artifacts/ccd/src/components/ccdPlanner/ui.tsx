@@ -195,23 +195,27 @@ export function Segmented<T extends string>({
 }) {
   return (
     <div className="inline-flex rounded-full bg-indigo-50 p-1" role="tablist">
-      {options.map((o) => (
-        <button
-          key={o.id}
-          type="button"
-          role="tab"
-          aria-selected={value === o.id}
-          onClick={() => onChange(o.id)}
-          className={cn(
-            'min-h-[44px] rounded-full px-3.5 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
-            value === o.id
-              ? 'bg-white text-indigo-700 shadow-sm'
-              : 'text-slate-500 hover:text-indigo-600',
-          )}
-        >
-          {o.label}
-        </button>
-      ))}
+      {options.map((o) => {
+        const active = value === o.id;
+        return (
+          <button
+            key={o.id}
+            type="button"
+            role="tab"
+            aria-selected={active}
+            data-state={active ? 'active' : 'inactive'}
+            onClick={() => onChange(o.id)}
+            className={cn(
+              'min-h-[44px] rounded-full px-3.5 py-1.5 text-xs font-semibold transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+              active
+                ? 'bg-indigo-600 text-white shadow-sm ring-2 ring-indigo-600 ring-offset-1'
+                : 'text-slate-500 hover:text-indigo-600',
+            )}
+          >
+            {o.label}
+          </button>
+        );
+      })}
     </div>
   );
 }

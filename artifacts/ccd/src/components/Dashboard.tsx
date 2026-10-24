@@ -316,10 +316,14 @@ export function Dashboard() {
     activeTab === 'unit-viewer' ||
     activeTab === 'curriculum' ||
     activeTab === 'settings' ||
-    activeTab === 'help';
+    activeTab === 'help' ||
+    activeTab === 'contact-us';
   const editorFlush = activeTab === 'activity-library' && activityEditorOpen;
 
-  const shellNavigate = (id: StudioNavId) => handleTabChange(id);
+  const shellNavigate = (id: StudioNavId) => {
+    // Help / Contact stay inside StudioShell — never bounce through /forum.
+    handleTabChange(id);
+  };
 
   const shellToolAction = (action: StudioToolAction) => {
     if (action === 'class-calendar') {
@@ -338,7 +342,11 @@ export function Dashboard() {
       return;
     }
     if (action === 'walkthrough') {
+      // Stay in the main shell (sidebar visible). Do not enter /forum chrome.
       try {
+        if (window.location.pathname.replace(/\/+$/, '') !== '/walkthrough') {
+          window.history.pushState({}, '', '/walkthrough');
+        }
         window.dispatchEvent(new CustomEvent('ccd:start-walkthrough'));
       } catch {
         /* ignore */

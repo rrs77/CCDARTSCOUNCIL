@@ -73,8 +73,15 @@ export function LessonPrintModal({
   } = useData();
   const { getCategoryColor, settings } = useSettings();
   const branding = settings?.branding || {};
-  const productName = branding.loginTitle || 'CCDesigner';
-  const footerCompany = branding.footerCompanyName || 'CCDesigner';
+  const productName =
+    !branding.loginTitle || /Creative\s+Curriculum\s+Designer/i.test(branding.loginTitle)
+      ? 'CCDesigner'
+      : branding.loginTitle;
+  const footerCompany =
+    !branding.footerCompanyName ||
+    /Creative\s+Curriculum\s+Designer/i.test(branding.footerCompanyName)
+      ? 'CCDesigner'
+      : branding.footerCompanyName;
   const footerYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
   const { shareLesson: shareSingleLesson, isSharing: isSharingSingle, getStoredShareUrl } = useShareLesson();
   const [isExporting, setIsExporting] = useState(false);

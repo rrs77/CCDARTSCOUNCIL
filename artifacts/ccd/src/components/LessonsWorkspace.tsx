@@ -34,6 +34,10 @@ import { SharePlanningModal } from './ccdPlanner/SharePlanningModal';
 import { YearGroupsAccessNotice } from './ccdPlanner/YearGroupsAccessNotice';
 import { loadPlannerTerms } from '../utils/planner/plannerCurriculumStore';
 import { syncSettingsUrl } from './settings/routes';
+import {
+  lessonEditorFromPath,
+  syncLessonEditorUrl,
+} from './studio/plannerRoutes';
 
 const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)";
 
@@ -175,6 +179,7 @@ export function LessonsWorkspace({
     setEditingLessonNumber(lessonNumber);
     setBuilderKey((k) => k + 1);
     setLiveMessage(`Opened ${lessonNumber} on the canvas`);
+    syncLessonEditorUrl(lessonNumber);
   };
 
   const openLessonForm = (lessonNumber?: string) => {
@@ -187,11 +192,40 @@ export function LessonsWorkspace({
         lessonNumber,
         lessonData: allLessonsData[lessonNumber],
       });
+      syncLessonEditorUrl(lessonNumber);
     } else {
       setEditingLessonForForm(null);
+      syncLessonEditorUrl(null);
     }
     setLessonPlanOpen(true);
   };
+
+  // Deep-link /lessons/edit/:id — open on the canvas when data is ready
+  React.useEffect(() => {
+    const fromUrl = lessonEditorFromPath();
+    if (!fromUrl || !allLessonsData?.[fromUrl]) return;
+    if (editingLessonNumber === fromUrl) return;
+    setEditingLessonNumber(fromUrl);
+    setBuilderKey((k) => k + 1);
+  }, [allLessonsData, editingLessonNumber]);
+
+  React.useEffect(() => {
+    const onPop = () => {
+      const fromUrl = lessonEditorFromPath();
+      if (fromUrl && allLessonsData?.[fromUrl]) {
+        setEditingLessonNumber(fromUrl);
+        setBuilderKey((k) => k + 1);
+        return;
+      }
+      if (!fromUrl && window.location.pathname.replace(/\/+$/, '') === '/lessons') {
+        setEditingLessonNumber(undefined);
+        setLessonPlanOpen(false);
+        setEditingLessonForForm(null);
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, [allLessonsData]);
 
   const createLesson = () => openLessonForm();
 

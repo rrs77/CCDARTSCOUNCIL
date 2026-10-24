@@ -73,6 +73,16 @@ export function Header() {
     return () => window.removeEventListener('ccd:start-walkthrough', handler);
   }, []);
 
+  // Deep link /walkthrough — open tour inside the main shell (not /forum).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.pathname.replace(/\/+$/, '') === '/walkthrough') {
+      const t = window.setTimeout(() => setShowWalkthrough(true), 200);
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
+  }, []);
+
   useEffect(() => {
     const openSettings = () => navigateToSettings();
     window.addEventListener('ccd:open-settings', openSettings);
@@ -286,11 +296,13 @@ export function Header() {
     }
   }, [mobileMenuOpen, currentSection]);
 
-  // Keep document title in sync with branding (tab/window title)
-  const productName = settings.branding?.loginTitle || 'CCDesigner';
+  // Document title is always CCDesigner (never the long legacy product name).
+  const productName = 'CCDesigner';
   useEffect(() => {
     document.title = productName;
-    return () => { document.title = 'CCDesigner'; };
+    return () => {
+      document.title = 'CCDesigner';
+    };
   }, [productName]);
 
   return (
@@ -574,7 +586,16 @@ export function Header() {
       {/* Walkthrough Guide */}
       <WalkthroughGuide
         isOpen={showWalkthrough}
-        onClose={() => setShowWalkthrough(false)}
+        onClose={() => {
+          setShowWalkthrough(false);
+          try {
+            if (window.location.pathname.replace(/\/+$/, '') === '/walkthrough') {
+              window.history.pushState({}, '', '/planner');
+            }
+          } catch {
+            /* ignore */
+          }
+        }}
       />
 
     </>

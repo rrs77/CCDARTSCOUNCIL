@@ -812,6 +812,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         if (parsed.branding?.loginTitle && /Planner/i.test(parsed.branding.loginTitle)) {
           parsed.branding.loginTitle = parsed.branding.loginTitle.replace(/Planner/gi, 'Designer');
         }
+        if (
+          parsed.branding?.loginTitle &&
+          /Creative\s+Curriculum\s+Designer/i.test(parsed.branding.loginTitle)
+        ) {
+          parsed.branding.loginTitle = 'CCDesigner';
+        }
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       }
       
@@ -1189,6 +1195,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
               if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
                 supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
+              }
+              if (
+                supabaseBranding.loginTitle &&
+                /Creative\s+Curriculum\s+Designer/i.test(supabaseBranding.loginTitle)
+              ) {
+                supabaseBranding.loginTitle = 'CCDesigner';
               }
               setSettings(prev => ({
                 ...prev,
@@ -2311,6 +2323,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
           if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
             supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
+          }
+          if (
+            supabaseBranding.loginTitle &&
+            /Creative\s+Curriculum\s+Designer/i.test(supabaseBranding.loginTitle)
+          ) {
+            supabaseBranding.loginTitle = 'CCDesigner';
           }
           setSettings(prev => ({
             ...prev,
