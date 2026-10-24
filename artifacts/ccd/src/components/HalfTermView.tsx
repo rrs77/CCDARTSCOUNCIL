@@ -29,7 +29,7 @@ export function HalfTermView({
 }: HalfTermViewProps) {
   const { allLessonsData, currentSheetInfo, getTermSpecificLessonNumber } = useData();
   const { getThemeForClass, getCategoryColor, settings } = useSettings();
-  const productName = settings?.branding?.loginTitle || 'Creative Curriculum Designer';
+  const productName = settings?.branding?.loginTitle || 'CCDesigner';
   const theme = getThemeForClass('LKG'); // Default theme
 
   // Helper function to convert hex color to RGB

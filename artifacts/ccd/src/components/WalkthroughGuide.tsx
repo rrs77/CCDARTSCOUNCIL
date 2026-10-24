@@ -63,7 +63,7 @@ function resolveTarget(selectorList: string): HTMLElement | null {
 
 export function WalkthroughGuide({ isOpen, onClose }: WalkthroughGuideProps) {
   const { settings } = useSettings();
-  const productName = settings?.branding?.loginTitle || 'Creative Curriculum Designer';
+  const productName = settings?.branding?.loginTitle || 'CCDesigner';
 
   const [currentStep, setCurrentStep] = useState(0);
   const [tooltipPos, setTooltipPos] = useState<{ top: number; left: number }>({ top: 0, left: 0 });

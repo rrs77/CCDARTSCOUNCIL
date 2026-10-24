@@ -61,7 +61,7 @@ export function Scene5() {
             className="w-[3.6cqw] h-[3.6cqw]"
           />
           <span className="text-white font-display font-semibold tracking-tight text-[1.6cqw]">
-            Creative Curriculum Designer
+            CCDesigner
           </span>
         </motion.div>
 

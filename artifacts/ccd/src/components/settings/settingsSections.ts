@@ -90,7 +90,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     id: 'users',
     label: 'Users',
     title: 'Users',
-    helper: 'Invite and manage who can use Studio Score.',
+    helper: 'Invite and manage who can use CCDesigner.',
     keywords: [
       'user',
       'people',

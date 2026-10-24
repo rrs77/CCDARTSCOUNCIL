@@ -5,7 +5,7 @@ import { useSettings } from '../contexts/SettingsContextNew';
 
 export function PWAInstallPrompt() {
   const { settings } = useSettings();
-  const productName = settings?.branding?.loginTitle || 'Creative Curriculum Designer';
+  const productName = settings?.branding?.loginTitle || 'CCDesigner';
   const { canInstall, isInstalled, install } = usePWAInstall();
   const [showPrompt, setShowPrompt] = useState(false);
   const [isIOS, setIsIOS] = useState(false);

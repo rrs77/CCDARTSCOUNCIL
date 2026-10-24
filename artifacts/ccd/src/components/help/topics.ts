@@ -1,5 +1,5 @@
 /**
- * Help centre content for Creative Curriculum Designer.
+ * Help centre content for CCDesigner.
  * Keep copy aligned with the live product (Settings, Users, Half-terms, etc.).
  */
 
@@ -49,7 +49,7 @@ export interface HelpTopic {
   sections: HelpSection[];
 }
 
-export const HELP_PRODUCT_NAME = 'Creative Curriculum Designer';
+export const HELP_PRODUCT_NAME = 'CCDesigner';
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
@@ -337,7 +337,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       {
         id: 'facts',
         title: 'Open The Facts',
-        intro: 'The Facts is the evidence briefing for Creative Curriculum Designer.',
+        intro: 'The Facts is the evidence briefing for CCDesigner.',
         steps: [
           { title: 'Find The Facts', body: 'Open it from Partner / resources areas or the briefing link in the product.' },
           { title: 'Read or download', body: 'Use the PDF for governors, SLT or funding conversations.' },

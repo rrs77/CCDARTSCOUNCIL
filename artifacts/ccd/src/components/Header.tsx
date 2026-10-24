@@ -287,10 +287,10 @@ export function Header() {
   }, [mobileMenuOpen, currentSection]);
 
   // Keep document title in sync with branding (tab/window title)
-  const productName = settings.branding?.loginTitle || 'Creative Curriculum Designer';
+  const productName = settings.branding?.loginTitle || 'CCDesigner';
   useEffect(() => {
     document.title = productName;
-    return () => { document.title = 'Creative Curriculum Designer'; };
+    return () => { document.title = 'CCDesigner'; };
   }, [productName]);
 
   return (

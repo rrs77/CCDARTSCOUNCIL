@@ -3213,25 +3213,21 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                 </div>
                 <button
                   onClick={() => {
-                    if (confirm('Reset branding to defaults (Rhythmstix)?')) {
+                    if (confirm('Reset branding to defaults (CCDesigner)?')) {
                       const defaults = {
                         logoLetters: 'CCD',
-                        loginTitle: 'Creative Curriculum Designer',
-                        loginSubtitle: 'From Rhythmstix',
-                        loginSubtitleUrl: 'https://www.rhythmstix.co.uk',
+                        loginTitle: 'CCDesigner',
+                        loginSubtitle: 'Lesson planning for performing arts',
+                        loginSubtitleUrl: '',
                         loginBackgroundColor: 'rgb(77, 181, 168)',
                         loginButtonColor: '#008272',
-                        footerCompanyName: 'Rhythmstix',
+                        footerCompanyName: 'CCDesigner',
                         footerCopyrightYear: '2026',
-                        footerContactEmail: 'rob@rhythmstix.co.uk',
-                        footerPrivacyUrl: 'https://www.rhythmstix.co.uk/policy',
+                        footerContactEmail: '',
+                        footerPrivacyUrl: '',
                         footerBackgroundColor: '#4338E8',
-                        showSocialMedia: true,
-                        footerSocialLinks: [
-                          { platform: 'youtube', url: 'https://www.youtube.com/channel/UCooHhU7FKALUQ4CtqjDFMsw' },
-                          { platform: 'linkedin', url: 'https://www.linkedin.com/in/robert-reich-storer-974449144' },
-                          { platform: 'facebook', url: 'https://www.facebook.com/Rhythmstix-Music-108327688309431' },
-                        ]
+                        showSocialMedia: false,
+                        footerSocialLinks: [] as { platform: string; url: string }[],
                       };
                       updateSettings({ branding: defaults });
                       setTempSettings(prev => ({ ...prev, branding: defaults }));
@@ -3271,17 +3267,17 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       value={tempSettings.branding?.loginTitle ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, loginTitle: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="Creative Curriculum Designer"
+                      placeholder="CCDesigner"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm text-gray-600 mb-1">Subtitle (e.g. From Rhythmstix)</label>
+                    <label className="block text-sm text-gray-600 mb-1">Subtitle</label>
                     <input
                       type="text"
                       value={tempSettings.branding?.loginSubtitle ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, loginSubtitle: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="From Rhythmstix"
+                      placeholder="Lesson planning for performing arts"
                     />
                   </div>
                   <div>
@@ -3324,7 +3320,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       value={tempSettings.branding?.footerCompanyName ?? ''}
                       onChange={e => setTempSettings(prev => ({ ...prev, branding: { ...prev.branding, footerCompanyName: e.target.value } }))}
                       className="w-full border border-gray-300 rounded-lg px-3 py-2"
-                      placeholder="Rhythmstix"
+                      placeholder="CCDesigner"
                     />
                   </div>
                   <div>

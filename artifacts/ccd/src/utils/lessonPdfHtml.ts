@@ -562,7 +562,7 @@ export function buildLessonPdfFooterTemplate(options: {
     [options.sheetDisplay || '', `© ${company} ${year}`].filter(Boolean).join(' • ');
   return `
     <div style="width:100%; font-size:9px; padding:0 20px; color:#6b7280; display:flex; justify-content:space-between; align-items:center;">
-      <span>Creative Curriculum Designer</span>
+      <span>CCDesigner</span>
       <span>${escapeHtmlText(center)}</span>
       <span style="background:#f3f4f6; padding:2px 8px; border-radius:9999px;">Page <span class="pageNumber"></span></span>
     </div>

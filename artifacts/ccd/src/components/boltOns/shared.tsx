@@ -212,7 +212,7 @@ export function SampleLabel({ children }: { children: React.ReactNode }) {
 export function FooterNote() {
   return (
     <footer className="mt-10 flex flex-col gap-1 border-t border-[#E2E0EF] pt-5 text-[11px] text-[#77738F] sm:flex-row sm:items-start sm:justify-between">
-      <p>© Rhythmstix 2026 · CCDesigner + Bolt-ons concept · Not a live subscription or payment page</p>
+      <p>© CCDesigner 2026 · Bolt-ons concept · Not a live subscription or payment page</p>
       <p className="sm:text-right">Premium availability, usage limits and prices require product approval.</p>
     </footer>
   );
