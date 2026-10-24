@@ -5,15 +5,12 @@
  * Deploy to DreamHost and point DREAMHOST_PDF_UPLOAD_URL at this script.
  * CCDesigner Vercel routes call this with X-API-Key — never from the browser.
  *
- * Stores files under UPLOAD_DIR/<userId>/<uuid>.pdf (no overwrite).
- * Do not expose UPLOAD_DIR as a public directory listing; the app serves
- * files only via /api/files/... after auth.
+ * Preferred storage: outside the web root (ccd_private_pdfs/).
+ * Fallback: ../pdfs/ which is locked down by pdfs/.htaccess (Require all denied).
+ * Files are served only via download-pdf.php + the app /api/files proxy.
  */
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type, Authorization, X-API-Key, X-Upsert');
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(204);
@@ -26,19 +23,41 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit();
 }
 
-// --- Configure on DreamHost ---
-define('UPLOAD_DIR', __DIR__ . '/../pdfs/');
-define('PUBLIC_URL_BASE', 'https://YOUR-DOMAIN.com/pdfs/'); // used only for server-side fetch URL
-define('API_KEY', 'YOUR-SECRET-API-KEY-HERE'); // set DREAMHOST_PDF_API_KEY to the same value in Vercel
 define('MAX_FILE_SIZE', 10 * 1024 * 1024);
+
+$apiKey = getenv('DREAMHOST_PDF_API_KEY') ?: getenv('PDF_API_KEY') ?: '';
+$configFile = dirname(__DIR__, 2) . '/ccd_private/pdf-api-key.php';
+if ($apiKey === '' && is_readable($configFile)) {
+    /** @var array{api_key?: string} $cfg */
+    $cfg = include $configFile;
+    if (is_array($cfg) && !empty($cfg['api_key'])) {
+        $apiKey = (string) $cfg['api_key'];
+    }
+}
+
+if ($apiKey === '') {
+    http_response_code(503);
+    echo json_encode(['error' => 'Upload not configured']);
+    exit();
+}
 
 $headers = function_exists('getallheaders') ? getallheaders() : [];
 $providedKey = $headers['X-Api-Key'] ?? $headers['x-api-key'] ?? $headers['X-API-Key'] ?? '';
 
-if (!hash_equals(API_KEY, (string) $providedKey)) {
+if (!is_string($providedKey) || $providedKey === '' || !hash_equals($apiKey, $providedKey)) {
     http_response_code(401);
     echo json_encode(['error' => 'Invalid API key']);
     exit();
+}
+
+$uploadDirEnv = getenv('DREAMHOST_PDF_UPLOAD_DIR') ?: '';
+if ($uploadDirEnv !== '') {
+    $uploadDir = rtrim($uploadDirEnv, '/\\') . '/';
+} else {
+    $outside = dirname(__DIR__, 2) . '/ccd_private_pdfs/';
+    $uploadDir = is_dir(dirname($outside)) || @mkdir($outside, 0750, true)
+        ? (rtrim($outside, '/\\') . '/')
+        : (__DIR__ . '/../pdfs/');
 }
 
 $input = file_get_contents('php://input');
@@ -56,9 +75,8 @@ if (empty($data['fileData']) || empty($data['fileName'])) {
     exit();
 }
 
-// Expect server-built path: <uuid>/<uuid>.pdf
 $fileName = (string) $data['fileName'];
-if (!preg_match('/^[0-9a-fA-F-]{36}\/[0-9a-fA-F-]{36}\.pdf$/', $fileName)) {
+if (!preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.pdf$/i', $fileName)) {
     http_response_code(400);
     echo json_encode(['error' => 'Invalid fileName path']);
     exit();
@@ -78,16 +96,15 @@ if (strlen($pdfData) > MAX_FILE_SIZE) {
 }
 
 $parts = explode('/', $fileName);
-$userDir = UPLOAD_DIR . $parts[0];
+$userDir = $uploadDir . $parts[0];
 if (!is_dir($userDir) && !mkdir($userDir, 0750, true)) {
     http_response_code(500);
     echo json_encode(['error' => 'Failed to create directory']);
     exit();
 }
 
-$filePath = UPLOAD_DIR . $fileName;
+$filePath = $uploadDir . $fileName;
 
-// No overwrite
 if (file_exists($filePath)) {
     http_response_code(409);
     echo json_encode(['error' => 'File already exists', 'success' => false]);
@@ -100,11 +117,8 @@ if (file_put_contents($filePath, $pdfData) === false) {
     exit();
 }
 
-$publicUrl = rtrim(PUBLIC_URL_BASE, '/') . '/' . $parts[0] . '/' . $parts[1];
-
+// No public URL — clients use the app proxy only.
 echo json_encode([
     'success' => true,
-    'url' => $publicUrl,
-    'fileName' => $fileName,
     'path' => $fileName,
 ]);

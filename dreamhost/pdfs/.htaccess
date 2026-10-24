@@ -1,0 +1,9 @@
+# Deny all direct HTTP access to any files under pdfs/.
+# Preferred storage is outside the web root (see upload-pdf.php UPLOAD_DIR).
+# This directory is a fallback only and must never be publicly readable.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Deny from all
+</IfModule>

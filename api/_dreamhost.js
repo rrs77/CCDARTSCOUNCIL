@@ -2,11 +2,11 @@
  * Shared DreamHost storage helpers for authenticated upload + proxy.
  *
  * Env (server-only — never VITE_*):
- *   DREAMHOST_PDF_UPLOAD_URL — POST endpoint that accepts { fileData, fileName }
- *   DREAMHOST_PDF_API_KEY    — X-API-Key for that endpoint
- *   DREAMHOST_PDF_BASE_URL   — HTTPS base used by the proxy to fetch objects
- *                              (e.g. https://host/pdfs). Optional if upload
- *                              responses always include a private `url`.
+ *   DREAMHOST_PDF_UPLOAD_URL   — POST upload-pdf.php
+ *   DREAMHOST_PDF_DOWNLOAD_URL — GET download-pdf.php (preferred for fetch)
+ *   DREAMHOST_PDF_API_KEY      — X-API-Key for both endpoints
+ *
+ * Never return DreamHost URLs to clients — only app proxy paths.
  */
 
 import { randomUUID } from 'node:crypto';
@@ -38,18 +38,37 @@ export function getDreamHostApiKey() {
   ).trim();
 }
 
-export function getDreamHostBaseUrl() {
-  return (
-    process.env.DREAMHOST_PDF_BASE_URL ||
-    process.env.PDF_STORAGE_BASE_URL ||
+/**
+ * Authenticated download endpoint (download-pdf.php).
+ * Derived from upload URL when DREAMHOST_PDF_DOWNLOAD_URL is unset.
+ */
+export function getDreamHostDownloadUrl() {
+  const explicit = (
+    process.env.DREAMHOST_PDF_DOWNLOAD_URL ||
+    process.env.PDF_DOWNLOAD_URL ||
     ''
-  )
-    .trim()
-    .replace(/\/$/, '');
+  ).trim();
+  if (explicit) return explicit.replace(/\/$/, '');
+
+  const upload = getDreamHostUploadUrl();
+  if (!upload) return '';
+  try {
+    const u = new URL(upload);
+    // .../api/upload-pdf.php → .../api/download-pdf.php
+    u.pathname = u.pathname.replace(/upload-pdf\.php$/i, 'download-pdf.php');
+    if (!/download-pdf\.php$/i.test(u.pathname)) {
+      u.pathname = u.pathname.replace(/\/?$/, '/') + 'download-pdf.php';
+    }
+    return u.toString().replace(/\/$/, '');
+  } catch {
+    return '';
+  }
 }
 
 export function isDreamHostConfigured() {
-  return Boolean(getDreamHostUploadUrl() && getDreamHostApiKey());
+  return Boolean(
+    getDreamHostUploadUrl() && getDreamHostApiKey() && getDreamHostDownloadUrl(),
+  );
 }
 
 /**
@@ -103,16 +122,9 @@ export function buildProxyFileUrl(request, storagePath) {
 
 /**
  * Upload bytes to DreamHost. Path must already be server-built.
- * No overwrite: DreamHost endpoint must reject existing keys (or we rely on UUID uniqueness).
- *
- * @param {{ buffer: Buffer|Uint8Array, storagePath: string, contentType?: string }} opts
- * @returns {Promise<{ path: string, dreamhostUrl: string|null }>}
+ * @returns {Promise<{ path: string }>}
  */
-export async function uploadToDreamHost({
-  buffer,
-  storagePath,
-  contentType = 'application/pdf',
-}) {
+export async function uploadToDreamHost({ buffer, storagePath }) {
   const uploadUrl = getDreamHostUploadUrl();
   const apiKey = getDreamHostApiKey();
   if (!uploadUrl || !apiKey) {
@@ -146,13 +158,11 @@ export async function uploadToDreamHost({
     headers: {
       'Content-Type': 'application/json',
       'X-API-Key': apiKey,
-      // Signal no-overwrite; PHP script should honour when present.
       'X-Upsert': 'false',
     },
     body: JSON.stringify({
       fileData,
       fileName: path,
-      contentType,
       upsert: false,
     }),
   });
@@ -173,52 +183,37 @@ export async function uploadToDreamHost({
   }
 
   if (result && result.success === false) {
-    console.error('DreamHost upload rejected:', result.error || result);
+    console.error('DreamHost upload rejected:', result.error || 'unknown');
     const err = new Error('Upload failed.');
     err.status = 502;
     throw err;
   }
 
-  const dreamhostUrl =
-    typeof result?.url === 'string' && result.url.startsWith('https://')
-      ? result.url
-      : dreamHostObjectUrl(path);
-
-  return { path, dreamhostUrl };
+  return { path };
 }
 
 /**
- * Absolute URL on DreamHost for a storage path (server-side fetch only).
+ * Fetch object bytes via authenticated download-pdf.php (never a public URL).
  */
-export function dreamHostObjectUrl(storagePath) {
-  const path = parseOwnedStoragePath(storagePath);
-  if (!path) return null;
-  const base = getDreamHostBaseUrl();
-  if (!base) return null;
-  return `${base}/${path.split('/').map(encodeURIComponent).join('/')}`;
-}
-
-/**
- * Fetch object bytes from DreamHost for proxying.
- */
-export async function fetchFromDreamHost(storagePath, preferredUrl = null) {
+export async function fetchFromDreamHost(storagePath) {
   const apiKey = getDreamHostApiKey();
-  const url =
-    (typeof preferredUrl === 'string' && preferredUrl.startsWith('https://')
-      ? preferredUrl
-      : null) || dreamHostObjectUrl(storagePath);
-  if (!url) {
+  const downloadBase = getDreamHostDownloadUrl();
+  const path = parseOwnedStoragePath(storagePath);
+  if (!apiKey || !downloadBase || !path) {
     const err = new Error('File storage is not configured.');
     err.status = 503;
     throw err;
   }
 
-  const headers = {};
-  if (apiKey) headers['X-API-Key'] = apiKey;
+  const url = new URL(downloadBase);
+  url.searchParams.set('path', path);
 
-  const upstream = await fetch(url, { method: 'GET', headers });
+  const upstream = await fetch(url.toString(), {
+    method: 'GET',
+    headers: { 'X-API-Key': apiKey },
+  });
   if (!upstream.ok) {
-    console.error('DreamHost fetch failed:', upstream.status, url.replace(/https:\/\/[^/]+/, 'https://…'));
+    console.error('DreamHost download failed:', upstream.status);
     const err = new Error(upstream.status === 404 ? 'File not found.' : 'Failed to fetch file.');
     err.status = upstream.status === 404 ? 404 : 502;
     throw err;
@@ -229,6 +224,7 @@ export async function fetchFromDreamHost(storagePath, preferredUrl = null) {
 /**
  * Owner or same-organisation colleague may access a stored file.
  * Extensible for future explicit share grants.
+ * (Same-org policy left as-is pending owner decision.)
  */
 export async function userMayAccessStoredFile(userId, storagePath) {
   const path = parseOwnedStoragePath(storagePath);
@@ -251,7 +247,6 @@ export async function userMayAccessStoredFile(userId, storagePath) {
       return true;
     }
 
-    // Optional explicit share grants table (present when migrations land).
     const service = createServiceClient();
     if (service) {
       const { data } = await service
@@ -275,7 +270,7 @@ export function dreamHostNotConfiguredResponse() {
   return jsonResponse(
     {
       error:
-        'File storage is not configured. Set DREAMHOST_PDF_UPLOAD_URL and DREAMHOST_PDF_API_KEY.',
+        'File storage is not configured. Set DREAMHOST_PDF_UPLOAD_URL, DREAMHOST_PDF_DOWNLOAD_URL (or matching upload URL), and DREAMHOST_PDF_API_KEY.',
     },
     503,
   );
