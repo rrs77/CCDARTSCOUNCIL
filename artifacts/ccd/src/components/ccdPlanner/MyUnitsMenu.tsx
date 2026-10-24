@@ -1,6 +1,8 @@
+import { createPortal } from 'react-dom';
 import {
   ChevronDown,
   ChevronRight,
+  FileDown,
   Pencil,
   Plus,
   Trash2,
@@ -17,6 +19,8 @@ import { formatUkDateRangeShort } from '../../utils/planner/ukDate';
 import { PlannerPopover } from './PlannerPopover';
 import { ModalConfirm, ModalPrompt } from './ModalShell';
 import { cn } from '@/lib/utils';
+import { LessonPrintModal } from '../LessonPrintModal';
+import { ExportDataScope } from './ExportDataScope';
 
 function formatTermHint(term: PlannerTermDates): string {
   return formatUkDateRangeShort(term.start, term.end);
@@ -53,6 +57,8 @@ export function MyUnitsMenu({
   const [liveMessage, setLiveMessage] = useState('');
   const [termsTick, setTermsTick] = useState(0);
   const [dialog, setDialog] = useState<UnitDialog>(null);
+  /** Unit being exported (reuses the unit print/PDF path from the old UnitViewer). */
+  const [exportUnit, setExportUnit] = useState<Unit | null>(null);
 
   const terms = useMemo(
     () => loadPlannerTerms(currentAcademicYear),
@@ -265,6 +271,20 @@ export function MyUnitsMenu({
                           Delete
                         </button>
                       </div>
+                      <button
+                        type="button"
+                        aria-label={`Export ${unit.name} as PDF`}
+                        title={`Export ${unit.name} as PDF`}
+                        disabled={unit.lessonNumbers.length === 0}
+                        onClick={() => {
+                          setExportUnit(unit);
+                          onOpenChange(false);
+                        }}
+                        className="inline-flex h-11 w-full items-center justify-center gap-1.5 rounded-lg border border-indigo-200 bg-white px-2 text-[13px] font-bold text-indigo-700 hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                      >
+                        <FileDown className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                        Export PDF
+                      </button>
                     </div>
                     {isOpen ? (
                       <ul className="space-y-1 border-t border-slate-50 px-2 py-2">
@@ -340,6 +360,20 @@ export function MyUnitsMenu({
       confirmLabel="Delete"
       danger
     />
+    {exportUnit
+        ? createPortal(
+            <ExportDataScope lessonNumbers={exportUnit.lessonNumbers}>
+              <LessonPrintModal
+                isUnitPrint
+                unitId={exportUnit.id}
+                unitName={exportUnit.name}
+                lessonNumbers={exportUnit.lessonNumbers.filter((n) => allLessonsData?.[n])}
+                onClose={() => setExportUnit(null)}
+              />
+            </ExportDataScope>,
+            document.body,
+          )
+        : null}
     </>
   );
 }

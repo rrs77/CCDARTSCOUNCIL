@@ -295,7 +295,7 @@ interface DataProviderProps {
   children: ReactNode;
 }
 
-const DataContext = createContext<DataContextType | undefined>(undefined);
+export const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function useData() {
   const context = useContext(DataContext);

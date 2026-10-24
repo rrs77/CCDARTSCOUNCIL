@@ -78,6 +78,8 @@ export function LessonsWorkspace({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedHalfTerm, setSelectedHalfTerm] = useState('all');
   const [editingLessonNumber, setEditingLessonNumber] = useState<string | undefined>();
+  /** Lesson most recently opened on the canvas or in the plan form ("Add current" in My units). */
+  const [lastOpenedLessonNumber, setLastOpenedLessonNumber] = useState<string | undefined>();
   const [builderKey, setBuilderKey] = useState(0);
   const [assignLessonNumber, setAssignLessonNumber] = useState<string | null>(null);
   const [lessonPlanOpen, setLessonPlanOpen] = useState(false);
@@ -178,6 +180,7 @@ export function LessonsWorkspace({
 
   const openLessonInBuilder = (lessonNumber: string) => {
     setEditingLessonNumber(lessonNumber);
+    setLastOpenedLessonNumber(lessonNumber);
     setBuilderKey((k) => k + 1);
     setLiveMessage(`Opened ${lessonNumber} on the canvas`);
     syncLessonEditorUrl(lessonNumber);
@@ -189,6 +192,7 @@ export function LessonsWorkspace({
       return;
     }
     if (lessonNumber && allLessonsData[lessonNumber]) {
+      setLastOpenedLessonNumber(lessonNumber);
       setEditingLessonForForm({
         lessonNumber,
         lessonData: allLessonsData[lessonNumber],
@@ -503,6 +507,7 @@ export function LessonsWorkspace({
             onAssign={onAssignToUnit ? (num) => setAssignLessonNumber(num) : undefined}
             onDeleteLesson={(num) => {
               deleteLesson(num);
+              if (lastOpenedLessonNumber === num) setLastOpenedLessonNumber(undefined);
               if (editingLessonNumber === num) {
                 setEditingLessonNumber(undefined);
                 setLessonPlanOpen(false);
@@ -540,7 +545,16 @@ export function LessonsWorkspace({
                 setLessonsOpen(false);
               }
             }}
-            activeLessonNumber={editingLessonNumber}
+            // "Edit plan" opens a lesson in the plan form without putting it on the
+            // canvas, so "current" is the lesson in the editor URL (/lessons/edit/:n), else the
+            // lesson most recently opened on the canvas or in the plan form.
+            activeLessonNumber={
+              (lessonEditorFromPath() && allLessonsData?.[lessonEditorFromPath()!]
+                ? lessonEditorFromPath()!
+                : undefined) ??
+              lastOpenedLessonNumber ??
+              editingLessonNumber
+            }
             onSelectLesson={(num) => {
               openLessonInBuilder(num);
               setUnitsOpen(false);

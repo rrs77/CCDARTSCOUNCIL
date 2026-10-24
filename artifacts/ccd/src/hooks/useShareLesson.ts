@@ -146,7 +146,17 @@ export function useShareLesson() {
       <head>
         <meta charset="UTF-8">
         <title>${lessonTitle}</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <style>
+          /* Utilities used below, inlined so the page never waits on a CDN. */
+          .flex{display:flex}.grid{display:grid}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+          .gap-2{gap:8px}.items-start{align-items:flex-start}.items-center{align-items:center}
+          .space-x-2>*+*{margin-left:8px}.space-y-0\.5>*+*{margin-top:2px}
+          .p-2{padding:8px}.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mb-4{margin-bottom:16px}
+          .w-4{width:16px}.h-4{height:16px}.rounded-lg{border-radius:8px}
+          .border{border-width:1px;border-style:solid}.border-gray-800{border-color:#1f2937}
+          .font-bold{font-weight:700}.text-xs{font-size:12px;line-height:16px}.text-base{font-size:16px;line-height:24px}
+          .text-black{color:#000}.text-purple-600{color:#9333ea}.text-green-600{color:#16a34a}.text-blue-800{color:#1e40af}
+        </style>
         <style>
           @page { size: A4; margin: 12mm 15mm 25mm 15mm; }
           .lesson-pdf-content { width: 100%; max-width: 210mm; margin: 0 auto; padding: 0; background: white; }
@@ -416,6 +426,28 @@ export function useShareLesson() {
     }
   };
 
+  /** Browser print → Save as PDF, used when the share PDF service can't be reached. */
+  const openSharePrintFallback = (html: string): boolean => {
+    try {
+      const win = window.open('', '_blank');
+      if (!win) return false;
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => {
+        try {
+          win.print();
+        } catch {
+          /* ignore */
+        }
+      }, 300);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   // Main share function
   const shareLesson = async (lessonNumber: string): Promise<string | null> => {
     // Prevent multiple simultaneous calls
@@ -473,12 +505,27 @@ export function useShareLesson() {
       const { generateAndUploadSharePdf } = await import('../utils/pdfApi');
       console.log('Generating share PDF via PDFBolt proxy + Supabase upload');
 
-      const { url: publicUrl } = await generateAndUploadSharePdf({
-        html: encodedHtml,
-        footerTemplate: encodedFooter,
-        headerTemplate: encodedHeader,
-        fileName,
-      });
+      let publicUrl: string;
+      try {
+        ({ url: publicUrl } = await generateAndUploadSharePdf({
+          html: encodedHtml,
+          footerTemplate: encodedFooter,
+          headerTemplate: encodedHeader,
+          fileName,
+        }));
+      } catch (serviceError) {
+        // Local/dev (or service outage): /api/generate-pdf needs PDFBOLT_API_KEY and the
+        // DREAMHOST_PDF_* settings on the server. Fall back to the browser print path so
+        // the teacher can still Save as PDF, and say clearly why no link was made.
+        console.warn('Share PDF service unavailable, using browser print fallback:', serviceError);
+        const opened = openSharePrintFallback(htmlContent);
+        // Callers show error.message, so the wording avoids their keyword remaps.
+        throw new Error(
+          opened
+            ? 'No share link: the PDF service isn’t available here, so Print opened instead. Choose “Save as PDF” to keep a copy.'
+            : 'No share link: the PDF service isn’t available here. Allow pop-ups, then use Print → Save as PDF instead.',
+        );
+      }
 
       const displayUrl = publicUrl;
 
@@ -531,12 +578,27 @@ export function useShareLesson() {
       const { generateAndUploadSharePdf } = await import('../utils/pdfApi');
       if (import.meta.env.DEV) console.log('[PDF] Generating share PDF via PDFBolt proxy');
 
-      const { url: publicUrl } = await generateAndUploadSharePdf({
-        html: encodedHtml,
-        footerTemplate: encodedFooter,
-        headerTemplate: encodedHeader,
-        fileName,
-      });
+      let publicUrl: string;
+      try {
+        ({ url: publicUrl } = await generateAndUploadSharePdf({
+          html: encodedHtml,
+          footerTemplate: encodedFooter,
+          headerTemplate: encodedHeader,
+          fileName,
+        }));
+      } catch (serviceError) {
+        // Local/dev (or service outage): /api/generate-pdf needs PDFBOLT_API_KEY and the
+        // DREAMHOST_PDF_* settings on the server. Fall back to the browser print path so
+        // the teacher can still Save as PDF, and say clearly why no link was made.
+        console.warn('Share PDF service unavailable, using browser print fallback:', serviceError);
+        const opened = openSharePrintFallback(htmlContent);
+        // Callers show error.message, so the wording avoids their keyword remaps.
+        throw new Error(
+          opened
+            ? 'No share link: the PDF service isn’t available here, so Print opened instead. Choose “Save as PDF” to keep a copy.'
+            : 'No share link: the PDF service isn’t available here. Allow pop-ups, then use Print → Save as PDF instead.',
+        );
+      }
       storeShareUrl(lessonNumber, publicUrl);
       return publicUrl;
     } catch (error: any) {

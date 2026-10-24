@@ -1,3 +1,4 @@
+import { createPortal } from 'react-dom';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
@@ -6,9 +7,12 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronRight,
+  FileDown,
   Plus,
   Search,
 } from 'lucide-react';
+import { LessonPrintModal } from '../LessonPrintModal';
+import { ExportDataScope } from '../ccdPlanner/ExportDataScope';
 import { useAuth } from '../../hooks/useAuth';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
@@ -74,7 +78,11 @@ export function TeacherHalfTermBoard({
     setCurrentAcademicYear,
     getAvailableYears,
     copyTermToYear,
+    allLessonsData,
+    currentSheetInfo,
   } = useData();
+  /** Half-term being exported (reuses the half-term print/PDF path from the old UnitViewer). */
+  const [exportTerm, setExportTerm] = useState<{ id: string; name: string; lessons: string[] } | null>(null);
   const { customYearGroups, yearGroupSections } = useSettings();
   const { stacks } = useLessonStacks();
   const [searchQuery, setSearchQuery] = useState('');
@@ -183,15 +191,26 @@ export function TeacherHalfTermBoard({
       ];
       const matches = !q || hayParts.join(' ').toLowerCase().includes(q);
 
+      // Lesson numbers are per class, so export uses the class that's open in the planner.
+      const openRow = classRows.find((r) => r.cls.id === currentSheetInfo?.sheet);
+      const exportLessons = openRow
+        ? [
+            ...new Set([
+              ...openRow.schemes.flatMap((sc) => sc.lessons || []),
+              ...(readClassHalfTerms(openRow.cls.id, currentAcademicYear).find((t) => t.id === term.id)?.lessons || []),
+            ]),
+          ].filter((n) => allLessonsData?.[n])
+        : [];
       return {
         term,
+        exportLessons,
         classRows,
         unallocatedCount,
         assignedClassCount: classRows.filter((r) => !r.empty).length,
         matches,
       };
     });
-  }, [visibleClasses, stacks, searchQuery, currentAcademicYear, refreshKey]);
+  }, [visibleClasses, stacks, searchQuery, currentAcademicYear, refreshKey, allLessonsData, currentSheetInfo?.sheet]);
 
   const visible = cards.filter((c) => c.matches);
 
@@ -355,7 +374,7 @@ export function TeacherHalfTermBoard({
         </div>
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
-          {visible.map(({ term, classRows, unallocatedCount, assignedClassCount }) => {
+          {visible.map(({ term, classRows, unallocatedCount, assignedClassCount, exportLessons }) => {
             const color = TERM_COLORS[term.id];
             const tint = TERM_TINTS[term.id];
             return (
@@ -407,6 +426,20 @@ export function TeacherHalfTermBoard({
                         <Plus className="h-3.5 w-3.5" />
                         Add scheme
                       </button>
+                      <button
+                        type="button"
+                        disabled={exportLessons.length === 0}
+                        onClick={() => setExportTerm({ id: term.id, name: term.name, lessons: exportLessons })}
+                        title={
+                          exportLessons.length
+                            ? `Export ${term.name} (${currentSheetInfo?.display || 'this class'}) as PDF`
+                            : 'No lessons for the open class in this half-term'
+                        }
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[13px] font-extrabold text-[#1F1B4D] transition hover:bg-[#F7F6FC] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                        Export PDF
+                      </button>
                     </div>
                   </div>
 
@@ -454,9 +487,11 @@ export function TeacherHalfTermBoard({
                                 <span className="ml-auto text-[13px] font-bold tabular-nums text-[#9B97B0]">
                                   {empty
                                     ? '—'
-                                    : `${schemes.length} scheme${schemes.length === 1 ? '' : 's'}${
-                                        lessonCount ? ` · ${lessonCount}` : ''
-                                      }`}
+                                    : schemes.length === 0
+                                      ? `${lessonCount} lesson${lessonCount === 1 ? '' : 's'}`
+                                      : `${schemes.length} scheme${schemes.length === 1 ? '' : 's'}${
+                                          lessonCount ? ` · ${lessonCount}` : ''
+                                        }`}
                                 </span>
                               </div>
 
@@ -583,6 +618,20 @@ export function TeacherHalfTermBoard({
         </div>
       )}
 
+      {exportTerm
+        ? createPortal(
+            <ExportDataScope lessonNumbers={exportTerm.lessons}>
+              <LessonPrintModal
+                isUnitPrint
+                halfTermId={exportTerm.id}
+                halfTermName={exportTerm.name}
+                lessonNumbers={exportTerm.lessons}
+                onClose={() => setExportTerm(null)}
+              />
+            </ExportDataScope>,
+            document.body,
+          )
+        : null}
       <TermCopyModal
         isOpen={showTermCopyModal}
         onClose={() => setShowTermCopyModal(false)}
