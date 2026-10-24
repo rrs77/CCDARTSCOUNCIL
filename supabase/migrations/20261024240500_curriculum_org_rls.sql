@@ -747,10 +747,11 @@ BEGIN
 END $$;
 
 -- For later migrations: fail if any curriculum policy is not named ccd_*.
+-- SECURITY INVOKER: callers (migrations / CI as postgres|service_role) use own rights.
 CREATE OR REPLACE FUNCTION public.ccd_assert_curriculum_policies()
 RETURNS void
 LANGUAGE plpgsql
-SECURITY DEFINER
+SECURITY INVOKER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
@@ -775,8 +776,7 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.ccd_assert_curriculum_policies() FROM PUBLIC;
-REVOKE ALL ON FUNCTION public.ccd_assert_curriculum_policies() FROM anon;
+REVOKE ALL ON FUNCTION public.ccd_assert_curriculum_policies() FROM PUBLIC, anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.ccd_assert_curriculum_policies() TO service_role;
 
 SELECT public.ccd_assert_curriculum_policies();
