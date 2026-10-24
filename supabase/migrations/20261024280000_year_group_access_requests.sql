@@ -1,7 +1,11 @@
 -- Year-group access requests: teachers with NULL/empty allowed_year_groups can
 -- ask org admins for assignment. Never grants or mutates allowed_year_groups.
--- Rate limit (once / 24h / user) is enforced by the authenticated API using
--- year_group_access_requests.created_at. In-app rows go to app_notifications.
+--
+-- Rate limit is atomic via year_group_access_last + claim_year_group_access_slot()
+-- (SECURITY DEFINER, service_role only): INSERT ... ON CONFLICT DO UPDATE … WHERE
+-- last_at < now() - interval '24 hours' RETURNING last_at; no row ⇒ still cooling.
+-- Audit/request history stays in year_group_access_requests; in-app rows go to
+-- app_notifications.
 
 CREATE TABLE IF NOT EXISTS public.app_notifications (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -34,8 +38,15 @@ CREATE INDEX IF NOT EXISTS idx_year_group_access_requests_requester_created
 CREATE INDEX IF NOT EXISTS idx_year_group_access_requests_org_created
   ON public.year_group_access_requests (organisation_id, created_at DESC);
 
+-- Atomic 24h cooldown slot (service_role writes only).
+CREATE TABLE IF NOT EXISTS public.year_group_access_last (
+  requester_id uuid PRIMARY KEY REFERENCES auth.users (id) ON DELETE CASCADE,
+  last_at timestamptz NOT NULL DEFAULT now()
+);
+
 ALTER TABLE public.app_notifications ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.year_group_access_requests ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.year_group_access_last ENABLE ROW LEVEL SECURITY;
 
 DROP POLICY IF EXISTS app_notifications_select_own ON public.app_notifications;
 CREATE POLICY app_notifications_select_own
@@ -44,6 +55,14 @@ CREATE POLICY app_notifications_select_own
   TO authenticated
   USING (user_id = auth.uid());
 
+DROP POLICY IF EXISTS app_notifications_update_own_is_read ON public.app_notifications;
+CREATE POLICY app_notifications_update_own_is_read
+  ON public.app_notifications
+  FOR UPDATE
+  TO authenticated
+  USING (user_id = auth.uid())
+  WITH CHECK (user_id = auth.uid());
+
 DROP POLICY IF EXISTS year_group_access_requests_select_own ON public.year_group_access_requests;
 CREATE POLICY year_group_access_requests_select_own
   ON public.year_group_access_requests
@@ -51,10 +70,73 @@ CREATE POLICY year_group_access_requests_select_own
   TO authenticated
   USING (requester_id = auth.uid());
 
--- Client roles cannot write; API uses service role.
+-- Org admins (active, not suspended/anonymised) can read requests for their org.
+DROP POLICY IF EXISTS year_group_access_requests_select_org_admin ON public.year_group_access_requests;
+CREATE POLICY year_group_access_requests_select_org_admin
+  ON public.year_group_access_requests
+  FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.profiles p
+      WHERE p.id = auth.uid()
+        AND p.status IS DISTINCT FROM 'suspended'
+        AND p.anonymised_at IS NULL
+        AND NULLIF(trim(p.organisation_id), '') IS NOT NULL
+        AND trim(p.organisation_id) = trim(year_group_access_requests.organisation_id)
+        AND (
+          p.role IN ('admin', 'superuser', 'super_admin')
+          OR p.can_manage_users IS TRUE
+        )
+    )
+  );
+
+-- No client policies on year_group_access_last (service_role only).
+DROP POLICY IF EXISTS year_group_access_last_deny_all ON public.year_group_access_last;
+CREATE POLICY year_group_access_last_deny_all
+  ON public.year_group_access_last
+  FOR ALL
+  TO authenticated, anon
+  USING (false)
+  WITH CHECK (false);
+
 REVOKE ALL ON public.app_notifications FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON public.year_group_access_requests FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON public.year_group_access_last FROM PUBLIC, anon, authenticated;
+
 GRANT SELECT ON public.app_notifications TO authenticated;
+GRANT UPDATE (is_read) ON public.app_notifications TO authenticated;
 GRANT SELECT ON public.year_group_access_requests TO authenticated;
+
 GRANT ALL ON public.app_notifications TO service_role;
 GRANT ALL ON public.year_group_access_requests TO service_role;
+GRANT ALL ON public.year_group_access_last TO service_role;
+
+CREATE OR REPLACE FUNCTION public.claim_year_group_access_slot(p_requester_id uuid)
+RETURNS timestamptz
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_last timestamptz;
+BEGIN
+  IF p_requester_id IS NULL THEN
+    RETURN NULL;
+  END IF;
+
+  INSERT INTO public.year_group_access_last AS t (requester_id, last_at)
+  VALUES (p_requester_id, now())
+  ON CONFLICT (requester_id) DO UPDATE
+    SET last_at = now()
+    WHERE t.last_at < now() - interval '24 hours'
+  RETURNING t.last_at INTO v_last;
+
+  RETURN v_last;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.claim_year_group_access_slot(uuid) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.claim_year_group_access_slot(uuid) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_year_group_access_slot(uuid) TO service_role;

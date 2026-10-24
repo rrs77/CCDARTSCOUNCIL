@@ -475,17 +475,36 @@ INSERT INTO rls_results
 SELECT 'ccd_current_user_manages_own_org exists',
        to_regprocedure('public.ccd_current_user_manages_own_org(text)') IS NOT NULL;
 
--- P2b: no leftover non-ccd_% policies on catalog/planner tables
+-- Simulate 20261024270000 half_terms policy cleanup (drops only; unique index
+-- is not applied here — scratch fixtures share scope keys that the live unique
+-- forbids). Clash policies must not OR with ccd_* owner_admin.
+DROP POLICY IF EXISTS half_terms_owner_all ON public.half_terms;
+DROP POLICY IF EXISTS half_terms_org_shared_read ON public.half_terms;
+
+-- P2b: every policy on the 14 curriculum tables must be named ccd_*
 INSERT INTO rls_results
-SELECT 'no non-ccd policies on year_groups/half_terms/lesson_plans/category_groups/custom_categories',
+SELECT 'no non-ccd policies on 14 curriculum tables',
        NOT EXISTS (
          SELECT 1 FROM pg_policies
          WHERE schemaname = 'public'
            AND tablename IN (
+             'activities', 'lessons', 'eyfs_statements',
              'half_terms', 'lesson_plans', 'year_groups',
-             'category_groups', 'custom_categories'
+             'category_groups', 'custom_categories',
+             'lesson_stacks', 'activity_stacks',
+             'custom_objective_year_groups', 'custom_objective_areas',
+             'custom_objectives', 'activity_custom_objectives'
            )
            AND policyname NOT LIKE 'ccd_%'
+       );
+
+INSERT INTO rls_results
+SELECT 'half_terms clash policies absent after 270000 cleanup',
+       NOT EXISTS (
+         SELECT 1 FROM pg_policies
+         WHERE schemaname = 'public'
+           AND tablename = 'half_terms'
+           AND policyname IN ('half_terms_owner_all', 'half_terms_org_shared_read')
        );
 
 -- Teacher cannot UPDATE/DELETE NULL-org shared catalog rows

@@ -7,3 +7,44 @@ export function hasAssignedYearGroups(allowedYearGroups: string[] | null | undef
   if (!Array.isArray(allowedYearGroups)) return false;
   return allowedYearGroups.some((y) => String(y ?? '').trim().length > 0);
 }
+
+export function orgIdOfProfile(profile: { organisation_id?: string | null } | null | undefined): string | null {
+  const org =
+    typeof profile?.organisation_id === 'string' ? profile.organisation_id.trim() : '';
+  return org || null;
+}
+
+/** Admins / superusers manage year groups — they should not see the teacher notice. */
+export function isYearGroupNoticeAdminRole(role: string | null | undefined): boolean {
+  return role === 'admin' || role === 'super_admin' || role === 'superuser';
+}
+
+export type YearGroupsNoticeInput = {
+  /** AuthContext.loading — hide until profile has settled (no first-login flash). */
+  authLoading: boolean;
+  profile: {
+    id?: string;
+    role?: string | null;
+    organisation_id?: string | null;
+    allowed_year_groups?: string[] | null;
+  } | null;
+  /** Demo / preview sessions seed null year groups on admins — never show. */
+  isDemo: boolean;
+  dismissed: boolean;
+};
+
+/**
+ * Whether the Planner/Lessons year-groups notice should render.
+ * Teachers only; requires loaded profile + organisation; hidden for admins/demo.
+ */
+export function shouldShowYearGroupsAccessNotice(input: YearGroupsNoticeInput): boolean {
+  if (input.authLoading) return false;
+  if (input.isDemo) return false;
+  if (input.dismissed) return false;
+  const profile = input.profile;
+  if (!profile?.id) return false;
+  if (isYearGroupNoticeAdminRole(profile.role)) return false;
+  if (!orgIdOfProfile(profile)) return false;
+  if (hasAssignedYearGroups(profile.allowed_year_groups)) return false;
+  return true;
+}

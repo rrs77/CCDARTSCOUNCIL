@@ -1,20 +1,24 @@
 /**
  * POST /api/year-groups/request-access
  *
- * Authenticated teacher (or any signed-in user) with a non-null organisation_id
- * asks org admins to assign allowed_year_groups. Creates an audit/request row,
- * in-app app_notifications for same-org admins, and optional email via Resend.
+ * Authenticated user with a non-null organisation_id asks org admins to assign
+ * allowed_year_groups. Creates an audit/request row, in-app app_notifications
+ * for same-org admins (capped), and optional email via Resend.
  *
- * Never updates profiles / allowed_year_groups. Rate-limited to once per 24h
- * per requester (DB-backed).
+ * Never updates profiles / allowed_year_groups. Atomic 24h cooldown via
+ * claim_year_group_access_slot (service_role SECURITY DEFINER RPC).
  */
 
 import {
+  assertRateLimit,
   createServiceClient,
+  getClientIp,
+  hashIpForStorage,
   jsonResponse,
   loadProfile,
   optionsResponse,
   requireAuth,
+  writeAuditLog,
 } from '../../../api/_authShared.js';
 import {
   processYearGroupAccessRequest,
@@ -25,6 +29,8 @@ import {
   yearGroupAccessRequestEmail,
 } from '../../../api/_emailTemplates.js';
 
+const NO_STORE = { 'Cache-Control': 'private, no-store' };
+
 function appUsersSettingsUrl() {
   const base =
     process.env.APP_BASE_URL ||
@@ -34,26 +40,88 @@ function appUsersSettingsUrl() {
   return `${String(base).replace(/\/$/, '')}/settings/users`;
 }
 
+function respond(body, status, extra = {}) {
+  return jsonResponse(body, status, { ...NO_STORE, ...extra });
+}
+
+async function audit(request, { actorId, action, organisationId, meta }) {
+  const ipHash = await hashIpForStorage(getClientIp(request));
+  await writeAuditLog({
+    actorId,
+    action,
+    targetType: 'year_group_access',
+    targetId: actorId,
+    organisationId: organisationId || null,
+    ipHash,
+    meta,
+  });
+}
+
 export async function OPTIONS() {
   return optionsResponse();
 }
 
 export async function POST(request) {
+  let actorId = null;
+  let organisationId = null;
   try {
     const auth = await requireAuth(request);
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) {
+      // requireAuth already shaped; still force no-store
+      const res = auth.response;
+      const headers = new Headers(res.headers);
+      headers.set('Cache-Control', 'private, no-store');
+      return new Response(res.body, { status: res.status, headers });
+    }
+    actorId = auth.userId;
+
+    const ip = getClientIp(request);
+    const ipRl = assertRateLimit(`year-group-access-ip:${ip || 'x'}`, {
+      limit: 30,
+      windowMs: 60 * 60 * 1000,
+    });
+    if (!ipRl.ok) {
+      await audit(request, {
+        actorId,
+        action: 'year_group_access.request_denied_ip_rate',
+        organisationId: null,
+        meta: { status: 429 },
+      });
+      return respond(
+        { error: 'Too many requests. Please wait and try again.' },
+        429,
+        { 'Retry-After': '3600' },
+      );
+    }
 
     const service = createServiceClient();
-    if (!service) return jsonResponse({ error: 'Server configuration error.' }, 500);
+    if (!service) return respond({ error: 'Server configuration error.' }, 500);
 
     const requester = await loadProfile(auth.userId);
     if (!requester || requester.anonymised_at) {
-      return jsonResponse({ error: 'Forbidden.' }, 403);
+      await audit(request, {
+        actorId,
+        action: 'year_group_access.request_denied',
+        organisationId: null,
+        meta: { status: 403, reason: 'forbidden' },
+      });
+      return respond({ error: 'Forbidden.' }, 403);
     }
     const status = requester.status == null ? 'active' : String(requester.status);
     if (status === 'suspended') {
-      return jsonResponse({ error: 'Forbidden.' }, 403);
+      await audit(request, {
+        actorId,
+        action: 'year_group_access.request_denied',
+        organisationId: null,
+        meta: { status: 403, reason: 'suspended' },
+      });
+      return respond({ error: 'Forbidden.' }, 403);
     }
+
+    organisationId =
+      typeof requester.organisation_id === 'string'
+        ? requester.organisation_id.trim() || null
+        : null;
 
     const result = await processYearGroupAccessRequest({
       requester: {
@@ -61,17 +129,15 @@ export async function POST(request) {
         email: requester.email,
         display_name: requester.display_name,
         organisation_id: requester.organisation_id,
+        allowed_year_groups: requester.allowed_year_groups,
       },
-      getLatestRequest: async (requesterId) => {
-        const { data, error } = await service
-          .from('year_group_access_requests')
-          .select('id, created_at')
-          .eq('requester_id', requesterId)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .maybeSingle();
+      claimSlot: async (requesterId) => {
+        const { data, error } = await service.rpc('claim_year_group_access_slot', {
+          p_requester_id: requesterId,
+        });
         if (error) throw new Error(error.message);
-        return data;
+        // PostgREST returns the scalar or null when no RETURNING row.
+        return data ?? null;
       },
       insertRequest: async (row) => {
         const { data, error } = await service
@@ -82,13 +148,13 @@ export async function POST(request) {
         if (error) throw new Error(error.message);
         return data;
       },
-      listOrgProfiles: async (organisationId) => {
+      listOrgProfiles: async (orgId) => {
         const { data, error } = await service
           .from('profiles')
           .select(
             'id, email, display_name, role, status, organisation_id, can_manage_users, anonymised_at',
           )
-          .eq('organisation_id', organisationId);
+          .eq('organisation_id', orgId);
         if (error) throw new Error(error.message);
         return data || [];
       },
@@ -96,7 +162,6 @@ export async function POST(request) {
         const { error } = await service.from('app_notifications').insert(rows);
         if (error) throw new Error(error.message);
       },
-      // Intentionally unused — exposed so tests prove grants never happen.
       updateProfile: undefined,
       sendEmail: async ({ to, admin, requester: req }) => {
         const mail = yearGroupAccessRequestEmail({
@@ -109,15 +174,49 @@ export async function POST(request) {
       },
     });
 
-    const headers =
+    if (result.status === 400 || result.status === 403 || result.status === 429 || result.status === 409) {
+      await audit(request, {
+        actorId,
+        action:
+          result.status === 429
+            ? 'year_group_access.request_rate_limited'
+            : result.status === 409
+              ? 'year_group_access.request_already_assigned'
+              : 'year_group_access.request_denied',
+        organisationId,
+        meta: { status: result.status },
+      });
+    } else if (result.ok) {
+      await audit(request, {
+        actorId,
+        action: 'year_group_access.request',
+        organisationId,
+        meta: {
+          status: 200,
+          notified: result.notifiedAdminIds?.length ?? 0,
+          request_id: result.requestId ?? null,
+        },
+      });
+    }
+
+    const extra =
       result.status === 429
         ? { 'Retry-After': String(Math.ceil(YEAR_GROUP_ACCESS_COOLDOWN_MS / 1000)) }
-        : undefined;
-    return jsonResponse(result.body, result.status, headers);
+        : {};
+    return respond(result.body, result.status, extra);
   } catch (e) {
-    return jsonResponse(
-      { error: e instanceof Error ? e.message : 'Request failed.' },
-      500,
+    console.error(
+      'year-groups/request-access failed:',
+      e instanceof Error ? e.stack || e.message : e,
     );
+    if (actorId) {
+      await audit(request, {
+        actorId,
+        action: 'year_group_access.request_error',
+        organisationId,
+        meta: { status: 500 },
+      }).catch(() => {});
+    }
+    return respond({ error: 'Request failed.' }, 500);
   }
 }

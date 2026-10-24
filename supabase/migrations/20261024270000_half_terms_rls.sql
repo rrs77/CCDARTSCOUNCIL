@@ -1,7 +1,12 @@
--- half_terms: restore tenant scope (user_id + organisation_id) after d1bd288
--- dropped client filters to avoid PostgREST 400 on a missing user_id column.
+-- half_terms: restore tenant scope columns (user_id + organisation_id) after
+-- d1bd288 dropped client filters to avoid PostgREST 400 on a missing user_id.
 -- Unique key includes scope so two teachers can own the same sheet/year/term.
 -- Timestamp 20261024270000 per Security Reviewer (after MIS / security-fixes).
+--
+-- BLOCKER fix: do NOT create half_terms_owner_all / half_terms_org_shared_read.
+-- Those OR with security-fixes 20261024240500 ccd_* owner_admin policies and
+-- would re-open same-org colleague read (P3 HOLD) and skip suspended/anonymised
+-- gates. Drop them if a prior draft left them in place; rely on ccd_* policies.
 
 ALTER TABLE public.half_terms
   ADD COLUMN IF NOT EXISTS user_id uuid REFERENCES auth.users (id) ON DELETE CASCADE;
@@ -66,28 +71,9 @@ CREATE UNIQUE INDEX IF NOT EXISTS uq_half_terms_scope
 
 ALTER TABLE public.half_terms ENABLE ROW LEVEL SECURITY;
 
+-- Remove clash policies from earlier drafts of this migration.
 DROP POLICY IF EXISTS half_terms_owner_all ON public.half_terms;
-CREATE POLICY half_terms_owner_all
-  ON public.half_terms
-  FOR ALL
-  USING (user_id = auth.uid())
-  WITH CHECK (user_id = auth.uid());
-
 DROP POLICY IF EXISTS half_terms_org_shared_read ON public.half_terms;
-CREATE POLICY half_terms_org_shared_read
-  ON public.half_terms
-  FOR SELECT
-  USING (
-    user_id IS NULL
-    AND organisation_id IS NOT NULL
-    AND length(trim(organisation_id)) > 0
-    AND EXISTS (
-      SELECT 1
-      FROM public.profiles p
-      WHERE p.id = auth.uid()
-        AND NULLIF(trim(p.organisation_id), '') = trim(half_terms.organisation_id)
-    )
-  );
 
 COMMENT ON COLUMN public.half_terms.user_id IS
   'Personal half-term map owner. NULL only for org-shared curriculum restore rows.';

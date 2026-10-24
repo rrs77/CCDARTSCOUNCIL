@@ -4,12 +4,15 @@ import toast from 'react-hot-toast';
 import { useAuth } from '../../hooks/useAuth';
 import { getVercelApiUrl } from '../../utils/apiUrl';
 import { supabase } from '../../config/supabase';
+import { isDemoModeActive } from '../../utils/demoMode';
 import {
   YEAR_GROUP_ACCESS_NOTICE,
   hasAssignedYearGroups,
+  shouldShowYearGroupsAccessNotice,
 } from '../../utils/planner/yearGroupAccess';
 
 const DISMISS_PREFIX = 'ccd:year-groups-notice-dismissed:';
+const DEMO_USER_ID = 'demo-visitor';
 
 function dismissKey(userId: string) {
   return `${DISMISS_PREFIX}${userId}`;
@@ -41,21 +44,21 @@ function clearDismissed(userId: string) {
 
 /**
  * Dismissible but persistent notice for teachers with NULL/empty
- * allowed_year_groups. Own activities/plans stay available; request access
- * only notifies same-org admins (never grants year groups).
+ * allowed_year_groups. Hidden until auth profile has loaded; never shown for
+ * admins, demo/preview, or users without an organisation.
  */
 export function YearGroupsAccessNotice() {
-  const { user, profile } = useAuth();
+  const { user, profile, loading: authLoading } = useAuth();
   const headingId = useId();
   const [dismissed, setDismissed] = useState(false);
   const [requesting, setRequesting] = useState(false);
 
   const userId = user?.id || profile?.id || '';
-  const allowed = profile?.allowed_year_groups ?? null;
-  const hasGroups = hasAssignedYearGroups(allowed);
+  const isDemo = isDemoModeActive() || userId === DEMO_USER_ID;
+  const hasGroups = hasAssignedYearGroups(profile?.allowed_year_groups);
 
   useEffect(() => {
-    if (!userId) {
+    if (!userId || authLoading) {
       setDismissed(false);
       return;
     }
@@ -65,7 +68,7 @@ export function YearGroupsAccessNotice() {
       return;
     }
     setDismissed(readDismissed(userId));
-  }, [userId, hasGroups]);
+  }, [userId, hasGroups, authLoading]);
 
   const onDismiss = useCallback(() => {
     if (userId) writeDismissed(userId);
@@ -111,12 +114,20 @@ export function YearGroupsAccessNotice() {
     }
   }, [requesting]);
 
-  if (!userId || hasGroups || dismissed) return null;
+  const visible = shouldShowYearGroupsAccessNotice({
+    authLoading,
+    profile,
+    isDemo,
+    dismissed,
+  });
+
+  if (!visible) return null;
 
   return (
     <div
       role="region"
       aria-labelledby={headingId}
+      data-testid="year-groups-access-notice"
       className="mb-3 rounded-xl border border-amber-200/80 bg-amber-50 px-3 py-2.5 text-[#1F1B4D] shadow-sm"
     >
       <div className="flex items-start gap-2">

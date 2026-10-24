@@ -4,9 +4,12 @@
  * Teachers with NULL/empty allowed_year_groups keep owner-scoped create/use.
  * Request access only notifies same-org admins — never grants or updates
  * profiles.allowed_year_groups.
+ *
+ * Rate limit is atomic via claimSlot (DB RPC claim_year_group_access_slot).
  */
 
 export const YEAR_GROUP_ACCESS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
+export const YEAR_GROUP_ACCESS_EMAIL_CAP = 20;
 
 export const YEAR_GROUP_ACCESS_NOTICE =
   "You haven't been given any year groups yet. You can still create your own activities and plans. Ask your school admin for access to year-group shared plans.";
@@ -58,11 +61,11 @@ export function selectOrgAdminsToNotify(candidates, { organisationId, excludeUse
   });
 }
 
-export function isWithinRequestCooldown(lastCreatedAt, nowMs = Date.now()) {
-  if (!lastCreatedAt) return false;
-  const t = new Date(lastCreatedAt).getTime();
-  if (!Number.isFinite(t)) return false;
-  return nowMs - t < YEAR_GROUP_ACCESS_COOLDOWN_MS;
+/** Cap email/notify recipients (deterministic: first N after filter). */
+export function capNotifyRecipients(admins, cap = YEAR_GROUP_ACCESS_EMAIL_CAP) {
+  const list = Array.isArray(admins) ? admins : [];
+  const limit = Number.isFinite(cap) && cap > 0 ? Math.floor(cap) : YEAR_GROUP_ACCESS_EMAIL_CAP;
+  return list.slice(0, limit);
 }
 
 export function buildAccessRequestNotification({ requester, organisationId }) {
@@ -80,7 +83,6 @@ export function buildAccessRequestNotification({ requester, organisationId }) {
     meta: {
       requester_id: requester?.id ?? null,
       requester_email: requester?.email ?? null,
-      // Explicit: this flow never grants access.
       grants_allowed_year_groups: false,
     },
   };
@@ -92,20 +94,32 @@ export function buildAccessRequestNotification({ requester, organisationId }) {
  * Guarantees:
  * - never calls updateProfile / never mutates allowed_year_groups
  * - only notifies admins returned by selectOrgAdminsToNotify (same org)
- * - rate-limits via getLatestRequest + cooldown
+ * - rate-limits via claimSlot (atomic); no row / falsy ⇒ 429
+ * - emails via Promise.allSettled, capped at YEAR_GROUP_ACCESS_EMAIL_CAP
  */
 export async function processYearGroupAccessRequest({
   requester,
-  getLatestRequest,
+  claimSlot,
   insertRequest,
   listOrgProfiles,
   insertNotifications,
   sendEmail,
   /** @deprecated Never used — accepted so tests can assert grants are impossible. */
   updateProfile: _updateProfile,
-  now = new Date(),
+  emailCap = YEAR_GROUP_ACCESS_EMAIL_CAP,
 }) {
-  void _updateProfile; // intentionally unused: this flow must never mutate profiles
+  void _updateProfile;
+
+  if (hasAssignedYearGroups(requester?.allowed_year_groups)) {
+    return {
+      ok: false,
+      status: 409,
+      body: { error: 'You already have year groups assigned.' },
+      notifiedAdminIds: [],
+      emailsAttempted: 0,
+      profileMutations: 0,
+    };
+  }
 
   const organisationId = orgIdOf(requester);
   if (!organisationId) {
@@ -114,12 +128,13 @@ export async function processYearGroupAccessRequest({
       status: 400,
       body: { error: 'Your profile needs an organisation_id before requesting year-group access.' },
       notifiedAdminIds: [],
+      emailsAttempted: 0,
       profileMutations: 0,
     };
   }
 
-  const latest = await getLatestRequest(requester.id);
-  if (isWithinRequestCooldown(latest?.created_at, now.getTime())) {
+  const claimedAt = await claimSlot(requester.id);
+  if (!claimedAt) {
     return {
       ok: false,
       status: 429,
@@ -128,6 +143,7 @@ export async function processYearGroupAccessRequest({
         retry_after_hours: 24,
       },
       notifiedAdminIds: [],
+      emailsAttempted: 0,
       profileMutations: 0,
     };
   }
@@ -138,10 +154,13 @@ export async function processYearGroupAccessRequest({
   });
 
   const candidates = await listOrgProfiles(organisationId);
-  const admins = selectOrgAdminsToNotify(candidates, {
-    organisationId,
-    excludeUserId: requester.id,
-  });
+  const admins = capNotifyRecipients(
+    selectOrgAdminsToNotify(candidates, {
+      organisationId,
+      excludeUserId: requester.id,
+    }),
+    emailCap,
+  );
 
   const note = buildAccessRequestNotification({ requester, organisationId });
   const notificationRows = admins.map((admin) => ({
@@ -157,17 +176,23 @@ export async function processYearGroupAccessRequest({
     await insertNotifications(notificationRows);
   }
 
-  const notifiedAdminIds = [];
-  for (const admin of admins) {
-    notifiedAdminIds.push(admin.id);
-    if (typeof sendEmail === 'function' && admin.email) {
-      await sendEmail({
-        to: admin.email,
-        admin,
-        requester,
-        organisationId,
+  const notifiedAdminIds = admins.map((a) => a.id);
+  let emailsAttempted = 0;
+  if (typeof sendEmail === 'function') {
+    const jobs = admins
+      .filter((admin) => admin.email)
+      .map((admin) => {
+        emailsAttempted += 1;
+        return Promise.resolve(
+          sendEmail({
+            to: admin.email,
+            admin,
+            requester,
+            organisationId,
+          }),
+        );
       });
-    }
+    await Promise.allSettled(jobs);
   }
 
   return {
@@ -176,12 +201,30 @@ export async function processYearGroupAccessRequest({
     body: {
       ok: true,
       notified: notifiedAdminIds.length,
-      // Surface that nothing was granted.
       granted: false,
       allowed_year_groups_unchanged: true,
     },
     notifiedAdminIds,
+    emailsAttempted,
     profileMutations: 0,
     requestId: requestRow?.id ?? null,
+    claimedAt,
+  };
+}
+
+/**
+ * In-memory stand-in for claim_year_group_access_slot used by parallel tests.
+ * Only the first successful claim within the cooldown window returns a timestamp.
+ */
+export function createMemoryClaimSlot({ cooldownMs = YEAR_GROUP_ACCESS_COOLDOWN_MS } = {}) {
+  const lastByUser = new Map();
+  return async function claimSlot(requesterId) {
+    const now = Date.now();
+    const prev = lastByUser.get(requesterId);
+    if (prev != null && now - prev < cooldownMs) {
+      return null;
+    }
+    lastByUser.set(requesterId, now);
+    return new Date(now).toISOString();
   };
 }

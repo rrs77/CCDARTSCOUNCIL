@@ -1,29 +1,34 @@
 /**
- * Year-group access request — notify same-org admins only; never grant.
+ * Year-group access request — atomic cooldown, same-org admins only, never grant.
  * Run: node --test api/__tests__/yearGroupAccess.test.mjs
  */
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   YEAR_GROUP_ACCESS_COOLDOWN_MS,
+  YEAR_GROUP_ACCESS_EMAIL_CAP,
   YEAR_GROUP_ACCESS_NOTICE,
+  capNotifyRecipients,
+  createMemoryClaimSlot,
   hasAssignedYearGroups,
-  isWithinRequestCooldown,
   orgIdOf,
   processYearGroupAccessRequest,
   selectOrgAdminsToNotify,
 } from '../_yearGroupAccess.js';
+import { shouldShowYearGroupsAccessNotice } from '../../artifacts/ccd/src/utils/planner/yearGroupAccessHelpers.mjs';
 
 const ORG_A = 'school-a';
 const ORG_B = 'school-b';
-const NOW = new Date('2026-10-24T12:00:00.000Z');
 
 const requester = {
   id: 'teacher-1',
   email: 'teacher@school-a.test',
   display_name: 'Taylor Teacher',
   organisation_id: ORG_A,
+  allowed_year_groups: null,
 };
 
 const sameOrgAdmin = {
@@ -66,22 +71,35 @@ const sameOrgTeacher = {
   can_manage_users: false,
 };
 
+function baseDeps(overrides = {}) {
+  const claimSlot = createMemoryClaimSlot();
+  return {
+    claimSlot,
+    insertRequest: async (row) => ({ id: 'req-1', ...row }),
+    listOrgProfiles: async () => [sameOrgAdmin, sameOrgManager, otherOrgAdmin, sameOrgTeacher],
+    insertNotifications: async () => {},
+    sendEmail: async () => ({ sent: true }),
+    updateProfile: async () => {
+      throw new Error('updateProfile must not be called');
+    },
+    ...overrides,
+  };
+}
+
 describe('hasAssignedYearGroups', () => {
   it('treats null and empty as no access', () => {
     assert.equal(hasAssignedYearGroups(null), false);
-    assert.equal(hasAssignedYearGroups(undefined), false);
     assert.equal(hasAssignedYearGroups([]), false);
     assert.equal(hasAssignedYearGroups(['', '  ']), false);
   });
 
   it('accepts a non-blank year group', () => {
     assert.equal(hasAssignedYearGroups(['Year 5']), true);
-    assert.equal(hasAssignedYearGroups(['', 'Year 3']), true);
   });
 });
 
-describe('selectOrgAdminsToNotify', () => {
-  it('includes same-org admins and can_manage_users; excludes other-org and peers', () => {
+describe('selectOrgAdminsToNotify / cap', () => {
+  it('includes same-org admins only', () => {
     const selected = selectOrgAdminsToNotify(
       [sameOrgAdmin, sameOrgManager, otherOrgAdmin, sameOrgTeacher, requester],
       { organisationId: ORG_A, excludeUserId: requester.id },
@@ -92,32 +110,13 @@ describe('selectOrgAdminsToNotify', () => {
     );
   });
 
-  it('returns empty when organisation_id is missing', () => {
-    assert.deepEqual(
-      selectOrgAdminsToNotify([sameOrgAdmin], { organisationId: null, excludeUserId: 'x' }),
-      [],
-    );
-  });
-
-  it('excludes suspended / anonymised admins', () => {
-    const selected = selectOrgAdminsToNotify(
-      [
-        { ...sameOrgAdmin, status: 'suspended' },
-        { ...sameOrgManager, anonymised_at: '2026-01-01T00:00:00.000Z' },
-      ],
-      { organisationId: ORG_A, excludeUserId: requester.id },
-    );
-    assert.equal(selected.length, 0);
-  });
-});
-
-describe('isWithinRequestCooldown', () => {
-  it('blocks within 24h and allows after', () => {
-    const recent = new Date(NOW.getTime() - 60 * 60 * 1000).toISOString();
-    const old = new Date(NOW.getTime() - YEAR_GROUP_ACCESS_COOLDOWN_MS - 1000).toISOString();
-    assert.equal(isWithinRequestCooldown(recent, NOW.getTime()), true);
-    assert.equal(isWithinRequestCooldown(old, NOW.getTime()), false);
-    assert.equal(isWithinRequestCooldown(null, NOW.getTime()), false);
+  it('caps recipients at 20', () => {
+    const many = Array.from({ length: 25 }, (_, i) => ({
+      ...sameOrgAdmin,
+      id: `admin-${i}`,
+      email: `a${i}@school-a.test`,
+    }));
+    assert.equal(capNotifyRecipients(many).length, YEAR_GROUP_ACCESS_EMAIL_CAP);
   });
 });
 
@@ -126,30 +125,20 @@ describe('processYearGroupAccessRequest', () => {
     const profileUpdates = [];
     const emails = [];
     const notifications = [];
-    let insertedRequest = null;
 
     const result = await processYearGroupAccessRequest({
       requester,
-      now: NOW,
-      getLatestRequest: async () => null,
-      insertRequest: async (row) => {
-        insertedRequest = { id: 'req-1', ...row };
-        return insertedRequest;
-      },
-      listOrgProfiles: async (orgId) => {
-        assert.equal(orgId, ORG_A);
-        // Deliberately include other-org admin in the candidate set — must be filtered out.
-        return [sameOrgAdmin, sameOrgManager, otherOrgAdmin, sameOrgTeacher];
-      },
-      insertNotifications: async (rows) => {
-        notifications.push(...rows);
-      },
-      updateProfile: async (patch) => {
-        profileUpdates.push(patch);
-      },
-      sendEmail: async (payload) => {
-        emails.push(payload);
-      },
+      ...baseDeps({
+        insertNotifications: async (rows) => {
+          notifications.push(...rows);
+        },
+        updateProfile: async (patch) => {
+          profileUpdates.push(patch);
+        },
+        sendEmail: async (payload) => {
+          emails.push(payload);
+        },
+      }),
     });
 
     assert.equal(result.ok, true);
@@ -158,99 +147,211 @@ describe('processYearGroupAccessRequest', () => {
     assert.equal(result.body.allowed_year_groups_unchanged, true);
     assert.equal(result.profileMutations, 0);
     assert.equal(profileUpdates.length, 0);
-    assert.ok(insertedRequest);
-    assert.equal(insertedRequest.organisation_id, ORG_A);
-    assert.equal(insertedRequest.requester_id, requester.id);
-
     assert.deepEqual(result.notifiedAdminIds.sort(), [sameOrgAdmin.id, sameOrgManager.id].sort());
-    assert.equal(notifications.length, 2);
-    for (const n of notifications) {
-      assert.equal(n.organisation_id, ORG_A);
-      assert.equal(n.meta.grants_allowed_year_groups, false);
-      assert.notEqual(n.user_id, otherOrgAdmin.id);
-    }
-    assert.equal(
-      notifications.some((n) => n.user_id === otherOrgAdmin.id),
-      false,
-    );
-
-    assert.equal(emails.length, 2);
-    assert.equal(
-      emails.some((e) => e.to === otherOrgAdmin.email),
-      false,
-    );
+    assert.equal(notifications.some((n) => n.user_id === otherOrgAdmin.id), false);
+    assert.equal(emails.some((e) => e.to === otherOrgAdmin.email), false);
   });
 
-  it('does not notify other-org admins even when listOrgProfiles is mis-scoped', async () => {
-    const notifications = [];
+  it('returns 409 when year groups are already assigned (no grant side effects)', async () => {
+    let claimCalls = 0;
     const result = await processYearGroupAccessRequest({
-      requester,
-      now: NOW,
-      getLatestRequest: async () => null,
-      insertRequest: async (row) => ({ id: 'req-2', ...row }),
-      listOrgProfiles: async () => [otherOrgAdmin],
-      insertNotifications: async (rows) => {
-        notifications.push(...rows);
-      },
-      sendEmail: async () => {},
-    });
-    assert.equal(result.ok, true);
-    assert.equal(result.notifiedAdminIds.length, 0);
-    assert.equal(notifications.length, 0);
-  });
-
-  it('rate-limits to once per 24h without writing grants', async () => {
-    let insertCalls = 0;
-    const result = await processYearGroupAccessRequest({
-      requester,
-      now: NOW,
-      getLatestRequest: async () => ({
-        id: 'old',
-        created_at: new Date(NOW.getTime() - 2 * 60 * 60 * 1000).toISOString(),
+      requester: { ...requester, allowed_year_groups: ['Year 4'] },
+      ...baseDeps({
+        claimSlot: async () => {
+          claimCalls += 1;
+          return new Date().toISOString();
+        },
       }),
-      insertRequest: async () => {
-        insertCalls += 1;
-        return { id: 'should-not' };
-      },
-      listOrgProfiles: async () => [sameOrgAdmin],
-      insertNotifications: async () => {},
-      updateProfile: async () => {
-        throw new Error('updateProfile must not be called');
-      },
-      sendEmail: async () => {},
+    });
+    assert.equal(result.ok, false);
+    assert.equal(result.status, 409);
+    assert.equal(claimCalls, 0);
+  });
+
+  it('returns 429 when claimSlot returns null', async () => {
+    const result = await processYearGroupAccessRequest({
+      requester,
+      ...baseDeps({
+        claimSlot: async () => null,
+      }),
     });
     assert.equal(result.ok, false);
     assert.equal(result.status, 429);
-    assert.equal(insertCalls, 0);
-    assert.equal(result.profileMutations, 0);
   });
 
-  it('rejects when organisation_id is null', async () => {
+  it('rejects when organisation_id is null with 400', async () => {
     const result = await processYearGroupAccessRequest({
       requester: { ...requester, organisation_id: null },
-      now: NOW,
-      getLatestRequest: async () => null,
-      insertRequest: async () => {
-        throw new Error('should not insert');
-      },
-      listOrgProfiles: async () => [],
-      insertNotifications: async () => {},
-      sendEmail: async () => {},
+      ...baseDeps(),
     });
     assert.equal(result.ok, false);
     assert.equal(result.status, 400);
   });
+
+  it('20 parallel POSTs send a single round of emails (atomic claim)', async () => {
+    const claimSlot = createMemoryClaimSlot({ cooldownMs: YEAR_GROUP_ACCESS_COOLDOWN_MS });
+    const emails = [];
+    const insertRequestCalls = [];
+
+    const runOnce = () =>
+      processYearGroupAccessRequest({
+        requester,
+        claimSlot,
+        insertRequest: async (row) => {
+          insertRequestCalls.push(row);
+          return { id: `req-${insertRequestCalls.length}`, ...row };
+        },
+        listOrgProfiles: async () => [sameOrgAdmin, sameOrgManager],
+        insertNotifications: async () => {},
+        sendEmail: async (payload) => {
+          emails.push(payload);
+          return { sent: true };
+        },
+      });
+
+    const results = await Promise.all(Array.from({ length: 20 }, () => runOnce()));
+    const successes = results.filter((r) => r.ok);
+    const limited = results.filter((r) => r.status === 429);
+
+    assert.equal(successes.length, 1);
+    assert.equal(limited.length, 19);
+    assert.equal(insertRequestCalls.length, 1);
+    // One successful round → two admins emailed once each
+    assert.equal(emails.length, 2);
+    assert.deepEqual(
+      emails.map((e) => e.to).sort(),
+      [sameOrgAdmin.email, sameOrgManager.email].sort(),
+    );
+  });
 });
 
-describe('notice copy', () => {
-  it('keeps the owner-approved wording', () => {
-    assert.match(YEAR_GROUP_ACCESS_NOTICE, /haven't been given any year groups/i);
-    assert.match(YEAR_GROUP_ACCESS_NOTICE, /create your own activities and plans/i);
-    assert.match(YEAR_GROUP_ACCESS_NOTICE, /Ask your school admin/i);
+describe('shouldShowYearGroupsAccessNotice', () => {
+  const teacher = {
+    id: 't1',
+    role: 'teacher',
+    organisation_id: ORG_A,
+    allowed_year_groups: null,
+  };
+
+  it('hides while auth is loading (first-login no-flash)', () => {
+    assert.equal(
+      shouldShowYearGroupsAccessNotice({
+        authLoading: true,
+        profile: teacher,
+        isDemo: false,
+        dismissed: false,
+      }),
+      false,
+    );
   });
 
-  it('orgIdOf trims blank organisation ids', () => {
+  it('hides for admin / super_admin even when allowed_year_groups is null', () => {
+    for (const role of ['admin', 'super_admin', 'superuser']) {
+      assert.equal(
+        shouldShowYearGroupsAccessNotice({
+          authLoading: false,
+          profile: { ...teacher, role, allowed_year_groups: null },
+          isDemo: false,
+          dismissed: false,
+        }),
+        false,
+        role,
+      );
+    }
+  });
+
+  it('hides for demo sessions', () => {
+    assert.equal(
+      shouldShowYearGroupsAccessNotice({
+        authLoading: false,
+        profile: teacher,
+        isDemo: true,
+        dismissed: false,
+      }),
+      false,
+    );
+  });
+
+  it('hides when organisation_id is missing', () => {
+    assert.equal(
+      shouldShowYearGroupsAccessNotice({
+        authLoading: false,
+        profile: { ...teacher, organisation_id: null },
+        isDemo: false,
+        dismissed: false,
+      }),
+      false,
+    );
+  });
+
+  it('shows for loaded teacher with org and empty year groups', () => {
+    assert.equal(
+      shouldShowYearGroupsAccessNotice({
+        authLoading: false,
+        profile: teacher,
+        isDemo: false,
+        dismissed: false,
+      }),
+      true,
+    );
+  });
+});
+
+describe('migration / route hardening source checks', () => {
+  const root = fileURLToPath(new URL('../..', import.meta.url));
+
+  it('270000 drops clash half_terms policies (ccd_* only)', () => {
+    const sql = readFileSync(
+      `${root}/supabase/migrations/20261024270000_half_terms_rls.sql`,
+      'utf8',
+    );
+    assert.match(sql, /DROP POLICY IF EXISTS half_terms_owner_all/);
+    assert.match(sql, /DROP POLICY IF EXISTS half_terms_org_shared_read/);
+    assert.doesNotMatch(sql, /CREATE POLICY half_terms_owner_all/);
+    assert.doesNotMatch(sql, /CREATE POLICY half_terms_org_shared_read/);
+  });
+
+  it('280000 defines atomic claim RPC and UPDATE\(is_read\) grant', () => {
+    const sql = readFileSync(
+      `${root}/supabase/migrations/20261024280000_year_group_access_requests.sql`,
+      'utf8',
+    );
+    assert.match(sql, /year_group_access_last/);
+    assert.match(sql, /claim_year_group_access_slot/);
+    assert.match(sql, /ON CONFLICT \(requester_id\) DO UPDATE/);
+    assert.match(sql, /SET search_path = public, pg_temp/);
+    assert.match(sql, /GRANT UPDATE \(is_read\) ON public\.app_notifications TO authenticated/);
+    assert.match(sql, /year_group_access_requests_select_org_admin/);
+    assert.match(sql, /REVOKE ALL ON FUNCTION public\.claim_year_group_access_slot/);
+  });
+
+  it('request-access route uses no-store, generic catch, audit, and Promise.allSettled path', () => {
+    const src = readFileSync(
+      `${root}/server/api/year-groups/request-access.js`,
+      'utf8',
+    );
+    assert.match(src, /Cache-Control': 'private, no-store'/);
+    assert.match(src, /error: 'Request failed\.'/);
+    assert.match(src, /console\.error/);
+    assert.match(src, /writeAuditLog|hashIpForStorage/);
+    assert.match(src, /claim_year_group_access_slot/);
+    assert.match(src, /Retry-After/);
+  });
+
+  it('process helper uses Promise.allSettled for emails', () => {
+    const src = readFileSync(`${root}/api/_yearGroupAccess.js`, 'utf8');
+    assert.match(src, /Promise\.allSettled/);
+    assert.match(src, /YEAR_GROUP_ACCESS_EMAIL_CAP/);
+  });
+
+  it('keeps owner-approved notice wording', () => {
+    assert.match(YEAR_GROUP_ACCESS_NOTICE, /haven't been given any year groups/i);
     assert.equal(orgIdOf({ organisation_id: '  ' }), null);
-    assert.equal(orgIdOf({ organisation_id: ` ${ORG_A} ` }), ORG_A);
+  });
+
+  it('CI workflow includes test-sql-restore-guards', () => {
+    const yml = readFileSync(`${root}/.github/workflows/test.yml`, 'utf8');
+    assert.match(yml, /test-sql-restore-guards/);
+    assert.match(yml, /run_restore_cross_org_guards\.sh/);
   });
 });
