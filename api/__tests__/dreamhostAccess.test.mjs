@@ -469,6 +469,106 @@ describe('canPushResourceToSchool', () => {
   });
 });
 
+describe('viewer access contract (V3)', () => {
+  // RLS helper viewer_may_access_stored_file(path) uses auth.uid() only
+  // (no caller-supplied p_viewer). Proxy mirrors that via userId from requireAuth.
+  it('keys ownership on authenticated userId only (not a spoofable second viewer)', () => {
+    assert.equal(
+      evaluateStoredFileAccess({
+        userId: PEER,
+        storagePath: FILE,
+        viewerProfile: active('ems'),
+        ownerProfile: active('ems'),
+        visibility: FILE_VISIBILITY.ORG,
+      }),
+      true,
+    );
+    // Same path, different authenticated user without org match → denied
+    assert.equal(
+      evaluateStoredFileAccess({
+        userId: OTHER,
+        storagePath: FILE,
+        viewerProfile: active('jazznorth'),
+        ownerProfile: active('ems'),
+        visibility: FILE_VISIBILITY.ORG,
+      }),
+      false,
+    );
+  });
+});
+
+describe('licensedStoredFileFieldsMutable (V2)', () => {
+  it('allows server/service updates even when demoting', () => {
+    assert.equal(
+      licensedStoredFileFieldsMutable({
+        isServer: true,
+        oldVisibility: 'licensed',
+        oldIsPurchased: true,
+        newVisibility: 'private',
+        newIsPurchased: false,
+      }),
+      true,
+    );
+  });
+
+  it('blocks client licensed → private (and onward to org)', () => {
+    assert.equal(
+      licensedStoredFileFieldsMutable({
+        oldVisibility: 'licensed',
+        oldIsPurchased: false,
+        newVisibility: 'private',
+        newIsPurchased: false,
+      }),
+      false,
+    );
+    assert.equal(
+      licensedStoredFileFieldsMutable({
+        oldVisibility: 'licensed',
+        oldIsPurchased: false,
+        newVisibility: 'org',
+        newIsPurchased: false,
+      }),
+      false,
+    );
+  });
+
+  it('blocks clearing the purchased flag', () => {
+    assert.equal(
+      licensedStoredFileFieldsMutable({
+        oldVisibility: 'licensed',
+        oldIsPurchased: true,
+        newVisibility: 'licensed',
+        newIsPurchased: false,
+      }),
+      false,
+    );
+  });
+
+  it('allows no-op updates on licensed/purchased rows', () => {
+    assert.equal(
+      licensedStoredFileFieldsMutable({
+        oldVisibility: 'licensed',
+        oldIsPurchased: true,
+        newVisibility: 'licensed',
+        newIsPurchased: true,
+      }),
+      true,
+    );
+  });
+
+  it('allows org ↔ private when not licensed/purchased', () => {
+    assert.equal(
+      licensedStoredFileFieldsMutable({
+        oldVisibility: 'org',
+        oldIsPurchased: false,
+        newVisibility: 'private',
+        newIsPurchased: false,
+      }),
+      true,
+    );
+  });
+});
+
 describe('canChangeFileVisibility', () => {
   it('allows owner to switch between org and private', () => {
     assert.equal(
