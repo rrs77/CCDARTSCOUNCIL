@@ -58,12 +58,15 @@ export function contrastTextOn(bg: string): '#0f172a' | '#ffffff' {
   return light;
 }
 
-/** Soft tinted chip background (~12% alpha) with readable subject colour text when possible. */
+/**
+ * Soft tinted chip (~12% alpha). Category headers use dark ink on light tints
+ * so coloured Settings colours stay on the chip/stripe, not body text.
+ */
 export function chipStyle(color: string): { backgroundColor: string; color: string; borderColor: string } {
-  const text = color || '#4338E8';
+  const base = color || '#4338E8';
   return {
-    backgroundColor: `${text}1F`,
-    color: text,
-    borderColor: `${text}55`,
+    backgroundColor: `${base}1F`,
+    color: '#0f172a',
+    borderColor: `${base}55`,
   };
 }

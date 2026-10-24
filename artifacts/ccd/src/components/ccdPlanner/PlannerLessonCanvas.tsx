@@ -4,6 +4,8 @@
  * Library / My units stay as toolbar menus (locked layout).
  */
 import {
+  ChevronDown,
+  ChevronUp,
   Clock,
   Copy,
   GripVertical,
@@ -11,6 +13,8 @@ import {
   Sparkles,
   X,
 } from 'lucide-react';
+import { contrastTextOn } from '../../utils/planner/contrastText';
+import { DEFAULT_LESSON_TITLE } from './LessonPlanModal';
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropFlash, useDropZoneStyle } from '../dnd';
@@ -65,6 +69,7 @@ function sectionsToLessonPatch(
 function SortableSectionCard({
   section,
   index,
+  total,
   color,
   onOpen,
   onRemove,
@@ -73,6 +78,7 @@ function SortableSectionCard({
 }: {
   section: LessonSection;
   index: number;
+  total: number;
   color: string;
   onOpen: () => void;
   onRemove: () => void;
@@ -130,9 +136,10 @@ function SortableSectionCard({
       )}
     >
       <div
-        className="flex items-center justify-between gap-2 px-3 py-2 text-white"
+        className="flex items-center justify-between gap-2 px-3 py-2"
         style={{
           backgroundColor: isFlexible ? '#818CF8' : color,
+          color: contrastTextOn(isFlexible ? '#818CF8' : color),
         }}
       >
         <div className="flex min-w-0 items-center gap-1">
@@ -143,7 +150,7 @@ function SortableSectionCard({
                 drag(node);
               }}
               data-drag-handle
-              className="cursor-grab touch-none rounded-lg p-1 text-white/80 hover:bg-white/15 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              className="relative inline-flex h-11 w-11 cursor-grab touch-none items-center justify-center rounded-lg opacity-80 hover:bg-black/10 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
               aria-label="Drag to reorder"
             >
               <GripVertical className="h-4 w-4" />
@@ -155,27 +162,49 @@ function SortableSectionCard({
               if (dragStarted) return;
               onOpen();
             }}
-            className="line-clamp-2 min-w-0 text-left text-sm font-bold leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+            className="line-clamp-2 min-w-0 text-left text-[13px] font-bold leading-snug focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
             title={section.title}
           >
             {section.title}
           </button>
         </div>
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5">
+          {canEdit ? (
+            <>
+              <button
+                type="button"
+                aria-label={`Move ${section.title} up`}
+                disabled={index === 0}
+                onClick={() => onReorder(index, index - 1)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/10 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              >
+                <ChevronUp className="h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                aria-label={`Move ${section.title} down`}
+                disabled={index >= total - 1}
+                onClick={() => onReorder(index, index + 1)}
+                className="inline-flex h-11 w-11 items-center justify-center rounded-full hover:bg-black/10 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60"
+              >
+                <ChevronDown className="h-4 w-4" />
+              </button>
+            </>
+          ) : null}
           {isFlexible ? (
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
+            <span className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] font-semibold">
               Section
             </span>
           ) : null}
           {mins > 0 ? (
-            <span className="rounded-full bg-white/20 px-2 py-0.5 text-[11px] font-semibold">
+            <span className="rounded-full bg-black/10 px-2 py-0.5 text-[11px] font-semibold">
               {mins} min
             </span>
           ) : null}
           {canEdit ? (
             <IconButton
               onClick={onRemove}
-              className="h-7 w-7 text-white hover:bg-white/20 hover:text-white"
+              className="h-11 w-11 hover:bg-black/10"
               aria-label={`Remove ${section.title}`}
             >
               <X className="h-3.5 w-3.5" />
@@ -324,7 +353,7 @@ export function PlannerLessonCanvas({
             ) : null}
           </div>
           <h1 className="text-xl font-extrabold tracking-tight text-slate-900 sm:text-2xl">
-            {ensured.title || `Lesson ${lessonNumber}`}
+            {(ensured.title || '').trim() || DEFAULT_LESSON_TITLE}
           </h1>
         </div>
         <div className="flex items-center gap-2">
@@ -410,6 +439,7 @@ export function PlannerLessonCanvas({
               key={section.id}
               section={section}
               index={index}
+              total={sections.length}
               color={color}
               canEdit={canEdit}
               onOpen={() => {
@@ -426,11 +456,14 @@ export function PlannerLessonCanvas({
                 );
               }}
               onReorder={(from, to) => {
-                if (from === to) return;
+                if (from === to || to < 0 || to >= sections.length) return;
                 const next = [...sections];
                 const [item] = next.splice(from, 1);
                 next.splice(to, 0, item);
-                void persistSections(next);
+                void persistSections(
+                  next,
+                  `Moved ${item.title} ${to < from ? 'up' : 'down'}`,
+                );
               }}
             />
           );

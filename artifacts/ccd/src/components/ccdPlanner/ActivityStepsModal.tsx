@@ -384,10 +384,10 @@ export function ActivityStepsModal({
         </div>
       </div>
 
-      <div className="flex items-center justify-between border-t border-indigo-50 px-5 py-3">
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-indigo-50 px-5 py-3 sm:px-6">
         <SavedBadge time={savedAt} />
         <div className="flex items-center gap-3">
-          <span className="text-xs font-medium text-slate-400">
+          <span className="text-[13px] font-medium text-[#5F5B7A]">
             {step + 1} of {STEPS.length}
           </span>
           <Button

@@ -132,6 +132,7 @@ export function StudioShell({
               data-tab={item.dataTab}
               className={`ccd-studio-nav-item ${active === item.id ? 'is-active' : ''}`}
               aria-current={active === item.id ? 'page' : undefined}
+              aria-label={item.label}
               onClick={() => onNavigate(item.id)}
             >
               {item.icon}
@@ -146,6 +147,7 @@ export function StudioShell({
             data-tab="more"
             className={`ccd-studio-nav-item ${active === 'more' || active === 'contact-us' || active === 'settings' ? 'is-active' : ''}`}
             aria-current={active === 'more' || active === 'contact-us' || active === 'settings' ? 'page' : undefined}
+            aria-label="More tools"
             onClick={() => onNavigate('more')}
           >
             <MoreHorizontal className="h-[17px] w-[17px]" />
@@ -157,6 +159,7 @@ export function StudioShell({
             className={`ccd-studio-nav-item ${boltOnsOpen ? 'is-active' : ''}`}
             aria-current={active === 'bolt-ons' ? 'page' : undefined}
             aria-expanded={boltOnsOpen}
+            aria-label="Bolt-ons"
             onClick={() => onNavigate('bolt-ons')}
           >
             <Sparkles className="h-[17px] w-[17px]" />

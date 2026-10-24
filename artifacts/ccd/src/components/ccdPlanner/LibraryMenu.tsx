@@ -6,7 +6,7 @@ import {
   Plus,
   Search,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useDrag } from 'react-dnd';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
@@ -21,6 +21,7 @@ import {
   type LibrarySubject,
 } from '../../utils/libraryHierarchy';
 import { chipStyle } from '../../utils/planner/contrastText';
+import { PlannerPopover } from './PlannerPopover';
 import { cn } from '@/lib/utils';
 
 function DraggableLibraryRow({
@@ -112,16 +113,6 @@ export function LibraryMenu({
   const [query, setQuery] = useState('');
   const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({});
   const [liveMessage, setLiveMessage] = useState('');
-  const rootRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open, onOpenChange]);
 
   const hierarchy = useMemo(() => {
     const visibleCats = (categories || []).filter((c) => !c.hidden);
@@ -195,29 +186,29 @@ export function LibraryMenu({
   };
 
   return (
-    <div className="relative" ref={rootRef}>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => onOpenChange(!open)}
-        className={cn(
-          'inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D]',
-          'hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
-          'pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm',
-          open && 'border-indigo-300 bg-indigo-50/60',
-        )}
-      >
-        Library
-        <ChevronDown className={cn('h-3.5 w-3.5 text-slate-500 transition pointer-coarse:h-4 pointer-coarse:w-4', open && 'rotate-180')} />
-      </button>
-
-      {open ? (
-        <div
-          role="dialog"
-          aria-label="Activity library"
-          className="absolute left-0 top-[calc(100%+8px)] z-50 flex max-h-[min(70vh,560px)] w-[min(92vw,280px)] flex-col overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-900/15"
+    <PlannerPopover
+      open={open}
+      onOpenChange={onOpenChange}
+      label="Activity library"
+      panelClassName="w-[min(92vw,280px)] max-sm:w-full"
+      trigger={
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          onClick={() => onOpenChange(!open)}
+          className={cn(
+            'inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D]',
+            'hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+            'pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm',
+            open && 'border-indigo-300 bg-indigo-50/60',
+          )}
         >
+          Library
+          <ChevronDown className={cn('h-3.5 w-3.5 text-slate-500 transition pointer-coarse:h-4 pointer-coarse:w-4', open && 'rotate-180')} />
+        </button>
+      }
+    >
           <div className="border-b border-indigo-50 px-2 py-2">
             <div className="mb-2 flex items-center justify-between gap-2">
               <p className="text-sm font-extrabold text-slate-800">Activities</p>
@@ -319,8 +310,6 @@ export function LibraryMenu({
           <div className="sr-only" aria-live="polite">
             {liveMessage}
           </div>
-        </div>
-      ) : null}
-    </div>
+    </PlannerPopover>
   );
 }

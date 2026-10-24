@@ -3,7 +3,7 @@ import {
   ChevronRight,
   Plus,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
 import { useData, type Unit } from '../../contexts/DataContext';
 import {
@@ -11,15 +11,12 @@ import {
 } from '../../utils/planner/plannerCurriculumStore';
 import type { PlannerTermDates } from '../../types/plannerCurriculum';
 import { chipStyle } from '../../utils/planner/contrastText';
+import { formatUkDateRangeShort } from '../../utils/planner/ukDate';
+import { PlannerPopover } from './PlannerPopover';
 import { cn } from '@/lib/utils';
 
 function formatTermHint(term: PlannerTermDates): string {
-  try {
-    const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    return `${new Date(term.start).toLocaleDateString(undefined, opts)} – ${new Date(term.end).toLocaleDateString(undefined, opts)}`;
-  } catch {
-    return '';
-  }
+  return formatUkDateRangeShort(term.start, term.end);
 }
 
 export function MyUnitsMenu({
@@ -45,7 +42,6 @@ export function MyUnitsMenu({
   const [expanded, setExpanded] = useState<Record<string, boolean>>({});
   const [liveMessage, setLiveMessage] = useState('');
   const [termsTick, setTermsTick] = useState(0);
-  const rootRef = useRef<HTMLDivElement>(null);
 
   const terms = useMemo(
     () => loadPlannerTerms(currentAcademicYear),
@@ -57,15 +53,6 @@ export function MyUnitsMenu({
     window.addEventListener('ccd:planner-curriculum-updated', onUpdate);
     return () => window.removeEventListener('ccd:planner-curriculum-updated', onUpdate);
   }, []);
-
-  useEffect(() => {
-    if (!open) return;
-    const onDoc = (e: MouseEvent) => {
-      if (!rootRef.current?.contains(e.target as Node)) onOpenChange(false);
-    };
-    document.addEventListener('mousedown', onDoc);
-    return () => document.removeEventListener('mousedown', onDoc);
-  }, [open, onOpenChange]);
 
   const createUnit = () => {
     const unit: Unit = {
@@ -109,29 +96,29 @@ export function MyUnitsMenu({
   };
 
   return (
-    <div className="relative" ref={rootRef}>
-      <button
-        type="button"
-        aria-expanded={open}
-        aria-haspopup="dialog"
-        onClick={() => onOpenChange(!open)}
-        className={cn(
-          'inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D]',
-          'hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
-          'pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm',
-          open && 'border-indigo-300 bg-indigo-50/60',
-        )}
-      >
-        My units
-        <ChevronDown className={cn('h-3.5 w-3.5 text-slate-500 transition pointer-coarse:h-4 pointer-coarse:w-4', open && 'rotate-180')} />
-      </button>
-
-      {open ? (
-        <div
-          role="dialog"
-          aria-label="My units"
-          className="absolute right-0 top-[calc(100%+8px)] z-50 flex max-h-[min(70vh,560px)] w-[min(92vw,340px)] flex-col overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-900/15 sm:left-0 sm:right-auto"
+    <PlannerPopover
+      open={open}
+      onOpenChange={onOpenChange}
+      label="My units"
+      panelClassName="w-[min(92vw,320px)] max-sm:w-full"
+      trigger={
+        <button
+          type="button"
+          aria-expanded={open}
+          aria-haspopup="dialog"
+          onClick={() => onOpenChange(!open)}
+          className={cn(
+            'inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D]',
+            'hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+            'pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm',
+            open && 'border-indigo-300 bg-indigo-50/60',
+          )}
         >
+          My units
+          <ChevronDown className={cn('h-3.5 w-3.5 text-slate-500 transition pointer-coarse:h-4 pointer-coarse:w-4', open && 'rotate-180')} />
+        </button>
+      }
+    >
           <div className="flex items-center justify-between gap-2 border-b border-indigo-50 px-3 py-3">
             <p className="text-sm font-extrabold text-slate-800">My units</p>
             <div className="flex items-center gap-1">
@@ -268,8 +255,6 @@ export function MyUnitsMenu({
           <div className="sr-only" aria-live="polite">
             {liveMessage}
           </div>
-        </div>
-      ) : null}
-    </div>
+    </PlannerPopover>
   );
 }

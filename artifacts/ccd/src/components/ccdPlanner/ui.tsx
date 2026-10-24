@@ -131,7 +131,7 @@ export function TextInput(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
     <textarea
       {...props}
       className={cn(
-        'w-full resize-y rounded-2xl border border-indigo-100 bg-indigo-50/30 px-3.5 py-3 text-sm text-[#1F1B4D] outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus-visible:ring-2 focus-visible:ring-indigo-400',
+        'w-full resize-y rounded-2xl border border-indigo-100 bg-indigo-50/30 px-3.5 py-3 text-base text-[#1F1B4D] outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:bg-white focus:ring-4 focus:ring-indigo-100 focus-visible:ring-2 focus-visible:ring-indigo-400',
         props.className,
       )}
     />
@@ -143,7 +143,7 @@ export function TextField(props: InputHTMLAttributes<HTMLInputElement>) {
     <input
       {...props}
       className={cn(
-        'w-full rounded-2xl border border-indigo-100 bg-white px-3.5 py-2.5 text-sm text-[#1F1B4D] outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 focus-visible:ring-2 focus-visible:ring-indigo-400',
+        'w-full rounded-2xl border border-indigo-100 bg-white px-3.5 py-2.5 text-base text-[#1F1B4D] outline-none transition placeholder:text-slate-400 focus:border-indigo-300 focus:ring-4 focus:ring-indigo-100 focus-visible:ring-2 focus-visible:ring-indigo-400',
         props.className,
       )}
     />
