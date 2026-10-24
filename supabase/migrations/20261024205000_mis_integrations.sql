@@ -280,8 +280,11 @@ CREATE INDEX IF NOT EXISTS mis_year_group_mappings_connection_idx
 -- Helpers
 -- ---------------------------------------------------------------------------
 
--- Org membership for MIS: use profiles.organisation_id only (never school_or_org —
--- that field is user-editable and must not grant cross-org access).
+-- Org membership for MIS: use profiles.organisation_id only (never school_or_org).
+-- Do NOT use current_user_is_full_user_admin() — that is true for school role=admin
+-- and would grant manage/read across every organisation.
+-- Rhythmstix platform operators use is_super_admin(); school managers are scoped
+-- to their own organisation_id only.
 CREATE OR REPLACE FUNCTION public.mis_user_can_manage_org(p_org_id text)
 RETURNS boolean
 LANGUAGE sql
@@ -299,11 +302,7 @@ AS $$
         AND me.anonymised_at IS NULL
     )
     AND (
-      public.current_user_is_full_user_admin()
-      OR (
-        public.current_user_can_manage_users()
-        AND p_org_id = ANY (public.current_user_org_ids())
-      )
+      public.is_super_admin()
       OR EXISTS (
         SELECT 1 FROM public.profiles p
         WHERE p.id = auth.uid()
@@ -312,7 +311,10 @@ AS $$
           AND p.organisation_id IS NOT NULL
           AND btrim(p.organisation_id) <> ''
           AND p.organisation_id = p_org_id
-          AND p.role IN ('admin', 'superuser', 'super_admin', 'organisation')
+          AND (
+            p.role IN ('admin', 'organisation')
+            OR COALESCE(p.can_manage_users, false) = true
+          )
       )
     );
 $$;
@@ -334,10 +336,7 @@ AS $$
         AND me.anonymised_at IS NULL
     )
     AND (
-      public.current_user_is_full_user_admin()
-      OR (
-        p_org_id = ANY (public.current_user_org_ids())
-      )
+      public.is_super_admin()
       OR EXISTS (
         SELECT 1 FROM public.profiles p
         WHERE p.id = auth.uid()
@@ -496,7 +495,7 @@ BEGIN
        OR (TG_OP = 'UPDATE' AND OLD.met IS DISTINCT FROM NEW.met)
        OR (TG_OP = 'UPDATE' AND COALESCE(OLD.met, false) = true AND OLD.notes IS DISTINCT FROM NEW.notes)
     THEN
-      IF auth.role() = 'service_role' OR public.current_user_is_full_user_admin() THEN
+      IF auth.role() = 'service_role' OR public.is_super_admin() THEN
         RETURN NEW;
       END IF;
       RAISE EXCEPTION
@@ -542,12 +541,12 @@ CREATE POLICY mis_app_allowed_scopes_read ON public.mis_app_allowed_scopes
 DROP POLICY IF EXISTS mis_providers_read ON public.mis_providers;
 CREATE POLICY mis_providers_read ON public.mis_providers FOR SELECT TO authenticated USING (true);
 
--- Providers writable only by full admins (catalogue curation)
+-- Providers writable only by Rhythmstix super-admins (catalogue curation)
 DROP POLICY IF EXISTS mis_providers_admin_write ON public.mis_providers;
 CREATE POLICY mis_providers_admin_write ON public.mis_providers
   FOR ALL TO authenticated
-  USING (public.current_user_is_full_user_admin())
-  WITH CHECK (public.current_user_is_full_user_admin());
+  USING (public.is_super_admin())
+  WITH CHECK (public.is_super_admin());
 
 -- Org connections: members can read; managers can write
 -- (no config secrets on this table — see mis_org_connection_secrets)
@@ -572,12 +571,13 @@ CREATE POLICY mis_org_connections_delete ON public.mis_org_connections
   FOR DELETE TO authenticated
   USING (public.mis_user_can_manage_org(organisation_id));
 
--- Config placeholders: super-admin / service_role only (service_role bypasses RLS)
+-- Config placeholders: is_super_admin() / service_role only (service_role bypasses RLS).
+-- Never current_user_is_full_user_admin() — school role=admin must not read other orgs' secrets.
 DROP POLICY IF EXISTS mis_org_connection_secrets_admin ON public.mis_org_connection_secrets;
 CREATE POLICY mis_org_connection_secrets_admin ON public.mis_org_connection_secrets
   FOR ALL TO authenticated
-  USING (public.current_user_is_full_user_admin())
-  WITH CHECK (public.current_user_is_full_user_admin());
+  USING (public.is_super_admin())
+  WITH CHECK (public.is_super_admin());
 
 -- Gates follow connection org
 DROP POLICY IF EXISTS mis_activation_gates_select ON public.mis_activation_gates;
@@ -649,11 +649,11 @@ CREATE POLICY mis_integration_requests_update ON public.mis_integration_requests
   FOR UPDATE TO authenticated
   USING (
     public.mis_user_can_manage_org(organisation_id)
-    OR public.current_user_is_full_user_admin()
+    OR public.is_super_admin()
   )
   WITH CHECK (
     public.mis_user_can_manage_org(organisation_id)
-    OR public.current_user_is_full_user_admin()
+    OR public.is_super_admin()
   );
 
 -- Year-group mappings (structure only)
@@ -671,12 +671,14 @@ CREATE POLICY mis_year_group_mappings_write ON public.mis_year_group_mappings
 COMMENT ON TABLE public.mis_org_connections IS
   'Org-scoped MIS/hub connections. status=connected only when all activation gates are met. Secrets are not stored here.';
 COMMENT ON TABLE public.mis_org_connection_secrets IS
-  'Secure config placeholders. Readable/writable only by full user admins (service_role bypasses RLS). Never expose to org managers.';
+  'Secure config placeholders. Readable/writable only via is_super_admin() (service_role bypasses RLS). School role=admin must never read these.';
 COMMENT ON TABLE public.mis_year_group_mappings IS
   'Year-group structure mapping only. Never stores pupil names, IDs, parents, attendance, medical or safeguarding data.';
 COMMENT ON TABLE public.mis_connection_app_scopes IS
   'Per-app scopes. CCDesigner is restricted to year_groups.read by trigger + allow-list.';
 COMMENT ON FUNCTION public.mis_user_in_org(text) IS
-  'Org membership for MIS RLS. Uses profiles.organisation_id only — never school_or_org. Denies suspended/anonymised users.';
+  'Org membership for MIS RLS. Own profiles.organisation_id only (or is_super_admin). Never school_or_org / full-user-admin.';
+COMMENT ON FUNCTION public.mis_user_can_manage_org(text) IS
+  'MIS manage: is_super_admin() for any org, else only the caller''s own organisation_id. Never current_user_is_full_user_admin().';
 COMMENT ON FUNCTION public.mis_protect_provider_gates() IS
-  'Blocks org managers from setting commercial_terms_confirmed / provider_approval_confirmed; super-admin or service_role only.';
+  'Blocks school admins from setting commercial_terms_confirmed / provider_approval_confirmed; is_super_admin() or service_role only.';
