@@ -23,7 +23,6 @@ import { AttachInteractiveLesson } from '../../features/interactive-lesson-viewe
 import {
   Button,
   CloseX,
-  ModalShell,
   Pill,
   Segmented,
   TextInput,
@@ -37,7 +36,12 @@ function uid(prefix = 'sec') {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
-export function LessonPlanModal({
+/**
+ * Inline lesson plan — fills the full-width lesson canvas (not ModalShell).
+ * Plan / Preview / Print + sequence + curriculum; Flesh out is an overlay drawer
+ * so it does not squeeze the curriculum / objectives column.
+ */
+export function LessonPlanPanel({
   open,
   onClose,
   lessonNumber,
@@ -269,19 +273,17 @@ export function LessonPlanModal({
     }
   }, [draft, tab, yearGroup, lessonNumber]);
 
-  if (!draft) {
-    return (
-      <ModalShell open={false} onClose={onClose} labelledBy={titleId}>
-        <span />
-      </ModalShell>
-    );
-  }
+  if (!open || !draft) return null;
 
   const linkedStatements = curriculum.statements.filter((st) => selectedIds.has(st.id));
 
   return (
-    <ModalShell open={open} onClose={onClose} labelledBy={titleId}>
-      {/* Header — mock LessonPlanModal chrome */}
+    <section
+      className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[1.5rem] bg-white"
+      aria-labelledby={titleId}
+      data-ccd-lesson-plan-panel
+    >
+      {/* Header */}
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-indigo-50 px-5 py-4">
         <div className="min-w-0 flex-1">
           <h2
@@ -316,7 +318,10 @@ export function LessonPlanModal({
           <Button
             variant={fleshOpen ? 'primary' : 'soft'}
             size="sm"
-            onClick={() => setFleshOpen((v) => !v)}
+            onClick={() => {
+              setFleshOpen((v) => !v);
+              setInsertAt(null);
+            }}
             className={cn(fleshOpen && 'bg-violet-600 hover:bg-violet-700 shadow-violet-600/20')}
           >
             <Sparkles className="h-3.5 w-3.5" />
@@ -326,13 +331,9 @@ export function LessonPlanModal({
         </div>
       </div>
 
+      {/* Body — Flesh out overlays; does not pad/squeeze curriculum column */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        <div
-          className={cn(
-            'soft-scroll min-h-0 flex-1 overflow-y-auto',
-            fleshOpen && 'md:pr-[min(48%,280px)]',
-          )}
-        >
+        <div className="soft-scroll min-h-0 flex-1 overflow-y-auto">
           {tab === 'plan' ? (
             <div className="grid min-h-0 gap-4 p-5 lg:grid-cols-[1.2fr_0.8fr]">
               <div>
@@ -579,6 +580,7 @@ export function LessonPlanModal({
                   </h4>
                   <TextInput
                     rows={3}
+                    aria-label="Learning objective"
                     value={draft.learningOutcome || ''}
                     onChange={(e) =>
                       setDraft({ ...draft, learningOutcome: e.target.value })
@@ -591,6 +593,7 @@ export function LessonPlanModal({
                   </h4>
                   <TextInput
                     rows={4}
+                    aria-label="Success criteria"
                     value={draft.successCriteria || ''}
                     onChange={(e) =>
                       setDraft({ ...draft, successCriteria: e.target.value })
@@ -650,17 +653,15 @@ export function LessonPlanModal({
           ) : null}
         </div>
 
-        {/* Inline Flesh out drawer — locked: not a stacked modal */}
+        {/* Overlay drawer — does not shrink sequence / curriculum columns */}
         {fleshOpen ? (
           <aside
-            className="absolute inset-y-0 right-0 z-10 flex w-[min(100%,280px)] flex-col border-l border-violet-100 bg-violet-50/90 backdrop-blur-sm"
+            className="absolute inset-y-0 right-0 z-10 flex w-[min(100%,280px)] flex-col border-l border-violet-100 bg-violet-50/95 shadow-xl shadow-violet-900/10 backdrop-blur-sm"
             aria-label="Flesh out with AI"
           >
             <div className="border-b border-violet-100 px-4 py-3">
               <p className="text-sm font-extrabold text-violet-900">Flesh out with AI</p>
-              <p className="text-[11px] text-violet-700">
-                Results stay editable. Demo stub when offline.
-              </p>
+              <p className="text-[11px] text-violet-700">Results stay editable.</p>
             </div>
             <FleshOutPanel
               onApply={applyFleshOut}
@@ -704,9 +705,12 @@ export function LessonPlanModal({
       <div className="sr-only" aria-live="polite">
         {liveMessage}
       </div>
-    </ModalShell>
+    </section>
   );
 }
+
+/** @deprecated Use LessonPlanPanel — lesson plan is inline, not a modal. */
+export const LessonPlanModal = LessonPlanPanel;
 
 function InsertButton({
   open,

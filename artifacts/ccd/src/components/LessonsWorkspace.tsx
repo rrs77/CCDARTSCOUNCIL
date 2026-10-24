@@ -27,7 +27,7 @@ import type { PlanTemplate } from '../types/lessonSections';
 import { LibraryMenu } from './ccdPlanner/LibraryMenu';
 import { MyUnitsMenu } from './ccdPlanner/MyUnitsMenu';
 import { ActivityStepsModal } from './ccdPlanner/ActivityStepsModal';
-import { LessonPlanModal } from './ccdPlanner/LessonPlanModal';
+import { LessonPlanPanel } from './ccdPlanner/LessonPlanModal';
 import { PlannerLessonCanvas } from './ccdPlanner/PlannerLessonCanvas';
 import { RunThroughModal } from './ccdPlanner/RunThroughModal';
 import { TemplatePickerModal } from './ccdPlanner/TemplatePickerModal';
@@ -682,23 +682,39 @@ export function LessonsWorkspace({
           </div>
         </aside>
 
-        {/* Full-width lesson canvas (mock LessonCanvas port — not three-column) */}
+        {/* Full-width lesson area: canvas OR inline lesson plan (not ModalShell) */}
         <div className="planner-shell-surface flex min-h-[28rem] min-w-0 flex-col overflow-hidden rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
-          <PlannerLessonCanvas
-            key={`${builderKey}-${editingLessonNumber ?? 'empty'}`}
-            lessonNumber={editingLessonNumber}
-            lessonData={activeLessonData}
-            keyStageLabel={keyStageLabel(keyStage)}
-            classLabel={classLabel}
-            yearGroupLabel={currentSheetInfo.sheet}
-            canEdit={!isViewOnly}
-            onSave={saveCanvasLesson}
-            onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}
-            onOpenActivity={(a) => setActivityForSteps(a)}
-            onDuplicate={
-              editingLessonNumber && !isViewOnly ? () => void duplicateActiveLesson() : undefined
-            }
-          />
+          {lessonPlanOpen ? (
+            <LessonPlanPanel
+              open={lessonPlanOpen}
+              onClose={() => {
+                setLessonPlanOpen(false);
+                setEditingLessonForForm(null);
+              }}
+              onSave={handleSaveLessonPlan}
+              lessonNumber={editingLessonForForm?.lessonNumber}
+              lessonData={editingLessonForForm?.lessonData}
+              yearGroup={currentSheetInfo.sheet}
+            />
+          ) : (
+            <PlannerLessonCanvas
+              key={`${builderKey}-${editingLessonNumber ?? 'empty'}`}
+              lessonNumber={editingLessonNumber}
+              lessonData={activeLessonData}
+              keyStageLabel={keyStageLabel(keyStage)}
+              classLabel={classLabel}
+              yearGroupLabel={currentSheetInfo.sheet}
+              canEdit={!isViewOnly}
+              onSave={saveCanvasLesson}
+              onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}
+              onOpenActivity={(a) => setActivityForSteps(a)}
+              onDuplicate={
+                editingLessonNumber && !isViewOnly
+                  ? () => void duplicateActiveLesson()
+                  : undefined
+              }
+            />
+          )}
         </div>
       </div>
 
@@ -715,18 +731,6 @@ export function LessonsWorkspace({
           halfTerms={(halfTerms || []) as any}
         />
       )}
-
-      <LessonPlanModal
-        open={lessonPlanOpen}
-        onClose={() => {
-          setLessonPlanOpen(false);
-          setEditingLessonForForm(null);
-        }}
-        onSave={handleSaveLessonPlan}
-        lessonNumber={editingLessonForForm?.lessonNumber}
-        lessonData={editingLessonForForm?.lessonData}
-        yearGroup={currentSheetInfo.sheet}
-      />
 
       <ActivityStepsModal
         open={!!activityForSteps}

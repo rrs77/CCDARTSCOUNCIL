@@ -11,8 +11,9 @@ import { cn } from '@/lib/utils';
 import { useFocusTrap } from '../../hooks/useFocusTrap';
 
 /**
- * Shared modal shell for every planner dialog (activity steps, lesson plan,
- * run-through, template picker, Settings editors, confirms).
+ * Shared modal shell for genuine planner dialogs only: activity stepped card,
+ * template picker, Settings editors and confirms. (Run-through also uses it.)
+ * Lesson plan is inline in the lesson canvas — not ModalShell.
  * Width full up to 720px (760px from md). Height fixed min(88vh, 760px).
  */
 export const MODAL_SHELL_SIZE =

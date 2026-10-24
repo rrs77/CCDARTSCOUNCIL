@@ -101,7 +101,7 @@
 | EYFS / nested standards | `DataContext` (`nestedStandards`, `lessonStandards`, `eyfsApi`) | EYFS statements attachable to lessons. |
 | Activity-level standards | `Activity.standards`, `NestedStandardsBrowser` in editor | Activity card Curriculum step. |
 
-**Rule:** lesson plan modal “Curriculum statements” checklist = **same data teachers already configure in Settings**. No parallel curriculum picker dataset.
+**Rule:** inline lesson plan “Curriculum statements” checklist = **same data teachers already configure in Settings**. No parallel curriculum picker dataset.
 
 ### 0.7 Persistence surfaces (Supabase / local)
 
@@ -193,9 +193,9 @@ interface Unit {
 - A lesson may appear in `halfTerms[].lessons` **and/or** in `unit.lessonNumbers` with `unit.term` set.
 - Product rule: **several units can share a half-term** (e.g. Autumn 1 Music + Autumn 1 Drama). Do not enforce one-unit-per-term.
 
-### 1.5 AI flesh-out state (inline in lesson plan modal)
+### 1.5 AI flesh-out state (inline in the lesson plan)
 
-Editing and re-prompting happen **inside the lesson plan modal/view** — not a separate screen or route.
+Editing and re-prompting happen **inside the inline lesson plan** (full-width lesson area; not ModalShell) — not a separate screen or route.
 
 ```ts
 interface LessonAiPromptTurn {
@@ -230,7 +230,7 @@ interface LessonAiFleshOutState {
 2. Teacher can **re-prompt** with further instructions (whole plan or single section), e.g. “add a SEND adaptation”, “restructure for a 60 min lesson”.
 3. Maintain **prompt history + undo/redo** of AI applies.
 4. **Preserve teacher manual edits** by default: do not silently overwrite sections the teacher edited since the last AI apply unless they explicitly choose overwrite (confirm UI).
-5. UX lives **inline** in the lesson plan modal (toolbar + optional side panel / drawer attached to that modal), never a separate page.
+5. UX lives **inline** in the lesson plan panel (toolbar + overlay Flesh out drawer that must not squeeze the curriculum / objectives column), never a separate page or ModalShell.
 
 ### 1.6 Plan templates (new, settings-driven)
 
@@ -330,7 +330,7 @@ Extend `LessonPdfData` in `lessonPdfHtml.ts` to render `sections` in order (acti
 | **Exists** | `PolishWithAIModal` (fake suggestions) + `applyLessonPolishDraft`. |
 | **Interpret** | UX precedent for “AI helps then teacher accepts”; output already lands in editable notes/activities. |
 | **Gap** | No real generation; no re-prompt; no history; not labeled Flesh out; not scoped to modal. |
-| **Change** | Replace/extend polish into **Flesh out with AI** inside the lesson plan modal: |
+| **Change** | Replace/extend polish into **Flesh out with AI** inside the inline lesson plan: |
 | | 1. Generate/revise `sections` + objectives from activities + curriculum + duration + teacher instruction. |
 | | 2. Write results into the **same** bound state as manual editors (no lock). |
 | | 3. Re-prompt UI: instruction box + scope (whole plan \| current/selected section) + Apply. |
@@ -409,11 +409,11 @@ Extend `LessonPdfData` in `lessonPdfHtml.ts` to render `sections` in order (acti
 - [ ] Click activity → stepped modal (5 steps), view + edit, arrows, autosave, Add to lesson.
 - [ ] No regression to library full-page editor entry points (can keep as advanced/alternate).
 
-### Phase 3 — Flexible sections + lesson plan modal shell
+### Phase 3 — Flexible sections + inline lesson plan shell
 
 **Done when:**
 
-- [ ] Lesson plan modal lists ordered `sections` with `+` insert menu (built-ins + Settings custom types).
+- [ ] Inline lesson plan lists ordered `sections` with `+` insert menu (built-ins + Settings custom types).
 - [ ] Sections move / rename / delete.
 - [ ] Curriculum checklist uses Settings objectives/standards only.
 - [ ] Plan \| Preview \| Print tabs; Print/PDF HTML === `buildLessonPdfHtml` output for same lesson input.
@@ -423,7 +423,7 @@ Extend `LessonPdfData` in `lessonPdfHtml.ts` to render `sections` in order (acti
 
 **Done when:**
 
-- [ ] Flesh out runs from **inside** lesson plan modal; results editable in-place.
+- [ ] Flesh out runs from **inside** the inline lesson plan (overlay drawer; no curriculum squeeze); results editable in-place.
 - [ ] Re-prompt whole plan or one section; history undo/redo.
 - [ ] Teacher-dirty sections preserved unless overwrite confirmed.
 - [ ] Demo mode stub works without API keys.
@@ -479,7 +479,7 @@ Build a stepped Activity view/edit modal used from the new planner library/lesso
 ```
 Read docs/PLANNER_BUILD_BRIEF.md §1.2, §2.7, §2.9–2.10 and mock/3_lesson_plan_modal.jpg.
 
-Evolve StandaloneLessonCreator (or a LessonPlanModal wrapper) so the lesson sequence is sections[] with + insert-anywhere (Free text, Differentiation, Vocabulary, AfL, Health and safety, Homework, + custom types from Settings). Sections reorder/rename/delete. Right rail: curriculum statements FROM existing Settings objectives/EYFS standards only; learning objective + success criteria. Tabs Plan | Preview | Print. Print/PDF must call buildLessonPdfHtml in utils/lessonPdfHtml.ts (extend renderer for sections). Remove/avoid duplicate HTML in LessonPrintModal/share paths for this flow. Legacy lessons via legacyLessonToSections. Acceptance: Phase 3 checklist.
+Evolve the planner into an inline LessonPlanPanel (fills the full-width lesson area; not ModalShell) so the lesson sequence is sections[] with + insert-anywhere (Free text, Differentiation, Vocabulary, AfL, Homework, + custom types from Settings). Sections reorder/rename/delete. Right rail: curriculum statements FROM existing Settings objectives/EYFS standards only; learning objective + success criteria. Tabs Plan | Preview | Print. Flesh out is an overlay drawer that must not squeeze the curriculum column. Print/PDF must call buildLessonPdfHtml in utils/lessonPdfHtml.ts (extend renderer for sections). Remove/avoid duplicate HTML in LessonPrintModal/share paths for this flow. Legacy lessons via legacyLessonToSections. Acceptance: Phase 3 checklist.
 ```
 
 ### Prompt — Phase 4
@@ -487,7 +487,7 @@ Evolve StandaloneLessonCreator (or a LessonPlanModal wrapper) so the lesson sequ
 ```
 Read docs/PLANNER_BUILD_BRIEF.md §1.5 and §2.8 carefully.
 
-Implement "Flesh out with AI" INLINE inside the lesson plan modal (not a separate screen/route). Requirements:
+Implement "Flesh out with AI" INLINE inside the lesson plan panel (full-width lesson area, not ModalShell; not a separate screen/route). Requirements:
 - AI output writes into the same editable sections/fields teachers already edit; nothing locked.
 - Teacher can re-prompt with free-text instructions for the whole plan OR a single section (examples: make more practical; add SEND adaptation; restructure for 60 min).
 - Persist prompt history on lesson.aiFleshOut with undo/redo of applies (snapshots).
