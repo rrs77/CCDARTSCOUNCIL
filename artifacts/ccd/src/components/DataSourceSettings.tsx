@@ -19,10 +19,10 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   const [backupStatus, setBackupStatus] = useState<'idle' | 'backing-up' | 'success' | 'error'>('idle');
   const [restoreStatus, setRestoreStatus] = useState<'idle' | 'restoring' | 'success' | 'error'>('idle');
 
-  const isAdmin = user?.email === 'rob.reichstorer@gmail.com' ||
-                  user?.role === 'administrator' ||
-                  user?.role === 'admin' ||
-                  user?.role === 'superuser';
+  // System-wide backup/restore: super_admin / superuser only (never by email).
+  const role = (user?.profile?.role || user?.role || '').toLowerCase();
+  const isSuperAdmin = role === 'super_admin' || role === 'superuser';
+  const isAdmin = isSuperAdmin;
 
   // Move all function declarations to the top before any conditional returns
   const checkServerStatus = async () => {
@@ -184,25 +184,17 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   };
 
   const handleBackupDatabase = async () => {
-    if (!isAdmin) {
-      console.error('Unauthorized: backup requires administrator role');
+    if (!isSuperAdmin) {
+      console.error('Unauthorized: backup requires super_admin');
       return;
     }
     try {
       setBackupStatus('backing-up');
       console.log('🔄 Starting database backup...');
-      
-      // Export all data from Supabase
-      const backupData = await dataApi.exportAll();
-      
-      // Add metadata
-      const backupWithMetadata = {
-        version: '1.0',
-        timestamp: new Date().toISOString(),
-        description: 'Complete database backup',
-        data: backupData
-      };
-      
+
+      // Server enforces super_admin (Bearer); never export via client RLS alone.
+      const backupWithMetadata = await dataApi.exportAll();
+
       // Create and download JSON file
       const dataStr = JSON.stringify(backupWithMetadata, null, 2);
       const dataBlob = new Blob([dataStr], { type: 'application/json' });
@@ -229,8 +221,8 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   };
 
   const handleRestoreDatabase = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (!isAdmin) {
-      console.error('Unauthorized: restore requires administrator role');
+    if (!isSuperAdmin) {
+      console.error('Unauthorized: restore requires super_admin');
       event.target.value = '';
       return;
     }
@@ -257,9 +249,9 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
       }
       
       console.log('📦 Restoring backup from:', backupData.timestamp);
-      
-      // Import the data
-      await dataApi.importAll(backupData.data);
+
+      // Server enforces super_admin; send full envelope when present.
+      await dataApi.importAll(backupData);
       
       // Refresh the app data
       await refreshData();
@@ -361,7 +353,9 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
           </div>
         </div>
 
-        {/* Database Backup & Restore */}
+
+        {isSuperAdmin && (
+
         <div className="border border-[#E2E0EF] bg-[#E9E6FF] rounded-lg p-6">
           <div className="flex items-center space-x-3 mb-4">
             <Database className="h-6 w-6 text-[#4338E8]" />
@@ -445,6 +439,8 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
             </div>
           </div>
         </div>
+
+        )}
 
         {/* Clear All Data */}
         <div className="border border-red-200 bg-red-50 rounded-lg p-6">
@@ -478,7 +474,9 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
   if (embedded) {
     return (
       <div className="space-y-6">
-        {/* Database Backup & Restore */}
+
+        {isSuperAdmin && (
+
         <div className="border border-[#E2E0EF] bg-[#E9E6FF] rounded-lg p-6">
           <div className="flex items-center space-x-3 mb-4">
             <Database className="h-6 w-6 text-[#4338E8]" />
@@ -562,6 +560,8 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
             </div>
           </div>
         </div>
+
+        )}
 
         {/* Clear All Data */}
         <div className="border border-red-200 bg-red-50 rounded-lg p-6">
@@ -740,7 +740,9 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
             </div>
           </div>
 
-          {/* Database Backup & Restore */}
+  
+        {isSuperAdmin && (
+
           <div className="border border-[#E2E0EF] bg-[#E9E6FF] rounded-lg p-6">
             <div className="flex items-center space-x-3 mb-4">
               <Archive className="h-6 w-6 style={{color: '#0BA596'}}" />
@@ -839,6 +841,8 @@ export function DataSourceSettings({ embedded = false }: DataSourceSettingsProps
               </div>
             </div>
           </div>
+
+        )}
 
           {/* Clear All Data */}
           <div className="border border-red-200 bg-red-50 rounded-lg p-6">

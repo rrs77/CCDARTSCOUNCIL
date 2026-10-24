@@ -100,6 +100,14 @@
       "destination": "/api/router?__route=freesound/:path*"
     },
     {
+      "source": "/api/admin/backup",
+      "destination": "/api/router?__route=admin/backup"
+    },
+    {
+      "source": "/api/admin/:path*",
+      "destination": "/api/router?__route=admin/:path*"
+    },
+    {
       "source": "/((?!api/|partners/|assets/|ccd-pitch/|the-facts/|.*\\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|pdf|zip|woff2?|ttf|map)$).*)",
       "destination": "/index.html"
     }

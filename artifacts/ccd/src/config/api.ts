@@ -1880,257 +1880,55 @@ export const dataApi = {
     }
   },
 
+  /**
+   * Super-admin curriculum export via GET /api/admin/backup.
+   * Server checks super_admin / superuser; client never bypasses with email.
+   */
   exportAll: async () => {
-    try {
-      // Get all data from core tables (always exist)
-      const [activities, lessons, lessonPlans, standards, halfTerms, customCategories, categoryGroups, yearGroups, lessonStacks, activityStacks] = await Promise.all([
-        supabase.from(TABLES.ACTIVITIES).select('*'),
-        supabase.from(TABLES.LESSONS).select('*'),
-        supabase.from(TABLES.LESSON_PLANS).select('*'),
-        supabase.from(TABLES.EYFS_STATEMENTS).select('*'),
-        supabase.from('half_terms').select('*'),
-        supabase.from(TABLES.CUSTOM_CATEGORIES).select('*'),
-        supabase.from(TABLES.CATEGORY_GROUPS).select('*'),
-        supabase.from(TABLES.YEAR_GROUPS).select('*'),
-        supabase.from(TABLES.LESSON_STACKS).select('*'),
-        supabase.from(TABLES.ACTIVITY_STACKS).select('*')
-      ]);
-      
-      // Check for errors in core tables
-      if (activities.error) throw activities.error;
-      if (lessons.error) throw lessons.error;
-      if (lessonPlans.error) throw lessonPlans.error;
-      if (standards.error) throw standards.error;
-      if (halfTerms.error) throw halfTerms.error;
-      if (customCategories.error) throw customCategories.error;
-      if (categoryGroups.error) throw categoryGroups.error;
-      if (yearGroups.error) throw yearGroups.error;
-      if (lessonStacks.error) throw lessonStacks.error;
-      if (activityStacks.error) throw activityStacks.error;
-
-      // Try to get custom objectives data (optional - tables might not exist yet)
-      let customObjectiveYearGroups: any = { data: [] };
-      let customObjectiveAreas: any = { data: [] };
-      let customObjectives: any = { data: [] };
-      let activityCustomObjectives: any = { data: [] };
-
-      try {
-        const [coyg, coa, co, aco] = await Promise.all([
-          supabase.from(TABLES.CUSTOM_OBJECTIVE_YEAR_GROUPS).select('*'),
-          supabase.from(TABLES.CUSTOM_OBJECTIVE_AREAS).select('*'),
-          supabase.from(TABLES.CUSTOM_OBJECTIVES).select('*'),
-          supabase.from(TABLES.ACTIVITY_CUSTOM_OBJECTIVES).select('*')
-        ]);
-        
-        customObjectiveYearGroups = coyg;
-        customObjectiveAreas = coa;
-        customObjectives = co;
-        activityCustomObjectives = aco;
-        
-        console.log('✅ Custom objectives tables found and exported');
-      } catch (customError) {
-        console.log('ℹ️ Custom objectives tables not found (migration not run yet) - continuing with core data only');
-      }
-      
-      return {
-        activities: activities.data || [],
-        lessons: lessons.data || [],
-        lessonPlans: lessonPlans.data || [],
-        standards: standards.data || [],
-        halfTerms: halfTerms.data || [],
-        customCategories: customCategories.data || [],
-        categoryGroups: categoryGroups.data || [],
-        yearGroups: yearGroups.data || [],
-        lessonStacks: lessonStacks.data || [],
-        activityStacks: activityStacks.data || [],
-        customObjectiveYearGroups: customObjectiveYearGroups.data || [],
-        customObjectiveAreas: customObjectiveAreas.data || [],
-        customObjectives: customObjectives.data || [],
-        activityCustomObjectives: activityCustomObjectives.data || []
-      };
-    } catch (error) {
-      console.warn('Failed to export data from Supabase:', error);
-      throw error;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      throw new Error('Sign in required for backup.');
     }
+    const res = await fetch('/api/admin/backup', {
+      method: 'GET',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || `Backup failed (${res.status})`);
+    }
+    return body;
   },
-  
+
+  /**
+   * Super-admin curriculum restore via POST /api/admin/backup.
+   * Accepts either a full backup envelope `{ data }` or a bare data object.
+   */
   importAll: async (data: any) => {
-    try {
-      // Start a transaction to import all data
-      const promises = [];
-      
-      if (data.activities && data.activities.length > 0) {
-        // Clean activities data (remove uniqueId and convert to snake_case)
-        const cleanedActivities = data.activities.map(({ uniqueId, ...activity }: any) => ({
-          activity: activity.activity,
-          description: activity.description,
-          activity_text: activity.activityText,
-          time: activity.time,
-          video_link: activity.videoLink,
-          music_link: activity.musicLink,
-          backing_link: activity.backingLink,
-          resource_link: activity.resourceLink,
-          link: activity.link,
-          vocals_link: activity.vocalsLink,
-          image_link: activity.imageLink,
-          canva_link: activity.canvaLink || '',
-          teaching_unit: activity.teachingUnit,
-          category: activity.category,
-          level: activity.level,
-          unit_name: activity.unitName,
-          lesson_number: activity.lessonNumber,
-          eyfs_standards: activity.eyfsStandards
-        }));
-        promises.push(
-          supabase
-            .from(TABLES.ACTIVITIES)
-            .upsert(cleanedActivities, { 
-              onConflict: 'activity,category,lesson_number',
-              ignoreDuplicates: false 
-            })
-        );
-      }
-      
-      if (data.lessons) {
-        const lessonsData = Object.entries(data.lessons).map(([sheet, sheetData]: [string, any]) => ({
-          sheet_name: sheet,
-          data: sheetData.allLessonsData || {},
-          lesson_numbers: sheetData.lessonNumbers || [],
-          teaching_units: sheetData.teachingUnits || []
-          // Note: lesson_standards_map and eyfs_statements_map columns don't exist
-          // Standards are stored within the lesson data itself
-        }));
-        
-        promises.push(
-          supabase
-            .from(TABLES.LESSONS)
-            .upsert(lessonsData, { onConflict: 'sheet_name' })
-        );
-      }
-      
-      if (data.lessonPlans && data.lessonPlans.length > 0) {
-        // Convert lesson plans to snake_case
-        const lessonPlansData = data.lessonPlans.map((plan: any) => ({
-          id: plan.id,
-          date: new Date(plan.date).toISOString(),
-          week: plan.week,
-          class_name: plan.className,
-          activities: plan.activities,
-          duration: plan.duration,
-          notes: plan.notes,
-          status: plan.status,
-          unit_id: plan.unitId,
-          unit_name: plan.unitName,
-          lesson_number: plan.lessonNumber,
-          title: plan.title,
-          term: plan.term,
-          time: plan.time
-        }));
-        
-        promises.push(
-          supabase
-            .from(TABLES.LESSON_PLANS)
-            .upsert(lessonPlansData, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.eyfs) {
-        const eyfsData = Object.entries(data.eyfs).map(([sheet, sheetData]: [string, any]) => ({
-          sheet_name: sheet,
-          all_statements: sheetData.allStatements || [],
-          structured_statements: sheetData.structuredStatements || {}
-        }));
-        
-        promises.push(
-          supabase
-            .from(TABLES.EYFS_STATEMENTS)
-            .upsert(eyfsData, { onConflict: 'sheet_name' })
-        );
-      }
-      
-      // Import settings tables
-      if (data.customCategories && data.customCategories.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.CUSTOM_CATEGORIES)
-            .upsert(data.customCategories, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.categoryGroups && data.categoryGroups.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.CATEGORY_GROUPS)
-            .upsert(data.categoryGroups, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.yearGroups && data.yearGroups.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.YEAR_GROUPS)
-            .upsert(data.yearGroups, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.lessonStacks && data.lessonStacks.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.LESSON_STACKS)
-            .upsert(data.lessonStacks, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.activityStacks && data.activityStacks.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.ACTIVITY_STACKS)
-            .upsert(data.activityStacks, { onConflict: 'id' })
-        );
-      }
-      
-      // Import custom objectives data if present
-      if (data.customObjectiveYearGroups && data.customObjectiveYearGroups.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.CUSTOM_OBJECTIVE_YEAR_GROUPS)
-            .upsert(data.customObjectiveYearGroups, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.customObjectiveAreas && data.customObjectiveAreas.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.CUSTOM_OBJECTIVE_AREAS)
-            .upsert(data.customObjectiveAreas, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.customObjectives && data.customObjectives.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.CUSTOM_OBJECTIVES)
-            .upsert(data.customObjectives, { onConflict: 'id' })
-        );
-      }
-      
-      if (data.activityCustomObjectives && data.activityCustomObjectives.length > 0) {
-        promises.push(
-          supabase
-            .from(TABLES.ACTIVITY_CUSTOM_OBJECTIVES)
-            .upsert(data.activityCustomObjectives, { onConflict: 'activity_id,objective_id' })
-        );
-      }
-      
-      // Execute all promises
-      await Promise.all(promises);
-      
-      return { success: true };
-    } catch (error) {
-      console.warn('Failed to import data to Supabase:', error);
-      throw error;
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData.session?.access_token;
+    if (!token) {
+      throw new Error('Sign in required for restore.');
     }
-  }
+    const payload =
+      data && typeof data === 'object' && data.data && typeof data.data === 'object'
+        ? data
+        : { data };
+    const res = await fetch('/api/admin/backup', {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(payload),
+    });
+    const body = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(body.error || `Restore failed (${res.status})`);
+    }
+    return body;
+  },
 };
 
 // WordPress API Configuration

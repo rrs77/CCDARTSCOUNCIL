@@ -13,6 +13,7 @@ import {
   canViewOrgAnalytics,
   assertRateLimit,
   isFullUserAdmin,
+  isSuperAdminProfile,
   requireAuth,
   getBearerToken,
 } from '../_authShared.js';
@@ -93,6 +94,13 @@ describe('permissions', () => {
       isFullUserAdmin({ role: 'teacher', status: 'active', can_manage_users: true }),
       false,
     );
+  });
+
+  it('isSuperAdminProfile matches backup/restore gate (no email)', () => {
+    assert.equal(isSuperAdminProfile({ role: 'admin', status: 'active' }), false);
+    assert.equal(isSuperAdminProfile({ role: 'super_admin', status: 'active' }), true);
+    assert.equal(isSuperAdminProfile({ role: 'superuser', status: 'active' }), true);
+    assert.equal(isSuperAdminProfile({ role: 'super_admin', status: 'suspended' }), false);
   });
 });
 

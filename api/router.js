@@ -51,6 +51,9 @@ import * as filesProxy from '../server/api/files/[...path].js';
 import * as freesoundSearch from '../server/api/freesound/search.js';
 import * as freesoundPreview from '../server/api/freesound/preview.js';
 
+/* Super-admin curriculum backup / restore */
+import * as adminBackup from '../server/api/admin/backup.js';
+
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -231,6 +234,15 @@ function targetFor(pathname) {
     return null;
   }
 
+  /* ---------- Super-admin backup / restore ---------- */
+
+  if (area === 'admin') {
+    if (rest.length === 1 && rest[0] === 'backup') {
+      return adminBackup;
+    }
+    return null;
+  }
+
   return null;
 }
 
@@ -244,7 +256,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound)(\/|$)/.test(
+    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound|admin)(\/|$)/.test(
       route,
     ) ||
     route.includes('..')

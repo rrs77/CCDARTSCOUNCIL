@@ -597,6 +597,22 @@ export async function requireAdmin(request) {
 }
 
 /**
+ * Require auth + super_admin / superuser (system-wide ops: backup/restore, branding).
+ */
+export async function requireSuperAdmin(request) {
+  const auth = await requireAuth(request);
+  if (!auth.ok) return auth;
+  const profile = await loadProfile(auth.userId);
+  if (!profile || !isSuperAdminProfile(profile)) {
+    return {
+      ok: false,
+      response: jsonResponse({ error: 'Forbidden. Super-admin access required.' }, 403),
+    };
+  }
+  return { ...auth, profile };
+}
+
+/**
  * Write an audit_log row (best-effort; never throws to caller).
  */
 export async function writeAuditLog({
