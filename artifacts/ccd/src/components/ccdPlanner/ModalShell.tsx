@@ -14,10 +14,9 @@ import { useFocusTrap } from '../../hooks/useFocusTrap';
  * Shared modal shell for genuine planner dialogs only: activity stepped card,
  * template picker, Settings editors and confirms. (Run-through also uses it.)
  * Lesson plan is inline in the lesson canvas — not ModalShell.
- * Width full up to 720px (760px from md). Height fixed min(88vh, 760px).
+ * One size: 760px wide × min(88vh, 760px) tall.
  */
-export const MODAL_SHELL_SIZE =
-  'h-[min(88vh,760px)] w-full max-w-[720px] md:max-w-[760px]';
+export const MODAL_SHELL_SIZE = 'h-[min(88vh,760px)] w-full max-w-[760px]';
 
 export function ModalShell({
   open,
@@ -57,6 +56,7 @@ export function ModalShell({
             initial={reduceMotion ? false : { opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={reduceMotion ? undefined : { opacity: 0 }}
+            transition={reduceMotion ? { duration: 0 } : { duration: 0.2 }}
             onClick={handleClose}
           />
           <motion.div
@@ -72,21 +72,13 @@ export function ModalShell({
             aria-describedby={describedBy}
             tabIndex={-1}
             data-modal-shell
-            initial={
-              reduceMotion
-                ? false
-                : { opacity: 0, y: 18, scale: 0.97 }
-            }
+            initial={reduceMotion ? false : { opacity: 0, y: 12, scale: 0.98 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={
-              reduceMotion
-                ? undefined
-                : { opacity: 0, y: 12, scale: 0.98 }
-            }
+            exit={reduceMotion ? undefined : { opacity: 0, y: 8, scale: 0.99 }}
             transition={
               reduceMotion
                 ? { duration: 0 }
-                : { type: 'spring', stiffness: 380, damping: 32 }
+                : { duration: 0.2, ease: [0.22, 1, 0.36, 1] }
             }
             className={cn(
               // Match feat/planner-mock ModalShell: 28px radius, indigo shadow

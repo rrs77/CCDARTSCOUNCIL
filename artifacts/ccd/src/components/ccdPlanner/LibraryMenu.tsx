@@ -49,10 +49,10 @@ function DraggableLibraryRow({
         preview(node);
       }}
       className={cn(
-        'flex items-stretch gap-1 rounded-xl border border-slate-100 bg-white',
+        'flex items-stretch gap-0.5 rounded-lg border border-slate-100 bg-white',
         isDragging && 'opacity-50',
       )}
-      style={{ borderLeftWidth: 4, borderLeftColor: color }}
+      style={{ borderLeftWidth: 3, borderLeftColor: color }}
     >
       <button
         type="button"
@@ -60,22 +60,22 @@ function DraggableLibraryRow({
           drag(node);
         }}
         aria-label={`Drag ${activity.activity}`}
-        className="inline-flex h-11 w-8 shrink-0 cursor-grab items-center justify-center text-slate-300 hover:text-slate-500 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+        className="relative inline-flex h-10 w-7 shrink-0 cursor-grab items-center justify-center text-slate-300 hover:text-slate-500 active:cursor-grabbing focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:w-11 before:absolute before:inset-y-0 before:-left-1 before:-right-1 before:content-['']"
       >
-        <GripVertical className="h-4 w-4" />
+        <GripVertical className="h-3.5 w-3.5" />
       </button>
       <button
         type="button"
         onClick={onOpen}
-        className="min-w-0 flex-1 px-1 py-2 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
+        className="min-w-0 flex-1 px-1 py-1.5 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-indigo-400"
       >
         <span
-          className="line-clamp-2 text-sm font-semibold leading-snug text-slate-800"
+          className="line-clamp-2 text-[13px] font-semibold leading-snug text-slate-800"
           title={activity.activity || undefined}
         >
           {activity.activity}
         </span>
-        <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-slate-400">
+        <span className="mt-0.5 inline-flex items-center gap-1 text-[11px] text-[#5F5B7A]">
           <Clock className="h-3 w-3" />
           {activity.time || 0}m
         </span>
@@ -216,11 +216,11 @@ export function LibraryMenu({
         <div
           role="dialog"
           aria-label="Activity library"
-          className="absolute left-0 top-[calc(100%+8px)] z-50 flex max-h-[min(70vh,560px)] w-[min(92vw,360px)] flex-col overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-900/15"
+          className="absolute left-0 top-[calc(100%+8px)] z-50 flex max-h-[min(70vh,560px)] w-[min(92vw,280px)] flex-col overflow-hidden rounded-2xl border border-indigo-100 bg-white shadow-xl shadow-indigo-900/15"
         >
-          <div className="border-b border-indigo-50 px-3 py-3">
+          <div className="border-b border-indigo-50 px-2 py-2">
             <div className="mb-2 flex items-center justify-between gap-2">
-              <p className="text-sm font-extrabold text-slate-800">Activity library</p>
+              <p className="text-sm font-extrabold text-slate-800">Activities</p>
               <label className="sr-only" htmlFor="planner-ks">
                 Key stage
               </label>
@@ -273,25 +273,29 @@ export function LibraryMenu({
                           [subject.id]: !isOpen,
                         }))
                       }
-                      className="flex h-11 w-full items-center gap-2 rounded-xl px-2 text-left hover:bg-indigo-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                      className="flex h-9 w-full items-center gap-1.5 rounded-lg px-1.5 text-left hover:bg-indigo-50/60 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11"
                     >
                       {isOpen ? (
-                        <ChevronDown className="h-4 w-4 text-slate-400" />
+                        <ChevronDown className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                       ) : (
-                        <ChevronRight className="h-4 w-4 text-slate-400" />
+                        <ChevronRight className="h-3.5 w-3.5 shrink-0 text-slate-400" />
                       )}
                       <span
-                        className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold"
-                        style={style}
+                        className="inline-flex min-w-0 max-w-[70%] items-center truncate rounded-full border px-2 py-0.5 text-[11px] font-semibold"
+                        style={{
+                          ...style,
+                          color: '#0f172a',
+                          backgroundColor: `${subject.color || '#4338E8'}1F`,
+                        }}
                       >
                         {subject.name}
                       </span>
-                      <span className="ml-auto text-xs font-semibold text-slate-400">
+                      <span className="ml-auto shrink-0 text-[11px] font-semibold text-[#5F5B7A]">
                         {subject.activities.length}
                       </span>
                     </button>
                     {isOpen ? (
-                      <ul className="space-y-1 pb-2 pl-2">
+                      <ul className="space-y-1 pb-2 pl-1">
                         {subject.activities.length === 0 ? (
                           <li className="px-2 py-2 text-xs text-slate-400">No activities</li>
                         ) : (

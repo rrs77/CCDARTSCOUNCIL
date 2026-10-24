@@ -236,13 +236,13 @@ export function ActivityStepsModal({
         </div>
       </div>
 
-      <div className="soft-scroll relative min-h-0 flex-1 overflow-y-auto px-5 py-5">
+      <div className="relative flex min-h-0 flex-1">
         <button
           type="button"
           aria-label="Previous step"
           disabled={step === 0}
           onClick={() => setStep((s) => s - 1)}
-          className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-indigo-600 shadow-md ring-1 ring-indigo-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          className="absolute left-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-indigo-600 shadow-md ring-1 ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
           <ChevronLeft className="h-5 w-5" />
         </button>
@@ -251,12 +251,12 @@ export function ActivityStepsModal({
           aria-label="Next step"
           disabled={step === STEPS.length - 1}
           onClick={() => setStep((s) => s + 1)}
-          className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-indigo-600 shadow-md ring-1 ring-indigo-100 disabled:opacity-30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          className="absolute right-2 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-white text-indigo-600 shadow-md ring-1 ring-indigo-100 disabled:cursor-not-allowed disabled:bg-slate-100 disabled:text-slate-400 disabled:opacity-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
         >
           <ChevronRight className="h-5 w-5" />
         </button>
 
-        <div className="mx-auto max-w-lg space-y-4 px-8">
+        <div className="soft-scroll mx-auto min-h-0 w-full max-w-lg flex-1 space-y-4 overflow-y-auto px-12 py-5 sm:px-14">
           {stepId === 'overview' ? (
             <>
               <Field label="Description">

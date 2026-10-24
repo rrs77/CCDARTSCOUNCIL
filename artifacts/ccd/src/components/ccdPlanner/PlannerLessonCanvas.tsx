@@ -378,7 +378,7 @@ export function PlannerLessonCanvas({
               <div
                 key={section.id}
                 title={`${section.title} · ${mins}m`}
-                className="h-full transition-all duration-500 first:rounded-l-full last:rounded-r-full"
+                className="h-full transition-all duration-200 motion-reduce:transition-none first:rounded-l-full last:rounded-r-full"
                 style={{
                   width,
                   backgroundColor: over ? '#F59E0B' : color,
