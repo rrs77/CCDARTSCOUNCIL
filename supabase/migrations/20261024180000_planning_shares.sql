@@ -391,13 +391,32 @@ CREATE POLICY planning_shares_owner_all
   WITH CHECK (
     public.owns_planning_resource(resource_id)
     AND shared_by = auth.uid()
-    -- school / hub_org: audience_id must be the sharer's organisation_id
     AND (
       audience_type NOT IN ('school', 'hub_org')
-      OR audience_id = (
-        SELECT NULLIF(trim(p.organisation_id), '')
-        FROM public.profiles p
-        WHERE p.id = auth.uid()
+      OR (
+        -- school: audience_id must be the sharer's organisation_id
+        audience_type = 'school'
+        AND audience_id = (
+          SELECT NULLIF(trim(p.organisation_id), '')
+          FROM public.profiles p
+          WHERE p.id = auth.uid()
+        )
+      )
+      OR (
+        -- hub_org: audience_id is the org, and the sharer must be a hub member of that org
+        audience_type = 'hub_org'
+        AND audience_id = (
+          SELECT NULLIF(trim(p.organisation_id), '')
+          FROM public.profiles p
+          WHERE p.id = auth.uid()
+        )
+        AND EXISTS (
+          SELECT 1
+          FROM public.hub_memberships hm
+          WHERE hm.user_id = auth.uid()
+            AND NULLIF(trim(hm.organisation_id), '') IS NOT NULL
+            AND trim(hm.organisation_id) = audience_id
+        )
       )
     )
   );

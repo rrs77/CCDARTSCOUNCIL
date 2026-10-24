@@ -209,6 +209,38 @@ EXCEPTION WHEN insufficient_privilege OR check_violation THEN
   INSERT INTO results VALUES ('with check: shared_by must be auth.uid()', true);
 END $$;
 
+-- school: audience_id must equal owner's organisation_id
+SELECT pg_temp.as_user('10000000-0000-0000-0000-000000000001');
+DO $$ BEGIN
+  INSERT INTO public.planning_shares (resource_id, shared_by, audience_type, audience_id, permission)
+  VALUES (
+    '20000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000001',
+    'school',
+    'org-other',
+    'view'
+  );
+  INSERT INTO results VALUES ('with check: school audience_id must be owner org', false);
+EXCEPTION WHEN insufficient_privilege OR check_violation THEN
+  INSERT INTO results VALUES ('with check: school audience_id must be owner org', true);
+END $$;
+
+-- hub_org: requires hub_memberships for that org (owner has none → denied)
+SELECT pg_temp.as_user('10000000-0000-0000-0000-000000000001');
+DO $$ BEGIN
+  INSERT INTO public.planning_shares (resource_id, shared_by, audience_type, audience_id, permission)
+  VALUES (
+    '20000000-0000-0000-0000-000000000001',
+    '10000000-0000-0000-0000-000000000001',
+    'hub_org',
+    'org-a',
+    'view'
+  );
+  INSERT INTO results VALUES ('with check: hub_org requires hub membership', false);
+EXCEPTION WHEN insufficient_privilege OR check_violation THEN
+  INSERT INTO results VALUES ('with check: hub_org requires hub membership', true);
+END $$;
+
 -- (4) organisation_id only — school_or_org must not grant access
 RESET ROLE;
 UPDATE public.profiles
