@@ -63,11 +63,67 @@ describe('canManagerEditProfile (V5)', () => {
   it('allows same-org admin to edit a peer teacher with a lower role', () => {
     assert.equal(
       canManagerEditProfile({
-        actor: { role: 'admin', status: 'active', organisation_id: 'ems' },
+        actor: {
+          id: 'admin-1',
+          role: 'admin',
+          status: 'active',
+          organisation_id: 'ems',
+        },
         targetOld: teacherTarget,
         targetNew: { role: 'viewer', organisation_id: 'ems' },
       }),
       true,
+    );
+  });
+
+  it('denies teacher manager editing/suspending a same-org admin (target rank >= actor)', () => {
+    assert.equal(
+      canManagerEditProfile({
+        actor: {
+          id: 'mgr-1',
+          role: 'teacher',
+          status: 'active',
+          organisation_id: 'ems',
+          can_manage_users: true,
+        },
+        targetOld: {
+          id: 'admin-peer',
+          organisation_id: 'ems',
+          role: 'admin',
+          status: 'active',
+          can_manage_users: true,
+        },
+        targetNew: { status: 'suspended', organisation_id: 'ems' },
+      }),
+      false,
+    );
+  });
+
+  it('denies managers changing their own can_* / forum_can_* flags', () => {
+    const self = {
+      id: 'mgr-1',
+      role: 'teacher',
+      status: 'active',
+      organisation_id: 'ems',
+      can_manage_users: true,
+      can_edit_activities: false,
+      forum_can_moderate: false,
+    };
+    assert.equal(
+      canManagerEditProfile({
+        actor: self,
+        targetOld: self,
+        targetNew: { can_manage_users: false, organisation_id: 'ems' },
+      }),
+      false,
+    );
+    assert.equal(
+      canManagerEditProfile({
+        actor: self,
+        targetOld: self,
+        targetNew: { forum_can_moderate: true, organisation_id: 'ems' },
+      }),
+      false,
     );
   });
 
@@ -131,26 +187,45 @@ describe('canManagerEditProfile (V5)', () => {
     assert.equal(
       canManagerEditProfile({
         actor: {
+          id: 'mgr-1',
           role: 'teacher',
           status: 'active',
           organisation_id: 'ems',
           can_manage_users: true,
         },
-        targetOld: teacherTarget,
-        targetNew: { role: 'viewer', organisation_id: 'ems' },
+        targetOld: { ...teacherTarget, id: 'viewer-1', role: 'viewer' },
+        targetNew: { role: 'student', organisation_id: 'ems' },
       }),
       true,
     );
     assert.equal(
       canManagerEditProfile({
         actor: {
+          id: 'mgr-1',
           role: 'teacher',
           status: 'active',
           organisation_id: 'ems',
           can_manage_users: true,
         },
-        targetOld: { ...teacherTarget, role: 'viewer' },
+        targetOld: { ...teacherTarget, id: 'viewer-1', role: 'viewer' },
         targetNew: { role: 'teacher', organisation_id: 'ems' },
+      }),
+      false,
+    );
+  });
+
+  it('denies teacher manager editing another teacher (peer rank)', () => {
+    assert.equal(
+      canManagerEditProfile({
+        actor: {
+          id: 'mgr-1',
+          role: 'teacher',
+          status: 'active',
+          organisation_id: 'ems',
+          can_manage_users: true,
+        },
+        targetOld: teacherTarget,
+        targetNew: { status: 'suspended', organisation_id: 'ems' },
       }),
       false,
     );

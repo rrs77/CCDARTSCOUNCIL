@@ -70,6 +70,13 @@ BEGIN
       END IF;
     END IF;
 
+    -- Cannot edit others whose rank >= manager rank (blocks demote/suspend of admins).
+    IF OLD.id IS DISTINCT FROM auth.uid()
+       AND public.profile_role_rank(OLD.role) >= public.profile_role_rank(actor.role) THEN
+      RAISE EXCEPTION 'managers cannot edit users at or above their own rank'
+        USING ERRCODE = '42501';
+    END IF;
+
     IF NEW.role IS DISTINCT FROM OLD.role THEN
       IF lower(COALESCE(NEW.role, '')) IN ('super_admin', 'superuser') THEN
         RAISE EXCEPTION 'managers cannot grant super-admin roles'
@@ -77,6 +84,23 @@ BEGIN
       END IF;
       IF public.profile_role_rank(NEW.role) >= public.profile_role_rank(actor.role) THEN
         RAISE EXCEPTION 'managers cannot grant roles at or above their own'
+          USING ERRCODE = '42501';
+      END IF;
+    END IF;
+
+    -- Managers cannot change their own can_* / forum_can_* flags.
+    IF OLD.id = auth.uid() THEN
+      IF NEW.can_edit_activities IS DISTINCT FROM OLD.can_edit_activities
+         OR NEW.can_edit_lessons IS DISTINCT FROM OLD.can_edit_lessons
+         OR NEW.can_manage_year_groups IS DISTINCT FROM OLD.can_manage_year_groups
+         OR NEW.can_manage_users IS DISTINCT FROM OLD.can_manage_users
+         OR NEW.can_view_download_analytics IS DISTINCT FROM OLD.can_view_download_analytics
+         OR NEW.can_view_raw_ip IS DISTINCT FROM OLD.can_view_raw_ip
+         OR NEW.forum_can_moderate IS DISTINCT FROM OLD.forum_can_moderate
+         OR NEW.forum_can_manage_categories IS DISTINCT FROM OLD.forum_can_manage_categories
+         OR NEW.forum_can_manage_settings IS DISTINCT FROM OLD.forum_can_manage_settings
+      THEN
+        RAISE EXCEPTION 'managers cannot change their own capability flags'
           USING ERRCODE = '42501';
       END IF;
     END IF;

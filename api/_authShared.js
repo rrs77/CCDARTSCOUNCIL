@@ -366,11 +366,25 @@ export function profileRoleRank(role) {
   return Number.isFinite(rank) ? rank : 0;
 }
 
+/** Capability / forum flags managers must not change on their own row. */
+export const SELF_LOCKED_PROFILE_FLAGS = Object.freeze([
+  'can_edit_activities',
+  'can_edit_lessons',
+  'can_manage_year_groups',
+  'can_manage_users',
+  'can_view_download_analytics',
+  'can_view_raw_ip',
+  'forum_can_moderate',
+  'forum_can_manage_categories',
+  'forum_can_manage_settings',
+]);
+
 /**
  * V5: whether a manager may apply targetNew over targetOld.
  * Super-admins (super_admin / superuser) are unrestricted.
  * Other managers: same-org only; cannot move organisation_id to another org;
- * cannot grant roles at/above their own or any SUPER_ADMIN_ROLES.
+ * cannot edit others whose rank >= actor rank; cannot grant roles at/above
+ * their own or any SUPER_ADMIN_ROLES; cannot change their own can_*/forum_can_* flags.
  */
 export function canManagerEditProfile({ actor, targetOld, targetNew }) {
   if (!actor || !targetOld || !canManageUsers(actor)) return false;
@@ -383,6 +397,14 @@ export function canManagerEditProfile({ actor, targetOld, targetNew }) {
       ? targetOld.organisation_id.trim()
       : '';
   if (!actorOrg || !targetOrg || actorOrg !== targetOrg) return false;
+
+  const isSelf =
+    actor.id != null && targetOld.id != null && String(actor.id) === String(targetOld.id);
+
+  // Block editing peers/superiors (except self).
+  if (!isSelf && profileRoleRank(targetOld.role) >= profileRoleRank(actor.role)) {
+    return false;
+  }
 
   if (targetNew && Object.prototype.hasOwnProperty.call(targetNew, 'organisation_id')) {
     const nextOrg =
@@ -400,6 +422,18 @@ export function canManagerEditProfile({ actor, targetOld, targetNew }) {
     if (SUPER_ADMIN_ROLES.has(targetNew.role)) return false;
     if (profileRoleRank(targetNew.role) >= profileRoleRank(actor.role)) {
       return false;
+    }
+  }
+
+  // Managers cannot escalate their own capability / forum flags.
+  if (isSelf && targetNew) {
+    for (const flag of SELF_LOCKED_PROFILE_FLAGS) {
+      if (
+        Object.prototype.hasOwnProperty.call(targetNew, flag) &&
+        targetNew[flag] !== targetOld[flag]
+      ) {
+        return false;
+      }
     }
   }
 
