@@ -25,6 +25,7 @@ header('Content-Type: application/json');
 define('MAX_FILE_SIZE', 100 * 1024 * 1024); // Keep in sync with api/_dreamhost.js MAX_UPLOAD_BYTES
 define('STREAM_CHUNK_BYTES', 1024 * 1024); // 1 MiB
 define('NONCE_MAX_AGE_SEC', 35 * 60); // upload TTL (5m) + complete grace (30m)
+define('TMP_MAX_AGE_SEC', 60 * 60); // orphaned upload_tmp/up_* older than 1 hour
 define('PATH_REGEX', '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\/[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}\.pdf$/i');
 define('UUID_REGEX', '/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i');
 
@@ -234,6 +235,42 @@ function ccd_private_tmp_dir(): string
     return rtrim($base, '/\\') . '/';
 }
 
+/** Best-effort: remove upload_tmp/up_* files older than TMP_MAX_AGE_SEC. */
+function ccd_cleanup_stale_tmps(): void
+{
+    $dir = ccd_private_tmp_dir();
+    $cutoff = time() - TMP_MAX_AGE_SEC;
+    $matches = glob($dir . 'up_*') ?: [];
+    foreach ($matches as $full) {
+        if (!is_file($full)) {
+            continue;
+        }
+        $mtime = @filemtime($full);
+        if ($mtime !== false && $mtime < $cutoff) {
+            @unlink($full);
+        }
+    }
+}
+
+/** Ensure a temp path is unlinked even if the request aborts mid-flight. */
+function ccd_register_tmp_cleanup(string $tmpPath): void
+{
+    register_shutdown_function(static function () use ($tmpPath) {
+        if ($tmpPath !== '' && is_file($tmpPath)) {
+            @unlink($tmpPath);
+        }
+    });
+}
+
+/** Create an exclusive up_* temp path with shutdown + stale cleanup. */
+function ccd_create_upload_tmp(): string
+{
+    ccd_cleanup_stale_tmps();
+    $tmpPath = ccd_private_tmp_dir() . 'up_' . bin2hex(random_bytes(16));
+    ccd_register_tmp_cleanup($tmpPath);
+    return $tmpPath;
+}
+
 /**
  * Validate a temp file as PDF (magic + finfo), then atomically link into place.
  * link(temp, final) fails if final exists (no overwrite) → 409; then unlink(temp).
@@ -296,14 +333,16 @@ function ccd_finalize_pdf_from_temp(string $uploadDir, string $fileName, string 
 function ccd_stream_body_to_temp(int $maxBytes): array
 {
     $limit = min($maxBytes, MAX_FILE_SIZE);
-    $tmpPath = ccd_private_tmp_dir() . 'up_' . bin2hex(random_bytes(16));
+    $tmpPath = ccd_create_upload_tmp();
     $in = fopen('php://input', 'rb');
     if ($in === false) {
+        @unlink($tmpPath);
         ccd_fail(400, 'Empty body');
     }
     $out = @fopen($tmpPath, 'xb');
     if ($out === false) {
         fclose($in);
+        @unlink($tmpPath);
         ccd_fail(500, 'Failed to create temp file');
     }
 
@@ -353,7 +392,7 @@ function ccd_write_pdf_from_string(string $uploadDir, string $fileName, string $
     if ($len > $maxBytes || $len > MAX_FILE_SIZE) {
         ccd_fail(413, 'File too large');
     }
-    $tmpPath = ccd_private_tmp_dir() . 'up_' . bin2hex(random_bytes(16));
+    $tmpPath = ccd_create_upload_tmp();
     if (@file_put_contents($tmpPath, $pdfData) !== $len) {
         @unlink($tmpPath);
         ccd_fail(500, 'Failed to write temp file');

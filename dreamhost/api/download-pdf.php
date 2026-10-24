@@ -99,10 +99,12 @@ $probe = isset($_GET['probe']) && (string) $_GET['probe'] === '1';
 $rangeHeader = $headers['Range'] ?? $headers['range'] ?? '';
 $wantHead = $probe;
 $rangeEnd = 4;
+// Cap Range responses at 64 KiB (inclusive end index 65535).
+$rangeMaxEnd = (64 * 1024) - 1;
 
 if (!$wantHead && is_string($rangeHeader) && preg_match('/bytes=0-(\d+)/i', $rangeHeader, $m)) {
     $wantHead = true;
-    $rangeEnd = min((int) $m[1], max(0, $totalSize - 1));
+    $rangeEnd = min((int) $m[1], $rangeMaxEnd, max(0, $totalSize - 1));
 }
 
 $fh = fopen($realFile, 'rb');
