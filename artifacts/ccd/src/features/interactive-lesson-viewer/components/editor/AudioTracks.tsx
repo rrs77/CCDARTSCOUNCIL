@@ -8,6 +8,7 @@ import {
   sceneLayoutMs,
   sceneLayoutOffsets,
   snapToSceneBoundary,
+  snapToTimelineGuides,
 } from '../../utils/timelineAudio';
 
 interface AudioTracksProps {
@@ -125,21 +126,34 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
     const origFadeOut = clip.fadeOutMs || 0;
     const origCurve = [...(clip.volumeCurve || [{ t: 0, gain: 1 }, { t: 1, gain: 1 }])];
 
+    const otherEdges = clips
+      .filter((c) => c.id !== clip.id)
+      .flatMap((c) => [c.startMs, c.startMs + c.durationMs]);
+    const guides = [elapsedMs, ...otherEdges];
+    const snap = (v: number, altKey: boolean) =>
+      altKey ? Math.max(0, Math.min(total, v)) : snapToTimelineGuides(v, lesson.scenes, guides);
+
     const move = (ev: PointerEvent) => {
       const dx = (ev.clientX - startX) / pxPerMs;
       if (mode === 'move') {
-        const next = snapToSceneBoundary(Math.max(0, origStart + dx), lesson.scenes);
+        const next = snap(Math.max(0, origStart + dx), ev.altKey);
         updateClip(clip.id, { startMs: Math.min(next, Math.max(0, total - origDur)) });
       } else if (mode === 'resize-l') {
-        let start = snapToSceneBoundary(origStart + dx, lesson.scenes);
+        let start = snap(origStart + dx, ev.altKey);
         let dur = origDur - (start - origStart);
         if (dur < 500) {
           start = origStart + origDur - 500;
           dur = 500;
         }
-        updateClip(clip.id, { startMs: Math.max(0, start), durationMs: dur });
+        const delta = start - origStart;
+        updateClip(clip.id, {
+          startMs: Math.max(0, start),
+          durationMs: dur,
+          // Keep source in/out aligned when trimming the left edge (Vids-style).
+          trimStartMs: Math.max(0, (clip.trimStartMs || 0) + delta),
+        });
       } else if (mode === 'resize-r') {
-        const end = snapToSceneBoundary(origStart + origDur + dx, lesson.scenes);
+        const end = snap(origStart + origDur + dx, ev.altKey);
         updateClip(clip.id, { durationMs: Math.max(500, end - origStart) });
       } else if (mode === 'fade-in') {
         updateClip(clip.id, {
@@ -483,6 +497,30 @@ export function AudioTracks({ lesson, elapsedMs, pxPerMs, onChange, onSeek }: Au
                 min={0}
                 value={selected.fadeOutMs || 0}
                 onChange={(e) => updateClip(selected.id, { fadeOutMs: Math.max(0, Number(e.target.value) || 0) })}
+              />
+            </div>
+            <div>
+              <label className="ilv-label">Source trim start (ms)</label>
+              <input
+                className="ilv-input min-h-[32px] py-1 text-xs"
+                type="number"
+                min={0}
+                value={selected.trimStartMs || 0}
+                onChange={(e) =>
+                  updateClip(selected.id, { trimStartMs: Math.max(0, Number(e.target.value) || 0) })
+                }
+              />
+            </div>
+            <div>
+              <label className="ilv-label">Duration (ms)</label>
+              <input
+                className="ilv-input min-h-[32px] py-1 text-xs"
+                type="number"
+                min={500}
+                value={selected.durationMs}
+                onChange={(e) =>
+                  updateClip(selected.id, { durationMs: Math.max(500, Number(e.target.value) || 500) })
+                }
               />
             </div>
           </div>

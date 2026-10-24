@@ -19,6 +19,9 @@ interface SceneThumbProps {
   onMoveLeft: () => void;
   onMoveRight: () => void;
   onSetAdvance?: (mode: AdvanceMode) => void;
+  /** Drag the right edge to change scene duration (layout clock). */
+  onResizeDuration?: (nextDurationMs: number) => void;
+  pxPerMs?: number;
 }
 
 const MENU_W = 180;
@@ -39,6 +42,8 @@ export function SceneThumb({
   onMoveLeft,
   onMoveRight,
   onSetAdvance,
+  onResizeDuration,
+  pxPerMs = 0.05,
 }: SceneThumbProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const moreBtnRef = useRef<HTMLButtonElement>(null);
@@ -315,6 +320,31 @@ export function SceneThumb({
         <span className="truncate">{SCENE_TYPE_LABELS[scene.type]}</span>
         <span className="ilv-scene-dur">{durLabel}</span>
       </div>
+      {onResizeDuration && (
+        <button
+          type="button"
+          className="ilv-scene-dur-handle is-right"
+          aria-label="Resize scene duration"
+          title="Drag to change duration"
+          onPointerDown={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const startX = e.clientX;
+            const startDur = Math.max(500, scene.durationMs || scene.advanceAfterMs || 4000);
+            const move = (ev: PointerEvent) => {
+              const dx = (ev.clientX - startX) / Math.max(0.001, pxPerMs);
+              const next = Math.max(500, Math.round((startDur + dx) / 50) * 50);
+              onResizeDuration(next);
+            };
+            const up = () => {
+              window.removeEventListener('pointermove', move);
+              window.removeEventListener('pointerup', up);
+            };
+            window.addEventListener('pointermove', move);
+            window.addEventListener('pointerup', up);
+          }}
+        />
+      )}
     </div>
   );
 }
