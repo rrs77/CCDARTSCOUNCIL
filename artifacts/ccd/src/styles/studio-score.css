@@ -1966,3 +1966,540 @@ html.ccd-studio .ss-dialog-lg {
     font-size: 1.35rem;
   }
 }
+
+/* ── School Systems & MIS Integrations (Settings) ───────────────── */
+.ss-mis-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  padding-bottom: 2rem;
+}
+
+.ss-mis-banner {
+  border: 1px solid #fcd34d;
+  background: #fffbeb;
+  color: #78350f;
+  border-radius: 12px;
+  padding: 12px 16px;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.ss-mis-section {
+  background: var(--ss-white, #fff);
+  border: 1px solid var(--ss-line, #e5e7eb);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.ss-mis-h2 {
+  margin: 0 0 0.25rem;
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--ss-ink, #111827);
+  font-family: var(--ss-font-display, inherit);
+}
+
+.ss-mis-lead {
+  margin: 0;
+  max-width: 45rem;
+  color: #4b5563;
+  font-size: 0.9375rem;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.ss-mis-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  align-items: flex-start;
+  margin-top: 0.75rem;
+  font-size: 0.8125rem;
+  color: #4b5563;
+}
+
+.ss-mis-legend-title {
+  width: 100%;
+  font-size: 0.8125rem;
+  color: var(--ss-ink, #111827);
+}
+
+.ss-mis-legend-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ss-mis-legend-extra {
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.ss-mis-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  align-self: flex-start;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-radius: 999px;
+  padding: 4px 12px;
+  line-height: 1.3;
+}
+
+.ss-mis-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.ss-mis-badge-unverified {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+.ss-mis-badge-requested {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.ss-mis-badge-approved {
+  background: #e0e7ff;
+  color: #3730a3;
+}
+
+.ss-mis-badge-connected {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.ss-mis-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+  margin-top: 1rem;
+}
+
+.ss-mis-card {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-width: 0;
+  background: #fff;
+}
+
+.ss-mis-card.is-recommended {
+  border: 2px solid #4f46e5;
+}
+
+.ss-mis-card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.ss-mis-provider-name {
+  font-size: 1.25rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--ss-ink, #111827);
+}
+
+.ss-mis-provider-sub {
+  margin: 0;
+  color: #4b5563;
+  font-size: 0.8125rem;
+}
+
+.ss-mis-flag {
+  align-self: flex-start;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #3730a3;
+  background: #eef2ff;
+  border-radius: 999px;
+  padding: 4px 8px;
+}
+
+.ss-mis-flag.is-soft {
+  color: #374151;
+  background: #f3f4f6;
+}
+
+.ss-mis-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  border-radius: 8px;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  padding: 0 1rem;
+  cursor: pointer;
+  border: 1px solid #d1d5db;
+  background: #fff;
+  color: #374151;
+  transition: background 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+}
+
+.ss-mis-btn:hover:not(:disabled) {
+  border-color: #bcb7f4;
+  color: var(--ss-ink, #111827);
+}
+
+.ss-mis-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+.ss-mis-btn:focus-visible,
+.ss-mis-select:focus-visible,
+.ss-mis-input:focus-visible,
+.ss-mis-link:focus-visible {
+  outline: 3px solid #818cf8;
+  outline-offset: 2px;
+}
+
+.ss-mis-btn-primary {
+  background: #4f46e5;
+  border-color: #4f46e5;
+  color: #fff;
+}
+
+.ss-mis-btn-primary:hover:not(:disabled) {
+  background: #4338ca;
+  border-color: #4338ca;
+  color: #fff;
+}
+
+.ss-mis-cfg {
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 8px 12px 12px;
+  margin: 0;
+  color: #6b7280;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.ss-mis-cfg legend {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  padding: 0 4px;
+}
+
+.ss-mis-cfg-field {
+  display: flex;
+  flex-direction: column;
+  font-size: 0.8125rem;
+  gap: 0.25rem;
+}
+
+.ss-mis-cfg-check {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-height: 44px;
+  font-size: 0.8125rem;
+  gap: 0.5rem;
+}
+
+.ss-mis-cfg-check input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  margin: 0;
+}
+
+.ss-mis-cfg-hint {
+  margin: 0;
+  font-size: 0.8125rem;
+  color: #4b5563;
+  font-weight: 600;
+}
+
+.ss-mis-cfg select,
+.ss-mis-select {
+  font-size: 1rem;
+  min-height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 8px;
+  background: #fff;
+  color: #111827;
+  max-width: 100%;
+}
+
+.ss-mis-cfg select:disabled,
+.ss-mis-select:disabled {
+  background: #f3f4f6;
+  color: #6b7280;
+}
+
+.ss-mis-table-wrap {
+  overflow-x: auto;
+  margin-top: 1rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.ss-mis-apps-table,
+.ss-mis-map-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+.ss-mis-apps-table th,
+.ss-mis-apps-table td,
+.ss-mis-map-table th,
+.ss-mis-map-table td {
+  text-align: left;
+  padding: 12px 8px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: top;
+}
+
+.ss-mis-apps-table th,
+.ss-mis-map-table th {
+  font-size: 0.8125rem;
+  color: #4b5563;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-weight: 700;
+}
+
+.ss-mis-apps-table tr.is-ccd {
+  background: #eef2ff;
+}
+
+.ss-mis-code {
+  display: inline-block;
+  font-size: 0.8125rem;
+  background: #f3f4f6;
+  border-radius: 4px;
+  padding: 2px 4px;
+  color: #3730a3;
+  margin: 0 0.2rem 0.2rem 0;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.ss-mis-scopes-note {
+  font-size: 0.8125rem;
+  color: #4b5563;
+}
+
+.ss-mis-never {
+  color: #991b1b;
+  font-weight: 600;
+  font-size: 0.8125rem;
+}
+
+.ss-mis-note {
+  font-size: 0.8125rem;
+  color: #4b5563;
+  margin: 12px 0 0;
+}
+
+.ss-mis-checklist {
+  list-style: none;
+  padding: 0;
+  margin: 1rem 0 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.ss-mis-checklist li {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 44px;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 8px 12px;
+}
+
+.ss-mis-step-num {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 2px solid #9ca3af;
+  display: grid;
+  place-items: center;
+  font-weight: 700;
+  font-size: 0.8125rem;
+  flex: none;
+  color: #374151;
+}
+
+.ss-mis-step-label {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 0.875rem;
+  color: var(--ss-ink, #111827);
+}
+
+.ss-mis-step-status {
+  margin-left: auto;
+  font-size: 0.8125rem;
+  color: #4b5563;
+  white-space: nowrap;
+}
+
+.ss-mis-example-tag {
+  display: inline-block;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: #92400e;
+  background: #fef3c7;
+  border-radius: 4px;
+  padding: 2px 8px;
+  margin-top: 0.75rem;
+}
+
+.ss-mis-map-arrow {
+  width: 1.5rem;
+  text-align: center;
+  color: #9ca3af;
+}
+
+.ss-mis-safe {
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  color: #065f46;
+  border-radius: 8px;
+  padding: 12px;
+  font-size: 0.875rem;
+  margin-top: 1rem;
+}
+
+.ss-mis-map-actions {
+  margin: 1rem 0 0;
+}
+
+.ss-mis-link {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  color: #4338ca;
+  font-weight: 600;
+  font-size: 0.9375rem;
+  background: none;
+  border: 0;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.ss-mis-link:hover {
+  text-decoration: underline;
+}
+
+.ss-mis-modal-lead {
+  margin: 0 0 1rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  line-height: 1.5;
+}
+
+.ss-mis-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.ss-mis-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.ss-mis-input {
+  min-height: 44px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  padding: 0 12px;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #111827;
+  background: #fff;
+}
+
+.ss-mis-textarea {
+  min-height: 5.5rem;
+  padding: 10px 12px;
+  resize: vertical;
+}
+
+.ss-mis-submit-note {
+  margin: 1rem 0 0;
+  padding: 10px 12px;
+  border-radius: 8px;
+  background: #eef2ff;
+  color: #3730a3;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 900px) {
+  .ss-mis-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .ss-mis-section {
+    padding: 1rem;
+  }
+
+  .ss-mis-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ss-mis-apps-table thead {
+    display: none;
+  }
+
+  .ss-mis-apps-table tr {
+    display: block;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 8px 0;
+  }
+
+  .ss-mis-apps-table td {
+    display: block;
+    border: 0;
+    padding: 4px 8px;
+  }
+
+  .ss-mis-checklist li {
+    flex-wrap: wrap;
+  }
+
+  .ss-mis-step-status {
+    margin-left: 2.5rem;
+    width: 100%;
+  }
+}

@@ -48,9 +48,16 @@ export function useSettingsAccess(): SettingsAccess {
     if (canEditSystemCategories) schoolPanels.push('system-categories');
     if (isAdmin) schoolPanels.push('data');
 
+    const showIntegrations =
+      isAdmin ||
+      canManageUsers ||
+      profile?.role === 'organisation' ||
+      isDemoModeActive();
+
     return {
       showDownloads: true,
       showUsers,
+      showIntegrations,
       showSchoolTools: schoolPanels.length > 0,
       schoolPanels,
     };

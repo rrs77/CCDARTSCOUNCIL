@@ -41,6 +41,7 @@ import type { SchoolToolsPanelId, SettingsSectionId } from './settingsSections';
 import { SCHOOL_TOOLS_PANELS } from './settingsSections';
 import { keyStageAccent } from './keyStageAccents';
 import { groupClassesBySubject } from '../../utils/classOrganization';
+import { SchoolSystemsIntegrationsPanel } from './misIntegrations/SchoolSystemsIntegrationsPanel';
 
 
 function YearGroupSectionSelect({
@@ -254,6 +255,7 @@ const SECTION_TO_TAB: Record<SettingsSectionId, string> = {
   curriculum: 'curriculum',
   preferences: 'resource-links',
   downloads: 'my-downloads',
+  integrations: 'integrations',
   users: 'users',
   school: 'school',
 };
@@ -3166,6 +3168,8 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
           )}
 
           {activeTab === 'curriculum' && <CurriculumSettingsEditor />}
+
+          {activeTab === 'integrations' && <SchoolSystemsIntegrationsPanel />}
 
           {activeTab === 'my-downloads' && (
             <MyDownloads />

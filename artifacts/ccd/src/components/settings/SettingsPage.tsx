@@ -17,6 +17,8 @@ export interface SettingsAccess {
   showDownloads: boolean;
   /** Top-level Users section (admins / school leads / demo) */
   showUsers: boolean;
+  /** School Systems & MIS Integrations (admins / school leads) */
+  showIntegrations: boolean;
   showSchoolTools: boolean;
   /** Which school-tool panels this user can open */
   schoolPanels: SchoolToolsPanelId[];
@@ -82,10 +84,16 @@ export function SettingsPage({ access, initialSection, initialSchoolPanel }: Set
     return SETTINGS_SECTIONS.filter((s) => {
       if (s.requires === 'downloads') return access.showDownloads;
       if (s.requires === 'users') return access.showUsers;
+      if (s.requires === 'integrations') return access.showIntegrations;
       if (s.requires === 'school') return access.showSchoolTools;
       return true;
     });
-  }, [access.showDownloads, access.showUsers, access.showSchoolTools]);
+  }, [
+    access.showDownloads,
+    access.showUsers,
+    access.showIntegrations,
+    access.showSchoolTools,
+  ]);
 
   const filteredSections = useMemo(() => {
     const q = navQuery.trim().toLowerCase();
