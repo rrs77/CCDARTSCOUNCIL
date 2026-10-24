@@ -171,9 +171,7 @@ CREATE TABLE IF NOT EXISTS public.mis_org_connections (
   status text NOT NULL DEFAULT 'draft' CHECK (status IN (
     'draft', 'requested', 'gates_incomplete', 'ready', 'connected', 'revoked', 'declined'
   )),
-  -- Secure config placeholders (encrypted secrets live outside this JSON in future vault).
-  -- Never store live API tokens here in this phase.
-  config_placeholder jsonb NOT NULL DEFAULT '{}'::jsonb,
+  -- Sensitive config lives in mis_org_connection_secrets (super-admin / service_role only).
   school_authorised boolean NOT NULL DEFAULT false,
   last_sync_at timestamptz, -- only set when genuinely connected + sync ran
   created_by uuid REFERENCES auth.users (id) ON DELETE SET NULL,
@@ -187,6 +185,15 @@ CREATE INDEX IF NOT EXISTS mis_org_connections_org_idx
   ON public.mis_org_connections (organisation_id);
 CREATE INDEX IF NOT EXISTS mis_org_connections_provider_idx
   ON public.mis_org_connections (provider_id);
+
+-- Secure config placeholders — never readable by org managers / teachers.
+-- Encrypted secrets will live in a vault later; this JSON is still restricted.
+CREATE TABLE IF NOT EXISTS public.mis_org_connection_secrets (
+  connection_id uuid PRIMARY KEY REFERENCES public.mis_org_connections (id) ON DELETE CASCADE,
+  config_placeholder jsonb NOT NULL DEFAULT '{}'::jsonb,
+  updated_at timestamptz NOT NULL DEFAULT now(),
+  updated_by uuid REFERENCES auth.users (id) ON DELETE SET NULL
+);
 
 -- Activation gates checklist (all must be true before status=connected)
 CREATE TABLE IF NOT EXISTS public.mis_activation_gates (
@@ -273,6 +280,8 @@ CREATE INDEX IF NOT EXISTS mis_year_group_mappings_connection_idx
 -- Helpers
 -- ---------------------------------------------------------------------------
 
+-- Org membership for MIS: use profiles.organisation_id only (never school_or_org —
+-- that field is user-editable and must not grant cross-org access).
 CREATE OR REPLACE FUNCTION public.mis_user_can_manage_org(p_org_id text)
 RETURNS boolean
 LANGUAGE sql
@@ -282,7 +291,13 @@ STABLE
 AS $$
   SELECT
     p_org_id IS NOT NULL
-    AND p_org_id <> ''
+    AND btrim(p_org_id) <> ''
+    AND EXISTS (
+      SELECT 1 FROM public.profiles me
+      WHERE me.id = auth.uid()
+        AND me.status IS DISTINCT FROM 'suspended'
+        AND me.anonymised_at IS NULL
+    )
     AND (
       public.current_user_is_full_user_admin()
       OR (
@@ -294,7 +309,9 @@ AS $$
         WHERE p.id = auth.uid()
           AND p.status IS DISTINCT FROM 'suspended'
           AND p.anonymised_at IS NULL
-          AND COALESCE(p.organisation_id, p.school_or_org, '') = p_org_id
+          AND p.organisation_id IS NOT NULL
+          AND btrim(p.organisation_id) <> ''
+          AND p.organisation_id = p_org_id
           AND p.role IN ('admin', 'superuser', 'super_admin', 'organisation')
       )
     );
@@ -309,17 +326,38 @@ STABLE
 AS $$
   SELECT
     p_org_id IS NOT NULL
-    AND p_org_id <> ''
+    AND btrim(p_org_id) <> ''
+    AND EXISTS (
+      SELECT 1 FROM public.profiles me
+      WHERE me.id = auth.uid()
+        AND me.status IS DISTINCT FROM 'suspended'
+        AND me.anonymised_at IS NULL
+    )
     AND (
       public.current_user_is_full_user_admin()
-      OR p_org_id = ANY (public.current_user_org_ids())
+      OR (
+        p_org_id = ANY (public.current_user_org_ids())
+      )
       OR EXISTS (
         SELECT 1 FROM public.profiles p
         WHERE p.id = auth.uid()
-          AND COALESCE(p.organisation_id, p.school_or_org, '') = p_org_id
+          AND p.status IS DISTINCT FROM 'suspended'
+          AND p.anonymised_at IS NULL
+          AND p.organisation_id IS NOT NULL
+          AND btrim(p.organisation_id) <> ''
+          AND p.organisation_id = p_org_id
       )
     );
 $$;
+
+REVOKE ALL ON FUNCTION public.mis_user_can_manage_org(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.mis_user_can_manage_org(text) FROM anon;
+REVOKE ALL ON FUNCTION public.mis_user_in_org(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.mis_user_in_org(text) FROM anon;
+GRANT EXECUTE ON FUNCTION public.mis_user_can_manage_org(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.mis_user_can_manage_org(text) TO service_role;
+GRANT EXECUTE ON FUNCTION public.mis_user_in_org(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.mis_user_in_org(text) TO service_role;
 
 -- All activation gates met for a connection?
 CREATE OR REPLACE FUNCTION public.mis_connection_all_gates_met(p_connection_id uuid)
@@ -441,6 +479,40 @@ CREATE TRIGGER mis_org_connections_seed_gates
   AFTER INSERT ON public.mis_org_connections
   FOR EACH ROW EXECUTE FUNCTION public.mis_seed_activation_gates();
 
+-- commercial_terms_confirmed + provider_approval_confirmed: only service_role / super-admin
+CREATE OR REPLACE FUNCTION public.mis_protect_provider_gates()
+RETURNS trigger
+LANGUAGE plpgsql
+SET search_path = public
+AS $$
+BEGIN
+  IF NEW.gate_id IN ('commercial_terms_confirmed', 'provider_approval_confirmed') THEN
+    -- Allow seeding unmet rows
+    IF TG_OP = 'INSERT' AND COALESCE(NEW.met, false) = false THEN
+      RETURN NEW;
+    END IF;
+    -- Any attempt to mark met (or flip met / notes while met) requires elevated role
+    IF COALESCE(NEW.met, false) = true
+       OR (TG_OP = 'UPDATE' AND OLD.met IS DISTINCT FROM NEW.met)
+       OR (TG_OP = 'UPDATE' AND COALESCE(OLD.met, false) = true AND OLD.notes IS DISTINCT FROM NEW.notes)
+    THEN
+      IF auth.role() = 'service_role' OR public.current_user_is_full_user_admin() THEN
+        RETURN NEW;
+      END IF;
+      RAISE EXCEPTION
+        'Only Rhythmstix super-admins (or service role) may set activation gate %',
+        NEW.gate_id;
+    END IF;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS mis_activation_gates_protect ON public.mis_activation_gates;
+CREATE TRIGGER mis_activation_gates_protect
+  BEFORE INSERT OR UPDATE ON public.mis_activation_gates
+  FOR EACH ROW EXECUTE FUNCTION public.mis_protect_provider_gates();
+
 -- ---------------------------------------------------------------------------
 -- RLS
 -- ---------------------------------------------------------------------------
@@ -450,6 +522,7 @@ ALTER TABLE public.mis_scopes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mis_app_allowed_scopes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mis_providers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mis_org_connections ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.mis_org_connection_secrets ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mis_activation_gates ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mis_connection_app_scopes ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.mis_integration_requests ENABLE ROW LEVEL SECURITY;
@@ -477,6 +550,7 @@ CREATE POLICY mis_providers_admin_write ON public.mis_providers
   WITH CHECK (public.current_user_is_full_user_admin());
 
 -- Org connections: members can read; managers can write
+-- (no config secrets on this table — see mis_org_connection_secrets)
 DROP POLICY IF EXISTS mis_org_connections_select ON public.mis_org_connections;
 CREATE POLICY mis_org_connections_select ON public.mis_org_connections
   FOR SELECT TO authenticated
@@ -497,6 +571,13 @@ DROP POLICY IF EXISTS mis_org_connections_delete ON public.mis_org_connections;
 CREATE POLICY mis_org_connections_delete ON public.mis_org_connections
   FOR DELETE TO authenticated
   USING (public.mis_user_can_manage_org(organisation_id));
+
+-- Config placeholders: super-admin / service_role only (service_role bypasses RLS)
+DROP POLICY IF EXISTS mis_org_connection_secrets_admin ON public.mis_org_connection_secrets;
+CREATE POLICY mis_org_connection_secrets_admin ON public.mis_org_connection_secrets
+  FOR ALL TO authenticated
+  USING (public.current_user_is_full_user_admin())
+  WITH CHECK (public.current_user_is_full_user_admin());
 
 -- Gates follow connection org
 DROP POLICY IF EXISTS mis_activation_gates_select ON public.mis_activation_gates;
@@ -588,8 +669,14 @@ CREATE POLICY mis_year_group_mappings_write ON public.mis_year_group_mappings
   WITH CHECK (public.mis_user_can_manage_org(organisation_id));
 
 COMMENT ON TABLE public.mis_org_connections IS
-  'Org-scoped MIS/hub connections. status=connected only when all activation gates are met. No live secrets in this phase.';
+  'Org-scoped MIS/hub connections. status=connected only when all activation gates are met. Secrets are not stored here.';
+COMMENT ON TABLE public.mis_org_connection_secrets IS
+  'Secure config placeholders. Readable/writable only by full user admins (service_role bypasses RLS). Never expose to org managers.';
 COMMENT ON TABLE public.mis_year_group_mappings IS
   'Year-group structure mapping only. Never stores pupil names, IDs, parents, attendance, medical or safeguarding data.';
 COMMENT ON TABLE public.mis_connection_app_scopes IS
   'Per-app scopes. CCDesigner is restricted to year_groups.read by trigger + allow-list.';
+COMMENT ON FUNCTION public.mis_user_in_org(text) IS
+  'Org membership for MIS RLS. Uses profiles.organisation_id only — never school_or_org. Denies suspended/anonymised users.';
+COMMENT ON FUNCTION public.mis_protect_provider_gates() IS
+  'Blocks org managers from setting commercial_terms_confirmed / provider_approval_confirmed; super-admin or service_role only.';

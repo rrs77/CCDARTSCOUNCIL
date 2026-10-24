@@ -67,3 +67,13 @@ imports, SOCS scheduling, last-sync timestamps (only when genuinely connected).
 
 **Wonde** — central hub covering many MIS systems with one connection once
 external approval is in place.
+
+## DB security
+
+Migration: `supabase/migrations/20261024_mis_integrations.sql` (not applied to live DB by this agent).
+
+- `mis_user_in_org` / `mis_user_can_manage_org` use `profiles.organisation_id` only (never `school_or_org`), deny suspended/anonymised users, `SECURITY DEFINER` + `search_path=public`, `EXECUTE` revoked from `PUBLIC`/`anon`.
+- `commercial_terms_confirmed` and `provider_approval_confirmed` gates are writable only by super-admin or `service_role` (trigger).
+- Config placeholders live in `mis_org_connection_secrets` (super-admin / service_role only).
+
+SQL tests: `supabase/tests/mis_integrations_security.sql`
