@@ -16,6 +16,7 @@ import {
   isLibraryKeyStageId,
   keyStageFromYearGroupTag,
   keyStageLabel,
+  lessonMatchesKeyStage,
 } from '../utils/libraryHierarchy';
 import { ensureLessonSections, legacyLessonToSections } from '../utils/planner/legacyLessonToSections';
 import type { PlanTemplate } from '../types/lessonSections';
@@ -122,6 +123,7 @@ export function LessonsWorkspace({
     const list = Array.from(keys).filter((num) => {
       const data = allLessonsData[num];
       if (!data) return false;
+      if (!lessonMatchesKeyStage(data, keyStage)) return false;
       if (selectedHalfTerm !== 'all' && getLessonHalfTerm(num) !== selectedHalfTerm) {
         return false;
       }
@@ -143,7 +145,18 @@ export function LessonsWorkspace({
       return na - nb;
     });
     return list;
-  }, [allLessonsData, lessonNumbers, searchQuery, selectedHalfTerm, halfTerms]);
+  }, [allLessonsData, lessonNumbers, searchQuery, selectedHalfTerm, halfTerms, keyStage]);
+
+  // Drop an open lesson that no longer matches the toolbar key stage.
+  React.useEffect(() => {
+    if (!editingLessonNumber || !allLessonsData) return;
+    const data = allLessonsData[editingLessonNumber];
+    if (data && !lessonMatchesKeyStage(data, keyStage)) {
+      setEditingLessonNumber(undefined);
+      setLessonPlanOpen(false);
+      setEditingLessonForForm(null);
+    }
+  }, [keyStage, editingLessonNumber, allLessonsData]);
 
   const activeLessonData = editingLessonNumber
     ? allLessonsData?.[editingLessonNumber]
@@ -355,6 +368,15 @@ export function LessonsWorkspace({
   }, []);
 
   const classLabel = currentSheetInfo.display || currentSheetInfo.sheet;
+  /** Year-group chip only when the open class matches the toolbar key stage. */
+  const yearGroupChipLabel = useMemo(() => {
+    const sheetKs = keyStageFromYearGroupTag(currentSheetInfo?.sheet || '');
+    const displayKs = keyStageFromYearGroupTag(currentSheetInfo?.display || '');
+    if (sheetKs === keyStage || displayKs === keyStage) {
+      return classLabel;
+    }
+    return keyStageLabel(keyStage);
+  }, [currentSheetInfo?.sheet, currentSheetInfo?.display, classLabel, keyStage]);
 
   const goYearOverview = () => {
     setUnitsOpen(false);
@@ -399,8 +421,14 @@ export function LessonsWorkspace({
             CONNECT &amp; CREATE / <span>LESSONS</span>
           </p>
           <p className="text-[13px] text-[#5F5B7A]">
-            Lesson planner for{' '}
-            <strong className="text-[#1F1B4D]">{classLabel}</strong>
+            Lesson planner ·{' '}
+            <strong className="text-[#1F1B4D]">{keyStageLabel(keyStage)}</strong>
+            {yearGroupChipLabel !== keyStageLabel(keyStage) ? (
+              <>
+                {' · '}
+                <strong className="text-[#1F1B4D]">{yearGroupChipLabel}</strong>
+              </>
+            ) : null}
             {' · '}
             open Your lessons, Library or My units from the toolbar.
           </p>
@@ -558,7 +586,7 @@ export function LessonsWorkspace({
               onSave={handleSaveLessonPlan}
               lessonNumber={editingLessonForForm?.lessonNumber}
               lessonData={editingLessonForForm?.lessonData}
-              yearGroup={currentSheetInfo.sheet}
+              yearGroup={yearGroupChipLabel}
             />
           ) : (
             <PlannerLessonCanvas
@@ -567,7 +595,7 @@ export function LessonsWorkspace({
               lessonData={activeLessonData}
               keyStageLabel={keyStageLabel(keyStage)}
               classLabel={classLabel}
-              yearGroupLabel={currentSheetInfo.sheet}
+              yearGroupLabel={yearGroupChipLabel}
               canEdit={!isViewOnly}
               onSave={saveCanvasLesson}
               onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}

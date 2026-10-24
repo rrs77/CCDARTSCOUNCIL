@@ -230,6 +230,56 @@ export function keyStagesFromActivityTags(
   return LIBRARY_KEY_STAGES.map((k) => k.id).filter((id) => stages.has(id));
 }
 
+type ActivityLike = {
+  yearGroups?: unknown;
+  yeargroups?: unknown;
+  level?: string | null;
+};
+
+function activityYearGroupTags(activity: ActivityLike): unknown {
+  return activity.yearGroups ?? activity.yeargroups;
+}
+
+type LessonLikeForKeyStage = {
+  title?: string | null;
+  lessonName?: string | null;
+  orderedActivities?: ActivityLike[] | null;
+  grouped?: Record<string, ActivityLike[]> | null;
+};
+
+/**
+ * Key stages implied by a lesson's activities (year-group tags / level).
+ * Empty when the lesson has no tagged activities (caller may treat as "any").
+ */
+export function keyStagesForLesson(lesson: LessonLikeForKeyStage | null | undefined): LibraryKeyStageId[] {
+  if (!lesson) return [];
+  const acts: ActivityLike[] = lesson.orderedActivities?.length
+    ? lesson.orderedActivities
+    : Object.values(lesson.grouped || {}).flat();
+  const stages = new Set<LibraryKeyStageId>();
+  for (const a of acts) {
+    for (const ks of keyStagesFromActivityTags(activityYearGroupTags(a), a.level)) {
+      stages.add(ks);
+    }
+  }
+  // Title / name heuristics (e.g. "LKG — …", "Year 8 …")
+  const titleBlob = `${lesson.title || ''} ${lesson.lessonName || ''}`;
+  const fromTitle = keyStageFromYearGroupTag(titleBlob);
+  if (fromTitle) stages.add(fromTitle);
+  return LIBRARY_KEY_STAGES.map((k) => k.id).filter((id) => stages.has(id));
+}
+
+/** True when the lesson should appear under the toolbar key-stage filter. */
+export function lessonMatchesKeyStage(
+  lesson: LessonLikeForKeyStage | null | undefined,
+  keyStage: LibraryKeyStageId,
+): boolean {
+  const stages = keyStagesForLesson(lesson);
+  // Untagged lessons stay visible for every stage (teacher can still open them).
+  if (stages.length === 0) return true;
+  return stages.includes(keyStage);
+}
+
 /** Default stages when an activity is tagged All / untagged, by subject category. */
 export function defaultKeyStagesForCategory(categoryName: string): LibraryKeyStageId[] {
   const n = normalizeKey(categoryName);
@@ -305,16 +355,6 @@ export interface HierarchyNode {
     count: number;
   }[];
   count: number;
-}
-
-type ActivityLike = {
-  yearGroups?: unknown;
-  yeargroups?: unknown;
-  level?: string | null;
-};
-
-function activityYearGroupTags(activity: ActivityLike): unknown {
-  return activity.yearGroups ?? activity.yeargroups;
 }
 
 /**
