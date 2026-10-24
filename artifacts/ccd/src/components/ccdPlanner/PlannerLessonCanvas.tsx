@@ -18,9 +18,9 @@ import type { Activity, LessonData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import type { LessonSection } from '../../types/lessonSections';
 import { ensureLessonSections } from '../../utils/planner/legacyLessonToSections';
-import { htmlToPlainText } from '../../utils/sanitize';
 import { cn } from '@/lib/utils';
 import { Button, IconButton, Pill } from './ui';
+import { RichHtml } from './RichHtml';
 
 const TARGET_FALLBACK_MIN = 45;
 
@@ -191,9 +191,11 @@ function SortableSectionCard({
         }}
         className="w-full px-3.5 py-2.5 text-left text-xs leading-relaxed text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
       >
-        {htmlToPlainText(
-          section.bodyHtml || section.activity?.description || '',
-        ) || 'Tap to edit this block…'}
+        <RichHtml
+          className="line-clamp-3 prose-p:my-0.5 text-xs text-slate-500"
+          html={section.bodyHtml || section.activity?.description || ''}
+          empty="Tap to edit this block…"
+        />
       </button>
     </div>
   );

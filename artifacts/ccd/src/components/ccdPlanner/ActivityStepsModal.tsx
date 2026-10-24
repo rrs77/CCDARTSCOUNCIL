@@ -18,6 +18,7 @@ import {
   SavedBadge,
   TextInput,
 } from './ui';
+import { RichHtml } from './RichHtml';
 
 const STEPS = [
   { id: 'overview', label: 'Overview' },
@@ -259,20 +260,26 @@ export function ActivityStepsModal({
           {stepId === 'overview' ? (
             <>
               <Field label="Description">
-                <TextInput
-                  rows={4}
-                  readOnly={!editing}
-                  value={draft.description}
-                  onChange={(e) => setDraft({ ...draft, description: e.target.value })}
-                />
+                {editing ? (
+                  <TextInput
+                    rows={4}
+                    value={draft.description}
+                    onChange={(e) => setDraft({ ...draft, description: e.target.value })}
+                  />
+                ) : (
+                  <RichHtml html={draft.description} />
+                )}
               </Field>
               <Field label="Learning outcome">
-                <TextInput
-                  rows={3}
-                  readOnly={!editing}
-                  value={draft.learningOutcome}
-                  onChange={(e) => setDraft({ ...draft, learningOutcome: e.target.value })}
-                />
+                {editing ? (
+                  <TextInput
+                    rows={3}
+                    value={draft.learningOutcome}
+                    onChange={(e) => setDraft({ ...draft, learningOutcome: e.target.value })}
+                  />
+                ) : (
+                  <RichHtml html={draft.learningOutcome} empty="—" />
+                )}
               </Field>
             </>
           ) : null}
@@ -335,34 +342,43 @@ export function ActivityStepsModal({
 
           {stepId === 'how' ? (
             <Field label="How to run it">
-              <TextInput
-                rows={8}
-                readOnly={!editing}
-                value={draft.howToRun}
-                onChange={(e) => setDraft({ ...draft, howToRun: e.target.value })}
-              />
+              {editing ? (
+                <TextInput
+                  rows={8}
+                  value={draft.howToRun}
+                  onChange={(e) => setDraft({ ...draft, howToRun: e.target.value })}
+                />
+              ) : (
+                <RichHtml html={draft.howToRun} />
+              )}
             </Field>
           ) : null}
 
           {stepId === 'resources' ? (
             <Field label="Resources" hint="One URL or note per line">
-              <TextInput
-                rows={6}
-                readOnly={!editing}
-                value={draft.resources}
-                onChange={(e) => setDraft({ ...draft, resources: e.target.value })}
-              />
+              {editing ? (
+                <TextInput
+                  rows={6}
+                  value={draft.resources}
+                  onChange={(e) => setDraft({ ...draft, resources: e.target.value })}
+                />
+              ) : (
+                <RichHtml html={draft.resources} />
+              )}
             </Field>
           ) : null}
 
           {stepId === 'assessment' ? (
             <Field label="Assessment">
-              <TextInput
-                rows={6}
-                readOnly={!editing}
-                value={draft.assessment}
-                onChange={(e) => setDraft({ ...draft, assessment: e.target.value })}
-              />
+              {editing ? (
+                <TextInput
+                  rows={6}
+                  value={draft.assessment}
+                  onChange={(e) => setDraft({ ...draft, assessment: e.target.value })}
+                />
+              ) : (
+                <RichHtml html={draft.assessment} />
+              )}
             </Field>
           ) : null}
         </div>

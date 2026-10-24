@@ -288,7 +288,10 @@ export function Dashboard() {
   const wideCanvas =
     activeTab === 'activity-library' ||
     activeTab === 'lesson-library' ||
+    activeTab === 'lesson-builder' ||
     activeTab === 'lesson-viewer' ||
+    activeTab === 'unit-viewer' ||
+    activeTab === 'curriculum' ||
     activeTab === 'settings' ||
     activeTab === 'help';
   const editorFlush = activeTab === 'activity-library' && activityEditorOpen;

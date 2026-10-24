@@ -202,13 +202,14 @@ export function LibraryMenu({
         aria-haspopup="dialog"
         onClick={() => onOpenChange(!open)}
         className={cn(
-          'inline-flex h-11 min-w-[44px] items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D]',
+          'inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D]',
           'hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400',
+          'pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm',
           open && 'border-indigo-300 bg-indigo-50/60',
         )}
       >
         Library
-        <ChevronDown className={cn('h-4 w-4 text-slate-500 transition', open && 'rotate-180')} />
+        <ChevronDown className={cn('h-3.5 w-3.5 text-slate-500 transition pointer-coarse:h-4 pointer-coarse:w-4', open && 'rotate-180')} />
       </button>
 
       {open ? (

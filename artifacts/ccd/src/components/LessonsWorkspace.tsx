@@ -411,8 +411,8 @@ export function LessonsWorkspace({
           </p>
         </div>
 
-        {/* Toolbar — Library / My units as Classes-style menus */}
-        <div className="flex flex-wrap items-center gap-2 rounded-2xl border border-[#E2E0EF] bg-white/90 p-2 shadow-sm">
+        {/* Toolbar — compact chrome; year-group/KS select always pinned far right */}
+        <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white/90 p-1.5 shadow-sm">
           <LibraryMenu
             keyStage={keyStage}
             onKeyStageChange={setKeyStage}
@@ -443,14 +443,14 @@ export function LessonsWorkspace({
             onYearOverview={goYearOverview}
           />
 
-          <div className="mx-1 hidden h-8 w-px bg-[#E2E0EF] sm:block" aria-hidden />
+          <div className="mx-0.5 hidden h-5 w-px bg-[#E2E0EF] sm:block" aria-hidden />
 
           <button
             type="button"
             onClick={() => setTemplateOpen(true)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
           >
-            <FileText className="h-4 w-4 text-indigo-600" />
+            <FileText className="h-3.5 w-3.5 text-indigo-600 pointer-coarse:h-4 pointer-coarse:w-4" />
             <span className="hidden sm:inline">Choose plan template</span>
             <span className="sm:hidden">Template</span>
           </button>
@@ -458,9 +458,9 @@ export function LessonsWorkspace({
             type="button"
             disabled={!editingLessonNumber}
             onClick={() => setRunThroughOpen(true)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
           >
-            <Eye className="h-4 w-4 text-indigo-600" />
+            <Eye className="h-3.5 w-3.5 text-indigo-600 pointer-coarse:h-4 pointer-coarse:w-4" />
             Run-through
           </button>
           {/* Lesson Viewer (Slides) — reserved toolbar slot for Interactive Lesson Viewer hook-in */}
@@ -469,18 +469,18 @@ export function LessonsWorkspace({
             data-planner-extension="lesson-viewer"
             title="Open Lesson Viewer (Slides)"
             onClick={goLessonViewer}
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
           >
-            <Clapperboard className="h-4 w-4 text-indigo-600" />
+            <Clapperboard className="h-3.5 w-3.5 text-indigo-600 pointer-coarse:h-4 pointer-coarse:w-4" />
             <span className="hidden sm:inline">Lesson Viewer</span>
             <span className="sm:hidden">Slides</span>
           </button>
           <button
             type="button"
             onClick={() => openLessonForm(editingLessonNumber)}
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl bg-indigo-600 px-3 text-sm font-bold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="inline-flex h-8 items-center gap-1 rounded-lg bg-indigo-600 px-2 text-xs font-bold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
           >
-            <Pencil className="h-4 w-4" />
+            <Pencil className="h-3.5 w-3.5 pointer-coarse:h-4 pointer-coarse:w-4" />
             <span className="hidden sm:inline">Lesson plan</span>
             <span className="sm:hidden">Plan</span>
           </button>
@@ -488,13 +488,13 @@ export function LessonsWorkspace({
             type="button"
             onClick={createLesson}
             disabled={isViewOnly}
-            className="inline-flex h-11 items-center gap-1.5 rounded-xl border-2 border-indigo-200 bg-indigo-50 px-3 text-sm font-bold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+            className="inline-flex h-8 items-center gap-1 rounded-lg border-2 border-indigo-200 bg-indigo-50 px-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
           >
-            <Plus className="h-4 w-4" />
+            <Plus className="h-3.5 w-3.5 pointer-coarse:h-4 pointer-coarse:w-4" />
             New
           </button>
 
-          <div className="ml-auto hidden items-center gap-2 lg:flex">
+          <div className="ml-auto flex shrink-0 items-center">
             <label className="sr-only" htmlFor="planner-toolbar-ks">
               Key stage
             </label>
@@ -505,7 +505,7 @@ export function LessonsWorkspace({
                 const v = e.target.value;
                 if (isLibraryKeyStageId(v)) setKeyStage(v);
               }}
-              className="h-11 rounded-xl border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+              className="h-8 rounded-lg border border-[#E2E0EF] bg-white px-1.5 text-[11px] font-bold text-[#1F1B4D] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:rounded-xl pointer-coarse:px-2 pointer-coarse:text-xs"
             >
               {LIBRARY_KEY_STAGES.map((ks) => (
                 <option key={ks.id} value={ks.id}>

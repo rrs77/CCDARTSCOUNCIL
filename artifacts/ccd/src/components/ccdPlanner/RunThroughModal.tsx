@@ -8,8 +8,8 @@ import { AnimatePresence, motion, useReducedMotion } from 'framer-motion';
 import { useEffect, useId, useState } from 'react';
 import type { LessonSection } from '../../types/lessonSections';
 import { chipStyle } from '../../utils/planner/contrastText';
-import { htmlToPlainText } from '../../utils/sanitize';
 import { Button, CloseX, ModalShell, Pill } from './ui';
+import { RichHtml } from './RichHtml';
 
 export function RunThroughModal({
   open,
@@ -138,14 +138,15 @@ export function RunThroughModal({
                     <h3 className="mt-1 text-xl font-extrabold text-slate-900">
                       {block.title}
                     </h3>
-                    <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-slate-600">
-                      {htmlToPlainText(
+                    <RichHtml
+                      className="mt-3"
+                      html={
                         block.bodyHtml ||
-                          block.activity?.description ||
-                          block.activity?.activityText ||
-                          '',
-                      ) || '—'}
-                    </p>
+                        block.activity?.description ||
+                        block.activity?.activityText ||
+                        ''
+                      }
+                    />
                   </motion.div>
                 ) : null}
               </AnimatePresence>

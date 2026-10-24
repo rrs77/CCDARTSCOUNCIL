@@ -28,6 +28,7 @@ import {
   Segmented,
   TextInput,
 } from './ui';
+import { RichHtml } from './RichHtml';
 import { cn } from '@/lib/utils';
 
 type ViewTab = 'plan' | 'preview' | 'print';
@@ -421,11 +422,15 @@ export function LessonPlanModal({
                       </div>
                       <div className="px-3 pb-3">
                         {section.kind === 'activity' ? (
-                          <p className="rounded-2xl bg-slate-50 px-3 py-2 text-xs leading-relaxed text-slate-500">
-                            {section.bodyHtml ||
-                              section.activity?.description ||
-                              'Activity block — edit details from the stepped activity card.'}
-                          </p>
+                          <div className="rounded-2xl bg-slate-50 px-3 py-2 text-xs text-slate-500">
+                            <RichHtml
+                              className="prose-sm text-xs text-slate-600"
+                              html={
+                                section.bodyHtml || section.activity?.description || ''
+                              }
+                              empty="Activity block — edit details from the stepped activity card."
+                            />
+                          </div>
                         ) : (
                           <TextInput
                             rows={3}
@@ -624,9 +629,11 @@ export function LessonPlanModal({
                           ? ` · ${b.durationMins || b.activity?.time}m`
                           : ''}
                       </p>
-                      <p className="mt-1 whitespace-pre-wrap text-sm text-slate-700">
-                        {b.bodyHtml || b.activity?.description || ''}
-                      </p>
+                      <RichHtml
+                        className="mt-1"
+                        html={b.bodyHtml || b.activity?.description || ''}
+                        empty=""
+                      />
                     </li>
                   ))}
                 </ol>

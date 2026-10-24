@@ -16,9 +16,9 @@
   --ss-lavender: #e5e2ff;
   --ss-white: #ffffff;
   --ss-sidebar: 200px;
-  /* Content measure — mockup shell ~1540; keep readable, not edge-to-edge */
-  --ss-workspace-max: 1280px;
-  --ss-workspace-week-max: 1440px;
+  /* Full-width workspace — no page max-width; modals keep ModalShell 760 */
+  --ss-workspace-max: none;
+  --ss-workspace-week-max: none;
   --ss-dialog-sm: 28rem; /* ~448px */
   --ss-dialog-md: 36rem; /* ~576px */
   --ss-dialog-lg: 42rem; /* ~672px */
@@ -398,15 +398,15 @@ html.ccd-studio {
 .ccd-studio-workspace-inner {
   flex: 1;
   width: 100%;
-  margin-inline: auto;
+  margin-inline: 0;
   padding: 18px 24px 48px;
   min-width: 0;
-  max-width: var(--ss-workspace-max);
+  max-width: none;
 }
 
-/* Week planner may breathe a little wider; still not full ultrawide */
+/* Week planner — same full column as other studio pages */
 .ccd-studio-workspace-inner:has(.ss-week-grid) {
-  max-width: var(--ss-workspace-week-max);
+  max-width: none;
 }
 
 .ccd-studio-workspace-inner.hubs-bridge {
