@@ -114,6 +114,7 @@ export function Dashboard() {
     userCreatedLessonPlans,
     addOrUpdateUserLessonPlan,
     deleteUserLessonPlan,
+    removeLessonPlanFromDiary,
   } = useData();
   const { getThemeForClass } = useSettings();
   const settingsAccess = useSettingsAccess();
@@ -275,9 +276,11 @@ export function Dashboard() {
     setActiveTab('lesson-library');
   };
 
+  /** Diary remove — keep the lesson in the library (Your lessons). */
   const handleDeleteLessonPlan = (planId: string) => {
-    void deleteUserLessonPlan(planId);
+    removeLessonPlanFromDiary(planId);
   };
+  void deleteUserLessonPlan;
 
   const handleUpdateLessonPlan = async (updatedPlan: LessonPlan) => {
     await addOrUpdateUserLessonPlan({

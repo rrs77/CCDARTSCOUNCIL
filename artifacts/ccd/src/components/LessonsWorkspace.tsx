@@ -63,6 +63,7 @@ export function LessonsWorkspace({
     loading,
     currentAcademicYear,
     updateLessonData,
+    deleteLesson,
   } = useData();
 
   const derivedKs = useMemo((): LibraryKeyStageId => {
@@ -500,6 +501,16 @@ export function LessonsWorkspace({
             onOpenCanvas={openLessonInBuilder}
             onOpenPlan={(num) => openLessonForm(num)}
             onAssign={onAssignToUnit ? (num) => setAssignLessonNumber(num) : undefined}
+            onDeleteLesson={(num) => {
+              deleteLesson(num);
+              if (editingLessonNumber === num) {
+                setEditingLessonNumber(undefined);
+                setLessonPlanOpen(false);
+                setEditingLessonForForm(null);
+                syncLessonEditorUrl(null);
+              }
+              toast.success('Lesson moved to trash');
+            }}
           />
           <LibraryMenu
             keyStage={keyStage}

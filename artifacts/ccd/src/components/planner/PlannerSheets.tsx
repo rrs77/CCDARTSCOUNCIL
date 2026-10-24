@@ -33,6 +33,7 @@ import {
 import { lessonTitle } from './plannerEntries';
 import { PolishWithAIModal, type PolishSuggestionId } from '../studio/PolishWithAIModal';
 import { applyLessonPolishDraft } from '../../utils/applyLessonPolish';
+import { ModalConfirm } from '../ccdPlanner/ModalShell';
 import {
   filterLessonEntries,
   lessonActivities,
@@ -142,12 +143,16 @@ export function LessonDetailsSheet({
   const setStatus = (status: LessonPlan['status']) =>
     data.savePlans([{ ...plan, status }], status === 'completed' ? 'Marked as taught.' : `Marked as ${planStatusLabel[status].toLowerCase()}.`);
 
-  /** Remove the lesson from this timetable outline — the dashed slot returns. */
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  /** Remove the lesson from this timetable outline — the dashed slot returns.
+   * Library lesson content is kept (status cancelled only). */
   const clearFromSlot = () => {
-    const label = entry.slot ? 'Clear this lesson from the timetable slot?' : 'Remove this lesson from the planner?';
-    if (!window.confirm(label)) return;
     void data
-      .savePlans([{ ...plan, status: 'cancelled' }], entry.slot ? 'Cleared — timetable slot is empty again.' : 'Lesson cleared.')
+      .savePlans(
+        [{ ...plan, status: 'cancelled' }],
+        entry.slot ? 'Cleared — timetable slot is empty again.' : 'Lesson cleared.',
+      )
       .then(onClose);
   };
 
@@ -155,6 +160,7 @@ export function LessonDetailsSheet({
   const isPast = date < new Date(new Date().toDateString());
 
   return (
+    <>
     <PlannerSheet onClose={onClose} label={mode === 'details' ? 'Lesson details' : mode === 'move' ? 'Move this lesson' : 'Teach to another class'}>
       <h2 className="mt-1 text-[22px] font-semibold leading-tight text-[#1F1B4D]" style={{ fontFamily: SERIF }}>{title}</h2>
       <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-[#77738F]">
@@ -300,7 +306,7 @@ export function LessonDetailsSheet({
               <button
                 type="button"
                 className={`${btn} border-[#FECACA] text-[#B91C1C] hover:bg-[#FEF2F2]`}
-                onClick={clearFromSlot}
+                onClick={() => setConfirmClear(true)}
               >
                 {entry.slot ? 'Clear from slot' : 'Remove from planner'}
               </button>
@@ -321,6 +327,20 @@ export function LessonDetailsSheet({
       {mode === 'move' && <MoveForm plan={plan} data={data} onDone={() => setMode('details')} />}
       {mode === 'reuse' && <ReuseForm plan={plan} title={title} data={data} onDone={() => setMode('details')} />}
     </PlannerSheet>
+    <ModalConfirm
+      open={confirmClear}
+      onClose={() => setConfirmClear(false)}
+      onConfirm={clearFromSlot}
+      title={entry.slot ? 'Clear timetable slot?' : 'Remove from planner?'}
+      message={
+        entry.slot
+          ? 'Clear this lesson from the timetable slot? It stays in Your lessons.'
+          : 'Remove this lesson from the planner? It stays in Your lessons.'
+      }
+      confirmLabel={entry.slot ? 'Clear from slot' : 'Remove from planner'}
+      danger
+    />
+    </>
   );
 }
 

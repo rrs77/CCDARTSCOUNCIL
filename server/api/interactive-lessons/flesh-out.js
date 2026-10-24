@@ -449,13 +449,18 @@ export async function POST(request) {
 
     if (!oaRes.ok) {
       const errText = await oaRes.text().catch(() => '');
-      console.error('Flesh-out OpenAI error', oaRes.status, errText.slice(0, 500));
+      // Log status + safe snippet server-side (never log the API key).
+      console.error('Flesh-out OpenAI error', {
+        status: oaRes.status,
+        model: MODEL,
+        body: errText.slice(0, 500).replace(/sk-[A-Za-z0-9_-]+/g, 'sk-***'),
+      });
+      const safeMessage = mapOpenAiHttpError(oaRes.status, errText);
       return jsonResponse(
         {
-          message:
-            oaRes.status === 401 || oaRes.status === 403
-              ? 'OpenAI rejected the server API key. Check OPENAI_API_KEY on the API project.'
-              : 'Flesh out failed talking to OpenAI. Try again in a moment.',
+          message: safeMessage,
+          code: 'openai_http_error',
+          status: oaRes.status,
         },
         502,
       );
@@ -523,9 +528,44 @@ export async function POST(request) {
       pickedByAi: autoPickCurriculum ? result.selectedStatementIds.length > 0 : false,
     });
   } catch (err) {
-    console.error('Flesh-out failed', err);
-    return jsonResponse({ message: 'Flesh out failed unexpectedly' }, 500);
+    const name = err && typeof err === 'object' && 'name' in err ? String(err.name) : '';
+    const msg = err instanceof Error ? err.message : String(err || '');
+    console.error('Flesh-out failed', { name, message: msg.slice(0, 300) });
+    const isTimeout =
+      name === 'AbortError' ||
+      name === 'TimeoutError' ||
+      /timeout|timed out|network/i.test(msg);
+    return jsonResponse(
+      {
+        message: isTimeout
+          ? 'Flesh out timed out waiting for OpenAI. Try again in a moment.'
+          : 'Flesh out failed unexpectedly on the server. Try again, or check API logs.',
+        code: isTimeout ? 'timeout' : 'server_error',
+      },
+      isTimeout ? 504 : 500,
+    );
   }
+}
+
+/** Safe client-facing reason from OpenAI HTTP status (no secrets). */
+function mapOpenAiHttpError(status, errText) {
+  const lower = String(errText || '').toLowerCase();
+  if (status === 401 || status === 403) {
+    return `OpenAI auth failed (HTTP ${status}): the server API key was rejected. Ask an admin to check OPENAI_API_KEY.`;
+  }
+  if (status === 429) {
+    return `OpenAI quota or rate limit (HTTP 429): wait a moment or check billing/quota on the API project.`;
+  }
+  if (status === 404 || /model|does not exist|not found/i.test(lower)) {
+    return `OpenAI model unavailable (HTTP ${status}): model “${MODEL}” was not found or is not allowed for this key.`;
+  }
+  if (status === 408 || status === 504 || /timeout/i.test(lower)) {
+    return `OpenAI timed out (HTTP ${status}). Try again in a moment.`;
+  }
+  if (status >= 500) {
+    return `OpenAI is unavailable (HTTP ${status}). Try again shortly.`;
+  }
+  return `Flesh out failed talking to OpenAI (HTTP ${status}). Try again, or ask an admin to check the API logs.`;
 }
 
 export async function OPTIONS() {

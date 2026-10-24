@@ -224,7 +224,9 @@ interface DataContextType {
   userCreatedLessonPlans: LessonPlan[]; // New property for user-created lesson plans
   addOrUpdateUserLessonPlan: (plan: LessonPlan) => void; // New function to add/update user lesson plans
   updateLessonData?: (lessonNumber: string, updatedData: any) => Promise<void>;
-  deleteUserLessonPlan: (planId: string) => void; // New function to delete user lesson plans
+  deleteUserLessonPlan: (planId: string) => void; // Deletes scheduled plan AND library lesson (legacy destructive)
+  /** Remove a plan from the diary/calendar only — keeps the lesson in the library. */
+  removeLessonPlanFromDiary: (planId: string) => void;
   /** Re-read the current class's scheduled lessons after another view wrote to lesson_plans. */
   reloadUserLessonPlans: () => void;
   deleteLesson: (lessonNumber: string) => void; // Move lesson to trash
@@ -2408,6 +2410,38 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
     }
   };
 
+  /**
+   * Remove a scheduled plan from the diary only.
+   * Does NOT delete or reindex library lesson data (Your lessons / allLessonsData).
+   */
+  const removeLessonPlanFromDiary = (planId: string) => {
+    setUserCreatedLessonPlans((prev) => {
+      const updated = prev.filter((p) => p.id !== planId);
+      try {
+        localStorage.setItem('user-created-lesson-plans', JSON.stringify(updated));
+      } catch {
+        /* ignore */
+      }
+      return updated;
+    });
+    if (isSupabaseConfigured()) {
+      const delUserId = localStorage.getItem('rhythmstix_user_id');
+      const delUserIsAuth =
+        !!delUserId &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(delUserId);
+      if (delUserIsAuth) {
+        void supabase
+          .from(TABLES.LESSON_PLANS)
+          .delete()
+          .eq('id', planId)
+          .eq('user_id', delUserId)
+          .then(({ error }) => {
+            if (error) console.warn('Failed to remove diary plan from Supabase:', error);
+          });
+      }
+    }
+  };
+
   // Delete a lesson
   const deleteLesson = (lessonNumber: string) => {
     // Get the lesson data before removing it
@@ -4250,6 +4284,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
     addOrUpdateUserLessonPlan,
     updateLessonData,
     deleteUserLessonPlan,
+    removeLessonPlanFromDiary,
     reloadUserLessonPlans: loadUserCreatedLessonPlans,
     deleteLesson,
     trashLessons,

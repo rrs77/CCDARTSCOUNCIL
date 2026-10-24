@@ -182,9 +182,11 @@ export function PlannerLessonCard({
             )}
           </span>
           <strong className={`pl-1 ${roomy ? 'text-[15px]' : ''}`}>
-            {cls?.name || entry.classId}
+            {title || 'Lesson'}
           </strong>
-          <span className="ss-desc pl-1">{title}{unitLabel ? ` · ${unitLabel}` : ''}</span>
+          <span className="ss-desc pl-1">
+            {unitLabel || (showClass ? null : cls?.name) || '\u00a0'}
+          </span>
           {roomy && (hasReflection || entry.location) && (
             <span className="mt-1 flex items-center gap-2.5 pl-1 text-xs text-[#77738F]">
               {entry.location && (

@@ -10,10 +10,13 @@ import {
   Plus,
   Search,
   Tag,
+  Trash2,
 } from 'lucide-react';
+import { useState } from 'react';
 import type { LessonData } from '../../contexts/DataContext';
 import type { PlannerTermDates } from '../../types/plannerCurriculum';
 import { PlannerPopover } from './PlannerPopover';
+import { ModalConfirm } from './ModalShell';
 import { cn } from '@/lib/utils';
 
 const DISPLAY_FONT =
@@ -38,6 +41,7 @@ export function YourLessonsMenu({
   onOpenCanvas,
   onOpenPlan,
   onAssign,
+  onDeleteLesson,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -57,8 +61,17 @@ export function YourLessonsMenu({
   onOpenCanvas: (num: string) => void;
   onOpenPlan: (num: string) => void;
   onAssign?: (num: string) => void;
+  /** Permanently remove from library (with in-app confirm). */
+  onDeleteLesson?: (num: string) => void;
 }) {
+  const [pendingDelete, setPendingDelete] = useState<string | null>(null);
+  const pendingTitle =
+    pendingDelete && allLessonsData[pendingDelete]
+      ? allLessonsData[pendingDelete].title || pendingDelete
+      : pendingDelete || '';
+
   return (
+    <>
     <PlannerPopover
       open={open}
       onOpenChange={onOpenChange}
@@ -216,7 +229,7 @@ export function YourLessonsMenu({
                           </div>
                         </div>
                       </button>
-                      <div className="mt-1.5 flex gap-1">
+                      <div className="mt-1.5 flex flex-wrap gap-1">
                         <button
                           type="button"
                           onClick={() => {
@@ -239,6 +252,16 @@ export function YourLessonsMenu({
                         >
                           Canvas
                         </button>
+                        {onDeleteLesson && !isViewOnly ? (
+                          <button
+                            type="button"
+                            aria-label={`Delete lesson ${data.title || num}`}
+                            onClick={() => setPendingDelete(num)}
+                            className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                          </button>
+                        ) : null}
                       </div>
                       {onAssign && !isViewOnly ? (
                         <button
@@ -262,5 +285,20 @@ export function YourLessonsMenu({
         </div>
       </div>
     </PlannerPopover>
+    <ModalConfirm
+      open={!!pendingDelete}
+      onClose={() => setPendingDelete(null)}
+      onConfirm={() => {
+        if (pendingDelete && onDeleteLesson) {
+          onDeleteLesson(pendingDelete);
+          onOpenChange(false);
+        }
+      }}
+      title="Delete lesson?"
+      message={`Delete “${pendingTitle}” from Your lessons? This moves it to trash. Scheduled diary entries for this lesson are cleared.`}
+      confirmLabel="Delete lesson"
+      danger
+    />
+    </>
   );
 }

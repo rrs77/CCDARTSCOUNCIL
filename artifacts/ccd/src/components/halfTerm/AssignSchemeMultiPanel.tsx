@@ -374,7 +374,7 @@ export function AssignSchemeMultiPanel({
         onClick={onClose}
       />
 
-      <div className="relative z-[1] flex h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
+      <div className="relative z-[1] flex h-auto max-h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
         {/* Header */}
         <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-7">
           <div className="flex items-start justify-between gap-3">
@@ -406,16 +406,32 @@ export function AssignSchemeMultiPanel({
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]" aria-hidden>
+          <div
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={
+              selectedStackId ? 100 : selectedClassIds.size === 0 ? 50 : 75
+            }
+            aria-label={
+              selectedStackId
+                ? 'Step 2 of 2 complete'
+                : selectedClassIds.size === 0
+                  ? 'Step 1 of 2'
+                  : 'Step 2 of 2'
+            }
+          >
             <div
               className="h-full rounded-full transition-all duration-200"
               style={{
                 background: termColor,
+                // Step 1 of 2 → 50%; classes chosen → 75%; scheme chosen → 100%
                 width: selectedStackId
                   ? '100%'
                   : selectedClassIds.size === 0
-                    ? '33%'
-                    : '66%',
+                    ? '50%'
+                    : '75%',
               }}
             />
           </div>

@@ -432,7 +432,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
                   role="tab"
                   aria-selected={room === r.id}
                   onClick={() => goRoom(r.id)}
-                  className={`min-h-[36px] rounded-lg px-3.5 text-[13px] font-semibold ${
+                  className={`min-h-[36px] rounded-lg px-3.5 text-[13px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
                     room === r.id ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
                   }`}
                 >
@@ -703,7 +703,10 @@ body{
 .n{color:#C4C0D4;margin-top:10px;font-size:11px;font-weight:500}
 .day-stack{margin-top:12px;border:1px solid #E2E0EF;border-radius:10px;padding:12px 14px}
 .month-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:12px}
+.month-heads{display:contents}
+.month-head{font-size:9px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding:0 4px 2px}
 .month-cell{border:1px solid #E2E0EF;border-radius:8px;padding:6px 7px;min-height:72px;break-inside:avoid}
+.month-cell.is-empty{border-style:dashed;background:#FAFAFC;min-height:48px}
 .month-cell .dn{font-size:9px;font-weight:800;color:#4338E8;margin-bottom:4px}
 .foot{margin-top:12px;padding-top:8px;border-top:1px solid #E2E0EF;display:flex;justify-content:space-between;gap:12px;font-size:9px;font-weight:500;color:#77738F}
 </style></head><body>
@@ -771,7 +774,7 @@ function printSchedule(
     }).join('');
     body = `<div class="g">${cols}</div>`;
   } else if (view === 'day') {
-    const d = startOfDay(anchor);
+    const d = nextWeekday(startOfDay(anchor));
     rangeLabel = d.toLocaleDateString('en-GB', {
       weekday: 'long',
       day: 'numeric',
@@ -779,7 +782,7 @@ function printSchedule(
       year: 'numeric',
     });
     eyebrow = 'Day planner';
-    pageSize = 'A4 portrait';
+    pageSize = 'A4 landscape';
     const items = buildDayEntries(d, visibleIds, data.plans, data.slots, data.events)
       .filter((e) => e.plan)
       .map((e) => lessonBlockHtml(esc, data, e))
@@ -790,19 +793,43 @@ function printSchedule(
     const last = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
     rangeLabel = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
     eyebrow = 'Month planner';
+    pageSize = 'A4 landscape';
+    // Mon–Fri grid aligned to weekdays (empty leading/trailing cells)
+    const headers = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+      .map((h) => `<div class="month-head">${h}</div>`)
+      .join('');
     const cells: string[] = [];
-    for (let day = 1; day <= last.getDate(); day++) {
-      const d = new Date(anchor.getFullYear(), anchor.getMonth(), day);
-      if (d.getDay() === 0 || d.getDay() === 6) continue;
+    // Monday=0 … Friday=4; JS Sunday=0 → convert
+    const firstDow = (first.getDay() + 6) % 7; // Mon=0 … Sun=6
+    const startPad = firstDow <= 4 ? firstDow : 0;
+    // If month starts on Sat/Sun, first printed day is the following Monday
+    let dayCursor = 1;
+    if (firstDow > 4) {
+      dayCursor = 1 + (7 - firstDow);
+    }
+    for (let i = 0; i < startPad; i++) {
+      cells.push(`<div class="month-cell is-empty"></div>`);
+    }
+    while (dayCursor <= last.getDate()) {
+      const d = new Date(anchor.getFullYear(), anchor.getMonth(), dayCursor);
+      const dow = d.getDay();
+      if (dow === 0 || dow === 6) {
+        dayCursor += 1;
+        continue;
+      }
       const items = buildDayEntries(d, visibleIds, data.plans, data.slots, data.events)
         .filter((e) => e.plan)
         .map((e) => lessonBlockHtml(esc, data, e))
         .join('');
       cells.push(
-        `<div class="month-cell"><div class="dn">${d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })}</div>${items || '<div class="n">—</div>'}</div>`,
+        `<div class="month-cell"><div class="dn">${dayCursor}</div>${items || '<div class="n">—</div>'}</div>`,
       );
+      dayCursor += 1;
     }
-    body = `<div class="month-grid">${cells.join('')}</div>`;
+    while (cells.length % 5 !== 0) {
+      cells.push(`<div class="month-cell is-empty"></div>`);
+    }
+    body = `<div class="month-grid"><div class="month-heads">${headers}</div>${cells.join('')}</div>`;
   }
 
   openPrintHtml(
