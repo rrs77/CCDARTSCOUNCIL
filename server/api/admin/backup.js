@@ -20,14 +20,19 @@ import {
   BACKUP_MAX_BODY_BYTES,
   backupContentLengthGate,
   exportCurriculumBackup,
+  normalizeOrganisationId,
   restoreCurriculumBackupRpc,
   sanitizeRestorePayload,
+  saveCurriculumBackupSnapshot,
 } from '../../../api/_dataBackupShared.js';
 
 const NO_STORE = { 'Cache-Control': 'private, no-store' };
 
-/** Set true only when R1–R7 hardening is present (this file). */
-const RESTORE_ENABLED = true;
+/**
+ * Real restore stays OFF until org-scoped RPC + pre-export storage (items 1–5)
+ * pass Security Reviewer. Export and dryRun remain available.
+ */
+const RESTORE_ENABLED = false;
 
 export async function OPTIONS(request) {
   return optionsResponse(request);
@@ -143,17 +148,6 @@ export async function POST(request) {
       return auth.response;
     }
 
-    if (!RESTORE_ENABLED) {
-      await auditBackup({
-        request,
-        auth,
-        action: 'curriculum_backup_restore',
-        ok: false,
-        meta: { reason: 'restore_disabled' },
-      });
-      return jsonResponse({ error: 'restore disabled' }, 503, NO_STORE, request);
-    }
-
     const limited = assertRateLimit(`admin-backup:${auth.userId}`, {
       limit: 5,
       windowMs: 600_000,
@@ -215,11 +209,56 @@ export async function POST(request) {
     }
 
     const url = new URL(request.url);
-    const organisationId =
+    const organisationId = normalizeOrganisationId(
       (typeof body?.organisationId === 'string' && body.organisationId.trim()) ||
-      url.searchParams.get('organisationId') ||
-      null;
+        url.searchParams.get('organisationId') ||
+        null,
+    );
     const dryRun = Boolean(body?.dryRun);
+
+    if (!organisationId) {
+      await auditBackup({
+        request,
+        auth,
+        action: 'curriculum_backup_restore',
+        ok: false,
+        meta: { reason: 'organisationId_required', dryRun },
+      });
+      return jsonResponse(
+        { error: 'organisationId is required and must match ^[A-Za-z0-9_-]{1,64}$.' },
+        400,
+        NO_STORE,
+        request,
+      );
+    }
+
+    const { data: orgRow, error: orgErr } = await service
+      .from('organisations')
+      .select('id')
+      .eq('id', organisationId)
+      .maybeSingle();
+    if (orgErr || !orgRow?.id) {
+      await auditBackup({
+        request,
+        auth,
+        action: 'curriculum_backup_restore',
+        ok: false,
+        meta: { reason: 'organisationId_not_found', organisationId, dryRun },
+      });
+      return jsonResponse({ error: 'organisationId not found.' }, 400, NO_STORE, request);
+    }
+
+    // Real restore OFF until items 1–5 pass review; dryRun + export still allowed.
+    if (!dryRun && !RESTORE_ENABLED) {
+      await auditBackup({
+        request,
+        auth,
+        action: 'curriculum_backup_restore',
+        ok: false,
+        meta: { reason: 'restore_disabled', organisationId },
+      });
+      return jsonResponse({ error: 'restore disabled' }, 503, NO_STORE, request);
+    }
 
     const sanitized = sanitizeRestorePayload(body, { targetOrg: organisationId });
     if (!sanitized.ok) {
@@ -238,11 +277,18 @@ export async function POST(request) {
       return jsonResponse({ error: sanitized.error }, 400, NO_STORE, request);
     }
 
-    // Automatic export snapshot before restoring (skipped for dry-run).
+    // Automatic export + persist to private curriculum_backups (skipped for dry-run).
     let preExport = null;
+    let snapshotRef = null;
     if (!dryRun) {
       try {
         preExport = await exportCurriculumBackup(service, { organisationId });
+        snapshotRef = await saveCurriculumBackupSnapshot(service, {
+          userId: auth.userId,
+          organisationId,
+          payload: preExport.data,
+          rowCounts: preExport.rowCounts,
+        });
       } catch (e) {
         await auditBackup({
           request,
@@ -250,12 +296,16 @@ export async function POST(request) {
           action: 'curriculum_backup_restore',
           ok: false,
           meta: {
-            reason: 'pre_export_failed',
-            error: e instanceof Error ? e.message : 'pre_export_failed',
+            reason: 'pre_export_persist_failed',
+            error: e instanceof Error ? e.message : 'pre_export_persist_failed',
+            organisationId,
           },
         });
         return jsonResponse(
-          { error: 'Automatic pre-restore export failed; restore aborted.' },
+          {
+            error:
+              'Automatic pre-restore snapshot failed; restore aborted.',
+          },
           500,
           NO_STORE,
           request,
@@ -268,6 +318,12 @@ export async function POST(request) {
       dryRun,
     });
 
+    // Prefer RPC-reported write counts when present.
+    const writtenCounts =
+      rpcResult && typeof rpcResult === 'object' && rpcResult.counts
+        ? rpcResult.counts
+        : sanitized.rowCounts;
+
     await auditBackup({
       request,
       auth,
@@ -276,9 +332,11 @@ export async function POST(request) {
       meta: {
         organisationId,
         dryRun,
-        rowCounts: sanitized.rowCounts,
+        rowCounts: writtenCounts,
         rpc: rpcResult,
         preExportRowCounts: preExport?.rowCounts || null,
+        snapshotId: snapshotRef?.id || null,
+        snapshotStorageKey: snapshotRef?.storageKey || null,
         backupTimestamp: typeof body?.timestamp === 'string' ? body.timestamp : null,
       },
     });
@@ -287,9 +345,12 @@ export async function POST(request) {
       {
         success: true,
         dryRun,
-        rowCounts: sanitized.rowCounts,
+        organisationId,
+        rowCounts: writtenCounts,
         rpc: rpcResult,
         preExportRowCounts: preExport?.rowCounts || null,
+        snapshotId: snapshotRef?.id || null,
+        snapshotStorageKey: snapshotRef?.storageKey || null,
       },
       200,
       NO_STORE,

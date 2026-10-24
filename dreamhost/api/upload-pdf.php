@@ -273,10 +273,10 @@ function ccd_create_upload_tmp(): string
 
 /**
  * Place temp → final exclusively.
- * Prefer link() (atomic, same filesystem). If link fails (EXDEV / unsupported)
- * and the target does not exist: fopen(dest,'xb'), stream_copy_to_stream,
- * verify byte count; unlink partial dest on any error. Temp+upload dirs must
- * share a filesystem for link(); otherwise the copy fallback is used.
+ * Prefer link() (atomic, same filesystem). On EXDEV / unsupported link:
+ * copy into a sibling temp inside the destination folder, then link() that
+ * into the final path so $filePath never holds a partial file. Shutdown
+ * cleanup unlinks the staging temp unless placement finished.
  */
 function ccd_place_temp_as_final(string $tmpPath, string $filePath, int $expectedBytes): void
 {
@@ -290,20 +290,29 @@ function ccd_place_temp_as_final(string $tmpPath, string $filePath, int $expecte
         ccd_fail(409, 'File already exists', ['success' => false]);
     }
 
-    // Cross-device / unsupported link — exclusive copy fallback.
-    $dest = @fopen($filePath, 'xb');
-    if ($dest === false) {
-        $exists = file_exists($filePath);
-        @unlink($tmpPath);
-        if ($exists) {
-            ccd_fail(409, 'File already exists', ['success' => false]);
+    // Cross-device / unsupported link — stage in dest dir, then link into place.
+    $destDir = dirname($filePath);
+    $stagePath = rtrim($destDir, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR
+        . '.up_' . bin2hex(random_bytes(16));
+    $copyFinished = false;
+    $placed = false;
+    register_shutdown_function(static function () use (&$copyFinished, &$placed, $stagePath) {
+        // Drop staging file on abort (partial or complete-but-unlinked).
+        // Final path is only created via successful link() — never a partial dest.
+        if ((!$copyFinished || !$placed) && $stagePath !== '' && is_file($stagePath)) {
+            @unlink($stagePath);
         }
+    });
+
+    $dest = @fopen($stagePath, 'xb');
+    if ($dest === false) {
+        @unlink($tmpPath);
         ccd_fail(500, 'Failed to save file', ['success' => false]);
     }
     $src = @fopen($tmpPath, 'rb');
     if ($src === false) {
         fclose($dest);
-        @unlink($filePath);
+        @unlink($stagePath);
         @unlink($tmpPath);
         ccd_fail(500, 'Failed to read temp file');
     }
@@ -311,11 +320,25 @@ function ccd_place_temp_as_final(string $tmpPath, string $filePath, int $expecte
     fclose($src);
     fclose($dest);
     if ($copied === false || (int) $copied !== (int) $expectedBytes) {
-        @unlink($filePath);
+        @unlink($stagePath);
         @unlink($tmpPath);
         ccd_fail(500, 'Failed to save file', ['success' => false]);
     }
+    $copyFinished = true;
+
+    if (@link($stagePath, $filePath)) {
+        $placed = true;
+        @unlink($stagePath);
+        @unlink($tmpPath);
+        return;
+    }
+
+    @unlink($stagePath);
     @unlink($tmpPath);
+    if (file_exists($filePath)) {
+        ccd_fail(409, 'File already exists', ['success' => false]);
+    }
+    ccd_fail(500, 'Failed to save file', ['success' => false]);
 }
 
 /**
