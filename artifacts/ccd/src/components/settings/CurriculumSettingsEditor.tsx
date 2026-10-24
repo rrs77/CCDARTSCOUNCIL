@@ -18,6 +18,7 @@ import {
   uid,
 } from '../../utils/planner/plannerCurriculumStore';
 import { chipStyle, contrastTextOn } from '../../utils/planner/contrastText';
+import { formatUkDate, parseUkDateInput, toIsoDateInput } from '../../utils/planner/ukDate';
 import {
   ModalConfirm,
   ModalBody,
@@ -27,6 +28,50 @@ import {
 } from '../ccdPlanner/ModalShell';
 import { Button, Field, TextField, TextInput } from '../ccdPlanner/ui';
 import { useData } from '../../contexts/DataContext';
+
+/** Term date field — always shows and accepts dd/mm/yyyy (stores ISO). */
+function UkTermDateField({
+  value,
+  onChange,
+  'aria-label': ariaLabel,
+}: {
+  value: string;
+  onChange: (iso: string) => void;
+  'aria-label'?: string;
+}) {
+  const [text, setText] = useState(() => formatUkDate(value) || '');
+  useEffect(() => {
+    setText(formatUkDate(value) || '');
+  }, [value]);
+
+  return (
+    <TextField
+      type="text"
+      inputMode="numeric"
+      placeholder="dd/mm/yyyy"
+      lang="en-GB"
+      autoComplete="off"
+      value={text}
+      aria-label={ariaLabel}
+      onChange={(e) => setText(e.target.value)}
+      onBlur={() => {
+        const parsed = parseUkDateInput(text);
+        if (parsed) {
+          onChange(parsed);
+          setText(formatUkDate(parsed));
+          return;
+        }
+        if (!text.trim()) {
+          onChange('');
+          setText('');
+          return;
+        }
+        // Invalid — revert to last good ISO display
+        setText(formatUkDate(value) || '');
+      }}
+    />
+  );
+}
 
 type Dialog =
   | { kind: 'framework'; id?: string; name: string }
@@ -290,19 +335,17 @@ export function CurriculumSettingsEditor() {
                   aria-label={`Name for term ${t.id}`}
                 />
               </Field>
-              <Field label="Start">
-                <TextField
-                  type="date"
-                  value={t.start}
-                  onChange={(e) => updateTerm(t.id, { start: e.target.value })}
+              <Field label="Start (dd/mm/yyyy)">
+                <UkTermDateField
+                  value={toIsoDateInput(t.start)}
+                  onChange={(iso) => updateTerm(t.id, { start: iso })}
                   aria-label={`Start date for ${t.name}`}
                 />
               </Field>
-              <Field label="End">
-                <TextField
-                  type="date"
-                  value={t.end}
-                  onChange={(e) => updateTerm(t.id, { end: e.target.value })}
+              <Field label="End (dd/mm/yyyy)">
+                <UkTermDateField
+                  value={toIsoDateInput(t.end)}
+                  onChange={(iso) => updateTerm(t.id, { end: iso })}
                   aria-label={`End date for ${t.name}`}
                 />
               </Field>

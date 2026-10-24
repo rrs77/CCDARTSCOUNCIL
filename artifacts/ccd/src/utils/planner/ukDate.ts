@@ -31,6 +31,33 @@ export function formatUkDate(value: string | Date | null | undefined): string {
   return `${dd}/${mm}/${yyyy}`;
 }
 
+/** Parse typed UK `dd/mm/yyyy` (also accepts `d/m/yyyy`) → `YYYY-MM-DD`, or null. */
+export function parseUkDateInput(raw: string): string | null {
+  const s = String(raw || '').trim();
+  if (!s) return null;
+  const iso = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  if (iso) return s;
+  const uk = /^(\d{1,2})[/.-](\d{1,2})[/.-](\d{4})$/.exec(s);
+  if (!uk) return null;
+  const d = Number(uk[1]);
+  const m = Number(uk[2]);
+  const y = Number(uk[3]);
+  if (m < 1 || m > 12 || d < 1 || d > 31) return null;
+  const dt = new Date(y, m - 1, d);
+  if (dt.getFullYear() !== y || dt.getMonth() !== m - 1 || dt.getDate() !== d) return null;
+  return `${y}-${String(m).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+}
+
+/** Store value for Settings term fields: keep ISO when valid, else empty. */
+export function toIsoDateInput(value: string | Date | null | undefined): string {
+  const dt = parseLocalDate(value);
+  if (!dt) return '';
+  const y = dt.getFullYear();
+  const m = String(dt.getMonth() + 1).padStart(2, '0');
+  const d = String(dt.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
 /** Short range for planners: "1 Sep – 31 Oct" using local parse. */
 export function formatUkDateRangeShort(
   start: string | Date | null | undefined,
