@@ -20,7 +20,7 @@ import {
   loadProfile,
   optionsResponse,
   requireAuth,
-} from '../_authShared.js';
+} from '../../../api/_authShared.js';
 
 function isActiveProfile(profile) {
   if (!profile) return false;

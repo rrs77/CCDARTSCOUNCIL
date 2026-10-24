@@ -55,6 +55,9 @@ import * as freesoundPreview from '../server/api/freesound/preview.js';
 /* Super-admin curriculum backup / restore */
 import * as adminBackup from '../server/api/admin/backup.js';
 
+/* Planning group membership (service-role writes; kept out of /api entrypoints) */
+import * as planningGroupMembers from '../server/api/planning-groups/members.js';
+
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -247,6 +250,15 @@ function targetFor(pathname) {
     return null;
   }
 
+  /* ---------- Planning groups ---------- */
+
+  if (area === 'planning-groups') {
+    if (rest.length === 1 && rest[0] === 'members') {
+      return planningGroupMembers;
+    }
+    return null;
+  }
+
   return null;
 }
 
@@ -260,7 +272,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound|admin)(\/|$)/.test(
+    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound|admin|planning-groups)(\/|$)/.test(
       route,
     ) ||
     route.includes('..')
