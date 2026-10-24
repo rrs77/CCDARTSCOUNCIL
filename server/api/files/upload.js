@@ -17,7 +17,9 @@ import {
   buildOwnedStoragePath,
   buildProxyFileUrl,
   dreamHostNotConfiguredResponse,
+  FILE_VISIBILITY,
   isDreamHostConfigured,
+  registerStoredFile,
   uploadToDreamHost,
 } from '../../../api/_dreamhost.js';
 
@@ -70,6 +72,14 @@ export async function POST(request) {
 
     const storagePath = buildOwnedStoragePath(auth.userId);
     await uploadToDreamHost({ buffer, storagePath });
+
+    // Default visibility = org. Purchased/licensed rows are service-role only.
+    await registerStoredFile({
+      storagePath,
+      ownerId: auth.userId,
+      visibility: FILE_VISIBILITY.ORG,
+      isPurchasedResource: false,
+    });
 
     const url = buildProxyFileUrl(request, storagePath);
     return jsonResponse({

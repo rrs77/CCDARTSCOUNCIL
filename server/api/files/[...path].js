@@ -2,7 +2,7 @@
  * GET /api/files/:userId/:uuid.pdf
  * Authenticated proxy for DreamHost-stored files.
  * Allows Bearer header or ?access_token= (download/open in new tab).
- * Access: owner or same-organisation (share) colleague.
+ * Access: visibility-aware (org / private / licensed) via userMayAccessStoredFile.
  */
 
 import {

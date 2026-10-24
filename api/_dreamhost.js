@@ -12,6 +12,7 @@
 import { randomUUID } from 'node:crypto';
 import {
   createServiceClient,
+  isSuspended,
   jsonResponse,
   loadProfile,
 } from './_authShared.js';
@@ -221,10 +222,234 @@ export async function fetchFromDreamHost(storagePath) {
   return Buffer.from(await upstream.arrayBuffer());
 }
 
+/** Allowed visibility values. Unknown/missing fails closed to private. */
+export const FILE_VISIBILITY = Object.freeze({
+  ORG: 'org',
+  PRIVATE: 'private',
+  LICENSED: 'licensed',
+});
+
 /**
- * Owner or same-organisation colleague may access a stored file.
- * Extensible for future explicit share grants.
- * (Same-org policy left as-is pending owner decision.)
+ * Normalize visibility. Unknown/missing → private (fail closed).
+ * Purchased resources are always treated as licensed.
+ */
+export function normalizeVisibility(raw, { isPurchasedResource = false } = {}) {
+  if (isPurchasedResource) return FILE_VISIBILITY.LICENSED;
+  if (raw === FILE_VISIBILITY.ORG) return FILE_VISIBILITY.ORG;
+  if (raw === FILE_VISIBILITY.PRIVATE) return FILE_VISIBILITY.PRIVATE;
+  if (raw === FILE_VISIBILITY.LICENSED) return FILE_VISIBILITY.LICENSED;
+  return FILE_VISIBILITY.PRIVATE;
+}
+
+/**
+ * Same-school/org check for file proxy access.
+ * Never treats null/empty organisation_id as matching (no null=null).
+ */
+export function sameOrganisationIds(viewerOrgId, ownerOrgId) {
+  if (viewerOrgId == null || ownerOrgId == null) return false;
+  const viewer = String(viewerOrgId).trim();
+  const owner = String(ownerOrgId).trim();
+  if (!viewer || !owner) return false;
+  return viewer === owner;
+}
+
+/**
+ * Whether the actor may change visibility on a stored file.
+ * Only the owner may change visibility; nobody may self-upgrade to licensed.
+ */
+export function canChangeFileVisibility({
+  actorId,
+  ownerId,
+  currentVisibility,
+  nextVisibility,
+  isPurchasedResource = false,
+}) {
+  if (!actorId || !ownerId || actorId !== ownerId) return false;
+
+  // Inspect the requested next value before purchased-resource coercion —
+  // otherwise next='org' normalises to licensed and looks like a no-op.
+  const requestedNext = nextVisibility;
+  if (
+    requestedNext != null &&
+    requestedNext !== FILE_VISIBILITY.ORG &&
+    requestedNext !== FILE_VISIBILITY.PRIVATE &&
+    requestedNext !== FILE_VISIBILITY.LICENSED
+  ) {
+    return false;
+  }
+
+  const current = normalizeVisibility(currentVisibility, { isPurchasedResource });
+
+  // Purchased resources are locked to licensed (never org/private via client).
+  if (isPurchasedResource) {
+    return (
+      requestedNext == null ||
+      requestedNext === FILE_VISIBILITY.LICENSED
+    );
+  }
+
+  if (requestedNext === current || requestedNext == null) return true;
+
+  // Users can never set or upgrade to licensed themselves.
+  if (requestedNext === FILE_VISIBILITY.LICENSED) {
+    return false;
+  }
+  // Licensed may tighten to private, never open to org.
+  if (current === FILE_VISIBILITY.LICENSED) {
+    return requestedNext === FILE_VISIBILITY.PRIVATE;
+  }
+  return (
+    requestedNext === FILE_VISIBILITY.ORG ||
+    requestedNext === FILE_VISIBILITY.PRIVATE
+  );
+}
+
+/**
+ * Pure access decision for tests / proxy.
+ *
+ * - org (default): owner + same non-null organisation_id
+ * - private: owner + explicit file_shares grants
+ * - licensed: owner + licence/purchase holders only (never org-wide)
+ * Unknown/missing visibility → private.
+ */
+export function evaluateStoredFileAccess({
+  userId,
+  storagePath,
+  viewerProfile = null,
+  ownerProfile = null,
+  visibility = null,
+  isPurchasedResource = false,
+  hasShareGrant = false,
+  hasLicence = false,
+}) {
+  const path = parseOwnedStoragePath(storagePath);
+  if (!path || !userId) return false;
+  const ownerId = path.split('/')[0];
+  if (userId === ownerId) return true;
+  if (!viewerProfile || isSuspended(viewerProfile)) return false;
+
+  const mode = normalizeVisibility(visibility, { isPurchasedResource });
+
+  if (mode === FILE_VISIBILITY.LICENSED) {
+    return Boolean(hasLicence);
+  }
+  if (mode === FILE_VISIBILITY.PRIVATE) {
+    return Boolean(hasShareGrant);
+  }
+  // org
+  return sameOrganisationIds(
+    viewerProfile.organisation_id,
+    ownerProfile?.organisation_id,
+  );
+}
+
+/**
+ * Load stored_files metadata + share/licence flags (service role).
+ */
+export async function loadStoredFileAccessContext(userId, storagePath) {
+  const path = parseOwnedStoragePath(storagePath);
+  if (!path || !userId) return null;
+  const ownerId = path.split('/')[0];
+  const service = createServiceClient();
+
+  let meta = null;
+  let hasShareGrant = false;
+  let hasLicence = false;
+
+  if (service) {
+    const { data: fileRow } = await service
+      .from('stored_files')
+      .select('storage_path, owner_id, visibility, is_purchased_resource')
+      .eq('storage_path', path)
+      .maybeSingle();
+    meta = fileRow || null;
+
+    const { data: shareRow } = await service
+      .from('file_shares')
+      .select('id')
+      .eq('storage_path', path)
+      .eq('shared_with', userId)
+      .maybeSingle();
+    hasShareGrant = Boolean(shareRow?.id);
+
+    const { data: licenceRow } = await service
+      .from('file_licences')
+      .select('id')
+      .eq('storage_path', path)
+      .eq('user_id', userId)
+      .maybeSingle();
+    hasLicence = Boolean(licenceRow?.id);
+  }
+
+  const [viewer, owner] = await Promise.all([
+    loadProfile(userId),
+    loadProfile(ownerId),
+  ]);
+
+  return {
+    path,
+    ownerId,
+    viewerProfile: viewer,
+    ownerProfile: owner,
+    visibility: meta?.visibility ?? null,
+    isPurchasedResource: Boolean(meta?.is_purchased_resource),
+    hasShareGrant,
+    hasLicence,
+    // Missing metadata fails closed to private (unless owner).
+    missingMetadata: !meta,
+  };
+}
+
+/**
+ * Register a stored file row after upload (service role). Best-effort.
+ */
+export async function registerStoredFile({
+  storagePath,
+  ownerId,
+  visibility = FILE_VISIBILITY.ORG,
+  isPurchasedResource = false,
+  resourceId = null,
+}) {
+  const path = parseOwnedStoragePath(storagePath);
+  if (!path || !ownerId) return false;
+  const service = createServiceClient();
+  if (!service) return false;
+
+  // Purchased → always licensed. Clients cannot self-register as licensed.
+  let mode;
+  if (isPurchasedResource) {
+    mode = FILE_VISIBILITY.LICENSED;
+  } else if (visibility === FILE_VISIBILITY.ORG) {
+    mode = FILE_VISIBILITY.ORG;
+  } else if (visibility === FILE_VISIBILITY.PRIVATE) {
+    mode = FILE_VISIBILITY.PRIVATE;
+  } else {
+    // Unknown or client-requested licensed → fail closed to private
+    // (callers that want org should pass FILE_VISIBILITY.ORG explicitly;
+    // upload defaults to org).
+    mode = FILE_VISIBILITY.PRIVATE;
+  }
+
+  const { error } = await service.from('stored_files').upsert(
+    {
+      storage_path: path,
+      owner_id: ownerId,
+      visibility: mode,
+      is_purchased_resource: Boolean(isPurchasedResource),
+      resource_id: resourceId,
+      updated_at: new Date().toISOString(),
+    },
+    { onConflict: 'storage_path' },
+  );
+  if (error) {
+    console.warn('registerStoredFile:', error.message);
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Enforce visibility rules for /api/files proxy.
  */
 export async function userMayAccessStoredFile(userId, storagePath) {
   const path = parseOwnedStoragePath(storagePath);
@@ -233,37 +458,26 @@ export async function userMayAccessStoredFile(userId, storagePath) {
   if (userId === ownerId) return true;
 
   try {
-    const [viewer, owner] = await Promise.all([
-      loadProfile(userId),
-      loadProfile(ownerId),
-    ]);
-    if (
-      viewer?.organisation_id &&
-      owner?.organisation_id &&
-      viewer.organisation_id === owner.organisation_id &&
-      viewer.status !== 'suspended' &&
-      !viewer.anonymised_at
-    ) {
-      return true;
-    }
-
-    const service = createServiceClient();
-    if (service) {
-      const { data } = await service
-        .from('file_shares')
-        .select('id')
-        .eq('storage_path', path)
-        .eq('shared_with', userId)
-        .maybeSingle();
-      if (data?.id) return true;
-    }
+    const ctx = await loadStoredFileAccessContext(userId, path);
+    if (!ctx) return false;
+    return evaluateStoredFileAccess({
+      userId,
+      storagePath: path,
+      viewerProfile: ctx.viewerProfile,
+      ownerProfile: ctx.ownerProfile,
+      // Missing row → private (fail closed).
+      visibility: ctx.missingMetadata ? FILE_VISIBILITY.PRIVATE : ctx.visibility,
+      isPurchasedResource: ctx.isPurchasedResource,
+      hasShareGrant: ctx.hasShareGrant,
+      hasLicence: ctx.hasLicence,
+    });
   } catch (e) {
     console.warn(
       'userMayAccessStoredFile:',
       e instanceof Error ? e.message : e,
     );
+    return false;
   }
-  return false;
 }
 
 export function dreamHostNotConfiguredResponse() {
