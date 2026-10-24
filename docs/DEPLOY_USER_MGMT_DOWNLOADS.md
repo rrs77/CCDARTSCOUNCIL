@@ -9,7 +9,7 @@ In Supabase SQL Editor, run:
 
 Migration 1 creates profiles extensions, organisations, resources, download_events, audit_log, and Jazz North resource seeds.
 
-Migration 2 adds `super_admin`, `hub_memberships`, hub pages, resource lifecycle fields, activities/media, and idempotently assigns `super_admin` to the existing verified account `rob.reichstorer@gmail.com` (email is checked **only** in this migration — never at request time).
+Migration 2 adds `super_admin`, `hub_memberships`, hub pages, resource lifecycle fields, and activities/media. An early one-shot in that migration assigned `super_admin` by email (already applied — do not re-run or rewrite). **Going forward, grant `super_admin` only via `scripts/grant-super-admin.mjs` (by `auth.users.id`, requiring `email_confirmed_at`). Never grant by email in SQL or at request time.** Migration `20261024140000_remove_email_privilege_checks.sql` removes remaining JWT-email policy bypasses.
 
 ## Hub administration
 

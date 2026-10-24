@@ -2,6 +2,10 @@
 /**
  * ONE-OFF (manual): grant profiles.role = super_admin to a fixed auth.users.id.
  *
+ * This is the ONLY supported way to grant super_admin after the historical
+ * one-shot in 20260903_hub_administration.sql. Do not add email-matching
+ * grants in migrations, triggers, or RLS policies.
+ *
  * Does NOT match by email. Requires:
  *   - argument: auth.users UUID
  *   - that user has email_confirmed_at IS NOT NULL
