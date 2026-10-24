@@ -25,3 +25,6 @@ Migrations (not applied live until owner reviews):
 - `20261024170000_restore_curriculum_backup_rpc.sql` (initial RPC)
 - `20261024200000_org_scoped_curriculum_restore.sql` (org-scoped + snapshots + GRANT)
 - `20261024220000_restore_on_conflict_org_where.sql` (`ON CONFLICT … DO UPDATE WHERE t.organisation_id = v_org`)
+- `20261024240000_restore_cross_org_guards.sql` (42501 cross-org id guards; org-scoped natural-key uniques; in-org FK checks; `GRANT ALL` on `curriculum_backups`)
+
+SQL tests: `supabase/tests/restore_cross_org_guards.sql` (scratch DB only).
