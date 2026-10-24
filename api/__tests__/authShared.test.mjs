@@ -86,6 +86,18 @@ describe('permissions', () => {
     assert.equal(canViewGlobalAnalytics({ role: 'super_admin', status: 'active' }), true);
   });
 
+  it('school role=admin can manage users and org analytics but not global analytics', () => {
+    const schoolAdmin = {
+      role: 'admin',
+      status: 'active',
+      organisation_id: 'org-a',
+    };
+    assert.equal(canManageUsers(schoolAdmin), true);
+    assert.equal(canViewOrgAnalytics(schoolAdmin), true);
+    assert.equal(canViewGlobalAnalytics(schoolAdmin), false);
+    assert.equal(isFullUserAdmin(schoolAdmin), false);
+  });
+
   it('isFullUserAdmin is true for super_admin/superuser only', () => {
     assert.equal(isFullUserAdmin({ role: 'admin', status: 'active' }), false);
     assert.equal(isFullUserAdmin({ role: 'superuser', status: 'active' }), true);

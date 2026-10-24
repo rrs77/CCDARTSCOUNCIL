@@ -182,12 +182,23 @@ export async function GET(request) {
       invitation_status: invitationStatus(u),
     }));
 
-    const { count: activeAdminCount, error: adminCountErr } = await service
+    // Protect-last-admin count: platform supers globally; school admins only in-scope.
+    const fullAdmin = isFullUserAdmin(admin.profile);
+    let activeAdminQuery = service
       .from('profiles')
       .select('id', { count: 'exact', head: true })
-      .in('role', ['admin', 'superuser', 'super_admin'])
       .neq('status', 'suspended')
       .is('anonymised_at', null);
+    if (fullAdmin) {
+      activeAdminQuery = activeAdminQuery.in('role', ['superuser', 'super_admin']);
+    } else {
+      activeAdminQuery = activeAdminQuery.in('role', ['admin', 'superuser', 'super_admin']);
+      const scopeIds = await resolveActorScopeUserIds(service, admin);
+      if (Array.isArray(scopeIds) && scopeIds.length > 0) {
+        activeAdminQuery = activeAdminQuery.in('id', scopeIds);
+      }
+    }
+    const { count: activeAdminCount, error: adminCountErr } = await activeAdminQuery;
     if (adminCountErr) {
       console.warn('activeAdminCount:', adminCountErr.message);
     }
@@ -198,7 +209,7 @@ export async function GET(request) {
       page: params.page,
       pageSize: params.pageSize,
       activeAdminCount: activeAdminCount ?? 0,
-      scope: isFullUserAdmin(admin.profile) ? 'global' : 'hub',
+      scope: fullAdmin ? 'global' : 'hub',
     });
   } catch (e) {
     console.error('users/list error:', e);

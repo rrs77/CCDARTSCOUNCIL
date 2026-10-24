@@ -7,10 +7,14 @@ import { createClient } from '@supabase/supabase-js';
 
 export const DEFAULT_SUPABASE_URL = 'https://wiudrzdkbpyziaodqoog.supabase.co';
 
-/** Roles that can manage users (create / invite / suspend / anonymise). */
+/**
+ * Roles that can manage users within their organisation / hubs
+ * (create / invite / suspend / anonymise in-scope). Platform-wide list/manage
+ * still requires isFullUserAdmin (super_admin / superuser only).
+ */
 export const ADMIN_ROLES = new Set(['admin', 'superuser', 'super_admin']);
 
-/** Roles that can view organisation-scoped download analytics. */
+/** Roles that can view organisation-scoped download analytics (own org). */
 export const ORG_ANALYTICS_ROLES = new Set([
   'admin',
   'superuser',
@@ -18,8 +22,11 @@ export const ORG_ANALYTICS_ROLES = new Set([
   'organisation',
 ]);
 
-/** Roles that can view global / system-wide download analytics. */
-export const GLOBAL_ANALYTICS_ROLES = new Set(['admin', 'superuser', 'super_admin']);
+/**
+ * Roles that can view global / system-wide download analytics.
+ * School role=admin is NOT included — use ORG_ANALYTICS_ROLES + organisation_id.
+ */
+export const GLOBAL_ANALYTICS_ROLES = new Set(['superuser', 'super_admin']);
 
 /** Canonical + legacy system super roles (never checked by email at request time). */
 export const SUPER_ADMIN_ROLES = new Set(['super_admin', 'superuser']);
@@ -415,13 +422,22 @@ export function isSuperAdminProfile(profile) {
   return SUPER_ADMIN_ROLES.has(profile.role);
 }
 
-/** System admins who may list/manage all users (not hub-scoped). */
-/** Full user admin = super_admin / superuser only (matches SQL current_user_is_full_user_admin). */
+/**
+ * Platform operators who may list/manage all users (not hub/org-scoped).
+ * Matches SQL current_user_is_full_user_admin(): super_admin / superuser only.
+ * School role=admin is intentionally false — those managers are org-scoped via
+ * canManageUsers() + organisation_id / hub_memberships.
+ */
 export function isFullUserAdmin(profile) {
   if (!profile || isSuspended(profile)) return false;
   return SUPER_ADMIN_ROLES.has(profile.role);
 }
 
+/**
+ * May manage users in-scope (own org / administered hubs). Includes school
+ * role=admin. Does NOT grant cross-org or global profile reads — callers must
+ * still scope queries (see isFullUserAdmin / resolveActorScopeUserIds).
+ */
 export function canManageUsers(profile) {
   if (!profile || isSuspended(profile)) return false;
   if (ADMIN_ROLES.has(profile.role)) return true;
@@ -562,13 +578,14 @@ export function canManagerEditProfile({ actor, targetOld, targetNew }) {
 
 export function canViewGlobalAnalytics(profile) {
   if (!profile || isSuspended(profile)) return false;
+  // School role=admin must not see system-wide analytics.
   if (GLOBAL_ANALYTICS_ROLES.has(profile.role)) return true;
   return profile.can_view_download_analytics === true && isSuperAdminProfile(profile);
 }
 
 export function canViewOrgAnalytics(profile) {
   if (!profile || isSuspended(profile)) return false;
-  if (GLOBAL_ANALYTICS_ROLES.has(profile.role)) return true;
+  if (isSuperAdminProfile(profile)) return true;
   if (ORG_ANALYTICS_ROLES.has(profile.role) && profile.organisation_id) return true;
   return (
     profile.can_view_download_analytics === true && Boolean(profile.organisation_id)

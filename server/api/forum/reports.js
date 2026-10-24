@@ -53,11 +53,13 @@ export async function POST(request) {
       .single();
     if (error) return forumJson({ error: error.message }, 400);
 
-    // Notify moderators (profiles with admin roles) — best effort
+    // Notify platform supers + dedicated forum moderators — not every school role=admin
     const { data: mods } = await service
       .from('profiles')
       .select('id')
-      .in('role', ['admin', 'superuser', 'super_admin'])
+      .or(
+        'role.in.(superuser,super_admin),forum_can_moderate.eq.true',
+      )
       .eq('status', 'active')
       .limit(20);
     for (const m of mods || []) {

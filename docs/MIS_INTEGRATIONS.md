@@ -73,10 +73,12 @@ external approval is in place.
 Migrations (not applied to live DB by this agent):
 
 - `supabase/migrations/20261024205000_mis_integrations.sql`
-- `supabase/migrations/20261024210000_mis_integrations_super_admin_scope.sql` (after `20261024200000`)
+- `supabase/migrations/20261024210000_mis_integrations_super_admin_scope.sql`
+- `supabase/migrations/20261024250000_mis_rls_followups.sql` — gate DELETE super-only; connection_id org match; request withdraw-only for school managers
+- `supabase/migrations/20261024260000_full_user_admin_super_only.sql` — `current_user_is_full_user_admin()` = super only; org-scoped helpers; forum/lessons/downloads/branding
 
-- `mis_user_in_org` / `mis_user_can_manage_org` use the caller’s own `profiles.organisation_id` only (never `school_or_org`, never `current_user_is_full_user_admin()` which is true for school `role=admin`). Platform operators use `is_super_admin()`.
-- `commercial_terms_confirmed` and `provider_approval_confirmed` gates: `is_super_admin()` or `service_role` only.
-- Config placeholders in `mis_org_connection_secrets`: `is_super_admin()` only.
+- `mis_user_in_org` / `mis_user_can_manage_org` use the caller’s own `profiles.organisation_id` only (never `school_or_org`). Platform operators use `is_super_admin()`.
+- Gates/secrets/DELETE: `is_super_admin()` or `service_role` only.
+- `GLOBAL_ANALYTICS_ROLES` excludes school `admin` (`api/_authShared.js`).
 
-SQL tests: `supabase/tests/mis_integrations_security.sql` (includes school-admin repro).
+SQL tests: `supabase/tests/mis_integrations_security.sql`, `supabase/tests/mis_rls_followups_security.sql`.
