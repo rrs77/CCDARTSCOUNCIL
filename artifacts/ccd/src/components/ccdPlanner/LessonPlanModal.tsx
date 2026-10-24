@@ -944,7 +944,11 @@ function FleshOutPanel({
       label: 'Auto-pick curriculum statements',
       hint: 'Match this plan to your Settings → Curriculum list (IDs only)',
     },
-    { key: 'wholeLesson', label: 'Flesh out whole lesson (sequenced plan)' },
+    {
+      key: 'wholeLesson',
+      label: 'Flesh out whole lesson (sequenced plan)',
+      hint: 'Timings, teacher/pupil actions, transitions, resources, questions — still editable; re-run any section from Scope',
+    },
   ];
 
   return (
