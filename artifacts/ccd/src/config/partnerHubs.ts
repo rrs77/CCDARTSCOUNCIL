@@ -75,7 +75,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     primaryColor: '#1a1033',
     accentColor: '#C9A227',
     logoInvert: true,
-    logoPanelColor: '#1a1033',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'lso',
@@ -92,7 +92,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#0a1628',
     accentColor: '#3DB7E4',
-    logoPanelColor: '#0a1628',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'weteachdrama',
@@ -103,6 +103,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     siteUrl: 'https://www.weteachdrama.com/',
     /** Official weTD wordmark from weteachdrama.com on brand purple (uncropped). */
     logoSrc: '/partners/paid-logos/we-teach-drama-header.png',
+    /** White wordmark for directory cards on #111111 tile (see public/partners/LOGO_GUIDELINES.md). */
+    logoSrcOnDark: '/partners/paid-logos/we-teach-drama-wordmark-white.svg',
     interactive: true,
     paid: true,
     tagline: 'Drama schemes and classroom resources',
@@ -113,7 +115,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     primaryColor: '#2D1B4E',
     accentColor: '#F59E0B',
     logoOnPlate: true,
-    logoPanelColor: '#2D1B4E',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'ems',
@@ -164,7 +166,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     /** Colour lockup on white plate in hub chrome */
     logoSrc: '/partners/omnimusic/logo-colour.svg',
     /** White lockup for forest-green org cards (matches LSO / Jazz North strip) */
-    logoSrcOnDark: '/partners/omnimusic/logo-white.svg',
+    logoSrcOnDark: '/partners/omnimusic/omnimusic-wordmark-white.svg',
     interactive: true,
     tagline: 'Inclusive music · free Resource Zone downloads',
     description: [
@@ -174,7 +176,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     primaryColor: '#0B1F4A',
     accentColor: '#C8F542',
     logoOnPlate: true,
-    logoPanelColor: '#FFFFFF',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'icompose',
@@ -185,6 +187,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     siteUrl: 'https://www.icancompose.com/',
     /** Official I Can Compose mark from icancompose.com */
     logoSrc: '/partners/paid-logos/icompose.svg',
+    /** White wordmark for directory cards on #111111 tile (see public/partners/LOGO_GUIDELINES.md). */
+    logoSrcOnDark: '/partners/paid-logos/icompose-wordmark-white.svg',
     interactive: true,
     paid: true,
     tagline: 'Online composition courses for secondary musicians',
@@ -195,7 +199,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     primaryColor: '#0a1628',
     accentColor: '#5BA3D9',
     logoOnPlate: true,
-    logoPanelColor: '#FFFFFF',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'dramaresource',
@@ -206,6 +210,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     siteUrl: 'https://dramaresource.com/',
     /** Official white wordmark from dramaresource.com on brand green */
     logoSrc: '/partners/paid-logos/drama-resource-white-clear.png',
+    /** White wordmark for directory cards on #111111 tile (see public/partners/LOGO_GUIDELINES.md). */
+    logoSrcOnDark: '/partners/paid-logos/drama-resource-wordmark-white.svg',
     interactive: true,
     paid: true,
     tagline: 'Creative ideas for teaching drama — David Farmer',
@@ -215,7 +221,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#0F3D2E',
     accentColor: '#2DD4BF',
-    logoPanelColor: '#0F3D2E',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'jazznorth',
@@ -226,7 +232,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     siteUrl: 'https://www.jazznorth.org/',
     logoSrc: '/partners/jazz-north.png',
     /** White lockup for Organisations free-resource cards (matches ROH / LSO). */
-    logoSrcOnDark: '/partners/jazz-north-white.png',
+    logoSrcOnDark: '/partners/jazznorth/jazz-north-wordmark-white.svg',
     interactive: true,
     tagline: 'Strategic development agency for jazz in the North',
     description: [
@@ -240,7 +246,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
      * Org cards use logoSrcOnDark (white) with no plate.
      */
     logoOnPlate: true,
-    logoPanelColor: '#FFFFFF',
+    logoPanelColor: '#111111',
     /** Wide landscape mark — fill the plate more like ROH / other hubs. */
     logoImgClassName: 'h-12 max-h-[90%] w-auto max-w-[94%] sm:h-14',
   },
@@ -260,7 +266,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     primaryColor: '#111827',
     accentColor: '#EF4444',
     logoInvert: true,
-    logoPanelColor: '#111827',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'tate',
@@ -331,7 +337,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     ],
     primaryColor: '#0F3D2E',
     accentColor: '#D4A574',
-    logoPanelColor: '#0F3D2E',
+    logoPanelColor: '#111111',
   },
   {
     slug: 'rsc',
@@ -388,7 +394,7 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     primaryColor: '#1A0A0A',
     accentColor: '#E85D04',
     logoInvert: true,
-    logoPanelColor: '#1A0A0A',
+    logoPanelColor: '#111111',
   },
 ];
 

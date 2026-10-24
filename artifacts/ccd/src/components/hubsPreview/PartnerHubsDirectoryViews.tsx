@@ -75,12 +75,13 @@ function OrgLogoStrip({
   const needsInvert = onDark && !hub.logoSrcOnDark && hub.logoInvert;
   const shell =
     size === 'compact'
-      ? 'flex h-9 w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1'
-      : 'flex h-12 w-full items-center justify-center overflow-hidden rounded-lg px-2.5 py-1.5';
+      ? 'flex h-9 w-full items-center justify-start overflow-hidden rounded-lg py-1 pl-3 pr-12'
+      : 'flex h-12 w-full items-center justify-start overflow-hidden rounded-lg py-2 pl-4 pr-14';
+  /** Fixed logo box: every logo renders at one height, left-aligned, clear of the heart (pr = safe zone). */
   const img =
     size === 'compact'
-      ? 'h-full max-h-7 w-auto max-w-[92%] object-contain'
-      : 'h-full max-h-9 w-auto max-w-[92%] object-contain';
+      ? 'h-6 max-h-6 w-auto max-w-full object-contain object-left'
+      : 'h-8 max-h-8 w-auto max-w-full object-contain object-left';
   return (
     <div
       className={shell}
