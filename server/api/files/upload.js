@@ -1,7 +1,8 @@
 /**
  * POST /api/upload-pdf  (also /api/files/upload)
- * Authenticated upload of a PDF (or other bytes) to DreamHost.
+ * Authenticated upload of a PDF to DreamHost.
  * Path is always `<userId>/<uuid>.pdf` — never client-controlled.
+ * Client contentType is ignored; bytes must start with %PDF-.
  * Returns an app proxy URL only (no public DreamHost link).
  */
 
@@ -19,6 +20,8 @@ import {
   isDreamHostConfigured,
   uploadToDreamHost,
 } from '../../../api/_dreamhost.js';
+
+const PDF_MAGIC = Buffer.from('%PDF-');
 
 export async function OPTIONS(request) {
   return optionsResponse(request);
@@ -60,13 +63,13 @@ export async function POST(request) {
       return jsonResponse({ error: 'Empty file.' }, 400);
     }
 
-    const storagePath = buildOwnedStoragePath(auth.userId);
-    const contentType =
-      typeof body?.contentType === 'string' && body.contentType.startsWith('application/')
-        ? body.contentType
-        : 'application/pdf';
+    // Ignore client contentType — require PDF magic bytes server-side.
+    if (buffer.length < 5 || !buffer.subarray(0, 5).equals(PDF_MAGIC)) {
+      return jsonResponse({ error: 'Not a PDF.' }, 400);
+    }
 
-    await uploadToDreamHost({ buffer, storagePath, contentType });
+    const storagePath = buildOwnedStoragePath(auth.userId);
+    await uploadToDreamHost({ buffer, storagePath });
 
     const url = buildProxyFileUrl(request, storagePath);
     return jsonResponse({
