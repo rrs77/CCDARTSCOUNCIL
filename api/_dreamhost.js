@@ -116,7 +116,7 @@ export function buildShareAppPath(storagePath) {
 }
 
 /**
- * Authenticated file proxy API path (Bearer or legacy ?access_token=).
+ * Authenticated file proxy API path (Authorization Bearer only).
  * @param {string} storagePath
  * @returns {string} `/api/files/{userId}/{uuid}.pdf`
  */

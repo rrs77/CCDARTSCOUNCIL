@@ -1,7 +1,10 @@
 /**
  * Tracked resource download: auth → permission → log → redirect to external URL.
  * GET /api/resources/:resourceId/download
- * Auth via Authorization Bearer or ?access_token= (for window.location redirects).
+ *
+ * Auth: Authorization Bearer, or ?access_token= for GET-only window.location
+ * navigations (startTrackedDownload) that cannot set headers. This is the only
+ * route that still accepts the query-token fallback — /api/files uses Bearer.
  */
 
 import {
@@ -40,7 +43,7 @@ export async function GET(request, context) {
     const limited = assertRateLimit(`dl:${ip}:${resourceId}`, { limit: 60, windowMs: 60_000 });
     if (!limited.ok) return limited.response;
 
-    // L1: query token allowed only on this download redirect (+ file proxy).
+    // Query token allowed only on this GET download redirect (not /api/files).
     const auth = await requireAuth(request, { allowQuery: true });
     if (!auth.ok) return auth.response;
 

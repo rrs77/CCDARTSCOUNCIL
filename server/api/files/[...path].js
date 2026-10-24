@@ -4,9 +4,9 @@
  *
  * Decision 2 — signed-in users only (no anonymous / public share tokens).
  * Share links use the in-app `/shared/...` route, which fetches this proxy
- * with Authorization Bearer (JWT never appears in the share URL).
- * `?access_token=` remains allowed here (and resource download) for top-level
- * navigations that cannot set headers — not for share links.
+ * with Authorization Bearer only (JWT never in the URL; no ?access_token=).
+ * Query-token fallback remains solely on GET /api/resources/:id/download
+ * for window.location tracked downloads that cannot set headers.
  * Then visibility checks (org / private / licensed).
  */
 
@@ -64,9 +64,9 @@ export async function GET(request, context) {
     });
     if (!limited.ok) return limited.response;
 
-    // Session JWT via Bearer (preferred) or ?access_token= (download/proxy only).
-    // Share links never put the JWT in the URL — they use /shared/... + Bearer.
-    const auth = await requireAuth(request, { allowQuery: true });
+    // Bearer only — /shared/... loads this proxy with Authorization.
+    // Do not accept ?access_token= here (leak via Referer / logs).
+    const auth = await requireAuth(request);
     if (!auth.ok) {
       return unauthenticatedFileShareResponse(
         request,

@@ -18,7 +18,7 @@ After migrations:
 - Settings → **Hub admin** for hub members / super admins
 - Sections: Edit page, Resources, Activities, Media, Drafts, Preview, Publish, Hub users, Analytics, Export, Audit
 - Public hub content: `GET /api/hubs/public/:slug`
-- Tracked downloads: `GET /api/resources/:id/download` (Bearer or `?access_token=`)
+- Tracked downloads: `GET /api/resources/:id/download` (Bearer or `?access_token=` for `window.location` only — the sole query-token route; `/api/files` is Bearer-only via `/shared/...`)
 
 ## 2. Upload binary files
 

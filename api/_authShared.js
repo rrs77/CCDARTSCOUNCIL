@@ -278,8 +278,9 @@ async function verifyHs256(token, secret) {
 
 /**
  * Extract Bearer token from Authorization header.
- * Query-string `?access_token=` is opt-in (file download / proxy only) so tokens
- * are not leaked via Referer on ordinary API calls.
+ * Query-string `?access_token=` is opt-in for GET resource downloads only
+ * (window.location cannot set Authorization). Never use on /api/files or
+ * ordinary JSON APIs — tokens would leak via Referer / logs.
  *
  * @param {Request} request
  * @param {{ allowQuery?: boolean }} [options]
@@ -305,7 +306,7 @@ export function getBearerToken(request, { allowQuery = false } = {}) {
  *
  * @param {Request} request
  * @param {{ allowQuery?: boolean }} [options] pass allowQuery:true only for
- *   download/proxy routes that must open via window.location.
+ *   GET /api/resources/:id/download (window.location tracked downloads).
  * @returns {Promise<{ ok: true, userId: string, email?: string, token: string, claims: object } | { ok: false, response: Response }>}
  */
 export async function requireAuth(request, options = {}) {

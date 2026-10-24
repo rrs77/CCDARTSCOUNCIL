@@ -2,8 +2,8 @@
  * Decision 2 — share links require a signed-in Supabase session.
  * Shared links are in-app `/shared/:userId/:fileId` routes (no JWT in the URL).
  * After sign-in, the page fetches `/api/files/...` with Authorization Bearer.
- * `?access_token=` stays only on the API proxy/download routes for top-level
- * navigations that cannot set headers — never on share links.
+ * `?access_token=` is not used for file shares or the file proxy — it remains
+ * only on GET /api/resources/:id/download for window.location redirects.
  */
 
 import { buildSignInHref, safeReturnPath } from './authReturn.ts';
