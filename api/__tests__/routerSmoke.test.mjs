@@ -151,3 +151,22 @@ describe('interactive lesson viewer routes', () => {
     assert.equal(typeof body.available, 'boolean');
   });
 });
+
+describe('DreamHost file routes', () => {
+  it('dispatches POST /api/files/upload (upload-pdf alias target)', async () => {
+    const { status, body } = await jsonStatus(await routed('POST', 'files/upload'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('dispatches GET /api/files/:userId/:uuid.pdf', async () => {
+    const { status, body } = await jsonStatus(
+      await routed(
+        'GET',
+        'files/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002.pdf',
+      ),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+});

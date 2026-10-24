@@ -72,6 +72,22 @@
       "destination": "/api/router?__route=interactive-lessons/:path*"
     },
     {
+      "source": "/api/upload-pdf",
+      "destination": "/api/router?__route=files/upload"
+    },
+    {
+      "source": "/api/files/upload",
+      "destination": "/api/router?__route=files/upload"
+    },
+    {
+      "source": "/api/files",
+      "destination": "/api/router?__route=files"
+    },
+    {
+      "source": "/api/files/:path*",
+      "destination": "/api/router?__route=files/:path*"
+    },
+    {
       "source": "/((?!api/|partners/|assets/|ccd-pitch/|the-facts/|.*\\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|pdf|zip|woff2?|ttf|map)$).*)",
       "destination": "/index.html"
     }

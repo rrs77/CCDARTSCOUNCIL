@@ -1,15 +1,19 @@
 /**
  * POST /api/generate-pdf
- * Generate PDF via PDFBolt, upload to storage, return share URL (Copy Link).
+ * Generate PDF via PDFBolt, upload to DreamHost, return authenticated proxy URL.
  *
- * Env: PDFBOLT_API_KEY, SUPABASE_SERVICE_ROLE_KEY
- * Optional: SUPABASE_URL / VITE_SUPABASE_URL, SUPABASE_JWT_SECRET
+ * Env: PDFBOLT_API_KEY, DREAMHOST_PDF_UPLOAD_URL, DREAMHOST_PDF_API_KEY
+ * Optional: DREAMHOST_PDF_BASE_URL, SUPABASE_JWT_SECRET
  */
-import { createClient } from '@supabase/supabase-js';
-import { randomUUID } from 'node:crypto';
 import { requireAuth } from './_authShared.js';
 import {
-  DEFAULT_SUPABASE_URL,
+  buildOwnedStoragePath,
+  buildProxyFileUrl,
+  dreamHostNotConfiguredResponse,
+  isDreamHostConfigured,
+  uploadToDreamHost,
+} from './_dreamhost.js';
+import {
   generatePdfBuffer,
   getPdfBoltApiKey,
   jsonResponse,
@@ -38,6 +42,10 @@ export async function POST(request) {
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
 
+  if (!isDreamHostConfigured()) {
+    return dreamHostNotConfiguredResponse();
+  }
+
   let body;
   try {
     body = await request.json();
@@ -53,24 +61,7 @@ export async function POST(request) {
     return jsonResponse({ error: 'HTML payload exceeds maximum allowed size.' }, 413);
   }
 
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
-    return jsonResponse(
-      {
-        error:
-          'Copy link requires SUPABASE_SERVICE_ROLE_KEY in Vercel environment variables.',
-      },
-      503,
-    );
-  }
-
-  const supabaseUrl =
-    process.env.SUPABASE_URL ||
-    process.env.VITE_SUPABASE_URL ||
-    DEFAULT_SUPABASE_URL;
-
-  // C2: path is always server-built — never trust client fileName.
-  const storagePath = `${auth.userId}/${randomUUID()}.pdf`;
+  const storagePath = buildOwnedStoragePath(auth.userId);
 
   try {
     const pdfBuffer = await generatePdfBuffer(
@@ -82,32 +73,17 @@ export async function POST(request) {
       }),
     );
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false },
+    await uploadToDreamHost({
+      buffer: pdfBuffer,
+      storagePath,
+      contentType: 'application/pdf',
     });
 
-    const { error: uploadError } = await supabase.storage
-      .from('lesson-pdfs')
-      .upload(storagePath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: false,
-      });
-
-    if (uploadError) {
-      return jsonResponse({ error: `Upload failed: ${uploadError.message}` }, 500);
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('lesson-pdfs')
-      .getPublicUrl(storagePath);
-
-    if (!urlData?.publicUrl) {
-      return jsonResponse({ error: 'No public URL returned after upload.' }, 500);
-    }
+    const url = buildProxyFileUrl(request, storagePath);
 
     return jsonResponse({
       success: true,
-      url: urlData.publicUrl,
+      url,
       path: storagePath,
     });
   } catch (error) {

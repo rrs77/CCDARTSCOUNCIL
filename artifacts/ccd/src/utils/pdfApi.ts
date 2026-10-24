@@ -87,8 +87,8 @@ async function authHeaders(): Promise<Record<string, string>> {
 }
 
 /**
- * Generate a PDF via PDFBolt, upload to Supabase Storage (server-side),
- * and return the public URL for Copy Link / share flows.
+ * Generate a PDF via PDFBolt, upload to DreamHost (server-side),
+ * and return an authenticated app proxy URL for Copy Link / share flows.
  */
 export async function generateAndUploadSharePdf(
   options: SharePdfOptions,

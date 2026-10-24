@@ -40,6 +40,10 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 /* Interactive Lesson Viewer (kept out of /api entrypoints for Hobby function limit) */
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
 
+/* DreamHost file upload + authenticated proxy (shared with generate-pdf via _dreamhost.js) */
+import * as filesUpload from '../server/api/files/upload.js';
+import * as filesProxy from '../server/api/files/[...path].js';
+
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -182,6 +186,23 @@ function targetFor(pathname) {
     return null;
   }
 
+  /* ---------- DreamHost files (upload + proxy) ---------- */
+
+  if (area === 'files') {
+    if (rest.length === 1 && rest[0] === 'upload') {
+      return filesUpload;
+    }
+    if (rest.length >= 1) {
+      return filesProxy;
+    }
+    return null;
+  }
+
+  /* Alias used by LessonPrintModal / legacy clients */
+  if (area === 'upload-pdf' && rest.length === 0) {
+    return filesUpload;
+  }
+
   return null;
 }
 
@@ -195,7 +216,9 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf)(\/|$)/.test(
+      route,
+    ) ||
     route.includes('..')
   ) {
     return null;
