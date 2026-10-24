@@ -586,41 +586,39 @@ export function LessonsWorkspace({
         </div>
       </div>
 
-      {/* Lesson area — centred max width; Your lessons is a toolbar menu */}
-      <div className="mx-auto flex min-h-0 w-full max-w-[1200px] flex-1 flex-col">
-        <div className="planner-shell-surface flex min-h-[28rem] min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
-          {lessonPlanOpen ? (
-            <LessonPlanPanel
-              open={lessonPlanOpen}
-              onClose={() => {
-                setLessonPlanOpen(false);
-                setEditingLessonForForm(null);
-              }}
-              onSave={handleSaveLessonPlan}
-              lessonNumber={editingLessonForForm?.lessonNumber}
-              lessonData={editingLessonForForm?.lessonData}
-              yearGroup={yearGroupChipLabel}
-            />
-          ) : (
-            <PlannerLessonCanvas
-              key={`${builderKey}-${editingLessonNumber ?? 'empty'}`}
-              lessonNumber={editingLessonNumber}
-              lessonData={activeLessonData}
-              keyStageLabel={keyStageLabel(keyStage)}
-              classLabel={contextChipLabel}
-              yearGroupLabel={undefined}
-              canEdit={!isViewOnly}
-              onSave={saveCanvasLesson}
-              onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}
-              onOpenActivity={(a) => setActivityForSteps(a)}
-              onDuplicate={
-                editingLessonNumber && !isViewOnly
-                  ? () => void duplicateActiveLesson()
-                  : undefined
-              }
-            />
-          )}
-        </div>
+      {/* Full-width lesson area: canvas OR inline lesson plan (Your lessons is a toolbar menu) */}
+      <div className="planner-shell-surface flex min-h-[28rem] min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
+        {lessonPlanOpen ? (
+          <LessonPlanPanel
+            open={lessonPlanOpen}
+            onClose={() => {
+              setLessonPlanOpen(false);
+              setEditingLessonForForm(null);
+            }}
+            onSave={handleSaveLessonPlan}
+            lessonNumber={editingLessonForForm?.lessonNumber}
+            lessonData={editingLessonForForm?.lessonData}
+            yearGroup={yearGroupChipLabel}
+          />
+        ) : (
+          <PlannerLessonCanvas
+            key={`${builderKey}-${editingLessonNumber ?? 'empty'}`}
+            lessonNumber={editingLessonNumber}
+            lessonData={activeLessonData}
+            keyStageLabel={keyStageLabel(keyStage)}
+            classLabel={contextChipLabel}
+            yearGroupLabel={undefined}
+            canEdit={!isViewOnly}
+            onSave={saveCanvasLesson}
+            onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}
+            onOpenActivity={(a) => setActivityForSteps(a)}
+            onDuplicate={
+              editingLessonNumber && !isViewOnly
+                ? () => void duplicateActiveLesson()
+                : undefined
+            }
+          />
+        )}
       </div>
 
       <div className="sr-only" aria-live="polite">
