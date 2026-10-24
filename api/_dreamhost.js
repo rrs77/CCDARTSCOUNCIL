@@ -256,6 +256,30 @@ export function sameOrganisationIds(viewerOrgId, ownerOrgId) {
 }
 
 /**
+ * V2 mirror of protect_stored_file_visibility for non-server UPDATEs:
+ * if OLD was licensed or purchased, visibility and is_purchased_resource
+ * must not change at all (blocks licensed→private→org and clearing purchase).
+ */
+export function licensedStoredFileFieldsMutable({
+  isServer = false,
+  oldVisibility = null,
+  oldIsPurchased = false,
+  newVisibility = null,
+  newIsPurchased = false,
+} = {}) {
+  if (isServer) return true;
+  if (oldVisibility === FILE_VISIBILITY.LICENSED || oldIsPurchased === true) {
+    if (
+      newVisibility !== oldVisibility ||
+      Boolean(newIsPurchased) !== Boolean(oldIsPurchased)
+    ) {
+      return false;
+    }
+  }
+  return true;
+}
+
+/**
  * Whether the actor may change visibility on a stored file.
  * Only the owner may change visibility; nobody may self-upgrade to licensed.
  */

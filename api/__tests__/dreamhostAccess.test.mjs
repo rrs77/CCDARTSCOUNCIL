@@ -10,6 +10,7 @@ import {
   canPushResourceToSchool,
   evaluateStoredFileAccess,
   FILE_VISIBILITY,
+  licensedStoredFileFieldsMutable,
   normalizeVisibility,
   parseOwnedStoragePath,
   sameOrganisationIds,
