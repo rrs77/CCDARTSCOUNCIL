@@ -11,10 +11,12 @@
 
 import { randomUUID } from 'node:crypto';
 import {
+  canManageUsers,
   createServiceClient,
   isSuspended,
   jsonResponse,
   loadProfile,
+  writeAuditLog,
 } from './_authShared.js';
 
 const MAX_UPLOAD_BYTES = 10 * 1024 * 1024;
@@ -309,7 +311,8 @@ export function canChangeFileVisibility({
  *
  * - org (default): owner + same non-null organisation_id
  * - private: owner + explicit file_shares grants
- * - licensed: owner + licence/purchase holders only (never org-wide)
+ * - licensed: owner + licence holders + members of an org with an active
+ *   school push grant (never ambient org-wide without a grant)
  * Unknown/missing visibility → private.
  */
 export function evaluateStoredFileAccess({
@@ -321,6 +324,7 @@ export function evaluateStoredFileAccess({
   isPurchasedResource = false,
   hasShareGrant = false,
   hasLicence = false,
+  hasOrgGrant = false,
 }) {
   const path = parseOwnedStoragePath(storagePath);
   if (!path || !userId) return false;
@@ -331,7 +335,7 @@ export function evaluateStoredFileAccess({
   const mode = normalizeVisibility(visibility, { isPurchasedResource });
 
   if (mode === FILE_VISIBILITY.LICENSED) {
-    return Boolean(hasLicence);
+    return Boolean(hasLicence || hasOrgGrant);
   }
   if (mode === FILE_VISIBILITY.PRIVATE) {
     return Boolean(hasShareGrant);
@@ -344,7 +348,38 @@ export function evaluateStoredFileAccess({
 }
 
 /**
- * Load stored_files metadata + share/licence flags (service role).
+ * Whether the actor may push / revoke a school-wide grant for a resource.
+ *
+ * Allowed: purchaser, or org admin (role admin / can_manage_users) in the
+ * same non-null organisation_id as the resource. Never cross-org; null org
+ * denied. Caller must hold a personal licence OR the org must already hold
+ * a school-wide licence/grant.
+ */
+export function canPushResourceToSchool({
+  actorProfile = null,
+  resourceOrganisationId = null,
+  targetOrganisationId = null,
+  isPurchaser = false,
+  hasCallerLicence = false,
+  orgHasSchoolLicence = false,
+}) {
+  if (!actorProfile || isSuspended(actorProfile)) return false;
+
+  const actorOrg = actorProfile.organisation_id;
+  if (!sameOrganisationIds(actorOrg, resourceOrganisationId)) return false;
+  if (!sameOrganisationIds(targetOrganisationId, resourceOrganisationId)) {
+    return false;
+  }
+  if (!sameOrganisationIds(actorOrg, targetOrganisationId)) return false;
+
+  const isOrgAdmin = canManageUsers(actorProfile);
+  if (!isPurchaser && !isOrgAdmin) return false;
+  if (!hasCallerLicence && !orgHasSchoolLicence) return false;
+  return true;
+}
+
+/**
+ * Load stored_files metadata + share/licence/org-grant flags (service role).
  */
 export async function loadStoredFileAccessContext(userId, storagePath) {
   const path = parseOwnedStoragePath(storagePath);
@@ -355,11 +390,19 @@ export async function loadStoredFileAccessContext(userId, storagePath) {
   let meta = null;
   let hasShareGrant = false;
   let hasLicence = false;
+  let hasOrgGrant = false;
+
+  const [viewer, owner] = await Promise.all([
+    loadProfile(userId),
+    loadProfile(ownerId),
+  ]);
 
   if (service) {
     const { data: fileRow } = await service
       .from('stored_files')
-      .select('storage_path, owner_id, visibility, is_purchased_resource')
+      .select(
+        'storage_path, owner_id, visibility, is_purchased_resource, resource_id',
+      )
       .eq('storage_path', path)
       .maybeSingle();
     meta = fileRow || null;
@@ -379,12 +422,24 @@ export async function loadStoredFileAccessContext(userId, storagePath) {
       .eq('user_id', userId)
       .maybeSingle();
     hasLicence = Boolean(licenceRow?.id);
-  }
 
-  const [viewer, owner] = await Promise.all([
-    loadProfile(userId),
-    loadProfile(ownerId),
-  ]);
+    const resourceId =
+      typeof meta?.resource_id === 'string' ? meta.resource_id.trim() : '';
+    const viewerOrg =
+      typeof viewer?.organisation_id === 'string'
+        ? viewer.organisation_id.trim()
+        : '';
+    if (resourceId && viewerOrg) {
+      const { data: grantRow } = await service
+        .from('resource_org_grants')
+        .select('id')
+        .eq('resource_id', resourceId)
+        .eq('organisation_id', viewerOrg)
+        .is('revoked_at', null)
+        .maybeSingle();
+      hasOrgGrant = Boolean(grantRow?.id);
+    }
+  }
 
   return {
     path,
@@ -393,8 +448,10 @@ export async function loadStoredFileAccessContext(userId, storagePath) {
     ownerProfile: owner,
     visibility: meta?.visibility ?? null,
     isPurchasedResource: Boolean(meta?.is_purchased_resource),
+    resourceId: meta?.resource_id ?? null,
     hasShareGrant,
     hasLicence,
+    hasOrgGrant,
     // Missing metadata fails closed to private (unless owner).
     missingMetadata: !meta,
   };
@@ -470,6 +527,7 @@ export async function userMayAccessStoredFile(userId, storagePath) {
       isPurchasedResource: ctx.isPurchasedResource,
       hasShareGrant: ctx.hasShareGrant,
       hasLicence: ctx.hasLicence,
+      hasOrgGrant: ctx.hasOrgGrant,
     });
   } catch (e) {
     console.warn(
@@ -478,6 +536,237 @@ export async function userMayAccessStoredFile(userId, storagePath) {
     );
     return false;
   }
+}
+
+/**
+ * Resolve resource metadata for school push/revoke (service role).
+ * @returns {Promise<{
+ *   resourceId: string,
+ *   resourceOrganisationId: string|null,
+ *   purchaserIds: string[],
+ *   hasCallerLicence: boolean,
+ *   orgHasSchoolLicence: boolean,
+ *   activeGrant: object|null,
+ * }|null>}
+ */
+export async function loadResourceSchoolPushContext({
+  resourceId,
+  actorId,
+  actorOrganisationId,
+}) {
+  const rid = typeof resourceId === 'string' ? resourceId.trim() : '';
+  if (!rid || !actorId) return null;
+  const service = createServiceClient();
+  if (!service) return null;
+
+  const { data: files } = await service
+    .from('stored_files')
+    .select('storage_path, owner_id, resource_id, is_purchased_resource, visibility')
+    .eq('resource_id', rid);
+
+  const fileRows = Array.isArray(files) ? files : [];
+  if (!fileRows.length) return null;
+
+  const paths = fileRows.map((f) => f.storage_path).filter(Boolean);
+  const ownerIds = [...new Set(fileRows.map((f) => f.owner_id).filter(Boolean))];
+
+  const { data: licenceRows } = paths.length
+    ? await service
+        .from('file_licences')
+        .select('user_id, storage_path, source')
+        .in('storage_path', paths)
+    : { data: [] };
+
+  const licences = Array.isArray(licenceRows) ? licenceRows : [];
+  // Purchaser = purchase-sourced licence holder or owner of a purchased file.
+  // Gifted/other licence holders are not purchasers (org admin path still applies).
+  const purchaserIds = [
+    ...new Set([
+      ...licences
+        .filter((l) => !l.source || l.source === 'purchase')
+        .map((l) => l.user_id)
+        .filter(Boolean),
+      ...fileRows
+        .filter((f) => f.is_purchased_resource)
+        .map((f) => f.owner_id)
+        .filter(Boolean),
+    ]),
+  ];
+
+  const hasCallerLicence = licences.some((l) => l.user_id === actorId);
+
+  const actorOrg =
+    typeof actorOrganisationId === 'string' ? actorOrganisationId.trim() : '';
+  let activeGrant = null;
+  let orgHasSchoolLicence = false;
+  if (actorOrg) {
+    const { data: grantRow } = await service
+      .from('resource_org_grants')
+      .select('id, resource_id, organisation_id, granted_by, granted_at, revoked_at')
+      .eq('resource_id', rid)
+      .eq('organisation_id', actorOrg)
+      .is('revoked_at', null)
+      .maybeSingle();
+    activeGrant = grantRow || null;
+    orgHasSchoolLicence = Boolean(grantRow?.id);
+  }
+
+  // Resource org = purchaser/owner profile org (first non-null among owners).
+  let resourceOrganisationId = null;
+  for (const oid of ownerIds) {
+    const profile = await loadProfile(oid);
+    const org =
+      typeof profile?.organisation_id === 'string'
+        ? profile.organisation_id.trim()
+        : '';
+    if (org) {
+      resourceOrganisationId = org;
+      break;
+    }
+  }
+
+  return {
+    resourceId: rid,
+    resourceOrganisationId,
+    purchaserIds,
+    hasCallerLicence,
+    orgHasSchoolLicence,
+    activeGrant,
+    ownerIds,
+  };
+}
+
+/**
+ * Create an active school-wide grant (service role). Idempotent if already active.
+ */
+export async function pushResourceToSchool({
+  resourceId,
+  organisationId,
+  grantedBy,
+  ipHash = null,
+}) {
+  const rid = typeof resourceId === 'string' ? resourceId.trim() : '';
+  const org = typeof organisationId === 'string' ? organisationId.trim() : '';
+  if (!rid || !org || !grantedBy) {
+    const err = new Error('Invalid push parameters.');
+    err.status = 400;
+    throw err;
+  }
+  const service = createServiceClient();
+  if (!service) {
+    const err = new Error('Service unavailable.');
+    err.status = 503;
+    throw err;
+  }
+
+  const { data: existing } = await service
+    .from('resource_org_grants')
+    .select('id, granted_at')
+    .eq('resource_id', rid)
+    .eq('organisation_id', org)
+    .is('revoked_at', null)
+    .maybeSingle();
+
+  if (existing?.id) {
+    await writeAuditLog({
+      actorId: grantedBy,
+      action: 'resource_org_grant_push',
+      targetType: 'resource',
+      targetId: rid,
+      organisationId: org,
+      ipHash,
+      meta: { organisation_id: org, grant_id: existing.id, already_active: true },
+    });
+    return { grantId: existing.id, created: false };
+  }
+
+  const { data: inserted, error } = await service
+    .from('resource_org_grants')
+    .insert({
+      resource_id: rid,
+      organisation_id: org,
+      granted_by: grantedBy,
+      granted_at: new Date().toISOString(),
+    })
+    .select('id')
+    .maybeSingle();
+
+  if (error || !inserted?.id) {
+    console.error('pushResourceToSchool:', error?.message || 'insert failed');
+    const err = new Error('Failed to create school grant.');
+    err.status = 500;
+    throw err;
+  }
+
+  await writeAuditLog({
+    actorId: grantedBy,
+    action: 'resource_org_grant_push',
+    targetType: 'resource',
+    targetId: rid,
+    organisationId: org,
+    ipHash,
+    meta: { organisation_id: org, grant_id: inserted.id },
+  });
+
+  return { grantId: inserted.id, created: true };
+}
+
+/**
+ * Revoke an active school-wide grant (service role).
+ */
+export async function revokeResourceSchoolPush({
+  resourceId,
+  organisationId,
+  revokedBy,
+  ipHash = null,
+}) {
+  const rid = typeof resourceId === 'string' ? resourceId.trim() : '';
+  const org = typeof organisationId === 'string' ? organisationId.trim() : '';
+  if (!rid || !org || !revokedBy) {
+    const err = new Error('Invalid revoke parameters.');
+    err.status = 400;
+    throw err;
+  }
+  const service = createServiceClient();
+  if (!service) {
+    const err = new Error('Service unavailable.');
+    err.status = 503;
+    throw err;
+  }
+
+  const now = new Date().toISOString();
+  const { data: updated, error } = await service
+    .from('resource_org_grants')
+    .update({ revoked_by: revokedBy, revoked_at: now })
+    .eq('resource_id', rid)
+    .eq('organisation_id', org)
+    .is('revoked_at', null)
+    .select('id')
+    .maybeSingle();
+
+  if (error) {
+    console.error('revokeResourceSchoolPush:', error.message);
+    const err = new Error('Failed to revoke school grant.');
+    err.status = 500;
+    throw err;
+  }
+  if (!updated?.id) {
+    const err = new Error('No active school grant to revoke.');
+    err.status = 404;
+    throw err;
+  }
+
+  await writeAuditLog({
+    actorId: revokedBy,
+    action: 'resource_org_grant_revoke',
+    targetType: 'resource',
+    targetId: rid,
+    organisationId: org,
+    ipHash,
+    meta: { organisation_id: org, grant_id: updated.id },
+  });
+
+  return { grantId: updated.id, revoked: true };
 }
 
 export function dreamHostNotConfiguredResponse() {

@@ -159,6 +159,22 @@ describe('DreamHost file routes', () => {
     assert.notEqual(body.error, 'API route not found.');
   });
 
+  it('dispatches POST /api/files/school-grant', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('POST', 'files/school-grant'),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('dispatches DELETE /api/files/school-grant', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('DELETE', 'files/school-grant'),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
   it('dispatches GET /api/files/:userId/:uuid.pdf', async () => {
     const { status, body } = await jsonStatus(
       await routed(
