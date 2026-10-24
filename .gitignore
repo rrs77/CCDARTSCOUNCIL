@@ -72,3 +72,6 @@ artifacts/ccd/public/feature-demo/raw-video/
 
 # Supabase CLI link state
 supabase/.temp/
+
+# Root Vite hashed bundles (build output) — do not commit.
+/public/assets/
