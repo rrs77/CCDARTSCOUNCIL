@@ -221,11 +221,12 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div
-            className="h-1.5 w-full rounded-full"
-            style={{ background: termColor }}
-            aria-hidden
-          />
+          <div className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]" aria-hidden>
+            <div
+              className="h-full rounded-full transition-all duration-200"
+              style={{ background: termColor, width: '33%' }}
+            />
+          </div>
           <p className="mt-3 text-[13px] leading-snug text-[#5C5878]">
             Add a whole scheme of work (unit / lesson stack) to this half-term. Individual lessons
             are not assigned from here.

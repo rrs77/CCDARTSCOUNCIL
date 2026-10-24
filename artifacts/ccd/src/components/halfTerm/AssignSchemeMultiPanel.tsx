@@ -411,7 +411,11 @@ export function AssignSchemeMultiPanel({
               className="h-full rounded-full transition-all duration-200"
               style={{
                 background: termColor,
-                width: selectedClassIds.size === 0 ? '33%' : '66%',
+                width: selectedStackId
+                  ? '100%'
+                  : selectedClassIds.size === 0
+                    ? '33%'
+                    : '66%',
               }}
             />
           </div>
