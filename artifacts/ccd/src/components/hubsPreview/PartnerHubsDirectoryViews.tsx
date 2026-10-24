@@ -1585,6 +1585,7 @@ export function MusicHubResultCard({
   detail,
   onOpen,
   compact = false,
+  alsoCovers,
 }: {
   id: string;
   name: string;
@@ -1593,6 +1594,8 @@ export function MusicHubResultCard({
   detail: string;
   onOpen: () => void;
   compact?: boolean;
+  /** Cross-region hub: name of the region being viewed that it also covers. */
+  alsoCovers?: string;
 }) {
   const [saved, setSaved] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
@@ -1645,6 +1648,11 @@ export function MusicHubResultCard({
           <p className={`mt-0.5 truncate font-medium ${muted} text-[13px]`}>
             {location}
           </p>
+          {alsoCovers && (
+            <span className="mt-1 inline-flex items-center rounded-full bg-[#F4F3FA] px-2 py-0.5 text-[13px] font-medium text-[#5C5878] ring-1 ring-inset ring-[#1F1B4D]/[0.08]">
+              Also covers {alsoCovers}
+            </span>
+          )}
           {!compact && <p className={`mt-1 line-clamp-2 text-[13px] leading-snug ${muted}`}>{detail}</p>}
           <div className="mt-1.5 flex justify-end">
             <span

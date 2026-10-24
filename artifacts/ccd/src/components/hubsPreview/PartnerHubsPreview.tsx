@@ -1999,6 +1999,12 @@ function PartnerHubsBrowse({
     setPinnedHub(null);
     setRegionMapModal(false);
   }, [focus]);
+  // Region's natural shape for the side-by-side map, clamped to 4:5 … 4:3.
+  const regionAspect = useMemo(() => {
+    const b = ix && atRegion ? ix.region(focus.id)?.bbox : undefined;
+    if (!b) return 0.8;
+    return Math.min(4 / 3, Math.max(0.8, b[2] / b[3]));
+  }, [ix, atRegion, focus]);
   const activatePin = (id: string) => {
     setPinnedHub(id);
     const card = document.querySelector<HTMLElement>(`[data-hub-card="${CSS.escape(id)}"]`);
@@ -2177,9 +2183,10 @@ function PartnerHubsBrowse({
                 <span aria-hidden>{regionMapOpen ? '▴' : '▾'}</span>
               </button>
 
-              <div className="grid gap-6 lg:grid-cols-[clamp(360px,40%,520px)_minmax(0,1fr)] lg:items-start">
+              <div className="grid gap-6 min-[1200px]:grid-cols-[clamp(360px,40%,520px)_minmax(0,1fr)] min-[1200px]:items-start">
                 <div
-                  className={`${regionMapOpen ? 'block' : 'hidden'} relative h-[240px] overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:block sm:h-[320px] lg:sticky lg:top-[calc(var(--ccd-sticky-header-h,65px)+16px)] lg:h-auto lg:aspect-[4/5] lg:max-h-[calc(100vh-var(--ccd-sticky-header-h,65px)-40px)]`}
+                  style={{ ['--region-aspect' as string]: String(regionAspect) }}
+                  className={`${regionMapOpen ? 'block' : 'hidden'} relative h-[240px] overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:block sm:h-[320px] min-[1200px]:sticky min-[1200px]:top-[calc(var(--ccd-sticky-header-h,65px)+16px)] min-[1200px]:h-auto min-[1200px]:aspect-[var(--region-aspect,4/5)] min-[1200px]:max-h-[calc(100vh-var(--ccd-sticky-header-h,65px)-40px)]`}
                 >
                   <UkHubMap
                     ix={ix}
@@ -2195,6 +2202,7 @@ function PartnerHubsBrowse({
                     showReset
                     pins
                     onPinActivate={activatePin}
+                    fitPaddingPx={24}
                     palette="green"
                     className="h-full w-full !rounded-xl !border-0"
                   />
@@ -2298,6 +2306,7 @@ function PartnerHubsBrowse({
                           detail={musicHubCardDetail(h.id, h.leadOrganisation ?? undefined, h.lads.length)}
                           onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
                           compact={hubsView === 'compact'}
+                          alsoCovers={h.region !== focus.id ? regionName : undefined}
                         />
                       </li>
                     ))}
@@ -2334,6 +2343,7 @@ function PartnerHubsBrowse({
                         controlsPosition="bottom-right"
                         showReset
                         pins
+                        fitPaddingPx={24}
                         onPinActivate={(id) => {
                           setRegionMapModal(false);
                           activatePin(id);

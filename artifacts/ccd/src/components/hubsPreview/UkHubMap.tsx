@@ -103,6 +103,8 @@ interface Props {
   pins?: boolean;
   /** Called when a pin is clicked/activated. Falls back to onFocus(item.focus). */
   onPinActivate?: (id: string) => void;
+  /** Fit focus bounds with this many screen px of padding (overrides % padding). */
+  fitPaddingPx?: number;
 }
 
 interface Item {
@@ -155,6 +157,7 @@ export function UkHubMap({
   showReset = false,
   pins = false,
   onPinActivate,
+  fitPaddingPx,
 }: Props) {
   const labelMode: 'counts' | 'names' | 'none' =
     regionLabelMode ?? (showRegionCounts ? 'counts' : 'none');
@@ -216,6 +219,16 @@ export function UkHubMap({
       const cy = b[1] + b[3] / 2;
       return [cx - w / 2, cy - h / 2, w, h];
     }
+    if (fitPaddingPx != null) {
+      const ix2 = Math.max(1, cw - fitPaddingPx * 2);
+      const iy = Math.max(1, ch - fitPaddingPx * 2);
+      const k = Math.max(b[2] / ix2, b[3] / iy); // world units per px
+      const w = cw * k;
+      const h = ch * k;
+      const cx = b[0] + b[2] / 2;
+      const cy = b[1] + b[3] / 2;
+      return [cx - w / 2, cy - h / 2, w, h];
+    }
     const pad = b[2] >= ix.data.viewBox[2] * 0.9 ? 0.03 : 0.08;
     let w = b[2] * (1 + pad * 2);
     let h = b[3] * (1 + pad * 2);
@@ -225,7 +238,7 @@ export function UkHubMap({
     const cx = b[0] + b[2] / 2;
     const cy = b[1] + b[3] / 2 - (topPx / ch) * h * 0.45;
     return [cx - w / 2, cy - h / 2, w, h];
-  }, [showBreadcrumb, ix, frameEngland]);
+  }, [showBreadcrumb, ix, frameEngland, fitPaddingPx]);
 
   const flyTo = useCallback(
     (target: BBox, ms = FLY_MS) => {
@@ -461,15 +474,29 @@ export function UkHubMap({
       }));
     }
     if (ctx.regionId) {
-      return ix.hubsInRegion(ctx.regionId).map((h) => ({
+      const rid = ctx.regionId;
+      return ix.hubsInRegion(rid).map((h) => {
+        // Cross-region hubs: pin at the centre of their areas inside this region.
+        let label = h.label;
+        if (h.region !== rid) {
+          const inside = h.lads.map((c) => ix.lad(c)).filter((l) => l && l.region === rid);
+          if (inside.length) {
+            label = [
+              inside.reduce((a, l) => a + l!.label[0], 0) / inside.length,
+              inside.reduce((a, l) => a + l!.label[1], 0) / inside.length,
+            ];
+          }
+        }
+        return {
         id: h.id,
         name: hubLabel(h),
         lads: h.lads,
-        focus: { level: 'hub', id: h.id },
-        label: h.label,
+        focus: { level: 'hub', id: h.id } as MapFocus,
+        label,
         labelText: mapLabel(hubLabel(h)),
         priority: h.bbox[2] * h.bbox[3],
-      }));
+        };
+      });
     }
     const regions: Item[] = d.regions.map((r) => ({
       id: r.code,
@@ -1056,12 +1083,14 @@ export function UkHubMap({
           const ly = (it.label[1] - settled.box[1]) / settled.box[3];
           if (lx < -0.02 || lx > 1.02 || ly < -0.02 || ly > 1.02) return null;
           const on = hover === it.id;
+          const secondary =
+            ctx.regionId != null && it.focus.level === 'hub' && ix.hub(it.id)?.region !== ctx.regionId;
           return (
             <button
               key={`pin-${it.id}`}
               type="button"
               data-pin-id={it.id}
-              aria-label={`${it.name} — show hub card`}
+              aria-label={`${it.name}${secondary ? ` (also covers ${focusName(ix, focus)})` : ''} — show hub card`}
               aria-pressed={on || undefined}
               onPointerEnter={() => onHover(it.id)}
               onPointerLeave={() => onHover(null)}
@@ -1073,11 +1102,15 @@ export function UkHubMap({
             >
               <span
                 aria-hidden
-                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 border-white shadow-[0_2px_8px_rgba(31,27,77,0.35)] transition-transform ${
-                  on ? 'scale-125 bg-[#1F1B4D]' : 'bg-[#0B6B5F]'
+                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-[0_2px_8px_rgba(31,27,77,0.25)] transition-transform ${
+                  on
+                    ? 'scale-125 border-white bg-[#1F1B4D]'
+                    : secondary
+                      ? 'border-[#0B6B5F] bg-white/90'
+                      : 'border-white bg-[#0B6B5F]'
                 }`}
               >
-                <span className="h-2.5 w-2.5 rounded-full bg-white" />
+                <span className={`h-2.5 w-2.5 rounded-full ${secondary && !on ? 'bg-[#0B6B5F]/60' : 'bg-white'}`} />
               </span>
             </button>
           );
