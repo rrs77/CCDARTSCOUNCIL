@@ -18,6 +18,7 @@ import type { Activity, LessonData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import type { LessonSection } from '../../types/lessonSections';
 import { ensureLessonSections } from '../../utils/planner/legacyLessonToSections';
+import { htmlToPlainText } from '../../utils/sanitize';
 import { cn } from '@/lib/utils';
 import { Button, IconButton, Pill } from './ui';
 
@@ -190,8 +191,9 @@ function SortableSectionCard({
         }}
         className="w-full px-3.5 py-2.5 text-left text-xs leading-relaxed text-slate-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
       >
-        {(section.bodyHtml || section.activity?.description || '').trim() ||
-          'Tap to edit this block…'}
+        {htmlToPlainText(
+          section.bodyHtml || section.activity?.description || '',
+        ) || 'Tap to edit this block…'}
       </button>
     </div>
   );
