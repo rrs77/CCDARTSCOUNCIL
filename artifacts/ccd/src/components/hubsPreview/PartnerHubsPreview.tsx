@@ -2151,7 +2151,7 @@ function PartnerHubsBrowse({
                 </button>
               </div>
 
-              <div className="rounded-2xl border border-[#1F1B4D]/[0.08] bg-white px-5 py-5 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:px-6">
+              <div className="rounded-2xl border border-[#1F1B4D]/[0.08] bg-white px-5 py-3 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:px-6">
                 <h2
                   id="music-hubs-results"
                   className="text-[26px] font-bold tracking-tight text-[#1F1B4D] sm:text-[30px]"
@@ -2161,7 +2161,7 @@ function PartnerHubsBrowse({
                 <p className="mt-1 text-[13px] font-semibold text-[#0B6B5F]">
                   {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'} in {regionName}
                 </p>
-                <p className={`mt-2 max-w-3xl text-[14px] leading-snug ${muted}`}>
+                <p className={`mt-1 text-[14px] leading-snug ${muted}`}>
                   These Music Hubs serve schools across this region. Open a hub to explore resources and local
                   services, or pick a pin on the map to find its card.
                 </p>
@@ -2177,9 +2177,9 @@ function PartnerHubsBrowse({
                 <span aria-hidden>{regionMapOpen ? '▴' : '▾'}</span>
               </button>
 
-              <div className="grid gap-6 lg:grid-cols-[clamp(360px,38%,520px)_minmax(0,1fr)] lg:items-start">
+              <div className="grid gap-6 lg:grid-cols-[clamp(360px,40%,520px)_minmax(0,1fr)] lg:items-start">
                 <div
-                  className={`${regionMapOpen ? 'block' : 'hidden'} relative h-[240px] overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:block sm:h-[320px] lg:sticky lg:top-[calc(var(--ccd-sticky-header-h,0px)+16px)] lg:h-auto lg:aspect-[4/5]`}
+                  className={`${regionMapOpen ? 'block' : 'hidden'} relative h-[240px] overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:block sm:h-[320px] lg:sticky lg:top-[calc(var(--ccd-sticky-header-h,65px)+16px)] lg:h-auto lg:aspect-[4/5] lg:max-h-[calc(100vh-var(--ccd-sticky-header-h,65px)-40px)]`}
                 >
                   <UkHubMap
                     ix={ix}

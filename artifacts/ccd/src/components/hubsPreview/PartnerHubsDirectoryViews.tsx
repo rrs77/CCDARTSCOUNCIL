@@ -1608,9 +1608,7 @@ export function MusicHubResultCard({
         >
           {wordmark ? (
             <span
-              className={`line-clamp-2 px-2 text-center font-bold leading-snug tracking-tight ${
-                compact ? 'text-[10px]' : 'text-[12px]'
-              }`}
+              className="line-clamp-2 px-2 text-center text-[13px] font-bold leading-snug tracking-tight"
               style={{ color: wordmark.color }}
             >
               {wordmark.label}
@@ -1627,29 +1625,27 @@ export function MusicHubResultCard({
             />
           ) : (
             <span
-              className={`line-clamp-2 px-2 text-center font-bold leading-snug text-[#0B6B5F] ${
-                compact ? 'text-[10px]' : 'text-[12px]'
-              }`}
+              className="line-clamp-2 px-2 text-center text-[13px] font-bold leading-snug text-[#0B6B5F]"
             >
               {name}
             </span>
           )}
-          <span className="absolute left-1 top-1 inline-flex max-w-[70%] truncate items-center rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold leading-none text-[#1F1B4D] shadow-sm ring-1 ring-[#1F1B4D]/[0.06]">
+          <span className="absolute left-1 top-1 inline-flex max-w-[70%] truncate items-center rounded-full bg-white/95 px-1.5 py-0.5 text-[13px] font-bold leading-none text-[#1F1B4D] shadow-sm ring-1 ring-[#1F1B4D]/[0.06]">
             {region}
           </span>
         </div>
         <div className={`relative flex flex-col ${compact ? 'px-2 pb-1.5 pt-1.5' : 'px-2.5 pb-2 pt-2'}`}>
           <h3
             className={`line-clamp-2 font-bold leading-snug tracking-tight ${ink} ${
-              compact ? 'text-[11px]' : 'text-[12.5px]'
+              compact ? 'text-[13px]' : 'text-[14px]'
             }`}
           >
             {name}
           </h3>
-          <p className={`mt-0.5 truncate font-medium ${muted} ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
+          <p className={`mt-0.5 truncate font-medium ${muted} text-[13px]`}>
             {location}
           </p>
-          {!compact && <p className={`mt-1 line-clamp-2 text-[10px] leading-snug ${muted}`}>{detail}</p>}
+          {!compact && <p className={`mt-1 line-clamp-2 text-[13px] leading-snug ${muted}`}>{detail}</p>}
           <div className="mt-1.5 flex justify-end">
             <span
               className={`flex shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white ${

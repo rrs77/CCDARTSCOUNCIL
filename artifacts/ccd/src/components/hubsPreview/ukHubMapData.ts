@@ -116,7 +116,7 @@ export function indexMap(data: UkHubMapData): MapIndex {
     lad: (code) => lads.get(code),
     region: (code) => regions.get(code),
     nation: (code) => nations.get(code),
-    hubsInRegion: (code) => data.hubs.filter((h) => h.regions.includes(code)).sort(byName),
+    hubsInRegion: (code) => data.hubs.filter((h) => h.region === code).sort(byName),
     ladsInHub: (id) => data.lads.filter((l) => l.hub === id).sort(byName),
     ladsInNation: (code) => data.lads.filter((l) => l.nation === code).sort(byName),
     ladBySlug: (hubId, slug) => data.lads.find((l) => l.hub === hubId && slugify(l.name) === slug),
