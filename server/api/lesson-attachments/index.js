@@ -84,8 +84,10 @@ export async function GET(request) {
       return jsonResponse({
         dropbox: cfg.dropbox,
         googleDrive: cfg.googleDrive,
+        googleClassroom: cfg.googleClassroom,
         box: cfg.box,
         oneDrive: cfg.oneDrive,
+        teams: cfg.teams,
         // Public picker keys only (safe to expose; hide button when null)
         keys: {
           dropboxAppKey: cfg.dropboxAppKey,
@@ -93,6 +95,7 @@ export async function GET(request) {
           googleClientId: cfg.googleClientId,
           boxClientId: cfg.boxClientId,
           oneDriveClientId: cfg.oneDriveClientId,
+          teamsClientId: cfg.teamsClientId,
         },
         sizeLimits: SIZE_LIMITS,
       });
@@ -181,7 +184,11 @@ export async function POST(request) {
     // --- cloud import ---
     if (body?.import === true) {
       const provider = String(body.provider || '').toLowerCase();
-      if (!['dropbox', 'google_drive', 'box', 'onedrive'].includes(provider)) {
+      if (
+        !['dropbox', 'google_drive', 'box', 'onedrive', 'teams', 'google_classroom'].includes(
+          provider,
+        )
+      ) {
         return jsonResponse({ error: 'Unsupported provider.' }, 400);
       }
       const fileName = String(body.fileName || 'file').trim();
@@ -198,6 +205,32 @@ export async function POST(request) {
           : downloadUrl;
       const providerFileId =
         typeof body.providerFileId === 'string' ? body.providerFileId.trim() : null;
+      const linkOnly = body.linkOnly === true || body.asLink === true;
+
+      // YouTube / web links from Classroom — store as linked metadata only.
+      if (linkOnly) {
+        const kindRaw = String(body.kind || '').toLowerCase();
+        const kind = ['image', 'video', 'audio', 'document'].includes(kindRaw)
+          ? kindRaw
+          : 'document';
+        if (!externalUrl) return jsonResponse({ error: 'Missing externalUrl for linked attachment.' }, 400);
+        const row = await insertAttachmentRow({
+          owner_id: auth.userId,
+          organisation_id: organisationId,
+          lesson_key: lessonKey,
+          storage_path: null,
+          storage_kind: 'link',
+          file_name: fileName || externalUrl,
+          mime_type: mimeType || (kind === 'video' ? 'video/youtube' : 'text/uri-list'),
+          kind,
+          byte_size: Math.max(0, Math.floor(declaredSize)),
+          status: 'linked',
+          provider,
+          provider_file_id: providerFileId,
+          external_url: externalUrl,
+        });
+        return jsonResponse({ attachment: publicRow(request, row), linked: true, reason: 'link_only' });
+      }
 
       const resolved = resolveExtFromNameAndMime(fileName, mimeType);
       if (!resolved.ok) return jsonResponse({ error: resolved.error }, 400);

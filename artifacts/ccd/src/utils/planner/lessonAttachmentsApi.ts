@@ -20,14 +20,17 @@ export interface LessonAttachment {
 export interface ProviderConfig {
   dropbox: boolean;
   googleDrive: boolean;
+  googleClassroom: boolean;
   box: boolean;
   oneDrive: boolean;
+  teams: boolean;
   keys: {
     dropboxAppKey: string | null;
     googleApiKey: string | null;
     googleClientId: string | null;
     boxClientId: string | null;
     oneDriveClientId: string | null;
+    teamsClientId: string | null;
   };
 }
 
@@ -56,14 +59,17 @@ export async function fetchProviderConfig(): Promise<ProviderConfig> {
     return {
       dropbox: false,
       googleDrive: false,
+      googleClassroom: false,
       box: false,
       oneDrive: false,
+      teams: false,
       keys: {
         dropboxAppKey: null,
         googleApiKey: null,
         googleClientId: null,
         boxClientId: null,
         oneDriveClientId: null,
+        teamsClientId: null,
       },
     };
   }
@@ -193,7 +199,7 @@ export async function uploadLessonAttachment(
 export async function importCloudAttachment(
   lessonKey: string,
   payload: {
-    provider: 'dropbox' | 'google_drive' | 'box' | 'onedrive';
+    provider: 'dropbox' | 'google_drive' | 'box' | 'onedrive' | 'teams' | 'google_classroom';
     fileName: string;
     mimeType?: string;
     byteSize?: number;
@@ -201,6 +207,8 @@ export async function importCloudAttachment(
     externalUrl?: string;
     accessToken?: string;
     providerFileId?: string;
+    linkOnly?: boolean;
+    kind?: AttachmentKind;
   },
 ): Promise<LessonAttachment> {
   const res = await fetch(getVercelApiUrl('/api/lesson-attachments'), {

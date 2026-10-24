@@ -21,10 +21,15 @@ import {
   uploadLessonAttachment,
 } from '../../utils/planner/lessonAttachmentsApi';
 import {
+  type ClassroomCourse,
+  type ClassroomMaterialItem,
+  listGoogleClassroomCourses,
+  listGoogleClassroomMaterials,
   pickFromBox,
   pickFromDropbox,
   pickFromGoogleDrive,
   pickFromOneDrive,
+  pickFromTeams,
 } from '../../utils/planner/cloudPickers';
 
 interface LessonAttachmentsPanelProps {
@@ -57,6 +62,12 @@ export function LessonAttachmentsPanel({ sheet, lessonNumber }: LessonAttachment
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [preview, setPreview] = useState<LessonAttachment | null>(null);
+  const [classroomOpen, setClassroomOpen] = useState(false);
+  const [classroomToken, setClassroomToken] = useState<string | null>(null);
+  const [classroomCourses, setClassroomCourses] = useState<ClassroomCourse[]>([]);
+  const [classroomMaterials, setClassroomMaterials] = useState<ClassroomMaterialItem[]>([]);
+  const [classroomCourseId, setClassroomCourseId] = useState('');
+  const [classroomBusy, setClassroomBusy] = useState(false);
 
   useEffect(() => {
     void supabase.auth.getSession().then(({ data }) => {
@@ -109,8 +120,37 @@ export function LessonAttachmentsPanel({ sheet, lessonNumber }: LessonAttachment
     }
   };
 
-  const onCloud = async (provider: 'dropbox' | 'googleDrive' | 'box' | 'oneDrive') => {
+  const onCloud = async (
+    provider: 'dropbox' | 'googleDrive' | 'box' | 'oneDrive' | 'teams' | 'googleClassroom',
+  ) => {
     if (!providers) return;
+    if (provider === 'googleClassroom') {
+      if (!providers.keys.googleClientId) return;
+      setBusy(true);
+      setError(null);
+      try {
+        const { token, courses } = await listGoogleClassroomCourses(providers.keys.googleClientId);
+        setClassroomToken(token);
+        setClassroomCourses(courses);
+        setClassroomMaterials([]);
+        setClassroomCourseId(courses[0]?.id || '');
+        setClassroomOpen(true);
+        if (courses[0]?.id) {
+          setClassroomBusy(true);
+          try {
+            setClassroomMaterials(await listGoogleClassroomMaterials(courses[0].id, token));
+          } finally {
+            setClassroomBusy(false);
+          }
+        }
+      } catch (e) {
+        setError(e instanceof Error ? e.message : 'Classroom sign-in failed');
+      } finally {
+        setBusy(false);
+      }
+      return;
+    }
+
     setBusy(true);
     setError(null);
     try {
@@ -130,12 +170,46 @@ export function LessonAttachmentsPanel({ sheet, lessonNumber }: LessonAttachment
         picked = await pickFromBox(providers.keys.boxClientId);
       } else if (provider === 'oneDrive' && providers.keys.oneDriveClientId) {
         picked = await pickFromOneDrive(providers.keys.oneDriveClientId);
+      } else if (provider === 'teams' && providers.keys.teamsClientId) {
+        picked = await pickFromTeams(providers.keys.teamsClientId);
       }
       if (!picked) return;
       await importCloudAttachment(lessonKey, picked);
       await refresh();
     } catch (e) {
       setError(e instanceof Error ? e.message : 'Cloud import failed');
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const onClassroomCourseChange = async (courseId: string) => {
+    setClassroomCourseId(courseId);
+    if (!classroomToken || !courseId) {
+      setClassroomMaterials([]);
+      return;
+    }
+    setClassroomBusy(true);
+    setError(null);
+    try {
+      setClassroomMaterials(await listGoogleClassroomMaterials(courseId, classroomToken));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to load Classroom materials');
+      setClassroomMaterials([]);
+    } finally {
+      setClassroomBusy(false);
+    }
+  };
+
+  const onClassroomPick = async (item: ClassroomMaterialItem) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await importCloudAttachment(lessonKey, item.attachment);
+      setClassroomOpen(false);
+      await refresh();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Classroom import failed');
     } finally {
       setBusy(false);
     }
@@ -186,7 +260,13 @@ export function LessonAttachmentsPanel({ sheet, lessonNumber }: LessonAttachment
         Photos, video, Word and audio. Stored on DreamHost (or linked if over the size limit).
       </p>
 
-      {providers && (providers.dropbox || providers.googleDrive || providers.box || providers.oneDrive) ? (
+      {providers &&
+      (providers.dropbox ||
+        providers.googleDrive ||
+        providers.googleClassroom ||
+        providers.box ||
+        providers.oneDrive ||
+        providers.teams) ? (
         <div className="mb-3 flex flex-wrap gap-2">
           {providers.dropbox ? (
             <button
@@ -208,6 +288,16 @@ export function LessonAttachmentsPanel({ sheet, lessonNumber }: LessonAttachment
               Google Drive
             </button>
           ) : null}
+          {providers.googleClassroom ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void onCloud('googleClassroom')}
+              className="rounded-full border border-slate-200 px-3 py-1.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Google Classroom
+            </button>
+          ) : null}
           {providers.box ? (
             <button
               type="button"
@@ -226,6 +316,16 @@ export function LessonAttachmentsPanel({ sheet, lessonNumber }: LessonAttachment
               className="rounded-full border border-slate-200 px-3 py-1.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
             >
               OneDrive
+            </button>
+          ) : null}
+          {providers.teams ? (
+            <button
+              type="button"
+              disabled={busy}
+              onClick={() => void onCloud('teams')}
+              className="rounded-full border border-slate-200 px-3 py-1.5 text-[13px] font-semibold text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+            >
+              Teams
             </button>
           ) : null}
         </div>
@@ -312,6 +412,77 @@ export function LessonAttachmentsPanel({ sheet, lessonNumber }: LessonAttachment
           })}
         </ul>
       )}
+
+      {classroomOpen ? (
+        <div
+          className="fixed inset-0 z-[80] flex items-center justify-center bg-black/50 p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-label="Google Classroom materials"
+          onClick={() => setClassroomOpen(false)}
+        >
+          <div
+            className="max-h-[85vh] w-full max-w-lg overflow-auto rounded-2xl bg-white p-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-3 flex items-center justify-between gap-2">
+              <h3 className="text-sm font-extrabold text-slate-800">Google Classroom</h3>
+              <button
+                type="button"
+                className="rounded-full px-3 py-1 text-sm font-semibold text-slate-600 hover:bg-slate-100"
+                onClick={() => setClassroomOpen(false)}
+              >
+                Close
+              </button>
+            </div>
+            {classroomCourses.length === 0 ? (
+              <p className="text-[13px] text-slate-500">No active courses found for this teacher.</p>
+            ) : (
+              <>
+                <label className="mb-1 block text-[12px] font-semibold uppercase tracking-wide text-slate-500">
+                  Course
+                </label>
+                <select
+                  className="mb-3 h-11 w-full rounded-xl border border-slate-200 px-3 text-sm font-semibold"
+                  value={classroomCourseId}
+                  onChange={(e) => void onClassroomCourseChange(e.target.value)}
+                >
+                  {classroomCourses.map((c) => (
+                    <option key={c.id} value={c.id}>
+                      {c.name}
+                    </option>
+                  ))}
+                </select>
+                {classroomBusy ? (
+                  <p className="text-[13px] text-slate-400">Loading materials…</p>
+                ) : classroomMaterials.length === 0 ? (
+                  <p className="text-[13px] text-slate-400">
+                    No Drive files, links or YouTube attachments in this course.
+                  </p>
+                ) : (
+                  <ul className="space-y-2">
+                    {classroomMaterials.map((m) => (
+                      <li key={m.id}>
+                        <button
+                          type="button"
+                          disabled={busy}
+                          onClick={() => void onClassroomPick(m)}
+                          className="flex w-full items-start justify-between gap-2 rounded-xl border border-slate-100 bg-slate-50 px-3 py-2 text-left hover:bg-indigo-50 disabled:opacity-50"
+                        >
+                          <span className="text-[13px] font-semibold text-slate-800">{m.title}</span>
+                          <span className="shrink-0 text-[12px] font-medium text-indigo-700">
+                            {m.attachment.linkOnly ? 'Link' : 'Attach'}
+                          </span>
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      ) : null}
 
       {preview ? (
         <div

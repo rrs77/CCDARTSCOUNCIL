@@ -5,7 +5,7 @@
  */
 
 export type CloudPickResult = {
-  provider: 'dropbox' | 'google_drive' | 'box' | 'onedrive';
+  provider: 'dropbox' | 'google_drive' | 'box' | 'onedrive' | 'teams' | 'google_classroom';
   fileName: string;
   mimeType: string;
   byteSize: number;
@@ -13,6 +13,9 @@ export type CloudPickResult = {
   externalUrl?: string;
   accessToken?: string;
   providerFileId?: string;
+  /** When true, server stores provider URL only (YouTube / web links). */
+  linkOnly?: boolean;
+  kind?: 'image' | 'video' | 'audio' | 'document';
 };
 
 function loadScript(src: string, id: string): Promise<void> {
@@ -259,13 +262,18 @@ export async function pickFromBox(clientId: string): Promise<CloudPickResult | n
   };
 }
 
-export async function pickFromOneDrive(clientId: string): Promise<CloudPickResult | null> {
-  await loadScript('https://js.live.net/v7.2/OneDrive.js', 'onedrive-js');
+function openMicrosoftFilePicker(
+  clientId: string,
+  provider: 'onedrive' | 'teams',
+): Promise<CloudPickResult | null> {
   return new Promise((resolve) => {
     if (!window.OneDrive?.open) {
       resolve(null);
       return;
     }
+    // Teams files live in SharePoint; the work/school OneDrive+SharePoint picker
+    // (same Entra app as OneDrive) surfaces team document libraries when the
+    // user signs in with an organisational account.
     window.OneDrive.open({
       clientId,
       action: 'download',
@@ -273,6 +281,8 @@ export async function pickFromOneDrive(clientId: string): Promise<CloudPickResul
       advanced: {
         filter: '',
         redirectUri: `${window.location.origin}/`,
+        // Prefer organisational (SharePoint / Teams) over consumer OneDrive.
+        ...(provider === 'teams' ? { isConsumerAccount: false } : {}),
       },
       success: (files: { value?: Array<Record<string, unknown>> }) => {
         const f = files?.value?.[0];
@@ -282,7 +292,7 @@ export async function pickFromOneDrive(clientId: string): Promise<CloudPickResul
         }
         const permissions = f['@microsoft.graph.downloadUrl'] || f['@content.downloadUrl'];
         resolve({
-          provider: 'onedrive',
+          provider,
           fileName: String(f.name || 'file'),
           mimeType: String((f.file as { mimeType?: string } | undefined)?.mimeType || ''),
           byteSize: Number(f.size || 0),
@@ -295,4 +305,193 @@ export async function pickFromOneDrive(clientId: string): Promise<CloudPickResul
       error: () => resolve(null),
     });
   });
+}
+
+export async function pickFromOneDrive(clientId: string): Promise<CloudPickResult | null> {
+  await loadScript('https://js.live.net/v7.2/OneDrive.js', 'onedrive-js');
+  return openMicrosoftFilePicker(clientId, 'onedrive');
+}
+
+/** Teams / SharePoint files via the same OneDrive File Picker + Graph download URL. */
+export async function pickFromTeams(clientId: string): Promise<CloudPickResult | null> {
+  await loadScript('https://js.live.net/v7.2/OneDrive.js', 'onedrive-js');
+  return openMicrosoftFilePicker(clientId, 'teams');
+}
+
+export type ClassroomCourse = { id: string; name: string };
+export type ClassroomMaterialItem = {
+  id: string;
+  title: string;
+  attachment: CloudPickResult;
+};
+
+async function googleAccessToken(clientId: string, scope: string): Promise<string | null> {
+  await loadScript('https://accounts.google.com/gsi/client', 'gis-js');
+  return new Promise((resolve) => {
+    const client = window.google?.accounts?.oauth2?.initTokenClient({
+      client_id: clientId,
+      scope,
+      callback: (resp: { access_token?: string; error?: string }) => {
+        resolve(resp?.access_token || null);
+      },
+    });
+    client?.requestAccessToken({ prompt: '' });
+  });
+}
+
+const CLASSROOM_SCOPES = [
+  'https://www.googleapis.com/auth/classroom.courses.readonly',
+  'https://www.googleapis.com/auth/classroom.courseworkmaterials.readonly',
+  'https://www.googleapis.com/auth/classroom.coursework.readonly',
+  'https://www.googleapis.com/auth/drive.readonly',
+].join(' ');
+
+/** List courses the signed-in teacher teaches (Classroom API). */
+export async function listGoogleClassroomCourses(
+  clientId: string,
+): Promise<{ token: string; courses: ClassroomCourse[] }> {
+  const token = await googleAccessToken(clientId, CLASSROOM_SCOPES);
+  if (!token) throw new Error('Google Classroom sign-in cancelled');
+  const res = await fetch(
+    'https://classroom.googleapis.com/v1/courses?teacherId=me&courseStates=ACTIVE&pageSize=50',
+    { headers: { Authorization: `Bearer ${token}` } },
+  );
+  if (!res.ok) throw new Error(`Classroom courses failed (${res.status})`);
+  const data = (await res.json()) as { courses?: Array<{ id: string; name: string }> };
+  return {
+    token,
+    courses: (data.courses || []).map((c) => ({ id: c.id, name: c.name || c.id })),
+  };
+}
+
+/**
+ * List attachable materials for a course: Drive files (download via Drive API)
+ * plus links / YouTube as linked-only attachments.
+ */
+export async function listGoogleClassroomMaterials(
+  courseId: string,
+  accessToken: string,
+): Promise<ClassroomMaterialItem[]> {
+  const headers = { Authorization: `Bearer ${accessToken}` };
+  const [matRes, workRes] = await Promise.all([
+    fetch(
+      `https://classroom.googleapis.com/v1/courses/${encodeURIComponent(courseId)}/courseWorkMaterials?pageSize=40`,
+      { headers },
+    ),
+    fetch(
+      `https://classroom.googleapis.com/v1/courses/${encodeURIComponent(courseId)}/courseWork?pageSize=40`,
+      { headers },
+    ),
+  ]);
+
+  type Att = {
+    driveFile?: { driveFile?: { id?: string; title?: string; alternateLink?: string } };
+    link?: { url?: string; title?: string };
+    youtubeVideo?: { id?: string; title?: string; alternateLink?: string };
+  };
+  type Item = { id?: string; title?: string; materials?: Att[] };
+
+  const materials: ClassroomMaterialItem[] = [];
+  const driveIds: string[] = [];
+
+  const pushFrom = (items: Item[], prefix: string) => {
+    for (const item of items) {
+      const title = item.title || prefix;
+      for (const [i, m] of (item.materials || []).entries()) {
+        const key = `${item.id || 'x'}-${i}`;
+        if (m.driveFile?.driveFile?.id) {
+          const df = m.driveFile.driveFile;
+          const id = String(df.id);
+          driveIds.push(id);
+          materials.push({
+            id: key,
+            title: `${title} — ${df.title || 'Drive file'}`,
+            attachment: {
+              provider: 'google_classroom',
+              fileName: String(df.title || 'classroom-file'),
+              mimeType: '',
+              byteSize: 0,
+              downloadUrl: `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?alt=media`,
+              externalUrl: String(df.alternateLink || ''),
+              accessToken,
+              providerFileId: id,
+            },
+          });
+        } else if (m.youtubeVideo) {
+          const yt = m.youtubeVideo;
+          const url =
+            yt.alternateLink ||
+            (yt.id ? `https://www.youtube.com/watch?v=${yt.id}` : '');
+          if (!url) continue;
+          materials.push({
+            id: key,
+            title: `${title} — ${yt.title || 'YouTube'}`,
+            attachment: {
+              provider: 'google_classroom',
+              fileName: String(yt.title || 'YouTube video'),
+              mimeType: 'video/youtube',
+              byteSize: 0,
+              downloadUrl: '',
+              externalUrl: url,
+              providerFileId: yt.id || undefined,
+              linkOnly: true,
+              kind: 'video',
+            },
+          });
+        } else if (m.link?.url) {
+          materials.push({
+            id: key,
+            title: `${title} — ${m.link.title || 'Link'}`,
+            attachment: {
+              provider: 'google_classroom',
+              fileName: String(m.link.title || m.link.url),
+              mimeType: 'text/uri-list',
+              byteSize: 0,
+              downloadUrl: '',
+              externalUrl: m.link.url,
+              linkOnly: true,
+              kind: 'document',
+            },
+          });
+        }
+      }
+    }
+  };
+
+  if (matRes.ok) {
+    const data = (await matRes.json()) as { courseWorkMaterial?: Item[] };
+    pushFrom(data.courseWorkMaterial || [], 'Material');
+  }
+  if (workRes.ok) {
+    const data = (await workRes.json()) as { courseWork?: Item[] };
+    pushFrom(data.courseWork || [], 'Coursework');
+  }
+
+  await Promise.all(
+    [...new Set(driveIds)].map(async (id) => {
+      try {
+        const metaRes = await fetch(
+          `https://www.googleapis.com/drive/v3/files/${encodeURIComponent(id)}?fields=name,mimeType,size`,
+          { headers: { Authorization: `Bearer ${accessToken}` } },
+        );
+        if (!metaRes.ok) return;
+        const meta = (await metaRes.json()) as {
+          name?: string;
+          mimeType?: string;
+          size?: string;
+        };
+        for (const entry of materials) {
+          if (entry.attachment.providerFileId !== id) continue;
+          if (meta.name) entry.attachment.fileName = meta.name;
+          if (meta.mimeType) entry.attachment.mimeType = meta.mimeType;
+          if (meta.size) entry.attachment.byteSize = Number(meta.size) || 0;
+          entry.title = entry.title.replace(/— .*$/, `— ${entry.attachment.fileName}`);
+        }
+      } catch {
+        /* keep title-only */
+      }
+    }),
+  );
+
+  return materials;
 }

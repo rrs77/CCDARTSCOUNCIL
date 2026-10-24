@@ -402,26 +402,41 @@ export function buildAttachmentProxyUrl(request, storagePath) {
 
 /** Provider picker visibility (public client ids only — no secrets). */
 export function getProviderClientConfig() {
-  return {
-    dropbox: Boolean((process.env.VITE_DROPBOX_APP_KEY || process.env.DROPBOX_APP_KEY || '').trim()),
-    googleDrive: Boolean(
-      (process.env.VITE_GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || '').trim() &&
-        (process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim(),
-    ),
-    box: Boolean((process.env.VITE_BOX_CLIENT_ID || process.env.BOX_CLIENT_ID || '').trim()),
-    oneDrive: Boolean(
-      (process.env.VITE_ONEDRIVE_CLIENT_ID || process.env.VITE_MICROSOFT_CLIENT_ID || process.env.MICROSOFT_CLIENT_ID || '').trim(),
-    ),
-    dropboxAppKey: (process.env.VITE_DROPBOX_APP_KEY || process.env.DROPBOX_APP_KEY || '').trim() || null,
-    googleApiKey: (process.env.VITE_GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || '').trim() || null,
-    googleClientId: (process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim() || null,
-    boxClientId: (process.env.VITE_BOX_CLIENT_ID || process.env.BOX_CLIENT_ID || '').trim() || null,
-    oneDriveClientId: (
+  const googleApiKey = (process.env.VITE_GOOGLE_API_KEY || process.env.GOOGLE_API_KEY || '').trim() || null;
+  const googleClientId =
+    (process.env.VITE_GOOGLE_CLIENT_ID || process.env.GOOGLE_CLIENT_ID || '').trim() || null;
+  const msClientId =
+    (
+      process.env.VITE_TEAMS_CLIENT_ID ||
       process.env.VITE_ONEDRIVE_CLIENT_ID ||
       process.env.VITE_MICROSOFT_CLIENT_ID ||
       process.env.MICROSOFT_CLIENT_ID ||
       ''
-    ).trim() || null,
+    ).trim() || null;
+  const oneDriveClientId =
+    (
+      process.env.VITE_ONEDRIVE_CLIENT_ID ||
+      process.env.VITE_MICROSOFT_CLIENT_ID ||
+      process.env.MICROSOFT_CLIENT_ID ||
+      process.env.VITE_TEAMS_CLIENT_ID ||
+      ''
+    ).trim() || null;
+
+  return {
+    dropbox: Boolean((process.env.VITE_DROPBOX_APP_KEY || process.env.DROPBOX_APP_KEY || '').trim()),
+    googleDrive: Boolean(googleApiKey && googleClientId),
+    // Classroom reuses the same Google OAuth client; enable Classroom API in that project.
+    googleClassroom: Boolean(googleApiKey && googleClientId),
+    box: Boolean((process.env.VITE_BOX_CLIENT_ID || process.env.BOX_CLIENT_ID || '').trim()),
+    oneDrive: Boolean(oneDriveClientId),
+    // Teams files live in SharePoint; same Entra app / picker as OneDrive when configured.
+    teams: Boolean(msClientId),
+    dropboxAppKey: (process.env.VITE_DROPBOX_APP_KEY || process.env.DROPBOX_APP_KEY || '').trim() || null,
+    googleApiKey,
+    googleClientId,
+    boxClientId: (process.env.VITE_BOX_CLIENT_ID || process.env.BOX_CLIENT_ID || '').trim() || null,
+    oneDriveClientId,
+    teamsClientId: msClientId,
   };
 }
 

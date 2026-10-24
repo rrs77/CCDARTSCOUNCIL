@@ -12,6 +12,8 @@ interface ImportMetaEnv {
   /** Microsoft OneDrive / Graph picker */
   readonly VITE_ONEDRIVE_CLIENT_ID?: string;
   readonly VITE_MICROSOFT_CLIENT_ID?: string;
+  /** Optional alias for Teams/SharePoint (same Entra app as OneDrive is fine) */
+  readonly VITE_TEAMS_CLIENT_ID?: string;
 }
 
 interface ImportMeta {
