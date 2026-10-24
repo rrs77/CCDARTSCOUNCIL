@@ -130,13 +130,8 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
     return () => window.removeEventListener('ccd:planner-focus-request', onRequest);
   }, [classById, currentSheetInfo.sheet, classes]);
 
-  useEffect(() => {
-    if (view === 'classic' && currentSheetInfo.sheet && classById.has(currentSheetInfo.sheet) && focus !== currentSheetInfo.sheet) {
-      setFocus(currentSheetInfo.sheet);
-    }
-  }, [view, currentSheetInfo.sheet, classById, focus]);
-
-  // Keep one-class focus aligned with header class when in one-class mode
+  // Keep one-class focus aligned with header class when in one-class mode.
+  // Never override an intentional "All classes" focus when navigating.
   useEffect(() => {
     if (focus === 'all') return;
     if (currentSheetInfo.sheet && classById.has(currentSheetInfo.sheet) && focus !== currentSheetInfo.sheet) {
@@ -523,9 +518,9 @@ function printWeek(
 ) {
   const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const branding = settings?.branding || {};
-  const productName = branding.loginTitle || settings?.schoolName || 'Creative Curriculum Designer';
-  const productSubtitle = branding.loginSubtitle || 'From Rhythmstix';
-  const companyName = branding.footerCompanyName || 'Rhythmstix';
+  const productName = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+  const productSubtitle = branding.loginSubtitle || 'CCDesigner';
+  const companyName = branding.footerCompanyName || 'CCDesigner';
   const copyrightYear = branding.footerCopyrightYear || String(new Date().getFullYear());
   const headerColor = branding.loginButtonColor || branding.loginBackgroundColor || '#1F1B4D';
   const logoSrc = branding.loginLogoUrl || settings?.schoolLogo || '/ccdesigner-logo.png';
@@ -627,7 +622,7 @@ body{
   <div class="g">${cols}</div>
   <footer class="foot">
     <span>© ${esc(copyrightYear)} ${esc(companyName)} · Private reflections are not included</span>
-    <span class="page-num">Page </span>
+    <span class="page-num">Page <span class="pageNumber"></span></span>
   </footer>
 </div>
 </body></html>`;

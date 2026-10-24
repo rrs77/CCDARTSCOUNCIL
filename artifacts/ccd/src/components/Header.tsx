@@ -215,7 +215,10 @@ export function Header() {
   const selectYearGroup = (group: { id: string; name: string }) => {
     setCurrentSheetInfo({ sheet: group.id, display: group.name, eyfs: `${group.id} Statements` });
     setYearGroupDropdownOpen(false);
-    if (onPlannerTab) {
+    // Only switch All → one when the user explicitly picks a class from the menu
+    // while already viewing the planner in one-class mode. Never force a switch
+    // silently when navigating tabs or when All classes is the intentional view.
+    if (onPlannerTab && !allClassPlannerView) {
       window.dispatchEvent(new CustomEvent('ccd:planner-focus-request', { detail: { mode: 'one' } }));
     }
   };
@@ -318,10 +321,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (allClassPlannerView) {
-                      // Switching chip while in all-class planner → one-class mode
-                      window.dispatchEvent(new CustomEvent('ccd:planner-focus-request', { detail: { mode: 'one' } }));
-                    }
+                    // Open the menu only — do not silently leave All classes.
                     openYearGroupDropdown();
                   }}
                   className="bg-white border border-[#E2E0EF] text-[#1F1B4D] text-xs lg:text-sm rounded-xl focus:border-[#4338E8] focus:ring-2 focus:ring-[#4338E8]/20 focus:outline-none px-3 py-1.5 lg:py-2 pr-8 flex items-center justify-between gap-2 min-w-[140px] lg:min-w-[220px] max-w-[320px] hover:border-[#bcb7f4] transition-colors"

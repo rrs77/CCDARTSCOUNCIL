@@ -1,7 +1,9 @@
 import {
   ChevronDown,
   ChevronRight,
+  Pencil,
   Plus,
+  Trash2,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import toast from 'react-hot-toast';
@@ -35,6 +37,7 @@ export function MyUnitsMenu({
   const {
     units,
     updateUnit,
+    deleteUnit: deleteUnitFromContext,
     allLessonsData,
     currentSheetInfo,
     currentAcademicYear,
@@ -55,9 +58,12 @@ export function MyUnitsMenu({
   }, []);
 
   const createUnit = () => {
+    const name = window.prompt('Name for the new unit', 'New unit');
+    if (name === null) return;
+    const trimmed = name.trim() || 'New unit';
     const unit: Unit = {
       id: `unit-${Date.now()}`,
-      name: 'New unit',
+      name: trimmed,
       description: '',
       lessonNumbers: [],
       color: '#4338E8',
@@ -67,8 +73,25 @@ export function MyUnitsMenu({
       updatedAt: new Date(),
     };
     updateUnit(unit);
-    setLiveMessage('Created new unit');
-    toast.success('Unit created');
+    setLiveMessage(`Created ${trimmed}`);
+    toast.success(`Created “${trimmed}”`, { duration: 3000, position: 'top-center' });
+  };
+
+  const renameUnit = (unit: Unit) => {
+    const name = window.prompt('Rename unit', unit.name);
+    if (name === null) return;
+    const trimmed = name.trim();
+    if (!trimmed || trimmed === unit.name) return;
+    updateUnit({ ...unit, name: trimmed, updatedAt: new Date() });
+    setLiveMessage(`Renamed to ${trimmed}`);
+    toast.success(`Renamed to “${trimmed}”`, { position: 'top-center' });
+  };
+
+  const removeUnit = (unit: Unit) => {
+    if (!window.confirm(`Delete unit “${unit.name}”? Lessons stay in Your lessons.`)) return;
+    deleteUnitFromContext(unit.id);
+    setLiveMessage(`Deleted ${unit.name}`);
+    toast.success(`Deleted “${unit.name}”`, { position: 'top-center' });
   };
 
   const addActiveLesson = (unit: Unit) => {
@@ -144,14 +167,9 @@ export function MyUnitsMenu({
             {(units || []).length === 0 ? (
               <div className="px-2 py-8 text-center">
                 <p className="text-sm text-slate-500">No units yet.</p>
-                <button
-                  type="button"
-                  onClick={createUnit}
-                  className="mt-3 inline-flex h-11 items-center gap-1 rounded-full bg-indigo-600 px-4 text-sm font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                >
-                  <Plus className="h-4 w-4" />
-                  New unit
-                </button>
+                <p className="mt-2 text-[12px] text-[#5F5B7A]">
+                  Use the + button above to create one.
+                </p>
               </div>
             ) : (
               (units || []).map((unit) => {
@@ -214,9 +232,25 @@ export function MyUnitsMenu({
                       <button
                         type="button"
                         onClick={() => addActiveLesson(unit)}
-                        className="h-9 shrink-0 rounded-lg bg-indigo-50 px-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        className="h-11 shrink-0 rounded-lg bg-indigo-50 px-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
                       >
                         Add current
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Rename ${unit.name}`}
+                        onClick={() => renameUnit(unit)}
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label={`Delete ${unit.name}`}
+                        onClick={() => removeUnit(unit)}
+                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </div>
                     {isOpen ? (
