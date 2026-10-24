@@ -72,8 +72,8 @@ export function LessonPrintModal({
   } = useData();
   const { getCategoryColor, settings } = useSettings();
   const branding = settings?.branding || {};
-  const productName = branding.loginTitle || 'Creative Curriculum Designer';
-  const footerCompany = branding.footerCompanyName || 'Rhythmstix';
+  const productName = branding.loginTitle || 'CCDesigner';
+  const footerCompany = branding.footerCompanyName || 'CCDesigner';
   const footerYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
   const { shareLesson: shareSingleLesson, isSharing: isSharingSingle, getStoredShareUrl } = useShareLesson();
   const [isExporting, setIsExporting] = useState(false);
@@ -674,8 +674,19 @@ export function LessonPrintModal({
             <div class="subtitle">${escapeHtmlText(lessonSubtitle)}</div>
             <div class="meta">
               <span class="meta-item">📚 ${currentSheetInfo.display}</span>
-              <span class="meta-item">⏱ ${lessonData.totalTime || 45} mins</span>
-              <span class="meta-item">📅 ${halfTermName || unitName || 'Term 1'}</span>
+              <span class="meta-item">⏱ ${
+                lessonData.totalTime && lessonData.totalTime > 0
+                  ? lessonData.totalTime
+                  : (lessonData.orderedActivities || []).reduce(
+                      (s: number, a: { time?: number }) => s + (a.time || 0),
+                      0,
+                    ) || '—'
+              } mins</span>
+              ${
+                halfTermName || unitName
+                  ? `<span class="meta-item">📅 ${escapeHtmlText(halfTermName || unitName || '')}</span>`
+                  : ''
+              }
             </div>
           </div>
           
@@ -1204,19 +1215,55 @@ export function LessonPrintModal({
     return n || num;
   };
 
-  /** Browser print → Save as PDF when the Vercel/PDFBolt proxy is unreachable (local/dev). */
-  const openPrintFallback = async (htmlRaw: string) => {
+  /** Ask open lesson editors to flush drafts so print never loses unsaved work. */
+  const persistDraftsBeforePrint = () => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('ccd:persist-lesson-draft-before-print', {
+          detail: { sheet: currentSheetInfo.sheet, lessonNumbers: lessonsToRender },
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
+  /**
+   * Open the print window *before* any await so pop-up blockers do not stop the fallback.
+   * Caller fills/replaces document content once HTML is ready.
+   */
+  const openPrintWindowEarly = (): Window | null => {
     const printWin = window.open('', '_blank');
     if (!printWin) {
       toast.error('Please allow pop-ups to export via Print → Save as PDF');
-      return false;
+      return null;
     }
+    try {
+      printWin.document.write(
+        '<!DOCTYPE html><html><head><title>Preparing print…</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;color:#334155"><p>Preparing print preview…</p></body></html>',
+      );
+      printWin.document.close();
+    } catch {
+      /* ignore */
+    }
+    return printWin;
+  };
+
+  const writeAndPrintWindow = (printWin: Window, htmlRaw: string) => {
+    printWin.document.open();
     printWin.document.write(htmlRaw);
     printWin.document.close();
     printWin.focus();
     setTimeout(() => {
       printWin.print();
     }, 150);
+  };
+
+  /** Browser print → Save as PDF when the Vercel/PDFBolt proxy is unreachable (local/dev). */
+  const openPrintFallback = async (htmlRaw: string, existingWin?: Window | null) => {
+    const printWin = existingWin && !existingWin.closed ? existingWin : openPrintWindowEarly();
+    if (!printWin) return false;
+    writeAndPrintWindow(printWin, htmlRaw);
     return true;
   };
 
@@ -1226,6 +1273,10 @@ export function LessonPrintModal({
     const downloadFileName = exportMode === 'single' && lessonNumber
       ? `${currentSheetInfo.sheet}_Lesson_${getLessonDisplayNumber(lessonNumber)}.pdf`
       : `${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
+
+    persistDraftsBeforePrint();
+    // Open before any await — pop-up blockers require a sync user-gesture window.
+    const fallbackWin = openPrintWindowEarly();
 
     setIsExporting(true);
     try {
@@ -1247,6 +1298,13 @@ export function LessonPrintModal({
           emulateMediaType: 'screen',
         });
 
+        // PDF download succeeded — close the early fallback tab if we opened one.
+        try {
+          if (fallbackWin && !fallbackWin.closed) fallbackWin.close();
+        } catch {
+          /* ignore */
+        }
+
         const url = window.URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
         link.href = url;
@@ -1261,7 +1319,7 @@ export function LessonPrintModal({
         setTimeout(() => setExportSuccess(false), 3000);
       } catch (proxyError: unknown) {
         console.warn('PDF proxy failed, falling back to print dialog:', proxyError);
-        const opened = await openPrintFallback(htmlRaw);
+        const opened = await openPrintFallback(htmlRaw, fallbackWin);
         if (opened) {
           toast.success('Opened print dialog — choose “Save as PDF” to export', { duration: 5000 });
           setExportSuccess(true);
@@ -1270,6 +1328,11 @@ export function LessonPrintModal({
       }
     } catch (error: any) {
       console.error('Export failed:', error);
+      try {
+        if (fallbackWin && !fallbackWin.closed) fallbackWin.close();
+      } catch {
+        /* ignore */
+      }
       toast.error(error?.message || 'Failed to export PDF', { duration: 5000 });
     } finally {
       setIsExporting(false);
@@ -1604,31 +1667,39 @@ export function LessonPrintModal({
   useEffect(() => {
     if (!systemPrintOnly || lessonsToRender.length === 0 || systemPrintDone.current) return;
     systemPrintDone.current = true;
+    persistDraftsBeforePrint();
+    // Sync open under the effect's scheduling still benefits from early window
+    // (user gesture chain from the Print click that mounted this modal).
+    const printWin = openPrintWindowEarly();
+    if (!printWin) {
+      onClose();
+      return;
+    }
     const run = async () => {
       try {
         const [fullHtml] = await generateHTMLContent();
-        const printWin = window.open('', '_blank');
-        if (!printWin) {
-          toast.error('Please allow pop-ups to use Print');
-          onClose();
-          return;
-        }
-        printWin.document.write(fullHtml);
-        printWin.document.close();
-        printWin.focus();
-        // Small delay so content is painted before print dialog
+        writeAndPrintWindow(printWin, fullHtml);
         setTimeout(() => {
-          printWin.print();
           onClose();
-          setTimeout(() => printWin.close(), 500);
-        }, 150);
+          setTimeout(() => {
+            try {
+              if (!printWin.closed) printWin.close();
+            } catch {
+              /* ignore */
+            }
+          }, 500);
+        }, 200);
       } catch (e) {
+        try {
+          if (!printWin.closed) printWin.close();
+        } catch {
+          /* ignore */
+        }
         toast.error('Failed to open print dialog');
         onClose();
       }
     };
-    const t = setTimeout(run, 100);
-    return () => clearTimeout(t);
+    void run();
   }, [systemPrintOnly, lessonsToRender.length]);
 
   const pdfDownloadDone = useRef(false);

@@ -333,8 +333,16 @@ export function renderLessonPdfPage(options: BuildLessonPdfHtmlOptions): string 
       <div class="subtitle">${escapeHtmlText(lessonSubtitle)}</div>
       <div class="meta">
         <span class="meta-item">📚 ${escapeHtmlText(sheetDisplay)}</span>
-        <span class="meta-item">⏱ ${lessonData.totalTime || 45} mins</span>
-        <span class="meta-item">📅 ${escapeHtmlText(halfTermName || unitName || 'Term 1')}</span>
+        <span class="meta-item">⏱ ${
+          lessonData.totalTime && lessonData.totalTime > 0
+            ? lessonData.totalTime
+            : (lessonData.orderedActivities || []).reduce((s, a) => s + (a.time || 0), 0) || '—'
+        } mins</span>
+        ${
+          halfTermName || unitName
+            ? `<span class="meta-item">📅 ${escapeHtmlText(halfTermName || unitName || '')}</span>`
+            : ''
+        }
       </div>
     </div>
     <div class="content-wrapper">

@@ -335,6 +335,19 @@ export function LessonPlanBuilder({
     }
   }, [currentLessonPlan, editingLessonNumber]);
 
+  // Flush draft to localStorage before Print/PDF so an async export cannot lose work.
+  useEffect(() => {
+    const onPersist = () => {
+      try {
+        saveDraftToStorage(currentLessonPlan);
+      } catch {
+        /* ignore */
+      }
+    };
+    window.addEventListener('ccd:persist-lesson-draft-before-print', onPersist);
+    return () => window.removeEventListener('ccd:persist-lesson-draft-before-print', onPersist);
+  }, [currentLessonPlan]);
+
   // Handle beforeunload (browser close/navigation) - only warn on actual page close
   useEffect(() => {
     const handleBeforeUnload = (e: BeforeUnloadEvent) => {

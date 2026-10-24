@@ -62,7 +62,7 @@ export function PlannerSheet({ onClose, children, label }: { onClose: () => void
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="fixed inset-x-0 bottom-0 z-[61] max-h-[86vh] overflow-y-auto rounded-t-3xl bg-white px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:w-[440px] md:rounded-none md:rounded-l-3xl md:px-6 md:pt-6 md:shadow-[-12px_0_40px_rgba(0,0,0,0.14)]"
+        className="fixed inset-x-0 bottom-0 z-[61] max-h-[min(88vh,760px)] overflow-y-auto rounded-t-3xl bg-white px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:inset-x-auto md:right-0 md:top-1/2 md:bottom-auto md:max-h-[min(88vh,760px)] md:w-full md:max-w-[760px] md:-translate-y-1/2 md:rounded-3xl md:px-6 md:pt-6 md:shadow-2xl md:shadow-indigo-900/20"
       >
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#D1D5DB] md:hidden" aria-hidden />
         <div className="flex items-start justify-between gap-3">
@@ -144,6 +144,8 @@ export function LessonDetailsSheet({
 
   /** Remove the lesson from this timetable outline — the dashed slot returns. */
   const clearFromSlot = () => {
+    const label = entry.slot ? 'Clear this lesson from the timetable slot?' : 'Remove this lesson from the planner?';
+    if (!window.confirm(label)) return;
     void data
       .savePlans([{ ...plan, status: 'cancelled' }], entry.slot ? 'Cleared — timetable slot is empty again.' : 'Lesson cleared.')
       .then(onClose);
@@ -444,7 +446,13 @@ export function SchedulePickerSheet({
   data: PlannerData;
   onClose: () => void;
 }) {
-  const { currentSheetInfo, allLessonsData, lessonNumbers: liveLessonNumbers } = useData();
+  const {
+    currentSheetInfo,
+    allLessonsData,
+    lessonNumbers: liveLessonNumbers,
+    updateLessonData,
+    currentAcademicYear,
+  } = useData();
   const visible = data.classes.filter((c) => !c.hidden);
   const [classId, setClassId] = useState(
     initial.classId ||
@@ -558,6 +566,7 @@ export function SchedulePickerSheet({
       ...a,
       lessonNumber: n,
     }));
+    const numLabel = String(n).replace(/^lesson/i, '') || n;
     const plan: LessonPlan = {
       id: crypto.randomUUID(),
       date: d,
@@ -568,7 +577,7 @@ export function SchedulePickerSheet({
       notes: '',
       status: 'planned',
       lessonNumber: n,
-      title: l.title || l.lessonName || `Lesson ${n}`,
+      title: l.title || l.lessonName || `Lesson ${numLabel}`,
       // Keep the timetable slot's start time so the outline matches after save.
       time: time ? normalizeTime(time) : undefined,
       createdAt: new Date(),
@@ -577,11 +586,64 @@ export function SchedulePickerSheet({
     void data.savePlans([plan], `Scheduled for ${cls?.name || 'class'}.`).then(onClose);
   };
 
+  const createAndScheduleNew = async () => {
+    if (!updateLessonData) return;
+    const title =
+      window.prompt('Title for the new lesson', 'New lesson')?.trim() || 'New lesson';
+    const maxLessonNumber = Math.max(
+      0,
+      ...Object.keys(library.lessons || {}).map((num) => {
+        const numStr = String(num).replace(/^lesson/i, '');
+        return parseInt(numStr, 10) || 0;
+      }),
+    );
+    const newLessonNumber = `lesson${maxLessonNumber + 1}`;
+    try {
+      await updateLessonData(newLessonNumber, {
+        grouped: {},
+        categoryOrder: [],
+        totalTime: 0,
+        title,
+        isUserCreated: true,
+        academicYear: currentAcademicYear,
+        sections: [],
+      });
+      await ensureLessons(classId);
+      choose(newLessonNumber);
+    } catch {
+      // choose may fail if cache not yet updated — schedule with the new title directly
+      const d = new Date(`${date}T12:00:00`);
+      const plan: LessonPlan = {
+        id: crypto.randomUUID(),
+        date: d,
+        week: isoWeek(d),
+        className: classId,
+        activities: [],
+        duration: 0,
+        notes: '',
+        status: 'planned',
+        lessonNumber: newLessonNumber,
+        title,
+        time: time ? normalizeTime(time) : undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      void data.savePlans([plan], `Created and scheduled “${title}”.`).then(onClose);
+    }
+  };
+
   return (
     <PlannerSheet onClose={onClose} label="Choose a lesson">
-      <p className="mt-1 text-[13px] text-[#77738F]">
-        All lessons in {cls?.name || 'this class'}’s library. Already on the planner stay available to schedule again.
+      <p className="mt-1 text-[13px] text-[#5F5B7A]">
+        All lessons in {cls?.name || 'this class'}’s library. Create a new one or pick an existing lesson.
       </p>
+      <button
+        type="button"
+        onClick={() => void createAndScheduleNew()}
+        className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 text-sm font-bold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+      >
+        Create new lesson
+      </button>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-1">
         <div className="relative block text-[13px] font-semibold text-[#374151]" ref={classMenuRef}>
           Class

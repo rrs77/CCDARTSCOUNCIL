@@ -192,7 +192,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
         onClick={onClose}
       />
 
-      <div className="relative z-[1] flex max-h-[min(92vh,880px)] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
+      <div className="relative z-[1] flex h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
         {/* Header */}
         <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-6">
           <div className="mb-3 flex items-start justify-between gap-3">
