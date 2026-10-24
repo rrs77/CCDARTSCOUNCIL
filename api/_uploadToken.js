@@ -252,3 +252,36 @@ export function estimateBase64DecodedBytes(b64) {
   else if (b64.endsWith('=')) pad = 1;
   return Math.max(0, Math.floor((len * 3) / 4) - pad);
 }
+
+/**
+ * Vercel JSON upload Content-Length gate (before request.json()).
+ * @param {string | null | undefined} contentLengthHeader
+ * @param {number} [limit=VERCEL_JSON_CONTENT_LENGTH_LIMIT]
+ * @returns {{ status: 411 | 413, error: string, code?: string } | null} null = OK
+ */
+export function vercelUploadContentLengthGate(
+  contentLengthHeader,
+  limit = VERCEL_JSON_CONTENT_LENGTH_LIMIT,
+) {
+  if (contentLengthHeader == null || String(contentLengthHeader).trim() === '') {
+    return {
+      status: 411,
+      error: 'Content-Length header is required.',
+    };
+  }
+  const cl = Number(contentLengthHeader);
+  if (!Number.isFinite(cl) || cl < 0) {
+    return {
+      status: 411,
+      error: 'Content-Length header is required.',
+    };
+  }
+  if (cl > limit) {
+    return {
+      status: 413,
+      error: `File too large for this upload route (max ${MAX_VERCEL_BODY_UPLOAD_BYTES / (1024 * 1024)} MB). Use direct upload for files up to ${MAX_DIRECT_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+      code: 'USE_DIRECT_UPLOAD',
+    };
+  }
+  return null;
+}

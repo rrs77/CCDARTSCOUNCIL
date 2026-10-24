@@ -27,6 +27,7 @@ import {
   MAX_DIRECT_UPLOAD_BYTES,
   MAX_VERCEL_BODY_UPLOAD_BYTES,
   VERCEL_JSON_CONTENT_LENGTH_LIMIT,
+  vercelUploadContentLengthGate,
 } from '../../../api/_uploadToken.js';
 
 const PDF_MAGIC = Buffer.from('%PDF-');
@@ -48,21 +49,21 @@ export async function POST(request) {
       return dreamHostNotConfiguredResponse();
     }
 
-    // Content-Length pre-check before buffering / request.json() (413 early).
-    const clRaw = request.headers.get('content-length');
-    if (clRaw != null && clRaw !== '') {
-      const cl = Number(clRaw);
-      if (Number.isFinite(cl) && cl > VERCEL_JSON_CONTENT_LENGTH_LIMIT) {
-        return jsonResponse(
-          {
-            error: `File too large for this upload route (max ${MAX_VERCEL_BODY_UPLOAD_BYTES / (1024 * 1024)} MB). Use direct upload for files up to ${MAX_DIRECT_UPLOAD_BYTES / (1024 * 1024)} MB.`,
-            code: 'USE_DIRECT_UPLOAD',
-            maxVercelBytes: MAX_VERCEL_BODY_UPLOAD_BYTES,
-            maxDirectBytes: MAX_DIRECT_UPLOAD_BYTES,
-          },
-          413,
-        );
-      }
+    // Content-Length required (411); reject oversized before request.json() (413).
+    const clGate = vercelUploadContentLengthGate(
+      request.headers.get('content-length'),
+      VERCEL_JSON_CONTENT_LENGTH_LIMIT,
+    );
+    if (clGate) {
+      return jsonResponse(
+        {
+          error: clGate.error,
+          ...(clGate.code ? { code: clGate.code } : {}),
+          maxVercelBytes: MAX_VERCEL_BODY_UPLOAD_BYTES,
+          maxDirectBytes: MAX_DIRECT_UPLOAD_BYTES,
+        },
+        clGate.status,
+      );
     }
 
     let body;

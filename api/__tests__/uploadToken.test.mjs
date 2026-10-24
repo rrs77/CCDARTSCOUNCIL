@@ -122,4 +122,26 @@ describe('upload token helpers', () => {
   it('isUploadTokenConfigured requires secret + upload URL', () => {
     assert.equal(mod.isUploadTokenConfigured(), true);
   });
+
+  it('vercelUploadContentLengthGate returns 411 when Content-Length is missing', () => {
+    assert.equal(mod.vercelUploadContentLengthGate(null)?.status, 411);
+    assert.equal(mod.vercelUploadContentLengthGate(undefined)?.status, 411);
+    assert.equal(mod.vercelUploadContentLengthGate('')?.status, 411);
+    assert.equal(mod.vercelUploadContentLengthGate('  ')?.status, 411);
+    assert.equal(mod.vercelUploadContentLengthGate('nope')?.status, 411);
+  });
+
+  it('vercelUploadContentLengthGate returns 413 when over the JSON limit', () => {
+    const over = String(mod.VERCEL_JSON_CONTENT_LENGTH_LIMIT + 1);
+    assert.equal(mod.vercelUploadContentLengthGate(over)?.status, 413);
+    assert.equal(mod.vercelUploadContentLengthGate(over)?.code, 'USE_DIRECT_UPLOAD');
+  });
+
+  it('vercelUploadContentLengthGate allows a valid Content-Length', () => {
+    assert.equal(mod.vercelUploadContentLengthGate('1024'), null);
+    assert.equal(
+      mod.vercelUploadContentLengthGate(String(mod.VERCEL_JSON_CONTENT_LENGTH_LIMIT)),
+      null,
+    );
+  });
 });
