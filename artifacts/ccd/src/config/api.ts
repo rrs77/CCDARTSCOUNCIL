@@ -822,7 +822,9 @@ export const halfTermsApi = {
         return [];
       }
 
-      // Scope reads to the authenticated user so tenants cannot read each other's half-term data
+      // Live schema: sheet_name, academic_year, term_id, … — no user_id column.
+      // Filtering on user_id caused PostgREST 400 (column does not exist).
+      // Auth is still required above; rows are keyed by sheet_name (+ academic_year).
       let query = supabase
         .from('half_terms')
         .select('*')
@@ -831,10 +833,6 @@ export const halfTermsApi = {
       // Filter by academic year if provided
       if (academicYear) {
         query = query.eq('academic_year', academicYear);
-      }
-
-      if (userIsAuthenticated) {
-        query = query.eq('user_id', userId);
       }
       
       const { data, error } = await query;
@@ -895,13 +893,13 @@ export const halfTermsApi = {
           updated_at: new Date().toISOString()
       };
       
-      // Fail closed: refuse to execute unscoped cross-tenant writes for non-auth sessions
+      // Fail closed: refuse writes without an authenticated session
       const htUserId = getCurrentUserId();
       if (!isAuthUserId(htUserId)) {
         console.warn('⚠️ halfTermsApi.updateHalfTerm: unauthenticated session — refusing unscoped write (fail closed)');
-        throw new Error('Unauthenticated: cannot update half-term without a scoped user ID');
+        throw new Error('Unauthenticated: cannot update half-term without a signed-in user');
       }
-      upsertData.user_id = htUserId;
+      // Do not set user_id — column does not exist on live half_terms (PostgREST 400).
       
       // Add stacks if provided
       if (stacks !== undefined) {
@@ -910,20 +908,14 @@ export const halfTermsApi = {
       
       console.log('🔄 Upserting to Supabase with data:', upsertData);
       
-      // Use upsert with onConflict to handle the unique constraint properly
-      // The unique constraint is on (sheet_name, term_id), so we need to specify that
-      // First try to update existing record using the unique constraint fields,
-      // scoped by user_id so we never overwrite another tenant's rows
-      let updateQuery = supabase
+      // Unique key on live table: (sheet_name, academic_year, term_id) — no user_id
+      const updateResult = await supabase
           .from(TABLES.HALF_TERMS)
           .update(upsertData)
           .eq('sheet_name', sheet)
           .eq('academic_year', year)
-          .eq('term_id', halfTermId);
-      if (isAuthUserId(htUserId)) {
-        updateQuery = updateQuery.eq('user_id', htUserId);
-      }
-      const updateResult = await updateQuery.select();
+          .eq('term_id', halfTermId)
+          .select();
       
       let data, error;
       
@@ -948,38 +940,26 @@ export const halfTermsApi = {
         error = insertResult.error;
         
         if (error) {
-          // If insert fails with duplicate key, a conflicting row exists.
-          // Only retry as an update if the conflicting row is owned by the current
-          // user (user_id matches). If it belongs to a different tenant, fail closed
-          // rather than overwriting another tenant's data.
+          // Duplicate on (sheet_name, academic_year, term_id) — retry update by those keys.
+          // Live half_terms has no user_id column for tenant scoping.
           if (error.code === '23505' || error.message?.includes('duplicate key')) {
-            if (!isAuthUserId(htUserId)) {
-              // Non-authenticated caller: cannot safely scope the retry; fail closed
-              throw new Error(`Half-term ${halfTermId} conflict: unauthenticated caller cannot safely resolve duplicate key`);
-            }
-            console.log('⚠️ Insert failed with duplicate key, retrying scoped update (user_id + sheet_name + academic_year + term_id)...');
-            // Retry the update with user_id in the predicate to ensure we only touch
-            // a row that belongs to this tenant. If the conflicting row belongs to
-            // another tenant, this will match nothing and we will fail closed.
-            let retryQuery = supabase
+            console.log('⚠️ Insert failed with duplicate key, retrying update (sheet_name + academic_year + term_id)...');
+            const retryResult = await supabase
               .from(TABLES.HALF_TERMS)
               .update(upsertData)
               .eq('sheet_name', sheet)
               .eq('academic_year', year)
               .eq('term_id', halfTermId)
-              .eq('user_id', htUserId);
-            const retryResult = await retryQuery.select();
+              .select();
             
             if (retryResult.error) {
               throw retryResult.error;
             }
             if (retryResult.data && retryResult.data.length > 0) {
               data = retryResult.data[0];
-              console.log(`✅ Updated half-term ${halfTermId} for ${sheet} (scoped retry matched by user_id + sheet_name + academic_year + term_id)`);
+              console.log(`✅ Updated half-term ${halfTermId} for ${sheet} (retry matched sheet_name + academic_year + term_id)`);
             } else {
-              // No user-owned row matched: the conflict belongs to another tenant.
-              // Fail closed — do not touch the other tenant's row.
-              throw new Error(`Half-term ${halfTermId} conflict: duplicate key belongs to another tenant; refusing unsafe cross-tenant update`);
+              throw new Error(`Half-term ${halfTermId} conflict: duplicate key but update matched no rows`);
             }
           } else {
             throw error;
@@ -1033,8 +1013,8 @@ export const halfTermsApi = {
         console.warn('⚠️ halfTermsApi.initializeHalfTerms: unauthenticated session — refusing unscoped write (fail closed)');
         return [];
       }
-      const halfTermsToInsert = defaultHalfTerms.map(term => {
-        const row: Record<string, unknown> = {
+      // Omit user_id — column does not exist on live half_terms (would 400).
+      const halfTermsToInsert = defaultHalfTerms.map(term => ({
           id: term.id,
           sheet_name: sheet,
           academic_year: year,
@@ -1042,12 +1022,7 @@ export const halfTermsApi = {
           lessons: [],
           is_complete: false,
           term_id: term.id
-        };
-        if (initUserIsAuth) {
-          row.user_id = initUserId;
-        }
-        return row;
-      });
+      }));
       
       // For initialization, we'll use insert with ignoreDuplicates to avoid conflicts
       const { data, error } = await supabase
