@@ -174,7 +174,7 @@ export function BoltOnsBreadcrumb({
 }) {
   return (
     <nav aria-label="Breadcrumb" className="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#77738F]">
-      <span>Your tools</span>
+      <span>Workspace</span>
       <span className="mx-1.5 text-[#C4C0D8]" aria-hidden>
         &gt;
       </span>

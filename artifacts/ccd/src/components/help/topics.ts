@@ -246,7 +246,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'overview',
         title: 'Full-page Settings',
         intro:
-          'Settings is a full page (not a modal). Open it from the header gear or More tools. Left nav covers My classes, Activity folders, Learning objectives, Preferences, Downloads, Users (admins) and School tools.',
+          'Settings is a full page (not a modal). Open it from the cog at the bottom of the left sidebar. Left nav covers My classes, Activity folders, Learning objectives, Preferences, Downloads, Users (admins) and School tools.',
         steps: [
           { title: 'My classes', body: 'Add and group classes by key stage. Accents and natural year order match the header class picker.' },
           { title: 'Activity folders', body: 'Control which folders each class sees in the Activity Library.' },

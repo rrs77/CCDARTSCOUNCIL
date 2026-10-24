@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
+import { Menu, X, RefreshCw, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useData } from '../contexts/DataContext';
@@ -439,28 +439,7 @@ export function Header() {
                 <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5" />
               </a>
 
-              {/* Help Button — full-page Help centre at /help */}
-              <button
-                type="button"
-                onClick={() => navigateToHelp()}
-                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="Help"
-                aria-label="Open help"
-                data-help-button
-              >
-                <HelpCircle className="h-4 w-4 lg:h-5 lg:w-5" />
-              </button>
-
-              {/* Settings Button — full-page Settings */}
-              <button
-                onClick={() => navigateToSettings('curriculum')}
-                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0 min-h-[44px] min-w-[44px] inline-flex items-center justify-center"
-                title="Settings — Curriculum"
-                aria-label="Settings — Curriculum"
-                data-walkthrough="settings"
-              >
-                <Settings className="h-4 w-4 lg:h-5 lg:w-5" />
-              </button>
+              {/* Help / Settings live in the left sidebar (Help & community + bottom cog). */}
 
               {/* Refresh Button */}
               <button

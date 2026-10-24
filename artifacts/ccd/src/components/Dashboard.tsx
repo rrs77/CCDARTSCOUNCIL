@@ -12,8 +12,7 @@ import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { isAuthorizedDemoMode } from '../utils/demoMode';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
-import { StudioShell, type StudioNavId } from './studio/StudioShell';
-import { MoreToolsPanel } from './studio/MoreToolsPanel';
+import { StudioShell, type StudioNavId, type StudioToolAction } from './studio/StudioShell';
 import { HalfTermDesigner } from './halfTerm/HalfTermDesigner';
 import { BoltOnsView } from './boltOns/BoltOnsView';
 import type { BoltOnsPageId } from './boltOns/types';
@@ -71,7 +70,6 @@ const ALLOWED = new Set([
   'our-partners',
   'contact-us',
   'curriculum',
-  'more',
   'lesson-viewer',
   'bolt-ons',
   'assessify',
@@ -80,10 +78,11 @@ const ALLOWED = new Set([
   'help',
 ]);
 
-/** Old Lesson Builder / Calendar links land on unified Lessons / Planner. */
+/** Old Lesson Builder / Calendar / More tools links land on unified Lessons / Planner. */
 function canonicalizeTab(tab: string): string {
   if (tab === 'lesson-builder') return 'lesson-library';
   if (tab === 'calendar') return 'unit-viewer';
+  if (tab === 'more' || tab === 'more-tools') return 'unit-viewer';
   return tab;
 }
 
@@ -322,6 +321,31 @@ export function Dashboard() {
 
   const shellNavigate = (id: StudioNavId) => handleTabChange(id);
 
+  const shellToolAction = (action: StudioToolAction) => {
+    if (action === 'class-calendar') {
+      handleTabChange('unit-viewer');
+      window.setTimeout(() => {
+        try {
+          window.dispatchEvent(new CustomEvent('ccd:open-class-calendar'));
+        } catch {
+          /* ignore */
+        }
+      }, 0);
+      return;
+    }
+    if (action === 'forum') {
+      window.location.assign('/forum');
+      return;
+    }
+    if (action === 'walkthrough') {
+      try {
+        window.dispatchEvent(new CustomEvent('ccd:start-walkthrough'));
+      } catch {
+        /* ignore */
+      }
+    }
+  };
+
   void getThemeForClass;
   void setUnits;
 
@@ -329,6 +353,7 @@ export function Dashboard() {
     <StudioShell
       active={navId}
       onNavigate={shellNavigate}
+      onToolAction={shellToolAction}
       hubsMode={hubsMode}
       wideCanvas={wideCanvas}
       editorFlush={editorFlush}
@@ -430,12 +455,6 @@ export function Dashboard() {
       {activeTab === 'contact-us' && (
         <div className="ccd-fade-in-up" key="contact">
           <ContactUsPanel />
-        </div>
-      )}
-
-      {activeTab === 'more' && (
-        <div className="ccd-fade-in-up" key="more">
-          <MoreToolsPanel onNavigate={shellNavigate} />
         </div>
       )}
 

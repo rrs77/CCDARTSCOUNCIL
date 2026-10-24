@@ -11,7 +11,7 @@ export type MainTabId =
   | 'lesson-viewer'
   | 'our-partners'
   | 'contact-us'
-  | 'more'
+  | 'more' // legacy path only — redirects to planner
   | 'settings'
   | 'help';
 
@@ -23,7 +23,6 @@ const PATH_BY_TAB: Partial<Record<MainTabId, string>> = {
   'lesson-viewer': '/viewer',
   'our-partners': '/partners',
   'contact-us': '/contact',
-  more: '/more',
 };
 
 const TAB_BY_PATH: Record<string, MainTabId> = {
@@ -44,7 +43,9 @@ const TAB_BY_PATH: Record<string, MainTabId> = {
   '/our-partners': 'our-partners',
   '/contact': 'contact-us',
   '/contact-us': 'contact-us',
-  '/more': 'more',
+  // Retired More tools page → Planner
+  '/more': 'unit-viewer',
+  '/more-tools': 'unit-viewer',
 };
 
 const MAIN_PATHS = new Set(Object.keys(TAB_BY_PATH));
@@ -68,12 +69,26 @@ export function resolveMainTabFromLocation(
   pathname = typeof window !== 'undefined' ? window.location.pathname : '/',
   search = typeof window !== 'undefined' ? window.location.search : '',
 ): MainTabId | null {
+  const normalised = pathname.replace(/\/+$/, '') || '/';
+  // Old More tools URLs land on Planner and rewrite the address bar.
+  if (normalised === '/more' || normalised === '/more-tools') {
+    if (typeof window !== 'undefined' && window.location.pathname.replace(/\/+$/, '') !== '/planner') {
+      window.history.replaceState({}, '', '/planner');
+    }
+    return 'unit-viewer';
+  }
   const fromPath = tabFromMainPath(pathname);
   if (fromPath) return fromPath;
   try {
     const params = new URLSearchParams(search);
     const tab = params.get('tab');
     if (!tab) return null;
+    if (tab === 'more' || tab === 'more-tools') {
+      if (typeof window !== 'undefined') {
+        window.history.replaceState({}, '', '/planner');
+      }
+      return 'unit-viewer';
+    }
     if (tab === 'lesson-builder' || tab === 'calendar') {
       return tab === 'calendar' ? 'unit-viewer' : 'lesson-library';
     }

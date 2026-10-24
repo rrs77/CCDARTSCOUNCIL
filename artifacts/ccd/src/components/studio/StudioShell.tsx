@@ -2,13 +2,18 @@ import React, { useEffect, useState } from 'react';
 import {
   BookOpen,
   Calendar,
+  CalendarDays,
   ChevronLeft,
   Clapperboard,
+  Compass,
   CornerDownRight,
   FolderOpen,
   Globe2,
   Grid3X3,
-  MoreHorizontal,
+  HelpCircle,
+  Mail,
+  MessageSquare,
+  Settings,
   Sparkles,
 } from 'lucide-react';
 
@@ -18,7 +23,7 @@ export type StudioNavId =
   | 'lesson-builder' // legacy; redirects to lesson-library
   | 'activity-library'
   | 'curriculum'
-  | 'more'
+  | 'more' // legacy; redirects away from More tools page
   | 'lesson-library'
   | 'contact-us'
   | 'lesson-viewer'
@@ -27,6 +32,9 @@ export type StudioNavId =
   | 'perifeedback'
   | 'settings'
   | 'help';
+
+/** Non-tab sidebar actions (open overlay / external / event). */
+export type StudioToolAction = 'class-calendar' | 'forum' | 'walkthrough';
 
 const PRIMARY: { id: StudioNavId; label: string; short: string; icon: React.ReactNode; dataTab: string }[] = [
   { id: 'unit-viewer', label: 'Planner', short: 'Planner', icon: <Calendar className="h-[17px] w-[17px]" />, dataTab: 'unit-viewer' },
@@ -42,12 +50,53 @@ const BOLT_ON_SUBLINKS: { id: StudioNavId; label: string; dataTab: string }[] = 
   { id: 'perifeedback', label: 'PeriFeedback', dataTab: 'perifeedback' },
 ];
 
+/** Help / community — grouped lower in the column. */
+const SUPPORT: {
+  kind: 'nav' | 'action';
+  id: string;
+  label: string;
+  icon: React.ReactNode;
+  navId?: StudioNavId;
+  action?: StudioToolAction;
+}[] = [
+  {
+    kind: 'action',
+    id: 'forum',
+    label: 'Community forum',
+    icon: <MessageSquare className="h-[17px] w-[17px]" />,
+    action: 'forum',
+  },
+  {
+    kind: 'nav',
+    id: 'help',
+    label: 'Help guide',
+    icon: <HelpCircle className="h-[17px] w-[17px]" />,
+    navId: 'help',
+  },
+  {
+    kind: 'action',
+    id: 'walkthrough',
+    label: 'Feature walkthrough',
+    icon: <Compass className="h-[17px] w-[17px]" />,
+    action: 'walkthrough',
+  },
+  {
+    kind: 'nav',
+    id: 'contact-us',
+    label: 'Contact',
+    icon: <Mail className="h-[17px] w-[17px]" />,
+    navId: 'contact-us',
+  },
+];
+
 const isBoltOnsNav = (id: StudioNavId) =>
   id === 'bolt-ons' || id === 'assessify' || id === 'perifeedback';
 
 interface StudioShellProps {
   active: StudioNavId;
   onNavigate: (id: StudioNavId) => void;
+  /** Class calendar / forum / walkthrough (not full tabs). */
+  onToolAction?: (action: StudioToolAction) => void;
   children: React.ReactNode;
   /** Hub surfaces keep forest/teal padding */
   hubsMode?: boolean;
@@ -62,6 +111,7 @@ interface StudioShellProps {
 export function StudioShell({
   active,
   onNavigate,
+  onToolAction,
   children,
   hubsMode,
   wideCanvas,
@@ -84,14 +134,17 @@ export function StudioShell({
 
   const mobileActive =
     active === 'contact-us' ||
-    active === 'more' ||
     active === 'settings' ||
     active === 'help' ||
     isBoltOnsNav(active)
-      ? 'more'
+      ? 'settings'
       : active;
 
   const boltOnsOpen = isBoltOnsNav(active);
+
+  const runTool = (action: StudioToolAction) => {
+    onToolAction?.(action);
+  };
 
   return (
     <div className={`ccd-studio-app ${collapsed ? 'is-collapsed' : ''}`}>
@@ -123,7 +176,7 @@ export function StudioShell({
           )}
         </div>
 
-        <nav className="ccd-studio-nav">
+        <nav className="ccd-studio-nav" aria-label="Workspace">
           <div className="ccd-studio-section">Connect &amp; create</div>
           {PRIMARY.map((item) => (
             <button
@@ -133,26 +186,25 @@ export function StudioShell({
               className={`ccd-studio-nav-item ${active === item.id ? 'is-active' : ''}`}
               aria-current={active === item.id ? 'page' : undefined}
               aria-label={item.label}
+              title={collapsed ? item.label : undefined}
               onClick={() => onNavigate(item.id)}
             >
               {item.icon}
               <span>{item.label}</span>
             </button>
           ))}
-          <div className="ccd-studio-section" style={{ marginTop: 12 }}>
-            Your tools
-          </div>
+
           <button
             type="button"
-            data-tab="more"
-            className={`ccd-studio-nav-item ${active === 'more' || active === 'contact-us' || active === 'settings' ? 'is-active' : ''}`}
-            aria-current={active === 'more' || active === 'contact-us' || active === 'settings' ? 'page' : undefined}
-            aria-label="More tools"
-            onClick={() => onNavigate('more')}
+            className="ccd-studio-nav-item"
+            aria-label="Class calendar"
+            title={collapsed ? 'Class calendar' : undefined}
+            onClick={() => runTool('class-calendar')}
           >
-            <MoreHorizontal className="h-[17px] w-[17px]" />
-            <span>More tools</span>
+            <CalendarDays className="h-[17px] w-[17px]" />
+            <span>Class calendar</span>
           </button>
+
           <button
             type="button"
             data-tab="bolt-ons"
@@ -160,6 +212,7 @@ export function StudioShell({
             aria-current={active === 'bolt-ons' ? 'page' : undefined}
             aria-expanded={boltOnsOpen}
             aria-label="Bolt-ons"
+            title={collapsed ? 'Bolt-ons' : undefined}
             onClick={() => onNavigate('bolt-ons')}
           >
             <Sparkles className="h-[17px] w-[17px]" />
@@ -185,9 +238,59 @@ export function StudioShell({
               ))}
             </div>
           ) : null}
+
+          <div className="ccd-studio-section" style={{ marginTop: 12 }}>
+            Help &amp; community
+          </div>
+          {SUPPORT.map((item) => {
+            if (item.kind === 'nav' && item.navId) {
+              const navId = item.navId;
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  data-tab={navId}
+                  className={`ccd-studio-nav-item ${active === navId ? 'is-active' : ''}`}
+                  aria-current={active === navId ? 'page' : undefined}
+                  aria-label={item.label}
+                  title={collapsed ? item.label : undefined}
+                  onClick={() => onNavigate(navId)}
+                >
+                  {item.icon}
+                  <span>{item.label}</span>
+                </button>
+              );
+            }
+            return (
+              <button
+                key={item.id}
+                type="button"
+                className="ccd-studio-nav-item"
+                aria-label={item.label}
+                title={collapsed ? item.label : undefined}
+                onClick={() => item.action && runTool(item.action)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
+              </button>
+            );
+          })}
         </nav>
 
         <div className="ccd-studio-sidebar-foot">
+          <button
+            type="button"
+            data-tab="settings"
+            data-walkthrough="settings"
+            className={`ccd-studio-nav-item ${active === 'settings' ? 'is-active' : ''}`}
+            aria-current={active === 'settings' ? 'page' : undefined}
+            aria-label="Settings"
+            title={collapsed ? 'Settings' : undefined}
+            onClick={() => onNavigate('settings')}
+          >
+            <Settings className="h-[17px] w-[17px]" />
+            <span>Settings</span>
+          </button>
           <button
             type="button"
             className="ccd-studio-collapse"
@@ -217,6 +320,7 @@ export function StudioShell({
             type="button"
             data-tab={item.dataTab}
             className={mobileActive === item.id ? 'is-active' : ''}
+            aria-label={item.label}
             onClick={() => onNavigate(item.id)}
           >
             {item.icon}
@@ -225,11 +329,12 @@ export function StudioShell({
         ))}
         <button
           type="button"
-          className={mobileActive === 'more' ? 'is-active' : ''}
-          onClick={() => onNavigate('more')}
+          className={mobileActive === 'settings' ? 'is-active' : ''}
+          aria-label="Settings"
+          onClick={() => onNavigate('settings')}
         >
-          <MoreHorizontal className="h-5 w-5" />
-          <span>More</span>
+          <Settings className="h-5 w-5" />
+          <span>Settings</span>
         </button>
       </nav>
     </div>
