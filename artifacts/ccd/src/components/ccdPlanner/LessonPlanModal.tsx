@@ -1,5 +1,4 @@
 import {
-  Check,
   ChevronDown,
   ChevronUp,
   GripVertical,
@@ -27,6 +26,7 @@ import {
   TextInput,
 } from './ui';
 import { RichHtml } from './RichHtml';
+import { CurriculumStatementsPanel } from './CurriculumStatementsPanel';
 import { cn } from '@/lib/utils';
 
 type ViewTab = 'plan' | 'preview' | 'print';
@@ -251,8 +251,6 @@ export function LessonPlanPanel({
 
   if (!open || !draft) return null;
 
-  const linkedStatements = curriculum.statements.filter((st) => selectedIds.has(st.id));
-
   return (
     <section
       className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[1.5rem] bg-white"
@@ -311,8 +309,8 @@ export function LessonPlanPanel({
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <div className="soft-scroll min-h-0 flex-1 overflow-y-auto">
           {tab === 'plan' ? (
-            <div className="grid min-h-0 gap-4 p-5 lg:grid-cols-[1.2fr_0.8fr]">
-              <div>
+            <div className="grid min-h-[min(70vh,640px)] gap-4 p-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
+              <div className="min-h-0">
                 <h3 className="mb-2 text-sm font-extrabold text-slate-800">Lesson sequence</h3>
                 <label className="mb-3 block space-y-1">
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -471,110 +469,45 @@ export function LessonPlanPanel({
                 </div>
               </div>
 
-              <div className="space-y-3">
-                <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-                  <div className="mb-2">
-                    <h4 className="text-sm font-extrabold text-slate-800">
-                      Curriculum statements
+              <div className="flex min-h-0 flex-col gap-3 lg:min-h-[min(70vh,640px)]">
+                <CurriculumStatementsPanel
+                  className="min-h-[280px] flex-1"
+                  selectedIds={selectedIds}
+                  onSelectedIdsChange={(next) =>
+                    setDraft({
+                      ...draft,
+                      customObjectives: [...next],
+                      curriculumType: 'CUSTOM',
+                    })
+                  }
+                />
+                <div className="shrink-0 space-y-3">
+                  <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <h4 className="mb-2 text-sm font-extrabold text-slate-800">
+                      Learning objective
                     </h4>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                      From your curriculum in Settings
-                    </p>
+                    <TextInput
+                      rows={3}
+                      aria-label="Learning objective"
+                      value={draft.learningOutcome || ''}
+                      onChange={(e) =>
+                        setDraft({ ...draft, learningOutcome: e.target.value })
+                      }
+                    />
                   </div>
-                  {curriculum.statements.length === 0 ? (
-                    <p className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                      Nothing set up yet.{' '}
-                      <a href="/settings/curriculum" className="font-bold underline">
-                        Add frameworks, strands and statements
-                      </a>
-                    </p>
-                  ) : (
-                    <div className="mb-3 max-h-48 space-y-1.5 overflow-y-auto rounded-2xl border border-indigo-100 bg-indigo-50/40 p-2">
-                      {curriculum.statements.map((st) => {
-                        const strand = curriculum.strands.find((s) => s.id === st.strandId);
-                        const checked = selectedIds.has(st.id);
-                        return (
-                          <label
-                            key={st.id}
-                            className="flex min-h-[44px] cursor-pointer gap-2 rounded-xl bg-white px-2.5 py-2 text-xs text-slate-700"
-                          >
-                            <input
-                              type="checkbox"
-                              className="mt-0.5"
-                              checked={checked}
-                              onChange={() => {
-                                const next = new Set(selectedIds);
-                                if (checked) next.delete(st.id);
-                                else next.add(st.id);
-                                setDraft({
-                                  ...draft,
-                                  customObjectives: [...next],
-                                  curriculumType: 'CUSTOM',
-                                });
-                              }}
-                            />
-                            <span className="min-w-0">
-                              {strand ? (
-                                <span className="mb-0.5 block font-bold text-indigo-500">
-                                  {strand.name}
-                                </span>
-                              ) : null}
-                              {st.text}
-                            </span>
-                          </label>
-                        );
-                      })}
-                    </div>
-                  )}
-                  <ul className="space-y-2">
-                    {linkedStatements.map((c) => {
-                      const strand = curriculum.strands.find((s) => s.id === c.strandId);
-                      return (
-                        <li key={c.id} className="flex gap-2 text-sm text-slate-700">
-                          <Check className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
-                          <span>
-                            {strand ? (
-                              <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-indigo-500">
-                                {strand.name}
-                              </span>
-                            ) : null}
-                            {c.text}
-                          </span>
-                        </li>
-                      );
-                    })}
-                    {linkedStatements.length === 0 && curriculum.statements.length > 0 ? (
-                      <li className="text-sm text-slate-400">
-                        No statements linked yet — tick statements above.
-                      </li>
-                    ) : null}
-                  </ul>
-                </div>
-                <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-                  <h4 className="mb-2 text-sm font-extrabold text-slate-800">
-                    Learning objective
-                  </h4>
-                  <TextInput
-                    rows={3}
-                    aria-label="Learning objective"
-                    value={draft.learningOutcome || ''}
-                    onChange={(e) =>
-                      setDraft({ ...draft, learningOutcome: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-                  <h4 className="mb-2 text-sm font-extrabold text-slate-800">
-                    Success criteria
-                  </h4>
-                  <TextInput
-                    rows={4}
-                    aria-label="Success criteria"
-                    value={draft.successCriteria || ''}
-                    onChange={(e) =>
-                      setDraft({ ...draft, successCriteria: e.target.value })
-                    }
-                  />
+                  <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
+                    <h4 className="mb-2 text-sm font-extrabold text-slate-800">
+                      Success criteria
+                    </h4>
+                    <TextInput
+                      rows={4}
+                      aria-label="Success criteria"
+                      value={draft.successCriteria || ''}
+                      onChange={(e) =>
+                        setDraft({ ...draft, successCriteria: e.target.value })
+                      }
+                    />
+                  </div>
                 </div>
               </div>
             </div>
