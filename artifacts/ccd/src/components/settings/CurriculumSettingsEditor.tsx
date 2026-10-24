@@ -261,20 +261,20 @@ export function CurriculumSettingsEditor() {
         readable contrast.
       </p>
 
-      <section className="rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-sm">
+      <section className="overflow-visible rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-sm">
         <div className="mb-1 flex flex-wrap items-start justify-between gap-2">
           <div>
             <h3 className="text-sm font-extrabold text-[#1F1B4D]">Term / half-term dates</h3>
-            <p className="mt-1 text-xs text-slate-400">
+            <p className="mt-1 text-[13px] text-[#5F5B7A]">
               Year overview columns and My units use these dates
-              {currentAcademicYear ? ` · ${currentAcademicYear}` : ''}.
+              {currentAcademicYear ? ` · ${currentAcademicYear}` : ''} · UK dd/mm/yyyy.
             </p>
           </div>
           <Button variant="ghost" size="sm" onClick={resetTermDefaults}>
             Reset to defaults
           </Button>
         </div>
-        <ul className="mt-3 space-y-2">
+        <ul className="mt-3 space-y-2 overflow-visible">
           {(state.terms.length > 0
             ? state.terms
             : defaultPlannerTerms(currentAcademicYear)

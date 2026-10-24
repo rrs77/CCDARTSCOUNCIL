@@ -12,15 +12,11 @@ import {
 } from '../../utils/planner/plannerCurriculumStore';
 import type { PlannerTermDates } from '../../types/plannerCurriculum';
 import { Button } from './ui';
+import { formatUkDateRangeShort } from '../../utils/planner/ukDate';
 import { cn } from '@/lib/utils';
 
 function formatRange(start: string, end: string) {
-  try {
-    const opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' };
-    return `${new Date(start).toLocaleDateString(undefined, opts)} – ${new Date(end).toLocaleDateString(undefined, opts)}`;
-  } catch {
-    return `${start} – ${end}`;
-  }
+  return formatUkDateRangeShort(start, end);
 }
 
 export function YearOverviewScreen({
@@ -88,7 +84,7 @@ export function YearOverviewScreen({
         </Button>
       </header>
 
-      <div className="soft-scroll flex-1 overflow-x-auto px-5 pb-8 sm:px-6">
+      <div className="soft-scroll min-h-0 flex-1 overflow-x-auto overflow-y-auto px-5 pb-8 sm:px-6">
         {columns.length === 0 ? (
           <div className="rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 px-4 py-16 text-center">
             <p className="text-sm font-semibold text-indigo-700">No terms configured</p>
@@ -100,7 +96,11 @@ export function YearOverviewScreen({
             </Button>
           </div>
         ) : (
-          <div className="flex min-w-max gap-4" role="list" aria-label="Half-terms">
+          <div
+            className="flex w-max min-w-full gap-4 pr-4"
+            role="list"
+            aria-label="Half-terms"
+          >
             {columns.map(({ term, units: termUnits }) => (
               <TermColumn
                 key={term.id}
@@ -137,16 +137,16 @@ function TermColumn({
   return (
     <section
       role="listitem"
-      className="flex w-[min(85vw,280px)] flex-col rounded-[1.5rem] card-surface"
+      className="flex w-[min(85vw,260px)] shrink-0 flex-col self-stretch rounded-[1.5rem] card-surface"
       aria-label={`${term.name}, ${formatRange(term.start, term.end)}`}
     >
       <div className="border-b border-indigo-50 px-4 py-3">
         <h2 className="text-sm font-extrabold text-indigo-700" title={term.name}>
           <span className="line-clamp-2 leading-snug">{term.name}</span>
         </h2>
-        <p className="text-xs text-slate-400">{formatRange(term.start, term.end)}</p>
+        <p className="text-xs text-[#5F5B7A]">{formatRange(term.start, term.end)}</p>
       </div>
-      <div className="flex-1 space-y-2.5 p-3">
+      <div className="flex min-h-[12rem] flex-1 flex-col space-y-2.5 p-3">
         {units.map((unit) => {
           const color = unit.color || getCategoryColor?.('') || '#4338E8';
           const lessonLabels = unit.lessonNumbers.map((num) => {
@@ -232,14 +232,14 @@ function TermColumn({
           );
         })}
         {units.length === 0 ? (
-          <div className="flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 px-3 py-10 text-center">
+          <div className="flex min-h-[10rem] flex-1 flex-col items-center justify-center rounded-2xl border-2 border-dashed border-indigo-200 bg-indigo-50/40 px-3 py-8 text-center">
             <span className="mb-2 flex h-9 w-9 items-center justify-center rounded-full bg-white text-lg font-bold text-indigo-400 shadow-sm">
               +
             </span>
-            <p className="text-xs font-semibold text-indigo-600">
+            <p className="text-[13px] font-semibold text-indigo-600">
               No units in {term.name}
             </p>
-            <p className="mt-1 text-[11px] text-slate-400">
+            <p className="mt-1 text-[11px] text-[#5F5B7A]">
               Assign a unit to this term from My units
             </p>
           </div>

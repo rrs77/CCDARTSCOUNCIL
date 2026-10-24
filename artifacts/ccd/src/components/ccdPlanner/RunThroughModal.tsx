@@ -56,9 +56,9 @@ export function RunThroughModal({
             className="line-clamp-2 text-lg font-extrabold text-slate-900"
             title={title}
           >
-            {title || 'Lesson'}
+            {title || 'New lesson'}
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-[13px] text-[#5F5B7A]">
             {durationMins ?? 0} min · swipe through activities
           </p>
         </div>

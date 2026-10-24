@@ -18,7 +18,6 @@ import {
 } from '../../types/lessonSections';
 import { ensureLessonSections } from '../../utils/planner/legacyLessonToSections';
 import { loadPlannerCurriculum } from '../../utils/planner/plannerCurriculumStore';
-import { buildLessonPdfHtml } from '../../utils/lessonPdfHtml';
 import { AttachInteractiveLesson } from '../../features/interactive-lesson-viewer';
 import {
   Button,
@@ -31,6 +30,9 @@ import { RichHtml } from './RichHtml';
 import { cn } from '@/lib/utils';
 
 type ViewTab = 'plan' | 'preview' | 'print';
+
+/** Single default title across header, preview, print, and new drafts. */
+export const DEFAULT_LESSON_TITLE = 'New lesson';
 
 function uid(prefix = 'sec') {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
@@ -72,7 +74,7 @@ export function LessonPlanPanel({
           grouped: {},
           categoryOrder: [],
           totalTime: 0,
-          title: 'New lesson',
+          title: DEFAULT_LESSON_TITLE,
           learningOutcome: '',
           successCriteria: '',
         };
@@ -80,6 +82,8 @@ export function LessonPlanPanel({
     setTab('plan');
     setFleshOpen(false);
   }, [open, lessonData]);
+
+  const displayTitle = (draft?.title || '').trim() || DEFAULT_LESSON_TITLE;
 
   const sections = draft?.sections || [];
   const selectedIds = new Set(draft?.customObjectives || []);
@@ -245,34 +249,6 @@ export function LessonPlanPanel({
     setLiveMessage('Redid AI apply');
   };
 
-  const printHtml = useMemo(() => {
-    if (!draft || tab === 'plan') return '';
-    try {
-      return buildLessonPdfHtml({
-        lessonData: {
-          title: draft.title || 'Lesson',
-          learningOutcome: draft.learningOutcome,
-          successCriteria: draft.successCriteria,
-          introduction: draft.introduction,
-          mainActivity: draft.mainActivity,
-          plenary: draft.plenary,
-          vocabulary: draft.vocabulary,
-          differentiation: draft.differentiation,
-          assessment: draft.assessment,
-          resources: draft.resources,
-          orderedActivities: draft.orderedActivities,
-          grouped: draft.grouped,
-          sections: draft.sections,
-          totalTime: draft.totalTime,
-        },
-        sheetDisplay: yearGroup || '',
-        lessonNumber,
-      });
-    } catch {
-      return '<p>Preview unavailable</p>';
-    }
-  }, [draft, tab, yearGroup, lessonNumber]);
-
   if (!open || !draft) return null;
 
   const linkedStatements = curriculum.statements.filter((st) => selectedIds.has(st.id));
@@ -289,9 +265,9 @@ export function LessonPlanPanel({
           <h2
             id={titleId}
             className="line-clamp-2 text-lg font-extrabold text-indigo-700"
-            title={draft.title || 'Lesson plan'}
+            title={displayTitle}
           >
-            Lesson plan — {draft.title || 'Untitled'}
+            Lesson plan — {displayTitle}
           </h2>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
             {yearGroup ? (
@@ -604,20 +580,35 @@ export function LessonPlanPanel({
             </div>
           ) : null}
 
-          {tab === 'preview' ? (
+          {tab === 'preview' || tab === 'print' ? (
             <div className="soft-scroll flex-1 overflow-y-auto p-6">
-              <article className="mx-auto max-w-2xl space-y-4">
+              <article
+                className="mx-auto max-w-2xl space-y-4"
+                data-lesson-plan-print={tab === 'print' ? 'true' : undefined}
+              >
                 <header>
                   <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">
-                    Preview
+                    {tab === 'print' ? 'Print' : 'Preview'}
                   </p>
                   <h3 className="text-2xl font-extrabold text-slate-900">
-                    {draft.title || 'Lesson'}
+                    {displayTitle}
                   </h3>
                   {draft.learningOutcome ? (
-                    <p className="mt-3 rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-900">
-                      {draft.learningOutcome}
-                    </p>
+                    <div className="mt-3 rounded-2xl bg-indigo-50 px-4 py-3 text-sm font-medium text-indigo-900">
+                      <RichHtml
+                        className="text-sm font-medium text-indigo-900"
+                        html={draft.learningOutcome}
+                        empty=""
+                      />
+                    </div>
+                  ) : null}
+                  {draft.successCriteria ? (
+                    <div className="mt-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                      <p className="mb-1 text-[11px] font-bold uppercase tracking-wide text-[#5F5B7A]">
+                        Success criteria
+                      </p>
+                      <RichHtml html={draft.successCriteria} empty="" />
+                    </div>
                   ) : null}
                 </header>
                 <ol className="space-y-3">
@@ -642,14 +633,6 @@ export function LessonPlanPanel({
                 </ol>
               </article>
             </div>
-          ) : null}
-
-          {tab === 'print' ? (
-            <iframe
-              title="Print view"
-              className="h-full min-h-[480px] w-full border-0 bg-slate-100/80"
-              srcDoc={printHtml}
-            />
           ) : null}
         </div>
 
