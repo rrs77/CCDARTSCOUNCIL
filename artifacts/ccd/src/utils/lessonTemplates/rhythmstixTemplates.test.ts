@@ -11,6 +11,7 @@ import {
   rhythmstixPlanTemplate,
   templateFromDbRow,
   templateIdForYearGroup,
+  safeHexColour,
   withLessonTemplate,
 } from './rhythmstixTemplates.ts';
 
@@ -131,5 +132,22 @@ describe('starter sections and DB rows', () => {
     assert.equal(r?.name, 'KS1 edited');
     assert.equal(r?.accent, '#000000');
     assert.equal(r?.referenceHeading, 'Check understanding');
+  });
+});
+
+describe('accent validation', () => {
+  it('only lets 6-digit hex accents reach styles', () => {
+    assert.equal(safeHexColour('#1a2B3c', '#000000'), '#1a2B3c');
+    for (const bad of ['red', '#fff', '#12345678', '#C87835;background:url(x)', '</style><script>', 7, null]) {
+      assert.equal(safeHexColour(bad, '#C87835'), '#C87835');
+    }
+  });
+  it('falls back to the bundled accent for a bad DB config', () => {
+    const r = templateFromDbRow({ template_key: 'ks3', config: { accent: 'red;}</style><script>x</script>', tint: 'url(x)' } });
+    assert.equal(r?.accent, '#665A8C');
+    assert.equal(r?.tint, '#EFEDF5');
+    const html = renderRhythmstixHtml(buildRhythmstixDoc(lesson, { templateId: 'ks3', template: { ...r!, accent: 'x</style>' } }));
+    assert.doesNotMatch(html, /x<\/style>/);
+    assert.match(html, /--rx-accent:#665A8C/);
   });
 });

@@ -232,6 +232,13 @@ export function withLessonTemplate<T extends object>(lesson: T, id: RhythmstixTe
   return { ...lesson, lessonTemplateId: id };
 }
 
+const HEX_COLOUR = /^#[0-9A-Fa-f]{6}$/;
+
+/** A colour safe to put in a style: 6-digit hex, otherwise the fallback. */
+export function safeHexColour(value: unknown, fallback: string): string {
+  return typeof value === 'string' && HEX_COLOUR.test(value) ? value : fallback;
+}
+
 /** Normalise a DB row (lesson_plan_templates) into a template; null when invalid. */
 export function templateFromDbRow(row: any): RhythmstixTemplate | null {
   if (!row || !isRhythmstixTemplateId(row.template_key)) return null;
@@ -241,6 +248,8 @@ export function templateFromDbRow(row: any): RhythmstixTemplate | null {
     ...base,
     ...cfg,
     id: base.id,
+    accent: safeHexColour(cfg.accent, base.accent),
+    tint: safeHexColour(cfg.tint, base.tint),
     name: typeof row.name === 'string' && row.name ? row.name : base.name,
     description: typeof row.description === 'string' ? row.description : base.description,
     sortOrder: Number.isFinite(row.sort_order) ? row.sort_order : base.sortOrder,
@@ -468,6 +477,8 @@ export interface RenderOptions {
 /** Scoped CSS for the document. All text ≥ 13px. */
 export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string {
   const cssText = (v: string) => v.replace(/["\\<>{}]/g, '').toUpperCase();
+  const base = RHYTHMSTIX_TEMPLATES.find((b) => b.id === t.id) || RHYTHMSTIX_TEMPLATES[0];
+  t = { ...t, accent: safeHexColour(t.accent, base.accent), tint: safeHexColour(t.tint, base.tint) };
   return `
 .rx-doc{--rx-accent:${t.accent};--rx-tint:${t.tint};--rx-teal:#1F7A70;--rx-gold:#C9A227;
   font-family:Aptos,"Segoe UI",Calibri,Arial,sans-serif;color:#111;background:#fff;font-size:14px;line-height:1.45;width:100%;max-width:none;box-sizing:border-box}

@@ -29,8 +29,8 @@ CREATE OR REPLACE FUNCTION public.can_manage_lesson_plan_template(p_organisation
 RETURNS boolean
 LANGUAGE sql
 STABLE
-SECURITY DEFINER
-SET search_path = public
+SECURITY INVOKER
+SET search_path = public, pg_temp
 AS $$
   -- Shared defaults and (for now) org rows: super admins only.
   SELECT public.is_super_admin();
