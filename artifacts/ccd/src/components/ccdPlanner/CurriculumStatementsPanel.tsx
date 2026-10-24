@@ -178,14 +178,15 @@ export function CurriculumStatementsPanel({
   return (
     <div
       className={cn(
-        'flex h-full min-h-0 flex-col overflow-hidden rounded-3xl border border-slate-100 bg-white shadow-sm',
+        'flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[1.25rem] border border-indigo-100 bg-white',
         className,
       )}
+      data-testid="curriculum-statements-panel"
     >
       <div className="shrink-0 border-b border-indigo-50 px-4 py-3">
         <h4 className="text-sm font-extrabold text-slate-800">Curriculum statements</h4>
         <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-          Same data as Settings · tick to apply to this lesson
+          Edit here or in Settings · tick to apply to this lesson
         </p>
         <div className="mt-2 flex flex-wrap gap-1.5">
           <Button
@@ -225,7 +226,7 @@ export function CurriculumStatementsPanel({
             disabled={strands.length === 0}
           >
             <Plus className="h-3.5 w-3.5" />
-            Statement
+            Statement / objective
           </Button>
         </div>
       </div>
@@ -323,25 +324,32 @@ export function CurriculumStatementsPanel({
 
       <div className="soft-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
         {statements.length === 0 && frameworks.length === 0 ? (
-          <div className="rounded-2xl bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            <p className="font-semibold">Nothing set up yet.</p>
-            <p className="mt-1">
-              Add a framework, strand and statement here, or open{' '}
+          <div className="flex min-h-[12rem] flex-col justify-center rounded-2xl border border-dashed border-amber-200 bg-amber-50/80 px-4 py-6 text-sm text-amber-950">
+            <p className="text-base font-extrabold">Nothing set up yet.</p>
+            <p className="mt-2 leading-snug">
+              Add frameworks, strands and statements (objectives) right here — they sync with{' '}
               <a href="/settings/curriculum" className="font-bold underline">
                 Settings → Curriculum
               </a>
               .
             </p>
-            <Button
-              type="button"
-              variant="soft"
-              size="sm"
-              className="mt-3"
-              onClick={() => setForm({ kind: 'framework', name: '' })}
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Add framework
-            </Button>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="primary"
+                size="sm"
+                onClick={() => setForm({ kind: 'framework', name: '' })}
+              >
+                <Plus className="h-3.5 w-3.5" />
+                Add framework
+              </Button>
+              <a
+                href="/settings/curriculum"
+                className="inline-flex h-9 items-center rounded-full border border-amber-300 bg-white px-3 text-[12px] font-bold text-amber-950 hover:bg-amber-50"
+              >
+                Open Settings
+              </a>
+            </div>
           </div>
         ) : (
           <>

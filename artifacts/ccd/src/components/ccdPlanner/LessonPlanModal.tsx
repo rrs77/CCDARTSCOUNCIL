@@ -444,12 +444,12 @@ export function LessonPlanPanel({
         </div>
       </div>
 
-      {/* Body — Flesh out overlays; does not pad/squeeze curriculum column */}
+      {/* Body — Flesh out overlays; curriculum column fills height (not a small card) */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        <div className="soft-scroll min-h-0 flex-1 overflow-y-auto">
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           {tab === 'plan' ? (
-            <div className="grid min-h-[min(70vh,640px)] gap-4 p-5 lg:grid-cols-[1.15fr_0.85fr] lg:items-stretch">
-              <div className="min-h-0">
+            <div className="grid min-h-0 flex-1 gap-4 overflow-hidden p-4 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:items-stretch">
+              <div className="soft-scroll min-h-0 overflow-y-auto pr-1">
                 <h3 className="mb-2 text-sm font-extrabold text-slate-800">Lesson sequence</h3>
                 <label className="mb-3 block space-y-1">
                   <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
@@ -608,14 +608,14 @@ export function LessonPlanPanel({
                 </div>
               </div>
 
-              <div className="flex min-h-0 flex-col gap-3 lg:min-h-[min(70vh,640px)]">
+              <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
                 {aiPickedNote ? (
-                  <p className="rounded-xl bg-violet-50 px-3 py-2 text-[12px] font-semibold text-violet-800">
+                  <p className="shrink-0 rounded-xl bg-violet-50 px-3 py-2 text-[12px] font-semibold text-violet-800">
                     Picked by AI, edit as needed
                   </p>
                 ) : null}
                 <CurriculumStatementsPanel
-                  className="min-h-[280px] flex-1"
+                  className="min-h-0 w-full flex-1"
                   selectedIds={selectedIds}
                   onSelectedIdsChange={(next) => {
                     setAiPickedNote(false);
@@ -626,13 +626,13 @@ export function LessonPlanPanel({
                     });
                   }}
                 />
-                <div className="shrink-0 space-y-3">
-                  <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-                    <h4 className="mb-2 text-sm font-extrabold text-slate-800">
+                <div className="soft-scroll max-h-[28%] shrink-0 space-y-2 overflow-y-auto">
+                  <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                    <h4 className="mb-1.5 text-xs font-extrabold uppercase tracking-wide text-slate-500">
                       Learning objective
                     </h4>
                     <TextInput
-                      rows={3}
+                      rows={2}
                       aria-label="Learning objective"
                       value={draft.learningOutcome || ''}
                       onChange={(e) =>
@@ -640,12 +640,12 @@ export function LessonPlanPanel({
                       }
                     />
                   </div>
-                  <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-                    <h4 className="mb-2 text-sm font-extrabold text-slate-800">
+                  <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
+                    <h4 className="mb-1.5 text-xs font-extrabold uppercase tracking-wide text-slate-500">
                       Success criteria
                     </h4>
                     <TextInput
-                      rows={4}
+                      rows={2}
                       aria-label="Success criteria"
                       value={draft.successCriteria || ''}
                       onChange={(e) =>
@@ -659,7 +659,7 @@ export function LessonPlanPanel({
           ) : null}
 
           {tab === 'preview' || tab === 'print' ? (
-            <div className="soft-scroll flex-1 overflow-y-auto p-6">
+            <div className="soft-scroll min-h-0 flex-1 overflow-y-auto p-6">
               <article
                 className="mx-auto max-w-2xl space-y-4"
                 data-lesson-plan-print={tab === 'print' ? 'true' : undefined}
