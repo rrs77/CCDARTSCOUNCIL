@@ -94,6 +94,78 @@ export function optionsResponse(request = null) {
   return new Response(null, { status: 204, headers: corsHeaders({}, request) });
 }
 
+/**
+ * Same-origin relative return path only (share / download post-login).
+ * Rejects absolute, protocol-relative, and scheme URLs.
+ */
+export function safeInAppReturnPath(raw) {
+  if (typeof raw !== 'string') return null;
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith('/')) return null;
+  if (trimmed.startsWith('//')) return null;
+  if (/^[a-zA-Z][a-zA-Z+\-.]*:/.test(trimmed)) return null;
+  if (trimmed.includes('\\')) return null;
+  let decoded = trimmed;
+  try {
+    decoded = decodeURIComponent(trimmed);
+  } catch {
+    /* keep trimmed */
+  }
+  if (!decoded.startsWith('/') || decoded.startsWith('//')) return null;
+  if (/^[a-zA-Z][a-zA-Z+\-.]*:/.test(decoded)) return null;
+  return trimmed.split('#')[0] || null;
+}
+
+/** App sign-in URL that returns to an in-app path after auth (no share tokens). */
+export function buildSignInRedirectLocation(returnPath) {
+  const safe = safeInAppReturnPath(returnPath) || '/';
+  const params = new URLSearchParams();
+  params.set('return', safe);
+  params.set('signin', '1');
+  return `/?${params.toString()}`;
+}
+
+/**
+ * Browser navigation vs API client. Used so unauthenticated share opens
+ * redirect to sign-in instead of a bare JSON 401.
+ */
+export function prefersHtmlNavigation(request) {
+  if (!request?.headers?.get) return false;
+  const mode = (request.headers.get('sec-fetch-mode') || '').toLowerCase();
+  if (mode === 'navigate' || mode === 'nested-navigate') return true;
+  const accept = (request.headers.get('accept') || '').toLowerCase();
+  if (!accept) return false;
+  if (accept.includes('application/json') && !accept.includes('text/html')) {
+    return false;
+  }
+  return accept.includes('text/html');
+}
+
+/**
+ * Decision 2 — share links are signed-in users only (no anonymous / public
+ * share tokens). Unauthenticated HTML navigations redirect to sign-in with
+ * return= the file path; API clients get 401.
+ */
+export function unauthenticatedFileShareResponse(request, filePath) {
+  const safePath = safeInAppReturnPath(filePath);
+  if (prefersHtmlNavigation(request) && safePath) {
+    return new Response(null, {
+      status: 302,
+      headers: {
+        Location: buildSignInRedirectLocation(safePath),
+        'Cache-Control': 'private, no-store',
+        ...corsHeaders({}, request),
+      },
+    });
+  }
+  return jsonResponse(
+    { error: 'Unauthorized. Sign in required to open this shared file.' },
+    401,
+    {},
+    request,
+  );
+}
+
 export function getSupabaseUrl() {
   return (
     process.env.SUPABASE_URL ||

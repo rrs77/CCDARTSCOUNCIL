@@ -31,9 +31,17 @@ function listDeployableFunctions(dir, acc = []) {
   return acc;
 }
 
-async function routed(method, route, extraSearch = '') {
+async function routed(method, route, extraSearchOrOptions = '') {
+  const options =
+    typeof extraSearchOrOptions === 'string'
+      ? { extraSearch: extraSearchOrOptions }
+      : extraSearchOrOptions || {};
+  const extraSearch = options.extraSearch || '';
   const url = `https://ccd.example/api/router?__route=${route}${extraSearch}`;
-  const request = new Request(url, { method });
+  const request = new Request(url, {
+    method,
+    headers: options.headers,
+  });
   const fn = method === 'POST' ? POST : method === 'OPTIONS' ? OPTIONS : GET;
   return fn(request);
 }
@@ -184,5 +192,35 @@ describe('DreamHost file routes', () => {
     );
     assert.notEqual(status, 404, JSON.stringify(body));
     assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('rejects unauthenticated file share with 401 (decision 2)', async () => {
+    const res = await routed(
+      'GET',
+      'files/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002.pdf',
+      { headers: { Accept: 'application/json' } },
+    );
+    const { status, body } = await jsonStatus(res);
+    assert.equal(status, 401, JSON.stringify(body));
+    assert.match(String(body.error || ''), /sign in/i);
+  });
+
+  it('redirects unauthenticated HTML file share to sign-in', async () => {
+    const res = await routed(
+      'GET',
+      'files/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002.pdf',
+      {
+        headers: {
+          Accept: 'text/html',
+          'Sec-Fetch-Mode': 'navigate',
+        },
+      },
+    );
+    assert.equal(res.status, 302);
+    const loc = res.headers.get('Location') || '';
+    assert.equal(loc.startsWith('/?'), true);
+    const params = new URLSearchParams(loc.slice(2));
+    assert.equal(params.get('signin'), '1');
+    assert.match(params.get('return') || '', /^\/api\/files\//);
   });
 });

@@ -1,8 +1,12 @@
 /**
  * GET /api/files/:userId/:uuid.pdf
  * Authenticated proxy for DreamHost-stored files.
- * Allows Bearer header or ?access_token= (download/open in new tab).
- * Access: visibility-aware (org / private / licensed) via userMayAccessStoredFile.
+ *
+ * Decision 2 — signed-in users only (no anonymous / public share tokens).
+ * Requires requireAuth (aud + role 'authenticated'): Bearer or live session
+ * ?access_token= for top-level navigations after sign-in. Then visibility
+ * checks (org / private / licensed). Unauthenticated HTML navigations
+ * redirect to sign-in with return= this path.
  */
 
 import {
@@ -11,6 +15,7 @@ import {
   jsonResponse,
   optionsResponse,
   requireAuth,
+  unauthenticatedFileShareResponse,
 } from '../../../api/_authShared.js';
 import {
   fetchFromDreamHost,
@@ -57,9 +62,11 @@ export async function GET(request, context) {
     });
     if (!limited.ok) return limited.response;
 
-    // L1: query token allowed only on this file proxy (+ resource download).
+    // Session JWT only (header or query after sign-in). No dedicated share tokens.
     const auth = await requireAuth(request, { allowQuery: true });
-    if (!auth.ok) return auth.response;
+    if (!auth.ok) {
+      return unauthenticatedFileShareResponse(request, `/api/files/${storagePath}`);
+    }
 
     const allowed = await userMayAccessStoredFile(auth.userId, storagePath);
     if (!allowed) {

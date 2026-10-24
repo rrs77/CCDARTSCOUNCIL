@@ -101,6 +101,13 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     }
     const current = `${window.location.pathname}${window.location.search}`;
     if (shouldNavigateToReturn(ret, current) && ret) {
+      // Decision 2: shared file links need a live session token on navigation.
+      if (ret.startsWith('/api/files/')) {
+        void import('./utils/fileShareAccess').then(({ openAuthenticatedFileShare }) =>
+          openAuthenticatedFileShare(ret),
+        );
+        return;
+      }
       window.history.replaceState({}, '', ret);
       window.dispatchEvent(new PopStateEvent('popstate'));
       if (isForumPath(ret.split('?')[0] || '')) {
