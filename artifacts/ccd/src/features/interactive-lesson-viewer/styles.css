@@ -464,6 +464,7 @@
 }
 
 .ilv-scene-clip {
+  position: relative;
   flex: 0 0 auto;
   width: 112px;
   border: 1px solid var(--ss-line);
@@ -737,7 +738,9 @@
   bottom: 0;
   width: 2px;
   background: var(--ss-indigo);
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: ew-resize;
+  touch-action: none;
   z-index: 3;
 }
 .ilv-playhead::before {
@@ -2083,6 +2086,136 @@
 .ilv-timeline-splitter:focus-visible .ilv-timeline-splitter-grip {
   background: var(--ss-indigo);
   opacity: 1;
+}
+.ilv-timeline-splitter:focus-visible {
+  box-shadow: inset 0 0 0 2px var(--ss-indigo);
+}
+
+/* Cloud / device file sources (reuses planner providers) */
+.ilv-cloud-files {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  margin-top: 0.35rem;
+}
+.ilv-cloud-files-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--ss-muted);
+}
+.ilv-cloud-files-hint {
+  margin: 0;
+  font-size: 0.72rem;
+  color: var(--ss-muted);
+  line-height: 1.35;
+}
+.ilv-cloud-files-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+}
+.ilv-cloud-files-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  min-height: 30px;
+  padding: 0.25rem 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--ss-line);
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--ss-ink);
+  cursor: pointer;
+}
+.ilv-cloud-files-btn:hover:not(:disabled) {
+  background: var(--ss-lilac);
+}
+.ilv-cloud-files-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+.ilv-cloud-files-btn.is-disconnected {
+  border-style: dashed;
+  color: var(--ss-muted);
+}
+.ilv-cloud-files-nc {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 0.62rem;
+  color: var(--ss-muted);
+  opacity: 0.9;
+}
+.ilv-cloud-files-status,
+.ilv-cloud-files-error {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  margin: 0;
+  font-size: 0.72rem;
+}
+.ilv-cloud-files-error {
+  color: #b91c1c;
+}
+.ilv-cloud-classroom {
+  margin-top: 0.35rem;
+  padding: 0.55rem;
+  border: 1px solid var(--ss-line);
+  border-radius: 12px;
+  background: var(--ss-lilac);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+.ilv-cloud-classroom-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 160px;
+  overflow: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+.ilv-cloud-classroom-item {
+  width: 100%;
+  text-align: left;
+  padding: 0.4rem 0.5rem;
+  border-radius: 8px;
+  border: 1px solid var(--ss-line);
+  background: #fff;
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+.ilv-cloud-classroom-item:hover:not(:disabled) {
+  background: var(--ss-softindigo);
+}
+
+.ilv-scene-dur-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 8px;
+  z-index: 3;
+  cursor: ew-resize;
+  background: transparent;
+  border: 0;
+  padding: 0;
+}
+.ilv-scene-dur-handle.is-right {
+  right: -2px;
+}
+.ilv-scene-dur-handle:hover,
+.ilv-scene-dur-handle:focus-visible {
+  background: rgba(67, 56, 232, 0.35);
+  outline: none;
 }
 
 .ilv-timeline {

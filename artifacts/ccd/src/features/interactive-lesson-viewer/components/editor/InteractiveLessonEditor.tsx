@@ -64,6 +64,8 @@ import { InsertShapeMenu } from './InsertShapeMenu';
 import { TransitionMarker } from './TransitionMarker';
 import { FreeMediaPanel, FREE_MEDIA_MIME } from './FreeMediaPanel';
 import { SceneBackgroundPanel } from './SceneBackgroundPanel';
+import { IlvCloudFilesPanel } from './IlvCloudFilesPanel';
+import type { ImportedIlvMedia } from '../../utils/ilvCloudImport';
 import { InteractiveLessonPlayer } from '../player/InteractiveLessonPlayer';
 import { saveInteractiveLesson } from '../../data/store';
 import { SceneThumb } from './SceneThumb';
@@ -253,7 +255,7 @@ export function InteractiveLessonEditor({
       if (!scene) return;
       const nextScene = typeof patch === 'function' ? patch(scene) : { ...scene, ...patch };
       const scenes = lesson.scenes.map((s, i) => (i === sceneIndex ? nextScene : s));
-      const maxLocal = Math.max(0, nextScene.durationMs || 0);
+      const maxLocal = sceneLayoutMs(nextScene);
       if (sceneTimeMs > maxLocal) setSceneTimeMs(maxLocal);
       pushHistory({ ...lesson, scenes });
     },
@@ -278,16 +280,22 @@ export function InteractiveLessonEditor({
 
   useEffect(() => {
     if (!playing || !scene) return;
+    // Manual scenes don't auto-advance; timer/media use clock duration.
+    const clock = sceneClockMs(scene);
+    if (clock <= 0) {
+      setPlaying(false);
+      return;
+    }
     const started = performance.now() - sceneTimeMs;
     let raf = 0;
     const tick = (now: number) => {
       const t = now - started;
-      if (t >= scene.durationMs) {
+      if (t >= clock) {
         if (sceneIndex < lesson.scenes.length - 1) {
           setSceneIndex((i) => i + 1);
           setSceneTimeMs(0);
         } else {
-          setSceneTimeMs(scene.durationMs);
+          setSceneTimeMs(clock);
           setPlaying(false);
         }
         return;
@@ -793,7 +801,7 @@ export function InteractiveLessonEditor({
   // Layout clock for audio track + playhead alignment on the scene strip.
   const clampedLocalMs = Math.min(
     Math.max(0, sceneTimeMs),
-    scene ? Math.max(0, scene.durationMs || 0) : 0,
+    scene ? sceneLayoutMs(scene) : 0,
   );
   const absoluteMs = Math.min(
     absoluteLayoutMs(lesson, sceneIndex, clampedLocalMs),
@@ -867,13 +875,83 @@ export function InteractiveLessonEditor({
       const end = start + dur;
       if (clamped < end || i === lesson.scenes.length - 1) {
         const local = Math.max(0, clamped - start);
-        const maxLocal = Math.max(0, lesson.scenes[i].durationMs || 0);
         setSceneIndex(i);
-        setSceneTimeMs(Math.min(local, maxLocal || local));
+        setSceneTimeMs(Math.min(local, dur));
         return;
       }
     }
   };
+
+  const applyImportedMedia = useCallback(
+    (media: ImportedIlvMedia) => {
+      if (media.kind === 'image') {
+        insertStageImage(media.url, {
+          name: media.name,
+          cloudProvider: media.provider,
+          sourceUrl: media.sourceUrl,
+        });
+        return;
+      }
+      const sceneType = uploadKindToSceneType(media.kind);
+      const item: MediaLibraryItem = {
+        id: createId('media'),
+        name: media.name,
+        kind: media.kind === 'upload' ? 'upload' : sceneType,
+        url: media.url,
+        addedAt: new Date().toISOString(),
+        cloudProvider: media.provider,
+        sourceUrl: media.sourceUrl,
+      };
+      let nextLesson: InteractiveLesson = {
+        ...lesson,
+        mediaLibrary: [...lesson.mediaLibrary, item],
+      };
+      if (media.kind === 'audio') {
+        const { starts } = sceneLayoutOffsets(lesson.scenes);
+        const startMs = starts[sceneIndex] || 0;
+        nextLesson = {
+          ...nextLesson,
+          audioClips: [
+            ...(nextLesson.audioClips || []),
+            {
+              id: createId('clip'),
+              lane: 'music',
+              name: media.name,
+              mediaUrl: media.url,
+              mediaId: item.id,
+              startMs,
+              durationMs: 8000,
+              fadeInMs: 400,
+              fadeOutMs: 600,
+              volume: 0.85,
+              loop: true,
+            },
+          ],
+        };
+        setToast({ message: `Added “${media.name}” to Music lane` });
+        setRail('audio');
+      } else if (media.kind === 'video' || media.kind === 'powerpoint') {
+        const patched = nextLesson.scenes.map((s, i) =>
+          i === sceneIndex
+            ? {
+                ...s,
+                type: sceneType,
+                advanceMode: s.advanceMode || defaultAdvanceMode(sceneType),
+                ...(media.kind === 'powerpoint'
+                  ? { embedUrl: media.url }
+                  : { mediaUrl: media.url }),
+              }
+            : s,
+        );
+        nextLesson = { ...nextLesson, scenes: patched };
+        setToast({ message: `Applied “${media.name}” to scene` });
+      } else {
+        setToast({ message: `Added “${media.name}” to library` });
+      }
+      pushHistory(nextLesson);
+    },
+    [insertStageImage, lesson, pushHistory, sceneIndex],
+  );
 
   const transitionClass = (type: string) => {
     switch (type) {
@@ -1153,6 +1231,7 @@ export function InteractiveLessonEditor({
               onInsertUrl={(url, meta) => insertStageImage(url, meta)}
               onOpenFreeMedia={() => setRail('freemedia')}
               onOpenLibraryRail={() => setRail('uploads')}
+              onCloudImported={applyImportedMedia}
             />
             <InsertShapeMenu
               open={shapeMenuOpen}
@@ -1673,8 +1752,24 @@ export function InteractiveLessonEditor({
                       'Paste a Google Slides share or edit link (Anyone with the link). We convert it to the classroom embed URL.'}
                     {rail === 'embed' && 'Paste any allow-listed embed URL.'}
                     {(rail === 'video' || rail === 'audio' || rail === 'image' || rail === 'uploads') &&
-                      'Add a media URL. YouTube links pasted into Video are auto-detected. Demo and local files work now.'}
+                      'Add files from your device or connected cloud providers, or paste a media URL. YouTube links in Video are auto-detected.'}
                   </p>
+                  {(rail === 'video' || rail === 'audio' || rail === 'image' || rail === 'uploads') && (
+                    <IlvCloudFilesPanel
+                      lessonId={lesson.id}
+                      acceptKinds={
+                        rail === 'image'
+                          ? ['image']
+                          : rail === 'audio'
+                            ? ['audio']
+                            : rail === 'video'
+                              ? ['video', 'upload']
+                              : undefined
+                      }
+                      targetHint="Providers that aren’t set up show “not connected”."
+                      onImported={applyImportedMedia}
+                    />
+                  )}
                   <label className="ilv-label">
                     {rail === 'youtube'
                       ? 'YouTube URL'
@@ -1848,10 +1943,12 @@ export function InteractiveLessonEditor({
         aria-valuenow={timelineHeight}
         aria-valuemin={TIMELINE_H_MIN}
         aria-valuemax={TIMELINE_H_MAX}
+        aria-valuetext={`${timelineHeight} pixels`}
         aria-label="Resize timeline"
         tabIndex={0}
         onPointerDown={(e) => {
           e.preventDefault();
+          (e.currentTarget as HTMLElement).setPointerCapture?.(e.pointerId);
           const startY = e.clientY;
           const startH = timelineHeight;
           const move = (ev: PointerEvent) => {
@@ -1982,11 +2079,61 @@ export function InteractiveLessonEditor({
           >
             <div
               className="ilv-playhead"
+              role="slider"
+              tabIndex={0}
+              aria-label="Playhead"
+              aria-valuemin={0}
+              aria-valuemax={Math.max(0, layoutTotal)}
+              aria-valuenow={Math.round(absoluteMs)}
+              aria-valuetext={formatTimecode(absoluteMs)}
               style={{
                 left:
                   layoutTotal > 0
                     ? `${Math.min(100, Math.max(0, (absoluteMs / layoutTotal) * 100))}%`
                     : 0,
+              }}
+              onPointerDown={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                const track = e.currentTarget.parentElement;
+                if (!track) return;
+                const scrub = (clientX: number) => {
+                  const rect = track.getBoundingClientRect();
+                  const ratio = Math.max(
+                    0,
+                    Math.min(1, (clientX - rect.left + track.scrollLeft) / Math.max(track.scrollWidth, 1)),
+                  );
+                  seekLessonMs(ratio * layoutTotal);
+                  setPlaying(false);
+                };
+                scrub(e.clientX);
+                const move = (ev: PointerEvent) => scrub(ev.clientX);
+                const up = () => {
+                  window.removeEventListener('pointermove', move);
+                  window.removeEventListener('pointerup', up);
+                };
+                window.addEventListener('pointermove', move);
+                window.addEventListener('pointerup', up);
+              }}
+              onKeyDown={(e) => {
+                const step = e.shiftKey ? 1000 : 100;
+                if (e.key === 'ArrowLeft') {
+                  e.preventDefault();
+                  seekLessonMs(absoluteMs - step);
+                  setPlaying(false);
+                } else if (e.key === 'ArrowRight') {
+                  e.preventDefault();
+                  seekLessonMs(absoluteMs + step);
+                  setPlaying(false);
+                } else if (e.key === 'Home') {
+                  e.preventDefault();
+                  seekLessonMs(0);
+                  setPlaying(false);
+                } else if (e.key === 'End') {
+                  e.preventDefault();
+                  seekLessonMs(layoutTotal);
+                  setPlaying(false);
+                }
               }}
             />
             {lesson.scenes.length === 0 ? (
@@ -2030,7 +2177,8 @@ export function InteractiveLessonEditor({
                     scene={sc}
                     index={i}
                     active={i === sceneIndex}
-                    width={clipWidth}
+                    width={Math.max(72, sceneLayoutMs(sc) * pxPerMs)}
+                    pxPerMs={pxPerMs}
                     canMoveLeft={i > 0}
                     canMoveRight={i < lesson.scenes.length - 1}
                     onSelect={() => {
@@ -2046,6 +2194,22 @@ export function InteractiveLessonEditor({
                     onDuplicate={() => duplicateSceneAt(i)}
                     onMoveLeft={() => reorderScene(i, i - 1)}
                     onMoveRight={() => reorderScene(i, i + 1)}
+                    onResizeDuration={(nextDurationMs) => {
+                      const scenes = lesson.scenes.map((s, idx) =>
+                        idx === i
+                          ? {
+                              ...s,
+                              durationMs: nextDurationMs,
+                              advanceMode: resolveAdvanceMode(s) === 'manual' ? 'timer' : s.advanceMode,
+                              advanceAfterMs:
+                                resolveAdvanceMode(s) === 'timer' || resolveAdvanceMode(s) === 'manual'
+                                  ? nextDurationMs
+                                  : s.advanceAfterMs,
+                            }
+                          : s,
+                      );
+                      pushHistory({ ...lesson, scenes });
+                    }}
                     onSetAdvance={(mode) => {
                       setSceneIndex(i);
                       const scenes = lesson.scenes.map((s, idx) =>

@@ -8,6 +8,8 @@ import {
   uploadInteractiveLessonMedia,
   type UploadProgress,
 } from '../../utils/mediaUpload';
+import { IlvCloudFilesPanel } from './IlvCloudFilesPanel';
+import type { ImportedIlvMedia } from '../../utils/ilvCloudImport';
 
 interface InsertImageMenuProps {
   open: boolean;
@@ -28,6 +30,8 @@ interface InsertImageMenuProps {
   onInsertUrl: (url: string, meta?: { name?: string; sourceUrl?: string; cloudProvider?: string }) => void;
   onOpenFreeMedia: () => void;
   onOpenLibraryRail: () => void;
+  /** Cloud / device import via lesson-attachment pickers (preferred for Drive, Dropbox, …). */
+  onCloudImported?: (media: ImportedIlvMedia) => void;
 }
 
 /** Portaled insert-image picker — Upload from computer first. */
@@ -42,6 +46,7 @@ export function InsertImageMenu({
   onInsertUrl,
   onOpenFreeMedia,
   onOpenLibraryRail,
+  onCloudImported,
 }: InsertImageMenuProps) {
   const [url, setUrl] = useState('');
   const [hint, setHint] = useState('');
@@ -146,6 +151,21 @@ export function InsertImageMenu({
           <div className="ilv-upload-progress" role="progressbar" aria-valuenow={progress.percent} aria-valuemin={0} aria-valuemax={100}>
             <div className="ilv-upload-progress-bar" style={{ width: `${progress.percent}%` }} />
             <span>{progress.percent}%</span>
+          </div>
+        )}
+
+        {onCloudImported && (
+          <div className="ilv-insert-menu-block">
+            <IlvCloudFilesPanel
+              lessonId={lessonId}
+              compact
+              acceptKinds={['image', 'video', 'audio', 'powerpoint', 'upload']}
+              targetHint="Device, Dropbox, Drive, Box, OneDrive, Teams, Classroom"
+              onImported={(media) => {
+                onCloudImported(media);
+                onClose();
+              }}
+            />
           </div>
         )}
 
