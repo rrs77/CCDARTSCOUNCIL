@@ -57,9 +57,8 @@ export async function GET(request, context) {
     });
     if (!limited.ok) return limited.response;
 
-    // Auth: Bearer header, or ?access_token= (needed for new-tab open).
-    // L1 narrows query-token acceptance to this proxy + resource download only.
-    const auth = await requireAuth(request);
+    // L1: query token allowed only on this file proxy (+ resource download).
+    const auth = await requireAuth(request, { allowQuery: true });
     if (!auth.ok) return auth.response;
 
     const allowed = await userMayAccessStoredFile(auth.userId, storagePath);

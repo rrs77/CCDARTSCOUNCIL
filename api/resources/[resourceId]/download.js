@@ -40,7 +40,8 @@ export async function GET(request, context) {
     const limited = assertRateLimit(`dl:${ip}:${resourceId}`, { limit: 60, windowMs: 60_000 });
     if (!limited.ok) return limited.response;
 
-    const auth = await requireAuth(request);
+    // L1: query token allowed only on this download redirect (+ file proxy).
+    const auth = await requireAuth(request, { allowQuery: true });
     if (!auth.ok) return auth.response;
 
     const profile = await loadProfile(auth.userId);

@@ -175,11 +175,17 @@ async function verifyHs256(token, secret) {
 
 /**
  * Extract Bearer token from Authorization header.
+ * Query-string `?access_token=` is opt-in (file download / proxy only) so tokens
+ * are not leaked via Referer on ordinary API calls.
+ *
+ * @param {Request} request
+ * @param {{ allowQuery?: boolean }} [options]
  */
-export function getBearerToken(request) {
+export function getBearerToken(request, { allowQuery = false } = {}) {
   const authHeader = request.headers.get('authorization') || '';
   const fromHeader = authHeader.replace(/^Bearer\s+/i, '').trim();
   if (fromHeader) return fromHeader;
+  if (!allowQuery) return '';
   try {
     const url = new URL(request.url);
     const q = url.searchParams.get('access_token');
@@ -194,10 +200,13 @@ export function getBearerToken(request) {
  * Verify Supabase JWT. Prefer SUPABASE_JWT_SECRET (HS256).
  * Falls back to getUser via service role when secret is unset (dev / misconfig).
  *
+ * @param {Request} request
+ * @param {{ allowQuery?: boolean }} [options] pass allowQuery:true only for
+ *   download/proxy routes that must open via window.location.
  * @returns {Promise<{ ok: true, userId: string, email?: string, token: string, claims: object } | { ok: false, response: Response }>}
  */
-export async function requireAuth(request) {
-  const token = getBearerToken(request);
+export async function requireAuth(request, options = {}) {
+  const token = getBearerToken(request, options);
   if (!token) {
     return { ok: false, response: jsonResponse({ error: 'Unauthorized. Sign in required.' }, 401) };
   }
