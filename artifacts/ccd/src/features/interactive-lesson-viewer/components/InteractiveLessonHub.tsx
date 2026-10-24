@@ -12,6 +12,7 @@ import {
   Trash2,
   Youtube,
   Eye,
+  Copy,
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useCanEditInteractiveLessons } from '../hooks/useCanEditInteractiveLessons';
@@ -23,6 +24,7 @@ import {
   saveInteractiveLesson,
 } from '../data/store';
 import { buildDemoInteractiveLesson } from '../data/demoLesson';
+import { isBuiltInDemo } from '../data/demoGuard';
 import type { InteractiveLesson, InteractiveLessonSummary, SlidesLibraryTab } from '../types';
 import { createId, emptyScene } from '../types';
 import { InteractiveLessonEditor } from './editor/InteractiveLessonEditor';
@@ -228,9 +230,11 @@ export function InteractiveLessonHub() {
       setError('Slides not found');
       return;
     }
-    if (lesson.isDemo || lesson.ownerId !== userId) {
+    if (isBuiltInDemo(lesson) || lesson.ownerId !== userId) {
+      const fromDemo = isBuiltInDemo(lesson) || Boolean(lesson.derivedFromDemo);
       const copy: InteractiveLesson = {
         ...structuredClone(lesson),
+        ...(fromDemo ? { source: 'user' as const, derivedFromDemo: true, tags: lesson.tags } : {}),
         id: createId('ilv'),
         title: `${lesson.title} (copy)`,
         ownerId: userId,
@@ -348,7 +352,8 @@ export function InteractiveLessonHub() {
       ) : (
         <div className="ilv-hub-grid">
           {items.map((item) => {
-            const canDelete = canEdit && !item.isDemo && item.ownerId === userId;
+            const builtIn = isBuiltInDemo(item);
+            const canDelete = canEdit && !builtIn && item.ownerId === userId;
             return (
               <article key={item.id} className="ilv-lesson-tile">
                 <button
@@ -384,7 +389,14 @@ export function InteractiveLessonHub() {
                       {item.status}
                     </span>
                     <span className="ilv-chip">{item.sceneCount} scenes</span>
-                    {item.isDemo && <span className="ilv-chip ilv-chip-sun">Demo</span>}
+                    {builtIn && (
+                      <span
+                        className="ilv-chip ilv-chip-sun text-[13px]"
+                        title="Built-in demo for every user. It can’t be deleted or edited — make a copy to change it."
+                      >
+                        Built-in demo
+                      </span>
+                    )}
                     <span className="ilv-lesson-tile-edited">{formatRelativeEdited(item.updatedAt)}</span>
                   </div>
 
@@ -403,8 +415,8 @@ export function InteractiveLessonHub() {
                         className="ilv-btn ilv-btn-secondary"
                         onClick={() => void openEditor(item.id)}
                       >
-                        <Pencil className="h-4 w-4" />
-                        Edit
+                        {builtIn ? <Copy className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                        {builtIn ? 'Make a copy' : 'Edit'}
                       </button>
                     ) : (
                       <span className="inline-flex items-center gap-1 px-2 text-[12px] text-[var(--ss-muted)]">

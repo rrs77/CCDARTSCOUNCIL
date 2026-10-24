@@ -610,7 +610,14 @@ export function InteractiveLessonEditor({
 
   const publish = async (status: 'draft' | 'published') => {
     setSaving(true);
-    const next = await saveInteractiveLesson({ ...lesson, status });
+    let next: InteractiveLesson;
+    try {
+      next = await saveInteractiveLesson({ ...lesson, status });
+    } catch (err) {
+      setSaving(false);
+      setSaveMsg(err instanceof Error ? err.message : 'Could not save these slides.');
+      return;
+    }
     onChange(next);
     setSaving(false);
     setSaveMsg(status === 'published' ? 'Published — available to teachers in lessons.' : 'Saved as draft.');

@@ -525,6 +525,8 @@ export interface InteractiveLesson {
   createdAt: string;
   updatedAt: string;
   isDemo?: boolean;
+  /** Copied from the built-in demo: the intro sting stays as scene 1. */
+  derivedFromDemo?: boolean;
   /** Library provenance — user-created, partner hub pack, or shipped demo. */
   source?: InteractiveLessonSource;
   /** Partner hub slug when source === 'hub'. */

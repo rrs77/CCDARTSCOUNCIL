@@ -1,6 +1,12 @@
 import { supabase, isSupabaseAuthEnabled } from '../../../config/supabase';
 import { isAuthorizedDemoMode, isDemoModeActive } from '../../../utils/demoMode';
 import { buildDemoInteractiveLesson } from './demoLesson';
+import {
+  DEMO_INTRO_SCENE_ID,
+  ensureDemoIntro,
+  isBuiltInDemo,
+  isBuiltInDemoId,
+} from './demoGuard';
 import { buildHubSlidesDecks } from './hubDecks';
 import type {
   InteractiveLesson,
@@ -61,16 +67,35 @@ function writeLibraryLinks(userId: string, ids: string[]) {
   }
 }
 
-function ensureDemo(lessons: InteractiveLesson[], ownerId: string): InteractiveLesson[] {
-  const demo = {
-    ...buildDemoInteractiveLesson(ownerId),
-    source: 'demo' as const,
-    tags: ['demo', 'lyric-videos', 'youtube', 'canva'],
-    subject: 'Performing arts',
-  };
-  const withoutStaleDemo = lessons.filter(
-    (l) => l.id !== 'demo-interactive-lesson' && !l.isDemo,
+function canonicalIntroScene(): InteractiveLesson['scenes'][number] {
+  const intro = buildDemoInteractiveLesson().scenes.find((s) => s.id === DEMO_INTRO_SCENE_ID);
+  if (!intro) throw new Error('[ILV] built-in demo is missing its intro sting');
+  return intro;
+}
+
+/** The built-in demo, rebuilt from code every time, with the sting forced to scene 1. */
+function builtInDemo(ownerId = 'system-demo'): InteractiveLesson {
+  return ensureDemoIntro(
+    {
+      ...buildDemoInteractiveLesson(ownerId),
+      source: 'demo' as const,
+      tags: ['demo', 'lyric-videos', 'youtube', 'canva'],
+      subject: 'Performing arts',
+    },
+    canonicalIntroScene(),
   );
+}
+
+/** Copies of the demo keep the sting as scene 1, even if a stored copy lost it. */
+function guardDerived(lesson: InteractiveLesson): InteractiveLesson {
+  return lesson.derivedFromDemo ? ensureDemoIntro(lesson, canonicalIntroScene()) : lesson;
+}
+
+function ensureDemo(lessons: InteractiveLesson[], ownerId: string): InteractiveLesson[] {
+  const demo = builtInDemo(ownerId);
+  const withoutStaleDemo = lessons
+    .filter((l) => !isBuiltInDemo(l))
+    .map(guardDerived);
   // Always refresh the shipped demo so preview works without the Supabase migration.
   return [demo, ...withoutStaleDemo];
 }
@@ -141,6 +166,7 @@ function rowToLesson(row: Record<string, unknown>): InteractiveLesson {
     createdAt: String(row.created_at || data.createdAt || new Date().toISOString()),
     updatedAt: String(row.updated_at || data.updatedAt || new Date().toISOString()),
     isDemo: Boolean(data.isDemo),
+    derivedFromDemo: Boolean(data.derivedFromDemo),
     source:
       (row.source as InteractiveLesson['source']) ||
       data.source ||
@@ -187,7 +213,11 @@ export async function listInteractiveLessons(opts: {
       const { data, error } = await query;
       // Missing table / RLS (migration not applied) → stay on localStorage demo.
       if (!error && data) {
-        remote = data.map((r) => rowToLesson(r as Record<string, unknown>));
+        // A stored row can never replace the built-in demo.
+        remote = data
+          .map((r) => rowToLesson(r as Record<string, unknown>))
+          .filter((l) => !isBuiltInDemo(l))
+          .map(guardDerived);
       } else if (error) {
         console.warn('[ILV] remote list skipped (using local/demo):', error.message);
       }
@@ -278,14 +308,9 @@ export function linkHubSlidesToLibrary(userId: string, interactiveLessonId: stri
 
 export async function getInteractiveLesson(id: string): Promise<InteractiveLesson | null> {
   // Always rebuild the shipped demo so preview content stays polished (no stale placeholders).
-  if (id === 'demo-interactive-lesson') {
-    const demo = {
-      ...buildDemoInteractiveLesson(),
-      source: 'demo' as const,
-      tags: ['demo', 'lyric-videos', 'youtube', 'canva'],
-      subject: 'Performing arts',
-    };
-    const rest = readLocal().filter((l) => l.id !== id && !l.isDemo);
+  if (isBuiltInDemoId(id)) {
+    const demo = builtInDemo();
+    const rest = readLocal().filter((l) => !isBuiltInDemo(l));
     writeLocal(ensureHubDecks([demo, ...rest]));
     return demo;
   }
@@ -303,7 +328,10 @@ export async function getInteractiveLesson(id: string): Promise<InteractiveLesso
   if (useRemoteSync()) {
     try {
       const { data, error } = await supabase.from(TABLE).select('*').eq('id', id).maybeSingle();
-      if (!error && data) return rowToLesson(data as Record<string, unknown>);
+      if (!error && data) {
+        const row = rowToLesson(data as Record<string, unknown>);
+        if (!isBuiltInDemo(row)) return guardDerived(row);
+      }
     } catch (err) {
       console.warn('[ILV] get remote failed', err);
     }
@@ -338,9 +366,18 @@ export async function getPublishedInteractiveLessonForPlayer(
   return { lesson: null, reason: 'unpublished' };
 }
 
+export class BuiltInDemoLockedError extends Error {
+  constructor() {
+    super('The built-in demo can’t be edited, saved over or deleted. Make a copy to change it.');
+    this.name = 'BuiltInDemoLockedError';
+  }
+}
+
 export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<InteractiveLesson> {
+  // Built-in demo is read-only for everyone; also blocks overwriting its id with a copy.
+  if (isBuiltInDemo(lesson)) throw new BuiltInDemoLockedError();
   const next: InteractiveLesson = {
-    ...lesson,
+    ...guardDerived(lesson),
     source: lesson.source || (lesson.isDemo ? 'demo' : lesson.hubId ? 'hub' : 'user'),
     updatedAt: new Date().toISOString(),
   };
@@ -377,7 +414,7 @@ export async function saveInteractiveLesson(lesson: InteractiveLesson): Promise<
 }
 
 export async function deleteInteractiveLesson(id: string, userId: string): Promise<void> {
-  if (id === 'demo-interactive-lesson') return;
+  if (isBuiltInDemoId(id)) throw new BuiltInDemoLockedError();
   if (id.startsWith('hub-slides-')) return;
   writeLocal(readLocal().filter((l) => !(l.id === id && l.ownerId === userId)));
   if (useRemoteSync()) {
@@ -414,6 +451,8 @@ export async function attachInteractiveLessonToCcdLesson(
   } catch {
     /* ignore */
   }
+  // The built-in demo is never written back; the attachment map above is enough.
+  if (isBuiltInDemo(lesson)) return lesson;
   return saveInteractiveLesson(lesson);
 }
 
