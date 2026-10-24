@@ -384,7 +384,7 @@ export const SELF_LOCKED_PROFILE_FLAGS = Object.freeze([
  * Super-admins (super_admin / superuser) are unrestricted.
  * Other managers: same-org only; cannot move organisation_id to another org;
  * cannot edit others whose rank >= actor rank; cannot grant roles at/above
- * their own or any SUPER_ADMIN_ROLES; cannot change their own can_*/forum_can_* flags.
+ * their own or any SUPER_ADMIN_ROLES; cannot change their own can_ or forum_can_ flags.
  */
 export function canManagerEditProfile({ actor, targetOld, targetNew }) {
   if (!actor || !targetOld || !canManageUsers(actor)) return false;
