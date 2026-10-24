@@ -225,3 +225,27 @@ describe('DreamHost file routes', () => {
     assert.equal(loc.includes('access_token='), false);
   });
 });
+
+describe('Freesound routes', () => {
+  it('dispatches GET /api/freesound/search', async () => {
+    const { status, body } = await jsonStatus(await routed('GET', 'freesound/search'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('rejects unauthenticated Freesound search with 401', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('GET', 'freesound/search', {
+        extraSearch: '&query=clap',
+        headers: { Accept: 'application/json' },
+      }),
+    );
+    assert.equal(status, 401, JSON.stringify(body));
+  });
+
+  it('dispatches GET /api/freesound/preview/:id', async () => {
+    const { status, body } = await jsonStatus(await routed('GET', 'freesound/preview/12345'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+});

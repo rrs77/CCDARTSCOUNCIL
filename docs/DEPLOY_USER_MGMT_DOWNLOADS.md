@@ -41,6 +41,8 @@ Set for Production (and Preview if testing):
 | `IP_HASH_SALT` | Optional | IP hash salt |
 | `DOWNLOAD_ALLOWLIST_HOSTS` | Optional | Extra redirect hosts |
 | `PDFBOLT_API_KEY` | Existing | PDF export |
+| `FREESOUND_API_KEY` | Optional | Interactive Lesson Viewer Freesound search/preview proxy (server-only; never `VITE_FREESOUND_API_KEY`) |
+| `OPENAI_API_KEY` / `WHISPER_API_KEY` | Optional | Interactive Lesson Viewer Whisper transcribe |
 
 ## 4. Deploy
 

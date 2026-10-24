@@ -92,6 +92,14 @@
       "destination": "/api/router?__route=files/:path*"
     },
     {
+      "source": "/api/freesound",
+      "destination": "/api/router?__route=freesound"
+    },
+    {
+      "source": "/api/freesound/:path*",
+      "destination": "/api/router?__route=freesound/:path*"
+    },
+    {
       "source": "/((?!api/|partners/|assets/|ccd-pitch/|the-facts/|.*\\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|pdf|zip|woff2?|ttf|map)$).*)",
       "destination": "/index.html"
     }

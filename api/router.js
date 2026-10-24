@@ -45,6 +45,10 @@ import * as filesUpload from '../server/api/files/upload.js';
 import * as filesSchoolGrant from '../server/api/files/school-grant.js';
 import * as filesProxy from '../server/api/files/[...path].js';
 
+/* Freesound search + preview (server-only FREESOUND_API_KEY) */
+import * as freesoundSearch from '../server/api/freesound/search.js';
+import * as freesoundPreview from '../server/api/freesound/preview.js';
+
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -207,6 +211,18 @@ function targetFor(pathname) {
     return filesUpload;
   }
 
+  /* ---------- Freesound (authenticated proxy) ---------- */
+
+  if (area === 'freesound') {
+    if (rest.length === 1 && rest[0] === 'search') {
+      return freesoundSearch;
+    }
+    if (rest.length === 2 && rest[0] === 'preview') {
+      return freesoundPreview;
+    }
+    return null;
+  }
+
   return null;
 }
 
@@ -220,7 +236,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf)(\/|$)/.test(
+    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound)(\/|$)/.test(
       route,
     ) ||
     route.includes('..')
