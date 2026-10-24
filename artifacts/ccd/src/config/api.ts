@@ -28,6 +28,61 @@ const isAuthUserId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a
 /** Whether user-scoped Supabase reads and writes can run (signed in, or demo). */
 export const hasScopedUser = () => isAuthUserId(getCurrentUserId());
 
+const ORG_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
+
+/**
+ * Resolve the signed-in user's organisation_id for org-scoped upserts.
+ * Prefer profile cache, then profiles table. Required after org-scoped unique indexes.
+ */
+export async function resolveOrganisationId(): Promise<string | null> {
+  try {
+    const cached = localStorage.getItem('rhythmstix_organisation_id');
+    if (cached && ORG_ID_RE.test(cached)) return cached;
+  } catch {
+    /* ignore */
+  }
+  try {
+    const raw = localStorage.getItem('rhythmstix_profile_cache');
+    if (raw) {
+      const parsed = JSON.parse(raw) as { profile?: { organisation_id?: string | null } };
+      const org = parsed?.profile?.organisation_id;
+      if (typeof org === 'string' && ORG_ID_RE.test(org.trim())) {
+        localStorage.setItem('rhythmstix_organisation_id', org.trim());
+        return org.trim();
+      }
+    }
+  } catch {
+    /* ignore */
+  }
+  const uid = getCurrentUserId();
+  if (!isAuthUserId(uid) || isDemoModeActive()) {
+    // Demo / unscoped sessions: use a stable demo org id when present in profile cache.
+    return null;
+  }
+  try {
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('organisation_id')
+      .eq('id', uid)
+      .maybeSingle();
+    if (error) throw error;
+    const org = typeof data?.organisation_id === 'string' ? data.organisation_id.trim() : '';
+    if (org && ORG_ID_RE.test(org)) {
+      localStorage.setItem('rhythmstix_organisation_id', org);
+      return org;
+    }
+  } catch (error) {
+    console.warn('Failed to resolve organisation_id:', error);
+  }
+  return null;
+}
+
+/** Normalize lesson_number for org-scoped unique indexes (NULL → ''). */
+export function normalizeLessonNumber(value: unknown): string {
+  if (value == null) return '';
+  return String(value);
+}
+
 let pageUnloading = false;
 if (typeof window !== 'undefined') {
   window.addEventListener('beforeunload', () => {
@@ -102,6 +157,10 @@ export const activitiesApi = {
   
   create: async (activity: Activity) => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save activities.');
+      }
       // Convert camelCase to snake_case for database
       const { _uniqueId, ...activityData } = activity;
       const dbActivity = {
@@ -124,9 +183,10 @@ export const activitiesApi = {
         category: activityData.category,
         level: activityData.level,
         unit_name: activityData.unitName,
-        lesson_number: activityData.lessonNumber,
+        lesson_number: normalizeLessonNumber(activityData.lessonNumber),
         eyfs_standards: activityData.eyfsStandards,
-        yeargroups: Array.isArray(activityData.yearGroups) ? activityData.yearGroups : [] // CRITICAL: Save yearGroups
+        yeargroups: Array.isArray(activityData.yearGroups) ? activityData.yearGroups : [], // CRITICAL: Save yearGroups
+        organisation_id: organisationId,
       };
       
       console.log('💾 Creating activity in Supabase with all fields:', {
@@ -184,6 +244,10 @@ export const activitiesApi = {
   
   update: async (id: string, activity: Activity) => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save activities.');
+      }
       // Convert camelCase to snake_case for database
       const { _uniqueId, ...activityData } = activity;
       const dbActivity = {
@@ -206,9 +270,10 @@ export const activitiesApi = {
         category: activityData.category,
         level: activityData.level,
         unit_name: activityData.unitName,
-        lesson_number: activityData.lessonNumber,
+        lesson_number: normalizeLessonNumber(activityData.lessonNumber),
         eyfs_standards: activityData.eyfsStandards,
-        yeargroups: Array.isArray(activityData.yearGroups) ? activityData.yearGroups : [] // CRITICAL: Save yearGroups
+        yeargroups: Array.isArray(activityData.yearGroups) ? activityData.yearGroups : [], // CRITICAL: Save yearGroups
+        organisation_id: organisationId,
       };
       
       console.log('💾 Updating activity in Supabase with yearGroups:', {
@@ -276,6 +341,10 @@ export const activitiesApi = {
   
   import: async (activities: Activity[]) => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to import activities.');
+      }
       // Convert camelCase to snake_case for database
       const cleanedActivities = activities.map(({ _uniqueId, ...activity }) => ({
         activity: activity.activity,
@@ -294,15 +363,16 @@ export const activitiesApi = {
         category: activity.category,
         level: activity.level,
         unit_name: activity.unitName,
-        lesson_number: activity.lessonNumber,
-        eyfs_standards: activity.eyfsStandards
+        lesson_number: normalizeLessonNumber(activity.lessonNumber),
+        eyfs_standards: activity.eyfsStandards,
+        organisation_id: organisationId,
       }));
       
-      // Use upsert with the correct constraint
+      // Org-scoped unique: (organisation_id, activity, category, lesson_number)
       const { data, error } = await supabase
         .from(TABLES.ACTIVITIES)
         .upsert(cleanedActivities, { 
-          onConflict: 'activity,category,lesson_number',
+          onConflict: 'organisation_id,activity,category,lesson_number',
           ignoreDuplicates: false
         });
       
@@ -478,13 +548,18 @@ export const lessonsApi = {
         throw checkError;
       }
       
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save lessons.');
+      }
       const lessonData: Record<string, unknown> = {
         sheet_name: sheet,
         academic_year: year,
         data: data.allLessonsData ?? {},
         lesson_numbers: data.lessonNumbers ?? [],
         teaching_units: data.teachingUnits ?? [],
-        notes: data.notes ?? ''
+        notes: data.notes ?? '',
+        organisation_id: organisationId,
       };
       if (userIsAuth) {
         lessonData.user_id = userId;
@@ -791,13 +866,18 @@ export const eyfsApi = {
   
   updateSheet: async (sheet: string, data: any) => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save EYFS standards.');
+      }
       const { error } = await supabase
         .from(TABLES.EYFS_STATEMENTS)
         .upsert({
           sheet_name: sheet,
           all_statements: data.allStatements,
-          structured_statements: data.structuredStatements
-        }, { onConflict: 'sheet_name' });
+          structured_statements: data.structuredStatements,
+          organisation_id: organisationId,
+        }, { onConflict: 'organisation_id,sheet_name' });
       
       if (error) throw error;
       return { success: true };

@@ -2,10 +2,39 @@
 -- Before RESTORE_ENABLED is flipped on: cross-org id guards (42501), org-scoped
 -- natural-key unique indexes + ON CONFLICT targets, in-org FK checks, GRANT.
 -- Keep WHERE t.organisation_id = v_org on every DO UPDATE.
+--
+-- B1 (app): onConflict keys include organisation_id (see artifacts/ccd api + DataContext).
+-- B2: backfill organisation_id from owner profile; normalize NULL lesson_number to '';
+--     unique indexes use NULLS NOT DISTINCT when Postgres >= 15 (document below).
+-- B3: duplicate GROUP BY checks before each CREATE UNIQUE INDEX.
+-- B4: helpers live in schema "private"; REVOKE from PUBLIC/anon/authenticated;
+--     GRANT EXECUTE TO service_role only.
+-- B5: SQL tests in supabase/tests/restore_cross_org_guards.sql (+ CI scratch Postgres).
+-- Also: owner policy for user:{uid}:* branding_settings keys; org members read own org.
+--
+-- Postgres version note:
+--   NULLS NOT DISTINCT requires PostgreSQL 15+. Supabase projects are PG15+.
+--   On older majors this migration RAISE's and must not be applied.
 
+-- ---------------------------------------------------------------------------
+-- Require PG15+ for NULLS NOT DISTINCT
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+  IF current_setting('server_version_num')::int < 150000 THEN
+    RAISE EXCEPTION
+      '20261024240000 requires PostgreSQL 15+ (NULLS NOT DISTINCT). server_version_num=%',
+      current_setting('server_version_num');
+  END IF;
+END $$;
 
--- Cross-org restore guards (before re-enabling RESTORE_ENABLED).
--- Safe to re-run. Do not apply to live DB until the owner reviews.
+-- ---------------------------------------------------------------------------
+-- private schema for restore helpers (not exposed to PostgREST)
+-- ---------------------------------------------------------------------------
+CREATE SCHEMA IF NOT EXISTS private;
+REVOKE ALL ON SCHEMA private FROM PUBLIC;
+REVOKE ALL ON SCHEMA private FROM anon, authenticated;
+GRANT USAGE ON SCHEMA private TO postgres, service_role;
 
 -- (e) service_role full access to private snapshot table
 DO $$
@@ -14,18 +43,117 @@ BEGIN
     EXECUTE 'GRANT ALL ON TABLE public.curriculum_backups TO service_role';
   END IF;
 EXCEPTION
-  WHEN undefined_object THEN NULL; -- role missing on non-Supabase scratch DBs
+  WHEN undefined_object THEN NULL;
   WHEN undefined_table THEN NULL;
 END $$;
 
 -- ---------------------------------------------------------------------------
--- (b) Org-scoped unique indexes for natural keys
+-- Regression from 20261024160000: restore owner writes for
+-- user:{uid}:custom_categories (api.ts / SettingsContextNew). System catalog
+-- and other branding keys remain super_admin-only.
+-- ---------------------------------------------------------------------------
+DROP POLICY IF EXISTS "Users manage own branding keys" ON public.branding_settings;
+CREATE POLICY "Users manage own branding keys"
+  ON public.branding_settings
+  FOR ALL
+  TO authenticated
+  USING (key = 'user:' || auth.uid()::text || ':custom_categories')
+  WITH CHECK (key = 'user:' || auth.uid()::text || ':custom_categories');
+
+-- School members/admins can read their own organisation even when inactive
+-- (status-agnostic; complements any "active only" public read policy).
+DROP POLICY IF EXISTS "Org members read own organisation" ON public.organisations;
+CREATE POLICY "Org members read own organisation"
+  ON public.organisations FOR SELECT
+  TO authenticated
+  USING (
+    EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid() AND p.organisation_id = organisations.id
+    )
+  );
+
+-- ---------------------------------------------------------------------------
+-- B2: backfill organisation_id from owner profile; normalize lesson_number
+-- ---------------------------------------------------------------------------
+DO $$
+BEGIN
+  -- activities
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='activities' AND column_name='user_id'
+  ) THEN
+    UPDATE public.activities a
+    SET organisation_id = p.organisation_id
+    FROM public.profiles p
+    WHERE a.organisation_id IS NULL
+      AND a.user_id IS NOT NULL
+      AND p.id = a.user_id
+      AND p.organisation_id IS NOT NULL;
+  END IF;
+
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='activities' AND column_name='created_by'
+  ) THEN
+    UPDATE public.activities a
+    SET organisation_id = p.organisation_id
+    FROM public.profiles p
+    WHERE a.organisation_id IS NULL
+      AND a.created_by IS NOT NULL
+      AND p.id = a.created_by
+      AND p.organisation_id IS NOT NULL;
+  END IF;
+
+  UPDATE public.activities SET lesson_number = '' WHERE lesson_number IS NULL;
+
+  -- lessons
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='lessons' AND column_name='user_id'
+  ) THEN
+    UPDATE public.lessons l
+    SET organisation_id = p.organisation_id
+    FROM public.profiles p
+    WHERE l.organisation_id IS NULL
+      AND l.user_id IS NOT NULL
+      AND p.id = l.user_id
+      AND p.organisation_id IS NOT NULL;
+  END IF;
+
+  -- eyfs_statements
+  IF EXISTS (
+    SELECT 1 FROM information_schema.columns
+    WHERE table_schema='public' AND table_name='eyfs_statements' AND column_name='user_id'
+  ) THEN
+    UPDATE public.eyfs_statements e
+    SET organisation_id = p.organisation_id
+    FROM public.profiles p
+    WHERE e.organisation_id IS NULL
+      AND e.user_id IS NOT NULL
+      AND p.id = e.user_id
+      AND p.organisation_id IS NOT NULL;
+  END IF;
+
+  -- activity_custom_objectives via objective's org when present
+  IF to_regclass('public.activity_custom_objectives') IS NOT NULL
+     AND to_regclass('public.custom_objectives') IS NOT NULL THEN
+    UPDATE public.activity_custom_objectives aco
+    SET organisation_id = o.organisation_id
+    FROM public.custom_objectives o
+    WHERE aco.organisation_id IS NULL
+      AND o.id = aco.objective_id
+      AND o.organisation_id IS NOT NULL;
+  END IF;
+END $$;
+
+-- ---------------------------------------------------------------------------
+-- Drop legacy non-org natural-key uniques (same shapes we replace)
 -- ---------------------------------------------------------------------------
 DO $$
 DECLARE
   r record;
 BEGIN
-  -- Drop non-org unique constraints that match the natural-key shapes we replace.
   FOR r IN
     SELECT c.conname, t.relname
     FROM pg_constraint c
@@ -50,7 +178,7 @@ BEGIN
   END LOOP;
 
   FOR r IN
-    SELECT i.relname AS idxname, t.relname AS tbl
+    SELECT i.relname AS idxname
     FROM pg_index x
     JOIN pg_class i ON i.oid = x.indexrelid
     JOIN pg_class t ON t.oid = x.indrelid
@@ -70,29 +198,116 @@ BEGIN
   END LOOP;
 END $$;
 
-CREATE UNIQUE INDEX IF NOT EXISTS uq_activities_org_natural
-  ON public.activities (organisation_id, activity, category, lesson_number);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_lessons_org_sheet
-  ON public.lessons (organisation_id, sheet_name);
-
-CREATE UNIQUE INDEX IF NOT EXISTS uq_eyfs_statements_org_sheet
-  ON public.eyfs_statements (organisation_id, sheet_name);
-
+-- ---------------------------------------------------------------------------
+-- B3: duplicate checks then unique indexes (NULLS NOT DISTINCT, PG15+)
+-- ---------------------------------------------------------------------------
 DO $$
+DECLARE
+  n int;
 BEGIN
-  IF to_regclass('public.activity_custom_objectives') IS NOT NULL THEN
-    EXECUTE $i$
-      CREATE UNIQUE INDEX IF NOT EXISTS uq_activity_custom_objectives_org_pair
-        ON public.activity_custom_objectives (organisation_id, activity_id, objective_id)
-    $i$;
+  SELECT COUNT(*) INTO n FROM (
+    SELECT organisation_id, activity, category, lesson_number
+    FROM public.activities
+    GROUP BY organisation_id, activity, category, lesson_number
+    HAVING COUNT(*) > 1
+  ) d;
+  IF n > 0 THEN
+    RAISE EXCEPTION
+      'Cannot create uq_activities_org_natural: % duplicate (organisation_id, activity, category, lesson_number) groups. Resolve duplicates before applying.',
+      n;
   END IF;
 END $$;
 
+CREATE UNIQUE INDEX IF NOT EXISTS uq_activities_org_natural
+  ON public.activities (organisation_id, activity, category, lesson_number)
+  NULLS NOT DISTINCT;
+
+DO $$
+DECLARE
+  n int;
+BEGIN
+  SELECT COUNT(*) INTO n FROM (
+    SELECT organisation_id, sheet_name
+    FROM public.lessons
+    GROUP BY organisation_id, sheet_name
+    HAVING COUNT(*) > 1
+  ) d;
+  IF n > 0 THEN
+    RAISE EXCEPTION
+      'Cannot create uq_lessons_org_sheet: % duplicate (organisation_id, sheet_name) groups. Resolve duplicates before applying.',
+      n;
+  END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_lessons_org_sheet
+  ON public.lessons (organisation_id, sheet_name)
+  NULLS NOT DISTINCT;
+
+DO $$
+DECLARE
+  n int;
+BEGIN
+  SELECT COUNT(*) INTO n FROM (
+    SELECT organisation_id, sheet_name
+    FROM public.eyfs_statements
+    GROUP BY organisation_id, sheet_name
+    HAVING COUNT(*) > 1
+  ) d;
+  IF n > 0 THEN
+    RAISE EXCEPTION
+      'Cannot create uq_eyfs_statements_org_sheet: % duplicate (organisation_id, sheet_name) groups. Resolve duplicates before applying.',
+      n;
+  END IF;
+END $$;
+
+CREATE UNIQUE INDEX IF NOT EXISTS uq_eyfs_statements_org_sheet
+  ON public.eyfs_statements (organisation_id, sheet_name)
+  NULLS NOT DISTINCT;
+
+DO $$
+DECLARE
+  n int;
+  pk text;
+BEGIN
+  IF to_regclass('public.activity_custom_objectives') IS NULL THEN
+    RETURN;
+  END IF;
+
+  -- Drop global (activity_id, objective_id) primary/unique keys so orgs can share pairs.
+  SELECT c.conname INTO pk
+  FROM pg_constraint c
+  JOIN pg_class t ON t.oid = c.conrelid
+  JOIN pg_namespace nsp ON nsp.oid = t.relnamespace
+  WHERE nsp.nspname = 'public'
+    AND t.relname = 'activity_custom_objectives'
+    AND c.contype = 'p'
+    AND pg_get_constraintdef(c.oid) !~* 'organisation_id';
+  IF pk IS NOT NULL THEN
+    EXECUTE format('ALTER TABLE public.activity_custom_objectives DROP CONSTRAINT %I', pk);
+  END IF;
+
+  SELECT COUNT(*) INTO n FROM (
+    SELECT organisation_id, activity_id, objective_id
+    FROM public.activity_custom_objectives
+    GROUP BY organisation_id, activity_id, objective_id
+    HAVING COUNT(*) > 1
+  ) d;
+  IF n > 0 THEN
+    RAISE EXCEPTION
+      'Cannot create uq_activity_custom_objectives_org_pair: % duplicate groups. Resolve duplicates before applying.',
+      n;
+  END IF;
+  EXECUTE $i$
+    CREATE UNIQUE INDEX IF NOT EXISTS uq_activity_custom_objectives_org_pair
+      ON public.activity_custom_objectives (organisation_id, activity_id, objective_id)
+      NULLS NOT DISTINCT
+  $i$;
+END $$;
+
 -- ---------------------------------------------------------------------------
--- Guard helpers (SECURITY DEFINER, service_role via restore RPC only)
+-- B4: Guard helpers in private schema
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public._restore_assert_ids_in_org(
+CREATE OR REPLACE FUNCTION private._restore_assert_ids_in_org(
   p_payload jsonb,
   p_key text,
   p_table text,
@@ -142,7 +357,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public._restore_assert_activity_natural_keys(
+CREATE OR REPLACE FUNCTION private._restore_assert_activity_natural_keys(
   p_payload jsonb,
   p_org text
 ) RETURNS void
@@ -155,33 +370,29 @@ BEGIN
      OR jsonb_typeof(p_payload->'activities') <> 'array' THEN
     RETURN;
   END IF;
-  -- With org-scoped unique indexes, same natural key in another org is allowed.
-  -- Still raise if a matching row would be updated only via a legacy global unique
-  -- (organisation_id IS DISTINCT FROM p_org). Defence in depth: no-op when indexes are correct.
+  IF EXISTS (
+    SELECT 1 FROM pg_indexes
+    WHERE schemaname = 'public' AND indexname = 'uq_activities_org_natural'
+  ) THEN
+    RETURN;
+  END IF;
   IF EXISTS (
     SELECT 1
     FROM jsonb_array_elements(p_payload->'activities') r
     JOIN public.activities a
       ON a.activity = r->>'activity'
      AND a.category = r->>'category'
-     AND a.lesson_number IS NOT DISTINCT FROM NULLIF(r->>'lesson_number', '')
+     AND a.lesson_number IS NOT DISTINCT FROM COALESCE(NULLIF(r->>'lesson_number', ''), '')
     WHERE COALESCE(r->>'activity', '') <> ''
       AND COALESCE(r->>'category', '') <> ''
       AND a.organisation_id IS DISTINCT FROM p_org
-      -- Only treat as conflict when there is NO org-scoped unique yet protecting us:
-      -- if the row's org differs, restoring must not touch it; raise so callers notice
-      -- payloads that collide on the old global key shape while a global unique still exists.
-      AND NOT EXISTS (
-        SELECT 1 FROM pg_indexes
-        WHERE schemaname = 'public' AND indexname = 'uq_activities_org_natural'
-      )
   ) THEN
     RAISE EXCEPTION 'cross-org natural key conflict in activities' USING ERRCODE = '42501';
   END IF;
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public._restore_assert_sheet_natural_keys(
+CREATE OR REPLACE FUNCTION private._restore_assert_sheet_natural_keys(
   p_payload jsonb,
   p_key text,
   p_table text,
@@ -204,7 +415,6 @@ BEGIN
     WHEN 'eyfs_statements' THEN 'uq_eyfs_statements_org_sheet'
     ELSE NULL
   END;
-  -- Only raise when org-scoped unique is missing (legacy global sheet_name unique).
   IF v_idx IS NOT NULL AND EXISTS (
     SELECT 1 FROM pg_indexes WHERE schemaname = 'public' AND indexname = v_idx
   ) THEN
@@ -228,7 +438,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public._restore_assert_aco_natural_keys(
+CREATE OR REPLACE FUNCTION private._restore_assert_aco_natural_keys(
   p_payload jsonb,
   p_org text
 ) RETURNS void
@@ -263,7 +473,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public._restore_assert_area_year_groups_in_org(
+CREATE OR REPLACE FUNCTION private._restore_assert_area_year_groups_in_org(
   p_payload jsonb,
   p_org text
 ) RETURNS void
@@ -276,7 +486,6 @@ BEGIN
      OR jsonb_typeof(p_payload->'customObjectiveAreas') <> 'array' THEN
     RETURN;
   END IF;
-  -- Reject year_group_id owned by another org
   IF EXISTS (
     SELECT 1
     FROM jsonb_array_elements(p_payload->'customObjectiveAreas') r
@@ -288,7 +497,6 @@ BEGIN
     RAISE EXCEPTION 'custom_objective_areas.year_group_id not in organisation'
       USING ERRCODE = '42501';
   END IF;
-  -- Reject unknown year_group_id (not in v_org and not in this payload's year groups)
   IF EXISTS (
     SELECT 1
     FROM jsonb_array_elements(p_payload->'customObjectiveAreas') r
@@ -310,7 +518,7 @@ BEGIN
 END;
 $$;
 
-CREATE OR REPLACE FUNCTION public._restore_assert_aco_refs_in_org(
+CREATE OR REPLACE FUNCTION private._restore_assert_aco_refs_in_org(
   p_payload jsonb,
   p_org text
 ) RETURNS void
@@ -324,7 +532,6 @@ BEGIN
     RETURN;
   END IF;
 
-  -- objective_id must not belong to another org; must be in v_org or payload
   IF EXISTS (
     SELECT 1
     FROM jsonb_array_elements(p_payload->'activityCustomObjectives') r
@@ -355,7 +562,6 @@ BEGIN
       USING ERRCODE = '42501';
   END IF;
 
-  -- activity_id: if activities.id exists and row found, must be v_org; else allow payload ids
   IF EXISTS (
     SELECT 1
     FROM information_schema.columns
@@ -394,12 +600,37 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public._restore_assert_ids_in_org(jsonb, text, text, text, boolean) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public._restore_assert_activity_natural_keys(jsonb, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public._restore_assert_sheet_natural_keys(jsonb, text, text, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public._restore_assert_aco_natural_keys(jsonb, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public._restore_assert_area_year_groups_in_org(jsonb, text) FROM PUBLIC;
-REVOKE ALL ON FUNCTION public._restore_assert_aco_refs_in_org(jsonb, text) FROM PUBLIC;
+-- Drop any public-schema copies from earlier 240000 drafts
+DROP FUNCTION IF EXISTS public._restore_assert_ids_in_org(jsonb, text, text, text, boolean);
+DROP FUNCTION IF EXISTS public._restore_assert_activity_natural_keys(jsonb, text);
+DROP FUNCTION IF EXISTS public._restore_assert_sheet_natural_keys(jsonb, text, text, text);
+DROP FUNCTION IF EXISTS public._restore_assert_aco_natural_keys(jsonb, text);
+DROP FUNCTION IF EXISTS public._restore_assert_area_year_groups_in_org(jsonb, text);
+DROP FUNCTION IF EXISTS public._restore_assert_aco_refs_in_org(jsonb, text);
+
+REVOKE ALL ON FUNCTION private._restore_assert_ids_in_org(jsonb, text, text, text, boolean) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._restore_assert_ids_in_org(jsonb, text, text, text, boolean) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._restore_assert_ids_in_org(jsonb, text, text, text, boolean) TO service_role;
+
+REVOKE ALL ON FUNCTION private._restore_assert_activity_natural_keys(jsonb, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._restore_assert_activity_natural_keys(jsonb, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._restore_assert_activity_natural_keys(jsonb, text) TO service_role;
+
+REVOKE ALL ON FUNCTION private._restore_assert_sheet_natural_keys(jsonb, text, text, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._restore_assert_sheet_natural_keys(jsonb, text, text, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._restore_assert_sheet_natural_keys(jsonb, text, text, text) TO service_role;
+
+REVOKE ALL ON FUNCTION private._restore_assert_aco_natural_keys(jsonb, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._restore_assert_aco_natural_keys(jsonb, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._restore_assert_aco_natural_keys(jsonb, text) TO service_role;
+
+REVOKE ALL ON FUNCTION private._restore_assert_area_year_groups_in_org(jsonb, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._restore_assert_area_year_groups_in_org(jsonb, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._restore_assert_area_year_groups_in_org(jsonb, text) TO service_role;
+
+REVOKE ALL ON FUNCTION private._restore_assert_aco_refs_in_org(jsonb, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._restore_assert_aco_refs_in_org(jsonb, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._restore_assert_aco_refs_in_org(jsonb, text) TO service_role;
 
 
 CREATE OR REPLACE FUNCTION public.restore_curriculum_backup(
@@ -431,37 +662,37 @@ BEGIN
 
 
   -- (a) Cross-org id guards: payload id must not belong to another org
-  PERFORM public._restore_assert_ids_in_org(p_payload, 'yearGroups', 'year_groups', v_org, false);
-  PERFORM public._restore_assert_ids_in_org(p_payload, 'categoryGroups', 'category_groups', v_org, false);
-  PERFORM public._restore_assert_ids_in_org(p_payload, 'customCategories', 'custom_categories', v_org, false);
-  PERFORM public._restore_assert_ids_in_org(p_payload, 'halfTerms', 'half_terms', v_org, false);
-  PERFORM public._restore_assert_ids_in_org(p_payload, 'lessonPlans', 'lesson_plans', v_org, false);
-  PERFORM public._restore_assert_ids_in_org(p_payload, 'lessonStacks', 'lesson_stacks', v_org, false);
-  PERFORM public._restore_assert_ids_in_org(p_payload, 'activityStacks', 'activity_stacks', v_org, false);
+  PERFORM private._restore_assert_ids_in_org(p_payload, 'yearGroups', 'year_groups', v_org, false);
+  PERFORM private._restore_assert_ids_in_org(p_payload, 'categoryGroups', 'category_groups', v_org, false);
+  PERFORM private._restore_assert_ids_in_org(p_payload, 'customCategories', 'custom_categories', v_org, false);
+  PERFORM private._restore_assert_ids_in_org(p_payload, 'halfTerms', 'half_terms', v_org, false);
+  PERFORM private._restore_assert_ids_in_org(p_payload, 'lessonPlans', 'lesson_plans', v_org, false);
+  PERFORM private._restore_assert_ids_in_org(p_payload, 'lessonStacks', 'lesson_stacks', v_org, false);
+  PERFORM private._restore_assert_ids_in_org(p_payload, 'activityStacks', 'activity_stacks', v_org, false);
   IF to_regclass('public.custom_objective_year_groups') IS NOT NULL THEN
-    PERFORM public._restore_assert_ids_in_org(p_payload, 'customObjectiveYearGroups', 'custom_objective_year_groups', v_org, true);
+    PERFORM private._restore_assert_ids_in_org(p_payload, 'customObjectiveYearGroups', 'custom_objective_year_groups', v_org, true);
   END IF;
   IF to_regclass('public.custom_objective_areas') IS NOT NULL THEN
-    PERFORM public._restore_assert_ids_in_org(p_payload, 'customObjectiveAreas', 'custom_objective_areas', v_org, true);
+    PERFORM private._restore_assert_ids_in_org(p_payload, 'customObjectiveAreas', 'custom_objective_areas', v_org, true);
   END IF;
   IF to_regclass('public.custom_objectives') IS NOT NULL THEN
-    PERFORM public._restore_assert_ids_in_org(p_payload, 'customObjectives', 'custom_objectives', v_org, true);
+    PERFORM private._restore_assert_ids_in_org(p_payload, 'customObjectives', 'custom_objectives', v_org, true);
   END IF;
 
   -- (b) Natural-key cross-org guards (defence in depth alongside org-scoped unique indexes)
-  PERFORM public._restore_assert_activity_natural_keys(p_payload, v_org);
-  PERFORM public._restore_assert_sheet_natural_keys(p_payload, 'lessons', 'lessons', v_org);
-  PERFORM public._restore_assert_sheet_natural_keys(p_payload, 'standards', 'eyfs_statements', v_org);
+  PERFORM private._restore_assert_activity_natural_keys(p_payload, v_org);
+  PERFORM private._restore_assert_sheet_natural_keys(p_payload, 'lessons', 'lessons', v_org);
+  PERFORM private._restore_assert_sheet_natural_keys(p_payload, 'standards', 'eyfs_statements', v_org);
   IF to_regclass('public.activity_custom_objectives') IS NOT NULL THEN
-    PERFORM public._restore_assert_aco_natural_keys(p_payload, v_org);
+    PERFORM private._restore_assert_aco_natural_keys(p_payload, v_org);
   END IF;
 
   -- (c) In-org FK-ish references
   IF to_regclass('public.custom_objective_areas') IS NOT NULL THEN
-    PERFORM public._restore_assert_area_year_groups_in_org(p_payload, v_org);
+    PERFORM private._restore_assert_area_year_groups_in_org(p_payload, v_org);
   END IF;
   IF to_regclass('public.activity_custom_objectives') IS NOT NULL THEN
-    PERFORM public._restore_assert_aco_refs_in_org(p_payload, v_org);
+    PERFORM private._restore_assert_aco_refs_in_org(p_payload, v_org);
   END IF;
 
 
@@ -571,7 +802,7 @@ BEGIN
         r->>'category',
         r->>'level',
         r->>'unit_name',
-        r->>'lesson_number',
+        COALESCE(NULLIF(r->>'lesson_number', ''), ''),
         CASE
           WHEN jsonb_typeof(r->'eyfs_standards') = 'array' THEN
             ARRAY(SELECT jsonb_array_elements_text(r->'eyfs_standards'))
@@ -712,7 +943,7 @@ BEGIN
         r->>'status',
         r->>'unit_id',
         r->>'unit_name',
-        r->>'lesson_number',
+        COALESCE(NULLIF(r->>'lesson_number', ''), ''),
         r->>'title',
         r->>'term',
         r->>'time',
