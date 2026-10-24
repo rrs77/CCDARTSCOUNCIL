@@ -3,10 +3,11 @@
  * Authenticated proxy for DreamHost-stored files.
  *
  * Decision 2 — signed-in users only (no anonymous / public share tokens).
- * Requires requireAuth (aud + role 'authenticated'): Bearer or live session
- * ?access_token= for top-level navigations after sign-in. Then visibility
- * checks (org / private / licensed). Unauthenticated HTML navigations
- * redirect to sign-in with return= this path.
+ * Share links use the in-app `/shared/...` route, which fetches this proxy
+ * with Authorization Bearer (JWT never appears in the share URL).
+ * `?access_token=` remains allowed here (and resource download) for top-level
+ * navigations that cannot set headers — not for share links.
+ * Then visibility checks (org / private / licensed).
  */
 
 import {
@@ -18,6 +19,7 @@ import {
   unauthenticatedFileShareResponse,
 } from '../../../api/_authShared.js';
 import {
+  buildShareAppPath,
   fetchFromDreamHost,
   parseOwnedStoragePath,
   userMayAccessStoredFile,
@@ -62,10 +64,14 @@ export async function GET(request, context) {
     });
     if (!limited.ok) return limited.response;
 
-    // Session JWT only (header or query after sign-in). No dedicated share tokens.
+    // Session JWT via Bearer (preferred) or ?access_token= (download/proxy only).
+    // Share links never put the JWT in the URL — they use /shared/... + Bearer.
     const auth = await requireAuth(request, { allowQuery: true });
     if (!auth.ok) {
-      return unauthenticatedFileShareResponse(request, `/api/files/${storagePath}`);
+      return unauthenticatedFileShareResponse(
+        request,
+        buildShareAppPath(storagePath),
+      );
     }
 
     const allowed = await userMayAccessStoredFile(auth.userId, storagePath);

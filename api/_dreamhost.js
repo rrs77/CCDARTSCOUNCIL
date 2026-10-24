@@ -102,11 +102,77 @@ export function parseOwnedStoragePath(raw) {
 }
 
 /**
- * App-facing URL (authenticated proxy). Not a public DreamHost link.
+ * In-app share path (no JWT). Signed-out users sign in and return here;
+ * the page fetches /api/files/... with Authorization Bearer.
+ * @param {string} storagePath `userId/uuid.pdf`
+ * @returns {string} `/shared/{userId}/{uuid}`
  */
-export function buildProxyFileUrl(request, storagePath) {
+export function buildShareAppPath(storagePath) {
   const path = parseOwnedStoragePath(storagePath);
   if (!path) throw new Error('Invalid storage path.');
+  const [userId, fileName] = path.split('/');
+  const fileId = fileName.replace(/\.pdf$/i, '');
+  return `/shared/${userId}/${fileId}`;
+}
+
+/**
+ * Authenticated file proxy API path (Bearer or legacy ?access_token=).
+ * @param {string} storagePath
+ * @returns {string} `/api/files/{userId}/{uuid}.pdf`
+ */
+export function buildFileProxyApiPath(storagePath) {
+  const path = parseOwnedStoragePath(storagePath);
+  if (!path) throw new Error('Invalid storage path.');
+  return `/api/files/${path}`;
+}
+
+/**
+ * Parse `/shared/{userId}/{uuid}` (optional .pdf) → storage path.
+ * @param {string} pathname
+ * @returns {string|null}
+ */
+export function parseShareAppPath(pathname) {
+  if (typeof pathname !== 'string' || !pathname) return null;
+  const cleaned = pathname.split('?')[0].split('#')[0];
+  const m = cleaned.match(
+    /^\/shared\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})\/([0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12})(?:\.pdf)?\/?$/i,
+  );
+  if (!m) return null;
+  return parseOwnedStoragePath(`${m[1]}/${m[2]}.pdf`);
+}
+
+/**
+ * Map legacy `/api/files/...` links to the in-app share route.
+ * @param {string} pathnameOrUrl
+ * @returns {string|null}
+ */
+export function shareAppPathFromApiOrShare(pathnameOrUrl) {
+  if (typeof pathnameOrUrl !== 'string' || !pathnameOrUrl) return null;
+  let path = pathnameOrUrl.trim();
+  try {
+    if (/^https?:\/\//i.test(path)) {
+      path = new URL(path).pathname;
+    }
+  } catch {
+    return null;
+  }
+  const fromShare = parseShareAppPath(path);
+  if (fromShare) return buildShareAppPath(fromShare);
+  const marker = '/api/files/';
+  const idx = path.indexOf(marker);
+  if (idx >= 0) {
+    const storage = parseOwnedStoragePath(path.slice(idx + marker.length));
+    if (storage) return buildShareAppPath(storage);
+  }
+  return null;
+}
+
+/**
+ * App-facing share URL for Copy Link. In-app `/shared/...` — never a JWT
+ * and never a public DreamHost link. The page loads the proxy with Bearer.
+ */
+export function buildProxyFileUrl(request, storagePath) {
+  const relative = buildShareAppPath(storagePath);
   const fromEnv =
     process.env.VITE_APP_URL ||
     process.env.APP_URL ||
@@ -119,7 +185,6 @@ export function buildProxyFileUrl(request, storagePath) {
       origin = '';
     }
   }
-  const relative = `/api/files/${path}`;
   return origin ? `${origin}${relative}` : relative;
 }
 

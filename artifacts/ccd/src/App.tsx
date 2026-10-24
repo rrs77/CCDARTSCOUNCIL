@@ -13,6 +13,13 @@ import {
   resolvePostAuthReturn,
   shouldNavigateToReturn,
 } from './utils/authReturn';
+import {
+  isFileShareApiPath,
+  isFileShareAppPath,
+  redirectToSignInForShare,
+  toFileShareAppPath,
+} from './utils/fileShareAccess';
+import { SharedFilePage, isSharedFilePath } from './components/SharedFilePage';
 import { DataProvider } from './contexts/DataContext';
 import { SettingsProviderNew } from './contexts/SettingsContextNew';
 import { PaidBasketProvider } from './contexts/PaidBasketContext';
@@ -101,17 +108,17 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     }
     const current = `${window.location.pathname}${window.location.search}`;
     if (shouldNavigateToReturn(ret, current) && ret) {
-      // Decision 2: shared file links need a live session token on navigation.
-      if (ret.startsWith('/api/files/')) {
-        void import('./utils/fileShareAccess').then(({ openAuthenticatedFileShare }) =>
-          openAuthenticatedFileShare(ret),
-        );
-        return;
-      }
-      window.history.replaceState({}, '', ret);
+      // Decision 2: share links are in-app /shared/... (Bearer fetch; no JWT in URL).
+      // Rewrite legacy /api/files/... return targets to /shared/...
+      const shareRet =
+        isFileShareAppPath(ret) || isFileShareApiPath(ret)
+          ? toFileShareAppPath(ret)
+          : null;
+      const dest = shareRet || ret;
+      window.history.replaceState({}, '', dest);
       window.dispatchEvent(new PopStateEvent('popstate'));
-      if (isForumPath(ret.split('?')[0] || '')) {
-        window.location.assign(ret);
+      if (isForumPath(dest.split('?')[0] || '') || shareRet) {
+        window.location.assign(dest);
       }
     }
   }, [user, loading]);
@@ -200,7 +207,19 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
     };
   }, []);
 
-  if (loading) {
+  const sharedPath =
+    typeof window !== 'undefined' && isSharedFilePath(window.location.pathname)
+      ? window.location.pathname
+      : null;
+
+  // Signed-out share link → sign-in with return=/shared/...
+  useEffect(() => {
+    if (!loading && !user && sharedPath) {
+      redirectToSignInForShare(sharedPath);
+    }
+  }, [loading, user, sharedPath]);
+
+  if (loading || (!user && sharedPath)) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -216,6 +235,10 @@ function AppContent({ schoolHomepage }: { schoolHomepage: SchoolHomepageConfig |
       return <SchoolHomepage school={schoolHomepage} />;
     }
     return <LoginForm />;
+  }
+
+  if (sharedPath) {
+    return <SharedFilePage path={sharedPath} />;
   }
 
   if (onForum) {
@@ -447,9 +470,13 @@ function App() {
     typeof window !== 'undefined' ? getPartnerHubForPath(window.location.pathname) : null;
 
   // Detect a school-specific public homepage at `/<slug>`. Skip when the path
-  // is a partner hub (`/roh`, …) so those routes are not treated as schools.
+  // is a partner hub (`/roh`, …) or a shared-file route so those are not
+  // treated as schools.
   const schoolHomepage =
-    typeof window !== 'undefined' && !partnerHub && !isForumPath(window.location.pathname)
+    typeof window !== 'undefined' &&
+    !partnerHub &&
+    !isForumPath(window.location.pathname) &&
+    !isSharedFilePath(window.location.pathname)
       ? getSchoolForPath(window.location.pathname)
       : null;
 

@@ -6,6 +6,8 @@
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  buildFileProxyApiPath,
+  buildShareAppPath,
   canChangeFileVisibility,
   canPushResourceToSchool,
   evaluateStoredFileAccess,
@@ -13,7 +15,9 @@ import {
   licensedStoredFileFieldsMutable,
   normalizeVisibility,
   parseOwnedStoragePath,
+  parseShareAppPath,
   sameOrganisationIds,
+  shareAppPathFromApiOrShare,
 } from '../_dreamhost.js';
 
 const OWNER = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
@@ -32,6 +36,16 @@ describe('parseOwnedStoragePath', () => {
     assert.equal(parseOwnedStoragePath('../etc/passwd'), null);
     assert.equal(parseOwnedStoragePath(`${OWNER}/not-a-uuid.pdf`), null);
     assert.equal(parseOwnedStoragePath('nope'), null);
+  });
+});
+
+describe('share app path helpers', () => {
+  it('builds /shared routes without JWT or .pdf in the path', () => {
+    const share = buildShareAppPath(FILE);
+    assert.equal(share, `/shared/${OWNER}/dddddddd-dddd-4ddd-8ddd-dddddddddddd`);
+    assert.equal(parseShareAppPath(share), FILE);
+    assert.equal(buildFileProxyApiPath(FILE), `/api/files/${FILE}`);
+    assert.equal(shareAppPathFromApiOrShare(`/api/files/${FILE}`), share);
   });
 });
 

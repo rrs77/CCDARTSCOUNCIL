@@ -1,56 +1,100 @@
 /**
  * Decision 2 — share links require a signed-in Supabase session.
- * No anonymous / public / expiring signed share tokens.
- * After login, open /api/files/... with the session access_token (same pattern
- * as tracked downloads) so the proxy can run requireAuth + visibility checks.
+ * Shared links are in-app `/shared/:userId/:fileId` routes (no JWT in the URL).
+ * After sign-in, the page fetches `/api/files/...` with Authorization Bearer.
+ * `?access_token=` stays only on the API proxy/download routes for top-level
+ * navigations that cannot set headers — never on share links.
  */
 
 import { buildSignInHref, safeReturnPath } from './authReturn.ts';
 
+const UUID =
+  '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
+const SHARE_PATH_RE = new RegExp(
+  `^/shared/(${UUID})/(${UUID})(?:\\.pdf)?/?$`,
+  'i',
+);
+const API_FILES_RE = new RegExp(
+  `^/api/files/(${UUID})/(${UUID})\\.pdf$`,
+  'i',
+);
+
+export function isFileShareAppPath(path: string | null | undefined): boolean {
+  const safe = safeReturnPath(path);
+  if (!safe) return false;
+  const pathname = safe.split('?')[0] || '';
+  return SHARE_PATH_RE.test(pathname);
+}
+
+/** Legacy clipboard / return URLs that pointed at the API proxy. */
 export function isFileShareApiPath(path: string | null | undefined): boolean {
   const safe = safeReturnPath(path);
   if (!safe) return false;
   const pathname = safe.split('?')[0] || '';
-  return /^\/api\/files\/[0-9a-f-]{36}\/[0-9a-f-]{36}\.pdf$/i.test(pathname);
+  return API_FILES_RE.test(pathname);
 }
 
 /**
- * Append the current session token for a top-level navigation to the file proxy.
- * Does not create a long-lived share token — uses the live Supabase session JWT.
+ * Normalise a share or legacy API path to `/shared/{userId}/{fileId}`.
+ * Never appends access_token.
  */
-export function appendSessionTokenToFileShareUrl(
-  path: string,
-  accessToken: string,
-): string {
+export function toFileShareAppPath(path: string | null | undefined): string | null {
   const safe = safeReturnPath(path);
-  if (!safe) return '/';
-  const url = new URL(safe, 'https://ccd.local');
-  url.searchParams.set('access_token', accessToken);
-  return `${url.pathname}${url.search}`;
+  if (!safe) return null;
+  const pathname = safe.split('?')[0] || '';
+
+  let m = pathname.match(SHARE_PATH_RE);
+  if (m) return `/shared/${m[1]}/${m[2]}`;
+
+  m = pathname.match(API_FILES_RE);
+  if (m) return `/shared/${m[1]}/${m[2]}`;
+
+  return null;
+}
+
+export function storagePathFromShareAppPath(
+  path: string | null | undefined,
+): string | null {
+  const share = toFileShareAppPath(path);
+  if (!share) return null;
+  const m = share.match(SHARE_PATH_RE);
+  if (!m) return null;
+  return `${m[1]}/${m[2]}.pdf`;
+}
+
+export function fileProxyApiPathFromStorage(storagePath: string): string {
+  return `/api/files/${storagePath}`;
 }
 
 /**
- * Navigate to a shared file proxy URL with the signed-in session, or to sign-in.
+ * Fetch the shared PDF with the live session Bearer header (never put JWT in the URL).
  */
-export async function openAuthenticatedFileShare(
-  path: string,
-): Promise<'opened' | 'signin'> {
-  const safe = safeReturnPath(path);
-  if (!safe || !isFileShareApiPath(safe)) {
-    window.location.assign(buildSignInHref(safe || '/'));
-    return 'signin';
-  }
-
+export async function fetchSharedFileWithBearer(
+  storagePath: string,
+): Promise<Response> {
   const { supabase } = await import('../config/supabase');
+  const { getVercelApiUrl } = await import('./apiUrl');
+
   const {
     data: { session },
   } = await supabase.auth.getSession();
-
   if (!session?.access_token) {
-    window.location.assign(buildSignInHref(safe));
-    return 'signin';
+    const err = new Error('Sign in required');
+    (err as Error & { status: number }).status = 401;
+    throw err;
   }
 
-  window.location.assign(appendSessionTokenToFileShareUrl(safe, session.access_token));
-  return 'opened';
+  return fetch(getVercelApiUrl(fileProxyApiPathFromStorage(storagePath)), {
+    headers: {
+      Authorization: `Bearer ${session.access_token}`,
+      Accept: 'application/pdf',
+    },
+    credentials: 'same-origin',
+  });
+}
+
+/** Redirect signed-out visitors to sign-in, then back to the in-app share path. */
+export function redirectToSignInForShare(path: string): void {
+  const share = toFileShareAppPath(path) || safeReturnPath(path) || '/';
+  window.location.assign(buildSignInHref(share));
 }

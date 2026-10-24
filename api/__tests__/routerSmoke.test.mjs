@@ -205,7 +205,7 @@ describe('DreamHost file routes', () => {
     assert.match(String(body.error || ''), /sign in/i);
   });
 
-  it('redirects unauthenticated HTML file share to sign-in', async () => {
+  it('redirects unauthenticated HTML file share to sign-in with /shared return', async () => {
     const res = await routed(
       'GET',
       'files/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002.pdf',
@@ -221,6 +221,7 @@ describe('DreamHost file routes', () => {
     assert.equal(loc.startsWith('/?'), true);
     const params = new URLSearchParams(loc.slice(2));
     assert.equal(params.get('signin'), '1');
-    assert.match(params.get('return') || '', /^\/api\/files\//);
+    assert.match(params.get('return') || '', /^\/shared\//);
+    assert.equal(loc.includes('access_token='), false);
   });
 });
