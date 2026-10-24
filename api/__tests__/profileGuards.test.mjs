@@ -193,6 +193,42 @@ describe('canManagerEditProfile (V5)', () => {
     );
   });
 
+  it('locks status on self-edit (cannot self-reactivate or self-suspend)', () => {
+    const suspended = {
+      id: 'mgr-1',
+      role: 'teacher',
+      status: 'suspended',
+      organisation_id: 'ems',
+      can_manage_users: true,
+    };
+    assert.equal(
+      canManagerEditProfile({
+        actor: suspended,
+        targetOld: suspended,
+        targetNew: { status: 'active', organisation_id: 'ems' },
+      }),
+      false,
+    );
+    const active = { ...suspended, status: 'active' };
+    assert.equal(
+      canManagerEditProfile({
+        actor: active,
+        targetOld: active,
+        targetNew: { status: 'suspended', organisation_id: 'ems' },
+      }),
+      false,
+    );
+    const invited = { ...suspended, status: 'invited' };
+    assert.equal(
+      canManagerEditProfile({
+        actor: invited,
+        targetOld: invited,
+        targetNew: { status: 'active', organisation_id: 'ems' },
+      }),
+      true,
+    );
+  });
+
   it('denies editing users outside the manager org', () => {
     assert.equal(
       canManagerEditProfile({

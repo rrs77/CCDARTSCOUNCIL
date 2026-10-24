@@ -112,6 +112,21 @@ BEGIN
         RAISE EXCEPTION 'managers cannot change their own capability flags'
           USING ERRCODE = '42501';
       END IF;
+
+      -- Status locked on self-edit for everyone (including managers).
+      IF NEW.status IS DISTINCT FROM OLD.status THEN
+        IF COALESCE(OLD.status, '') = 'suspended' THEN
+          RAISE EXCEPTION 'profiles.status cannot be changed from suspended by this user'
+            USING ERRCODE = '42501';
+        END IF;
+        IF NOT (
+          COALESCE(OLD.status, '') IN ('invited', 'pending')
+          AND NEW.status = 'active'
+        ) THEN
+          RAISE EXCEPTION 'profiles.status may only change from invited/pending to active for this user'
+            USING ERRCODE = '42501';
+        END IF;
+      END IF;
     END IF;
 
     RETURN NEW;

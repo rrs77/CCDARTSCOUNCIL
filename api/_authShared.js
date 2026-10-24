@@ -548,6 +548,13 @@ export function canManagerEditProfile({ actor, targetOld, targetNew }) {
         return false;
       }
     }
+    // Status is locked on self-edit for everyone (invited/pending → active only).
+    if (
+      Object.prototype.hasOwnProperty.call(targetNew, 'status') &&
+      !maySelfUpdateProfileStatus(targetOld.status, targetNew.status)
+    ) {
+      return false;
+    }
   }
 
   return true;
