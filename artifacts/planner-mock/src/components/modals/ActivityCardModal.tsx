@@ -73,20 +73,30 @@ export function ActivityCardModal({
 
   const curriculum = useMemo(() => {
     if (!activity) return [];
-    return state.settings.curriculum.filter(
-      (c) =>
-        c.subjectId === activity.subjectId &&
-        (activity.content.curriculumIds.includes(c.id) ||
-          c.keyStage === state.keyStage),
+    const strandIds = new Set(
+      state.settings.strands
+        .filter(
+          (s) =>
+            s.subjectId === activity.subjectId &&
+            (s.keyStage === state.keyStage ||
+              activity.keyStages.includes(s.keyStage)),
+        )
+        .map((s) => s.id),
     );
-  }, [activity, state.settings.curriculum, state.keyStage]);
+    return state.settings.curriculum.filter((c) => strandIds.has(c.strandId));
+  }, [
+    activity,
+    state.settings.curriculum,
+    state.settings.strands,
+    state.keyStage,
+  ]);
 
   if (!open || !activity || !draft || !subject) {
     return null;
   }
 
   return (
-    <ModalShell open={open} onClose={onClose} wide className="max-w-3xl">
+    <ModalShell open={open} onClose={onClose}>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-indigo-50 px-5 py-4">
         <div className="flex min-w-0 items-start gap-3">
           <span
@@ -227,7 +237,17 @@ export function ActivityCardModal({
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                 From your curriculum in Settings
               </p>
+              {curriculum.length === 0 ? (
+                <p className="rounded-2xl border border-dashed border-indigo-200 bg-indigo-50/40 px-4 py-6 text-center text-sm text-slate-500">
+                  No statements for this subject and key stage yet. Add frameworks,
+                  strands and statements in Settings.
+                </p>
+              ) : null}
               {curriculum.map((c) => {
+                const strand = state.settings.strands.find((s) => s.id === c.strandId);
+                const framework = state.settings.frameworks.find(
+                  (f) => f.id === strand?.frameworkId,
+                );
                 const checked = draft.curriculumIds.includes(c.id);
                 return (
                   <label
@@ -252,7 +272,13 @@ export function ActivityCardModal({
                         setDraft({ ...draft, curriculumIds: ids });
                       }}
                     />
-                    <span className="leading-relaxed text-slate-700">{c.text}</span>
+                    <span className="min-w-0">
+                      <span className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-indigo-500">
+                        {framework?.name}
+                        {strand ? ` · ${strand.name}` : ""}
+                      </span>
+                      <span className="leading-relaxed text-slate-700">{c.text}</span>
+                    </span>
                   </label>
                 );
               })}

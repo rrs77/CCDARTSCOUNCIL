@@ -1,6 +1,5 @@
 import {
   Check,
-  ChevronDown,
   GripVertical,
   Plus,
   Printer,
@@ -210,9 +209,9 @@ export function LessonPlanModal({
   } = usePlanner();
 
   const [view, setView] = useState<"plan" | "preview" | "print">("plan");
-  const [menuAfter, setMenuAfter] = useState<string | null>(null);
   const [reprompt, setReprompt] = useState("");
   const [aiBusy, setAiBusy] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   const sensors = useSensors(useSensor(PointerSensor, { activationConstraint: { distance: 6 } }));
 
@@ -230,9 +229,23 @@ export function LessonPlanModal({
 
   if (!activeLesson) return null;
 
-  const curriculum = state.settings.curriculum.filter((c) =>
+  const linkedCurriculum = state.settings.curriculum.filter((c) =>
     activeLesson.curriculumIds.includes(c.id),
   );
+
+  const subjectIdsInLesson = new Set(
+    activeLesson.blocks
+      .map((b) => b.subjectId)
+      .filter((id): id is string => Boolean(id)),
+  );
+
+  const pickableStatements = state.settings.curriculum.filter((c) => {
+    const strand = state.settings.strands.find((s) => s.id === c.strandId);
+    if (!strand) return false;
+    if (strand.keyStage !== activeLesson.keyStage) return false;
+    if (subjectIdsInLesson.size === 0) return true;
+    return subjectIdsInLesson.has(strand.subjectId);
+  });
 
   const onDragEnd = (event: DragEndEvent) => {
     const { active, over } = event;
@@ -252,7 +265,7 @@ export function LessonPlanModal({
   const runFleshOut = () => {
     snapshot();
     setAiBusy(true);
-    const ensure = ["diff", "vocab", "afl", "hs"].filter((id) =>
+    const ensure = ["diff", "vocab", "afl"].filter((id) =>
       enabledSections.some((s) => s.id === id),
     );
     const existing = new Set(
@@ -311,10 +324,10 @@ export function LessonPlanModal({
   }, [activeLesson?.blocks, ui.aiSuggestions]);
 
   return (
-    <ModalShell open={open} onClose={onClose} wide className="max-w-6xl">
+    <ModalShell open={open} onClose={onClose}>
       <div className="flex flex-wrap items-start justify-between gap-3 border-b border-indigo-50 px-5 py-4">
-        <div>
-          <h2 className="text-lg font-extrabold text-indigo-700">
+        <div className="min-w-0 flex-1">
+          <h2 className="line-clamp-2 text-lg font-extrabold text-indigo-700" title={activeLesson.title}>
             Lesson plan — {activeLesson.title}
           </h2>
           <div className="mt-1.5 flex flex-wrap gap-1.5">
@@ -415,7 +428,6 @@ export function LessonPlanModal({
                           afterBlockId: block.id,
                           sectionTypeId,
                         });
-                        setMenuAfter(null);
                       }}
                     />
                   </div>
@@ -466,19 +478,85 @@ export function LessonPlanModal({
 
           <div className="space-y-3">
             <div className="rounded-3xl border border-slate-100 bg-white p-4 shadow-sm">
-              <h4 className="text-sm font-extrabold text-slate-800">Curriculum statements</h4>
-              <p className="mb-2 text-[11px] font-semibold uppercase tracking-wide text-slate-400">
-                From your curriculum in Settings
-              </p>
+              <div className="mb-2 flex items-start justify-between gap-2">
+                <div>
+                  <h4 className="text-sm font-extrabold text-slate-800">Curriculum statements</h4>
+                  <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+                    From your curriculum in Settings
+                  </p>
+                </div>
+                <Button
+                  variant="soft"
+                  size="sm"
+                  onClick={() => setPickerOpen((v) => !v)}
+                >
+                  <Plus className="h-3.5 w-3.5" />
+                  {pickerOpen ? "Done" : "Choose"}
+                </Button>
+              </div>
+              {pickerOpen ? (
+                <div className="mb-3 max-h-48 space-y-1.5 overflow-y-auto rounded-2xl border border-indigo-100 bg-indigo-50/40 p-2">
+                  {pickableStatements.length === 0 ? (
+                    <p className="px-2 py-3 text-center text-xs text-slate-500">
+                      No statements for this key stage / subjects. Define them in Settings.
+                    </p>
+                  ) : (
+                    pickableStatements.map((c) => {
+                      const strand = state.settings.strands.find((s) => s.id === c.strandId);
+                      const checked = activeLesson.curriculumIds.includes(c.id);
+                      return (
+                        <label
+                          key={c.id}
+                          className="flex cursor-pointer gap-2 rounded-xl bg-white px-2.5 py-2 text-xs text-slate-700"
+                        >
+                          <input
+                            type="checkbox"
+                            className="mt-0.5"
+                            checked={checked}
+                            onChange={(e) => {
+                              const ids = e.target.checked
+                                ? [...activeLesson.curriculumIds, c.id]
+                                : activeLesson.curriculumIds.filter((id) => id !== c.id);
+                              dispatch({
+                                type: "UPDATE_LESSON",
+                                id: activeLesson.id,
+                                patch: { curriculumIds: ids },
+                              });
+                            }}
+                          />
+                          <span className="min-w-0">
+                            <span className="mb-0.5 block font-bold text-indigo-500">
+                              {strand?.name}
+                            </span>
+                            {c.text}
+                          </span>
+                        </label>
+                      );
+                    })
+                  )}
+                </div>
+              ) : null}
               <ul className="space-y-2">
-                {curriculum.map((c) => (
-                  <li key={c.id} className="flex gap-2 text-sm text-slate-700">
-                    <Check className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
-                    <span>{c.text}</span>
+                {linkedCurriculum.map((c) => {
+                  const strand = state.settings.strands.find((s) => s.id === c.strandId);
+                  return (
+                    <li key={c.id} className="flex gap-2 text-sm text-slate-700">
+                      <Check className="mt-0.5 h-4 w-4 shrink-0 text-indigo-600" />
+                      <span>
+                        {strand ? (
+                          <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-indigo-500">
+                            {strand.name}
+                          </span>
+                        ) : null}
+                        {c.text}
+                      </span>
+                    </li>
+                  );
+                })}
+                {linkedCurriculum.length === 0 ? (
+                  <li className="text-sm text-slate-400">
+                    No statements linked yet — choose from Settings-defined statements.
                   </li>
-                ))}
-                {curriculum.length === 0 ? (
-                  <li className="text-sm text-slate-400">No statements linked yet.</li>
                 ) : null}
               </ul>
             </div>
@@ -600,7 +678,7 @@ export function LessonPlanModal({
                 From your curriculum in Settings
               </p>
               <ul className="list-disc space-y-1 pl-5 text-sm text-slate-700">
-                {curriculum.map((c) => (
+                {linkedCurriculum.map((c) => (
                   <li key={c.id}>{c.text}</li>
                 ))}
               </ul>

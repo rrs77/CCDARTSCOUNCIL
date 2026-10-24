@@ -85,23 +85,28 @@ export function Pill({
   );
 }
 
+/**
+ * Shared modal shell — one size for every dialog (activity card, lesson plan,
+ * swipe preview, templates, settings editors). Same footprint on iPad.
+ */
+export const MODAL_SHELL_SIZE =
+  "h-[min(88vh,760px)] w-full max-w-[720px] md:max-w-[760px]";
+
 export function ModalShell({
   open,
   onClose,
   children,
-  wide,
   className,
 }: {
   open: boolean;
   onClose: () => void;
   children: ReactNode;
-  wide?: boolean;
   className?: string;
 }) {
   if (!open) return null;
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6"
+      className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 md:p-6"
       onKeyDown={(e) => {
         if (e.key === "Escape") onClose();
       }}
@@ -117,13 +122,14 @@ export function ModalShell({
       <motion.div
         role="dialog"
         aria-modal="true"
+        data-modal-shell
         tabIndex={-1}
         initial={{ opacity: 0, y: 18, scale: 0.97 }}
         animate={{ opacity: 1, y: 0, scale: 1 }}
         transition={{ type: "spring", stiffness: 380, damping: 32 }}
         className={cn(
-          "relative z-10 flex max-h-[min(92vh,920px)] w-full flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl shadow-indigo-900/20",
-          wide ? "max-w-5xl" : "max-w-3xl",
+          "relative z-10 flex flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl shadow-indigo-900/20",
+          MODAL_SHELL_SIZE,
           className,
         )}
       >

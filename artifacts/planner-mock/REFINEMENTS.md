@@ -26,3 +26,10 @@
 - Proto nav available on Year + Settings screens
 - Settings remain live source of truth (colours, subjects, sections, terms)
 - Screenshot suite for desktop, iPad, activity card, lesson plan + AI, preview, year, settings, empty, template, over-time, print A4
+
+## Pass 4 — Rob feedback
+
+- Single shared `ModalShell` size for activity card, lesson plan, swipe preview, templates, and Settings curriculum dialogs (same footprint on iPad)
+- Removed Health and safety section type and related AI flesh-out copy
+- Curriculum is user-defined in Settings: frameworks → strands (per subject + key stage) → statements; lesson/activity pickers only use those
+- Long activity / unit / lesson names wrap to 2 lines with full `title` tooltip on hover

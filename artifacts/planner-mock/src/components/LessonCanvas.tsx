@@ -68,7 +68,8 @@ function SortableBlock({
           <button
             type="button"
             onClick={onOpen}
-            className="truncate text-left text-sm font-bold"
+            className="line-clamp-2 min-w-0 text-left text-sm font-bold leading-snug"
+            title={block.title}
           >
             {block.title}
           </button>

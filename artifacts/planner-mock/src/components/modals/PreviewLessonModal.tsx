@@ -20,13 +20,15 @@ export function PreviewLessonModal({
   const subject = block?.subjectId ? getSubject(block.subjectId) : undefined;
 
   return (
-    <ModalShell open={open} onClose={onClose} className="max-w-xl">
+    <ModalShell open={open} onClose={onClose}>
       <div className="flex items-center justify-between border-b border-indigo-50 px-5 py-4">
-        <div>
+        <div className="min-w-0 pr-2">
           <p className="text-xs font-bold uppercase tracking-wide text-indigo-500">
             Lesson preview
           </p>
-          <h2 className="text-lg font-extrabold text-slate-900">{activeLesson.title}</h2>
+          <h2 className="line-clamp-2 text-lg font-extrabold text-slate-900" title={activeLesson.title}>
+            {activeLesson.title}
+          </h2>
           <p className="text-xs text-slate-400">
             {lessonDuration(activeLesson)} min · swipe through activities
           </p>
@@ -34,7 +36,7 @@ export function PreviewLessonModal({
         <CloseX onClick={onClose} />
       </div>
 
-      <div className="relative px-5 py-6">
+      <div className="soft-scroll relative flex-1 overflow-y-auto px-5 py-6">
         <div className="mb-4 flex items-center justify-center gap-1.5">
           {blocks.map((b, i) => (
             <button
@@ -88,25 +90,25 @@ export function PreviewLessonModal({
             )}
           </AnimatePresence>
         </div>
+      </div>
 
-        <div className="mt-5 flex items-center justify-between">
-          <Button
-            variant="secondary"
-            size="sm"
-            disabled={index === 0}
-            onClick={() => setIndex((i) => i - 1)}
-          >
-            <ChevronLeft className="h-4 w-4" /> Back
-          </Button>
-          <Button
-            variant="primary"
-            size="sm"
-            disabled={index >= blocks.length - 1}
-            onClick={() => setIndex((i) => i + 1)}
-          >
-            Next <ChevronRight className="h-4 w-4" />
-          </Button>
-        </div>
+      <div className="flex items-center justify-between border-t border-indigo-50 px-5 py-3">
+        <Button
+          variant="secondary"
+          size="sm"
+          disabled={index === 0}
+          onClick={() => setIndex((i) => i - 1)}
+        >
+          <ChevronLeft className="h-4 w-4" /> Back
+        </Button>
+        <Button
+          variant="primary"
+          size="sm"
+          disabled={index >= blocks.length - 1}
+          onClick={() => setIndex((i) => i + 1)}
+        >
+          Next <ChevronRight className="h-4 w-4" />
+        </Button>
       </div>
     </ModalShell>
   );

@@ -24,11 +24,26 @@ export interface SectionType {
   enabled: boolean;
 }
 
-export interface CurriculumStatement {
+/** User-defined curriculum framework (e.g. National Curriculum). */
+export interface CurriculumFramework {
   id: string;
-  text: string;
+  name: string;
+}
+
+/** Strand within a framework, scoped to subject + key stage. */
+export interface CurriculumStrand {
+  id: string;
+  frameworkId: string;
+  name: string;
   subjectId: string;
   keyStage: KeyStage;
+}
+
+/** Individual statement under a strand — defined in Settings only. */
+export interface CurriculumStatement {
+  id: string;
+  strandId: string;
+  text: string;
 }
 
 export interface ActivityContent {
@@ -106,6 +121,8 @@ export interface SettingsState {
   subjects: Subject[];
   terms: TermDates[];
   sectionTypes: SectionType[];
+  frameworks: CurriculumFramework[];
+  strands: CurriculumStrand[];
   curriculum: CurriculumStatement[];
   defaultTargetMin: number;
   className: string;

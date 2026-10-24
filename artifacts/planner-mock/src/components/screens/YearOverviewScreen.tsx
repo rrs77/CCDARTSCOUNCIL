@@ -61,8 +61,13 @@ export function YearOverviewScreen() {
                   const covered = new Set(
                     lessons.flatMap((l) => l!.curriculumIds),
                   );
-                  const statements = state.settings.curriculum.filter(
-                    (c) => c.subjectId === unit.subjectId,
+                  const strandIds = new Set(
+                    state.settings.strands
+                      .filter((s) => s.subjectId === unit.subjectId)
+                      .map((s) => s.id),
+                  );
+                  const statements = state.settings.curriculum.filter((c) =>
+                    strandIds.has(c.strandId),
                   );
                   return (
                     <article
@@ -74,8 +79,8 @@ export function YearOverviewScreen() {
                           className="mt-1 h-2.5 w-2.5 rounded-full"
                           style={{ backgroundColor: subject?.color }}
                         />
-                        <div className="min-w-0 flex-1">
-                          <h3 className="truncate text-sm font-bold text-slate-800">
+                        <div className="min-w-0 flex-1" title={unit.title}>
+                          <h3 className="line-clamp-2 text-sm font-bold leading-snug text-slate-800">
                             {unit.title}
                           </h3>
                           <p className="text-[11px] text-slate-400">

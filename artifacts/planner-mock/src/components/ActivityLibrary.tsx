@@ -59,8 +59,9 @@ function LibraryActivity({
         onClick={onOpen}
         className="min-w-0 flex-1 border-l-4 py-1 pl-2 text-left"
         style={{ borderLeftColor: color }}
+        title={activity.title}
       >
-        <span className="block truncate text-sm font-semibold text-slate-800">
+        <span className="line-clamp-2 text-sm font-semibold leading-snug text-slate-800">
           {activity.title}
         </span>
         <span className="text-xs text-slate-400">{activity.durationMin}m</span>

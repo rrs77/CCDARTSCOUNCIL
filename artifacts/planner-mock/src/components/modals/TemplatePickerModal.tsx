@@ -21,7 +21,7 @@ export function TemplatePickerModal({
   );
 
   return (
-    <ModalShell open={open} onClose={onClose} wide>
+    <ModalShell open={open} onClose={onClose}>
       <div className="flex items-center justify-between border-b border-indigo-50 px-5 py-4">
         <div>
           <h2 className="text-lg font-extrabold text-slate-900">Choose plan template</h2>
@@ -41,7 +41,7 @@ export function TemplatePickerModal({
           ]}
         />
       </div>
-      <div className="soft-scroll grid max-h-[60vh] gap-3 overflow-y-auto p-5 sm:grid-cols-2">
+      <div className="soft-scroll grid flex-1 gap-3 overflow-y-auto p-5 sm:grid-cols-2">
         {templates.map((tpl) => (
           <button
             key={tpl.id}

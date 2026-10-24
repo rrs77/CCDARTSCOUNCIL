@@ -1,6 +1,8 @@
 import type {
   Activity,
+  CurriculumFramework,
   CurriculumStatement,
+  CurriculumStrand,
   KeyStage,
   Lesson,
   PlanTemplate,
@@ -45,52 +47,101 @@ export const DEFAULT_SECTION_TYPES: SectionType[] = [
   { id: "diff", label: "Differentiation", builtIn: true, enabled: true },
   { id: "vocab", label: "Vocabulary", builtIn: true, enabled: true },
   { id: "afl", label: "Assessment for learning", builtIn: true, enabled: true },
-  { id: "hs", label: "Health and safety", builtIn: true, enabled: true },
   { id: "hw", label: "Homework", builtIn: true, enabled: true },
   { id: "custom", label: "Custom", builtIn: true, enabled: true },
+];
+
+export const DEFAULT_FRAMEWORKS: CurriculumFramework[] = [
+  { id: "fw_nc", name: "National Curriculum" },
+  { id: "fw_school", name: "School creative framework" },
+];
+
+export const DEFAULT_STRANDS: CurriculumStrand[] = [
+  {
+    id: "st_music_perf",
+    frameworkId: "fw_nc",
+    name: "Performing",
+    subjectId: "music",
+    keyStage: "KS2",
+  },
+  {
+    id: "st_music_listen",
+    frameworkId: "fw_nc",
+    name: "Listening",
+    subjectId: "music",
+    keyStage: "KS2",
+  },
+  {
+    id: "st_music_compose",
+    frameworkId: "fw_nc",
+    name: "Composing",
+    subjectId: "music",
+    keyStage: "KS2",
+  },
+  {
+    id: "st_drama",
+    frameworkId: "fw_nc",
+    name: "Drama skills",
+    subjectId: "drama",
+    keyStage: "KS2",
+  },
+  {
+    id: "st_dance",
+    frameworkId: "fw_nc",
+    name: "Movement & dance",
+    subjectId: "dance",
+    keyStage: "KS2",
+  },
+  {
+    id: "st_art",
+    frameworkId: "fw_nc",
+    name: "Recording & reviewing",
+    subjectId: "art",
+    keyStage: "KS2",
+  },
+  {
+    id: "st_english",
+    frameworkId: "fw_school",
+    name: "Language & imagination",
+    subjectId: "english",
+    keyStage: "KS2",
+  },
 ];
 
 export const DEFAULT_CURRICULUM: CurriculumStatement[] = [
   {
     id: "c1",
-    subjectId: "music",
-    keyStage: "KS2",
+    strandId: "st_music_perf",
     text: "Pupils should be taught to play and perform in solo and ensemble contexts, using their voices and playing musical instruments with increasing accuracy, fluency, control and expression.",
   },
   {
     id: "c2",
-    subjectId: "music",
-    keyStage: "KS2",
+    strandId: "st_music_listen",
     text: "Pupils should be taught to listen with attention to detail and recall sounds with increasing aural memory.",
   },
   {
     id: "c3",
-    subjectId: "music",
-    keyStage: "KS2",
+    strandId: "st_music_compose",
     text: "Pupils should be taught to improvise and compose music for a range of purposes using the inter-related dimensions of music.",
   },
   {
     id: "c4",
-    subjectId: "drama",
-    keyStage: "KS2",
+    strandId: "st_drama",
     text: "Pupils participate in a range of drama activities, including improvisation and scripted performance.",
   },
   {
     id: "c5",
-    subjectId: "dance",
-    keyStage: "KS2",
+    strandId: "st_dance",
     text: "Pupils perform dances using a range of movement patterns and respond to different stimuli.",
   },
   {
     id: "c6",
-    subjectId: "art",
-    keyStage: "KS2",
+    strandId: "st_art",
     text: "Pupils create sketch books to record observations and use them to review and revisit ideas.",
   },
   {
     id: "c7",
-    subjectId: "english",
-    keyStage: "KS2",
+    strandId: "st_english",
     text: "Pupils discuss words and phrases that capture the reader's interest and imagination.",
   },
 ];
@@ -128,7 +179,7 @@ function act(
 export const DEFAULT_ACTIVITIES: Activity[] = [
   act(
     "a1",
-    "Rhythm Echo Warm-up",
+    "Rhythm Echo Warm-up with Extended Call Patterns",
     "music",
     5,
     "Call-and-echo clapping patterns that settle the class into a shared pulse.",
@@ -136,7 +187,7 @@ export const DEFAULT_ACTIVITIES: Activity[] = [
   ),
   act(
     "a2",
-    "Body Percussion Patterns",
+    "Body Percussion Patterns — Layered Ostinato Build",
     "music",
     10,
     "Explore layered body percussion patterns in small groups, building from a steady pulse to a four-part ostinato.",
@@ -298,9 +349,11 @@ function lessonFromTemplate(
 }
 
 export function buildSeedLessons(): Lesson[] {
-  const l1 = lessonFromTemplate("Lesson 1 — Pulse and Rhythm", ["a1", "a2", "a7", "a8"], {
-    id: "les_1",
-  });
+  const l1 = lessonFromTemplate(
+    "Lesson 1 — Pulse and Rhythm Foundations for Ensemble Performance",
+    ["a1", "a2", "a7", "a8"],
+    { id: "les_1" },
+  );
   // Insert a teacher notes flexible section after block 2
   l1.blocks = [
     l1.blocks[0],
@@ -316,7 +369,7 @@ export function buildSeedLessons(): Lesson[] {
     l1.blocks[3],
   ];
 
-  const l2 = lessonFromTemplate("Lesson 2 — Layering Patterns", ["a2", "a3"], {
+  const l2 = lessonFromTemplate("Lesson 2 — Layering Patterns Across the Ensemble", ["a2", "a3"], {
     id: "les_2",
     learningObjective: "To layer a rhythm ostinato against a steady pulse",
   });
@@ -337,7 +390,7 @@ export function buildSeedUnits(lessons: Lesson[]): Unit[] {
   return [
     {
       id: "u1",
-      title: "Rhythm Explorers",
+      title: "Rhythm Explorers — Pulse, Pattern and Performance",
       subjectId: "music",
       termId: "aut1",
       lessonIds: ["les_1", "les_2", "les_3"],
@@ -375,6 +428,8 @@ export function buildDefaultSettings(): SettingsState {
     subjects: DEFAULT_SUBJECTS.map((s) => ({ ...s })),
     terms: DEFAULT_TERMS.map((t) => ({ ...t })),
     sectionTypes: DEFAULT_SECTION_TYPES.map((s) => ({ ...s })),
+    frameworks: DEFAULT_FRAMEWORKS.map((f) => ({ ...f })),
+    strands: DEFAULT_STRANDS.map((s) => ({ ...s })),
     curriculum: DEFAULT_CURRICULUM.map((c) => ({ ...c })),
     defaultTargetMin: 45,
     className: "4B",
@@ -387,10 +442,35 @@ export const AI_FLESH_OUT: Record<string, string> = {
   diff: "Support: provide visual pulse cards and a seated option.\nChallenge: invite confident pupils to lead a group ostinato layer.",
   vocab: "pulse · ostinato · body percussion · unison · layer · tempo",
   afl: "Mini plenary: freeze on the pulse — who can show the beat silently with shoulders?",
-  hs: "Clear the floor of bags. Sensible footwear for stamp/clap work. Stop signal: double clap.",
   hw: "Practise a 4-beat body percussion pattern at home and teach it to someone in your household.",
   custom: "Extension invitation: record a 20-second group ostinato on a class tablet for next lesson.",
 };
 
 export const AI_REPROMPT_RESPONSE =
   "Revised plan emphasis: open with a quieter pulse settle, move Body Percussion earlier, and close with a gallery walk of Pattern Prints so assessment evidence is visible.";
+
+/** Resolve statement metadata via strand (subject + key stage). */
+export function statementMeta(
+  statementId: string,
+  settings: SettingsState,
+): { statement: CurriculumStatement; strand: CurriculumStrand; framework?: CurriculumFramework } | null {
+  const statement = settings.curriculum.find((c) => c.id === statementId);
+  if (!statement) return null;
+  const strand = settings.strands.find((s) => s.id === statement.strandId);
+  if (!strand) return null;
+  const framework = settings.frameworks.find((f) => f.id === strand.frameworkId);
+  return { statement, strand, framework };
+}
+
+export function statementsForSubjectKeyStage(
+  settings: SettingsState,
+  subjectId: string,
+  keyStage: KeyStage,
+): CurriculumStatement[] {
+  const strandIds = new Set(
+    settings.strands
+      .filter((s) => s.subjectId === subjectId && s.keyStage === keyStage)
+      .map((s) => s.id),
+  );
+  return settings.curriculum.filter((c) => strandIds.has(c.strandId));
+}

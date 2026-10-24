@@ -19,6 +19,9 @@ import { formatTime, uid } from "./lib/utils";
 import type {
   Activity,
   AiSuggestion,
+  CurriculumFramework,
+  CurriculumStatement,
+  CurriculumStrand,
   KeyStage,
   Lesson,
   LessonBlock,
@@ -44,6 +47,15 @@ type Action =
   | { type: "UPDATE_TERM"; id: string; patch: Partial<TermDates> }
   | { type: "UPDATE_SECTION_TYPE"; id: string; patch: Partial<SectionType> }
   | { type: "ADD_SECTION_TYPE"; label: string }
+  | { type: "ADD_FRAMEWORK"; name?: string }
+  | { type: "UPDATE_FRAMEWORK"; id: string; patch: Partial<CurriculumFramework> }
+  | { type: "DELETE_FRAMEWORK"; id: string }
+  | { type: "ADD_STRAND"; strand: Omit<CurriculumStrand, "id"> & { id?: string } }
+  | { type: "UPDATE_STRAND"; id: string; patch: Partial<CurriculumStrand> }
+  | { type: "DELETE_STRAND"; id: string }
+  | { type: "ADD_STATEMENT"; statement: Omit<CurriculumStatement, "id"> & { id?: string } }
+  | { type: "UPDATE_STATEMENT"; id: string; patch: Partial<CurriculumStatement> }
+  | { type: "DELETE_STATEMENT"; id: string }
   | { type: "UPDATE_ACTIVITY"; id: string; patch?: Partial<Activity>; content?: Partial<Activity["content"]> }
   | { type: "ADD_ACTIVITY_TO_LESSON"; activityId: string; lessonId?: string }
   | { type: "REORDER_LESSON_BLOCKS"; lessonId: string; blockIds: string[] }
@@ -64,6 +76,24 @@ type Action =
   | { type: "PUSH_UNDO"; snapshot: Snapshot }
   | { type: "UNDO" }
   | { type: "RESET_DEMO" };
+
+function purgeStatementRefs(state: PlannerState, removedIds: Set<string>): PlannerState {
+  if (removedIds.size === 0) return state;
+  return {
+    ...state,
+    activities: state.activities.map((a) => ({
+      ...a,
+      content: {
+        ...a.content,
+        curriculumIds: a.content.curriculumIds.filter((id) => !removedIds.has(id)),
+      },
+    })),
+    lessons: state.lessons.map((l) => ({
+      ...l,
+      curriculumIds: l.curriculumIds.filter((id) => !removedIds.has(id)),
+    })),
+  };
+}
 
 interface UiExtras {
   aiSuggestions: AiSuggestion[];
@@ -227,6 +257,141 @@ function reducer(state: PlannerState, action: Action): PlannerState {
         },
         lastSavedAt: formatTime(),
       };
+    case "ADD_FRAMEWORK":
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          frameworks: [
+            ...state.settings.frameworks,
+            { id: uid("fw"), name: action.name ?? "New framework" },
+          ],
+        },
+        lastSavedAt: formatTime(),
+      };
+    case "UPDATE_FRAMEWORK":
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          frameworks: state.settings.frameworks.map((f) =>
+            f.id === action.id ? { ...f, ...action.patch } : f,
+          ),
+        },
+        lastSavedAt: formatTime(),
+      };
+    case "DELETE_FRAMEWORK": {
+      const strandIds = new Set(
+        state.settings.strands
+          .filter((s) => s.frameworkId === action.id)
+          .map((s) => s.id),
+      );
+      const removedStatementIds = new Set(
+        state.settings.curriculum
+          .filter((c) => strandIds.has(c.strandId))
+          .map((c) => c.id),
+      );
+      const next = {
+        ...state,
+        settings: {
+          ...state.settings,
+          frameworks: state.settings.frameworks.filter((f) => f.id !== action.id),
+          strands: state.settings.strands.filter((s) => s.frameworkId !== action.id),
+          curriculum: state.settings.curriculum.filter(
+            (c) => !strandIds.has(c.strandId),
+          ),
+        },
+        lastSavedAt: formatTime(),
+      };
+      return purgeStatementRefs(next, removedStatementIds);
+    }
+    case "ADD_STRAND":
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          strands: [
+            ...state.settings.strands,
+            {
+              id: action.strand.id ?? uid("st"),
+              frameworkId: action.strand.frameworkId,
+              name: action.strand.name,
+              subjectId: action.strand.subjectId,
+              keyStage: action.strand.keyStage,
+            },
+          ],
+        },
+        lastSavedAt: formatTime(),
+      };
+    case "UPDATE_STRAND":
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          strands: state.settings.strands.map((s) =>
+            s.id === action.id ? { ...s, ...action.patch } : s,
+          ),
+        },
+        lastSavedAt: formatTime(),
+      };
+    case "DELETE_STRAND": {
+      const removedStatementIds = new Set(
+        state.settings.curriculum
+          .filter((c) => c.strandId === action.id)
+          .map((c) => c.id),
+      );
+      const next = {
+        ...state,
+        settings: {
+          ...state.settings,
+          strands: state.settings.strands.filter((s) => s.id !== action.id),
+          curriculum: state.settings.curriculum.filter(
+            (c) => c.strandId !== action.id,
+          ),
+        },
+        lastSavedAt: formatTime(),
+      };
+      return purgeStatementRefs(next, removedStatementIds);
+    }
+    case "ADD_STATEMENT":
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          curriculum: [
+            ...state.settings.curriculum,
+            {
+              id: action.statement.id ?? uid("c"),
+              strandId: action.statement.strandId,
+              text: action.statement.text,
+            },
+          ],
+        },
+        lastSavedAt: formatTime(),
+      };
+    case "UPDATE_STATEMENT":
+      return {
+        ...state,
+        settings: {
+          ...state.settings,
+          curriculum: state.settings.curriculum.map((c) =>
+            c.id === action.id ? { ...c, ...action.patch } : c,
+          ),
+        },
+        lastSavedAt: formatTime(),
+      };
+    case "DELETE_STATEMENT": {
+      const removed = new Set([action.id]);
+      const next = {
+        ...state,
+        settings: {
+          ...state.settings,
+          curriculum: state.settings.curriculum.filter((c) => c.id !== action.id),
+        },
+        lastSavedAt: formatTime(),
+      };
+      return purgeStatementRefs(next, removed);
+    }
     case "UPDATE_ACTIVITY": {
       return {
         ...state,
