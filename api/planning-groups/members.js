@@ -6,11 +6,13 @@
  * verifying the caller is the planning_groups owner or a same-org admin
  * (role admin/superuser/super_admin or can_manage_users).
  *
- * Body: { groupId, userId?, label?, organisationId? }
+ * Body: { groupId?, createGroup?, userId?, label?, organisationId? }
  * - POST upserts membership for userId (defaults to caller).
- * - Creates planning_groups row if missing (caller becomes owner; org from profile).
+ * - New groups: set createGroup:true (or omit groupId with a label); id is
+ *   always randomUUID() on the server — never accept a client-invented id.
  */
 
+import { randomUUID } from 'node:crypto';
 import {
   assertRateLimit,
   createServiceClient,
@@ -100,26 +102,31 @@ export async function POST(request) {
       return jsonResponse({ error: 'Invalid JSON body.' }, 400);
     }
 
-    const groupId = typeof body?.groupId === 'string' ? body.groupId.trim() : '';
-    if (!groupId || groupId.length > 120) {
-      return jsonResponse({ error: 'Invalid groupId.' }, 400);
-    }
+    const requestedGroupId =
+      typeof body?.groupId === 'string' ? body.groupId.trim() : '';
+    const createGroup = body?.createGroup === true || !requestedGroupId;
+    const label =
+      typeof body?.label === 'string' && body.label.trim()
+        ? body.label.trim().slice(0, 200)
+        : '';
 
     const targetUserId =
       typeof body?.userId === 'string' && body.userId.trim()
         ? body.userId.trim()
         : auth.userId;
 
-    let managed = await assertCanManageGroup(service, auth.userId, callerProfile, groupId);
-    if (!managed.ok && managed.missing) {
-      // Create group — caller becomes owner (only for self-add bootstrap).
+    let groupId = requestedGroupId;
+    let managed;
+
+    if (createGroup && !requestedGroupId) {
+      // New group — id generated server-side only.
       if (targetUserId !== auth.userId) {
-        return jsonResponse({ error: 'Group not found.' }, 404);
+        return jsonResponse({ error: 'Create a group before adding other members.' }, 400);
       }
-      const label =
-        typeof body?.label === 'string' && body.label.trim()
-          ? body.label.trim().slice(0, 200)
-          : groupId;
+      if (!label) {
+        return jsonResponse({ error: 'label is required when creating a group.' }, 400);
+      }
+      groupId = randomUUID();
       const { error: createErr } = await service.from('planning_groups').insert({
         id: groupId,
         owner_id: auth.userId,
@@ -128,16 +135,24 @@ export async function POST(request) {
         updated_at: new Date().toISOString(),
       });
       if (createErr) {
-        // Race: another request created it — re-check manage rights.
-        managed = await assertCanManageGroup(service, auth.userId, callerProfile, groupId);
-        if (!managed.ok) {
-          return managed.response || jsonResponse({ error: createErr.message }, 400);
-        }
-      } else {
-        managed = { ok: true, group: { id: groupId, owner_id: auth.userId, organisation_id: callerOrg } };
+        return jsonResponse({ error: createErr.message }, 400);
       }
-    } else if (!managed.ok) {
-      return managed.response;
+      managed = {
+        ok: true,
+        group: { id: groupId, owner_id: auth.userId, organisation_id: callerOrg },
+      };
+    } else {
+      if (!groupId || groupId.length > 120) {
+        return jsonResponse({ error: 'Invalid groupId.' }, 400);
+      }
+      managed = await assertCanManageGroup(service, auth.userId, callerProfile, groupId);
+      if (!managed.ok) {
+        // Do not create groups from a client-supplied id.
+        if (managed.missing) {
+          return jsonResponse({ error: 'Group not found.' }, 404);
+        }
+        return managed.response;
+      }
     }
 
     // Target must be same org when adding someone else.

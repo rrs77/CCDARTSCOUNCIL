@@ -51,6 +51,9 @@ artifacts/*/.env.local
 /public/assets/
 /artifacts/api-server/public/assets/
 
+# Committed Vite bundles under the api-server public tree — do not track.
+artifacts/api-server/public/assets/
+
 # System Files
 .DS_Store
 Thumbs.db

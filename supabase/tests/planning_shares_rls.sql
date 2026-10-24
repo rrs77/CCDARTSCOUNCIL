@@ -1,6 +1,6 @@
--- Local RLS checks for 20261024_planning_shares.sql.
+-- Local RLS checks for 20261024130000_planning_shares.sql.
 -- Run against a scratch Postgres with Supabase stand-ins (never production):
---   psql -v ON_ERROR_STOP=1 -d <scratch> -f supabase/migrations/20261024_planning_shares.sql
+--   psql -v ON_ERROR_STOP=1 -d <scratch> -f supabase/migrations/20261024130000_planning_shares.sql
 --   psql -v ON_ERROR_STOP=1 -d <scratch> -f supabase/tests/planning_shares_rls.sql
 -- Everything runs inside a transaction that is rolled back.
 BEGIN;
