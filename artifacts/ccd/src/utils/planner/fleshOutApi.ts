@@ -39,8 +39,21 @@ export type FleshOutResult = {
 };
 
 export type FleshOutResponse =
-  | { ok: true; result: FleshOutResult; pickedByAi: boolean; model?: string }
+  | { ok: true; result: FleshOutResult; pickedByAi: boolean; model?: string; offlineDemo?: boolean }
   | { ok: false; message: string; code?: string; status: number };
+
+export type FleshOutAvailability = {
+  /** True when Apply can run (live OpenAI or offline demo). */
+  available: boolean;
+  /** Live OpenAI key is configured on the API server. */
+  live: boolean;
+  /** Local/offline deterministic stub (no key, no network). */
+  offlineDemo: boolean;
+  message?: string;
+};
+
+const LOCAL_API_HINT =
+  'AI needs the API server running (port 8080) or VITE_API_PROXY_TARGET set. Offline demo mode is active until then.';
 
 async function authHeader(): Promise<Record<string, string>> {
   try {
@@ -52,21 +65,151 @@ async function authHeader(): Promise<Record<string, string>> {
   }
 }
 
-export async function checkFleshOutAvailable(): Promise<{ available: boolean; message?: string }> {
+function isUnreachableProxyResponse(res: Response, body: unknown): boolean {
+  if (res.status === 502 || res.status === 503 || res.status === 504) return true;
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) return true;
+  // Empty / HTML-parsed-as-{} from a dead proxy
+  if (!body || typeof body !== 'object') return true;
+  return false;
+}
+
+/**
+ * Safe offline demo — restored after ccf788c removed the client stub.
+ * Deterministic, no keys; avoids the generic filler phrases banned on the live path.
+ */
+export function buildOfflineDemoFleshOut(input: {
+  instruction: string;
+  lesson: {
+    title?: string;
+    activities?: Array<{ name?: string; activity?: string }>;
+    sections?: Array<{ id: string; title: string; kind: string; bodyHtml?: string }>;
+  };
+  options: FleshOutOptions;
+}): FleshOutResult {
+  const title = (input.lesson.title || 'this lesson').trim();
+  const activityNames = (input.lesson.activities || [])
+    .map((a) => a.name || a.activity)
+    .filter(Boolean)
+    .slice(0, 3);
+  const named = activityNames.length ? activityNames.join(', ') : title;
+  const note = input.instruction.trim() || 'Make it practical';
+
+  const learningOutcome = input.options.includeOutcomes
+    ? `By the end of “${title}”, pupils will complete ${named} and explain one concrete choice they made.`
+    : '';
+  const successCriteria = input.options.includeSuccessCriteria
+    ? [
+        `• I can take part in ${activityNames[0] || 'the main activity'} with a clear role`,
+        '• I can name one technique or idea I used',
+        '• I can tell a partner what I would change next time',
+      ].join('\n')
+    : '';
+
+  const teacherQuestions = input.options.includeTeacherQuestions
+    ? {
+        opening: [`What do you already know about “${title}”?`],
+        during: [`During ${activityNames[0] || 'the activity'}, what is working — and what will you try next?`],
+        plenary: ['What is one thing you would keep, and one thing you would change?'],
+      }
+    : { opening: [], during: [], plenary: [] };
+
+  const differentiation = input.options.includeDifferentiation
+    ? {
+        support: 'Offer a simpler starting prompt and model the first step together.',
+        core: `Complete ${named} with the success criteria as a checklist.`,
+        challenge: 'Add a stretch: justify one creative choice to a partner in 20 seconds.',
+        sendEal: 'Provide key vocabulary cards and allow draw/gesture responses first.',
+      }
+    : { support: '', core: '', challenge: '', sendEal: '' };
+
+  const sections = input.lesson.sections || [];
+  const sectionBodies =
+    input.options.sectionId
+      ? sections
+          .filter((s) => s.id === input.options.sectionId)
+          .map((s) => ({
+            sectionId: s.id,
+            bodyHtml: `<p><strong>Teacher note (offline demo)</strong> for “${escapeHtml(s.title)}”: ${escapeHtml(note)}</p>`,
+          }))
+      : sections
+          .filter((s) => s.kind !== 'activity' && !(s.bodyHtml || '').trim())
+          .map((s) => ({
+            sectionId: s.id,
+            bodyHtml: `<p><strong>Teacher note (offline demo)</strong> for “${escapeHtml(s.title)}”: ${escapeHtml(note)}</p>`,
+          }));
+
+  const wholeLessonSections = input.options.wholeLesson
+    ? sections
+        .filter((s) => s.kind !== 'activity')
+        .map((s, i) => ({
+          sectionId: s.id,
+          title: s.title,
+          durationMins: 5 + (i % 3) * 5,
+          bodyHtml: `<p><strong>Offline demo sequence</strong> — ${escapeHtml(s.title)}: ${escapeHtml(note)}</p>`,
+        }))
+    : [];
+
+  return {
+    learningOutcome,
+    successCriteria,
+    teacherQuestions,
+    differentiation,
+    selectedStatementIds: [],
+    wholeLessonSections,
+    sectionBodies,
+  };
+}
+
+export async function checkFleshOutAvailable(): Promise<FleshOutAvailability> {
   try {
     const res = await fetch('/api/interactive-lessons/flesh-out', {
       method: 'GET',
       headers: await authHeader(),
     });
-    const body = await res.json().catch(() => ({}));
+    const body = await res.json().catch(() => null);
+
+    if (isUnreachableProxyResponse(res, body)) {
+      return {
+        available: true,
+        live: false,
+        offlineDemo: true,
+        message: LOCAL_API_HINT,
+      };
+    }
+
+    if (body && typeof body === 'object' && 'available' in body) {
+      if (body.available) {
+        return {
+          available: true,
+          live: true,
+          offlineDemo: false,
+          message: body.message,
+        };
+      }
+      // Server reached but OPENAI_API_KEY missing — still allow offline demo locally.
+      return {
+        available: true,
+        live: false,
+        offlineDemo: true,
+        message:
+          (typeof body.message === 'string' && body.message) ||
+          'OPENAI_API_KEY is not set on the API server. Offline demo mode is active. Start api-server with OPENAI_API_KEY for live AI.',
+      };
+    }
+
     return {
-      available: !!body.available,
-      message: body.message,
+      available: true,
+      live: false,
+      offlineDemo: true,
+      message: LOCAL_API_HINT,
     };
   } catch {
     return {
-      available: false,
-      message: 'Could not reach the Flesh out API.',
+      available: true,
+      live: false,
+      offlineDemo: true,
+      message: LOCAL_API_HINT,
     };
   }
 }
@@ -108,17 +251,39 @@ export async function requestFleshOut(input: {
       },
       body: JSON.stringify(input),
     });
-    const body = await res.json().catch(() => ({}));
+    const body = await res.json().catch(() => null);
+
+    if (isUnreachableProxyResponse(res, body) || res.status === 0) {
+      return {
+        ok: true,
+        offlineDemo: true,
+        pickedByAi: false,
+        model: 'offline-demo',
+        result: buildOfflineDemoFleshOut(input),
+      };
+    }
+
+    if (res.status === 501 || (body && body.available === false && res.status >= 500)) {
+      // Key missing on a reachable server — fall back to offline demo rather than hard-fail local work.
+      return {
+        ok: true,
+        offlineDemo: true,
+        pickedByAi: false,
+        model: 'offline-demo',
+        result: buildOfflineDemoFleshOut(input),
+      };
+    }
+
     if (!res.ok) {
       return {
         ok: false,
         status: res.status,
         message:
-          body.message ||
+          (body && typeof body.message === 'string' && body.message) ||
           (res.status === 501
             ? 'OPENAI_API_KEY is not configured on the server.'
             : `Flesh out failed (${res.status}).`),
-        code: body.code,
+        code: body?.code,
       };
     }
     if (!body?.result) {
@@ -132,9 +297,11 @@ export async function requestFleshOut(input: {
     };
   } catch {
     return {
-      ok: false,
-      status: 0,
-      message: 'Network error calling Flesh out. Check your connection and try again.',
+      ok: true,
+      offlineDemo: true,
+      pickedByAi: false,
+      model: 'offline-demo',
+      result: buildOfflineDemoFleshOut(input),
     };
   }
 }

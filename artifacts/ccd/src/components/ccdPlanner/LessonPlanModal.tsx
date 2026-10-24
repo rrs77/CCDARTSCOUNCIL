@@ -235,6 +235,12 @@ export function LessonPlanPanel({
       throw new Error(res.message);
     }
 
+    if (res.offlineDemo) {
+      toast('Offline demo applied — start the API server with OPENAI_API_KEY for live AI.', {
+        icon: 'ℹ️',
+      });
+    }
+
     // Defence in depth: never apply IDs that were not in the Settings list we sent.
     const allowedIds = new Set(curriculumStatements.map((s) => s.id));
     const result = {
@@ -878,6 +884,7 @@ function FleshOutPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [available, setAvailable] = useState<boolean | null>(null);
+  const [offlineDemo, setOfflineDemo] = useState(false);
   const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null);
   const [opts, setOpts] = useState<FleshOutOptions>({
     includeOutcomes: true,
@@ -893,6 +900,7 @@ function FleshOutPanel({
     void checkFleshOutAvailable().then((r) => {
       if (cancelled) return;
       setAvailable(r.available);
+      setOfflineDemo(!!r.offlineDemo && !r.live);
       setAvailabilityMessage(r.message || null);
     });
     return () => {
@@ -960,6 +968,15 @@ function FleshOutPanel({
         >
           {availabilityMessage ||
             'OPENAI_API_KEY is not configured on the server. Flesh out is unavailable.'}
+        </div>
+      ) : null}
+      {available && offlineDemo ? (
+        <div
+          role="status"
+          className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[12px] font-semibold text-amber-950"
+        >
+          {availabilityMessage ||
+            'AI needs the API server running or VITE_API_PROXY_TARGET set. Offline demo mode is active.'}
         </div>
       ) : null}
       {error ? (
@@ -1070,8 +1087,9 @@ function FleshOutPanel({
         </button>
       </div>
       <p className="text-[11px] leading-relaxed text-violet-700">
-        Uses the server OPENAI_API_KEY only (never in the browser). Only ticked sections are
-        generated. Empty teacher fields are filled first; re-run a single section from Scope anytime.
+        {offlineDemo
+          ? 'Offline demo fills empty fields locally (no OpenAI key in the browser). Start the API server with OPENAI_API_KEY for live AI.'
+          : 'Uses the server OPENAI_API_KEY only (never in the browser). Only ticked sections are generated. Empty teacher fields are filled first; re-run a single section from Scope anytime.'}
       </p>
     </div>
   );
