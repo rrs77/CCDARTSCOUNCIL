@@ -19,8 +19,12 @@ import {
   writeAuditLog,
 } from './_authShared.js';
 
-/** Shared with dreamhost/api/upload-pdf.php MAX_FILE_SIZE. */
-export const MAX_UPLOAD_BYTES = 20 * 1024 * 1024;
+/**
+ * Server-to-server DreamHost upload cap (API key JSON path).
+ * Keep in sync with dreamhost/api/upload-pdf.php MAX_FILE_SIZE.
+ * Browser → Vercel JSON uploads use MAX_VERCEL_BODY_UPLOAD_BYTES (3 MB) in _uploadToken.js.
+ */
+export const MAX_UPLOAD_BYTES = 100 * 1024 * 1024;
 
 /** UUID v4-ish path segment (Supabase user ids). */
 const USER_ID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -288,6 +292,78 @@ export async function fetchFromDreamHost(storagePath) {
     throw err;
   }
   return Buffer.from(await upstream.arrayBuffer());
+}
+
+const PDF_MAGIC_BYTES = Buffer.from('%PDF-');
+
+/**
+ * Confirm a direct upload landed: object exists, starts with %PDF-, size ≤ maxBytes.
+ * Uses Range when the download endpoint supports it to avoid loading large files.
+ * @returns {Promise<{ byteLength: number }>}
+ */
+export async function probeDreamHostPdf(storagePath, maxBytes) {
+  const apiKey = getDreamHostApiKey();
+  const downloadBase = getDreamHostDownloadUrl();
+  const path = parseOwnedStoragePath(storagePath);
+  if (!apiKey || !downloadBase || !path) {
+    const err = new Error('File storage is not configured.');
+    err.status = 503;
+    throw err;
+  }
+
+  const url = new URL(downloadBase);
+  url.searchParams.set('path', path);
+
+  const upstream = await fetch(url.toString(), {
+    method: 'GET',
+    headers: {
+      'X-API-Key': apiKey,
+      Range: 'bytes=0-4',
+    },
+  });
+
+  if (upstream.status === 404) {
+    const err = new Error('File not found.');
+    err.status = 404;
+    throw err;
+  }
+  if (!upstream.ok && upstream.status !== 206) {
+    console.error('DreamHost probe failed:', upstream.status);
+    const err = new Error('Failed to verify file.');
+    err.status = 502;
+    throw err;
+  }
+
+  const head = Buffer.from(await upstream.arrayBuffer());
+  if (head.length < 5 || !head.subarray(0, 5).equals(PDF_MAGIC_BYTES)) {
+    const err = new Error('Not a PDF.');
+    err.status = 400;
+    throw err;
+  }
+
+  let byteLength = 0;
+  const contentRange = upstream.headers.get('Content-Range') || '';
+  const rangeTotal = contentRange.match(/\/(\d+)\s*$/);
+  if (rangeTotal) {
+    byteLength = Number(rangeTotal[1]);
+  } else {
+    const cl = Number(upstream.headers.get('Content-Length') || 0);
+    // Full body returned (no Range support) — length is the whole file.
+    byteLength = upstream.status === 206 ? 0 : cl || head.byteLength;
+  }
+
+  if (!Number.isFinite(byteLength) || byteLength < 5) {
+    const err = new Error('Invalid uploaded size.');
+    err.status = 400;
+    throw err;
+  }
+  if (Number.isFinite(maxBytes) && byteLength > maxBytes) {
+    const err = new Error('File too large.');
+    err.status = 413;
+    throw err;
+  }
+
+  return { byteLength };
 }
 
 /** Allowed visibility values. Unknown/missing fails closed to private. */

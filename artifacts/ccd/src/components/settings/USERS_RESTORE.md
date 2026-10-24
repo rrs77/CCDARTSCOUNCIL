@@ -25,9 +25,18 @@ There was **never** a separate `/set-password` route. Invitees use **`/reset-pas
 2. Else client `profiles` SELECT under RLS (migration `20261019120100_profiles_admin_read_scope.sql`).
 3. Else demo roster (includes Rob as `super_admin` + Chelmsford Music Hub org admin for UI demos).
 
-## Rob as super admin
+## Granting super_admin (manual, by user id)
 
-Migration `20260903_hub_administration.sql` (and re-applied in `20261019120100_profiles_admin_read_scope.sql`) sets `rob.reichstorer@gmail.com` → `super_admin` when that profile exists. Also matches typo `@gmaill.com` in the new migration. **Email is never checked at request time** — only roles.
+Do **not** grant by email in migrations (squatting risk). After the account exists and `email_confirmed_at` is set:
+
+```bash
+# Dry-run
+node scripts/grant-super-admin.mjs <auth.users.uuid>
+# Apply
+node scripts/grant-super-admin.mjs <auth.users.uuid> --apply
+```
+
+Requires `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY`. Email is never checked at request time — only roles.
 
 ## Env / migrations needed
 

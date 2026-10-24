@@ -1,9 +1,9 @@
 /**
  * POST /api/upload-pdf  (also /api/files/upload)
- * Authenticated upload of a PDF to DreamHost.
+ * Authenticated upload of a small PDF to DreamHost via Vercel JSON (base64).
+ * Honest cap: 3 MB (Vercel request body limit ~4.5 MB). Larger files must use
+ * POST /api/files/upload-token → direct DreamHost → /api/files/upload-complete.
  * Path is always `<userId>/<uuid>.pdf` — never client-controlled.
- * Client contentType is ignored; bytes must start with %PDF-.
- * Returns an app proxy URL only (no public DreamHost link).
  */
 
 import {
@@ -19,10 +19,15 @@ import {
   dreamHostNotConfiguredResponse,
   FILE_VISIBILITY,
   isDreamHostConfigured,
-  MAX_UPLOAD_BYTES,
   registerStoredFile,
   uploadToDreamHost,
 } from '../../../api/_dreamhost.js';
+import {
+  estimateBase64DecodedBytes,
+  MAX_DIRECT_UPLOAD_BYTES,
+  MAX_VERCEL_BODY_UPLOAD_BYTES,
+  VERCEL_JSON_CONTENT_LENGTH_LIMIT,
+} from '../../../api/_uploadToken.js';
 
 const PDF_MAGIC = Buffer.from('%PDF-');
 
@@ -43,6 +48,23 @@ export async function POST(request) {
       return dreamHostNotConfiguredResponse();
     }
 
+    // Content-Length pre-check before buffering / request.json() (413 early).
+    const clRaw = request.headers.get('content-length');
+    if (clRaw != null && clRaw !== '') {
+      const cl = Number(clRaw);
+      if (Number.isFinite(cl) && cl > VERCEL_JSON_CONTENT_LENGTH_LIMIT) {
+        return jsonResponse(
+          {
+            error: `File too large for this upload route (max ${MAX_VERCEL_BODY_UPLOAD_BYTES / (1024 * 1024)} MB). Use direct upload for files up to ${MAX_DIRECT_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+            code: 'USE_DIRECT_UPLOAD',
+            maxVercelBytes: MAX_VERCEL_BODY_UPLOAD_BYTES,
+            maxDirectBytes: MAX_DIRECT_UPLOAD_BYTES,
+          },
+          413,
+        );
+      }
+    }
+
     let body;
     try {
       body = await request.json();
@@ -53,6 +75,20 @@ export async function POST(request) {
     const fileData = body?.fileData;
     if (typeof fileData !== 'string' || !fileData) {
       return jsonResponse({ error: 'Missing fileData.' }, 400);
+    }
+
+    // Reject oversized base64 before decode (avoids allocating a huge Buffer).
+    const estimated = estimateBase64DecodedBytes(fileData);
+    if (estimated > MAX_VERCEL_BODY_UPLOAD_BYTES || fileData.length > VERCEL_JSON_CONTENT_LENGTH_LIMIT) {
+      return jsonResponse(
+        {
+          error: `File too large for this upload route (max ${MAX_VERCEL_BODY_UPLOAD_BYTES / (1024 * 1024)} MB). Use direct upload for files up to ${MAX_DIRECT_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+          code: 'USE_DIRECT_UPLOAD',
+          maxVercelBytes: MAX_VERCEL_BODY_UPLOAD_BYTES,
+          maxDirectBytes: MAX_DIRECT_UPLOAD_BYTES,
+        },
+        413,
+      );
     }
 
     let buffer;
@@ -66,8 +102,16 @@ export async function POST(request) {
       return jsonResponse({ error: 'Empty file.' }, 400);
     }
 
-    if (buffer.byteLength > MAX_UPLOAD_BYTES) {
-      return jsonResponse({ error: 'File too large.' }, 413);
+    if (buffer.byteLength > MAX_VERCEL_BODY_UPLOAD_BYTES) {
+      return jsonResponse(
+        {
+          error: `File too large for this upload route (max ${MAX_VERCEL_BODY_UPLOAD_BYTES / (1024 * 1024)} MB). Use direct upload for files up to ${MAX_DIRECT_UPLOAD_BYTES / (1024 * 1024)} MB.`,
+          code: 'USE_DIRECT_UPLOAD',
+          maxVercelBytes: MAX_VERCEL_BODY_UPLOAD_BYTES,
+          maxDirectBytes: MAX_DIRECT_UPLOAD_BYTES,
+        },
+        413,
+      );
     }
 
     // Ignore client contentType — require PDF magic bytes server-side.

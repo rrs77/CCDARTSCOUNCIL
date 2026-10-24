@@ -42,6 +42,8 @@ import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js'
 
 /* DreamHost file upload + authenticated proxy (shared with generate-pdf via _dreamhost.js) */
 import * as filesUpload from '../server/api/files/upload.js';
+import * as filesUploadToken from '../server/api/files/upload-token.js';
+import * as filesUploadComplete from '../server/api/files/upload-complete.js';
 import * as filesSchoolGrant from '../server/api/files/school-grant.js';
 import * as filesProxy from '../server/api/files/[...path].js';
 
@@ -196,6 +198,12 @@ function targetFor(pathname) {
   if (area === 'files') {
     if (rest.length === 1 && rest[0] === 'upload') {
       return filesUpload;
+    }
+    if (rest.length === 1 && rest[0] === 'upload-token') {
+      return filesUploadToken;
+    }
+    if (rest.length === 1 && rest[0] === 'upload-complete') {
+      return filesUploadComplete;
     }
     if (rest.length === 1 && rest[0] === 'school-grant') {
       return filesSchoolGrant;

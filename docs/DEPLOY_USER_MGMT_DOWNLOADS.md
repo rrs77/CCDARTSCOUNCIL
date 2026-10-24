@@ -43,6 +43,10 @@ Set for Production (and Preview if testing):
 | `PDFBOLT_API_KEY` | Existing | PDF export |
 | `FREESOUND_API_KEY` | Optional | Interactive Lesson Viewer Freesound search/preview proxy (server-only; never `VITE_FREESOUND_API_KEY`) |
 | `OPENAI_API_KEY` / `WHISPER_API_KEY` | Optional | Interactive Lesson Viewer Whisper transcribe |
+| `DREAMHOST_PDF_UPLOAD_URL` | For PDF share uploads | DreamHost `upload-pdf.php` URL |
+| `DREAMHOST_PDF_DOWNLOAD_URL` | For PDF share uploads | DreamHost `download-pdf.php` URL |
+| `DREAMHOST_PDF_API_KEY` | For PDF share uploads | Server-to-server X-API-Key (never expose to browser) |
+| `DREAMHOST_UPLOAD_TOKEN_SECRET` | For large PDF direct uploads | HMAC-SHA256 secret for short-lived upload tokens (also set on DreamHost; never `VITE_*`) |
 
 ## 4. Deploy
 

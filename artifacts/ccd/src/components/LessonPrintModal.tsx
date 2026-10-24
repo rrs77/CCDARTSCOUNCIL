@@ -8,6 +8,7 @@ import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjective, CustomObjectiveArea, CustomObjectiveYearGroup } from '../types/customObjectives';
 import { supabase } from '../config/supabase';
 import { generatePdfViaProxy } from '../utils/pdfApi';
+import { uploadLessonPdf } from '../utils/pdfUpload';
 import { useShareLesson } from '../hooks/useShareLesson';
 import toast from 'react-hot-toast';
 
@@ -1459,59 +1460,9 @@ export function LessonPrintModal({
         emulateMediaType: 'screen',
       });
 
-      // Generate filename
-      const getLessonDisplayNumber = (num: string): string => {
-        const numericPart = num.replace(/^lesson/i, '').replace(/[^0-9]/g, '');
-        return numericPart || num;
-      };
-      
-      const timestamp = Date.now();
-      const fileName = exportMode === 'single'
-          ? (() => {
-              const lessonDisplayNumber = getLessonDisplayNumber(lessonNumber!);
-              return `${timestamp}_${currentSheetInfo.sheet}_Lesson_${lessonDisplayNumber}.pdf`;
-            })()
-          : `${timestamp}_${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
+      // ≤3 MB via Vercel; larger via signed direct DreamHost (max 100 MB). Path is server-built.
+      const { url: publicUrl } = await uploadLessonPdf(pdfBlob);
 
-      // Convert blob to base64 for Vercel API (chunked — avoid spread stack overflow on large PDFs)
-      const arrayBuffer = await pdfBlob.arrayBuffer();
-      const bytes = new Uint8Array(arrayBuffer);
-      const CHUNK = 0x8000;
-      let binary = '';
-      for (let i = 0; i < bytes.length; i += CHUNK) {
-        binary += String.fromCharCode(...bytes.subarray(i, i + CHUNK));
-      }
-      const base64 = btoa(binary);
-
-      // Upload via authenticated DreamHost route (server builds path; no overwrite)
-      const uploadHeaders: Record<string, string> = {
-        'Content-Type': 'application/json',
-      };
-      try {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session?.access_token) {
-          uploadHeaders.Authorization = `Bearer ${sessionData.session.access_token}`;
-        }
-      } catch {
-        /* server returns 401 if missing */
-      }
-      const uploadResponse = await fetch('/api/upload-pdf', {
-        method: 'POST',
-        headers: uploadHeaders,
-        body: JSON.stringify({
-          fileName,
-          fileData: base64
-        })
-      });
-
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json().catch(() => ({ error: 'Upload failed' }));
-        console.error('Upload error:', errorData);
-        throw new Error(errorData.error || `Failed to upload PDF: ${uploadResponse.status}`);
-      }
-
-      const { url: publicUrl } = await uploadResponse.json();
-      
       if (!publicUrl) {
         throw new Error('No URL returned from upload');
       }
