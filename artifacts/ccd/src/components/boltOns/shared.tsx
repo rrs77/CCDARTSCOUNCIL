@@ -1,15 +1,10 @@
 import React from 'react';
 import toast from 'react-hot-toast';
-import {
-  BarChart3,
-  LayoutGrid,
-  Music2,
-  Sparkles,
-} from 'lucide-react';
-import type { BoltOnsPageId, FeatureStatus } from './types';
+import { Check, LayoutGrid, Music2, Sparkles } from 'lucide-react';
+import type { BoltOnsPageId } from './types';
 
 export const CONCEPT_TOAST =
-  'Concept only — no live billing or checkout yet. Connect this action to a real account and subscription flow when entitlements exist.';
+  'Concept only — no live billing or checkout yet. Prices and Premium availability are not set.';
 
 export function showConceptToast(actionLabel?: string): void {
   toast(actionLabel ? `${actionLabel} · ${CONCEPT_TOAST}` : CONCEPT_TOAST, {
@@ -17,110 +12,68 @@ export function showConceptToast(actionLabel?: string): void {
   });
 }
 
-export function StatusPill({
-  status,
-  children,
-}: {
-  status: FeatureStatus;
-  children: React.ReactNode;
-}) {
-  const styles: Record<FeatureStatus, string> = {
-    available: 'bg-[#E9E6FF] text-[#4338E8]',
-    proposed: 'bg-[#FFF6DF] text-[#8A5A00]',
-    roadmap: 'bg-[#FFF6DF] text-[#8A5A00]',
-    'core-upgrade': 'bg-[#D5F3EA] text-[#0F766E]',
-    limit: 'bg-[#FFF1C2] text-[#92400E]',
-  };
-  const labels: Partial<Record<FeatureStatus, string>> = {
-    proposed: 'Proposed',
-    roadmap: 'Roadmap',
-    'core-upgrade': 'Core upgrade',
-    limit: 'Proposed limit',
-  };
-  const text = children ?? labels[status] ?? status;
+export function ExampleTag({ children = 'Example' }: { children?: React.ReactNode }) {
   return (
-    <span
-      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide ${styles[status]}`}
-    >
-      {text}
+    <span className="inline-flex items-center rounded-full bg-[#FFF6DF] px-2.5 py-0.5 text-[13px] font-bold text-[#7A4F00]">
+      {children}
     </span>
   );
 }
 
-export function FeatureRow({
-  included,
-  label,
-  status,
-}: {
-  included: boolean;
-  label: string;
-  status?: FeatureStatus;
-}) {
+export function PremTag({ children = 'Free + Premium' }: { children?: React.ReactNode }) {
   return (
-    <li className="flex items-start gap-2.5 text-[13px] leading-snug text-[#1F1B4D]">
-      <span
-        className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-extrabold ${
-          included ? 'bg-[#E9E6FF] text-[#4338E8]' : 'bg-[#F3F2F8] text-[#9A96B0]'
-        }`}
-        aria-hidden
-      >
-        {included ? '✓' : '—'}
-      </span>
-      <span className="min-w-0 flex-1">
-        <span className={included ? '' : 'text-[#77738F]'}>{label}</span>
-        {status && status !== 'available' ? (
-          <>
-            {' '}
-            <StatusPill status={status}>{null}</StatusPill>
-          </>
-        ) : null}
-      </span>
-    </li>
+    <span className="inline-flex items-center rounded-full bg-[#E9E6FF] px-2.5 py-0.5 text-[13px] font-bold text-[#3730A3]">
+      {children}
+    </span>
+  );
+}
+
+export function FreeTag() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-[#DCFCE7] px-2.5 py-0.5 text-[13px] font-bold text-[#166534]">
+      Free
+    </span>
+  );
+}
+
+export function PremiumTag() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-[#E9E6FF] px-2.5 py-0.5 text-[13px] font-bold text-[#3730A3]">
+      Premium
+    </span>
+  );
+}
+
+export function PricePlaceholder() {
+  return (
+    <span className="inline-flex items-center rounded-full bg-[#FFF6DF] px-2.5 py-0.5 text-[13px] font-bold text-[#7A4F00]">
+      Price: example — not set
+    </span>
+  );
+}
+
+export function YesMark() {
+  return (
+    <span
+      className="inline-grid h-6 w-6 place-items-center rounded-full bg-[#DCFCE7] text-[#166534]"
+      role="img"
+      aria-label="Included"
+    >
+      <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden />
+    </span>
   );
 }
 
 const SWITCHER: {
   id: BoltOnsPageId;
   label: string;
-  hint: string;
-  Icon: typeof Sparkles;
-  on: string;
-  off: string;
-  chipOn: string;
-  chipOff: string;
 }[] = [
-  {
-    id: 'bolt-ons',
-    label: 'Explore bolt-ons',
-    hint: 'Do more with your teaching',
-    Icon: Sparkles,
-    on: 'bg-[#1F1B4D] text-white shadow-[0_10px_24px_-14px_rgba(31,27,77,0.7)]',
-    off: 'bg-white text-[#1F1B4D] ring-1 ring-[#E2E0EF] hover:bg-[#F4F3FA]',
-    chipOn: 'bg-white/15',
-    chipOff: 'bg-[#E9E6FF] text-[#4338E8]',
-  },
-  {
-    id: 'assessify',
-    label: 'Assessify',
-    hint: 'Assessment & progress',
-    Icon: LayoutGrid,
-    on: 'bg-[#4338E8] text-white shadow-[0_10px_24px_-14px_rgba(67,56,232,0.55)]',
-    off: 'bg-white text-[#1F1B4D] ring-1 ring-[#E2E0EF] hover:bg-[#F4F3FA]',
-    chipOn: 'bg-white/20',
-    chipOff: 'bg-[#E9E6FF] text-[#4338E8]',
-  },
-  {
-    id: 'perifeedback',
-    label: 'PeriFeedback',
-    hint: 'Peripatetic teaching',
-    Icon: Music2,
-    on: 'bg-[#1F1B4D] text-white shadow-[0_10px_24px_-14px_rgba(31,27,77,0.7)]',
-    off: 'bg-white text-[#1F1B4D] ring-1 ring-[#E2E0EF] hover:bg-[#F4F3FA]',
-    chipOn: 'bg-white/20',
-    chipOff: 'bg-[#D5F3EA] text-[#0F766E]',
-  },
+  { id: 'bolt-ons', label: 'Explore' },
+  { id: 'assessify', label: 'Assessify' },
+  { id: 'perifeedback', label: 'PeriFeedback' },
 ];
 
+/** Compact segmented control matching approved mockups (13px+). */
 export function BoltOnsSwitcher({
   active,
   onNavigate,
@@ -129,10 +82,13 @@ export function BoltOnsSwitcher({
   onNavigate: (page: BoltOnsPageId) => void;
 }) {
   return (
-    <div role="tablist" aria-label="Bolt-ons sections" className="grid grid-cols-1 gap-2.5 sm:grid-cols-3">
+    <div
+      role="tablist"
+      aria-label="Bolt-ons sections"
+      className="inline-flex w-full gap-1 rounded-xl border border-[#E2E0EF] bg-white p-1 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:w-auto"
+    >
       {SWITCHER.map((tab) => {
         const selected = active === tab.id;
-        const Icon = tab.Icon;
         return (
           <button
             key={tab.id}
@@ -140,24 +96,11 @@ export function BoltOnsSwitcher({
             role="tab"
             aria-selected={selected}
             onClick={() => onNavigate(tab.id)}
-            className={`flex items-center gap-3 rounded-2xl px-4 py-3.5 text-left transition sm:px-5 ${
-              selected ? tab.on : tab.off
+            className={`flex min-h-9 flex-1 items-center justify-center rounded-lg px-3.5 text-[13px] font-bold transition sm:flex-none ${
+              selected ? 'bg-[#1F1B4D] text-white' : 'text-[#5F5B7A] hover:bg-[#F4F3FA]'
             }`}
           >
-            <span
-              className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-xl ${
-                selected ? tab.chipOn : tab.chipOff
-              }`}
-              aria-hidden
-            >
-              <Icon className={`h-5 w-5 ${selected ? 'text-white' : ''}`} strokeWidth={2.25} />
-            </span>
-            <span className="min-w-0">
-              <span className="block text-[15px] font-extrabold tracking-tight">{tab.label}</span>
-              <span className={`mt-0.5 block text-[12px] font-medium ${selected ? 'text-white/80' : 'text-[#77738F]'}`}>
-                {tab.hint}
-              </span>
-            </span>
+            {tab.label}
           </button>
         );
       })}
@@ -173,10 +116,13 @@ export function BoltOnsBreadcrumb({
   onCatalogue?: () => void;
 }) {
   return (
-    <nav aria-label="Breadcrumb" className="mb-3 text-[12px] font-bold uppercase tracking-[0.08em] text-[#77738F]">
-      <span>Workspace</span>
+    <nav
+      aria-label="Breadcrumb"
+      className="text-[13px] font-bold uppercase tracking-[0.06em] text-[#5F5B7A]"
+    >
+      <span>Your tools</span>
       <span className="mx-1.5 text-[#C4C0D8]" aria-hidden>
-        &gt;
+        /
       </span>
       {onCatalogue ? (
         <button
@@ -184,96 +130,55 @@ export function BoltOnsBreadcrumb({
           onClick={onCatalogue}
           className="text-[#4338E8] underline-offset-2 hover:underline"
         >
-          + Bolt-ons
+          Bolt-ons
         </button>
       ) : (
-        <span className="text-[#1F1B4D]">{pageLabel}</span>
+        <span className="text-[#4338E8]">Bolt-ons</span>
       )}
       {onCatalogue ? (
         <>
           <span className="mx-1.5 text-[#C4C0D8]" aria-hidden>
-            &gt;
+            /
           </span>
-          <span className="text-[#1F1B4D]">{pageLabel}</span>
+          <span className="text-[#1F1B4D] normal-case tracking-normal">{pageLabel}</span>
         </>
       ) : null}
     </nav>
   );
 }
 
-export function SampleLabel({ children }: { children: React.ReactNode }) {
+export function ConceptFooter() {
   return (
-    <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
-      {children}
+    <p className="mt-4 text-[13px] leading-relaxed text-[#5F5B7A]">
+      Concept mockup. Prices, limits and Premium availability are not set — anything marked{' '}
+      <ExampleTag /> is a placeholder, and preview data is illustrative.
     </p>
   );
 }
 
-export function FooterNote() {
+export function TierCheck({ children }: { children: React.ReactNode }) {
   return (
-    <footer className="mt-10 flex flex-col gap-1 border-t border-[#E2E0EF] pt-5 text-[11px] text-[#77738F] sm:flex-row sm:items-start sm:justify-between">
-      <p>© CCDesigner 2026 · Bolt-ons concept · Not a live subscription or payment page</p>
-      <p className="sm:text-right">Premium availability, usage limits and prices require product approval.</p>
-    </footer>
+    <li className="flex items-center gap-2.5 text-[13px] font-medium text-[#1F1B4D]">
+      <Check className="h-[18px] w-[18px] shrink-0 text-[#166534]" strokeWidth={2.5} aria-hidden />
+      <span>{children}</span>
+    </li>
   );
 }
 
-export function AssessifyMiniDashboard() {
+export function ProductIcon({
+  variant,
+}: {
+  variant: 'assessify' | 'perifeedback' | 'explore';
+}) {
+  const Icon = variant === 'assessify' ? LayoutGrid : variant === 'perifeedback' ? Music2 : Sparkles;
+  const bg = variant === 'assessify' ? '#4338E8' : variant === 'perifeedback' ? '#0F766E' : '#1F1B4D';
   return (
-    <div className="rounded-2xl border border-[#D9D4FF] bg-white/90 p-4 shadow-[0_8px_24px_rgba(67,56,232,0.08)]">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <SampleLabel>Year 4 · Music</SampleLabel>
-          <p className="mt-0.5 text-[12px] font-extrabold text-[#1F1B4D]">Progress snapshot</p>
-        </div>
-        <BarChart3 className="h-4 w-4 text-[#4338E8]" aria-hidden />
-      </div>
-      {[
-        { label: 'Rhythm', pct: 81 },
-        { label: 'Listening', pct: 70 },
-        { label: 'Creating', pct: 89 },
-      ].map((row) => (
-        <div key={row.label} className="mb-2.5 last:mb-0">
-          <div className="mb-1 flex justify-between text-[11px] font-bold text-[#1F1B4D]">
-            <span>{row.label}</span>
-            <span>{row.pct}%</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#EFEDFF]">
-            <div className="h-full rounded-full bg-[#4338E8]" style={{ width: `${row.pct}%` }} />
-          </div>
-        </div>
-      ))}
-      <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-[#EFEDFF] px-2.5 py-1.5 text-[11px] font-semibold text-[#4338E8]">
-        <Sparkles className="h-3.5 w-3.5" aria-hidden />
-        AI-assisted next-step suggestions
-        <span className="ml-auto rounded bg-[#4338E8] px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-white">
-          Pro
-        </span>
-      </p>
-    </div>
-  );
-}
-
-export function PeriFeedbackMiniNote() {
-  return (
-    <div className="rounded-2xl border border-[#BFE8E1] bg-white/90 p-4 shadow-[0_8px_24px_rgba(19,142,136,0.08)]">
-      <div className="mb-2 flex items-center justify-between">
-        <SampleLabel>Weekly lesson note</SampleLabel>
-        <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#0F766E]">
-          Piano
-        </span>
-      </div>
-      <p className="text-[11px] font-bold text-[#77738F]">Monday · Week 5</p>
-      <p className="mt-2 text-[12px] font-extrabold text-[#1F1B4D]">What went well</p>
-      <p className="mt-0.5 text-[12px] leading-snug text-[#77738F]">
-        Confident right-hand melody and a steadier pulse.
-      </p>
-      <p className="mt-3 flex items-center gap-1.5 text-[12px] font-bold text-[#0F766E]">
-        <span aria-hidden>✓</span> Practice goal saved
-      </p>
-      <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-[#FFF6DF] px-2.5 py-1.5 text-[11px] font-semibold text-[#8A5A00]">
-        <span aria-hidden>🔒</span> Parent update requires Premium
-      </p>
-    </div>
+    <span
+      className="inline-grid h-11 w-11 place-items-center rounded-xl text-white shadow-[0_6px_14px_rgba(31,27,77,0.18)]"
+      style={{ backgroundColor: bg }}
+      aria-hidden
+    >
+      <Icon className="h-5 w-5" strokeWidth={2.25} />
+    </span>
   );
 }
