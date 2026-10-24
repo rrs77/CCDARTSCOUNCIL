@@ -272,8 +272,54 @@ function ccd_create_upload_tmp(): string
 }
 
 /**
- * Validate a temp file as PDF (magic + finfo), then atomically link into place.
- * link(temp, final) fails if final exists (no overwrite) → 409; then unlink(temp).
+ * Place temp → final exclusively.
+ * Prefer link() (atomic, same filesystem). If link fails (EXDEV / unsupported)
+ * and the target does not exist: fopen(dest,'xb'), stream_copy_to_stream,
+ * verify byte count; unlink partial dest on any error. Temp+upload dirs must
+ * share a filesystem for link(); otherwise the copy fallback is used.
+ */
+function ccd_place_temp_as_final(string $tmpPath, string $filePath, int $expectedBytes): void
+{
+    if (@link($tmpPath, $filePath)) {
+        @unlink($tmpPath);
+        return;
+    }
+
+    if (file_exists($filePath)) {
+        @unlink($tmpPath);
+        ccd_fail(409, 'File already exists', ['success' => false]);
+    }
+
+    // Cross-device / unsupported link — exclusive copy fallback.
+    $dest = @fopen($filePath, 'xb');
+    if ($dest === false) {
+        $exists = file_exists($filePath);
+        @unlink($tmpPath);
+        if ($exists) {
+            ccd_fail(409, 'File already exists', ['success' => false]);
+        }
+        ccd_fail(500, 'Failed to save file', ['success' => false]);
+    }
+    $src = @fopen($tmpPath, 'rb');
+    if ($src === false) {
+        fclose($dest);
+        @unlink($filePath);
+        @unlink($tmpPath);
+        ccd_fail(500, 'Failed to read temp file');
+    }
+    $copied = @stream_copy_to_stream($src, $dest);
+    fclose($src);
+    fclose($dest);
+    if ($copied === false || (int) $copied !== (int) $expectedBytes) {
+        @unlink($filePath);
+        @unlink($tmpPath);
+        ccd_fail(500, 'Failed to save file', ['success' => false]);
+    }
+    @unlink($tmpPath);
+}
+
+/**
+ * Validate a temp file as PDF (magic + finfo), then place exclusively.
  */
 function ccd_finalize_pdf_from_temp(string $uploadDir, string $fileName, string $tmpPath, int $byteLength): void
 {
@@ -309,16 +355,7 @@ function ccd_finalize_pdf_from_temp(string $uploadDir, string $fileName, string 
     }
 
     $filePath = $uploadDir . $fileName;
-    // Atomic exclusive create: link fails if destination already exists.
-    if (!@link($tmpPath, $filePath)) {
-        $exists = file_exists($filePath);
-        @unlink($tmpPath);
-        if ($exists) {
-            ccd_fail(409, 'File already exists', ['success' => false]);
-        }
-        ccd_fail(500, 'Failed to save file', ['success' => false]);
-    }
-    @unlink($tmpPath);
+    ccd_place_temp_as_final($tmpPath, $filePath, $byteLength);
 
     echo json_encode([
         'success' => true,

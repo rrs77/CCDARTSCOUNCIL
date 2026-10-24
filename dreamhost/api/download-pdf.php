@@ -6,8 +6,9 @@
  * ?path=<userId>/<uuid>.pdf — never expose this to browsers without the key.
  *
  * Probe (no full body):
- *   - Range: bytes=0-4  → 206 + Content-Range bytes 0-4/total
- *   - ?probe=1          → same 5-byte head response
+ *   - Range (any form) → 206 of at most 64 KiB (suffix / open-ended / closed)
+ *   - Multiple ranges → 416
+ *   - ?probe=1          → first 5 bytes (when no Range)
  *
  * Required storage: DREAMHOST_PDF_UPLOAD_DIR or ccd_private_pdfs/ outside web root.
  * No fallback to api/../pdfs (500 if missing).
@@ -95,16 +96,74 @@ if ($totalSize === false) {
     exit();
 }
 
-$probe = isset($_GET['probe']) && (string) $_GET['probe'] === '1';
-$rangeHeader = $headers['Range'] ?? $headers['range'] ?? '';
-$wantHead = $probe;
-$rangeEnd = 4;
-// Cap Range responses at 64 KiB (inclusive end index 65535).
-$rangeMaxEnd = (64 * 1024) - 1;
+/**
+ * Parse a single HTTP Range. Caps returned length at $maxBytes.
+ * Returns ['start'=>int,'end'=>int] or ['error'=>416].
+ */
+function ccd_parse_byte_range(?string $header, int $totalSize, int $maxBytes = 65536): ?array
+{
+    if ($header === null || trim($header) === '') {
+        return null;
+    }
+    if (!preg_match('/^\s*bytes\s*=\s*(.+)$/i', $header, $m)) {
+        return ['error' => 416];
+    }
+    $spec = trim($m[1]);
+    // Multiple ranges not supported.
+    if (str_contains($spec, ',')) {
+        return ['error' => 416];
+    }
 
-if (!$wantHead && is_string($rangeHeader) && preg_match('/bytes=0-(\d+)/i', $rangeHeader, $m)) {
-    $wantHead = true;
-    $rangeEnd = min((int) $m[1], $rangeMaxEnd, max(0, $totalSize - 1));
+    $maxEndDelta = max(0, $maxBytes - 1);
+
+    // Suffix: bytes=-N (last N bytes), capped at maxBytes.
+    if (preg_match('/^-(\d+)$/', $spec, $sm)) {
+        $want = (int) $sm[1];
+        if ($want < 1 || $totalSize < 1) {
+            return ['error' => 416];
+        }
+        $length = min($want, $maxBytes, $totalSize);
+        $start = $totalSize - $length;
+        return ['start' => $start, 'end' => $totalSize - 1];
+    }
+
+    // Open-ended: bytes=N-
+    if (preg_match('/^(\d+)-$/', $spec, $om)) {
+        $start = (int) $om[1];
+        if ($start < 0 || $start >= $totalSize) {
+            return ['error' => 416];
+        }
+        $end = min($start + $maxEndDelta, $totalSize - 1);
+        return ['start' => $start, 'end' => $end];
+    }
+
+    // Closed: bytes=N-M
+    if (preg_match('/^(\d+)-(\d+)$/', $spec, $cm)) {
+        $start = (int) $cm[1];
+        $end = (int) $cm[2];
+        if ($start < 0 || $end < $start || $start >= $totalSize) {
+            return ['error' => 416];
+        }
+        $end = min($end, $totalSize - 1);
+        if (($end - $start + 1) > $maxBytes) {
+            $end = $start + $maxEndDelta;
+        }
+        return ['start' => $start, 'end' => $end];
+    }
+
+    return ['error' => 416];
+}
+
+$probe = isset($_GET['probe']) && (string) $_GET['probe'] === '1';
+$rangeHeader = $headers['Range'] ?? $headers['range'] ?? null;
+$parsed = is_string($rangeHeader) ? ccd_parse_byte_range($rangeHeader, (int) $totalSize, 64 * 1024) : null;
+
+if (is_array($parsed) && isset($parsed['error'])) {
+    header('Content-Type: application/json');
+    header('Content-Range: bytes */' . $totalSize);
+    http_response_code(416);
+    echo json_encode(['error' => 'Range Not Satisfiable']);
+    exit();
 }
 
 $fh = fopen($realFile, 'rb');
@@ -115,10 +174,38 @@ if ($fh === false) {
     exit();
 }
 
-if ($wantHead) {
-    $end = min($rangeEnd, max(0, $totalSize - 1));
-    $length = $end + 1;
-    $head = fread($fh, $length);
+if (is_array($parsed) && isset($parsed['start'], $parsed['end'])) {
+    $start = (int) $parsed['start'];
+    $end = (int) $parsed['end'];
+    $length = $end - $start + 1;
+    if (fseek($fh, $start) !== 0) {
+        fclose($fh);
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to read file']);
+        exit();
+    }
+    $chunk = fread($fh, $length);
+    fclose($fh);
+    if ($chunk === false || strlen($chunk) < 1) {
+        header('Content-Type: application/json');
+        http_response_code(500);
+        echo json_encode(['error' => 'Failed to read file']);
+        exit();
+    }
+    header('Content-Type: application/pdf');
+    header('Accept-Ranges: bytes');
+    header('Content-Range: bytes ' . $start . '-' . ($start + strlen($chunk) - 1) . '/' . $totalSize);
+    header('Content-Length: ' . (string) strlen($chunk));
+    header('X-Content-Type-Options: nosniff');
+    header('Cache-Control: private, no-store');
+    http_response_code(206);
+    echo $chunk;
+    exit();
+}
+
+if ($probe) {
+    $head = fread($fh, 5);
     fclose($fh);
     if ($head === false || strlen($head) < 1) {
         header('Content-Type: application/json');

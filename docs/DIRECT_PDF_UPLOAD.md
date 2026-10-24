@@ -23,7 +23,11 @@ Also keep outside the web root:
 
 - `ccd_private/pdf-api-key.php` — secrets
 - `ccd_private/upload_nonces/` — single-use nonce files (auto-cleaned after ~35 minutes)
-- `ccd_private/upload_tmp/` — streamed upload temps before `rename()`
+- `ccd_private/upload_tmp/` — streamed upload temps before exclusive place (`link`, or `fopen('xb')` + copy on EXDEV)
+
+**Filesystem:** `upload_tmp/` and the PDF upload dir (`DREAMHOST_PDF_UPLOAD_DIR` / `ccd_private_pdfs/`) **must be on the same filesystem** for `link(temp, final)`. If `link` fails with EXDEV/unsupported and the target does not exist, PHP falls back to `fopen(dest,'xb')` + `stream_copy_to_stream` (exclusive; 409 if the target appears). Prefer co-locating the dirs so `link` succeeds.
+
+**download-pdf.php Range:** every `Range` form is parsed (closed, open-ended, suffix). Multiple ranges → **416**. Single ranges are capped at **64 KiB**; unsatisfiable specs → **416**.
 
 ## Env (do not set here — name only)
 
