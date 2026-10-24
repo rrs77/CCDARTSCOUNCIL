@@ -464,6 +464,69 @@ BEGIN
   INSERT INTO rls_results VALUES ('anon cannot read year_groups', blocked_yg);
 END $$;
 
+-- F1: MIS current_user_manages_organisation must be unchanged after 240500
+INSERT INTO rls_results
+SELECT 'current_user_manages_organisation unchanged (MIS marker)',
+       pg_get_functiondef('public.current_user_manages_organisation(text)'::regprocedure)
+         ILIKE '%mis_235500_current_user_manages_organisation_marker%';
+
+-- ccd helper exists and is distinct
+INSERT INTO rls_results
+SELECT 'ccd_current_user_manages_own_org exists',
+       to_regprocedure('public.ccd_current_user_manages_own_org(text)') IS NOT NULL;
+
+-- P2b: no leftover non-ccd_% policies on catalog/planner tables
+INSERT INTO rls_results
+SELECT 'no non-ccd policies on year_groups/half_terms/lesson_plans/category_groups/custom_categories',
+       NOT EXISTS (
+         SELECT 1 FROM pg_policies
+         WHERE schemaname = 'public'
+           AND tablename IN (
+             'half_terms', 'lesson_plans', 'year_groups',
+             'category_groups', 'custom_categories'
+           )
+           AND policyname NOT LIKE 'ccd_%'
+       );
+
+-- Teacher cannot UPDATE/DELETE NULL-org shared catalog rows
+DELETE FROM public.year_groups WHERE id IN ('yg_shared_sys', 'yg_a_own');
+INSERT INTO public.year_groups (id, name, organisation_id)
+VALUES
+  ('yg_shared_sys', 'SharedYG', NULL),
+  ('yg_a_own', 'OrgOnlyYG', 'org_a');
+
+DO $$
+DECLARE upd_denied boolean := false; del_denied boolean := false; still_shared boolean := false;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    UPDATE public.year_groups SET name = 'HackedShared' WHERE id = 'yg_shared_sys';
+    -- 0-row update under RLS counts as success; treat as denied if name unchanged
+    upd_denied := true;
+  EXCEPTION WHEN OTHERS THEN
+    upd_denied := true;
+  END;
+  BEGIN
+    DELETE FROM public.year_groups WHERE id = 'yg_shared_sys';
+    del_denied := true;
+  EXCEPTION WHEN OTHERS THEN
+    del_denied := true;
+  END;
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  SELECT name = 'SharedYG' AND organisation_id IS NULL INTO still_shared
+  FROM public.year_groups WHERE id = 'yg_shared_sys';
+  INSERT INTO rls_results VALUES (
+    'teacher cannot UPDATE NULL-org shared year_groups',
+    upd_denied AND still_shared
+  );
+  INSERT INTO rls_results VALUES (
+    'teacher cannot DELETE NULL-org shared year_groups',
+    del_denied AND still_shared
+  );
+END $$;
+
 DO $$
 DECLARE failed int;
 BEGIN

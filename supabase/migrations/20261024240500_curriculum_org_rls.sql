@@ -27,7 +27,10 @@ DROP POLICY IF EXISTS "ccd_eyfs_delete_org_202610242358" ON public.eyfs_statemen
 -- ---------------------------------------------------------------------------
 -- Helpers
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.current_user_manages_organisation(p_org text)
+-- F1: do NOT redefine public.current_user_manages_organisation(text) — that is
+-- owned by MIS 235500 (super-admin on any org + 'organisation' role). Use a
+-- CCD-local helper for planner curriculum policies instead.
+CREATE OR REPLACE FUNCTION public.ccd_current_user_manages_own_org(p_org text)
 RETURNS boolean
 LANGUAGE sql
 STABLE
@@ -48,8 +51,9 @@ AS $$
   );
 $$;
 
-REVOKE ALL ON FUNCTION public.current_user_manages_organisation(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.current_user_manages_organisation(text) TO authenticated, service_role;
+REVOKE ALL ON FUNCTION public.ccd_current_user_manages_own_org(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.ccd_current_user_manages_own_org(text) FROM anon;
+GRANT EXECUTE ON FUNCTION public.ccd_current_user_manages_own_org(text) TO authenticated;
 
 -- Hook for future planning_shares (always false until table exists).
 CREATE OR REPLACE FUNCTION private._ccd_planning_share_allows(
@@ -69,6 +73,7 @@ REVOKE ALL ON FUNCTION private._ccd_planning_share_allows(text, uuid, uuid) FROM
 GRANT EXECUTE ON FUNCTION private._ccd_planning_share_allows(text, uuid, uuid) TO authenticated, service_role;
 
 -- Safety net: fill organisation_id from caller's profile when NULL on write.
+-- Skip for super_admin so they can intentionally create shared (NULL-org) rows.
 CREATE OR REPLACE FUNCTION private._ccd_fill_organisation_id()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -78,7 +83,9 @@ AS $$
 DECLARE
   v_org text;
 BEGIN
-  IF NEW.organisation_id IS NULL AND auth.uid() IS NOT NULL THEN
+  IF NEW.organisation_id IS NULL
+     AND auth.uid() IS NOT NULL
+     AND NOT public.is_super_admin() THEN
     SELECT p.organisation_id INTO v_org
     FROM public.profiles p
     WHERE p.id = auth.uid()
@@ -596,7 +603,7 @@ BEGIN
         AND (
           user_id IS NULL
           OR user_id = auth.uid()
-          OR public.current_user_manages_organisation(organisation_id)
+          OR public.ccd_current_user_manages_own_org(organisation_id)
           OR private._ccd_planning_share_allows(organisation_id, user_id, auth.uid())
         )
       )
@@ -610,7 +617,7 @@ BEGIN
         AND (
           user_id IS NULL
           OR user_id = auth.uid()
-          OR public.current_user_manages_organisation(organisation_id)
+          OR public.ccd_current_user_manages_own_org(organisation_id)
         )
       )
       $q$, org_eq
@@ -659,6 +666,31 @@ GRANT EXECUTE ON FUNCTION private._ccd_apply_org_rls(text, text) TO service_role
 -- Drop old boolean overload from earlier 240500 drafts
 DROP FUNCTION IF EXISTS private._ccd_apply_org_rls(text, boolean);
 
+-- P2b: drop leftover non-ccd_% policies that could bypass isolation
+DO $$
+DECLARE
+  r record;
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'half_terms', 'lesson_plans', 'year_groups', 'category_groups', 'custom_categories'
+  ]
+  LOOP
+    IF to_regclass(format('public.%I', t)) IS NULL THEN
+      CONTINUE;
+    END IF;
+    FOR r IN
+      SELECT policyname
+      FROM pg_policies
+      WHERE schemaname = 'public'
+        AND tablename = t
+        AND policyname NOT LIKE 'ccd_%'
+    LOOP
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', r.policyname, t);
+    END LOOP;
+  END LOOP;
+END $$;
+
 SELECT private._ccd_apply_org_rls('half_terms', 'owner_admin');
 SELECT private._ccd_apply_org_rls('lesson_plans', 'owner_admin');
 SELECT private._ccd_apply_org_rls('year_groups', 'org');
@@ -670,6 +702,32 @@ SELECT private._ccd_apply_org_rls('custom_objective_year_groups', 'org');
 SELECT private._ccd_apply_org_rls('custom_objective_areas', 'org');
 SELECT private._ccd_apply_org_rls('custom_objectives', 'org');
 SELECT private._ccd_apply_org_rls('activity_custom_objectives', 'org');
+
+-- Re-run P2b after apply in case a non-ccd policy was recreated somehow, and
+-- to catch any that existed alongside our new ccd_% policies.
+DO $$
+DECLARE
+  r record;
+  t text;
+BEGIN
+  FOREACH t IN ARRAY ARRAY[
+    'half_terms', 'lesson_plans', 'year_groups', 'category_groups', 'custom_categories'
+  ]
+  LOOP
+    IF to_regclass(format('public.%I', t)) IS NULL THEN
+      CONTINUE;
+    END IF;
+    FOR r IN
+      SELECT policyname
+      FROM pg_policies
+      WHERE schemaname = 'public'
+        AND tablename = t
+        AND policyname NOT LIKE 'ccd_%'
+    LOOP
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', r.policyname, t);
+    END LOOP;
+  END LOOP;
+END $$;
 
 -- Attach fill-org trigger to every curriculum table (incl. activities/lessons/eyfs)
 SELECT private._ccd_attach_org_fill_trigger('activities');
@@ -709,7 +767,7 @@ END $$;
 
 COMMENT ON POLICY "ccd_lessons_insert_org_owner_202610242405" ON public.lessons IS
   'Own-org insert; user_id must be NULL or auth.uid(). No org-admin edit of colleagues.';
-COMMENT ON FUNCTION public.current_user_manages_organisation(text) IS
-  'True when caller is admin/superuser/can_manage_users in the given org.';
+COMMENT ON FUNCTION public.ccd_current_user_manages_own_org(text) IS
+  'CCD planner helper: caller is admin/superuser/can_manage_users in the given org. Does not replace MIS current_user_manages_organisation.';
 COMMENT ON FUNCTION private._ccd_planning_share_allows(text, uuid, uuid) IS
   'Hook for planning_shares; returns false until shares table is wired.';

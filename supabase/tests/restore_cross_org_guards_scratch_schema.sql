@@ -57,6 +57,31 @@ AS $$
 $$;
 GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated, anon, service_role;
 
+-- Stand-in for MIS 235500 current_user_manages_organisation (super-admin on any
+-- org + 'organisation' role). 240500 must NOT replace this — CCD uses
+-- ccd_current_user_manages_own_org instead. Marker in body for CI assertion.
+CREATE OR REPLACE FUNCTION public.current_user_manages_organisation(p_org text)
+RETURNS boolean
+LANGUAGE sql
+STABLE
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+  -- mis_235500_current_user_manages_organisation_marker
+  SELECT
+    public.is_super_admin()
+    OR EXISTS (
+      SELECT 1 FROM public.profiles p
+      WHERE p.id = auth.uid()
+        AND (
+          (p.organisation_id IS NOT DISTINCT FROM p_org
+           AND lower(COALESCE(p.role, '')) IN ('admin', 'organisation', 'super_admin', 'superuser'))
+          OR (public.is_super_admin())
+        )
+    );
+$$;
+GRANT EXECUTE ON FUNCTION public.current_user_manages_organisation(text) TO authenticated, service_role;
+
 CREATE TABLE IF NOT EXISTS public.branding_settings (
   key TEXT PRIMARY KEY,
   data JSONB NOT NULL DEFAULT '{}'::jsonb,
