@@ -328,7 +328,14 @@ CREATE POLICY planning_groups_manager_all
   ON public.planning_groups
   FOR ALL
   USING (public.can_manage_planning_group(id))
-  WITH CHECK (public.can_manage_planning_group(id));
+  WITH CHECK (
+    public.can_manage_planning_group(id)
+    AND organisation_id = (
+      SELECT NULLIF(trim(organisation_id), '')
+      FROM public.profiles
+      WHERE id = auth.uid()
+    )
+  );
 
 DROP POLICY IF EXISTS planning_groups_member_read ON public.planning_groups;
 CREATE POLICY planning_groups_member_read
@@ -384,6 +391,15 @@ CREATE POLICY planning_shares_owner_all
   WITH CHECK (
     public.owns_planning_resource(resource_id)
     AND shared_by = auth.uid()
+    -- school / hub_org: audience_id must be the sharer's organisation_id
+    AND (
+      audience_type NOT IN ('school', 'hub_org')
+      OR audience_id = (
+        SELECT NULLIF(trim(p.organisation_id), '')
+        FROM public.profiles p
+        WHERE p.id = auth.uid()
+      )
+    )
   );
 
 DROP POLICY IF EXISTS planning_shares_recipient_read ON public.planning_shares;

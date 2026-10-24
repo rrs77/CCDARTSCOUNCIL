@@ -225,15 +225,21 @@ export async function createPlanningShareGrant(input: {
 /**
  * Ensure membership via authenticated server route (service role write).
  * Clients cannot INSERT into planning_group_members (RLS revoke).
+ * New groups: pass createGroup:true + label — server assigns randomUUID().
  */
 export async function ensurePlanningGroupMembership(input: {
-  groupId: string;
+  groupId?: string;
+  createGroup?: boolean;
   userId: string;
   organisationId?: string | null;
   label?: string;
-}): Promise<void> {
-  const groupId = input.groupId.trim();
-  if (!groupId || !input.userId) return;
+}): Promise<{ groupId: string }> {
+  const groupId = (input.groupId || '').trim();
+  const createGroup = input.createGroup === true || !groupId;
+  if (!input.userId) throw new Error('Missing user');
+  if (createGroup && !(input.label || '').trim()) {
+    throw new Error('Group label is required');
+  }
 
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   try {
@@ -250,7 +256,8 @@ export async function ensurePlanningGroupMembership(input: {
       method: 'POST',
       headers,
       body: JSON.stringify({
-        groupId,
+        groupId: createGroup ? undefined : groupId,
+        createGroup,
         userId: input.userId,
         label: input.label,
         organisationId: input.organisationId || null,
@@ -267,13 +274,22 @@ export async function ensurePlanningGroupMembership(input: {
       }
       throw new Error(msg || `Group membership failed (${res.status})`);
     }
+    const data = (await res.json()) as { groupId?: string };
+    const resolved = (data.groupId || groupId).trim();
+    if (!resolved) throw new Error('No groupId returned');
+    return { groupId: resolved };
   } catch (e) {
-    // Local demo fallback when API / DreamHost stack is unavailable.
+    // Local demo fallback when API is unavailable.
+    const localId =
+      groupId ||
+      (typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : `local-group-${Date.now()}`);
     try {
       const raw = localStorage.getItem('ccd-planning-group-members-v1');
       const list: Array<{ groupId: string; userId: string }> = raw ? JSON.parse(raw) : [];
-      if (!list.some((m) => m.groupId === groupId && m.userId === input.userId)) {
-        list.push({ groupId, userId: input.userId });
+      if (!list.some((m) => m.groupId === localId && m.userId === input.userId)) {
+        list.push({ groupId: localId, userId: input.userId });
         localStorage.setItem('ccd-planning-group-members-v1', JSON.stringify(list));
       }
     } catch {
@@ -282,6 +298,10 @@ export async function ensurePlanningGroupMembership(input: {
     if (import.meta.env.DEV) {
       console.warn('ensurePlanningGroupMembership:', e);
     }
+    if (e instanceof TypeError) {
+      return { groupId: localId };
+    }
+    throw e;
   }
 }
 

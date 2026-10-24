@@ -124,7 +124,12 @@ export function SharePlanningModal({
       toast.error('Your profile needs an organisation_id before sharing with school / hub / year group');
       return;
     }
-    if (!audienceId.trim()) {
+    if (audienceType === 'group') {
+      if (!audienceId.trim() && !audienceLabel.trim()) {
+        toast.error('Enter a group label (or an existing group id)');
+        return;
+      }
+    } else if (!audienceId.trim()) {
       toast.error('Choose who to share with');
       return;
     }
@@ -140,20 +145,28 @@ export function SharePlanningModal({
         organisationId: orgId || null,
         payload: { note },
       });
+      let grantAudienceId = audienceId.trim();
+      if (audienceType === 'school' || audienceType === 'hub_org') {
+        // Must match owner's organisation_id (RLS WITH CHECK).
+        grantAudienceId = orgId;
+      }
       if (audienceType === 'group') {
-        await ensurePlanningGroupMembership({
-          groupId: audienceId.trim(),
+        const created = await ensurePlanningGroupMembership({
+          // Existing id if provided; otherwise server creates with randomUUID().
+          groupId: audienceId.trim() || undefined,
+          createGroup: !audienceId.trim(),
           userId: user.id,
           organisationId: orgId || null,
-          label: audienceLabel.trim() || audienceId.trim(),
+          label: audienceLabel.trim() || 'Teaching group',
         });
+        grantAudienceId = created.groupId;
       }
       await createPlanningShareGrant({
         resourceId: resource.id,
         sharedBy: user.id,
         audienceType,
-        audienceId: audienceId.trim(),
-        audienceLabel: audienceLabel.trim() || audienceId.trim(),
+        audienceId: grantAudienceId,
+        audienceLabel: audienceLabel.trim() || grantAudienceId,
         permission,
         title: resource.title,
         resourceType,
@@ -247,22 +260,22 @@ export function SharePlanningModal({
             </Field>
           ) : audienceType === 'group' ? (
             <>
-              <Field label="Group id">
-                <TextField
-                  value={audienceId}
-                  onChange={(e) => setAudienceId(e.target.value)}
-                  placeholder="e.g. year6-music-team"
-                />
-                <p className="mt-1 text-[11px] font-medium text-[#77738F]">
-                  Membership is managed server-side (group owner or same-org admin). Sharing adds
-                  you as a member via the planning-groups API.
-                </p>
-              </Field>
               <Field label="Group label">
                 <TextField
                   value={audienceLabel}
                   onChange={(e) => setAudienceLabel(e.target.value)}
                   placeholder="Year 6 music team"
+                />
+                <p className="mt-1 text-[11px] font-medium text-[#77738F]">
+                  Leave group id blank to create a new group — the server assigns a random id.
+                  Membership is managed server-side (owner or same-org admin).
+                </p>
+              </Field>
+              <Field label="Existing group id (optional)">
+                <TextField
+                  value={audienceId}
+                  onChange={(e) => setAudienceId(e.target.value)}
+                  placeholder="Paste an existing group id to reuse it"
                 />
               </Field>
             </>

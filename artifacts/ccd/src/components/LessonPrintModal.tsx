@@ -1467,7 +1467,7 @@ export function LessonPrintModal({
         if (msg.includes('BLOB_READ_WRITE_TOKEN') || msg.includes('Blob store')) {
           errorMessage = 'Vercel Blob Storage not set up. In Vercel Dashboard: Storage → Create Blob Store, then redeploy.';
         } else if (msg.includes('PDFBOLT_API_KEY') || msg.includes('VITE_PDFBOLT_API_KEY')) {
-          errorMessage = 'PDF API key missing. Set PDFBOLT_API_KEY (or VITE_PDFBOLT_API_KEY) in Vercel environment variables, then redeploy.';
+          errorMessage = 'PDF API key missing. Set PDFBOLT_API_KEY in Vercel environment variables, then redeploy.';
         } else if (msg.includes('bucket')) {
           errorMessage = 'Storage not configured. Create a Blob store in Vercel Dashboard → Storage.';
         } else if (msg.includes('Service role key') || msg.includes('SUPABASE_SERVICE_ROLE')) {
