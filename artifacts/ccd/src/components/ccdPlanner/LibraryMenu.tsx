@@ -5,9 +5,11 @@ import {
   GripVertical,
   Plus,
   Search,
+  Share2,
 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useDrag } from 'react-dnd';
+import { useAuth } from '../../hooks/useAuth';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import type { Activity } from '../../contexts/DataContext';
@@ -20,6 +22,10 @@ import {
   subjectColor,
   type LibrarySubject,
 } from '../../utils/libraryHierarchy';
+import {
+  listSharedWithMe,
+  type PlanningShareGrant,
+} from '../../utils/planner/planningShares';
 import { chipStyle } from '../../utils/planner/contrastText';
 import { PlannerPopover } from './PlannerPopover';
 import { cn } from '@/lib/utils';
@@ -108,11 +114,34 @@ export function LibraryMenu({
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
+  const { user } = useAuth();
   const { allActivities } = useData();
   const { categories, categoryFolders, getCategoryColor } = useSettings();
   const [query, setQuery] = useState('');
   const [expandedSubjects, setExpandedSubjects] = useState<Record<string, boolean>>({});
   const [liveMessage, setLiveMessage] = useState('');
+  const [sharedWithMe, setSharedWithMe] = useState<PlanningShareGrant[]>([]);
+  const [sharedOpen, setSharedOpen] = useState(true);
+
+  useEffect(() => {
+    if (!open || !user?.id) return;
+    let cancelled = false;
+    const load = () => {
+      void listSharedWithMe({
+        id: user.id,
+        organisationId: (user.profile as { organisation_id?: string } | undefined)?.organisation_id,
+        schoolOrOrg: user.profile?.school_or_org,
+      }).then((rows) => {
+        if (!cancelled) setSharedWithMe(rows);
+      });
+    };
+    load();
+    window.addEventListener('ccd:planning-shares-updated', load);
+    return () => {
+      cancelled = true;
+      window.removeEventListener('ccd:planning-shares-updated', load);
+    };
+  }, [open, user?.id, user?.profile]);
 
   const hierarchy = useMemo(() => {
     const visibleCats = (categories || []).filter((c) => !c.hidden);
@@ -246,6 +275,43 @@ export function LibraryMenu({
           </div>
 
           <div className="min-h-0 flex-1 space-y-1 overflow-y-auto px-2 py-2">
+            <div className="mb-2 rounded-xl border border-violet-100 bg-violet-50/50">
+              <button
+                type="button"
+                onClick={() => setSharedOpen((v) => !v)}
+                className="flex h-9 w-full items-center gap-1.5 px-2 text-left text-[12px] font-extrabold text-violet-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                Shared with me
+                <span className="ml-auto tabular-nums text-[11px] font-bold text-violet-700">
+                  {sharedWithMe.length}
+                </span>
+              </button>
+              {sharedOpen ? (
+                <ul className="space-y-1 px-2 pb-2">
+                  {sharedWithMe.length === 0 ? (
+                    <li className="px-1 py-2 text-[11px] text-violet-700/80">
+                      Nothing shared with you yet.
+                    </li>
+                  ) : (
+                    sharedWithMe.map((g) => (
+                      <li
+                        key={g.id}
+                        className="rounded-lg border border-violet-100 bg-white px-2 py-1.5"
+                      >
+                        <p className="truncate text-[12px] font-bold text-slate-800">
+                          {g.title || 'Shared planning'}
+                        </p>
+                        <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-600">
+                          {(g.resourceType || 'lesson').replace('_', ' ')} · {g.permission} ·{' '}
+                          {g.audienceLabel || g.audienceType}
+                        </p>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              ) : null}
+            </div>
             {subjects.length === 0 ? (
               <p className="px-2 py-8 text-center text-sm text-slate-400">
                 No subjects for this key stage. Add folders in Settings.

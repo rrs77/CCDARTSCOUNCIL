@@ -5,6 +5,7 @@ import {
   FileText,
   Pencil,
   Plus,
+  Share2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AssignToHalfTermModal } from './AssignToHalfTermModal';
@@ -29,6 +30,7 @@ import { PlannerLessonCanvas } from './ccdPlanner/PlannerLessonCanvas';
 import { RunThroughModal } from './ccdPlanner/RunThroughModal';
 import { TemplatePickerModal } from './ccdPlanner/TemplatePickerModal';
 import { YearOverviewScreen } from './ccdPlanner/YearOverviewScreen';
+import { SharePlanningModal } from './ccdPlanner/SharePlanningModal';
 import { loadPlannerTerms } from '../utils/planner/plannerCurriculumStore';
 import { syncSettingsUrl } from './settings/routes';
 
@@ -83,6 +85,7 @@ export function LessonsWorkspace({
   const [liveMessage, setLiveMessage] = useState('');
   const [showYearOverview, setShowYearOverview] = useState(false);
   const [termsTick, setTermsTick] = useState(0);
+  const [shareOpen, setShareOpen] = useState(false);
 
   const plannerTerms = useMemo(
     () => loadPlannerTerms(currentAcademicYear),
@@ -542,6 +545,16 @@ export function LessonsWorkspace({
           </button>
           <button
             type="button"
+            onClick={() => setShareOpen(true)}
+            disabled={!editingLessonNumber || isViewOnly}
+            className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2 text-xs font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
+            aria-label="Share planning"
+          >
+            <Share2 className="h-3.5 w-3.5 text-indigo-600 pointer-coarse:h-4 pointer-coarse:w-4" />
+            <span className="hidden sm:inline">Share</span>
+          </button>
+          <button
+            type="button"
             onClick={createLesson}
             disabled={isViewOnly}
             className="inline-flex h-8 items-center gap-1 rounded-lg border-2 border-indigo-200 bg-indigo-50 px-2 text-xs font-bold text-indigo-700 hover:bg-indigo-100 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 pointer-coarse:h-11 pointer-coarse:min-h-[44px] pointer-coarse:gap-1.5 pointer-coarse:rounded-xl pointer-coarse:px-3 pointer-coarse:text-sm"
@@ -654,6 +667,15 @@ export function LessonsWorkspace({
         onApply={(tpl) => {
           void applyTemplate(tpl);
         }}
+      />
+
+      <SharePlanningModal
+        open={shareOpen}
+        onClose={() => setShareOpen(false)}
+        resourceType="lesson"
+        resourceId={editingLessonNumber || 'draft'}
+        title={activeLessonData?.title || editingLessonNumber || 'Lesson'}
+        summary={`${keyStageLabel(keyStage)} · ${classLabel}`}
       />
     </div>
   );
