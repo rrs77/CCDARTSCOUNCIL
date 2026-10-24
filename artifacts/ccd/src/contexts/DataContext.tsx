@@ -2074,6 +2074,12 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
             console.warn('⚠️ saveUserCreatedLessonPlans: unauthenticated session — skipping Supabase write (fail closed)');
             return;
           }
+          const { resolveOrganisationId } = await import('../config/api');
+          const organisationId = await resolveOrganisationId();
+          if (!organisationId) {
+            console.warn('⚠️ saveUserCreatedLessonPlans: organisation_id missing — skipping Supabase write');
+            return;
+          }
           const supabasePlans = plans.map(plan => {
             const row: Record<string, unknown> = {
               id: plan.id,
@@ -2089,7 +2095,8 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
               lesson_number: plan.lessonNumber,
               title: plan.title,
               term: plan.term,
-              time: plan.time
+              time: plan.time,
+              organisation_id: organisationId,
             };
             if (saveLpUserIsAuth) {
               row.user_id = saveLpUserId;
@@ -3064,39 +3071,46 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
             // Remove id as Supabase will generate its own id
             const { id, _uniqueId, ...activityForSupabase } = activity;
             
-            // Convert camelCase to snake_case for database
-            const dbActivity = {
-              activity: activityForSupabase.activity,
-              description: activityForSupabase.description,
-              activity_text: activityForSupabase.activityText,
-              time: activityForSupabase.time,
-              video_link: activityForSupabase.videoLink,
-              music_link: activityForSupabase.musicLink,
-              backing_link: activityForSupabase.backingLink,
-              resource_link: activityForSupabase.resourceLink,
-              link: activityForSupabase.link,
-              vocals_link: activityForSupabase.vocalsLink,
-              image_link: activityForSupabase.imageLink,
-              canva_link: activityForSupabase.canvaLink || '',
-              teaching_unit: activityForSupabase.teachingUnit,
-              category: activityForSupabase.category,
-              level: activityForSupabase.level,
-              unit_name: activityForSupabase.unitName,
-              lesson_number: activityForSupabase.lessonNumber,
-              eyfs_standards: activityForSupabase.eyfsStandards
-            };
-            
-            supabase
-              .from(TABLES.ACTIVITIES)
-              .upsert([dbActivity], { 
-                onConflict: 'activity,category,lesson_number',
-                ignoreDuplicates: false
-              })
-              .then(({ error }) => {
-                if (error) {
-                  console.warn('Failed to add activity to Supabase:', error);
-                }
-              });
+            // Org-scoped unique requires organisation_id on every upsert.
+            void (async () => {
+              const { resolveOrganisationId, normalizeLessonNumber } = await import('../config/api');
+              const organisationId = await resolveOrganisationId();
+              if (!organisationId) {
+                console.warn('Failed to add activity to Supabase: organisation_id missing');
+                return;
+              }
+              const dbActivity = {
+                activity: activityForSupabase.activity,
+                description: activityForSupabase.description,
+                activity_text: activityForSupabase.activityText,
+                time: activityForSupabase.time,
+                video_link: activityForSupabase.videoLink,
+                music_link: activityForSupabase.musicLink,
+                backing_link: activityForSupabase.backingLink,
+                resource_link: activityForSupabase.resourceLink,
+                link: activityForSupabase.link,
+                vocals_link: activityForSupabase.vocalsLink,
+                image_link: activityForSupabase.imageLink,
+                canva_link: activityForSupabase.canvaLink || '',
+                teaching_unit: activityForSupabase.teachingUnit,
+                category: activityForSupabase.category,
+                level: activityForSupabase.level,
+                unit_name: activityForSupabase.unitName,
+                lesson_number: normalizeLessonNumber(activityForSupabase.lessonNumber),
+                eyfs_standards: activityForSupabase.eyfsStandards,
+                organisation_id: organisationId,
+              };
+
+              const { error } = await supabase
+                .from(TABLES.ACTIVITIES)
+                .upsert([dbActivity], {
+                  onConflict: 'organisation_id,activity,category,lesson_number',
+                  ignoreDuplicates: false,
+                });
+              if (error) {
+                console.warn('Failed to add activity to Supabase:', error);
+              }
+            })();
           } catch (error) {
             console.warn('Failed to add activity to Supabase:', error);
           }

@@ -99,6 +99,15 @@ function syncUserIdToStorage(userId: string | null) {
     localStorage.setItem('rhythmstix_user_id', userId);
   } else {
     localStorage.removeItem('rhythmstix_user_id');
+    localStorage.removeItem('rhythmstix_organisation_id');
+  }
+}
+
+function syncOrganisationIdToStorage(organisationId: string | null | undefined) {
+  if (typeof organisationId === 'string' && organisationId.trim()) {
+    localStorage.setItem('rhythmstix_organisation_id', organisationId.trim());
+  } else {
+    localStorage.removeItem('rhythmstix_organisation_id');
   }
 }
 
@@ -130,6 +139,7 @@ function readProfileCache(userId: string): Profile | null {
 }
 
 function writeProfileCache(userId: string, profile: Profile | null) {
+  syncOrganisationIdToStorage(profile?.organisation_id ?? null);
   try {
     const entry: ProfileCacheEntry = { userId, profile, ts: Date.now() };
     localStorage.setItem(PROFILE_CACHE_KEY, JSON.stringify(entry));
@@ -141,6 +151,7 @@ function writeProfileCache(userId: string, profile: Profile | null) {
 function clearProfileCache() {
   try {
     localStorage.removeItem(PROFILE_CACHE_KEY);
+    localStorage.removeItem('rhythmstix_organisation_id');
   } catch {
     /* noop */
   }

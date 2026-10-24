@@ -144,4 +144,46 @@ describe('sanitizeRestorePayload', () => {
     );
     assert.equal(result.ok, false);
   });
+
+  it('keeps lessons academic_year and valid UUID user_id', () => {
+    const uid = '550e8400-e29b-41d4-a716-446655440000';
+    const result = sanitizeRestorePayload(
+      {
+        lessons: [
+          {
+            sheet_name: 'Sheet1',
+            academic_year: '2025-2026',
+            user_id: uid,
+            data: { a: 1 },
+            lesson_numbers: [],
+            teaching_units: [],
+          },
+        ],
+      },
+      { targetOrg: 'ems' },
+    );
+    assert.equal(result.ok, true);
+    assert.equal(result.data.lessons[0].academic_year, '2025-2026');
+    assert.equal(result.data.lessons[0].user_id, uid);
+    assert.equal(result.data.lessons[0].organisation_id, 'ems');
+  });
+
+  it('drops invalid lessons user_id but keeps academic_year', () => {
+    const result = sanitizeRestorePayload(
+      {
+        lessons: [
+          {
+            sheet_name: 'Sheet1',
+            academic_year: '2026-2027',
+            user_id: 'not-a-uuid',
+            data: {},
+          },
+        ],
+      },
+      { targetOrg: 'ems' },
+    );
+    assert.equal(result.ok, true);
+    assert.equal(result.data.lessons[0].academic_year, '2026-2027');
+    assert.equal(result.data.lessons[0].user_id, undefined);
+  });
 });

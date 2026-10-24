@@ -25,3 +25,17 @@ Migrations (not applied live until owner reviews):
 - `20261024170000_restore_curriculum_backup_rpc.sql` (initial RPC)
 - `20261024200000_org_scoped_curriculum_restore.sql` (org-scoped + snapshots + GRANT)
 - `20261024220000_restore_on_conflict_org_where.sql` (`ON CONFLICT … DO UPDATE WHERE t.organisation_id = v_org`)
+- `20261024240000_restore_cross_org_guards.sql` (42501 cross-org id guards; lessons unique `(organisation_id, sheet_name, academic_year, user_id)`; private helpers; branding owner policy; own-org SELECT with suspended/anonymised gates; `GRANT ALL` on `curriculum_backups`)
+- `20261024235800_curriculum_org_rls.sql` (RLS on activities/lessons/eyfs)
+
+App upserts must use org-scoped `onConflict` keys:
+- activities: `organisation_id,activity,category,lesson_number`
+- lessons: `organisation_id,sheet_name,academic_year,user_id`
+- eyfs_statements: `organisation_id,sheet_name` (app has no year/user on EYFS writes)
+- activity_custom_objectives: `organisation_id,activity_id,objective_id`
+
+Always send `organisation_id`.
+
+Also: `20261024235800_curriculum_org_rls.sql` — RLS on activities/lessons/eyfs (own-org + NULL-org system reads + super_admin); own-org SELECT excludes suspended/anonymised. Policy names are `ccd_*_202610242358` to avoid MIS 235500 clashes.
+
+SQL tests (CI scratch Postgres 15): `supabase/tests/run_restore_cross_org_guards.sh` (full `supabase db reset` is not feasible in CI without the live schema chain).
