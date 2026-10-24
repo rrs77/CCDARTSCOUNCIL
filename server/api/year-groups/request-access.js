@@ -5,8 +5,8 @@
  * allowed_year_groups. Creates an audit/request row, in-app app_notifications
  * for same-org admins (capped), and optional email via Resend.
  *
- * Never updates profiles / allowed_year_groups. Atomic 24h cooldown via
- * claim_year_group_access_slot (service_role SECURITY DEFINER RPC).
+ * Never updates profiles / allowed_year_groups. Atomic 24h cooldown + request
+ * row via claim_and_record_year_group_access (service_role SECURITY DEFINER).
  */
 
 import {
@@ -95,7 +95,15 @@ export async function POST(request) {
     }
 
     const service = createServiceClient();
-    if (!service) return respond({ error: 'Server configuration error.' }, 500);
+    if (!service) {
+      await audit(request, {
+        actorId,
+        action: 'year_group_access.request_error',
+        organisationId: null,
+        meta: { status: 500, reason: 'server_configuration' },
+      });
+      return respond({ error: 'Server configuration error.' }, 500);
+    }
 
     const requester = await loadProfile(auth.userId);
     if (!requester || requester.anonymised_at) {
@@ -131,22 +139,16 @@ export async function POST(request) {
         organisation_id: requester.organisation_id,
         allowed_year_groups: requester.allowed_year_groups,
       },
-      claimSlot: async (requesterId) => {
-        const { data, error } = await service.rpc('claim_year_group_access_slot', {
+      // Single RPC: claim slot + insert request in one transaction.
+      claimAndRecord: async ({ requesterId, organisationId: orgId }) => {
+        const { data, error } = await service.rpc('claim_and_record_year_group_access', {
           p_requester_id: requesterId,
+          p_organisation_id: orgId,
         });
         if (error) throw new Error(error.message);
-        // PostgREST returns the scalar or null when no RETURNING row.
-        return data ?? null;
-      },
-      insertRequest: async (row) => {
-        const { data, error } = await service
-          .from('year_group_access_requests')
-          .insert(row)
-          .select('id, created_at')
-          .single();
-        if (error) throw new Error(error.message);
-        return data;
+        const row = Array.isArray(data) ? data[0] : data;
+        if (!row?.request_id) return null;
+        return { requestId: row.request_id, claimedAt: row.claimed_at };
       },
       listOrgProfiles: async (orgId) => {
         const { data, error } = await service

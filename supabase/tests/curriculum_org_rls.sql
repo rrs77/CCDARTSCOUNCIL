@@ -481,7 +481,7 @@ SELECT 'ccd_current_user_manages_own_org exists',
 DROP POLICY IF EXISTS half_terms_owner_all ON public.half_terms;
 DROP POLICY IF EXISTS half_terms_org_shared_read ON public.half_terms;
 
--- P2b: every policy on the 14 curriculum tables must be named ccd_*
+-- P2b: no leftover non-ccd_* policies on all 14 curriculum tables
 INSERT INTO rls_results
 SELECT 'no non-ccd policies on 14 curriculum tables',
        NOT EXISTS (
@@ -489,13 +489,13 @@ SELECT 'no non-ccd policies on 14 curriculum tables',
          WHERE schemaname = 'public'
            AND tablename IN (
              'activities', 'lessons', 'eyfs_statements',
-             'half_terms', 'lesson_plans', 'year_groups',
-             'category_groups', 'custom_categories',
+             'half_terms', 'lesson_plans',
+             'year_groups', 'category_groups', 'custom_categories',
              'lesson_stacks', 'activity_stacks',
              'custom_objective_year_groups', 'custom_objective_areas',
              'custom_objectives', 'activity_custom_objectives'
            )
-           AND policyname NOT LIKE 'ccd_%'
+           AND policyname NOT LIKE 'ccd\_%' ESCAPE '\'
        );
 
 INSERT INTO rls_results
@@ -506,6 +506,29 @@ SELECT 'half_terms clash policies absent after 270000 cleanup',
            AND tablename = 'half_terms'
            AND policyname IN ('half_terms_owner_all', 'half_terms_org_shared_read')
        );
+
+-- ccd_assert_curriculum_policies raises only when a non-ccd policy exists
+DO $$
+DECLARE ok_pass boolean := false; ok_fail boolean := false;
+BEGIN
+  BEGIN
+    PERFORM public.ccd_assert_curriculum_policies();
+    ok_pass := true;
+  EXCEPTION WHEN OTHERS THEN
+    ok_pass := false;
+  END;
+  -- Inject a non-ccd policy, expect assert to fail, then clean up
+  CREATE POLICY "legacy_open_year_groups" ON public.year_groups FOR SELECT TO authenticated USING (true);
+  BEGIN
+    PERFORM public.ccd_assert_curriculum_policies();
+    ok_fail := false;
+  EXCEPTION WHEN OTHERS THEN
+    ok_fail := true;
+  END;
+  DROP POLICY IF EXISTS "legacy_open_year_groups" ON public.year_groups;
+  INSERT INTO rls_results VALUES ('ccd_assert_curriculum_policies passes clean', ok_pass);
+  INSERT INTO rls_results VALUES ('ccd_assert_curriculum_policies fails on non-ccd', ok_fail);
+END $$;
 
 -- Teacher cannot UPDATE/DELETE NULL-org shared catalog rows
 DELETE FROM public.year_groups WHERE id IN ('yg_shared_sys', 'yg_a_own');

@@ -21,6 +21,12 @@ export function isYearGroupNoticeAdminRole(role) {
   return role === 'admin' || role === 'super_admin' || role === 'superuser';
 }
 
+export function isYearGroupNoticeManager(profile) {
+  if (!profile) return false;
+  if (isYearGroupNoticeAdminRole(profile.role)) return true;
+  return profile.can_manage_users === true;
+}
+
 export function shouldShowYearGroupsAccessNotice({
   authLoading,
   profile,
@@ -31,7 +37,7 @@ export function shouldShowYearGroupsAccessNotice({
   if (isDemo) return false;
   if (dismissed) return false;
   if (!profile?.id) return false;
-  if (isYearGroupNoticeAdminRole(profile.role)) return false;
+  if (isYearGroupNoticeManager(profile)) return false;
   if (!orgIdOfProfile(profile)) return false;
   if (hasAssignedYearGroups(profile.allowed_year_groups)) return false;
   return true;

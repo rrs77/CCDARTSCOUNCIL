@@ -14,9 +14,19 @@ export function orgIdOfProfile(profile: { organisation_id?: string | null } | nu
   return org || null;
 }
 
-/** Admins / superusers manage year groups — they should not see the teacher notice. */
+/** Matches server isOrgAdminForNotify role set (admins / superusers). */
 export function isYearGroupNoticeAdminRole(role: string | null | undefined): boolean {
   return role === 'admin' || role === 'super_admin' || role === 'superuser';
+}
+
+/** Same gate as server notify recipients — managers should not see the teacher notice. */
+export function isYearGroupNoticeManager(profile: {
+  role?: string | null;
+  can_manage_users?: boolean | null;
+} | null | undefined): boolean {
+  if (!profile) return false;
+  if (isYearGroupNoticeAdminRole(profile.role)) return true;
+  return profile.can_manage_users === true;
 }
 
 export type YearGroupsNoticeInput = {
@@ -27,6 +37,7 @@ export type YearGroupsNoticeInput = {
     role?: string | null;
     organisation_id?: string | null;
     allowed_year_groups?: string[] | null;
+    can_manage_users?: boolean | null;
   } | null;
   /** Demo / preview sessions seed null year groups on admins — never show. */
   isDemo: boolean;
@@ -35,7 +46,8 @@ export type YearGroupsNoticeInput = {
 
 /**
  * Whether the Planner/Lessons year-groups notice should render.
- * Teachers only; requires loaded profile + organisation; hidden for admins/demo.
+ * Teachers only; requires loaded profile + organisation; hidden for
+ * admins / can_manage_users / demo.
  */
 export function shouldShowYearGroupsAccessNotice(input: YearGroupsNoticeInput): boolean {
   if (input.authLoading) return false;
@@ -43,7 +55,7 @@ export function shouldShowYearGroupsAccessNotice(input: YearGroupsNoticeInput): 
   if (input.dismissed) return false;
   const profile = input.profile;
   if (!profile?.id) return false;
-  if (isYearGroupNoticeAdminRole(profile.role)) return false;
+  if (isYearGroupNoticeManager(profile)) return false;
   if (!orgIdOfProfile(profile)) return false;
   if (hasAssignedYearGroups(profile.allowed_year_groups)) return false;
   return true;

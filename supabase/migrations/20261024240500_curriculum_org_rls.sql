@@ -53,7 +53,7 @@ $$;
 
 REVOKE ALL ON FUNCTION public.ccd_current_user_manages_own_org(text) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.ccd_current_user_manages_own_org(text) FROM anon;
-GRANT EXECUTE ON FUNCTION public.ccd_current_user_manages_own_org(text) TO authenticated;
+GRANT EXECUTE ON FUNCTION public.ccd_current_user_manages_own_org(text) TO authenticated, service_role;
 
 -- Hook for future planning_shares (always false until table exists).
 CREATE OR REPLACE FUNCTION private._ccd_planning_share_allows(
@@ -666,31 +666,6 @@ GRANT EXECUTE ON FUNCTION private._ccd_apply_org_rls(text, text) TO service_role
 -- Drop old boolean overload from earlier 240500 drafts
 DROP FUNCTION IF EXISTS private._ccd_apply_org_rls(text, boolean);
 
--- P2b: drop leftover non-ccd_% policies that could bypass isolation
-DO $$
-DECLARE
-  r record;
-  t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY[
-    'half_terms', 'lesson_plans', 'year_groups', 'category_groups', 'custom_categories'
-  ]
-  LOOP
-    IF to_regclass(format('public.%I', t)) IS NULL THEN
-      CONTINUE;
-    END IF;
-    FOR r IN
-      SELECT policyname
-      FROM pg_policies
-      WHERE schemaname = 'public'
-        AND tablename = t
-        AND policyname NOT LIKE 'ccd_%'
-    LOOP
-      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', r.policyname, t);
-    END LOOP;
-  END LOOP;
-END $$;
-
 SELECT private._ccd_apply_org_rls('half_terms', 'owner_admin');
 SELECT private._ccd_apply_org_rls('lesson_plans', 'owner_admin');
 SELECT private._ccd_apply_org_rls('year_groups', 'org');
@@ -702,32 +677,6 @@ SELECT private._ccd_apply_org_rls('custom_objective_year_groups', 'org');
 SELECT private._ccd_apply_org_rls('custom_objective_areas', 'org');
 SELECT private._ccd_apply_org_rls('custom_objectives', 'org');
 SELECT private._ccd_apply_org_rls('activity_custom_objectives', 'org');
-
--- Re-run P2b after apply in case a non-ccd policy was recreated somehow, and
--- to catch any that existed alongside our new ccd_% policies.
-DO $$
-DECLARE
-  r record;
-  t text;
-BEGIN
-  FOREACH t IN ARRAY ARRAY[
-    'half_terms', 'lesson_plans', 'year_groups', 'category_groups', 'custom_categories'
-  ]
-  LOOP
-    IF to_regclass(format('public.%I', t)) IS NULL THEN
-      CONTINUE;
-    END IF;
-    FOR r IN
-      SELECT policyname
-      FROM pg_policies
-      WHERE schemaname = 'public'
-        AND tablename = t
-        AND policyname NOT LIKE 'ccd_%'
-    LOOP
-      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', r.policyname, t);
-    END LOOP;
-  END LOOP;
-END $$;
 
 -- Attach fill-org trigger to every curriculum table (incl. activities/lessons/eyfs)
 SELECT private._ccd_attach_org_fill_trigger('activities');
@@ -765,9 +714,78 @@ BEGIN
   END LOOP;
 END $$;
 
+-- P2b: drop leftover non-ccd_* policies on all 14 curriculum tables (literal underscore).
+DO $$
+DECLARE
+  r record;
+  t text;
+  tables text[] := ARRAY[
+    'activities', 'lessons', 'eyfs_statements',
+    'half_terms', 'lesson_plans',
+    'year_groups', 'category_groups', 'custom_categories',
+    'lesson_stacks', 'activity_stacks',
+    'custom_objective_year_groups', 'custom_objective_areas',
+    'custom_objectives', 'activity_custom_objectives'
+  ];
+BEGIN
+  FOREACH t IN ARRAY tables
+  LOOP
+    IF to_regclass(format('public.%I', t)) IS NULL THEN
+      CONTINUE;
+    END IF;
+    FOR r IN
+      SELECT policyname
+      FROM pg_policies
+      WHERE schemaname = 'public'
+        AND tablename = t
+        AND policyname NOT LIKE 'ccd\_%' ESCAPE '\'
+    LOOP
+      RAISE NOTICE 'dropping non-ccd policy %.%', t, r.policyname;
+      EXECUTE format('DROP POLICY IF EXISTS %I ON public.%I', r.policyname, t);
+    END LOOP;
+  END LOOP;
+END $$;
+
+-- For later migrations: fail if any curriculum policy is not named ccd_*.
+-- SECURITY INVOKER: callers (migrations / CI as postgres|service_role) use own rights.
+CREATE OR REPLACE FUNCTION public.ccd_assert_curriculum_policies()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY INVOKER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  bad text;
+BEGIN
+  SELECT string_agg(format('%I.%I', tablename, policyname), ', ' ORDER BY tablename, policyname)
+  INTO bad
+  FROM pg_policies
+  WHERE schemaname = 'public'
+    AND tablename = ANY (ARRAY[
+      'activities', 'lessons', 'eyfs_statements',
+      'half_terms', 'lesson_plans',
+      'year_groups', 'category_groups', 'custom_categories',
+      'lesson_stacks', 'activity_stacks',
+      'custom_objective_year_groups', 'custom_objective_areas',
+      'custom_objectives', 'activity_custom_objectives'
+    ])
+    AND policyname NOT LIKE 'ccd\_%' ESCAPE '\';
+  IF bad IS NOT NULL THEN
+    RAISE EXCEPTION 'non-ccd curriculum policies present: %', bad;
+  END IF;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.ccd_assert_curriculum_policies() FROM PUBLIC, anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.ccd_assert_curriculum_policies() TO service_role;
+
+SELECT public.ccd_assert_curriculum_policies();
+
 COMMENT ON POLICY "ccd_lessons_insert_org_owner_202610242405" ON public.lessons IS
   'Own-org insert; user_id must be NULL or auth.uid(). No org-admin edit of colleagues.';
 COMMENT ON FUNCTION public.ccd_current_user_manages_own_org(text) IS
   'CCD planner helper: caller is admin/superuser/can_manage_users in the given org. Does not replace MIS current_user_manages_organisation.';
+COMMENT ON FUNCTION public.ccd_assert_curriculum_policies() IS
+  'Raises if any policy on the 14 curriculum tables is not named ccd_*. Call from later migrations.';
 COMMENT ON FUNCTION private._ccd_planning_share_allows(text, uuid, uuid) IS
   'Hook for planning_shares; returns false until shares table is wired.';

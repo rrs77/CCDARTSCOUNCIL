@@ -79,3 +79,7 @@ COMMENT ON COLUMN public.half_terms.user_id IS
   'Personal half-term map owner. NULL only for org-shared curriculum restore rows.';
 COMMENT ON COLUMN public.half_terms.organisation_id IS
   'Tenant organisation_id tag; personal rows may still set this when the owner has an org.';
+
+-- Fail if any of the 14 curriculum tables still has a non-ccd_* policy
+-- (requires 20261024240500 ccd_assert_curriculum_policies).
+SELECT public.ccd_assert_curriculum_policies();

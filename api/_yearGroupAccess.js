@@ -5,7 +5,9 @@
  * Request access only notifies same-org admins — never grants or updates
  * profiles.allowed_year_groups.
  *
- * Rate limit is atomic via claimSlot (DB RPC claim_year_group_access_slot).
+ * Rate limit + request row are claimed together via claimAndRecord (DB RPC
+ * claim_and_record_year_group_access) so a failed insert cannot lock the user
+ * out for 24h with no request row.
  */
 
 export const YEAR_GROUP_ACCESS_COOLDOWN_MS = 24 * 60 * 60 * 1000;
@@ -35,7 +37,7 @@ export function isActiveProfile(profile) {
   return status !== 'suspended';
 }
 
-/** School/org managers who should receive access requests. */
+/** School/org managers who should receive access requests (and not see the teacher notice). */
 export function isOrgAdminForNotify(profile) {
   if (!isActiveProfile(profile)) return false;
   const role = profile.role || '';
@@ -91,16 +93,13 @@ export function buildAccessRequestNotification({ requester, organisationId }) {
 /**
  * Process a year-group access request with injectable I/O (for tests).
  *
- * Guarantees:
- * - never calls updateProfile / never mutates allowed_year_groups
- * - only notifies admins returned by selectOrgAdminsToNotify (same org)
- * - rate-limits via claimSlot (atomic); no row / falsy ⇒ 429
- * - emails via Promise.allSettled, capped at YEAR_GROUP_ACCESS_EMAIL_CAP
+ * claimAndRecord({ requesterId, organisationId }) must atomically claim the
+ * 24h slot and insert the request row (or return null on cooldown). If the
+ * insert fails, the slot must not remain claimed.
  */
 export async function processYearGroupAccessRequest({
   requester,
-  claimSlot,
-  insertRequest,
+  claimAndRecord,
   listOrgProfiles,
   insertNotifications,
   sendEmail,
@@ -133,8 +132,18 @@ export async function processYearGroupAccessRequest({
     };
   }
 
-  const claimedAt = await claimSlot(requester.id);
-  if (!claimedAt) {
+  let recorded;
+  try {
+    recorded = await claimAndRecord({
+      requesterId: requester.id,
+      organisationId,
+    });
+  } catch (err) {
+    // Insert/claim rolled back together — surface as 500; slot must not stick.
+    throw err;
+  }
+
+  if (!recorded) {
     return {
       ok: false,
       status: 429,
@@ -148,10 +157,10 @@ export async function processYearGroupAccessRequest({
     };
   }
 
-  const requestRow = await insertRequest({
-    requester_id: requester.id,
-    organisation_id: organisationId,
-  });
+  const requestRow = {
+    id: recorded.requestId,
+    created_at: recorded.claimedAt,
+  };
 
   const candidates = await listOrgProfiles(organisationId);
   const admins = capNotifyRecipients(
@@ -208,23 +217,62 @@ export async function processYearGroupAccessRequest({
     emailsAttempted,
     profileMutations: 0,
     requestId: requestRow?.id ?? null,
-    claimedAt,
+    claimedAt: recorded.claimedAt,
   };
 }
 
 /**
- * In-memory stand-in for claim_year_group_access_slot used by parallel tests.
- * Only the first successful claim within the cooldown window returns a timestamp.
+ * In-memory stand-in for claim_and_record_year_group_access.
+ * Claims the slot first (atomic vs parallel callers); if insertFn throws the
+ * slot is released so the user is not locked out for 24h.
  */
-export function createMemoryClaimSlot({ cooldownMs = YEAR_GROUP_ACCESS_COOLDOWN_MS } = {}) {
+export function createMemoryClaimAndRecord({
+  cooldownMs = YEAR_GROUP_ACCESS_COOLDOWN_MS,
+  insertFn,
+} = {}) {
   const lastByUser = new Map();
-  return async function claimSlot(requesterId) {
+  let seq = 0;
+  return async function claimAndRecord({ requesterId, organisationId }) {
     const now = Date.now();
     const prev = lastByUser.get(requesterId);
     if (prev != null && now - prev < cooldownMs) {
       return null;
     }
+    // Claim immediately so parallel callers see the cooldown.
     lastByUser.set(requesterId, now);
-    return new Date(now).toISOString();
+    const doInsert =
+      typeof insertFn === 'function'
+        ? insertFn
+        : async () => {
+            seq += 1;
+            return { id: `req-${seq}` };
+          };
+    try {
+      const row = await doInsert({
+        requester_id: requesterId,
+        organisation_id: organisationId,
+      });
+      return {
+        requestId: row?.id ?? `req-${++seq}`,
+        claimedAt: new Date(now).toISOString(),
+      };
+    } catch (err) {
+      // Release slot so a failed insert does not lock the user out.
+      if (prev == null) lastByUser.delete(requesterId);
+      else lastByUser.set(requesterId, prev);
+      throw err;
+    }
+  };
+}
+
+/** @deprecated Prefer createMemoryClaimAndRecord. */
+export function createMemoryClaimSlot(opts) {
+  const claimAndRecord = createMemoryClaimAndRecord(opts);
+  return async function claimSlot(requesterId) {
+    const r = await claimAndRecord({
+      requesterId,
+      organisationId: 'test-org',
+    });
+    return r?.claimedAt ?? null;
   };
 }

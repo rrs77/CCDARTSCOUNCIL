@@ -140,3 +140,46 @@ $$;
 REVOKE ALL ON FUNCTION public.claim_year_group_access_slot(uuid) FROM PUBLIC;
 REVOKE ALL ON FUNCTION public.claim_year_group_access_slot(uuid) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION public.claim_year_group_access_slot(uuid) TO service_role;
+
+-- Claim the 24h slot and insert the request row in one transaction so a failed
+-- insert cannot leave the user locked out with no audit/request row.
+CREATE OR REPLACE FUNCTION public.claim_and_record_year_group_access(
+  p_requester_id uuid,
+  p_organisation_id text
+)
+RETURNS TABLE (request_id uuid, claimed_at timestamptz)
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_last timestamptz;
+  v_org text;
+  v_req_id uuid;
+BEGIN
+  IF p_requester_id IS NULL THEN
+    RETURN;
+  END IF;
+  v_org := NULLIF(trim(p_organisation_id), '');
+  IF v_org IS NULL THEN
+    RETURN;
+  END IF;
+
+  v_last := public.claim_year_group_access_slot(p_requester_id);
+  IF v_last IS NULL THEN
+    RETURN; -- still cooling down
+  END IF;
+
+  INSERT INTO public.year_group_access_requests (requester_id, organisation_id)
+  VALUES (p_requester_id, v_org)
+  RETURNING id INTO v_req_id;
+
+  request_id := v_req_id;
+  claimed_at := v_last;
+  RETURN NEXT;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION public.claim_and_record_year_group_access(uuid, text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.claim_and_record_year_group_access(uuid, text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION public.claim_and_record_year_group_access(uuid, text) TO service_role;
