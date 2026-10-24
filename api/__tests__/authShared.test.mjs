@@ -7,6 +7,7 @@ import { createHmac } from 'node:crypto';
 import { describe, it, before, after } from 'node:test';
 import assert from 'node:assert/strict';
 import {
+  accessTokenClaimsAreValid,
   canManageUsers,
   canViewGlobalAnalytics,
   canViewOrgAnalytics,
@@ -151,6 +152,29 @@ describe('requireAuth JWT claims', () => {
     const result = await requireAuth(authRequest(token));
     assert.equal(result.ok, false);
     assert.equal(result.response.status, 401);
+  });
+
+  it('rejects Supabase anon key JWT (role anon) with 401 — PDF/generate parity', async () => {
+    // Anon keys are valid HS256 JWTs but must not authorize PDF generation.
+    const anonToken = signJwt(
+      validClaims({
+        role: 'anon',
+        aud: 'authenticated',
+        sub: '00000000-0000-0000-0000-000000000000',
+      }),
+    );
+    const result = await requireAuth(authRequest(anonToken));
+    assert.equal(result.ok, false);
+    assert.equal(result.response.status, 401);
+    assert.equal(
+      accessTokenClaimsAreValid({
+        sub: '00000000-0000-0000-0000-000000000000',
+        aud: 'authenticated',
+        role: 'anon',
+        exp: Math.floor(Date.now() / 1000) + 3600,
+      }),
+      false,
+    );
   });
 
   it('rejects expired tokens beyond skew', async () => {

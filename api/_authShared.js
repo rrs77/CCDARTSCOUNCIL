@@ -143,7 +143,22 @@ export function assertRateLimit(key, { limit = 30, windowMs = 60_000 } = {}) {
   return { ok: true };
 }
 
-const JWT_CLOCK_SKEW_MS = 30_000;
+export const JWT_CLOCK_SKEW_MS = 30_000;
+
+/**
+ * Shared Supabase access-token claim checks (HS256 payload after verify).
+ * Requires aud === 'authenticated' and role === 'authenticated' (rejects anon key).
+ */
+export function accessTokenClaimsAreValid(claims, nowMs = Date.now()) {
+  if (!claims || typeof claims !== 'object') return false;
+  if (!claims.sub || typeof claims.sub !== 'string') return false;
+  if (typeof claims.exp !== 'number') return false;
+  if (claims.exp * 1000 < nowMs - JWT_CLOCK_SKEW_MS) return false;
+  if (claims.aud !== 'authenticated' || claims.role !== 'authenticated') {
+    return false;
+  }
+  return true;
+}
 
 function decodeJwtPart(part) {
   try {
@@ -245,23 +260,26 @@ export async function requireAuth(request, options = {}) {
     }
 
     const claims = decodeJwtPayload(token);
-    const userId = claims?.sub;
-    if (!userId || typeof userId !== 'string') {
-      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
-    }
-    if (typeof claims.exp !== 'number') {
-      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
-    }
-    // Allow 30s clock skew on expiry.
-    if (claims.exp * 1000 < Date.now() - JWT_CLOCK_SKEW_MS) {
-      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Session expired.' }, 401) };
-    }
-    if (claims.aud !== 'authenticated' || claims.role !== 'authenticated') {
-      return { ok: false, response: jsonResponse({ error: 'Unauthorized. Invalid token.' }, 401) };
+    if (!accessTokenClaimsAreValid(claims)) {
+      const expired =
+        claims &&
+        typeof claims.exp === 'number' &&
+        claims.exp * 1000 < Date.now() - JWT_CLOCK_SKEW_MS;
+      return {
+        ok: false,
+        response: jsonResponse(
+          {
+            error: expired
+              ? 'Unauthorized. Session expired.'
+              : 'Unauthorized. Invalid token.',
+          },
+          401,
+        ),
+      };
     }
     return {
       ok: true,
-      userId,
+      userId: claims.sub,
       email: typeof claims.email === 'string' ? claims.email : undefined,
       token,
       claims,

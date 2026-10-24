@@ -1,6 +1,9 @@
 import { Router, type IRouter } from "express";
 import jwt from "jsonwebtoken";
 import { createClient } from "@supabase/supabase-js";
+// Shared claim guard (same rules as api/_authShared.js requireAuth).
+// @ts-expect-error JS module outside package rootDir
+import { accessTokenClaimsAreValid } from "../../../../api/_authShared.js";
 
 const router: IRouter = Router();
 
@@ -59,7 +62,14 @@ function enforcePdfAuth(
       return false;
     }
     try {
-      jwt.verify(token, jwtSecret, { algorithms: ["HS256"] });
+      const payload = jwt.verify(token, jwtSecret, {
+        algorithms: ["HS256"],
+      }) as jwt.JwtPayload;
+      // Reject anon key / wrong aud|role — same as requireAuth (aud+role authenticated).
+      if (!accessTokenClaimsAreValid(payload)) {
+        res.status(401).json({ error: "Unauthorized" });
+        return false;
+      }
     } catch {
       res.status(401).json({ error: "Unauthorized" });
       return false;
