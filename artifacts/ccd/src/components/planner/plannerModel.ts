@@ -137,6 +137,19 @@ export const startOfWeek = (d: Date) => {
   return addDays(x, -dow);
 };
 
+/** True for Saturday (6) or Sunday (0). */
+export const isWeekend = (d: Date) => {
+  const day = d.getDay();
+  return day === 0 || day === 6;
+};
+
+/** Snap to the next Mon–Fri date (same day if already a weekday). */
+export const nextWeekday = (d: Date) => {
+  let x = startOfDay(d);
+  while (isWeekend(x)) x = addDays(x, 1);
+  return x;
+};
+
 export const sameDay = (a: Date, b: Date) => ymd(a) === ymd(b);
 
 export const isoWeek = (d: Date) => {

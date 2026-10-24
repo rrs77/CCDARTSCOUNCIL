@@ -59,7 +59,9 @@ export function normaliseLogoLetters(val: string | undefined): string {
 
 /** Colourful ribbon mark only */
 export function LogoMark({ letters, className = '', size = 48, title }: LogoMarkProps) {
-  const label = title ?? normaliseLogoLetters(letters);
+  // Empty string title = decorative (parent provides accessible name).
+  const label = title === '' ? '' : title ?? 'CCDesigner';
+  void letters;
   return (
     <img
       src={LOGO_MARK_SRC}
@@ -96,7 +98,7 @@ export function Logo({
     <div
       className={`inline-flex items-center gap-[0.28em] ${className}`}
       role="img"
-      aria-label="designer"
+      aria-label="CCDesigner"
     >
       <LogoMark letters={letters} className={MARK_SIZE[size]} size={64} title="" />
       <span

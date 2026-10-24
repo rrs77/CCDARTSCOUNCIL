@@ -28,6 +28,11 @@ const PATH_BY_TAB: Partial<Record<MainTabId, string>> = {
 const TAB_BY_PATH: Record<string, MainTabId> = {
   '/': 'unit-viewer',
   '/planner': 'unit-viewer',
+  '/planner/week': 'unit-viewer',
+  '/planner/day': 'unit-viewer',
+  '/planner/month': 'unit-viewer',
+  '/planner/timetable': 'unit-viewer',
+  '/planner/calendar': 'unit-viewer',
   '/calendar': 'unit-viewer',
   '/half-terms': 'curriculum',
   '/halfterms': 'curriculum',
@@ -43,6 +48,7 @@ const TAB_BY_PATH: Record<string, MainTabId> = {
   '/our-partners': 'our-partners',
   '/contact': 'contact-us',
   '/contact-us': 'contact-us',
+  '/walkthrough': 'unit-viewer',
   // Retired More tools page → Planner
   '/more': 'unit-viewer',
   '/more-tools': 'unit-viewer',
@@ -56,11 +62,15 @@ export function mainPathForTab(tab: string): string | null {
 
 export function isMainAppPath(pathname: string): boolean {
   const p = pathname.replace(/\/+$/, '') || '/';
-  return MAIN_PATHS.has(p);
+  if (MAIN_PATHS.has(p)) return true;
+  // Lesson editor deep link lives under /lessons
+  if (/^\/lessons\/edit\/[^/]+$/i.test(p)) return true;
+  return false;
 }
 
 export function tabFromMainPath(pathname: string): MainTabId | null {
   const normalised = pathname.replace(/\/+$/, '') || '/';
+  if (/^\/lessons\/edit\/[^/]+$/i.test(normalised)) return 'lesson-library';
   return TAB_BY_PATH[normalised] ?? null;
 }
 
@@ -103,9 +113,18 @@ export function resolveMainTabFromLocation(
 
 export function syncMainUrl(tab: string): void {
   if (typeof window === 'undefined') return;
+  // Preserve deep planner / lesson-editor paths when staying on those tabs
+  const current = window.location.pathname.replace(/\/+$/, '') || '/';
+  if (tab === 'unit-viewer') {
+    if (current === '/planner' || current.startsWith('/planner/')) {
+      return;
+    }
+  }
+  if (tab === 'lesson-library') {
+    if (current === '/lessons' || /^\/lessons\/edit\//i.test(current)) return;
+  }
   const next = mainPathForTab(tab);
   if (!next) return;
-  const current = window.location.pathname.replace(/\/+$/, '') || '/';
   const target = next.replace(/\/+$/, '') || '/';
   if (current === target && !window.location.search) return;
   // Drop legacy ?tab= when writing a clean path

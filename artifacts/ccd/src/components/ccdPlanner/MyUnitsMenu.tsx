@@ -179,7 +179,7 @@ export function MyUnitsMenu({
                 return (
                   <div
                     key={unit.id}
-                    className="overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm"
+                    className="rounded-2xl border border-slate-100 bg-white shadow-sm"
                   >
                     <div
                       className="h-1.5"
@@ -211,47 +211,55 @@ export function MyUnitsMenu({
                         {unit.lessonNumbers.length} lessons
                       </span>
                     </button>
-                    <div className="flex items-center gap-2 px-3 pb-2">
-                      <label className="sr-only" htmlFor={`term-${unit.id}`}>
-                        Half-term for {unit.name}
-                      </label>
-                      <select
-                        id={`term-${unit.id}`}
-                        value={unit.term || ''}
-                        onChange={(e) => setTerm(unit, e.target.value)}
-                        className="h-9 flex-1 rounded-lg border border-indigo-50 bg-indigo-50/30 px-2 text-xs font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                      >
-                        <option value="">No term</option>
-                        {terms.map((t) => (
-                          <option key={t.id} value={t.id}>
-                            {t.name}
-                            {formatTermHint(t) ? ` (${formatTermHint(t)})` : ''}
-                          </option>
-                        ))}
-                      </select>
-                      <button
-                        type="button"
-                        onClick={() => addActiveLesson(unit)}
-                        className="h-11 shrink-0 rounded-lg bg-indigo-50 px-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                      >
-                        Add current
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Rename ${unit.name}`}
-                        onClick={() => renameUnit(unit)}
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-slate-600 hover:bg-slate-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`Delete ${unit.name}`}
-                        onClick={() => removeUnit(unit)}
-                        className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-lg text-rose-600 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                    <div className="space-y-2 px-3 pb-2">
+                      <div className="flex items-center gap-2">
+                        <label className="sr-only" htmlFor={`term-${unit.id}`}>
+                          Half-term for {unit.name}
+                        </label>
+                        <select
+                          id={`term-${unit.id}`}
+                          value={unit.term || ''}
+                          onChange={(e) => setTerm(unit, e.target.value)}
+                          className="h-9 min-w-0 flex-1 rounded-lg border border-indigo-50 bg-indigo-50/30 px-2 text-xs font-semibold text-slate-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        >
+                          <option value="">No term</option>
+                          {terms.map((t) => (
+                            <option key={t.id} value={t.id}>
+                              {t.name}
+                              {formatTermHint(t) ? ` (${formatTermHint(t)})` : ''}
+                            </option>
+                          ))}
+                        </select>
+                        <button
+                          type="button"
+                          onClick={() => addActiveLesson(unit)}
+                          className="h-11 shrink-0 rounded-lg bg-indigo-50 px-2 text-[11px] font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        >
+                          Add current
+                        </button>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          type="button"
+                          aria-label={`Rename ${unit.name}`}
+                          title={`Rename ${unit.name}`}
+                          onClick={() => renameUnit(unit)}
+                          className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-slate-200 bg-white px-2 text-[12px] font-bold text-slate-700 hover:bg-slate-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                        >
+                          <Pencil className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          Rename
+                        </button>
+                        <button
+                          type="button"
+                          aria-label={`Delete ${unit.name}`}
+                          title={`Delete ${unit.name}`}
+                          onClick={() => removeUnit(unit)}
+                          className="inline-flex h-11 min-w-[44px] flex-1 items-center justify-center gap-1.5 rounded-lg border border-rose-200 bg-white px-2 text-[12px] font-bold text-rose-700 hover:bg-rose-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-400"
+                        >
+                          <Trash2 className="h-3.5 w-3.5 shrink-0" aria-hidden />
+                          Delete
+                        </button>
+                      </div>
                     </div>
                     {isOpen ? (
                       <ul className="space-y-1 border-t border-slate-50 px-2 py-2">

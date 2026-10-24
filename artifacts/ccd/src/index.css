@@ -734,42 +734,58 @@ button[data-state="active"] {
   break-after: auto;
 }
 
-/* Print styles for lesson plans */
+/* Print styles for lesson plans — content is nested under #root, so never
+   use `body > *:not(.print-content) { display:none }` (that blanks Chrome). */
 @media print {
   body {
     background: white !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
-  
+
   .pageNumber:before {
     content: counter(page);
   }
-  
+
   .page-break-inside-avoid {
     page-break-inside: avoid;
   }
-  
-  /* Make sure the print content is visible */
-  .print-content {
-    display: block !important;
+
+  /* Hide chrome; reveal only marked print surfaces (and their descendants). */
+  body * {
+    visibility: hidden !important;
+  }
+
+  .print-content,
+  .print-content *,
+  [data-lesson-plan-print],
+  [data-lesson-plan-print] * {
     visibility: visible !important;
-    opacity: 1 !important;
-    position: static !important;
+  }
+
+  .print-content,
+  [data-lesson-plan-print] {
+    display: block !important;
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: none !important;
+    margin: 0 !important;
+    padding: 12mm !important;
     overflow: visible !important;
     max-height: none !important;
+    background: white !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
   }
-  
-  /* Hide everything except the print content */
-  body > *:not(.print-content) {
-    display: none !important;
-  }
-  
+
   /* Ensure proper page breaks */
   h2, h3 {
     page-break-after: avoid;
   }
-  
+
   /* Circular activity boxes */
   .print-activity {
     border-radius: 1rem;
@@ -778,14 +794,14 @@ button[data-state="active"] {
     overflow: hidden;
     page-break-inside: avoid;
   }
-  
+
   /* Force page breaks between lessons */
   .lesson-page-break,
   .print-preview-page {
     page-break-after: always !important;
     break-after: page !important;
   }
-  
+
   /* Clean up preview styles for actual printing */
   .print-preview-page {
     margin: 0 !important;
@@ -795,12 +811,12 @@ button[data-state="active"] {
     width: 100% !important;
     min-height: auto !important;
   }
-  
+
   .print-preview-container {
     background: white !important;
     padding: 0 !important;
   }
-  
+
   /* Ensure footer appears on every page */
   .page-footer {
     position: fixed;
