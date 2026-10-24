@@ -4,12 +4,13 @@ import {
   Pencil,
   Target,
 } from 'lucide-react';
+import { ADDON_PLANS } from './addonPlans';
 import type { BoltOnsPageId } from './types';
 import {
-  AssessifyMiniDashboard,
+  AddonIllustration,
+  AddonTierSplit,
   FooterNote,
-  PeriFeedbackMiniNote,
-  showConceptToast,
+  requestAddonPlan,
 } from './shared';
 
 interface Props {
@@ -17,6 +18,9 @@ interface Props {
 }
 
 export function BoltOnsCatalogue({ onNavigate }: Props) {
+  const assessify = ADDON_PLANS.assessify;
+  const peri = ADDON_PLANS.perifeedback;
+
   return (
     <div className="ccd-boltons">
       <header className="mb-6 flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
@@ -26,7 +30,8 @@ export function BoltOnsCatalogue({ onNavigate }: Props) {
           </p>
           <h1 className="ccd-studio-title">Tools that grow with your teaching.</h1>
           <p className="ccd-studio-sub max-w-xl">
-            CCDesigner plans your lessons. These optional bolt-ons help you see progress and share success.
+            CCDesigner plans your lessons. These optional bolt-ons help you see progress and share success —
+            start free, unlock Full when you need more.
           </p>
         </div>
         <span className="inline-flex w-fit items-center rounded-full bg-[#E9E6FF] px-3 py-1.5 text-[12px] font-bold text-[#4338E8]">
@@ -34,83 +39,117 @@ export function BoltOnsCatalogue({ onNavigate }: Props) {
         </span>
       </header>
 
-      <div className="grid gap-4 lg:grid-cols-2">
-        <article className="flex flex-col overflow-hidden rounded-[22px] border border-[#D9D4FF] bg-gradient-to-br from-[#EFEDFF] to-white p-5 shadow-[0_10px_28px_rgba(67,56,232,0.07)] sm:p-6">
+      <div className="grid gap-5 lg:grid-cols-2">
+        <article
+          className="flex flex-col overflow-hidden rounded-[22px] border p-5 shadow-[0_10px_28px_rgba(67,56,232,0.07)] sm:p-6"
+          style={{
+            borderColor: assessify.accent.border,
+            backgroundImage: `linear-gradient(to bottom right, ${assessify.accent.soft}, white)`,
+          }}
+        >
           <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[22px]">
-                Assessify
+                {assessify.name}
               </h2>
-              <p className="mt-0.5 text-[13px] font-semibold text-[#6554D8]">
-                Every step of progress, made visible.
+              <p className="mt-0.5 text-[13px] font-semibold" style={{ color: assessify.accent.primary }}>
+                {assessify.tagline}
               </p>
             </div>
-            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#4338E8] ring-1 ring-[#D9D4FF]">
-              Free + Premium
+            <span
+              className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ring-1"
+              style={{ color: assessify.accent.primary, borderColor: assessify.accent.border }}
+            >
+              Free + Full
             </span>
           </div>
-          <div className="mb-5 hidden sm:block">
-            <AssessifyMiniDashboard />
+
+          <div className="mb-4">
+            <AddonIllustration plan={assessify} />
           </div>
-          <p className="text-[15px] font-extrabold text-[#1F1B4D]">Assessment without the paperwork.</p>
-          <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-[#77738F]">
-            Subject-specific rubrics, meaningful pupil feedback and a clear view of creative progression — with
-            powerful AI help in Premium.
-          </p>
+
+          <p className="text-[15px] font-extrabold text-[#1F1B4D]">{assessify.benefitHeadline}</p>
+          <ul className="mt-2 space-y-1.5">
+            {assessify.featureBullets.map((bullet) => (
+              <li key={bullet} className="flex items-start gap-2 text-[13px] leading-relaxed text-[#77738F]">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: assessify.accent.primary }} aria-hidden />
+                {bullet}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-5">
+            <AddonTierSplit
+              plan={assessify}
+              onFree={() => requestAddonPlan(`${assessify.name} · ${assessify.free.cta}`)}
+              onFull={() => requestAddonPlan(`${assessify.name} · ${assessify.full.cta}`)}
+            />
+          </div>
+
           <button
             type="button"
             onClick={() => onNavigate('assessify')}
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#4338E8] px-4 text-[13px] font-extrabold text-white transition hover:bg-[#3529d1]"
+            className="mt-4 text-left text-[12px] font-bold underline-offset-2 hover:underline"
+            style={{ color: assessify.accent.primary }}
           >
-            Explore Assessify →
+            Learn more about Assessify →
           </button>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#6554D8] ring-1 ring-[#D9D4FF]">
-              Creative subjects
-            </span>
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#6554D8] ring-1 ring-[#D9D4FF]">
-              AI in Premium
-            </span>
-          </div>
         </article>
 
-        <article className="flex flex-col overflow-hidden rounded-[22px] border border-[#BFE8E1] bg-gradient-to-br from-[#E9F8F5] to-white p-5 shadow-[0_10px_28px_rgba(19,142,136,0.07)] sm:p-6">
+        <article
+          className="flex flex-col overflow-hidden rounded-[22px] border p-5 shadow-[0_10px_28px_rgba(19,142,136,0.07)] sm:p-6"
+          style={{
+            borderColor: peri.accent.border,
+            backgroundImage: `linear-gradient(to bottom right, ${peri.accent.soft}, white)`,
+          }}
+        >
           <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
             <div>
               <h2 className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[22px]">
-                PeriFeedback
+                {peri.name}
               </h2>
-              <p className="mt-0.5 text-[13px] font-semibold text-[#138E88]">
-                Better lessons. Clearer communication.
+              <p className="mt-0.5 text-[13px] font-semibold" style={{ color: peri.accent.primary }}>
+                {peri.tagline}
               </p>
             </div>
-            <span className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide text-[#0F766E] ring-1 ring-[#BFE8E1]">
-              Free + Premium
+            <span
+              className="rounded-full bg-white/80 px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ring-1"
+              style={{ color: peri.accent.primary, borderColor: peri.accent.border }}
+            >
+              Free + Full
             </span>
           </div>
-          <div className="mb-5 hidden sm:block">
-            <PeriFeedbackMiniNote />
+
+          <div className="mb-4">
+            <AddonIllustration plan={peri} />
           </div>
-          <p className="text-[15px] font-extrabold text-[#1F1B4D]">From a great lesson to a great update.</p>
-          <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-[#77738F]">
-            Record what happened, set practice goals and — with Premium — keep parents informed with professional
-            lesson updates.
-          </p>
+
+          <p className="text-[15px] font-extrabold text-[#1F1B4D]">{peri.benefitHeadline}</p>
+          <ul className="mt-2 space-y-1.5">
+            {peri.featureBullets.map((bullet) => (
+              <li key={bullet} className="flex items-start gap-2 text-[13px] leading-relaxed text-[#77738F]">
+                <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full" style={{ backgroundColor: peri.accent.primary }} aria-hidden />
+                {bullet}
+              </li>
+            ))}
+          </ul>
+
+          <div className="mt-5">
+            <AddonTierSplit
+              plan={peri}
+              onFree={() => requestAddonPlan(`${peri.name} · ${peri.free.cta}`)}
+              onFull={() => requestAddonPlan(`${peri.name} · ${peri.full.cta}`)}
+            />
+          </div>
+
           <button
             type="button"
             onClick={() => onNavigate('perifeedback')}
-            className="mt-5 inline-flex h-11 items-center justify-center rounded-xl bg-[#1F1B4D] px-4 text-[13px] font-extrabold text-white transition hover:bg-[#16133a]"
+            className="mt-4 text-left text-[12px] font-bold underline-offset-2 hover:underline"
+            style={{ color: peri.accent.primary }}
           >
-            Explore PeriFeedback →
+            Learn more about PeriFeedback →
           </button>
-          <div className="mt-4 flex flex-wrap gap-2">
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#0F766E] ring-1 ring-[#BFE8E1]">
-              Visiting tutors
-            </span>
-            <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] font-bold text-[#0F766E] ring-1 ring-[#BFE8E1]">
-              Parent updates in Premium
-            </span>
-          </div>
         </article>
       </div>
 
@@ -134,7 +173,7 @@ export function BoltOnsCatalogue({ onNavigate }: Props) {
             {
               icon: <ArrowUpRight className="h-4 w-4" />,
               title: 'Share meaningful updates',
-              body: 'PeriFeedback Premium turns weekly teaching notes into parent-friendly communication.',
+              body: 'PeriFeedback Full turns weekly teaching notes into parent-friendly communication.',
             },
           ].map((item) => (
             <div
@@ -156,7 +195,7 @@ export function BoltOnsCatalogue({ onNavigate }: Props) {
           <h2 id="boltons-journey-heading" className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D]">
             One connected teaching journey
           </h2>
-          <p className="text-[11px] font-semibold text-[#77738F]">An integration concept, not a current sync claim</p>
+          <p className="text-[11px] font-semibold text-[#77738F]">Classes come from Settings → My classes</p>
         </div>
         <div className="grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center">
           {[
@@ -187,17 +226,17 @@ export function BoltOnsCatalogue({ onNavigate }: Props) {
           Start free. Add power when you need it.
         </p>
         <h2 className="mt-2 max-w-xl text-[22px] font-extrabold tracking-tight sm:text-[26px]">
-          Try the essentials. Unlock more when your workload grows.
+          Try the essentials. Unlock Full when your workload grows.
         </h2>
         <p className="mt-2 max-w-xl text-[13px] leading-relaxed text-white/80">
-          No need to move away from CCDesigner, and no need to pay for a tool you do not use.
+          Free tiers stay deliberately limited — no AI, no parent messaging, capped classes. Full unlocks the toolkit.
         </p>
         <button
           type="button"
-          onClick={() => showConceptToast('Compare plans')}
+          onClick={() => requestAddonPlan('Compare Free & Full')}
           className="mt-5 inline-flex h-11 items-center rounded-xl bg-white px-4 text-[13px] font-extrabold text-[#1F1B4D] transition hover:bg-[#F4F3FA]"
         >
-          Compare plans →
+          Compare Free &amp; Full →
         </button>
       </section>
 

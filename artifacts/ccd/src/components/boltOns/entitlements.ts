@@ -1,51 +1,34 @@
 /**
  * Front-end entitlement stubs for Assessify / PeriFeedback.
  *
- * Investigation (Oct 2026): no Assessify or PeriFeedback product backend,
- * subscription tables, or org entitlement records exist in this repo.
- * Partner Hub resource access (`access_code` / `subscription`) is unrelated.
- *
- * Until server-side entitlement APIs exist, every signed-in teacher is treated
- * as Free for these bolt-ons. Do not trust a client-supplied tier.
+ * Sourced from addonPlans.ts (single Free vs Full config). Until server-side
+ * entitlement APIs exist, every signed-in teacher is treated as Free.
+ * Do not trust a client-supplied tier.
  */
 
+import { ADDON_PLANS } from './addonPlans';
 import type {
   AssessifyEntitlements,
   BoltOnTier,
   PeriFeedbackEntitlements,
 } from './types';
 
-export const ASSESSIFY_FREE: AssessifyEntitlements = {
-  maxClasses: 1,
-  maxPupils: 10,
-  canUseAI: false,
-  canCustomizeRubrics: false,
-  canViewProgressAnalytics: false,
-  canExportReports: false,
-};
+export const ASSESSIFY_FREE = ADDON_PLANS.assessify.entitlements.free as AssessifyEntitlements;
+export const ASSESSIFY_FULL = ADDON_PLANS.assessify.entitlements.full as AssessifyEntitlements;
+export const PERIFEEDBACK_FREE = ADDON_PLANS.perifeedback.entitlements.free as PeriFeedbackEntitlements;
+export const PERIFEEDBACK_FULL = ADDON_PLANS.perifeedback.entitlements.full as PeriFeedbackEntitlements;
 
-export const PERIFEEDBACK_FREE: PeriFeedbackEntitlements = {
-  maxPupils: 3,
-  maxLessonEntriesPerMonth: 10,
-  maxActivePracticeGoalsPerPupil: 1,
-  canContactParents: false,
-  canSendFeedback: false,
-  canCreateParentShareLinks: false,
-  canGenerateTermlyReports: false,
-  canManageSchoolTutors: false,
-};
-
-/** Always Free until a real entitlement service is wired. */
+/** Always Free until a real entitlement / billing service is wired. */
 export function getBoltOnTier(_product: 'assessify' | 'perifeedback'): BoltOnTier {
   return 'free';
 }
 
 export function getAssessifyEntitlements(): AssessifyEntitlements {
-  return ASSESSIFY_FREE;
+  return getBoltOnTier('assessify') === 'free' ? ASSESSIFY_FREE : ASSESSIFY_FULL;
 }
 
 export function getPeriFeedbackEntitlements(): PeriFeedbackEntitlements {
-  return PERIFEEDBACK_FREE;
+  return getBoltOnTier('perifeedback') === 'free' ? PERIFEEDBACK_FREE : PERIFEEDBACK_FULL;
 }
 
 /** Parent contact must never be enabled from the client alone. */

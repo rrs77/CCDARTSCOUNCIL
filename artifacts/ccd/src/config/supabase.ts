@@ -111,6 +111,8 @@ export const TABLES = {
   ACTIVITY_STACKS: 'activity_stacks',
   TIMETABLE_CLASSES: 'timetable_classes',
   BRANDING_SETTINGS: 'branding_settings',
+  /** Shared classes / school name for add-ons (Settings → My classes SSoT). */
+  WORKSPACE_PROFILES: 'workspace_profiles',
   
   // Unused tables (commented out for safety - can be deleted later)
   // ACTIVITIES_ROWS: 'activities_rows',

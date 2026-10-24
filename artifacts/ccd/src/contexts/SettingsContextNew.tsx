@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
 import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError, systemCategoriesApi } from '../config/api';
+import { workspaceProfileApi } from '../config/workspaceProfileApi';
 import { useAuth } from '../hooks/useAuth';
 import {
   buildDefaultYearGroupSections,
@@ -1522,6 +1523,34 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
     // Queue Supabase save
     queueSave('yearGroups', customYearGroups);
   }, [customYearGroups]);
+
+  // Shared workspace profile (Settings → My classes SSoT for add-ons / sibling apps)
+  useEffect(() => {
+    if (!dataLoadedFromSupabase.current || loadingFromSupabase.current) return;
+    if (!isSupabaseConfigured()) return;
+
+    const sectionsPayload = yearGroupSections.map((s) => ({
+      id: s.id,
+      label: s.label,
+      sortOrder: s.sortOrder,
+      yearGroupIds: [...(s.yearGroupIds || [])],
+    }));
+    const classesPayload = customYearGroups.map((g) => ({
+      id: g.id,
+      name: g.name,
+      ...(g.color ? { color: g.color } : {}),
+    }));
+
+    const handle = window.setTimeout(() => {
+      void workspaceProfileApi.upsertMine({
+        schoolName: settings.schoolName || '',
+        classes: classesPayload,
+        yearGroupSections: sectionsPayload,
+      });
+    }, 400);
+
+    return () => window.clearTimeout(handle);
+  }, [settings.schoolName, customYearGroups, yearGroupSections]);
 
   // Save categories using queue-based system to prevent race conditions
   useEffect(() => {

@@ -1,11 +1,13 @@
 import React from 'react';
 import toast from 'react-hot-toast';
 import {
-  BarChart3,
+  Check,
   LayoutGrid,
+  Minus,
   Music2,
   Sparkles,
 } from 'lucide-react';
+import type { AddonPlanDefinition, AddonPlanFeature } from './addonPlans';
 import type { BoltOnsPageId, FeatureStatus } from './types';
 
 export const CONCEPT_TOAST =
@@ -15,6 +17,11 @@ export function showConceptToast(actionLabel?: string): void {
   toast(actionLabel ? `${actionLabel} · ${CONCEPT_TOAST}` : CONCEPT_TOAST, {
     duration: 5200,
   });
+}
+
+/** Placeholder contact / interest flow until billing exists. */
+export function requestAddonPlan(actionLabel: string): void {
+  showConceptToast(actionLabel);
 }
 
 export function StatusPill({
@@ -76,6 +83,122 @@ export function FeatureRow({
         ) : null}
       </span>
     </li>
+  );
+}
+
+function PlanFeatureLine({
+  feature,
+  accent,
+}: {
+  feature: AddonPlanFeature;
+  accent: string;
+}) {
+  return (
+    <li className="flex items-start gap-2 text-[12px] leading-snug text-[#1F1B4D]">
+      <span
+        className={`mt-0.5 inline-flex h-4 w-4 shrink-0 items-center justify-center rounded-full ${
+          feature.included ? '' : 'bg-[#F3F2F8] text-[#9A96B0]'
+        }`}
+        style={feature.included ? { backgroundColor: `${accent}22`, color: accent } : undefined}
+        aria-hidden
+      >
+        {feature.included ? <Check className="h-2.5 w-2.5" strokeWidth={3} /> : <Minus className="h-2.5 w-2.5" />}
+      </span>
+      <span className={feature.included ? '' : 'text-[#77738F]'}>{feature.label}</span>
+    </li>
+  );
+}
+
+/** Icon illustration block — replaces fake pupil/progress mock data. */
+export function AddonIllustration({
+  plan,
+}: {
+  plan: AddonPlanDefinition;
+}) {
+  const Icon = plan.id === 'assessify' ? LayoutGrid : Music2;
+  return (
+    <div
+      className="flex items-center gap-4 rounded-2xl border bg-white/90 p-4"
+      style={{ borderColor: plan.accent.border }}
+      aria-hidden
+    >
+      <span
+        className="inline-flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl text-white shadow-[0_8px_20px_rgba(31,27,77,0.12)]"
+        style={{ backgroundColor: plan.accent.primary }}
+      >
+        <Icon className="h-7 w-7" strokeWidth={2.25} />
+      </span>
+      <div className="min-w-0">
+        <p className="text-[10px] font-extrabold uppercase tracking-[0.14em]" style={{ color: plan.accent.primary }}>
+          Optional bolt-on
+        </p>
+        <p className="mt-0.5 text-[14px] font-extrabold text-[#1F1B4D]">{plan.name}</p>
+        <p className="mt-0.5 text-[12px] leading-snug text-[#77738F]">{plan.tagline}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Free vs Full split with dual CTAs — sales surface, no sample pupil data. */
+export function AddonTierSplit({
+  plan,
+  onFree,
+  onFull,
+}: {
+  plan: AddonPlanDefinition;
+  onFree: () => void;
+  onFull: () => void;
+}) {
+  return (
+    <div className="grid gap-3 sm:grid-cols-2">
+      <div className="flex flex-col rounded-2xl border border-[#E2E0EF] bg-white p-4">
+        <p className="text-[12px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
+          {plan.free.title}
+        </p>
+        <p className="mt-1 text-[13px] font-extrabold text-[#1F1B4D]">{plan.free.summary}</p>
+        <ul className="mt-3 flex-1 space-y-2">
+          {plan.free.features.map((f) => (
+            <PlanFeatureLine key={f.id} feature={f} accent={plan.accent.primary} />
+          ))}
+        </ul>
+        <button
+          type="button"
+          onClick={onFree}
+          className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl px-3 text-[12px] font-extrabold transition hover:opacity-90"
+          style={{ backgroundColor: plan.accent.ring, color: plan.accent.primary }}
+        >
+          {plan.free.cta}
+        </button>
+      </div>
+      <div
+        className="relative flex flex-col rounded-2xl border-2 bg-gradient-to-b to-white p-4 shadow-[0_10px_24px_rgba(31,27,77,0.06)]"
+        style={{ borderColor: plan.accent.primary, backgroundImage: `linear-gradient(to bottom, ${plan.accent.soft}, white)` }}
+      >
+        <span
+          className="absolute -top-2.5 right-3 rounded-full px-2 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-white"
+          style={{ backgroundColor: plan.accent.primary }}
+        >
+          Full toolkit
+        </span>
+        <p className="text-[12px] font-extrabold uppercase tracking-[0.1em]" style={{ color: plan.accent.primary }}>
+          {plan.full.title}
+        </p>
+        <p className="mt-1 text-[13px] font-extrabold text-[#1F1B4D]">{plan.full.summary}</p>
+        <ul className="mt-3 flex-1 space-y-2">
+          {plan.full.features.map((f) => (
+            <PlanFeatureLine key={f.id} feature={f} accent={plan.accent.primary} />
+          ))}
+        </ul>
+        <button
+          type="button"
+          onClick={onFull}
+          className="mt-4 inline-flex h-10 w-full items-center justify-center rounded-xl px-3 text-[12px] font-extrabold text-white transition hover:opacity-95"
+          style={{ backgroundColor: plan.accent.primary }}
+        >
+          {plan.full.cta} →
+        </button>
+      </div>
+    </div>
   );
 }
 
@@ -201,79 +324,11 @@ export function BoltOnsBreadcrumb({
   );
 }
 
-export function SampleLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
-      {children}
-    </p>
-  );
-}
-
 export function FooterNote() {
   return (
     <footer className="mt-10 flex flex-col gap-1 border-t border-[#E2E0EF] pt-5 text-[11px] text-[#77738F] sm:flex-row sm:items-start sm:justify-between">
       <p>© CCDesigner 2026 · Bolt-ons concept · Not a live subscription or payment page</p>
-      <p className="sm:text-right">Premium availability, usage limits and prices require product approval.</p>
+      <p className="sm:text-right">Free vs Full limits are proposed defaults — adjust in addonPlans.ts before launch.</p>
     </footer>
-  );
-}
-
-export function AssessifyMiniDashboard() {
-  return (
-    <div className="rounded-2xl border border-[#D9D4FF] bg-white/90 p-4 shadow-[0_8px_24px_rgba(67,56,232,0.08)]">
-      <div className="mb-3 flex items-center justify-between gap-2">
-        <div>
-          <SampleLabel>Year 4 · Music</SampleLabel>
-          <p className="mt-0.5 text-[12px] font-extrabold text-[#1F1B4D]">Progress snapshot</p>
-        </div>
-        <BarChart3 className="h-4 w-4 text-[#4338E8]" aria-hidden />
-      </div>
-      {[
-        { label: 'Rhythm', pct: 81 },
-        { label: 'Listening', pct: 70 },
-        { label: 'Creating', pct: 89 },
-      ].map((row) => (
-        <div key={row.label} className="mb-2.5 last:mb-0">
-          <div className="mb-1 flex justify-between text-[11px] font-bold text-[#1F1B4D]">
-            <span>{row.label}</span>
-            <span>{row.pct}%</span>
-          </div>
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#EFEDFF]">
-            <div className="h-full rounded-full bg-[#4338E8]" style={{ width: `${row.pct}%` }} />
-          </div>
-        </div>
-      ))}
-      <p className="mt-3 flex items-center gap-1.5 rounded-lg bg-[#EFEDFF] px-2.5 py-1.5 text-[11px] font-semibold text-[#4338E8]">
-        <Sparkles className="h-3.5 w-3.5" aria-hidden />
-        AI-assisted next-step suggestions
-        <span className="ml-auto rounded bg-[#4338E8] px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-white">
-          Pro
-        </span>
-      </p>
-    </div>
-  );
-}
-
-export function PeriFeedbackMiniNote() {
-  return (
-    <div className="rounded-2xl border border-[#BFE8E1] bg-white/90 p-4 shadow-[0_8px_24px_rgba(19,142,136,0.08)]">
-      <div className="mb-2 flex items-center justify-between">
-        <SampleLabel>Weekly lesson note</SampleLabel>
-        <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#0F766E]">
-          Piano
-        </span>
-      </div>
-      <p className="text-[11px] font-bold text-[#77738F]">Monday · Week 5</p>
-      <p className="mt-2 text-[12px] font-extrabold text-[#1F1B4D]">What went well</p>
-      <p className="mt-0.5 text-[12px] leading-snug text-[#77738F]">
-        Confident right-hand melody and a steadier pulse.
-      </p>
-      <p className="mt-3 flex items-center gap-1.5 text-[12px] font-bold text-[#0F766E]">
-        <span aria-hidden>✓</span> Practice goal saved
-      </p>
-      <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-[#FFF6DF] px-2.5 py-1.5 text-[11px] font-semibold text-[#8A5A00]">
-        <span aria-hidden>🔒</span> Parent update requires Premium
-      </p>
-    </div>
   );
 }
