@@ -237,7 +237,7 @@ BEGIN
   );
 END $$;
 
--- R2: lesson user_id from another org raises 42501
+-- R2: lesson user_id from another org raises 42501 (via RPC)
 DO $$
 DECLARE err text; state text;
 BEGIN
@@ -263,6 +263,66 @@ BEGIN
     GET STACKED DIAGNOSTICS err = MESSAGE_TEXT, state = RETURNED_SQLSTATE;
     INSERT INTO results VALUES (
       'foreign lesson user_id raises 42501',
+      state = '42501' OR err ILIKE '%user_id%'
+    );
+  END;
+END $$;
+
+-- Direct unit test of private._restore_assert_lesson_user_ids_in_org
+DO $$
+DECLARE err text; state text; ok_null boolean := false; ok_own boolean := false;
+BEGIN
+  -- NULL user_id allowed
+  BEGIN
+    PERFORM private._restore_assert_lesson_user_ids_in_org(
+      jsonb_build_object(
+        'lessons', jsonb_build_array(
+          jsonb_build_object('sheet_name', 'X', 'user_id', NULL)
+        )
+      ),
+      'org_a'
+    );
+    ok_null := true;
+  EXCEPTION WHEN OTHERS THEN
+    ok_null := false;
+  END;
+  -- Own-org user_id allowed
+  BEGIN
+    PERFORM private._restore_assert_lesson_user_ids_in_org(
+      jsonb_build_object(
+        'lessons', jsonb_build_array(
+          jsonb_build_object(
+            'sheet_name', 'X',
+            'user_id', '00000000-0000-4000-8000-0000000000a1'
+          )
+        )
+      ),
+      'org_a'
+    );
+    ok_own := true;
+  EXCEPTION WHEN OTHERS THEN
+    ok_own := false;
+  END;
+  INSERT INTO results VALUES ('_restore_assert_lesson_user_ids_in_org allows NULL', ok_null);
+  INSERT INTO results VALUES ('_restore_assert_lesson_user_ids_in_org allows own-org', ok_own);
+
+  BEGIN
+    PERFORM private._restore_assert_lesson_user_ids_in_org(
+      jsonb_build_object(
+        'lessons', jsonb_build_array(
+          jsonb_build_object(
+            'sheet_name', 'X',
+            'user_id', '00000000-0000-4000-8000-0000000000b1'
+          )
+        )
+      ),
+      'org_a'
+    );
+    INSERT INTO results VALUES ('_restore_assert_lesson_user_ids_in_org rejects foreign', false);
+  EXCEPTION WHEN OTHERS THEN
+    GET STACKED DIAGNOSTICS err = MESSAGE_TEXT, state = RETURNED_SQLSTATE;
+    INSERT INTO results VALUES (
+      '_restore_assert_lesson_user_ids_in_org rejects foreign',
       state = '42501' OR err ILIKE '%user_id%'
     );
   END;

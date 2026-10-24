@@ -1,4 +1,5 @@
 import { supabase, TABLES } from './supabase';
+import { resolveOrganisationId } from './api';
 import type { StackedLesson } from '../hooks/useLessonStacks';
 
 export const lessonStacksApi = {
@@ -40,6 +41,10 @@ export const lessonStacksApi = {
   // Create a new lesson stack
   create: async (stackData: Omit<StackedLesson, 'id' | 'created_at'>): Promise<StackedLesson> => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save lesson stacks.');
+      }
       // Convert camelCase to snake_case for database
       const dbStack = {
         id: `stack-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
@@ -51,6 +56,7 @@ export const lessonStacksApi = {
         total_activities: stackData.totalActivities,
         custom_objectives: stackData.customObjectives || [],
         curriculum_type: stackData.curriculumType,
+        organisation_id: organisationId,
         created_at: new Date().toISOString(),
         updated_at: new Date().toISOString()
       };

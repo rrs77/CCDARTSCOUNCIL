@@ -706,6 +706,10 @@ export const lessonPlansApi = {
   create: async (plan: LessonPlan) => {
     try {
       const userId = getCurrentUserId();
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save lesson plans.');
+      }
       const row: Record<string, unknown> = {
         date: plan.date.toISOString(),
         week: plan.week,
@@ -719,7 +723,8 @@ export const lessonPlansApi = {
         lesson_number: plan.lessonNumber,
         title: plan.title,
         term: plan.term,
-        time: plan.time
+        time: plan.time,
+        organisation_id: organisationId,
       };
       if (isAuthUserId(userId)) {
         row.user_id = userId;
@@ -972,6 +977,11 @@ export const halfTermsApi = {
         throw new Error('Unauthenticated: cannot update half-term without a scoped user ID');
       }
       upsertData.user_id = htUserId;
+      const htOrgId = await resolveOrganisationId();
+      if (!htOrgId) {
+        throw new Error('organisation_id is required to save half-terms.');
+      }
+      upsertData.organisation_id = htOrgId;
       
       // Add stacks if provided
       if (stacks !== undefined) {
@@ -1103,6 +1113,10 @@ export const halfTermsApi = {
         console.warn('⚠️ halfTermsApi.initializeHalfTerms: unauthenticated session — refusing unscoped write (fail closed)');
         return [];
       }
+      const initOrgId = await resolveOrganisationId();
+      if (!initOrgId) {
+        throw new Error('organisation_id is required to initialize half-terms.');
+      }
       const halfTermsToInsert = defaultHalfTerms.map(term => {
         const row: Record<string, unknown> = {
           id: term.id,
@@ -1111,7 +1125,8 @@ export const halfTermsApi = {
           name: term.name,
           lessons: [],
           is_complete: false,
-          term_id: term.id
+          term_id: term.id,
+          organisation_id: initOrgId,
         };
         if (initUserIsAuth) {
           row.user_id = initUserId;
@@ -1187,13 +1202,18 @@ const _yearGroupsApiImpl = {
 
   upsert: async (yearGroups: any[]) => {
     try {
-      // SAFE UPSERT: Only add missing year groups, never delete existing ones
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save year groups.');
+      }
+      // SAFE UPSERT: Only add missing year groups within this org, never delete existing ones
       console.log('🔄 Safe upsert - checking existing year groups first...');
       
-      // First, get existing year groups
+      // First, get existing year groups for this organisation
       const { data: existing, error: fetchError } = await supabase
         .from(TABLES.YEAR_GROUPS)
         .select('*')
+        .eq('organisation_id', organisationId)
         .order('sort_order');
       
       if (fetchError) {
@@ -1213,7 +1233,7 @@ const _yearGroupsApiImpl = {
         return acc;
       }, [] as any[]);
       
-      // Find year groups that need to be added (don't exist yet)
+      // Find year groups that need to be added (don't exist yet in this org)
       const toAdd = uniqueYearGroups.filter((g: any) => !existingNames.has(g.name));
       
       if (toAdd.length === 0) {
@@ -1229,15 +1249,16 @@ const _yearGroupsApiImpl = {
         id: crypto.randomUUID(),
         name: group.name,
         color: group.color || '#14B8A6',
-        sort_order: maxOrder + index + 1
+        sort_order: maxOrder + index + 1,
+        organisation_id: organisationId,
       }));
       
       console.log('📝 Adding missing year groups:', formattedYearGroups.map((g: any) => g.name));
       
-      // Insert only the missing year groups
+      // Insert only the missing year groups (org-scoped unique on organisation_id,name)
       const { data, error } = await supabase
         .from(TABLES.YEAR_GROUPS)
-        .insert(formattedYearGroups)
+        .upsert(formattedYearGroups, { onConflict: 'organisation_id,name' })
         .select();
       
       if (error) {
@@ -1258,13 +1279,17 @@ const _yearGroupsApiImpl = {
   // EXPLICIT REPLACE: Only use this when user explicitly clicks "Reset to Defaults"
   replaceAll: async (yearGroups: any[]) => {
     try {
-      console.log('⚠️ EXPLICIT REPLACE: Removing all year groups and replacing with:', yearGroups.map(g => g.name));
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to replace year groups.');
+      }
+      console.log('⚠️ EXPLICIT REPLACE: Removing org year groups and replacing with:', yearGroups.map(g => g.name));
       
-      // Delete all existing
+      // Delete existing rows for this organisation only
       const { error: deleteError } = await supabase
         .from(TABLES.YEAR_GROUPS)
         .delete()
-        .neq('id', '00000000-0000-0000-0000-000000000000');
+        .eq('organisation_id', organisationId);
       
       if (deleteError) {
         console.warn('⚠️ Failed to clear year groups:', deleteError);
@@ -1275,12 +1300,13 @@ const _yearGroupsApiImpl = {
         id: crypto.randomUUID(),
         name: group.name,
         color: group.color || '#14B8A6',
-        sort_order: index
+        sort_order: index,
+        organisation_id: organisationId,
       }));
       
       const { data, error } = await supabase
         .from(TABLES.YEAR_GROUPS)
-        .insert(formatted)
+        .upsert(formatted, { onConflict: 'organisation_id,name' })
         .select();
       
       if (error) throw error;
@@ -1306,27 +1332,12 @@ const _yearGroupsApiImpl = {
   }
 };
 
+// Org-scoped via organisation_id + uq_year_groups_org_name (RLS + resolveOrganisationId).
 export const yearGroupsApi = {
-  getAll: async () => {
-    if (isDemoModeActive()) return _yearGroupsApiImpl.getAll();
-    console.warn('⚠️ yearGroupsApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
-    return [];
-  },
-  upsert: async (yearGroups: any[]) => {
-    if (isDemoModeActive()) return _yearGroupsApiImpl.upsert(yearGroups);
-    console.warn('⚠️ yearGroupsApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
-    return [];
-  },
-  replaceAll: async (yearGroups: any[]) => {
-    if (isDemoModeActive()) return _yearGroupsApiImpl.replaceAll(yearGroups);
-    console.warn('⚠️ yearGroupsApi.replaceAll disabled — table has no tenant key (cross-tenant tampering)');
-    return [];
-  },
-  delete: async (id: string) => {
-    if (isDemoModeActive()) return _yearGroupsApiImpl.delete(id);
-    console.warn('⚠️ yearGroupsApi.delete disabled — table has no tenant key (cross-tenant tampering)');
-    return { success: true };
-  },
+  getAll: async () => _yearGroupsApiImpl.getAll(),
+  upsert: async (yearGroups: any[]) => _yearGroupsApiImpl.upsert(yearGroups),
+  replaceAll: async (yearGroups: any[]) => _yearGroupsApiImpl.replaceAll(yearGroups),
+  delete: async (id: string) => _yearGroupsApiImpl.delete(id),
 };
 
 // Normalise year_groups from DB (can be object or string from JSONB)
@@ -1570,6 +1581,10 @@ const _customCategoriesApiImpl = {
 
   upsert: async (categories: any[]) => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save custom categories.');
+      }
       const rows = categories.map((cat: any) => {
         const yearGroups = cat.yearGroups ?? {};
         const yearGroupsObj = typeof yearGroups === 'object' && !Array.isArray(yearGroups) ? yearGroups : {};
@@ -1600,7 +1615,8 @@ const _customCategoriesApiImpl = {
           color: color,
           position: position,
           groups: groupsArray,
-          year_groups: yearGroupsObj
+          year_groups: yearGroupsObj,
+          organisation_id: organisationId,
         };
         
         // Remove null/undefined values that might cause issues
@@ -1668,7 +1684,7 @@ const _customCategoriesApiImpl = {
       
       const { data, error } = await supabase
         .from(TABLES.CUSTOM_CATEGORIES)
-        .upsert(validatedRows, { onConflict: 'name' })
+        .upsert(validatedRows, { onConflict: 'organisation_id,name' })
         .select();
       
       if (error) {
@@ -1731,20 +1747,11 @@ const _customCategoriesApiImpl = {
   }
 };
 
-// TENANT-ISOLATION GUARD — see comment above yearGroupsApi.
+// Org-scoped via organisation_id + uq_category_groups_org_name.
 export const categoryGroupsApi = {
-  getAll: async () => {
-    console.warn('⚠️ categoryGroupsApi.getAll disabled — table has no tenant key (cross-tenant disclosure)');
-    return [];
-  },
-  upsert: async (_groups: string[]) => {
-    console.warn('⚠️ categoryGroupsApi.upsert disabled — table has no tenant key (cross-tenant tampering)');
-    return [];
-  },
-  delete: async (_name: string) => {
-    console.warn('⚠️ categoryGroupsApi.delete disabled — table has no tenant key (cross-tenant tampering)');
-    return { success: true };
-  }
+  getAll: async () => _categoryGroupsApiImpl.getAll(),
+  upsert: async (groups: string[]) => _categoryGroupsApiImpl.upsert(groups),
+  delete: async (name: string) => _categoryGroupsApiImpl.delete(name),
 };
 
 // (Original categoryGroupsApi implementation retained below for reference only — not exported)
@@ -1766,21 +1773,24 @@ const _categoryGroupsApiImpl = {
 
   upsert: async (groups: string[]) => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save category groups.');
+      }
       console.log('🔄 Upserting category groups to Supabase:', groups);
 
-      // Use a true upsert (conflict on name) rather than delete-all + insert.
-      // The previous delete-all approach wiped every tenant's category groups
-      // whenever any one tenant saved their settings, causing cross-tenant data loss.
+      // Org-scoped upsert on (organisation_id, name).
       const formattedGroups = groups.map((group, index) => ({
         name: group,
-        sort_order: index
+        sort_order: index,
+        organisation_id: organisationId,
       }));
 
-      console.log('🔄 Upserting category groups (on conflict name):', formattedGroups);
+      console.log('🔄 Upserting category groups (on conflict organisation_id,name):', formattedGroups);
 
       const { data, error } = await supabase
         .from(TABLES.CATEGORY_GROUPS)
-        .upsert(formattedGroups, { onConflict: 'name' })
+        .upsert(formattedGroups, { onConflict: 'organisation_id,name' })
         .select();
 
       if (error) {
@@ -1798,10 +1808,15 @@ const _categoryGroupsApiImpl = {
 
   delete: async (name: string) => {
     try {
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to delete category groups.');
+      }
       const { error } = await supabase
         .from(TABLES.CATEGORY_GROUPS)
         .delete()
-        .eq('name', name);
+        .eq('name', name)
+        .eq('organisation_id', organisationId);
       
       if (error) throw error;
       return { success: true };

@@ -2062,6 +2062,12 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
             console.warn('⚠️ saveUserCreatedLessonPlans: unauthenticated session — skipping Supabase write (fail closed)');
             return;
           }
+          const { resolveOrganisationId } = await import('../config/api');
+          const organisationId = await resolveOrganisationId();
+          if (!organisationId) {
+            console.warn('⚠️ saveUserCreatedLessonPlans: organisation_id missing — skipping Supabase write');
+            return;
+          }
           const supabasePlans = plans.map(plan => {
             const row: Record<string, unknown> = {
               id: plan.id,
@@ -2077,7 +2083,8 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
               lesson_number: plan.lessonNumber,
               title: plan.title,
               term: plan.term,
-              time: plan.time
+              time: plan.time,
+              organisation_id: organisationId,
             };
             if (saveLpUserIsAuth) {
               row.user_id = saveLpUserId;

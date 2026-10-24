@@ -15,6 +15,15 @@ import type {
   BulkObjectiveOperation
 } from '../types/customObjectives';
 
+async function requireOrganisationId(): Promise<string> {
+  const { resolveOrganisationId } = await import('./api');
+  const organisationId = await resolveOrganisationId();
+  if (!organisationId) {
+    throw new Error('organisation_id is required for custom objectives writes.');
+  }
+  return organisationId;
+}
+
 // Custom Objectives API
 export const customObjectivesApi = {
   // Year Groups Management
@@ -52,9 +61,10 @@ export const customObjectivesApi = {
 
     create: async (yearGroup: Omit<CustomObjectiveYearGroup, 'id' | 'created_at' | 'updated_at'>): Promise<CustomObjectiveYearGroup> => {
       try {
+        const organisationId = await requireOrganisationId();
         const { data, error } = await supabase
           .from(TABLES.CUSTOM_OBJECTIVE_YEAR_GROUPS)
-          .insert(yearGroup)
+          .insert({ ...yearGroup, organisation_id: organisationId })
           .select()
           .single();
         
@@ -133,9 +143,10 @@ export const customObjectivesApi = {
 
     create: async (area: Omit<CustomObjectiveArea, 'id' | 'created_at' | 'updated_at'>): Promise<CustomObjectiveArea> => {
       try {
+        const organisationId = await requireOrganisationId();
         const { data, error } = await supabase
           .from(TABLES.CUSTOM_OBJECTIVE_AREAS)
-          .insert(area)
+          .insert({ ...area, organisation_id: organisationId })
           .select()
           .single();
         
@@ -220,9 +231,10 @@ export const customObjectivesApi = {
           objective_code: objective.objective_code || `OBJ${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
         };
         
+        const organisationId = await requireOrganisationId();
         const { data, error } = await supabase
           .from(TABLES.CUSTOM_OBJECTIVES)
-          .insert(objectiveWithCode)
+          .insert({ ...objectiveWithCode, organisation_id: organisationId })
           .select()
           .single();
         

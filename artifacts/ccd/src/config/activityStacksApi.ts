@@ -1,4 +1,5 @@
 import { supabase, TABLES } from './supabase';
+import { resolveOrganisationId } from './api';
 import type { ActivityStack } from '../contexts/DataContext';
 
 export const activityStacksApi = {
@@ -40,6 +41,10 @@ export const activityStacksApi = {
     try {
       console.log('➕ Creating activity stack in Supabase:', stack.name);
       
+      const organisationId = await resolveOrganisationId();
+      if (!organisationId) {
+        throw new Error('organisation_id is required to save activity stacks.');
+      }
       const { data, error } = await supabase
         .from(TABLES.ACTIVITY_STACKS)
         .insert([{
@@ -49,6 +54,7 @@ export const activityStacksApi = {
           category: stack.category,
           total_time: stack.totalTime,
           description: stack.description,
+          organisation_id: organisationId,
           created_at: stack.createdAt.toISOString(),
           updated_at: stack.updatedAt.toISOString()
         }])

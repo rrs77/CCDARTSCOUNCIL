@@ -309,6 +309,161 @@ BEGIN
   INSERT INTO rls_results VALUES ('super_admin can read other-org activities', n_b = 1);
 END $$;
 
+-- Trigger fills organisation_id when omitted (ordinary teacher saves)
+DO $$
+DECLARE wrote_yg boolean := false; wrote_ht boolean := false; wrote_lp boolean := false;
+        wrote_ls boolean := false; wrote_cc boolean := false; org text;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    INSERT INTO public.year_groups (id, name) VALUES ('yg_trigger', 'Trigger YG');
+    SELECT organisation_id INTO org FROM public.year_groups WHERE id = 'yg_trigger';
+    wrote_yg := (org = 'org_a');
+  EXCEPTION WHEN OTHERS THEN
+    wrote_yg := false;
+  END;
+  BEGIN
+    INSERT INTO public.half_terms (id, sheet_name, academic_year, name, user_id)
+    VALUES ('ht_trig', 'TrigSheet', '2025-2026', 'Trig HT', '00000000-0000-4000-8000-0000000000a1');
+    SELECT organisation_id INTO org FROM public.half_terms WHERE id = 'ht_trig';
+    wrote_ht := (org = 'org_a');
+  EXCEPTION WHEN OTHERS THEN
+    wrote_ht := false;
+  END;
+  BEGIN
+    INSERT INTO public.lesson_plans (id, date, class_name, user_id)
+    VALUES ('lp_trig', now(), 'Class A', '00000000-0000-4000-8000-0000000000a1');
+    SELECT organisation_id INTO org FROM public.lesson_plans WHERE id = 'lp_trig';
+    wrote_lp := (org = 'org_a');
+  EXCEPTION WHEN OTHERS THEN
+    wrote_lp := false;
+  END;
+  BEGIN
+    INSERT INTO public.lesson_stacks (id, name, data)
+    VALUES ('ls_trig', 'Trig Stack', '{}'::jsonb);
+    SELECT organisation_id INTO org FROM public.lesson_stacks WHERE id = 'ls_trig';
+    wrote_ls := (org = 'org_a');
+  EXCEPTION WHEN OTHERS THEN
+    wrote_ls := false;
+  END;
+  BEGIN
+    INSERT INTO public.custom_categories (id, name)
+    VALUES ('cc_trig', 'Trig Cat');
+    SELECT organisation_id INTO org FROM public.custom_categories WHERE id = 'cc_trig';
+    wrote_cc := (org = 'org_a');
+  EXCEPTION WHEN OTHERS THEN
+    wrote_cc := false;
+  END;
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  INSERT INTO rls_results VALUES ('trigger fills org on year_groups save', wrote_yg);
+  INSERT INTO rls_results VALUES ('trigger fills org on half_terms save', wrote_ht);
+  INSERT INTO rls_results VALUES ('trigger fills org on lesson_plans save', wrote_lp);
+  INSERT INTO rls_results VALUES ('trigger fills org on lesson_stacks save', wrote_ls);
+  INSERT INTO rls_results VALUES ('trigger fills org on custom_categories save', wrote_cc);
+END $$;
+
+-- Teacher without organisation_id cannot leave NULL-org rows
+DO $$
+DECLARE blocked boolean := false;
+BEGIN
+  UPDATE public.profiles
+  SET organisation_id = NULL
+  WHERE id = '00000000-0000-4000-8000-0000000000a2';
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a2', true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    INSERT INTO public.year_groups (id, name) VALUES ('yg_null_org', 'Should Fail');
+    blocked := false;
+  EXCEPTION WHEN OTHERS THEN
+    blocked := true;
+  END;
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  UPDATE public.profiles
+  SET organisation_id = 'org_a'
+  WHERE id = '00000000-0000-4000-8000-0000000000a2';
+  INSERT INTO rls_results VALUES ('teacher cannot write NULL-org year_groups', blocked);
+END $$;
+
+-- P2: no cross-org reads of legacy NULL-org rows owned by another user
+DELETE FROM public.activities WHERE activity = 'LegacyNullOther';
+INSERT INTO public.activities (activity, category, lesson_number, description, organisation_id, user_id)
+VALUES (
+  'LegacyNullOther', 'Warm-up', '1', 'legacy', NULL,
+  '00000000-0000-4000-8000-0000000000b1'
+);
+
+DO $$
+DECLARE n int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
+  SELECT COUNT(*) INTO n FROM public.activities WHERE activity = 'LegacyNullOther';
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  INSERT INTO rls_results VALUES ('no cross-org read of legacy NULL-org activity', n = 0);
+END $$;
+
+-- System shared (NULL org + NULL user) still readable
+DO $$
+DECLARE n int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
+  SELECT COUNT(*) INTO n FROM public.activities WHERE activity = 'SysShared';
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  INSERT INTO rls_results VALUES ('system NULL-org NULL-user activity still readable', n = 1);
+END $$;
+
+-- P3: org admin can read colleague half_terms; ordinary colleague cannot
+INSERT INTO auth.users (id, email) VALUES ('00000000-0000-4000-8000-0000000000c1', 'admin@test')
+ON CONFLICT (id) DO NOTHING;
+INSERT INTO public.profiles (id, email, role, status, organisation_id, anonymised_at)
+VALUES ('00000000-0000-4000-8000-0000000000c1', 'admin@test', 'admin', 'active', 'org_a', NULL)
+ON CONFLICT (id) DO UPDATE
+  SET role = 'admin', status = 'active', organisation_id = 'org_a', anonymised_at = NULL;
+
+DO $$
+DECLARE n_admin int; n_peer int;
+BEGIN
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000c1', true);
+  SET LOCAL ROLE authenticated;
+  SELECT COUNT(*) INTO n_admin FROM public.half_terms WHERE id = 'ht_a2';
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
+  SELECT COUNT(*) INTO n_peer FROM public.half_terms WHERE id = 'ht_a2';
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+  INSERT INTO rls_results VALUES ('org admin can read colleague half_terms', n_admin = 1);
+  INSERT INTO rls_results VALUES ('ordinary colleague cannot read half_terms (P3 HOLD)', n_peer = 0);
+END $$;
+
+-- Anon cannot read half_terms / year_groups
+DO $$
+DECLARE blocked_ht boolean := false; blocked_yg boolean := false;
+BEGIN
+  SET LOCAL ROLE anon;
+  BEGIN
+    PERFORM 1 FROM public.half_terms LIMIT 1;
+    blocked_ht := false;
+  EXCEPTION WHEN OTHERS THEN
+    blocked_ht := true;
+  END;
+  BEGIN
+    PERFORM 1 FROM public.year_groups LIMIT 1;
+    blocked_yg := false;
+  EXCEPTION WHEN OTHERS THEN
+    blocked_yg := true;
+  END;
+  RESET ROLE;
+  INSERT INTO rls_results VALUES ('anon cannot read half_terms', blocked_ht);
+  INSERT INTO rls_results VALUES ('anon cannot read year_groups', blocked_yg);
+END $$;
+
 DO $$
 DECLARE failed int;
 BEGIN
