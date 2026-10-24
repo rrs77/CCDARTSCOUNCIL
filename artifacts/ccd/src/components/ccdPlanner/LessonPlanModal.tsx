@@ -20,6 +20,7 @@ import {
 import { ensureLessonSections } from '../../utils/planner/legacyLessonToSections';
 import { loadPlannerCurriculum } from '../../utils/planner/plannerCurriculumStore';
 import { buildLessonPdfHtml } from '../../utils/lessonPdfHtml';
+import { AttachInteractiveLesson } from '../../features/interactive-lesson-viewer';
 import { ModalBody, ModalFooter, ModalHeader, ModalShell } from './ModalShell';
 import { cn } from '@/lib/utils';
 
@@ -474,6 +475,34 @@ export function LessonPlanModal({
                       );
                     })}
                   </ul>
+                )}
+              </div>
+
+              {/* Extension point: attach Interactive Lesson Viewer (Slides) document */}
+              <div
+                data-planner-extension="attach-interactive-lesson"
+                className="rounded-2xl border border-indigo-50 bg-indigo-50/20 p-3"
+              >
+                <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
+                  Lesson Viewer
+                </p>
+                {lessonNumber && yearGroup ? (
+                  <AttachInteractiveLesson
+                    sheet={yearGroup}
+                    lessonNumber={lessonNumber}
+                    existingId={draft.interactiveLessonId || null}
+                    compact={false}
+                    onAttached={(id) =>
+                      setDraft({
+                        ...draft,
+                        interactiveLessonId: id || undefined,
+                      })
+                    }
+                  />
+                ) : (
+                  <p className="text-sm text-slate-500">
+                    Save this lesson once to attach an interactive Lesson Viewer (Slides) document.
+                  </p>
                 )}
               </div>
             </div>

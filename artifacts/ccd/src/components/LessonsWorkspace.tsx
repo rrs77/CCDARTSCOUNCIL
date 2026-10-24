@@ -2,6 +2,7 @@ import React, { useMemo, useState } from 'react';
 import {
   BookOpen,
   Calendar,
+  Clapperboard,
   Clock,
   Eye,
   FileText,
@@ -307,6 +308,11 @@ export function LessonsWorkspace({
     window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'curriculum' } }));
   };
 
+  /** Extension point: open Interactive Lesson Viewer (Slides) hub — PR #32. */
+  const goLessonViewer = () => {
+    window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-viewer' } }));
+  };
+
   return (
     <div
       className="flex min-h-[calc(100vh-7.5rem)] flex-col gap-3"
@@ -377,6 +383,18 @@ export function LessonsWorkspace({
           >
             <Eye className="h-4 w-4 text-indigo-600" />
             Run-through
+          </button>
+          {/* Lesson Viewer (Slides) — reserved toolbar slot for Interactive Lesson Viewer hook-in */}
+          <button
+            type="button"
+            data-planner-extension="lesson-viewer"
+            title="Open Lesson Viewer (Slides)"
+            onClick={goLessonViewer}
+            className="inline-flex h-11 items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 text-sm font-bold text-[#1F1B4D] hover:border-indigo-300 hover:bg-indigo-50/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+          >
+            <Clapperboard className="h-4 w-4 text-indigo-600" />
+            <span className="hidden sm:inline">Lesson Viewer</span>
+            <span className="sm:hidden">Slides</span>
           </button>
           <button
             type="button"
