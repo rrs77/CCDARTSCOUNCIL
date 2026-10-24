@@ -31,6 +31,9 @@ export const VERCEL_JSON_CONTENT_LENGTH_LIMIT =
 
 export const UPLOAD_TOKEN_TTL_SEC = 5 * 60;
 
+/** Grace after token exp for POST /api/files/upload-complete (probe + register). */
+export const UPLOAD_COMPLETE_GRACE_SEC = 30 * 60;
+
 const UUID_RE =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 
@@ -164,6 +167,7 @@ export async function mintDirectUploadIntent(opts) {
   const storagePath = buildOwnedStoragePath(userId);
   const nonce = randomUUID();
   const exp = Math.floor(Date.now() / 1000) + UPLOAD_TOKEN_TTL_SEC;
+  const completeBySec = exp + UPLOAD_COMPLETE_GRACE_SEC;
   const mode = normalizeVisibility(visibility);
   // Clients cannot self-register as licensed.
   const safeVis =
@@ -188,6 +192,7 @@ export async function mintDirectUploadIntent(opts) {
     max_bytes: byteLength,
     visibility: safeVis,
     expires_at: new Date(exp * 1000).toISOString(),
+    complete_by: new Date(completeBySec * 1000).toISOString(),
   });
 
   if (error) {
@@ -203,6 +208,7 @@ export async function mintDirectUploadIntent(opts) {
     path: storagePath,
     maxBytes: byteLength,
     expiresAt: exp,
+    completeBy: completeBySec,
     nonce,
     visibility: safeVis,
   };
@@ -221,6 +227,7 @@ export async function consumeDirectUploadIntent({ nonce, userId, path }) {
   if (!service) return null;
 
   const nowIso = new Date().toISOString();
+  // complete_by (exp + 30m) gates confirmation; upload token exp only gates PHP write.
   const { data, error } = await service
     .from('direct_upload_intents')
     .update({ consumed_at: nowIso })
@@ -228,8 +235,10 @@ export async function consumeDirectUploadIntent({ nonce, userId, path }) {
     .eq('user_id', userId)
     .eq('storage_path', storagePath)
     .is('consumed_at', null)
-    .gt('expires_at', nowIso)
-    .select('nonce, user_id, organisation_id, storage_path, max_bytes, visibility')
+    .gt('complete_by', nowIso)
+    .select(
+      'nonce, user_id, organisation_id, storage_path, max_bytes, visibility, complete_by',
+    )
     .maybeSingle();
 
   if (error) {

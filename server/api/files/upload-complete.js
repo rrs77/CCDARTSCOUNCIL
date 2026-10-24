@@ -1,8 +1,8 @@
 /**
  * POST /api/files/upload-complete
- * After a successful direct DreamHost upload, consume the single-use intent
- * and register the stored_files row (visibility from the minted intent).
- * Does not trust the client for path or visibility.
+ * After a successful direct DreamHost upload: probe the object first, then
+ * consume the single-use intent (complete_by = token exp + 30m) and register
+ * stored_files. Does not trust the client for path or visibility.
  */
 
 import {
@@ -59,24 +59,8 @@ export async function POST(request) {
     if (claims.userId !== auth.userId) {
       return jsonResponse({ error: 'Upload token does not match the signed-in user.' }, 403);
     }
-    if (claims.exp < Math.floor(Date.now() / 1000)) {
-      return jsonResponse({ error: 'Upload token expired.' }, 401);
-    }
 
-    // Single-use: consume nonce before registering.
-    const intent = await consumeDirectUploadIntent({
-      nonce: claims.nonce,
-      userId: auth.userId,
-      path: claims.path,
-    });
-    if (!intent) {
-      return jsonResponse(
-        { error: 'Upload intent missing, expired, or already used.' },
-        409,
-      );
-    }
-
-    // Confirm object exists, starts with %PDF-, and respects the token max size.
+    // Probe first (Range / ?probe=1) — do not consume the intent if the object is missing.
     try {
       await probeDreamHostPdf(claims.path, claims.maxBytes);
     } catch (e) {
@@ -89,7 +73,23 @@ export async function POST(request) {
             : status === 413
               ? 'Uploaded file is too large.'
               : 'Could not verify upload.';
-      return jsonResponse({ error: msg }, status === 404 || status === 400 || status === 413 ? status : 502);
+      return jsonResponse(
+        { error: msg },
+        status === 404 || status === 400 || status === 413 ? status : 502,
+      );
+    }
+
+    // Single-use: consume by complete_by (not token exp).
+    const intent = await consumeDirectUploadIntent({
+      nonce: claims.nonce,
+      userId: auth.userId,
+      path: claims.path,
+    });
+    if (!intent) {
+      return jsonResponse(
+        { error: 'Upload intent missing, past complete_by, or already used.' },
+        409,
+      );
     }
 
     await registerStoredFile({

@@ -36,6 +36,7 @@ describe('upload token helpers', () => {
     assert.equal(mod.MAX_DIRECT_UPLOAD_BYTES, 100 * 1024 * 1024);
     assert.ok(mod.VERCEL_JSON_CONTENT_LENGTH_LIMIT > mod.MAX_VERCEL_BODY_UPLOAD_BYTES);
     assert.equal(mod.UPLOAD_TOKEN_TTL_SEC, 300);
+    assert.equal(mod.UPLOAD_COMPLETE_GRACE_SEC, 30 * 60);
   });
 
   it('signs and verifies a token bound to user, org, path, max, nonce', () => {

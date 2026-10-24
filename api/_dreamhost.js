@@ -297,8 +297,28 @@ export async function fetchFromDreamHost(storagePath) {
 const PDF_MAGIC_BYTES = Buffer.from('%PDF-');
 
 /**
+ * Read at most one chunk from a fetch body, then cancel the stream.
+ * @param {Response} upstream
+ * @returns {Promise<Buffer>}
+ */
+async function readProbeHead(upstream) {
+  if (upstream.body && typeof upstream.body.getReader === 'function') {
+    const reader = upstream.body.getReader();
+    try {
+      const { value } = await reader.read();
+      await reader.cancel().catch(() => {});
+      return Buffer.from(value || []);
+    } catch {
+      await reader.cancel().catch(() => {});
+      return Buffer.from(await upstream.arrayBuffer());
+    }
+  }
+  return Buffer.from(await upstream.arrayBuffer());
+}
+
+/**
  * Confirm a direct upload landed: object exists, starts with %PDF-, size ≤ maxBytes.
- * Uses Range when the download endpoint supports it to avoid loading large files.
+ * Prefers ?probe=1 and Range bytes=0-4 (206). Falls back to one chunk + cancel.
  * @returns {Promise<{ byteLength: number }>}
  */
 export async function probeDreamHostPdf(storagePath, maxBytes) {
@@ -313,6 +333,7 @@ export async function probeDreamHostPdf(storagePath, maxBytes) {
 
   const url = new URL(downloadBase);
   url.searchParams.set('path', path);
+  url.searchParams.set('probe', '1');
 
   const upstream = await fetch(url.toString(), {
     method: 'GET',
@@ -334,7 +355,7 @@ export async function probeDreamHostPdf(storagePath, maxBytes) {
     throw err;
   }
 
-  const head = Buffer.from(await upstream.arrayBuffer());
+  const head = await readProbeHead(upstream);
   if (head.length < 5 || !head.subarray(0, 5).equals(PDF_MAGIC_BYTES)) {
     const err = new Error('Not a PDF.');
     err.status = 400;
@@ -346,10 +367,11 @@ export async function probeDreamHostPdf(storagePath, maxBytes) {
   const rangeTotal = contentRange.match(/\/(\d+)\s*$/);
   if (rangeTotal) {
     byteLength = Number(rangeTotal[1]);
+  } else if (upstream.status === 206) {
+    byteLength = head.byteLength;
   } else {
     const cl = Number(upstream.headers.get('Content-Length') || 0);
-    // Full body returned (no Range support) — length is the whole file.
-    byteLength = upstream.status === 206 ? 0 : cl || head.byteLength;
+    byteLength = cl || head.byteLength;
   }
 
   if (!Number.isFinite(byteLength) || byteLength < 5) {
