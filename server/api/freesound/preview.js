@@ -1,6 +1,7 @@
 /**
  * GET /api/freesound/preview/:id — stream a Freesound preview mp3.
  * requireAuth + rate limit; server uses FREESOUND_API_KEY to resolve the sound.
+ * Upstream fetch uses redirect:'error' (no open redirects) and only serves audio/*.
  */
 
 import {
@@ -27,6 +28,11 @@ function soundIdFromRequest(request, context) {
     /* ignore */
   }
   return null;
+}
+
+function isAllowedFreesoundHost(hostname) {
+  const host = String(hostname || '').toLowerCase();
+  return host === 'freesound.org' || host.endsWith('.freesound.org');
 }
 
 export async function OPTIONS(request) {
@@ -64,32 +70,36 @@ export async function GET(request, context) {
       return jsonResponse({ error: 'Preview not available.' }, 404, {}, request);
     }
 
-    // Only allow Freesound CDN hosts for the upstream fetch.
     let previewHost = '';
     try {
-      previewHost = new URL(previewUrl).hostname.toLowerCase();
+      previewHost = new URL(previewUrl).hostname;
     } catch {
       return jsonResponse({ error: 'Preview not available.' }, 404, {}, request);
     }
-    if (
-      previewHost !== 'freesound.org' &&
-      !previewHost.endsWith('.freesound.org')
-    ) {
+    if (!isAllowedFreesoundHost(previewHost)) {
       return jsonResponse({ error: 'Preview host not allowed.' }, 502, {}, request);
     }
 
+    // Do not follow redirects — avoids hopping off Freesound CDN hosts.
     const audioRes = await fetch(previewUrl, {
+      redirect: 'error',
       headers: { Accept: 'audio/mpeg,audio/*,*/*' },
     });
     if (!audioRes.ok || !audioRes.body) {
       return jsonResponse({ error: 'Freesound preview failed.' }, 502, {}, request);
     }
 
+    const upstreamType = (audioRes.headers.get('Content-Type') || '')
+      .split(';')[0]
+      .trim()
+      .toLowerCase();
+    if (upstreamType && !upstreamType.startsWith('audio/')) {
+      return jsonResponse({ error: 'Preview is not audio.' }, 502, {}, request);
+    }
+
     const headers = new Headers();
-    headers.set(
-      'Content-Type',
-      audioRes.headers.get('Content-Type') || 'audio/mpeg',
-    );
+    // Force a known audio type for the panel player.
+    headers.set('Content-Type', upstreamType.startsWith('audio/') ? upstreamType : 'audio/mpeg');
     const len = audioRes.headers.get('Content-Length');
     if (len) headers.set('Content-Length', len);
     headers.set('Cache-Control', 'private, max-age=300');
