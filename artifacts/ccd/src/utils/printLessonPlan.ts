@@ -4,6 +4,8 @@
  * cannot blank the print preview.
  */
 
+import { PLAN_LOGO_ALT, planLogoUrl } from './planLogo';
+
 const PRINT_ROOT_ID = 'ccd-print-root';
 
 function ensurePrintRoot(): HTMLElement {
@@ -49,6 +51,13 @@ export function printLessonPlanFromDom(source?: HTMLElement | null): void {
   clone.setAttribute('data-lesson-plan-print', 'true');
   clone.style.cssText =
     'display:block;width:100%;max-width:none;margin:0;padding:12mm;background:#fff;color:#111;';
+  // CCDesigner logo, top-left of every printed plan.
+  const logo = document.createElement('img');
+  logo.src = planLogoUrl();
+  logo.alt = PLAN_LOGO_ALT;
+  logo.className = 'ccd-plan-logo';
+  logo.style.cssText = 'display:block;height:30px;width:auto;margin:0 0 8px 0;';
+  clone.insertBefore(logo, clone.firstChild);
   root.appendChild(clone);
   document.documentElement.classList.add('ccd-printing-lesson');
 

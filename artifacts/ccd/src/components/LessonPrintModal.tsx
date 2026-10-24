@@ -1,3 +1,4 @@
+import { planLogoHtml } from '../utils/planLogo';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { sanitizeHtml, escapeHtmlText, sanitizeUrl } from '../utils/sanitize';
 import { Download, X, Check, Tag, ChevronDown, Share2, Copy, Link2, Target, Loader2 } from 'lucide-react';
@@ -691,6 +692,8 @@ export function LessonPrintModal({
       const lessonSubtitle = lessonData.lessonName || `${halfTermName || unitName || 'Autumn 1'} - ${currentSheetInfo.display}`;
 
       htmlContent += `
+          <!-- CCDesigner logo, top-left -->
+          ${planLogoHtml(30, 'margin:0 0 10px 0;')}
           <!-- Lesson Header -->
           <div class="lesson-header">
             ${(() => {

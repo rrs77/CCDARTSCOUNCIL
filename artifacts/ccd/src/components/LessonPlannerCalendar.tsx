@@ -1,3 +1,4 @@
+import { planLogoHtml } from '../utils/planLogo';
 import React, { useState, useEffect, useRef, memo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
@@ -1042,10 +1043,9 @@ export function LessonPlannerCalendar({
       `;
     }
 
-    const logoLetters = branding.logoLetters || 'CCD';
-    const logoHtml = branding.loginLogoUrl
-      ? `<img src="${escape(branding.loginLogoUrl)}" alt="" style="height:36px;margin-bottom:8px;" onerror="this.style.display='none'">`
-      : `<div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;margin-bottom:8px;">${escape(logoLetters.slice(0, 3))}</div>`;
+    // CCDesigner logo top-left on a white tab so it reads on the teal band
+    // (replaces the old "CCD" letter disc).
+    const logoHtml = `<div style="display:inline-block;background:#fff;border-radius:8px;padding:6px 10px;margin-bottom:10px;">${planLogoHtml(28)}</div>`;
     const brandHeader = `
       <div class="brand-header">
         ${logoHtml}

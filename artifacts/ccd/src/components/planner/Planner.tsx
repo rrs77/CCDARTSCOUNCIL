@@ -1,3 +1,4 @@
+import { PLAN_LOGO_ALT, PLAN_LOGO_PATH, planLogoUrl } from '../../utils/planLogo';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { toast } from 'react-hot-toast';
 import {
@@ -314,6 +315,13 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
         <YearGroupsAccessNotice />
         <header className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
+            {/* CCDesigner logo, top-left of the Planner and Class calendar screens */}
+            <img
+              src={PLAN_LOGO_PATH}
+              alt={PLAN_LOGO_ALT}
+              className="mb-2 block h-8 w-auto"
+              decoding="async"
+            />
             <p className="ccd-studio-eyebrow mb-1">
               CONNECT &amp; CREATE / <span>PLANNER</span>
             </p>
@@ -679,14 +687,14 @@ body{
   -webkit-print-color-adjust:exact;print-color-adjust:exact;
   position:relative;min-height:100%;
 }
-.logo-mark{position:absolute;top:0;left:0;z-index:0;width:28px;height:28px;object-fit:contain;opacity:.22;pointer-events:none}
-.sheet{position:relative;z-index:1;padding-top:4px}
-.mast{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:4px 0 10px 36px;border-bottom:1.5px solid #E2E0EF}
+.plan-logo{display:block;height:30px;width:auto;margin:0 0 6px}
+.sheet{position:relative;z-index:1;padding:4px 6px 0}
+.mast{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:4px 0 10px;border-bottom:1.5px solid #E2E0EF}
 .mast-left{min-width:0}
 .eyebrow{margin:0 0 2px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#77738F}
 .mast h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:#1F1B4D}
 .mast .range{margin:3px 0 0;font-size:13px;font-weight:500;color:#5C5878}
-.mast-right{text-align:right;flex-shrink:0}
+.mast-right{text-align:right;flex-shrink:0;padding-right:4px}
 .term-pill{display:inline-block;font-size:13px;font-weight:700;color:#4338E8;background:#E9E6FF;border-radius:999px;padding:3px 10px}
 .product-quiet{margin-top:4px;font-size:13px;font-weight:600;color:#9B97B0}
 .accent{height:2px;margin-top:-1.5px;background:linear-gradient(90deg,#4338E8 0%,#E5E2FF 42%,transparent 100%)}
@@ -710,10 +718,10 @@ body{
 .month-cell .dn{font-size:13px;font-weight:800;color:#4338E8;margin-bottom:4px}
 .foot{margin-top:12px;padding-top:8px;border-top:1px solid #E2E0EF;display:flex;justify-content:space-between;gap:12px;font-size:13px;font-weight:500;color:#77738F}
 </style></head><body>
-<img class="logo-mark" src="${esc(absLogo)}" alt="" onerror="this.style.display='none'">
 <div class="sheet">
   <header class="mast">
     <div class="mast-left">
+      <img class="plan-logo" src="${esc(absLogo)}" alt="CCDesigner">
       <p class="eyebrow">${esc(eyebrow)}</p>
       <h1>${esc(rangeLabel)}</h1>
       <p class="range">${esc(productName)}${productSubtitle ? ` · ${esc(productSubtitle)}` : ''}</p>
@@ -748,10 +756,8 @@ function printSchedule(
   const productSubtitle = branding.loginSubtitle || '';
   const companyName = branding.footerCompanyName || 'CCDesigner';
   const copyrightYear = branding.footerCopyrightYear || String(new Date().getFullYear());
-  const logoSrc = branding.loginLogoUrl || settings?.schoolLogo || '/ccdesigner-logo.png';
-  const absLogo = logoSrc.startsWith('http')
-    ? logoSrc
-    : `${window.location.origin}${logoSrc.startsWith('/') ? '' : '/'}${logoSrc}`;
+  // Every plan carries the CCDesigner logo top-left (not a school/branding override).
+  const absLogo = planLogoUrl();
   const term = HALF_TERMS.find((h) => h.id === halfTermFor(anchor));
 
   let rangeLabel = '';
