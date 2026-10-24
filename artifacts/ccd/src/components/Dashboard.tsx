@@ -36,6 +36,11 @@ import {
   syncHelpUrl,
   topicFromHelpPath,
 } from './help/routes';
+import {
+  resolveMainTabFromLocation,
+  syncMainUrl,
+  tabFromMainPath,
+} from './studio/mainRoutes';
 
 interface Unit {
   id: string;
@@ -94,6 +99,8 @@ function initialDashboardTab(): string {
     return 'settings';
   }
   if (resolveSettingsSectionFromLocation()) return 'settings';
+  const fromMain = resolveMainTabFromLocation();
+  if (fromMain) return fromMain;
   if (isPartnerHubsLink()) return 'our-partners';
   return 'unit-viewer';
 }
@@ -127,9 +134,13 @@ export function Dashboard() {
       clearSettingsUrlIfPresent();
       const topic = typeof window !== 'undefined' ? topicFromHelpPath(window.location.pathname) : null;
       syncHelpUrl(topic);
+    } else if (BOLT_ON_TABS.has(next)) {
+      clearSettingsUrlIfPresent();
+      clearHelpUrlIfPresent();
     } else {
       clearSettingsUrlIfPresent();
       clearHelpUrlIfPresent();
+      syncMainUrl(next);
     }
   };
 
@@ -166,21 +177,29 @@ export function Dashboard() {
         setActiveTab('settings');
         return;
       }
+      const fromMain = resolveMainTabFromLocation();
+      if (fromMain) {
+        setActiveTabRaw(canonicalizeTab(fromMain));
+        // Clean legacy ?tab= once we have a path (keep Lesson Viewer play/mode).
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('tab')) {
+          const keep = new URLSearchParams();
+          const play = params.get('play');
+          const mode = params.get('mode');
+          if (play) keep.set('play', play);
+          if (mode) keep.set('mode', mode);
+          const qs = keep.toString();
+          const path = window.location.pathname || '/';
+          window.history.replaceState({}, '', `${path}${qs ? `?${qs}` : ''}`);
+        }
+        return;
+      }
       const params = new URLSearchParams(window.location.search);
       const tab = params.get('tab');
       if (tab && ALLOWED.has(tab)) {
         setActiveTab(tab);
-        // Bolt-ons sync their own /bolt-ons paths via BoltOnsView.
         if (BOLT_ON_TABS.has(tab)) return;
         if (tab === 'settings' || tab === 'help') return;
-        // Preserve player deep-link params for Lesson Viewer hub to consume.
-        const keep = new URLSearchParams();
-        const play = params.get('play');
-        const mode = params.get('mode');
-        if (play) keep.set('play', play);
-        if (mode) keep.set('mode', mode);
-        const qs = keep.toString();
-        window.history.replaceState({}, '', `${window.location.pathname || '/'}${qs ? `?${qs}` : ''}`);
       }
     } catch {
       /* ignore */
@@ -200,6 +219,11 @@ export function Dashboard() {
       }
       if (isSettingsPath(window.location.pathname)) {
         setActiveTab('settings');
+        return;
+      }
+      const fromMain = tabFromMainPath(window.location.pathname);
+      if (fromMain) {
+        setActiveTabRaw(canonicalizeTab(fromMain));
         return;
       }
       if (activeTab === 'settings' || activeTab === 'help') {
