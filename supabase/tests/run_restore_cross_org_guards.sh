@@ -19,6 +19,7 @@ psql -v ON_ERROR_STOP=1 -d "$PGDATABASE" \
   -f "$ROOT/supabase/tests/restore_cross_org_guards_scratch_schema.sql" \
   -f "$ROOT/supabase/migrations/20261024240000_restore_cross_org_guards.sql" \
   -f "$ROOT/supabase/migrations/20261024240500_curriculum_org_rls.sql" \
+  -f "$ROOT/supabase/tests/assert_curriculum_policies.sql" \
   -f "$ROOT/supabase/tests/restore_cross_org_guards.sql" \
   -f "$ROOT/supabase/tests/curriculum_org_rls.sql"
 
