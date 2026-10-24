@@ -371,15 +371,15 @@ export function LessonsWorkspace({
   }, []);
 
   const classLabel = currentSheetInfo.display || currentSheetInfo.sheet;
-  /** Year-group chip only when the open class matches the toolbar key stage. */
-  const yearGroupChipLabel = useMemo(() => {
+  /** True when the header class/year group belongs to the toolbar key stage. */
+  const classMatchesToolbarKs = useMemo(() => {
     const sheetKs = keyStageFromYearGroupTag(currentSheetInfo?.sheet || '');
     const displayKs = keyStageFromYearGroupTag(currentSheetInfo?.display || '');
-    if (sheetKs === keyStage || displayKs === keyStage) {
-      return classLabel;
-    }
-    return keyStageLabel(keyStage);
-  }, [currentSheetInfo?.sheet, currentSheetInfo?.display, classLabel, keyStage]);
+    return sheetKs === keyStage || displayKs === keyStage;
+  }, [currentSheetInfo?.sheet, currentSheetInfo?.display, keyStage]);
+  /** Context chip: matching class name, otherwise only the selected key stage (no LKG under KS3). */
+  const contextChipLabel = classMatchesToolbarKs ? classLabel : undefined;
+  const yearGroupChipLabel = contextChipLabel;
 
   const goYearOverview = () => {
     setUnitsOpen(false);
@@ -426,10 +426,10 @@ export function LessonsWorkspace({
           <p className="text-[13px] text-[#5F5B7A]">
             Lesson planner ·{' '}
             <strong className="text-[#1F1B4D]">{keyStageLabel(keyStage)}</strong>
-            {yearGroupChipLabel !== keyStageLabel(keyStage) ? (
+            {contextChipLabel ? (
               <>
                 {' · '}
-                <strong className="text-[#1F1B4D]">{yearGroupChipLabel}</strong>
+                <strong className="text-[#1F1B4D]">{contextChipLabel}</strong>
               </>
             ) : null}
             {' · '}
@@ -459,7 +459,7 @@ export function LessonsWorkspace({
             selectedHalfTerm={selectedHalfTerm}
             onSelectedHalfTermChange={setSelectedHalfTerm}
             isViewOnly={isViewOnly}
-            classLabel={classLabel}
+            classLabel={contextChipLabel || keyStageLabel(keyStage)}
             onCreate={createLesson}
             onOpenCanvas={openLessonInBuilder}
             onOpenPlan={(num) => openLessonForm(num)}
@@ -607,8 +607,8 @@ export function LessonsWorkspace({
               lessonNumber={editingLessonNumber}
               lessonData={activeLessonData}
               keyStageLabel={keyStageLabel(keyStage)}
-              classLabel={classLabel}
-              yearGroupLabel={yearGroupChipLabel}
+              classLabel={contextChipLabel}
+              yearGroupLabel={undefined}
               canEdit={!isViewOnly}
               onSave={saveCanvasLesson}
               onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}
