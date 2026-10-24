@@ -7,6 +7,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import {
   canManagerEditProfile,
+  mayClientUpdateAnonymisedAt,
   maySelfUpdateProfileStatus,
   profileRoleRank,
 } from '../_authShared.js';

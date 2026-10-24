@@ -39,7 +39,13 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- Super-admins: unrestricted.
+  -- LOW: anonymised_at is service-role only (non-server clients cannot set it).
+  IF NEW.anonymised_at IS DISTINCT FROM OLD.anonymised_at THEN
+    RAISE EXCEPTION 'profiles.anonymised_at can only be changed by service role'
+      USING ERRCODE = '42501';
+  END IF;
+
+  -- Super-admins: unrestricted (except anonymised_at above).
   IF public.is_super_admin(auth.uid()) THEN
     RETURN NEW;
   END IF;

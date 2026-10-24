@@ -366,6 +366,14 @@ export function maySelfUpdateProfileStatus(oldStatus, newStatus) {
   );
 }
 
+/**
+ * LOW: anonymised_at may only change via service role (non-server denied).
+ */
+export function mayClientUpdateAnonymisedAt({ isServer = false, oldValue, newValue }) {
+  if (isServer) return true;
+  return oldValue === newValue || (oldValue == null && newValue == null);
+}
+
 /** Rank for role grant comparisons (higher = more privileged). */
 export const PROFILE_ROLE_RANK = Object.freeze({
   student: 0,
