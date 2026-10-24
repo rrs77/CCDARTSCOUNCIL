@@ -80,6 +80,11 @@ $$;
 COMMENT ON FUNCTION public.org_has_active_resource_grant(TEXT, TEXT) IS
   'True when organisation has a non-revoked push grant for the resource.';
 
+-- Callable only from SECURITY DEFINER helpers / service role (not clients).
+REVOKE ALL ON FUNCTION public.org_has_active_resource_grant(TEXT, TEXT) FROM PUBLIC;
+REVOKE ALL ON FUNCTION public.org_has_active_resource_grant(TEXT, TEXT) FROM anon;
+REVOKE ALL ON FUNCTION public.org_has_active_resource_grant(TEXT, TEXT) FROM authenticated;
+
 -- ---------------------------------------------------------------------------
 -- Extend licensed access: licence holder OR active org grant
 -- ---------------------------------------------------------------------------
