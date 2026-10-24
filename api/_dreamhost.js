@@ -374,32 +374,30 @@ export function evaluateStoredFileAccess({
 /**
  * Whether the actor may push / revoke a school-wide grant for a resource.
  *
- * Allowed: purchaser, or org admin (role admin / can_manage_users) in the
- * same non-null organisation_id as the resource. Never cross-org; null org
- * denied. Caller must hold a personal licence OR the org must already hold
- * a school-wide licence/grant.
+ * Require target org === actor's non-null org (never compare to file owner org).
+ * Allowed when:
+ *   - actor holds a purchase licence for the resource, OR
+ *   - actor is a same-org admin (role admin / can_manage_users) AND some
+ *     member of that org holds a purchase licence.
+ * Null org denied. Never cross-org.
  */
 export function canPushResourceToSchool({
   actorProfile = null,
-  resourceOrganisationId = null,
   targetOrganisationId = null,
-  isPurchaser = false,
-  hasCallerLicence = false,
-  orgHasSchoolLicence = false,
+  hasCallerPurchaseLicence = false,
+  orgMemberHasPurchaseLicence = false,
 }) {
   if (!actorProfile || isSuspended(actorProfile)) return false;
 
   const actorOrg = actorProfile.organisation_id;
-  if (!sameOrganisationIds(actorOrg, resourceOrganisationId)) return false;
-  if (!sameOrganisationIds(targetOrganisationId, resourceOrganisationId)) {
-    return false;
-  }
   if (!sameOrganisationIds(actorOrg, targetOrganisationId)) return false;
 
-  const isOrgAdmin = canManageUsers(actorProfile);
-  if (!isPurchaser && !isOrgAdmin) return false;
-  if (!hasCallerLicence && !orgHasSchoolLicence) return false;
-  return true;
+  if (hasCallerPurchaseLicence) return true;
+
+  if (canManageUsers(actorProfile) && orgMemberHasPurchaseLicence) {
+    return true;
+  }
+  return false;
 }
 
 /**
@@ -564,14 +562,8 @@ export async function userMayAccessStoredFile(userId, storagePath) {
 
 /**
  * Resolve resource metadata for school push/revoke (service role).
- * @returns {Promise<{
- *   resourceId: string,
- *   resourceOrganisationId: string|null,
- *   purchaserIds: string[],
- *   hasCallerLicence: boolean,
- *   orgHasSchoolLicence: boolean,
- *   activeGrant: object|null,
- * }|null>}
+ * Does not compare against the file owner's organisation — entitlement is
+ * actor org + purchase licence (self or any same-org member for admins).
  */
 export async function loadResourceSchoolPushContext({
   resourceId,
@@ -592,7 +584,6 @@ export async function loadResourceSchoolPushContext({
   if (!fileRows.length) return null;
 
   const paths = fileRows.map((f) => f.storage_path).filter(Boolean);
-  const ownerIds = [...new Set(fileRows.map((f) => f.owner_id).filter(Boolean))];
 
   const { data: licenceRows } = paths.length
     ? await service
@@ -602,9 +593,8 @@ export async function loadResourceSchoolPushContext({
     : { data: [] };
 
   const licences = Array.isArray(licenceRows) ? licenceRows : [];
-  // Purchaser = purchase-sourced licence holder or owner of a purchased file.
-  // Gifted/other licence holders are not purchasers (org admin path still applies).
-  const purchaserIds = [
+  // Purchase holders: purchase-sourced licence rows + owners of purchased files.
+  const purchaseHolderIds = [
     ...new Set([
       ...licences
         .filter((l) => !l.source || l.source === 'purchase')
@@ -617,12 +607,26 @@ export async function loadResourceSchoolPushContext({
     ]),
   ];
 
-  const hasCallerLicence = licences.some((l) => l.user_id === actorId);
+  const hasCallerPurchaseLicence = purchaseHolderIds.includes(actorId);
 
   const actorOrg =
     typeof actorOrganisationId === 'string' ? actorOrganisationId.trim() : '';
+
+  let orgMemberHasPurchaseLicence = false;
+  if (actorOrg && purchaseHolderIds.length) {
+    for (const holderId of purchaseHolderIds) {
+      const holder = await loadProfile(holderId);
+      if (
+        holder &&
+        sameOrganisationIds(holder.organisation_id, actorOrg)
+      ) {
+        orgMemberHasPurchaseLicence = true;
+        break;
+      }
+    }
+  }
+
   let activeGrant = null;
-  let orgHasSchoolLicence = false;
   if (actorOrg) {
     const { data: grantRow } = await service
       .from('resource_org_grants')
@@ -632,31 +636,14 @@ export async function loadResourceSchoolPushContext({
       .is('revoked_at', null)
       .maybeSingle();
     activeGrant = grantRow || null;
-    orgHasSchoolLicence = Boolean(grantRow?.id);
-  }
-
-  // Resource org = purchaser/owner profile org (first non-null among owners).
-  let resourceOrganisationId = null;
-  for (const oid of ownerIds) {
-    const profile = await loadProfile(oid);
-    const org =
-      typeof profile?.organisation_id === 'string'
-        ? profile.organisation_id.trim()
-        : '';
-    if (org) {
-      resourceOrganisationId = org;
-      break;
-    }
   }
 
   return {
     resourceId: rid,
-    resourceOrganisationId,
-    purchaserIds,
-    hasCallerLicence,
-    orgHasSchoolLicence,
+    purchaseHolderIds,
+    hasCallerPurchaseLicence,
+    orgMemberHasPurchaseLicence,
     activeGrant,
-    ownerIds,
   };
 }
 

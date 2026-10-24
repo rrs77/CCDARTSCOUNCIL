@@ -351,24 +351,22 @@ describe('evaluateStoredFileAccess — licensed', () => {
 
 describe('canPushResourceToSchool', () => {
   const base = {
-    resourceOrganisationId: 'ems',
     targetOrganisationId: 'ems',
-    hasCallerLicence: true,
-    orgHasSchoolLicence: false,
   };
 
-  it('allows purchaser in the same org with a personal licence', () => {
+  it('allows actor with a personal purchase licence (no owner-org comparison)', () => {
     assert.equal(
       canPushResourceToSchool({
         ...base,
         actorProfile: { organisation_id: 'ems', status: 'active', role: 'teacher' },
-        isPurchaser: true,
+        hasCallerPurchaseLicence: true,
+        orgMemberHasPurchaseLicence: true,
       }),
       true,
     );
   });
 
-  it('allows org admin (can_manage_users) in the same org with a licence', () => {
+  it('allows org admin when a same-org member holds a purchase licence', () => {
     assert.equal(
       canPushResourceToSchool({
         ...base,
@@ -378,32 +376,41 @@ describe('canPushResourceToSchool', () => {
           role: 'teacher',
           can_manage_users: true,
         },
-        isPurchaser: false,
+        hasCallerPurchaseLicence: false,
+        orgMemberHasPurchaseLicence: true,
       }),
       true,
     );
-  });
-
-  it('allows org admin with role admin when org already has school licence', () => {
     assert.equal(
       canPushResourceToSchool({
         ...base,
         actorProfile: { organisation_id: 'ems', status: 'active', role: 'admin' },
-        isPurchaser: false,
-        hasCallerLicence: false,
-        orgHasSchoolLicence: true,
+        hasCallerPurchaseLicence: false,
+        orgMemberHasPurchaseLicence: true,
       }),
       true,
     );
   });
 
-  it('denies non-admin non-purchaser', () => {
+  it('denies org admin when no org member holds a purchase licence (no circular grant check)', () => {
+    assert.equal(
+      canPushResourceToSchool({
+        ...base,
+        actorProfile: { organisation_id: 'ems', status: 'active', role: 'admin' },
+        hasCallerPurchaseLicence: false,
+        orgMemberHasPurchaseLicence: false,
+      }),
+      false,
+    );
+  });
+
+  it('denies non-admin without a personal purchase licence', () => {
     assert.equal(
       canPushResourceToSchool({
         ...base,
         actorProfile: { organisation_id: 'ems', status: 'active', role: 'teacher' },
-        isPurchaser: false,
-        hasCallerLicence: true,
+        hasCallerPurchaseLicence: false,
+        orgMemberHasPurchaseLicence: true,
       }),
       false,
     );
@@ -412,57 +419,22 @@ describe('canPushResourceToSchool', () => {
   it('denies push targeting another org', () => {
     assert.equal(
       canPushResourceToSchool({
-        ...base,
         actorProfile: { organisation_id: 'ems', status: 'active', role: 'admin' },
-        isPurchaser: true,
         targetOrganisationId: 'jazznorth',
-      }),
-      false,
-    );
-    assert.equal(
-      canPushResourceToSchool({
-        ...base,
-        actorProfile: {
-          organisation_id: 'jazznorth',
-          status: 'active',
-          role: 'admin',
-        },
-        isPurchaser: true,
-        resourceOrganisationId: 'ems',
-        targetOrganisationId: 'jazznorth',
+        hasCallerPurchaseLicence: true,
+        orgMemberHasPurchaseLicence: true,
       }),
       false,
     );
   });
 
-  it('denies when actor or resource org is null', () => {
+  it('denies when actor org is null', () => {
     assert.equal(
       canPushResourceToSchool({
         ...base,
         actorProfile: { organisation_id: null, status: 'active', role: 'admin' },
-        isPurchaser: true,
-      }),
-      false,
-    );
-    assert.equal(
-      canPushResourceToSchool({
-        ...base,
-        actorProfile: { organisation_id: 'ems', status: 'active', role: 'admin' },
-        isPurchaser: true,
-        resourceOrganisationId: null,
-      }),
-      false,
-    );
-  });
-
-  it('denies without personal licence and without school licence', () => {
-    assert.equal(
-      canPushResourceToSchool({
-        ...base,
-        actorProfile: { organisation_id: 'ems', status: 'active', role: 'admin' },
-        isPurchaser: true,
-        hasCallerLicence: false,
-        orgHasSchoolLicence: false,
+        hasCallerPurchaseLicence: true,
+        orgMemberHasPurchaseLicence: true,
       }),
       false,
     );

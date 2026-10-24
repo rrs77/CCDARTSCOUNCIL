@@ -123,14 +123,11 @@ async function authorizeSchoolGrant(request) {
     };
   }
 
-  const isPurchaser = ctx.purchaserIds.includes(auth.userId);
   const allowed = canPushResourceToSchool({
     actorProfile: profile,
-    resourceOrganisationId: ctx.resourceOrganisationId,
     targetOrganisationId,
-    isPurchaser,
-    hasCallerLicence: ctx.hasCallerLicence,
-    orgHasSchoolLicence: ctx.orgHasSchoolLicence,
+    hasCallerPurchaseLicence: ctx.hasCallerPurchaseLicence,
+    orgMemberHasPurchaseLicence: ctx.orgMemberHasPurchaseLicence,
   });
 
   if (!allowed) {
@@ -139,7 +136,7 @@ async function authorizeSchoolGrant(request) {
       response: jsonResponse(
         {
           error:
-            'Forbidden. Only the purchaser or an org admin in the same organisation may push/revoke, and a personal or school licence is required.',
+            'Forbidden. Push/revoke requires your organisation, and either a personal purchase licence or org-admin rights when a same-org member holds one.',
         },
         403,
       ),
@@ -162,14 +159,6 @@ export async function POST(request) {
   try {
     const gate = await authorizeSchoolGrant(request);
     if (!gate.ok) return gate.response;
-
-    // First push requires a personal licence (org school licence covers re-push).
-    if (!gate.ctx.hasCallerLicence && !gate.ctx.orgHasSchoolLicence) {
-      return jsonResponse(
-        { error: 'Forbidden. Caller must hold a licence for this resource.' },
-        403,
-      );
-    }
 
     const result = await pushResourceToSchool({
       resourceId: gate.resourceId,
