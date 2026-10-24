@@ -45,11 +45,10 @@ export function SharePlanningModal({
   const orgId = (profile?.organisation_id || '').trim();
   const allowedYearGroups = profile?.allowed_year_groups ?? null;
   const hasProfileYearGroups = Array.isArray(allowedYearGroups) && allowedYearGroups.length > 0;
-  // When profiles lack year-group data, year_group shares are whole-school within org.
-  const yearGroupOptionLabel = hasProfileYearGroups ? 'Year group' : 'Whole school';
+  // Owner decision: NULL/empty allowed_year_groups → no year-group share access until admin sets them up.
   const yearGroupOptionHint = hasProfileYearGroups
     ? 'Scoped to colleagues whose allowed year groups include this class'
-    : 'Profiles have no year-group data — shares reach your whole school (organisation_id)';
+    : 'Ask your school admin to assign year groups before sharing this way';
 
   const audienceOptions = useMemo(
     () =>
@@ -57,18 +56,22 @@ export function SharePlanningModal({
         { id: 'person' as const, label: 'Person', hint: 'A colleague (email or user id)' },
         { id: 'group' as const, label: 'Group', hint: 'Your teaching group / team' },
         { id: 'school' as const, label: 'School', hint: 'Everyone at your school' },
-        {
-          id: 'year_group' as const,
-          label: yearGroupOptionLabel,
-          hint: yearGroupOptionHint,
-        },
+        ...(hasProfileYearGroups
+          ? [
+              {
+                id: 'year_group' as const,
+                label: 'Year group',
+                hint: yearGroupOptionHint,
+              },
+            ]
+          : []),
         {
           id: 'hub_org' as const,
           label: 'Hub / arts organisation',
           hint: 'Members of your hub or arts org',
         },
       ] satisfies { id: ShareAudienceType; label: string; hint: string }[],
-    [yearGroupOptionLabel, yearGroupOptionHint],
+    [hasProfileYearGroups, yearGroupOptionHint],
   );
 
   const [audienceType, setAudienceType] = useState<ShareAudienceType>('school');
@@ -100,15 +103,9 @@ export function SharePlanningModal({
       setAudienceId('');
       setAudienceLabel('My teaching group');
     } else if (next === 'year_group') {
-      if (!hasProfileYearGroups) {
-        // Whole school within organisation_id (RLS treats empty allowed_year_groups as org-wide).
-        setAudienceId(orgId || 'whole-school');
-        setAudienceLabel('Whole school');
-      } else {
-        const first = yearOptions[0];
-        setAudienceId(first?.id || '');
-        setAudienceLabel(first?.label || '');
-      }
+      const first = yearOptions[0];
+      setAudienceId(first?.id || '');
+      setAudienceLabel(first?.label || '');
     } else {
       setAudienceId('');
       setAudienceLabel('');
