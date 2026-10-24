@@ -1,298 +1,196 @@
 import React from 'react';
 import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger,
-} from '../ui/accordion';
+  FileText,
+  Mail,
+  Pencil,
+  Smartphone,
+  Target,
+  Users,
+} from 'lucide-react';
+import { ADDON_PLANS } from './addonPlans';
 import { periFeedbackAllowsParentContact } from './entitlements';
 import {
-  FeatureRow,
-  FooterNote,
-  SampleLabel,
-  StatusPill,
+  ConceptFooter,
+  ExampleTag,
+  FreeTag,
+  PremTag,
+  PremiumTag,
+  PricePlaceholder,
+  ProductIcon,
+  TierCheck,
   showConceptToast,
 } from './shared';
 
+const FEATURES = [
+  { icon: Pencil, title: 'Quick lesson notes', body: 'Capture what went well in under a minute.' },
+  { icon: Target, title: 'Practice goals', body: 'Set and track goals week to week.' },
+  { icon: Smartphone, title: 'Works on your phone', body: 'Fill notes between lessons.' },
+  { icon: Users, title: 'Pupil history', body: 'Every note for a pupil in one timeline.' },
+  { icon: FileText, title: 'Termly summaries', body: "Pull a term's notes together (Premium)." },
+  { icon: Mail, title: 'Parent updates', body: 'Friendly, professional emails (Premium).' },
+];
+
 export function PeriFeedbackPage() {
+  const plan = ADDON_PLANS.perifeedback;
   const canContactParents = periFeedbackAllowsParentContact();
 
   return (
-    <div className="ccd-boltons">
-      <header className="mb-5 flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-        <div className="max-w-2xl">
-          <p className="ccd-studio-eyebrow">
-            WORKSPACE / <span>PERIFEEDBACK</span>
-          </p>
-          <h1 className="ccd-studio-title">PeriFeedback</h1>
-          <p className="ccd-studio-sub max-w-xl">
-            The simple way to record visiting music lessons and keep everyone informed.
-          </p>
-        </div>
-        <span className="inline-flex w-fit items-center rounded-full bg-[#D5F3EA] px-3 py-1.5 text-[12px] font-bold text-[#0F766E]">
-          For individual instrumental &amp; singing teachers
-        </span>
-      </header>
-
-      <section className="grid gap-5 overflow-hidden rounded-[22px] border border-[#BFE8E1] bg-gradient-to-br from-[#E9F8F5] via-[#F4FBF9] to-white p-5 sm:p-6 lg:grid-cols-[1.15fr_0.85fr]">
+    <div>
+      <section
+        className="mb-5 grid items-center gap-5 overflow-hidden rounded-2xl border border-[#E2E0EF] bg-gradient-to-br from-[#E6F6F3] to-white p-4 shadow-[0_12px_32px_rgba(31,27,77,0.05)] sm:p-5 lg:grid-cols-[4fr_7fr] lg:gap-7 lg:p-6"
+        aria-labelledby="peri-hero-title"
+      >
         <div>
-          <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#138E88]">
-            A smarter weekly teaching routine
-          </p>
-          <h2 className="mt-2 text-[26px] font-extrabold leading-tight tracking-tight text-[#1F1B4D] sm:text-[30px]">
-            Teach the lesson.
-            <br />
-            Share the progress.
-          </h2>
-          <p className="mt-3 max-w-lg text-[13px] leading-relaxed text-[#77738F]">
-            Save notes and set practice goals as you go. With Premium, turn them into carefully controlled,
-            parent-friendly updates without repeating the same admin each week.
-          </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById('peri-plans')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className="inline-flex h-11 items-center rounded-xl bg-[#138E88] px-4 text-[13px] font-extrabold text-white hover:bg-[#0f766e]"
-            >
-              Compare Free &amp; Premium
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById('peri-sample')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className="inline-flex h-11 items-center rounded-xl border border-[#BFE8E1] bg-white px-4 text-[13px] font-extrabold text-[#0F766E] hover:bg-[#E9F8F5]"
-            >
-              See a sample lesson note
-            </button>
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            <ProductIcon variant="perifeedback" />
+            <PremTag />
           </div>
-          <div className="mt-4 flex flex-wrap gap-1.5">
-            {['Piano', 'Strings', 'Woodwind', 'Brass', 'Percussion', 'Singing'].map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-white/80 px-2.5 py-1 text-[11px] font-bold text-[#0F766E] ring-1 ring-[#BFE8E1]"
-              >
-                {tag}
-              </span>
-            ))}
+          <h1
+            id="peri-hero-title"
+            className="text-[28px] font-extrabold leading-tight tracking-tight text-[#1F1B4D]"
+          >
+            {plan.benefitHeadline}
+          </h1>
+          <p className="mt-1 max-w-md text-[15px] leading-snug text-[#3F3B5C]">{plan.lede}</p>
+          <div className="mt-4 flex flex-wrap items-center gap-3">
+            <button
+              type="button"
+              onClick={() => showConceptToast('Start PeriFeedback free')}
+              className="inline-flex h-11 items-center gap-2 rounded-xl bg-[#0F766E] px-4 text-[14px] font-bold text-white shadow-[0_6px_16px_rgba(15,118,110,0.25)] hover:bg-[#0c5f59]"
+            >
+              Start PeriFeedback free →
+            </button>
+            <span className="text-[13px] text-[#5F5B7A]">No card needed to start</span>
           </div>
         </div>
 
-        <aside
-          id="peri-sample"
-          className="rounded-2xl border border-[#BFE8E1] bg-white p-4 shadow-[0_10px_28px_rgba(19,142,136,0.08)]"
-          aria-label="Weekly piano lesson sample — illustrative data"
+        <div
+          className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_24px_48px_rgba(31,27,77,0.12)]"
+          aria-label="PeriFeedback preview with example data"
         >
-          <div className="mb-2 flex items-center justify-between gap-2">
-            <div>
-              <SampleLabel>Weekly piano lesson</SampleLabel>
-              <p className="mt-0.5 text-[12px] font-bold text-[#77738F]">Sample pupil 01 · illustrative</p>
-            </div>
-            <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[10px] font-extrabold uppercase text-[#0F766E]">
-              Lesson recorded
+          <div className="flex items-center gap-1.5 border-b border-[#EEEDF6] bg-[#FAFAFD] px-3.5 py-2.5 text-[13px] font-bold text-[#1F1B4D]">
+            <span className="h-2 w-2 rounded-full bg-[#E2E0EF]" aria-hidden />
+            <span className="h-2 w-2 rounded-full bg-[#E2E0EF]" aria-hidden />
+            <span className="h-2 w-2 rounded-full bg-[#E2E0EF]" aria-hidden />
+            <span className="ml-2">Lesson note · Piano · Week 5</span>
+            <span className="ml-auto">
+              <ExampleTag>Example data</ExampleTag>
             </span>
           </div>
-          <p className="text-[11px] font-bold text-[#77738F]">Monday · 30-minute lesson</p>
-          <p className="mt-3 text-[12px] font-extrabold text-[#1F1B4D]">Achievement:</p>
-          <p className="text-[12px] leading-snug text-[#77738F]">
-            Played the melody with fewer stops and improved hand position.
-          </p>
-          <p className="mt-2 text-[12px] font-extrabold text-[#1F1B4D]">Practice:</p>
-          <p className="text-[12px] leading-snug text-[#77738F]">
-            Repeat bars 5–8 slowly, three times each day.
-          </p>
-          <div className="mt-3 grid grid-cols-2 gap-2">
-            <div className="rounded-xl bg-[#F8F8FD] px-2.5 py-2 text-center">
-              <p className="text-[18px] font-extrabold text-[#1F1B4D]">3</p>
-              <p className="text-[10px] font-bold text-[#77738F]">Goals completed</p>
+          <div className="grid gap-3 p-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="block text-[13px] font-semibold text-[#5F5B7A]">
+                Pupil
+                <select
+                  className="mt-1 h-11 w-full rounded-[10px] border border-[#D9D4FF] bg-white px-3 text-[14px] text-[#1F1B4D]"
+                  defaultValue="a"
+                  aria-label="Example pupil"
+                >
+                  <option value="a">Pupil A · Grade 2</option>
+                </select>
+              </label>
+              <label className="block text-[13px] font-semibold text-[#5F5B7A]">
+                Lesson
+                <input
+                  className="mt-1 h-11 w-full rounded-[10px] border border-[#D9D4FF] bg-white px-3 text-[14px] text-[#1F1B4D]"
+                  defaultValue="Mon · 10:20"
+                  readOnly
+                  aria-label="Example lesson time"
+                />
+              </label>
             </div>
-            <div className="rounded-xl bg-[#F8F8FD] px-2.5 py-2 text-center">
-              <p className="text-[18px] font-extrabold text-[#1F1B4D]">1</p>
-              <p className="text-[10px] font-bold text-[#77738F]">Next focus</p>
-            </div>
-          </div>
-          <p className="mt-3 flex items-center gap-1.5 text-[12px] font-bold text-[#0F766E]">
-            <span aria-hidden>✓</span> Note saved
-          </p>
-          {!canContactParents ? (
-            <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-[#FFF6DF] px-2.5 py-1.5 text-[11px] font-semibold text-[#8A5A00]">
-              <span aria-hidden>🔒</span> Parent message preview · Premium feature
+            <label className="block text-[13px] font-semibold text-[#5F5B7A]">
+              What went well
+              <textarea
+                className="mt-1 min-h-[72px] w-full resize-none rounded-[10px] border border-[#D9D4FF] bg-white px-3 py-2.5 text-[14px] text-[#1F1B4D]"
+                defaultValue="Confident right-hand melody and a much steadier pulse."
+                readOnly
+                aria-label="Example what went well"
+              />
+            </label>
+            <label className="block text-[13px] font-semibold text-[#5F5B7A]">
+              Practice goal
+              <input
+                className="mt-1 h-11 w-full rounded-[10px] border border-[#D9D4FF] bg-white px-3 text-[14px] text-[#1F1B4D]"
+                defaultValue="Hands together, bars 1–8, ten minutes a day"
+                readOnly
+                aria-label="Example practice goal"
+              />
+            </label>
+            <p className="flex items-center gap-2 text-[13px] font-bold text-[#166534]">
+              <span aria-hidden>✓</span> Practice goal saved
             </p>
-          ) : null}
-        </aside>
-      </section>
-
-      <section id="peri-plans" className="mt-10 scroll-mt-24" aria-labelledby="peri-plans-heading">
-        <div className="mb-1 flex flex-wrap items-end justify-between gap-2">
-          <div>
-            <h2 id="peri-plans-heading" className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D]">
-              Choose how you keep in touch
-            </h2>
-            <p className="mt-1 text-[13px] text-[#77738F]">
-              The free plan records a little. Premium connects the whole lesson journey.
-            </p>
-          </div>
-          <p className="text-[12px] font-bold text-[#138E88]">Parent communication: Premium only</p>
-        </div>
-
-        <div className="mt-4 grid gap-4 lg:grid-cols-2">
-          <div className="rounded-[22px] border border-[#E2E0EF] bg-white p-5 sm:p-6">
-            <p className="text-[14px] font-extrabold text-[#1F1B4D]">PeriFeedback Free</p>
-            <p className="mt-0.5 text-[12px] text-[#77738F]">A personal record for occasional teaching</p>
-            <p className="mt-3 text-[32px] font-extrabold tracking-tight text-[#1F1B4D]">
-              £0 <span className="text-[13px] font-bold text-[#77738F]">forever · proposed plan</span>
-            </p>
-            <p className="mt-2 text-[12px] leading-relaxed text-[#77738F]">
-              A restricted personal notebook: enough to try the workflow, not a communication platform.
-            </p>
-            <ul className="mt-4 space-y-2.5">
-              <FeatureRow included label="Up to 3 pupil profiles" status="limit" />
-              <FeatureRow included label="Up to 10 lesson entries per month" />
-              <FeatureRow included label="Manual lesson notes" />
-              <FeatureRow included label="One practice target per pupil" />
-              <FeatureRow included label="View recent lesson history" />
-              <FeatureRow included={false} label="No ability to contact parents" />
-              <FeatureRow included={false} label="No emails, messaging, delivery or share links" />
-              <FeatureRow included={false} label="No automated reports or bulk exports" />
-            </ul>
-            <p className="mt-3 text-[11px] text-[#77738F]">View saved notes; no automatic sending</p>
-            <button
-              type="button"
-              onClick={() => showConceptToast('Use Free')}
-              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#E9E6FF] px-4 text-[13px] font-extrabold text-[#4338E8] hover:bg-[#D9D4FF]"
-            >
-              Use Free
-            </button>
-          </div>
-
-          <div className="relative rounded-[22px] border-2 border-[#138E88] bg-gradient-to-b from-[#E9F8F5] to-white p-5 shadow-[0_12px_32px_rgba(19,142,136,0.12)] sm:p-6">
-            <div className="absolute -top-3 right-5">
-              <StatusPill status="core-upgrade">Best for working tutors</StatusPill>
-            </div>
-            <p className="text-[14px] font-extrabold text-[#1F1B4D]">PeriFeedback Premium ♫</p>
-            <p className="mt-0.5 text-[12px] text-[#138E88]">Turn weekly notes into outstanding communication</p>
-            <p className="mt-3 text-[28px] font-extrabold tracking-tight text-[#1F1B4D]">
-              Pricing TBC <span className="text-[13px] font-bold text-[#77738F]">tutor / school options</span>
-            </p>
-            <p className="mt-2 text-[12px] leading-relaxed text-[#77738F]">
-              For instrumental teachers and schools running regular peripatetic lessons.
-            </p>
-            <ul className="mt-4 space-y-2.5">
-              <FeatureRow included label="Send approved lesson updates to parents" status="core-upgrade" />
-              <FeatureRow included label="Professional, branded weekly feedback" />
-              <FeatureRow included label="Reusable achievement and practice-goal templates" />
-              <FeatureRow included label="More pupil profiles and lesson entries" />
-              <FeatureRow included label="Parent contact preferences and delivery history" />
-              <FeatureRow included label="Termly summaries and PDF reports" status="proposed" />
-              <FeatureRow included label="Progress and practice tracking over time" status="proposed" />
-              <FeatureRow included label="School-approved tutor oversight and role permissions" status="proposed" />
-            </ul>
-            <p className="mt-3 text-[11px] font-semibold text-[#138E88]">
-              Approvals and permissions required before contact
-            </p>
-            <button
-              type="button"
-              onClick={() => showConceptToast('Explore Premium')}
-              className="mt-5 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#138E88] px-4 text-[13px] font-extrabold text-white hover:bg-[#0f766e]"
-            >
-              Explore Premium →
-            </button>
-          </div>
-        </div>
-      </section>
-
-      <section className="mt-10" aria-labelledby="peri-flow-heading">
-        <h2 id="peri-flow-heading" className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D]">
-          A simple routine, a better parent experience
-        </h2>
-        <p className="mt-1 text-[13px] text-[#77738F]">
-          The Premium journey is designed around a lesson, not an admin dashboard.
-        </p>
-        <div className="mt-4 grid gap-2 sm:grid-cols-[1fr_auto_1fr_auto_1fr] sm:items-center">
-          {[
-            { n: '01', title: 'Capture', sub: 'Teach & record', detail: 'What went well, what comes next' },
-            { n: '02', title: 'Prepare', sub: 'Review the update', detail: 'Professional, friendly parent wording' },
-            { n: '03', title: 'Share', sub: 'Send with permission', detail: 'Parent communication is Premium only' },
-          ].map((step, i) => (
-            <React.Fragment key={step.n}>
-              <div className="rounded-2xl border border-[#E2E0EF] bg-[#F8F8FD] p-4">
-                <p className="text-[10px] font-extrabold uppercase tracking-[0.14em] text-[#138E88]">
-                  {step.n} · {step.title}
-                </p>
-                <p className="mt-1 text-[14px] font-extrabold text-[#1F1B4D]">{step.sub}</p>
-                <p className="mt-0.5 text-[12px] text-[#77738F]">{step.detail}</p>
-              </div>
-              {i < 2 ? (
-                <span className="hidden text-center text-[#C4C0D8] sm:block" aria-hidden>
-                  →
+            {!canContactParents ? (
+              <div className="flex flex-wrap items-center gap-2 rounded-xl border border-[#F3DFA8] bg-[#FFF6DF] px-3 py-2.5 text-[13px] font-semibold text-[#7A4F00]">
+                <span aria-hidden>🔒</span>
+                Send this update to parents
+                <span className="ml-auto">
+                  <PremTag>Premium</PremTag>
                 </span>
-              ) : null}
-            </React.Fragment>
-          ))}
-        </div>
-
-        {!canContactParents ? (
-          <div className="mt-4 flex flex-col gap-3 rounded-2xl border border-[#BFE8E1] bg-[#E9F8F5] p-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <p className="text-[13px] font-extrabold text-[#0F766E]">
-                🔒 Parent communications are not available on Free
-              </p>
-              <p className="mt-0.5 text-[12px] text-[#77738F]">
-                Keep notes in your private workspace. Upgrade to prepare, approve and send parent updates.
-              </p>
-            </div>
-            <button
-              type="button"
-              onClick={() => {
-                document.getElementById('peri-plans')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-              }}
-              className="inline-flex h-10 shrink-0 items-center justify-center rounded-xl bg-[#138E88] px-4 text-[12px] font-extrabold text-white hover:bg-[#0f766e]"
-            >
-              View Premium →
-            </button>
+              </div>
+            ) : null}
           </div>
-        ) : null}
+        </div>
       </section>
 
-      <section className="mt-10" aria-labelledby="peri-faq-heading">
-        <h2 id="peri-faq-heading" className="text-[20px] font-extrabold tracking-tight text-[#1F1B4D]">
-          Questions teachers will ask
-        </h2>
-        <Accordion type="single" collapsible className="mt-3 rounded-2xl border border-[#E2E0EF] bg-white px-4">
-          <AccordionItem value="free-contact">
-            <AccordionTrigger className="text-[14px] font-bold text-[#1F1B4D] hover:no-underline">
-              Can Free users email, message or share links with parents?
-            </AccordionTrigger>
-            <AccordionContent className="text-[13px] leading-relaxed text-[#77738F]">
-              No. The free plan has no contact action, message delivery, external share link, parent portal, or
-              messaging API access. The restriction must also be enforced server-side.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="school-control">
-            <AccordionTrigger className="text-[14px] font-bold text-[#1F1B4D] hover:no-underline">
-              Can a school control who communicates with parents?
-            </AccordionTrigger>
-            <AccordionContent className="text-[13px] leading-relaxed text-[#77738F]">
-              That should be a core paid school feature: verified tutor accounts, school-approved contact lists,
-              permissions, audit history and a review flow where appropriate. It must be built and checked before
-              launch.
-            </AccordionContent>
-          </AccordionItem>
-          <AccordionItem value="auto-send" className="border-b-0">
-            <AccordionTrigger className="text-[14px] font-bold text-[#1F1B4D] hover:no-underline">
-              Will the app send messages without my approval?
-            </AccordionTrigger>
-            <AccordionContent className="text-[13px] leading-relaxed text-[#77738F]">
-              No. The proposed flow is review first, then explicitly send using approved contacts and permissions. No
-              automatic unsolicited parent communication.
-            </AccordionContent>
-          </AccordionItem>
-        </Accordion>
-      </section>
+      <h2 className="mb-3 text-[18px] font-extrabold tracking-tight text-[#1F1B4D]">What you can do</h2>
+      <div className="mb-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+        {FEATURES.map((f) => (
+          <div
+            key={f.title}
+            className="flex items-center gap-3 rounded-xl border border-[#E2E0EF] bg-white px-4 py-3 shadow-[0_1px_2px_rgba(31,27,77,0.04)]"
+          >
+            <span className="inline-grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-[#E6F6F3] text-[#0F766E]">
+              <f.icon className="h-[18px] w-[18px]" aria-hidden />
+            </span>
+            <div className="min-w-0">
+              <h3 className="truncate text-[14px] font-extrabold text-[#1F1B4D]">{f.title}</h3>
+              <p className="text-[13px] leading-snug text-[#5F5B7A]">{f.body}</p>
+            </div>
+          </div>
+        ))}
+      </div>
 
-      <FooterNote />
+      <h2 className="mb-3 text-[18px] font-extrabold tracking-tight text-[#1F1B4D]">Free and Premium</h2>
+      <div className="grid gap-4 lg:grid-cols-2">
+        <div className="rounded-2xl border border-[#E2E0EF] bg-white p-4 sm:p-5">
+          <FreeTag />
+          <h3 className="mt-2 text-[16px] font-extrabold text-[#1F1B4D]">{plan.free.title}</h3>
+          <ul className="mt-2.5 space-y-1.5">
+            {plan.free.features.map((f) => (
+              <TierCheck key={f}>{f}</TierCheck>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => showConceptToast('Add PeriFeedback free')}
+            className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#E6F6F3] text-[14px] font-bold text-[#0F766E] hover:bg-[#d5f0eb]"
+          >
+            Add free version
+          </button>
+        </div>
+        <div className="rounded-2xl border border-[#BFE8E1] bg-gradient-to-b from-[#E6F6F3] to-white p-4 sm:p-5">
+          <div className="flex flex-wrap items-center gap-2">
+            <PremiumTag />
+            <PricePlaceholder />
+          </div>
+          <h3 className="mt-2 text-[16px] font-extrabold text-[#1F1B4D]">{plan.premium.title}</h3>
+          <ul className="mt-2.5 space-y-1.5">
+            {plan.premium.features.map((f) => (
+              <TierCheck key={f}>{f}</TierCheck>
+            ))}
+          </ul>
+          <button
+            type="button"
+            onClick={() => showConceptToast('Get PeriFeedback Premium')}
+            className="mt-4 inline-flex h-11 w-full items-center justify-center rounded-xl bg-[#0F766E] text-[14px] font-bold text-white hover:bg-[#0c5f59]"
+          >
+            Get full version →
+          </button>
+        </div>
+      </div>
+
+      <ConceptFooter />
     </div>
   );
 }
