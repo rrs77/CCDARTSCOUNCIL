@@ -387,7 +387,7 @@ export function LessonPlanModal({
                             );
                             updateSections(next);
                           }}
-                          aria-label="Section title"
+                          aria-label={`Rename section: ${section.title}`}
                         />
                         {(section.durationMins || section.activity?.time) ? (
                           <span className="text-[11px] font-semibold text-slate-400">
