@@ -334,6 +334,78 @@ export function canManageUsers(profile) {
   return profile.can_manage_users === true;
 }
 
+/**
+ * V4: non-managers may only change invited/pending → active.
+ * Any change from suspended is denied (blocks self-reactivation).
+ * No-op (same status) is allowed.
+ */
+export function maySelfUpdateProfileStatus(oldStatus, newStatus) {
+  if (oldStatus === newStatus) return true;
+  if (oldStatus === 'suspended') return false;
+  return (
+    (oldStatus === 'invited' || oldStatus === 'pending') &&
+    newStatus === 'active'
+  );
+}
+
+/** Rank for role grant comparisons (higher = more privileged). */
+export const PROFILE_ROLE_RANK = Object.freeze({
+  student: 0,
+  viewer: 0,
+  teacher: 1,
+  creator: 1,
+  organisation: 2,
+  admin: 3,
+  superuser: 4,
+  super_admin: 4,
+});
+
+export function profileRoleRank(role) {
+  if (role == null) return 0;
+  const rank = PROFILE_ROLE_RANK[role];
+  return Number.isFinite(rank) ? rank : 0;
+}
+
+/**
+ * V5: whether a manager may apply targetNew over targetOld.
+ * Super-admins (super_admin / superuser) are unrestricted.
+ * Other managers: same-org only; cannot move organisation_id to another org;
+ * cannot grant roles at/above their own or any SUPER_ADMIN_ROLES.
+ */
+export function canManagerEditProfile({ actor, targetOld, targetNew }) {
+  if (!actor || !targetOld || !canManageUsers(actor)) return false;
+  if (isSuperAdminProfile(actor)) return true;
+
+  const actorOrg =
+    typeof actor.organisation_id === 'string' ? actor.organisation_id.trim() : '';
+  const targetOrg =
+    typeof targetOld.organisation_id === 'string'
+      ? targetOld.organisation_id.trim()
+      : '';
+  if (!actorOrg || !targetOrg || actorOrg !== targetOrg) return false;
+
+  if (targetNew && Object.prototype.hasOwnProperty.call(targetNew, 'organisation_id')) {
+    const nextOrg =
+      targetNew.organisation_id == null
+        ? ''
+        : String(targetNew.organisation_id).trim();
+    if (!nextOrg || nextOrg !== actorOrg) return false;
+  }
+
+  if (
+    targetNew &&
+    Object.prototype.hasOwnProperty.call(targetNew, 'role') &&
+    targetNew.role !== targetOld.role
+  ) {
+    if (SUPER_ADMIN_ROLES.has(targetNew.role)) return false;
+    if (profileRoleRank(targetNew.role) >= profileRoleRank(actor.role)) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function canViewGlobalAnalytics(profile) {
   if (!profile || isSuspended(profile)) return false;
   if (GLOBAL_ANALYTICS_ROLES.has(profile.role)) return true;
