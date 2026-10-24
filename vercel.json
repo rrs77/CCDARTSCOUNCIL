@@ -72,12 +72,12 @@
       "destination": "/api/router?__route=interactive-lessons/:path*"
     },
     {
-      "source": "/api/lesson-attachments",
-      "destination": "/api/router?__route=lesson-attachments"
+      "source": "/api/planning-groups/members",
+      "destination": "/api/router?__route=planning-groups/members"
     },
     {
-      "source": "/api/lesson-attachments/:path*",
-      "destination": "/api/router?__route=lesson-attachments/:path*"
+      "source": "/api/planning-groups/:path*",
+      "destination": "/api/router?__route=planning-groups/:path*"
     },
     {
       "source": "/((?!api/|partners/|assets/|ccd-pitch/|the-facts/|.*\\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|pdf|zip|woff2?|ttf|map)$).*)",

@@ -26,7 +26,6 @@ import {
 } from '../../utils/planner/fleshOutApi';
 import { keyStageFromYearGroupTag } from '../../utils/libraryHierarchy';
 import { AttachInteractiveLesson } from '../../features/interactive-lesson-viewer';
-import { LessonAttachmentsPanel } from './LessonAttachmentsPanel';
 import {
   Button,
   CloseX,
@@ -640,19 +639,6 @@ export function LessonPlanPanel({
                     </p>
                   )}
                 </div>
-
-                {lessonNumber && yearGroup ? (
-                  <LessonAttachmentsPanel sheet={yearGroup} lessonNumber={lessonNumber} />
-                ) : (
-                  <div className="mt-4 rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
-                    <p className="text-xs font-semibold uppercase tracking-wide text-slate-500">
-                      Attachments
-                    </p>
-                    <p className="mt-1 text-sm text-slate-500">
-                      Save this lesson once to upload photos, video, Word or audio.
-                    </p>
-                  </div>
-                )}
               </div>
 
               <div className="flex min-h-0 flex-col gap-3 overflow-hidden">

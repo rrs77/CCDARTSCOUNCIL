@@ -41,9 +41,8 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
 import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
 
-/* Lesson attachments (DreamHost + cloud import) — mirror SF files/* shape */
-import * as lessonAttachments from '../server/api/lesson-attachments/index.js';
-import * as lessonAttachmentFile from '../server/api/lesson-attachments/file/[...path].js';
+/* Planning group membership (service-role writes; kept out of /api entrypoints) */
+import * as planningGroupMembers from '../server/api/planning-groups/members.js';
 
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -190,13 +189,13 @@ function targetFor(pathname) {
     return null;
   }
 
-  /* ---------- Lesson attachments ---------- */
+  /* ---------- Planning groups ---------- */
 
-  if (area === 'lesson-attachments') {
-    if (rest[0] === 'file' && rest.length >= 2) {
-      return lessonAttachmentFile;
+  if (area === 'planning-groups') {
+    if (rest.length === 1 && rest[0] === 'members') {
+      return planningGroupMembers;
     }
-    return lessonAttachments;
+    return null;
   }
 
   return null;
@@ -212,7 +211,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|lesson-attachments)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|interactive-lessons|planning-groups)(\/|$)/.test(route) ||
     route.includes('..')
   ) {
     return null;
