@@ -34,6 +34,15 @@ CREATE TABLE IF NOT EXISTS public.profiles (
   anonymised_at TIMESTAMPTZ
 );
 
+CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid
+LANGUAGE sql
+STABLE
+AS $$
+  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid;
+$$;
+GRANT USAGE ON SCHEMA auth TO anon, authenticated, service_role;
+GRANT EXECUTE ON FUNCTION auth.uid() TO anon, authenticated, service_role;
+
 CREATE OR REPLACE FUNCTION public.is_super_admin()
 RETURNS boolean
 LANGUAGE sql
@@ -47,10 +56,6 @@ AS $$
   );
 $$;
 GRANT EXECUTE ON FUNCTION public.is_super_admin() TO authenticated, anon, service_role;
-
-CREATE OR REPLACE FUNCTION auth.uid() RETURNS uuid LANGUAGE sql STABLE AS $$
-  SELECT NULLIF(current_setting('request.jwt.claim.sub', true), '')::uuid;
-$$;
 
 CREATE TABLE IF NOT EXISTS public.branding_settings (
   key TEXT PRIMARY KEY,
