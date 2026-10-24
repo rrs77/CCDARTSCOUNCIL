@@ -31,6 +31,7 @@ import { RunThroughModal } from './ccdPlanner/RunThroughModal';
 import { TemplatePickerModal } from './ccdPlanner/TemplatePickerModal';
 import { YearOverviewScreen } from './ccdPlanner/YearOverviewScreen';
 import { SharePlanningModal } from './ccdPlanner/SharePlanningModal';
+import { YearGroupsAccessNotice } from './ccdPlanner/YearGroupsAccessNotice';
 import { loadPlannerTerms } from '../utils/planner/plannerCurriculumStore';
 import { syncSettingsUrl } from './settings/routes';
 
@@ -418,6 +419,7 @@ export function LessonsWorkspace({
       style={{ fontFamily: UI_FONT }}
       data-testid="lessons-planner"
     >
+      <YearGroupsAccessNotice />
       <div className="shrink-0 space-y-3">
         <div>
           <p className="ccd-studio-eyebrow mb-1">

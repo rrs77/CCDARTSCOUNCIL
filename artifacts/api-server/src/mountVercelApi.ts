@@ -47,6 +47,7 @@ const COMBINED_AREAS = [
   "music-hubs",
   "interactive-lessons",
   "planning-groups",
+  "year-groups",
 ] as const;
 
 function resolveApiDir(): string {

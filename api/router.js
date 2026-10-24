@@ -58,6 +58,9 @@ import * as adminBackup from '../server/api/admin/backup.js';
 /* Planning group membership (service-role writes; kept out of /api entrypoints) */
 import * as planningGroupMembers from '../server/api/planning-groups/members.js';
 
+/* Year-group access requests (notify same-org admins; no grant side effects) */
+import * as yearGroupRequestAccess from '../server/api/year-groups/request-access.js';
+
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
     status,
@@ -259,6 +262,15 @@ function targetFor(pathname) {
     return null;
   }
 
+  /* ---------- Year groups (access request) ---------- */
+
+  if (area === 'year-groups') {
+    if (rest.length === 1 && rest[0] === 'request-access') {
+      return yearGroupRequestAccess;
+    }
+    return null;
+  }
+
   return null;
 }
 
@@ -272,7 +284,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound|admin|planning-groups)(\/|$)/.test(
+    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound|admin|planning-groups|year-groups)(\/|$)/.test(
       route,
     ) ||
     route.includes('..')

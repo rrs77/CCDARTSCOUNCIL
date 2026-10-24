@@ -9,6 +9,7 @@ import {
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import { TimetableBuilder } from '../TimetableBuilder';
+import { YearGroupsAccessNotice } from '../ccdPlanner/YearGroupsAccessNotice';
 import { usePlannerData, type PlannerData } from './usePlannerData';
 import { WeekView, DayView, MonthView } from './PlannerViews';
 import { LessonDetailsSheet, SchedulePickerSheet } from './PlannerSheets';
@@ -265,6 +266,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
   return (
     <div className={`ss-planner-shell ${view === 'timetable' ? 'is-timetable-fullpage' : ''}`}>
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <YearGroupsAccessNotice />
         <header className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
             <p className="ccd-studio-eyebrow mb-1">

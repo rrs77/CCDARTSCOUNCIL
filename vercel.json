@@ -84,6 +84,14 @@
       "destination": "/api/router?__route=planning-groups/:path*"
     },
     {
+      "source": "/api/year-groups/request-access",
+      "destination": "/api/router?__route=year-groups/request-access"
+    },
+    {
+      "source": "/api/year-groups/:path*",
+      "destination": "/api/router?__route=year-groups/:path*"
+    },
+    {
       "source": "/api/upload-pdf",
       "destination": "/api/router?__route=files/upload"
     },

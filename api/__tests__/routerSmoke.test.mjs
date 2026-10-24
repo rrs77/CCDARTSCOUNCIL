@@ -226,6 +226,25 @@ describe('DreamHost file routes', () => {
   });
 });
 
+describe('year-groups request-access', () => {
+  it('dispatches POST /api/year-groups/request-access via combined router', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('POST', 'year-groups/request-access'),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('rejects unauthenticated year-group access requests with 401', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('POST', 'year-groups/request-access', {
+        headers: { Accept: 'application/json' },
+      }),
+    );
+    assert.equal(status, 401, JSON.stringify(body));
+  });
+});
+
 describe('Freesound routes', () => {
   it('dispatches GET /api/freesound/search', async () => {
     const { status, body } = await jsonStatus(await routed('GET', 'freesound/search'));
