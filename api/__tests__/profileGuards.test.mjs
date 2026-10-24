@@ -35,6 +35,41 @@ describe('maySelfUpdateProfileStatus (V4)', () => {
   });
 });
 
+describe('mayClientUpdateAnonymisedAt (LOW)', () => {
+  it('allows service/server updates', () => {
+    assert.equal(
+      mayClientUpdateAnonymisedAt({
+        isServer: true,
+        oldValue: null,
+        newValue: '2026-01-01T00:00:00Z',
+      }),
+      true,
+    );
+  });
+
+  it('denies non-server changes to anonymised_at', () => {
+    assert.equal(
+      mayClientUpdateAnonymisedAt({
+        isServer: false,
+        oldValue: null,
+        newValue: '2026-01-01T00:00:00Z',
+      }),
+      false,
+    );
+  });
+
+  it('allows no-op', () => {
+    assert.equal(
+      mayClientUpdateAnonymisedAt({
+        isServer: false,
+        oldValue: null,
+        newValue: null,
+      }),
+      true,
+    );
+  });
+});
+
 describe('canManagerEditProfile (V5)', () => {
   const teacherTarget = {
     id: 't1',
