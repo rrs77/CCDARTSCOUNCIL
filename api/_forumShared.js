@@ -315,15 +315,10 @@ export async function loadForumStatus(userId) {
  * Optional auth: returns { userId, profile, caps, forumStatus } or anonymous.
  */
 export async function optionalForumAuth(request) {
-  const token =
-    (request.headers.get('authorization') || '').replace(/^Bearer\s+/i, '').trim() ||
-    (() => {
-      try {
-        return new URL(request.url).searchParams.get('access_token') || '';
-      } catch {
-        return '';
-      }
-    })();
+  // Bearer only — never accept ?access_token= (leaks into logs / Referer).
+  const token = (request.headers.get('authorization') || '')
+    .replace(/^Bearer\s+/i, '')
+    .trim();
 
   if (!token) {
     return {
