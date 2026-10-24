@@ -893,10 +893,8 @@ export function LessonPlannerCalendar({
       .print-resource-links a { color: #0d9488; text-decoration: underline; }
       .brand-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #64748b; text-align: center; }
       @page { margin: 12mm; }
-      .ccd-print-page .pageNumber::after { content: counter(page); }
-      @media print {
-        .ccd-print-page .pageNumber:empty::after { content: counter(page); }
-      }
+      .print-lesson-block .acts { margin: 4px 0 0; padding: 0 0 0 12px; font-size: 9px; color: #475569; }
+      .print-lesson-block .acts li { margin: 0; }
     `;
 
     let bodyHtml = '';
@@ -968,7 +966,16 @@ export function LessonPlannerCalendar({
                 const color = plan.unitId ? '#8B5CF6' : '#EC4899';
                 const time = plan.time || '';
                 const title = plan.title || `Lesson ${plan.lessonNumber || ''}`;
-                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${renderResourceLinksHtml(plan, false)}</div>`;
+                const acts = (plan.activities?.length
+                  ? plan.activities
+                  : (plan.lessonNumber && allLessonsData[plan.lessonNumber])
+                    ? (allLessonsData[plan.lessonNumber].orderedActivities || Object.values(allLessonsData[plan.lessonNumber].grouped || {}).flat())
+                    : []
+                ).map((a: Activity) => (a?.activity || a?.description || '').trim()).filter(Boolean).slice(0, 8);
+                const actsHtml = acts.length
+                  ? `<ul class="acts">${acts.map((n: string) => `<li>${escape(n)}</li>`).join('')}</ul>`
+                  : '';
+                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${actsHtml}${renderResourceLinksHtml(plan, false)}</div>`;
               }
             });
             return `<div class="print-day-col">${colContent}</div>`;
@@ -1027,8 +1034,9 @@ export function LessonPlannerCalendar({
     `;
 
     const brandFooter = `
-      <div class="brand-footer">
-        ${escape(companyName)} • © ${escape(copyrightYear)}${contactEmail ? ` • ${escape(contactEmail)}` : ''}
+      <div class="brand-footer" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <span>${escape(companyName)} • © ${escape(copyrightYear)}${contactEmail ? ` • ${escape(contactEmail)}` : ''}</span>
+        <span>Page 1</span>
       </div>
     `;
 
@@ -1042,11 +1050,12 @@ export function LessonPlannerCalendar({
       return btoa(binaryString);
     };
 
+    // PDFBolt/Chromium fills .pageNumber; browser print fallback uses "Page 1" in the body footer below.
     const footerContent = `
       <div style="width:100%;font-size:9px;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;color:#5F6368;font-family:'Inter',sans-serif;">
         <span>${escape(productName)}</span>
         <span>${escape(className)} • ${escape(viewLabel)}</span>
-        <span style="background:#E8EAEF;color:#0f766e;padding:4px 12px;border-radius:50px;font-weight:500;" class="ccd-print-page">Page <span class="pageNumber"></span></span>
+        <span style="background:#E8EAEF;color:#0f766e;padding:4px 12px;border-radius:50px;font-weight:500;">Page <span class="pageNumber"></span></span>
       </div>
     `;
 
