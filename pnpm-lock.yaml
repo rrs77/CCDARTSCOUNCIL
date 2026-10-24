@@ -84,6 +84,9 @@ importers:
       '@supabase/supabase-js':
         specifier: ^2.105.1
         version: 2.105.1
+      zod:
+        specifier: 'catalog:'
+        version: 3.25.76
     devDependencies:
       prettier:
         specifier: ^3.8.1
