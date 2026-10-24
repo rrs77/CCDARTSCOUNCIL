@@ -2,12 +2,20 @@ import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { isDemoModeActive } from '../utils/demoMode';
 import { createDemoSupabaseClient } from '../utils/demoDb';
 
-// Use env vars in Vercel (or any host); fallback to current Supabase project
+// Use env vars in Vercel (or any host). Fail closed when the anon key is missing.
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://wiudrzdkbpyziaodqoog.supabase.co';
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndpdWRyemRrYnB5emlhb2Rxb29nIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTA5MzgxNzcsImV4cCI6MjA2NjUxNDE3N30.LpD82hY_1wYzroA09nYfaz13iNx5gRJzmPTt0gPCLMI';
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.error('Missing Supabase credentials. Set VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY in Vercel (or use defaults).');
+if (!supabaseAnonKey) {
+  throw new Error(
+    'Missing VITE_SUPABASE_ANON_KEY. Set it in the environment before starting the app.',
+  );
+}
+
+if (!supabaseUrl) {
+  throw new Error(
+    'Missing VITE_SUPABASE_URL. Set it in the environment before starting the app.',
+  );
 }
 
 // Supabase Auth is enabled by default (fail-closed).
