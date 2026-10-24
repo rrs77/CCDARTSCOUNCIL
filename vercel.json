@@ -32,8 +32,12 @@
       "source": "/(.*)",
       "headers": [
         {
+          "key": "X-Content-Type-Options",
+          "value": "nosniff"
+        },
+        {
           "key": "Content-Security-Policy",
-          "value": "frame-src 'self' https://www.canva.com https://*.canva.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://vimeo.com https://view.officeapps.live.com https://*.officeapps.live.com https://onedrive.live.com https://*.onedrive.live.com https://*.sharepoint.com https://drive.google.com https://docs.google.com https://*.google.com https://www.dropbox.com https://*.dropbox.com https://app.box.com https://*.box.com https://www.icloud.com https://*.icloud.com; child-src 'self' https://www.canva.com https://*.canva.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://view.officeapps.live.com https://*.officeapps.live.com https://onedrive.live.com https://*.sharepoint.com https://drive.google.com https://docs.google.com https://www.dropbox.com https://app.box.com https://www.icloud.com"
+          "value": "default-src 'self'; script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://www.google-analytics.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src 'self' data: https://fonts.gstatic.com; img-src 'self' data: blob: https:; media-src 'self' blob: https:; connect-src 'self' https://*.supabase.co wss://*.supabase.co https://wiudrzdkbpyziaodqoog.supabase.co https://www.googletagmanager.com https://www.google-analytics.com https://region1.google-analytics.com https://rhythmstix.co.uk https://www.rhythmstix.co.uk; worker-src 'self' blob:; manifest-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'; frame-src 'self' blob: https://www.canva.com https://*.canva.com https://www.youtube.com https://youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://vimeo.com https://view.officeapps.live.com https://*.officeapps.live.com https://onedrive.live.com https://*.onedrive.live.com https://*.sharepoint.com https://drive.google.com https://docs.google.com https://*.google.com https://www.dropbox.com https://*.dropbox.com https://app.box.com https://*.box.com https://www.icloud.com https://*.icloud.com; child-src 'self' blob: https://www.canva.com https://*.canva.com https://www.youtube.com https://www.youtube-nocookie.com https://player.vimeo.com https://view.officeapps.live.com https://*.officeapps.live.com https://onedrive.live.com https://*.sharepoint.com https://drive.google.com https://docs.google.com https://www.dropbox.com https://app.box.com https://www.icloud.com"
         }
       ]
     }
@@ -70,6 +74,38 @@
     {
       "source": "/api/interactive-lessons/:path*",
       "destination": "/api/router?__route=interactive-lessons/:path*"
+    },
+    {
+      "source": "/api/upload-pdf",
+      "destination": "/api/router?__route=files/upload"
+    },
+    {
+      "source": "/api/files/upload",
+      "destination": "/api/router?__route=files/upload"
+    },
+    {
+      "source": "/api/files",
+      "destination": "/api/router?__route=files"
+    },
+    {
+      "source": "/api/files/:path*",
+      "destination": "/api/router?__route=files/:path*"
+    },
+    {
+      "source": "/api/freesound",
+      "destination": "/api/router?__route=freesound"
+    },
+    {
+      "source": "/api/freesound/:path*",
+      "destination": "/api/router?__route=freesound/:path*"
+    },
+    {
+      "source": "/api/admin/backup",
+      "destination": "/api/router?__route=admin/backup"
+    },
+    {
+      "source": "/api/admin/:path*",
+      "destination": "/api/router?__route=admin/:path*"
     },
     {
       "source": "/((?!api/|partners/|assets/|ccd-pitch/|the-facts/|.*\\.(?:js|css|png|jpg|jpeg|gif|svg|webp|ico|pdf|zip|woff2?|ttf|map)$).*)",

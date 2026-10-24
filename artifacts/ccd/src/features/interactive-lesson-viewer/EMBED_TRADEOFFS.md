@@ -29,10 +29,11 @@ CSP allows Drive, Docs, OneDrive, SharePoint, and Office Online viewers. Dropbox
 
 | Approach | Pros | Cons |
 |----------|------|------|
-| **Client search + hotlink** | No new serverless functions; CC0/PD discoverable in-editor | Depends on third-party CDN CORS; attribution must stay with the asset |
+| **Client search + hotlink (Openverse / Wikimedia)** | No new serverless functions; CC0/PD discoverable in-editor | Depends on third-party CDN CORS; attribution must stay with the asset |
+| **Authenticated Freesound proxy** | API key stays server-only (`FREESOUND_API_KEY`) | Requires sign-in; Hobby router route |
 | **Copy into lesson media library / Storage** | Stable offline-friendly once uploaded | Storage cost; license text should still be kept on the library item |
 
-Drag-and-drop places images on the stage and sounds on the Music lane (with fade handles). Prefer Openverse CC0/PD filters; Freesound needs `VITE_FREESOUND_API_KEY`.
+Drag-and-drop places images on the stage and sounds on the Music lane (with fade handles). Prefer Openverse CC0/PD filters. Freesound uses `/api/freesound/search` and `/api/freesound/preview/:id` with `requireAuth` — set server env `FREESOUND_API_KEY` (never `VITE_FREESOUND_API_KEY`).
 
 ## Generic embed
 

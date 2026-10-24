@@ -21,7 +21,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 ## Supabase Dashboard branding (Auth emails)
 
-1. Configure Resend as custom SMTP — see `.migration-backup/docs/SUPABASE_RESEND_SMTP.md`.
+1. Configure Resend as custom SMTP in the Supabase Dashboard (Project Settings → Auth → SMTP). Use `RESEND_API_KEY` / `RESEND_FROM_EMAIL` from env; template source of truth is `api/_emailTemplates.js`.
 2. **Authentication → Email Templates** — paste HTML/text from `api/_emailTemplates.js` wording.
 3. Use `{{ .ConfirmationURL }}` for verify / reset / invite links.
 4. Ensure Site URL and redirect allow-list include `VITE_APP_URL` and `/reset-password`.

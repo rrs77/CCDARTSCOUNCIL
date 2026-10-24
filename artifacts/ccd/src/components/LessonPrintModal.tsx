@@ -8,6 +8,7 @@ import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjective, CustomObjectiveArea, CustomObjectiveYearGroup } from '../types/customObjectives';
 import { supabase } from '../config/supabase';
 import { generatePdfViaProxy } from '../utils/pdfApi';
+import { uploadLessonPdf } from '../utils/pdfUpload';
 import { useShareLesson } from '../hooks/useShareLesson';
 import toast from 'react-hot-toast';
 
@@ -1401,8 +1402,8 @@ export function LessonPrintModal({
         const msg = error.message ?? '';
         if (msg.includes('BLOB_READ_WRITE_TOKEN') || msg.includes('Blob store')) {
           errorMessage = 'Vercel Blob Storage not set up. In Vercel Dashboard: Storage → Create Blob Store, then redeploy.';
-        } else if (msg.includes('PDFBOLT_API_KEY') || msg.includes('VITE_PDFBOLT_API_KEY')) {
-          errorMessage = 'PDF API key missing. Set PDFBOLT_API_KEY (or VITE_PDFBOLT_API_KEY) in Vercel environment variables, then redeploy.';
+        } else if (msg.includes('PDFBOLT_API_KEY') || msg.includes('PDF generation is not configured')) {
+          errorMessage = 'PDF generation is not configured. Set PDFBOLT_API_KEY in Vercel environment variables, then redeploy.';
         } else if (msg.includes('bucket')) {
           errorMessage = 'Storage not configured. Create a Blob store in Vercel Dashboard → Storage.';
         } else if (msg.includes('Service role key') || msg.includes('SUPABASE_SERVICE_ROLE')) {
@@ -1459,44 +1460,9 @@ export function LessonPrintModal({
         emulateMediaType: 'screen',
       });
 
-      // Generate filename
-      const getLessonDisplayNumber = (num: string): string => {
-        const numericPart = num.replace(/^lesson/i, '').replace(/[^0-9]/g, '');
-        return numericPart || num;
-      };
-      
-      const timestamp = Date.now();
-      const fileName = exportMode === 'single'
-          ? (() => {
-              const lessonDisplayNumber = getLessonDisplayNumber(lessonNumber!);
-              return `${timestamp}_${currentSheetInfo.sheet}_Lesson_${lessonDisplayNumber}.pdf`;
-            })()
-          : `${timestamp}_${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
+      // ≤3 MB via Vercel; larger via signed direct DreamHost (max 100 MB). Path is server-built.
+      const { url: publicUrl } = await uploadLessonPdf(pdfBlob);
 
-      // Convert blob to base64 for Vercel API
-      const arrayBuffer = await pdfBlob.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-      // Upload via Vercel API to bypass RLS
-      const uploadResponse = await fetch('/api/upload-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName,
-          fileData: base64
-        })
-      });
-
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json().catch(() => ({ error: 'Upload failed' }));
-        console.error('Upload error:', errorData);
-        throw new Error(errorData.error || `Failed to upload PDF: ${uploadResponse.status}`);
-      }
-
-      const { url: publicUrl } = await uploadResponse.json();
-      
       if (!publicUrl) {
         throw new Error('No URL returned from upload');
       }

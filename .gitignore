@@ -46,7 +46,10 @@ artifacts/*/.env
 artifacts/*/.env.local
 
 # public/ is Vercel build output (scripts/vercel-build.sh). Do not commit it.
-# Must NOT be gitignored — Vercel refuses Output Directory paths listed in .gitignore.
+# Must NOT gitignore the Output Directory root `public/` — Vercel refuses that.
+# Ignore hashed asset bundles under public/assets (rebuilt on deploy).
+/public/assets/
+/artifacts/api-server/public/assets/
 
 # System Files
 .DS_Store

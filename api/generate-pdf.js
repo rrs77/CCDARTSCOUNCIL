@@ -1,14 +1,19 @@
 /**
  * POST /api/generate-pdf
- * Generate PDF via PDFBolt, upload to Supabase Storage, return public URL (Copy Link).
+ * Generate PDF via PDFBolt, upload to DreamHost, return authenticated proxy URL.
  *
- * Env: PDFBOLT_API_KEY, SUPABASE_SERVICE_ROLE_KEY
- * Optional: SUPABASE_URL / VITE_SUPABASE_URL, SUPABASE_JWT_SECRET
+ * Env: PDFBOLT_API_KEY, DREAMHOST_PDF_UPLOAD_URL, DREAMHOST_PDF_API_KEY
+ * Optional: DREAMHOST_PDF_BASE_URL, SUPABASE_JWT_SECRET
  */
-import { createClient } from '@supabase/supabase-js';
+import {
+  buildOwnedStoragePath,
+  buildProxyFileUrl,
+  dreamHostNotConfiguredResponse,
+  isDreamHostConfigured,
+  uploadToDreamHost,
+} from './_dreamhost.js';
 import {
   assertAuthorized,
-  DEFAULT_SUPABASE_URL,
   generatePdfBuffer,
   getPdfBoltApiKey,
   jsonResponse,
@@ -21,8 +26,8 @@ export const config = {
   maxDuration: 60,
 };
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function POST(request) {
@@ -31,50 +36,38 @@ export async function POST(request) {
     return jsonResponse(
       { error: 'PDF generation is not configured. Set PDFBOLT_API_KEY in Vercel env.' },
       503,
+      request,
     );
   }
 
+  // assertAuthorized → requireAuth + rate limit (C2 path ownership via auth.userId)
   const auth = await assertAuthorized(request);
   if (!auth.ok) return auth.response;
+
+  if (!isDreamHostConfigured()) {
+    return dreamHostNotConfiguredResponse();
+  }
 
   let body;
   try {
     body = await request.json();
   } catch {
-    return jsonResponse({ error: 'Invalid JSON body.' }, 400);
+    return jsonResponse({ error: 'Invalid JSON body.' }, 400, request);
   }
 
   const encodedHtml = body?.html;
   if (typeof encodedHtml !== 'string' || encodedHtml.length === 0) {
-    return jsonResponse({ error: 'Missing html content' }, 400);
+    return jsonResponse({ error: 'Missing html content' }, 400, request);
   }
   if (Buffer.byteLength(encodedHtml, 'utf8') > MAX_HTML_BYTES) {
-    return jsonResponse({ error: 'HTML payload exceeds maximum allowed size.' }, 413);
-  }
-
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-  if (!serviceRoleKey) {
     return jsonResponse(
-      {
-        error:
-          'Copy link requires SUPABASE_SERVICE_ROLE_KEY in Vercel environment variables.',
-      },
-      503,
+      { error: 'HTML payload exceeds maximum allowed size.' },
+      413,
+      request,
     );
   }
 
-  const supabaseUrl =
-    process.env.SUPABASE_URL ||
-    process.env.VITE_SUPABASE_URL ||
-    DEFAULT_SUPABASE_URL;
-
-  const fileNameRaw =
-    typeof body.fileName === 'string' && body.fileName
-      ? body.fileName
-      : `shared-pdfs/${Date.now()}_lesson.pdf`;
-  const storagePath = fileNameRaw.startsWith('shared-pdfs/')
-    ? fileNameRaw
-    : `shared-pdfs/${fileNameRaw}`;
+  const storagePath = buildOwnedStoragePath(auth.userId);
 
   try {
     const pdfBuffer = await generatePdfBuffer(
@@ -86,36 +79,35 @@ export async function POST(request) {
       }),
     );
 
-    const supabase = createClient(supabaseUrl, serviceRoleKey, {
-      auth: { persistSession: false },
+    await uploadToDreamHost({
+      buffer: pdfBuffer,
+      storagePath,
+      contentType: 'application/pdf',
     });
 
-    const { error: uploadError } = await supabase.storage
-      .from('lesson-pdfs')
-      .upload(storagePath, pdfBuffer, {
-        contentType: 'application/pdf',
-        upsert: true,
-      });
-
-    if (uploadError) {
-      return jsonResponse({ error: `Upload failed: ${uploadError.message}` }, 500);
-    }
-
-    const { data: urlData } = supabase.storage
-      .from('lesson-pdfs')
-      .getPublicUrl(storagePath);
-
-    if (!urlData?.publicUrl) {
-      return jsonResponse({ error: 'No public URL returned after upload.' }, 500);
-    }
+    const url = buildProxyFileUrl(request, storagePath);
 
     return jsonResponse({
       success: true,
-      url: urlData.publicUrl,
+      url,
       path: storagePath,
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : 'PDF generation failed';
-    return jsonResponse({ error: message }, 500);
+    console.error(
+      'generate-pdf failed:',
+      error instanceof Error ? error.message : error,
+    );
+    const status = error?.status && Number.isFinite(error.status) ? error.status : 500;
+    const clientMessage =
+      status === 413
+        ? 'HTML payload exceeds maximum allowed size.'
+        : status === 503
+          ? 'PDF generation is not configured.'
+          : 'PDF generation failed.';
+    return jsonResponse(
+      { error: clientMessage },
+      status >= 400 && status < 600 ? status : 500,
+      request,
+    );
   }
 }

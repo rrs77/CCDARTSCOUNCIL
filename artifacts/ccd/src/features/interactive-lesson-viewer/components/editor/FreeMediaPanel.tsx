@@ -1,8 +1,9 @@
 import React, { useEffect, useId, useRef, useState } from 'react';
 import { Image as ImageIcon, Music, Pause, Play, Search, GripVertical } from 'lucide-react';
 import {
+  checkFreesoundAvailable,
+  fetchFreesoundPreviewObjectUrl,
   formatFreeMediaAttribution,
-  isFreesoundAvailable,
   searchFreeMedia,
   type AudioProvider,
   type FreeMediaItem,
@@ -59,7 +60,7 @@ export function FreeMediaPanel({
   onAddToAudioLane,
 }: FreeMediaPanelProps) {
   const searchId = useId();
-  const freesoundOk = isFreesoundAvailable();
+  const [freesoundOk, setFreesoundOk] = useState(false);
 
   const [tab, setTab] = useState<Tab>('image');
   const [imageProvider, setImageProvider] = useState<ImageProvider>('openverse');
@@ -76,6 +77,17 @@ export function FreeMediaPanel({
 
   const abortRef = useRef<AbortController | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const previewObjectUrlRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    void checkFreesoundAvailable().then((ok) => {
+      if (!cancelled) setFreesoundOk(ok);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     return () => {
@@ -83,6 +95,10 @@ export function FreeMediaPanel({
       if (audioRef.current) {
         audioRef.current.pause();
         audioRef.current = null;
+      }
+      if (previewObjectUrlRef.current) {
+        URL.revokeObjectURL(previewObjectUrlRef.current);
+        previewObjectUrlRef.current = null;
       }
     };
   }, []);
@@ -129,13 +145,28 @@ export function FreeMediaPanel({
     }
   };
 
-  const ensureAudio = (item: FreeMediaItem) => {
+  const revokePreviewObjectUrl = () => {
+    if (previewObjectUrlRef.current) {
+      URL.revokeObjectURL(previewObjectUrlRef.current);
+      previewObjectUrlRef.current = null;
+    }
+  };
+
+  const ensureAudio = async (item: FreeMediaItem) => {
     if (audioRef.current && playingId === item.id) return audioRef.current;
     if (audioRef.current) {
       audioRef.current.pause();
       audioRef.current = null;
     }
-    const el = new Audio(item.url);
+    revokePreviewObjectUrl();
+
+    let src = item.url;
+    if (item.provider === 'freesound' && item.previewPath) {
+      src = await fetchFreesoundPreviewObjectUrl(item.previewPath);
+      previewObjectUrlRef.current = src;
+    }
+
+    const el = new Audio(src);
     audioRef.current = el;
     el.preload = 'metadata';
     el.ontimeupdate = () => setAudioTime(el.currentTime);
@@ -162,18 +193,25 @@ export function FreeMediaPanel({
       setPlayingId(null);
       return;
     }
-    const el = ensureAudio(item);
-    void el.play().then(
-      () => setPlayingId(item.id),
-      () => setPlayingId(null),
+    void ensureAudio(item).then(
+      (el) =>
+        el.play().then(
+          () => setPlayingId(item.id),
+          () => setPlayingId(null),
+        ),
+      () => {
+        setPlayingId(null);
+        setError('Audio preview failed — try Open in source.');
+      },
     );
   };
 
   const scrubTo = (item: FreeMediaItem, ratio: number) => {
-    const el = ensureAudio(item);
-    if (!el.duration) return;
-    el.currentTime = Math.max(0, Math.min(el.duration, ratio * el.duration));
-    setAudioTime(el.currentTime);
+    void ensureAudio(item).then((el) => {
+      if (!el.duration) return;
+      el.currentTime = Math.max(0, Math.min(el.duration, ratio * el.duration));
+      setAudioTime(el.currentTime);
+    });
   };
 
   const previewItem = results.find((r) => r.id === previewId) || null;

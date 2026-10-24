@@ -21,8 +21,8 @@ import { decideResourceAccess } from '../../../api/_resourceAccess.js';
 
 const SIGNED_URL_SECONDS = 300;
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function GET(request) {

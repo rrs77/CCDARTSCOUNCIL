@@ -2,7 +2,7 @@
  * Download / resource helpers: allow-list, CSV sanitisation, geolocation cache.
  */
 
-import { createServiceClient, jsonResponse } from './_authShared.js';
+import { createServiceClient, corsHeaders, jsonResponse } from './_authShared.js';
 
 /** Hosts allowed as redirect targets for tracked downloads. */
 export const ALLOWED_DOWNLOAD_HOSTS = new Set([
@@ -136,17 +136,13 @@ export function userMayDownload(profile, resource) {
   return true;
 }
 
-export function redirectResponse(url) {
+export function redirectResponse(url, request = null) {
   return new Response(null, {
     status: 302,
     headers: {
       Location: url,
       'Cache-Control': 'no-store',
-      ...Object.fromEntries(
-        Object.entries({
-          'Access-Control-Allow-Origin': '*',
-        }),
-      ),
+      ...corsHeaders({}, request),
     },
   });
 }

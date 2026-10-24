@@ -19,8 +19,8 @@ import {
 } from '../../../api/_authShared.js';
 import { codeIsRedeemable, normaliseAccessCode, verifyAccessCode } from '../../../api/_resourceAccess.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function POST(request) {

@@ -4,29 +4,28 @@
  */
 
 import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypto';
+import {
+  jsonResponse as sharedJsonResponse,
+  optionsResponse as sharedOptionsResponse,
+} from './_authShared.js';
 
 const TOKEN_TTL_MS = 8 * 60 * 60 * 1000;
 
-function jsonResponse(body, status = 200) {
-  return new Response(JSON.stringify(body), {
+function jsonResponse(body, status = 200, request = null) {
+  return sharedJsonResponse(
+    body,
     status,
-    headers: {
-      'Content-Type': 'application/json',
-      'Cache-Control': 'no-store',
-    },
-  });
+    { 'Cache-Control': 'no-store' },
+    request,
+  );
 }
 
-function optionsResponse() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
-      'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-      'Cache-Control': 'no-store',
-    },
-  });
+function optionsResponse(request = null) {
+  const res = sharedOptionsResponse(request);
+  // Preserve no-store on unlock OPTIONS
+  const headers = new Headers(res.headers);
+  headers.set('Cache-Control', 'no-store');
+  return new Response(null, { status: 204, headers });
 }
 
 function signingSecret() {

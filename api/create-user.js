@@ -31,8 +31,8 @@ import {
   upsertProfileRow,
 } from './_inviteShared.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 function safeJson(body, status) {
