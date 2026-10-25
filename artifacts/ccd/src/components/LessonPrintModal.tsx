@@ -640,6 +640,17 @@ export function LessonPrintModal({
           body.single-lesson .lesson-header { break-inside: avoid; page-break-inside: avoid; }
           body.single-lesson .print-header-note { font-size: 13px; opacity: 0.9; margin-bottom: 4px; }
 
+          /* Unit / half-term (multi-lesson) PDF: let sections flow so page 1 is not half empty */
+          body.multi-lesson .lesson-page { max-width: none; width: 100%; min-height: 0; }
+          body.multi-lesson .category-group { break-inside: auto; page-break-inside: auto; }
+          body.multi-lesson .activity-card { break-inside: auto; page-break-inside: auto; }
+          body.multi-lesson .section-card { break-inside: auto; page-break-inside: auto; }
+          body.multi-lesson .activity-category,
+          body.multi-lesson .activity-header { break-after: avoid; page-break-after: avoid; }
+          body.multi-lesson .activity-resources,
+          body.multi-lesson .goal-box,
+          body.multi-lesson .lesson-header { break-inside: avoid; page-break-inside: avoid; }
+
           /* Print styles */
           @media print {
             body { background: white; }
@@ -648,7 +659,7 @@ export function LessonPrintModal({
           }
         </style>
       </head>
-      <body class="${isSingleLesson ? 'single-lesson' : ''}">
+      <body class="${isSingleLesson ? 'single-lesson' : 'multi-lesson'}">
         <div class="lesson-page">
     `;
 
@@ -821,11 +832,11 @@ export function LessonPrintModal({
           Object.entries(groupedEyfs).forEach(([area, statements]) => {
             if (statements && statements.length > 0) {
               // Statements without an "Area:" prefix use the statement as its own area —
-              // on the single-lesson PDF don't repeat it as a heading above itself.
+              // don't repeat it as a heading above itself (same rule as single-lesson PDF).
               const areaIsStatement = statements.every((st) => st.trim() === area.trim());
               htmlContent += `
                 <div class="goal-box" style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
-                  ${isSingleLesson && areaIsStatement ? '' : `<h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${area}</h4>`}
+                  ${areaIsStatement ? '' : `<h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${area}</h4>`}
                   <ul style="list-style: none; padding: 0; margin: 0;">
               `;
               statements.forEach(statement => {
@@ -930,8 +941,9 @@ export function LessonPrintModal({
       }
 
       // Add Standards section at the top (as tags/pills like in UI).
-      // Single-lesson PDF: skip when the same statements were already listed as Learning Goals.
-      if (lessonStandardsList.length > 0 && !(isSingleLesson && hasEyfsStandards)) {
+      // Skip when the same statements were already listed as Learning Goals
+      // (same rule as the single-lesson PDF path).
+      if (lessonStandardsList.length > 0 && !hasEyfsStandards) {
         htmlContent += `
           <div style="margin-bottom: 16px;">
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
@@ -1225,13 +1237,11 @@ export function LessonPrintModal({
       </div>
     `;
 
-    if (isSingleLesson) {
-      // 13px minimum for every print size on the single-lesson PDF (CSS and inline styles).
-      const min13 = (html: string) =>
-        html.replace(/font-size:\s*(\d+(?:\.\d+)?)px/g, (m, n) => (parseFloat(n) < 13 ? 'font-size: 13px' : m));
-      return [min13(htmlContent), min13(footerContent), headerContent];
-    }
-    return [htmlContent, footerContent, headerContent];
+    // 13px minimum for every print size (CSS and inline styles) on single-lesson
+    // and multi-lesson (unit / half-term) PDFs.
+    const min13 = (html: string) =>
+      html.replace(/font-size:\s*(\d+(?:\.\d+)?)px/g, (m, n) => (parseFloat(n) < 13 ? 'font-size: 13px' : m));
+    return [min13(htmlContent), min13(footerContent), headerContent];
   };
 
   if (lessonsToRender.length === 0) {
