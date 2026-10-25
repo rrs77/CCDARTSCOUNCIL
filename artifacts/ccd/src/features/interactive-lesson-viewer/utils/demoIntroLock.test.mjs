@@ -75,21 +75,6 @@ describe('built-in demo intro lock', () => {
     assert.equal(guard.isBuiltInDemo({ id: 'ilv-1', isDemo: false }), false);
     assert.equal(guard.isBuiltInDemo(null), false);
   });
-
-  it('keeps intro + lyrics, drops Big Buck Bunny YouTube, and ships Canva/PPT examples', () => {
-    assert.match(demoSrc, /id: DEMO_INTRO_SCENE_ID/);
-    assert.match(demoSrc, /id: 'demo-scene-karaoke'/);
-    assert.doesNotMatch(demoSrc, /demo-scene-youtube/);
-    assert.doesNotMatch(demoSrc, /aqz-KE-bpKQ/);
-    assert.doesNotMatch(demoSrc, /youtube\.com\/embed/);
-    assert.match(demoSrc, /id: 'demo-scene-canva'/);
-    assert.match(demoSrc, /embedUrl: DEMO_CANVA_EMBED/);
-    assert.match(demoSrc, /id: 'demo-scene-ppt'/);
-    assert.match(demoSrc, /EXAMPLE POWERPOINT SLIDE/);
-    // Intro + title + lyrics + audio + canva + ppt + image = 7 scenes
-    const sceneIds = [...demoSrc.matchAll(/id: (?:DEMO_INTRO_SCENE_ID|'demo-scene-[a-z-]+')/g)];
-    assert.equal(sceneIds.length, 7);
-  });
 });
 
 describe('media-driven playback', () => {

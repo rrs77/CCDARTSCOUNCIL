@@ -7,22 +7,12 @@ import {
   DEMO_LESSON_ID,
 } from './demoGuard';
 import { CCD_LOGO_COLOUR_PATH } from '../../../utils/brandLogo';
-import { normalizeCanvaEmbedUrl } from '../utils/canvaEmbed';
 
 const INTRO_VIDEO = DEMO_INTRO_VIDEO;
 const KARAOKE_AUDIO = '/interactive-lessons/sample-karaoke-placeholder.mp3';
 const LOGO = CCD_LOGO_COLOUR_PATH;
 
-/** Public Canva view/embed used elsewhere in the demo curriculum (classroom example). */
-const DEMO_CANVA_EMBED = normalizeCanvaEmbedUrl(
-  'https://www.canva.com/design/DAHCD56d7sA/ip6Kq4MhJ4gRUhq6pVno6Q/view',
-);
-
-/**
- * Polished demo interactive lesson shipped with the prototype.
- * Scenes: intro sting → title → lyrics (vocals) → audio → Canva → PowerPoint → image.
- * One video example only (lyrics/vocals); no separate YouTube sample scene.
- */
+/** Polished demo interactive lesson shipped with the prototype. */
 export function buildDemoInteractiveLesson(ownerId = 'system-demo'): InteractiveLesson {
   const now = new Date().toISOString();
 
@@ -30,7 +20,7 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
     id: DEMO_LESSON_ID,
     title: 'CCDesigner Slides Demo',
     description:
-      'Classroom-ready sample slides: intro sting, title, lyric video with timed lyrics, audio, Canva and PowerPoint examples.',
+      'Classroom-ready sample slides: intro sting, title, lyric video with timed lyrics, YouTube, audio, Canva and PowerPoint embeds.',
     ownerId,
     ownerEmail: 'demo@ccd.preview',
     status: 'published',
@@ -49,7 +39,7 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
       },
       {
         id: createId('media'),
-        name: 'Sample lyric audio bed',
+        name: 'Sample lyric video bed (placeholder)',
         kind: 'audio',
         url: KARAOKE_AUDIO,
         durationMs: 32000,
@@ -138,11 +128,11 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
           backgroundColor: 'rgba(31,27,77,0.55)',
         },
         notes:
-          'SAMPLE — timed lyrics for classroom lyric video demo (vocals / backing toggle).',
+          'SAMPLE — royalty-free placeholder tone (not a commercial song). Timed lyrics for classroom lyric video demo.',
         overlays: [
           {
             id: 'ov-kara-label',
-            text: 'Sample lyric video · vocals',
+            text: 'Sample lyric video · placeholder audio',
             style: 'body',
             x: 6,
             y: 8,
@@ -161,6 +151,30 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
           { id: 'ly7', text: 'One more time from the start', startMs: 24000, endMs: 28000 },
           { id: 'ly8', text: 'Rhythm lives inside your heart', startMs: 28000, endMs: 32000 },
         ],
+      },
+      {
+        id: 'demo-scene-youtube',
+        type: 'youtube',
+        title: 'YouTube embed',
+        durationMs: 15000,
+        advanceMode: 'manual',
+        transition: { type: 'slide', durationMs: 500 },
+        // Public domain / Creative Commons education-friendly sample (Big Buck Bunny trailer often used in demos;
+        // using a short YouTube embed ID that is commonly available for testing).
+        embedUrl: 'https://www.youtube.com/embed/aqz-KE-bpKQ',
+        overlays: [
+          {
+            id: 'ov-yt',
+            text: 'YouTube · sample embed',
+            style: 'body',
+            x: 4,
+            y: 4,
+            width: 50,
+            color: '#FFFFFF',
+            fontSize: 14,
+          },
+        ],
+        notes: 'Paste any YouTube watch or embed URL. Playback depends on YouTube availability in the classroom.',
       },
       {
         id: 'demo-scene-audio',
@@ -202,11 +216,31 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
         advanceMode: 'manual',
         transition: { type: 'fade', durationMs: 500 },
         backgroundColor: '#1F1B4D',
-        embedUrl: DEMO_CANVA_EMBED,
         posterUrl: LOGO,
-        overlays: [],
+        overlays: [
+          {
+            id: 'ov-canva-1',
+            text: 'Canva in the classroom',
+            style: 'headline',
+            x: 8,
+            y: 36,
+            width: 84,
+            color: '#FFFFFF',
+            fontSize: 36,
+          },
+          {
+            id: 'ov-canva-2',
+            text: 'Link your share URL to present live layouts.',
+            style: 'subtitle',
+            x: 8,
+            y: 56,
+            width: 84,
+            color: '#FFC93C',
+            fontSize: 20,
+          },
+        ],
         notes:
-          'Example Canva embed (public view link). In your own decks, paste Share → More → Embed.',
+          'Canva trade-off: view/embed links preserve layout; exported MP4 preserves motion but is a flat video. Animations in live embeds depend on Canva’s embed player.',
       },
       {
         id: 'demo-scene-ppt',
@@ -215,54 +249,32 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
         durationMs: 12000,
         advanceMode: 'manual',
         transition: { type: 'slide', durationMs: 500 },
-        backgroundColor: '#F4F3FA',
+        backgroundColor: '#1F1B4D',
         posterUrl: LOGO,
         overlays: [
           {
-            id: 'ov-ppt-eyebrow',
-            text: 'EXAMPLE POWERPOINT SLIDE',
-            style: 'body',
-            x: 8,
-            y: 10,
-            width: 84,
-            color: '#4338E8',
-            fontSize: 14,
-            fontFamily: 'plus-jakarta',
-          },
-          {
             id: 'ov-ppt-1',
-            text: 'Lesson warm-up agenda',
+            text: 'PowerPoint decks',
             style: 'headline',
             x: 8,
-            y: 22,
+            y: 36,
             width: 84,
-            color: '#1F1B4D',
+            color: '#FFFFFF',
             fontSize: 36,
-            fontFamily: 'plus-jakarta',
           },
           {
             id: 'ov-ppt-2',
-            text: '1. Pulse game (2 min)   2. Echo clap (3 min)   3. Sing the hook (5 min)',
+            text: 'Embed via Office Online or export to MP4.',
             style: 'subtitle',
             x: 8,
-            y: 48,
+            y: 56,
             width: 84,
-            color: '#5F5B7A',
+            color: '#FFC93C',
             fontSize: 20,
-          },
-          {
-            id: 'ov-ppt-3',
-            text: 'Paste an Office Online or SharePoint embed URL to show a live .pptx here.',
-            style: 'body',
-            x: 8,
-            y: 72,
-            width: 84,
-            color: '#77738F',
-            fontSize: 16,
           },
         ],
         notes:
-          'Clearly labelled example slide content. Teachers can replace this with an Office Online embed of their own deck.',
+          'PowerPoint trade-off: Office Online embed keeps slide advances when the file is publicly reachable; uploaded .pptx plays as designed only via Office Online or after MP4 export (animations flattened).',
       },
       {
         id: 'demo-scene-image',
