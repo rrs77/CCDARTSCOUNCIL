@@ -1206,19 +1206,22 @@ export function LessonPrintModal({
       ? exportCustomFooter
       : [currentSheetInfo.display || '', `© ${footerCompany} ${footerYear}`].filter(Boolean).join(' • ');
     
-    // Get lesson number for footer (first lesson if multiple)
+    // Get lesson number for footer (single-lesson only; multi-lesson omits Lesson N)
     const firstLessonNum = lessonsToRender[0];
     const getLessonDisplayNumber = (num: string): string => {
       const numericPart = num.replace(/^lesson/i, '').replace(/[^0-9]/g, '');
       return numericPart || num;
     };
     const lessonDisplayNum = firstLessonNum ? (halfTermId ? getTermSpecificLessonNumber(firstLessonNum, halfTermId) : getLessonDisplayNumber(firstLessonNum)) : '1';
+    const footerPagePill = isSingleLesson
+      ? `Lesson ${lessonDisplayNum} • Page <span class="pageNumber"></span> of <span class="totalPages"></span>`
+      : `Page <span class="pageNumber"></span> of <span class="totalPages"></span>`;
     
     const footerContent = `
-      <div style="width: 100%; font-size: 9px; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; color: #5F6368; font-family: 'Inter', sans-serif;">
+      <div style="width: 100%; font-size: 13px; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; color: #5F6368; font-family: 'Inter', sans-serif;">
         <span style="color: #5F6368;">${productName.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
         <span style="color: #5F6368;">${footerCenterText}</span>
-        <span style="background: #E8EAEF; color: #0f766e; padding: 4px 12px; border-radius: 50px; font-weight: 500;">Lesson ${lessonDisplayNum} • Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+        <span style="background: #E8EAEF; color: #0f766e; padding: 4px 12px; border-radius: 50px; font-weight: 500;">${footerPagePill}</span>
       </div>
     `;
 
