@@ -108,27 +108,29 @@ async function halfTermsHasScopeColumns(): Promise<boolean> {
 }
 
 /**
- * P2a interim: keep caller-org rows + NULL-org shared rows; hide a shared row
- * when the org already has its own row with the same name. Does not backfill
- * or delete legacy NULL-org catalog rows (awaits Rob).
+ * Rob: NULL-org defaults stay readable via RLS (no interim hide filter).
+ * After seeding, org + shared may share a name — collapse to one UI row,
+ * preferring the org-scoped (editable) copy. Shared-only names are kept.
  */
-function mergeOrgAndSharedByName<T extends { name?: string | null; organisation_id?: string | null }>(
+function preferOrgScopedByName<T extends { name?: string | null; organisation_id?: string | null }>(
   rows: T[],
-  organisationId: string | null,
 ): T[] {
-  const orgRows = organisationId
-    ? rows.filter((r) => r.organisation_id === organisationId)
-    : [];
-  const orgNames = new Set(
-    orgRows.map((r) => (r.name == null ? '' : String(r.name))).filter(Boolean),
-  );
-  const shared = rows.filter(
-    (r) =>
-      r.organisation_id == null &&
-      r.name != null &&
-      !orgNames.has(String(r.name)),
-  );
-  return [...orgRows, ...shared];
+  const sorted = [...rows].sort((a, b) => {
+    const aOrg = a.organisation_id == null ? 1 : 0;
+    const bOrg = b.organisation_id == null ? 1 : 0;
+    return aOrg - bOrg;
+  });
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const row of sorted) {
+    const name = row.name == null ? '' : String(row.name);
+    if (name) {
+      if (seen.has(name)) continue;
+      seen.add(name);
+    }
+    out.push(row);
+  }
+  return out;
 }
 
 /** Normalize lesson_number for org-scoped unique indexes (NULL → ''). */
@@ -1216,7 +1218,6 @@ const _yearGroupsApiImpl = {
   getAll: async () => {
     try {
       console.log('🔍 Fetching year groups from Supabase table:', TABLES.YEAR_GROUPS);
-      const organisationId = await resolveOrganisationId();
       const { data, error } = await supabase
         .from(TABLES.YEAR_GROUPS)
         .select('*')
@@ -1227,21 +1228,15 @@ const _yearGroupsApiImpl = {
         throw error;
       }
       
-      // Org rows + NULL-org shared; hide shared when org has same name (P2a interim).
-      const merged = mergeOrgAndSharedByName(data || [], organisationId);
+      // RLS returns org + NULL-org shared; prefer org row when names collide.
+      const merged = preferOrgScopedByName(data || []);
       console.log('📦 Raw year groups data from Supabase:', data);
       
-      // Deduplicate by name (org preferred via merge) and use name as frontend id
-      const uniqueData = merged.reduce((acc, group) => {
-        const existing = acc.find((g: any) => g.name === group.name);
-        if (!existing) {
-          acc.push({
-            ...group,
-            id: group.name // Use name as ID for frontend compatibility
-          });
-        }
-        return acc;
-      }, [] as any[]);
+      // Use name as frontend id (legacy sheet compatibility).
+      const uniqueData = merged.map((group: any) => ({
+        ...group,
+        id: group.name,
+      }));
       
       console.log('📦 Deduplicated and formatted year groups for frontend:', uniqueData);
       return uniqueData;
@@ -1583,15 +1578,14 @@ export const customCategoriesApi = {
 const _customCategoriesApiImpl = {
   getAll: async () => {
     try {
-      const organisationId = await resolveOrganisationId();
       const { data, error } = await supabase
         .from(TABLES.CUSTOM_CATEGORIES)
         .select('*')
         .order('position');
       
       if (error) throw error;
-      // Org + shared NULL-org; hide shared when org owns same name (P2a interim).
-      const rows = mergeOrgAndSharedByName(data || [], organisationId);
+      // RLS returns org + NULL-org shared; prefer org row when names collide.
+      const rows = preferOrgScopedByName(data || []);
       
       // Log raw data from Supabase to debug yearGroups
       const categoriesWithYearGroups = rows.filter((r: any) => {
@@ -1811,15 +1805,14 @@ export const categoryGroupsApi = {
 const _categoryGroupsApiImpl = {
   getAll: async () => {
     try {
-      const organisationId = await resolveOrganisationId();
       const { data, error } = await supabase
         .from(TABLES.CATEGORY_GROUPS)
         .select('*')
         .order('sort_order');
       
       if (error) throw error;
-      // Org + shared NULL-org; hide shared when org owns same name (P2a interim).
-      return mergeOrgAndSharedByName(data || [], organisationId);
+      // RLS returns org + NULL-org shared; prefer org row when names collide.
+      return preferOrgScopedByName(data || []);
     } catch (error) {
       console.warn('Failed to get category groups from Supabase:', error);
       throw error;

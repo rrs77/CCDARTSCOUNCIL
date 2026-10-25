@@ -119,6 +119,8 @@ export const TABLES = {
   ACTIVITY_STACKS: 'activity_stacks',
   TIMETABLE_CLASSES: 'timetable_classes',
   BRANDING_SETTINGS: 'branding_settings',
+  /** Per-organisation planner curriculum JSON (frameworks/strands/statements). */
+  PLANNER_CURRICULUM: 'planner_curriculum',
   
   // Unused tables (commented out for safety - can be deleted later)
   // ACTIVITIES_ROWS: 'activities_rows',

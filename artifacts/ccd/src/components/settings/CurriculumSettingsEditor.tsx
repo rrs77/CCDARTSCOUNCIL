@@ -13,6 +13,7 @@ import {
 import {
   defaultPlannerTerms,
   loadPlannerCurriculum,
+  loadPlannerCurriculumAsync,
   loadPlannerTerms,
   savePlannerCurriculum,
   uid,
@@ -120,15 +121,16 @@ export function CurriculumSettingsEditor() {
   const [filterKeyStage, setFilterKeyStage] = useState<PlannerKeyStageId | 'all'>('all');
 
   useEffect(() => {
-    const onUpdate = () => {
-      const loaded = loadPlannerCurriculum();
+    const apply = (loaded: PlannerCurriculumState) => {
       const terms =
         loaded.terms.length > 0
           ? loaded.terms
           : loadPlannerTerms(currentAcademicYear);
       setState({ ...loaded, terms });
     };
+    const onUpdate = () => apply(loadPlannerCurriculum());
     window.addEventListener('ccd:planner-curriculum-updated', onUpdate);
+    void loadPlannerCurriculumAsync().then(apply);
     return () => window.removeEventListener('ccd:planner-curriculum-updated', onUpdate);
   }, [currentAcademicYear]);
 
