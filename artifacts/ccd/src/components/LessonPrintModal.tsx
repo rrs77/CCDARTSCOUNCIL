@@ -309,7 +309,8 @@ export function LessonPrintModal({
           
           @page {
             size: A4;
-            margin: 12mm 15mm 25mm 15mm;
+            /* Bottom 14mm reserved for @bottom-center print footer (see lessonExportPrintFooterCss). */
+            margin: 12mm 15mm 14mm 15mm;
           }
           
           .lesson-page {
@@ -1200,12 +1201,12 @@ export function LessonPrintModal({
     `;
 
     // PDFBolt header: colour logo top-left on EVERY page (21×86). Print-window
-    // fallback uses a repeating table thead (margin boxes unsupported) — see planLogo.ts.
+    // fallback uses a repeating table thead — see planLogo.ts.
     const headerContent = planLogoHeaderTemplateHtml();
 
-    // PDFBolt footer (server path, 13px). Print-window fallback emits no custom footer
-    // (Chromium lacks @page margin boxes; position:fixed printed "Page 0") — see
-    // lessonExportPrintFooterCss() / lessonExportPrintFooterBodyHtml().
+    // PDFBolt footer (server path, 13px). Print-window fallback uses @page @bottom-center
+    // (Chromium 131+); never position:fixed + counter(page) ("Page 0") — see
+    // lessonExportPrintFooterCss().
     const footerContent = lessonExportFooterTemplateHtml();
 
     // 13px minimum for every print size (CSS and inline styles) on single-lesson

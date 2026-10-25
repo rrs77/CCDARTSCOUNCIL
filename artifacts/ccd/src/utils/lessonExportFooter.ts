@@ -3,10 +3,8 @@
  * Ignores branding productName / footerCompany — always "Page N · © CCDesigner <year>".
  *
  * Server/PDFBolt path uses {@link lessonExportFooterTemplateHtml} (Chromium fills .pageNumber).
- * Browser print-window fallback: Chromium does not support CSS @page margin boxes
- * (@bottom-center), and a position:fixed body footer prints "Page 0" and overlaps content.
- * Therefore the print-window path emits no custom footer — the browser's own page footer
- * applies. Never emit "Page 0" or a position:fixed print footer.
+ * Browser print-window fallback uses CSS @page @bottom-center (Chromium 131+). Never use a
+ * position:fixed body footer with counter(page) — that prints "Page 0".
  */
 
 /** Runtime copyright year for export footers (not branding.footerCopyrightYear). */
@@ -30,20 +28,28 @@ export function lessonExportFooterTemplateHtml(now: Date = new Date()): string {
 }
 
 /**
- * @deprecated No in-body print footer — Chromium cannot paginate position:fixed counters
- * (prints "Page 0") and does not support @page @bottom-center margin boxes in available
- * Chromium. Kept as an empty string so callers stay stable.
+ * @deprecated No in-body print footer — use {@link lessonExportPrintFooterCss} (@page margin box).
+ * Kept as an empty string so callers stay stable. Never emit "Page 0".
  */
 export function lessonExportPrintFooterBodyHtml(_now: Date = new Date()): string {
   return '';
 }
 
 /**
- * Print-window CSS for the export footer.
- * Empty on purpose: margin boxes are unsupported, and a position:fixed body footer
- * would print "Page 0" and overlap content. Never emits "Page 0" or position:fixed.
- * Inline styles remain allowed by the print CSP (style-src 'unsafe-inline').
+ * Print-window CSS: @page margin box with Page N · © CCDesigner &lt;year&gt;.
+ * Top/sides match the LessonPrintModal sheet (12mm / 15mm); bottom ~14mm for the box.
+ * Never emits position:fixed or the literal "Page 0". Year is a numeric constant only.
  */
-export function lessonExportPrintFooterCss(_now: Date = new Date()): string {
-  return '';
+export function lessonExportPrintFooterCss(now: Date = new Date()): string {
+  const year = lessonExportFooterYear(now);
+  return `
+          @page {
+            margin: 12mm 15mm 14mm 15mm;
+            @bottom-center {
+              content: "Page " counter(page) " · © CCDesigner ${year}";
+              font-size: 13px;
+              color: #555;
+            }
+          }
+`;
 }

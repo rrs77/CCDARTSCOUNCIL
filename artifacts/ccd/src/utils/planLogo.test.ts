@@ -205,6 +205,9 @@ describe('LessonPrintModal PDF header / print thead chrome', () => {
     assert.match(thead, /ccd-export-print-logo-row/);
     assert.ok(thead.includes(PLAN_LOGO_DATA_URI));
     assert.match(thead, /height="21"/);
+    assert.match(thead, /padding:0 0 16px 0/);
+
+    assert.match(header, /padding:6px 20px 10px 20px/);
 
     const css = planLogoPrintRunningCss();
     assert.match(css, /table-header-group/);

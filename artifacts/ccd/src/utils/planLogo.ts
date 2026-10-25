@@ -91,7 +91,8 @@ export const PLAN_LOGO_COLOUR_DATA_URL = PLAN_LOGO_DATA_URI;
  * Pair with a top margin that reserves the header band (see PDFBOLT_MARGINS.top).
  */
 export function planLogoHeaderTemplateHtml(): string {
-  return `<div style="width:100%;margin:0;padding:6px 20px 0 20px;box-sizing:border-box;">${planLogoImg()}</div>`;
+  // Extra ~10px below the logo so the teal header / first body line clear it.
+  return `<div style="width:100%;margin:0;padding:6px 20px 10px 20px;box-sizing:border-box;">${planLogoImg()}</div>`;
 }
 
 /**
@@ -99,7 +100,8 @@ export function planLogoHeaderTemplateHtml(): string {
  * Hidden on screen so PDFBolt (emulateMediaType: screen) + headerTemplate is not doubled.
  */
 export function planLogoPrintTheadHtml(): string {
-  return `<thead class="ccd-export-print-logo-row"><tr><td style="padding:0 0 8px 0;">${planLogoImg('margin:0;')}</td></tr></thead>`;
+  // Extra bottom padding (~16px) so the teal lesson header clears the 21×86 colour logo.
+  return `<thead class="ccd-export-print-logo-row"><tr><td style="padding:0 0 16px 0;">${planLogoImg('margin:0;')}</td></tr></thead>`;
 }
 
 /** CSS for the print-window repeating logo thead (screen-hidden) + colour print rules. */

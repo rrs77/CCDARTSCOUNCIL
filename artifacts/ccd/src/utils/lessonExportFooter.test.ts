@@ -34,18 +34,19 @@ describe('lesson export PDF/print footer', () => {
     assert.doesNotMatch(html, /CCDesigner \| CCDesigner/);
   });
 
-  it('print-window HTML/CSS never emits Page 0 or a position:fixed footer', () => {
+  it('print-window CSS uses @bottom-center — never Page 0 or position:fixed', () => {
     const now = new Date('2026-06-15T00:00:00Z');
-    const body = lessonExportPrintFooterBodyHtml(now);
-    const css = lessonExportPrintFooterCss(now);
-    // Chromium lacks @page margin boxes; empty fallback avoids wrong footers.
-    assert.equal(body, '');
-    assert.equal(css, '');
+    assert.equal(lessonExportPrintFooterBodyHtml(now), '');
 
-    const printWindowSnippet = `<style>${css}</style>${body}`;
-    assert.doesNotMatch(printWindowSnippet, /Page\s+0/);
-    assert.doesNotMatch(printWindowSnippet, /position:\s*fixed/i);
-    assert.doesNotMatch(printWindowSnippet, /ccd-export-print-footer/);
-    assert.doesNotMatch(printWindowSnippet, /counter\(page\)/);
+    const css = lessonExportPrintFooterCss(now);
+    assert.match(css, /@page/);
+    assert.match(css, /@bottom-center/);
+    assert.match(css, /content:\s*"Page "\s*counter\(page\)/);
+    assert.match(css, /© CCDesigner 2026/);
+    assert.match(css, /font-size:\s*13px/);
+    assert.match(css, /margin:\s*12mm\s+15mm\s+14mm\s+15mm/);
+    assert.doesNotMatch(css, /Page\s+0/);
+    assert.doesNotMatch(css, /position:\s*fixed/i);
+    assert.doesNotMatch(css, /ccd-export-print-footer/);
   });
 });

@@ -16,7 +16,7 @@ export const A4_HEIGHT_PX = A4_HEIGHT_MM * MM_TO_PX;
  * reserves the Page N · © CCDesigner footer. Body layout is otherwise unchanged.
  */
 export const PDFBOLT_MARGINS = {
-  top: '40px',
+  top: '50px',
   right: '20px',
   left: '20px',
   bottom: '55px',
@@ -153,7 +153,7 @@ export function getLessonPdfStyles(): string {
       color: #1a1a1a;
       background: #fff;
     }
-    @page { size: A4; margin: 12mm 15mm 25mm 15mm; }
+    @page { size: A4; margin: 12mm 15mm 14mm 15mm; }
     .lesson-page {
       width: 100%;
       max-width: 210mm;

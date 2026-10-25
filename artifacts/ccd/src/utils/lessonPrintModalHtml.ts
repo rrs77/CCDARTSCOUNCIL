@@ -1,10 +1,12 @@
 /**
  * Pure helpers for LessonPrintModal print/PDF HTML.
  * Escaping and colour hardening live here so they can be unit-tested without mounting React.
+ * Print-window chrome (CSP, @page @bottom-center footer) is shared by single / unit / half-term.
  */
 
 import { escapeHtmlText } from './escapeHtml.ts';
 import { safeColour } from './safeColour.ts';
+import { lessonExportPrintFooterCss } from './lessonExportFooter.ts';
 
 /** CSP for about:blank print windows (no scripts; opener calls print()). */
 export const LESSON_PRINT_WINDOW_CSP =
@@ -35,12 +37,12 @@ export function renderPrintEyfsGoalBoxHtml(
 ): string {
   const heading = areaIsStatement
     ? ''
-    : `<h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${escapeHtmlText(area)}</h4>`;
+    : `<h4 style="font-size: 13px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${escapeHtmlText(area)}</h4>`;
   const items = statements
     .filter((s) => s && String(s).trim())
     .map(
       (statement) => `
-                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 11px; color: #1f2937; line-height: 1.4;">
+                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 13px; color: #1f2937; line-height: 1.4;">
                       <span style="color: #16a34a; font-weight: 700; margin-right: 6px; flex-shrink: 0;">✓</span>
                       <span>${escapeHtmlText(statement)}</span>
                     </li>`,
@@ -61,7 +63,7 @@ export function renderPrintCustomObjectiveBoxHtml(
     .filter((t) => t && String(t).trim())
     .map(
       (text) => `
-                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 11px; color: #1f2937; line-height: 1.4;">
+                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 13px; color: #1f2937; line-height: 1.4;">
                       <span style="color: #16a34a; font-weight: 700; margin-right: 6px; flex-shrink: 0;">✓</span>
                       <span>${escapeHtmlText(text)}</span>
                     </li>`,
@@ -69,7 +71,7 @@ export function renderPrintCustomObjectiveBoxHtml(
     .join('');
   return `
                 <div style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
-                  <h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${escapeHtmlText(displayTitle)}</h4>
+                  <h4 style="font-size: 13px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${escapeHtmlText(displayTitle)}</h4>
                   <ul style="list-style: none; padding: 0; margin: 0;">${items}
                   </ul></div>`;
 }
@@ -112,12 +114,16 @@ export function buildLessonPrintModalEscapingSampleHtml(fields: {
     renderPrintCategoryHeadingHtml(fields.category, fields.categoryColor ?? '#0f766e'),
   ].join('\n');
 
+  // Same print-window chrome as LessonPrintModal (single / unit / half-term): CSP + @page footer.
   return `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 ${LESSON_PRINT_CSP_META}
 <title>${title}</title>
+<style>
+${lessonExportPrintFooterCss()}
+</style>
 </head>
 <body>
 ${body}

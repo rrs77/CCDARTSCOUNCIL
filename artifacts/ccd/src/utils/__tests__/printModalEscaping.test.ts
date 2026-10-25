@@ -60,7 +60,7 @@ describe('LessonPrintModal print escaping', () => {
     assert.equal(safeColour(null, '#111'), '#111');
   });
 
-  it('print-window sample never includes Page 0 or a position:fixed footer', () => {
+  it('print-window HTML has @bottom-center Page footer, no Page 0, and script-src none', () => {
     const html = buildLessonPrintModalEscapingSampleHtml({
       area: 'a',
       statement: 's',
@@ -69,9 +69,15 @@ describe('LessonPrintModal print escaping', () => {
       category: 'c',
       sheetDisplay: 'd',
     });
+    assert.match(html, /@bottom-center/);
+    assert.match(html, /content:\s*"Page "/);
+    assert.match(html, /© CCDesigner/);
+    assert.match(html, /counter\(page\)/);
+    assert.match(html, /font-size:\s*13px/);
     assert.doesNotMatch(html, /Page\s+0/);
     assert.doesNotMatch(html, /position:\s*fixed/i);
     assert.doesNotMatch(html, /ccd-export-print-footer/);
+    assert.match(html, /script-src 'none'/);
   });
 
   it('ensurePrintDocumentCsp injects CSP into HTML written for the print window', () => {
