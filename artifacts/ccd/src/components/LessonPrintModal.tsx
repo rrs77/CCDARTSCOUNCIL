@@ -17,6 +17,11 @@ import {
   A4_WIDTH_PX,
   PDFBOLT_MARGINS,
 } from '../utils/lessonPdfHtml';
+import {
+  lessonExportFooterTemplateHtml,
+  lessonExportPrintFooterBodyHtml,
+  lessonExportPrintFooterCss,
+} from '../utils/lessonExportFooter';
 
 // PDFBolt margin settings (in pixels) — shared with lessonPdfHtml / live print preview
 const PDFBOLT_MARGIN_TOP_PX = parseInt(PDFBOLT_MARGINS.top, 10);
@@ -78,11 +83,7 @@ export function LessonPrintModal({
     !branding.loginTitle || /Creative\s+Curriculum\s+Designer/i.test(branding.loginTitle)
       ? 'CCDesigner'
       : branding.loginTitle;
-  const footerCompany =
-    !branding.footerCompanyName ||
-    /Creative\s+Curriculum\s+Designer/i.test(branding.footerCompanyName)
-      ? 'CCDesigner'
-      : branding.footerCompanyName;
+  // Placeholder year only (custom-footer UI). Export footers use runtime year via lessonExportFooter.ts.
   const footerYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
   const { shareLesson: shareSingleLesson, isSharing: isSharingSingle, getStoredShareUrl } = useShareLesson();
   const [isExporting, setIsExporting] = useState(false);
@@ -657,6 +658,7 @@ export function LessonPrintModal({
             .lesson-page { box-shadow: none; min-height: auto; }
             .content-wrapper { background: white; }
           }
+          ${lessonExportPrintFooterCss()}
         </style>
       </head>
       <body class="${isSingleLesson ? 'single-lesson' : 'multi-lesson'}">
@@ -1204,6 +1206,7 @@ export function LessonPrintModal({
 
     htmlContent += `
         </div>
+        ${lessonExportPrintFooterBodyHtml()}
       </body>
       </html>
     `;
@@ -1212,36 +1215,10 @@ export function LessonPrintModal({
     // PDFBolt doesn't support hiding header on first page, so we use empty header
     const headerContent = '<div></div>';
 
-    // Create footer template for PDFBolt (use custom footer when set)
-    // Match design: Left (product name), Center (Curriculum • Copyright), Right (Lesson • Page in pill)
-    const footerCenterText = (exportUseCustomHeaderFooter && exportCustomFooter)
-      ? exportCustomFooter
-      : [currentSheetInfo.display || '', `© ${footerCompany} ${footerYear}`].filter(Boolean).join(' • ');
-    
-    // Get lesson number for footer (single-lesson only; multi-lesson omits Lesson N)
-    const firstLessonNum = lessonsToRender[0];
-    const getLessonDisplayNumber = (num: string): string => {
-      const numericPart = num.replace(/^lesson/i, '').replace(/[^0-9]/g, '');
-      return numericPart || num;
-    };
-    const lessonDisplayNum = firstLessonNum ? (halfTermId ? getTermSpecificLessonNumber(firstLessonNum, halfTermId) : getLessonDisplayNumber(firstLessonNum)) : '1';
-    const escapedProductName = productName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
-    // Single-lesson footer stays three-part (product · curriculum/copyright · Lesson N • Page).
-    // Unit/half-term: productName and footerCompany are both "CCDesigner", which read as
-    // "CCDesigner CCDesigner Page X of Y" — use one brand name with the page pill.
-    const footerContent = isSingleLesson
-      ? `
-      <div style="width: 100%; font-size: 13px; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; color: #5F6368; font-family: 'Inter', sans-serif;">
-        <span style="color: #5F6368;">${escapedProductName}</span>
-        <span style="color: #5F6368;">${footerCenterText}</span>
-        <span style="background: #E8EAEF; color: #0f766e; padding: 4px 12px; border-radius: 50px; font-weight: 500;">Lesson ${lessonDisplayNum} • Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
-      </div>
-    `
-      : `
-      <div style="width: 100%; font-size: 13px; padding: 8px 20px; display: flex; justify-content: flex-start; align-items: center; color: #5F6368; font-family: 'Inter', sans-serif;">
-        <span style="color: #5F6368;">${escapedProductName} · Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
-      </div>
-    `;
+    // Fixed export footer for single / unit / half-term (ignores branding productName
+    // and footerCompany). PDFBolt fills .pageNumber; print windows use the matching
+    // body footer + CSS counter (see lessonExportFooter.ts).
+    const footerContent = lessonExportFooterTemplateHtml();
 
     // 13px minimum for every print size (CSS and inline styles) on single-lesson
     // and multi-lesson (unit / half-term) PDFs.
