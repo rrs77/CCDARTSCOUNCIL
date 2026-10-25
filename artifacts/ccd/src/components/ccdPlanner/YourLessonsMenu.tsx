@@ -101,46 +101,33 @@ export function YourLessonsMenu({
       }
     >
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="shrink-0 border-b border-[#E2E0EF] bg-gradient-to-r from-[#2DD4BF] to-[#4338E8] px-3 py-3 text-white">
-          <div className="flex items-center justify-between gap-2">
-            <h2
-              className="truncate text-[15px] font-extrabold tracking-tight"
-              style={{ fontFamily: DISPLAY_FONT }}
-            >
-              Your lessons
-            </h2>
-            <button
-              type="button"
-              onClick={onCreate}
-              disabled={isViewOnly}
-              className="inline-flex h-11 shrink-0 items-center gap-1 rounded-lg bg-white/20 px-2.5 text-[13px] font-extrabold text-white hover:bg-white/30 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/50"
-            >
-              <Plus className="h-3.5 w-3.5" />
-              Create
-            </button>
-          </div>
+        <div className="shrink-0 border-b border-[#E2E0EF] bg-white px-3 py-3">
+          <h2
+            className="truncate text-[15px] font-extrabold tracking-tight text-[#1F1B4D]"
+            style={{ fontFamily: DISPLAY_FONT }}
+          >
+            Your lessons
+          </h2>
           <div className="mt-2 flex flex-col gap-2">
             <div className="relative">
-              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-white/70" />
+              <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-[#77738F]" />
               <input
                 type="search"
                 value={searchQuery}
                 onChange={(e) => onSearchQueryChange(e.target.value)}
                 placeholder="Search lessons…"
-                className="h-11 w-full rounded-lg border border-white/25 bg-white/15 py-1 pl-8 pr-2 text-base font-medium text-white placeholder:text-white/65 focus:border-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+                className="h-11 w-full rounded-lg border border-[#E2E0EF] bg-white py-1 pl-8 pr-2 text-base font-medium text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/30"
               />
             </div>
             <select
               value={selectedHalfTerm}
               onChange={(e) => onSelectedHalfTermChange(e.target.value)}
-              className="h-11 w-full rounded-lg border border-white/25 bg-white/15 px-2 text-[13px] font-semibold text-white focus:border-white/50 focus:outline-none focus-visible:ring-2 focus-visible:ring-white/25"
+              className="h-11 w-full rounded-lg border border-[#E2E0EF] bg-white px-2 text-[13px] font-semibold text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400/30"
               aria-label="Filter by half-term"
             >
-              <option value="all" className="text-[#1F1B4D]">
-                All half-terms
-              </option>
+              <option value="all">All half-terms</option>
               {plannerTerms.map((t) => (
-                <option key={t.id} value={t.id} className="text-[#1F1B4D]">
+                <option key={t.id} value={t.id}>
                   {t.name}
                 </option>
               ))}
