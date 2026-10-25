@@ -13,17 +13,18 @@
  *
  * Pure module (no DOM access at import) so Node tests and server code can use it.
  */
+import { CCD_LOGO_ALT, CCD_LOGO_COLOUR_PATH } from './brandLogo.ts';
 import { PLAN_LOGO_PNG_BASE64, PLAN_LOGO_PNG_HEIGHT, PLAN_LOGO_PNG_WIDTH } from './planLogoData.ts';
 
 /**
  * Canonical colour export logo (master brand file trimmed, 784×192, transparent).
  * For on-screen <img> next to plans; outputs use the embedded PLAN_LOGO_DATA_URI.
  */
-export const PLAN_LOGO_PATH = '/ccdesigner-logo-colour.png';
+export const PLAN_LOGO_PATH = CCD_LOGO_COLOUR_PATH;
 /** Size of the canonical asset. */
 export const PLAN_LOGO_SOURCE_WIDTH = 784;
 export const PLAN_LOGO_SOURCE_HEIGHT = 192;
-export const PLAN_LOGO_ALT = 'CCDesigner';
+export const PLAN_LOGO_ALT = CCD_LOGO_ALT;
 /** Natural aspect ratio of the artwork (784×192 ≈ 4.08:1). */
 export const PLAN_LOGO_ASPECT = PLAN_LOGO_PNG_WIDTH / PLAN_LOGO_PNG_HEIGHT;
 /**

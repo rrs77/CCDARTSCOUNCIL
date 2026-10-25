@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { CCD_LOGO_COLOUR_PATH } from '../utils/brandLogo';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
 import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError, systemCategoriesApi } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
@@ -315,7 +316,7 @@ const DEFAULT_BRANDING: BrandingSettings = {
 // Default settings
 const DEFAULT_SETTINGS: UserSettings = {
   schoolName: 'Curriculum Designer',
-  schoolLogo: '/ccdesigner-logo.png',
+  schoolLogo: CCD_LOGO_COLOUR_PATH, // default only; a stored school logo is never overwritten
   primaryColor: '#3B82F6',
   secondaryColor: '#2563EB',
   accentColor: '#60A5FA',

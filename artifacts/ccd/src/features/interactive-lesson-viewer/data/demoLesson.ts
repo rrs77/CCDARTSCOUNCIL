@@ -6,10 +6,11 @@ import {
   DEMO_INTRO_VIDEO,
   DEMO_LESSON_ID,
 } from './demoGuard';
+import { CCD_LOGO_COLOUR_PATH } from '../../../utils/brandLogo';
 
 const INTRO_VIDEO = DEMO_INTRO_VIDEO;
 const KARAOKE_AUDIO = '/interactive-lessons/sample-karaoke-placeholder.mp3';
-const LOGO = '/ccdesigner-logo.png';
+const LOGO = CCD_LOGO_COLOUR_PATH;
 
 /** Polished demo interactive lesson shipped with the prototype. */
 export function buildDemoInteractiveLesson(ownerId = 'system-demo'): InteractiveLesson {

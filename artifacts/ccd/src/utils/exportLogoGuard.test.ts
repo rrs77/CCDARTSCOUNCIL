@@ -7,7 +7,8 @@
  * Rob, 25 Oct 2026, "A: yes, all the same small size".
  */
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { PLAN_LOGO_BAD_FILTER, PLAN_LOGO_HEIGHT_PX, htmlHasColourPlanLogo, planDocxHeaderFooter, planSheetChrome } from './planLogo.ts';
@@ -107,5 +108,34 @@ describe('builders that set the <img> size themselves use the shared constants',
     assert.match(src, /logo\.width = PLAN_LOGO_WIDTH_PX;/);
     assert.match(src, /logo\.height = PLAN_LOGO_HEIGHT_PX;/);
     assert.doesNotMatch(src, /logo\.(width|height) = \d/);
+  });
+});
+
+/**
+ * Rob, 25 Oct 2026 ("A: yes, switch them all"): every user-visible screen uses the
+ * colour master logo (utils/brandLogo.ts CCD_LOGO_COLOUR_PATH). The old redrawn
+ * /ccdesigner-logo.png may stay in public/ but no screen or default may reference it.
+ */
+describe('no screen uses the old /ccdesigner-logo.png', () => {
+  const walk = (dir: string): string[] =>
+    readdirSync(dir, { withFileTypes: true }).flatMap((e) =>
+      e.isDirectory() ? walk(join(dir, e.name)) : /\.(tsx?|jsx?|mjs|css|html)$/.test(e.name) ? [join(dir, e.name)] : [],
+    );
+  it('src/** (screens, settings default, interactive viewer demo)', () => {
+    const offenders = walk(SRC)
+      .filter((f) => !/\.test\.(ts|mjs)$/.test(f) && !/__logoShot/.test(f))
+      .filter((f) => {
+        // Code only: drop comments so a doc mention of the old file doesn't count.
+        const code = readFileSync(f, 'utf8').replace(/\/\*[\s\S]*?\*\//g, '').replace(/^\s*\/\/.*$/gm, '');
+        return /ccdesigner-logo\.png/.test(code);
+      })
+      .map((f) => f.slice(SRC.length));
+    assert.deepEqual(offenders, []);
+  });
+  it('the switched screens use the shared constant', () => {
+    for (const f of ['components/ResourceViewer.tsx', 'components/CanvaViewer.tsx', 'contexts/SettingsContextNew.tsx', 'features/interactive-lesson-viewer/data/demoLesson.ts']) {
+      assert.match(readFileSync(SRC + f, 'utf8'), /CCD_LOGO_COLOUR_PATH/, f);
+    }
+    assert.match(readFileSync(SRC + 'utils/brandLogo.ts', 'utf8'), /CCD_LOGO_COLOUR_PATH = '\/ccdesigner-logo-colour\.png'/);
   });
 });
