@@ -4,6 +4,7 @@
 import assert from 'node:assert/strict';
 import { describe, it } from 'node:test';
 import {
+  compactShortLines,
   RHYTHMSTIX_TEMPLATES,
   buildRhythmstixDoc,
   renderRhythmstixHtml,
@@ -40,6 +41,14 @@ const lesson = {
 };
 
 describe('year group → template', () => {
+  it('Reception labels map to EYFS (regression)', () => {
+    for (const l of ['YR', 'YR.', 'Yr R', 'Year R', 'yr', 'Reception', 'YR Music', 'Reception Class']) {
+      assert.equal(templateIdForYearGroup(l), 'eyfs', l);
+    }
+    assert.equal(templateIdForYearGroup('Y'), null);
+    assert.equal(templateIdForYearGroup('Yr 3'), 'lks2');
+    assert.equal(templateIdForYearGroup('Year 1'), 'ks1');
+  });
   const cases: Array<[string, string | null]> = [
     ['Reception', 'eyfs'], ['EYFS', 'eyfs'], ['Nursery', 'eyfs'], ['Year 1', 'ks1'], ['Y2', 'ks1'],
     ['Year 3', 'lks2'], ['Y4 Music', 'lks2'], ['Year 5', 'uks2'], ['Year 6', 'uks2'],
@@ -144,16 +153,41 @@ describe('document mapping', () => {
     assert.ok(sizes.length > 5);
     assert.ok(sizes.every((s) => s >= 13), `sizes: ${sizes}`);
   });
-  it('does not invent content when none is authored: prompts instead, empty boxes omitted', () => {
+  it('does not invent content: blank write-in lines, every section and Source always shown', () => {
     const d = buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: 'eyfs' });
     assert.deepEqual(d.iCan, []);
     const html = renderRhythmstixHtml(d);
-    assert.equal((html.match(/Teacher to add an I CAN statement/g) || []).length, 4);
+    assert.doesNotMatch(html, /Teacher to (add|complete)/);
+    assert.equal((html.match(/✓ I can <div class="rx-lines"/g) || []).length, 4);
     assert.match(html, /Key vocabulary/);
-    assert.match(html, /Teacher to add resources/);
     assert.match(html, /Non-specialist teacher toolkit/);
-    assert.doesNotMatch(html, /Support, challenge and safety/);
-    assert.doesNotMatch(html, /SOURCE &amp; ADAPTATION/);
+    assert.match(html, /Support, challenge and safety/);
+    assert.match(html, /SOURCE &amp; ADAPTATION/);
+    assert.match(html, /45 minutes/);
+    for (const id of ['ks4', 'ks5'] as const) {
+      const h = renderRhythmstixHtml(buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: id }));
+      assert.match(h, /Support, challenge and safety/);
+      assert.match(h, /SOURCE, ATTRIBUTION AND LIVE RESOURCE LINKS/);
+      assert.match(h, id === 'ks4' ? /Not tied to any examination board/ : /scholarly sources/);
+    }
+  });
+  it('meta line: lesson minutes and focus from the lesson data', () => {
+    const d = buildRhythmstixDoc(
+      { grouped: {}, categoryOrder: ['Composition and musical storytelling'], totalTime: 42, title: 'Film music' },
+      { templateId: 'ks3' },
+    );
+    assert.deepEqual(d.meta.slice(-2), ['42 minutes', 'Composition and musical storytelling']);
+    const n = buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: 'uks2' });
+    assert.ok(n.meta.includes('50 minutes'));
+  });
+  it('compacts runs of short lines, keeps lead-ins, reads minute ranges', () => {
+    assert.equal(
+      compactShortLines('Encourage words:\nexcited\nproud\nworried\nThen discuss in pairs and share back with the whole class at the end.'),
+      'Encourage words:\nexcited • proud • worried\nThen discuss in pairs and share back with the whole class at the end.',
+    );
+    const r = splitLongBlock('Main', '1. Warm up (5 minutes)<br>Clap.<br>2. Performance – Beginning to End (10–12 minutes)<br>Perform.');
+    assert.equal(r.steps[1].title, 'Performance – Beginning to End');
+    assert.equal(r.steps[1].minutes, 12);
   });
   it('dedupes vocabulary, resources and key questions held both on the lesson and in sections', () => {
     const l = {
@@ -209,7 +243,7 @@ describe('document mapping', () => {
     const long = { ...lesson, sections: Array.from({ length: 8 }, (_, i) => ({ id: String(i), kind: 'free_text', title: `Step ${i}`, durationMins: 5, bodyHtml: 'Do the thing carefully. '.repeat(20) })) };
     const html = renderRhythmstixHtml(buildRhythmstixDoc(long, { templateId: 'eyfs' }));
     assert.equal((html.match(/Lesson sequence • continued/g) || []).length, 1);
-    assert.match(html, /Teacher cue: <span class="rx-fill">/);
+    assert.match(html, /Teacher cue: <span class="rx-fillin">/);
   });
 });
 

@@ -38,6 +38,12 @@ export interface RhythmstixTemplate {
   /** Fixed toolkit card labels (secondary). Primary toolkits are teacher-authored concept cards. */
   toolkitLabels: string[];
   sourceLabel: string;
+  /** Template's own attribution line (structural, from Rob's examples), shown when the lesson has none. */
+  sourceDefault: string;
+  /** Lesson length used in the meta line when the lesson has no duration (from the examples). */
+  defaultMinutes: number;
+  /** Generic teacher guidance for fixed toolkit cards, where Rob's examples give non-lesson-specific text. */
+  toolkitDefaults?: Record<string, string>;
   sortOrder: number;
 }
 
@@ -48,6 +54,8 @@ const PRIMARY = {
   toolkitHeading: 'Non-specialist teacher toolkit',
   toolkitLabels: [] as string[],
   sourceLabel: 'SOURCE & ADAPTATION',
+  sourceDefault:
+    'Adapt activities, curriculum links, credits and references for your class before teaching or sharing. Rhythmstix design © 2026.',
 };
 
 const SECONDARY = {
@@ -58,6 +66,7 @@ const SECONDARY = {
   toolkitHeading: 'Teacher reference and subject toolkit',
   toolkitSubtitle: '',
   sourceLabel: 'SOURCE, ATTRIBUTION AND LIVE RESOURCE LINKS',
+  sourceDefault: 'Use permitted Activity Library resources and retain provider attribution.',
   sequenceSubtitle: 'Teacher cues and timings follow the original Rhythmstix layout.',
 };
 
@@ -65,6 +74,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
   {
     ...PRIMARY,
     id: 'eyfs',
+    defaultMinutes: 45,
     name: 'EYFS · Nursery & Reception',
     description: 'Sing, move, play and explore. Short I CAN outcomes, look & listen assessment.',
     yearsLabel: 'RECEPTION',
@@ -80,6 +90,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
   {
     ...PRIMARY,
     id: 'ks1',
+    defaultMinutes: 45,
     name: 'KS1 · Years 1–2',
     description: 'Practise, copy, choose and perform, with explicit teacher prompts.',
     yearsLabel: 'YEARS 1–2',
@@ -95,6 +106,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
   {
     ...PRIMARY,
     id: 'lks2',
+    defaultMinutes: 50,
     name: 'KS2 · Years 3–4',
     description: 'Experiment, apply, sequence and create; begin to evaluate.',
     yearsLabel: 'YEARS 3–4',
@@ -110,6 +122,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
   {
     ...PRIMARY,
     id: 'uks2',
+    defaultMinutes: 50,
     name: 'KS2 · Years 5–6',
     description: 'Develop technique, refine and justify ideas independently.',
     yearsLabel: 'YEARS 5–6',
@@ -125,6 +138,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
   {
     ...SECONDARY,
     id: 'ks3',
+    defaultMinutes: 60,
     name: 'KS3 · Years 7–9',
     description: 'Conceptual exploration, specialist practice and critical reflection.',
     yearsLabel: 'YEARS 7–9',
@@ -138,6 +152,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
   {
     ...SECONDARY,
     id: 'ks4',
+    defaultMinutes: 60,
     name: 'KS4 · Years 10–11',
     description: 'Deliberate practical choices, refinement and teacher-selected qualification mapping.',
     yearsLabel: 'YEARS 10–11',
@@ -146,11 +161,22 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
     tint: '#F5ECE9',
     defaultStrap: 'Investigate • Rehearse • Refine • Evidence',
     toolkitLabels: ['QUALIFICATION MAPPING', 'AUTHENTICITY', 'TEACHER SUPPORT', 'EVIDENCE'],
+    toolkitDefaults: {
+      'QUALIFICATION MAPPING':
+        'Select exam board, specification, component and current assessment objectives from verified teacher-managed data.',
+      AUTHENTICITY:
+        'Reflective evidence must describe the learner’s own choices and be handled in accordance with course rules.',
+      'TEACHER SUPPORT': 'Provide sentence stems for explaining intention and revision, not pre-written portfolio answers.',
+      EVIDENCE: 'Retain rehearsal annotations or recordings only where permissions and school policies permit.',
+    },
+    sourceDefault:
+      'Not tied to any examination board. Actual objectives and permitted evidence depend on the teacher’s chosen specification.',
     sortOrder: 6,
   },
   {
     ...SECONDARY,
     id: 'ks5',
+    defaultMinutes: 75,
     name: 'KS5 · Years 12–13',
     description: 'Advanced reasoning, independent enquiry and scholarly evidence.',
     yearsLabel: 'YEARS 12–13',
@@ -158,7 +184,13 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
     accent: '#7B415D',
     tint: '#F4EAEF',
     defaultStrap: 'Research • Analyse • Interpret • Critique',
-    toolkitLabels: ['QUALIFICATION FIT', 'EVIDENCE', 'SUBJECT EXPERTISE', 'SCHOLARLY LITERACY'],
+    toolkitLabels: ['SUBJECT EXPERTISE', 'SCHOLARLY LITERACY', 'QUALIFICATION FIT', 'EVIDENCE'],
+    toolkitDefaults: {
+      'SUBJECT EXPERTISE': 'Provide the selected score, recording versions and reliable context; do not assume a fixed set work.',
+      'SCHOLARLY LITERACY': 'Distinguish observation from interpretation, reference recording timings and cite sources.',
+      'QUALIFICATION FIT': 'Use the teacher-selected A-level, BTEC or other pathway standards; do not hardcode one board.',
+    },
+    sourceDefault: 'Use teacher-approved curriculum, scholarly sources and licensing conditions.',
     sortOrder: 7,
   },
 ];
@@ -185,7 +217,7 @@ function normYearText(yearGroup: string | null | undefined): string {
 }
 
 const EYFS_RE =
-  /\b(eyfs|reception|rec|nursery|early years|foundation( stage)?|fs ?[12]|pre-?school|lkg|ukg|(lower|upper) kindergarten|kindergarten)\b/;
+  /(?:^|[^a-z0-9])(?:yr\.?|y\s*r|yrs?\s+r|year\s+r)(?![a-z0-9])|\b(eyfs|reception|rec|nursery|early years|foundation( stage)?|fs ?[12]|pre-?school|lkg|ukg|(lower|upper) kindergarten|kindergarten)\b/;
 
 /** First year number in a label: "Year 3", "Yr 3", "Y3", "Years 3-4", "Yrs 5 & 6", "Year 11 Music (GCSE)". */
 export function yearNumberFromLabel(yearGroup: string | null | undefined): number | null {
@@ -484,6 +516,32 @@ const escapeLine = (s: string) =>
   s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 
 /**
+ * Runs of 3+ short lines (word lists, question lists, rules: "excited / proud / worried")
+ * print inline as "excited • proud • worried" so a pasted list doesn't take a page.
+ * Lead-in lines ending in ':' and numbered headings are never merged.
+ */
+export function compactShortLines(text: string): string {
+  const lines = text.split('\n');
+  const out: string[] = [];
+  let run: string[] = [];
+  const flush = () => {
+    if (run.length >= 3) out.push(run.map((r) => r.trim()).join(' • '));
+    else out.push(...run);
+    run = [];
+  };
+  for (const l of lines) {
+    const t = l.trim();
+    if (t && t.length <= 48 && !/:$/.test(t) && !/^\d+[.)]\s/.test(t)) run.push(l);
+    else {
+      flush();
+      out.push(l);
+    }
+  }
+  flush();
+  return out.join('\n').replace(/\n{3,}/g, '\n\n');
+}
+
+/**
  * Split one long free-text block (e.g. a whole legacy "Main activity") into
  * steps at numbered headings like "1. Warm-Up Game – Pass the Emotion (10 minutes)".
  * Un-numbered headings that name a reference block ("Key Vocabulary",
@@ -495,13 +553,13 @@ export function splitLongBlock(
   bodyHtml: string,
 ): { steps: Array<{ title: string; minutes?: number; bodyHtml: string }>; routed: Array<[Route, string]> } {
   const lines = stripTags(bodyHtml).split('\n').map((l) => l.replace(/\s+$/, ''));
-  const HEAD = /^\s*(\d{1,2})[.)]\s+(.{2,90}?)\s*(?:[(\[–—-]\s*(\d{1,3})\s*(?:mins?|minutes?)\s*[)\]]?)?\s*$/i;
+  const HEAD = /^\s*(\d{1,2})[.)]\s+(.{2,90}?)\s*(?:[(\[–—-]\s*(?:\d{1,3}\s*[–—-]\s*)?(\d{1,3})\s*(?:mins?|minutes?)\s*[)\]]?)?\s*$/i;
   const heads = lines.filter((l) => HEAD.test(l) && l.trim().length <= 110).length;
   const steps: Array<{ title: string; minutes?: number; bodyHtml: string }> = [];
   const routed: Array<[Route, string]> = [];
   if (heads < 2) {
     // No structure: keep as one step, but break very long text into readable parts.
-    const text = lines.join('\n').trim();
+    const text = compactShortLines(lines.join('\n')).trim();
     if (text.length <= 1800) return { steps: [{ title, bodyHtml }], routed };
     const paras = text.split(/\n\s*\n/);
     let buf = '';
@@ -521,7 +579,7 @@ export function splitLongBlock(
   }
   let cur: { title: string; minutes?: number; lines: string[]; route?: Route } = { title, lines: [] };
   const close = () => {
-    const text = cur.lines.join('\n').replace(/^\s*lesson structure:?\s*$/gim, '').trim();
+    const text = compactShortLines(cur.lines.join('\n').replace(/^\s*lesson structure:?\s*$/gim, '')).trim();
     if (cur.route) {
       // A lone lead-in such as "By the end of the lesson:" with nothing after it adds nothing.
       if (text && !(text.length < 60 && /:$/.test(text))) routed.push([cur.route, escapeLine(text).replace(/\n/g, '<br>')]);
@@ -598,11 +656,7 @@ export function buildRhythmstixDoc(
 
   // Meta: "YEARS 7–9 • 60 minutes • focus" (primary examples also name the subject).
   doc.meta.push(yearsLabelFor(template, opts.yearGroup));
-  const minutes = Number(lesson.totalTime) || 0;
-  if (minutes > 0) doc.meta.push(`${minutes} minutes`);
-  if (template.stage === 'primary' && subject) doc.meta.push(subject);
-  const focus = String(lesson.strand || lesson.focus || lesson.unitName || '').trim();
-  if (focus) doc.meta.push(focus);
+  const metaAt = doc.meta.length;
 
   pushLink(doc.resourceLinks, null, lesson.resourceLink, base);
   pushLink(doc.resourceLinks, null, lesson.videoLink, base);
@@ -674,7 +728,19 @@ export function buildRhythmstixDoc(
     if (lesson.mainActivity) addStep('Main activity', undefined, String(lesson.mainActivity));
     if (lesson.plenary) addStep('Plenary', undefined, String(lesson.plenary));
   }
-  // Intent duplicated by a routed "Learning outcomes" block? keep one.
+  // Meta: years • minutes • (subject, primary) • focus. Minutes: lesson total, else
+  // the sum of step timings, else the template's default length.
+  const stepMins = doc.steps.reduce((n, st) => n + (st.minutes || 0), 0);
+  const minutes = Number(lesson.totalTime) > 0 ? Number(lesson.totalTime) : stepMins > 0 ? stepMins : template.defaultMinutes;
+  const tail: string[] = [`${minutes} minutes`];
+  if (template.stage === 'primary' && subject) tail.push(subject);
+  const firstCategory = (sections.find((x) => x.activity?.category)?.activity?.category ||
+    activities.find((a) => a.category)?.category ||
+    (Array.isArray(lesson.categoryOrder) ? lesson.categoryOrder[0] : '') ||
+    '') as string;
+  const focus = String(lesson.strand || lesson.focus || lesson.unitName || lesson.teachingUnit || firstCategory || '').trim();
+  if (focus && !/^(teaching units?|uncategori[sz]ed|general|other|misc(ellaneous)?)$/i.test(focus) && normText(focus) !== normText(doc.title) && normText(focus) !== normText(subject)) tail.push(focus);
+  doc.meta.splice(metaAt, 0, ...tail);
   return doc;
 }
 
@@ -705,7 +771,8 @@ function estHeight(html: string, charsPerLine = 92): number {
   return lines * 20;
 }
 
-const PROMPT = (s: string) => `<p class="rx-prompt">${escapeText(s)}</p>`;
+/** Ruled, printable write-in lines for fields the lesson hasn't filled. */
+const LINES = (n: number) => `<div class="rx-lines" aria-label="Write-in space">${'<span></span>'.repeat(n)}</div>`;
 export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string {
   const cssText = (v: string) => v.replace(/["\\<>{}]/g, '').toUpperCase();
   const base = RHYTHMSTIX_TEMPLATES.find((b) => b.id === t.id) || RHYTHMSTIX_TEMPLATES[0];
@@ -727,7 +794,11 @@ export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string 
 .rx-box{border:1px solid var(--rx-accent);border-radius:4px;padding:8px 12px;margin:10px 0}
 .rx-box.tint{background:var(--rx-tint)}
 .rx-label{font-size:13px;font-weight:800;color:var(--rx-accent);text-transform:uppercase;margin:0 0 4px}
-.rx-prompt{font-size:13px;color:#6b6b6b;font-style:italic}
+.rx-lines{display:block;padding-top:2px}
+.rx-lines span{display:block;height:24px;border-bottom:1px solid #9a9a9a}
+.rx-ican-grid>div .rx-lines span{height:22px}
+.rx-fillin{display:inline-block;min-width:44px;border-bottom:1px solid #9a9a9a;height:1em;vertical-align:baseline}
+.rx-cue .rx-fillin{min-width:60%}
 .rx-ican{margin:14px 0;border:1px solid var(--rx-accent);border-radius:4px;overflow:hidden;break-inside:avoid}
 .rx-ican-h{background:#1d1d1f;color:#fff;font-weight:800;font-size:14px;padding:5px 10px}
 .rx-ican-grid{display:grid;grid-template-columns:1fr 1fr}
@@ -746,7 +817,6 @@ export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string 
 .rx-step-h{display:flex;justify-content:space-between;gap:12px;font-weight:800;font-size:17px;break-after:avoid}
 .rx-step-t{font-size:13px;font-weight:700;color:var(--rx-accent);white-space:nowrap}
 .rx-cue{font-size:13px;font-weight:700;color:var(--rx-gold);margin-top:4px}
-.rx-cue .rx-fill{font-weight:400;font-style:italic;color:#6b6b6b}
 .rx-links{font-size:13px;margin-top:4px}
 .rx-cont{break-before:page;page-break-before:always}
 .rx-ref{break-before:page;page-break-before:always;padding-top:4px}
@@ -804,7 +874,7 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
 
   parts.push(
     `<div class="rx-box tint"><p class="rx-label">Lesson intent</p>${
-      normText(doc.intentHtml) ? rich(doc.intentHtml) : PROMPT('Teacher to add: what pupils will learn and do in this lesson.')
+      normText(doc.intentHtml) ? rich(doc.intentHtml) : LINES(2)
     }</div>`,
   );
   used += 50 + estHeight(doc.intentHtml);
@@ -814,18 +884,18 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   const cells = Math.max(4, ican.length + (ican.length % 2));
   parts.push(
     `<section class="rx-ican"><div class="rx-ican-h">I CAN…</div><div class="rx-ican-grid">${Array.from({ length: cells }, (_, i) =>
-      ican[i] ? `<div>✓ ${escapeText(ican[i])}</div>` : `<div><span class="rx-prompt">Teacher to add an I CAN statement</span></div>`,
+      ican[i] ? `<div>✓ ${escapeText(ican[i])}</div>` : `<div>✓ I can ${LINES(1)}</div>`,
     ).join('')}</div></section>`,
   );
   used += 40 + (cells / 2) * 40;
 
   // Key vocabulary / Resources: always shown, as in the examples.
-  const vocab = normText(doc.vocabularyHtml) ? rich(doc.vocabularyHtml) : PROMPT('Teacher to add key vocabulary.');
+  const vocab = normText(doc.vocabularyHtml) ? rich(doc.vocabularyHtml) : LINES(2);
   const resText = doc.resourceLines.length ? doc.resourceLines.map((l) => `<p>${escapeText(l)}</p>`).join('') : '';
   const resLinks = doc.resourceLinks.length ? `<div class="rx-links">${doc.resourceLinks.map(link).join('<br>')}</div>` : '';
   parts.push(
     `<div class="rx-two"><div class="rx-cell-a"><p class="rx-label">Key vocabulary</p>${vocab}</div>` +
-      `<div class="rx-cell-b"><p class="rx-label">Resources</p>${resText || resLinks ? resText + resLinks : PROMPT('Teacher to add resources.')}</div></div>`,
+      `<div class="rx-cell-b"><p class="rx-label">Resources</p>${resText || resLinks ? resText + resLinks : LINES(2)}</div></div>`,
   );
   used += 56 + Math.max(estHeight(doc.vocabularyHtml, 45), (doc.resourceLines.length + doc.resourceLinks.length) * 20);
 
@@ -837,7 +907,7 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
     const h = 66 + estHeight(s.bodyHtml) + (s.links.length ? 18 : 0);
     const short = h < 360;
     // Examples: a step that won't fit starts page 2 under "LESSON SEQUENCE • CONTINUED".
-    if (!continued && i > 0 && used + (short ? h : 160) > PAGE_PX) {
+    if (!continued && i > 0 && (i >= 2 || used + (short ? h : 160) > PAGE_PX)) {
       continued = true;
       parts.push(
         `<div class="rx-cont"><p class="rx-kicker">Lesson sequence • continued</p>${
@@ -848,9 +918,9 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
     if (!continued) used += h;
     parts.push(
       `<div class="rx-step${short ? ' short' : ''}"><div class="rx-step-h"><span>${i + 1}.&nbsp; ${escapeText(s.title)}</span><span class="rx-step-t">${
-        s.minutes ? `${s.minutes} min` : '<span class="rx-prompt">add timing</span>'
+        s.minutes ? `${s.minutes} min` : '<span class="rx-fillin"></span> min'
       }</span></div>${normText(s.bodyHtml) ? `<div>${rich(s.bodyHtml)}</div>` : ''}<div class="rx-cue">Teacher cue: ${
-        s.cue ? escapeText(s.cue) : '<span class="rx-fill">teacher to add a question or prompt</span>'
+        s.cue ? escapeText(s.cue) : '<span class="rx-fillin"></span>'
       }</div>${s.links.length ? `<div class="rx-links">${s.links.map(link).join(' &nbsp; ')}</div>` : ''}</div>`,
     );
   });
@@ -860,57 +930,52 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   parts.push(`<h2 class="rx-h2">${escapeText(t.referenceHeading)}</h2><p class="rx-sub">${escapeText(t.referenceSubtitle)}</p>`);
   parts.push(
     `<div class="rx-two"><div class="rx-cell-b"><p class="rx-label">Key questions</p>${
-      doc.keyQuestions.length ? li(doc.keyQuestions) : PROMPT('Teacher to add 3–5 key questions.')
+      doc.keyQuestions.length ? li(doc.keyQuestions) : LINES(4)
     }</div>` +
       `<div class="rx-cell-a"><p class="rx-label">${escapeText(t.assessmentLabel)}</p>${
-        doc.assessment.length ? checks(doc.assessment) : PROMPT('Teacher to add what to look and listen for.')
+        doc.assessment.length ? checks(doc.assessment) : LINES(4)
       }</div></div>`,
   );
 
   // Toolkit: secondary has fixed labels; primary always shows four concept cards.
-  let toolkitCards: Array<RxCard & { prompt?: string }>;
+  let toolkitCards: RxCard[];
   if (secondary) {
     toolkitCards = [
-      ...t.toolkitLabels.map((label) => doc.toolkit.find((c) => c.label === label) || { label, bodyHtml: '', prompt: 'Teacher to complete.' }),
+      ...t.toolkitLabels.map((label) => doc.toolkit.find((c) => c.label === label) || { label, bodyHtml: t.toolkitDefaults?.[label] || '' }),
       ...doc.toolkit.filter((c) => !t.toolkitLabels.includes(c.label)),
     ];
   } else {
     toolkitCards = doc.toolkit.slice();
     while (toolkitCards.length < 4 || toolkitCards.length % 2) {
-      toolkitCards.push({ label: 'CONCEPT = MEANING', bodyHtml: '', prompt: 'Teacher to add a subject concept, explained for non-specialists.' });
+      toolkitCards.push({ label: 'KEY CONCEPT', bodyHtml: '' });
     }
   }
   parts.push(`<h2 class="rx-h2">${escapeText(t.toolkitHeading)}</h2>${t.toolkitSubtitle ? `<p class="rx-sub">${escapeText(t.toolkitSubtitle)}</p>` : ''}`);
   parts.push(
     `<div class="rx-grid2">${toolkitCards
-      .map((c) => `<div><p class="rx-label">${escapeText(c.label)}</p>${normText(c.bodyHtml) ? rich(c.bodyHtml) : PROMPT(c.prompt || 'Teacher to complete.')}</div>`)
+      .map((c) => `<div><p class="rx-label">${escapeText(c.label)}</p>${normText(c.bodyHtml) ? rich(c.bodyHtml) : LINES(3)}</div>`)
       .join('')}</div>`,
   );
 
-  // Support / Challenge / Safety: only boxes with real content.
-  const scs = (
-    [
-      ['Support', doc.support],
-      ['Challenge', doc.challenge],
-      ['Safety', doc.safety],
-    ] as Array<[string, string]>
-  ).filter(([, v]) => normText(v));
-  if (scs.length) {
-    parts.push(`<h2 class="rx-h2">Support, challenge and safety</h2>`);
-    parts.push(
-      `<div class="rx-grid3" style="grid-template-columns:repeat(${scs.length},1fr)">${scs
-        .map(([k, v]) => `<div><p class="rx-label">${k}</p>${rich(v)}</div>`)
-        .join('')}</div>`,
-    );
-  }
-  // Source: only with real attribution or links.
-  if (normText(doc.sourceHtml) || doc.sourceLinks.length) {
-    parts.push(
-      `<div class="rx-source"><p class="rx-label" style="color:var(--rx-teal)">${escapeText(t.sourceLabel)}</p>${
-        normText(doc.sourceHtml) ? rich(doc.sourceHtml) : '<p>Activity sources (retain provider credit when sharing):</p>'
-      }${doc.sourceLinks.length ? `<div class="rx-links">${doc.sourceLinks.map(link).join('<br>')}</div>` : ''}</div>`,
-    );
-  }
+  // Support / Challenge / Safety: always shown, as in every example; empty boxes are write-in.
+  parts.push(`<h2 class="rx-h2">Support, challenge and safety</h2>`);
+  parts.push(
+    `<div class="rx-grid3" style="grid-template-columns:repeat(3,1fr)">${(
+      [
+        ['Support', doc.support],
+        ['Challenge', doc.challenge],
+        ['Safety', doc.safety],
+      ] as Array<[string, string]>
+    )
+      .map(([k, v]) => `<div><p class="rx-label">${k}</p>${normText(v) ? rich(v) : LINES(3)}</div>`)
+      .join('')}</div>`,
+  );
+  // Source: always shown; the lesson's own attribution, else the template's line.
+  parts.push(
+    `<div class="rx-source"><p class="rx-label" style="color:var(--rx-teal)">${escapeText(t.sourceLabel)}</p>${
+      normText(doc.sourceHtml) ? rich(doc.sourceHtml) : `<p>${escapeText(t.sourceDefault)}</p>`
+    }${doc.sourceLinks.length ? `<div class="rx-links">${doc.sourceLinks.map(link).join('<br>')}</div>` : ''}</div>`,
+  );
   parts.push(`</section>`);
   parts.push(`<footer class="rx-foot"><span>© Rhythmstix 2026</span><span>www.rhythmstix.co.uk</span><span></span></footer>`);
   parts.push(`</div>`);
