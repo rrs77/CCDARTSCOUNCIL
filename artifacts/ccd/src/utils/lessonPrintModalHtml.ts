@@ -6,7 +6,7 @@
 
 import { escapeHtmlText } from './escapeHtml.ts';
 import { safeColour } from './safeColour.ts';
-import { lessonExportPrintFooterCss } from './lessonExportFooter.ts';
+import { injectPrintWindowFooterCss } from './lessonExportFooter.ts';
 
 /** CSP for about:blank print windows (no scripts; opener calls print()). */
 export const LESSON_PRINT_WINDOW_CSP =
@@ -114,19 +114,17 @@ export function buildLessonPrintModalEscapingSampleHtml(fields: {
     renderPrintCategoryHeadingHtml(fields.category, fields.categoryColor ?? '#0f766e'),
   ].join('\n');
 
-  // Same print-window chrome as LessonPrintModal (single / unit / half-term): CSP + @page footer.
-  return `<!DOCTYPE html>
+  // Print-window sample (CSP + @page footer injected the same way as writeAndPrintWindow).
+  const raw = `<!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
 ${LESSON_PRINT_CSP_META}
 <title>${title}</title>
-<style>
-${lessonExportPrintFooterCss()}
-</style>
 </head>
 <body>
 ${body}
 </body>
 </html>`;
+  return injectPrintWindowFooterCss(raw);
 }

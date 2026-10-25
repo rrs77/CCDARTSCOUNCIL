@@ -24,8 +24,8 @@ import {
   PDFBOLT_MARGINS,
 } from '../utils/lessonPdfHtml';
 import {
+  injectPrintWindowFooterCss,
   lessonExportFooterTemplateHtml,
-  lessonExportPrintFooterCss,
 } from '../utils/lessonExportFooter';
 import {
   LESSON_PRINT_CSP_META,
@@ -307,11 +307,8 @@ export function LessonPrintModal({
             background: #fff;
           }
           
-          @page {
-            size: A4;
-            /* Bottom 14mm reserved for @bottom-center print footer (see lessonExportPrintFooterCss). */
-            margin: 12mm 15mm 14mm 15mm;
-          }
+          /* No @page here — PDFBolt margins come from PDFBOLT_MARGINS / headerTemplate.
+             Print-window @page + @bottom-center are injected only in writeAndPrintWindow. */
           
           .lesson-page {
             width: 100%;
@@ -673,7 +670,6 @@ export function LessonPrintModal({
             .lesson-page { box-shadow: none; min-height: auto; }
             .content-wrapper { background: white; }
           }
-          ${lessonExportPrintFooterCss()}
           ${planLogoPrintRunningCss()}
         </style>
       </head>
@@ -1296,9 +1292,9 @@ export function LessonPrintModal({
   };
 
   const writeAndPrintWindow = (printWin: Window, htmlRaw: string) => {
-    // Inject CSP (script-src 'none') into whatever document we write; print() is
-    // invoked from this opener, never via inline script in the print document.
-    const html = ensurePrintDocumentCsp(htmlRaw);
+    // Print-window only: @page @bottom-center footer + CSP. Never bake these into the
+    // PDFBolt HTML payload (duplicate footer / margin override).
+    const html = ensurePrintDocumentCsp(injectPrintWindowFooterCss(htmlRaw));
     printWin.document.open();
     printWin.document.write(html);
     printWin.document.close();

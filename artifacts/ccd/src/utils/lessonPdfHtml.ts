@@ -153,7 +153,7 @@ export function getLessonPdfStyles(): string {
       color: #1a1a1a;
       background: #fff;
     }
-    @page { size: A4; margin: 12mm 15mm 14mm 15mm; }
+    /* No @page — PDFBolt uses PDFBOLT_MARGINS + header/footer templates. */
     .lesson-page {
       width: 100%;
       max-width: 210mm;

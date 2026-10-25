@@ -916,7 +916,7 @@ export function LessonPlannerCalendar({
       .print-lesson-block .title { font-weight: 600; }
       .print-resource-links a { color: #0d9488; text-decoration: underline; }
       .brand-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #64748b; text-align: center; }
-      @page { margin: 12mm; }
+      /* No @page — PDFBolt margins come from the generate-pdf call. */
       .print-lesson-block .acts { margin: 4px 0 0; padding: 0 0 0 12px; font-size: 13px; color: #475569; }
       .print-lesson-block .acts li { margin: 0; }
     `;

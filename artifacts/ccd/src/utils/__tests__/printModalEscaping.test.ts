@@ -74,6 +74,7 @@ describe('LessonPrintModal print escaping', () => {
     assert.match(html, /© CCDesigner/);
     assert.match(html, /counter\(page\)/);
     assert.match(html, /font-size:\s*13px/);
+    assert.match(html, /font-family:\s*Inter,\s*sans-serif/);
     assert.doesNotMatch(html, /Page\s+0/);
     assert.doesNotMatch(html, /position:\s*fixed/i);
     assert.doesNotMatch(html, /ccd-export-print-footer/);

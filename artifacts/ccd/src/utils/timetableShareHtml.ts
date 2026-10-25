@@ -48,10 +48,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
         .text-gray-600{color:#4b5563}.text-gray-900{color:#111827}
         h1,h2,p{margin-top:0}
 
-        @page {
-          size: A4;
-          margin: 1cm;
-        }
+        /* No @page margin rule — PDFBolt / print callers set margins outside the HTML. */
         
         .timetable-page {
           width: 21cm;

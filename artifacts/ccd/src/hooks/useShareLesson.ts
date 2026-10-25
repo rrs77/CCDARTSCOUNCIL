@@ -167,7 +167,7 @@ export function useShareLesson() {
           .text-black{color:#000}.text-purple-600{color:#9333ea}.text-green-600{color:#16a34a}.text-blue-800{color:#1e40af}
         </style>
         <style>
-          @page { size: A4; margin: 12mm 15mm 25mm 15mm; }
+          /* No @page — PDFBolt margins come from the generate-pdf call. */
           .lesson-pdf-content { width: 100%; max-width: 210mm; margin: 0 auto; padding: 0; background: white; }
           .lesson-header-teal {
             background: #0f766e;
