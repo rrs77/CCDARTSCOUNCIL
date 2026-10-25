@@ -21,7 +21,7 @@ export interface RhythmstixTemplate {
   description: string;
   /** Years shown in the header band and meta line, e.g. "YEARS 3–4". */
   yearsLabel: string;
-  /** Prefix of the top-right header, e.g. "KS2" → "KS2 MUSIC | TEACHING RESOURCE". */
+  /** Prefix of the top-right header, e.g. "KS2" → "KS2 | TEACHING RESOURCE" (no subject word). */
   headerPhase: string;
   /** Restrained phase accent (headings rule, labels). */
   accent: string;
@@ -78,13 +78,13 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
     id: 'eyfs',
     defaultMinutes: 45,
     name: 'EYFS · Nursery & Reception',
-    description: 'Sing, move, play and explore. Short I CAN outcomes, look & listen assessment.',
+    description: 'Explore, create and respond. Short I CAN outcomes, observation-led assessment.',
     yearsLabel: 'RECEPTION',
     headerPhase: 'EYFS',
     accent: '#C87835',
     tint: '#FDF1E3',
-    defaultStrap: 'Listen • Move • Play • Create',
-    sequenceSubtitle: 'Model the action first, then let children listen, explore and respond.',
+    defaultStrap: 'Explore • Practise • Create • Reflect',
+    sequenceSubtitle: 'Model the action first, then let children explore, create and respond.',
     referenceSubtitle: 'Use simple questions as children play and talk.',
     toolkitSubtitle: 'Straightforward guidance for a confident early-years lesson.',
     sortOrder: 1,
@@ -94,13 +94,13 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
     id: 'ks1',
     defaultMinutes: 45,
     name: 'KS1 · Years 1–2',
-    description: 'Practise, copy, choose and perform, with explicit teacher prompts.',
+    description: 'Practise, copy, choose and present, with explicit teacher prompts.',
     yearsLabel: 'YEARS 1–2',
     headerPhase: 'KS1',
     accent: '#4E9177',
     tint: '#E9F3EE',
-    defaultStrap: 'Listen • Imagine • Perform • Reflect',
-    sequenceSubtitle: 'Model each step, then let pupils practise, choose and perform.',
+    defaultStrap: 'Explore • Imagine • Present • Reflect',
+    sequenceSubtitle: 'Model each step, then let pupils practise, choose and present.',
     referenceSubtitle: 'Use simple questions to check recall and understanding.',
     toolkitSubtitle: 'Clear subject concepts to support confident KS1 teaching.',
     sortOrder: 2,
@@ -115,7 +115,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
     headerPhase: 'KS2',
     accent: '#C5A13B',
     tint: '#FBF4DF',
-    defaultStrap: 'Explore • Practise • Compose • Share',
+    defaultStrap: 'Explore • Practise • Create • Share',
     sequenceSubtitle: 'Build confidence with one idea before layering parts.',
     referenceSubtitle: 'Use questions and peer feedback to check understanding.',
     toolkitSubtitle: 'Clear subject concepts to support confident KS2 teaching.',
@@ -131,8 +131,8 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
     headerPhase: 'KS2',
     accent: '#3E6F9D',
     tint: '#E8EFF6',
-    defaultStrap: 'Plan • Rehearse • Refine • Perform',
-    sequenceSubtitle: 'Move from initial ideas to a purposeful performance.',
+    defaultStrap: 'Plan • Rehearse • Refine • Present',
+    sequenceSubtitle: 'Move from initial ideas to a purposeful shared outcome.',
     referenceSubtitle: 'Focus on choices, control and evidence of refinement.',
     toolkitSubtitle: 'Subject concepts to support independence and KS3 transition.',
     sortOrder: 4,
@@ -169,7 +169,7 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
       AUTHENTICITY:
         'Reflective evidence must describe the learner’s own choices and be handled in accordance with course rules.',
       'TEACHER SUPPORT': 'Provide sentence stems for explaining intention and revision, not pre-written portfolio answers.',
-      EVIDENCE: 'Retain rehearsal annotations or recordings only where permissions and school policies permit.',
+      EVIDENCE: 'Retain rehearsal notes or documentation only where permissions and school policies permit.',
     },
     sourceDefault:
       'Not tied to any examination board. Actual objectives and permitted evidence depend on the teacher’s chosen specification.',
@@ -188,8 +188,8 @@ export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [
     defaultStrap: 'Research • Analyse • Interpret • Critique',
     toolkitLabels: ['SUBJECT EXPERTISE', 'SCHOLARLY LITERACY', 'QUALIFICATION FIT', 'EVIDENCE'],
     toolkitDefaults: {
-      'SUBJECT EXPERTISE': 'Provide the selected score, recording versions and reliable context; do not assume a fixed set work.',
-      'SCHOLARLY LITERACY': 'Distinguish observation from interpretation, reference recording timings and cite sources.',
+      'SUBJECT EXPERTISE': 'Provide the selected source materials and reliable context; do not assume a fixed set work.',
+      'SCHOLARLY LITERACY': 'Distinguish observation from interpretation, reference timings or key moments and cite sources.',
       'QUALIFICATION FIT': 'Use the teacher-selected A-level, BTEC or other pathway standards; do not hardcode one board.',
     },
     sourceDefault: 'Use teacher-approved curriculum, scholarly sources and licensing conditions.',
@@ -288,14 +288,44 @@ export function yearsLabelFor(t: RhythmstixTemplate, yearGroup?: string | null):
   return t.yearsLabel;
 }
 
-/** Subject from the class label or lesson (Music unless the label names another subject). */
-export function subjectFromLabel(label: string | null | undefined, fallback = 'Music'): string {
+/**
+ * Subject from a class/category label when named (Music, Drama, Dance, Art, …).
+ * Empty fallback — never invent "Music" for Drama/Dance/Art plans.
+ */
+export function subjectFromLabel(label: string | null | undefined, fallback = ''): string {
   const s = String(label || '').toLowerCase();
   const found = [
     ['music', 'Music'], ['drama', 'Drama'], ['dance', 'Dance'], ['computing', 'Computing'],
     ['art', 'Art'], ['pe', 'PE'],
   ].filter(([k]) => new RegExp(`\\b${k}\\b`).test(s)).map(([, v]) => v);
   return found.length ? found.join(' & ') : fallback;
+}
+
+/** Subject for meta / toolkit: lesson.subject, year-group label, or category — never a forced Music default. */
+export function subjectForLesson(
+  lesson: {
+    subject?: string | null;
+    categoryOrder?: string[] | null;
+    grouped?: Record<string, unknown> | null;
+  } | null | undefined,
+  yearGroup?: string | null,
+  explicit?: string | null,
+): string {
+  const fromExplicit = String(explicit || '').trim();
+  if (fromExplicit) return fromExplicit;
+  const fromLesson = String(lesson?.subject || '').trim();
+  if (fromLesson) return fromLesson;
+  const fromYear = subjectFromLabel(yearGroup, '');
+  if (fromYear) return fromYear;
+  const cats = [
+    ...(Array.isArray(lesson?.categoryOrder) ? lesson!.categoryOrder! : []),
+    ...Object.keys(lesson?.grouped || {}),
+  ];
+  for (const c of cats) {
+    const hit = subjectFromLabel(c, '');
+    if (hit) return hit;
+  }
+  return '';
 }
 
 /**
@@ -626,7 +656,7 @@ export function buildRhythmstixDoc(
   },
 ): RhythmstixDoc {
   const template = opts.template || getRhythmstixTemplate(opts.templateId);
-  const subject = String(opts.subject || lesson.subject || subjectFromLabel(opts.yearGroup)).trim();
+  const subject = subjectForLesson(lesson, opts.yearGroup, opts.subject);
   const base = opts.baseUrl;
   const doc: RhythmstixDoc = {
     template,
@@ -780,10 +810,16 @@ function estHeight(html: string, charsPerLine = 92): number {
 
 /** Ruled, printable write-in lines for fields the lesson hasn't filled. */
 const LINES = (n: number) => `<div class="rx-lines" aria-label="Write-in space">${'<span></span>'.repeat(n)}</div>`;
-export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string {
+/** Running header / on-page phase tag: phase only — no hardcoded MUSIC (Drama/Dance/Art too). */
+export function teachingResourcePhaseLabel(headerPhase: string, _subject?: string): string {
+  return `${String(headerPhase || '').trim()} | TEACHING RESOURCE`.replace(/\s+/g, ' ').trim();
+}
+
+export function rhythmstixCss(t: RhythmstixTemplate, _subject = ''): string {
   const cssText = (v: string) => v.replace(/["\\<>{}]/g, '').toUpperCase();
   const base = RHYTHMSTIX_TEMPLATES.find((b) => b.id === t.id) || RHYTHMSTIX_TEMPLATES[0];
   t = { ...t, accent: safeHexColour(t.accent, base.accent), tint: safeHexColour(t.tint, base.tint) };
+  const phaseTag = cssText(teachingResourcePhaseLabel(t.headerPhase));
   return `
 .rx-doc{--rx-accent:${t.accent};--rx-tint:${t.tint};--rx-teal:#1F7A70;--rx-gold:#B08A1E;
   font-family:Aptos,"Segoe UI",Calibri,Arial,sans-serif;color:#111;background:#fff;font-size:14px;line-height:1.45;width:100%;max-width:none;box-sizing:border-box}
@@ -843,7 +879,7 @@ ${PLAN_LOGO_PRINT_CSS}
 .rx-empty{color:#666;font-style:italic}
 @media print{
   @page{size:A4;margin:14mm 14mm 16mm 14mm;
-    @top-right{content:"${cssText(t.headerPhase)} ${cssText(subject)}  |  TEACHING RESOURCE";font-size:13px;font-weight:700;color:${t.accent}}
+    @top-right{content:"${phaseTag}";font-size:13px;font-weight:700;color:${t.accent}}
     @bottom-left{content:"${PLAN_FOOTER_COPYRIGHT()}";font-size:13px;color:#555}
     @bottom-center{content:"${PLAN_FOOTER_SITE}";font-size:13px;color:#1F7A70}
     @bottom-right{content:"Page " counter(page);font-size:13px;color:#555}}
@@ -863,8 +899,8 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   const link = (l: RxLink) => `<a href="${escapeText(l.url)}" target="_blank" rel="noopener noreferrer">${escapeText(l.label)} ↗</a>`;
   const li = (items: string[]) => `<ul class="rx-list">${items.map((i) => `<li>${escapeText(i)}</li>`).join('')}</ul>`;
   const checks = (items: string[]) => `<ul class="rx-checks">${items.map((i) => `<li>${escapeText(i)}</li>`).join('')}</ul>`;
-  const subjectUpper = escapeText(doc.subject.toUpperCase());
   const secondary = t.stage === 'secondary';
+  const phaseTag = escapeText(teachingResourcePhaseLabel(t.headerPhase));
 
   const parts: string[] = [];
   let used = 0; // estimated px used on page 1
@@ -872,7 +908,7 @@ export function renderRhythmstixHtml(doc: RhythmstixDoc, opts: RenderOptions = {
   parts.push(`<div class="rx-doc" data-rx-template="${t.id}">`);
   parts.push(
     `<header class="rx-head"><div class="rx-logo-slot" data-logo-slot="top-left">${opts.logoHtml || DEFAULT_LOGO_HTML}</div>` +
-      `<div class="rx-phase">${escapeText(t.headerPhase)} ${subjectUpper} &nbsp;|&nbsp; TEACHING RESOURCE</div></header>`,
+      `<div class="rx-phase">${phaseTag.replace(' | ', ' &nbsp;|&nbsp; ')}</div></header>`,
   );
   // Kicker as in the examples: KS3–KS5 say "LESSON PLAN • ILLUSTRATIVE TEMPLATE".
   parts.push(`<p class="rx-kicker">${secondary ? 'Lesson plan • Illustrative template' : 'Lesson plan'}</p><h1 class="rx-title">${escapeText(doc.title)}</h1>`);

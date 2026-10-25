@@ -10,6 +10,9 @@ import {
   renderRhythmstixHtml,
   resolveLessonTemplateId,
   rhythmstixPlanTemplate,
+  subjectForLesson,
+  subjectFromLabel,
+  teachingResourcePhaseLabel,
   templateFromDbRow,
   templateIdForYearGroup,
   templateIdForKeyStage,
@@ -113,15 +116,44 @@ describe('switching templates', () => {
     assert.match(ks3, /Lesson plan • Illustrative template/);
     assert.match(ks3, /Explore • Create • Refine • Evaluate/);
     assert.match(ks3, /YEARS 7–9 &nbsp;•&nbsp; 45 minutes/);
-    assert.match(eyfs, /EYFS MUSIC/);
+    assert.match(eyfs, /EYFS &nbsp;\|&nbsp; TEACHING RESOURCE/);
+    assert.doesNotMatch(eyfs, /EYFS MUSIC/);
     assert.match(eyfs, /ASSESSMENT — LOOK &amp; LISTEN FOR/);
     assert.match(eyfs, /Check understanding/);
+    assert.match(eyfs, /Explore • Practise • Create • Reflect/);
     assert.match(ks3, /data-rx-template="ks3"/);
-    assert.match(ks3, /YEARS 7–9 MUSIC/);
+    assert.match(ks3, /YEARS 7–9 &nbsp;\|&nbsp; TEACHING RESOURCE/);
+    assert.doesNotMatch(ks3, /YEARS 7–9 MUSIC/);
     assert.match(ks3, /ASSESSMENT: LOOK FOR/);
     assert.match(ks3, /Teacher reference and subject toolkit/);
     assert.match(ks3, /COMMON MISCONCEPTION/);
     assert.notEqual(eyfs, ks3);
+  });
+
+  it('phase tag never hardcodes MUSIC; subject comes from lesson when present', () => {
+    for (const t of RHYTHMSTIX_TEMPLATES) {
+      assert.equal(teachingResourcePhaseLabel(t.headerPhase), `${t.headerPhase} | TEACHING RESOURCE`);
+      assert.doesNotMatch(teachingResourcePhaseLabel(t.headerPhase, 'Music'), /MUSIC/);
+      const html = renderRhythmstixHtml(buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: t.id }));
+      assert.match(html, /TEACHING RESOURCE/);
+      assert.doesNotMatch(html, new RegExp(`${t.headerPhase.replace(/[–—]/g, '.')}\\s+MUSIC`));
+      assert.doesNotMatch(html, /Listen • Move • Play • Create/);
+      assert.doesNotMatch(html, /Listen • Imagine • Perform • Reflect/);
+      assert.doesNotMatch(html, /Explore • Practise • Compose • Share/);
+    }
+    assert.equal(subjectFromLabel('Reception'), '');
+    assert.equal(subjectFromLabel('Year 8 Drama'), 'Drama');
+    assert.equal(subjectForLesson({ subject: 'Dance' }, 'Year 5'), 'Dance');
+    assert.equal(subjectForLesson({ categoryOrder: ['Art exploration'], grouped: {} }, 'Year 3'), 'Art');
+    assert.equal(subjectForLesson({ grouped: {}, categoryOrder: [] }, 'Reception'), '');
+    const drama = buildRhythmstixDoc(
+      { grouped: {}, categoryOrder: [], totalTime: 45, subject: 'Drama' },
+      { templateId: 'ks3', yearGroup: 'Year 8' },
+    );
+    assert.equal(drama.subject, 'Drama');
+    // Header phase stays subject-free even when lesson.subject is set.
+    assert.match(renderRhythmstixHtml(drama), /YEARS 7–9 &nbsp;\|&nbsp; TEACHING RESOURCE/);
+    assert.doesNotMatch(renderRhythmstixHtml(drama), /YEARS 7–9 DRAMA/);
   });
 });
 
