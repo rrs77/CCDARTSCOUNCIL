@@ -75,13 +75,13 @@ function OrgLogoStrip({
   const needsInvert = onDark && !hub.logoSrcOnDark && hub.logoInvert;
   const shell =
     size === 'compact'
-      ? 'flex h-9 w-full items-center justify-start overflow-hidden rounded-lg py-1 pl-3 pr-12'
-      : 'flex h-12 w-full items-center justify-start overflow-hidden rounded-lg py-2 pl-4 pr-14';
+      ? 'flex h-9 w-full min-w-0 items-center justify-start overflow-hidden rounded-lg py-1 pl-3 pr-12'
+      : 'flex h-12 w-full min-w-0 items-center justify-start overflow-hidden rounded-lg py-2 pl-4 pr-14';
   /** Fixed logo box: every logo renders at one height, left-aligned, clear of the heart (pr = safe zone). */
   const img =
     size === 'compact'
-      ? 'h-6 max-h-6 w-auto max-w-full object-contain object-left'
-      : 'h-8 max-h-8 w-auto max-w-full object-contain object-left';
+      ? 'h-6 max-h-6 w-auto max-w-full min-w-0 object-contain object-left'
+      : 'h-8 max-h-8 w-auto max-w-full min-w-0 object-contain object-left';
   return (
     <div
       className={shell}
@@ -113,7 +113,11 @@ function OrgLogoMark({ hub }: { hub: PartnerHubConfig }) {
           : hub.primaryColor || '#1F1B4D',
       }}
     >
-      <img src={src} alt="" className={`h-6 w-auto max-w-full object-contain ${invert ? 'brightness-0 invert' : ''}`} />
+      <img
+        src={src}
+        alt=""
+        className={`h-6 w-auto max-w-full min-w-0 object-contain ${invert ? 'brightness-0 invert' : ''}`}
+      />
     </span>
   );
 }
