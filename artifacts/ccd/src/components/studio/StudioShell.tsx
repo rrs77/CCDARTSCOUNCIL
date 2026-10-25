@@ -305,7 +305,7 @@ export function StudioShell({
       </aside>
 
       <div className="ccd-studio-workspace">
-        {topBar}
+        {topBar ? <div className="ccd-studio-topbar">{topBar}</div> : null}
         <div
           className={`ccd-studio-workspace-inner ${hubsMode ? 'hubs-bridge' : ''} ${wideCanvas ? 'wide-canvas' : ''} ${editorFlush ? 'editor-flush' : ''}`}
         >

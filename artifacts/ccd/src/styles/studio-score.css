@@ -16,6 +16,8 @@
   --ss-lavender: #e5e2ff;
   --ss-white: #ffffff;
   --ss-sidebar: 200px;
+  /* Sticky/fixed app header (Header h-14 / sm:h-16) — keep shell clear of it */
+  --ss-topbar: 3.5rem;
   /* Full-width workspace — no page max-width; modals keep ModalShell 760 */
   --ss-workspace-max: none;
   --ss-workspace-week-max: none;
@@ -28,6 +30,12 @@
   /* Page titles match sidebar / UI — same family, heavier weight */
   --ss-font-display: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
   --ss-font-ui: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+}
+
+@media (min-width: 640px) {
+  :root {
+    --ss-topbar: 4rem;
+  }
 }
 
 .ccd-studio {
@@ -65,9 +73,9 @@
 .ccd-studio-app {
   display: grid;
   grid-template-columns: var(--ss-sidebar) minmax(0, 1fr);
-  min-height: calc(100vh - 4rem);
-  height: calc(100vh - 4rem);
-  max-height: calc(100vh - 4rem);
+  min-height: calc(100vh - var(--ss-topbar));
+  height: calc(100vh - var(--ss-topbar));
+  max-height: calc(100vh - var(--ss-topbar));
   max-width: none;
   margin: 0;
   background: var(--ss-lilac);
@@ -135,8 +143,8 @@ html.ccd-studio {
   padding: 22px 14px;
   gap: 20px;
   position: sticky;
-  top: 3.5rem;
-  height: calc(100vh - 3.5rem);
+  top: var(--ss-topbar);
+  height: calc(100vh - var(--ss-topbar));
   overflow-y: auto;
   z-index: 40;
 }
@@ -399,10 +407,21 @@ html.ccd-studio {
   overflow: hidden;
 }
 
+/* Optional slim bar above the scroller (StudioShell topBar) — never overlap pages */
+.ccd-studio-workspace > .ccd-studio-topbar {
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  margin: 0;
+}
+
 .ccd-studio-workspace-inner {
   flex: 1;
   width: 100%;
   margin-inline: 0;
+  /* Never pull page chrome (eyebrow / H1) under the sticky app header */
+  margin-top: 0;
   padding: 18px 24px 48px;
   min-width: 0;
   /* Flex child must shrink so tall Lessons / Help / Planner / Bolt-ons pages
@@ -413,6 +432,8 @@ html.ccd-studio {
   overflow-y: auto;
   overscroll-behavior: contain;
   -webkit-overflow-scrolling: touch;
+  /* In-scroller stickies / scrollIntoView clear the page padding band */
+  scroll-padding-top: 18px;
 }
 
 /* Week planner — same full column as other studio pages */
@@ -424,12 +445,21 @@ html.ccd-studio {
   /* Partner Hubs keep their own sage/forest canvas — full column */
   max-width: none;
   margin-inline: 0;
-  padding: 8px 12px 40px;
+  margin-top: 0;
+  /* Same top clearance as other studio pages (was 8px — sat under app chrome) */
+  padding: 18px 12px 40px;
   background: transparent;
+  scroll-padding-top: 18px;
   /* Sticky region map sticks to this scroller (workspace-inner already
      scrolls for all studio pages; hubs also needs a size container). */
   container-type: size;
   container-name: hubs-scroller;
+}
+
+/* Eyebrows + titles stay visible when jumped to / stuck under in-page chrome */
+.ccd-studio-workspace-inner .ccd-studio-eyebrow,
+.ccd-studio-workspace-inner h1 {
+  scroll-margin-top: 12px;
 }
 
 .ccd-studio-workspace-inner.wide-canvas {
@@ -446,7 +476,9 @@ html.ccd-studio {
   height: 100%;
   max-height: 100%;
   overflow: hidden;
+  margin-top: 0;
   padding: 14px 18px 14px;
+  scroll-padding-top: 14px;
 }
 
 .ccd-studio-workspace-inner.wide-canvas:has(.ss-settings-page) > .ccd-fade-in-up {
@@ -463,8 +495,8 @@ html.ccd-studio {
   display: flex;
   flex-direction: column;
   min-height: 0;
-  height: calc(100vh - 3.5rem);
-  max-height: calc(100vh - 3.5rem);
+  height: calc(100vh - var(--ss-topbar));
+  max-height: calc(100vh - var(--ss-topbar));
   overflow: hidden;
 }
 
@@ -979,8 +1011,10 @@ html.ccd-studio .ss-dialog-lg {
   }
 
   .ccd-studio-workspace-inner {
+    margin-top: 0;
     padding: 16px 16px 96px;
     max-width: none;
+    scroll-padding-top: 16px;
   }
 
   .ccd-studio-mobile-nav {

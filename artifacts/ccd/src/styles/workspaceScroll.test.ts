@@ -35,6 +35,30 @@ describe('studio workspace vertical scroll', () => {
   });
 });
 
+describe('studio sticky top bar clearance', () => {
+  const css = read('styles/studio-score.css');
+
+  it('defines --ss-topbar and keeps workspace-inner clear of the app header', () => {
+    assert.match(css, /--ss-topbar:\s*3\.5rem/);
+    assert.match(css, /--ss-topbar:\s*4rem/);
+    assert.match(css, /height:\s*calc\(100vh\s*-\s*var\(--ss-topbar\)\)/);
+    const inner = css.match(/\.ccd-studio-workspace-inner\s*\{([^}]+)\}/);
+    assert.ok(inner, 'expected .ccd-studio-workspace-inner rule');
+    assert.match(inner[1], /margin-top:\s*0/);
+    assert.match(inner[1], /scroll-padding-top:\s*18px/);
+    assert.doesNotMatch(inner[1], /margin-top:\s*-/);
+  });
+
+  it('gives Partner Hubs the same top padding as other studio pages', () => {
+    const hubs = css.match(/\.ccd-studio-workspace-inner\.hubs-bridge\s*\{([^}]+)\}/);
+    assert.ok(hubs, 'expected .hubs-bridge rule');
+    assert.match(hubs[1], /padding:\s*18px\s+12px\s+40px/);
+    assert.match(hubs[1], /margin-top:\s*0/);
+    assert.match(css, /\.ccd-studio-workspace-inner\s+\.ccd-studio-eyebrow/);
+    assert.match(css, /scroll-margin-top:\s*12px/);
+  });
+});
+
 describe('Lessons workspace does not trap height in the viewport', () => {
   const src = read('components/LessonsWorkspace.tsx');
 
