@@ -394,6 +394,8 @@ html.ccd-studio {
   display: flex;
   flex-direction: column;
   background: var(--ss-lilac);
+  /* Clip to the shell; vertical scroll lives on workspace-inner so Planner,
+     Bolt-ons, and other tall pages are not trapped / cut off at the top. */
   overflow: hidden;
 }
 
@@ -403,7 +405,12 @@ html.ccd-studio {
   margin-inline: 0;
   padding: 18px 24px 48px;
   min-width: 0;
+  min-height: 0;
   max-width: none;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Week planner — same full column as other studio pages */
@@ -417,11 +424,8 @@ html.ccd-studio {
   margin-inline: 0;
   padding: 8px 12px 40px;
   background: transparent;
-  /* Hubs view scrolls inside the studio workspace (which is overflow:hidden),
-     so the sticky region map sticks to this scroller. Scoped to hubs only. */
-  min-height: 0;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  /* Sticky region map sticks to this scroller (workspace-inner already
+     scrolls for all studio pages; hubs also needs a size container). */
   container-type: size;
   container-name: hubs-scroller;
 }

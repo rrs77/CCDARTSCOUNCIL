@@ -51,6 +51,60 @@ function CellValue({
   return <b className="text-[13px] text-[#1F1B4D]">{value}</b>;
 }
 
+type CompareRow = (typeof EXPLORE_COMPARE.assessify)[number];
+
+function PlanCompareCard({
+  title,
+  titleId,
+  icon,
+  rows,
+}: {
+  title: string;
+  titleId: string;
+  icon: React.ReactNode;
+  rows: readonly CompareRow[];
+}) {
+  return (
+    <div className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_12px_32px_rgba(31,27,77,0.05)]">
+      <div className="flex items-center gap-2 border-b border-[#EEEDF6] bg-[#FAFAFD] px-4 py-2.5 text-[13px] font-extrabold uppercase tracking-wide text-[#4338E8]">
+        {icon}
+        <span id={titleId}>{title}</span>
+      </div>
+      <table className="w-full border-collapse" aria-labelledby={titleId}>
+        <thead>
+          <tr>
+            <th scope="col" className="px-4 py-2.5 text-left text-[14px] font-bold text-[#1F1B4D]">
+              Feature
+            </th>
+            <th scope="col" className="px-3 py-2.5 text-center text-[14px] font-bold text-[#1F1B4D]">
+              Free
+            </th>
+            <th
+              scope="col"
+              className="bg-[#F1EFFF] px-3 py-2.5 text-center text-[14px] font-bold text-[#1F1B4D] shadow-[inset_0_3px_0_#4338E8]"
+            >
+              Premium <ExampleTag>Price not set</ExampleTag>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={row.feature} className="border-t border-[#F0EFF7]">
+              <td className="px-4 py-2.5 text-[13px] text-[#1F1B4D]">{row.feature}</td>
+              <td className="px-3 py-2.5 text-center">
+                <CellValue value={row.free} />
+              </td>
+              <td className="bg-[#F7F6FF] px-3 py-2.5 text-center">
+                <CellValue value={row.premium} />
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function BoltOnsCatalogue({ onNavigate }: Props) {
   return (
     <div>
@@ -245,64 +299,25 @@ export function BoltOnsCatalogue({ onNavigate }: Props) {
         <p className="text-[13px] text-[#5F5B7A]">CCDesigner itself stays free on every plan.</p>
       </div>
 
-      <div className="overflow-hidden rounded-2xl border border-[#E2E0EF] bg-white shadow-[0_12px_32px_rgba(31,27,77,0.05)]">
-        <table className="w-full border-collapse" aria-labelledby="cmp">
-          <thead>
-            <tr>
-              <th scope="col" className="px-4 py-2.5 text-left text-[14px] font-bold text-[#1F1B4D]">
-                Feature
-              </th>
-              <th scope="col" className="px-3 py-2.5 text-center text-[14px] font-bold text-[#1F1B4D]">
-                Free
-              </th>
-              <th
-                scope="col"
-                className="bg-[#F1EFFF] px-3 py-2.5 text-center text-[14px] font-bold text-[#1F1B4D] shadow-[inset_0_3px_0_#4338E8]"
-              >
-                Premium{' '}
-                <ExampleTag>Price not set</ExampleTag>
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="bg-[#FAFAFD]">
-              <td colSpan={3} className="px-4 py-1.5 text-[13px] font-extrabold uppercase tracking-wide text-[#4338E8]">
-                <span className="inline-flex items-center gap-2">
-                  <LayoutGrid className="h-4 w-4" aria-hidden /> Assessify
-                </span>
-              </td>
-            </tr>
-            {EXPLORE_COMPARE.assessify.map((row) => (
-              <tr key={row.feature} className="border-t border-[#F0EFF7]">
-                <td className="px-4 py-2.5 text-[13px] text-[#1F1B4D]">{row.feature}</td>
-                <td className="px-3 py-2.5 text-center">
-                  <CellValue value={row.free} />
-                </td>
-                <td className="bg-[#F7F6FF] px-3 py-2.5 text-center">
-                  <CellValue value={row.premium} />
-                </td>
-              </tr>
-            ))}
-            <tr className="bg-[#FAFAFD]">
-              <td colSpan={3} className="px-4 py-1.5 text-[13px] font-extrabold uppercase tracking-wide text-[#4338E8]">
-                <span className="inline-flex items-center gap-2">
-                  <Music2 className="h-4 w-4" aria-hidden /> PeriFeedback
-                </span>
-              </td>
-            </tr>
-            {EXPLORE_COMPARE.perifeedback.map((row) => (
-              <tr key={row.feature} className="border-t border-[#F0EFF7]">
-                <td className="px-4 py-2.5 text-[13px] text-[#1F1B4D]">{row.feature}</td>
-                <td className="px-3 py-2.5 text-center">
-                  <CellValue value={row.free} />
-                </td>
-                <td className="bg-[#F7F6FF] px-3 py-2.5 text-center">
-                  <CellValue value={row.premium} />
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+      {/* Two side-by-side plan cards; stack below 900px so neither table is clipped. */}
+      <div
+        className="grid grid-cols-1 gap-4 min-[900px]:grid-cols-2"
+        role="region"
+        aria-labelledby="cmp"
+        data-plans-compare="two-column"
+      >
+        <PlanCompareCard
+          title="Assessify"
+          titleId="cmp-assessify"
+          icon={<LayoutGrid className="h-4 w-4" aria-hidden />}
+          rows={EXPLORE_COMPARE.assessify}
+        />
+        <PlanCompareCard
+          title="PeriFeedback"
+          titleId="cmp-perifeedback"
+          icon={<Music2 className="h-4 w-4" aria-hidden />}
+          rows={EXPLORE_COMPARE.perifeedback}
+        />
       </div>
 
       <ConceptFooter />
