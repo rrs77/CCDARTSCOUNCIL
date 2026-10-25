@@ -17,9 +17,12 @@ export function normalizeYgKey(value: string | undefined | null): string {
 
 /** Alias tokens that should be treated as the same year group. */
 const ALIAS_GROUPS: string[][] = [
+  // EYFS umbrella: a class named EYFS matches categories ticked for any of these, and the reverse.
+  ['eyfs', 'reception', 'lkg', 'ukg', 'nursery'],
   ['lkg', 'lower kindergarten', 'lower kindergarten music', 'lower kindergarden'],
   ['ukg', 'upper kindergarten', 'upper kindergarten music', 'upper kindergarden'],
   ['reception', 'reception music', 'reception class'],
+  ['nursery', 'nursery class', 'nursery music'],
   ['year6', 'year 6', 'year 6 music', 'y6'],
   ['year5', 'year 5', 'year 5 music', 'y5'],
   ['year4', 'year 4', 'year 4 music', 'y4'],
@@ -125,9 +128,11 @@ export function resolveYearGroupMatchKeys(
   const sheetNorm = normalizeYgKey(sheet);
 
   const shortToLong: Record<string, (name: string) => boolean> = {
+    eyfs: (n) => n === 'eyfs' || n.startsWith('eyfs '),
     lkg: (n) => n.includes('lower') && n.includes('kindergarten'),
     ukg: (n) => n.includes('upper') && n.includes('kindergarten'),
     reception: (n) => n === 'reception' || n.startsWith('reception '),
+    nursery: (n) => n === 'nursery' || n.startsWith('nursery '),
     year6: (n) => n === 'year 6' || n.startsWith('year 6 ') || n === 'year6',
   };
 
@@ -178,16 +183,35 @@ export function resolveYearGroupMatchKeys(
     const nameLower = normalizeYgKey(yearGroup.name);
     const idLower = normalizeYgKey(yearGroup.id);
 
+    if (
+      nameLower === 'eyfs' ||
+      nameLower.startsWith('eyfs ') ||
+      idLower === 'eyfs' ||
+      nameLower.includes('early years')
+    ) {
+      keys.add('EYFS');
+      keys.add('Reception');
+      keys.add('LKG');
+      keys.add('UKG');
+      keys.add('Nursery');
+    }
     if (nameLower.includes('lower') || nameLower.includes('lkg') || idLower === 'lkg') {
       keys.add('LKG');
       keys.add('Lower Kindergarten');
+      keys.add('EYFS');
     }
     if (nameLower.includes('upper') || nameLower.includes('ukg') || idLower === 'ukg') {
       keys.add('UKG');
       keys.add('Upper Kindergarten');
+      keys.add('EYFS');
     }
     if (nameLower === 'reception' || nameLower.startsWith('reception ') || idLower === 'reception') {
       keys.add('Reception');
+      keys.add('EYFS');
+    }
+    if (nameLower === 'nursery' || nameLower.startsWith('nursery ') || idLower === 'nursery') {
+      keys.add('Nursery');
+      keys.add('EYFS');
     }
 
     const yearMatch = nameLower.match(/\byear\s*(\d+)\b/) || idLower.match(/\byear\s*(\d+)\b/);
@@ -205,10 +229,25 @@ export function resolveYearGroupMatchKeys(
   } else {
     // Sheet-only fallback aliases so tags / legacy keys still match
     for (const token of aliasTokensFor(sheetNorm)) {
-      if (token === 'lkg') keys.add('LKG');
-      else if (token === 'ukg') keys.add('UKG');
-      else if (token === 'reception') keys.add('Reception');
-      else if (/^year\d+$/.test(token)) {
+      if (token === 'eyfs') {
+        keys.add('EYFS');
+        keys.add('Reception');
+        keys.add('LKG');
+        keys.add('UKG');
+        keys.add('Nursery');
+      } else if (token === 'lkg') {
+        keys.add('LKG');
+        keys.add('EYFS');
+      } else if (token === 'ukg') {
+        keys.add('UKG');
+        keys.add('EYFS');
+      } else if (token === 'reception') {
+        keys.add('Reception');
+        keys.add('EYFS');
+      } else if (token === 'nursery') {
+        keys.add('Nursery');
+        keys.add('EYFS');
+      } else if (/^year\d+$/.test(token)) {
         const n = token.replace('year', '');
         keys.add(`Year${n}`);
         keys.add(`Year ${n}`);

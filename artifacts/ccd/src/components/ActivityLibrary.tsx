@@ -167,9 +167,59 @@ export function ActivityLibrary({
     const sheetId = className || currentSheetInfo?.sheet;
     return resolveYearGroupMatchKeys(sheetId, customYearGroups);
   }, [className, currentSheetInfo, customYearGroups]);
+
+  const { user, profile } = useAuth();
+  const isOrgOrSuperAdmin = React.useMemo(() => {
+    const role = user?.role || profile?.role;
+    return (
+      role === 'admin' ||
+      role === 'superuser' ||
+      role === 'super_admin' ||
+      role === 'organisation' ||
+      profile?.role === 'admin' ||
+      profile?.role === 'superuser' ||
+      profile?.role === 'super_admin' ||
+      profile?.role === 'organisation'
+    );
+  }, [user?.role, profile?.role]);
+
+  const SHOW_ALL_CATEGORIES_KEY = 'ccd-activity-library-show-all-categories';
+  const [showAllCategories, setShowAllCategories] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    try {
+      const stored = localStorage.getItem(SHOW_ALL_CATEGORIES_KEY);
+      if (stored === '1') return true;
+      if (stored === '0') return false;
+    } catch {
+      /* ignore */
+    }
+    return false;
+  });
+  // Default ON for org/super admins when no preference has been saved yet.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SHOW_ALL_CATEGORIES_KEY);
+      if (stored === '1' || stored === '0') return;
+    } catch {
+      /* ignore */
+    }
+    if (isOrgOrSuperAdmin) setShowAllCategories(true);
+  }, [isOrgOrSuperAdmin]);
+
+  const setShowAllCategoriesPersisted = useCallback((next: boolean) => {
+    setShowAllCategories(next);
+    try {
+      localStorage.setItem(SHOW_ALL_CATEGORIES_KEY, next ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  }, []);
   
   // Categories assigned to current year group (alias-aware: LKG↔Lower Kindergarten, Year6↔Year 6).
+  // null = show every category (admin "Show all categories" or no category catalog yet).
   const availableCategoriesForYearGroup = React.useMemo(() => {
+    if (showAllCategories) return null;
+
     if (!categories || categories.length === 0) {
       if (import.meta.env.DEV) console.log('📚 ActivityLibrary: No categories available');
       return null;
@@ -220,9 +270,7 @@ export function ActivityLibrary({
     
     // Empty list still allows activity-tag fallback via activityVisibleForYearGroup
     return categoryNames;
-  }, [categories, className, currentSheetInfo, getCurrentYearGroupKeys]);
-  
-  const { user, profile } = useAuth();
+  }, [categories, className, currentSheetInfo, getCurrentYearGroupKeys, showAllCategories]);
   const [searchQuery, setSearchQuery] = useState('');
   const [debouncedSearchQuery, setDebouncedSearchQuery] = useState('');
   useEffect(() => {
@@ -589,14 +637,17 @@ export function ActivityLibrary({
       const matchesLevel = true;
       
       // Settings folder visibility AND activity year-group tags (when present).
-      const visibleForYearGroup = activityVisibleForYearGroup({
-        activityCategory: activity.category,
-        availableCategoriesForYearGroup,
-        activityYearGroups: activity.yearGroups,
-        yearGroupKeys: getCurrentYearGroupKeys(),
-        settingsCategoryNames: categories.map((c) => c.name),
-        normalizeKey,
-      });
+      // "Show all categories" bypasses class assignment so every activity is listed.
+      const visibleForYearGroup =
+        showAllCategories ||
+        activityVisibleForYearGroup({
+          activityCategory: activity.category,
+          availableCategoriesForYearGroup,
+          activityYearGroups: activity.yearGroups,
+          yearGroupKeys: getCurrentYearGroupKeys(),
+          settingsCategoryNames: categories.map((c) => c.name),
+          normalizeKey,
+        });
 
       // Check if user owns required pack (if activity requires one)
       const hasPackAccess = !activity.requiredPack || userOwnedPacks.includes(activity.requiredPack);
@@ -656,10 +707,16 @@ export function ActivityLibrary({
       displayGroups: groups,
       filteredActivityCount: filteredActivities.length
     };
-  }, [allActivities, debouncedSearchQuery, localSelectedCategory, selectedTopic, sortBy, sortOrder, categories, userOwnedPacks, availableCategoriesForYearGroup, getCurrentYearGroupKeys, normalizeKey, globalStarredFirst, starredFirstCategories, starredIds]);
+  }, [allActivities, debouncedSearchQuery, localSelectedCategory, selectedTopic, sortBy, sortOrder, categories, userOwnedPacks, availableCategoriesForYearGroup, getCurrentYearGroupKeys, normalizeKey, globalStarredFirst, starredFirstCategories, starredIds, showAllCategories]);
 
   // Calculate total activities available for the current year group (without search/category filters)
   const totalActivitiesForYearGroup = useMemo(() => {
+    if (showAllCategories) {
+      return allActivities.filter((activity) => {
+        const hasPackAccess = !activity.requiredPack || userOwnedPacks.includes(activity.requiredPack);
+        return hasPackAccess;
+      }).length;
+    }
     const ygKeys = getCurrentYearGroupKeys();
     const settingsCategoryNames = categories.map((c) => c.name);
     return allActivities.filter(activity => {
@@ -674,7 +731,7 @@ export function ActivityLibrary({
       const hasPackAccess = !activity.requiredPack || userOwnedPacks.includes(activity.requiredPack);
       return visibleForYearGroup && hasPackAccess;
     }).length;
-  }, [allActivities, availableCategoriesForYearGroup, categories, getCurrentYearGroupKeys, normalizeKey, userOwnedPacks]);
+  }, [allActivities, availableCategoriesForYearGroup, categories, getCurrentYearGroupKeys, normalizeKey, userOwnedPacks, showAllCategories]);
 
   const availableTopicsForSelection = useMemo(() => {
     const topics = new Set<string>();
@@ -1161,10 +1218,11 @@ export function ActivityLibrary({
             >
               {className ? className : 'Activity Library'}
             </h2>
-            <p className="text-[10px] font-medium leading-tight text-[#77738F]">
+            <p className="text-[13px] font-medium leading-tight text-[#77738F]">
               {getCurrentYearGroupKeys().length > 0
                 ? `${filteredActivityCount} of ${totalActivitiesForYearGroup}`
                 : `${filteredActivityCount} activities`}
+              {showAllCategories ? ' · all categories' : ''}
             </p>
           </div>
 
@@ -1175,7 +1233,7 @@ export function ActivityLibrary({
               placeholder="Search…"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 w-full rounded-lg border border-[#E2E0EF] bg-white py-1 pl-7 pr-2 text-xs text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
+              className="h-8 w-full rounded-lg border border-[#E2E0EF] bg-white py-1 pl-7 pr-2 text-[13px] text-[#1F1B4D] placeholder:text-[#77738F] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
               dir="ltr"
             />
           </div>
@@ -1185,10 +1243,28 @@ export function ActivityLibrary({
               selectedCategory={localSelectedCategory === 'all' ? '' : localSelectedCategory}
               onCategoryChange={(category) => handleCategoryChange(category === '' ? 'all' : category)}
               placeholder="All categories"
-              className="h-8 w-full truncate rounded-lg border border-[#E2E0EF] bg-white px-2 py-1 text-xs font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
+              className="h-8 w-full truncate rounded-lg border border-[#E2E0EF] bg-white px-2 py-1 text-[13px] font-medium text-[#1F1B4D] focus:border-[#4338E8] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/20"
               showAllCategories={false}
             />
           </div>
+
+          <label
+            className={`inline-flex h-8 shrink-0 cursor-pointer items-center gap-1.5 rounded-lg border px-2 text-[13px] font-bold transition ${
+              showAllCategories
+                ? 'border-[#4338E8] bg-[#E9E6FF] text-[#4338E8]'
+                : 'border-[#E2E0EF] bg-white text-[#1F1B4D] hover:border-[#bcb7f4]'
+            }`}
+            title="Show every category and activity regardless of class assignment"
+          >
+            <input
+              type="checkbox"
+              className="h-3.5 w-3.5 accent-[#4338E8]"
+              checked={showAllCategories}
+              onChange={(e) => setShowAllCategoriesPersisted(e.target.checked)}
+              data-testid="activity-library-show-all-categories"
+            />
+            Show all categories
+          </label>
 
           {availableTopicsForSelection.length > 0 && (
             <label className="relative inline-flex w-[120px] shrink-0 items-center sm:w-[140px]">
@@ -1411,6 +1487,7 @@ export function ActivityLibrary({
           selectedActivityKeys={partnerSelectedActivityKeys}
           selectedProjectKeys={partnerSelectedProjectKeys}
           activityFilter={(activity) =>
+            showAllCategories ||
             activityVisibleForYearGroup({
               activityCategory: activity.category,
               availableCategoriesForYearGroup,
