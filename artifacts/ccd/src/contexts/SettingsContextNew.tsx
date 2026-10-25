@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import toast from 'react-hot-toast';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
 import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError, systemCategoriesApi } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
@@ -2144,11 +2145,14 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
       );
 
       console.log('🎉 NEW: Category added permanently and saved!');
-      alert(`✅ NEW VERSION: Category "${name}" saved permanently!`);
-    } catch (error: any) {
-      const errorMessage = error?.message || 'Unknown error occurred';
+      toast.success(`Category “${name}” saved`);
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
       console.error('❌ NEW: Failed to add category:', error);
-      alert(`❌ NEW VERSION: Failed to save category: ${errorMessage}`);
+      toast.error('Could not save that category. Please try again.');
+      if (import.meta.env.DEV) {
+        console.warn('Category save detail:', errorMessage);
+      }
     }
   };
 

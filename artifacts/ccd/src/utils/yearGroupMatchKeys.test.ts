@@ -24,33 +24,82 @@ describe('normalizeYearGroupKey', () => {
   });
 });
 
-describe('yearGroupTokensMatch — Reception / EYFS', () => {
-  it('matches EYFS Reception Music with Reception and Reception Music', () => {
-    assert.equal(yearGroupTokensMatch('EYFS Reception Music', 'Reception'), true);
-    assert.equal(yearGroupTokensMatch('EYFS Reception Music', 'Reception Music'), true);
-    assert.equal(yearGroupTokensMatch('Reception Music', 'EYFS Reception Music'), true);
-  });
+describe('yearGroupTokensMatch — Reception / EYFS spellings', () => {
+  const receptionPairs: [string, string][] = [
+    ['Reception', 'Rec'],
+    ['Reception', 'R'],
+    ['Reception', 'Yr R'],
+    ['Reception', 'Year R'],
+    ['Reception', 'EYFS'],
+    ['Reception', 'Nursery'],
+    ['Reception Music', 'Reception Drama'],
+    ['EYFS Reception Music', 'Reception'],
+    ['EYFS Reception Music', 'Reception Music'],
+    ['Reception Music', 'EYFS Reception Music'],
+  ];
+
+  for (const [a, b] of receptionPairs) {
+    it(`matches ${a} ↔ ${b}`, () => {
+      assert.equal(yearGroupTokensMatch(a, b), true);
+      assert.equal(yearGroupTokensMatch(b, a), true);
+    });
+  }
 
   it('does not match Reception Music with Year 1 Music', () => {
     assert.equal(yearGroupTokensMatch('EYFS Reception Music', 'Year 1 Music'), false);
   });
 });
 
-describe('yearGroupTokensMatch — Year N safety', () => {
+describe('yearGroupTokensMatch — Year N spellings', () => {
+  const year1Pairs: [string, string][] = [
+    ['Year 1', 'Yr 1'],
+    ['Year 1', 'Y 1'],
+    ['Year 1', 'Y1'],
+    ['Year 1', 'Year1'],
+    ['Year 1 Drama', 'Year 1 Music'],
+    ['Year 1 Music', 'Yr 1'],
+  ];
+
+  for (const [a, b] of year1Pairs) {
+    it(`matches ${a} ↔ ${b}`, () => {
+      assert.equal(yearGroupTokensMatch(a, b), true);
+      assert.equal(yearGroupTokensMatch(b, a), true);
+    });
+  }
+
   it('never treats Year 10 as Year 1', () => {
     assert.equal(yearGroupTokensMatch('Year 10', 'Year 1'), false);
     assert.equal(yearGroupTokensMatch('Year 10 Music', 'Year 1 Music'), false);
     assert.equal(extractYearNumber('year 10 music'), '10');
     assert.equal(extractYearNumber('year 1 music'), '1');
+    assert.equal(extractYearNumber('yr 1'), '1');
   });
 
   it('matches Year 6 aliases', () => {
     assert.equal(yearGroupTokensMatch('Year6', 'Year 6 Music'), true);
     assert.equal(yearGroupTokensMatch('Y6', 'Year 6'), true);
+    assert.equal(yearGroupTokensMatch('Yr 6', 'Year 6 Drama'), true);
   });
 });
 
-describe('resolveYearGroupMatchKeys — EYFS Reception Music 0-of-0 fix', () => {
+describe('yearGroupTokensMatch — KS bands', () => {
+  it('KS1 covers Year 1 and Year 2 only', () => {
+    assert.equal(yearGroupTokensMatch('KS1', 'Year 1'), true);
+    assert.equal(yearGroupTokensMatch('KS1', 'Year 2'), true);
+    assert.equal(yearGroupTokensMatch('Key Stage 1', 'Year 1 Music'), true);
+    assert.equal(yearGroupTokensMatch('KS1', 'Year 3'), false);
+    assert.equal(yearGroupTokensMatch('KS1', 'Reception'), false);
+  });
+
+  it('KS2 covers Years 3–6 only', () => {
+    assert.equal(yearGroupTokensMatch('KS2', 'Year 3'), true);
+    assert.equal(yearGroupTokensMatch('KS2', 'Year 6 Music'), true);
+    assert.equal(yearGroupTokensMatch('KS2', 'Year 2'), false);
+    assert.equal(yearGroupTokensMatch('KS2', 'Year 7'), false);
+  });
+});
+
+describe('resolveYearGroupMatchKeys — EYFS Reception Music finds activities', () => {
   const groups = [
     { id: 'yg-rec-plain', name: 'Reception Music' },
     { id: 'yg-eyfs-rec', name: 'EYFS Reception Music' },
@@ -82,9 +131,11 @@ describe('resolveYearGroupMatchKeys — EYFS Reception Music 0-of-0 fix', () => 
     assert.equal(categoryAssignedToYearGroupKeys(yearGroups, keys), true);
   });
 
-  it('activity tagged Reception is visible for EYFS Reception Music', () => {
+  it('activity tagged Reception is visible for EYFS Reception Music (real matching path)', () => {
     const keys = resolveYearGroupMatchKeys('EYFS Reception Music', groups);
     assert.equal(activityTagsMatchYearGroupKeys(['Reception'], keys), true);
+    assert.equal(activityTagsMatchYearGroupKeys(['Reception Music'], keys), true);
+    assert.equal(activityTagsMatchYearGroupKeys(['Yr R'], keys), true);
     assert.equal(activityTagsMatchYearGroupKeys(['Year 1'], keys), false);
   });
 

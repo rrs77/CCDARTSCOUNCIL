@@ -22,11 +22,44 @@ import {
   selectMergedCurriculumStatements,
   type MergedPlannerCurriculum,
 } from './mergePlannerCurriculum';
+import toast from 'react-hot-toast';
 
+/** Legacy unscoped key (migrated into scoped keys on read). */
 export const STORAGE_KEY = 'ccd-planner-curriculum-v1';
 const PERSONAL_STORAGE_KEY = 'ccd-planner-curriculum-personal-v1';
 const IMPORT_FLAG_PREFIX = 'ccd-planner-curriculum-imported-v1:';
 const PERSONAL_IMPORT_FLAG_PREFIX = 'ccd-planner-curriculum-personal-imported-v1:';
+
+/** Scope local cache by org + user so a shared browser cannot cross-upload schools. */
+function scopedLocalKey(base: string, organisationId?: string | null, userId?: string | null): string {
+  try {
+    const org =
+      (organisationId && String(organisationId).trim()) ||
+      localStorage.getItem('rhythmstix_organisation_id') ||
+      '';
+    const user =
+      (userId && String(userId).trim()) ||
+      localStorage.getItem('rhythmstix_user_id') ||
+      '';
+    if (org || user) return `${base}:${org}:${user}`;
+  } catch {
+    /* ignore */
+  }
+  return base;
+}
+
+function notifyCurriculumSaveFailed(layer: 'school' | 'personal', detail?: string): void {
+  if (detail) console.warn(`planner_curriculum ${layer} save failed:`, detail);
+  try {
+    toast.error(
+      layer === 'school'
+        ? 'Could not save the school curriculum. Your changes are kept on this device only.'
+        : 'Could not save your personal curriculum. Your changes are kept on this device only.',
+    );
+  } catch {
+    /* toast may be unavailable outside React */
+  }
+}
 
 /** Layer 1 — school shared curriculum. */
 export const PLANNER_CURRICULUM_TABLE = TABLES.PLANNER_CURRICULUM;
@@ -80,9 +113,13 @@ export function parsePlannerCurriculum(raw: unknown): PlannerCurriculumState {
   };
 }
 
-function readLocalPlannerCurriculum(): PlannerCurriculumState {
+function readLocalPlannerCurriculum(
+  organisationId?: string | null,
+  userId?: string | null,
+): PlannerCurriculumState {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    const scoped = scopedLocalKey(STORAGE_KEY, organisationId, userId);
+    const raw = localStorage.getItem(scoped) ?? localStorage.getItem(STORAGE_KEY);
     if (!raw) return { ...EMPTY_PLANNER_CURRICULUM };
     return parsePlannerCurriculum(JSON.parse(raw));
   } catch {
@@ -90,17 +127,26 @@ function readLocalPlannerCurriculum(): PlannerCurriculumState {
   }
 }
 
-function writeLocalPlannerCurriculum(state: PlannerCurriculumState): void {
+function writeLocalPlannerCurriculum(
+  state: PlannerCurriculumState,
+  organisationId?: string | null,
+  userId?: string | null,
+): void {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    const scoped = scopedLocalKey(STORAGE_KEY, organisationId, userId);
+    localStorage.setItem(scoped, JSON.stringify(state));
   } catch {
     /* ignore quota / private mode */
   }
 }
 
-function readLocalPersonalCurriculum(): PersonalCurriculumData {
+function readLocalPersonalCurriculum(
+  organisationId?: string | null,
+  userId?: string | null,
+): PersonalCurriculumData {
   try {
-    const raw = localStorage.getItem(PERSONAL_STORAGE_KEY);
+    const scoped = scopedLocalKey(PERSONAL_STORAGE_KEY, organisationId, userId);
+    const raw = localStorage.getItem(scoped) ?? localStorage.getItem(PERSONAL_STORAGE_KEY);
     if (!raw) return { ...EMPTY_PERSONAL_CURRICULUM, overrides: {}, hiddenIds: [] };
     return parsePersonalCurriculum(JSON.parse(raw));
   } catch {
@@ -108,9 +154,14 @@ function readLocalPersonalCurriculum(): PersonalCurriculumData {
   }
 }
 
-function writeLocalPersonalCurriculum(personal: PersonalCurriculumData): void {
+function writeLocalPersonalCurriculum(
+  personal: PersonalCurriculumData,
+  organisationId?: string | null,
+  userId?: string | null,
+): void {
   try {
-    localStorage.setItem(PERSONAL_STORAGE_KEY, JSON.stringify(personal));
+    const scoped = scopedLocalKey(PERSONAL_STORAGE_KEY, organisationId, userId);
+    localStorage.setItem(scoped, JSON.stringify(personal));
   } catch {
     /* ignore */
   }
@@ -271,11 +322,12 @@ export async function loadMergedPlannerCurriculumAsync(): Promise<MergedPlannerC
       .maybeSingle();
 
     if (!schoolRes.error && schoolRes.data?.data != null) {
+      // Never overwrite an existing server copy with local-only data.
       schoolCache = parsePlannerCurriculum(schoolRes.data.data);
-      writeLocalPlannerCurriculum(schoolCache);
+      writeLocalPlannerCurriculum(schoolCache, organisationId, userId);
     } else {
-      schoolCache = readLocalPlannerCurriculum();
-      // Admin-only: seed school row from localStorage once if empty.
+      // Only import scoped local cache for THIS org+user into an empty server row.
+      schoolCache = readLocalPlannerCurriculum(organisationId, userId);
       if (
         !schoolRes.error &&
         curriculumIsEmpty(schoolCache) === false &&
@@ -289,11 +341,15 @@ export async function loadMergedPlannerCurriculumAsync(): Promise<MergedPlannerC
           },
           { onConflict: 'organisation_id' },
         );
-        if (!upsertError) markImportedLocalForOrg(organisationId);
+        if (upsertError) {
+          notifyCurriculumSaveFailed('school', upsertError.message);
+        } else {
+          markImportedLocalForOrg(organisationId);
+        }
       }
     }
 
-    personalCache = readLocalPersonalCurriculum();
+    personalCache = readLocalPersonalCurriculum(organisationId, userId);
     if (userId) {
       const personalRes = await supabase
         .from(PLANNER_CURRICULUM_USER_TABLE)
@@ -303,14 +359,15 @@ export async function loadMergedPlannerCurriculumAsync(): Promise<MergedPlannerC
         .maybeSingle();
 
       if (!personalRes.error && personalRes.data?.data != null) {
+        // Existing personal server copy wins — never silent overwrite from local.
         personalCache = parsePersonalCurriculum(personalRes.data.data);
-        writeLocalPersonalCurriculum(personalCache);
+        writeLocalPersonalCurriculum(personalCache, organisationId, userId);
       } else if (
         !personalRes.error &&
         personalCurriculumIsEmpty(personalCache)
       ) {
-        // One-time import: legacy ccd-planner-curriculum-v1 → personal copy.
-        const legacy = readLocalPlannerCurriculum();
+        // One-time import into empty personal only, scoped to this org+user.
+        const legacy = readLocalPlannerCurriculum(organisationId, userId);
         if (
           !curriculumIsEmpty(legacy) &&
           !hasImportedPersonal(organisationId, userId)
@@ -327,9 +384,11 @@ export async function loadMergedPlannerCurriculumAsync(): Promise<MergedPlannerC
               },
               { onConflict: 'user_id,organisation_id' },
             );
-          if (!upsertError) {
+          if (upsertError) {
+            notifyCurriculumSaveFailed('personal', upsertError.message);
+          } else {
             personalCache = imported;
-            writeLocalPersonalCurriculum(imported);
+            writeLocalPersonalCurriculum(imported, organisationId, userId);
             markImportedPersonal(organisationId, userId);
           }
         }
@@ -363,6 +422,7 @@ export function saveSchoolPlannerCurriculum(state: PlannerCurriculumState): void
       const organisationId = await resolveOrganisationId();
       if (!organisationId) return;
       const { data: auth } = await supabase.auth.getUser();
+      writeLocalPlannerCurriculum(state, organisationId, auth.user?.id ?? null);
       const { error } = await supabase.from(PLANNER_CURRICULUM_TABLE).upsert(
         {
           organisation_id: organisationId,
@@ -372,13 +432,11 @@ export function saveSchoolPlannerCurriculum(state: PlannerCurriculumState): void
         },
         { onConflict: 'organisation_id' },
       );
-      if (error && import.meta.env.DEV) {
-        console.warn('planner_curriculum upsert failed (local kept):', error.message);
+      if (error) {
+        notifyCurriculumSaveFailed('school', error.message);
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.warn('planner_curriculum upsert threw (local kept):', err);
-      }
+      notifyCurriculumSaveFailed('school', err instanceof Error ? err.message : String(err));
     }
   })();
 }
@@ -402,6 +460,7 @@ export function savePersonalPlannerCurriculum(personal: PersonalCurriculumData):
       const { data: auth } = await supabase.auth.getUser();
       const userId = auth.user?.id;
       if (!userId) return;
+      writeLocalPersonalCurriculum(personal, organisationId, userId);
       const { error } = await supabase.from(PLANNER_CURRICULUM_USER_TABLE).upsert(
         {
           user_id: userId,
@@ -412,13 +471,11 @@ export function savePersonalPlannerCurriculum(personal: PersonalCurriculumData):
         },
         { onConflict: 'user_id,organisation_id' },
       );
-      if (error && import.meta.env.DEV) {
-        console.warn('planner_curriculum_user upsert failed (local kept):', error.message);
+      if (error) {
+        notifyCurriculumSaveFailed('personal', error.message);
       }
     } catch (err) {
-      if (import.meta.env.DEV) {
-        console.warn('planner_curriculum_user upsert threw (local kept):', err);
-      }
+      notifyCurriculumSaveFailed('personal', err instanceof Error ? err.message : String(err));
     }
   })();
 }

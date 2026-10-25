@@ -31,18 +31,36 @@ const ALIAS_GROUPS: string[][] = [
   [
     'reception',
     'reception music',
+    'reception drama',
     'reception class',
+    'rec',
+    'r',
+    'yr r',
+    'year r',
+    'y r',
+    'eyfs',
     'eyfs reception',
     'eyfs reception music',
+    'nursery',
     'nursery reception',
   ],
-  ['year6', 'year 6', 'year 6 music', 'y6'],
-  ['year5', 'year 5', 'year 5 music', 'y5'],
-  ['year4', 'year 4', 'year 4 music', 'y4'],
-  ['year3', 'year 3', 'year 3 music', 'y3'],
-  ['year2', 'year 2', 'year 2 music', 'y2'],
-  ['year1', 'year 1', 'year 1 music', 'y1'],
+  ['year6', 'year 6', 'year 6 music', 'year 6 drama', 'y6', 'yr 6', 'y 6'],
+  ['year5', 'year 5', 'year 5 music', 'year 5 drama', 'y5', 'yr 5', 'y 5'],
+  ['year4', 'year 4', 'year 4 music', 'year 4 drama', 'y4', 'yr 4', 'y 4'],
+  ['year3', 'year 3', 'year 3 music', 'year 3 drama', 'y3', 'yr 3', 'y 3'],
+  ['year2', 'year 2', 'year 2 music', 'year 2 drama', 'y2', 'yr 2', 'y 2'],
+  ['year1', 'year 1', 'year 1 music', 'year 1 drama', 'y1', 'yr 1', 'y 1'],
 ];
+
+/** KS band → year numbers it covers (unambiguous English primary mapping). */
+const KS_YEARS: Record<string, string[]> = {
+  ks1: ['1', '2'],
+  'key stage 1': ['1', '2'],
+  ks2: ['3', '4', '5', '6'],
+  'key stage 2': ['3', '4', '5', '6'],
+  ks3: ['7', '8', '9'],
+  'key stage 3': ['7', '8', '9'],
+};
 
 /** Extract a Year N number when present (word-boundary safe). */
 export function extractYearNumber(normalized: string): string | null {
@@ -50,16 +68,34 @@ export function extractYearNumber(normalized: string): string | null {
   if (!n) return null;
   const m =
     n.match(/\byear\s*(\d+)\b/) ||
+    n.match(/\byr\s*(\d+)\b/) ||
     n.match(/^year(\d+)\b/) ||
+    n.match(/^y\s*(\d+)$/) ||
     n.match(/^y(\d+)$/);
   return m ? m[1] : null;
+}
+
+/** Detect an unambiguous KS label (e.g. KS1, Key Stage 2). */
+export function extractKeyStage(normalized: string): string | null {
+  const n = normalizeYearGroupKey(normalized);
+  if (!n) return null;
+  const m = n.match(/\b(ks\s*[1-5]|key stage\s*[1-5])\b/);
+  if (!m) return null;
+  return m[1].replace(/\s+/g, ' ').replace(/^key stage/, 'key stage').replace(/^ks\s*/, 'ks');
+}
+
+function yearsForKeyStage(ks: string | null): string[] {
+  if (!ks) return [];
+  const key = ks.replace(/\s+/g, ' ');
+  const compact = key.replace(/\s+/g, '');
+  return KS_YEARS[key] || KS_YEARS[compact] || KS_YEARS[`key stage ${compact.replace('ks', '')}`] || [];
 }
 
 /** Subject / suffix after a Year N token, e.g. "year 1 drama" → "drama". */
 function subjectAfterYear(normalized: string): string {
   const n = normalizeYearGroupKey(normalized);
   return n
-    .replace(/^y(?:ear)?\s*\d+\s*/i, '')
+    .replace(/^(?:y(?:ear)?|yr)\s*\d+\s*/i, '')
     .replace(/\s*\([^)]*\)\s*/g, ' ')
     .trim()
     .replace(/\s+/g, ' ');
@@ -74,7 +110,12 @@ function stripStagePrefix(normalized: string): string {
 
 function hasReceptionToken(normalized: string): boolean {
   const n = normalizeYearGroupKey(normalized);
-  return /\breception\b/.test(n);
+  if (/\breception\b/.test(n) || /\brec\b/.test(n)) return true;
+  if (/\beyfs\b/.test(n) && !extractYearNumber(n)) return true;
+  if (/\bnursery\b/.test(n) && !extractYearNumber(n)) return true;
+  // Bare R / Yr R / Year R (not Year 1…)
+  if (/^(yr|year|y)\s*r$/.test(n) || n === 'r') return true;
+  return false;
 }
 
 function aliasTokensFor(normalized: string): string[] {
@@ -130,16 +171,25 @@ export function yearGroupTokensMatch(a: string, b: string): boolean {
   // "Year 10 …" must never match "Year 1 …"
   if (ya && yb && ya !== yb) return false;
 
-  if (ya && yb && ya === yb) {
-    const subA = subjectAfterYear(na);
-    const subB = subjectAfterYear(nb);
-    // Generic "Year 1" matches "Year 1 Drama" / "Year 1 Music".
-    // Subject-specific labels only match the same subject (drama ≠ music).
-    if (!subA || !subB) return true;
-    if (subA === subB) return true;
-    // Allow OCR/GCSE parenthetical variants already stripped above.
-    if (subA.startsWith(subB) || subB.startsWith(subA)) return true;
-    return false;
+  // Same Year N: treat subject suffixes (Music / Drama / …) as the same class,
+  // consistent with Reception Music ↔ Reception Drama.
+  if (ya && yb && ya === yb) return true;
+
+  // KS labels cover their years only when unambiguous (KS1 ↔ Year 1 / Year 2).
+  const ksA = extractKeyStage(na);
+  const ksB = extractKeyStage(nb);
+  if (ksA && yb) {
+    const years = yearsForKeyStage(ksA);
+    if (years.includes(yb) && !extractYearNumber(na)) return true;
+  }
+  if (ksB && ya) {
+    const years = yearsForKeyStage(ksB);
+    if (years.includes(ya) && !extractYearNumber(nb)) return true;
+  }
+  if (ksA && ksB) {
+    const yaYears = yearsForKeyStage(ksA);
+    const ybYears = yearsForKeyStage(ksB);
+    if (yaYears.length && ybYears.length && yaYears.join() === ybYears.join()) return true;
   }
 
   const aAliases = aliasTokensFor(na);

@@ -1,7 +1,10 @@
 import { supabase, TABLES, isSupabaseConfigured } from './supabase';
 import { isDemoModeActive } from '../utils/demoMode';
 import { filterLessonEntries } from '../utils/lessonEntries';
+import { preferOrgScopedByName } from '../utils/preferOrgScopedByName';
 import type { Activity, LessonData, LessonPlan } from '../contexts/DataContext';
+
+export { preferOrgScopedByName } from '../utils/preferOrgScopedByName';
 
 // Synthetic, UUID-shaped user id for Preview/Demo sessions. It satisfies the
 // fail-closed `isAuthUserId` guards below, and every query it scopes runs
@@ -105,32 +108,6 @@ async function halfTermsHasScopeColumns(): Promise<boolean> {
     halfTermsScopeColumns = false;
     return false;
   }
-}
-
-/**
- * Rob: NULL-org defaults stay readable via RLS (no interim hide filter).
- * After seeding, org + shared may share a name — collapse to one UI row,
- * preferring the org-scoped (editable) copy. Shared-only names are kept.
- */
-function preferOrgScopedByName<T extends { name?: string | null; organisation_id?: string | null }>(
-  rows: T[],
-): T[] {
-  const sorted = [...rows].sort((a, b) => {
-    const aOrg = a.organisation_id == null ? 1 : 0;
-    const bOrg = b.organisation_id == null ? 1 : 0;
-    return aOrg - bOrg;
-  });
-  const seen = new Set<string>();
-  const out: T[] = [];
-  for (const row of sorted) {
-    const name = row.name == null ? '' : String(row.name);
-    if (name) {
-      if (seen.has(name)) continue;
-      seen.add(name);
-    }
-    out.push(row);
-  }
-  return out;
 }
 
 /** Normalize lesson_number for org-scoped unique indexes (NULL → ''). */
@@ -1218,10 +1195,14 @@ const _yearGroupsApiImpl = {
   getAll: async () => {
     try {
       console.log('🔍 Fetching year groups from Supabase table:', TABLES.YEAR_GROUPS);
-      const { data, error } = await supabase
-        .from(TABLES.YEAR_GROUPS)
-        .select('*')
-        .order('sort_order');
+      // Scope to the school being viewed (incl. super admins) so edits cannot
+      // hit another school's row after name-merge. Still include NULL-org defaults.
+      const organisationId = await resolveOrganisationId();
+      let query = supabase.from(TABLES.YEAR_GROUPS).select('*').order('sort_order');
+      if (organisationId) {
+        query = query.or(`organisation_id.eq.${organisationId},organisation_id.is.null`);
+      }
+      const { data, error } = await query;
       
       if (error) {
         console.error('❌ Error fetching year groups:', error);
@@ -1229,6 +1210,7 @@ const _yearGroupsApiImpl = {
       }
       
       // RLS returns org + NULL-org shared; prefer org row when names collide.
+      // Once org copies exist, shared defaults are hidden (preferOrgScopedByName).
       const merged = preferOrgScopedByName(data || []);
       console.log('📦 Raw year groups data from Supabase:', data);
       
@@ -1578,13 +1560,16 @@ export const customCategoriesApi = {
 const _customCategoriesApiImpl = {
   getAll: async () => {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.CUSTOM_CATEGORIES)
-        .select('*')
-        .order('position');
+      const organisationId = await resolveOrganisationId();
+      let query = supabase.from(TABLES.CUSTOM_CATEGORIES).select('*').order('position');
+      if (organisationId) {
+        query = query.or(`organisation_id.eq.${organisationId},organisation_id.is.null`);
+      }
+      const { data, error } = await query;
       
       if (error) throw error;
       // RLS returns org + NULL-org shared; prefer org row when names collide.
+      // Once org copies exist, shared defaults are hidden (preferOrgScopedByName).
       const rows = preferOrgScopedByName(data || []);
       
       // Log raw data from Supabase to debug yearGroups
@@ -1805,13 +1790,16 @@ export const categoryGroupsApi = {
 const _categoryGroupsApiImpl = {
   getAll: async () => {
     try {
-      const { data, error } = await supabase
-        .from(TABLES.CATEGORY_GROUPS)
-        .select('*')
-        .order('sort_order');
+      const organisationId = await resolveOrganisationId();
+      let query = supabase.from(TABLES.CATEGORY_GROUPS).select('*').order('sort_order');
+      if (organisationId) {
+        query = query.or(`organisation_id.eq.${organisationId},organisation_id.is.null`);
+      }
+      const { data, error } = await query;
       
       if (error) throw error;
       // RLS returns org + NULL-org shared; prefer org row when names collide.
+      // Once org copies exist, shared defaults are hidden (preferOrgScopedByName).
       return preferOrgScopedByName(data || []);
     } catch (error) {
       console.warn('Failed to get category groups from Supabase:', error);
