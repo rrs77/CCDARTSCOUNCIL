@@ -21,7 +21,6 @@ import {
 } from '../utils/lessonPdfHtml';
 import {
   lessonExportFooterTemplateHtml,
-  lessonExportPrintFooterBodyHtml,
   lessonExportPrintFooterCss,
 } from '../utils/lessonExportFooter';
 import {
@@ -1184,7 +1183,6 @@ export function LessonPrintModal({
 
     htmlContent += `
         </div>
-        ${lessonExportPrintFooterBodyHtml()}
       </body>
       </html>
     `;
@@ -1193,9 +1191,9 @@ export function LessonPrintModal({
     // PDFBolt doesn't support hiding header on first page, so we use empty header
     const headerContent = '<div></div>';
 
-    // Fixed export footer for single / unit / half-term (ignores branding productName
-    // and footerCompany). PDFBolt fills .pageNumber; print windows use the matching
-    // body footer + CSS counter (see lessonExportFooter.ts).
+    // PDFBolt footer (server path, 13px). Print-window fallback emits no custom footer
+    // (Chromium lacks @page margin boxes; position:fixed printed "Page 0") — see
+    // lessonExportPrintFooterCss() / lessonExportPrintFooterBodyHtml().
     const footerContent = lessonExportFooterTemplateHtml();
 
     // 13px minimum for every print size (CSS and inline styles) on single-lesson

@@ -48,13 +48,29 @@ describe('LessonPrintModal print escaping', () => {
     assert.match(html, /script-src 'none'/);
   });
 
-  it('safeColour accepts hex/rgb and rejects breakouts', () => {
+  it('safeColour accepts hex/rgb/hsl(deg) and rejects breakouts', () => {
     assert.equal(safeColour('#0f766e', '#000'), '#0f766e');
     assert.equal(safeColour('#abc', '#000'), '#abc');
     assert.equal(safeColour('rgb(1, 2, 3)', '#000'), 'rgb(1, 2, 3)');
+    assert.equal(safeColour('rgb(1 2 3)', '#000'), 'rgb(1 2 3)');
+    assert.equal(safeColour('hsl(120deg, 50%, 40%)', '#000'), 'hsl(120deg, 50%, 40%)');
     assert.equal(safeColour(HOSTILE_COLOUR, '#0f766e'), '#0f766e');
     assert.equal(safeColour('"><svg onload=1>', '#0f766e'), '#0f766e');
     assert.equal(safeColour(null, '#111'), '#111');
+  });
+
+  it('print-window sample never includes Page 0 or a position:fixed footer', () => {
+    const html = buildLessonPrintModalEscapingSampleHtml({
+      area: 'a',
+      statement: 's',
+      displayTitle: 't',
+      objectiveText: 'o',
+      category: 'c',
+      sheetDisplay: 'd',
+    });
+    assert.doesNotMatch(html, /Page\s+0/);
+    assert.doesNotMatch(html, /position:\s*fixed/i);
+    assert.doesNotMatch(html, /ccd-export-print-footer/);
   });
 
   it('ensurePrintDocumentCsp injects CSP into HTML written for the print window', () => {

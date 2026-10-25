@@ -34,17 +34,18 @@ describe('lesson export PDF/print footer', () => {
     assert.doesNotMatch(html, /CCDesigner \| CCDesigner/);
   });
 
-  it('print-window body footer matches the same line and is print-only', () => {
+  it('print-window HTML/CSS never emits Page 0 or a position:fixed footer', () => {
     const now = new Date('2026-06-15T00:00:00Z');
     const body = lessonExportPrintFooterBodyHtml(now);
-    assert.match(body, /ccd-export-print-footer/);
-    assert.match(body, /Page <span class="pageNumber"><\/span> · © CCDesigner 2026/);
-    assert.equal((body.match(/CCDesigner/g) || []).length, 1);
+    const css = lessonExportPrintFooterCss(now);
+    // Chromium lacks @page margin boxes; empty fallback avoids wrong footers.
+    assert.equal(body, '');
+    assert.equal(css, '');
 
-    const css = lessonExportPrintFooterCss();
-    assert.match(css, /\.ccd-export-print-footer\s*\{\s*display:\s*none/);
-    assert.match(css, /@media print/);
-    assert.match(css, /font-size:\s*13px/);
-    assert.match(css, /counter\(page\)/);
+    const printWindowSnippet = `<style>${css}</style>${body}`;
+    assert.doesNotMatch(printWindowSnippet, /Page\s+0/);
+    assert.doesNotMatch(printWindowSnippet, /position:\s*fixed/i);
+    assert.doesNotMatch(printWindowSnippet, /ccd-export-print-footer/);
+    assert.doesNotMatch(printWindowSnippet, /counter\(page\)/);
   });
 });
