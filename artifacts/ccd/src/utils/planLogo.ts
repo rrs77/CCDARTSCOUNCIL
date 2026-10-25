@@ -131,8 +131,10 @@ export const PLAN_FOOTER_SITE = 'www.ccdesigner.co.uk';
 
 /**
  * Header/footer chrome for HTML sheets that don't have their own (e.g. the
- * in-lesson one-page sheet, when it's built): colour logo top-left, page number
- * and copyright bottom centre.
+ * in-lesson one-page sheet, when it's built): colour logo top-left; copyright
+ * in a body footer. No @page / @bottom-center here — those double PDFBolt footers
+ * if this CSS is ever mixed into a PDF payload (print-window footers use
+ * lessonExportPrintFooterCss / injectPrintWindowFooterCss instead).
  */
 export function planSheetChrome(opts: { year?: number } = {}): {
   css: string;
@@ -143,10 +145,9 @@ export function planSheetChrome(opts: { year?: number } = {}): {
   return {
     css:
       PLAN_LOGO_PRINT_CSS +
-      `@page{@bottom-center{content:"Page " counter(page) " · ${copyright}";font-size:13px;color:#555}}` +
       '.ccd-sheet-foot{text-align:center;font-size:13px;color:#555;margin-top:16px}',
     headerHtml: `<header class="ccd-sheet-head">${planLogoImg()}</header>`,
-    footerHtml: `<footer class="ccd-sheet-foot">${copyright}</footer>`,
+    footerHtml: `<footer class="ccd-sheet-foot">Page N · ${copyright}</footer>`,
   };
 }
 

@@ -152,11 +152,13 @@ describe('colour-logo guard', () => {
 });
 
 describe('sheet chrome (in-lesson sheet, later)', () => {
-  it('logo top-left at 21px, "Page N · © CCDesigner year" bottom centre, 13px+', () => {
+  it('logo top-left at 21px, body footer with © CCDesigner year, no @page box', () => {
     const c = planSheetChrome({ year: 2026 });
     assert.ok(htmlHasColourPlanLogo(c.headerHtml));
     assert.ok(/width="86" height="21"/.test(c.headerHtml));
-    assert.match(c.css, /@bottom-center\{content:"Page " counter\(page\) " · © CCDesigner 2026"/);
+    assert.match(c.footerHtml, /Page N · © CCDesigner 2026/);
+    assert.doesNotMatch(c.css, /@page\s*\{/);
+    assert.doesNotMatch(c.css, /@bottom-center\s*\{/);
     for (const m of c.css.matchAll(/font-size:(\d+)px/g)) assert.ok(Number(m[1]) >= 13);
   });
 });

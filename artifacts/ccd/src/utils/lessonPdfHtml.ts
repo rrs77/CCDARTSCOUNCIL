@@ -16,7 +16,7 @@ export const A4_HEIGHT_PX = A4_HEIGHT_MM * MM_TO_PX;
  * reserves the Page N · © CCDesigner footer. Body layout is otherwise unchanged.
  */
 export const PDFBOLT_MARGINS = {
-  top: '50px',
+  top: '60px',
   right: '20px',
   left: '20px',
   bottom: '55px',

@@ -61,7 +61,7 @@ describe('every export HTML carries the colour logo (runtime)', () => {
  */
 const SRC = fileURLToPath(new URL('..', import.meta.url));
 const SOURCE_BUILDERS: { file: string; what: string; uses: RegExp }[] = [
-  { file: 'components/LessonPrintModal.tsx', what: 'single lesson, unit and half-term PDF/print', uses: /planLogoHtml\(/ },
+  { file: 'components/LessonPrintModal.tsx', what: 'single lesson, unit and half-term PDF/print', uses: /planLogo(?:HeaderTemplateHtml|PrintTheadHtml|PrintRunningCss)\(/ },
   { file: 'hooks/useShareLesson.ts', what: 'share fallback PDF', uses: /planLogoImg\(/ },
   { file: 'utils/timetableShareHtml.ts', what: 'timetable share PDF', uses: /planLogoImg\(/ },
   { file: 'components/LessonPlannerCalendar.tsx', what: 'calendar print', uses: /planLogoImg\(/ },
@@ -85,13 +85,8 @@ describe('every export builder uses the shared colour logo (source guard)', () =
       assert.doesNotMatch(src, OTHER_LOGO_FILE, 'no other/mono logo file in an export');
       assert.doesNotMatch(src, MONO_CSS, 'no greyscale/mono filter');
       assert.doesNotMatch(src, PLAN_LOGO_BAD_FILTER, 'no colour-stripping filter');
-      if (b.file === 'components/LessonPrintModal.tsx') {
-        // Not edited by this work: it still passes a legacy height, which planLogoHtml ignores
-        // (always PLAN_LOGO_HEIGHT_PX); the runtime test in planLogo.test.ts pins that.
-        assert.match(src, /planLogoHtml\(/);
-      } else {
-        assert.doesNotMatch(src, HARDCODED_LOGO_SIZE, 'logo size comes only from PLAN_LOGO_HEIGHT_PX');
-      }
+      assert.doesNotMatch(src, HARDCODED_LOGO_SIZE, 'logo size comes only from PLAN_LOGO_HEIGHT_PX');
+
     });
   }
 });
