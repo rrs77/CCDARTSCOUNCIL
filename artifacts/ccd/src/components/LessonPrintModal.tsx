@@ -1,6 +1,8 @@
 import { planLogoHtml } from '../utils/planLogo';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { sanitizeHtml, escapeHtmlText, sanitizeUrl } from '../utils/sanitize';
+import { sanitizeHtml, sanitizeUrl } from '../utils/sanitize';
+import { escapeHtmlText } from '../utils/escapeHtml';
+import { safeColour } from '../utils/safeColour';
 import { Download, X, Check, Tag, ChevronDown, Share2, Copy, Link2, Target, Loader2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import type { Activity } from '../contexts/DataContext';
@@ -22,6 +24,14 @@ import {
   lessonExportPrintFooterBodyHtml,
   lessonExportPrintFooterCss,
 } from '../utils/lessonExportFooter';
+import {
+  LESSON_PRINT_CSP_META,
+  ensurePrintDocumentCsp,
+  renderPrintCategoryHeadingHtml,
+  renderPrintCustomObjectiveBoxHtml,
+  renderPrintEyfsGoalBoxHtml,
+  renderPrintSheetDisplayMetaHtml,
+} from '../utils/lessonPrintModalHtml';
 
 // PDFBolt margin settings (in pixels) — shared with lessonPdfHtml / live print preview
 const PDFBOLT_MARGIN_TOP_PX = parseInt(PDFBOLT_MARGINS.top, 10);
@@ -276,7 +286,8 @@ export function LessonPrintModal({
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>${printTitle}</title>
+        ${LESSON_PRINT_CSP_META}
+        <title>${escapeHtmlText(printTitle)}</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           * {
@@ -728,7 +739,7 @@ export function LessonPrintModal({
             })()}
             <div class="subtitle">${escapeHtmlText(lessonSubtitle)}</div>
             <div class="meta">
-              <span class="meta-item">📚 ${currentSheetInfo.display}</span>
+              ${renderPrintSheetDisplayMetaHtml(currentSheetInfo.display || '')}
               <span class="meta-item">⏱ ${
                 lessonData.totalTime && lessonData.totalTime > 0
                   ? lessonData.totalTime
@@ -836,22 +847,7 @@ export function LessonPrintModal({
               // Statements without an "Area:" prefix use the statement as its own area —
               // don't repeat it as a heading above itself (same rule as single-lesson PDF).
               const areaIsStatement = statements.every((st) => st.trim() === area.trim());
-              htmlContent += `
-                <div class="goal-box" style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
-                  ${areaIsStatement ? '' : `<h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${area}</h4>`}
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-              `;
-              statements.forEach(statement => {
-                if (statement && statement.trim()) {
-                  htmlContent += `
-                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 11px; color: #1f2937; line-height: 1.4;">
-                      <span style="color: #16a34a; font-weight: 700; margin-right: 6px; flex-shrink: 0;">✓</span>
-                      <span>${statement}</span>
-                    </li>
-                  `;
-                }
-              });
-              htmlContent += `</ul></div>`;
+              htmlContent += renderPrintEyfsGoalBoxHtml(area, statements, areaIsStatement);
             }
           });
         }
@@ -866,23 +862,10 @@ export function LessonPrintModal({
                   displayTitle = `${sectionName}, ${areaName}`;
                 }
               }
-              
-              htmlContent += `
-                <div style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
-                  <h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${displayTitle}</h4>
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-              `;
-              objectives.forEach(objective => {
-                if (objective.objective_text && objective.objective_text.trim()) {
-                  htmlContent += `
-                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 11px; color: #1f2937; line-height: 1.4;">
-                      <span style="color: #16a34a; font-weight: 700; margin-right: 6px; flex-shrink: 0;">✓</span>
-                      <span>${objective.objective_text}</span>
-                    </li>
-                  `;
-                }
-              });
-              htmlContent += `</ul></div>`;
+              const texts = objectives
+                .map((objective) => objective.objective_text)
+                .filter((t): t is string => Boolean(t && String(t).trim()));
+              htmlContent += renderPrintCustomObjectiveBoxHtml(displayTitle, texts);
             });
           });
         }
@@ -1096,17 +1079,12 @@ export function LessonPrintModal({
           const activities = activitiesByCategory[category] || [];
           if (activities.length === 0) return;
 
-          const categoryColor = getCategoryColor(category);
+          const categoryColor = safeColour(getCategoryColor(category), '#0f766e');
 
           // Wrap category heading with first activity to prevent orphaned headings
           // This ensures at least one activity follows the heading on the same page
           htmlContent += `<div class="category-group">`;
-          
-          htmlContent += `
-            <div class="activity-category" style="color: ${categoryColor}; border-bottom-color: ${categoryColor};">
-              ${category}
-            </div>
-          `;
+          htmlContent += renderPrintCategoryHeadingHtml(category, categoryColor);
 
           // Render first activity within the category-group wrapper
           if (activities.length > 0) {
@@ -1281,14 +1259,23 @@ export function LessonPrintModal({
    * Caller fills/replaces document content once HTML is ready.
    */
   const openPrintWindowEarly = (): Window | null => {
+    // Need a Window handle to document.write + print() from the opener; cannot use
+    // noopener. Detach opener after open and rely on CSP script-src 'none'.
     const printWin = window.open('', '_blank');
     if (!printWin) {
       toast.error('Please allow pop-ups to export via Print → Save as PDF');
       return null;
     }
     try {
+      try {
+        (printWin as Window & { opener: Window | null }).opener = null;
+      } catch {
+        /* ignore */
+      }
       printWin.document.write(
-        '<!DOCTYPE html><html><head><title>Preparing print…</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;color:#334155"><p>Preparing print preview…</p></body></html>',
+        ensurePrintDocumentCsp(
+          '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Preparing print…</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;color:#334155"><p>Preparing print preview…</p></body></html>',
+        ),
       );
       printWin.document.close();
     } catch {
@@ -1298,9 +1285,17 @@ export function LessonPrintModal({
   };
 
   const writeAndPrintWindow = (printWin: Window, htmlRaw: string) => {
+    // Inject CSP (script-src 'none') into whatever document we write; print() is
+    // invoked from this opener, never via inline script in the print document.
+    const html = ensurePrintDocumentCsp(htmlRaw);
     printWin.document.open();
-    printWin.document.write(htmlRaw);
+    printWin.document.write(html);
     printWin.document.close();
+    try {
+      (printWin as Window & { opener: Window | null }).opener = null;
+    } catch {
+      /* ignore */
+    }
     printWin.focus();
     setTimeout(() => {
       printWin.print();
