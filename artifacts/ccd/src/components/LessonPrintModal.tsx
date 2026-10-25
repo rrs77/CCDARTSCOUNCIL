@@ -1225,15 +1225,21 @@ export function LessonPrintModal({
       return numericPart || num;
     };
     const lessonDisplayNum = firstLessonNum ? (halfTermId ? getTermSpecificLessonNumber(firstLessonNum, halfTermId) : getLessonDisplayNumber(firstLessonNum)) : '1';
-    const footerPagePill = isSingleLesson
-      ? `Lesson ${lessonDisplayNum} • Page <span class="pageNumber"></span> of <span class="totalPages"></span>`
-      : `Page <span class="pageNumber"></span> of <span class="totalPages"></span>`;
-    
-    const footerContent = `
+    const escapedProductName = productName.replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    // Single-lesson footer stays three-part (product · curriculum/copyright · Lesson N • Page).
+    // Unit/half-term: productName and footerCompany are both "CCDesigner", which read as
+    // "CCDesigner CCDesigner Page X of Y" — use one brand name with the page pill.
+    const footerContent = isSingleLesson
+      ? `
       <div style="width: 100%; font-size: 13px; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; color: #5F6368; font-family: 'Inter', sans-serif;">
-        <span style="color: #5F6368;">${productName.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
+        <span style="color: #5F6368;">${escapedProductName}</span>
         <span style="color: #5F6368;">${footerCenterText}</span>
-        <span style="background: #E8EAEF; color: #0f766e; padding: 4px 12px; border-radius: 50px; font-weight: 500;">${footerPagePill}</span>
+        <span style="background: #E8EAEF; color: #0f766e; padding: 4px 12px; border-radius: 50px; font-weight: 500;">Lesson ${lessonDisplayNum} • Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+      </div>
+    `
+      : `
+      <div style="width: 100%; font-size: 13px; padding: 8px 20px; display: flex; justify-content: flex-start; align-items: center; color: #5F6368; font-family: 'Inter', sans-serif;">
+        <span style="color: #5F6368;">${escapedProductName} · Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
       </div>
     `;
 
