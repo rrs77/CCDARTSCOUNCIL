@@ -18,21 +18,24 @@ INSERT INTO auth.users (id, email) VALUES
   ('00000000-0000-4000-8000-0000000000a2', 'a2@test'),
   ('00000000-0000-4000-8000-0000000000b1', 'b@test'),
   ('00000000-0000-4000-8000-0000000000a5', 'super@test'),
-  ('00000000-0000-4000-8000-0000000000a6', 'suspended@test')
+  ('00000000-0000-4000-8000-0000000000a6', 'suspended@test'),
+  ('00000000-0000-4000-8000-0000000000a7', 'admin_a@test')
 ON CONFLICT (id) DO NOTHING;
 
-INSERT INTO public.profiles (id, email, role, status, organisation_id, anonymised_at)
+INSERT INTO public.profiles (id, email, role, status, organisation_id, anonymised_at, can_manage_users)
 VALUES
-  ('00000000-0000-4000-8000-0000000000a1', 'a@test', 'teacher', 'active', 'org_a', NULL),
-  ('00000000-0000-4000-8000-0000000000a2', 'a2@test', 'teacher', 'active', 'org_a', NULL),
-  ('00000000-0000-4000-8000-0000000000b1', 'b@test', 'teacher', 'active', 'org_b', NULL),
-  ('00000000-0000-4000-8000-0000000000a5', 'super@test', 'super_admin', 'active', 'org_a', NULL),
-  ('00000000-0000-4000-8000-0000000000a6', 'suspended@test', 'teacher', 'suspended', 'org_a', NULL)
+  ('00000000-0000-4000-8000-0000000000a1', 'a@test', 'teacher', 'active', 'org_a', NULL, false),
+  ('00000000-0000-4000-8000-0000000000a2', 'a2@test', 'teacher', 'active', 'org_a', NULL, false),
+  ('00000000-0000-4000-8000-0000000000b1', 'b@test', 'teacher', 'active', 'org_b', NULL, false),
+  ('00000000-0000-4000-8000-0000000000a5', 'super@test', 'super_admin', 'active', 'org_a', NULL, true),
+  ('00000000-0000-4000-8000-0000000000a6', 'suspended@test', 'teacher', 'suspended', 'org_a', NULL, false),
+  ('00000000-0000-4000-8000-0000000000a7', 'admin_a@test', 'admin', 'active', 'org_a', NULL, true)
 ON CONFLICT (id) DO UPDATE
   SET role = EXCLUDED.role,
       status = EXCLUDED.status,
       organisation_id = EXCLUDED.organisation_id,
-      anonymised_at = EXCLUDED.anonymised_at;
+      anonymised_at = EXCLUDED.anonymised_at,
+      can_manage_users = EXCLUDED.can_manage_users;
 
 DELETE FROM public.activities WHERE activity IN ('SysShared', 'OrgAOnly', 'OrgBOnly', 'AWrite', 'BHack');
 INSERT INTO public.activities (activity, category, lesson_number, description, organisation_id)
@@ -245,7 +248,7 @@ INSERT INTO public.year_groups (id, name, organisation_id)
 VALUES ('yg_a', 'Year A', 'org_a'), ('yg_b', 'Year B', 'org_b');
 
 DO $$
-DECLARE n_a int; n_b int; wrote boolean := false;
+DECLARE n_a int; n_b int; wrote boolean := false; admin_wrote boolean := false;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
   SET LOCAL ROLE authenticated;
@@ -254,15 +257,30 @@ BEGIN
   BEGIN
     INSERT INTO public.year_groups (id, name, organisation_id)
     VALUES ('yg_a_new', 'Year A2', 'org_a');
-    wrote := true;
+    wrote := EXISTS (SELECT 1 FROM public.year_groups WHERE id = 'yg_a_new');
   EXCEPTION WHEN OTHERS THEN
     wrote := false;
   END;
   RESET ROLE;
   PERFORM set_config('request.jwt.claim.sub', '', true);
+
+  -- Org admin may insert year groups (Rob Q2 / migration 350000).
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a7', true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    INSERT INTO public.year_groups (id, name, organisation_id)
+    VALUES ('yg_a_admin', 'Year A Admin', 'org_a');
+    admin_wrote := EXISTS (SELECT 1 FROM public.year_groups WHERE id = 'yg_a_admin');
+  EXCEPTION WHEN OTHERS THEN
+    admin_wrote := false;
+  END;
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+
   INSERT INTO rls_results VALUES ('teacher reads own-org year_groups', n_a = 1);
   INSERT INTO rls_results VALUES ('teacher cannot read other-org year_groups', n_b = 0);
-  INSERT INTO rls_results VALUES ('teacher can insert own-org year_groups', wrote);
+  INSERT INTO rls_results VALUES ('teacher cannot insert own-org year_groups', NOT wrote);
+  INSERT INTO rls_results VALUES ('admin can insert own-org year_groups', admin_wrote);
 END $$;
 
 -- Anon cannot read lessons
@@ -309,12 +327,14 @@ BEGIN
   INSERT INTO rls_results VALUES ('super_admin can read other-org activities', n_b = 1);
 END $$;
 
--- Trigger fills organisation_id when omitted (ordinary teacher saves)
+-- Trigger fills organisation_id when omitted.
+-- Year groups: admin-only write (350000). Categories: any member may INSERT.
 DO $$
 DECLARE wrote_yg boolean := false; wrote_ht boolean := false; wrote_lp boolean := false;
         wrote_ls boolean := false; wrote_cc boolean := false; org text;
 BEGIN
-  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  -- Admin for year_groups fill-org trigger (members cannot INSERT year_groups)
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a7', true);
   SET LOCAL ROLE authenticated;
   BEGIN
     INSERT INTO public.year_groups (id, name) VALUES ('yg_trigger', 'Trigger YG');
@@ -323,6 +343,11 @@ BEGIN
   EXCEPTION WHEN OTHERS THEN
     wrote_yg := false;
   END;
+  RESET ROLE;
+
+  -- Teacher for remaining member-writable tables
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
   BEGIN
     INSERT INTO public.half_terms (id, sheet_name, academic_year, name, user_id)
     VALUES ('ht_trig', 'TrigSheet', '2025-2026', 'Trig HT', '00000000-0000-4000-8000-0000000000a1');

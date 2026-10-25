@@ -354,6 +354,10 @@ export function SettingsContent({
     user?.role === 'superuser' ||
     profile?.role === 'superuser';
   const canEditSystemCategories = isAdmin || isSuperAdmin;
+  /** Org admins / super admins manage year groups (add/edit/delete). Members read only. */
+  const canManageYearGroups = isAdmin || isSuperAdmin;
+  /** Members may add categories; only admins may edit or delete existing ones. */
+  const canManageCategories = isAdmin || isSuperAdmin;
   const isCreator = profile?.role === 'creator';
   const showUserManagement =
     isAdmin ||
@@ -774,8 +778,8 @@ export function SettingsContent({
 
 
   const handleDeleteCategory = async (index: number) => {
-    if (isViewOnly) {
-      toastSettingsError('Your account cannot delete categories.');
+    if (isViewOnly || !canManageCategories) {
+      toastSettingsError('Only school admins can change or remove categories.');
       return;
     }
     const categoryToDelete = tempCategories[index];
@@ -949,6 +953,10 @@ export function SettingsContent({
     color: string;
     sectionId: string;
   }) => {
+    if (!canManageYearGroups) {
+      toastSettingsError('Only school admins can add or change year groups.');
+      return false;
+    }
     const id = opts.id.trim();
     const name = opts.name.trim();
     if (!id || !name) return false;
@@ -1031,6 +1039,10 @@ export function SettingsContent({
   };
 
   const handleUpdateYearGroup = async (index: number, id: string, name: string, color: string) => {
+    if (!canManageYearGroups) {
+      toastSettingsError('Only school admins can add or change year groups.');
+      return;
+    }
     const updatedYearGroups = [...tempYearGroups];
     const oldYearGroup = updatedYearGroups[index];
     const lockedId = oldYearGroup?.id || id;
@@ -1056,6 +1068,10 @@ export function SettingsContent({
     );
 
   const handleDeleteYearGroup = async (yearGroup: { id: string; name: string }) => {
+    if (!canManageYearGroups) {
+      toastSettingsError('Only school admins can add or change year groups.');
+      return;
+    }
     try {
       setIsDeletingYearGroup(true);
       const index = resolveYearGroupIndex(yearGroup);
@@ -1208,6 +1224,10 @@ export function SettingsContent({
   };
 
   const handleResetYearGroups = () => {
+    if (!canManageYearGroups) {
+      toastSettingsError('Only school admins can add or change year groups.');
+      return;
+    }
     const warningMessage = `⚠️ DANGER: This will DELETE ALL your custom year groups and reset to only the 3 defaults:
 
 • Lower Kindergarten Music
@@ -1262,7 +1282,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               : 'border border-transparent hover:bg-[#F4F3FA]'
         }`}
       >
-        {editingYearGroup === yearGroup.id ? (
+        {canManageYearGroups && editingYearGroup === yearGroup.id ? (
           <div className="flex flex-col gap-2">
             <div className="flex items-start gap-3">
               <div className="flex-shrink-0 cursor-move pt-1" title="Drag to reorder within this section" aria-hidden>
@@ -1363,48 +1383,63 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
               style={{ backgroundColor: yearGroup.color }}
               aria-hidden
             />
-            <button
-              type="button"
-              onClick={() => {
-                setEditingYearGroup(yearGroup.id);
-                setEditingYearGroupDraft({
-                  id: yearGroup.id,
-                  name: yearGroup.name,
-                  color: yearGroup.color || '#4338E8',
-                });
-              }}
-              className="min-w-0 flex-1 text-left"
-            >
-              <span className="ss-settings-class-name block truncate">
-                {yearGroup.name}
-              </span>
-              <span className="block truncate text-[10px] font-medium text-[#9CA3AF]">
-                {yearGroup.id}
-              </span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                setEditingYearGroup(yearGroup.id);
-                setEditingYearGroupDraft({
-                  id: yearGroup.id,
-                  name: yearGroup.name,
-                  color: yearGroup.color || '#4338E8',
-                });
-              }}
-              className="grid h-8 w-8 place-items-center rounded-lg text-[#77738F] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
-              aria-label={`Edit ${yearGroup.name}`}
-            >
-              <ChevronRight className="h-4 w-4" />
-            </button>
-            <button
-              type="button"
-              onClick={() => void handleDeleteYearGroup(yearGroup)}
-              className="grid h-8 w-8 place-items-center rounded-lg text-[#C4C0D8] hover:bg-red-50 hover:text-red-600"
-              aria-label={`Delete ${yearGroup.name}`}
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
+            {canManageYearGroups ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setEditingYearGroup(yearGroup.id);
+                  setEditingYearGroupDraft({
+                    id: yearGroup.id,
+                    name: yearGroup.name,
+                    color: yearGroup.color || '#4338E8',
+                  });
+                }}
+                className="min-w-0 flex-1 text-left"
+              >
+                <span className="ss-settings-class-name block truncate">
+                  {yearGroup.name}
+                </span>
+                <span className="block truncate text-[10px] font-medium text-[#9CA3AF]">
+                  {yearGroup.id}
+                </span>
+              </button>
+            ) : (
+              <div className="min-w-0 flex-1 text-left">
+                <span className="ss-settings-class-name block truncate">
+                  {yearGroup.name}
+                </span>
+                <span className="block truncate text-[10px] font-medium text-[#9CA3AF]">
+                  {yearGroup.id}
+                </span>
+              </div>
+            )}
+            {canManageYearGroups && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditingYearGroup(yearGroup.id);
+                    setEditingYearGroupDraft({
+                      id: yearGroup.id,
+                      name: yearGroup.name,
+                      color: yearGroup.color || '#4338E8',
+                    });
+                  }}
+                  className="grid h-8 w-8 place-items-center rounded-lg text-[#77738F] hover:bg-[#E9E6FF] hover:text-[#4338E8]"
+                  aria-label={`Edit ${yearGroup.name}`}
+                >
+                  <ChevronRight className="h-4 w-4" />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void handleDeleteYearGroup(yearGroup)}
+                  className="grid h-8 w-8 place-items-center rounded-lg text-[#C4C0D8] hover:bg-red-50 hover:text-red-600"
+                  aria-label={`Delete ${yearGroup.name}`}
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </>
+            )}
           </div>
         )}
       </div>
@@ -1466,6 +1501,12 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
 
           {activeTab === 'yeargroups' && (
             <div className="space-y-4">
+              {!canManageYearGroups && (
+                <p className="rounded-lg border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2 text-[13px] text-[#5C5878]">
+                  Year groups are managed by school admins. You can view them here.
+                </p>
+              )}
+              {canManageYearGroups && (
               <div className="flex flex-wrap items-center justify-end gap-1.5">
                   <button
                     type="button"
@@ -1518,13 +1559,14 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     {showAddClassForm ? 'Cancel' : 'Add class'}
                   </button>
               </div>
+              )}
 
               <div className="space-y-3">
               {/* Class Management */}
               <div className="rounded-2xl border border-[#E2E0EF] bg-white p-3 sm:p-4 shadow-[0_1px_0_rgba(31,27,77,0.04)]">
 
-                {/* Add class — collapsed by default */}
-                {showAddClassForm && (
+                {/* Add class — collapsed by default; admins only */}
+                {canManageYearGroups && showAddClassForm && (
                 <div className="mb-3 rounded-lg border border-[#E2E0EF] bg-[#F4F3FA]/80 p-3">
                   <h4 className="mb-2 text-[13px] font-bold text-[#1F1B4D]">New class</h4>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
@@ -1972,6 +2014,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                       </p>
                     </div>
                   </div>
+                  {canManageCategories && (
                   <button
                     onClick={handleResetCategories}
                     className="px-3 py-1.5 bg-[#E9E6FF] hover:bg-[#D8D4F5] text-[#4338E8] text-sm font-medium rounded-lg transition-colors duration-200 flex items-center space-x-1"
@@ -1979,7 +2022,13 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                     <RotateCcw className="h-3.5 w-3.5" />
                     <span>Reset options…</span>
                   </button>
+                  )}
                 </div>
+                {!canManageCategories && (
+                  <p className="mb-3 rounded-lg border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2 text-[13px] text-[#5C5878]">
+                    You can add categories. Editing or removing existing ones is for school admins.
+                  </p>
+                )}
 
                 {/* Create My Category */}
                 <div className="bg-white rounded-lg border border-[#E2E0EF] p-4 mb-6">
@@ -2779,6 +2828,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                         </span>
                                       ))
                                   : null}
+                                {canManageCategories && (
                                 <button
                                   type="button"
                                   onClick={(e) => {
@@ -2796,6 +2846,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     ? '+ Year groups'
                                     : 'Edit Year Groups'}
                                 </button>
+                                )}
                               </div>
                               <div className="ml-auto flex shrink-0 items-center">
                                 {bulkYearGroupMode ? (
@@ -2811,7 +2862,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                     className="mx-2 h-4 w-4 rounded-full border border-gray-300 text-[#4338E8] focus:ring-[#4338E8]"
                                     aria-label={`Select ${category.name} for bulk`}
                                   />
-                                ) : (
+                                ) : canManageCategories ? (
                                   <>
                                     <button
                                       type="button"
@@ -2841,7 +2892,7 @@ This action CANNOT be undone. Are you absolutely sure you want to continue?`;
                                       </button>
                                     )}
                                   </>
-                                )}
+                                ) : null}
                               </div>
                             </div>
                             {isYearEdit ? (
