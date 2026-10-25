@@ -81,6 +81,46 @@ export const PLAN_LOGO_PRINT_CSS =
   'img.ccd-plan-logo{filter:none!important;opacity:1!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}' +
   '@media print{html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}img.ccd-plan-logo{display:block!important;visibility:visible!important}}';
 
+/** Aliases used by LessonPrintModal header/print chrome (same 21×86 constants). */
+export const PLAN_LOGO_PRINT_HEIGHT_PX = PLAN_LOGO_HEIGHT_PX;
+export const PLAN_LOGO_PRINT_WIDTH_PX = PLAN_LOGO_WIDTH_PX;
+export const PLAN_LOGO_COLOUR_DATA_URL = PLAN_LOGO_DATA_URI;
+
+/**
+ * PDFBolt / Chromium header template — colour logo top-left on EVERY page.
+ * Pair with a top margin that reserves the header band (see PDFBOLT_MARGINS.top).
+ */
+export function planLogoHeaderTemplateHtml(): string {
+  return `<div style="width:100%;margin:0;padding:6px 20px 0 20px;box-sizing:border-box;">${planLogoImg()}</div>`;
+}
+
+/**
+ * Print-window running header: a table thead that repeats on every printed page.
+ * Hidden on screen so PDFBolt (emulateMediaType: screen) + headerTemplate is not doubled.
+ */
+export function planLogoPrintTheadHtml(): string {
+  return `<thead class="ccd-export-print-logo-row"><tr><td style="padding:0 0 8px 0;">${planLogoImg('margin:0;')}</td></tr></thead>`;
+}
+
+/** CSS for the print-window repeating logo thead (screen-hidden) + colour print rules. */
+export function planLogoPrintRunningCss(): string {
+  return `
+          ${PLAN_LOGO_PRINT_CSS}
+          .ccd-export-print-sheet { width: 100%; border-collapse: collapse; }
+          .ccd-export-print-logo-row { display: none; }
+          @media print {
+            .ccd-export-print-sheet { width: 100%; border-collapse: collapse; }
+            .ccd-export-print-logo-row { display: table-header-group; }
+            .ccd-export-print-logo-row img.ccd-plan-logo {
+              height: ${PLAN_LOGO_PRINT_HEIGHT_PX}px !important;
+              width: ${PLAN_LOGO_PRINT_WIDTH_PX}px !important;
+              -webkit-filter: none !important;
+              filter: none !important;
+            }
+          }
+`;
+}
+
 /** Footer copyright line, e.g. "© CCDesigner 2026". */
 export function planFooterCopyright(year: number = new Date().getFullYear()): string {
   return `© CCDesigner ${year}`;

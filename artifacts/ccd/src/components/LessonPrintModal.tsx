@@ -1,4 +1,8 @@
-import { planLogoHtml } from '../utils/planLogo';
+import {
+  planLogoHeaderTemplateHtml,
+  planLogoPrintRunningCss,
+  planLogoPrintTheadHtml,
+} from '../utils/planLogo';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { sanitizeHtml, sanitizeUrl } from '../utils/sanitize';
 import { escapeHtmlText } from '../utils/escapeHtml';
@@ -669,9 +673,15 @@ export function LessonPrintModal({
             .content-wrapper { background: white; }
           }
           ${lessonExportPrintFooterCss()}
+          ${planLogoPrintRunningCss()}
         </style>
       </head>
       <body class="${isSingleLesson ? 'single-lesson' : 'multi-lesson'}">
+        <table class="ccd-export-print-sheet">
+          ${planLogoPrintTheadHtml()}
+          <tbody>
+            <tr>
+              <td>
         <div class="lesson-page">
     `;
 
@@ -715,9 +725,7 @@ export function LessonPrintModal({
       const lessonSubtitle = lessonData.lessonName || `${halfTermName || unitName || 'Autumn 1'} - ${currentSheetInfo.display}`;
 
       htmlContent += `
-          <!-- CCDesigner logo, top-left -->
-          ${planLogoHtml(30, 'margin:0 0 10px 0;')}
-          <!-- Lesson Header -->
+          <!-- Lesson Header (colour logo is PDF header / print thead on every page) -->
           <div class="lesson-header">
             ${(() => {
               if (!isSingleLesson) {
@@ -1183,13 +1191,17 @@ export function LessonPrintModal({
 
     htmlContent += `
         </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </body>
       </html>
     `;
 
-    // Header template - empty to avoid header on first page
-    // PDFBolt doesn't support hiding header on first page, so we use empty header
-    const headerContent = '<div></div>';
+    // PDFBolt header: colour logo top-left on EVERY page (21×86). Print-window
+    // fallback uses a repeating table thead (margin boxes unsupported) — see planLogo.ts.
+    const headerContent = planLogoHeaderTemplateHtml();
 
     // PDFBolt footer (server path, 13px). Print-window fallback emits no custom footer
     // (Chromium lacks @page margin boxes; position:fixed printed "Page 0") — see
@@ -1332,7 +1344,7 @@ export function LessonPrintModal({
           printBackground: true,
           waitUntil: 'networkidle',
           format: 'A4',
-          margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+          margin: { ...PDFBOLT_MARGINS },
           displayHeaderFooter: true,
           footerTemplate: footerContent,
           headerTemplate: headerContent,
@@ -1558,7 +1570,7 @@ export function LessonPrintModal({
         printBackground: true,
         waitUntil: "networkidle",
         format: "A4",
-        margin: { top: "15px", right: "20px", left: "20px", bottom: "55px" },
+        margin: { ...PDFBOLT_MARGINS },
         displayHeaderFooter: true,
         footerTemplate: footerContent,
         headerTemplate: headerContent,

@@ -15,10 +15,16 @@ import {
   planLogoDocx,
   planLogoHtml,
   planLogoImg,
+  planLogoHeaderTemplateHtml,
+  planLogoPrintRunningCss,
+  planLogoPrintTheadHtml,
   planLogoTagIsStandardSize,
   planLogoPngBytes,
   planLogoUrl,
   planSheetChrome,
+  PLAN_LOGO_PRINT_HEIGHT_PX,
+  PLAN_LOGO_PRINT_WIDTH_PX,
+  PLAN_LOGO_COLOUR_DATA_URL,
 } from './planLogo.ts';
 import { PLAN_LOGO_PNG_HEIGHT, PLAN_LOGO_PNG_WIDTH } from './planLogoData.ts';
 
@@ -180,5 +186,30 @@ describe('Word (.docx) logo and header/footer spec', () => {
       { kind: 'text', text: ' · © CCDesigner 2026' },
     ]);
     assert.equal(planDocxHeaderFooter().footer.parts[2].kind, 'text');
+  });
+});
+
+describe('LessonPrintModal PDF header / print thead chrome', () => {
+  it('header template and print HTML carry the colour 21×86 logo', () => {
+    assert.equal(PLAN_LOGO_PRINT_HEIGHT_PX, 21);
+    assert.equal(PLAN_LOGO_PRINT_WIDTH_PX, 86);
+    assert.equal(PLAN_LOGO_COLOUR_DATA_URL, PLAN_LOGO_DATA_URI);
+
+    const header = planLogoHeaderTemplateHtml();
+    assert.ok(header.includes(PLAN_LOGO_DATA_URI));
+    assert.match(header, /height="21"/);
+    assert.match(header, /width="86"/);
+    assert.doesNotMatch(header, /grayscale/i);
+
+    const thead = planLogoPrintTheadHtml();
+    assert.match(thead, /ccd-export-print-logo-row/);
+    assert.ok(thead.includes(PLAN_LOGO_DATA_URI));
+    assert.match(thead, /height="21"/);
+
+    const css = planLogoPrintRunningCss();
+    assert.match(css, /table-header-group/);
+    assert.match(css, /height:\s*21px/);
+    assert.match(css, /width:\s*86px/);
+    assert.doesNotMatch(css, /grayscale/i);
   });
 });
