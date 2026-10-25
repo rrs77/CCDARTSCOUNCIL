@@ -3,7 +3,6 @@ import {
   Clapperboard,
   Eye,
   FileText,
-  LayoutGrid,
   Pencil,
   Plus,
   Share2,
@@ -42,6 +41,51 @@ import {
 import { cn } from '@/lib/utils';
 
 const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)";
+
+/**
+ * Single source for “Design lesson from activities” chrome (pink is CTA-only).
+ * Swap pink-* tokens here if Rob picks another colour.
+ */
+const DESIGN_LESSON_FROM_ACTIVITIES_BTN_CLASS = [
+  'lessons-design-activities-btn',
+  'inline-flex h-9 items-center gap-1.5 rounded-xl border border-pink-600 bg-pink-600',
+  'px-3.5 text-[13px] font-semibold text-white',
+  'shadow-[0_4px_12px_-2px_rgba(219,39,119,0.35)]',
+  'hover:border-pink-700 hover:bg-pink-700',
+  'active:border-pink-800 active:bg-pink-800 active:shadow-none',
+  'focus-visible:outline focus-visible:outline-[3px] focus-visible:outline-offset-2 focus-visible:outline-pink-300',
+  'disabled:border-[#F3DBE7] disabled:bg-[#F3DBE7] disabled:text-[#9A6B83] disabled:shadow-none',
+  /* <1024: icon-only 36×36; coarse pointer keeps ≥44px hit target */
+  'max-lg:h-9 max-lg:w-9 max-lg:justify-center max-lg:px-0',
+  'pointer-coarse:min-h-[44px] pointer-coarse:min-w-[44px]',
+].join(' ');
+
+const DESIGN_LESSON_FROM_ACTIVITIES_LABEL = 'Design lesson from activities';
+
+/** Four rounded squares; bottom-right is a plus (16px). */
+function DesignLessonFromActivitiesIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden
+    >
+      <rect x="1" y="1" width="5.5" height="5.5" rx="1.25" fill="currentColor" />
+      <rect x="9.5" y="1" width="5.5" height="5.5" rx="1.25" fill="currentColor" />
+      <rect x="1" y="9.5" width="5.5" height="5.5" rx="1.25" fill="currentColor" />
+      <path
+        d="M12.25 9.5v5.5M9.5 12.25h5.5"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
 
 interface LessonsWorkspaceProps {
   onAssignToUnit?: (lessonNumber: string, halfTermId: string) => void;
@@ -547,13 +591,15 @@ export function LessonsWorkspace({
             onClick={() => {
               void designLessonFromActivities();
             }}
-            className="lessons-design-activities-btn inline-flex h-10 min-h-[44px] items-center gap-1.5 rounded-xl bg-[var(--ss-indigo,#4338E8)] px-3 text-[13px] font-extrabold text-white shadow-sm hover:bg-[#3529d1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ss-indigo,#4338E8)] focus-visible:ring-offset-2 pointer-coarse:h-11 pointer-coarse:gap-2 pointer-coarse:px-4 pointer-coarse:text-sm"
+            className={DESIGN_LESSON_FROM_ACTIVITIES_BTN_CLASS}
             data-testid="lessons-design-from-activities-btn"
-            aria-label="Design lesson from activities"
+            aria-label={DESIGN_LESSON_FROM_ACTIVITIES_LABEL}
+            title={DESIGN_LESSON_FROM_ACTIVITIES_LABEL}
           >
-            <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden />
-            <span className="hidden sm:inline">Design lesson from activities</span>
-            <span className="sm:hidden">Design from activities</span>
+            <DesignLessonFromActivitiesIcon className="h-4 w-4 shrink-0" />
+            {/* ≥1280 full label; 1024–1279 short; &lt;1024 icon-only */}
+            <span className="hidden xl:inline">{DESIGN_LESSON_FROM_ACTIVITIES_LABEL}</span>
+            <span className="hidden lg:inline xl:hidden">Design lesson</span>
           </button>
           <div className="mx-0.5 hidden h-5 w-px bg-[#E2E0EF] sm:block" aria-hidden />
           <YourLessonsMenu

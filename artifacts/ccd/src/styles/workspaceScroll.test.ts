@@ -132,4 +132,19 @@ describe('Lessons workspace Design lesson from activities CTA', () => {
     assert.match(canvas, /accept:\s*\['activity'\]/);
     assert.match(app, /<DndRoot>/);
   });
+
+  it('keeps designer pink CTA styles in one constant with responsive labels', () => {
+    assert.match(src, /const DESIGN_LESSON_FROM_ACTIVITIES_BTN_CLASS/);
+    assert.match(src, /border-pink-600 bg-pink-600/);
+    assert.match(src, /hover:border-pink-700 hover:bg-pink-700/);
+    assert.match(src, /active:border-pink-800 active:bg-pink-800/);
+    assert.match(src, /focus-visible:outline-pink-300/);
+    assert.match(src, /shadow-\[0_4px_12px_-2px_rgba\(219,39,119,0\.35\)\]/);
+    assert.match(src, /pointer-coarse:min-h-\[44px\]/);
+    assert.match(src, /className=\{DESIGN_LESSON_FROM_ACTIVITIES_BTN_CLASS\}/);
+    assert.match(src, /hidden xl:inline/);
+    assert.match(src, /hidden lg:inline xl:hidden/);
+    assert.match(src, /DesignLessonFromActivitiesIcon/);
+    assert.doesNotMatch(src, /LayoutGrid/);
+  });
 });
