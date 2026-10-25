@@ -1,34 +1,31 @@
 /**
  * File sources for the Interactive Lesson Viewer.
- *
- * "This device" uploads through the existing ILV media path (Supabase Storage,
- * falling back to this browser). Cloud providers (Dropbox, Drive, Classroom,
- * Box, OneDrive, Teams) reuse the lesson-attachments API, which lives on the
- * separate lesson-attachments branch; until that ships they show as not
- * connected and never call /api/lesson-attachments.
+ * Device uploads use ILV media (signed Supabase URLs). Cloud providers reuse
+ * planner pickers + authenticated /api/lesson-attachments (public OAuth client
+ * IDs only — no secrets in VITE_).
  */
 
 import { supabase } from '../../../config/supabase';
-import { uploadInteractiveLessonMedia, type UploadKind } from './mediaUpload';
-
-export type CloudPickResult = {
-  provider: 'dropbox' | 'google_drive' | 'box' | 'onedrive' | 'teams' | 'google_classroom';
-  fileName: string;
-  mimeType: string;
-  byteSize: number;
-  downloadUrl: string;
-  externalUrl?: string;
-  accessToken?: string;
-  providerFileId?: string;
-  linkOnly?: boolean;
-  kind?: 'image' | 'video' | 'audio' | 'document';
-};
-
-export type ClassroomCourse = { id: string; name: string };
-export type ClassroomMaterialItem = { id: string; title: string; attachment: CloudPickResult };
-
-/** Cloud providers are disabled until the lesson-attachments API is merged. */
-export type ProviderConfig = { cloudAvailable: false };
+import {
+  fetchProviderConfig,
+  importCloudAttachment,
+  uploadLessonAttachment,
+  type LessonAttachment,
+  type ProviderConfig,
+} from '../../../utils/planner/lessonAttachmentsApi';
+import type { CloudPickResult } from '../../../utils/planner/cloudPickers';
+import {
+  pickFromBox,
+  pickFromDropbox,
+  pickFromGoogleDrive,
+  pickFromOneDrive,
+  pickFromTeams,
+  listGoogleClassroomCourses,
+  listGoogleClassroomMaterials,
+  type ClassroomCourse,
+  type ClassroomMaterialItem,
+} from '../../../utils/planner/cloudPickers';
+import { detectUploadKind, type UploadKind } from './mediaUpload';
 
 export type IlvCloudProviderId =
   | 'device'
@@ -45,20 +42,70 @@ export type IlvProviderStatus = {
   connected: boolean;
 };
 
-export function listIlvProviderStatuses(_cfg: ProviderConfig | null): IlvProviderStatus[] {
+export function ilvAttachmentLessonKey(lessonId: string): string {
+  return `ilv:${lessonId}`;
+}
+
+export function listIlvProviderStatuses(cfg: ProviderConfig | null): IlvProviderStatus[] {
   return [
     { id: 'device', label: 'This device', connected: true },
-    { id: 'dropbox', label: 'Dropbox', connected: false },
-    { id: 'googleDrive', label: 'Google Drive', connected: false },
-    { id: 'googleClassroom', label: 'Google Classroom', connected: false },
-    { id: 'box', label: 'Box', connected: false },
-    { id: 'oneDrive', label: 'OneDrive', connected: false },
-    { id: 'teams', label: 'Teams', connected: false },
+    { id: 'dropbox', label: 'Dropbox', connected: Boolean(cfg?.dropbox && cfg.keys.dropboxAppKey) },
+    {
+      id: 'googleDrive',
+      label: 'Google Drive',
+      connected: Boolean(cfg?.googleDrive && cfg.keys.googleApiKey && cfg.keys.googleClientId),
+    },
+    {
+      id: 'googleClassroom',
+      label: 'Google Classroom',
+      connected: Boolean(cfg?.googleClassroom && cfg.keys.googleClientId),
+    },
+    { id: 'box', label: 'Box', connected: Boolean(cfg?.box && cfg.keys.boxClientId) },
+    { id: 'oneDrive', label: 'OneDrive', connected: Boolean(cfg?.oneDrive && cfg.keys.oneDriveClientId) },
+    { id: 'teams', label: 'Teams', connected: Boolean(cfg?.teams && cfg.keys.teamsClientId) },
   ];
 }
 
 export async function loadIlvProviderConfig(): Promise<ProviderConfig> {
-  return { cloudAvailable: false };
+  return fetchProviderConfig();
+}
+
+async function authToken(): Promise<string | null> {
+  try {
+    const { data } = await supabase.auth.getSession();
+    return data.session?.access_token || null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Resolve a playable URL for the viewer. Proxy attachment paths are fetched
+ * with Bearer auth (no token in the URL) and turned into a blob URL.
+ */
+export async function resolveAttachmentPlayUrl(url: string | null | undefined): Promise<string> {
+  if (!url) throw new Error('Attachment has no URL yet');
+  if (!url.includes('/api/lesson-attachments/')) return url;
+  const token = await authToken();
+  const headers: Record<string, string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+  const res = await fetch(url, { headers });
+  if (!res.ok) throw new Error(`Could not load file (${res.status})`);
+  const blob = await res.blob();
+  return URL.createObjectURL(blob);
+}
+
+export function kindFromAttachment(att: LessonAttachment): UploadKind {
+  if (att.kind === 'image') return 'image';
+  if (att.kind === 'video') return 'video';
+  if (att.kind === 'audio') return 'audio';
+  const mime = (att.mimeType || '').toLowerCase();
+  const name = att.fileName || '';
+  if (mime.startsWith('image/') || /\.(png|jpe?g|gif|webp|svg)$/i.test(name)) return 'image';
+  if (mime.startsWith('video/') || /\.(mp4|webm|mov|m4v)$/i.test(name)) return 'video';
+  if (mime.startsWith('audio/') || /\.(mp3|wav|m4a|aac|ogg)$/i.test(name)) return 'audio';
+  if (/presentation|powerpoint|\.pptx?$/i.test(mime + name)) return 'powerpoint';
+  return 'upload';
 }
 
 export type ImportedIlvMedia = {
@@ -67,16 +114,38 @@ export type ImportedIlvMedia = {
   kind: UploadKind;
   provider?: string;
   sourceUrl?: string;
-  attachmentId?: string;
+  attachmentId: string;
 };
 
-const NOT_AVAILABLE = 'Cloud file sources are not available yet.';
-
 export async function importPickedCloudToIlv(
-  _lessonId: string,
-  _picked: CloudPickResult,
+  lessonId: string,
+  picked: CloudPickResult,
 ): Promise<ImportedIlvMedia> {
-  throw new Error(NOT_AVAILABLE);
+  const lessonKey = ilvAttachmentLessonKey(lessonId);
+  const attachment = await importCloudAttachment(lessonKey, picked);
+  const playUrl =
+    attachment.url ||
+    picked.externalUrl ||
+    (picked.linkOnly ? picked.externalUrl : null);
+  if (picked.linkOnly && playUrl) {
+    return {
+      url: playUrl,
+      name: attachment.fileName || picked.fileName,
+      kind: kindFromAttachment(attachment),
+      provider: picked.provider,
+      sourceUrl: playUrl,
+      attachmentId: attachment.id,
+    };
+  }
+  const url = await resolveAttachmentPlayUrl(attachment.url);
+  return {
+    url,
+    name: attachment.fileName || picked.fileName,
+    kind: kindFromAttachment(attachment),
+    provider: picked.provider,
+    sourceUrl: picked.externalUrl || attachment.url || undefined,
+    attachmentId: attachment.id,
+  };
 }
 
 export async function uploadDeviceFileToIlv(
@@ -84,37 +153,52 @@ export async function uploadDeviceFileToIlv(
   file: File,
   onProgress?: (pct: number) => void,
 ): Promise<ImportedIlvMedia> {
-  let userId = 'anonymous';
-  try {
-    const { data } = await supabase.auth.getUser();
-    if (data.user?.id) userId = data.user.id;
-  } catch {
-    /* fall back to local storage */
-  }
-  const media = await uploadInteractiveLessonMedia(file, {
-    userId,
-    lessonId,
-    onProgress: (p) => onProgress?.(p.percent),
-  });
-  return { url: media.url, name: media.name, kind: media.kind, provider: 'device' };
+  const lessonKey = ilvAttachmentLessonKey(lessonId);
+  const attachment = await uploadLessonAttachment(lessonKey, file, onProgress);
+  const url = await resolveAttachmentPlayUrl(attachment.url);
+  return {
+    url,
+    name: attachment.fileName || file.name,
+    kind: detectUploadKind(file),
+    provider: 'device',
+    attachmentId: attachment.id,
+  };
 }
 
 export async function pickIlvCloudProvider(
-  _provider: Exclude<IlvCloudProviderId, 'device' | 'googleClassroom'>,
-  _cfg: ProviderConfig,
+  provider: Exclude<IlvCloudProviderId, 'device' | 'googleClassroom'>,
+  cfg: ProviderConfig,
 ): Promise<CloudPickResult | null> {
-  throw new Error(NOT_AVAILABLE);
+  if (provider === 'dropbox' && cfg.keys.dropboxAppKey) {
+    return pickFromDropbox(cfg.keys.dropboxAppKey);
+  }
+  if (provider === 'googleDrive' && cfg.keys.googleApiKey && cfg.keys.googleClientId) {
+    return pickFromGoogleDrive(cfg.keys.googleApiKey, cfg.keys.googleClientId);
+  }
+  if (provider === 'box' && cfg.keys.boxClientId) {
+    return pickFromBox(cfg.keys.boxClientId);
+  }
+  if (provider === 'oneDrive' && cfg.keys.oneDriveClientId) {
+    return pickFromOneDrive(cfg.keys.oneDriveClientId);
+  }
+  if (provider === 'teams' && cfg.keys.teamsClientId) {
+    return pickFromTeams(cfg.keys.teamsClientId);
+  }
+  return null;
 }
 
 export async function openIlvClassroom(
-  _cfg: ProviderConfig,
+  cfg: ProviderConfig,
 ): Promise<{ token: string; courses: ClassroomCourse[] }> {
-  throw new Error(NOT_AVAILABLE);
+  if (!cfg.keys.googleClientId) throw new Error('Google Classroom is not connected');
+  return listGoogleClassroomCourses(cfg.keys.googleClientId);
 }
 
 export async function loadIlvClassroomMaterials(
-  _courseId: string,
-  _token: string,
+  courseId: string,
+  token: string,
 ): Promise<ClassroomMaterialItem[]> {
-  throw new Error(NOT_AVAILABLE);
+  return listGoogleClassroomMaterials(courseId, token);
 }
+
+export type { ClassroomCourse, ClassroomMaterialItem, ProviderConfig, CloudPickResult };

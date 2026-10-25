@@ -46,6 +46,7 @@ const COMBINED_AREAS = [
   "hubs",
   "music-hubs",
   "interactive-lessons",
+  "lesson-attachments",
   "planning-groups",
   "year-groups",
 ] as const;

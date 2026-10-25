@@ -41,6 +41,10 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
 import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
 
+/* Lesson attachments (DreamHost + cloud import) */
+import * as lessonAttachments from '../server/api/lesson-attachments/index.js';
+import * as lessonAttachmentFile from '../server/api/lesson-attachments/file/[...path].js';
+
 /* DreamHost file upload + authenticated proxy (shared with generate-pdf via _dreamhost.js) */
 import * as filesUpload from '../server/api/files/upload.js';
 import * as filesUploadToken from '../server/api/files/upload-token.js';
@@ -232,6 +236,15 @@ function targetFor(pathname) {
     return filesUpload;
   }
 
+  /* ---------- Lesson attachments ---------- */
+
+  if (area === 'lesson-attachments') {
+    if (rest[0] === 'file' && rest.length >= 2) {
+      return lessonAttachmentFile;
+    }
+    return lessonAttachments;
+  }
+
   /* ---------- Freesound (authenticated proxy) ---------- */
 
   if (area === 'freesound') {
@@ -284,7 +297,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound|admin|planning-groups|year-groups)(\/|$)/.test(
+    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|lesson-attachments|freesound|admin|planning-groups|year-groups)(\/|$)/.test(
       route,
     ) ||
     route.includes('..')

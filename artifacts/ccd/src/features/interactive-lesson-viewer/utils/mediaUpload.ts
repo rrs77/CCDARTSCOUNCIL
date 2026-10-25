@@ -188,11 +188,21 @@ export async function uploadInteractiveLessonMedia(
       return fallbackLocal(file, onProgress);
     }
 
-    const { data } = supabase.storage.from(ILV_STORAGE_BUCKET).getPublicUrl(path);
+    // Private bucket: short-lived signed URL only (never getPublicUrl).
+    const { data: signed, error: signError } = await supabase.storage
+      .from(ILV_STORAGE_BUCKET)
+      .createSignedUrl(path, 3600);
+    if (signError || !signed?.signedUrl) {
+      console.warn(
+        '[ilv] signed URL failed, using local fallback',
+        signError?.message || 'no url',
+      );
+      return fallbackLocal(file, onProgress);
+    }
     onProgress?.({ loaded: file.size, total: file.size, percent: 100 });
 
     return {
-      url: data.publicUrl,
+      url: signed.signedUrl,
       name: file.name,
       mimeType: file.type || 'application/octet-stream',
       kind,
