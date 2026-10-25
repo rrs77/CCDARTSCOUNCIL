@@ -16,7 +16,10 @@ import {
   type LessonSectionKind,
 } from '../../types/lessonSections';
 import { ensureLessonSections } from '../../utils/planner/legacyLessonToSections';
-import { loadPlannerCurriculum } from '../../utils/planner/plannerCurriculumStore';
+import {
+  getMergedCurriculumStatementsForConsumers,
+  loadPlannerCurriculum,
+} from '../../utils/planner/plannerCurriculumStore';
 import {
   checkFleshOutAvailable,
   formatDifferentiationHtml,
@@ -217,14 +220,15 @@ export function LessonPlanPanel({
     };
 
     const curr = loadPlannerCurriculum();
+    const mergedStatements = getMergedCurriculumStatementsForConsumers();
     const ks = (
       keyStageFromYearGroupTag(yearGroup || '') ||
       (curr.strands[0]?.keyStage as string | undefined) ||
       'ks2'
     ).toLowerCase();
 
-    // Only offer Settings statements for this lesson's key stage (and subject when known).
-    const allStatements = curr.statements.map((st) => {
+    // IDs only from the merged school+personal list (never invent outside it).
+    const allStatements = mergedStatements.map((st) => {
       const strand = curr.strands.find((s) => s.id === st.strandId);
       return {
         id: st.id,
@@ -246,7 +250,7 @@ export function LessonPlanPanel({
 
     if (options.autoPickCurriculum && curriculumStatements.length === 0) {
       const msg =
-        'No curriculum statements in Settings for this lesson’s key stage. Add frameworks, strands and statements in Settings → Curriculum, then try again.';
+        'No curriculum statements for this lesson’s key stage. Add some in the curriculum panel or Settings → Curriculum, then try again.';
       toast.error(msg);
       setLiveMessage(msg);
       throw new Error(msg);

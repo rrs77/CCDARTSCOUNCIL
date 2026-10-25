@@ -12,10 +12,10 @@ import {
 } from '../../types/plannerCurriculum';
 import {
   defaultPlannerTerms,
-  loadPlannerCurriculum,
   loadPlannerCurriculumAsync,
   loadPlannerTerms,
-  savePlannerCurriculum,
+  loadSchoolPlannerCurriculum,
+  saveSchoolPlannerCurriculum,
   uid,
 } from '../../utils/planner/plannerCurriculumStore';
 import { chipStyle, contrastTextOn } from '../../utils/planner/contrastText';
@@ -103,7 +103,7 @@ export function CurriculumSettingsEditor() {
   const { categoryFolders, categories, getCategoryColor } = useSettings();
   const { currentAcademicYear } = useData();
   const [state, setState] = useState<PlannerCurriculumState>(() => {
-    const loaded = loadPlannerCurriculum();
+    const loaded = loadSchoolPlannerCurriculum();
     const terms =
       loaded.terms.length > 0
         ? loaded.terms
@@ -121,23 +121,25 @@ export function CurriculumSettingsEditor() {
   const [filterKeyStage, setFilterKeyStage] = useState<PlannerKeyStageId | 'all'>('all');
 
   useEffect(() => {
-    const apply = (loaded: PlannerCurriculumState) => {
+    const applySchool = () => {
+      const loaded = loadSchoolPlannerCurriculum();
       const terms =
         loaded.terms.length > 0
           ? loaded.terms
           : loadPlannerTerms(currentAcademicYear);
       setState({ ...loaded, terms });
     };
-    const onUpdate = () => apply(loadPlannerCurriculum());
+    const onUpdate = () => applySchool();
     window.addEventListener('ccd:planner-curriculum-updated', onUpdate);
-    void loadPlannerCurriculumAsync().then(apply);
+    void loadPlannerCurriculumAsync().then(() => applySchool());
     return () => window.removeEventListener('ccd:planner-curriculum-updated', onUpdate);
   }, [currentAcademicYear]);
 
   const persist = useCallback((next: PlannerCurriculumState) => {
     setState(next);
-    savePlannerCurriculum(next);
-    toast.success('Curriculum saved');
+    // Layer 1 — school shared set (org admins / super admins via RLS).
+    saveSchoolPlannerCurriculum(next);
+    toast.success('School curriculum saved');
   }, []);
 
   const updateTerm = (

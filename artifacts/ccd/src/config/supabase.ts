@@ -121,6 +121,8 @@ export const TABLES = {
   BRANDING_SETTINGS: 'branding_settings',
   /** Per-organisation planner curriculum JSON (frameworks/strands/statements). */
   PLANNER_CURRICULUM: 'planner_curriculum',
+  /** Per-user personal planner curriculum overlays (adds / overrides / hides). */
+  PLANNER_CURRICULUM_USER: 'planner_curriculum_user',
   
   // Unused tables (commented out for safety - can be deleted later)
   // ACTIVITIES_ROWS: 'activities_rows',

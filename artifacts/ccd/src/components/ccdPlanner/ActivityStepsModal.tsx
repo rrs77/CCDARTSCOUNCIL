@@ -7,7 +7,10 @@ import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Activity } from '../../contexts/DataContext';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
-import { loadPlannerCurriculum } from '../../utils/planner/plannerCurriculumStore';
+import {
+  getMergedCurriculumStatementsForConsumers,
+  loadPlannerCurriculum,
+} from '../../utils/planner/plannerCurriculumStore';
 import { cn } from '@/lib/utils';
 import {
   Button,
@@ -64,6 +67,10 @@ export function ActivityStepsModal({
   const [undoStack, setUndoStack] = useState<DraftContent[]>([]);
   const snapshotRef = useRef<DraftContent | null>(null);
   const curriculumStore = useMemo(() => loadPlannerCurriculum(), [open]);
+  const mergedStatements = useMemo(
+    () => getMergedCurriculumStatementsForConsumers(),
+    [open, curriculumStore],
+  );
 
   useEffect(() => {
     if (!open || !activity) return;
@@ -117,10 +124,10 @@ export function ActivityStepsModal({
   const stepId: StepId = STEPS[step].id;
   const color = getCategoryColor?.(activity.category) || '#4338E8';
 
-  const statements = curriculumStore.statements.filter((st) => {
+  // Activity Library curriculum picker: IDs only from the merged school+personal list.
+  const statements = mergedStatements.filter((st) => {
     const strand = curriculumStore.strands.find((s) => s.id === st.strandId);
     if (!strand) return true;
-    // Prefer statements for matching subject/category when strand is scoped
     if (!strand.subjectId) return true;
     return (
       strand.subjectId.toLowerCase() === (activity.category || '').toLowerCase() ||

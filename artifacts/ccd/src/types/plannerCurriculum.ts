@@ -26,6 +26,40 @@ export interface CurriculumStatement {
   text: string;
 }
 
+/** Where a merged statement came from for UI markers. */
+export type CurriculumStatementSource = 'school' | 'mine';
+
+/** Statement after merging school + personal layers. */
+export interface MergedCurriculumStatement extends CurriculumStatement {
+  source: CurriculumStatementSource;
+  /** True when this is a school statement the teacher reworded for themselves. */
+  overridden?: boolean;
+  /** Original school text when overridden (for reset-to-school). */
+  schoolText?: string;
+}
+
+/**
+ * Layer 2 — teacher's personal copy. Never mutates the school set.
+ * - frameworks / strands / statements: teacher-added items
+ * - overrides: reword school statements by id
+ * - hiddenIds: school statement ids the teacher has hidden
+ */
+export interface PersonalCurriculumData {
+  frameworks: CurriculumFramework[];
+  strands: CurriculumStrand[];
+  statements: CurriculumStatement[];
+  overrides: Record<string, { text: string }>;
+  hiddenIds: string[];
+}
+
+export const EMPTY_PERSONAL_CURRICULUM: PersonalCurriculumData = {
+  frameworks: [],
+  strands: [],
+  statements: [],
+  overrides: {},
+  hiddenIds: [],
+};
+
 /** Half-term / term dates edited in Settings — drives Year overview + My units. */
 export interface PlannerTermDates {
   id: string;
