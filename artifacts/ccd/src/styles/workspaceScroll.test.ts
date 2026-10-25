@@ -68,3 +68,21 @@ describe('Lessons workspace does not trap height in the viewport', () => {
     assert.match(src, /lessonPlanOpen \? 'overflow-visible'/);
   });
 });
+
+describe('Lessons workspace exposes drag lesson builder', () => {
+  const src = read('components/LessonsWorkspace.tsx');
+  const app = read('App.tsx');
+
+  it('places Design lesson from activities left of Your lessons and mounts LessonPlanBuilder', () => {
+    assert.match(src, /import \{ LessonPlanBuilder \} from '\.\/LessonPlanBuilder'/);
+    assert.match(src, /data-testid="lessons-design-from-activities-btn"/);
+    assert.match(src, /Design lesson from activities/);
+    const btnIdx = src.indexOf('data-testid="lessons-design-from-activities-btn"');
+    const menuIdx = src.indexOf('<YourLessonsMenu');
+    assert.ok(btnIdx > 0 && menuIdx > btnIdx, 'CTA must appear before YourLessonsMenu in the toolbar');
+    assert.match(src, /data-testid="lessons-design-from-activities"/);
+    assert.match(src, /data-testid="lessons-design-back"/);
+    assert.match(src, /<LessonPlanBuilder[\s\S]*?embedded/);
+    assert.match(app, /<DndRoot>/);
+  });
+});

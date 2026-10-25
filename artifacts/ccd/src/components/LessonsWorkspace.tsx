@@ -1,14 +1,17 @@
 import React, { useMemo, useState } from 'react';
 import {
+  ArrowLeft,
   Clapperboard,
   Eye,
   FileText,
+  LayoutGrid,
   Pencil,
   Plus,
   Share2,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { AssignToHalfTermModal } from './AssignToHalfTermModal';
+import { LessonPlanBuilder } from './LessonPlanBuilder';
 import { useData, type Activity, type LessonData } from '../contexts/DataContext';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import {
@@ -50,10 +53,11 @@ interface LessonsWorkspaceProps {
 /**
  * Lesson planner: full-width canvas. Library and My units open from toolbar
  * menus (like Classes) — not a three-column layout.
+ * Optional full-page LessonPlanBuilder (drag activities) via toolbar CTA.
  */
 export function LessonsWorkspace({
   onAssignToUnit,
-  onUnsavedChangesChange: _onUnsavedChangesChange,
+  onUnsavedChangesChange,
 }: LessonsWorkspaceProps) {
   const isViewOnly = useIsViewOnly();
   const {
@@ -98,6 +102,8 @@ export function LessonsWorkspace({
   const [showYearOverview, setShowYearOverview] = useState(false);
   const [termsTick, setTermsTick] = useState(0);
   const [shareOpen, setShareOpen] = useState(false);
+  /** Full-page drag-and-drop LessonPlanBuilder (legacy lesson-builder tab). */
+  const [designFromActivities, setDesignFromActivities] = useState(false);
 
   const plannerTerms = useMemo(
     () => loadPlannerTerms(currentAcademicYear),
@@ -442,6 +448,51 @@ export function LessonsWorkspace({
     window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-viewer' } }));
   };
 
+  if (designFromActivities) {
+    return (
+      <div
+        className="flex w-full min-h-0 flex-col gap-3"
+        style={{ fontFamily: UI_FONT }}
+        data-testid="lessons-design-from-activities"
+      >
+        <div className="shrink-0 space-y-2">
+          <p className="ccd-studio-eyebrow mb-0">
+            CONNECT &amp; CREATE / <span>LESSON BUILDER</span>
+          </p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setDesignFromActivities(false);
+                onUnsavedChangesChange?.(false);
+              }}
+              className="inline-flex h-10 min-h-[44px] items-center gap-1.5 rounded-xl border border-[var(--ss-line,#E2E0EF)] bg-white px-3 text-[13px] font-bold text-[var(--ss-ink,#1F1B4D)] hover:border-[var(--ss-indigo,#4338E8)] hover:bg-[var(--ss-softindigo,#E9E6FF)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ss-indigo,#4338E8)] pointer-coarse:h-11 pointer-coarse:px-4"
+              data-testid="lessons-design-back"
+            >
+              <ArrowLeft className="h-4 w-4 text-[var(--ss-indigo,#4338E8)]" aria-hidden />
+              Back to planner
+            </button>
+            <p className="text-[13px] text-[var(--ss-muted,#77738F)]">
+              Drag activities into a lesson, then save — it appears under Your lessons.
+            </p>
+          </div>
+        </div>
+        {/* DnD: LessonDropZone + ActivityCard; DndRoot already wraps the app in App.tsx */}
+        <div className="planner-shell-surface min-w-0 flex-1 overflow-visible rounded-[1.75rem] border border-[var(--ss-line,#E2E0EF)] bg-[var(--ss-lilac,#F4F3FA)] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
+          <LessonPlanBuilder
+            key={`design-${builderKey}`}
+            embedded
+            onUnsavedChangesChange={onUnsavedChangesChange}
+            onEditComplete={() => {
+              setDesignFromActivities(false);
+              onUnsavedChangesChange?.(false);
+            }}
+          />
+        </div>
+      </div>
+    );
+  }
+
   if (showYearOverview) {
     return (
       <div style={{ fontFamily: UI_FONT }}>
@@ -485,6 +536,24 @@ export function LessonsWorkspace({
 
         {/* Toolbar — compact chrome; year-group/KS select always pinned far right */}
         <div className="flex flex-wrap items-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white/90 p-1.5 shadow-sm">
+          <button
+            type="button"
+            onClick={() => {
+              setLibraryOpen(false);
+              setUnitsOpen(false);
+              setLessonsOpen(false);
+              setDesignFromActivities(true);
+              setLiveMessage('Opened lesson builder from activities');
+            }}
+            className="lessons-design-activities-btn inline-flex h-10 min-h-[44px] items-center gap-1.5 rounded-xl bg-[var(--ss-indigo,#4338E8)] px-3 text-[13px] font-extrabold text-white shadow-sm hover:bg-[#3529d1] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--ss-indigo,#4338E8)] focus-visible:ring-offset-2 pointer-coarse:h-11 pointer-coarse:gap-2 pointer-coarse:px-4 pointer-coarse:text-sm"
+            data-testid="lessons-design-from-activities-btn"
+            aria-label="Design lesson from activities"
+          >
+            <LayoutGrid className="h-4 w-4 shrink-0" aria-hidden />
+            <span className="hidden sm:inline">Design lesson from activities</span>
+            <span className="sm:hidden">Design from activities</span>
+          </button>
+          <div className="mx-0.5 hidden h-5 w-px bg-[#E2E0EF] sm:block" aria-hidden />
           <YourLessonsMenu
             open={lessonsOpen}
             onOpenChange={(v) => {
