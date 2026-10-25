@@ -3,6 +3,8 @@
  * No secrets, no network — unit-testable with node --test.
  */
 
+import { FLESH_OUT_CAPS } from './_aiUsage.js';
+
 export const KEY_STAGE_GUIDANCE = {
   eyfs: {
     ages: '3–5',
@@ -87,6 +89,40 @@ function asStringArray(v) {
   return v.map((x) => String(x || '').trim()).filter(Boolean);
 }
 
+function truncateStr(value, max) {
+  const s = String(value ?? '');
+  if (s.length <= max) return s;
+  return s.slice(0, max);
+}
+
+/**
+ * Allowlist sanitiser for model-produced bodyHtml.
+ * Strips script/iframe/object/embed, on* handlers, and javascript: links.
+ */
+export function sanitizeAiBodyHtml(html) {
+  let s = String(html || '');
+  if (!s) return '';
+  s = s.replace(/<\s*(script|iframe|object|embed|link|meta|base)[\s\S]*?>[\s\S]*?<\s*\/\s*\1\s*>/gi, '');
+  s = s.replace(/<\s*(script|iframe|object|embed|link|meta|base)[^>]*\/?\s*>/gi, '');
+  // on*= event handlers (quoted or bare)
+  s = s.replace(/\s+on\w+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+  // javascript: in href/src/xlink:href/action/formaction
+  s = s.replace(
+    /\s(href|src|xlink:href|action|formaction)\s*=\s*(['"])\s*javascript:[\s\S]*?\2/gi,
+    ' $1="#"',
+  );
+  s = s.replace(
+    /\s(href|src|xlink:href|action|formaction)\s*=\s*javascript:[^\s>]*/gi,
+    ' $1="#"',
+  );
+  // data: text/html (common XSS vector)
+  s = s.replace(
+    /\s(href|src)\s*=\s*(['"])\s*data:\s*text\/html[\s\S]*?\2/gi,
+    ' $1="#"',
+  );
+  return s.trim();
+}
+
 /** True when the teacher instruction explicitly asks for I CAN / outcomes / boards / set works. */
 export function instructionAsksFor(instruction, kind) {
   const s = String(instruction || '').toLowerCase();
@@ -109,12 +145,26 @@ export function buildFleshOutUserPayload({
   curriculumStatements = [],
   options = {},
 }) {
-  const allowedIds = curriculumStatements
-    .map((s) => String(s?.id || '').trim())
-    .filter(Boolean);
+  const caps = FLESH_OUT_CAPS;
+  const fieldMax = caps.stringFieldChars;
 
-  const sections = Array.isArray(lesson.sections) ? lesson.sections : [];
-  const activities = Array.isArray(lesson.activities) ? lesson.activities : [];
+  const cappedStatements = (Array.isArray(curriculumStatements) ? curriculumStatements : [])
+    .slice(0, caps.curriculumStatements)
+    .map((s) => ({
+      id: truncateStr(s?.id || '', 120),
+      text: truncateStr(s?.text || '', caps.curriculumTextChars),
+      strand: truncateStr(s?.strand || '', 200),
+      keyStage: truncateStr(s?.keyStage || '', 32),
+      subject: truncateStr(s?.subject || '', 120),
+    }))
+    .filter((s) => s.id);
+
+  const allowedIds = cappedStatements.map((s) => s.id);
+
+  const sections = (Array.isArray(lesson.sections) ? lesson.sections : [])
+    .slice(0, caps.sections);
+  const activities = (Array.isArray(lesson.activities) ? lesson.activities : [])
+    .slice(0, caps.activities);
 
   const includeOutcomes = options.includeOutcomes !== false;
   const includeSuccessCriteria = options.includeSuccessCriteria !== false;
@@ -133,39 +183,34 @@ export function buildFleshOutUserPayload({
   const mayGenerateIcan = includeSuccessCriteria && (!existingIcan || askIcan);
 
   return {
-    instruction: String(instruction || '').trim() || 'Flesh out this lesson plan',
-    keyStage: String(lesson.keyStage || 'ks2').toLowerCase(),
-    yearGroup: lesson.yearGroup || '',
-    subject: lesson.subject || '',
-    title: lesson.title || '',
-    learningOutcome: lesson.learningOutcome || '',
-    successCriteria: lesson.successCriteria || '',
-    assessment: lesson.assessment || '',
-    differentiation: lesson.differentiation || '',
-    vocabulary: lesson.vocabulary || '',
-    keyQuestions: lesson.keyQuestions || '',
+    instruction:
+      truncateStr(String(instruction || '').trim() || 'Flesh out this lesson plan', caps.instructionChars),
+    keyStage: String(lesson.keyStage || 'ks2').toLowerCase().slice(0, 16),
+    yearGroup: truncateStr(lesson.yearGroup || '', 64),
+    subject: truncateStr(lesson.subject || '', 120),
+    title: truncateStr(lesson.title || '', 300),
+    learningOutcome: truncateStr(lesson.learningOutcome || '', fieldMax),
+    successCriteria: truncateStr(lesson.successCriteria || '', fieldMax),
+    assessment: truncateStr(lesson.assessment || '', fieldMax),
+    differentiation: truncateStr(lesson.differentiation || '', fieldMax),
+    vocabulary: truncateStr(lesson.vocabulary || '', fieldMax),
+    keyQuestions: truncateStr(lesson.keyQuestions || '', fieldMax),
     activities: activities.map((a) => ({
-      name: a?.name || a?.activity || '',
-      description: a?.description || '',
+      name: truncateStr(a?.name || a?.activity || '', 300),
+      description: truncateStr(a?.description || '', fieldMax),
       time: a?.time ?? a?.durationMins ?? null,
-      category: a?.category || '',
+      category: truncateStr(a?.category || '', 120),
     })),
     sections: sections.map((s) => ({
-      id: s.id,
-      kind: s.kind,
-      title: s.title,
+      id: truncateStr(s.id, 120),
+      kind: truncateStr(s.kind, 64),
+      title: truncateStr(s.title, 300),
       durationMins: s.durationMins,
-      bodyHtml: s.bodyHtml || '',
-      activityName: s.activity?.activity || s.activity?.name || '',
+      bodyHtml: sanitizeAiBodyHtml(truncateStr(s.bodyHtml || '', fieldMax)),
+      activityName: truncateStr(s.activity?.activity || s.activity?.name || '', 300),
     })),
     // Only IDs from Settings — the model may only return a subset of these.
-    curriculumStatements: curriculumStatements.map((s) => ({
-      id: s.id,
-      text: s.text,
-      strand: s.strand || '',
-      keyStage: s.keyStage || '',
-      subject: s.subject || '',
-    })),
+    curriculumStatements: cappedStatements,
     allowedCurriculumIds: allowedIds,
     generate: {
       learningOutcome: includeOutcomes,
@@ -299,25 +344,31 @@ export function validateAndFilterResult(parsed, allowedStatementIds, options) {
 
   if (options.wholeLesson && Array.isArray(parsed?.wholeLessonSections)) {
     out.wholeLessonSections = parsed.wholeLessonSections
-      .map((s) => ({
-        sectionId: String(s?.sectionId || ''),
-        title: String(s?.title || '').trim(),
-        durationMins:
-          typeof s?.durationMins === 'number' && Number.isFinite(s.durationMins)
-            ? s.durationMins
-            : undefined,
-        bodyHtml: looksGeneric(s?.bodyHtml) ? '' : String(s?.bodyHtml || '').trim(),
-      }))
+      .map((s) => {
+        const rawHtml = looksGeneric(s?.bodyHtml) ? '' : String(s?.bodyHtml || '').trim();
+        return {
+          sectionId: String(s?.sectionId || ''),
+          title: String(s?.title || '').trim(),
+          durationMins:
+            typeof s?.durationMins === 'number' && Number.isFinite(s.durationMins)
+              ? s.durationMins
+              : undefined,
+          bodyHtml: sanitizeAiBodyHtml(rawHtml),
+        };
+      })
       .filter((s) => s.sectionId && s.bodyHtml);
   }
 
   if (options.sectionId && Array.isArray(parsed?.sectionBodies)) {
     out.sectionBodies = parsed.sectionBodies
       .filter((s) => String(s?.sectionId || '') === options.sectionId)
-      .map((s) => ({
-        sectionId: String(s.sectionId),
-        bodyHtml: looksGeneric(s?.bodyHtml) ? '' : String(s.bodyHtml || '').trim(),
-      }))
+      .map((s) => {
+        const rawHtml = looksGeneric(s?.bodyHtml) ? '' : String(s.bodyHtml || '').trim();
+        return {
+          sectionId: String(s.sectionId),
+          bodyHtml: sanitizeAiBodyHtml(rawHtml),
+        };
+      })
       .filter((s) => s.bodyHtml);
   }
 

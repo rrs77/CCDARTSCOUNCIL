@@ -3,8 +3,9 @@
  * Routed through /api/router so we stay within the Hobby serverless function limit.
  * Secret: OPENAI_API_KEY (server env only — never commit).
  *
- * Gating: assertRateLimit + requireAiAddon (super_admin via profiles.role OR
- * organisations.ai_addon). Spoofed client role fields are ignored.
+ * Gating: assertRateLimit (IP) + requireAiAddon + claimAiUsage (DB per-user/org).
+ * SSRF: fetchAllowlistedAudio — https + exact host allowlist, manual redirects,
+ * private-IP reject, 25MB stream cap, audio/* only, 20s timeout.
  */
 
 import {
@@ -17,11 +18,117 @@ import {
   requireAuth,
 } from '../../../api/_authShared.js';
 import { probeAiAddon, requireAiAddon } from '../../../api/_aiAddon.js';
+import { assertAiRequestBodySize, claimAiUsage } from '../../../api/_aiUsage.js';
+import {
+  AUDIO_MAX_BYTES,
+  fetchAllowlistedAudio,
+} from '../../../api/_safeAudioFetch.js';
+import {
+  EXT_ALLOWLIST,
+  fetchAttachmentFromDreamHost,
+  parseAttachmentStoragePath,
+  verifyDirectUploadTicket,
+} from '../../../api/_lessonAttachmentStorage.js';
 
 const OPENAI_URL = 'https://api.openai.com/v1/audio/transcriptions';
 
 function getOpenAiKey() {
   return process.env.OPENAI_API_KEY || process.env.WHISPER_API_KEY || '';
+}
+
+function extFromContentType(contentType) {
+  const ct = String(contentType || '')
+    .split(';')[0]
+    .trim()
+    .toLowerCase();
+  if (ct.includes('wav')) return 'wav';
+  if (ct.includes('mp4') || ct.includes('m4a') || ct === 'audio/mp4') return 'm4a';
+  if (ct.includes('ogg')) return 'ogg';
+  if (ct.includes('aac')) return 'aac';
+  return 'mp3';
+}
+
+/**
+ * Resolve audio bytes: prefer lesson-attachment storagePath / ticket (server-side
+ * DreamHost read), else SSRF-safe allowlisted https URL.
+ */
+async function resolveAudioBuffer(body) {
+  const ticket =
+    typeof body?.attachmentTicket === 'string' ? body.attachmentTicket.trim() : '';
+  if (ticket) {
+    const payload = verifyDirectUploadTicket(ticket);
+    if (!payload?.p) {
+      throw Object.assign(new Error('Invalid or expired attachment ticket.'), {
+        status: 400,
+        code: 'bad_ticket',
+      });
+    }
+    const path = parseAttachmentStoragePath(payload.p);
+    if (!path) {
+      throw Object.assign(new Error('Invalid attachment path in ticket.'), {
+        status: 400,
+        code: 'bad_path',
+      });
+    }
+    const ext = path.split('.').pop()?.toLowerCase();
+    if (!ext || EXT_ALLOWLIST[ext]?.kind !== 'audio') {
+      throw Object.assign(new Error('Attachment is not an audio file.'), {
+        status: 400,
+        code: 'non_audio_type',
+      });
+    }
+    const buffer = await fetchAttachmentFromDreamHost(path);
+    if (buffer.byteLength > AUDIO_MAX_BYTES) {
+      throw Object.assign(new Error('Audio file is too large (max 25MB).'), {
+        status: 413,
+        code: 'oversize',
+      });
+    }
+    return {
+      buffer,
+      contentType: EXT_ALLOWLIST[ext].mime,
+      ext,
+    };
+  }
+
+  const storagePath =
+    typeof body?.storagePath === 'string' ? body.storagePath.trim() : '';
+  if (storagePath) {
+    const path = parseAttachmentStoragePath(storagePath);
+    if (!path) {
+      throw Object.assign(new Error('Invalid storagePath.'), {
+        status: 400,
+        code: 'bad_path',
+      });
+    }
+    const ext = path.split('.').pop()?.toLowerCase();
+    if (!ext || EXT_ALLOWLIST[ext]?.kind !== 'audio') {
+      throw Object.assign(new Error('storagePath must be an audio attachment.'), {
+        status: 400,
+        code: 'non_audio_type',
+      });
+    }
+    const buffer = await fetchAttachmentFromDreamHost(path);
+    if (buffer.byteLength > AUDIO_MAX_BYTES) {
+      throw Object.assign(new Error('Audio file is too large (max 25MB).'), {
+        status: 413,
+        code: 'oversize',
+      });
+    }
+    return {
+      buffer,
+      contentType: EXT_ALLOWLIST[ext].mime,
+      ext,
+    };
+  }
+
+  const audioUrl = typeof body?.audioUrl === 'string' ? body.audioUrl : '';
+  const fetched = await fetchAllowlistedAudio(audioUrl);
+  return {
+    buffer: fetched.buffer,
+    contentType: fetched.contentType,
+    ext: extFromContentType(fetched.contentType),
+  };
 }
 
 export async function GET(request) {
@@ -68,6 +175,9 @@ export async function POST(request) {
   const limited = assertRateLimit(`ilv-transcribe:${ip}`, { limit: 20, windowMs: 60_000 });
   if (!limited.ok) return limited.response;
 
+  const bodySize = assertAiRequestBodySize(request);
+  if (!bodySize.ok) return bodySize.response;
+
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
 
@@ -80,6 +190,13 @@ export async function POST(request) {
 
   const entitlement = await requireAiAddon(auth.userId, body);
   if (!entitlement.ok) return entitlement.response;
+
+  const usage = await claimAiUsage({
+    userId: auth.userId,
+    organisationId: entitlement.organisationId,
+    route: 'transcribe',
+  });
+  if (!usage.ok) return usage.response;
 
   const key = getOpenAiKey();
   if (!key) {
@@ -94,34 +211,11 @@ export async function POST(request) {
     );
   }
 
-  const audioUrl = typeof body.audioUrl === 'string' ? body.audioUrl.trim() : '';
-  if (!audioUrl) {
-    return jsonResponse({ message: 'audioUrl is required' }, 400);
-  }
-
-  if (!/^https?:\/\//i.test(audioUrl) && !audioUrl.startsWith('/')) {
-    return jsonResponse({ message: 'audioUrl must be http(s) or a site-relative path' }, 400);
-  }
-
   try {
-    const absolute = audioUrl.startsWith('http')
-      ? audioUrl
-      : new URL(audioUrl, request.url).toString();
-
-    const mediaRes = await fetch(absolute);
-    if (!mediaRes.ok) {
-      return jsonResponse({ message: `Could not fetch audio (${mediaRes.status})` }, 400);
-    }
-    const buf = Buffer.from(await mediaRes.arrayBuffer());
-    const contentType = mediaRes.headers.get('content-type') || 'audio/mpeg';
-    const ext = contentType.includes('wav')
-      ? 'wav'
-      : contentType.includes('mp4') || contentType.includes('m4a')
-        ? 'm4a'
-        : 'mp3';
+    const { buffer, contentType, ext } = await resolveAudioBuffer(body);
 
     const form = new FormData();
-    form.append('file', new Blob([buf], { type: contentType }), `lyrics.${ext}`);
+    form.append('file', new Blob([buffer], { type: contentType }), `lyrics.${ext}`);
     form.append('model', 'whisper-1');
     form.append('response_format', 'verbose_json');
     form.append('timestamp_granularities[]', 'segment');
@@ -130,6 +224,7 @@ export async function POST(request) {
       method: 'POST',
       headers: { Authorization: `Bearer ${key}` },
       body: form,
+      signal: AbortSignal.timeout(60_000),
     });
 
     if (!whisperRes.ok) {
@@ -155,12 +250,19 @@ export async function POST(request) {
       provider: 'openai-whisper',
       lines,
       available: true,
+      aiAddon: true,
     });
   } catch (err) {
-    console.error('[ILV transcribe]', err);
+    const status = err && typeof err === 'object' && 'status' in err ? Number(err.status) : 0;
+    const code = err && typeof err === 'object' && 'code' in err ? String(err.code) : '';
+    const message = err instanceof Error ? err.message : 'Transcription error.';
+    if (status >= 400 && status < 500) {
+      return jsonResponse({ message, code: code || undefined }, status);
+    }
+    console.error('[ILV transcribe]', message.slice(0, 300));
     return jsonResponse(
       { message: 'Transcription error. Use Tap to sync as a fallback.' },
-      500,
+      status >= 500 ? status : 500,
     );
   }
 }

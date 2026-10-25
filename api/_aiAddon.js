@@ -9,6 +9,7 @@
 
 import {
   createServiceClient,
+  isSuspended,
   isSuperAdminProfile,
   jsonResponse,
   loadProfile,
@@ -46,8 +47,13 @@ export function decideAiAddonAccess({
   void bodyRole;
   void headerRole;
 
+  // Super admins: isSuperAdminProfile already requires active + non-anonymised.
   if (isSuperAdminProfile(profile)) {
     return { allowed: true, reason: 'super_admin', aiAddon: true };
+  }
+  // Ordinary users: deny missing / suspended / anonymised before org lookup.
+  if (!profile || isSuspended(profile)) {
+    return { allowed: false, reason: 'suspended_or_missing', aiAddon: false };
   }
   if (orgHasAiAddon(orgRow)) {
     return { allowed: true, reason: 'org_ai_addon', aiAddon: true };
@@ -99,6 +105,18 @@ export async function requireAiAddon(userId, requestBody = null) {
       organisationId: profile?.organisation_id ? String(profile.organisation_id) : null,
       aiAddon: true,
       reason: 'super_admin',
+    };
+  }
+
+  // Ordinary users: deny before org lookup when profile is missing or suspended.
+  if (!profile || isSuspended(profile)) {
+    return {
+      ok: false,
+      aiAddon: false,
+      reason: 'suspended_or_missing',
+      profile: profile || null,
+      organisationId: null,
+      response: deniedResponse(),
     };
   }
 

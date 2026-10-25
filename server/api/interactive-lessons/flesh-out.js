@@ -18,6 +18,11 @@ import {
 } from '../../../api/_authShared.js';
 import { probeAiAddon, requireAiAddon } from '../../../api/_aiAddon.js';
 import {
+  FLESH_OUT_CAPS,
+  assertAiRequestBodySize,
+  claimAiUsage,
+} from '../../../api/_aiUsage.js';
+import {
   buildFleshOutUserPayload,
   buildSystemPrompt,
   buildUserMessage,
@@ -147,6 +152,9 @@ export async function POST(request) {
   const limited = assertRateLimit(`flesh-out:${ip}`, { limit: 20, windowMs: 60_000 });
   if (!limited.ok) return limited.response;
 
+  const bodySize = assertAiRequestBodySize(request);
+  if (!bodySize.ok) return bodySize.response;
+
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
 
@@ -160,6 +168,13 @@ export async function POST(request) {
   // Pass body only so spoofed role/aiAddon fields can be proven ignored.
   const entitlement = await requireAiAddon(auth.userId, body);
   if (!entitlement.ok) return entitlement.response;
+
+  const usage = await claimAiUsage({
+    userId: auth.userId,
+    organisationId: entitlement.organisationId,
+    route: 'flesh-out',
+  });
+  if (!usage.ok) return usage.response;
 
   const key = getOpenAiKey();
   if (!key) {
@@ -176,7 +191,7 @@ export async function POST(request) {
   const lesson = body?.lesson && typeof body.lesson === 'object' ? body.lesson : {};
   const options = body?.options && typeof body.options === 'object' ? body.options : {};
   const curriculumStatements = Array.isArray(body?.curriculumStatements)
-    ? body.curriculumStatements
+    ? body.curriculumStatements.slice(0, FLESH_OUT_CAPS.curriculumStatements)
     : [];
 
   const keyStage = String(lesson.keyStage || 'ks2').toLowerCase();
@@ -231,6 +246,7 @@ export async function POST(request) {
       body: JSON.stringify({
         model: MODEL,
         temperature: 0.35,
+        max_tokens: FLESH_OUT_CAPS.maxTokens,
         response_format: {
           type: 'json_schema',
           json_schema: {

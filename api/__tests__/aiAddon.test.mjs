@@ -95,6 +95,38 @@ describe('decideAiAddonAccess', () => {
     });
     assert.equal(d.allowed, false);
   });
+
+  it('suspended ordinary user is denied even with org add-on', () => {
+    const d = decideAiAddonAccess({
+      profile: { role: 'teacher', status: 'suspended', organisation_id: 'school-a' },
+      orgRow: { ai_addon: true },
+    });
+    assert.equal(d.allowed, false);
+    assert.equal(d.reason, 'suspended_or_missing');
+  });
+
+  it('anonymised ordinary user is denied even with org add-on', () => {
+    const d = decideAiAddonAccess({
+      profile: {
+        role: 'teacher',
+        status: 'active',
+        anonymised_at: '2026-01-01T00:00:00Z',
+        organisation_id: 'school-a',
+      },
+      orgRow: { ai_addon: true },
+    });
+    assert.equal(d.allowed, false);
+    assert.equal(d.reason, 'suspended_or_missing');
+  });
+
+  it('missing profile is denied before org lookup', () => {
+    const d = decideAiAddonAccess({
+      profile: null,
+      orgRow: { ai_addon: true },
+    });
+    assert.equal(d.allowed, false);
+    assert.equal(d.reason, 'suspended_or_missing');
+  });
 });
 
 describe('AI routes gate with requireAiAddon + rate limit', () => {
@@ -118,6 +150,7 @@ describe('AI routes gate with requireAiAddon + rate limit', () => {
     const src = readFileSync(join(root, 'api/_aiAddon.js'), 'utf8');
     assert.match(src, /loadProfile\(userId\)/);
     assert.match(src, /isSuperAdminProfile\(profile\)/);
+    assert.match(src, /isSuspended\(profile\)/);
     assert.match(src, /void requestBody/);
     assert.match(src, /void clientClaims/);
     assert.match(src, /void bodyRole/);
