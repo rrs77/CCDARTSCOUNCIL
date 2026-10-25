@@ -14,7 +14,8 @@ import { useShareLesson } from '../hooks/useShareLesson';
 import { useDemoMode } from '../hooks/useDemoMode';
 import toast from 'react-hot-toast';
 import type { Activity, LessonData } from '../contexts/DataContext';
-import { AttachInteractiveLesson } from '../features/interactive-lesson-viewer';
+import { LessonSlidesSection } from '../features/interactive-lesson-viewer/components/planner/LessonSlidesSection';
+import { academicYearFor } from './planner/plannerModel';
 
 interface LessonDetailsModalProps {
   lessonNumber: string;
@@ -54,6 +55,7 @@ export function LessonDetailsModal({
     updateHalfTerm,
     getLessonsForHalfTerm,
     currentSheetInfo,
+    currentAcademicYear,
     updateLessonData,
   } = useData();
   const { getCategoryColor } = useSettings();
@@ -693,17 +695,23 @@ export function LessonDetailsModal({
           {/* Side rail — Slides, Standards, resources & actions */}
           <aside className="flex w-full shrink-0 flex-col border-t border-[#E2E0EF] bg-[#F8F7FC] lg:w-[320px] lg:border-t-0 lg:border-l overflow-y-auto">
             <div className="space-y-4 p-4 sm:p-5">
-              <AttachInteractiveLesson
+              <LessonSlidesSection
+                year={currentAcademicYear || academicYearFor(new Date())}
                 sheet={currentSheetInfo?.sheet || ''}
                 lessonNumber={lessonNumber}
-                existingId={lessonData.interactiveLessonId || null}
-                onAttached={(id) => {
+                legacyInteractiveLessonId={lessonData.interactiveLessonId || null}
+                compact
+                onMirrorDefault={(id) => {
                   if (updateLessonData) {
                     void updateLessonData(lessonNumber, {
                       ...lessonData,
                       interactiveLessonId: id || undefined,
                     });
                   }
+                }}
+                returnContext={{
+                  tab: 'lesson-library',
+                  view: 'calendar',
                 }}
               />
 

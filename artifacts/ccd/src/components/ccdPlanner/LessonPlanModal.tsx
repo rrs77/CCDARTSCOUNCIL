@@ -25,7 +25,9 @@ import {
   type FleshOutOptions,
 } from '../../utils/planner/fleshOutApi';
 import { keyStageFromYearGroupTag } from '../../utils/libraryHierarchy';
-import { AttachInteractiveLesson } from '../../features/interactive-lesson-viewer';
+import { LessonSlidesSection } from '../../features/interactive-lesson-viewer/components/planner/LessonSlidesSection';
+import { academicYearFor } from '../planner/plannerModel';
+import { useData } from '../../contexts/DataContext';
 import {
   Button,
   CloseX,
@@ -83,6 +85,7 @@ export function LessonPlanPanel({
   keyStage?: string;
 }) {
   const titleId = useId();
+  const { currentAcademicYear } = useData();
   const [tab, setTab] = useState<ViewTab>('plan');
   const [fleshOpen, setFleshOpen] = useState(false);
   const [insertAt, setInsertAt] = useState<number | null>(null);
@@ -672,16 +675,16 @@ export function LessonPlanPanel({
                   data-planner-extension="attach-interactive-lesson"
                   className="mt-4 rounded-2xl border border-indigo-50 bg-indigo-50/20 p-3"
                 >
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-slate-500">
-                    Lesson Viewer
+                  <p className="mb-2 text-[13px] font-semibold uppercase tracking-wide text-slate-500">
+                    Slides
                   </p>
-                  {lessonNumber && yearGroup ? (
-                    <AttachInteractiveLesson
+                  {lessonNumber && yearGroup && draft ? (
+                    <LessonSlidesSection
+                      year={currentAcademicYear || academicYearFor(new Date())}
                       sheet={yearGroup}
                       lessonNumber={lessonNumber}
-                      existingId={draft.interactiveLessonId || null}
-                      compact={false}
-                      onAttached={(id) =>
+                      legacyInteractiveLessonId={draft.interactiveLessonId || null}
+                      onMirrorDefault={(id) =>
                         setDraft({
                           ...draft,
                           interactiveLessonId: id || undefined,
@@ -689,9 +692,8 @@ export function LessonPlanPanel({
                       }
                     />
                   ) : (
-                    <p className="text-sm text-slate-500">
-                      Save this lesson once to attach an interactive Lesson Viewer (Slides)
-                      document.
+                    <p className="text-[13px] text-slate-500">
+                      Save this lesson once to attach slideshows.
                     </p>
                   )}
                 </div>

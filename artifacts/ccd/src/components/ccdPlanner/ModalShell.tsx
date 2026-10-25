@@ -128,7 +128,7 @@ export function ModalHeader({
         <h2 id={id} className="text-lg font-extrabold text-slate-900">
           {title}
         </h2>
-        {subtitle ? <p className="mt-0.5 text-xs text-slate-500">{subtitle}</p> : null}
+        {subtitle ? <p className="mt-0.5 text-[13px] text-slate-500">{subtitle}</p> : null}
         {children}
       </div>
       <button

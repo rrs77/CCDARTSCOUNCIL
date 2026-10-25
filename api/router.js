@@ -41,6 +41,9 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
 import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
 
+/* Lesson ↔ viewer links (planner Slides section) */
+import * as slidesLinks from '../server/api/slides-links/index.js';
+
 /* DreamHost file upload + authenticated proxy (shared with generate-pdf via _dreamhost.js) */
 import * as filesUpload from '../server/api/files/upload.js';
 import * as filesUploadToken from '../server/api/files/upload-token.js';
@@ -206,6 +209,12 @@ function targetFor(pathname) {
     return null;
   }
 
+  /* ---------- Lesson ↔ viewer links (planner) ---------- */
+
+  if (area === 'slides-links') {
+    return slidesLinks;
+  }
+
   /* ---------- DreamHost files (upload + proxy) ---------- */
 
   if (area === 'files') {
@@ -284,7 +293,7 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons|files|upload-pdf|freesound|admin|planning-groups|year-groups)(\/|$)/.test(
+    !/^(forum|hubs|music-hubs|interactive-lessons|slides-links|files|upload-pdf|freesound|admin|planning-groups|year-groups)(\/|$)/.test(
       route,
     ) ||
     route.includes('..')

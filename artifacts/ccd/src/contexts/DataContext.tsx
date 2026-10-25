@@ -12,6 +12,7 @@ import {
   mergeLessonsWithHubSeeds,
   CCD_HUB_ACTIVITIES_UPDATED_EVENT,
 } from '../utils/hubSeedLocal';
+import { applySchemeViewerLinks } from '../features/interactive-lesson-viewer/data/slidesLinksApi';
 
 export interface Activity {
   id?: string;
@@ -1471,6 +1472,21 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
         hint: error?.hint
       });
       // Don't throw error - keep local changes even if Supabase fails
+    }
+
+    // Copy scheme template viewer links onto teacher lessons (idempotent).
+    const schemeIds = stacks !== undefined ? stacks : halfTerms.find((t) => t.id === halfTermId)?.stacks;
+    if (schemeIds?.length && sanitizedLessons.length) {
+      for (const schemeId of schemeIds) {
+        void applySchemeViewerLinks({
+          schemeId,
+          year: currentAcademicYear,
+          sheet: currentSheetInfo.sheet,
+          lessonNumbers: sanitizedLessons,
+        }).catch((err) => {
+          if (import.meta.env.DEV) console.warn('[slides-links] apply-scheme failed', err);
+        });
+      }
     }
   };
 
