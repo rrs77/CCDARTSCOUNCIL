@@ -16,9 +16,7 @@ import {
   Unlock,
   GripVertical,
   Link2,
-  Check,
-  PanelLeftClose,
-  PanelLeft,
+  Check
 } from 'lucide-react';
 import { useDrag, useDrop } from 'react-dnd';
 import { useDropZoneStyle, useDropFlash } from './dnd';
@@ -34,8 +32,6 @@ import type {
 import { useAuth } from '../hooks/useAuth';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { normalizeYearGroupToken, resolveYearGroupFromToken } from '../utils/yearGroupSectionOrder';
-import { buildObjectiveSetFolderTree } from '../utils/objectiveSetFolders';
-import { cn } from '@/lib/utils';
 
 // Draggable Year Group Item
 interface DraggableYearGroupProps {
@@ -134,13 +130,9 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
   const [showCloneDialog, setShowCloneDialog] = useState(false);
   const [cloneData, setCloneData] = useState({ sourceId: '', targetName: '', targetColor: '#3B82F6' });
   const [saveStatus, setSaveStatus] = useState<'idle' | 'success' | 'error'>('idle');
-  /** KS and subject folders start collapsed (ids in the set = collapsed). */
+  /** Subject-area KS folders start collapsed (ids in the set = collapsed). */
   const [collapsedSectionIds, setCollapsedSectionIds] = useState<Set<string>>(new Set());
-  const [collapsedSubjectFolderIds, setCollapsedSubjectFolderIds] = useState<Set<string>>(new Set());
   const [subjectSectionsSeeded, setSubjectSectionsSeeded] = useState(false);
-  /** Right-panel area section headings (e.g. Communication and Language) — collapsed by default. */
-  const [expandedContentSections, setExpandedContentSections] = useState<Set<string>>(new Set());
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
 
   const yearGroupIndexById = React.useMemo(() => {
     const map = new Map<string, number>();
@@ -179,38 +171,40 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     return byLinkedName;
   }, [sectionOrder, customYearGroups]);
 
-  /** KS → Subject → year-group sets (name-based fallback so EYFS sets are not dumped in Other). */
-  const objectiveFolders = React.useMemo(
-    () =>
-      buildObjectiveSetFolderTree(yearGroups, {
-        sections: sectionOrder,
-        customYearGroups: customYearGroups || [],
-        sectionLabelByLinkedName: sectionLabelByCustomYearGroupName,
-      }),
-    [yearGroups, sectionOrder, customYearGroups, sectionLabelByCustomYearGroupName],
-  );
-
-  // First paint: collapse every KS and subject folder (objective groups stay collapsed too).
-  React.useEffect(() => {
-    if (subjectSectionsSeeded || objectiveFolders.length === 0) return;
-    setCollapsedSectionIds(new Set(objectiveFolders.map((s) => s.id)));
-    setCollapsedSubjectFolderIds(
-      new Set(objectiveFolders.flatMap((ks) => ks.subjects.map((s) => s.id))),
-    );
-    setSubjectSectionsSeeded(true);
-  }, [objectiveFolders, subjectSectionsSeeded]);
-
-  const toggleCollapsedId = (
-    setter: React.Dispatch<React.SetStateAction<Set<string>>>,
-    id: string,
-  ) => {
-    setter((prev) => {
-      const next = new Set(prev);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
+  const groupedYearGroups = React.useMemo(() => {
+    const sectionMap = new Map<string, { id: string; label: string; items: CustomObjectiveYearGroupWithAreas[] }>();
+    sectionOrder.forEach((section) => {
+      sectionMap.set(section.label, { id: section.id, label: section.label, items: [] });
     });
-  };
+    if (!sectionMap.has('Other')) {
+      sectionMap.set('Other', { id: 'other', label: 'Other', items: [] });
+    }
+
+    yearGroups.forEach((group) => {
+      const linked = group.linked_year_groups || [];
+      const counts = new Map<string, number>();
+      linked.forEach((name) => {
+        const label = sectionLabelByCustomYearGroupName.get(normalizeYearGroupToken(name));
+        if (label) counts.set(label, (counts.get(label) || 0) + 1);
+      });
+
+      const bestLabel =
+        counts.size > 0
+          ? [...counts.entries()].sort((a, b) => b[1] - a[1])[0][0]
+          : 'Other';
+      const target = sectionMap.get(bestLabel) || sectionMap.get('Other');
+      target?.items.push(group);
+    });
+
+    return [...sectionMap.values()].filter((section) => section.items.length > 0);
+  }, [yearGroups, sectionOrder, sectionLabelByCustomYearGroupName]);
+
+  // First paint: collapse every Subject Areas KS folder (and keep objective groups collapsed).
+  React.useEffect(() => {
+    if (subjectSectionsSeeded || groupedYearGroups.length === 0) return;
+    setCollapsedSectionIds(new Set(groupedYearGroups.map((s) => s.id)));
+    setSubjectSectionsSeeded(true);
+  }, [groupedYearGroups, subjectSectionsSeeded]);
 
   // Helper function to auto-resize textarea
   const autoResizeTextarea = (textarea: HTMLTextAreaElement) => {
@@ -275,11 +269,11 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
     }
   }, [isOpen, embedded]);
 
-  // Keep section headings and strand groups collapsed when switching subject.
+  // Keep objective groups collapsed when switching subject — only strand/group
+  // titles show until the teacher opens a group ("N objectives").
   useEffect(() => {
     if (selectedYearGroup) {
       setExpandedAreas(new Set());
-      setExpandedContentSections(new Set());
     }
   }, [selectedYearGroup]);
 
@@ -703,58 +697,30 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
           </div>
         )}
 
-        {/* Content — narrow Subject Areas column + remaining width for objectives */}
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden min-[1024px]:flex-row">
-          {/* Sidebar - Subject Areas List (fixed ~260px on desktop; stacks above on narrow) */}
-          <div
-            className={cn(
-              'flex min-h-0 flex-col border-[#E2E0EF] bg-[#F7F6FB] transition-[width] duration-200',
-              sidebarCollapsed
-                ? 'w-full shrink-0 border-b min-[1024px]:w-12 min-[1024px]:border-b-0 min-[1024px]:border-r'
-                : 'w-full shrink-0 border-b min-[1024px]:w-[260px] min-[1024px]:max-w-[280px] min-[1024px]:border-b-0 min-[1024px]:border-r',
-            )}
-          >
-            <div className={cn('flex items-center gap-2 border-b border-[#E2E0EF] bg-white px-3 py-2.5', sidebarCollapsed && 'justify-center')}>
-              {!sidebarCollapsed ? (
-                <>
-                  <h3 className="min-w-0 flex-1 truncate text-[15px] font-extrabold text-[#1F1B4D]">
-                    Subject Areas
-                  </h3>
+        {/* Content */}
+        <div className="flex-1 overflow-hidden flex">
+          {/* Sidebar - Subject Areas List */}
+          <div className="w-1/3 border-r border-gray-200 bg-gray-50 overflow-y-auto">
+            <div className="p-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold text-gray-900">Subject Areas</h3>
+                <div className="flex space-x-2">
                   <button
-                    type="button"
                     onClick={handleCreateYearGroup}
-                    className="rounded-lg bg-[#4338E8] p-2 text-white hover:bg-[#3529d1]"
+                    className="p-2 bg-[#4338E8] text-white rounded-lg hover:bg-[#3529d1] transition-colors duration-200"
                     title="Create New Subject Area"
                   >
                     <Plus className="h-4 w-4" />
                   </button>
                   <button
-                    type="button"
                     onClick={() => handleExportCSV()}
-                    className="rounded-lg bg-green-600 p-2 text-white hover:bg-green-700"
+                    className="p-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors duration-200"
                     title="Export All to CSV"
                   >
                     <Download className="h-4 w-4" />
                   </button>
-                </>
-              ) : null}
-              <button
-                type="button"
-                onClick={() => setSidebarCollapsed((v) => !v)}
-                className="rounded-lg border border-[#E2E0EF] bg-white p-2 text-[#5F5B7A] hover:border-[#bcb7f4] hover:text-[#4338E8]"
-                title={sidebarCollapsed ? 'Show Subject Areas' : 'Hide Subject Areas'}
-                aria-expanded={!sidebarCollapsed}
-              >
-                {sidebarCollapsed ? (
-                  <PanelLeft className="h-4 w-4" />
-                ) : (
-                  <PanelLeftClose className="h-4 w-4" />
-                )}
-              </button>
-            </div>
-
-            {!sidebarCollapsed ? (
-            <div className="min-h-0 flex-1 overflow-y-auto p-3">
+                </div>
+              </div>
               
               {/* Quick Add Reception Drama Button */}
               {!yearGroups.some(yg => yg.name === 'Reception Drama') && (
@@ -827,220 +793,169 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
               )}
 
               {loading ? (
-                <div className="py-8 text-center text-[13px] text-[#5F5B7A]">Loading...</div>
+                <div className="text-center py-8 text-gray-500">Loading...</div>
               ) : (
-                <div className="space-y-2">
-                  {objectiveFolders.map((ksFolder) => (
-                    <div key={ksFolder.id} className="space-y-1">
+                // Drag-and-drop subject areas (same in modal and embedded)
+                <div className="space-y-3">
+                  {groupedYearGroups.map((section) => (
+                    <div key={section.id} className="space-y-2">
                       <button
                         type="button"
-                        onClick={() => toggleCollapsedId(setCollapsedSectionIds, ksFolder.id)}
-                        className="flex w-full items-center justify-between rounded-lg border border-[#E2E0EF] bg-white px-2.5 py-2 text-left hover:border-[#bcb7f4]"
+                        onClick={() =>
+                          setCollapsedSectionIds((prev) => {
+                            const next = new Set(prev);
+                            if (next.has(section.id)) {
+                              next.delete(section.id);
+                            } else {
+                              next.add(section.id);
+                            }
+                            return next;
+                          })
+                        }
+                        className="w-full flex items-center justify-between px-2 py-1.5 rounded-md bg-white border border-gray-200 hover:border-gray-300 text-left"
                       >
-                        <div className="flex min-w-0 items-center gap-1.5">
-                          {collapsedSectionIds.has(ksFolder.id) ? (
-                            <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" />
+                        <div className="flex items-center gap-2">
+                          {collapsedSectionIds.has(section.id) ? (
+                            <ChevronRight className="h-4 w-4 text-gray-500" />
                           ) : (
-                            <ChevronDown className="h-4 w-4 shrink-0 text-[#77738F]" />
+                            <ChevronDown className="h-4 w-4 text-gray-500" />
                           )}
-                          <span className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
-                            {ksFolder.label}
-                          </span>
+                          <span className="text-sm font-semibold text-gray-800">{section.label}</span>
                         </div>
-                        <span className="shrink-0 text-[13px] font-semibold text-[#77738F]">
-                          ({ksFolder.itemCount})
-                        </span>
+                        <span className="text-xs font-medium text-gray-500">({section.items.length})</span>
                       </button>
 
-                      {!collapsedSectionIds.has(ksFolder.id) && (
-                        <div className="space-y-1 pl-2">
-                          {ksFolder.subjects.map((subjectFolder) => (
-                            <div key={subjectFolder.id} className="space-y-1">
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  toggleCollapsedId(setCollapsedSubjectFolderIds, subjectFolder.id)
-                                }
-                                className="flex w-full items-center justify-between rounded-md border border-transparent bg-[#EFEDFF]/60 px-2 py-1.5 text-left hover:border-[#bcb7f4]"
+                      {!collapsedSectionIds.has(section.id) && (
+                        <div className="space-y-2 pl-1">
+                          {section.items.map((yearGroup) => {
+                            const index = yearGroupIndexById.get(yearGroup.id);
+                            if (typeof index !== 'number') return null;
+                            return (
+                              <DraggableYearGroup
+                                key={yearGroup.id}
+                                yearGroup={yearGroup}
+                                index={index}
+                                isSelected={selectedYearGroup === yearGroup.id}
+                                onSelect={() => setSelectedYearGroup(yearGroup.id)}
+                                onReorder={(dragIndex, hoverIndex) => {
+                                  const newYearGroups = [...yearGroups];
+                                  const [removed] = newYearGroups.splice(dragIndex, 1);
+                                  newYearGroups.splice(hoverIndex, 0, removed);
+                                  newYearGroups.forEach((yg, i) => {
+                                    yg.sort_order = i;
+                                  });
+                                  setYearGroups(newYearGroups);
+                                  (async () => {
+                                    try {
+                                      for (const yg of newYearGroups) {
+                                        await customObjectivesApi.yearGroups.update(yg.id, { sort_order: yg.sort_order });
+                                      }
+                                      setMessage({ type: 'success', text: 'Subject areas reordered successfully' });
+                                    } catch (error) {
+                                      console.error('Failed to save order:', error);
+                                      setMessage({ type: 'error', text: 'Failed to save new order' });
+                                    }
+                                  })();
+                                }}
+                                onDragEnd={() => {}}
                               >
-                                <div className="flex min-w-0 items-center gap-1.5">
-                                  {collapsedSubjectFolderIds.has(subjectFolder.id) ? (
-                                    <ChevronRight className="h-3.5 w-3.5 shrink-0 text-[#77738F]" />
-                                  ) : (
-                                    <ChevronDown className="h-3.5 w-3.5 shrink-0 text-[#77738F]" />
-                                  )}
-                                  <span className="truncate text-[13px] font-bold text-[#4338E8]">
-                                    {subjectFolder.label}
-                                  </span>
-                                </div>
-                                <span className="shrink-0 text-[13px] font-medium text-[#77738F]">
-                                  ({subjectFolder.items.length})
-                                </span>
-                              </button>
-
-                              {!collapsedSubjectFolderIds.has(subjectFolder.id) && (
-                                <div className="space-y-1.5 pl-1">
-                                  {subjectFolder.items.map((yearGroup) => {
-                                    const index = yearGroupIndexById.get(yearGroup.id);
-                                    if (typeof index !== 'number') return null;
-                                    return (
-                                      <DraggableYearGroup
-                                        key={yearGroup.id}
-                                        yearGroup={yearGroup}
-                                        index={index}
-                                        isSelected={selectedYearGroup === yearGroup.id}
-                                        onSelect={() => setSelectedYearGroup(yearGroup.id)}
-                                        onReorder={(dragIndex, hoverIndex) => {
-                                          const newYearGroups = [...yearGroups];
-                                          const [removed] = newYearGroups.splice(dragIndex, 1);
-                                          newYearGroups.splice(hoverIndex, 0, removed);
-                                          newYearGroups.forEach((yg, i) => {
-                                            yg.sort_order = i;
-                                          });
-                                          setYearGroups(newYearGroups);
-                                          (async () => {
-                                            try {
-                                              for (const yg of newYearGroups) {
-                                                await customObjectivesApi.yearGroups.update(yg.id, {
-                                                  sort_order: yg.sort_order,
-                                                });
-                                              }
-                                              setMessage({
-                                                type: 'success',
-                                                text: 'Subject areas reordered successfully',
-                                              });
-                                            } catch (error) {
-                                              console.error('Failed to save order:', error);
-                                              setMessage({
-                                                type: 'error',
-                                                text: 'Failed to save new order',
-                                              });
-                                            }
-                                          })();
+                              <div
+                                className={`p-3 rounded-lg border cursor-grab active:cursor-grabbing transition-colors duration-200 overflow-hidden ${
+                                  selectedYearGroup === yearGroup.id
+                                    ? 'border-[#4338E8] bg-[#E9E6FF]'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                                }`}
+                                onClick={() => setSelectedYearGroup(yearGroup.id)}
+                              >
+                                <div className="flex items-center justify-between gap-2 min-w-0">
+                                  <div className="flex items-center space-x-2 flex-1 min-w-0 overflow-hidden">
+                                    <GripVertical className="h-4 w-4 text-gray-400 flex-shrink-0" />
+                                    <div
+                                      className="w-3 h-3 rounded-full flex-shrink-0"
+                                      style={{ backgroundColor: yearGroup.color }}
+                                    />
+                                    <div className="flex-1 min-w-0 overflow-hidden">
+                                      <div className="flex items-center gap-1.5 min-w-0">
+                                        <h4 className="font-medium text-gray-900 truncate min-w-0 flex-1" title={yearGroup.name}>{yearGroup.name}</h4>
+                                        {yearGroup.is_locked && (
+                                          <span title="Locked - Read Only" className="flex-shrink-0">
+                                            <Lock className="h-3 w-3 text-amber-500" />
+                                          </span>
+                                        )}
+                                        {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
+                                          <span title={`Linked to: ${yearGroup.linked_year_groups.join(', ')}`} className="flex-shrink-0">
+                                            <Link2 className="h-3 w-3 text-[#4338E8]" />
+                                          </span>
+                                        )}
+                                      </div>
+                                      <p className="text-xs text-gray-500 truncate">
+                                        {yearGroup.areas.length} areas, {yearGroup.areas.reduce((sum, area) => sum + area.objectives.length, 0)} objectives
+                                      </p>
+                                      {yearGroup.linked_year_groups && yearGroup.linked_year_groups.length > 0 && (
+                                        <p className="text-xs text-[#4338E8] truncate" title={yearGroup.linked_year_groups.join(', ')}>
+                                          → {yearGroup.linked_year_groups.slice(0, 3).join(', ')}{yearGroup.linked_year_groups.length > 3 ? ` +${yearGroup.linked_year_groups.length - 3}` : ''}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="flex space-x-1 flex-shrink-0">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCloneData({ sourceId: yearGroup.id, targetName: `${yearGroup.name} Copy`, targetColor: yearGroup.color });
+                                        setShowCloneDialog(true);
+                                      }}
+                                      className="p-1 text-gray-400 hover:text-gray-600"
+                                      title="Clone"
+                                    >
+                                      <Copy className="h-3 w-3" />
+                                    </button>
+                                    {isAdmin && (
+                                      <button
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          handleToggleLock(yearGroup.id);
                                         }}
-                                        onDragEnd={() => {}}
+                                        className={`p-1 ${yearGroup.is_locked ? 'text-amber-500 hover:text-amber-600' : 'text-gray-400 hover:text-gray-600'}`}
+                                        title={yearGroup.is_locked ? 'Unlock (Admin only)' : 'Lock (Admin only)'}
                                       >
-                                        <div
-                                          className={cn(
-                                            'cursor-grab overflow-hidden rounded-lg border p-2.5 transition-colors active:cursor-grabbing',
-                                            selectedYearGroup === yearGroup.id
-                                              ? 'border-[#4338E8] bg-[#E9E6FF]'
-                                              : 'border-[#E2E0EF] bg-white hover:border-[#bcb7f4]',
-                                          )}
-                                          onClick={() => setSelectedYearGroup(yearGroup.id)}
+                                        {yearGroup.is_locked ? (
+                                          <Lock className="h-3 w-3" />
+                                        ) : (
+                                          <Unlock className="h-3 w-3" />
+                                        )}
+                                      </button>
+                                    )}
+                                    {!yearGroup.is_locked && (
+                                      <>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleEditYearGroup(yearGroup);
+                                          }}
+                                          className="p-1 text-gray-400 hover:text-gray-600"
+                                          title="Edit"
                                         >
-                                          <div className="flex min-w-0 items-start justify-between gap-1.5">
-                                            <div className="flex min-w-0 flex-1 items-start gap-1.5 overflow-hidden">
-                                              <GripVertical className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#77738F]" />
-                                              <div
-                                                className="mt-1 h-2.5 w-2.5 shrink-0 rounded-full"
-                                                style={{ backgroundColor: yearGroup.color }}
-                                              />
-                                              <div className="min-w-0 flex-1 overflow-hidden">
-                                                <div className="flex min-w-0 items-center gap-1">
-                                                  <h4
-                                                    className="min-w-0 flex-1 truncate text-[13px] font-bold text-[#1F1B4D]"
-                                                    title={yearGroup.name}
-                                                  >
-                                                    {yearGroup.name}
-                                                  </h4>
-                                                  {yearGroup.is_locked ? (
-                                                    <Lock className="h-3 w-3 shrink-0 text-amber-500" />
-                                                  ) : null}
-                                                  {yearGroup.linked_year_groups &&
-                                                  yearGroup.linked_year_groups.length > 0 ? (
-                                                    <Link2 className="h-3 w-3 shrink-0 text-[#4338E8]" />
-                                                  ) : null}
-                                                </div>
-                                                <p className="truncate text-[13px] text-[#77738F]">
-                                                  {yearGroup.areas.length} areas,{' '}
-                                                  {yearGroup.areas.reduce(
-                                                    (sum, area) => sum + area.objectives.length,
-                                                    0,
-                                                  )}{' '}
-                                                  objectives
-                                                </p>
-                                              </div>
-                                            </div>
-                                            <div className="flex shrink-0 gap-0.5">
-                                              <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                  e.stopPropagation();
-                                                  setCloneData({
-                                                    sourceId: yearGroup.id,
-                                                    targetName: `${yearGroup.name} Copy`,
-                                                    targetColor: yearGroup.color,
-                                                  });
-                                                  setShowCloneDialog(true);
-                                                }}
-                                                className="p-1 text-[#77738F] hover:text-[#1F1B4D]"
-                                                title="Clone"
-                                              >
-                                                <Copy className="h-3 w-3" />
-                                              </button>
-                                              {isAdmin ? (
-                                                <button
-                                                  type="button"
-                                                  onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleToggleLock(yearGroup.id);
-                                                  }}
-                                                  className={cn(
-                                                    'p-1',
-                                                    yearGroup.is_locked
-                                                      ? 'text-amber-500 hover:text-amber-600'
-                                                      : 'text-[#77738F] hover:text-[#1F1B4D]',
-                                                  )}
-                                                  title={
-                                                    yearGroup.is_locked
-                                                      ? 'Unlock (Admin only)'
-                                                      : 'Lock (Admin only)'
-                                                  }
-                                                >
-                                                  {yearGroup.is_locked ? (
-                                                    <Lock className="h-3 w-3" />
-                                                  ) : (
-                                                    <Unlock className="h-3 w-3" />
-                                                  )}
-                                                </button>
-                                              ) : null}
-                                              {!yearGroup.is_locked ? (
-                                                <>
-                                                  <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleEditYearGroup(yearGroup);
-                                                    }}
-                                                    className="p-1 text-[#77738F] hover:text-[#1F1B4D]"
-                                                    title="Edit"
-                                                  >
-                                                    <Edit2 className="h-3 w-3" />
-                                                  </button>
-                                                  <button
-                                                    type="button"
-                                                    onClick={(e) => {
-                                                      e.stopPropagation();
-                                                      handleDeleteYearGroup(yearGroup.id);
-                                                    }}
-                                                    className="p-1 text-[#77738F] hover:text-red-600"
-                                                    title="Delete"
-                                                  >
-                                                    <Trash2 className="h-3 w-3" />
-                                                  </button>
-                                                </>
-                                              ) : null}
-                                            </div>
-                                          </div>
-                                        </div>
-                                      </DraggableYearGroup>
-                                    );
-                                  })}
+                                          <Edit2 className="h-3 w-3" />
+                                        </button>
+                                        <button
+                                          onClick={(e) => {
+                                            e.stopPropagation();
+                                            handleDeleteYearGroup(yearGroup.id);
+                                          }}
+                                          className="p-1 text-gray-400 hover:text-red-600"
+                                          title="Delete"
+                                        >
+                                          <Trash2 className="h-3 w-3" />
+                                        </button>
+                                      </>
+                                    )}
+                                  </div>
                                 </div>
-                              )}
-                            </div>
-                          ))}
+                              </div>
+                              </DraggableYearGroup>
+                            );
+                          })}
                         </div>
                       )}
                     </div>
@@ -1048,168 +963,118 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                 </div>
               )}
             </div>
-            ) : null}
           </div>
 
-          {/* Main Content - Areas and Objectives (takes remaining width; min-w-0 prevents clip) */}
-          <div className="min-h-0 min-w-0 flex-1 overflow-x-hidden overflow-y-auto bg-white">
+          {/* Main Content - Areas and Objectives */}
+          <div className="flex-1 overflow-y-auto">
             {selectedYearGroup ? (
-              <div className="w-full max-w-none p-4 sm:p-6">
+              <div className="p-6">
                 {(() => {
-                  const yearGroup = yearGroups.find((yg) => yg.id === selectedYearGroup);
+                  const yearGroup = yearGroups.find(yg => yg.id === selectedYearGroup);
                   if (!yearGroup) return null;
 
                   return (
-                    <div className="w-full min-w-0">
-                      <div className="mb-5">
-                        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
-                          <div className="flex min-w-0 items-center gap-2">
+                    <div>
+                      <div className="mb-6">
+                        {/* Title and Buttons Row */}
+                        <div className="flex items-center justify-between mb-2">
+                          <div className="flex items-center space-x-2">
                             <div
-                              className="h-3 w-3 shrink-0 rounded-full"
+                              className="w-3 h-3 rounded-full flex-shrink-0"
                               style={{ backgroundColor: yearGroup.color }}
                             />
-                            <h3 className="truncate text-lg font-extrabold text-[#1F1B4D]">
-                              {yearGroup.name}
-                            </h3>
+                            <h3 className="text-lg font-semibold text-gray-900 truncate">{yearGroup.name}</h3>
                           </div>
-                          <div className="flex shrink-0 gap-2">
+                          <div className="flex space-x-2 flex-shrink-0">
                             <button
-                              type="button"
                               onClick={() => handleExportCSV(yearGroup.id)}
-                              className="inline-flex items-center gap-1 rounded-md bg-green-600 px-2.5 py-1.5 text-[13px] font-bold text-white hover:bg-green-700"
+                              className="px-2 py-1 bg-green-600 text-white text-xs rounded-md hover:bg-green-700 transition-colors duration-200 flex items-center space-x-1"
                               title="Export to CSV"
                             >
-                              <Download className="h-3.5 w-3.5" />
+                              <Download className="h-3 w-3" />
                               <span className="hidden sm:inline">Export CSV</span>
                             </button>
                             <button
-                              type="button"
                               onClick={() => handleEditYearGroup(yearGroup)}
-                              className="inline-flex items-center gap-1 rounded-md bg-[#4338E8] px-2.5 py-1.5 text-[13px] font-bold text-white hover:bg-[#3529d1]"
+                              className="px-2 py-1 bg-[#4338E8] text-white text-xs rounded-md hover:bg-[#3529d1] transition-colors duration-200 flex items-center space-x-1"
                               title="Edit"
                             >
-                              <Edit2 className="h-3.5 w-3.5" />
+                              <Edit2 className="h-3 w-3" />
                               <span className="hidden sm:inline">Edit</span>
                             </button>
                           </div>
                         </div>
-                        {yearGroup.description ? (
-                          <p className="text-[13px] italic text-[#5F5B7A]">{yearGroup.description}</p>
-                        ) : null}
+                        {/* Description Row */}
+                        {yearGroup.description && (
+                          <p className="text-xs text-gray-600 italic">{yearGroup.description}</p>
+                        )}
                       </div>
 
-                      <div className="w-full min-w-0 space-y-3">
+                      <div className="space-y-6">
                         {(() => {
+                          // Group areas by section
                           const groupedBySection: Record<string, typeof yearGroup.areas> = {};
-                          yearGroup.areas.forEach((area) => {
+                          yearGroup.areas.forEach(area => {
                             const section = area.section || 'Other';
-                            if (!groupedBySection[section]) groupedBySection[section] = [];
+                            if (!groupedBySection[section]) {
+                              groupedBySection[section] = [];
+                            }
                             groupedBySection[section].push(area);
                           });
 
-                          return Object.entries(groupedBySection).map(([section, areas]) => {
-                            const sectionKey = `${yearGroup.id}::${section}`;
-                            const sectionOpen =
-                              section === 'Other' || expandedContentSections.has(sectionKey);
-                            const objectiveCount = areas.reduce(
-                              (n, a) => n + a.objectives.length,
-                              0,
-                            );
-
-                            return (
-                              <div key={section} className="w-full min-w-0 space-y-2">
-                                {section !== 'Other' ? (
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setExpandedContentSections((prev) => {
-                                        const next = new Set(prev);
-                                        if (next.has(sectionKey)) next.delete(sectionKey);
-                                        else next.add(sectionKey);
-                                        return next;
-                                      });
-                                    }}
-                                    className="flex w-full items-center justify-between gap-3 rounded-lg border-l-4 border-[#4338E8] bg-gradient-to-r from-[#E9E6FF] to-blue-50 px-4 py-3 text-left hover:from-[#E0DCFF]"
+                          return Object.entries(groupedBySection).map(([section, areas]) => (
+                            <div key={section} className="space-y-3">
+                              {/* Section Header */}
+                              {section !== 'Other' && (
+                                <div className="bg-gradient-to-r from-[#E9E6FF] to-blue-50 border-l-4 border-[#4338E8] px-4 py-3 rounded-lg">
+                                  <h3 className="text-lg font-bold text-[#1F1B4D]">{section}</h3>
+                                </div>
+                              )}
+                              
+                              {/* Areas within this section */}
+                              {areas.map((area) => (
+                                <div key={area.id} className="border border-gray-200 rounded-lg overflow-hidden hover:border-[#bcb7f4] transition-colors">
+                                  <div
+                                    className="p-4 bg-gradient-to-r from-gray-50 to-white cursor-pointer flex items-center justify-between hover:from-[#E9E6FF] hover:to-blue-50 transition-colors"
+                                    onClick={() => toggleAreaExpansion(area.id)}
                                   >
-                                    <div className="flex min-w-0 items-center gap-2">
-                                      {sectionOpen ? (
-                                        <ChevronDown className="h-5 w-5 shrink-0 text-[#4338E8]" />
-                                      ) : (
-                                        <ChevronRight className="h-5 w-5 shrink-0 text-[#4338E8]" />
+                                    <div>
+                                      <h4 className="font-semibold text-gray-900 text-base">{area.name}</h4>
+                                      {area.description && (
+                                        <p className="text-sm text-gray-600 mt-1">{area.description}</p>
                                       )}
-                                      <h3 className="min-w-0 text-[15px] font-extrabold text-[#1F1B4D]">
-                                        {section}
-                                      </h3>
+                                      <p className="text-xs text-[#4338E8] font-medium mt-1">{area.objectives.length} objectives</p>
                                     </div>
-                                    <span className="shrink-0 text-[13px] font-semibold text-[#4338E8]">
-                                      {areas.length} strands · {objectiveCount} objectives
-                                    </span>
-                                  </button>
-                                ) : null}
-
-                                {sectionOpen
-                                  ? areas.map((area) => (
-                                      <div
-                                        key={area.id}
-                                        className="w-full min-w-0 overflow-hidden rounded-lg border border-[#E2E0EF] hover:border-[#bcb7f4]"
-                                      >
-                                        <button
-                                          type="button"
-                                          className="flex w-full items-center justify-between gap-3 bg-gradient-to-r from-gray-50 to-white p-4 text-left hover:from-[#E9E6FF] hover:to-blue-50"
-                                          onClick={() => toggleAreaExpansion(area.id)}
-                                        >
-                                          <div className="min-w-0 flex-1">
-                                            <h4 className="text-[15px] font-bold text-[#1F1B4D]">
-                                              {area.name}
-                                            </h4>
-                                            {area.description ? (
-                                              <p className="mt-1 text-[13px] text-[#5F5B7A]">
-                                                {area.description}
-                                              </p>
-                                            ) : null}
-                                            <p className="mt-1 text-[13px] font-semibold text-[#4338E8]">
-                                              {area.objectives.length} objectives
-                                            </p>
-                                          </div>
-                                          {expandedAreas.has(area.id) ? (
-                                            <ChevronDown className="h-5 w-5 shrink-0 text-[#4338E8]" />
-                                          ) : (
-                                            <ChevronRight className="h-5 w-5 shrink-0 text-[#77738F]" />
-                                          )}
-                                        </button>
-
-                                        {expandedAreas.has(area.id) ? (
-                                          <div className="border-t border-[#E2E0EF] bg-white p-4">
-                                            <div className="space-y-2">
-                                              {area.objectives.map((objective, idx) => (
-                                                <div
-                                                  key={objective.id}
-                                                  className="flex w-full min-w-0 items-start gap-3 rounded-lg border border-[#E2E0EF] bg-gradient-to-r from-[#E9E6FF] to-blue-50 p-3"
-                                                >
-                                                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#4338E8] text-[13px] font-bold text-white">
-                                                    {idx + 1}
-                                                  </div>
-                                                  <div className="min-w-0 flex-1">
-                                                    <p className="text-[13px] leading-relaxed text-[#1F1B4D]">
-                                                      {objective.objective_text}
-                                                    </p>
-                                                    {objective.description ? (
-                                                      <p className="mt-1 text-[13px] text-[#5F5B7A]">
-                                                        {objective.description}
-                                                      </p>
-                                                    ) : null}
-                                                  </div>
-                                                </div>
-                                              ))}
+                                    {expandedAreas.has(area.id) ? (
+                                      <ChevronDown className="h-5 w-5 text-[#4338E8]" />
+                                    ) : (
+                                      <ChevronRight className="h-5 w-5 text-gray-400" />
+                                    )}
+                                  </div>
+                                  
+                                  {expandedAreas.has(area.id) && (
+                                    <div className="p-4 bg-white border-t border-gray-100">
+                                      <div className="space-y-2">
+                                        {area.objectives.map((objective, idx) => (
+                                          <div key={objective.id} className="flex items-start space-x-3 p-3 bg-gradient-to-r from-[#E9E6FF] to-blue-50 rounded-lg border border-[#E2E0EF]">
+                                            <div className="flex-shrink-0 w-6 h-6 bg-[#4338E8] text-white rounded-full flex items-center justify-center text-xs font-bold">
+                                              {idx + 1}
+                                            </div>
+                                            <div className="flex-1">
+                                              <p className="text-sm text-gray-900 leading-relaxed">{objective.objective_text}</p>
+                                              {objective.description && (
+                                                <p className="text-xs text-gray-600 mt-1">{objective.description}</p>
+                                              )}
                                             </div>
                                           </div>
-                                        ) : null}
+                                        ))}
                                       </div>
-                                    ))
-                                  : null}
-                              </div>
-                            );
-                          });
+                                    </div>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          ));
                         })()}
                       </div>
                     </div>
@@ -1217,7 +1082,7 @@ export function CustomObjectivesAdmin({ isOpen, onClose, embedded = false }: Cus
                 })()}
               </div>
             ) : (
-              <div className="flex h-full items-center justify-center p-6 text-[13px] text-[#5F5B7A]">
+              <div className="flex items-center justify-center h-full text-gray-500">
                 Select a year group to view its objectives
               </div>
             )}

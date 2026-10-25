@@ -1878,16 +1878,6 @@ html.ccd-studio .ss-dialog-lg {
   flex: 1 1 auto;
   min-height: 0;
   height: 100%;
-  width: 100%;
-  max-width: 100%;
-  min-width: 0;
-}
-
-/* Learning objectives: keep the right panel from being clipped by a wide sidebar */
-.ss-objectives-admin > div,
-.ss-objectives-admin .flex.min-h-0.min-w-0.flex-1 {
-  min-width: 0;
-  max-width: 100%;
 }
 
 .ss-settings-section-intro {
