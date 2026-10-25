@@ -1,4 +1,5 @@
 import { planLogoHtml } from './planLogo.ts';
+import { escapeHtmlText as esc } from './escapeHtml.ts';
 
 export interface TimetableClass {
   id: string;
@@ -15,6 +16,8 @@ const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Frid
 
 /** HTML + footer for the shared timetable PDF (inline styles, CCDesigner logo; no CDN). */
 export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], className: string): [string, string] => {
+  // Every user-supplied string is HTML-escaped (class names, locations, times, colours).
+  const safeClassName = esc(className);
   // Group classes by day
   const classesByDay: { [day: number]: TimetableClass[] } = {};
   DAY_NAMES.forEach((_, dayIndex) => {
@@ -26,7 +29,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
     <html>
     <head>
       <meta charset="UTF-8">
-      <title>Class Timetable - ${className}</title>
+      <title>Class Timetable - ${safeClassName}</title>
       <style>
         /* Utilities used below, inlined so the page never waits on a CDN (was the Tailwind CDN script). */
         body{margin:0;font-family:ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;color:#111827}
@@ -100,7 +103,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
         <div class="mb-6">
           ${planLogoHtml(30, 'margin:0 0 12px 0;')}
           <h1 class="text-3xl font-bold mb-2">Class Timetable</h1>
-          <p class="text-gray-600 text-lg">${className}</p>
+          <p class="text-gray-600 text-lg">${safeClassName}</p>
         </div>
   `;
 
@@ -127,18 +130,18 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
       
       sortedClasses.forEach((tClass) => {
         htmlContent += `
-          <div class="class-item" style="border-left-color: ${tClass.color};">
+          <div class="class-item" style="border-left-color: ${esc(tClass.color)};">
             <div class="flex items-center justify-between">
               <div>
-                <div class="font-semibold text-gray-900">${tClass.className}</div>
+                <div class="font-semibold text-gray-900">${esc(tClass.className)}</div>
                 <div class="text-sm text-gray-600 mt-1">
-                  <span>${tClass.startTime} - ${tClass.endTime}</span>
-                  ${tClass.location ? `<span class="ml-3">📍 ${tClass.location}</span>` : ''}
+                  <span>${esc(tClass.startTime)} - ${esc(tClass.endTime)}</span>
+                  ${tClass.location ? `<span class="ml-3">📍 ${esc(tClass.location)}</span>` : ''}
                 </div>
               </div>
               <div 
                 class="w-4 h-4 rounded-full"
-                style="background-color: ${tClass.color};"
+                style="background-color: ${esc(tClass.color)};"
               ></div>
             </div>
           </div>
@@ -161,7 +164,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
   // Footer content
   const footerContent = `
     <div style="font-size: 13px; text-align: center; width: 100%; padding: 10px 0; color: #666;">
-      <span>${className} - Class Timetable</span>
+      <span>${safeClassName} - Class Timetable</span>
       <span style="margin: 0 10px;">|</span>
       <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
     </div>

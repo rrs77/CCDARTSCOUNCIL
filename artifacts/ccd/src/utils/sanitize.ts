@@ -37,18 +37,7 @@ export function sanitizeHtml(html: string): string {
   }));
 }
 
-const HTML_ESCAPE_MAP: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-};
-
-export function escapeHtmlText(text: string): string {
-  if (!text) return '';
-  return String(text).replace(/[&<>"']/g, (ch) => HTML_ESCAPE_MAP[ch] ?? ch);
-}
+export { escapeHtmlText } from './escapeHtml';
 
 /** Strip tags for plain-text UI (run-through cards, canvas previews). */
 export function htmlToPlainText(html: string): string {
