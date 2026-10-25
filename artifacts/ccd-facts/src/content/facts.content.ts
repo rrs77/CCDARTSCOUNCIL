@@ -215,7 +215,7 @@ export const sources: Record<string, SourceRef> = {
 
 export const meta = {
   brand: "CCDESIGNER",
-  productName: "Creative Curriculum Designer",
+  productName: "CCDesigner",
   title: "The State of Creative Education in England",
   titleLead: "The State of Creative Education in",
   titleAccent: "England",

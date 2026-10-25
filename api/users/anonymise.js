@@ -13,11 +13,11 @@ import {
   optionsResponse,
   requireAdmin,
   writeAuditLog,
-  ADMIN_ROLES,
+  ORG_ADMIN_ROLES,
 } from '../_authShared.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 export async function POST(request) {
@@ -47,7 +47,7 @@ export async function POST(request) {
     if (loadErr) return jsonResponse({ error: loadErr.message }, 400);
     if (!target) return jsonResponse({ error: 'User not found.' }, 404);
 
-    if (ADMIN_ROLES.has(target.role)) {
+    if (ORG_ADMIN_ROLES.has(target.role)) {
       const { count, error: countErr } = await supabase
         .from('profiles')
         .select('id', { count: 'exact', head: true })

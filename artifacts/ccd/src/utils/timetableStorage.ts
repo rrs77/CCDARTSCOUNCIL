@@ -213,8 +213,14 @@ export function readSlotsForClass(cls: ClassRef, termId = 'A1'): TimetableEntry[
   const teacher = loadTeacherTimetable(termId);
   const teacherHasAny = teacher.length > 0;
   const fromTeacher = sliceForClass(teacher, cls);
+  // Prefer display name for print/UI; keep yearGroupId as the stable id key.
+  const withDisplayName = (e: TimetableEntry): TimetableEntry => ({
+    ...e,
+    yearGroupId: e.yearGroupId || cls.id,
+    className: cls.name || e.className || cls.id,
+  });
   if (fromTeacher.length > 0) {
-    return fromTeacher.map((e) => ({ ...e, className: cls.id }));
+    return fromTeacher.map(withDisplayName);
   }
   // Teacher timetable exists (possibly from other classes) — this class truly has no slots
   if (teacherHasAny || localStorage.getItem(TEACHER_TIMETABLE_MIGRATION_KEY) === '1') {
@@ -222,7 +228,7 @@ export function readSlotsForClass(cls: ClassRef, termId = 'A1'): TimetableEntry[
   }
   const legacy = readJsonArray<TimetableEntry>(`timetable-${cls.id}`);
   const legacyByName = cls.name !== cls.id ? readJsonArray<TimetableEntry>(`timetable-${cls.name}`) : [];
-  return mergeTimetableEntries(legacy, legacyByName).map((e) => ({ ...e, className: cls.id }));
+  return mergeTimetableEntries(legacy, legacyByName).map(withDisplayName);
 }
 
 /**

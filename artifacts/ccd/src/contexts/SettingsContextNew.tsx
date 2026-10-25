@@ -1,4 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import { CCD_LOGO_COLOUR_PATH } from '../utils/brandLogo';
 import { supabase, isSupabaseConfigured, TABLES } from '../config/supabase';
 import { yearGroupsApi, customCategoriesApi, categoryGroupsApi, brandingApi, yearGroupSectionsApi, CategoriesCloudAuthError, systemCategoriesApi } from '../config/api';
 import { useAuth } from '../hooks/useAuth';
@@ -67,14 +68,14 @@ export interface BrandingSettings {
   // Login page customization
   loginLogoUrl?: string; // URL to custom logo image (if empty, uses default Logo component)
   logoLetters?: string; // Letters in logo circle, max 3 (e.g., "CCD")
-  loginTitle?: string; // Custom title text (e.g., "Creative Curriculum Designer")
-  loginSubtitle?: string; // Custom subtitle text (e.g., "From Rhythmstix")
+  loginTitle?: string; // Custom title text (e.g., "CCDesigner")
+  loginSubtitle?: string; // Custom subtitle text (e.g., "Lesson planning for performing arts")
   loginSubtitleUrl?: string; // URL for login subtitle link (default: https://www.rhythmstix.co.uk)
   loginBackgroundColor?: string; // Background color for login page (default: rgb(77, 181, 168))
   loginButtonColor?: string; // Button color (default: #008272)
   
   // Footer customization
-  footerCompanyName?: string; // Company name in footer (default: "Rhythmstix")
+  footerCompanyName?: string; // Company name in footer (default: "CCDesigner")
   footerCopyrightYear?: string; // Copyright year (default: "2026")
   footerContactEmail?: string; // Contact email (default: "rob@rhythmstix.co.uk")
   footerPrivacyUrl?: string; // Privacy policy URL (default: "https://www.rhythmstix.co.uk/policy")
@@ -295,31 +296,27 @@ const writeLocalCategories = (cats: Category[], userId?: string | null) => {
 // Default branding settings
 const DEFAULT_BRANDING: BrandingSettings = {
   logoLetters: 'CCD',
-  loginTitle: 'Creative Curriculum Designer',
-  loginSubtitle: 'From Rhythmstix',
-  loginSubtitleUrl: 'https://www.rhythmstix.co.uk',
+  loginTitle: 'CCDesigner',
+  loginSubtitle: 'Lesson planning for performing arts',
+  loginSubtitleUrl: '',
   loginBackgroundColor: 'rgb(77, 181, 168)',
   loginButtonColor: '#008272',
-  footerCompanyName: 'Rhythmstix',
+  footerCompanyName: 'CCDesigner',
   footerCopyrightYear: '2026',
-  footerContactEmail: 'rob@rhythmstix.co.uk',
-  footerPrivacyUrl: 'https://www.rhythmstix.co.uk/policy',
+  footerContactEmail: '',
+  footerPrivacyUrl: '',
   footerBackgroundColor: '#128c7e',
-  footerYoutubeUrl: 'https://www.youtube.com/channel/UCooHhU7FKALUQ4CtqjDFMsw',
-  footerLinkedinUrl: 'https://www.linkedin.com/in/robert-reich-storer-974449144',
-  footerFacebookUrl: 'https://www.facebook.com/Rhythmstix-Music-108327688309431',
-  footerSocialLinks: [
-    { platform: 'youtube', url: 'https://www.youtube.com/channel/UCooHhU7FKALUQ4CtqjDFMsw' },
-    { platform: 'linkedin', url: 'https://www.linkedin.com/in/robert-reich-storer-974449144' },
-    { platform: 'facebook', url: 'https://www.facebook.com/Rhythmstix-Music-108327688309431' },
-  ],
-  showSocialMedia: true
+  footerYoutubeUrl: '',
+  footerLinkedinUrl: '',
+  footerFacebookUrl: '',
+  footerSocialLinks: [],
+  showSocialMedia: false
 };
 
 // Default settings
 const DEFAULT_SETTINGS: UserSettings = {
   schoolName: 'Curriculum Designer',
-  schoolLogo: '/ccdesigner-logo.png',
+  schoolLogo: CCD_LOGO_COLOUR_PATH, // default only; a stored school logo is never overwritten
   primaryColor: '#3B82F6',
   secondaryColor: '#2563EB',
   accentColor: '#60A5FA',
@@ -816,6 +813,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         if (parsed.branding?.loginTitle && /Planner/i.test(parsed.branding.loginTitle)) {
           parsed.branding.loginTitle = parsed.branding.loginTitle.replace(/Planner/gi, 'Designer');
         }
+        if (
+          parsed.branding?.loginTitle &&
+          /Creative\s+Curriculum\s+Designer/i.test(parsed.branding.loginTitle)
+        ) {
+          parsed.branding.loginTitle = 'CCDesigner';
+        }
         setSettings({ ...DEFAULT_SETTINGS, ...parsed });
       }
       
@@ -1193,6 +1196,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
             if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
               if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
                 supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
+              }
+              if (
+                supabaseBranding.loginTitle &&
+                /Creative\s+Curriculum\s+Designer/i.test(supabaseBranding.loginTitle)
+              ) {
+                supabaseBranding.loginTitle = 'CCDesigner';
               }
               setSettings(prev => ({
                 ...prev,
@@ -2315,6 +2324,12 @@ export const SettingsProviderNew: React.FC<{ children: React.ReactNode }> = ({
         if (supabaseBranding && typeof supabaseBranding === 'object' && Object.keys(supabaseBranding).length > 0) {
           if (supabaseBranding.loginTitle && /Planner/i.test(supabaseBranding.loginTitle)) {
             supabaseBranding.loginTitle = supabaseBranding.loginTitle.replace(/Planner/gi, 'Designer');
+          }
+          if (
+            supabaseBranding.loginTitle &&
+            /Creative\s+Curriculum\s+Designer/i.test(supabaseBranding.loginTitle)
+          ) {
+            supabaseBranding.loginTitle = 'CCDesigner';
           }
           setSettings(prev => ({
             ...prev,

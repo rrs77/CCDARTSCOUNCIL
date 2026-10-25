@@ -1,0 +1,29 @@
+# Deny all direct HTTP access. Preferred storage is outside the web root.
+<IfModule mod_authz_core.c>
+  Require all denied
+</IfModule>
+<IfModule !mod_authz_core.c>
+  Deny from all
+</IfModule>
+
+Options -Indexes
+
+# Never execute PHP (or other scripts) if this directory is ever web-reachable.
+<IfModule mod_php.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+  php_flag engine off
+</IfModule>
+<IfModule mod_php8.c>
+  php_flag engine off
+</IfModule>
+RemoveHandler .php .phtml .php3 .php4 .php5 .php7 .php8 .phps
+RemoveType .php .phtml .php3 .php4 .php5 .php7 .php8 .phps
+
+# If a PDF somehow becomes reachable, force download as PDF only.
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Content-Disposition "attachment"
+</IfModule>
+ForceType application/pdf

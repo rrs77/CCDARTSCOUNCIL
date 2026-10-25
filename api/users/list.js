@@ -28,8 +28,8 @@ import {
 } from '../_usersShared.js';
 import { invitationStatus } from '../_inviteShared.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 /**
@@ -182,12 +182,26 @@ export async function GET(request) {
       invitation_status: invitationStatus(u),
     }));
 
-    const { count: activeAdminCount, error: adminCountErr } = await service
+    // Protect-last-admin count: platform supers globally; school managers by own org only.
+    const fullAdmin = isFullUserAdmin(admin.profile);
+    let activeAdminQuery = service
       .from('profiles')
       .select('id', { count: 'exact', head: true })
-      .in('role', ['admin', 'superuser', 'super_admin'])
       .neq('status', 'suspended')
       .is('anonymised_at', null);
+    if (fullAdmin) {
+      activeAdminQuery = activeAdminQuery.in('role', ['superuser', 'super_admin']);
+    } else {
+      const callerOrg = (admin.profile?.organisation_id || '').trim();
+      activeAdminQuery = activeAdminQuery.in('role', ['admin', 'superuser', 'super_admin']);
+      if (callerOrg) {
+        activeAdminQuery = activeAdminQuery.eq('organisation_id', callerOrg);
+      } else {
+        // No org → only count self (cannot see peer org admins).
+        activeAdminQuery = activeAdminQuery.eq('id', admin.userId);
+      }
+    }
+    const { count: activeAdminCount, error: adminCountErr } = await activeAdminQuery;
     if (adminCountErr) {
       console.warn('activeAdminCount:', adminCountErr.message);
     }
@@ -198,7 +212,7 @@ export async function GET(request) {
       page: params.page,
       pageSize: params.pageSize,
       activeAdminCount: activeAdminCount ?? 0,
-      scope: isFullUserAdmin(admin.profile) ? 'global' : 'hub',
+      scope: fullAdmin ? 'global' : 'hub',
     });
   } catch (e) {
     console.error('users/list error:', e);

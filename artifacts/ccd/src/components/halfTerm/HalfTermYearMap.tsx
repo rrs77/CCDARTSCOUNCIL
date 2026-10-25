@@ -125,7 +125,8 @@ export function HalfTermYearMap({
   onBack,
 }: HalfTermYearMapProps) {
   const { user } = useAuth();
-  const { currentAcademicYear, setCurrentAcademicYear, getAvailableYears, currentSheetInfo } = useData();
+  const { currentAcademicYear, setCurrentAcademicYear, getAvailableYears, currentSheetInfo, units, halfTerms } =
+    useData();
   const { customYearGroups, yearGroupSections } = useSettings();
   const { stacks } = useLessonStacks();
   const [rows, setRows] = useState<RowData[]>([]);
@@ -261,19 +262,41 @@ export function HalfTermYearMap({
       try {
         const next: RowData[] = await Promise.all(
           yearGroups.map(async (group) => {
-            const local = readLocalTerms(group.id, currentAcademicYear);
-            if (local && local.length > 0) {
-              return { group, cells: summariseTerms(local, stackNameById) };
-            }
-            try {
-              const remote = await halfTermsApi.getBySheet(group.id, currentAcademicYear);
-              if (remote && remote.length > 0) {
-                return { group, cells: summariseTerms(remote, stackNameById) };
+            let terms: Array<{ id: string; lessons?: string[]; stacks?: string[]; isComplete?: boolean }> =
+              readLocalTerms(group.id, currentAcademicYear) || [];
+            if (terms.length === 0) {
+              try {
+                const remote = await halfTermsApi.getBySheet(group.id, currentAcademicYear);
+                if (remote && remote.length > 0) terms = remote;
+              } catch {
+                /* local empty is fine */
               }
-            } catch {
-              /* local empty is fine */
             }
-            return { group, cells: emptyCells() };
+            // Merge live DataContext halfTerms for the open sheet
+            if (group.id === currentSheetInfo?.sheet && Array.isArray(halfTerms) && halfTerms.length > 0) {
+              const byId = new Map(terms.map((t) => [t.id, { ...t }]));
+              for (const t of halfTerms) {
+                const prev = byId.get(t.id) || { id: t.id, lessons: [], stacks: [] };
+                const lessons = [...new Set([...(prev.lessons || []), ...(t.lessons || [])])];
+                byId.set(t.id, { ...prev, lessons, stacks: prev.stacks || t.stacks || [] });
+              }
+              terms = [...byId.values()];
+            }
+            // Units assigned to a term also count as planned for that class sheet
+            const classUnits = (units || []).filter(
+              (u) => !u.classSheet || u.classSheet === group.id || u.classSheet === group.name,
+            );
+            if (classUnits.length > 0) {
+              const byId = new Map(terms.map((t) => [t.id, { ...t, lessons: [...(t.lessons || [])] }]));
+              for (const u of classUnits) {
+                if (!u.term) continue;
+                const prev = byId.get(u.term) || { id: u.term, lessons: [], stacks: [] };
+                const lessons = [...new Set([...(prev.lessons || []), ...(u.lessonNumbers || [])])];
+                byId.set(u.term, { ...prev, lessons });
+              }
+              terms = [...byId.values()];
+            }
+            return { group, cells: summariseTerms(terms, stackNameById) };
           }),
         );
         if (!cancelled) setRows(next);
@@ -288,7 +311,7 @@ export function HalfTermYearMap({
     return () => {
       cancelled = true;
     };
-  }, [yearGroups, currentAcademicYear, refreshKey, stackNameById]);
+  }, [yearGroups, currentAcademicYear, refreshKey, stackNameById, units, halfTerms, currentSheetInfo?.sheet]);
 
   const blocks: SectionBlock[] = useMemo(() => {
     const byId = new Map(rows.map((r) => [r.group.id, r]));

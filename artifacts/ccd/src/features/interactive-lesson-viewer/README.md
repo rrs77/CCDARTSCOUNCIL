@@ -20,7 +20,10 @@ Self-contained module for Google Vids–style interactive lessons inside CCDesig
    - `OPENAI_API_KEY` (or `WHISPER_API_KEY`)
    - Also ensure `SUPABASE_JWT_SECRET` or `SUPABASE_SERVICE_ROLE_KEY` for `/api/interactive-lessons/transcribe`
    - Transcription is routed through `/api/router` (not a separate Vercel function) to stay within the Hobby 12-function limit.
-3. Without a key, Tap to sync + paste/auto-align still work.
+3. **Optional Freesound free-media search** — server env only:
+   - `FREESOUND_API_KEY` (never `VITE_FREESOUND_API_KEY`)
+   - Proxied at `/api/freesound/search` and `/api/freesound/preview/:id` via `/api/router` (`requireAuth` + rate limit)
+4. Without Whisper/Freesound keys, Tap to sync + Openverse/Wikimedia still work.
 
 ### Open Lesson Viewer (normal login — preferred)
 

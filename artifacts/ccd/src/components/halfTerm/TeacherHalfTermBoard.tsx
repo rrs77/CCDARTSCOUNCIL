@@ -1,12 +1,18 @@
+import { createPortal } from 'react-dom';
 import React, { useEffect, useMemo, useState } from 'react';
 import {
   AlertCircle,
   BookOpen,
   Calendar,
   CheckCircle,
+  ChevronDown,
+  ChevronRight,
+  FileDown,
   Plus,
   Search,
 } from 'lucide-react';
+import { LessonPrintModal } from '../LessonPrintModal';
+import { ExportDataScope } from '../ccdPlanner/ExportDataScope';
 import { useAuth } from '../../hooks/useAuth';
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
@@ -72,12 +78,18 @@ export function TeacherHalfTermBoard({
     setCurrentAcademicYear,
     getAvailableYears,
     copyTermToYear,
+    allLessonsData,
+    currentSheetInfo,
   } = useData();
+  /** Half-term being exported (reuses the half-term print/PDF path from the old UnitViewer). */
+  const [exportTerm, setExportTerm] = useState<{ id: string; name: string; lessons: string[] } | null>(null);
   const { customYearGroups, yearGroupSections } = useSettings();
   const { stacks } = useLessonStacks();
   const [searchQuery, setSearchQuery] = useState('');
   const [showTermCopyModal, setShowTermCopyModal] = useState(false);
   const [filter, setFilter] = useState<HalfTermBoardFilter>({ kind: 'all' });
+  /** Per half-term: expand the collapsed “N classes with nothing planned” row. */
+  const [expandedEmptyTerms, setExpandedEmptyTerms] = useState<Set<string>>(() => new Set());
 
   // Deep-link / external one-class focus wins when set
   useEffect(() => {
@@ -155,15 +167,16 @@ export function TeacherHalfTermBoard({
             created_at: '',
           };
         });
+        const looseLessons = ht?.lessons?.length ?? 0;
         const lessonCount =
-          schemes.reduce((n, s) => n + (s.lessons?.length || 0), 0) ||
-          (ht?.lessons?.length ?? 0);
+          schemes.reduce((n, s) => n + (s.lessons?.length || 0), 0) || looseLessons;
         return {
           cls,
           schemes,
           lessonCount,
           isComplete: !!ht?.isComplete,
-          empty: stackIds.length === 0,
+          // Count schemes OR individual half-term lessons as planned
+          empty: stackIds.length === 0 && looseLessons === 0,
         };
       });
 
@@ -178,15 +191,26 @@ export function TeacherHalfTermBoard({
       ];
       const matches = !q || hayParts.join(' ').toLowerCase().includes(q);
 
+      // Lesson numbers are per class, so export uses the class that's open in the planner.
+      const openRow = classRows.find((r) => r.cls.id === currentSheetInfo?.sheet);
+      const exportLessons = openRow
+        ? [
+            ...new Set([
+              ...openRow.schemes.flatMap((sc) => sc.lessons || []),
+              ...(readClassHalfTerms(openRow.cls.id, currentAcademicYear).find((t) => t.id === term.id)?.lessons || []),
+            ]),
+          ].filter((n) => allLessonsData?.[n])
+        : [];
       return {
         term,
+        exportLessons,
         classRows,
         unallocatedCount,
         assignedClassCount: classRows.filter((r) => !r.empty).length,
         matches,
       };
     });
-  }, [visibleClasses, stacks, searchQuery, currentAcademicYear, refreshKey]);
+  }, [visibleClasses, stacks, searchQuery, currentAcademicYear, refreshKey, allLessonsData, currentSheetInfo?.sheet]);
 
   const visible = cards.filter((c) => c.matches);
 
@@ -194,6 +218,15 @@ export function TeacherHalfTermBoard({
     setFilter(next);
     if (next.kind === 'class') onFocusClassChange?.(next.classId);
     else onFocusClassChange?.(null);
+  };
+
+  const toggleEmptyExpanded = (termId: string) => {
+    setExpandedEmptyTerms((prev) => {
+      const next = new Set(prev);
+      if (next.has(termId)) next.delete(termId);
+      else next.add(termId);
+      return next;
+    });
   };
 
   const focusClassName =
@@ -211,12 +244,16 @@ export function TeacherHalfTermBoard({
         <div className="min-w-0">
           <h1 className="text-[1.85rem] font-extrabold tracking-tight text-[#1F1B4D] sm:text-[2.1rem]">
             Half-terms
+            {focusClassName ? (
+              <span className="block text-[1.05rem] font-bold text-[#4338E8] sm:inline sm:ml-2 sm:text-[1.25rem]">
+                · {focusClassName}
+              </span>
+            ) : null}
           </h1>
           <p className="mt-1 text-[14px] font-medium text-[#77738F]">
-            All your classes · {currentAcademicYear.replace('-', '–')}
-            {focusClassName ? (
-              <span className="text-[#4338E8]"> · {focusClassName}</span>
-            ) : null}
+            {focusClassName
+              ? `${focusClassName} · ${currentAcademicYear.replace('-', '–')}`
+              : `All your classes · ${currentAcademicYear.replace('-', '–')}`}
           </p>
         </div>
 
@@ -312,7 +349,7 @@ export function TeacherHalfTermBoard({
           <button
             type="button"
             onClick={onOpenMap}
-            className="ml-auto text-[12px] font-bold text-[#77738F] underline-offset-2 hover:text-[#4338E8] hover:underline"
+            className="ml-auto text-[13px] font-bold text-[#77738F] underline-offset-2 hover:text-[#4338E8] hover:underline"
           >
             Class map
           </button>
@@ -337,7 +374,7 @@ export function TeacherHalfTermBoard({
         </div>
       ) : (
         <div className="grid min-h-0 flex-1 grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3 xl:gap-5">
-          {visible.map(({ term, classRows, unallocatedCount, assignedClassCount }) => {
+          {visible.map(({ term, classRows, unallocatedCount, assignedClassCount, exportLessons }) => {
             const color = TERM_COLORS[term.id];
             const tint = TERM_TINTS[term.id];
             return (
@@ -363,14 +400,14 @@ export function TeacherHalfTermBoard({
                     <div className="flex shrink-0 flex-col items-end gap-1.5">
                       {unallocatedCount > 0 ? (
                         <span
-                          className="inline-flex items-center gap-1 rounded-lg bg-[#FFF4E5] px-2 py-1 text-[11px] font-extrabold text-[#9A5B00]"
+                          className="inline-flex items-center gap-1 rounded-lg bg-[#FFF4E5] px-2 py-1 text-[13px] font-extrabold text-[#9A5B00]"
                           title={`${unallocatedCount} class${unallocatedCount === 1 ? '' : 'es'} with no scheme`}
                         >
                           <AlertCircle className="h-3.5 w-3.5" />
                           {unallocatedCount} unallocated
                         </span>
                       ) : classRows.length > 0 ? (
-                        <span className="inline-flex items-center gap-1 rounded-lg bg-[#D5F3EA] px-2 py-1 text-[11px] font-extrabold text-[#0B6B5F]">
+                        <span className="inline-flex items-center gap-1 rounded-lg bg-[#D5F3EA] px-2 py-1 text-[13px] font-extrabold text-[#0B6B5F]">
                           <CheckCircle className="h-3.5 w-3.5" />
                           Covered
                         </span>
@@ -383,11 +420,25 @@ export function TeacherHalfTermBoard({
                             filter.kind === 'class' ? [filter.classId] : undefined,
                           )
                         }
-                        className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-extrabold text-white transition hover:brightness-95"
+                        className="inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[13px] font-extrabold text-white transition hover:brightness-95"
                         style={{ background: color }}
                       >
                         <Plus className="h-3.5 w-3.5" />
                         Add scheme
+                      </button>
+                      <button
+                        type="button"
+                        disabled={exportLessons.length === 0}
+                        onClick={() => setExportTerm({ id: term.id, name: term.name, lessons: exportLessons })}
+                        title={
+                          exportLessons.length
+                            ? `Export ${term.name} (${currentSheetInfo?.display || 'this class'}) as PDF`
+                            : 'No lessons for the open class in this half-term'
+                        }
+                        className="inline-flex h-8 items-center gap-1 rounded-lg border border-[#E2E0EF] bg-white px-2.5 text-[13px] font-extrabold text-[#1F1B4D] transition hover:bg-[#F7F6FC] disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <FileDown className="h-3.5 w-3.5" />
+                        Export PDF
                       </button>
                     </div>
                   </div>
@@ -398,96 +449,165 @@ export function TeacherHalfTermBoard({
                         No classes in this filter.
                       </p>
                     ) : (
-                      classRows.map(({ cls, schemes, lessonCount, empty, isComplete }) => {
-                        const chipColor = classDisplayColor(cls);
-                        return (
-                          <div
-                            key={cls.id}
-                            className="rounded-xl border border-[#E2E0EF]/90 bg-white/90 px-2.5 py-2"
-                          >
-                            <div className="mb-1.5 flex items-center gap-2">
-                              <span
-                                className="inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-[11px] font-extrabold text-white"
-                                style={{ background: chipColor }}
-                                title={cls.name}
-                              >
-                                <span
-                                  className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/80"
-                                  aria-hidden
-                                />
-                                <span className="truncate">{cls.name}</span>
-                              </span>
-                              {isComplete ? (
-                                <CheckCircle className="h-3.5 w-3.5 shrink-0 text-[#0B6B5F]" />
-                              ) : null}
-                              <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
-                                {empty
-                                  ? '—'
-                                  : `${schemes.length} scheme${schemes.length === 1 ? '' : 's'}${
-                                      lessonCount ? ` · ${lessonCount}` : ''
-                                    }`}
-                              </span>
-                            </div>
+                      (() => {
+                        // Single-class focus: always show that row (even if empty).
+                        const showAllRows = filter.kind === 'class';
+                        const planned = classRows.filter((r) => !r.empty);
+                        const emptyRows = classRows.filter((r) => r.empty);
+                        const emptyExpanded = expandedEmptyTerms.has(term.id);
 
-                            {empty ? (
-                              <button
-                                type="button"
-                                onClick={() => onAddScheme(term.id, [cls.id])}
-                                className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-[#FAFAFC] text-[12px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:bg-[#F7F6FC] hover:text-[#4338E8]"
-                              >
-                                <Plus className="h-3.5 w-3.5" />
-                                Add
-                              </button>
-                            ) : (
-                              <div className="flex flex-col gap-1.5">
-                                {schemes.map((stack) => (
-                                  <button
-                                    key={stack.id}
-                                    type="button"
-                                    onClick={() =>
-                                      onManageClassTerm(cls.id, cls.name, term.id)
-                                    }
-                                    className="flex w-full items-start gap-2 rounded-lg border border-[#E2E0EF] bg-white px-2.5 py-2 text-left transition hover:border-[#bcb7f4]"
-                                  >
-                                    <span
-                                      className="mt-0.5 h-7 w-1 shrink-0 rounded-full"
-                                      style={{ background: stack.color || color }}
-                                      aria-hidden
-                                    />
-                                    <div className="min-w-0 flex-1">
-                                      <p className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
-                                        {stack.name}
-                                      </p>
-                                      <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[11px] font-semibold text-[#77738F]">
-                                        <span className="inline-flex items-center gap-1">
-                                          <BookOpen className="h-3 w-3" />
-                                          {stack.lessons.length} lesson
-                                          {stack.lessons.length === 1 ? '' : 's'}
-                                        </span>
-                                        {stack.totalTime ? (
-                                          <span>{formatDuration(stack.totalTime)}</span>
-                                        ) : null}
-                                      </p>
-                                    </div>
-                                  </button>
-                                ))}
+                        const renderClassRow = ({
+                          cls,
+                          schemes,
+                          lessonCount,
+                          empty,
+                          isComplete,
+                        }: (typeof classRows)[number]) => {
+                          const chipColor = classDisplayColor(cls);
+                          return (
+                            <div
+                              key={cls.id}
+                              className="rounded-xl border border-[#E2E0EF]/90 bg-white/90 px-2.5 py-2"
+                            >
+                              <div className="mb-1.5 flex items-center gap-2">
+                                <span
+                                  className="inline-flex max-w-full items-center gap-1.5 rounded-md px-2 py-0.5 text-[13px] font-extrabold text-white"
+                                  style={{ background: chipColor }}
+                                  title={cls.name}
+                                >
+                                  <span
+                                    className="h-1.5 w-1.5 shrink-0 rounded-full bg-white/80"
+                                    aria-hidden
+                                  />
+                                  <span className="truncate">{cls.name}</span>
+                                </span>
+                                {isComplete ? (
+                                  <CheckCircle className="h-3.5 w-3.5 shrink-0 text-[#0B6B5F]" />
+                                ) : null}
+                                <span className="ml-auto text-[13px] font-bold tabular-nums text-[#9B97B0]">
+                                  {empty
+                                    ? '—'
+                                    : schemes.length === 0
+                                      ? `${lessonCount} lesson${lessonCount === 1 ? '' : 's'}`
+                                      : `${schemes.length} scheme${schemes.length === 1 ? '' : 's'}${
+                                          lessonCount ? ` · ${lessonCount}` : ''
+                                        }`}
+                                </span>
+                              </div>
+
+                              {empty ? (
                                 <button
                                   type="button"
                                   onClick={() => onAddScheme(term.id, [cls.id])}
-                                  className="inline-flex h-7 items-center justify-center gap-1 rounded-lg text-[11px] font-bold text-[#4338E8] hover:bg-[#F4F3FA]"
+                                  className="inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-[#FAFAFC] text-[13px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:bg-[#F7F6FC] hover:text-[#4338E8]"
                                 >
-                                  <Plus className="h-3 w-3" />
-                                  Add another
+                                  <Plus className="h-3.5 w-3.5" />
+                                  Add
                                 </button>
+                              ) : (
+                                <div className="flex flex-col gap-1.5">
+                                  {schemes.map((stack) => (
+                                    <button
+                                      key={stack.id}
+                                      type="button"
+                                      onClick={() =>
+                                        onManageClassTerm(cls.id, cls.name, term.id)
+                                      }
+                                      className="flex w-full items-start gap-2 rounded-lg border border-[#E2E0EF] bg-white px-2.5 py-2 text-left transition hover:border-[#bcb7f4]"
+                                    >
+                                      <span
+                                        className="mt-0.5 h-7 w-1 shrink-0 rounded-full"
+                                        style={{ background: stack.color || color }}
+                                        aria-hidden
+                                      />
+                                      <div className="min-w-0 flex-1">
+                                        <p className="truncate text-[13px] font-extrabold text-[#1F1B4D]">
+                                          {stack.name}
+                                        </p>
+                                        <p className="mt-0.5 flex flex-wrap items-center gap-x-2 text-[13px] font-semibold text-[#77738F]">
+                                          <span className="inline-flex items-center gap-1">
+                                            <BookOpen className="h-3 w-3" />
+                                            {stack.lessons.length} lesson
+                                            {stack.lessons.length === 1 ? '' : 's'}
+                                          </span>
+                                          {stack.totalTime ? (
+                                            <span>{formatDuration(stack.totalTime)}</span>
+                                          ) : null}
+                                        </p>
+                                      </div>
+                                    </button>
+                                  ))}
+                                  <button
+                                    type="button"
+                                    onClick={() => onAddScheme(term.id, [cls.id])}
+                                    className="inline-flex h-7 items-center justify-center gap-1 rounded-lg text-[13px] font-bold text-[#4338E8] hover:bg-[#F4F3FA]"
+                                  >
+                                    <Plus className="h-3 w-3" />
+                                    Add another
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          );
+                        };
+
+                        if (showAllRows) {
+                          return <>{classRows.map(renderClassRow)}</>;
+                        }
+
+                        return (
+                          <>
+                            {planned.map(renderClassRow)}
+                            {emptyRows.length > 0 ? (
+                              <div className="rounded-xl border border-dashed border-[#D8D5E8] bg-[#FAFAFC] px-2.5 py-2">
+                                <button
+                                  type="button"
+                                  onClick={() => toggleEmptyExpanded(term.id)}
+                                  className="flex w-full items-center gap-2 text-left"
+                                  aria-expanded={emptyExpanded}
+                                >
+                                  {emptyExpanded ? (
+                                    <ChevronDown className="h-4 w-4 shrink-0 text-[#77738F]" />
+                                  ) : (
+                                    <ChevronRight className="h-4 w-4 shrink-0 text-[#77738F]" />
+                                  )}
+                                  <span className="min-w-0 flex-1 text-[13px] font-extrabold text-[#5C5878]">
+                                    {emptyRows.length} class
+                                    {emptyRows.length === 1 ? '' : 'es'} with nothing planned
+                                  </span>
+                                  {!emptyExpanded ? (
+                                    <span className="text-[13px] font-bold text-[#4338E8]">
+                                      Expand to add
+                                    </span>
+                                  ) : (
+                                    <span className="text-[13px] font-bold text-[#77738F]">
+                                      Collapse
+                                    </span>
+                                  )}
+                                </button>
+                                {emptyExpanded ? (
+                                  <div className="mt-2 flex flex-col gap-2">
+                                    {emptyRows.map(renderClassRow)}
+                                  </div>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    onClick={() => onAddScheme(term.id)}
+                                    className="mt-2 inline-flex h-8 w-full items-center justify-center gap-1 rounded-lg border border-dashed border-[#D8D5E8] bg-white text-[13px] font-bold text-[#5C5878] transition hover:border-[#bcb7f4] hover:text-[#4338E8]"
+                                  >
+                                    <Plus className="h-3.5 w-3.5" />
+                                    Add scheme to a class
+                                  </button>
+                                )}
                               </div>
-                            )}
-                          </div>
+                            ) : null}
+                          </>
                         );
-                      })
+                      })()
                     )}
                   </div>
 
-                  <div className="mt-3 border-t border-[#E2E0EF]/80 pt-2 text-[11px] font-bold text-[#5C5878]">
+                  <div className="mt-3 border-t border-[#E2E0EF]/80 pt-2 text-[13px] font-bold text-[#5C5878]">
                     {assignedClassCount}/{classRows.length} class
                     {classRows.length === 1 ? '' : 'es'} planned
                   </div>
@@ -498,6 +618,20 @@ export function TeacherHalfTermBoard({
         </div>
       )}
 
+      {exportTerm
+        ? createPortal(
+            <ExportDataScope lessonNumbers={exportTerm.lessons}>
+              <LessonPrintModal
+                isUnitPrint
+                halfTermId={exportTerm.id}
+                halfTermName={exportTerm.name}
+                lessonNumbers={exportTerm.lessons}
+                onClose={() => setExportTerm(null)}
+              />
+            </ExportDataScope>,
+            document.body,
+          )
+        : null}
       <TermCopyModal
         isOpen={showTermCopyModal}
         onClose={() => setShowTermCopyModal(false)}
@@ -527,7 +661,7 @@ function Chip({
       type="button"
       onClick={onClick}
       aria-pressed={active}
-      className={`inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[12px] font-extrabold transition ${
+      className={`inline-flex h-8 items-center gap-1 rounded-lg px-2.5 text-[13px] font-extrabold transition ${
         active
           ? 'bg-[#4338E8] text-white shadow-sm'
           : 'border border-[#E2E0EF] bg-white text-[#5C5878] hover:border-[#bcb7f4] hover:text-[#1F1B4D]'

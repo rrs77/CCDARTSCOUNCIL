@@ -31,9 +31,17 @@ function listDeployableFunctions(dir, acc = []) {
   return acc;
 }
 
-async function routed(method, route, extraSearch = '') {
+async function routed(method, route, extraSearchOrOptions = '') {
+  const options =
+    typeof extraSearchOrOptions === 'string'
+      ? { extraSearch: extraSearchOrOptions }
+      : extraSearchOrOptions || {};
+  const extraSearch = options.extraSearch || '';
   const url = `https://ccd.example/api/router?__route=${route}${extraSearch}`;
-  const request = new Request(url, { method });
+  const request = new Request(url, {
+    method,
+    headers: options.headers,
+  });
   const fn = method === 'POST' ? POST : method === 'OPTIONS' ? OPTIONS : GET;
   return fn(request);
 }
@@ -149,5 +157,114 @@ describe('interactive lesson viewer routes', () => {
     assert.notEqual(status, 404, JSON.stringify(body));
     assert.notEqual(body.error, 'API route not found.');
     assert.equal(typeof body.available, 'boolean');
+  });
+});
+
+describe('DreamHost file routes', () => {
+  it('dispatches POST /api/files/upload (upload-pdf alias target)', async () => {
+    const { status, body } = await jsonStatus(await routed('POST', 'files/upload'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('dispatches POST /api/files/school-grant', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('POST', 'files/school-grant'),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('dispatches DELETE /api/files/school-grant', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('DELETE', 'files/school-grant'),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('dispatches GET /api/files/:userId/:uuid.pdf', async () => {
+    const { status, body } = await jsonStatus(
+      await routed(
+        'GET',
+        'files/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002.pdf',
+      ),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('rejects unauthenticated file share with 401 (decision 2)', async () => {
+    const res = await routed(
+      'GET',
+      'files/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002.pdf',
+      { headers: { Accept: 'application/json' } },
+    );
+    const { status, body } = await jsonStatus(res);
+    assert.equal(status, 401, JSON.stringify(body));
+    assert.match(String(body.error || ''), /sign in/i);
+  });
+
+  it('redirects unauthenticated HTML file share to sign-in with /shared return', async () => {
+    const res = await routed(
+      'GET',
+      'files/00000000-0000-0000-0000-000000000001/00000000-0000-0000-0000-000000000002.pdf',
+      {
+        headers: {
+          Accept: 'text/html',
+          'Sec-Fetch-Mode': 'navigate',
+        },
+      },
+    );
+    assert.equal(res.status, 302);
+    const loc = res.headers.get('Location') || '';
+    assert.equal(loc.startsWith('/?'), true);
+    const params = new URLSearchParams(loc.slice(2));
+    assert.equal(params.get('signin'), '1');
+    assert.match(params.get('return') || '', /^\/shared\//);
+    assert.equal(loc.includes('access_token='), false);
+  });
+});
+
+describe('year-groups request-access', () => {
+  it('dispatches POST /api/year-groups/request-access via combined router', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('POST', 'year-groups/request-access'),
+    );
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('rejects unauthenticated year-group access requests with 401', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('POST', 'year-groups/request-access', {
+        headers: { Accept: 'application/json' },
+      }),
+    );
+    assert.equal(status, 401, JSON.stringify(body));
+  });
+});
+
+describe('Freesound routes', () => {
+  it('dispatches GET /api/freesound/search', async () => {
+    const { status, body } = await jsonStatus(await routed('GET', 'freesound/search'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
+  });
+
+  it('rejects unauthenticated Freesound search with 401', async () => {
+    const { status, body } = await jsonStatus(
+      await routed('GET', 'freesound/search', {
+        extraSearch: '&query=clap',
+        headers: { Accept: 'application/json' },
+      }),
+    );
+    assert.equal(status, 401, JSON.stringify(body));
+  });
+
+  it('dispatches GET /api/freesound/preview/:id', async () => {
+    const { status, body } = await jsonStatus(await routed('GET', 'freesound/preview/12345'));
+    assert.notEqual(status, 404, JSON.stringify(body));
+    assert.notEqual(body.error, 'API route not found.');
   });
 });

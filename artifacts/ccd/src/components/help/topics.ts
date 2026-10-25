@@ -1,5 +1,5 @@
 /**
- * Help centre content for Creative Curriculum Designer.
+ * Help centre content for CCDesigner.
  * Keep copy aligned with the live product (Settings, Users, Half-terms, etc.).
  */
 
@@ -49,7 +49,7 @@ export interface HelpTopic {
   sections: HelpSection[];
 }
 
-export const HELP_PRODUCT_NAME = 'Creative Curriculum Designer';
+export const HELP_PRODUCT_NAME = 'CCDesigner';
 
 export const HELP_TOPICS: HelpTopic[] = [
   {
@@ -81,7 +81,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         steps: [
           { title: 'New activity', body: 'Choose Create / New activity and fill in title, description and media.' },
           { title: 'Place it', body: 'Assign a folder (category) so it appears in the right place for that class.' },
-          { title: 'Save', body: 'Save — the activity appears in the library ready for Lesson Builder.' },
+          { title: 'Save', body: 'Save — the activity appears in the library ready for Lessons.' },
         ],
         tips: ['Star activities you use often so they float to the top of their folder.'],
       },
@@ -89,26 +89,27 @@ export const HELP_TOPICS: HelpTopic[] = [
   },
   {
     id: 'lesson',
-    title: 'Lesson Builder',
-    blurb: 'Assemble activities into lessons',
+    title: 'Lessons',
+    blurb: 'Browse, build and save lessons',
     accent: '#4338E8',
     tint: '#E9E6FF',
-    keywords: ['lesson', 'builder', 'drag', 'save lesson', 'plan'],
+    keywords: ['lesson', 'builder', 'drag', 'save lesson', 'plan', 'lessons'],
     related: ['activity', 'unit', 'halfterms'],
-    openTab: 'lesson-builder',
+    openTab: 'lesson-library',
     sections: [
       {
         id: 'build',
         title: 'Build a lesson',
-        intro: 'Drag activities from the library into a lesson outline, then save.',
+        intro: 'Open Lessons, pick Create or an existing plan, then drag activities into the canvas.',
         steps: [
-          { title: 'Open Lesson Builder', body: 'Use the sidebar Lesson Builder item.' },
-          { title: 'Add activities', body: 'Drag activities into the lesson slots in the order you will teach them.' },
-          { title: 'Save Lesson', body: 'Save — the plan appears under Lessons for this class.' },
+          { title: 'Open Lessons', body: 'Use the sidebar Lessons item under Connect & create.' },
+          { title: 'Create or open', body: 'Create a new lesson from the list, or select a saved one to edit.' },
+          { title: 'Add activities', body: 'Drag activities from the coloured category blocks into the lesson canvas, then reorder as needed.' },
+          { title: 'Save Lesson', body: 'Save — the plan stays in Your lessons for this class and can be assigned to Half-terms.' },
         ],
         image: 'lesson-builder.png',
-        imageAlt: 'Lesson Builder with activities in slots',
-        tips: ['Open Lessons from the sidebar to revisit or assign a saved plan into Half-terms.'],
+        imageAlt: 'Lessons workspace with activity blocks and lesson canvas',
+        tips: ['Filter the left list by half-term, or assign a lesson into the Half-terms map from the list.'],
       },
     ],
   },
@@ -126,7 +127,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'units',
         title: 'Work with units and stacks',
         steps: [
-          { title: 'Save lessons first', body: 'Build and save lessons in Lesson Builder.' },
+          { title: 'Save lessons first', body: 'Build and save lessons from the Lessons tab.' },
           { title: 'Group them', body: 'Use units or stacks to keep related lessons together for a scheme of work.' },
           { title: 'Assign to terms', body: 'From Lessons or Half-terms, place lessons onto the year board.' },
         ],
@@ -245,7 +246,7 @@ export const HELP_TOPICS: HelpTopic[] = [
         id: 'overview',
         title: 'Full-page Settings',
         intro:
-          'Settings is a full page (not a modal). Open it from the header gear or More tools. Left nav covers My classes, Activity folders, Learning objectives, Preferences, Downloads, Users (admins) and School tools.',
+          'Settings is a full page (not a modal). Open it from the cog at the bottom of the left sidebar. Left nav covers My classes, Activity folders, Learning objectives, Preferences, Downloads, Users (admins) and School tools.',
         steps: [
           { title: 'My classes', body: 'Add and group classes by key stage. Accents and natural year order match the header class picker.' },
           { title: 'Activity folders', body: 'Control which folders each class sees in the Activity Library.' },
@@ -336,7 +337,7 @@ export const HELP_TOPICS: HelpTopic[] = [
       {
         id: 'facts',
         title: 'Open The Facts',
-        intro: 'The Facts is the evidence briefing for Creative Curriculum Designer.',
+        intro: 'The Facts is the evidence briefing for CCDesigner.',
         steps: [
           { title: 'Find The Facts', body: 'Open it from Partner / resources areas or the briefing link in the product.' },
           { title: 'Read or download', body: 'Use the PDF for governors, SLT or funding conversations.' },

@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { X, ExternalLink, ArrowLeft } from 'lucide-react';
+import { CCD_LOGO_ALT, CCD_LOGO_COLOUR_PATH } from '../utils/brandLogo';
 
 interface ResourceViewerProps {
   url: string;
@@ -202,8 +203,8 @@ export function ResourceViewer({ url, title, type, onClose }: ResourceViewerProp
           >
             <div className="p-1.5 flex items-center space-x-1.5">
               <img
-                src="/ccdesigner-logo.png"
-                alt="CCDesigner"
+                src={CCD_LOGO_COLOUR_PATH}
+                alt={CCD_LOGO_ALT}
                 className="h-5 w-auto"
               />
             </div>

@@ -43,6 +43,27 @@ export function snapToSceneBoundary(ms: number, scenes: Scene[], thresholdMs = 4
   return Math.max(0, Math.min(total, best));
 }
 
+/** Snap to scene edges and optional extra guides (playhead, other clip edges). */
+export function snapToTimelineGuides(
+  ms: number,
+  scenes: Scene[],
+  guides: number[] = [],
+  thresholdMs = 400,
+): number {
+  const { starts, total } = sceneLayoutOffsets(scenes);
+  const bounds = [...starts, total, ...guides];
+  let best = ms;
+  let bestDist = Infinity;
+  for (const b of bounds) {
+    const d = Math.abs(b - ms);
+    if (d < bestDist && d <= thresholdMs) {
+      bestDist = d;
+      best = b;
+    }
+  }
+  return Math.max(0, Math.min(total, best));
+}
+
 export function emptyAudioClip(
   lane: AudioLaneKind,
   partial: Partial<AudioClip> & { mediaUrl: string; name: string },

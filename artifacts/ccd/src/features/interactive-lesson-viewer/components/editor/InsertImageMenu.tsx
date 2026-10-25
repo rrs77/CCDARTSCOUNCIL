@@ -8,6 +8,8 @@ import {
   uploadInteractiveLessonMedia,
   type UploadProgress,
 } from '../../utils/mediaUpload';
+import { IlvCloudFilesPanel } from './IlvCloudFilesPanel';
+import type { ImportedIlvMedia } from '../../utils/ilvCloudImport';
 
 interface InsertImageMenuProps {
   open: boolean;
@@ -28,6 +30,8 @@ interface InsertImageMenuProps {
   onInsertUrl: (url: string, meta?: { name?: string; sourceUrl?: string; cloudProvider?: string }) => void;
   onOpenFreeMedia: () => void;
   onOpenLibraryRail: () => void;
+  /** Cloud / device import via lesson-attachment pickers (preferred for Drive, Dropbox, …). */
+  onCloudImported?: (media: ImportedIlvMedia) => void;
 }
 
 /** Portaled insert-image picker — Upload from computer first. */
@@ -42,6 +46,7 @@ export function InsertImageMenu({
   onInsertUrl,
   onOpenFreeMedia,
   onOpenLibraryRail,
+  onCloudImported,
 }: InsertImageMenuProps) {
   const [url, setUrl] = useState('');
   const [hint, setHint] = useState('');
@@ -149,6 +154,21 @@ export function InsertImageMenu({
           </div>
         )}
 
+        {onCloudImported && (
+          <div className="ilv-insert-menu-block">
+            <IlvCloudFilesPanel
+              lessonId={lessonId}
+              compact
+              acceptKinds={['image', 'video', 'audio', 'powerpoint', 'upload']}
+              targetHint="Device, Dropbox, Drive, Box, OneDrive, Teams, Classroom"
+              onImported={(media) => {
+                onCloudImported(media);
+                onClose();
+              }}
+            />
+          </div>
+        )}
+
         <div className="ilv-insert-menu-block">
           <label className="ilv-label">URL or cloud link</label>
           <div className="flex gap-1.5">
@@ -232,7 +252,7 @@ export function InsertImageMenu({
           </div>
         )}
 
-        {hint && <p className="mt-1 text-[10px] leading-snug text-[var(--ss-muted)]">{hint}</p>}
+        {hint && <p className="mt-1 text-[13px] leading-snug text-[var(--ss-muted)]">{hint}</p>}
       </div>
     </PortalPopover>
   );

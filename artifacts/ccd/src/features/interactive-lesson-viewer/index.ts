@@ -2,6 +2,8 @@ export { InteractiveLessonHub } from './components/InteractiveLessonHub';
 export { InteractiveLessonEditor } from './components/editor/InteractiveLessonEditor';
 export { InteractiveLessonPlayer } from './components/player/InteractiveLessonPlayer';
 export { AttachInteractiveLesson } from './components/AttachInteractiveLesson';
+export { LessonSlidesSection } from './components/planner/LessonSlidesSection';
+export { applySchemeViewerLinks, listLessonViewerLinks } from './data/slidesLinksApi';
 export { SlidesLibraryPicker } from './components/SlidesLibraryPicker';
 export { useCanEditInteractiveLessons } from './hooks/useCanEditInteractiveLessons';
 export { buildDemoInteractiveLesson } from './data/demoLesson';

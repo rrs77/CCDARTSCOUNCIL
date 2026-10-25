@@ -1,4 +1,6 @@
+import { PLAN_LOGO_ALT, PLAN_LOGO_PATH, PLAN_LOGO_PRINT_CSS, planLogoImg, planLogoUrl } from '../../utils/planLogo';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { safeColour } from '../../utils/safeColour';
 import { toast } from 'react-hot-toast';
 import {
   ChevronLeft,
@@ -9,6 +11,7 @@ import {
 import { useData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import { TimetableBuilder } from '../TimetableBuilder';
+import { YearGroupsAccessNotice } from '../ccdPlanner/YearGroupsAccessNotice';
 import { usePlannerData, type PlannerData } from './usePlannerData';
 import { WeekView, DayView, MonthView } from './PlannerViews';
 import { LessonDetailsSheet, SchedulePickerSheet } from './PlannerSheets';
@@ -19,6 +22,8 @@ import {
   formatRange,
   HALF_TERMS,
   halfTermFor,
+  isWeekend,
+  nextWeekday,
   SCHEDULE_VIEWS,
   readableInk,
   startOfDay,
@@ -28,6 +33,10 @@ import {
   type PlannerRoom,
   type PlannerView,
 } from './plannerModel';
+import {
+  scheduleViewFromPath,
+  syncPlannerViewUrl,
+} from '../studio/plannerRoutes';
 
 interface PlannerProps {
   initialView?: PlannerView;
@@ -45,7 +54,7 @@ const navBtn =
 const toolBtn =
   'inline-flex min-h-[40px] items-center gap-2 rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-semibold text-[#1F1B4D] hover:border-[#bcb7f4]';
 const primaryBtn =
-  'inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[12px] font-bold text-white hover:bg-[#3529d1]';
+  'inline-flex min-h-[40px] items-center gap-2 rounded-xl bg-[#4338E8] px-4 text-[13px] font-bold text-white hover:bg-[#3529d1]';
 
 function rangeFor(view: PlannerView, anchor: Date) {
   if (view === 'day') return { from: startOfDay(anchor), to: addDays(anchor, 1) };
@@ -72,10 +81,16 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
   const { currentSheetInfo, setCurrentSheetInfo } = useData();
   const { settings } = useSettings();
   // C2: term/units views moved to Half-terms — never open them inside Planner
+  const fromPath = typeof window !== 'undefined' ? scheduleViewFromPath() : null;
   const safeInitial =
-    initialView && initialView !== 'term' && initialView !== 'units' ? initialView : 'week';
+    fromPath ||
+    (initialView && initialView !== 'term' && initialView !== 'units' ? initialView : 'week');
   const [view, setView] = useState<PlannerView>(safeInitial);
-  const [anchor, setAnchor] = useState(() => startOfDay(new Date()));
+  const [anchor, setAnchor] = useState(() => {
+    const today = startOfDay(new Date());
+    // Day view is Mon–Fri only — never land on a weekend with "Add one-off".
+    return safeInitial === 'day' ? nextWeekday(today) : today;
+  });
   const [focus, setFocus] = useState<string>('all');
   const [sheet, setSheet] = useState<Sheet>(null);
   const [summaryOpen, setSummaryOpen] = useState(false);
@@ -130,13 +145,8 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
     return () => window.removeEventListener('ccd:planner-focus-request', onRequest);
   }, [classById, currentSheetInfo.sheet, classes]);
 
-  useEffect(() => {
-    if (view === 'classic' && currentSheetInfo.sheet && classById.has(currentSheetInfo.sheet) && focus !== currentSheetInfo.sheet) {
-      setFocus(currentSheetInfo.sheet);
-    }
-  }, [view, currentSheetInfo.sheet, classById, focus]);
-
-  // Keep one-class focus aligned with header class when in one-class mode
+  // Keep one-class focus aligned with header class when in one-class mode.
+  // Never override an intentional "All classes" focus when navigating.
   useEffect(() => {
     if (focus === 'all') return;
     if (currentSheetInfo.sheet && classById.has(currentSheetInfo.sheet) && focus !== currentSheetInfo.sheet) {
@@ -156,11 +166,44 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
         refreshStorage();
         void reloadPlans();
       }
+      if (next === 'day') {
+        setAnchor((a) => (isWeekend(a) ? nextWeekday(a) : a));
+      }
       setView(next);
       setSheet(null);
+      syncPlannerViewUrl(next);
     },
     [view, refreshStorage, reloadPlans],
   );
+
+  // Keep Day view on a weekday if anchor drifts (e.g. "This week" on Sat/Sun).
+  useEffect(() => {
+    if (view !== 'day') return;
+    if (!isWeekend(anchor)) return;
+    setAnchor(nextWeekday(anchor));
+  }, [view, anchor]);
+
+  // Browser back/forward for /planner/week|day|month
+  useEffect(() => {
+    const onPop = () => {
+      const v = scheduleViewFromPath();
+      if (v) {
+        setView(v);
+        if (v === 'day') setAnchor((a) => (isWeekend(a) ? nextWeekday(a) : a));
+      }
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  // Ensure URL matches initial schedule view when landing on /planner
+  useEffect(() => {
+    if (view === 'week' || view === 'day' || view === 'month') {
+      syncPlannerViewUrl(view);
+    }
+    // once on mount
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const goRoom = useCallback(
     (next: PlannerRoom) => {
@@ -270,8 +313,16 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
   return (
     <div className={`ss-planner-shell ${view === 'timetable' ? 'is-timetable-fullpage' : ''}`}>
       <main className="flex min-h-0 min-w-0 flex-1 flex-col">
+        <YearGroupsAccessNotice />
         <header className="flex shrink-0 flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
+            {/* CCDesigner logo, top-left of the Planner and Class calendar screens */}
+            <img
+              src={PLAN_LOGO_PATH}
+              alt={PLAN_LOGO_ALT}
+              className="mb-2 block h-8 w-auto"
+              decoding="async"
+            />
             <p className="ccd-studio-eyebrow mb-1">
               CONNECT &amp; CREATE / <span>PLANNER</span>
             </p>
@@ -302,7 +353,14 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
           {view !== 'timetable' && (
             <div className="flex flex-wrap items-center gap-2">
               {inSchedule && (
-                <button type="button" className={toolBtn} onClick={() => setAnchor(startOfDay(new Date()))}>
+                <button
+                  type="button"
+                  className={toolBtn}
+                  onClick={() => {
+                    const today = startOfDay(new Date());
+                    setAnchor(view === 'day' ? nextWeekday(today) : today);
+                  }}
+                >
                   This week
                 </button>
               )}
@@ -335,7 +393,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
               <button
                 type="button"
                 onClick={() => setFocus('all')}
-                className={`min-h-[32px] rounded-full px-3.5 text-[12px] font-bold ${
+                className={`min-h-[32px] rounded-full px-3.5 text-[13px] font-bold ${
                   focus === 'all' ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
                 }`}
               >
@@ -355,14 +413,14 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
                     }
                   }
                 }}
-                className={`min-h-[32px] rounded-full px-3.5 text-[12px] font-bold ${
+                className={`min-h-[32px] rounded-full px-3.5 text-[13px] font-bold ${
                   focus !== 'all' ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
                 }`}
               >
                 One class
               </button>
             </div>
-            <p className="hidden text-[12px] text-[#77738F] sm:block">
+            <p className="hidden text-[13px] text-[#77738F] sm:block">
               Tip: pick one class when you want Activities, Lessons and Half-terms to stay in the same context.
             </p>
           </div>
@@ -383,7 +441,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
                   role="tab"
                   aria-selected={room === r.id}
                   onClick={() => goRoom(r.id)}
-                  className={`min-h-[36px] rounded-lg px-3.5 text-[13px] font-semibold ${
+                  className={`min-h-[36px] rounded-lg px-3.5 text-[13px] font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400 focus-visible:ring-offset-2 ${
                     room === r.id ? 'bg-[#4338E8] text-white' : 'text-[#77738F] hover:text-[#1F1B4D]'
                   }`}
                 >
@@ -392,10 +450,10 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
               ))}
             </div>
             {inSchedule && (
-              <label className="inline-flex items-center gap-2 text-[10px] font-extrabold uppercase tracking-wide text-[#77738F]">
+              <label className="inline-flex items-center gap-2 text-[13px] font-extrabold uppercase tracking-wide text-[#77738F]">
                 View
                 <select
-                  className="min-h-[36px] rounded-xl border border-[#E2E0EF] bg-white px-3 text-[12px] font-bold normal-case tracking-normal text-[#1F1B4D]"
+                  className="min-h-[36px] rounded-xl border border-[#E2E0EF] bg-white px-3 text-[13px] font-bold normal-case tracking-normal text-[#1F1B4D]"
                   value={view}
                   aria-label="Planner view"
                   onChange={(e) => changeView(e.target.value as PlannerView)}
@@ -419,12 +477,12 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
               <button type="button" className={navBtn} onClick={() => step(1)} aria-label="Next">
                 <ChevronRight className="h-4 w-4" />
               </button>
-              {view === 'week' && (
+              {(view === 'week' || view === 'day' || view === 'month') && (
                 <button
                   type="button"
                   className={`${toolBtn} hidden sm:inline-flex`}
-                  onClick={() => printWeek(data, anchor, visibleIds, settings)}
-                  aria-label="Print this week"
+                  onClick={() => printSchedule(view, data, anchor, visibleIds, settings)}
+                  aria-label={`Print this ${view}`}
                 >
                   <Printer className="h-4 w-4" />
                 </button>
@@ -437,7 +495,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
           <button
             type="button"
             onClick={() => setSummaryOpen((o) => !o)}
-            className="mt-3 shrink-0 text-[12px] font-medium text-[#77738F] hover:text-[#4338E8]"
+            className="mt-3 shrink-0 text-[13px] font-medium text-[#77738F] hover:text-[#4338E8]"
             aria-expanded={summaryOpen}
           >
             {weekStats.planned} planned
@@ -466,7 +524,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
               visibleIds={visibleIds}
               anchor={anchor}
               onPickDay={(d) => {
-                setAnchor(d);
+                setAnchor(isWeekend(d) ? nextWeekday(d) : startOfDay(d));
                 changeView('day');
               }}
             />
@@ -502,7 +560,7 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
           onEditInBuilder={(plan) => {
             const c = classById.get(plan.className);
             if (c) setCurrentSheetInfo({ sheet: c.id, display: c.name, eyfs: `${c.id} Statements` });
-            window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-builder' } }));
+            window.dispatchEvent(new CustomEvent('ccd:open-tab', { detail: { tab: 'lesson-library' } }));
           }}
         />
       )}
@@ -513,124 +571,58 @@ export function Planner({ initialView, renderClassic }: PlannerProps) {
   );
 }
 
-/* ---------------- Weekly overview print ---------------- */
+/* ---------------- Schedule print (week / day / month) ---------------- */
 
-function printWeek(
+type PrintSettings = {
+  branding?: {
+    loginTitle?: string;
+    loginSubtitle?: string;
+    loginLogoUrl?: string;
+    footerCompanyName?: string;
+    footerCopyrightYear?: string;
+    loginButtonColor?: string;
+    loginBackgroundColor?: string;
+  };
+  schoolName?: string;
+  schoolLogo?: string;
+};
+
+function activityLabel(a: { activity?: string; description?: string } | null | undefined): string {
+  if (!a) return '';
+  return (a.activity || a.description || '').trim();
+}
+
+function planActivityLines(data: PlannerData, entry: DayEntry): string[] {
+  const plan = entry.plan;
+  if (!plan) return [];
+  const fromPlan = (plan.activities || []).map(activityLabel).filter(Boolean);
+  if (fromPlan.length) return fromPlan.slice(0, 8);
+  const cache = data.lessonCache[entry.classId];
+  if (!cache || cache === 'loading' || !plan.lessonNumber) return [];
+  const lesson = cache.lessons[plan.lessonNumber];
+  const list =
+    lesson?.orderedActivities ||
+    (lesson?.grouped ? Object.values(lesson.grouped).flat() : []);
+  return (list || []).map(activityLabel).filter(Boolean).slice(0, 8);
+}
+
+function lessonBlockHtml(
+  esc: (s: string) => string,
   data: PlannerData,
-  anchor: Date,
-  visibleIds: Set<string>,
-  settings?: { branding?: { loginTitle?: string; loginSubtitle?: string; loginLogoUrl?: string; footerCompanyName?: string; footerCopyrightYear?: string; loginButtonColor?: string; loginBackgroundColor?: string }; schoolName?: string; schoolLogo?: string },
-) {
-  const esc = (s: string) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
-  const branding = settings?.branding || {};
-  const productName = branding.loginTitle || settings?.schoolName || 'Creative Curriculum Designer';
-  const productSubtitle = branding.loginSubtitle || 'From Rhythmstix';
-  const companyName = branding.footerCompanyName || 'Rhythmstix';
-  const copyrightYear = branding.footerCopyrightYear || String(new Date().getFullYear());
-  const headerColor = branding.loginButtonColor || branding.loginBackgroundColor || '#1F1B4D';
-  const logoSrc = branding.loginLogoUrl || settings?.schoolLogo || '/ccdesigner-logo.png';
-  const absLogo = logoSrc.startsWith('http') ? logoSrc : `${window.location.origin}${logoSrc.startsWith('/') ? '' : '/'}${logoSrc}`;
-  const mon = startOfWeek(anchor);
-  const fri = addDays(mon, 4);
-  const rangeLabel = `${mon.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} – ${fri.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`;
-  const term = HALF_TERMS.find((h) => h.id === halfTermFor(anchor));
-  const cols = Array.from({ length: 5 }, (_, i) => {
-    const d = addDays(mon, i);
-    const items = buildDayEntries(d, visibleIds, data.plans, data.slots, data.events)
-      .filter((e) => e.plan)
-      .map((e) => {
-        const c = data.classById.get(e.classId);
-        const color = c?.color || '#475569';
-        return `<div class="l" style="border-color:${color}"><div class="a" style="color:${readableInk(color)}">${esc(e.time || '')} · ${esc(c?.name || e.classId)}</div><div class="b">${esc(lessonTitle(e.plan, data.lessonCache[e.classId]))}</div></div>`;
-      })
-      .join('');
-    return `<div class="col"><div class="d">${d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })}</div>${items || '<div class="n">—</div>'}</div>`;
-  }).join('');
-  const html = `<!doctype html><html><head><meta charset="utf-8"><title>Week planner · ${esc(rangeLabel)}</title>
-<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<style>
-@page{size:A4 landscape;margin:12mm 11mm 14mm}
-*{box-sizing:border-box}
-body{
-  font-family:"Plus Jakarta Sans",system-ui,sans-serif;
-  color:#1F1B4D;margin:0;background:#fff;
-  -webkit-print-color-adjust:exact;print-color-adjust:exact;
-  position:relative;min-height:100%;
+  entry: DayEntry,
+): string {
+  if (!entry.plan) return '';
+  const c = data.classById.get(entry.classId);
+  const color = safeColour(c?.color, '#475569');
+  const end = entry.endTime ? `–${esc(entry.endTime)}` : '';
+  const acts = planActivityLines(data, entry);
+  const actHtml = acts.length
+    ? `<ul class="acts">${acts.map((n) => `<li>${esc(n)}</li>`).join('')}</ul>`
+    : '';
+  return `<div class="l" style="border-color:${color}"><div class="a" style="color:${readableInk(color)}">${esc(entry.time || '')}${end} · ${esc(c?.name || entry.classId)}</div><div class="b">${esc(lessonTitle(entry.plan, data.lessonCache[entry.classId]))}</div>${actHtml}</div>`;
 }
-/* Small translucent mark — top-left watermark, not a banner */
-.logo-mark{
-  position:absolute;top:0;left:0;z-index:0;
-  width:28px;height:28px;object-fit:contain;
-  opacity:.22;pointer-events:none;
-}
-.sheet{position:relative;z-index:1;padding-top:4px}
-.mast{
-  display:flex;align-items:flex-end;justify-content:space-between;gap:16px;
-  padding:4px 0 10px 36px;
-  border-bottom:1.5px solid #E2E0EF;
-}
-.mast-left{min-width:0}
-.eyebrow{
-  margin:0 0 2px;font-size:9px;font-weight:700;letter-spacing:.12em;
-  text-transform:uppercase;color:#77738F;
-}
-.mast h1{
-  margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:#1F1B4D;
-}
-.mast .range{margin:3px 0 0;font-size:12px;font-weight:500;color:#5C5878}
-.mast-right{text-align:right;flex-shrink:0}
-.term-pill{
-  display:inline-block;font-size:10px;font-weight:700;color:#4338E8;
-  background:#E9E6FF;border-radius:999px;padding:3px 10px;
-}
-.product-quiet{margin-top:4px;font-size:9px;font-weight:600;color:#9B97B0}
-.accent{height:2px;margin-top:-1.5px;background:linear-gradient(90deg,#4338E8 0%,#E5E2FF 42%,transparent 100%)}
-.g{
-  display:grid;grid-template-columns:repeat(5,minmax(0,1fr));
-  gap:0;margin-top:12px;
-  border:1px solid #E2E0EF;border-radius:10px;overflow:hidden;
-}
-.col{min-width:0;padding:8px 9px 10px;border-right:1px solid #E2E0EF;background:#fff}
-.col:last-child{border-right:0}
-.col:nth-child(odd){background:#FAFAFC}
-.d{
-  font-size:10px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;
-  color:#4338E8;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid #E9E6FF;
-}
-.l{border-left:2.5px solid;padding:4px 0 4px 7px;margin-top:6px;break-inside:avoid}
-.a{font-size:9px;font-weight:700;letter-spacing:.01em}
-.b{font-size:11px;font-weight:600;line-height:1.35;margin-top:1px;color:#1F1B4D}
-.n{color:#C4C0D4;margin-top:10px;font-size:11px;font-weight:500}
-.foot{
-  margin-top:12px;padding-top:8px;border-top:1px solid #E2E0EF;
-  display:flex;justify-content:space-between;gap:12px;
-  font-size:9px;font-weight:500;color:#77738F;
-}
-@media print{
-  .page-num::after{content:counter(page)}
-}
-</style></head><body>
-<img class="logo-mark" src="${esc(absLogo)}" alt="" onerror="this.style.display='none'">
-<div class="sheet">
-  <header class="mast">
-    <div class="mast-left">
-      <p class="eyebrow">Week planner</p>
-      <h1>${esc(rangeLabel)}</h1>
-      <p class="range">${esc(productName)}${productSubtitle ? ` · ${esc(productSubtitle)}` : ''}</p>
-    </div>
-    <div class="mast-right">
-      ${term ? `<span class="term-pill">${esc(term.name)}</span>` : ''}
-      <div class="product-quiet">${esc(companyName)}</div>
-    </div>
-  </header>
-  <div class="accent" aria-hidden="true"></div>
-  <div class="g">${cols}</div>
-  <footer class="foot">
-    <span>© ${esc(copyrightYear)} ${esc(companyName)} · Private reflections are not included</span>
-    <span class="page-num">Page </span>
-  </footer>
-</div>
-</body></html>`;
+
+function openPrintHtml(html: string) {
   const frame = document.createElement('iframe');
   frame.setAttribute('aria-hidden', 'true');
   frame.style.cssText = 'position:fixed;right:0;bottom:0;width:0;height:0;border:0;visibility:hidden';
@@ -655,4 +647,212 @@ body{
     }
     setTimeout(() => frame.isConnected && frame.remove(), 60000);
   }, 350);
+}
+
+function printChrome(opts: {
+  esc: (s: string) => string;
+  title: string;
+  eyebrow: string;
+  rangeLabel: string;
+  productName: string;
+  productSubtitle: string;
+  companyName: string;
+  copyrightYear: string;
+  absLogo: string;
+  termName?: string;
+  body: string;
+  pageSize?: string;
+}) {
+  const {
+    esc,
+    title,
+    eyebrow,
+    rangeLabel,
+    productName,
+    productSubtitle,
+    companyName,
+    copyrightYear,
+    absLogo,
+    termName,
+    body,
+    pageSize = 'A4 landscape',
+  } = opts;
+  return `<!doctype html><html><head><meta charset="utf-8"><title>${esc(title)}</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+@page{size:${pageSize};margin:12mm 11mm 14mm}
+*{box-sizing:border-box}
+body{
+  font-family:"Plus Jakarta Sans",system-ui,sans-serif;
+  color:#1F1B4D;margin:0;background:#fff;
+  -webkit-print-color-adjust:exact;print-color-adjust:exact;
+  position:relative;min-height:100%;
+}
+.plan-logo{display:block;margin:0 0 6px}${PLAN_LOGO_PRINT_CSS}
+.sheet{position:relative;z-index:1;padding:4px 6px 0}
+.mast{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;padding:4px 0 10px;border-bottom:1.5px solid #E2E0EF}
+.mast-left{min-width:0}
+.eyebrow{margin:0 0 2px;font-size:13px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#77738F}
+.mast h1{margin:0;font-size:20px;font-weight:800;letter-spacing:-.03em;line-height:1.15;color:#1F1B4D}
+.mast .range{margin:3px 0 0;font-size:13px;font-weight:500;color:#5C5878}
+.mast-right{text-align:right;flex-shrink:0;padding-right:4px}
+.term-pill{display:inline-block;font-size:13px;font-weight:700;color:#4338E8;background:#E9E6FF;border-radius:999px;padding:3px 10px}
+.product-quiet{margin-top:4px;font-size:13px;font-weight:600;color:#9B97B0}
+.accent{height:2px;margin-top:-1.5px;background:linear-gradient(90deg,#4338E8 0%,#E5E2FF 42%,transparent 100%)}
+.g{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:0;margin-top:12px;border:1px solid #E2E0EF;border-radius:10px;overflow:hidden}
+.col{min-width:0;padding:8px 9px 10px;border-right:1px solid #E2E0EF;background:#fff}
+.col:last-child{border-right:0}
+.col:nth-child(odd){background:#FAFAFC}
+.d{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding-bottom:6px;margin-bottom:4px;border-bottom:1px solid #E9E6FF}
+.l{border-left:2.5px solid;padding:4px 0 4px 7px;margin-top:6px;break-inside:avoid}
+.a{font-size:13px;font-weight:700;letter-spacing:.01em}
+.b{font-size:13px;font-weight:600;line-height:1.35;margin-top:1px;color:#1F1B4D}
+.acts{margin:3px 0 0;padding:0 0 0 12px;font-size:13px;font-weight:500;color:#5C5878;line-height:1.35}
+.acts li{margin:0}
+.n{color:#C4C0D4;margin-top:10px;font-size:13px;font-weight:500}
+.day-stack{margin-top:12px;border:1px solid #E2E0EF;border-radius:10px;padding:12px 14px}
+.month-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-top:12px}
+.month-heads{display:contents}
+.month-head{font-size:13px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:#4338E8;padding:0 4px 2px}
+.month-cell{border:1px solid #E2E0EF;border-radius:8px;padding:6px 7px;min-height:72px;break-inside:avoid}
+.month-cell.is-empty{border-style:dashed;background:#FAFAFC;min-height:48px}
+.month-cell .dn{font-size:13px;font-weight:800;color:#4338E8;margin-bottom:4px}
+.foot{margin-top:12px;padding-top:8px;border-top:1px solid #E2E0EF;display:flex;justify-content:space-between;gap:12px;font-size:13px;font-weight:500;color:#77738F}
+</style></head><body>
+<div class="sheet">
+  <header class="mast">
+    <div class="mast-left">
+      <div class="plan-logo">${planLogoImg()}</div>
+      <p class="eyebrow">${esc(eyebrow)}</p>
+      <h1>${esc(rangeLabel)}</h1>
+      <p class="range">${esc(productName)}${productSubtitle ? ` · ${esc(productSubtitle)}` : ''}</p>
+    </div>
+    <div class="mast-right">
+      ${termName ? `<span class="term-pill">${esc(termName)}</span>` : ''}
+      <div class="product-quiet">${esc(companyName)}</div>
+    </div>
+  </header>
+  <div class="accent" aria-hidden="true"></div>
+  ${body}
+  <footer class="foot">
+    <span>© ${esc(copyrightYear)} ${esc(companyName)} · Private reflections are not included</span>
+    <span>Page 1</span>
+  </footer>
+</div>
+</body></html>`;
+}
+
+function printSchedule(
+  view: 'week' | 'day' | 'month',
+  data: PlannerData,
+  anchor: Date,
+  visibleIds: Set<string>,
+  settings?: PrintSettings,
+) {
+  const esc = (s: string) =>
+    s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+  const branding = settings?.branding || {};
+  const rawName = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+  const productName = /Creative\s+Curriculum\s+Designer/i.test(rawName) ? 'CCDesigner' : rawName;
+  const productSubtitle = branding.loginSubtitle || '';
+  const companyName = branding.footerCompanyName || 'CCDesigner';
+  const copyrightYear = branding.footerCopyrightYear || String(new Date().getFullYear());
+  // Every plan carries the CCDesigner logo top-left (not a school/branding override).
+  const absLogo = planLogoUrl();
+  const term = HALF_TERMS.find((h) => h.id === halfTermFor(anchor));
+
+  let rangeLabel = '';
+  let eyebrow = '';
+  let body = '';
+  let pageSize = 'A4 landscape';
+
+  if (view === 'week') {
+    const mon = startOfWeek(anchor);
+    const fri = addDays(mon, 4);
+    rangeLabel = `${mon.toLocaleDateString('en-GB', { day: 'numeric', month: 'long' })} – ${fri.toLocaleDateString('en-GB', { day: 'numeric', month: 'long', year: 'numeric' })}`;
+    eyebrow = 'Week planner';
+    const cols = Array.from({ length: 5 }, (_, i) => {
+      const d = addDays(mon, i);
+      const items = buildDayEntries(d, visibleIds, data.plans, data.slots, data.events)
+        .filter((e) => e.plan)
+        .map((e) => lessonBlockHtml(esc, data, e))
+        .join('');
+      return `<div class="col"><div class="d">${d.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric' })}</div>${items || '<div class="n">—</div>'}</div>`;
+    }).join('');
+    body = `<div class="g">${cols}</div>`;
+  } else if (view === 'day') {
+    const d = nextWeekday(startOfDay(anchor));
+    rangeLabel = d.toLocaleDateString('en-GB', {
+      weekday: 'long',
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric',
+    });
+    eyebrow = 'Day planner';
+    pageSize = 'A4 landscape';
+    const items = buildDayEntries(d, visibleIds, data.plans, data.slots, data.events)
+      .filter((e) => e.plan)
+      .map((e) => lessonBlockHtml(esc, data, e))
+      .join('');
+    body = `<div class="day-stack">${items || '<div class="n">No lessons planned</div>'}</div>`;
+  } else {
+    const first = new Date(anchor.getFullYear(), anchor.getMonth(), 1);
+    const last = new Date(anchor.getFullYear(), anchor.getMonth() + 1, 0);
+    rangeLabel = first.toLocaleDateString('en-GB', { month: 'long', year: 'numeric' });
+    eyebrow = 'Month planner';
+    pageSize = 'A4 landscape';
+    // Mon–Fri grid aligned to weekdays (empty leading/trailing cells)
+    const headers = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri']
+      .map((h) => `<div class="month-head">${h}</div>`)
+      .join('');
+    const cells: string[] = [];
+    // Monday=0 … Friday=4; JS Sunday=0 → convert
+    const firstDow = (first.getDay() + 6) % 7; // Mon=0 … Sun=6
+    const startPad = firstDow <= 4 ? firstDow : 0;
+    // If month starts on Sat/Sun, first printed day is the following Monday
+    let dayCursor = 1;
+    if (firstDow > 4) {
+      dayCursor = 1 + (7 - firstDow);
+    }
+    for (let i = 0; i < startPad; i++) {
+      cells.push(`<div class="month-cell is-empty"></div>`);
+    }
+    while (dayCursor <= last.getDate()) {
+      const d = new Date(anchor.getFullYear(), anchor.getMonth(), dayCursor);
+      const dow = d.getDay();
+      if (dow === 0 || dow === 6) {
+        dayCursor += 1;
+        continue;
+      }
+      const items = buildDayEntries(d, visibleIds, data.plans, data.slots, data.events)
+        .filter((e) => e.plan)
+        .map((e) => lessonBlockHtml(esc, data, e))
+        .join('');
+      cells.push(
+        `<div class="month-cell"><div class="dn">${dayCursor}</div>${items || '<div class="n">—</div>'}</div>`,
+      );
+      dayCursor += 1;
+    }
+    while (cells.length % 5 !== 0) {
+      cells.push(`<div class="month-cell is-empty"></div>`);
+    }
+    body = `<div class="month-grid"><div class="month-heads">${headers}</div>${cells.join('')}</div>`;
+  }
+
+  openPrintHtml(
+    printChrome({
+      esc,
+      title: `${eyebrow} · ${rangeLabel}`,
+      eyebrow,
+      rangeLabel,
+      productName,
+      productSubtitle,
+      companyName,
+      copyrightYear,
+      absLogo,
+      termName: term?.name,
+      body,
+      pageSize,
+    }),
+  );
 }

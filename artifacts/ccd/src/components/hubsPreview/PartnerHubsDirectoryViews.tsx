@@ -75,12 +75,13 @@ function OrgLogoStrip({
   const needsInvert = onDark && !hub.logoSrcOnDark && hub.logoInvert;
   const shell =
     size === 'compact'
-      ? 'flex h-9 w-full items-center justify-center overflow-hidden rounded-lg px-2 py-1'
-      : 'flex h-12 w-full items-center justify-center overflow-hidden rounded-lg px-2.5 py-1.5';
+      ? 'flex h-9 w-full items-center justify-start overflow-hidden rounded-lg py-1 pl-3 pr-12'
+      : 'flex h-12 w-full items-center justify-start overflow-hidden rounded-lg py-2 pl-4 pr-14';
+  /** Fixed logo box: every logo renders at one height, left-aligned, clear of the heart (pr = safe zone). */
   const img =
     size === 'compact'
-      ? 'h-full max-h-7 w-auto max-w-[92%] object-contain'
-      : 'h-full max-h-9 w-auto max-w-[92%] object-contain';
+      ? 'h-6 max-h-6 w-auto max-w-full object-contain object-left'
+      : 'h-8 max-h-8 w-auto max-w-full object-contain object-left';
   return (
     <div
       className={shell}
@@ -126,7 +127,7 @@ function FacetGroup({
 }) {
   return (
     <div className="space-y-2">
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#1F1B4D]/45">{title}</p>
+      <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#1F1B4D]/45">{title}</p>
       <div className="space-y-1">{children}</div>
     </div>
   );
@@ -156,7 +157,7 @@ function FacetRow({
     >
       <span>{label}</span>
       {typeof count === 'number' && (
-        <span className={`tabular-nums text-[12px] ${active ? 'text-white/80' : 'text-[#1F1B4D]/45'}`}>{count}</span>
+        <span className={`tabular-nums text-[13px] ${active ? 'text-white/80' : 'text-[#1F1B4D]/45'}`}>{count}</span>
       )}
     </button>
   );
@@ -280,7 +281,7 @@ function AgeCheckboxRow({
         )}
       </span>
       <span className="min-w-0 flex-1">{label}</span>
-      <span className="tabular-nums text-[12px] text-[#1F1B4D]/45">{count}</span>
+      <span className="tabular-nums text-[13px] text-[#1F1B4D]/45">{count}</span>
     </button>
   );
 }
@@ -515,18 +516,18 @@ export function ArtsOrganisationsDirectoryView() {
         <div className={`flex flex-1 flex-col ${tight ? 'px-2 pb-2 pt-1.5' : 'px-2.5 pb-2.5 pt-2'}`}>
           <h3
             className={`font-bold tracking-tight leading-snug line-clamp-2 ${ink} ${
-              tight ? 'text-[12px]' : 'text-[13px]'
+              tight ? 'text-[13px]' : 'text-[13px]'
             }`}
             title={o.hub.displayName}
           >
             {o.hub.displayName}
           </h3>
-          <p className={`mt-0.5 font-semibold text-[#5B4BDB] ${tight ? 'text-[10px]' : 'text-[11px]'}`}>
+          <p className={`mt-0.5 font-semibold text-[#5B4BDB] ${tight ? 'text-[13px]' : 'text-[13px]'}`}>
             {artFormSubtitle(o)}
           </p>
           <p
             className={`mt-1 leading-snug ${muted} ${
-              tight ? 'line-clamp-1 text-[10px]' : 'line-clamp-2 text-[11px]'
+              tight ? 'line-clamp-1 text-[13px]' : 'line-clamp-2 text-[13px]'
             }`}
           >
             {o.hub.tagline || meta.location}
@@ -615,7 +616,7 @@ export function ArtsOrganisationsDirectoryView() {
               <h2 className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base">
                 {shown.length} arts organisation{shown.length === 1 ? '' : 's'}
               </h2>
-              <p className="text-[10px] font-medium leading-tight text-[#77738F]">A–Z</p>
+              <p className="text-[13px] font-medium leading-tight text-[#5C5878]">A–Z</p>
             </div>
 
             {(view === 'grid' || view === 'compact') && (
@@ -627,7 +628,7 @@ export function ArtsOrganisationsDirectoryView() {
                     : `${gridCols} columns (auto-fits to width)`
                 }
               >
-                <span className="text-[10px] font-bold tabular-nums text-[#5C5878]">{gridCols}</span>
+                <span className="text-[13px] font-bold tabular-nums text-[#5C5878]">{gridCols}</span>
                 <input
                   type="range"
                   min={ORG_GRID_COLS_MIN}
@@ -641,7 +642,7 @@ export function ArtsOrganisationsDirectoryView() {
                 <button
                   type="button"
                   onClick={resetGridColsAuto}
-                  className={`rounded px-1 text-[9px] font-extrabold uppercase tracking-wide ${
+                  className={`rounded px-1 text-[13px] font-extrabold uppercase tracking-wide ${
                     gridColsPinned ? 'text-[#4338E8] hover:bg-[#E9E6FF]' : 'text-[#77738F]'
                   }`}
                 >
@@ -700,10 +701,10 @@ export function ArtsOrganisationsDirectoryView() {
                             <span className={`block truncate text-[13px] font-bold ${ink}`}>
                               {o.hub.displayName}
                             </span>
-                            <span className="block truncate text-[11px] font-semibold text-[#5B4BDB]">
+                            <span className="block truncate text-[13px] font-semibold text-[#5B4BDB]">
                               {artFormSubtitle(o)}
                             </span>
-                            <span className={`block truncate text-[11px] ${muted}`}>
+                            <span className={`block truncate text-[13px] ${muted}`}>
                               {o.hub.tagline || meta.location}
                             </span>
                           </span>
@@ -1052,7 +1053,7 @@ export function PaidResourcesDirectoryView() {
             <OrgLogoStrip hub={l.hub} size={density} />
           ) : (
             <div
-              className={`flex w-full items-center justify-center overflow-hidden rounded-lg px-2 text-[11px] font-bold text-white ${
+              className={`flex w-full items-center justify-center overflow-hidden rounded-lg px-2 text-[13px] font-bold text-white ${
                 tight ? 'h-9' : 'h-12'
               }`}
               style={{ backgroundColor: l.logoBg || '#92400E' }}
@@ -1073,10 +1074,10 @@ export function PaidResourcesDirectoryView() {
           </button>
         </div>
         <div className={`flex flex-1 flex-col ${tight ? 'px-2 pb-2 pt-1.5' : 'px-2.5 pb-2.5 pt-2'}`}>
-          <p className={`font-semibold text-[#B45309] ${tight ? 'text-[10px]' : 'text-[11px]'}`}>{l.subject}</p>
+          <p className={`font-semibold text-[#B45309] ${tight ? 'text-[13px]' : 'text-[13px]'}`}>{l.subject}</p>
           <h3
             className={`mt-0.5 font-bold leading-snug tracking-tight line-clamp-2 ${ink} ${
-              tight ? 'text-[12px]' : 'text-[13px]'
+              tight ? 'text-[13px]' : 'text-[13px]'
             }`}
             title={l.title}
           >
@@ -1084,20 +1085,20 @@ export function PaidResourcesDirectoryView() {
           </h3>
           <p
             className={`mt-1 leading-snug ${muted} ${
-              tight ? 'line-clamp-1 text-[10px]' : 'line-clamp-2 text-[11px]'
+              tight ? 'line-clamp-1 text-[13px]' : 'line-clamp-2 text-[13px]'
             }`}
           >
             {l.description}
           </p>
           <span
             className={`mt-1.5 w-fit rounded-full font-bold ${PAID_TYPE_TONE[l.type]} ${
-              tight ? 'px-1.5 py-0.5 text-[9px]' : 'px-2 py-0.5 text-[10px]'
+              tight ? 'px-1.5 py-0.5 text-[13px]' : 'px-2 py-0.5 text-[13px]'
             }`}
           >
             {l.type}
           </span>
           <div className="mt-auto flex items-center justify-between gap-2 pt-1.5">
-            <p className={`font-bold text-[#92400E] ${tight ? 'text-[11px]' : 'text-[12px]'}`}>{l.priceLabel}</p>
+            <p className={`font-bold text-[#92400E] ${tight ? 'text-[13px]' : 'text-[13px]'}`}>{l.priceLabel}</p>
             <button
               type="button"
               aria-label={`Open ${l.title}`}
@@ -1200,7 +1201,7 @@ export function PaidResourcesDirectoryView() {
               <h2 className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base">
                 {shown.length} paid resource{shown.length === 1 ? '' : 's'}
               </h2>
-              <p className="text-[10px] font-medium leading-tight text-[#77738F]">Popular</p>
+              <p className="text-[13px] font-medium leading-tight text-[#5C5878]">Popular</p>
             </div>
 
             {(view === 'grid' || view === 'compact') && (
@@ -1212,7 +1213,7 @@ export function PaidResourcesDirectoryView() {
                     : `${gridCols} columns (auto-fits to width)`
                 }
               >
-                <span className="text-[10px] font-bold tabular-nums text-[#5C5878]">{gridCols}</span>
+                <span className="text-[13px] font-bold tabular-nums text-[#5C5878]">{gridCols}</span>
                 <input
                   type="range"
                   min={ORG_GRID_COLS_MIN}
@@ -1226,7 +1227,7 @@ export function PaidResourcesDirectoryView() {
                 <button
                   type="button"
                   onClick={resetGridColsAuto}
-                  className={`rounded px-1 text-[9px] font-extrabold uppercase tracking-wide ${
+                  className={`rounded px-1 text-[13px] font-extrabold uppercase tracking-wide ${
                     gridColsPinned ? 'text-[#B45309] hover:bg-[#FEF3C7]' : 'text-[#77738F]'
                   }`}
                 >
@@ -1284,7 +1285,7 @@ export function PaidResourcesDirectoryView() {
                             <OrgLogoMark hub={l.hub} />
                           ) : (
                             <span
-                              className="flex h-9 w-14 shrink-0 items-center justify-center rounded-md text-[9px] font-bold text-white"
+                              className="flex h-9 w-14 shrink-0 items-center justify-center rounded-md text-[13px] font-bold text-white"
                               style={{ backgroundColor: l.logoBg || '#92400E' }}
                             >
                               {(l.logoLabel || l.partnerName).slice(0, 3)}
@@ -1292,10 +1293,10 @@ export function PaidResourcesDirectoryView() {
                           )}
                           <span className="min-w-0 flex-1">
                             <span className={`block truncate text-[13px] font-bold ${ink}`}>{l.title}</span>
-                            <span className="block truncate text-[11px] font-semibold text-[#B45309]">
+                            <span className="block truncate text-[13px] font-semibold text-[#B45309]">
                               {l.subject} · {l.type}
                             </span>
-                            <span className={`block truncate text-[11px] ${muted}`}>{l.priceLabel}</span>
+                            <span className={`block truncate text-[13px] ${muted}`}>{l.priceLabel}</span>
                           </span>
                         </button>
                         <button
@@ -1382,7 +1383,9 @@ export function PartnerSectionTabs({
       off: 'bg-[#FBF3D8] text-[#7A4E0C] hover:bg-[#F7EAC0]',
       chipOn: 'bg-[#C47A1A]',
       chipOff: 'bg-[#C47A1A]',
-      hintOn: 'text-[#6B4410]/70',
+      // Solid colours (no opacity) so the hint meets WCAG AA on the yellow fill
+      hintOn: 'text-[#5A370A]',
+      hintOff: 'text-[#6B4410]',
     },
   ];
 
@@ -1412,7 +1415,7 @@ export function PartnerSectionTabs({
             </span>
             <span className="min-w-0 pr-1">
               <span className="block text-[14px] font-bold tracking-tight sm:text-[15px]">{tab.label}</span>
-              <span className={`mt-0.5 block text-[11px] font-medium sm:text-[12px] ${selected ? tab.hintOn : 'opacity-70'}`}>
+              <span className={`mt-0.5 block text-[13px] font-medium ${selected ? tab.hintOn : ('hintOff' in tab && tab.hintOff) || 'opacity-70'}`}>
                 {tab.hint}
               </span>
             </span>
@@ -1554,18 +1557,7 @@ export function hubWordmark(id: string) {
   return HUB_WORDMARKS[logoId] ?? null;
 }
 
-/** Friendly card title — e.g. "Essex Music Hub", "Cambridgeshire Music". */
-export function musicHubCardTitle(id: string, fullName: string, lead?: string) {
-  if (id === 'cambridgeshire-and-peterborough') return 'Cambridgeshire Music';
-  if (id.includes('essex') || /essex/i.test(fullName)) return 'Greater Essex Music Hub';
-  if (id === 'tri-borough' || id === 'triborough' || /tri-?borough/i.test(fullName)) return 'Tri-borough Music Hub';
-  if (/suffolk/i.test(fullName) || id.includes('suffolk')) return 'Suffolk Music Hub';
-  if (lead && /music$/i.test(lead) && lead.length < 40) return lead;
-  return fullName
-    .replace(/ Music Education Hub$/i, ' Music Hub')
-    .replace(/ and Peterborough/i, '')
-    .replace(/ \(BLMK\)/, '');
-}
+export { musicHubCardTitle } from './hubDisplayName';
 
 export function musicHubCardDetail(id: string, lead?: string, ladCount?: number): string {
   if (id.includes('essex')) return 'Music education, projects and CPD across Essex.';
@@ -1584,6 +1576,7 @@ export function MusicHubResultCard({
   detail,
   onOpen,
   compact = false,
+  alsoCovers,
 }: {
   id: string;
   name: string;
@@ -1592,13 +1585,15 @@ export function MusicHubResultCard({
   detail: string;
   onOpen: () => void;
   compact?: boolean;
+  /** Cross-region hub: name of the region being viewed that it also covers. */
+  alsoCovers?: string;
 }) {
   const [saved, setSaved] = useState(false);
   const [heroFailed, setHeroFailed] = useState(false);
   const wordmark = hubWordmark(id);
   return (
-    <article className="group relative flex flex-col overflow-hidden rounded-lg border border-[#1F1B4D]/[0.08] bg-white text-left shadow-soft transition hover:border-[#0B6B5F]/35 hover:shadow-hover">
-      <button type="button" onClick={onOpen} className="flex min-w-0 flex-col text-left">
+    <article className="group relative flex h-full flex-col overflow-hidden rounded-lg border border-[#1F1B4D]/[0.08] bg-white text-left shadow-soft transition hover:border-[#0B6B5F]/35 hover:shadow-hover">
+      <button type="button" onClick={onOpen} className="flex min-w-0 flex-1 flex-col text-left">
         <div
           className={`relative flex shrink-0 items-center justify-center overflow-hidden ring-1 ring-inset ring-[#1F1B4D]/[0.04] ${
             compact ? 'h-12' : 'h-[72px]'
@@ -1607,9 +1602,7 @@ export function MusicHubResultCard({
         >
           {wordmark ? (
             <span
-              className={`line-clamp-2 px-2 text-center font-bold leading-snug tracking-tight ${
-                compact ? 'text-[10px]' : 'text-[12px]'
-              }`}
+              className="line-clamp-2 px-2 text-center text-[13px] font-bold leading-snug tracking-tight"
               style={{ color: wordmark.color }}
             >
               {wordmark.label}
@@ -1626,30 +1619,33 @@ export function MusicHubResultCard({
             />
           ) : (
             <span
-              className={`line-clamp-2 px-2 text-center font-bold leading-snug text-[#0B6B5F] ${
-                compact ? 'text-[10px]' : 'text-[12px]'
-              }`}
+              className="line-clamp-2 px-2 text-center text-[13px] font-bold leading-snug text-[#0B6B5F]"
             >
               {name}
             </span>
           )}
-          <span className="absolute left-1 top-1 inline-flex max-w-[70%] truncate items-center rounded-full bg-white/95 px-1.5 py-0.5 text-[8px] font-bold leading-none text-[#1F1B4D] shadow-sm ring-1 ring-[#1F1B4D]/[0.06]">
+          <span className="absolute left-1 top-1 inline-flex max-w-[70%] truncate items-center rounded-full bg-white/95 px-1.5 py-0.5 text-[13px] font-bold leading-none text-[#1F1B4D] shadow-sm ring-1 ring-[#1F1B4D]/[0.06]">
             {region}
           </span>
         </div>
-        <div className={`relative flex flex-col ${compact ? 'px-2 pb-1.5 pt-1.5' : 'px-2.5 pb-2 pt-2'}`}>
+        <div className={`relative flex flex-1 flex-col ${compact ? 'px-2 pb-1.5 pt-1.5' : 'px-2.5 pb-2 pt-2'}`}>
           <h3
             className={`line-clamp-2 font-bold leading-snug tracking-tight ${ink} ${
-              compact ? 'text-[11px]' : 'text-[12.5px]'
+              compact ? 'text-[13px]' : 'text-[14px]'
             }`}
           >
             {name}
           </h3>
-          <p className={`mt-0.5 truncate font-medium ${muted} ${compact ? 'text-[9px]' : 'text-[10px]'}`}>
+          <p className={`mt-0.5 truncate font-medium ${muted} text-[13px]`}>
             {location}
           </p>
-          {!compact && <p className={`mt-1 line-clamp-2 text-[10px] leading-snug ${muted}`}>{detail}</p>}
-          <div className="mt-1.5 flex justify-end">
+          {alsoCovers && (
+            <span className="mt-1 inline-flex self-start items-center rounded-full bg-[#F4F3FA] px-2 py-0.5 text-[13px] font-medium text-[#5C5878] ring-1 ring-inset ring-[#1F1B4D]/[0.08]">
+              Also covers {alsoCovers}
+            </span>
+          )}
+          {!compact && <p className={`mt-1 line-clamp-2 text-[13px] leading-snug ${muted}`}>{detail}</p>}
+          <div className="mt-auto flex justify-end pt-1.5">
             <span
               className={`flex shrink-0 items-center justify-center rounded-full bg-[#E4F4EF] text-[#0B6B5F] transition group-hover:bg-[#0B6B5F] group-hover:text-white ${
                 compact ? 'h-5 w-5' : 'h-6 w-6'
@@ -1700,12 +1696,12 @@ export function MusicHubListRow({
       </span>
       <span className="min-w-0 flex-1">
         <span className={`block truncate text-[14px] font-bold ${ink}`}>{name}</span>
-        <span className={`mt-0.5 flex items-center gap-1 truncate text-[12px] ${muted}`}>
+        <span className={`mt-0.5 flex items-center gap-1 truncate text-[13px] ${muted}`}>
           <MapPin className="h-3 w-3 shrink-0" aria-hidden />
           {location || region}
         </span>
       </span>
-      <span className="hidden text-[12px] font-semibold text-[#4338E8] sm:inline">Explore →</span>
+      <span className="hidden text-[13px] font-semibold text-[#4338E8] sm:inline">Explore →</span>
     </button>
   );
 }
@@ -1733,7 +1729,7 @@ export function MusicHubsResultsHeader({
       <div className="flex items-center gap-2">
         <button
           type="button"
-          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[12px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10"
+          className="inline-flex min-h-[36px] items-center gap-1.5 rounded-full bg-white px-3.5 text-[13px] font-semibold text-[#1F1B4D] ring-1 ring-inset ring-[#1F1B4D]/10"
         >
           Sort by: A–Z
           <ChevronDown className="h-3.5 w-3.5 opacity-50" aria-hidden />
@@ -1769,7 +1765,7 @@ export function SelectedAreaPanel({
 
   return (
     <aside className="flex h-full min-h-[260px] flex-col rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-5 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:p-6">
-      <p className="text-[11px] font-extrabold uppercase tracking-[0.16em] text-[#1F1B4D]/45">Selected area</p>
+      <p className="text-[13px] font-extrabold uppercase tracking-[0.16em] text-[#1F1B4D]/45">Selected area</p>
 
       <div className="mt-3 min-w-0">
         <h3 className="text-[22px] font-bold leading-tight tracking-tight text-[#1F1B4D] sm:text-[24px]">{title}</h3>
@@ -1785,14 +1781,14 @@ export function SelectedAreaPanel({
 
       {localAreas.length > 0 && (
         <div className="mt-4">
-          <p className="text-[11px] font-bold uppercase tracking-[0.1em] text-[#1F1B4D]/45">Local areas</p>
+          <p className="text-[13px] font-bold uppercase tracking-[0.1em] text-[#1F1B4D]/45">Local areas</p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {localAreas.slice(0, 8).map((a) => (
               <button
                 key={a}
                 type="button"
                 onClick={() => onSelectLocalArea?.(a)}
-                className="rounded-full bg-[#E4F4EF] px-2.5 py-1 text-[12px] font-semibold text-[#0B6B5F] transition hover:bg-[#0B6B5F] hover:text-white"
+                className="rounded-full bg-[#E4F4EF] px-2.5 py-1 text-[13px] font-semibold text-[#0B6B5F] transition hover:bg-[#0B6B5F] hover:text-white"
               >
                 {a}
               </button>

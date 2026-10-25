@@ -37,24 +37,33 @@ export function sanitizeHtml(html: string): string {
   }));
 }
 
-const HTML_ESCAPE_MAP: Record<string, string> = {
-  '&': '&amp;',
-  '<': '&lt;',
-  '>': '&gt;',
-  '"': '&quot;',
-  "'": '&#39;',
-};
+export { escapeHtmlText } from './escapeHtml';
 
-export function escapeHtmlText(text: string): string {
-  if (!text) return '';
-  return String(text).replace(/[&<>"']/g, (ch) => HTML_ESCAPE_MAP[ch] ?? ch);
+/** Strip tags for plain-text UI (run-through cards, canvas previews). */
+export function htmlToPlainText(html: string): string {
+  if (!html) return '';
+  const raw = String(html);
+  if (!raw.includes('<')) return raw.trim();
+  try {
+    if (typeof document !== 'undefined') {
+      const el = document.createElement('div');
+      el.innerHTML = sanitizeHtml(raw);
+      return (el.textContent || el.innerText || '').replace(/\s+\n/g, '\n').trim();
+    }
+  } catch {
+    /* fall through */
+  }
+  return raw
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/p>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/\n{3,}/g, '\n\n')
+    .trim();
 }
 
-const SAFE_URL_PATTERN = /^(https?:\/\/|\/|\.\/|#)/i;
-
-export function sanitizeUrl(url: string): string {
-  if (!url) return '#';
-  const trimmed = url.trim();
-  if (SAFE_URL_PATTERN.test(trimmed)) return trimmed;
-  return '#';
-}
+export { sanitizeUrl } from './safeUrl';

@@ -15,6 +15,15 @@ import type {
   BulkObjectiveOperation
 } from '../types/customObjectives';
 
+async function requireOrganisationId(): Promise<string> {
+  const { resolveOrganisationId } = await import('./api');
+  const organisationId = await resolveOrganisationId();
+  if (!organisationId) {
+    throw new Error('organisation_id is required for custom objectives writes.');
+  }
+  return organisationId;
+}
+
 // Custom Objectives API
 export const customObjectivesApi = {
   // Year Groups Management
@@ -52,9 +61,10 @@ export const customObjectivesApi = {
 
     create: async (yearGroup: Omit<CustomObjectiveYearGroup, 'id' | 'created_at' | 'updated_at'>): Promise<CustomObjectiveYearGroup> => {
       try {
+        const organisationId = await requireOrganisationId();
         const { data, error } = await supabase
           .from(TABLES.CUSTOM_OBJECTIVE_YEAR_GROUPS)
-          .insert(yearGroup)
+          .insert({ ...yearGroup, organisation_id: organisationId })
           .select()
           .single();
         
@@ -133,9 +143,10 @@ export const customObjectivesApi = {
 
     create: async (area: Omit<CustomObjectiveArea, 'id' | 'created_at' | 'updated_at'>): Promise<CustomObjectiveArea> => {
       try {
+        const organisationId = await requireOrganisationId();
         const { data, error } = await supabase
           .from(TABLES.CUSTOM_OBJECTIVE_AREAS)
-          .insert(area)
+          .insert({ ...area, organisation_id: organisationId })
           .select()
           .single();
         
@@ -220,9 +231,10 @@ export const customObjectivesApi = {
           objective_code: objective.objective_code || `OBJ${Date.now()}-${Math.random().toString(36).substr(2, 4)}`
         };
         
+        const organisationId = await requireOrganisationId();
         const { data, error } = await supabase
           .from(TABLES.CUSTOM_OBJECTIVES)
-          .insert(objectiveWithCode)
+          .insert({ ...objectiveWithCode, organisation_id: organisationId })
           .select()
           .single();
         
@@ -355,24 +367,36 @@ export const customObjectivesApi = {
 
     setForActivity: async (activityId: string, objectiveIds: string[]): Promise<void> => {
       try {
-        // First, remove existing objectives for this activity
-        const { error: deleteError } = await supabase
+        const { resolveOrganisationId } = await import('./api');
+        const organisationId = await resolveOrganisationId();
+        if (!organisationId) {
+          throw new Error('organisation_id is required to save activity custom objectives.');
+        }
+
+        // First, remove existing objectives for this activity (org-scoped)
+        let deleteQuery = supabase
           .from(TABLES.ACTIVITY_CUSTOM_OBJECTIVES)
           .delete()
-          .eq('activity_id', activityId);
+          .eq('activity_id', activityId)
+          .eq('organisation_id', organisationId);
+        const { error: deleteError } = await deleteQuery;
         
         if (deleteError) throw deleteError;
         
-        // Then, insert new objectives
+        // Then, upsert new objectives against org-scoped unique pair
         if (objectiveIds.length > 0) {
           const insertData = objectiveIds.map(objectiveId => ({
             activity_id: activityId,
-            objective_id: objectiveId
+            objective_id: objectiveId,
+            organisation_id: organisationId,
           }));
           
           const { error: insertError } = await supabase
             .from(TABLES.ACTIVITY_CUSTOM_OBJECTIVES)
-            .insert(insertData);
+            .upsert(insertData, {
+              onConflict: 'organisation_id,activity_id,objective_id',
+              ignoreDuplicates: false,
+            });
           
           if (insertError) throw insertError;
         }

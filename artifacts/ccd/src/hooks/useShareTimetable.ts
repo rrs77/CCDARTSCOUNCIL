@@ -1,18 +1,7 @@
 import { useState } from 'react';
 import { supabase } from '../config/supabase';
+import { buildTimetableShareHtml, type TimetableClass } from '../utils/timetableShareHtml';
 
-interface TimetableClass {
-  id: string;
-  day: number; // 0-6 for Sunday-Saturday
-  startTime: string; // HH:MM format
-  endTime: string; // HH:MM format
-  className: string;
-  location: string;
-  color: string;
-  recurringUnitId?: string;
-}
-
-const DAY_NAMES = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
 export function useShareTimetable() {
   const [isSharing, setIsSharing] = useState(false);
@@ -43,150 +32,6 @@ export function useShareTimetable() {
     }
   };
 
-  // Generate HTML content for timetable PDF
-  const generateHTMLContent = (timetableClasses: TimetableClass[], className: string) => {
-    // Group classes by day
-    const classesByDay: { [day: number]: TimetableClass[] } = {};
-    DAY_NAMES.forEach((_, dayIndex) => {
-      classesByDay[dayIndex] = timetableClasses.filter(tClass => tClass.day === dayIndex);
-    });
-
-    let htmlContent = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="UTF-8">
-        <title>Class Timetable - ${className}</title>
-        <script src="https://cdn.tailwindcss.com"></script>
-        <style>  
-          @page {
-            size: A4;
-            margin: 1cm;
-          }
-          
-          .timetable-page {
-            width: 21cm;
-            min-height: 29.7cm;
-            padding: 1cm;
-            margin: 0 auto 2cm auto;
-            background: white;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            page-break-after: always;
-            break-after: always;
-          }
-          
-          .timetable-page:last-child {
-            margin-bottom: 0;
-          }
-          
-          @media print {
-            .timetable-page {
-              box-shadow: none;
-              margin: 0;
-              padding: 0;
-              width: 100%;
-              min-height: auto;
-            }
-            
-            .timetable-page:not(:last-child) {
-              page-break-after: always;
-              break-after: always;
-            }
-            
-            * {
-              -webkit-print-color-adjust: exact !important;
-              color-adjust: exact !important;
-              print-color-adjust: exact !important;
-            }
-          }
-
-          .day-section {
-            margin-bottom: 1.5rem;
-            page-break-inside: avoid;
-          }
-
-          .class-item {
-            border-left: 4px solid;
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            background: #f9fafb;
-            border-radius: 0.25rem;
-          }
-        </style>
-      </head>
-      <body>
-        <div class="timetable-page">
-          <div class="mb-6">
-            <h1 class="text-3xl font-bold mb-2">Class Timetable</h1>
-            <p class="text-gray-600 text-lg">${className}</p>
-          </div>
-    `;
-
-    // Add classes grouped by day
-    DAY_NAMES.forEach((dayName, dayIndex) => {
-      const classesForDay = classesByDay[dayIndex];
-      if (classesForDay && classesForDay.length > 0) {
-        // Sort by start time
-        const sortedClasses = [...classesForDay].sort((a, b) => {
-          const aTime = a.startTime.split(':').map(Number);
-          const bTime = b.startTime.split(':').map(Number);
-          const aMinutes = aTime[0] * 60 + aTime[1];
-          const bMinutes = bTime[0] * 60 + bTime[1];
-          return aMinutes - bMinutes;
-        });
-
-        htmlContent += `
-          <div class="day-section">
-            <h2 class="text-xl font-semibold mb-3 pb-2 border-b-2 border-teal-500">
-              ${dayName}
-            </h2>
-            <div class="space-y-2">
-        `;
-        
-        sortedClasses.forEach((tClass) => {
-          htmlContent += `
-            <div class="class-item" style="border-left-color: ${tClass.color};">
-              <div class="flex items-center justify-between">
-                <div>
-                  <div class="font-semibold text-gray-900">${tClass.className}</div>
-                  <div class="text-sm text-gray-600 mt-1">
-                    <span>${tClass.startTime} - ${tClass.endTime}</span>
-                    ${tClass.location ? `<span class="ml-3">📍 ${tClass.location}</span>` : ''}
-                  </div>
-                </div>
-                <div 
-                  class="w-4 h-4 rounded-full"
-                  style="background-color: ${tClass.color};"
-                ></div>
-              </div>
-            </div>
-          `;
-        });
-        
-        htmlContent += `
-            </div>
-          </div>
-        `;
-      }
-    });
-
-    htmlContent += `
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Footer content
-    const footerContent = `
-      <div style="font-size: 10px; text-align: center; width: 100%; padding: 10px 0; color: #666;">
-        <span>${className} - Class Timetable</span>
-        <span style="margin: 0 10px;">|</span>
-        <span>Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
-      </div>
-    `;
-
-    return [htmlContent, footerContent];
-  };
 
   // Encode to base64
   const encodeUnicodeBase64 = (str: string): string => {
@@ -257,7 +102,7 @@ export function useShareTimetable() {
       }
 
       // Generate HTML content
-      const [htmlContent, footerContent] = generateHTMLContent(timetableClasses, className);
+      const [htmlContent, footerContent] = buildTimetableShareHtml(timetableClasses, className);
       const encodedHtml = encodeUnicodeBase64(htmlContent);
       const encodedFooter = encodeUnicodeBase64(footerContent);
 

@@ -3,6 +3,10 @@ export default {
   content: ['./index.html', './src/**/*.{js,ts,jsx,tsx}'],
   theme: {
     extend: {
+      // App-wide minimum text size is 13px (Rob). text-xs was 12px.
+      fontSize: {
+        xs: ['13px', { lineHeight: '18px' }],
+      },
       // Minimal additions for PWA install prompt
       backgroundImage: {
         'gradient-primary': 'linear-gradient(135deg, #0ec8b8 0%, #0ea4d4 100%)',

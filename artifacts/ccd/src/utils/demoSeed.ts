@@ -455,14 +455,40 @@ export async function seedDemoData(): Promise<void> {
     }
 
     const now = new Date().toISOString();
+    // The snapshot's half_terms rows only carry loose lessons (stacks is always
+    // empty), so every demo half-term showed "0 schemes". Group each sheet's
+    // term lessons into one demo scheme of work (a lesson stack) and link it.
+    const demoSchemeStacks: Record<string, unknown>[] = [];
+    const schemePalette = ['#4338E8', '#0B6B5F', '#B45309', '#BE185D', '#0369A1', '#6D28D9'];
     for (const { sheet } of sheetNames) {
       const lessonsByTerm = bySheet[sheet] || {};
-      const halfTerms = HALF_TERM_DEFS.map((t) => ({
+      const halfTerms = HALF_TERM_DEFS.map((t, ti) => {
+        const termLessons = lessonsByTerm[t.id] || [];
+        let stackIds: string[] = [];
+        if (termLessons.length > 0) {
+          const id = `demo-scheme-${sheet}-${t.id}`.replace(/[^A-Za-z0-9_-]/g, '-');
+          stackIds = [id];
+          demoSchemeStacks.push({
+            id,
+            name: `${t.name} scheme`,
+            description: `Demo scheme of work for ${sheet}, ${t.name}`,
+            color: schemePalette[ti % schemePalette.length],
+            lessons: termLessons,
+            total_time: 0,
+            total_activities: 0,
+            custom_objectives: [],
+            curriculum_type: 'CUSTOM',
+            created_at: now,
+            updated_at: now,
+          });
+        }
+        return { t, termLessons, stackIds };
+      }).map(({ t, termLessons, stackIds }) => ({
         id: t.id,
         name: t.name,
         months: t.months,
-        lessons: lessonsByTerm[t.id] || [],
-        stacks: [],
+        lessons: termLessons,
+        stacks: stackIds,
         isComplete: false,
         createdAt: now,
         updatedAt: now,
@@ -629,7 +655,29 @@ export async function seedDemoData(): Promise<void> {
     }
 
     // ---- 6. Stacks ----
-    writeDemoTable('lesson_stacks', tables.lesson_stacks || []);
+    const lessonStackRows = [...(tables.lesson_stacks || []), ...demoSchemeStacks];
+    writeDemoTable('lesson_stacks', lessonStackRows);
+    try {
+      localStorage.setItem(
+        'lesson-stacks',
+        JSON.stringify(
+          lessonStackRows.map((r: any) => ({
+            id: r.id,
+            name: r.name,
+            description: r.description,
+            color: r.color,
+            lessons: r.lessons || [],
+            totalTime: r.total_time || 0,
+            totalActivities: r.total_activities || 0,
+            customObjectives: r.custom_objectives || [],
+            curriculumType: r.curriculum_type,
+            created_at: r.created_at,
+          })),
+        ),
+      );
+    } catch {
+      /* quota */
+    }
     writeDemoTable('activity_stacks', tables.activity_stacks || []);
     const activityStacks = (tables.activity_stacks || []).map((s) => ({
       id: s.id,

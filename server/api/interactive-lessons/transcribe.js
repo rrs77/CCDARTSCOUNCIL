@@ -38,7 +38,7 @@ export async function GET() {
 }
 
 export async function POST(request) {
-  if (request.method === 'OPTIONS') return optionsResponse();
+  if (request.method === 'OPTIONS') return optionsResponse(request);
 
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
@@ -136,7 +136,7 @@ export async function POST(request) {
 
 export default async function handler(request) {
   if (request.method === 'OPTIONS') {
-    return new Response(null, { status: 204, headers: corsHeaders() });
+    return new Response(null, { status: 204, headers: corsHeaders({}, request) });
   }
   if (request.method === 'GET') return GET(request);
   if (request.method === 'POST') return POST(request);

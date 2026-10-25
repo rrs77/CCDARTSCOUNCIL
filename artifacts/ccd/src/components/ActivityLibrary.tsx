@@ -1324,7 +1324,7 @@ export function ActivityLibrary({
                 type="button"
                 onClick={() => setLibraryToolsOpen((v) => !v)}
                 className={`${toolBtn} ${libraryToolsOpen ? toolBtnOn : ''}`}
-                title="More tools"
+                title="Library filters"
                 aria-expanded={libraryToolsOpen}
               >
                 <Filter className="h-4 w-4" />

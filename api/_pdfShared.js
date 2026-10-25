@@ -2,78 +2,75 @@
  * Shared PDFBolt helpers for Vercel serverless routes.
  */
 
+import {
+  assertRateLimit,
+  corsHeaders as sharedCorsHeaders,
+  getClientIp,
+  jsonResponse as sharedJsonResponse,
+  optionsResponse as sharedOptionsResponse,
+  requireAuth,
+  resolveCorsOrigin,
+} from './_authShared.js';
+
+export { resolveCorsOrigin };
+
 export const PDFBOLT_API_URL = 'https://api.pdfbolt.com/v1/direct';
 export const DEFAULT_SUPABASE_URL = 'https://wiudrzdkbpyziaodqoog.supabase.co';
-export const MAX_HTML_BYTES = 40 * 1024 * 1024;
+/** Cap HTML payloads early to reduce proxy abuse (PDFBolt also enforces limits). */
+export const MAX_HTML_BYTES = 5 * 1024 * 1024;
 
-export function corsHeaders(extra = {}) {
-  return {
-    'Access-Control-Allow-Origin': '*',
-    'Access-Control-Allow-Methods': 'POST, OPTIONS',
-    'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-    ...extra,
-  };
-}
+const DEFAULT_MARGIN = {
+  top: '15px',
+  right: '20px',
+  left: '20px',
+  bottom: '55px',
+};
 
-export function jsonResponse(body, status = 200) {
-  return new Response(JSON.stringify(body), {
-    status,
-    headers: {
-      'Content-Type': 'application/json',
-      ...corsHeaders(),
+/** Keys allowed through to PDFBolt — never forward arbitrary client JSON. */
+const PDFBOLT_ALLOWED_KEYS = new Set([
+  'html',
+  'printBackground',
+  'waitUntil',
+  'format',
+  'margin',
+  'displayHeaderFooter',
+  'footerTemplate',
+  'headerTemplate',
+  'emulateMediaType',
+]);
+
+export function corsHeaders(extra = {}, request = null) {
+  return sharedCorsHeaders(
+    {
+      'Access-Control-Allow-Methods': 'POST, OPTIONS',
+      ...extra,
     },
-  });
+    request,
+  );
 }
 
-export function optionsResponse() {
-  return new Response(null, { status: 204, headers: corsHeaders() });
+export function jsonResponse(body, status = 200, request = null) {
+  return sharedJsonResponse(body, status, {}, request);
+}
+
+export function optionsResponse(request = null) {
+  return sharedOptionsResponse(request);
 }
 
 export function getPdfBoltApiKey() {
-  return process.env.PDFBOLT_API_KEY || process.env.VITE_PDFBOLT_API_KEY || '';
+  // Server-only. Do not fall back to VITE_* (would encourage shipping keys to the client).
+  return process.env.PDFBOLT_API_KEY || '';
 }
 
 /**
- * Optional JWT check. When SUPABASE_JWT_SECRET is unset, allow the request
- * (PDFBOLT key still required) so export works after setting only PDFBOLT_API_KEY.
+ * Require a valid Supabase JWT and apply a per-IP rate limit.
+ * @returns {Promise<{ ok: true, userId: string, ... } | { ok: false, response: Response }>}
  */
 export async function assertAuthorized(request) {
-  const jwtSecret = process.env.SUPABASE_JWT_SECRET;
-  if (!jwtSecret) return { ok: true };
-
-  const authHeader = request.headers.get('authorization') || '';
-  const token = authHeader.replace(/^Bearer\s+/i, '').trim();
-  if (!token) {
-    return { ok: false, response: jsonResponse({ error: 'Unauthorized' }, 401) };
-  }
-
-  try {
-    const parts = token.split('.');
-    if (parts.length !== 3) {
-      return { ok: false, response: jsonResponse({ error: 'Unauthorized' }, 401) };
-    }
-    // Prefer jose if available; fall back to soft decode + HMAC via Web Crypto
-    const enc = new TextEncoder();
-    const key = await crypto.subtle.importKey(
-      'raw',
-      enc.encode(jwtSecret),
-      { name: 'HMAC', hash: 'SHA-256' },
-      false,
-      ['verify'],
-    );
-    const data = enc.encode(`${parts[0]}.${parts[1]}`);
-    const sig = Uint8Array.from(
-      atob(parts[2].replace(/-/g, '+').replace(/_/g, '/')),
-      (c) => c.charCodeAt(0),
-    );
-    const valid = await crypto.subtle.verify('HMAC', key, sig, data);
-    if (!valid) {
-      return { ok: false, response: jsonResponse({ error: 'Unauthorized' }, 401) };
-    }
-    return { ok: true };
-  } catch {
-    return { ok: false, response: jsonResponse({ error: 'Unauthorized' }, 401) };
-  }
+  const ip = getClientIp(request) || 'unknown';
+  const limited = assertRateLimit(`pdf:${ip}`, { limit: 20, windowMs: 60_000 });
+  if (!limited.ok) return limited.response;
+  return requireAuth(request);
 }
 
 export async function generatePdfBuffer(apiKey, body) {
@@ -87,25 +84,72 @@ export async function generatePdfBuffer(apiKey, body) {
   });
 
   if (!upstream.ok) {
-    const errorText = await upstream.text();
-    const err = new Error(`PDFBolt error: ${upstream.status} ${errorText}`);
-    err.status = upstream.status;
+    const errorText = await upstream.text().catch(() => '');
+    // Log upstream detail server-side; never return raw provider text to clients.
+    console.error(
+      'PDFBolt upstream error:',
+      upstream.status,
+      String(errorText).slice(0, 300),
+    );
+    const err = new Error('PDF generation failed.');
+    err.status = upstream.status >= 400 && upstream.status < 600 ? upstream.status : 502;
     throw err;
   }
 
   return Buffer.from(await upstream.arrayBuffer());
 }
 
+function sanitiseMargin(margin) {
+  if (!margin || typeof margin !== 'object' || Array.isArray(margin)) {
+    return { ...DEFAULT_MARGIN };
+  }
+  const out = { ...DEFAULT_MARGIN };
+  for (const key of ['top', 'right', 'left', 'bottom']) {
+    const v = margin[key];
+    if (typeof v === 'string' && v.length <= 20 && /^[0-9.]+(px|mm|cm|in)?$/i.test(v)) {
+      out[key] = v;
+    }
+  }
+  return out;
+}
+
+/**
+ * Build a whitelisted PDFBolt payload from a share/export request body.
+ * Unknown keys are dropped.
+ */
 export function pdfBoltPayloadFromShareBody(body) {
+  const html = typeof body?.html === 'string' ? body.html : '';
+  const footerTemplate =
+    typeof body?.footerTemplate === 'string' ? body.footerTemplate : '';
+  const headerTemplate =
+    typeof body?.headerTemplate === 'string' ? body.headerTemplate : '';
+
   return {
-    html: body.html,
+    html,
     printBackground: true,
     waitUntil: 'networkidle',
     format: 'A4',
-    margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+    margin: sanitiseMargin(body?.margin),
     displayHeaderFooter: true,
-    footerTemplate: body.footerTemplate || '',
-    headerTemplate: body.headerTemplate || '',
+    footerTemplate,
+    headerTemplate,
     emulateMediaType: 'screen',
   };
+}
+
+/**
+ * Whitelist an arbitrary client body (e.g. /api/pdf/generate) before PDFBolt.
+ */
+export function whitelistPdfBoltPayload(body) {
+  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+    return pdfBoltPayloadFromShareBody({});
+  }
+  // Start from the safe share shape, then only copy known keys that we already sanitise.
+  const base = pdfBoltPayloadFromShareBody(body);
+  // Drop anything that somehow snuck onto base outside the allowlist.
+  const out = {};
+  for (const key of PDFBOLT_ALLOWED_KEYS) {
+    if (key in base) out[key] = base[key];
+  }
+  return out;
 }

@@ -12,6 +12,7 @@ import {
   Trash2,
   Youtube,
   Eye,
+  Copy,
 } from 'lucide-react';
 import { useAuth } from '../../../hooks/useAuth';
 import { useCanEditInteractiveLessons } from '../hooks/useCanEditInteractiveLessons';
@@ -23,6 +24,7 @@ import {
   saveInteractiveLesson,
 } from '../data/store';
 import { buildDemoInteractiveLesson } from '../data/demoLesson';
+import { isBuiltInDemo } from '../data/demoGuard';
 import type { InteractiveLesson, InteractiveLessonSummary, SlidesLibraryTab } from '../types';
 import { createId, emptyScene } from '../types';
 import { InteractiveLessonEditor } from './editor/InteractiveLessonEditor';
@@ -161,10 +163,11 @@ export function InteractiveLessonHub() {
   }, [refresh]);
 
   const [launchScene, setLaunchScene] = useState(0);
+  const [launchReturnTo, setLaunchReturnTo] = useState<string | null>(null);
 
-  // Deep-link: /?tab=lesson-viewer&play=<id>&mode=player&scene=N → classroom player only
+  // Deep-link: /?tab=lesson-viewer&play=<id>&mode=player&scene=N&return=… → classroom player
   useEffect(() => {
-    const { playId, playerOnly: only, sceneIndex } = readPlayerLaunchFromLocation();
+    const { playId, playerOnly: only, sceneIndex, returnTo } = readPlayerLaunchFromLocation();
     if (!playId) return;
     let cancelled = false;
     void (async () => {
@@ -173,6 +176,7 @@ export function InteractiveLessonHub() {
       if (lesson) {
         setPlayerOnly(only);
         setLaunchScene(Math.max(0, Math.min(sceneIndex, lesson.scenes.length - 1)));
+        setLaunchReturnTo(returnTo);
         setPlaying(lesson);
         setUnavailable('');
       } else if (reason === 'unpublished') {
@@ -182,6 +186,7 @@ export function InteractiveLessonHub() {
       }
       try {
         const params = new URLSearchParams(window.location.search);
+        // Keep return until player closes so Back can use it; drop play/mode/scene.
         params.delete('play');
         params.delete('mode');
         params.delete('scene');
@@ -228,9 +233,11 @@ export function InteractiveLessonHub() {
       setError('Slides not found');
       return;
     }
-    if (lesson.isDemo || lesson.ownerId !== userId) {
+    if (isBuiltInDemo(lesson) || lesson.ownerId !== userId) {
+      const fromDemo = isBuiltInDemo(lesson) || Boolean(lesson.derivedFromDemo);
       const copy: InteractiveLesson = {
         ...structuredClone(lesson),
+        ...(fromDemo ? { source: 'user' as const, derivedFromDemo: true, tags: lesson.tags } : {}),
         id: createId('ilv'),
         title: `${lesson.title} (copy)`,
         ownerId: userId,
@@ -334,7 +341,7 @@ export function InteractiveLessonHub() {
             placeholder="Search title, tags, subject…"
           />
         </label>
-        <p className="text-[12px] font-medium text-[var(--ss-muted)]">
+        <p className="text-[13px] font-medium text-[var(--ss-muted)]">
           {loading ? 'Loading…' : `${items.length} deck${items.length === 1 ? '' : 's'}`}
         </p>
       </div>
@@ -348,7 +355,8 @@ export function InteractiveLessonHub() {
       ) : (
         <div className="ilv-hub-grid">
           {items.map((item) => {
-            const canDelete = canEdit && !item.isDemo && item.ownerId === userId;
+            const builtIn = isBuiltInDemo(item);
+            const canDelete = canEdit && !builtIn && item.ownerId === userId;
             return (
               <article key={item.id} className="ilv-lesson-tile">
                 <button
@@ -384,7 +392,14 @@ export function InteractiveLessonHub() {
                       {item.status}
                     </span>
                     <span className="ilv-chip">{item.sceneCount} scenes</span>
-                    {item.isDemo && <span className="ilv-chip ilv-chip-sun">Demo</span>}
+                    {builtIn && (
+                      <span
+                        className="ilv-chip ilv-chip-sun text-[13px]"
+                        title="Built-in demo for every user. It can’t be deleted or edited — make a copy to change it."
+                      >
+                        Built-in demo
+                      </span>
+                    )}
                     <span className="ilv-lesson-tile-edited">{formatRelativeEdited(item.updatedAt)}</span>
                   </div>
 
@@ -403,11 +418,11 @@ export function InteractiveLessonHub() {
                         className="ilv-btn ilv-btn-secondary"
                         onClick={() => void openEditor(item.id)}
                       >
-                        <Pencil className="h-4 w-4" />
-                        Edit
+                        {builtIn ? <Copy className="h-4 w-4" /> : <Pencil className="h-4 w-4" />}
+                        {builtIn ? 'Make a copy' : 'Edit'}
                       </button>
                     ) : (
-                      <span className="inline-flex items-center gap-1 px-2 text-[12px] text-[var(--ss-muted)]">
+                      <span className="inline-flex items-center gap-1 px-2 text-[13px] text-[var(--ss-muted)]">
                         <Eye className="h-3.5 w-3.5" />
                         View only
                       </span>
@@ -479,20 +494,31 @@ export function InteractiveLessonHub() {
           playerOnly={playerOnly}
           canEdit={canEdit}
           startSceneIndex={launchScene}
+          returnLabel={launchReturnTo ? 'Back to planner' : undefined}
           onEdit={
             canEdit
               ? () => {
                   setPlaying(null);
                   setPlayerOnly(false);
                   setLaunchScene(0);
+                  setLaunchReturnTo(null);
                   void openEditor(playing.id);
                 }
               : undefined
           }
           onClose={() => {
+            const back = launchReturnTo;
             setPlaying(null);
             setPlayerOnly(false);
             setLaunchScene(0);
+            setLaunchReturnTo(null);
+            if (back) {
+              try {
+                window.location.assign(back);
+              } catch {
+                /* ignore */
+              }
+            }
           }}
         />
       )}

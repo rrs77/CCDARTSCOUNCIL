@@ -18,8 +18,8 @@ import {
   validateExternalUrl,
 } from '../../../../../api/_hubShared.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
 }
 
 function idsFrom(request, context) {

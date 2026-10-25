@@ -3,6 +3,7 @@ import { ExternalLink } from 'lucide-react';
 import type { LyricLine, LyricsDisplayOptions, Scene, TextOverlay } from '../types';
 import { DEFAULT_LYRICS_DISPLAY, TEXT_FONT_OPTIONS, TEXT_PRESET_DEFAULTS } from '../types';
 import { activeLyricIndex } from '../utils/lyricsSync';
+import { isAutoplayBlocked, shouldSeekMedia } from '../utils/mediaClock';
 import {
   canvaOpenUrl,
   isCanvaShortlink,
@@ -50,6 +51,10 @@ interface SceneRendererProps {
   onMediaEnded?: () => void;
   /** Override media URL (e.g. player vocal/backing switch). */
   mediaUrlOverride?: string | null;
+  /** Media-end scene timed by the media element itself (no clock re-seek). */
+  mediaDriven?: boolean;
+  /** Reports the media element's own playhead (ms) for media-driven scenes. */
+  onMediaTime?: (ms: number) => void;
 }
 
 function vimeoEmbed(url: string): string {
@@ -287,6 +292,8 @@ export function SceneRenderer({
   reducedMotion = false,
   onMediaEnded,
   mediaUrlOverride = null,
+  mediaDriven = false,
+  onMediaTime,
 }: SceneRendererProps) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const audioRef = useRef<HTMLAudioElement>(null);
@@ -295,6 +302,7 @@ export function SceneRenderer({
   const lyricDragRef = useRef<{ startY: number; origPos: string } | null>(null);
   const editElsRef = useRef<Record<string, HTMLDivElement | null>>({});
   const endedRef = useRef(false);
+  const [needsSoundTap, setNeedsSoundTap] = useState(false);
   const [selectedLyricId, setSelectedLyricId] = useState<string | null>(null);
   const [editingLyricId, setEditingLyricId] = useState<string | null>(null);
   const [guides, setGuides] = useState<GuideLine[]>([]);
@@ -307,23 +315,80 @@ export function SceneRenderer({
     endedRef.current = false;
   }, [scene.id]);
 
+  // Clock-driven media only: re-sync to the player clock once buffered and not mid-seek.
   useEffect(() => {
     const media = videoRef.current || audioRef.current;
     if (!media || !activeMediaUrl) return;
     const local = timeMs / 1000;
-    if (Math.abs(media.currentTime - local) > 0.35) {
+    if (
+      shouldSeekMedia({
+        mediaDriven,
+        readyState: media.readyState,
+        seeking: media.seeking,
+        currentTimeSec: media.currentTime,
+        targetSec: local,
+      })
+    ) {
       try {
         media.currentTime = local;
       } catch {
         /* ignore seek errors while loading */
       }
     }
-    if (playing) {
-      void media.play().catch(() => undefined);
-    } else {
+  }, [timeMs, activeMediaUrl, scene.id, mediaDriven]);
+
+  // Play/pause: wait for canplay; if unmuted autoplay is refused, retry muted and offer sound.
+  useEffect(() => {
+    const media = videoRef.current || audioRef.current;
+    if (!media || !activeMediaUrl) return;
+    if (!playing) {
       media.pause();
+      return;
     }
-  }, [playing, timeMs, activeMediaUrl, scene.id]);
+    let cancelled = false;
+    const start = () => {
+      if (cancelled) return;
+      media.play().catch((err: unknown) => {
+        if (cancelled || !isAutoplayBlocked(err)) return;
+        media.muted = true;
+        setNeedsSoundTap(true);
+        void media.play().catch(() => undefined);
+      });
+    };
+    if (media.readyState >= 3) start();
+    else media.addEventListener('canplay', start, { once: true });
+    return () => {
+      cancelled = true;
+      media.removeEventListener('canplay', start);
+    };
+  }, [playing, activeMediaUrl, scene.id]);
+
+  // Media-driven scenes: the media element's own playhead is the scene clock.
+  useEffect(() => {
+    const media = videoRef.current || audioRef.current;
+    if (!media || !activeMediaUrl || !mediaDriven || !onMediaTime) return;
+    let raf = 0;
+    let last = -1;
+    const tick = () => {
+      const ms = media.currentTime * 1000;
+      if (ms !== last) {
+        last = ms;
+        onMediaTime(ms);
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [activeMediaUrl, scene.id, mediaDriven, onMediaTime]);
+
+  const enableSound = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    const media = videoRef.current || audioRef.current;
+    if (!media) return;
+    media.muted = false;
+    void media.play().catch(() => undefined);
+    setNeedsSoundTap(false);
+  };
 
   useEffect(() => {
     const media = videoRef.current || audioRef.current;
@@ -586,6 +651,16 @@ export function SceneRenderer({
             <audio ref={audioRef} src={activeMediaUrl} preload="auto" />
           </>
         )}
+
+      {needsSoundTap && (
+        <button
+          type="button"
+          className="absolute bottom-4 left-1/2 z-20 -translate-x-1/2 rounded-full bg-black/75 px-4 py-2 text-[15px] font-semibold text-white shadow-lg"
+          onClick={enableSound}
+        >
+          Tap to play with sound
+        </button>
+      )}
 
       {scene.type === 'youtube' && scene.embedUrl && (
         <YouTubeFrame

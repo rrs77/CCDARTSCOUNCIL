@@ -134,7 +134,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
         {/* Top: small wordmark */}
         <div className="relative flex items-center gap-2 text-sm font-medium tracking-wide opacity-90">
           <span className="inline-block h-2 w-2 rounded-full" style={{ backgroundColor: school.accentColor }} />
-          <span className="uppercase">Creative Curriculum Designer</span>
+          <span className="uppercase">CCDesigner</span>
         </div>
 
         {/* Center: logo + name */}
@@ -174,7 +174,7 @@ export function SchoolHomepage({ school }: SchoolHomepageProps) {
         {/* Bottom: footer microcopy */}
         <div className="relative flex flex-wrap items-center justify-between gap-2 text-xs opacity-75">
           <span>© {new Date().getFullYear()} {school.displayName}</span>
-          <span>Powered by Creative Curriculum Designer</span>
+          <span>Powered by CCDesigner</span>
         </div>
       </div>
 

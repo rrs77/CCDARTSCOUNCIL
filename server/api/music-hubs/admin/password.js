@@ -8,14 +8,27 @@
  * Auth: requires Authorization Bearer matching MUSIC_HUB_ADMIN_TOKEN (or service role JWT setup later).
  */
 
+import { timingSafeEqual } from 'node:crypto';
 import {
   hashPasswordForStorage,
   jsonResponse,
   optionsResponse,
 } from '../../../../api/_musicHubUnlock.js';
 
-export async function OPTIONS() {
-  return optionsResponse();
+export async function OPTIONS(request) {
+  return optionsResponse(request);
+}
+
+function safeEqualString(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const bufA = Buffer.from(a);
+  const bufB = Buffer.from(b);
+  if (bufA.length !== bufB.length) {
+    // Compare against self to keep runtime roughly constant on length mismatch.
+    timingSafeEqual(bufA, bufA);
+    return false;
+  }
+  return timingSafeEqual(bufA, bufB);
 }
 
 function adminAuthorized(request) {
@@ -23,7 +36,7 @@ function adminAuthorized(request) {
   if (!expected) return false;
   const auth = request.headers.get('authorization') || '';
   const token = auth.startsWith('Bearer ') ? auth.slice(7).trim() : '';
-  return Boolean(token && token === expected);
+  return safeEqualString(token, expected);
 }
 
 export async function POST(request) {

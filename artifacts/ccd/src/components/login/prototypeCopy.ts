@@ -69,14 +69,13 @@ export const FEATURE_DEMO_VIDEO_POSTER = 'feature-demo/frames/04-disclaimer.png'
 export const TABS_EXPLAINER_TITLE = 'About these tabs';
 
 export const TABS_EXPLAINER_INTRO =
-  'A quick tour of the seven tabs along the top — tap a name to jump there.';
+  'A quick tour of the main areas — tap a name to jump there.';
 
 export const TABS_EXPLAINER_CTA = 'Got it';
 
 export type TabsExplainerTabId =
   | 'unit-viewer'
   | 'lesson-library'
-  | 'lesson-builder'
   | 'activity-library'
   | 'calendar'
   | 'our-partners'
@@ -95,12 +94,8 @@ export const TABS_EXPLAINER_ITEMS: ReadonlyArray<{
   {
     id: 'lesson-library',
     label: 'Lessons',
-    description: 'Saved lessons from Lesson Builder for the selected class — filter by half-term and assign to the term map.',
-  },
-  {
-    id: 'lesson-builder',
-    label: 'Lesson Builder',
-    description: 'Build and edit lessons from activities, then save them to Lessons.',
+    description:
+      'Browse saved lessons for the selected class, then build or edit them with activity blocks — filter by half-term and assign to the term map.',
   },
   {
     id: 'activity-library',

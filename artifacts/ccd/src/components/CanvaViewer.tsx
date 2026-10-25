@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { X, ExternalLink, ArrowLeft } from 'lucide-react';
+import { CCD_LOGO_ALT, CCD_LOGO_COLOUR_PATH } from '../utils/brandLogo';
 
 interface CanvaViewerProps {
   url: string;
@@ -159,8 +160,8 @@ export function CanvaViewer({ url, title, onClose }: CanvaViewerProps) {
           >
             <div className="p-2 flex items-center space-x-2">
               <img
-                src="/ccdesigner-logo.png"
-                alt="CCDesigner"
+                src={CCD_LOGO_COLOUR_PATH}
+                alt={CCD_LOGO_ALT}
                 className="h-8 w-auto"
               />
             </div>

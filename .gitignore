@@ -46,7 +46,13 @@ artifacts/*/.env
 artifacts/*/.env.local
 
 # public/ is Vercel build output (scripts/vercel-build.sh). Do not commit it.
-# Must NOT be gitignored — Vercel refuses Output Directory paths listed in .gitignore.
+# Must NOT gitignore the Output Directory root `public/` — Vercel refuses that.
+# Ignore hashed asset bundles under public/assets (rebuilt on deploy).
+/public/assets/
+/artifacts/api-server/public/assets/
+
+# Committed Vite bundles under the api-server public tree — do not track.
+artifacts/api-server/public/assets/
 
 # System Files
 .DS_Store
@@ -66,3 +72,6 @@ artifacts/ccd/public/feature-demo/raw-video/
 
 # Supabase CLI link state
 supabase/.temp/
+
+# Root Vite hashed bundles (build output) — do not commit.
+/public/assets/

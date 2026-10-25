@@ -12,6 +12,7 @@ import {
   mergeLessonsWithHubSeeds,
   CCD_HUB_ACTIVITIES_UPDATED_EVENT,
 } from '../utils/hubSeedLocal';
+import { applySchemeViewerLinks } from '../features/interactive-lesson-viewer/data/slidesLinksApi';
 
 export interface Activity {
   id?: string;
@@ -94,6 +95,16 @@ export interface LessonData {
   assessmentObjectives?: string[];
   _trashedStandards?: string[];
   _trashedAt?: string;
+  /** Ordered mix of activities and flexible teacher sections (planner). */
+  sections?: import('../types/lessonSections').LessonSection[];
+  /** Optional plan template id chosen for this key stage. */
+  planTemplateId?: string;
+  /** Rhythmstix print/PDF template chosen by the teacher (eyfs|ks1|lks2|uks2|ks3|ks4|ks5). Default comes from the year group. */
+  lessonTemplateId?: string;
+  /** Primary subject for unit tray colouring (Settings subject/folder). */
+  primarySubjectId?: string;
+  /** AI flesh-out metadata (never locks fields). */
+  aiFleshOut?: import('../types/lessonSections').LessonAiFleshOutState;
 }
 
 interface SheetInfo {
@@ -123,13 +134,17 @@ export interface LessonPlan {
   updatedAt: Date;
 }
 
-interface Unit {
+export interface Unit {
   id: string;
   name: string;
   description: string;
   lessonNumbers: string[];
   color: string;
   term?: string;
+  /** Settings subject/folder id or name key */
+  subjectId?: string;
+  /** Owning class/sheet */
+  classSheet?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -212,7 +227,9 @@ interface DataContextType {
   userCreatedLessonPlans: LessonPlan[]; // New property for user-created lesson plans
   addOrUpdateUserLessonPlan: (plan: LessonPlan) => void; // New function to add/update user lesson plans
   updateLessonData?: (lessonNumber: string, updatedData: any) => Promise<void>;
-  deleteUserLessonPlan: (planId: string) => void; // New function to delete user lesson plans
+  deleteUserLessonPlan: (planId: string) => void; // Deletes scheduled plan AND library lesson (legacy destructive)
+  /** Remove a plan from the diary/calendar only — keeps the lesson in the library. */
+  removeLessonPlanFromDiary: (planId: string) => void;
   /** Re-read the current class's scheduled lessons after another view wrote to lesson_plans. */
   reloadUserLessonPlans: () => void;
   deleteLesson: (lessonNumber: string) => void; // Move lesson to trash
@@ -281,7 +298,7 @@ interface DataProviderProps {
   children: ReactNode;
 }
 
-const DataContext = createContext<DataContextType | undefined>(undefined);
+export const DataContext = createContext<DataContextType | undefined>(undefined);
 
 export function useData() {
   const context = useContext(DataContext);
@@ -1456,6 +1473,21 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
       });
       // Don't throw error - keep local changes even if Supabase fails
     }
+
+    // Copy scheme template viewer links onto teacher lessons (idempotent).
+    const schemeIds = stacks !== undefined ? stacks : halfTerms.find((t) => t.id === halfTermId)?.stacks;
+    if (schemeIds?.length && sanitizedLessons.length) {
+      for (const schemeId of schemeIds) {
+        void applySchemeViewerLinks({
+          schemeId,
+          year: currentAcademicYear,
+          sheet: currentSheetInfo.sheet,
+          lessonNumbers: sanitizedLessons,
+        }).catch((err) => {
+          if (import.meta.env.DEV) console.warn('[slides-links] apply-scheme failed', err);
+        });
+      }
+    }
   };
 
   // ADDED: Get lessons for a specific half-term (now year-specific)
@@ -2062,6 +2094,12 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
             console.warn('⚠️ saveUserCreatedLessonPlans: unauthenticated session — skipping Supabase write (fail closed)');
             return;
           }
+          const { resolveOrganisationId } = await import('../config/api');
+          const organisationId = await resolveOrganisationId();
+          if (!organisationId) {
+            console.warn('⚠️ saveUserCreatedLessonPlans: organisation_id missing — skipping Supabase write');
+            return;
+          }
           const supabasePlans = plans.map(plan => {
             const row: Record<string, unknown> = {
               id: plan.id,
@@ -2077,7 +2115,8 @@ console.log('🏁 Set subjectsLoading to FALSE'); // ADD THIS DEBUG LINE
               lesson_number: plan.lessonNumber,
               title: plan.title,
               term: plan.term,
-              time: plan.time
+              time: plan.time,
+              organisation_id: organisationId,
             };
             if (saveLpUserIsAuth) {
               row.user_id = saveLpUserId;
@@ -2386,6 +2425,38 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
       
     } catch (error) {
       console.error('Failed to delete and reindex lesson plan:', error);
+    }
+  };
+
+  /**
+   * Remove a scheduled plan from the diary only.
+   * Does NOT delete or reindex library lesson data (Your lessons / allLessonsData).
+   */
+  const removeLessonPlanFromDiary = (planId: string) => {
+    setUserCreatedLessonPlans((prev) => {
+      const updated = prev.filter((p) => p.id !== planId);
+      try {
+        localStorage.setItem('user-created-lesson-plans', JSON.stringify(updated));
+      } catch {
+        /* ignore */
+      }
+      return updated;
+    });
+    if (isSupabaseConfigured()) {
+      const delUserId = localStorage.getItem('rhythmstix_user_id');
+      const delUserIsAuth =
+        !!delUserId &&
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(delUserId);
+      if (delUserIsAuth) {
+        void supabase
+          .from(TABLES.LESSON_PLANS)
+          .delete()
+          .eq('id', planId)
+          .eq('user_id', delUserId)
+          .then(({ error }) => {
+            if (error) console.warn('Failed to remove diary plan from Supabase:', error);
+          });
+      }
     }
   };
 
@@ -3052,39 +3123,46 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
             // Remove id as Supabase will generate its own id
             const { id, _uniqueId, ...activityForSupabase } = activity;
             
-            // Convert camelCase to snake_case for database
-            const dbActivity = {
-              activity: activityForSupabase.activity,
-              description: activityForSupabase.description,
-              activity_text: activityForSupabase.activityText,
-              time: activityForSupabase.time,
-              video_link: activityForSupabase.videoLink,
-              music_link: activityForSupabase.musicLink,
-              backing_link: activityForSupabase.backingLink,
-              resource_link: activityForSupabase.resourceLink,
-              link: activityForSupabase.link,
-              vocals_link: activityForSupabase.vocalsLink,
-              image_link: activityForSupabase.imageLink,
-              canva_link: activityForSupabase.canvaLink || '',
-              teaching_unit: activityForSupabase.teachingUnit,
-              category: activityForSupabase.category,
-              level: activityForSupabase.level,
-              unit_name: activityForSupabase.unitName,
-              lesson_number: activityForSupabase.lessonNumber,
-              eyfs_standards: activityForSupabase.eyfsStandards
-            };
-            
-            supabase
-              .from(TABLES.ACTIVITIES)
-              .upsert([dbActivity], { 
-                onConflict: 'activity,category,lesson_number',
-                ignoreDuplicates: false
-              })
-              .then(({ error }) => {
-                if (error) {
-                  console.warn('Failed to add activity to Supabase:', error);
-                }
-              });
+            // Org-scoped unique requires organisation_id on every upsert.
+            void (async () => {
+              const { resolveOrganisationId, normalizeLessonNumber } = await import('../config/api');
+              const organisationId = await resolveOrganisationId();
+              if (!organisationId) {
+                console.warn('Failed to add activity to Supabase: organisation_id missing');
+                return;
+              }
+              const dbActivity = {
+                activity: activityForSupabase.activity,
+                description: activityForSupabase.description,
+                activity_text: activityForSupabase.activityText,
+                time: activityForSupabase.time,
+                video_link: activityForSupabase.videoLink,
+                music_link: activityForSupabase.musicLink,
+                backing_link: activityForSupabase.backingLink,
+                resource_link: activityForSupabase.resourceLink,
+                link: activityForSupabase.link,
+                vocals_link: activityForSupabase.vocalsLink,
+                image_link: activityForSupabase.imageLink,
+                canva_link: activityForSupabase.canvaLink || '',
+                teaching_unit: activityForSupabase.teachingUnit,
+                category: activityForSupabase.category,
+                level: activityForSupabase.level,
+                unit_name: activityForSupabase.unitName,
+                lesson_number: normalizeLessonNumber(activityForSupabase.lessonNumber),
+                eyfs_standards: activityForSupabase.eyfsStandards,
+                organisation_id: organisationId,
+              };
+
+              const { error } = await supabase
+                .from(TABLES.ACTIVITIES)
+                .upsert([dbActivity], {
+                  onConflict: 'organisation_id,activity,category,lesson_number',
+                  ignoreDuplicates: false,
+                });
+              if (error) {
+                console.warn('Failed to add activity to Supabase:', error);
+              }
+            })();
           } catch (error) {
             console.warn('Failed to add activity to Supabase:', error);
           }
@@ -4224,6 +4302,7 @@ const updateLessonData = async (lessonNumber: string, updatedData: any) => {
     addOrUpdateUserLessonPlan,
     updateLessonData,
     deleteUserLessonPlan,
+    removeLessonPlanFromDiary,
     reloadUserLessonPlans: loadUserCreatedLessonPlans,
     deleteLesson,
     trashLessons,

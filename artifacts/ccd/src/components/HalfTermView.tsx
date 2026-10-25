@@ -1,3 +1,4 @@
+import { PLAN_LOGO_ALT, PLAN_LOGO_DATA_URI, PLAN_LOGO_HEIGHT_PX, PLAN_LOGO_WIDTH_PX } from '../utils/planLogo';
 import React from 'react';
 import { Calendar, Clock, X, Eye, ArrowLeft, ArrowRight, Star } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
@@ -29,7 +30,7 @@ export function HalfTermView({
 }: HalfTermViewProps) {
   const { allLessonsData, currentSheetInfo, getTermSpecificLessonNumber } = useData();
   const { getThemeForClass, getCategoryColor, settings } = useSettings();
-  const productName = settings?.branding?.loginTitle || 'Creative Curriculum Designer';
+  const productName = settings?.branding?.loginTitle || 'CCDesigner';
   const theme = getThemeForClass('LKG'); // Default theme
 
   // Helper function to convert hex color to RGB
@@ -74,6 +75,21 @@ export function HalfTermView({
           <>
             {/* Print-only header */}
             <div className="hidden print:block text-center border-b border-gray-200 pb-4 mb-6">
+              <img
+                src={PLAN_LOGO_DATA_URI}
+                alt={PLAN_LOGO_ALT}
+                width={PLAN_LOGO_WIDTH_PX}
+                height={PLAN_LOGO_HEIGHT_PX}
+                data-ccd-plan-logo="colour"
+                className="ccd-plan-logo mb-3 block"
+                style={{
+                  height: PLAN_LOGO_HEIGHT_PX,
+                  width: PLAN_LOGO_WIDTH_PX,
+                  filter: 'none',
+                  WebkitPrintColorAdjust: 'exact',
+                  printColorAdjust: 'exact',
+                }}
+              />
               <h1 className="text-2xl font-bold text-gray-900 mb-2">
                 {currentSheetInfo.display} Half-Term Plan
               </h1>

@@ -9,7 +9,7 @@ In Supabase SQL Editor, run:
 
 Migration 1 creates profiles extensions, organisations, resources, download_events, audit_log, and Jazz North resource seeds.
 
-Migration 2 adds `super_admin`, `hub_memberships`, hub pages, resource lifecycle fields, activities/media, and idempotently assigns `super_admin` to the existing verified account `rob.reichstorer@gmail.com` (email is checked **only** in this migration — never at request time).
+Migration 2 adds `super_admin`, `hub_memberships`, hub pages, resource lifecycle fields, and activities/media. An early one-shot in that migration assigned `super_admin` by email (already applied — do not re-run or rewrite). **Going forward, grant `super_admin` only via `scripts/grant-super-admin.mjs` (by `auth.users.id`, requiring `email_confirmed_at`). Never grant by email in SQL or at request time.** Migration `20261024140000_remove_email_privilege_checks.sql` removes remaining JWT-email policy bypasses.
 
 ## Hub administration
 
@@ -18,7 +18,7 @@ After migrations:
 - Settings → **Hub admin** for hub members / super admins
 - Sections: Edit page, Resources, Activities, Media, Drafts, Preview, Publish, Hub users, Analytics, Export, Audit
 - Public hub content: `GET /api/hubs/public/:slug`
-- Tracked downloads: `GET /api/resources/:id/download` (Bearer or `?access_token=`)
+- Tracked downloads: `GET /api/resources/:id/download` (Bearer or `?access_token=` for `window.location` only — the sole query-token route; `/api/files` is Bearer-only via `/shared/...`)
 
 ## 2. Upload binary files
 
@@ -41,6 +41,12 @@ Set for Production (and Preview if testing):
 | `IP_HASH_SALT` | Optional | IP hash salt |
 | `DOWNLOAD_ALLOWLIST_HOSTS` | Optional | Extra redirect hosts |
 | `PDFBOLT_API_KEY` | Existing | PDF export |
+| `FREESOUND_API_KEY` | Optional | Interactive Lesson Viewer Freesound search/preview proxy (server-only; never `VITE_FREESOUND_API_KEY`) |
+| `OPENAI_API_KEY` / `WHISPER_API_KEY` | Optional | Interactive Lesson Viewer Whisper transcribe |
+| `DREAMHOST_PDF_UPLOAD_URL` | For PDF share uploads | DreamHost `upload-pdf.php` URL |
+| `DREAMHOST_PDF_DOWNLOAD_URL` | For PDF share uploads | DreamHost `download-pdf.php` URL |
+| `DREAMHOST_PDF_API_KEY` | For PDF share uploads | Server-to-server X-API-Key (never expose to browser) |
+| `DREAMHOST_UPLOAD_TOKEN_SECRET` | For large PDF direct uploads | HMAC-SHA256 secret for short-lived upload tokens (also set on DreamHost; never `VITE_*`) |
 
 ## 4. Deploy
 

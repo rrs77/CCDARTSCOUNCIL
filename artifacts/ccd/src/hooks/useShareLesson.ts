@@ -1,4 +1,11 @@
 import { useState, useEffect } from 'react';
+import { PLAN_LOGO_PRINT_CSS, planLogoImg } from '../utils/planLogo';
+import { escapeHtmlText, sanitizeHtml, sanitizeUrl } from '../utils/sanitize';
+import { safeColour } from '../utils/safeColour';
+
+// One shared escape (utils/escapeHtml.ts); rich text goes through sanitizeHtml, links through sanitizeUrl.
+const escapeShareText = escapeHtmlText;
+const safeHref = (url: string) => escapeHtmlText(sanitizeUrl(url));
 import { useData } from '../contexts/DataContext';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { customObjectivesApi } from '../config/customObjectivesApi';
@@ -139,16 +146,28 @@ export function useShareLesson() {
     const shouldShowCustom = hasCustomObjectives;
     const shouldShowEyfs = hasEyfsObjectives && !hasCustomObjectives;
 
-    const headerTitle = lessonData.customHeader || `Lesson ${termSpecificNumber}, ${halfTermName || 'Autumn 1'} - ${currentSheetInfo.display}, Music`;
+    // The lesson's own title, not a saved print header (customHeader can belong to another lesson's print).
+    const headerTitle = lessonTitle || `Lesson ${termSpecificNumber}, ${halfTermName || 'Autumn 1'} - ${currentSheetInfo.display}`;
     let htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>${lessonTitle}</title>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <title>${escapeShareText(lessonTitle)}</title>
         <style>
-          @page { size: A4; margin: 12mm 15mm 25mm 15mm; }
+          ${PLAN_LOGO_PRINT_CSS}
+          /* Utilities used below, inlined so the page never waits on a CDN. */
+          .flex{display:flex}.grid{display:grid}.grid-cols-2{grid-template-columns:repeat(2,minmax(0,1fr))}
+          .gap-2{gap:8px}.items-start{align-items:flex-start}.items-center{align-items:center}
+          .space-x-2>*+*{margin-left:8px}.space-y-0\.5>*+*{margin-top:2px}
+          .p-2{padding:8px}.mb-1{margin-bottom:4px}.mb-2{margin-bottom:8px}.mb-4{margin-bottom:16px}
+          .w-4{width:16px}.h-4{height:16px}.rounded-lg{border-radius:8px}
+          .border{border-width:1px;border-style:solid}.border-gray-800{border-color:#1f2937}
+          .font-bold{font-weight:700}.text-xs{font-size:12px;line-height:16px}.text-base{font-size:16px;line-height:24px}
+          .text-black{color:#000}.text-purple-600{color:#9333ea}.text-green-600{color:#16a34a}.text-blue-800{color:#1e40af}
+        </style>
+        <style>
+          /* No @page — PDFBolt margins come from the generate-pdf call. */
           .lesson-pdf-content { width: 100%; max-width: 210mm; margin: 0 auto; padding: 0; background: white; }
           .lesson-header-teal {
             background: #0f766e;
@@ -192,10 +211,11 @@ export function useShareLesson() {
       </head>
       <body>
         <div class="lesson-pdf-content">
+          ${planLogoImg('margin:0 0 10px 0;')}
           <div class="lesson-header-teal">
-            <h3>${headerTitle}</h3>
-            <div class="subtitle">${halfTermName || 'Autumn 1'} - ${currentSheetInfo.display}</div>
-            <div class="meta">${currentSheetInfo.display} • ${lessonData.totalTime || 45} mins • ${halfTermName || 'Term 1'}</div>
+            <h3>${escapeShareText(headerTitle)}</h3>
+            <div class="subtitle">${escapeShareText(halfTermName || 'Autumn 1')} - ${escapeShareText(currentSheetInfo.display)}</div>
+            <div class="meta">${escapeShareText(currentSheetInfo.display)} • ${escapeShareText(lessonData.totalTime || 45)} mins • ${escapeShareText(halfTermName || 'Term 1')}</div>
           </div>
           <div class="content-wrapper">
     `;
@@ -218,14 +238,14 @@ export function useShareLesson() {
         Object.entries(groupedEyfs).forEach(([area, statements]) => {
           htmlContent += `
             <div class="rounded-lg p-2 border border-gray-800" style="background-color: #fffbeb;">
-              <h4 class="font-bold text-black text-xs mb-1">${area}</h4>
+              <h4 class="font-bold text-black text-xs mb-1">${escapeShareText(area)}</h4>
               <ul class="space-y-0.5">
           `;
           statements.forEach(statement => {
             htmlContent += `
               <li class="flex items-start space-x-2 text-xs text-black">
                 <span class="text-green-600 font-bold">✓</span>
-                <span>${statement}</span>
+                <span>${escapeShareText(statement)}</span>
               </li>
             `;
           });
@@ -246,14 +266,14 @@ export function useShareLesson() {
             
             htmlContent += `
               <div class="rounded-lg p-2 border border-gray-800" style="background-color: #f3e8ff;">
-                <h4 class="font-bold text-black text-xs mb-1">${displayTitle}</h4>
+                <h4 class="font-bold text-black text-xs mb-1">${escapeShareText(displayTitle)}</h4>
                 <ul class="space-y-0.5">
             `;
             objectives.forEach(objective => {
               htmlContent += `
                 <li class="flex items-start space-x-2 text-xs text-black">
                   <span class="text-purple-600 font-bold">✓</span>
-                  <span>${objective.objective_text}</span>
+                  <span>${escapeShareText(objective.objective_text)}</span>
                 </li>
               `;
             });
@@ -288,18 +308,18 @@ export function useShareLesson() {
       categoriesInOrder.forEach(category => {
         const activities = activitiesByCategory[category] || [];
         if (activities.length === 0) return;
-        const categoryColor = getCategoryColor(category);
-        htmlContent += `<div class="category-group"><div class="activity-category" style="color: ${categoryColor}; border-bottom-color: ${categoryColor};">${category}</div>`;
+        const categoryColor = safeColour(getCategoryColor(category), '#6B7280');
+        htmlContent += `<div class="category-group"><div class="activity-category" style="color: ${categoryColor}; border-bottom-color: ${categoryColor};">${escapeShareText(category)}</div>`;
         activities.forEach(activity => {
           htmlContent += `
           <div class="activity-card" style="border-left-color: ${categoryColor};">
             <div class="activity-header">
-              <span class="activity-title">${activity.activity}</span>
-              ${activity.time > 0 ? `<span class="activity-time">${activity.time} min</span>` : ''}
+              <span class="activity-title">${escapeShareText(activity.activity)}</span>
+              ${activity.time > 0 ? `<span class="activity-time">${escapeShareText(activity.time)} min</span>` : ''}
             </div>
             <div class="activity-body">
-              ${activity.activityText ? `<p style="font-weight: 500; margin-bottom: 6px;">${activity.activityText}</p>` : ''}
-              <div>${activity.description.includes('<') ? activity.description : activity.description.replace(/\n/g, '<br>')}</div>`;
+              ${activity.activityText ? `<p style="font-weight: 500; margin-bottom: 6px;">${sanitizeHtml(activity.activityText)}</p>` : ''}
+              <div>${sanitizeHtml(activity.description.includes('<') ? activity.description : activity.description.replace(/\n/g, '<br>'))}</div>`;
           const resources: { label: string; url: string; class: string }[] = [];
           if (activity.videoLink) resources.push({ label: 'Video', url: activity.videoLink, class: 'resource-video' });
           if (activity.musicLink) resources.push({ label: 'Music', url: activity.musicLink, class: 'resource-music' });
@@ -312,7 +332,7 @@ export function useShareLesson() {
           if (resources.length > 0) {
             htmlContent += `<div class="activity-resources">`;
             resources.forEach(r => {
-              htmlContent += `<a href="${r.url}" target="_blank" rel="noopener noreferrer" class="resource-tag ${r.class}">${r.label}</a>`;
+              htmlContent += `<a href="${safeHref(r.url)}" target="_blank" rel="noopener noreferrer" class="resource-tag ${escapeShareText(r.class)}">${escapeShareText(r.label)}</a>`;
             });
             htmlContent += `</div>`;
           }
@@ -328,7 +348,7 @@ export function useShareLesson() {
       htmlContent += `
         <div style="margin-top: 12px; padding: 10px 12px; background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; border-left: 4px solid #9ca3af;">
           <div style="font-size: 11px; font-weight: 600; color: #374151; margin-bottom: 6px;">Teacher Notes</div>
-          <div style="font-size: 10px; color: #1f2937; line-height: 1.5;">${(lessonData as any).notes}</div>
+          <div style="font-size: 10px; color: #1f2937; line-height: 1.5;">${sanitizeHtml((lessonData as any).notes)}</div>
         </div>
       `;
     }
@@ -343,8 +363,8 @@ export function useShareLesson() {
 
     // Footer content
     const branding = settings?.branding || {};
-    const productName = branding.loginTitle || 'Creative Curriculum Designer';
-    const footerCompany = branding.footerCompanyName || 'Rhythmstix';
+    const productName = branding.loginTitle || 'CCDesigner';
+    const footerCompany = branding.footerCompanyName || 'CCDesigner';
     const footerYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
     const footerText = lessonData.customFooter || 
       [productName, `Lesson ${termSpecificNumber}`, currentSheetInfo.display, halfTermName, `© ${footerCompany} ${footerYear}`]
@@ -353,7 +373,7 @@ export function useShareLesson() {
     
     const footerContent = `
       <div style="width: 100%; font-size: 11px; color: #000000; font-weight: bold;">
-        <p style="text-align: center; margin: 0 0 2px 0;">${footerText}</p>
+        <p style="text-align: center; margin: 0 0 2px 0;">${escapeShareText(footerText)}</p>
         <p style="text-align: center; margin: 0; font-size: 10px; font-weight: 600;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></p>
       </div>
     `;
@@ -416,6 +436,28 @@ export function useShareLesson() {
     }
   };
 
+  /** Browser print → Save as PDF, used when the share PDF service can't be reached. */
+  const openSharePrintFallback = (html: string): boolean => {
+    try {
+      const win = window.open('', '_blank');
+      if (!win) return false;
+      win.document.open();
+      win.document.write(html);
+      win.document.close();
+      win.focus();
+      setTimeout(() => {
+        try {
+          win.print();
+        } catch {
+          /* ignore */
+        }
+      }, 300);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   // Main share function
   const shareLesson = async (lessonNumber: string): Promise<string | null> => {
     // Prevent multiple simultaneous calls
@@ -473,12 +515,27 @@ export function useShareLesson() {
       const { generateAndUploadSharePdf } = await import('../utils/pdfApi');
       console.log('Generating share PDF via PDFBolt proxy + Supabase upload');
 
-      const { url: publicUrl } = await generateAndUploadSharePdf({
-        html: encodedHtml,
-        footerTemplate: encodedFooter,
-        headerTemplate: encodedHeader,
-        fileName,
-      });
+      let publicUrl: string;
+      try {
+        ({ url: publicUrl } = await generateAndUploadSharePdf({
+          html: encodedHtml,
+          footerTemplate: encodedFooter,
+          headerTemplate: encodedHeader,
+          fileName,
+        }));
+      } catch (serviceError) {
+        // Local/dev (or service outage): /api/generate-pdf needs PDFBOLT_API_KEY and the
+        // DREAMHOST_PDF_* settings on the server. Fall back to the browser print path so
+        // the teacher can still Save as PDF, and say clearly why no link was made.
+        console.warn('Share PDF service unavailable, using browser print fallback:', serviceError);
+        const opened = openSharePrintFallback(htmlContent);
+        // Callers show error.message, so the wording avoids their keyword remaps.
+        throw new Error(
+          opened
+            ? 'No share link: the PDF service isn’t available here, so Print opened instead. Choose “Save as PDF” to keep a copy.'
+            : 'No share link: the PDF service isn’t available here. Allow pop-ups, then use Print → Save as PDF instead.',
+        );
+      }
 
       const displayUrl = publicUrl;
 
@@ -531,12 +588,27 @@ export function useShareLesson() {
       const { generateAndUploadSharePdf } = await import('../utils/pdfApi');
       if (import.meta.env.DEV) console.log('[PDF] Generating share PDF via PDFBolt proxy');
 
-      const { url: publicUrl } = await generateAndUploadSharePdf({
-        html: encodedHtml,
-        footerTemplate: encodedFooter,
-        headerTemplate: encodedHeader,
-        fileName,
-      });
+      let publicUrl: string;
+      try {
+        ({ url: publicUrl } = await generateAndUploadSharePdf({
+          html: encodedHtml,
+          footerTemplate: encodedFooter,
+          headerTemplate: encodedHeader,
+          fileName,
+        }));
+      } catch (serviceError) {
+        // Local/dev (or service outage): /api/generate-pdf needs PDFBOLT_API_KEY and the
+        // DREAMHOST_PDF_* settings on the server. Fall back to the browser print path so
+        // the teacher can still Save as PDF, and say clearly why no link was made.
+        console.warn('Share PDF service unavailable, using browser print fallback:', serviceError);
+        const opened = openSharePrintFallback(htmlContent);
+        // Callers show error.message, so the wording avoids their keyword remaps.
+        throw new Error(
+          opened
+            ? 'No share link: the PDF service isn’t available here, so Print opened instead. Choose “Save as PDF” to keep a copy.'
+            : 'No share link: the PDF service isn’t available here. Allow pop-ups, then use Print → Save as PDF instead.',
+        );
+      }
       storeShareUrl(lessonNumber, publicUrl);
       return publicUrl;
     } catch (error: any) {

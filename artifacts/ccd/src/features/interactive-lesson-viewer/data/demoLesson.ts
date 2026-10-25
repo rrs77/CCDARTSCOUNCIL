@@ -1,16 +1,23 @@
 import type { InteractiveLesson } from '../types';
 import { createId } from '../types';
+import {
+  DEMO_INTRO_DURATION_MS,
+  DEMO_INTRO_SCENE_ID,
+  DEMO_INTRO_VIDEO,
+  DEMO_LESSON_ID,
+} from './demoGuard';
+import { CCD_LOGO_COLOUR_PATH } from '../../../utils/brandLogo';
 
-const INTRO_VIDEO = '/interactive-lessons/ccdesigner-intro.mp4';
+const INTRO_VIDEO = DEMO_INTRO_VIDEO;
 const KARAOKE_AUDIO = '/interactive-lessons/sample-karaoke-placeholder.mp3';
-const LOGO = '/ccdesigner-logo.png';
+const LOGO = CCD_LOGO_COLOUR_PATH;
 
 /** Polished demo interactive lesson shipped with the prototype. */
 export function buildDemoInteractiveLesson(ownerId = 'system-demo'): InteractiveLesson {
   const now = new Date().toISOString();
 
   return {
-    id: 'demo-interactive-lesson',
+    id: DEMO_LESSON_ID,
     title: 'CCDesigner Slides Demo',
     description:
       'Classroom-ready sample slides: intro sting, title, lyric video with timed lyrics, YouTube, audio, Canva and PowerPoint embeds.',
@@ -27,7 +34,7 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
         name: 'CCDesigner intro sting',
         kind: 'video',
         url: INTRO_VIDEO,
-        durationMs: 7000,
+        durationMs: DEMO_INTRO_DURATION_MS,
         addedAt: now,
       },
       {
@@ -48,15 +55,15 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
     ],
     scenes: [
       {
-        id: 'demo-scene-intro',
+        id: DEMO_INTRO_SCENE_ID,
         type: 'video',
         title: 'Intro sting',
-        durationMs: 7000,
+        durationMs: DEMO_INTRO_DURATION_MS,
         advanceMode: 'media-end',
         transition: { type: 'fade', durationMs: 400 },
         mediaUrl: INTRO_VIDEO,
         overlays: [],
-        notes: '7-second CCDesigner logo sting — no lyrics track.',
+        notes: '8-second CCDesigner logo sting — no lyrics track.',
       },
       {
         id: 'demo-scene-title',

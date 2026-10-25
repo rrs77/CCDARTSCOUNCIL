@@ -1,5 +1,12 @@
+import {
+  planLogoHeaderTemplateHtml,
+  planLogoPrintRunningCss,
+  planLogoPrintTheadHtml,
+} from '../utils/planLogo';
 import React, { useState, useRef, useEffect, useCallback } from 'react';
-import { sanitizeHtml, escapeHtmlText, sanitizeUrl } from '../utils/sanitize';
+import { sanitizeHtml, sanitizeUrl } from '../utils/sanitize';
+import { escapeHtmlText } from '../utils/escapeHtml';
+import { safeColour } from '../utils/safeColour';
 import { Download, X, Check, Tag, ChevronDown, Share2, Copy, Link2, Target, Loader2 } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
 import type { Activity } from '../contexts/DataContext';
@@ -8,27 +15,42 @@ import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjective, CustomObjectiveArea, CustomObjectiveYearGroup } from '../types/customObjectives';
 import { supabase } from '../config/supabase';
 import { generatePdfViaProxy } from '../utils/pdfApi';
+import { uploadLessonPdf } from '../utils/pdfUpload';
 import { useShareLesson } from '../hooks/useShareLesson';
 import toast from 'react-hot-toast';
+import {
+  A4_HEIGHT_PX,
+  A4_WIDTH_PX,
+  PDFBOLT_MARGINS,
+} from '../utils/lessonPdfHtml';
+import {
+  injectPrintWindowFooterCss,
+  lessonExportFooterTemplateHtml,
+} from '../utils/lessonExportFooter';
+import {
+  LESSON_PRINT_CSP_META,
+  ensurePrintDocumentCsp,
+  renderPrintCategoryHeadingHtml,
+  renderPrintCustomObjectiveBoxHtml,
+  renderPrintEyfsGoalBoxHtml,
+  renderPrintSheetDisplayMetaHtml,
+} from '../utils/lessonPrintModalHtml';
 
-// A4 dimensions and PDFBolt margin settings
-// These MUST match the PDFBolt API settings exactly for accurate preview
-const A4_WIDTH_MM = 210;
-const A4_HEIGHT_MM = 297;
-const MM_TO_PX = 3.7795275591; // 1mm = 3.7795275591 pixels at 96 DPI
-
-// A4 dimensions in pixels at 96 DPI
-const A4_WIDTH_PX = A4_WIDTH_MM * MM_TO_PX; // ~794px
-const A4_HEIGHT_PX = A4_HEIGHT_MM * MM_TO_PX; // ~1122px
-
-// PDFBolt margin settings (in pixels) - MUST match API call
-const PDFBOLT_MARGIN_TOP_PX = 15;
-const PDFBOLT_MARGIN_BOTTOM_PX = 55; // Includes footer space
-const PDFBOLT_MARGIN_LEFT_PX = 20;
-const PDFBOLT_MARGIN_RIGHT_PX = 20;
+// PDFBolt margin settings (in pixels) — shared with lessonPdfHtml / live print preview
+const PDFBOLT_MARGIN_TOP_PX = parseInt(PDFBOLT_MARGINS.top, 10);
+const PDFBOLT_MARGIN_BOTTOM_PX = parseInt(PDFBOLT_MARGINS.bottom, 10);
+const PDFBOLT_MARGIN_LEFT_PX = parseInt(PDFBOLT_MARGINS.left, 10);
+const PDFBOLT_MARGIN_RIGHT_PX = parseInt(PDFBOLT_MARGINS.right, 10);
 
 // Available content area height (A4 height minus top and bottom margins)
-const PAGE_CONTENT_HEIGHT_PX = A4_HEIGHT_PX - PDFBOLT_MARGIN_TOP_PX - PDFBOLT_MARGIN_BOTTOM_PX; // ~1052px
+const PAGE_CONTENT_HEIGHT_PX = A4_HEIGHT_PX - PDFBOLT_MARGIN_TOP_PX - PDFBOLT_MARGIN_BOTTOM_PX;
+
+// Re-export for any UI that still references local A4 width naming
+const _A4_WIDTH_PX = A4_WIDTH_PX;
+void _A4_WIDTH_PX;
+void PAGE_CONTENT_HEIGHT_PX;
+void PDFBOLT_MARGIN_LEFT_PX;
+void PDFBOLT_MARGIN_RIGHT_PX;
 
 interface LessonPrintModalProps {
   lessonNumber?: string;
@@ -70,8 +92,11 @@ export function LessonPrintModal({
   } = useData();
   const { getCategoryColor, settings } = useSettings();
   const branding = settings?.branding || {};
-  const productName = branding.loginTitle || 'Creative Curriculum Designer';
-  const footerCompany = branding.footerCompanyName || 'Rhythmstix';
+  const productName =
+    !branding.loginTitle || /Creative\s+Curriculum\s+Designer/i.test(branding.loginTitle)
+      ? 'CCDesigner'
+      : branding.loginTitle;
+  // Placeholder year only (custom-footer UI). Export footers use runtime year via lessonExportFooter.ts.
   const footerYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
   const { shareLesson: shareSingleLesson, isSharing: isSharingSingle, getStoredShareUrl } = useShareLesson();
   const [isExporting, setIsExporting] = useState(false);
@@ -255,12 +280,17 @@ export function LessonPrintModal({
       }
     }
     
+    // Single-lesson PDF gets its own layout tweaks (full width, flowing sections,
+    // 13px minimum text). Unit/half-term print is unchanged.
+    const isSingleLesson = exportMode === 'single' && lessonsToRender.length === 1;
+
     let htmlContent = `
       <!DOCTYPE html>
       <html>
       <head>
         <meta charset="UTF-8">
-        <title>${printTitle}</title>
+        ${LESSON_PRINT_CSP_META}
+        <title>${escapeHtmlText(printTitle)}</title>
         <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
         <style>
           * {
@@ -277,10 +307,8 @@ export function LessonPrintModal({
             background: #fff;
           }
           
-          @page {
-            size: A4;
-            margin: 12mm 15mm 25mm 15mm;
-          }
+          /* No @page here — PDFBolt margins come from PDFBOLT_MARGINS / headerTemplate.
+             Print-window @page + @bottom-center are injected only in writeAndPrintWindow. */
           
           .lesson-page {
             width: 100%;
@@ -614,15 +642,43 @@ export function LessonPrintModal({
             content: none !important;
           }
           
+          /* Single-lesson PDF: full A4 content width, sections flow across pages */
+          body.single-lesson .lesson-page { max-width: none; width: 100%; min-height: 0; }
+          body.single-lesson .category-group { break-inside: auto; page-break-inside: auto; }
+          body.single-lesson .activity-card { break-inside: auto; page-break-inside: auto; }
+          body.single-lesson .activity-category,
+          body.single-lesson .activity-header { break-after: avoid; page-break-after: avoid; }
+          body.single-lesson .activity-resources,
+          body.single-lesson .goal-box,
+          body.single-lesson .lesson-header { break-inside: avoid; page-break-inside: avoid; }
+          body.single-lesson .print-header-note { font-size: 13px; opacity: 0.9; margin-bottom: 4px; }
+
+          /* Unit / half-term (multi-lesson) PDF: let sections flow so page 1 is not half empty */
+          body.multi-lesson .lesson-page { max-width: none; width: 100%; min-height: 0; }
+          body.multi-lesson .category-group { break-inside: auto; page-break-inside: auto; }
+          body.multi-lesson .activity-card { break-inside: auto; page-break-inside: auto; }
+          body.multi-lesson .section-card { break-inside: auto; page-break-inside: auto; }
+          body.multi-lesson .activity-category,
+          body.multi-lesson .activity-header { break-after: avoid; page-break-after: avoid; }
+          body.multi-lesson .activity-resources,
+          body.multi-lesson .goal-box,
+          body.multi-lesson .lesson-header { break-inside: avoid; page-break-inside: avoid; }
+
           /* Print styles */
           @media print {
             body { background: white; }
             .lesson-page { box-shadow: none; min-height: auto; }
             .content-wrapper { background: white; }
           }
+          ${planLogoPrintRunningCss()}
         </style>
       </head>
-      <body>
+      <body class="${isSingleLesson ? 'single-lesson' : 'multi-lesson'}">
+        <table class="ccd-export-print-sheet">
+          ${planLogoPrintTheadHtml()}
+          <tbody>
+            <tr>
+              <td>
         <div class="lesson-page">
     `;
 
@@ -666,14 +722,41 @@ export function LessonPrintModal({
       const lessonSubtitle = lessonData.lessonName || `${halfTermName || unitName || 'Autumn 1'} - ${currentSheetInfo.display}`;
 
       htmlContent += `
-          <!-- Lesson Header -->
+          <!-- Lesson Header (colour logo is PDF header / print thead on every page) -->
           <div class="lesson-header">
-            <h1>${escapeHtmlText((exportUseCustomHeaderFooter && exportCustomHeader) ? exportCustomHeader : (lessonData.customHeader || lessonTitle))}</h1>
+            ${(() => {
+              if (!isSingleLesson) {
+                return `<h1>${escapeHtmlText((exportUseCustomHeaderFooter && exportCustomHeader) ? exportCustomHeader : (lessonData.customHeader || lessonTitle))}</h1>`;
+              }
+              // Single lesson: the H1 is always this lesson's own title. The lesson's saved
+              // print header (lessonData.customHeader) was previously used as the H1, and in
+              // the demo data it is stale text copied from another lesson ("A2 Performance To
+              // Parents"), so it is never shown as the title. A header typed in this export
+              // dialog is shown as a small line above the title.
+              const typedHeader =
+                exportUseCustomHeaderFooter && exportCustomHeader.trim() !== (lessonData.customHeader || '').trim()
+                  ? exportCustomHeader
+                  : '';
+              const headerNote = typedHeader.trim();
+              const realTitle = (lessonData.title || '').trim() || lessonTitle;
+              return `${headerNote && headerNote !== realTitle ? `<div class="print-header-note">${escapeHtmlText(headerNote)}</div>` : ''}<h1>${escapeHtmlText(realTitle)}</h1>`;
+            })()}
             <div class="subtitle">${escapeHtmlText(lessonSubtitle)}</div>
             <div class="meta">
-              <span class="meta-item">📚 ${currentSheetInfo.display}</span>
-              <span class="meta-item">⏱ ${lessonData.totalTime || 45} mins</span>
-              <span class="meta-item">📅 ${halfTermName || unitName || 'Term 1'}</span>
+              ${renderPrintSheetDisplayMetaHtml(currentSheetInfo.display || '')}
+              <span class="meta-item">⏱ ${
+                lessonData.totalTime && lessonData.totalTime > 0
+                  ? lessonData.totalTime
+                  : (lessonData.orderedActivities || []).reduce(
+                      (s: number, a: { time?: number }) => s + (a.time || 0),
+                      0,
+                    ) || '—'
+              } mins</span>
+              ${
+                halfTermName || unitName
+                  ? `<span class="meta-item">📅 ${escapeHtmlText(halfTermName || unitName || '')}</span>`
+                  : ''
+              }
             </div>
           </div>
           
@@ -750,7 +833,7 @@ export function LessonPrintModal({
               </svg>
               <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">Learning Goals</h3>
             </div>
-            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+            <div style="display: grid; grid-template-columns: ${isSingleLesson ? '1fr' : 'repeat(2, 1fr)'}; gap: 10px;">
         `;
         
         // Show EYFS Learning Goals if they exist
@@ -765,22 +848,10 @@ export function LessonPrintModal({
           
           Object.entries(groupedEyfs).forEach(([area, statements]) => {
             if (statements && statements.length > 0) {
-              htmlContent += `
-                <div style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
-                  <h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${area}</h4>
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-              `;
-              statements.forEach(statement => {
-                if (statement && statement.trim()) {
-                  htmlContent += `
-                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 11px; color: #1f2937; line-height: 1.4;">
-                      <span style="color: #16a34a; font-weight: 700; margin-right: 6px; flex-shrink: 0;">✓</span>
-                      <span>${statement}</span>
-                    </li>
-                  `;
-                }
-              });
-              htmlContent += `</ul></div>`;
+              // Statements without an "Area:" prefix use the statement as its own area —
+              // don't repeat it as a heading above itself (same rule as single-lesson PDF).
+              const areaIsStatement = statements.every((st) => st.trim() === area.trim());
+              htmlContent += renderPrintEyfsGoalBoxHtml(area, statements, areaIsStatement);
             }
           });
         }
@@ -795,23 +866,10 @@ export function LessonPrintModal({
                   displayTitle = `${sectionName}, ${areaName}`;
                 }
               }
-              
-              htmlContent += `
-                <div style="background-color: #fffbeb; border: 1px solid #1f2937; border-radius: 8px; padding: 12px;">
-                  <h4 style="font-size: 12px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0;">${displayTitle}</h4>
-                  <ul style="list-style: none; padding: 0; margin: 0;">
-              `;
-              objectives.forEach(objective => {
-                if (objective.objective_text && objective.objective_text.trim()) {
-                  htmlContent += `
-                    <li style="display: flex; align-items: flex-start; margin-bottom: 6px; font-size: 11px; color: #1f2937; line-height: 1.4;">
-                      <span style="color: #16a34a; font-weight: 700; margin-right: 6px; flex-shrink: 0;">✓</span>
-                      <span>${objective.objective_text}</span>
-                    </li>
-                  `;
-                }
-              });
-              htmlContent += `</ul></div>`;
+              const texts = objectives
+                .map((objective) => objective.objective_text)
+                .filter((t): t is string => Boolean(t && String(t).trim()));
+              htmlContent += renderPrintCustomObjectiveBoxHtml(displayTitle, texts);
             });
           });
         }
@@ -827,7 +885,7 @@ export function LessonPrintModal({
               <svg style="width: 18px; height: 18px; color: #0f766e; margin-right: 8px;" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path>
               </svg>
-              <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">Learning Goals</h3>
+              <h3 style="font-size: 16px; font-weight: 700; color: #111827; margin: 0;">${isSingleLesson && (hasEyfsStandards || hasCustomObjectives) ? 'Outcomes &amp; Success Criteria' : 'Learning Goals'}</h3>
             </div>
         `;
         
@@ -871,8 +929,10 @@ export function LessonPrintModal({
         htmlContent += `</div>`;
       }
 
-      // Add Standards section at the top (as tags/pills like in UI)
-      if (lessonStandardsList.length > 0) {
+      // Add Standards section at the top (as tags/pills like in UI).
+      // Skip when the same statements were already listed as Learning Goals
+      // (same rule as the single-lesson PDF path).
+      if (lessonStandardsList.length > 0 && !hasEyfsStandards) {
         htmlContent += `
           <div style="margin-bottom: 16px;">
             <div style="display: flex; align-items: center; margin-bottom: 8px;">
@@ -1023,17 +1083,12 @@ export function LessonPrintModal({
           const activities = activitiesByCategory[category] || [];
           if (activities.length === 0) return;
 
-          const categoryColor = getCategoryColor(category);
+          const categoryColor = safeColour(getCategoryColor(category), '#0f766e');
 
           // Wrap category heading with first activity to prevent orphaned headings
           // This ensures at least one activity follows the heading on the same page
           htmlContent += `<div class="category-group">`;
-          
-          htmlContent += `
-            <div class="activity-category" style="color: ${categoryColor}; border-bottom-color: ${categoryColor};">
-              ${category}
-            </div>
-          `;
+          htmlContent += renderPrintCategoryHeadingHtml(category, categoryColor);
 
           // Render first activity within the category-group wrapper
           if (activities.length > 0) {
@@ -1133,37 +1188,28 @@ export function LessonPrintModal({
 
     htmlContent += `
         </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
       </body>
       </html>
     `;
 
-    // Header template - empty to avoid header on first page
-    // PDFBolt doesn't support hiding header on first page, so we use empty header
-    const headerContent = '<div></div>';
+    // PDFBolt header: colour logo top-left on EVERY page (21×86). Print-window
+    // fallback uses a repeating table thead — see planLogo.ts.
+    const headerContent = planLogoHeaderTemplateHtml();
 
-    // Create footer template for PDFBolt (use custom footer when set)
-    // Match design: Left (product name), Center (Curriculum • Copyright), Right (Lesson • Page in pill)
-    const footerCenterText = (exportUseCustomHeaderFooter && exportCustomFooter)
-      ? exportCustomFooter
-      : [currentSheetInfo.display || '', `© ${footerCompany} ${footerYear}`].filter(Boolean).join(' • ');
-    
-    // Get lesson number for footer (first lesson if multiple)
-    const firstLessonNum = lessonsToRender[0];
-    const getLessonDisplayNumber = (num: string): string => {
-      const numericPart = num.replace(/^lesson/i, '').replace(/[^0-9]/g, '');
-      return numericPart || num;
-    };
-    const lessonDisplayNum = firstLessonNum ? (halfTermId ? getTermSpecificLessonNumber(firstLessonNum, halfTermId) : getLessonDisplayNumber(firstLessonNum)) : '1';
-    
-    const footerContent = `
-      <div style="width: 100%; font-size: 9px; padding: 8px 20px; display: flex; justify-content: space-between; align-items: center; color: #5F6368; font-family: 'Inter', sans-serif;">
-        <span style="color: #5F6368;">${productName.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>
-        <span style="color: #5F6368;">${footerCenterText}</span>
-        <span style="background: #E8EAEF; color: #0f766e; padding: 4px 12px; border-radius: 50px; font-weight: 500;">Lesson ${lessonDisplayNum} • Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
-      </div>
-    `;
+    // PDFBolt footer (server path, 13px). Print-window fallback uses @page @bottom-center
+    // (Chromium 131+); never position:fixed + counter(page) ("Page 0") — see
+    // lessonExportPrintFooterCss().
+    const footerContent = lessonExportFooterTemplateHtml();
 
-    return [htmlContent, footerContent, headerContent];
+    // 13px minimum for every print size (CSS and inline styles) on single-lesson
+    // and multi-lesson (unit / half-term) PDFs.
+    const min13 = (html: string) =>
+      html.replace(/font-size:\s*(\d+(?:\.\d+)?)px/g, (m, n) => (parseFloat(n) < 13 ? 'font-size: 13px' : m));
+    return [min13(htmlContent), min13(footerContent), headerContent];
   };
 
   if (lessonsToRender.length === 0) {
@@ -1202,19 +1248,72 @@ export function LessonPrintModal({
     return n || num;
   };
 
-  /** Browser print → Save as PDF when the Vercel/PDFBolt proxy is unreachable (local/dev). */
-  const openPrintFallback = async (htmlRaw: string) => {
+  /** Ask open lesson editors to flush drafts so print never loses unsaved work. */
+  const persistDraftsBeforePrint = () => {
+    try {
+      window.dispatchEvent(
+        new CustomEvent('ccd:persist-lesson-draft-before-print', {
+          detail: { sheet: currentSheetInfo.sheet, lessonNumbers: lessonsToRender },
+        }),
+      );
+    } catch {
+      /* ignore */
+    }
+  };
+
+  /**
+   * Open the print window *before* any await so pop-up blockers do not stop the fallback.
+   * Caller fills/replaces document content once HTML is ready.
+   */
+  const openPrintWindowEarly = (): Window | null => {
+    // Need a Window handle to document.write + print() from the opener; cannot use
+    // noopener. Detach opener after open and rely on CSP script-src 'none'.
     const printWin = window.open('', '_blank');
     if (!printWin) {
       toast.error('Please allow pop-ups to export via Print → Save as PDF');
-      return false;
+      return null;
     }
-    printWin.document.write(htmlRaw);
+    try {
+      try {
+        (printWin as Window & { opener: Window | null }).opener = null;
+      } catch {
+        /* ignore */
+      }
+      printWin.document.write(
+        ensurePrintDocumentCsp(
+          '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Preparing print…</title></head><body style="font-family:system-ui,sans-serif;padding:2rem;color:#334155"><p>Preparing print preview…</p></body></html>',
+        ),
+      );
+      printWin.document.close();
+    } catch {
+      /* ignore */
+    }
+    return printWin;
+  };
+
+  const writeAndPrintWindow = (printWin: Window, htmlRaw: string) => {
+    // Print-window only: @page @bottom-center footer + CSP. Never bake these into the
+    // PDFBolt HTML payload (duplicate footer / margin override).
+    const html = ensurePrintDocumentCsp(injectPrintWindowFooterCss(htmlRaw));
+    printWin.document.open();
+    printWin.document.write(html);
     printWin.document.close();
+    try {
+      (printWin as Window & { opener: Window | null }).opener = null;
+    } catch {
+      /* ignore */
+    }
     printWin.focus();
     setTimeout(() => {
       printWin.print();
     }, 150);
+  };
+
+  /** Browser print → Save as PDF when the Vercel/PDFBolt proxy is unreachable (local/dev). */
+  const openPrintFallback = async (htmlRaw: string, existingWin?: Window | null) => {
+    const printWin = existingWin && !existingWin.closed ? existingWin : openPrintWindowEarly();
+    if (!printWin) return false;
+    writeAndPrintWindow(printWin, htmlRaw);
     return true;
   };
 
@@ -1224,6 +1323,10 @@ export function LessonPrintModal({
     const downloadFileName = exportMode === 'single' && lessonNumber
       ? `${currentSheetInfo.sheet}_Lesson_${getLessonDisplayNumber(lessonNumber)}.pdf`
       : `${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
+
+    persistDraftsBeforePrint();
+    // Open before any await — pop-up blockers require a sync user-gesture window.
+    const fallbackWin = openPrintWindowEarly();
 
     setIsExporting(true);
     try {
@@ -1238,12 +1341,19 @@ export function LessonPrintModal({
           printBackground: true,
           waitUntil: 'networkidle',
           format: 'A4',
-          margin: { top: '15px', right: '20px', left: '20px', bottom: '55px' },
+          margin: { ...PDFBOLT_MARGINS },
           displayHeaderFooter: true,
           footerTemplate: footerContent,
           headerTemplate: headerContent,
           emulateMediaType: 'screen',
         });
+
+        // PDF download succeeded — close the early fallback tab if we opened one.
+        try {
+          if (fallbackWin && !fallbackWin.closed) fallbackWin.close();
+        } catch {
+          /* ignore */
+        }
 
         const url = window.URL.createObjectURL(pdfBlob);
         const link = document.createElement('a');
@@ -1259,7 +1369,7 @@ export function LessonPrintModal({
         setTimeout(() => setExportSuccess(false), 3000);
       } catch (proxyError: unknown) {
         console.warn('PDF proxy failed, falling back to print dialog:', proxyError);
-        const opened = await openPrintFallback(htmlRaw);
+        const opened = await openPrintFallback(htmlRaw, fallbackWin);
         if (opened) {
           toast.success('Opened print dialog — choose “Save as PDF” to export', { duration: 5000 });
           setExportSuccess(true);
@@ -1268,6 +1378,11 @@ export function LessonPrintModal({
       }
     } catch (error: any) {
       console.error('Export failed:', error);
+      try {
+        if (fallbackWin && !fallbackWin.closed) fallbackWin.close();
+      } catch {
+        /* ignore */
+      }
       toast.error(error?.message || 'Failed to export PDF', { duration: 5000 });
     } finally {
       setIsExporting(false);
@@ -1401,8 +1516,8 @@ export function LessonPrintModal({
         const msg = error.message ?? '';
         if (msg.includes('BLOB_READ_WRITE_TOKEN') || msg.includes('Blob store')) {
           errorMessage = 'Vercel Blob Storage not set up. In Vercel Dashboard: Storage → Create Blob Store, then redeploy.';
-        } else if (msg.includes('PDFBOLT_API_KEY') || msg.includes('VITE_PDFBOLT_API_KEY')) {
-          errorMessage = 'PDF API key missing. Set PDFBOLT_API_KEY (or VITE_PDFBOLT_API_KEY) in Vercel environment variables, then redeploy.';
+        } else if (msg.includes('PDFBOLT_API_KEY') || msg.includes('PDF generation is not configured')) {
+          errorMessage = 'PDF generation is not configured. Set PDFBOLT_API_KEY in Vercel environment variables, then redeploy.';
         } else if (msg.includes('bucket')) {
           errorMessage = 'Storage not configured. Create a Blob store in Vercel Dashboard → Storage.';
         } else if (msg.includes('Service role key') || msg.includes('SUPABASE_SERVICE_ROLE')) {
@@ -1452,51 +1567,16 @@ export function LessonPrintModal({
         printBackground: true,
         waitUntil: "networkidle",
         format: "A4",
-        margin: { top: "15px", right: "20px", left: "20px", bottom: "55px" },
+        margin: { ...PDFBOLT_MARGINS },
         displayHeaderFooter: true,
         footerTemplate: footerContent,
         headerTemplate: headerContent,
         emulateMediaType: 'screen',
       });
 
-      // Generate filename
-      const getLessonDisplayNumber = (num: string): string => {
-        const numericPart = num.replace(/^lesson/i, '').replace(/[^0-9]/g, '');
-        return numericPart || num;
-      };
-      
-      const timestamp = Date.now();
-      const fileName = exportMode === 'single'
-          ? (() => {
-              const lessonDisplayNumber = getLessonDisplayNumber(lessonNumber!);
-              return `${timestamp}_${currentSheetInfo.sheet}_Lesson_${lessonDisplayNumber}.pdf`;
-            })()
-          : `${timestamp}_${currentSheetInfo.sheet}_${(unitName || halfTermName || 'Unit').replace(/\s+/g, '_')}.pdf`;
+      // ≤3 MB via Vercel; larger via signed direct DreamHost (max 100 MB). Path is server-built.
+      const { url: publicUrl } = await uploadLessonPdf(pdfBlob);
 
-      // Convert blob to base64 for Vercel API
-      const arrayBuffer = await pdfBlob.arrayBuffer();
-      const base64 = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
-
-      // Upload via Vercel API to bypass RLS
-      const uploadResponse = await fetch('/api/upload-pdf', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName,
-          fileData: base64
-        })
-      });
-
-      if (!uploadResponse.ok) {
-        const errorData = await uploadResponse.json().catch(() => ({ error: 'Upload failed' }));
-        console.error('Upload error:', errorData);
-        throw new Error(errorData.error || `Failed to upload PDF: ${uploadResponse.status}`);
-      }
-
-      const { url: publicUrl } = await uploadResponse.json();
-      
       if (!publicUrl) {
         throw new Error('No URL returned from upload');
       }
@@ -1602,31 +1682,39 @@ export function LessonPrintModal({
   useEffect(() => {
     if (!systemPrintOnly || lessonsToRender.length === 0 || systemPrintDone.current) return;
     systemPrintDone.current = true;
+    persistDraftsBeforePrint();
+    // Sync open under the effect's scheduling still benefits from early window
+    // (user gesture chain from the Print click that mounted this modal).
+    const printWin = openPrintWindowEarly();
+    if (!printWin) {
+      onClose();
+      return;
+    }
     const run = async () => {
       try {
         const [fullHtml] = await generateHTMLContent();
-        const printWin = window.open('', '_blank');
-        if (!printWin) {
-          toast.error('Please allow pop-ups to use Print');
-          onClose();
-          return;
-        }
-        printWin.document.write(fullHtml);
-        printWin.document.close();
-        printWin.focus();
-        // Small delay so content is painted before print dialog
+        writeAndPrintWindow(printWin, fullHtml);
         setTimeout(() => {
-          printWin.print();
           onClose();
-          setTimeout(() => printWin.close(), 500);
-        }, 150);
+          setTimeout(() => {
+            try {
+              if (!printWin.closed) printWin.close();
+            } catch {
+              /* ignore */
+            }
+          }, 500);
+        }, 200);
       } catch (e) {
+        try {
+          if (!printWin.closed) printWin.close();
+        } catch {
+          /* ignore */
+        }
         toast.error('Failed to open print dialog');
         onClose();
       }
     };
-    const t = setTimeout(run, 100);
-    return () => clearTimeout(t);
+    void run();
   }, [systemPrintOnly, lessonsToRender.length]);
 
   const pdfDownloadDone = useRef(false);

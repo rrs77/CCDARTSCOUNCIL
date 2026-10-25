@@ -6,8 +6,10 @@ export type SettingsSectionId =
   | 'classes'
   | 'folders'
   | 'objectives'
+  | 'curriculum'
   | 'preferences'
   | 'downloads'
+  | 'integrations'
   | 'users'
   | 'school';
 
@@ -24,7 +26,7 @@ export interface SettingsSectionDef {
   /** Keywords for the left-nav search */
   keywords: string[];
   /** Only show when the callback returns true (role gates) */
-  requires?: 'always' | 'downloads' | 'users' | 'school';
+  requires?: 'always' | 'downloads' | 'users' | 'school' | 'integrations';
 }
 
 /** Most-used first. Keep teacher language free of jargon. */
@@ -54,6 +56,22 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     requires: 'always',
   },
   {
+    id: 'curriculum',
+    label: 'Curriculum',
+    title: 'Curriculum',
+    helper: 'Frameworks, strands and statements for lesson plans — all user-defined.',
+    keywords: [
+      'curriculum',
+      'framework',
+      'strand',
+      'statement',
+      'template',
+      'section',
+      'planner',
+    ],
+    requires: 'always',
+  },
+  {
     id: 'preferences',
     label: 'Preferences',
     title: 'Preferences',
@@ -70,10 +88,33 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     requires: 'downloads',
   },
   {
+    id: 'integrations',
+    label: 'School systems',
+    title: 'School Systems & Integrations',
+    helper:
+      "Connect your school's existing systems to automatically configure year groups and securely share authorised information across Rhythmstix applications.",
+    keywords: [
+      'mis',
+      'wonde',
+      'sims',
+      'arbor',
+      'isams',
+      'bromcom',
+      'engage',
+      'socs',
+      'integration',
+      'year group',
+      'school systems',
+      'provider',
+      'sync',
+    ],
+    requires: 'integrations',
+  },
+  {
     id: 'users',
     label: 'Users',
     title: 'Users',
-    helper: 'Invite and manage who can use Studio Score.',
+    helper: 'Invite and manage who can use CCDesigner.',
     keywords: [
       'user',
       'people',

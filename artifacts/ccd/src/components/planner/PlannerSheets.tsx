@@ -18,6 +18,7 @@ import { useData, type Activity, type LessonPlan } from '../../contexts/DataCont
 import type { PlannerData } from './usePlannerData';
 import {
   HALF_TERMS,
+  academicYearFor,
   isoWeek,
   normalizeTime,
   planStatusLabel,
@@ -33,20 +34,22 @@ import {
 import { lessonTitle } from './plannerEntries';
 import { PolishWithAIModal, type PolishSuggestionId } from '../studio/PolishWithAIModal';
 import { applyLessonPolishDraft } from '../../utils/applyLessonPolish';
+import { ModalConfirm } from '../ccdPlanner/ModalShell';
 import {
   filterLessonEntries,
   lessonActivities,
   lessonActivityCount,
   lessonBadgeLabel,
 } from '../../utils/lessonEntries';
+import { LessonSlidesSection } from '../../features/interactive-lesson-viewer/components/planner/LessonSlidesSection';
 
 const fieldClass =
   'w-full rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-sm text-[#1F1B4D] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/35 focus:border-[#4338E8]';
-const sectionTitle = 'text-xs font-bold uppercase tracking-[0.06em] text-[#77738F] mb-2';
+const sectionTitle = 'text-[13px] font-bold uppercase tracking-[0.06em] text-[#77738F] mb-2';
 const btn =
-  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl border border-[#E2E0EF] bg-white px-3.5 text-sm font-medium text-[#1F1B4D] hover:border-[#bcb7f4] hover:bg-[#F4F3FA] disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 min-h-[44px] rounded-xl border border-[#E2E0EF] bg-white px-3.5 text-[13px] font-medium text-[#1F1B4D] hover:border-[#bcb7f4] hover:bg-[#F4F3FA] disabled:opacity-50';
 const btnPrimary =
-  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl bg-[#4338E8] px-4 text-sm font-semibold text-white hover:bg-[#3529d1] disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 min-h-[44px] rounded-xl bg-[#4338E8] px-4 text-[13px] font-semibold text-white hover:bg-[#3529d1] disabled:opacity-50';
 
 /** Side panel on wide screens; bottom sheet with a scrim on tablets and phones. */
 export function PlannerSheet({ onClose, children, label }: { onClose: () => void; children: React.ReactNode; label: string }) {
@@ -62,11 +65,11 @@ export function PlannerSheet({ onClose, children, label }: { onClose: () => void
         role="dialog"
         aria-modal="true"
         aria-label={label}
-        className="fixed inset-x-0 bottom-0 z-[61] max-h-[86vh] overflow-y-auto rounded-t-3xl bg-white px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:inset-x-auto md:right-0 md:top-0 md:bottom-0 md:max-h-none md:w-[440px] md:rounded-none md:rounded-l-3xl md:px-6 md:pt-6 md:shadow-[-12px_0_40px_rgba(0,0,0,0.14)]"
+        className="fixed inset-x-0 bottom-0 z-[61] max-h-[min(88vh,760px)] overflow-y-auto rounded-t-3xl bg-white px-5 pb-[calc(20px+env(safe-area-inset-bottom))] pt-3 shadow-[0_-12px_40px_rgba(0,0,0,0.18)] md:inset-x-auto md:right-0 md:top-1/2 md:bottom-auto md:max-h-[min(88vh,760px)] md:w-full md:max-w-[760px] md:-translate-y-1/2 md:rounded-3xl md:px-6 md:pt-6 md:shadow-2xl md:shadow-indigo-900/20"
       >
         <div className="mx-auto mb-3 h-1.5 w-10 rounded-full bg-[#D1D5DB] md:hidden" aria-hidden />
         <div className="flex items-start justify-between gap-3">
-          <span className="text-[11px] font-bold uppercase tracking-[0.08em] text-[#77738F]">{label}</span>
+          <span className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#77738F]">{label}</span>
           <button type="button" onClick={onClose} className="-mt-1 rounded-lg p-1.5 text-[#77738F] hover:bg-[#F4F3FA]" aria-label="Close">
             <X className="h-5 w-5" />
           </button>
@@ -105,11 +108,14 @@ export function LessonDetailsSheet({
   onEditInBuilder?: (plan: LessonPlan) => void;
 }) {
   const [polishOpen, setPolishOpen] = useState(false);
+  const { updateLessonData, currentAcademicYear } = useData();
   const plan = entry.plan;
   const cls = data.classById.get(plan.className);
   const cache = data.lessonCache[plan.className];
   const title = lessonTitle(plan, cache);
   const lesson = cache && cache !== 'loading' && plan.lessonNumber ? cache.lessons[plan.lessonNumber] : undefined;
+  const planDate = plan.date ? new Date(plan.date) : new Date();
+  const academicYear = currentAcademicYear || academicYearFor(planDate);
   const activities: Activity[] = plan.activities?.length
     ? plan.activities
     : lesson?.orderedActivities || Object.values(lesson?.grouped || {}).flat();
@@ -142,10 +148,16 @@ export function LessonDetailsSheet({
   const setStatus = (status: LessonPlan['status']) =>
     data.savePlans([{ ...plan, status }], status === 'completed' ? 'Marked as taught.' : `Marked as ${planStatusLabel[status].toLowerCase()}.`);
 
-  /** Remove the lesson from this timetable outline — the dashed slot returns. */
+  const [confirmClear, setConfirmClear] = useState(false);
+
+  /** Remove the lesson from this timetable outline — the dashed slot returns.
+   * Library lesson content is kept (status cancelled only). */
   const clearFromSlot = () => {
     void data
-      .savePlans([{ ...plan, status: 'cancelled' }], entry.slot ? 'Cleared — timetable slot is empty again.' : 'Lesson cleared.')
+      .savePlans(
+        [{ ...plan, status: 'cancelled' }],
+        entry.slot ? 'Cleared — timetable slot is empty again.' : 'Lesson cleared.',
+      )
       .then(onClose);
   };
 
@@ -153,6 +165,7 @@ export function LessonDetailsSheet({
   const isPast = date < new Date(new Date().toDateString());
 
   return (
+    <>
     <PlannerSheet onClose={onClose} label={mode === 'details' ? 'Lesson details' : mode === 'move' ? 'Move this lesson' : 'Teach to another class'}>
       <h2 className="mt-1 text-[22px] font-semibold leading-tight text-[#1F1B4D]" style={{ fontFamily: SERIF }}>{title}</h2>
       <div className="mt-1.5 flex flex-wrap items-center gap-2 text-[13px] text-[#77738F]">
@@ -197,7 +210,7 @@ export function LessonDetailsSheet({
                 {activities.length > 12 && <li className="text-xs text-[#77738F]">+{activities.length - 12} more</li>}
               </ol>
             ) : (
-              <p className="text-sm text-[#77738F]">No activities yet. Build this lesson in the Lesson Builder.</p>
+              <p className="text-sm text-[#77738F]">No activities yet. Build this lesson in Lessons.</p>
             )}
             {lesson?.learningOutcome && (
               <p className="mt-3 rounded-xl bg-[#E9E6FF] px-3 py-2 text-sm text-[#1F2937]">
@@ -206,6 +219,28 @@ export function LessonDetailsSheet({
               </p>
             )}
           </section>
+
+          {plan.lessonNumber ? (
+            <LessonSlidesSection
+              year={academicYear}
+              sheet={plan.className}
+              lessonNumber={plan.lessonNumber}
+              legacyInteractiveLessonId={lesson?.interactiveLessonId || null}
+              onMirrorDefault={(viewerId) => {
+                if (!updateLessonData || !plan.lessonNumber || !lesson) return;
+                void updateLessonData(plan.lessonNumber, {
+                  ...lesson,
+                  interactiveLessonId: viewerId || undefined,
+                });
+              }}
+              returnContext={{
+                view: 'week',
+                date: ymd(planDate),
+                lessonPlanId: plan.id,
+                tab: 'unit-viewer',
+              }}
+            />
+          ) : null}
 
           <section className="mt-4 border-t border-[#E2E0EF] pt-4">
             <h3 className={sectionTitle}>Note for this class</h3>
@@ -259,7 +294,7 @@ export function LessonDetailsSheet({
                   />
                 </label>
               ))}
-              <p className="mt-2 flex items-center gap-2 rounded-xl bg-[#E9E6FF] px-3 py-2 text-[12.5px] text-[#374151]">
+              <p className="mt-2 flex items-center gap-2 rounded-xl bg-[#E9E6FF] px-3 py-2 text-[13px] text-[#374151]">
                 <Lock className="h-4 w-4 shrink-0 text-[#1F1B4D]" />
                 Private to you. Saved against {cls?.name || 'this class'} on this date, not the lesson itself.
               </p>
@@ -279,7 +314,7 @@ export function LessonDetailsSheet({
                   onClose();
                 }}
               >
-                Edit in Lesson Builder
+                Edit in Lessons
               </button>
             )}
             <button type="button" className={`${btn} border-[#4338E8]/30 text-[#4338E8]`} onClick={() => setPolishOpen(true)}>
@@ -298,7 +333,7 @@ export function LessonDetailsSheet({
               <button
                 type="button"
                 className={`${btn} border-[#FECACA] text-[#B91C1C] hover:bg-[#FEF2F2]`}
-                onClick={clearFromSlot}
+                onClick={() => setConfirmClear(true)}
               >
                 {entry.slot ? 'Clear from slot' : 'Remove from planner'}
               </button>
@@ -319,6 +354,20 @@ export function LessonDetailsSheet({
       {mode === 'move' && <MoveForm plan={plan} data={data} onDone={() => setMode('details')} />}
       {mode === 'reuse' && <ReuseForm plan={plan} title={title} data={data} onDone={() => setMode('details')} />}
     </PlannerSheet>
+    <ModalConfirm
+      open={confirmClear}
+      onClose={() => setConfirmClear(false)}
+      onConfirm={clearFromSlot}
+      title={entry.slot ? 'Clear timetable slot?' : 'Remove from planner?'}
+      message={
+        entry.slot
+          ? 'Clear this lesson from the timetable slot? It stays in Your lessons.'
+          : 'Remove this lesson from the planner? It stays in Your lessons.'
+      }
+      confirmLabel={entry.slot ? 'Clear from slot' : 'Remove from planner'}
+      danger
+    />
+    </>
   );
 }
 
@@ -444,7 +493,13 @@ export function SchedulePickerSheet({
   data: PlannerData;
   onClose: () => void;
 }) {
-  const { currentSheetInfo, allLessonsData, lessonNumbers: liveLessonNumbers } = useData();
+  const {
+    currentSheetInfo,
+    allLessonsData,
+    lessonNumbers: liveLessonNumbers,
+    updateLessonData,
+    currentAcademicYear,
+  } = useData();
   const visible = data.classes.filter((c) => !c.hidden);
   const [classId, setClassId] = useState(
     initial.classId ||
@@ -558,6 +613,7 @@ export function SchedulePickerSheet({
       ...a,
       lessonNumber: n,
     }));
+    const numLabel = String(n).replace(/^lesson/i, '') || n;
     const plan: LessonPlan = {
       id: crypto.randomUUID(),
       date: d,
@@ -568,7 +624,7 @@ export function SchedulePickerSheet({
       notes: '',
       status: 'planned',
       lessonNumber: n,
-      title: l.title || l.lessonName || `Lesson ${n}`,
+      title: l.title || l.lessonName || `Lesson ${numLabel}`,
       // Keep the timetable slot's start time so the outline matches after save.
       time: time ? normalizeTime(time) : undefined,
       createdAt: new Date(),
@@ -577,11 +633,64 @@ export function SchedulePickerSheet({
     void data.savePlans([plan], `Scheduled for ${cls?.name || 'class'}.`).then(onClose);
   };
 
+  const createAndScheduleNew = async () => {
+    if (!updateLessonData) return;
+    const title =
+      window.prompt('Title for the new lesson', 'New lesson')?.trim() || 'New lesson';
+    const maxLessonNumber = Math.max(
+      0,
+      ...Object.keys(library.lessons || {}).map((num) => {
+        const numStr = String(num).replace(/^lesson/i, '');
+        return parseInt(numStr, 10) || 0;
+      }),
+    );
+    const newLessonNumber = `lesson${maxLessonNumber + 1}`;
+    try {
+      await updateLessonData(newLessonNumber, {
+        grouped: {},
+        categoryOrder: [],
+        totalTime: 0,
+        title,
+        isUserCreated: true,
+        academicYear: currentAcademicYear,
+        sections: [],
+      });
+      await ensureLessons(classId);
+      choose(newLessonNumber);
+    } catch {
+      // choose may fail if cache not yet updated — schedule with the new title directly
+      const d = new Date(`${date}T12:00:00`);
+      const plan: LessonPlan = {
+        id: crypto.randomUUID(),
+        date: d,
+        week: isoWeek(d),
+        className: classId,
+        activities: [],
+        duration: 0,
+        notes: '',
+        status: 'planned',
+        lessonNumber: newLessonNumber,
+        title,
+        time: time ? normalizeTime(time) : undefined,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      void data.savePlans([plan], `Created and scheduled “${title}”.`).then(onClose);
+    }
+  };
+
   return (
     <PlannerSheet onClose={onClose} label="Choose a lesson">
-      <p className="mt-1 text-[13px] text-[#77738F]">
-        All lessons in {cls?.name || 'this class'}’s library. Already on the planner stay available to schedule again.
+      <p className="mt-1 text-[13px] text-[#5F5B7A]">
+        All lessons in {cls?.name || 'this class'}’s library. Create a new one or pick an existing lesson.
       </p>
+      <button
+        type="button"
+        onClick={() => void createAndScheduleNew()}
+        className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-3 text-sm font-bold text-white hover:bg-indigo-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+      >
+        Create new lesson
+      </button>
       <div className="mt-2 grid grid-cols-1 gap-3 sm:grid-cols-3 md:grid-cols-1">
         <div className="relative block text-[13px] font-semibold text-[#374151]" ref={classMenuRef}>
           Class
@@ -626,10 +735,10 @@ export function SchedulePickerSheet({
                       ) : (
                         <ChevronRight className="h-3.5 w-3.5 text-[#77738F]" />
                       )}
-                      <span className="flex-1 text-[10px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
+                      <span className="flex-1 text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
                         {folder.name}
                       </span>
-                      <span className="text-[10px] font-bold text-[#C4C0D8]">{folder.classes.length}</span>
+                      <span className="text-[13px] font-bold text-[#C4C0D8]">{folder.classes.length}</span>
                     </button>
                     {open &&
                       folder.classes.map((c) => (
@@ -679,7 +788,7 @@ export function SchedulePickerSheet({
         />
       </div>
       {!loading && lessons.length > 0 && (
-        <p className="mt-2 text-[11px] font-semibold uppercase tracking-wide text-[#77738F]">
+        <p className="mt-2 text-[13px] font-semibold uppercase tracking-wide text-[#77738F]">
           {lessons.length} lesson{lessons.length === 1 ? '' : 's'}
         </p>
       )}
@@ -688,7 +797,7 @@ export function SchedulePickerSheet({
           <p className="py-6 text-center text-sm text-[#77738F]">Loading lessons…</p>
         ) : lessons.length === 0 ? (
           <p className="py-6 text-center text-sm text-[#77738F]">
-            No lessons found for {cls?.name}. Create one in the Lesson Builder or Lesson Library first.
+            No lessons found for {cls?.name}. Create one in Lessons first.
           </p>
         ) : (
           lessons.map(({ n, l }) => (
@@ -703,13 +812,18 @@ export function SchedulePickerSheet({
                 {lessonBadgeLabel(n, l)}
               </span>
               <span className="min-w-0 flex-1">
-                <span className="block truncate text-sm font-semibold text-[#1F2937]">{l.title || l.lessonName || `Lesson ${n}`}</span>
+                <span
+                  className="block line-clamp-2 text-sm font-semibold leading-snug text-[#1F2937]"
+                  title={l.title || l.lessonName || `Lesson ${n}`}
+                >
+                  {l.title || l.lessonName || `Lesson ${n}`}
+                </span>
                 <span className="block text-xs text-[#77738F]">
                   {halfTermLabel.get(n) ? `${halfTermLabel.get(n)} · ` : ''}
                   {plural(lessonActivityCount(l), 'activity', 'activities')} · {l.totalTime || 0} min
                 </span>
               </span>
-              {scheduled.has(n) && <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[11.5px] font-semibold text-[#1E6B3E]">Scheduled</span>}
+              {scheduled.has(n) && <span className="rounded-full bg-[#D5F3EA] px-2 py-0.5 text-[13px] font-semibold text-[#1E6B3E]">Scheduled</span>}
               <BookOpen className="h-4 w-4 shrink-0 text-[#6B7280]" />
             </button>
           ))

@@ -5,8 +5,8 @@
 import { createServiceClient, assertRateLimit } from '../../../../../api/_authShared.js';
 import { forumJson, forumOptions, requireForumAuth } from '../../../../../api/_forumShared.js';
 
-export async function OPTIONS() {
-  return forumOptions();
+export async function OPTIONS(request) {
+  return forumOptions(request);
 }
 
 function getPostId(request) {

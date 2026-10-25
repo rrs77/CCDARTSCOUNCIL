@@ -374,12 +374,12 @@ export function AssignSchemeMultiPanel({
         onClick={onClose}
       />
 
-      <div className="relative z-[1] flex max-h-[min(94vh,920px)] w-full max-w-[68rem] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
+      <div className="relative z-[1] flex h-auto max-h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
         {/* Header */}
         <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-7">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[12px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
+              <p className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
                 Add scheme of work
               </p>
               <h2
@@ -406,7 +406,35 @@ export function AssignSchemeMultiPanel({
               <X className="h-4 w-4" />
             </button>
           </div>
-          <div className="mt-3 h-1.5 w-full rounded-full" style={{ background: termColor }} aria-hidden />
+          <div
+            className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={
+              selectedStackId ? 100 : selectedClassIds.size === 0 ? 50 : 75
+            }
+            aria-label={
+              selectedStackId
+                ? 'Step 2 of 2 complete'
+                : selectedClassIds.size === 0
+                  ? 'Step 1 of 2'
+                  : 'Step 2 of 2'
+            }
+          >
+            <div
+              className="h-full rounded-full transition-all duration-200"
+              style={{
+                background: termColor,
+                // Step 1 of 2 → 50%; classes chosen → 75%; scheme chosen → 100%
+                width: selectedStackId
+                  ? '100%'
+                  : selectedClassIds.size === 0
+                    ? '50%'
+                    : '75%',
+              }}
+            />
+          </div>
 
           {/* Step labels */}
           <div className="mt-3.5 flex flex-wrap gap-2">
@@ -418,7 +446,7 @@ export function AssignSchemeMultiPanel({
               }`}
             >
               <span
-                className={`grid h-5 w-5 place-items-center rounded-full text-[11px] font-extrabold ${
+                className={`grid h-5 w-5 place-items-center rounded-full text-[13px] font-extrabold ${
                   selectedClassIds.size > 0 ? 'bg-[#4338E8] text-white' : 'bg-white text-[#77738F]'
                 }`}
               >
@@ -437,7 +465,7 @@ export function AssignSchemeMultiPanel({
               }`}
             >
               <span
-                className={`grid h-5 w-5 place-items-center rounded-full text-[11px] font-extrabold ${
+                className={`grid h-5 w-5 place-items-center rounded-full text-[13px] font-extrabold ${
                   selectedStack ? 'bg-[#4338E8] text-white' : 'bg-white text-[#77738F]'
                 }`}
               >
@@ -477,7 +505,7 @@ export function AssignSchemeMultiPanel({
                 >
                   Clear
                 </button>
-                <span className="rounded-lg bg-[#E9E6FF] px-2 py-0.5 text-[12px] font-extrabold tabular-nums text-[#4338E8]">
+                <span className="rounded-lg bg-[#E9E6FF] px-2 py-0.5 text-[13px] font-extrabold tabular-nums text-[#4338E8]">
                   {selectedClassIds.size} selected
                 </span>
               </div>
@@ -545,7 +573,7 @@ export function AssignSchemeMultiPanel({
                               {block.classes.length}
                             </span>
                             {selectedInGroup > 0 ? (
-                              <span className="hidden rounded-full bg-[#4338E8] px-1.5 py-0.5 text-[10px] font-extrabold tabular-nums text-white sm:inline">
+                              <span className="hidden rounded-full bg-[#4338E8] px-1.5 py-0.5 text-[13px] font-extrabold tabular-nums text-white sm:inline">
                                 {selectedInGroup} sel.
                               </span>
                             ) : null}
@@ -555,7 +583,7 @@ export function AssignSchemeMultiPanel({
                             onClick={() =>
                               allSelected ? clearGroup(ids) : selectGroup(ids)
                             }
-                            className="shrink-0 rounded-lg px-1.5 py-1 text-[11px] font-extrabold text-[#4338E8] hover:bg-white/70 sm:px-2 sm:text-[12px]"
+                            className="shrink-0 rounded-lg px-1.5 py-1 text-[13px] font-extrabold text-[#4338E8] hover:bg-white/70 sm:px-2 sm:text-[13px]"
                           >
                             {allSelected ? 'Clear' : 'All'}
                             {selectedInGroup > 0 && !allSelected ? (
@@ -594,7 +622,7 @@ export function AssignSchemeMultiPanel({
                                       style={{ background: group.subject.color }}
                                     />
                                     <span>{group.subject.label}</span>
-                                    <span className="ml-auto text-[11px] font-bold tabular-nums text-[#9B97B0]">
+                                    <span className="ml-auto text-[13px] font-bold tabular-nums text-[#9B97B0]">
                                       {group.classes.length}
                                     </span>
                                   </div>
@@ -644,12 +672,12 @@ export function AssignSchemeMultiPanel({
                                               {title}
                                             </span>
                                             {context ? (
-                                              <span className="mt-0.5 block break-words text-[11px] font-semibold leading-snug text-[#9B97B0] sm:text-[12px]">
+                                              <span className="mt-0.5 block break-words text-[13px] font-semibold leading-snug text-[#9B97B0] sm:text-[13px]">
                                                 {context}
                                               </span>
                                             ) : null}
                                             {has ? (
-                                              <span className="mt-1 inline-block rounded-md bg-[#D5F3EA] px-1.5 py-0.5 text-[9px] font-extrabold uppercase tracking-wide text-[#0B6B5F]">
+                                              <span className="mt-1 inline-block rounded-md bg-[#D5F3EA] px-1.5 py-0.5 text-[13px] font-extrabold uppercase tracking-wide text-[#0B6B5F]">
                                                 Has it
                                               </span>
                                             ) : null}
@@ -695,7 +723,7 @@ export function AssignSchemeMultiPanel({
                     type="button"
                     aria-pressed={active}
                     onClick={() => setSchemeSubject(s)}
-                    className={`inline-flex h-8 items-center rounded-lg px-2.5 text-[12px] font-extrabold transition ${
+                    className={`inline-flex h-8 items-center rounded-lg px-2.5 text-[13px] font-extrabold transition ${
                       active
                         ? 'bg-[#4338E8] text-white'
                         : 'border border-[#E2E0EF] bg-white text-[#5C5878] hover:border-[#bcb7f4]'
@@ -782,11 +810,11 @@ export function AssignSchemeMultiPanel({
                                   {stack.name}
                                 </p>
                                 {subject !== 'Other' ? (
-                                  <span className="mt-1 inline-block rounded-md bg-[#F4F3FA] px-1.5 py-0.5 text-[10px] font-extrabold uppercase tracking-wide text-[#5C5878]">
+                                  <span className="mt-1 inline-block rounded-md bg-[#F4F3FA] px-1.5 py-0.5 text-[13px] font-extrabold uppercase tracking-wide text-[#5C5878]">
                                     {subject}
                                   </span>
                                 ) : null}
-                                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] font-semibold text-[#5C5878]">
+                                <div className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] font-semibold text-[#5C5878]">
                                   <span className="inline-flex items-center gap-0.5">
                                     <BookOpen className="h-3 w-3" />
                                     {stack.lessons.length}
@@ -797,7 +825,7 @@ export function AssignSchemeMultiPanel({
                                   </span>
                                 </div>
                                 {!open && lessonPreview.length > 0 ? (
-                                  <p className="mt-1.5 line-clamp-2 text-[11px] leading-snug text-[#9B97B0]">
+                                  <p className="mt-1.5 line-clamp-2 text-[13px] leading-snug text-[#9B97B0]">
                                     {lessonPreview
                                       .map((id) => allLessonsData[id]?.title || `Lesson ${id}`)
                                       .join(' · ')}
@@ -814,7 +842,7 @@ export function AssignSchemeMultiPanel({
                                 e.stopPropagation();
                                 setPreviewId(open ? null : stack.id);
                               }}
-                              className="mt-2 inline-flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-[#E2E0EF] text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
+                              className="mt-2 inline-flex h-7 w-full items-center justify-center gap-1 rounded-lg border border-[#E2E0EF] text-[13px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
                               aria-expanded={open}
                             >
                               {open ? 'Hide lessons' : 'Lessons'}
@@ -832,7 +860,7 @@ export function AssignSchemeMultiPanel({
                                     return (
                                       <li
                                         key={`${stack.id}-${lessonId}`}
-                                        className="flex items-baseline gap-1.5 text-[12px] text-[#5C5878]"
+                                        className="flex items-baseline gap-1.5 text-[13px] text-[#5C5878]"
                                       >
                                         <span className="w-4 shrink-0 text-right font-bold tabular-nums text-[#9B97B0]">
                                           {i + 1}.

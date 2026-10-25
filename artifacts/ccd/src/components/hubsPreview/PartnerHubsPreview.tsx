@@ -210,7 +210,7 @@ function Crumbs({ items }: { items: { label: string; onClick?: () => void }[] })
         <span key={i} className="flex items-center gap-1">
           {i > 0 && <ChevronRight className="h-3.5 w-3.5 text-[#1F1B4D]/30" aria-hidden />}
           {it.onClick ? (
-            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#1F1B4D]/60 hover:text-[#1F1B4D] hover:underline">
+            <button type="button" onClick={it.onClick} className="rounded px-1 py-0.5 text-[#1F1B4D]/75 hover:text-[#1F1B4D] hover:underline">
               {it.label}
             </button>
           ) : (
@@ -439,7 +439,7 @@ function GlobalSearch({ ix, onFocusMap }: { ix: MapIndex | null; onFocusMap: (f:
             lastGroup = h.group;
             return (
               <div key={`${h.group}-${h.label}-${i}`}>
-                {header && <p className="px-3 pb-1 pt-2 text-[12px] font-semibold uppercase tracking-[0.08em] text-[#1F1B4D]/45">{h.group}</p>}
+                {header && <p className="px-3 pb-1 pt-2 text-[13px] font-semibold uppercase tracking-[0.08em] text-[#1F1B4D]/45">{h.group}</p>}
                 <div
                   id={`hubs-hit-${i}`}
                   role="option"
@@ -877,14 +877,14 @@ function OrgDirectorySection({
                   </div>
                   <div className="flex flex-1 flex-col gap-1 p-3">
                     <h3 className={`text-[14px] font-semibold leading-snug ${ink}`}>{h.displayName}</h3>
-                    <p className={`text-[12px] ${muted}`}>{o.disciplines.join(' · ') || 'Arts'}</p>
-                    {h.tagline && <p className={`line-clamp-1 text-[12px] leading-snug ${muted}`}>{h.tagline}</p>}
+                    <p className={`text-[13px] ${muted}`}>{o.disciplines.join(' · ') || 'Arts'}</p>
+                    {h.tagline && <p className={`line-clamp-1 text-[13px] leading-snug ${muted}`}>{h.tagline}</p>}
                     <div className="mt-auto flex items-center justify-between gap-2 pt-2">
                       <Badge tone={o.access === 'free' ? 'teal' : 'amber'}>{ACCESS_LABEL[o.access]}</Badge>
                       <button
                         type="button"
                         onClick={() => openPartnerHub(h.slug)}
-                        className="inline-flex min-h-[32px] items-center gap-1 rounded-lg px-1.5 text-[12px] font-medium text-[#0B6B5F] hover:bg-[#14B8A6]/10"
+                        className="inline-flex min-h-[32px] items-center gap-1 rounded-lg px-1.5 text-[13px] font-medium text-[#0B6B5F] hover:bg-[#14B8A6]/10"
                         aria-label={`Explore resources from ${h.displayName}`}
                       >
                         Explore <ArrowRight className="h-3.5 w-3.5" />
@@ -897,7 +897,7 @@ function OrgDirectorySection({
           })}
         </ul>
       )}
-      <p className={`text-[12px] ${muted}`}>
+      <p className={`text-[13px] ${muted}`}>
         Listings show publicly available resources. A listing does not mean the organisation has endorsed or partnered with CCDesigner.
       </p>
     </section>
@@ -1992,6 +1992,25 @@ function PartnerHubsBrowse({
 
   const backToMap = () => go({ level: 'uk' });
 
+  const [regionMapOpen, setRegionMapOpen] = useState(false);
+  const [regionMapModal, setRegionMapModal] = useState(false);
+  const [pinnedHub, setPinnedHub] = useState<string | null>(null);
+  useEffect(() => {
+    setPinnedHub(null);
+    setRegionMapModal(false);
+  }, [focus]);
+  // Region's natural shape for the side-by-side map, clamped to 4:5 … 4:3.
+  const regionAspect = useMemo(() => {
+    const b = ix && atRegion ? ix.region(focus.id)?.bbox : undefined;
+    if (!b) return 0.8;
+    return Math.min(4 / 3, Math.max(0.8, b[2] / b[3]));
+  }, [ix, atRegion, focus]);
+  const activatePin = (id: string) => {
+    setPinnedHub(id);
+    const card = document.querySelector<HTMLElement>(`[data-hub-card="${CSS.escape(id)}"]`);
+    card?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  };
+
   const regionName = ix && atRegion ? focusName(ix, focus) : '';
   const regionHubCount = regionHubs.length;
 
@@ -2080,7 +2099,7 @@ function PartnerHubsBrowse({
                 </div>
 
                 <div className="flex min-h-0 flex-col rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-3 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:p-4">
-                  <h3 className="text-[12px] font-bold uppercase tracking-[0.08em] text-[#1F1B4D]/45">
+                  <h3 className="text-[13px] font-bold uppercase tracking-[0.08em] text-[#1F1B4D]/45">
                     Regions
                   </h3>
                   <ul
@@ -2107,7 +2126,7 @@ function PartnerHubsBrowse({
                           >
                             <span className="min-w-0 truncate text-[13px] font-semibold">{r.name}</span>
                             <span
-                              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[11px] font-bold tabular-nums ${
+                              className={`shrink-0 rounded-full px-1.5 py-0.5 text-[13px] font-bold tabular-nums ${
                                 active ? 'bg-[#0B6B5F] text-white' : 'bg-[#E4F4EF] text-[#0B6B5F]'
                               }`}
                             >
@@ -2121,7 +2140,7 @@ function PartnerHubsBrowse({
                 </div>
               </div>
 
-              <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
+              <p className={`flex items-center gap-2 text-[13px] ${muted}`}>
                 <Info className="h-3.5 w-3.5" aria-hidden />
                 Hub areas from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
               </p>
@@ -2138,89 +2157,72 @@ function PartnerHubsBrowse({
                 </button>
               </div>
 
-              <div className="flex flex-col gap-4 rounded-2xl border border-[#1F1B4D]/[0.08] bg-white p-4 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:flex-row sm:items-center sm:gap-5 sm:p-5">
-                <div className="min-w-0 flex-1">
-                  <h2
-                    id="music-hubs-results"
-                    className="text-[22px] font-bold tracking-tight text-[#1F1B4D] sm:text-[26px]"
-                  >
-                    {regionName}
-                  </h2>
-                  <p className={`mt-1 max-w-lg text-[14px] leading-snug ${muted}`}>
-                    {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'} serve schools across this region.
-                    Open a hub to explore resources and local services.
-                  </p>
-                  <p className="mt-2 text-[13px] font-semibold text-[#0B6B5F]">
-                    {regionHubCount} hub{regionHubCount === 1 ? '' : 's'} in {regionName}
-                  </p>
-                </div>
-                <div className="ml-auto h-[150px] w-full max-w-[260px] shrink-0 overflow-hidden rounded-xl ring-1 ring-[#1F1B4D]/[0.08] sm:w-[260px]">
+              <div className="rounded-2xl border border-[#1F1B4D]/[0.08] bg-white px-5 py-3 shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:px-6">
+                <h2
+                  id="music-hubs-results"
+                  className="text-[26px] font-bold tracking-tight text-[#1F1B4D] sm:text-[30px]"
+                >
+                  {regionName}
+                </h2>
+                <p className="mt-1 text-[13px] font-semibold text-[#0B6B5F]">
+                  {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'} in {regionName}
+                </p>
+                <p className={`mt-1 text-[14px] leading-snug ${muted}`}>
+                  These Music Hubs serve schools across this region. Open a hub to explore resources and local
+                  services, or pick a pin on the map to find its card.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setRegionMapOpen((v) => !v)}
+                aria-expanded={regionMapOpen}
+                className="flex min-h-[44px] w-full items-center justify-between rounded-xl border border-[#1F1B4D]/[0.08] bg-white px-4 text-[14px] font-semibold text-[#0B6B5F] sm:hidden"
+              >
+                {regionMapOpen ? 'Hide map' : 'Show map'}
+                <span aria-hidden>{regionMapOpen ? '▴' : '▾'}</span>
+              </button>
+
+              <div className="grid gap-6 min-[1200px]:grid-cols-[clamp(360px,40%,520px)_minmax(0,1fr)] min-[1200px]:items-start">
+                <div
+                  style={{ ['--region-aspect' as string]: String(regionAspect) }}
+                  className={`${regionMapOpen ? 'block' : 'hidden'} relative h-[240px] overflow-hidden rounded-xl border border-[#1F1B4D]/[0.08] bg-white shadow-[0_1px_2px_rgba(31,27,77,0.04)] sm:block sm:h-[320px] min-[1200px]:sticky min-[1200px]:top-4 min-[1200px]:h-auto min-[1200px]:aspect-[var(--region-aspect,4/5)] min-[1200px]:max-h-[calc(100cqh-40px)]`}
+                >
                   <UkHubMap
                     ix={ix}
                     focus={focus}
-                    hover={hover}
+                    hover={hover ?? pinnedHub}
                     onHover={setHover}
                     onFocus={onMapFocus}
                     showBreadcrumb={false}
                     regionLabelMode="none"
                     showFeatureLabels={false}
-                    showControls={false}
                     showAttribution={false}
+                    controlsPosition="bottom-right"
+                    showReset
+                    pins
+                    onPinActivate={activatePin}
+                    fitPaddingPx={24}
                     palette="green"
                     className="h-full w-full !rounded-xl !border-0"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setRegionMapModal(true)}
+                    className="absolute right-3 top-3 z-[6] inline-flex min-h-[40px] items-center rounded-full bg-white/95 px-4 text-[13px] font-semibold text-[#0B6B5F] shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] ring-1 ring-inset ring-[#0B6B5F]/20 hover:bg-[#E4F4EF]"
+                  >
+                    View full map
+                  </button>
                 </div>
-              </div>
 
+                <div className="min-w-0 space-y-4">
               <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5 rounded-xl border border-[#E2E0EF] bg-[#F4F3FA] px-3 py-2">
                 <div className="min-w-0 shrink-0 pr-1">
                   <h3 className="truncate text-sm font-extrabold tracking-tight text-[#1F1B4D] sm:text-base">
                     {regionHubCount} Music Hub{regionHubCount === 1 ? '' : 's'}
                   </h3>
-                  <p className="text-[10px] font-medium leading-tight text-[#77738F]">A–Z</p>
+                  <p className="text-[13px] font-medium leading-tight text-[#5C5878]">A–Z</p>
                 </div>
-                {(hubsView === 'grid' || hubsView === 'compact') && (
-                  <label
-                    className="flex items-center gap-1.5 rounded-lg border border-[#E2E0EF] bg-white px-2 py-1"
-                    title={
-                      hubsGridColsPinned
-                        ? `${hubsGridCols} columns (drag to change; click Auto to fit width)`
-                        : `${hubsGridCols} columns (auto-fits to width)`
-                    }
-                  >
-                    <span className="text-[10px] font-bold tabular-nums text-[#5C5878]">{hubsGridCols}</span>
-                    <input
-                      type="range"
-                      min={HUBS_GRID_COLS_MIN}
-                      max={HUBS_GRID_COLS_MAX}
-                      step={1}
-                      value={hubsGridCols}
-                      onChange={(e) => {
-                        const next = Math.max(
-                          HUBS_GRID_COLS_MIN,
-                          Math.min(HUBS_GRID_COLS_MAX, Math.round(Number(e.target.value))),
-                        );
-                        setHubsGridCols(next);
-                        setHubsGridColsPinned(true);
-                      }}
-                      className="h-1 w-16 cursor-pointer accent-[#0B6B5F] sm:w-20"
-                      aria-label="Music Hubs per row"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setHubsGridColsPinned(false);
-                        const w = hubsGridMeasureRef.current?.clientWidth ?? 0;
-                        setHubsGridCols(hubsColsForWidth(w));
-                      }}
-                      className={`rounded px-1 text-[9px] font-extrabold uppercase tracking-wide ${
-                        hubsGridColsPinned ? 'text-[#0B6B5F] hover:bg-[#E4F4EF]' : 'text-[#77738F]'
-                      }`}
-                    >
-                      Auto
-                    </button>
-                  </label>
-                )}
                 <div className="ml-auto flex flex-wrap items-center gap-0.5">
                   <button
                     type="button"
@@ -2280,12 +2282,22 @@ function PartnerHubsBrowse({
               ) : (
                 <div ref={hubsGridMeasureRef}>
                   <ul
-                    className={`grid items-start ${hubsView === 'compact' ? 'gap-1.5' : 'gap-2'}`}
-                    style={{ gridTemplateColumns: `repeat(${hubsGridCols}, minmax(0, 1fr))` }}
+                    className="grid items-stretch gap-6 max-[639px]:!grid-cols-1"
+                    style={{ gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))' }}
                     role="list"
                   >
                     {regionHubs.map((h) => (
-                      <li key={h.id} className="min-w-0">
+                      <li
+                        key={h.id}
+                        data-hub-card={h.id}
+                        onPointerEnter={() => setHover(h.id)}
+                        onPointerLeave={() => setHover(null)}
+                        className={`flex min-w-0 scroll-mt-24 flex-col rounded-2xl transition-shadow ${
+                          hover === h.id || pinnedHub === h.id
+                            ? 'shadow-[0_0_0_3px_#0B6B5F]'
+                            : ''
+                        }`}
+                      >
                         <MusicHubResultCard
                           id={h.id}
                           name={musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined)}
@@ -2294,6 +2306,7 @@ function PartnerHubsBrowse({
                           detail={musicHubCardDetail(h.id, h.leadOrganisation ?? undefined, h.lads.length)}
                           onOpen={() => go({ level: 'hub', id: h.id }, 'hub')}
                           compact={hubsView === 'compact'}
+                          alsoCovers={h.region !== focus.id ? regionName : undefined}
                         />
                       </li>
                     ))}
@@ -2301,7 +2314,57 @@ function PartnerHubsBrowse({
                 </div>
               )}
 
-              <p className={`flex items-center gap-2 text-[12px] ${muted}`}>
+                </div>
+              </div>
+
+              {regionMapModal &&
+                createPortal(
+                  <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-[#1F1B4D]/50 p-4"
+                    role="dialog"
+                    aria-modal="true"
+                    aria-label={`Map of ${regionName}`}
+                    onClick={(e) => {
+                      if (e.target === e.currentTarget) setRegionMapModal(false);
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setRegionMapModal(false);
+                    }}
+                  >
+                    <div className="relative h-[85vh] w-[90vw] max-w-[90vw] overflow-hidden rounded-2xl bg-white shadow-2xl">
+                      <UkHubMap
+                        ix={ix}
+                        focus={focus}
+                        hover={hover ?? pinnedHub}
+                        onHover={setHover}
+                        onFocus={onMapFocus}
+                        showBreadcrumb={false}
+                        regionLabelMode="none"
+                        controlsPosition="bottom-right"
+                        showReset
+                        pins
+                        fitPaddingPx={24}
+                        onPinActivate={(id) => {
+                          setRegionMapModal(false);
+                          activatePin(id);
+                        }}
+                        palette="green"
+                        className="h-full w-full !rounded-2xl !border-0"
+                      />
+                      <button
+                        type="button"
+                        autoFocus
+                        onClick={() => setRegionMapModal(false)}
+                        className="absolute right-3 top-3 z-[6] inline-flex min-h-[40px] items-center rounded-full bg-white px-4 text-[13px] font-semibold text-[#1F1B4D] shadow ring-1 ring-inset ring-[#1F1B4D]/15"
+                      >
+                        Close map
+                      </button>
+                    </div>
+                  </div>,
+                  document.body,
+                )}
+
+              <p className={`flex items-center gap-2 text-[13px] ${muted}`}>
                 <Info className="h-3.5 w-3.5" aria-hidden />
                 Hub areas from Arts Council England’s published list. Map boundaries © ONS, Open Government Licence.
               </p>

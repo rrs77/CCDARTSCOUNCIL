@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { X, Plus, Save, Trash2, MapPin, Settings, ChevronDown, ChevronRight, Copy, CopyPlus, Search, PanelLeftClose, PanelLeft } from 'lucide-react';
+import toast from 'react-hot-toast';
 import { useSettings } from '../contexts/SettingsContextNew';
 import { useDrop, useDrag } from 'react-dnd';
 import { getEmptyImage } from 'react-dnd-html5-backend';
 import { useDropZoneStyle, useDropFlash } from './dnd';
 import { supabase, TABLES, isSupabaseConfigured } from '../config/supabase';
 import { ColorPickerWithFavorites } from './ColorPickerWithFavorites';
+import { ModalPrompt } from './ccdPlanner/ModalShell';
 import {
   TERM_IDS as SHARED_TERM_IDS,
   loadTeacherTimetable,
@@ -146,6 +148,7 @@ export function TimetableBuilder({
   const [editingClass, setEditingClass] = useState<TimetableClass | null>(initialEditClass || null);
   const [isSaving, setIsSaving] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState<{ day: number; time: string } | null>(null);
+  const [breakPrompt, setBreakPrompt] = useState<{ day: number; time: string } | null>(null);
   const [viewMode, setViewMode] = useState<'week' | 'days'>('days');
   const [showRotationLabel, setShowRotationLabel] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
@@ -184,7 +187,7 @@ export function TimetableBuilder({
         label: section.label,
         classes: (section.yearGroupIds || [])
           .map((id) => myClasses.find((g) => g.id === id || g.name === id))
-          .filter((g): g is (typeof myClasses)[number] => Boolean(g) && match(g.name)),
+          .filter((g): g is (typeof myClasses)[number] => g != null && match(g.name)),
       }))
       .filter((s) => s.classes.length > 0);
     const assigned = new Set(grouped.flatMap((s) => s.classes.map((c) => c.id)));
@@ -344,18 +347,18 @@ export function TimetableBuilder({
 
   const copyFromPreviousTerm = () => {
     if (isGlobalTimetable) {
-      alert('Turn off "Same timetable for all terms" first to copy from a specific term.');
+      toast('Turn off "Same timetable for all terms" first to copy from a specific term.');
       return;
     }
     const idx = TERM_IDS.indexOf(selectedTermId as any);
     if (idx <= 0) {
-      alert('There is no previous term. Autumn 1 is the first term.');
+      toast('There is no previous term. Autumn 1 is the first term.');
       return;
     }
     const prevTermId = TERM_IDS[idx - 1];
     const saved = localStorage.getItem(getStorageKey(prevTermId));
     if (!saved) {
-      alert(`No timetable saved for ${TERM_LABELS[prevTermId]}. Set that term first or add classes here.`);
+      toast(`No timetable saved for ${TERM_LABELS[prevTermId]}. Set that term first or add classes here.`);
       return;
     }
     const classes = JSON.parse(saved);
@@ -371,7 +374,7 @@ export function TimetableBuilder({
       ? timetableClasses.map(c => ({ ...c, id: `class-${Date.now()}-${Math.random().toString(36).slice(2)}` }))
       : [];
     if (classes.length === 0) {
-      alert('Add or copy a timetable first, then use "Same timetable for all terms".');
+      toast('Add or copy a timetable first, then use "Same timetable for all terms".');
       return;
     }
     localStorage.setItem(globalFlagKey(), 'true');
@@ -383,7 +386,7 @@ export function TimetableBuilder({
     setIsGlobalTimetable(true);
     setTimetableClasses(classes);
     if (onTimetableUpdate) onTimetableUpdate(classes);
-    alert('Timetable is now used for all terms. Changing the semester will not change the grid; edits apply to the whole year. Turn off "Same timetable for all terms" to edit per term again.');
+    toast('Timetable is now used for all terms. Changing the semester will not change the grid; edits apply to the whole year. Turn off "Same timetable for all terms" to edit per term again.');
   };
 
   const setPerTermTimetable = () => {
@@ -396,7 +399,7 @@ export function TimetableBuilder({
       classes: myClasses,
     });
     loadTimetable(selectedTermId);
-    alert('Each term now has its own timetable. Change the semester to see or edit that term\'s timetable.');
+    toast('Each term now has its own timetable. Change the semester to see or edit that term\'s timetable.');
   };
 
   const handleAddYearGroup = (day: number, timeSlot: string, yearGroup: any) => {
@@ -417,9 +420,9 @@ export function TimetableBuilder({
     saveTimetable([...timetableClasses, newClass]);
   };
 
-  const handleAddNonCurriculum = (day: number, timeSlot: string) => {
-    const name = prompt('Enter name for non-curriculum time (e.g., Break, Lunch, Club):');
-    if (!name) return;
+  const handleAddNonCurriculum = (day: number, timeSlot: string, name: string) => {
+    const trimmed = name.trim();
+    if (!trimmed) return;
     const startM = parseTimeToMinutes(timeSlot);
     const endM = Math.min(dayEndMinutes, startM + slotDurationMinutes);
     const newClass: TimetableClass = {
@@ -427,12 +430,11 @@ export function TimetableBuilder({
       day,
       startTime: timeSlot,
       endTime: formatMinutesToTime(endM),
-      className: name,
+      className: trimmed,
       location: '',
-      color: '#9CA3AF', // Gray for non-curriculum
-      type: name.toLowerCase().includes('club') ? 'club' : 'non-curriculum'
+      color: '#9CA3AF',
+      type: trimmed.toLowerCase().includes('club') ? 'club' : 'non-curriculum',
     };
-    
     saveTimetable([...timetableClasses, newClass]);
   };
 
@@ -513,7 +515,7 @@ export function TimetableBuilder({
       ref={settingsRef}
       className="absolute right-0 top-full z-40 mt-2 w-[300px] rounded-2xl border border-[#E2E0EF] bg-white p-4 shadow-[0_16px_40px_rgba(31,27,77,0.12)]"
     >
-      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Term</p>
+      <p className="text-[13px] font-extrabold uppercase tracking-wide text-[#77738F]">Term</p>
       <select
         value={selectedTermId}
         onChange={(e) => setSelectedTermId(e.target.value)}
@@ -541,7 +543,7 @@ export function TimetableBuilder({
           <button
             type="button"
             onClick={copyFromPreviousTerm}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#E9E6FF] px-3 py-2 text-[12px] font-semibold text-[#4338E8] hover:bg-[#E2E0EF]"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-[#E9E6FF] px-3 py-2 text-[13px] font-semibold text-[#4338E8] hover:bg-[#E2E0EF]"
           >
             <Copy className="h-3.5 w-3.5" />
             Copy from previous term
@@ -549,7 +551,7 @@ export function TimetableBuilder({
           <button
             type="button"
             onClick={setSameForWholeYear}
-            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-[12px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
+            className="flex w-full items-center justify-center gap-1.5 rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-[13px] font-semibold text-[#1F1B4D] hover:bg-[#F4F3FA]"
           >
             <CopyPlus className="h-3.5 w-3.5" />
             Apply to whole year
@@ -557,10 +559,10 @@ export function TimetableBuilder({
         </div>
       )}
       <div className="my-3 border-t border-[#E2E0EF]" />
-      <p className="text-[11px] font-extrabold uppercase tracking-wide text-[#77738F]">Grid</p>
+      <p className="text-[13px] font-extrabold uppercase tracking-wide text-[#77738F]">Grid</p>
       <div className="mt-1.5 grid grid-cols-2 gap-2">
         <label className="block">
-          <span className="text-[11px] font-medium text-[#77738F]">Day start</span>
+          <span className="text-[13px] font-medium text-[#77738F]">Day start</span>
           <input
             type="time"
             value={normalizeTimeForInput(dayStart)}
@@ -573,7 +575,7 @@ export function TimetableBuilder({
           />
         </label>
         <label className="block">
-          <span className="text-[11px] font-medium text-[#77738F]">Day end</span>
+          <span className="text-[13px] font-medium text-[#77738F]">Day end</span>
           <input
             type="time"
             value={normalizeTimeForInput(dayEnd)}
@@ -587,7 +589,7 @@ export function TimetableBuilder({
         </label>
       </div>
       <label className="mt-2 block">
-        <span className="text-[11px] font-medium text-[#77738F]">Slot interval</span>
+        <span className="text-[13px] font-medium text-[#77738F]">Slot interval</span>
         <select
           value={slotInterval}
           onChange={(e) => {
@@ -615,7 +617,7 @@ export function TimetableBuilder({
       <button
         type="button"
         onClick={() => setViewMode(viewMode === 'days' ? 'week' : 'days')}
-        className="mt-2 w-full rounded-xl border border-[#E2E0EF] px-3 py-2 text-[12px] font-semibold text-[#77738F] hover:bg-[#F4F3FA]"
+        className="mt-2 w-full rounded-xl border border-[#E2E0EF] px-3 py-2 text-[13px] font-semibold text-[#77738F] hover:bg-[#F4F3FA]"
       >
         {viewMode === 'days' ? 'Show weekend days' : 'School days only (Mon–Fri)'}
       </button>
@@ -623,19 +625,14 @@ export function TimetableBuilder({
   );
 
   const openBreakClub = () => {
-    if (selectedSlot) handleAddNonCurriculum(selectedSlot.day, selectedSlot.time);
-    else {
-      setEditingClass({
-        id: `new-${Date.now()}`,
-        day: 1,
-        startTime: dayStart,
-        endTime: formatMinutesToTime(parseTimeToMinutes(dayStart) + slotInterval),
-        className: '',
-        location: '',
-        color: '#9CA3AF',
-        type: 'non-curriculum',
-      });
+    if (selectedSlot) {
+      setBreakPrompt({ day: selectedSlot.day, time: selectedSlot.time });
+      return;
     }
+    setBreakPrompt({
+      day: 1,
+      time: dayStart,
+    });
   };
 
   const page = (
@@ -787,12 +784,18 @@ export function TimetableBuilder({
                   slotStartTimes={slotStartTimes}
                   slotDurationMinutes={slotDurationMinutes}
                   onAddYearGroup={(timeSlot) => (yearGroup: any) => handleAddYearGroup(dayIndex, timeSlot, yearGroup)}
-                  onAddNonCurriculum={(timeSlot) => () => handleAddNonCurriculum(dayIndex, timeSlot)}
+                  onAddNonCurriculum={(timeSlot) => () =>
+                    setBreakPrompt({ day: dayIndex, time: timeSlot })
+                  }
                   onEdit={(cls) => setEditingClass(cls)}
                   onDelete={handleDeleteClass}
                   onResize={handleResizeClass}
                   onMoveClass={handleMoveClass}
-                  onSelectSlot={(timeSlot) => setSelectedSlot({ day: dayIndex, time: timeSlot })}
+                  onSelectSlot={(timeSlot) => {
+                    setSelectedSlot({ day: dayIndex, time: timeSlot });
+                    // Empty grid cells open Break / club — useful click, not a dead target
+                    setBreakPrompt({ day: dayIndex, time: timeSlot });
+                  }}
                   timeToMinutes={timeToMinutes}
                   minutesToTime={minutesToTime}
                 />
@@ -801,6 +804,20 @@ export function TimetableBuilder({
           </div>
         </div>
       </div>
+
+      <ModalPrompt
+        open={!!breakPrompt}
+        onClose={() => setBreakPrompt(null)}
+        onSubmit={(name) => {
+          if (breakPrompt) handleAddNonCurriculum(breakPrompt.day, breakPrompt.time, name);
+        }}
+        title="Break / club"
+        message="Name this non-curriculum block (e.g. Break, Lunch, Choir club)."
+        label="Name"
+        placeholder="Break"
+        initialValue="Break"
+        confirmLabel="Add"
+      />
 
       {editingClass && (
         <EditTimetableClassModal
@@ -811,6 +828,7 @@ export function TimetableBuilder({
           yearGroups={customYearGroups}
           theme={getThemeForClass(themeFallbackClass)}
           isNew={editingClass.id.startsWith('new-')}
+          showWeekends={viewMode === 'week'}
         />
       )}
     </div>
@@ -870,14 +888,21 @@ function TimetableSlotRow({
         isOver ? 'border-[#bcb7f4]' : 'hover:bg-[#F4F3FA]/80'
       } ${slotZoneClass} ${flashClass}`}
       style={{ height: heightPx }}
-      onClick={(e) => { e.stopPropagation(); onSelectSlot(); }}
+      onClick={(e) => {
+        e.stopPropagation();
+        onSelectSlot();
+      }}
+      title="Add break / club at this time"
+      aria-label={`Add break or club at ${slotTime}`}
     >
       {isOver ? (
         <span className="text-xs font-medium text-[#4338E8]">Drop here</span>
       ) : canDrop ? (
-        <span className="text-[10px] font-medium text-[#4338E8]/70" aria-hidden>Drop year group here</span>
+        <span className="text-[13px] font-medium text-[#4338E8]/70" aria-hidden>
+          Drop year group here
+        </span>
       ) : (
-        <span className="text-xs text-gray-300 opacity-0 hover:opacity-100" aria-hidden>+</span>
+        <span className="text-[13px] font-semibold text-[#9B97B0] opacity-70">+ Break / club</span>
       )}
     </div>
   );
@@ -1314,7 +1339,8 @@ function EditTimetableClassModal({
   onDelete,
   yearGroups,
   theme,
-  isNew = false
+  isNew = false,
+  showWeekends = false,
 }: {
   class: TimetableClass;
   onSave: (cls: TimetableClass) => void;
@@ -1323,6 +1349,7 @@ function EditTimetableClassModal({
   yearGroups: any[];
   theme: any;
   isNew?: boolean;
+  showWeekends?: boolean;
 }) {
   const [editedClass, setEditedClass] = useState<TimetableClass>(() => ({
     ...cls,
@@ -1341,7 +1368,7 @@ function EditTimetableClassModal({
 
   const handleSave = () => {
     if (!editedClass.className.trim()) {
-      alert('Please enter a class name');
+      toast.error('Please enter a class name');
       return;
     }
     
@@ -1353,12 +1380,21 @@ function EditTimetableClassModal({
     onSave(editedClass);
   };
 
+  const dayOptions = DAY_NAMES.map((day, index) => ({ day, index })).filter(({ index }) =>
+    showWeekends ? true : index >= 1 && index <= 5,
+  );
+
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[80] p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-        <h3 className="text-lg font-bold text-gray-900 mb-4">{isNew ? 'Add' : 'Edit'} Timetable Entry</h3>
+    <div className="fixed inset-0 z-[80] flex items-center justify-center bg-indigo-950/35 p-4 backdrop-blur-[2px]">
+      <div className="flex max-h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-[1.75rem] bg-white shadow-2xl shadow-indigo-900/20">
+        <div className="flex shrink-0 items-start justify-between gap-3 border-b border-indigo-50 px-6 py-4">
+          <h3 className="text-lg font-extrabold text-slate-900">{isNew ? 'Add' : 'Edit'} Timetable Entry</h3>
+          <button type="button" onClick={onClose} aria-label="Close" className="inline-flex h-11 w-11 items-center justify-center rounded-full text-slate-500 hover:bg-indigo-50">
+            <X className="h-5 w-5" />
+          </button>
+        </div>
+        <div className="min-h-0 flex-1 space-y-4 overflow-y-auto px-6 py-4">
         
-        <div className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">Class Name</label>
             <input
@@ -1390,7 +1426,7 @@ function EditTimetableClassModal({
               onChange={(e) => setEditedClass({ ...editedClass, day: parseInt(e.target.value) })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4338E8]"
             >
-              {DAY_NAMES.map((day, index) => (
+              {dayOptions.map(({ day, index }) => (
                 <option key={index} value={index}>
                   {day}
                 </option>
@@ -1439,26 +1475,31 @@ function EditTimetableClassModal({
             />
           </div>
         </div>
-        
-        <div className="flex justify-between mt-6">
-          {!isNew && (
+
+        <div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-indigo-50 px-6 py-3">
+          {!isNew ? (
             <button
+              type="button"
               onClick={onDelete}
-              className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors"
+              className="inline-flex h-11 items-center rounded-full bg-rose-600 px-4 text-sm font-semibold text-white hover:bg-rose-700"
             >
               Delete
             </button>
+          ) : (
+            <span />
           )}
-          <div className="space-x-2 ml-auto">
+          <div className="ml-auto flex gap-2">
             <button
+              type="button"
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:text-gray-800 rounded-lg transition-colors"
+              className="inline-flex h-11 items-center rounded-full border-2 border-indigo-200 px-4 text-sm font-semibold text-indigo-700 hover:bg-indigo-50"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleSave}
-              className="px-4 py-2 bg-[#4338E8] hover:bg-[#3529d1] text-white rounded-lg transition-colors"
+              className="inline-flex h-11 items-center rounded-full bg-indigo-600 px-4 text-sm font-semibold text-white hover:bg-indigo-700"
             >
               {isNew ? 'Add' : 'Save'}
             </button>

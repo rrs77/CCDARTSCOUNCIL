@@ -1,0 +1,92 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>School Systems & Integrations — mockup</title>
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:Inter,system-ui,sans-serif;color:#111827;background:#f9fafb;font-size:15px;line-height:1.5}
+.mock{background:#1e1b4b;color:#fff;padding:8px 16px;font-size:13px;text-align:center}
+.wrap{display:flex;max-width:1280px;margin:0 auto;gap:24px;padding:24px}
+nav{width:220px;flex:none}nav a{display:flex;align-items:center;min-height:44px;padding:0 12px;border-radius:8px;color:#374151;text-decoration:none;font-size:14px}nav a.on{background:#eef2ff;color:#3730a3;font-weight:600}
+main{flex:1;min-width:0}h1{font-size:28px;margin:0 0 8px}h2{font-size:20px;margin:0 0 4px}.lead{color:#4b5563;margin:0 0 16px;max-width:720px}
+.banner{border:1px solid #fcd34d;background:#fffbeb;color:#78350f;border-radius:12px;padding:12px 16px;margin-bottom:24px;font-size:14px}
+section.panel{background:#fff;border:1px solid #e5e7eb;border-radius:16px;padding:24px;margin-bottom:24px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:16px}
+.card{border:1px solid #e5e7eb;border-radius:12px;padding:16px;display:flex;flex-direction:column;gap:12px}.card.rec{border:2px solid #4f46e5}
+.ch{display:flex;flex-direction:column;gap:4px}.wm{font-size:20px;font-weight:800;letter-spacing:.02em}.sub{margin:0;color:#4b5563;font-size:13px}
+.flag{align-self:flex-start;font-size:13px;font-weight:600;color:#3730a3;background:#eef2ff;border-radius:999px;padding:4px 8px}.flag.soft{color:#374151;background:#f3f4f6}
+.badge{display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:600;border-radius:999px;padding:4px 12px;align-self:flex-start}.dot{width:8px;height:8px;border-radius:50%;background:currentColor}
+.b-unv{background:#f3f4f6;color:#374151}.b-req{background:#fef3c7;color:#92400e}.b-app{background:#e0e7ff;color:#3730a3}.b-con{background:#d1fae5;color:#065f46}
+.btn{min-height:44px;border-radius:8px;font:600 15px Inter,system-ui,sans-serif;padding:0 16px;cursor:pointer;border:1px solid #d1d5db;background:#fff;color:#374151}.btn.pri{background:#4f46e5;border-color:#4f46e5;color:#fff}
+.btn:focus-visible,select:focus-visible,a:focus-visible{outline:3px solid #818cf8;outline-offset:2px}
+.cfg{border:1px dashed #d1d5db;border-radius:8px;padding:8px 12px 12px;margin:0;color:#6b7280;display:flex;flex-direction:column;gap:8px}.cfg legend{font-size:13px;font-weight:600;padding:0 4px}
+.cfg label{display:flex;flex-direction:column;font-size:13px;gap:4px}.cfg label.chk{flex-direction:row;align-items:center;min-height:44px}
+select{font-size:16px;min-height:44px;border:1px solid #d1d5db;border-radius:8px;padding:0 8px;background:#fff;color:#111827;max-width:100%}select:disabled{background:#f3f4f6;color:#6b7280}
+input[type=checkbox]{width:20px;height:20px;margin-right:8px}.hint{margin:0;font-size:13px;color:#4b5563;font-weight:600}
+.legend{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-start;margin-top:12px;font-size:13px;color:#4b5563}.legend div{display:flex;flex-direction:column;gap:4px}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{text-align:left;padding:12px 8px;border-bottom:1px solid #e5e7eb;vertical-align:top}th{font-size:13px;color:#4b5563;text-transform:uppercase;letter-spacing:.04em}
+code{font-size:13px;background:#f3f4f6;border-radius:4px;padding:2px 4px;color:#3730a3}.never{color:#991b1b;font-weight:600;font-size:13px}
+.ccd{background:#eef2ff}.note{font-size:13px;color:#4b5563;margin:12px 0 0}
+ol.chk{list-style:none;padding:0;margin:16px 0 0;display:grid;gap:8px}ol.chk li{display:flex;align-items:center;gap:12px;min-height:44px;border:1px solid #e5e7eb;border-radius:8px;padding:8px 12px}
+.sn{width:28px;height:28px;border-radius:50%;border:2px solid #9ca3af;display:grid;place-items:center;font-weight:700;font-size:13px;flex:none}.st{margin-left:auto;font-size:13px;color:#4b5563;white-space:nowrap}
+.ex{display:inline-block;font-size:13px;font-weight:700;color:#92400e;background:#fef3c7;border-radius:4px;padding:2px 8px;margin-bottom:8px}
+.safe{background:#ecfdf5;border:1px solid #a7f3d0;color:#065f46;border-radius:8px;padding:12px;font-size:14px;margin-top:16px}
+a.link{display:inline-flex;align-items:center;min-height:44px;color:#4338ca;font-weight:600}
+.tw{overflow-x:auto}
+@media(max-width:900px){.grid{grid-template-columns:1fr 1fr}}
+@media(max-width:640px){.wrap{flex-direction:column;padding:16px;gap:16px}nav{width:auto;display:flex;overflow-x:auto;gap:4px}nav a{white-space:nowrap}.grid{grid-template-columns:1fr}h1{font-size:24px}section.panel{padding:16px}
+.apps thead{display:none}.apps tr{display:block;border-bottom:1px solid #e5e7eb;padding:8px 0}.apps td{display:block;border:0;padding:4px 8px}}
+</style></head><body>
+<div class="mock">Design mockup · not live · no connections exist · all example values are labelled</div>
+<div class="wrap"><nav aria-label="Settings"><a href="#">My classes</a><a href="#">Folders</a><a href="#">Objectives</a><a href="#">Curriculum</a><a href="#">Preferences</a><a href="#" class="on" aria-current="page">School systems</a><a href="#">Users</a></nav>
+<main><h1>School Systems &amp; Integrations</h1><p class="lead">Connect your school's existing systems to automatically configure year groups and securely share authorised information across Rhythmstix applications.</p>
+<div class="banner" role="status"><strong>Nothing is connected yet.</strong> Every provider below is unverified. No data is shared or synced until the provider, your school and Rhythmstix have completed the six approval steps.</div>
+
+<section class="panel" aria-labelledby="h-prov"><h2 id="h-prov">Providers</h2><p class="lead" style="margin:0">Request an integration to start the approval process. Wonde is a central provider that can cover many MIS systems with one connection.</p>
+<div class="legend" aria-label="Status legend"><strong style="width:100%">Status key</strong>
+<div><span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span></div>
+<div><span class="badge b-req"><span class="dot"></span>Requested</span></div>
+<div><span class="badge b-app"><span class="dot"></span>Approved · ready to configure</span></div>
+<div><span class="badge b-con"><span class="dot"></span>Connected</span><span>Last sync: 08:00 today <em>(example only)</em></span></div></div>
+<div class="grid"><article class="card rec"><div class="ch"><span class="wm">Wonde</span><span class="flag">★ Recommended first: central provider</span></div><p class="sub">Central MIS provider</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">iSAMS</span></div><p class="sub">MIS</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">SIMS</span></div><p class="sub">MIS</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">Arbor</span></div><p class="sub">MIS</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">Bromcom</span></div><p class="sub">MIS</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">Engage</span></div><p class="sub">MIS</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">WCBS</span></div><p class="sub">MIS</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">SchoolBase</span></div><p class="sub">MIS</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article><article class="card"><div class="ch"><span class="wm">SOCS</span><span class="flag soft">Co-curricular scheduling · separate integration</span></div><p class="sub">Co-curricular scheduling</p>
+<span class="badge b-unv"><span class="dot"></span>Unverified · awaiting provider approval</span>
+<button class="btn pri">Request integration</button>
+<fieldset disabled class="cfg"><legend>Configuration</legend><label>Sync frequency<select><option>Daily</option></select></label><label class="chk"><input type="checkbox"> Year groups</label><p class="hint">Available once approved</p></fieldset></article></div></section>
+
+<section class="panel" aria-labelledby="h-apps"><h2 id="h-apps">Which app uses what</h2><p class="lead" style="margin:0">Each app asks only for the data it needs. Permission names are proposed internal names, not provider scopes.</p>
+<div class="tw"><table class="apps"><thead><tr><th>App</th><th>Data it can receive</th><th>Permission</th><th>Never receives</th></tr></thead><tbody>
+<tr class="ccd"><td><strong>CCDesigner</strong></td><td>Year groups only (names, phases, school configuration)</td><td><code>year_groups.read</code></td><td class="never">⛔ No pupil data of any kind: no names, IDs, classes, parents, attendance, medical or safeguarding</td></tr>
+<tr><td><strong>Assessify</strong></td><td>Pupils, classes, teacher assignments</td><td><code>pupils.read</code> <code>classes.read</code></td><td>—</td></tr>
+<tr><td><strong>PeriFeedback</strong></td><td>Pupils, lesson assignments, parent contacts (restricted, only where authorised)</td><td><code>pupils.read</code> <code>lesson_assignments.read</code> <code>parent_contacts.read</code> (restricted)</td><td>—</td></tr>
+<tr><td><strong>PeriPlanner</strong></td><td>Pupils, timetables, activities and clubs</td><td><code>pupils.read</code> <code>timetables.read</code> <code>activities.read</code></td><td>—</td></tr></tbody></table></div>
+<p class="note">Access is enforced on the server and in the database, not just hidden on screen.</p></section>
+
+<section class="panel" aria-labelledby="h-chk"><h2 id="h-chk">Approval checklist</h2><p class="lead" style="margin:0">All six steps must be complete before any connection goes live.</p><ol class="chk"><li><span class="sn">1</span><span>Provider's official technical documentation reviewed</span><span class="st">Not started</span></li><li><span class="sn">2</span><span>API access and commercial terms confirmed</span><span class="st">Not started</span></li><li><span class="sn">3</span><span>School / organisation has authorised the integration</span><span class="st">Not started</span></li><li><span class="sn">4</span><span>Data protection and security requirements addressed</span><span class="st">Not started</span></li><li><span class="sn">5</span><span>Permitted data categories and app access configured</span><span class="st">Not started</span></li><li><span class="sn">6</span><span>Tested with appropriate test data</span><span class="st">Not started</span></li></ol></section>
+
+<section class="panel" aria-labelledby="h-map"><h2 id="h-map">Year-group mapping review</h2><p class="lead" style="margin:0">When an MIS is connected, an administrator reviews its year groups against yours before anything changes.</p>
+<span class="ex">Example data · preview only</span>
+<div class="tw"><table><thead><tr><th>Imported from MIS</th><th></th><th>Your CCDesigner year group</th><th>Action</th></tr></thead><tbody><tr><td>Reception</td><td aria-hidden="true">→</td><td>Reception</td><td><select disabled aria-label="Action for Reception"><option selected>Match</option><option>Rename CCDesigner name to MIS name</option><option>Keep existing</option></select></td></tr><tr><td>Year 1</td><td aria-hidden="true">→</td><td>Year 1</td><td><select disabled aria-label="Action for Year 1"><option selected>Match</option><option>Rename CCDesigner name to MIS name</option><option>Keep existing</option></select></td></tr><tr><td>Yr 2</td><td aria-hidden="true">→</td><td>Year 2</td><td><select disabled aria-label="Action for Yr 2"><option>Match</option><option selected>Rename CCDesigner name to MIS name</option><option>Keep existing</option></select></td></tr><tr><td>Year 7 (Senior)</td><td aria-hidden="true">→</td><td>—</td><td><select disabled aria-label="Action for Year 7 (Senior)"><option>Match</option><option>Rename CCDesigner name to MIS name</option><option selected>Keep existing</option></select></td></tr><tr><td>Upper Sixth</td><td aria-hidden="true">→</td><td>Year 13</td><td><select disabled aria-label="Action for Upper Sixth"><option>Match</option><option selected>Rename CCDesigner name to MIS name</option><option>Keep existing</option></select></td></tr></tbody></table></div>
+<div class="safe"><strong>Your curricula are never overwritten.</strong> Renaming only changes a label. Lessons, units and schemes of work stay linked to their year group.</div>
+<p style="margin:16px 0 0"><button class="btn" disabled>Apply mapping (available once connected)</button></p>
+<a class="link" href="#">No MIS? Edit year groups manually in My classes →</a></section>
+</main></div></body></html>

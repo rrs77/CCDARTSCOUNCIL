@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
-import { ChevronRight, Minus, Plus } from 'lucide-react';
+import { musicHubCardTitle } from './hubDisplayName';
+import { ChevronRight, Minus, Plus, RotateCcw } from 'lucide-react';
 import {
   type BBox,
   ENGLAND,
@@ -95,6 +96,16 @@ interface Props {
   showAttribution?: boolean;
   /** Draw feature name labels (hubs/districts). Off for compact locator maps. */
   showFeatureLabels?: boolean;
+  /** Where the zoom controls sit. Default top-left. */
+  controlsPosition?: 'top-left' | 'bottom-right';
+  /** Show a reset-view button with the zoom controls. */
+  showReset?: boolean;
+  /** Draw accessible pin buttons at each feature's label point (region detail view). */
+  pins?: boolean;
+  /** Called when a pin is clicked/activated. Falls back to onFocus(item.focus). */
+  onPinActivate?: (id: string) => void;
+  /** Fit focus bounds with this many screen px of padding (overrides % padding). */
+  fitPaddingPx?: number;
 }
 
 interface Item {
@@ -107,9 +118,6 @@ interface Item {
   priority: number;
 }
 
-function mapLabel(text: string) {
-  return text.replace(/ Music( Education)? Hub$/, '').replace(/ \(BLMK\)/, '').replace(/^Bedfordshire, Luton and Milton Keynes$/, 'BLMK');
-}
 
 function splitLabel(text: string): string[] {
   if (text.length <= 16) return [text];
@@ -143,6 +151,11 @@ export function UkHubMap({
   showControls = true,
   showAttribution = true,
   showFeatureLabels = true,
+  controlsPosition = 'top-left',
+  showReset = false,
+  pins = false,
+  onPinActivate,
+  fitPaddingPx,
 }: Props) {
   const labelMode: 'counts' | 'names' | 'none' =
     regionLabelMode ?? (showRegionCounts ? 'counts' : 'none');
@@ -204,6 +217,16 @@ export function UkHubMap({
       const cy = b[1] + b[3] / 2;
       return [cx - w / 2, cy - h / 2, w, h];
     }
+    if (fitPaddingPx != null) {
+      const ix2 = Math.max(1, cw - fitPaddingPx * 2);
+      const iy = Math.max(1, ch - fitPaddingPx * 2);
+      const k = Math.max(b[2] / ix2, b[3] / iy); // world units per px
+      const w = cw * k;
+      const h = ch * k;
+      const cx = b[0] + b[2] / 2;
+      const cy = b[1] + b[3] / 2;
+      return [cx - w / 2, cy - h / 2, w, h];
+    }
     const pad = b[2] >= ix.data.viewBox[2] * 0.9 ? 0.03 : 0.08;
     let w = b[2] * (1 + pad * 2);
     let h = b[3] * (1 + pad * 2);
@@ -213,7 +236,7 @@ export function UkHubMap({
     const cx = b[0] + b[2] / 2;
     const cy = b[1] + b[3] / 2 - (topPx / ch) * h * 0.45;
     return [cx - w / 2, cy - h / 2, w, h];
-  }, [showBreadcrumb, ix, frameEngland]);
+  }, [showBreadcrumb, ix, frameEngland, fitPaddingPx]);
 
   const flyTo = useCallback(
     (target: BBox, ms = FLY_MS) => {
@@ -411,6 +434,8 @@ export function UkHubMap({
     flyTo(target, 320);
   };
 
+  const resetView = () => flyTo(fit(frameBBox(focus)), 320);
+
   // ---------- what is interactive at this level ----------
   const level = focus.level;
   const ctx = useMemo(() => {
@@ -447,15 +472,29 @@ export function UkHubMap({
       }));
     }
     if (ctx.regionId) {
-      return ix.hubsInRegion(ctx.regionId).map((h) => ({
+      const rid = ctx.regionId;
+      return ix.hubsInRegion(rid).map((h) => {
+        // Cross-region hubs: pin at the centre of their areas inside this region.
+        let label = h.label;
+        if (h.region !== rid) {
+          const inside = h.lads.map((c) => ix.lad(c)).filter((l) => l && l.region === rid);
+          if (inside.length) {
+            label = [
+              inside.reduce((a, l) => a + l!.label[0], 0) / inside.length,
+              inside.reduce((a, l) => a + l!.label[1], 0) / inside.length,
+            ];
+          }
+        }
+        return {
         id: h.id,
-        name: hubLabel(h),
+        name: musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined),
         lads: h.lads,
-        focus: { level: 'hub', id: h.id },
-        label: h.label,
-        labelText: mapLabel(hubLabel(h)),
+        focus: { level: 'hub', id: h.id } as MapFocus,
+        label,
+        labelText: musicHubCardTitle(h.id, hubLabel(h), h.leadOrganisation ?? undefined),
         priority: h.bbox[2] * h.bbox[3],
-      }));
+        };
+      });
     }
     const regions: Item[] = d.regions.map((r) => ({
       id: r.code,
@@ -746,7 +785,7 @@ export function UkHubMap({
         {regionLanding
           ? ix.data.regions.map((r) => {
               const active = hover === r.code;
-              const fill = regionFill(r.code, r.tone, active);
+              const fill = regionFill(r.code, r.tone ?? 0, active);
               return (
                 <g
                   key={r.code}
@@ -977,7 +1016,7 @@ export function UkHubMap({
           <div
             key={`pill-${p.id}`}
             aria-hidden
-            className={`pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-2.5 py-1 text-[12.5px] font-semibold leading-none shadow-[0_1px_3px_rgba(26,58,34,0.12)] transition-[background,border-color,color,box-shadow] duration-150 ${
+            className={`pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border px-2.5 py-1 text-[13px] font-semibold leading-none shadow-[0_1px_3px_rgba(26,58,34,0.12)] transition-[background,border-color,color,box-shadow] duration-150 ${
               p.active
                 ? 'border-[#0B6B5F]/35 bg-[#0B6B5F] text-white shadow-[0_4px_14px_-4px_rgba(11,107,95,0.45)]'
                 : 'border-[#1A3A22]/10 bg-white text-[#1A3A22]'
@@ -991,16 +1030,16 @@ export function UkHubMap({
       {tipItem && !moving && !regionLanding && (
         <div
           aria-hidden
-          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[12px] font-semibold leading-snug text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
+          className="pointer-events-none absolute z-10 -translate-x-1/2 -translate-y-full rounded-lg bg-[#1A1A40] px-2.5 py-1.5 text-[13px] font-semibold leading-snug text-white shadow-[0_8px_20px_-10px_rgba(26,26,64,0.65)]"
           style={{
             left: `${((tipItem.label[0] - settled.box[0]) / settled.box[2]) * 100}%`,
             top: `${((tipItem.label[1] - settled.box[1]) / settled.box[3]) * 100}%`,
             marginTop: '-14px',
           }}
         >
-          <span className="block">{mapLabel(tipItem.name)}</span>
+          <span className="block">{tipItem.name}</span>
           {showRegionCounts && tipItem.focus.level === 'region' && (
-            <span className="mt-0.5 block text-[11px] font-medium text-white/80">
+            <span className="mt-0.5 block text-[13px] font-medium text-white/80">
               {ix.hubsInRegion(tipItem.id).length} Music Hub
               {ix.hubsInRegion(tipItem.id).length === 1 ? '' : 's'}
             </span>
@@ -1036,9 +1075,54 @@ export function UkHubMap({
         </nav>
       )}
 
+      {pins && !moving &&
+        items.map((it) => {
+          const lx = (it.label[0] - settled.box[0]) / settled.box[2];
+          const ly = (it.label[1] - settled.box[1]) / settled.box[3];
+          if (lx < -0.02 || lx > 1.02 || ly < -0.02 || ly > 1.02) return null;
+          const on = hover === it.id;
+          const secondary =
+            ctx.regionId != null && it.focus.level === 'hub' && ix.hub(it.id)?.region !== ctx.regionId;
+          return (
+            <button
+              key={`pin-${it.id}`}
+              type="button"
+              data-pin-id={it.id}
+              aria-label={`${it.name}${secondary ? ` (also covers ${focusName(ix, focus)})` : ''} — show hub card`}
+              aria-pressed={on || undefined}
+              onPointerEnter={() => onHover(it.id)}
+              onPointerLeave={() => onHover(null)}
+              onFocus={() => onHover(it.id)}
+              onBlur={() => onHover(null)}
+              onClick={() => (onPinActivate ? onPinActivate(it.id) : onFocus(it.focus))}
+              className="absolute z-[5] flex h-11 w-11 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full focus-visible:outline focus-visible:outline-2 focus-visible:outline-[#0B6B5F]"
+              style={{ left: `${lx * 100}%`, top: `${ly * 100}%` }}
+            >
+              <span
+                aria-hidden
+                className={`flex h-8 w-8 items-center justify-center rounded-full border-2 shadow-[0_2px_8px_rgba(31,27,77,0.25)] transition-transform ${
+                  on
+                    ? 'scale-125 border-white bg-[#1F1B4D]'
+                    : secondary
+                      ? 'border-[#0B6B5F] bg-white/90'
+                      : 'border-white bg-[#0B6B5F]'
+                }`}
+              >
+                <span className={`h-2.5 w-2.5 rounded-full ${secondary && !on ? 'bg-[#0B6B5F]/60' : 'bg-white'}`} />
+              </span>
+            </button>
+          );
+        })}
+
       {showControls && (
         <div
-          className={`absolute ${showBreadcrumb ? 'left-3 top-14' : 'left-3 top-3'} flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
+          className={`absolute z-[6] ${
+            controlsPosition === 'bottom-right'
+              ? 'bottom-3 right-3'
+              : showBreadcrumb
+                ? 'left-3 top-14'
+                : 'left-3 top-3'
+          } flex flex-col overflow-hidden rounded-xl border border-white/80 bg-white/95 shadow-[0_1px_2px_rgba(31,27,77,0.06),0_6px_20px_rgba(31,27,77,0.1)] backdrop-blur-md`}
         >
           <button type="button" aria-label="Zoom in" onClick={() => zoomButton(1 / 1.7)} className="ukmap-ctl">
             <Plus className="h-4 w-4" />
@@ -1047,11 +1131,19 @@ export function UkHubMap({
           <button type="button" aria-label="Zoom out" onClick={() => zoomButton(1.7)} className="ukmap-ctl">
             <Minus className="h-4 w-4" />
           </button>
+          {showReset && (
+            <>
+              <span className="mx-2 h-px bg-[#1F1B4D]/[0.08]" aria-hidden />
+              <button type="button" aria-label="Reset map view" onClick={resetView} className="ukmap-ctl">
+                <RotateCcw className="h-4 w-4" />
+              </button>
+            </>
+          )}
         </div>
       )}
 
       {showAttribution && (
-        <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[10px] leading-tight text-[#1F1B4D]/40">
+        <p className="pointer-events-none absolute bottom-2 left-3 max-w-[70%] text-[13px] leading-tight text-[#1F1B4D]/40">
           Contains OS data © Crown copyright and database right 2024 · ONS (OGL v3) · Hub areas: Arts Council England
         </p>
       )}

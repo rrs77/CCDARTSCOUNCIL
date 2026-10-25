@@ -39,6 +39,30 @@ import * as musicHubResourceAccess from '../server/api/music-hubs/resource-acces
 
 /* Interactive Lesson Viewer (kept out of /api entrypoints for Hobby function limit) */
 import * as ilvTranscribe from '../server/api/interactive-lessons/transcribe.js';
+import * as ilvFleshOut from '../server/api/interactive-lessons/flesh-out.js';
+
+/* Lesson ↔ viewer links (planner Slides section) */
+import * as slidesLinks from '../server/api/slides-links/index.js';
+
+/* DreamHost file upload + authenticated proxy (shared with generate-pdf via _dreamhost.js) */
+import * as filesUpload from '../server/api/files/upload.js';
+import * as filesUploadToken from '../server/api/files/upload-token.js';
+import * as filesUploadComplete from '../server/api/files/upload-complete.js';
+import * as filesSchoolGrant from '../server/api/files/school-grant.js';
+import * as filesProxy from '../server/api/files/[...path].js';
+
+/* Freesound search + preview (server-only FREESOUND_API_KEY) */
+import * as freesoundSearch from '../server/api/freesound/search.js';
+import * as freesoundPreview from '../server/api/freesound/preview.js';
+
+/* Super-admin curriculum backup / restore */
+import * as adminBackup from '../server/api/admin/backup.js';
+
+/* Planning group membership (service-role writes; kept out of /api entrypoints) */
+import * as planningGroupMembers from '../server/api/planning-groups/members.js';
+
+/* Year-group access requests (notify same-org admins; no grant side effects) */
+import * as yearGroupRequestAccess from '../server/api/year-groups/request-access.js';
 
 function json(body, status = 200, headers = {}) {
   return new Response(JSON.stringify(body), {
@@ -179,6 +203,80 @@ function targetFor(pathname) {
     if (rest.length === 1 && rest[0] === 'transcribe') {
       return ilvTranscribe;
     }
+    if (rest.length === 1 && rest[0] === 'flesh-out') {
+      return ilvFleshOut;
+    }
+    return null;
+  }
+
+  /* ---------- Lesson ↔ viewer links (planner) ---------- */
+
+  if (area === 'slides-links') {
+    return slidesLinks;
+  }
+
+  /* ---------- DreamHost files (upload + proxy) ---------- */
+
+  if (area === 'files') {
+    if (rest.length === 1 && rest[0] === 'upload') {
+      return filesUpload;
+    }
+    if (rest.length === 1 && rest[0] === 'upload-token') {
+      return filesUploadToken;
+    }
+    if (rest.length === 1 && rest[0] === 'upload-complete') {
+      return filesUploadComplete;
+    }
+    if (rest.length === 1 && rest[0] === 'school-grant') {
+      return filesSchoolGrant;
+    }
+    if (rest.length >= 1) {
+      return filesProxy;
+    }
+    return null;
+  }
+
+  /* Alias used by LessonPrintModal / legacy clients */
+  if (area === 'upload-pdf' && rest.length === 0) {
+    return filesUpload;
+  }
+
+  /* ---------- Freesound (authenticated proxy) ---------- */
+
+  if (area === 'freesound') {
+    if (rest.length === 1 && rest[0] === 'search') {
+      return freesoundSearch;
+    }
+    if (rest.length === 2 && rest[0] === 'preview') {
+      return freesoundPreview;
+    }
+    return null;
+  }
+
+  /* ---------- Super-admin backup / restore ---------- */
+
+  if (area === 'admin') {
+    if (rest.length === 1 && rest[0] === 'backup') {
+      return adminBackup;
+    }
+    return null;
+  }
+
+  /* ---------- Planning groups ---------- */
+
+  if (area === 'planning-groups') {
+    if (rest.length === 1 && rest[0] === 'members') {
+      return planningGroupMembers;
+    }
+    return null;
+  }
+
+  /* ---------- Year groups (access request) ---------- */
+
+  if (area === 'year-groups') {
+    if (rest.length === 1 && rest[0] === 'request-access') {
+      return yearGroupRequestAccess;
+    }
     return null;
   }
 
@@ -195,7 +293,9 @@ async function rebuildOriginalRequest(request) {
   route = route.replace(/^\/+|\/+$/g, '');
 
   if (
-    !/^(forum|hubs|music-hubs|interactive-lessons)(\/|$)/.test(route) ||
+    !/^(forum|hubs|music-hubs|interactive-lessons|slides-links|files|upload-pdf|freesound|admin|planning-groups|year-groups)(\/|$)/.test(
+      route,
+    ) ||
     route.includes('..')
   ) {
     return null;

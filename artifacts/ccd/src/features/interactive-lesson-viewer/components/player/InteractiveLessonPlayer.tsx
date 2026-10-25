@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import {
   ChevronLeft,
@@ -20,6 +20,7 @@ import {
   sceneClockMs,
 } from '../../types';
 import { SceneRenderer } from '../SceneRenderer';
+import { isMediaDrivenScene, mediaStalled } from '../../utils/mediaClock';
 import { absoluteLayoutMs, useLessonAudioMixer } from '../../hooks/useLessonAudioMixer';
 
 interface InteractiveLessonPlayerProps {
@@ -30,6 +31,8 @@ interface InteractiveLessonPlayerProps {
   playerOnly?: boolean;
   canEdit?: boolean;
   onEdit?: () => void;
+  /** When set (e.g. from planner Present), show ← Back to planner. */
+  returnLabel?: string;
 }
 
 /** Lyric-video scenes that have timed lyric lines — only then show Lyrics on/off. */
@@ -73,6 +76,7 @@ export function InteractiveLessonPlayer({
   playerOnly = false,
   canEdit = false,
   onEdit,
+  returnLabel,
 }: InteractiveLessonPlayerProps) {
   const [sceneIndex, setSceneIndex] = useState(startSceneIndex);
   const [playing, setPlaying] = useState(true);
@@ -107,6 +111,16 @@ export function InteractiveLessonPlayer({
     if (vocalVersion === 'vocals' && karaoke.vocalUrl) return karaoke.vocalUrl;
     return null;
   }, [karaoke, vocalVersion]);
+  const mediaDriven = isMediaDrivenScene(scene, advanceMode, mediaOverride);
+  const lastMediaProgressRef = useRef(0);
+  const limitMs = scene ? Math.max(500, scene.durationMs || 5000) : 5000;
+  const onMediaTime = useCallback(
+    (ms: number) => {
+      lastMediaProgressRef.current = performance.now();
+      setSceneTimeMs(Math.min(ms, limitMs));
+    },
+    [limitMs],
+  );
   const hasKaraokeToggle = Boolean(lyricEnabled && karaoke?.vocalUrl && karaoke?.backingUrl);
 
   const goTo = useCallback(
@@ -143,8 +157,18 @@ export function InteractiveLessonPlayer({
     // For media-end with video/audio/youtube, SceneRenderer fires onMediaEnded.
     // Still run a soft clock for UI timecode; only auto-advance on timer mode here.
     const started = performance.now() - sceneTimeMs;
+    lastMediaProgressRef.current = performance.now();
     let raf = 0;
     const tick = (now: number) => {
+      if (mediaDriven) {
+        // The media element drives the clock (onMediaTime). Safety net only: advance if it stalls.
+        if (mediaStalled(now, lastMediaProgressRef.current)) {
+          advanceFromMediaEnd();
+          return;
+        }
+        raf = requestAnimationFrame(tick);
+        return;
+      }
       const t = now - started;
       setSceneTimeMs(Math.min(t, limit));
       if (advanceMode === 'timer' && t >= limit) {
@@ -165,7 +189,7 @@ export function InteractiveLessonPlayer({
     raf = requestAnimationFrame(tick);
     return () => cancelAnimationFrame(raf);
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [playing, sceneIndex, scene?.id, advanceMode, scene?.advanceAfterMs, scene?.durationMs, goTo, lesson.scenes.length]);
+  }, [playing, sceneIndex, scene?.id, advanceMode, scene?.advanceAfterMs, scene?.durationMs, goTo, lesson.scenes.length, mediaDriven]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
@@ -233,18 +257,36 @@ export function InteractiveLessonPlayer({
   return createPortal(
     <div id="ilv-player-root" className="ilv-root ilv-player" role="dialog" aria-modal="true" aria-label={lesson.title}>
       <div className="ilv-player-header">
-        <div>
+        <div className="flex min-w-0 items-start gap-2">
+          {returnLabel ? (
+            <button
+              type="button"
+              className="ilv-ctrl shrink-0"
+              onClick={onClose}
+              title={returnLabel}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline text-[13px]">{returnLabel}</span>
+            </button>
+          ) : null}
+          <div className="min-w-0">
           <h2 className="text-base font-extrabold tracking-tight text-white">{lesson.title}</h2>
-          <p className="text-xs text-white/60">
+          <p className="text-[13px] text-white/60">
             Scene {sceneIndex + 1} of {lesson.scenes.length} · {scene.title}
             <span className="ml-2 text-white/40">· {advanceHint}</span>
           </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {playerOnly && canEdit && onEdit && (
-            <button type="button" className="ilv-ctrl" onClick={onEdit} title="Edit lesson">
+            <button
+              type="button"
+              className="ilv-ctrl"
+              onClick={onEdit}
+              title={lesson.isDemo ? 'Built-in demo — make an editable copy' : 'Edit lesson'}
+            >
               <Pencil className="h-4 w-4" />
-              <span className="hidden sm:inline">Edit</span>
+              <span className="hidden sm:inline">{lesson.isDemo ? 'Make a copy' : 'Edit'}</span>
             </button>
           )}
           <button
@@ -277,6 +319,8 @@ export function InteractiveLessonPlayer({
             transitionClass={transitionClass(scene.transition.type)}
             reducedMotion={reducedMotion}
             onMediaEnded={advanceMode === 'media-end' ? advanceFromMediaEnd : undefined}
+            mediaDriven={mediaDriven}
+            onMediaTime={mediaDriven ? onMediaTime : undefined}
           />
         </div>
       </div>

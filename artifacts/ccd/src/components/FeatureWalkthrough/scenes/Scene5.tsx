@@ -57,11 +57,11 @@ export function Scene5() {
         >
           <img
             src={logoUrl}
-            alt="CCD logo"
+            alt="CCDesigner"
             className="w-[3.6cqw] h-[3.6cqw]"
           />
           <span className="text-white font-display font-semibold tracking-tight text-[1.6cqw]">
-            Creative Curriculum Designer
+            CCDesigner
           </span>
         </motion.div>
 

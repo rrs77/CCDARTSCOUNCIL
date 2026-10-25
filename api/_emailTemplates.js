@@ -155,6 +155,48 @@ export function forumNotificationEmail({ displayName, title, body, topicUrl }) {
   return { subject, html, text };
 }
 
+/** Notify a school admin that a teacher asked for year-group assignment. */
+export function yearGroupAccessRequestEmail({
+  adminDisplayName,
+  requesterDisplayName,
+  requesterEmail,
+  settingsUsersUrl,
+}) {
+  const adminName = adminDisplayName || 'there';
+  const who =
+    requesterDisplayName ||
+    requesterEmail ||
+    'A teacher at your organisation';
+  const subject = `${BRAND.name}: year-group access requested`;
+  const html = wrapHtml(
+    subject,
+    `<p style="margin:0 0 12px;font-size:16px;">Hello ${escapeHtml(adminName)},</p>
+     <p style="margin:0 0 12px;"><strong>${escapeHtml(who)}</strong>${
+       requesterEmail && requesterDisplayName
+         ? ` (${escapeHtml(requesterEmail)})`
+         : ''
+     } asked for year-group access so they can open year-group shared plans.</p>
+     <p style="margin:0 0 12px;">Assign year groups in Settings → Users. This request does not change their permissions automatically — they can still create their own activities and plans.</p>
+     ${
+       settingsUsersUrl
+         ? `<p style="margin:20px 0;"><a href="${escapeAttr(settingsUsersUrl)}" style="display:inline-block;background:${BRAND.accent};color:#fff;text-decoration:none;padding:12px 20px;border-radius:8px;font-weight:600;">Open Users</a></p>`
+         : ''
+     }`,
+  );
+  const text = [
+    `Hello ${adminName},`,
+    '',
+    `${who} asked for year-group access so they can open year-group shared plans.`,
+    'Assign year groups in Settings → Users. This request does not change their permissions automatically.',
+    settingsUsersUrl ? `Open Users: ${settingsUsersUrl}` : '',
+    '',
+    `— ${BRAND.name} / ${BRAND.org}`,
+  ]
+    .filter(Boolean)
+    .join('\n');
+  return { subject, html, text };
+}
+
 function escapeHtml(s) {
   return String(s)
     .replace(/&/g, '&amp;')

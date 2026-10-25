@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Menu, X, RefreshCw, Settings, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
+import { Menu, X, RefreshCw, HelpCircle, Download, ChevronDown, ChevronRight, Check, MessageSquare } from 'lucide-react';
 import { useAuth } from '../hooks/useAuth';
 import { useIsViewOnly } from '../hooks/useIsViewOnly';
 import { useData } from '../contexts/DataContext';
@@ -71,6 +71,16 @@ export function Header() {
     const handler = () => setShowWalkthrough(true);
     window.addEventListener('ccd:start-walkthrough', handler);
     return () => window.removeEventListener('ccd:start-walkthrough', handler);
+  }, []);
+
+  // Deep link /walkthrough — open tour inside the main shell (not /forum).
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (window.location.pathname.replace(/\/+$/, '') === '/walkthrough') {
+      const t = window.setTimeout(() => setShowWalkthrough(true), 200);
+      return () => window.clearTimeout(t);
+    }
+    return undefined;
   }, []);
 
   useEffect(() => {
@@ -215,7 +225,10 @@ export function Header() {
   const selectYearGroup = (group: { id: string; name: string }) => {
     setCurrentSheetInfo({ sheet: group.id, display: group.name, eyfs: `${group.id} Statements` });
     setYearGroupDropdownOpen(false);
-    if (onPlannerTab) {
+    // Only switch All → one when the user explicitly picks a class from the menu
+    // while already viewing the planner in one-class mode. Never force a switch
+    // silently when navigating tabs or when All classes is the intentional view.
+    if (onPlannerTab && !allClassPlannerView) {
       window.dispatchEvent(new CustomEvent('ccd:planner-focus-request', { detail: { mode: 'one' } }));
     }
   };
@@ -283,11 +296,13 @@ export function Header() {
     }
   }, [mobileMenuOpen, currentSection]);
 
-  // Keep document title in sync with branding (tab/window title)
-  const productName = settings.branding?.loginTitle || 'Creative Curriculum Designer';
+  // Document title is always CCDesigner (never the long legacy product name).
+  const productName = 'CCDesigner';
   useEffect(() => {
     document.title = productName;
-    return () => { document.title = 'Creative Curriculum Designer'; };
+    return () => {
+      document.title = 'CCDesigner';
+    };
   }, [productName]);
 
   return (
@@ -318,10 +333,7 @@ export function Header() {
                 <button
                   type="button"
                   onClick={() => {
-                    if (allClassPlannerView) {
-                      // Switching chip while in all-class planner → one-class mode
-                      window.dispatchEvent(new CustomEvent('ccd:planner-focus-request', { detail: { mode: 'one' } }));
-                    }
+                    // Open the menu only — do not silently leave All classes.
                     openYearGroupDropdown();
                   }}
                   className="bg-white border border-[#E2E0EF] text-[#1F1B4D] text-xs lg:text-sm rounded-xl focus:border-[#4338E8] focus:ring-2 focus:ring-[#4338E8]/20 focus:outline-none px-3 py-1.5 lg:py-2 pr-8 flex items-center justify-between gap-2 min-w-[140px] lg:min-w-[220px] max-w-[320px] hover:border-[#bcb7f4] transition-colors"
@@ -348,7 +360,7 @@ export function Header() {
                   <ChevronDown className={`h-4 w-4 flex-shrink-0 text-gray-500 transition-transform ${yearGroupDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
                 <span
-                  className={`hidden lg:inline-flex shrink-0 rounded-full px-2.5 py-1 text-[10px] font-extrabold uppercase tracking-wide ${
+                  className={`hidden lg:inline-flex shrink-0 rounded-full px-2.5 py-1 text-[13px] font-extrabold uppercase tracking-wide ${
                     allClassPlannerView
                       ? 'bg-amber-100 text-amber-900'
                       : 'bg-[#E9E6FF] text-[#4338E8]'
@@ -439,28 +451,7 @@ export function Header() {
                 <MessageSquare className="h-4 w-4 lg:h-5 lg:w-5" />
               </a>
 
-              {/* Help Button — full-page Help centre at /help */}
-              <button
-                type="button"
-                onClick={() => navigateToHelp()}
-                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="Help"
-                aria-label="Open help"
-                data-help-button
-              >
-                <HelpCircle className="h-4 w-4 lg:h-5 lg:w-5" />
-              </button>
-
-              {/* Settings Button — full-page Settings */}
-              <button
-                onClick={() => navigateToSettings()}
-                className="p-1.5 lg:p-2.5 text-gray-600 hover:text-gray-900 hover:bg-gray-100 rounded-lg transition-colors duration-200 flex-shrink-0"
-                title="Settings"
-                aria-label="Open settings"
-                data-walkthrough="settings"
-              >
-                <Settings className="h-4 w-4 lg:h-5 lg:w-5" />
-              </button>
+              {/* Help / Settings live in the left sidebar (Help & community + bottom cog). */}
 
               {/* Refresh Button */}
               <button
@@ -595,7 +586,32 @@ export function Header() {
       {/* Walkthrough Guide */}
       <WalkthroughGuide
         isOpen={showWalkthrough}
-        onClose={() => setShowWalkthrough(false)}
+        onClose={() => {
+          setShowWalkthrough(false);
+          try {
+            if (window.location.pathname.replace(/\/+$/, '') === '/walkthrough') {
+              // Leave the main shell; restore a safe in-app path (not /forum).
+              const tab = document.documentElement.dataset.ccdTab || 'unit-viewer';
+              const path =
+                tab === 'lesson-library'
+                  ? '/lessons'
+                  : tab === 'help'
+                    ? '/help'
+                    : tab === 'contact-us'
+                      ? '/contact'
+                      : tab === 'settings'
+                        ? '/settings'
+                        : tab === 'activity-library'
+                          ? '/activities'
+                          : tab === 'curriculum'
+                            ? '/half-terms'
+                            : '/planner';
+              window.history.pushState({}, '', path);
+            }
+          } catch {
+            /* ignore */
+          }
+        }}
       />
 
     </>

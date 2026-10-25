@@ -192,12 +192,12 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
         onClick={onClose}
       />
 
-      <div className="relative z-[1] flex max-h-[min(92vh,880px)] w-full max-w-2xl flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
+      <div className="relative z-[1] flex h-auto max-h-[min(88vh,760px)] w-full max-w-[760px] flex-col overflow-hidden rounded-t-3xl bg-white shadow-[0_24px_64px_rgba(31,27,77,0.28)] sm:rounded-3xl">
         {/* Header */}
         <div className="shrink-0 border-b border-[#E2E0EF] px-5 pb-4 pt-5 sm:px-6">
           <div className="mb-3 flex items-start justify-between gap-3">
             <div className="min-w-0">
-              <p className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
+              <p className="text-[13px] font-extrabold uppercase tracking-[0.12em] text-[#77738F]">
                 Assign scheme of work
               </p>
               <h2
@@ -222,10 +222,18 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
             </button>
           </div>
           <div
-            className="h-1.5 w-full rounded-full"
-            style={{ background: termColor }}
-            aria-hidden
-          />
+            className="mt-1 h-1.5 w-full overflow-hidden rounded-full bg-[#E9E6FF]"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={50}
+            aria-label="Step 1 of 2"
+          >
+            <div
+              className="h-full rounded-full transition-all duration-200"
+              style={{ background: termColor, width: '50%' }}
+            />
+          </div>
           <p className="mt-3 text-[13px] leading-snug text-[#5C5878]">
             Add a whole scheme of work (unit / lesson stack) to this half-term. Individual lessons
             are not assigned from here.
@@ -243,10 +251,10 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
           {/* Assigned */}
           <section className="mb-6">
             <div className="mb-2.5 flex items-baseline justify-between gap-2">
-              <h3 className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
+              <h3 className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
                 Assigned to this half-term
               </h3>
-              <span className="text-[12px] font-bold tabular-nums text-[#4338E8]">
+              <span className="text-[13px] font-bold tabular-nums text-[#4338E8]">
                 {assignedSchemes.length} scheme{assignedSchemes.length === 1 ? '' : 's'}
               </span>
             </div>
@@ -273,7 +281,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
                     />
                     <div className="min-w-0 flex-1">
                       <p className="text-[14px] font-extrabold text-[#1F1B4D]">{stack.name}</p>
-                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] font-semibold text-[#77738F]">
+                      <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] font-semibold text-[#77738F]">
                         <span className="inline-flex items-center gap-1">
                           <BookOpen className="h-3.5 w-3.5" />
                           {stack.lessons.length} lesson{stack.lessons.length === 1 ? '' : 's'}
@@ -288,7 +296,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
                       type="button"
                       disabled={busyId === stack.id}
                       onClick={() => void removeScheme(stack.id)}
-                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] px-3 text-[12px] font-bold text-[#5C5878] transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
+                      className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-[#E2E0EF] px-3 text-[13px] font-bold text-[#5C5878] transition hover:border-red-200 hover:bg-red-50 hover:text-red-700 disabled:opacity-50"
                     >
                       <Trash2 className="h-3.5 w-3.5" />
                       Remove
@@ -302,7 +310,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
           {/* Picker */}
           <section>
             <div className="mb-2.5 flex flex-wrap items-end justify-between gap-2">
-              <h3 className="text-[11px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
+              <h3 className="text-[13px] font-extrabold uppercase tracking-[0.1em] text-[#77738F]">
                 Available schemes
               </h3>
               <div className="relative w-full sm:w-56">
@@ -362,11 +370,11 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
                         <div className="min-w-0 flex-1">
                           <p className="text-[14px] font-extrabold text-[#1F1B4D]">{stack.name}</p>
                           {stack.description ? (
-                            <p className="mt-0.5 line-clamp-2 text-[12px] leading-snug text-[#77738F]">
+                            <p className="mt-0.5 line-clamp-2 text-[13px] leading-snug text-[#77738F]">
                               {stack.description}
                             </p>
                           ) : null}
-                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[12px] font-semibold text-[#5C5878]">
+                          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-0.5 text-[13px] font-semibold text-[#5C5878]">
                             <span>
                               {stack.lessons.length} lesson{stack.lessons.length === 1 ? '' : 's'}
                             </span>
@@ -377,7 +385,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
                           <button
                             type="button"
                             onClick={() => setPreviewId(open ? null : stack.id)}
-                            className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-[#E2E0EF] px-2.5 text-[11px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
+                            className="inline-flex h-9 items-center justify-center gap-1 rounded-xl border border-[#E2E0EF] px-2.5 text-[13px] font-bold text-[#5C5878] hover:bg-[#F4F3FA]"
                             aria-expanded={open}
                           >
                             Lessons
@@ -391,7 +399,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
                             type="button"
                             disabled={busyId === stack.id}
                             onClick={() => void addScheme(stack)}
-                            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#4338E8] px-3 text-[12px] font-bold text-white transition hover:bg-[#3529d1] disabled:opacity-50"
+                            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-xl bg-[#4338E8] px-3 text-[13px] font-bold text-white transition hover:bg-[#3529d1] disabled:opacity-50"
                           >
                             {busyId === stack.id ? (
                               'Adding…'
@@ -412,7 +420,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
                               return (
                                 <li
                                   key={`${stack.id}-${lessonId}`}
-                                  className="flex items-baseline gap-2 text-[12px] text-[#5C5878]"
+                                  className="flex items-baseline gap-2 text-[13px] text-[#5C5878]"
                                 >
                                   <span className="w-5 shrink-0 text-right font-bold tabular-nums text-[#9B97B0]">
                                     {i + 1}.
@@ -436,7 +444,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
 
         {/* Footer */}
         <div className="flex shrink-0 items-center justify-between gap-3 border-t border-[#E2E0EF] bg-[#FAFAFC] px-5 py-3.5 sm:px-6">
-          <p className="text-[12px] font-medium text-[#77738F]">
+          <p className="text-[13px] font-medium text-[#77738F]">
             {assignedSchemes.length === 0
               ? 'Nothing assigned yet'
               : `${assignedSchemes.length} scheme${assignedSchemes.length === 1 ? '' : 's'} · ${assignedSchemes.reduce((n, s) => n + s.lessons.length, 0)} lessons`}

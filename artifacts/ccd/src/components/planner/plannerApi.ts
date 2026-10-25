@@ -1,4 +1,5 @@
 import { supabase, TABLES, isSupabaseConfigured } from '../../config/supabase';
+import { resolveOrganisationId } from '../../config/api';
 import { isDemoModeActive } from '../../utils/demoMode';
 import type { LessonPlan } from '../../contexts/DataContext';
 import { DEFAULT_PREFS, type PlannerPrefs, type PlannerReflection } from './plannerModel';
@@ -33,7 +34,7 @@ const rowToPlan = (row: Record<string, any>): LessonPlan => ({
 });
 
 /** Same column mapping as DataContext.saveUserCreatedLessonPlans, so both apps read identical rows. */
-const planToRow = (plan: LessonPlan, userId: string) => ({
+const planToRow = (plan: LessonPlan, userId: string, organisationId: string) => ({
   id: plan.id,
   date: plan.date instanceof Date ? plan.date.toISOString() : new Date(plan.date).toISOString(),
   week: plan.week,
@@ -49,6 +50,7 @@ const planToRow = (plan: LessonPlan, userId: string) => ({
   term: plan.term,
   time: plan.time,
   user_id: userId,
+  organisation_id: organisationId,
 });
 
 const LOCAL_PLANS_KEY = 'planner-lesson-plans';
@@ -85,9 +87,14 @@ export const plannerApi = {
       localStorage.setItem(LOCAL_PLANS_KEY, JSON.stringify([...byId.values()]));
       return;
     }
+    const organisationId = await resolveOrganisationId();
+    if (!organisationId) throw new Error('organisation_id is required to save lesson plans.');
     const { error } = await supabase
       .from(TABLES.LESSON_PLANS)
-      .upsert(plans.map((p) => planToRow({ ...p, updatedAt: new Date() }, userId)), { onConflict: 'id' });
+      .upsert(
+        plans.map((p) => planToRow({ ...p, updatedAt: new Date() }, userId, organisationId)),
+        { onConflict: 'id' },
+      );
     if (error) throw error;
   },
 

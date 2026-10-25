@@ -147,7 +147,7 @@ export function HelpPage({ initialTopic = null }: HelpPageProps) {
               'radial-gradient(circle at 12% 20%, rgba(67,56,232,0.18), transparent 42%), radial-gradient(circle at 88% 10%, rgba(13,148,136,0.14), transparent 40%)',
           }}
         />
-        <div className="relative mx-auto w-full max-w-6xl px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <div className="relative w-full px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
               <img
@@ -188,7 +188,7 @@ export function HelpPage({ initialTopic = null }: HelpPageProps) {
         </div>
       </header>
 
-      <div className="mx-auto flex w-full max-w-6xl flex-1 min-h-0 flex-col px-4 py-6 sm:px-6 lg:px-8">
+      <div className="flex w-full flex-1 min-h-0 flex-col px-4 py-6 sm:px-6 lg:px-8">
         {showSearch ? (
           <SearchResults
             query={query}

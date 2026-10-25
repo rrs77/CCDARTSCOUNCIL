@@ -1,4 +1,6 @@
+import { planLogoImg } from '../utils/planLogo';
 import React, { useState, useEffect, useRef, memo } from 'react';
+import { safeColour } from '../utils/safeColour';
 import { createPortal } from 'react-dom';
 import { 
   Calendar as CalendarIcon, 
@@ -77,6 +79,12 @@ import { useLessonStacks } from '../hooks/useLessonStacks';
 import { toast } from 'react-hot-toast';
 import type { Activity, LessonPlan } from '../contexts/DataContext';
 import { downloadIcsFile, generateIcsFromLessonPlans } from '../utils/exportIcal';
+import {
+  ModalShell,
+  ModalHeader,
+  ModalBody,
+  ModalConfirm,
+} from './ccdPlanner/ModalShell';
 import {
   PartnerKeyDatesModal,
   ImportantDatesConfirmPopup,
@@ -186,6 +194,11 @@ export function LessonPlannerCalendar({
   const [showAssignmentModal, setShowAssignmentModal] = useState(false);
   const [assignmentDate, setAssignmentDate] = useState<Date | null>(null);
   const [removeFromDayDropdownOpen, setRemoveFromDayDropdownOpen] = useState(false);
+  const [diaryRemoveConfirm, setDiaryRemoveConfirm] = useState<{
+    planId: string;
+    title: string;
+    dateStr: string;
+  } | null>(null);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [showActionsMenu, setShowActionsMenu] = useState(false);
   const [nowTick, setNowTick] = useState(() => new Date());
@@ -747,11 +760,16 @@ export function LessonPlannerCalendar({
 
   // Handle view lesson details
   const handleViewLessonDetails = (lessonNumber: string) => {
+    // Close the day pop-up so it doesn't sit on top of the lesson window (or its print/export).
+    setIsLessonSummaryOpen(false);
+    setRemoveFromDayDropdownOpen(false);
     setSelectedLessonForDetails(lessonNumber);
   };
 
   // Handle print lesson
   const handlePrintLesson = (lessonNumber: string) => {
+    setIsLessonSummaryOpen(false);
+    setRemoveFromDayDropdownOpen(false);
     setSelectedLessonForDetails(lessonNumber);
     setShowPrintModal(true);
   };
@@ -840,17 +858,23 @@ export function LessonPlannerCalendar({
       if (links.length === 0) return '';
       if (compact) {
         return links.slice(0, 3).map(r =>
-          `<a href="${escapeUrl(r.url)}" target="_blank" rel="noopener noreferrer" style="font-size:9px;color:#0d9488;text-decoration:underline;display:block;margin-top:1px">${escape(r.label)}</a>`
+          `<a href="${escapeUrl(r.url)}" target="_blank" rel="noopener noreferrer" style="font-size:13px;color:#0d9488;text-decoration:underline;display:block;margin-top:1px">${escape(r.label)}</a>`
         ).join('');
       }
-      return `<div class="print-resource-links" style="margin-top:6px;font-size:9px">${links.map(r =>
+      return `<div class="print-resource-links" style="margin-top:6px;font-size:13px">${links.map(r =>
         `<a href="${escapeUrl(r.url)}" target="_blank" rel="noopener noreferrer" style="color:#0d9488;text-decoration:underline;margin-right:8px;display:inline-block">${escape(r.label)}</a>`
       ).join('')}</div>`;
     };
     const branding = settings?.branding || {};
-    const productName = branding.loginTitle || settings?.schoolName || 'Creative Curriculum Designer';
-    const productSubtitle = branding.loginSubtitle || 'Rhythmstix';
-    const companyName = branding.footerCompanyName || 'Rhythmstix';
+    const rawProduct = branding.loginTitle || settings?.schoolName || 'CCDesigner';
+    const productName = /Creative\s+Curriculum\s+Designer/i.test(rawProduct)
+      ? 'CCDesigner'
+      : rawProduct;
+    const productSubtitle = branding.loginSubtitle || 'CCDesigner';
+    const rawCompany = branding.footerCompanyName || 'CCDesigner';
+    const companyName = /Creative\s+Curriculum\s+Designer/i.test(rawCompany)
+      ? 'CCDesigner'
+      : rawCompany;
     const copyrightYear = branding.footerCopyrightYear || new Date().getFullYear().toString();
     const contactEmail = branding.footerContactEmail || '';
     const headerColor = branding.loginButtonColor || branding.loginBackgroundColor || '#0d9488';
@@ -864,14 +888,14 @@ export function LessonPlannerCalendar({
 
     const printStyles = `
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font-family: 'Inter', -apple-system, sans-serif; font-size: 11px; line-height: 1.4; color: #1a1a1a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+      body { font-family: 'Inter', -apple-system, sans-serif; font-size: 13px; line-height: 1.4; color: #1a1a1a; background: #fff; -webkit-print-color-adjust: exact; print-color-adjust: exact; }
       .brand-header { background: ${escape(headerColor)}; color: white; padding: 20px 24px; border-radius: 8px 8px 0 0; margin-bottom: 0; }
       .brand-header h1 { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
-      .brand-header .subtitle { font-size: 12px; opacity: 0.95; }
-      .brand-header .meta { font-size: 10px; opacity: 0.9; margin-top: 8px; }
+      .brand-header .subtitle { font-size: 13px; opacity: 0.95; }
+      .brand-header .meta { font-size: 13px; opacity: 0.9; margin-top: 8px; }
       .print-content { padding: 20px 24px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
       .print-section-title { font-size: 16px; font-weight: 600; color: #0f766e; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 2px solid #e5e7eb; }
-      table { width: 100%; border-collapse: collapse; font-size: 11px; }
+      table { width: 100%; border-collapse: collapse; font-size: 13px; }
       th, td { border: 1px solid #e2e8f0; padding: 8px; text-align: left; }
       th { background: #f1f5f9; font-weight: 600; }
       .print-month-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 0; }
@@ -881,17 +905,20 @@ export function LessonPlannerCalendar({
       .print-day.holiday { background: #fef2f2; }
       .print-day.inset { background: #f5f3ff; }
       .print-day-num { font-weight: 600; margin-bottom: 4px; }
-      .print-day-content { font-size: 10px; }
+      .print-day-content { font-size: 13px; }
       .print-day-content .plan, .print-day-content .event { margin: 2px 0; padding: 2px 4px; border-radius: 4px; }
-      .print-day-content .badge { padding: 1px 4px; border-radius: 4px; font-size: 9px; }
+      .print-day-content .badge { padding: 1px 4px; border-radius: 4px; font-size: 13px; }
       .print-lessons-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 0; }
       .print-day-col { border: 1px solid #e2e8f0; padding: 12px; }
-      .print-day-col h3 { font-size: 12px; margin: 0 0 8px 0; color: #64748b; }
+      .print-day-col h3 { font-size: 13px; margin: 0 0 8px 0; color: #64748b; }
       .print-lesson-block { padding: 8px; margin-bottom: 8px; border-radius: 8px; border-left: 4px solid; page-break-inside: avoid; }
-      .print-lesson-block .time { font-size: 10px; color: #64748b; }
+      .print-lesson-block .time { font-size: 13px; color: #64748b; }
       .print-lesson-block .title { font-weight: 600; }
       .print-resource-links a { color: #0d9488; text-decoration: underline; }
-      .brand-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 9px; color: #64748b; text-align: center; }
+      .brand-footer { margin-top: 24px; padding-top: 16px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #64748b; text-align: center; }
+      /* No @page — PDFBolt margins come from the generate-pdf call. */
+      .print-lesson-block .acts { margin: 4px 0 0; padding: 0 0 0 12px; font-size: 13px; color: #475569; }
+      .print-lesson-block .acts li { margin: 0; }
     `;
 
     let bodyHtml = '';
@@ -917,60 +944,19 @@ export function LessonPlannerCalendar({
             if (isHolidayDate) content += '<div class="badge" style="background:#fecaca;color:#b91c1c;">Holiday</div>';
             if (isInsetDayDate) content += '<div class="badge" style="background:#ddd6fe;color:#6d28d9;">Inset</div>';
             events.slice(0, 2).forEach(e => {
-              content += `<div class="event" style="background:${escape(e.color)}20;color:${escape(e.color)}">${escape(e.title)}</div>`;
+              content += `<div class="event" style="background:${safeColour(e.color, '#64748b')}20;color:${safeColour(e.color, '#64748b')}">${escape(e.title)}</div>`;
             });
             plans.slice(0, 2).forEach(p => {
               const unitColor = p.unitId ? units.find(u => u.id === p.unitId)?.color || theme.primary : theme.primary;
-              content += `<div class="plan" style="background:${escape(unitColor)}20;color:${escape(unitColor)}">${escape(p.title || `Lesson ${p.lessonNumber || ''}`)}${renderResourceLinksHtml(p, true)}</div>`;
+              content += `<div class="plan" style="background:${safeColour(unitColor, '#64748b')}20;color:${safeColour(unitColor, '#64748b')}">${escape(p.title || `Lesson ${p.lessonNumber || ''}`)}${renderResourceLinksHtml(p, true)}</div>`;
             });
-            if (plans.length > 2) content += `<div style="font-size:9px;color:#64748b">+${plans.length - 2} more</div>`;
+            if (plans.length > 2) content += `<div style="font-size:13px;color:#64748b">+${plans.length - 2} more</div>`;
             return `<div class="${classes}"><div class="print-day-num">${format(date, 'd')}</div><div class="print-day-content">${content}</div></div>`;
           }).join('')}
         </div>
       `;
-    } else if (viewMode === 'week') {
-      const hours = Array.from({ length: 11 }, (_, i) => i + 8);
-      bodyHtml = `
-        <div class="print-section-title">${escape(viewLabel)} View • ${escape(viewTitle)}</div>
-        <table>
-          <thead><tr><th style="width:60px">Time</th>${weekDays.map(d => `<th>${format(d, 'EEE d')}</th>`).join('')}</tr></thead>
-          <tbody>
-            ${hours.map(hour => `
-              <tr>
-                <td style="background:#f1f5f9;font-weight:500">${hour}:00</td>
-                ${weekDays.map(date => {
-                  const plans = getLessonPlansForDate(date);
-                  const dayOfWeek = getDay(date);
-                  const tClasses = timetableClasses.filter(t => t.day === dayOfWeek);
-                  const slotClasses = tClasses.filter(t => {
-                    const sh = parseInt(t.startTime.split(':')[0], 10);
-                    const eh = parseInt(t.endTime.split(':')[0], 10);
-                    return hour >= sh && hour < eh;
-                  });
-                  const slotPlans = plans.filter(p => {
-                    const t = p.time || '00:00';
-                    const ph = parseInt(t.split(':')[0], 10);
-                    return ph === hour;
-                  });
-                  const isH = isHoliday(date);
-                  const isI = isInsetDay(date);
-                  let cell = '';
-                  if (isH) cell = '<span style="color:#b91c1c">Holiday</span>';
-                  else if (isI) cell = '<span style="color:#6d28d9">Inset</span>';
-                  else {
-                    slotClasses.forEach(t => { cell += `<div style="font-size:10px;padding:2px">${escape(t.className)}</div>`; });
-                    slotPlans.forEach(p => {
-                      cell += `<div style="font-size:10px;padding:2px">${escape(p.title || `Lesson ${p.lessonNumber || ''}`)}${renderResourceLinksHtml(p, true)}</div>`;
-                    });
-                  }
-                  return `<td style="vertical-align:top">${cell || '&nbsp;'}</td>`;
-                }).join('')}
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
-      `;
-    } else if (viewMode === 'week-lessons') {
+    } else if (viewMode === 'week' || viewMode === 'week-lessons') {
+      // Rich week print (times + activities) — same layout for week and week-lessons.
       const schoolWeekStart = startOfWeek(currentDate, { weekStartsOn: 1 });
       const schoolWeekEnd = endOfWeek(schoolWeekStart, { weekStartsOn: 1 });
       const schoolWeekDays = eachDayOfInterval({ start: schoolWeekStart, end: schoolWeekEnd }).slice(0, 5);
@@ -998,13 +984,22 @@ export function LessonPlannerCalendar({
                 const color = item.data.color;
                 const time = `${item.data.startTime}-${item.data.endTime}`;
                 const title = item.data.className;
-                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div></div>`;
+                colContent += `<div class="print-lesson-block" style="border-left-color:${safeColour(color, '#64748b')};background:${safeColour(color, '#64748b')}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div></div>`;
               } else {
                 const plan = item.data as LessonPlan;
                 const color = plan.unitId ? '#8B5CF6' : '#EC4899';
                 const time = plan.time || '';
                 const title = plan.title || `Lesson ${plan.lessonNumber || ''}`;
-                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${renderResourceLinksHtml(plan, false)}</div>`;
+                const acts = (plan.activities?.length
+                  ? plan.activities
+                  : (plan.lessonNumber && allLessonsData[plan.lessonNumber])
+                    ? (allLessonsData[plan.lessonNumber].orderedActivities || Object.values(allLessonsData[plan.lessonNumber].grouped || {}).flat())
+                    : []
+                ).map((a: Activity) => (a?.activity || a?.description || '').trim()).filter(Boolean).slice(0, 8);
+                const actsHtml = acts.length
+                  ? `<ul class="acts">${acts.map((n: string) => `<li>${escape(n)}</li>`).join('')}</ul>`
+                  : '';
+                colContent += `<div class="print-lesson-block" style="border-left-color:${safeColour(color, '#64748b')};background:${safeColour(color, '#64748b')}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${actsHtml}${renderResourceLinksHtml(plan, false)}</div>`;
               }
             });
             return `<div class="print-day-col">${colContent}</div>`;
@@ -1045,14 +1040,13 @@ export function LessonPlannerCalendar({
             }).join('')}
           </tbody>
         </table>
-        ${events.length > 0 ? `<div style="margin-top:16px">${events.map(e => `<div style="padding:8px;margin:4px 0;background:${escape(e.color)}20;color:${escape(e.color)};border-radius:8px">${escape(e.title)}</div>`).join('')}</div>` : ''}
+        ${events.length > 0 ? `<div style="margin-top:16px">${events.map(e => `<div style="padding:8px;margin:4px 0;background:${safeColour(e.color, '#64748b')}20;color:${safeColour(e.color, '#64748b')};border-radius:8px">${escape(e.title)}</div>`).join('')}</div>` : ''}
       `;
     }
 
-    const logoLetters = branding.logoLetters || 'CCD';
-    const logoHtml = branding.loginLogoUrl
-      ? `<img src="${escape(branding.loginLogoUrl)}" alt="" style="height:36px;margin-bottom:8px;" onerror="this.style.display='none'">`
-      : `<div style="width:48px;height:48px;border-radius:50%;background:rgba(255,255,255,0.3);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;margin-bottom:8px;">${escape(logoLetters.slice(0, 3))}</div>`;
+    // CCDesigner logo top-left on a white tab so it reads on the teal band
+    // (replaces the old "CCD" letter disc).
+    const logoHtml = `<div style="display:inline-block;background:#fff;border-radius:8px;padding:6px 10px;margin-bottom:10px;-webkit-print-color-adjust:exact;print-color-adjust:exact;">${planLogoImg()}</div>`;
     const brandHeader = `
       <div class="brand-header">
         ${logoHtml}
@@ -1063,8 +1057,9 @@ export function LessonPlannerCalendar({
     `;
 
     const brandFooter = `
-      <div class="brand-footer">
-        ${escape(companyName)} • © ${escape(copyrightYear)}${contactEmail ? ` • ${escape(contactEmail)}` : ''}
+      <div class="brand-footer" style="display:flex;justify-content:space-between;align-items:center;gap:12px;">
+        <span>${escape(companyName)} • © ${escape(copyrightYear)}${contactEmail ? ` • ${escape(contactEmail)}` : ''}</span>
+        <span>Page 1</span>
       </div>
     `;
 
@@ -1078,11 +1073,12 @@ export function LessonPlannerCalendar({
       return btoa(binaryString);
     };
 
+    // PDFBolt/Chromium fills .pageNumber; browser print fallback uses "Page 1" in the body footer below.
     const footerContent = `
-      <div style="width:100%;font-size:9px;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;color:#5F6368;font-family:'Inter',sans-serif;">
+      <div style="width:100%;font-size:13px;padding:8px 20px;display:flex;justify-content:space-between;align-items:center;color:#5F6368;font-family:'Inter',sans-serif;">
         <span>${escape(productName)}</span>
         <span>${escape(className)} • ${escape(viewLabel)}</span>
-        <span style="background:#E8EAEF;color:#0f766e;padding:4px 12px;border-radius:50px;font-weight:500;">Page <span class="pageNumber"></span> of <span class="totalPages"></span></span>
+        <span style="background:#E8EAEF;color:#0f766e;padding:4px 12px;border-radius:50px;font-weight:500;">Page <span class="pageNumber"></span></span>
       </div>
     `;
 
@@ -1559,7 +1555,7 @@ export function LessonPlannerCalendar({
             style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX, height: HOUR_HEIGHT_PX }}
           >
             {showHourLabels && (
-              <span className="absolute -left-14 -top-2.5 w-12 text-right text-[11px] text-gray-500 tabular-nums">
+              <span className="absolute -left-14 -top-2.5 w-12 text-right text-[13px] text-gray-500 tabular-nums">
                 {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
               </span>
             )}
@@ -1569,7 +1565,7 @@ export function LessonPlannerCalendar({
         {(isHolidayDate || isInsetDayDate) && (
           <div className="absolute inset-x-1 top-2 z-[1] text-center pointer-events-none">
             <span
-              className={`inline-block text-[10px] font-medium px-1.5 py-0.5 rounded ${
+              className={`inline-block text-[13px] font-medium px-1.5 py-0.5 rounded ${
                 isHolidayDate ? 'bg-red-100 text-red-800' : 'bg-purple-100 text-purple-800'
               }`}
             >
@@ -1618,12 +1614,12 @@ export function LessonPlannerCalendar({
                 }
               }}
             >
-              <div className={`px-1.5 py-0.5 leading-tight ${compact ? 'text-[10px]' : 'text-xs'}`}>
+              <div className={`px-1.5 py-0.5 leading-tight ${compact ? 'text-[13px]' : 'text-xs'}`}>
                 <div className="font-semibold truncate" style={{ color: item.color }}>
                   {item.title}
                 </div>
                 {!compact && item.subtitle && (
-                  <div className="text-[10px] text-gray-600 truncate">{item.subtitle}</div>
+                  <div className="text-[13px] text-gray-600 truncate">{item.subtitle}</div>
                 )}
               </div>
             </div>
@@ -1678,7 +1674,7 @@ export function LessonPlannerCalendar({
                   today ? 'bg-white' : ''
                 }`}
               >
-                <div className={`text-[10px] leading-none uppercase tracking-wide ${today ? 'text-[#1F1B4D] font-semibold' : 'text-gray-500'}`}>
+                <div className={`text-[13px] leading-none uppercase tracking-wide ${today ? 'text-[#1F1B4D] font-semibold' : 'text-gray-500'}`}>
                   {format(date, 'EEE')}
                 </div>
                 <div
@@ -1697,7 +1693,7 @@ export function LessonPlannerCalendar({
         {hasAllDay && (
           <div className="flex border-b border-[#E2E0EF] min-h-[36px]" style={{ backgroundColor: '#FAFCFA' }}>
             <div className="w-14 sm:w-16 shrink-0 flex items-start justify-end pr-2 pt-1.5 border-r border-[#E2E0EF]">
-              <span className="text-[10px] uppercase tracking-wide text-gray-400">All day</span>
+              <span className="text-[13px] uppercase tracking-wide text-gray-400">All day</span>
             </div>
             {allDayByDate.map(({ date, events, untimedPlans }) => (
               <div key={`allday-${date.toISOString()}`} className="flex-1 min-w-0 border-l border-[#E2E0EF] px-1 py-1 space-y-0.5">
@@ -1709,7 +1705,7 @@ export function LessonPlannerCalendar({
                         setEditingEvent(event);
                         setShowEventModal(true);
                       }}
-                      className="block w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate font-medium"
+                      className="block w-full text-left text-[13px] px-1.5 py-0.5 rounded truncate font-medium"
                       style={{ backgroundColor: `${event.color}22`, color: event.color }}
                       title={event.title}
                     >
@@ -1728,7 +1724,7 @@ export function LessonPlannerCalendar({
                         setSelectedDateWithPlans({ date, plans: [plan] });
                         setIsLessonSummaryOpen(true);
                       }}
-                      className="block w-full text-left text-[10px] px-1.5 py-0.5 rounded truncate font-medium"
+                      className="block w-full text-left text-[13px] px-1.5 py-0.5 rounded truncate font-medium"
                       style={{ backgroundColor: `${unitColor}22`, color: unitColor }}
                       title={plan.title || `Lesson ${plan.lessonNumber || ''}`}
                     >
@@ -1749,7 +1745,7 @@ export function LessonPlannerCalendar({
               {dayViewHours.map((hour) => (
                 <div
                   key={hour}
-                  className="absolute right-2 text-[11px] text-gray-500 tabular-nums -translate-y-1/2"
+                  className="absolute right-2 text-[13px] text-gray-500 tabular-nums -translate-y-1/2"
                   style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX }}
                 >
                   {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
@@ -1808,17 +1804,17 @@ export function LessonPlannerCalendar({
                 </h2>
                 <div className="flex items-center flex-wrap gap-2 mt-1">
                   {today && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-[#1F1B4D] text-white font-medium">
+                    <span className="text-[13px] px-2 py-0.5 rounded-full bg-[#1F1B4D] text-white font-medium">
                       Today
                     </span>
                   )}
                   {isHolidayDate && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-medium">
+                    <span className="text-[13px] px-2 py-0.5 rounded-full bg-red-100 text-red-800 font-medium">
                       Holiday
                     </span>
                   )}
                   {isInsetDayDate && (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium">
+                    <span className="text-[13px] px-2 py-0.5 rounded-full bg-purple-100 text-purple-800 font-medium">
                       Inset Day
                     </span>
                   )}
@@ -1827,7 +1823,11 @@ export function LessonPlannerCalendar({
               <div className="flex items-center gap-1.5">
                 <button
                   type="button"
-                  onClick={() => setDayViewDate(addDays(safeDate, -1))}
+                  onClick={() => {
+                    let d = addDays(safeDate, -1);
+                    while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, -1);
+                    setDayViewDate(d);
+                  }}
                   className={dayNavBtn}
                   aria-label="Previous day"
                 >
@@ -1842,7 +1842,11 @@ export function LessonPlannerCalendar({
                 </button>
                 <button
                   type="button"
-                  onClick={() => setDayViewDate(addDays(safeDate, 1))}
+                  onClick={() => {
+                    let d = addDays(safeDate, 1);
+                    while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+                    setDayViewDate(d);
+                  }}
                   className={dayNavBtn}
                   aria-label="Next day"
                 >
@@ -1901,7 +1905,7 @@ export function LessonPlannerCalendar({
                 {dayViewHours.map((hour) => (
                   <div
                     key={hour}
-                    className="absolute right-2 text-[11px] text-gray-500 tabular-nums -translate-y-1/2"
+                    className="absolute right-2 text-[13px] text-gray-500 tabular-nums -translate-y-1/2"
                     style={{ top: (hour - GRID_START_HOUR) * HOUR_HEIGHT_PX }}
                   >
                     {format(setHours(setMinutes(new Date(), 0), hour), 'H:mm')}
@@ -1938,7 +1942,7 @@ export function LessonPlannerCalendar({
         {['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'].map(day => (
           <div
             key={day}
-            className="text-center font-medium text-[11px] sm:text-xs tracking-wide uppercase text-gray-500 py-2"
+            className="text-center font-medium text-[13px] sm:text-xs tracking-wide uppercase text-gray-500 py-2"
           >
             {day}
           </div>
@@ -1998,104 +2002,83 @@ export function LessonPlannerCalendar({
     
     const timeSlots = Object.keys(groupedPlans).sort();
     
-    return createPortal(
-      <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-        <div
-          className="fixed inset-0 bg-black/50"
-          aria-hidden="true"
-          onClick={() => {
+    const dayTitleId = 'ccd-class-calendar-day-title';
+    return (
+      <>
+      <ModalShell
+        open
+        onClose={() => {
+          setIsLessonSummaryOpen(false);
+          setRemoveFromDayDropdownOpen(false);
+        }}
+        labelledBy={dayTitleId}
+      >
+        <ModalHeader
+          title={format(date, 'MMMM d, yyyy')}
+          subtitle={`${plans.length} ${plans.length === 1 ? 'lesson' : 'lessons'} planned`}
+          titleId={dayTitleId}
+          onClose={() => {
             setIsLessonSummaryOpen(false);
             setRemoveFromDayDropdownOpen(false);
           }}
-        />
-        <div
-          className="relative z-10 bg-white rounded-2xl shadow-xl border border-gray-200 overflow-hidden w-[90%] max-w-4xl max-h-[90vh] flex flex-col"
-          onClick={(e) => e.stopPropagation()}
         >
-          {/* Header */}
-          <div 
-            className="p-4 text-white relative"
-            style={{ 
-              background: `linear-gradient(135deg, ${theme.primary} 0%, ${theme.secondary} 100%)` 
-            }}
-          >
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-xl font-bold mb-1">
-                  {format(date, 'MMMM d, yyyy')}
-                </h2>
-                <p className="text-white text-opacity-90 text-sm">
-                  {plans.length} {plans.length === 1 ? 'lesson' : 'lessons'} planned
-                </p>
-              </div>
-              <div className="flex items-center gap-2 relative">
-                {plans.length > 0 && (
-                  <>
-                    <button
-                      onClick={() => {
-                        const dateStr = format(date, 'MMMM d, yyyy');
-                        if (plans.length === 1) {
-                          const plan = plans[0];
-                          const title = plan.title || (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : 'this lesson');
-                          if (window.confirm(`You are removing "${title}" from the diary for ${dateStr}. The lesson will still be in your library.`)) {
-                            handleDeletePlan(plan.id, { skipConfirm: true });
-                          }
-                        } else {
-                          setRemoveFromDayDropdownOpen((open) => !open);
-                        }
-                      }}
-                      className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
-                      title="Remove from day"
-                    >
-                      <Trash2 className="h-5 w-5 text-white" />
-                    </button>
-                    {removeFromDayDropdownOpen && plans.length > 1 && (
-                      <div 
-                        className="absolute right-0 top-full mt-2 z-50 py-1 bg-white rounded-lg shadow-lg border border-gray-200 min-w-[200px]"
-                        role="menu"
-                      >
-                        <div className="px-3 py-2 text-xs text-gray-500 border-b border-gray-100">
-                          Remove from {format(date, 'MMM d')}
-                        </div>
-                        {plans.map((plan) => {
-                          const title = plan.title || (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : `Week ${plan.week} Lesson`);
-                          const dateStr = format(date, 'MMMM d, yyyy');
-                          return (
-                            <button
-                              key={plan.id}
-                              onClick={() => {
-                                if (window.confirm(`You are removing "${title}" from the diary for ${dateStr}. The lesson will still be in your library.`)) {
-                                  handleDeletePlan(plan.id, { skipConfirm: true });
-                                  setRemoveFromDayDropdownOpen(false);
-                                }
-                              }}
-                              className="w-full text-left px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center gap-2"
-                              role="menuitem"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-500 shrink-0" />
-                              {title}
-                            </button>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </>
-                )}
-                <button
-                  onClick={() => {
-                    setIsLessonSummaryOpen(false);
-                    setRemoveFromDayDropdownOpen(false);
-                  }}
-                  className="p-2 bg-white bg-opacity-20 hover:bg-opacity-30 rounded-lg transition-colors duration-200"
+          {plans.length > 0 ? (
+            <div className="relative mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const dateStr = format(date, 'MMMM d, yyyy');
+                  if (plans.length === 1) {
+                    const plan = plans[0];
+                    const title =
+                      plan.title ||
+                      (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : 'this lesson');
+                    setDiaryRemoveConfirm({ planId: plan.id, title, dateStr });
+                  } else {
+                    setRemoveFromDayDropdownOpen((open) => !open);
+                  }
+                }}
+                className="inline-flex h-9 items-center gap-1.5 rounded-lg border border-indigo-100 bg-indigo-50 px-2.5 text-xs font-bold text-indigo-700 hover:bg-indigo-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+                title="Remove from day"
+              >
+                <Trash2 className="h-3.5 w-3.5" aria-hidden />
+                Remove from day
+              </button>
+              {removeFromDayDropdownOpen && plans.length > 1 ? (
+                <div
+                  className="absolute left-0 top-full z-50 mt-2 min-w-[200px] rounded-lg border border-gray-200 bg-white py-1 shadow-lg"
+                  role="menu"
                 >
-                  <X className="h-5 w-5 text-white" />
-                </button>
-              </div>
+                  <div className="border-b border-gray-100 px-3 py-2 text-xs text-gray-500">
+                    Remove from {format(date, 'MMM d')}
+                  </div>
+                  {plans.map((plan) => {
+                    const title =
+                      plan.title ||
+                      (plan.lessonNumber ? `Lesson ${plan.lessonNumber}` : `Week ${plan.week} Lesson`);
+                    const dateStr = format(date, 'MMMM d, yyyy');
+                    return (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        onClick={() => {
+                          setDiaryRemoveConfirm({ planId: plan.id, title, dateStr });
+                          setRemoveFromDayDropdownOpen(false);
+                        }}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-gray-700 hover:bg-gray-100"
+                        role="menuitem"
+                      >
+                        <Trash2 className="h-4 w-4 shrink-0 text-red-500" aria-hidden />
+                        {title}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
             </div>
-          </div>
-          
-          {/* Lesson Plans */}
-          <div className="p-6 overflow-y-auto flex-1">
+          ) : null}
+        </ModalHeader>
+        <ModalBody>
             {timeSlots.length === 0 ? (
               <div className="text-center py-8">
                 <p className="text-gray-500">No lessons scheduled for this date</p>
@@ -2290,8 +2273,9 @@ export function LessonPlannerCalendar({
             )}
             
             {/* Add New Lesson/Stack Button */}
-            <div className="mt-6 text-center space-y-3">
+            <div className="mt-6 space-y-3 text-center">
               <button
+                type="button"
                 onClick={() => {
                   setAssignmentDate(selectedDateWithPlans.date);
                   setIsLessonSummaryOpen(false);
@@ -2306,10 +2290,26 @@ export function LessonPlannerCalendar({
                 Choose from lesson library or stacks, spread over multiple days
               </div>
             </div>
-          </div>
-        </div>
-      </div>,
-      document.body,
+        </ModalBody>
+      </ModalShell>
+      <ModalConfirm
+        open={!!diaryRemoveConfirm}
+        onClose={() => setDiaryRemoveConfirm(null)}
+        onConfirm={() => {
+          if (diaryRemoveConfirm) {
+            handleDeletePlan(diaryRemoveConfirm.planId, { skipConfirm: true });
+          }
+        }}
+        title="Remove from diary?"
+        message={
+          diaryRemoveConfirm
+            ? `Remove “${diaryRemoveConfirm.title}” from the diary for ${diaryRemoveConfirm.dateStr}? The lesson stays in your library.`
+            : ''
+        }
+        confirmLabel="Remove from diary"
+        danger
+      />
+      </>
     );
   };
 
@@ -2334,6 +2334,11 @@ export function LessonPlannerCalendar({
   const setCalendarViewMode = (mode: 'month' | 'week' | 'day' | 'week-lessons') => {
     try {
       setViewMode(mode);
+      if (mode === 'day') {
+        let d = dayViewDate instanceof Date && !Number.isNaN(dayViewDate.getTime()) ? dayViewDate : new Date();
+        while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+        setDayViewDate(d);
+      }
     } catch (error) {
       console.error(`Error switching to ${mode} view:`, error);
     }
@@ -2484,7 +2489,7 @@ export function LessonPlannerCalendar({
               >
                 Populate with key dates from
               </label>
-              <p className="mt-0.5 text-[11px] text-gray-500">
+              <p className="mt-0.5 text-[13px] text-gray-500">
                 Start with primary Music · Drama · Dance · Art (dummy), or partner examples —
                 tick to attend &amp; remind
               </p>
@@ -2535,7 +2540,9 @@ export function LessonPlannerCalendar({
                 } else if (viewMode === 'week' || viewMode === 'week-lessons') {
                   setCurrentDate(subWeeks(currentDate, 1));
                 } else {
-                  setDayViewDate(addDays(dayViewDate, -1));
+                  let d = addDays(dayViewDate, -1);
+                  while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, -1);
+                  setDayViewDate(d);
                 }
               }}
               aria-label="Previous period"
@@ -2546,8 +2553,11 @@ export function LessonPlannerCalendar({
 
             <button
               onClick={() => {
-                setCurrentDate(new Date());
-                setDayViewDate(new Date());
+                const today = new Date();
+                setCurrentDate(today);
+                let d = today;
+                while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+                setDayViewDate(d);
               }}
               className="inline-flex min-h-[40px] md:min-h-[44px] items-center px-3 sm:px-3.5 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 transition-colors duration-200 hover:border-[#1F1B4D] hover:text-[#1F1B4D]"
             >
@@ -2561,7 +2571,9 @@ export function LessonPlannerCalendar({
                 } else if (viewMode === 'week' || viewMode === 'week-lessons') {
                   setCurrentDate(addWeeks(currentDate, 1));
                 } else {
-                  setDayViewDate(addDays(dayViewDate, 1));
+                  let d = addDays(dayViewDate, 1);
+                  while (d.getDay() === 0 || d.getDay() === 6) d = addDays(d, 1);
+                  setDayViewDate(d);
                 }
               }}
               aria-label="Next period"
