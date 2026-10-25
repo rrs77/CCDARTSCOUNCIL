@@ -3,8 +3,8 @@
  * on every lesson plan, unit, half-term plan and in-lesson sheet, in PDF, Word and
  * the on-screen preview. This fails if any export builder drops the shared colour
  * logo, points at another (mono/old) logo file, or puts a greyscale/mono filter on it.
- * It also fails if any output uses a logo height other than PLAN_LOGO_HEIGHT_PX (21px):
- * Rob, 25 Oct 2026, "A: yes, all the same small size".
+ * It also fails if any output uses a logo height other than PLAN_LOGO_HEIGHT_PX
+ * (single shared size on every preview / print / PDF / Word).
  */
 import assert from 'node:assert/strict';
 import { readdirSync, readFileSync } from 'node:fs';

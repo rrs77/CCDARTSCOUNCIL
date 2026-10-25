@@ -12,11 +12,12 @@ export const A4_HEIGHT_PX = A4_HEIGHT_MM * MM_TO_PX;
 
 /**
  * Match PDFBolt margin settings used by LessonPrintModal / share export.
- * Top reserves the every-page colour logo header band (21px + padding); bottom
+ * Top reserves the every-page colour logo header band (PLAN_LOGO_HEIGHT_PX + padding); bottom
  * reserves the Page N · © CCDesigner footer. Body layout is otherwise unchanged.
  */
 export const PDFBOLT_MARGINS = {
-  top: '60px',
+  /* ~34px logo + header padding; keep clear of the teal lesson banner */
+  top: '72px',
   right: '20px',
   left: '20px',
   bottom: '55px',

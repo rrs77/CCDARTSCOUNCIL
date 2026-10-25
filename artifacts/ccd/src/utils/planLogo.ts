@@ -28,13 +28,13 @@ export const PLAN_LOGO_ALT = CCD_LOGO_ALT;
 /** Natural aspect ratio of the artwork (784×192 ≈ 4.08:1). */
 export const PLAN_LOGO_ASPECT = PLAN_LOGO_PNG_WIDTH / PLAN_LOGO_PNG_HEIGHT;
 /**
- * THE logo height on every plan output (Rob, 25 Oct 2026: "A: yes, all the same small size"):
- * 21px at 96dpi ≈ 5.6mm, top-left, 784×192 aspect (≈ 86×21px). Single, unit and half-term
- * PDFs and print windows, all 7 templates and their previews, the full plan print, the share
- * fallback, the timetable share, the calendar export, the in-lesson sheet and Word.
- * This is the only logo size: never hardcode another height in an output.
+ * THE logo height on every plan output (Rob, 25 Oct 2026 — raised from 21px):
+ * 34px at 96dpi ≈ 9mm, top-left, 784×192 aspect (≈ 139×34px, ~140px wide). Single, unit
+ * and half-term PDFs and print windows, all 7 templates and their previews, the full plan
+ * print, the share fallback, the timetable share, the calendar export, the in-lesson sheet
+ * and Word. This is the only logo size: never hardcode another height in an output.
  */
-export const PLAN_LOGO_HEIGHT_PX = 21;
+export const PLAN_LOGO_HEIGHT_PX = 34;
 
 /** Embedded colour PNG as a data: URI. Always available, synchronously. */
 export const PLAN_LOGO_DATA_URI = `data:image/png;base64,${PLAN_LOGO_PNG_BASE64}`;
@@ -54,7 +54,7 @@ export function planLogoUrl(): string {
 export function planLogoWidthFor(heightPx: number): number {
   return Math.round(heightPx * PLAN_LOGO_ASPECT);
 }
-/** Logo width that goes with PLAN_LOGO_HEIGHT_PX (86px). */
+/** Logo width that goes with PLAN_LOGO_HEIGHT_PX (~139px). */
 export const PLAN_LOGO_WIDTH_PX = planLogoWidthFor(PLAN_LOGO_HEIGHT_PX);
 
 /** <img> for HTML print templates: colour, the one standard size (PLAN_LOGO_HEIGHT_PX), top-left. */
@@ -81,7 +81,7 @@ export const PLAN_LOGO_PRINT_CSS =
   'img.ccd-plan-logo{filter:none!important;opacity:1!important;-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}' +
   '@media print{html,body{-webkit-print-color-adjust:exact;print-color-adjust:exact}img.ccd-plan-logo{display:block!important;visibility:visible!important}}';
 
-/** Aliases used by LessonPrintModal header/print chrome (same 21×86 constants). */
+/** Aliases used by LessonPrintModal header/print chrome (same PLAN_LOGO_* constants). */
 export const PLAN_LOGO_PRINT_HEIGHT_PX = PLAN_LOGO_HEIGHT_PX;
 export const PLAN_LOGO_PRINT_WIDTH_PX = PLAN_LOGO_WIDTH_PX;
 export const PLAN_LOGO_COLOUR_DATA_URL = PLAN_LOGO_DATA_URI;
@@ -100,7 +100,7 @@ export function planLogoHeaderTemplateHtml(): string {
  * Hidden on screen so PDFBolt (emulateMediaType: screen) + headerTemplate is not doubled.
  */
 export function planLogoPrintTheadHtml(): string {
-  // Extra bottom padding (~16px) so the teal lesson header clears the 21×86 colour logo.
+  // Extra bottom padding so the teal lesson header clears the colour logo (~139×34).
   return `<thead class="ccd-export-print-logo-row"><tr><td style="padding:0 0 16px 0;">${planLogoImg('margin:0;')}</td></tr></thead>`;
 }
 
@@ -219,7 +219,7 @@ export interface PlanDocxLogo {
   altText: string;
 }
 
-/** The colour logo for a Word document, at the standard PLAN_LOGO_HEIGHT_PX (21px ≈ 5.6mm, 86×21px). */
+/** The colour logo for a Word document, at the standard PLAN_LOGO_HEIGHT_PX (~139×34px). */
 export function planLogoDocx(): PlanDocxLogo {
   const heightPx = PLAN_LOGO_HEIGHT_PX;
   const width = PLAN_LOGO_WIDTH_PX;

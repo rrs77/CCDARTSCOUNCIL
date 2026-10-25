@@ -28,6 +28,9 @@ import {
 } from './planLogo.ts';
 import { PLAN_LOGO_PNG_HEIGHT, PLAN_LOGO_PNG_WIDTH } from './planLogoData.ts';
 
+const W = PLAN_LOGO_WIDTH_PX;
+const H = PLAN_LOGO_HEIGHT_PX;
+
 /** Minimal PNG decoder (8-bit RGBA, non-interlaced) so the test can look at real pixels. */
 function decodePng(bytes: Uint8Array) {
   const buf = Buffer.from(bytes);
@@ -108,20 +111,20 @@ describe('plan logo: one colour source of truth', () => {
     assert.ok(Math.abs(PLAN_LOGO_ASPECT - PLAN_LOGO_SOURCE_WIDTH / PLAN_LOGO_SOURCE_HEIGHT) < 0.01);
   });
 
-  it('one small size everywhere: 21px tall, 86px wide (784×192 aspect)', () => {
-    assert.equal(PLAN_LOGO_HEIGHT_PX, 21);
-    assert.equal(PLAN_LOGO_WIDTH_PX, 86);
+  it('one size everywhere: ~140px wide / 34px tall (784×192 aspect)', () => {
+    assert.equal(PLAN_LOGO_HEIGHT_PX, 34);
+    assert.equal(PLAN_LOGO_WIDTH_PX, 139);
     assert.ok(Math.abs(PLAN_LOGO_WIDTH_PX / PLAN_LOGO_HEIGHT_PX - 784 / 192) < 0.05);
   });
 
   it('legacy planLogoHtml(height) ignores the height and renders the standard size', () => {
-    for (const h of [undefined, 21, 28, 30, 40]) assert.equal(planLogoHtml(h, 'margin:0'), planLogoImg('margin:0'));
+    for (const h of [undefined, 21, 28, 30, 40, 34]) assert.equal(planLogoHtml(h, 'margin:0'), planLogoImg('margin:0'));
   });
 
   it('renders with fixed width/height and print-colour-exact, no filter', () => {
     const html = planLogoImg();
-    assert.ok(/width="86" height="21"/.test(html));
-    assert.match(html, /height:21px;width:86px/);
+    assert.ok(new RegExp(`width="${W}" height="${H}"`).test(html));
+    assert.match(html, new RegExp(`height:${H}px;width:${W}px`));
     assert.match(html, /print-color-adjust:exact/);
     assert.match(html, /filter:none/);
     assert.ok(htmlHasColourPlanLogo(html));
@@ -141,21 +144,23 @@ describe('colour-logo guard', () => {
     assert.equal(htmlHasColourPlanLogo(`<style>${PLAN_LOGO_PRINT_CSS}</style>${planLogoHtml()}`), true);
   });
   it('fails when a logo is any other height or width', () => {
-    for (const [w, h] of [[122, 30], [141, 40], [114, 28], [86, 30], [90, 21]]) {
-      const tag = planLogoImg().replace('width="86" height="21"', `width="${w}" height="${h}"`).replace('height:21px;width:86px', `height:${h}px;width:${w}px`);
+    for (const [w, h] of [[122, 30], [141, 40], [114, 28], [86, 21], [90, 34]]) {
+      const tag = planLogoImg()
+        .replace(`width="${W}" height="${H}"`, `width="${w}" height="${h}"`)
+        .replace(`height:${H}px;width:${W}px`, `height:${h}px;width:${w}px`);
       assert.equal(planLogoTagIsStandardSize(tag), false, `${w}×${h}`);
       assert.equal(htmlHasColourPlanLogo(tag), false, `${w}×${h}`);
     }
-    assert.equal(planLogoTagIsStandardSize(planLogoImg().replace('height:21px', 'height:40px')), false, 'style height');
+    assert.equal(planLogoTagIsStandardSize(planLogoImg().replace(`height:${H}px`, 'height:40px')), false, 'style height');
     assert.equal(planLogoTagIsStandardSize(planLogoImg()), true);
   });
 });
 
 describe('sheet chrome (in-lesson sheet, later)', () => {
-  it('logo top-left at 21px, body footer with © CCDesigner year, no @page box', () => {
+  it('logo top-left at standard size, body footer with © CCDesigner year, no @page box', () => {
     const c = planSheetChrome({ year: 2026 });
     assert.ok(htmlHasColourPlanLogo(c.headerHtml));
-    assert.ok(/width="86" height="21"/.test(c.headerHtml));
+    assert.ok(new RegExp(`width="${W}" height="${H}"`).test(c.headerHtml));
     assert.match(c.footerHtml, /Page N · © CCDesigner 2026/);
     assert.doesNotMatch(c.css, /@page\s*\{/);
     assert.doesNotMatch(c.css, /@bottom-center\s*\{/);
@@ -164,22 +169,22 @@ describe('sheet chrome (in-lesson sheet, later)', () => {
 });
 
 describe('Word (.docx) logo and header/footer spec', () => {
-  it('gives colour PNG bytes at 86×21px (819150×200025 EMU)', () => {
+  it('gives colour PNG bytes at the standard PLAN_LOGO size (EMU)', () => {
     const logo = planLogoDocx();
     assert.equal(logo.type, 'png');
     assert.deepEqual([...logo.data.subarray(0, 4)], [137, 80, 78, 71]);
     assert.equal(decodePng(logo.data).colourType, 6);
-    assert.equal(logo.width, 86);
-    assert.equal(logo.height, 21);
-    assert.equal(logo.widthEmu, 819150);
-    assert.equal(logo.heightEmu, 200025);
+    assert.equal(logo.width, W);
+    assert.equal(logo.height, H);
+    assert.equal(logo.widthEmu, W * 9525);
+    assert.equal(logo.heightEmu, H * 9525);
     assert.equal(logo.altText, 'CCDesigner');
   });
 
   it('header: logo left; footer: centred "Page {n} · © CCDesigner <year>"', () => {
     const spec = planDocxHeaderFooter({ year: 2026 });
     assert.equal(spec.header.alignment, 'left');
-    assert.equal(spec.header.logo.height, 21);
+    assert.equal(spec.header.logo.height, H);
     assert.equal(spec.footer.alignment, 'center');
     assert.ok(spec.footer.fontSizePt >= 10, '10pt ≈ 13px');
     assert.deepEqual(spec.footer.parts, [
@@ -192,29 +197,29 @@ describe('Word (.docx) logo and header/footer spec', () => {
 });
 
 describe('LessonPrintModal PDF header / print thead chrome', () => {
-  it('header template and print HTML carry the colour 21×86 logo', () => {
-    assert.equal(PLAN_LOGO_PRINT_HEIGHT_PX, 21);
-    assert.equal(PLAN_LOGO_PRINT_WIDTH_PX, 86);
+  it('header template and print HTML carry the colour standard-size logo', () => {
+    assert.equal(PLAN_LOGO_PRINT_HEIGHT_PX, H);
+    assert.equal(PLAN_LOGO_PRINT_WIDTH_PX, W);
     assert.equal(PLAN_LOGO_COLOUR_DATA_URL, PLAN_LOGO_DATA_URI);
 
     const header = planLogoHeaderTemplateHtml();
     assert.ok(header.includes(PLAN_LOGO_DATA_URI));
-    assert.match(header, /height="21"/);
-    assert.match(header, /width="86"/);
+    assert.match(header, new RegExp(`height="${H}"`));
+    assert.match(header, new RegExp(`width="${W}"`));
     assert.doesNotMatch(header, /grayscale/i);
 
     const thead = planLogoPrintTheadHtml();
     assert.match(thead, /ccd-export-print-logo-row/);
     assert.ok(thead.includes(PLAN_LOGO_DATA_URI));
-    assert.match(thead, /height="21"/);
+    assert.match(thead, new RegExp(`height="${H}"`));
     assert.match(thead, /padding:0 0 16px 0/);
 
     assert.match(header, /padding:6px 20px 10px 20px/);
 
     const css = planLogoPrintRunningCss();
     assert.match(css, /table-header-group/);
-    assert.match(css, /height:\s*21px/);
-    assert.match(css, /width:\s*86px/);
+    assert.match(css, new RegExp(`height:\\s*${H}px`));
+    assert.match(css, new RegExp(`width:\\s*${W}px`));
     assert.doesNotMatch(css, /grayscale/i);
   });
 });

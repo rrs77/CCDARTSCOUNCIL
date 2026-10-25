@@ -1196,7 +1196,7 @@ export function LessonPrintModal({
       </html>
     `;
 
-    // PDFBolt header: colour logo top-left on EVERY page (21×86). Print-window
+    // PDFBolt header: colour logo top-left on EVERY page (PLAN_LOGO_*). Print-window
     // fallback uses a repeating table thead — see planLogo.ts.
     const headerContent = planLogoHeaderTemplateHtml();
 
