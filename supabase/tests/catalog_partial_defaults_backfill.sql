@@ -1,15 +1,21 @@
--- Catalog backfill Option 2 (20261024380000 replaces partial-fill behaviour).
+-- Catalog backfill Option 2 (20261024380000) + seeded-once (20261024390000).
 -- Skip schools that already have ANY org-scoped year groups.
--- Empty (never seeded) schools get defaults once.
--- Run after scratch + 240000..380000 (never production).
+-- Empty (never seeded) schools get defaults once; wipe stays empty.
+-- 340000 no longer runs the old partial fill (v1 pre-marked skipped).
+-- Run after scratch + 240000..390000 (never production).
 
 BEGIN;
 
 CREATE TEMP TABLE rls_results (name TEXT, ok BOOLEAN);
 
--- Reset both job markers so the helper can be exercised in scratch.
+-- Reset job markers so the helper can be exercised in scratch.
+-- (Does not apply to catalog_backfill_ordered_apply, which keeps markers.)
 DELETE FROM private.ccd_one_time_jobs
-WHERE job_key IN ('catalog_partial_defaults_v1', 'catalog_empty_org_defaults_v2');
+WHERE job_key IN (
+  'catalog_partial_defaults_v1',
+  'catalog_empty_org_defaults_v2',
+  'catalog_empty_org_defaults_v3'
+);
 
 INSERT INTO public.organisations (id, name, partner_slug, slug, display_name, short_name, status)
 VALUES
@@ -50,6 +56,11 @@ WHERE organisation_id IN ('org_partial', 'org_eyfs_y1', 'org_full', 'org_empty')
 DELETE FROM public.category_groups
 WHERE organisation_id IN ('org_partial', 'org_eyfs_y1', 'org_full', 'org_empty');
 DELETE FROM public.custom_categories
+WHERE organisation_id IN ('org_partial', 'org_eyfs_y1', 'org_full', 'org_empty');
+
+-- Trigger / prior backfill may have marked these; clear so this test controls
+-- never-seeded empty vs Option-2 skip+mark paths.
+DELETE FROM private.ccd_org_catalog_seeded
 WHERE organisation_id IN ('org_partial', 'org_eyfs_y1', 'org_full', 'org_empty');
 
 -- Partial org: only Reception (whitespace/case variant) — must stay alone (Option 2).
@@ -209,7 +220,29 @@ INSERT INTO rls_results
 SELECT 'one-time job marker recorded',
        EXISTS (
          SELECT 1 FROM private.ccd_one_time_jobs
-         WHERE job_key = 'catalog_empty_org_defaults_v2'
+         WHERE job_key = 'catalog_empty_org_defaults_v3'
+       );
+
+INSERT INTO rls_results
+SELECT 'empty org marked seeded',
+       EXISTS (
+         SELECT 1 FROM private.ccd_org_catalog_seeded
+         WHERE organisation_id = 'org_empty' AND reason = 'seeded'
+       );
+
+INSERT INTO rls_results
+SELECT 'partial orgs marked skipped_existing',
+       EXISTS (
+         SELECT 1 FROM private.ccd_org_catalog_seeded
+         WHERE organisation_id = 'org_partial' AND reason = 'skipped_existing'
+       )
+       AND EXISTS (
+         SELECT 1 FROM private.ccd_org_catalog_seeded
+         WHERE organisation_id = 'org_eyfs_y1' AND reason = 'skipped_existing'
+       )
+       AND EXISTS (
+         SELECT 1 FROM private.ccd_org_catalog_seeded
+         WHERE organisation_id = 'org_full' AND reason = 'skipped_existing'
        );
 
 -- Three re-runs: no changes, no duplicates

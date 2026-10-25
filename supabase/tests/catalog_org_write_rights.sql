@@ -47,7 +47,9 @@ DELETE FROM public.custom_categories WHERE id IN ('cc_wr_shared');
 INSERT INTO public.custom_categories (id, name, color, sort_order, organisation_id)
 VALUES ('cc_wr_shared', 'WR Shared Cat', '#14B8A6', 1, NULL);
 
--- Seed org copies via private helper (service role / postgres)
+-- Seed org copies via private helper (service role / postgres).
+-- Clear seeded-once marker if seed-on-create already ran before shared defaults.
+DELETE FROM private.ccd_org_catalog_seeded WHERE organisation_id = 'org_wr_a';
 SELECT private._ccd_seed_org_catalog_defaults('org_wr_a');
 
 -- Ensure admin-owned rows exist for mutate tests

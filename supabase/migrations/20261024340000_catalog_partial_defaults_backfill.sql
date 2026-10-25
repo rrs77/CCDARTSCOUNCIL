@@ -1,9 +1,14 @@
--- Rob: one-time backfill of missing NULL-org catalog defaults into orgs that
--- already have a partial year-group set. Match on normalised name; never
--- overwrite / rename / delete existing school rows. Runs once (job marker) so
--- a school that later removes a year group does not get it re-added on rerun.
--- Additive + idempotent. Do not apply to live DB until review.
--- Separate from any Q2 write-rights change (still awaiting Rob).
+-- Rob: helpers + job ledger for catalog defaults backfill.
+-- Originally defined a partial-fill backfill (catalog_partial_defaults_v1).
+-- Rob Option 2 + Security Reviewer: do NOT run that partial fill at apply
+-- time — it would insert missing defaults into schools that already have
+-- some year groups, which cannot be undone. 380000 replaces the function
+-- with empty-org-only seeding; 390000 adds the per-org seeded-once marker.
+--
+-- This migration still creates private.ccd_one_time_jobs, _ccd_norm_catalog_name,
+-- and the (superseded) function body so later migrations can CREATE OR REPLACE.
+-- It records catalog_partial_defaults_v1 as skipped so nothing can execute the
+-- old partial fill later. Additive + idempotent. Do not apply to live DB until review.
 
 CREATE SCHEMA IF NOT EXISTS private;
 REVOKE ALL ON SCHEMA private FROM PUBLIC;
@@ -290,19 +295,16 @@ REVOKE ALL ON FUNCTION private._ccd_backfill_missing_catalog_defaults() FROM ano
 GRANT EXECUTE ON FUNCTION private._ccd_backfill_missing_catalog_defaults() TO service_role;
 
 COMMENT ON FUNCTION private._ccd_backfill_missing_catalog_defaults() IS
-  'One-time: copy missing NULL-org year_groups / category_groups / custom_categories into partial orgs by normalised name. Never mutates existing org or NULL-org rows. Job key catalog_partial_defaults_v1.';
+  'Superseded at apply time: body kept for CREATE OR REPLACE chain. Do not execute — Rob Option 2 (380000) seeds empty orgs only; 390000 adds per-org seeded-once markers. Job key catalog_partial_defaults_v1 is pre-marked skipped.';
 
--- Run once at migration apply; counts visible in NOTICE / returned rows.
-DO $$
-DECLARE
-  r record;
-  n int := 0;
-BEGIN
-  FOR r IN SELECT * FROM private._ccd_backfill_missing_catalog_defaults()
-  LOOP
-    n := n + 1;
-    RAISE NOTICE 'backfill org %: yg+%, cg+%, cc+%',
-      r.organisation_id, r.year_groups_added, r.category_groups_added, r.custom_categories_added;
-  END LOOP;
-  RAISE NOTICE 'catalog_partial_defaults_v1: % orgs updated', n;
-END $$;
+-- Do NOT run the partial fill. Record v1 as skipped so a later accidental
+-- call of this (pre-380000) function body is a no-op via the job marker.
+INSERT INTO private.ccd_one_time_jobs (job_key, detail)
+VALUES (
+  'catalog_partial_defaults_v1',
+  jsonb_build_object(
+    'skipped',
+    'superseded by 380000 / Rob Option 2'
+  )
+)
+ON CONFLICT (job_key) DO NOTHING;

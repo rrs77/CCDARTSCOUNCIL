@@ -6,6 +6,22 @@ BEGIN;
 
 CREATE TEMP TABLE rls_results (name TEXT, ok BOOLEAN);
 
+-- Shared NULL-org defaults BEFORE org inserts so seed-on-create / seeded-once
+-- marker captures the rows this test expects.
+DELETE FROM public.year_groups WHERE id IN ('yg_shared_rec', 'yg_shared_y1');
+INSERT INTO public.year_groups (id, name, sort_order, organisation_id)
+VALUES
+  ('yg_shared_rec', 'Reception Music', 1, NULL),
+  ('yg_shared_y1', 'Year 1 Music', 2, NULL);
+
+DELETE FROM public.category_groups WHERE id IN ('cg_shared');
+INSERT INTO public.category_groups (id, name, sort_order, organisation_id)
+VALUES ('cg_shared', 'Warm-ups', 1, NULL);
+
+DELETE FROM public.custom_categories WHERE id IN ('cc_shared');
+INSERT INTO public.custom_categories (id, name, color, sort_order, organisation_id)
+VALUES ('cc_shared', 'Vocal Warmups', '#14B8A6', 1, NULL);
+
 INSERT INTO public.organisations (id, name, partner_slug, slug, display_name, short_name, status)
 VALUES
   ('org_a', 'Org A', 'org_a', 'org_a', 'Org A', 'Org A', 'active'),
@@ -31,21 +47,6 @@ ON CONFLICT (id) DO UPDATE
       organisation_id = EXCLUDED.organisation_id,
       anonymised_at = EXCLUDED.anonymised_at,
       can_manage_users = EXCLUDED.can_manage_users;
-
--- Shared NULL-org defaults (super-admin set)
-DELETE FROM public.year_groups WHERE id IN ('yg_shared_rec', 'yg_shared_y1');
-INSERT INTO public.year_groups (id, name, sort_order, organisation_id)
-VALUES
-  ('yg_shared_rec', 'Reception Music', 1, NULL),
-  ('yg_shared_y1', 'Year 1 Music', 2, NULL);
-
-DELETE FROM public.category_groups WHERE id IN ('cg_shared');
-INSERT INTO public.category_groups (id, name, sort_order, organisation_id)
-VALUES ('cg_shared', 'Warm-ups', 1, NULL);
-
-DELETE FROM public.custom_categories WHERE id IN ('cc_shared');
-INSERT INTO public.custom_categories (id, name, color, sort_order, organisation_id)
-VALUES ('cc_shared', 'Vocal Warmups', '#14B8A6', 1, NULL);
 
 -- Teacher can READ NULL-org defaults
 DO $$
