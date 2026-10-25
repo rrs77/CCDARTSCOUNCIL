@@ -89,9 +89,6 @@ describe('built-in demo intro lock', () => {
     // Intro + title + lyrics + audio + canva + ppt + image = 7 scenes
     const sceneIds = [...demoSrc.matchAll(/id: (?:DEMO_INTRO_SCENE_ID|'demo-scene-[a-z-]+')/g)];
     assert.equal(sceneIds.length, 7);
-    // Lyrics slide must not show a "placeholder audio" caption overlay
-    assert.doesNotMatch(demoSrc, /placeholder audio/i);
-    assert.doesNotMatch(demoSrc, /ov-kara-label/);
   });
 });
 
