@@ -163,7 +163,14 @@ describe('document mapping', () => {
     assert.match(html, /Non-specialist teacher toolkit/);
     assert.match(html, /Support, challenge and safety/);
     assert.match(html, /SOURCE &amp; ADAPTATION/);
+    assert.match(html, /CCDesigner design © 2026/);
+    assert.doesNotMatch(html, /Rhythmstix design ©/);
     assert.match(html, /45 minutes/);
+    for (const id of ['eyfs', 'ks1', 'lks2', 'uks2'] as const) {
+      const h = renderRhythmstixHtml(buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: id }));
+      assert.match(h, /CCDesigner design © 2026/, id);
+      assert.doesNotMatch(h, /Rhythmstix design ©/, id);
+    }
     for (const id of ['ks4', 'ks5'] as const) {
       const h = renderRhythmstixHtml(buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: id }));
       assert.match(h, /Support, challenge and safety/);

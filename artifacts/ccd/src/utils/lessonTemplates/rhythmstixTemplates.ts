@@ -55,7 +55,7 @@ const PRIMARY = {
   toolkitLabels: [] as string[],
   sourceLabel: 'SOURCE & ADAPTATION',
   sourceDefault:
-    'Adapt activities, curriculum links, credits and references for your class before teaching or sharing. Rhythmstix design © 2026.',
+    'Adapt activities, curriculum links, credits and references for your class before teaching or sharing. CCDesigner design © 2026.',
 };
 
 const SECONDARY = {
