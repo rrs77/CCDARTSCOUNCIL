@@ -86,7 +86,11 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
                 style={{ backgroundColor: logoPlateBg }}
               >
                 <img
-                  src={hub.logoSrc}
+                  src={
+                    hub.logoOnPlate
+                      ? hub.logoSrc
+                      : hub.logoSrcOnDark || hub.logoSrc
+                  }
                   alt={`${hub.displayName} logo`}
                   className={`w-auto max-w-full object-contain ${
                     hub.logoImgClassName

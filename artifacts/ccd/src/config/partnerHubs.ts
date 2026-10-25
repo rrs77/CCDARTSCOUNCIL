@@ -208,8 +208,8 @@ export const PARTNER_HUBS: PartnerHubConfig[] = [
     displayName: 'Drama Resource (David Farmer)',
     shortName: 'Drama Resource',
     siteUrl: 'https://dramaresource.com/',
-    /** Official white wordmark from dramaresource.com on brand green */
-    logoSrc: '/partners/paid-logos/drama-resource-white-clear.png',
+    /** Transparent white wordmark — never bake brand green into the asset (dark tile supplies the ground). */
+    logoSrc: '/partners/paid-logos/drama-resource-wordmark-white.svg',
     /** White wordmark for directory cards on #111111 tile (see public/partners/LOGO_GUIDELINES.md). */
     logoSrcOnDark: '/partners/paid-logos/drama-resource-wordmark-white.svg',
     interactive: true,
