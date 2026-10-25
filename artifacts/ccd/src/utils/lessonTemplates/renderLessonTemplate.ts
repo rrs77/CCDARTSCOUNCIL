@@ -1,5 +1,5 @@
 import { sanitizeHtml } from '../sanitize';
-import { planLogoHtml } from '../planLogo';
+import { planLogoImg } from '../planLogo';
 import {
   buildRhythmstixDoc,
   renderRhythmstixHtml,
@@ -14,5 +14,5 @@ export function renderLessonTemplateHtml(
 ): string {
   const baseUrl = typeof window !== 'undefined' && window.location?.origin ? window.location.origin : undefined;
   const doc = buildRhythmstixDoc(lesson, { ...opts, baseUrl });
-  return renderRhythmstixHtml(doc, { sanitizeHtml, logoHtml: planLogoHtml(40) });
+  return renderRhythmstixHtml(doc, { sanitizeHtml, logoHtml: planLogoImg() });
 }

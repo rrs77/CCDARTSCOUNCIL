@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { PLAN_LOGO_PRINT_CSS, planLogoHtml } from '../utils/planLogo';
+import { PLAN_LOGO_PRINT_CSS, planLogoImg } from '../utils/planLogo';
 import { escapeHtmlText, sanitizeHtml, sanitizeUrl } from '../utils/sanitize';
 import { safeColour } from '../utils/safeColour';
 
@@ -211,7 +211,7 @@ export function useShareLesson() {
       </head>
       <body>
         <div class="lesson-pdf-content">
-          ${planLogoHtml(30, 'margin:0 0 10px 0;')}
+          ${planLogoImg('margin:0 0 10px 0;')}
           <div class="lesson-header-teal">
             <h3>${escapeShareText(headerTitle)}</h3>
             <div class="subtitle">${escapeShareText(halfTermName || 'Autumn 1')} - ${escapeShareText(currentSheetInfo.display)}</div>

@@ -1,4 +1,4 @@
-import { PLAN_FOOTER_SITE, PLAN_LOGO_PRINT_CSS, planFooterCopyright, planLogoHtml } from '../planLogo.ts';
+import { PLAN_FOOTER_SITE, PLAN_LOGO_PRINT_CSS, PLAN_LOGO_HEIGHT_PX, planFooterCopyright, planLogoImg } from '../planLogo.ts';
 /**
  * Rhythmstix age-phase lesson plan templates (EYFS → KS5).
  *
@@ -759,7 +759,7 @@ export function escapeText(s: unknown): string {
 }
 
 /** CCDesigner colour logo (utils/planLogo.ts, embedded data: URI) when no logo markup is passed in. Never a Rhythmstix mark. */
-export const DEFAULT_LOGO_HTML = planLogoHtml(40);
+export const DEFAULT_LOGO_HTML = planLogoImg();
 /** Plan footer (Rob, 25 Oct 2026: "change it to CCDesigner"); shared with utils/planLogo.ts. */
 export const PLAN_FOOTER_COPYRIGHT = planFooterCopyright;
 export { PLAN_FOOTER_SITE };
@@ -767,7 +767,7 @@ export { PLAN_FOOTER_SITE };
 export interface RenderOptions {
   /** Sanitiser for teacher-authored rich HTML (DOMPurify in the app). Defaults to escaping. */
   sanitizeHtml?: (html: string) => string;
-  /** Trusted logo markup for the top-left slot (planLogoHtml in the app). Falls back to the CCDesigner logo image. */
+  /** Trusted logo markup for the top-left slot (planLogoImg in the app). Falls back to the CCDesigner logo image. */
   logoHtml?: string;
 }
 
@@ -791,7 +791,7 @@ export function rhythmstixCss(t: RhythmstixTemplate, subject = 'MUSIC'): string 
 .rx-doc p{margin:0}
 .rx-doc a{color:var(--rx-teal);font-weight:700}
 .rx-head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:2px solid var(--rx-gold);padding-bottom:10px;margin-bottom:14px}
-.rx-logo-slot{min-height:40px;min-width:160px;display:flex;align-items:center}
+.rx-logo-slot{min-height:${PLAN_LOGO_HEIGHT_PX}px;min-width:160px;display:flex;align-items:center}
 ${PLAN_LOGO_PRINT_CSS}
 .rx-phase{font-size:13px;font-weight:700;color:var(--rx-accent);text-transform:uppercase;text-align:right}
 .rx-kicker{font-size:13px;font-weight:800;letter-spacing:.04em;color:var(--rx-accent);text-transform:uppercase;margin:0 0 4px}

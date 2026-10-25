@@ -4,7 +4,7 @@
  * cannot blank the print preview.
  */
 
-import { PLAN_LOGO_ALT, PLAN_LOGO_COLOUR_STYLE, PLAN_LOGO_HEIGHT_PX, planLogoUrl, planLogoWidthFor } from './planLogo';
+import { PLAN_LOGO_ALT, PLAN_LOGO_COLOUR_STYLE, PLAN_LOGO_HEIGHT_PX, PLAN_LOGO_WIDTH_PX, planLogoUrl } from './planLogo';
 
 const PRINT_ROOT_ID = 'ccd-print-root';
 
@@ -62,9 +62,9 @@ export function printLessonPlanFromDom(source?: HTMLElement | null): void {
     logo.alt = PLAN_LOGO_ALT;
     logo.className = 'ccd-plan-logo';
     logo.dataset.ccdPlanLogo = 'colour';
-    logo.width = planLogoWidthFor(PLAN_LOGO_HEIGHT_PX);
+    logo.width = PLAN_LOGO_WIDTH_PX;
     logo.height = PLAN_LOGO_HEIGHT_PX;
-    logo.style.cssText = `display:block;height:${PLAN_LOGO_HEIGHT_PX}px;width:${planLogoWidthFor(PLAN_LOGO_HEIGHT_PX)}px;max-width:none;margin:0 0 8px 0;${PLAN_LOGO_COLOUR_STYLE}`;
+    logo.style.cssText = `display:block;height:${PLAN_LOGO_HEIGHT_PX}px;width:${PLAN_LOGO_WIDTH_PX}px;max-width:none;margin:0 0 8px 0;${PLAN_LOGO_COLOUR_STYLE}`;
     clone.insertBefore(logo, clone.firstChild);
   }
   root.appendChild(clone);

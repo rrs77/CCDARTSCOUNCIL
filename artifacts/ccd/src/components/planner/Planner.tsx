@@ -1,4 +1,4 @@
-import { PLAN_LOGO_ALT, PLAN_LOGO_PATH, PLAN_LOGO_PRINT_CSS, planLogoHtml, planLogoUrl } from '../../utils/planLogo';
+import { PLAN_LOGO_ALT, PLAN_LOGO_PATH, PLAN_LOGO_PRINT_CSS, planLogoImg, planLogoUrl } from '../../utils/planLogo';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { safeColour } from '../../utils/safeColour';
 import { toast } from 'react-hot-toast';
@@ -722,7 +722,7 @@ body{
 <div class="sheet">
   <header class="mast">
     <div class="mast-left">
-      <div class="plan-logo">${planLogoHtml(30)}</div>
+      <div class="plan-logo">${planLogoImg()}</div>
       <p class="eyebrow">${esc(eyebrow)}</p>
       <h1>${esc(rangeLabel)}</h1>
       <p class="range">${esc(productName)}${productSubtitle ? ` · ${esc(productSubtitle)}` : ''}</p>

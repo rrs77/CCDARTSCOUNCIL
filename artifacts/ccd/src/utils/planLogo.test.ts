@@ -4,6 +4,8 @@ import { inflateSync } from 'node:zlib';
 import {
   PLAN_LOGO_ASPECT,
   PLAN_LOGO_DATA_URI,
+  PLAN_LOGO_HEIGHT_PX,
+  PLAN_LOGO_WIDTH_PX,
   PLAN_LOGO_PATH,
   PLAN_LOGO_PRINT_CSS,
   PLAN_LOGO_SOURCE_HEIGHT,
@@ -12,6 +14,8 @@ import {
   planDocxHeaderFooter,
   planLogoDocx,
   planLogoHtml,
+  planLogoImg,
+  planLogoTagIsStandardSize,
   planLogoPngBytes,
   planLogoUrl,
   planSheetChrome,
@@ -98,9 +102,20 @@ describe('plan logo: one colour source of truth', () => {
     assert.ok(Math.abs(PLAN_LOGO_ASPECT - PLAN_LOGO_SOURCE_WIDTH / PLAN_LOGO_SOURCE_HEIGHT) < 0.01);
   });
 
+  it('one small size everywhere: 21px tall, 86px wide (784×192 aspect)', () => {
+    assert.equal(PLAN_LOGO_HEIGHT_PX, 21);
+    assert.equal(PLAN_LOGO_WIDTH_PX, 86);
+    assert.ok(Math.abs(PLAN_LOGO_WIDTH_PX / PLAN_LOGO_HEIGHT_PX - 784 / 192) < 0.05);
+  });
+
+  it('legacy planLogoHtml(height) ignores the height and renders the standard size', () => {
+    for (const h of [undefined, 21, 28, 30, 40]) assert.equal(planLogoHtml(h, 'margin:0'), planLogoImg('margin:0'));
+  });
+
   it('renders with fixed width/height and print-colour-exact, no filter', () => {
-    const html = planLogoHtml(30);
-    assert.ok(/width="122" height="30"/.test(html));
+    const html = planLogoImg();
+    assert.ok(/width="86" height="21"/.test(html));
+    assert.match(html, /height:21px;width:86px/);
     assert.match(html, /print-color-adjust:exact/);
     assert.match(html, /filter:none/);
     assert.ok(htmlHasColourPlanLogo(html));
@@ -118,6 +133,15 @@ describe('colour-logo guard', () => {
     assert.equal(htmlHasColourPlanLogo('<img class="ccd-plan-logo" src="/cre-logo.png">'), false);
     assert.equal(htmlHasColourPlanLogo(`<img class="ccd-plan-logo mono" src="${PLAN_LOGO_DATA_URI}">`), false);
     assert.equal(htmlHasColourPlanLogo(`<style>${PLAN_LOGO_PRINT_CSS}</style>${planLogoHtml()}`), true);
+  });
+  it('fails when a logo is any other height or width', () => {
+    for (const [w, h] of [[122, 30], [141, 40], [114, 28], [86, 30], [90, 21]]) {
+      const tag = planLogoImg().replace('width="86" height="21"', `width="${w}" height="${h}"`).replace('height:21px;width:86px', `height:${h}px;width:${w}px`);
+      assert.equal(planLogoTagIsStandardSize(tag), false, `${w}×${h}`);
+      assert.equal(htmlHasColourPlanLogo(tag), false, `${w}×${h}`);
+    }
+    assert.equal(planLogoTagIsStandardSize(planLogoImg().replace('height:21px', 'height:40px')), false, 'style height');
+    assert.equal(planLogoTagIsStandardSize(planLogoImg()), true);
   });
 });
 

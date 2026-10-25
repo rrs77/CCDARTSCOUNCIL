@@ -1,4 +1,4 @@
-import { PLAN_LOGO_ALT, PLAN_LOGO_DATA_URI, PLAN_LOGO_HEIGHT_PX, planLogoWidthFor } from '../utils/planLogo';
+import { PLAN_LOGO_ALT, PLAN_LOGO_DATA_URI, PLAN_LOGO_HEIGHT_PX, PLAN_LOGO_WIDTH_PX } from '../utils/planLogo';
 import React from 'react';
 import { Calendar, Clock, X, Eye, ArrowLeft, ArrowRight, Star } from 'lucide-react';
 import { useData } from '../contexts/DataContext';
@@ -78,13 +78,13 @@ export function HalfTermView({
               <img
                 src={PLAN_LOGO_DATA_URI}
                 alt={PLAN_LOGO_ALT}
-                width={planLogoWidthFor(PLAN_LOGO_HEIGHT_PX)}
+                width={PLAN_LOGO_WIDTH_PX}
                 height={PLAN_LOGO_HEIGHT_PX}
                 data-ccd-plan-logo="colour"
                 className="ccd-plan-logo mb-3 block"
                 style={{
                   height: PLAN_LOGO_HEIGHT_PX,
-                  width: planLogoWidthFor(PLAN_LOGO_HEIGHT_PX),
+                  width: PLAN_LOGO_WIDTH_PX,
                   filter: 'none',
                   WebkitPrintColorAdjust: 'exact',
                   printColorAdjust: 'exact',

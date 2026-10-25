@@ -1,4 +1,4 @@
-import { PLAN_LOGO_PRINT_CSS, planLogoHtml } from './planLogo.ts';
+import { PLAN_LOGO_PRINT_CSS, planLogoImg } from './planLogo.ts';
 import { escapeHtmlText as esc } from './escapeHtml.ts';
 import { safeColour } from './safeColour.ts';
 
@@ -106,7 +106,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
     <body>
       <div class="timetable-page">
         <div class="mb-6">
-          ${planLogoHtml(30, 'margin:0 0 12px 0;')}
+          ${planLogoImg('margin:0 0 12px 0;')}
           <h1 class="text-3xl font-bold mb-2">Class Timetable</h1>
           <p class="text-gray-600 text-lg">${safeClassName}</p>
         </div>

@@ -26,10 +26,14 @@ export const PLAN_LOGO_SOURCE_HEIGHT = 192;
 export const PLAN_LOGO_ALT = 'CCDesigner';
 /** Natural aspect ratio of the artwork (784×192 ≈ 4.08:1). */
 export const PLAN_LOGO_ASPECT = PLAN_LOGO_PNG_WIDTH / PLAN_LOGO_PNG_HEIGHT;
-/** Default printed logo height on plan exports (px at 96dpi ≈ 8mm): small, top-left. */
-export const PLAN_LOGO_HEIGHT_PX = 30;
-/** Header logo height for the in-lesson sheet and Word export (proposal v3: 21px ≈ 5.6mm, 86×21px). */
-export const PLAN_LOGO_SHEET_HEIGHT_PX = 21;
+/**
+ * THE logo height on every plan output (Rob, 25 Oct 2026: "A: yes, all the same small size"):
+ * 21px at 96dpi ≈ 5.6mm, top-left, 784×192 aspect (≈ 86×21px). Single, unit and half-term
+ * PDFs and print windows, all 7 templates and their previews, the full plan print, the share
+ * fallback, the timetable share, the calendar export, the in-lesson sheet and Word.
+ * This is the only logo size: never hardcode another height in an output.
+ */
+export const PLAN_LOGO_HEIGHT_PX = 21;
 
 /** Embedded colour PNG as a data: URI. Always available, synchronously. */
 export const PLAN_LOGO_DATA_URI = `data:image/png;base64,${PLAN_LOGO_PNG_BASE64}`;
@@ -49,15 +53,26 @@ export function planLogoUrl(): string {
 export function planLogoWidthFor(heightPx: number): number {
   return Math.round(heightPx * PLAN_LOGO_ASPECT);
 }
+/** Logo width that goes with PLAN_LOGO_HEIGHT_PX (86px). */
+export const PLAN_LOGO_WIDTH_PX = planLogoWidthFor(PLAN_LOGO_HEIGHT_PX);
 
-/** <img> for HTML print templates: colour, fixed width and height, top-left by default. */
-export function planLogoHtml(heightPx = PLAN_LOGO_HEIGHT_PX, extraStyle = ''): string {
-  const w = planLogoWidthFor(heightPx);
+/** <img> for HTML print templates: colour, the one standard size (PLAN_LOGO_HEIGHT_PX), top-left. */
+export function planLogoImg(extraStyle = ''): string {
+  const h = PLAN_LOGO_HEIGHT_PX;
+  const w = PLAN_LOGO_WIDTH_PX;
   return (
     `<img class="ccd-plan-logo" data-ccd-plan-logo="colour" src="${PLAN_LOGO_DATA_URI}" alt="${PLAN_LOGO_ALT}" ` +
-    `width="${w}" height="${heightPx}" ` +
-    `style="display:block;height:${heightPx}px;width:${w}px;max-width:none;${PLAN_LOGO_COLOUR_STYLE};${extraStyle}">`
+    `width="${w}" height="${h}" ` +
+    `style="display:block;height:${h}px;width:${w}px;max-width:none;${PLAN_LOGO_COLOUR_STYLE};${extraStyle}">`
   );
+}
+
+/**
+ * Legacy signature kept for existing callers (LessonPrintModal.tsx passes a height).
+ * The height argument is IGNORED: every plan output uses PLAN_LOGO_HEIGHT_PX. Prefer planLogoImg().
+ */
+export function planLogoHtml(_legacyHeightPx?: number, extraStyle = ''): string {
+  return planLogoImg(extraStyle);
 }
 
 /** CSS for a print document's <style>: keeps the logo (and the page's colours) in colour when printed. */
@@ -76,7 +91,7 @@ export const PLAN_FOOTER_SITE = 'www.ccdesigner.co.uk';
  * in-lesson one-page sheet, when it's built): colour logo top-left, page number
  * and copyright bottom centre.
  */
-export function planSheetChrome(opts: { year?: number; logoHeightPx?: number } = {}): {
+export function planSheetChrome(opts: { year?: number } = {}): {
   css: string;
   headerHtml: string;
   footerHtml: string;
@@ -87,7 +102,7 @@ export function planSheetChrome(opts: { year?: number; logoHeightPx?: number } =
       PLAN_LOGO_PRINT_CSS +
       `@page{@bottom-center{content:"Page " counter(page) " · ${copyright}";font-size:13px;color:#555}}` +
       '.ccd-sheet-foot{text-align:center;font-size:13px;color:#555;margin-top:16px}',
-    headerHtml: `<header class="ccd-sheet-head">${planLogoHtml(opts.logoHeightPx ?? PLAN_LOGO_SHEET_HEIGHT_PX)}</header>`,
+    headerHtml: `<header class="ccd-sheet-head">${planLogoImg()}</header>`,
     footerHtml: `<footer class="ccd-sheet-foot">${copyright}</footer>`,
   };
 }
@@ -100,8 +115,23 @@ export function htmlHasColourPlanLogo(html: string): boolean {
     const src = /\bsrc="([^"]+)"/i.exec(tag)?.[1] || '';
     const style = /\bstyle="([^"]*)"/i.exec(tag)?.[1] || '';
     const okSrc = src === PLAN_LOGO_DATA_URI || /\/ccdesigner-logo-colour\.png(\?|$)/.test(src);
-    return okSrc && !PLAN_LOGO_BAD_FILTER.test(style) && !/\b(grayscale|greyscale|mono)\b/i.test(tag.replace(src, ''));
+    return okSrc && planLogoTagIsStandardSize(tag) && !PLAN_LOGO_BAD_FILTER.test(style) && !/\b(grayscale|greyscale|mono)\b/i.test(tag.replace(src, ''));
   }) && !PLAN_LOGO_BAD_CSS.test(html);
+}
+/**
+ * True when a logo <img> tag is exactly the standard size: width/height attributes and
+ * inline style height/width all equal PLAN_LOGO_WIDTH_PX × PLAN_LOGO_HEIGHT_PX.
+ */
+export function planLogoTagIsStandardSize(tag: string): boolean {
+  const attr = (n: string) => new RegExp(`\\s${n}="(\\d+)"`, 'i').exec(tag)?.[1];
+  const style = /\bstyle="([^"]*)"/i.exec(tag)?.[1] || '';
+  const css = (n: string) => new RegExp(`(?:^|;)\\s*${n}\\s*:\\s*([\\d.]+)px`, 'i').exec(style)?.[1];
+  return (
+    attr('height') === String(PLAN_LOGO_HEIGHT_PX) &&
+    attr('width') === String(PLAN_LOGO_WIDTH_PX) &&
+    css('height') === String(PLAN_LOGO_HEIGHT_PX) &&
+    css('width') === String(PLAN_LOGO_WIDTH_PX)
+  );
 }
 /** filter values that would strip the logo's colour or hide it. */
 export const PLAN_LOGO_BAD_FILTER = /filter\s*:\s*(?!none)[^;"]*(grayscale|greyscale|saturate\(0|brightness\(0|invert|contrast\(0)/i;
@@ -145,9 +175,10 @@ export interface PlanDocxLogo {
   altText: string;
 }
 
-/** The colour logo for a Word document, at display height heightPx (default 21px ≈ 5.6mm, as proposal v3). */
-export function planLogoDocx(heightPx = PLAN_LOGO_SHEET_HEIGHT_PX): PlanDocxLogo {
-  const width = planLogoWidthFor(heightPx);
+/** The colour logo for a Word document, at the standard PLAN_LOGO_HEIGHT_PX (21px ≈ 5.6mm, 86×21px). */
+export function planLogoDocx(): PlanDocxLogo {
+  const heightPx = PLAN_LOGO_HEIGHT_PX;
+  const width = PLAN_LOGO_WIDTH_PX;
   return {
     data: planLogoPngBytes(),
     type: 'png',
@@ -174,9 +205,9 @@ export interface PlanDocxHeaderFooterSpec {
  * library as: Header([Paragraph({alignment: LEFT, children: [ImageRun(logo)]})]),
  * Footer([Paragraph({alignment: CENTER, children: parts → TextRun / PageNumber.CURRENT})]).
  */
-export function planDocxHeaderFooter(opts: { year?: number; logoHeightPx?: number } = {}): PlanDocxHeaderFooterSpec {
+export function planDocxHeaderFooter(opts: { year?: number } = {}): PlanDocxHeaderFooterSpec {
   return {
-    header: { alignment: 'left', logo: planLogoDocx(opts.logoHeightPx ?? PLAN_LOGO_SHEET_HEIGHT_PX) },
+    header: { alignment: 'left', logo: planLogoDocx() },
     footer: {
       alignment: 'center',
       fontSizePt: 10,
