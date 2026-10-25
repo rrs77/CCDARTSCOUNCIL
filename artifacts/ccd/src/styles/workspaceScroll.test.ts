@@ -65,7 +65,48 @@ describe('Lessons workspace does not trap height in the viewport', () => {
   it('avoids min-h calc(100vh) that clipped the lesson plan panel', () => {
     assert.doesNotMatch(src, /min-h-\[calc\(100vh-7\.5rem\)\]/);
     assert.match(src, /data-testid="lessons-planner"/);
-    assert.match(src, /lessonPlanOpen \? 'overflow-visible'/);
+    assert.match(src, /data-lessons-plan-shell=\{lessonPlanOpen \? 'open' : 'canvas'\}/);
+    assert.match(src, /lessonPlanOpen\s*\?\s*'min-h-0 overflow-hidden'/);
+    assert.match(src, /Drop min-h-\[28rem\] while open/);
+  });
+});
+
+describe('Lesson plan panel body scrolls in Plan / Preview / Print', () => {
+  const css = read('styles/studio-score.css');
+  const panel = read('components/ccdPlanner/LessonPlanModal.tsx');
+
+  it('bounds the panel and gives the body overflow-y:auto with min-height:0', () => {
+    assert.match(
+      css,
+      /\.ccd-studio-workspace-inner:has\(\[data-ccd-lesson-plan-panel\]\)\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    const body = css.match(
+      /\[data-ccd-lesson-plan-panel\]\s+\[data-ccd-lesson-plan-body\]\s*\{([^}]+)\}/,
+    );
+    assert.ok(body, 'expected [data-ccd-lesson-plan-body] rule');
+    assert.match(body[1], /min-height:\s*0/);
+    assert.match(body[1], /overflow-y:\s*auto/);
+    assert.match(body[1], /overflow-x:\s*hidden/);
+    assert.match(
+      css,
+      /\[data-ccd-lesson-plan-panel\]\s*\{[^}]*overflow:\s*hidden/s,
+    );
+    assert.match(
+      css,
+      /\[data-ccd-lesson-plan-panel\]\s*\{[^}]*max-height:\s*min\(100%,\s*calc\(100dvh\s*-\s*var\(--ss-topbar\)/s,
+    );
+  });
+
+  it('marks header, scroll body, and footer in LessonPlanPanel markup', () => {
+    assert.match(panel, /data-ccd-lesson-plan-panel/);
+    assert.match(panel, /data-ccd-lesson-plan-header/);
+    assert.match(panel, /data-ccd-lesson-plan-body/);
+    assert.match(panel, /data-ccd-lesson-plan-footer/);
+    assert.match(panel, /data-ccd-lesson-plan-body-shell/);
+    assert.match(
+      panel,
+      /className="soft-scroll flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"/,
+    );
   });
 });
 

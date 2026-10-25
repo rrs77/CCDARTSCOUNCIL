@@ -493,12 +493,15 @@ export function LessonPlanPanel({
 
   return (
     <section
-      className="flex w-full min-h-[32rem] flex-col rounded-[1.5rem] bg-white"
+      className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[1.5rem] bg-white"
       aria-labelledby={titleId}
       data-ccd-lesson-plan-panel
     >
-      {/* Header */}
-      <div className="flex flex-wrap items-start justify-between gap-3 border-b border-indigo-50 px-5 py-4">
+      {/* Header — stays visible; body scrolls in Plan / Preview / Print */}
+      <div
+        className="flex shrink-0 flex-wrap items-start justify-between gap-3 border-b border-indigo-50 px-5 py-4"
+        data-ccd-lesson-plan-header
+      >
         <div className="min-w-0 flex-1">
           <h2
             id={titleId}
@@ -566,9 +569,16 @@ export function LessonPlanPanel({
           />
         </div>
       ) : null}
-      {/* Body — Flesh out overlays; columns grow so workspace-inner scrolls past Check understanding */}
-      <div className="relative flex flex-1 flex-col">
-        <div className="flex flex-1 flex-col">
+      {/* Body — bounded height + overflow-y:auto so Plan / Preview / Print all scroll;
+          header & footer stay pinned. Flesh out overlays this region. */}
+      <div
+        className="relative flex min-h-0 flex-1 flex-col overflow-hidden"
+        data-ccd-lesson-plan-body-shell
+      >
+        <div
+          className="soft-scroll flex min-h-0 flex-1 flex-col overflow-x-hidden overflow-y-auto"
+          data-ccd-lesson-plan-body
+        >
           {tab === 'plan' ? (
             <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:items-start">
               <div className="pr-1">
@@ -780,7 +790,7 @@ export function LessonPlanPanel({
           ) : null}
 
           {tab === 'preview' || tab === 'print' ? (
-            <div className="soft-scroll min-h-0 flex-1 overflow-y-auto p-6">
+            <div className="min-h-0 flex-1 p-6">
               <article
                 className="print-content w-full max-w-none"
                 data-lesson-plan-print="true"
@@ -831,7 +841,10 @@ export function LessonPlanPanel({
           />
         </div>
       ) : null}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-indigo-50 px-5 py-3">
+      <div
+        className="flex shrink-0 flex-wrap items-center justify-between gap-3 border-t border-indigo-50 px-5 py-3"
+        data-ccd-lesson-plan-footer
+      >
         <Button variant="ghost" size="sm" onClick={onClose}>
           Cancel
         </Button>

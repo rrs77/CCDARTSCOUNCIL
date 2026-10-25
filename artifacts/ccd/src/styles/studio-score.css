@@ -513,6 +513,94 @@ html.ccd-studio {
 }
 
 /*
+ * Lessons → Lesson plan panel (Plan / Preview / Print): fill the workspace
+ * column and scroll inside the panel body so header/footer stay visible.
+ * Fixes Preview clipping where overflow:hidden + unbounded flex left
+ * "Lesson sequence" (and below) unreachable at 1280×800 / short windows.
+ */
+.ccd-studio-workspace-inner:has([data-ccd-lesson-plan-panel]) {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+.ccd-studio-workspace-inner:has([data-ccd-lesson-plan-panel]) > .ccd-fade-in-up {
+  flex: 1 1 auto;
+  min-height: 0;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+
+.ccd-studio-workspace-inner:has([data-ccd-lesson-plan-panel]) > .ccd-fade-in-up > * {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-ccd-lesson-plan-panel] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  /* Bound to the studio column (and fall back when not in a sized flex parent) */
+  height: 100%;
+  max-height: min(100%, calc(100dvh - var(--ss-topbar) - 6.5rem));
+  overflow: hidden;
+}
+
+[data-ccd-lesson-plan-panel] [data-ccd-lesson-plan-header],
+[data-ccd-lesson-plan-panel] [data-ccd-lesson-plan-footer] {
+  flex-shrink: 0;
+}
+
+[data-ccd-lesson-plan-panel] [data-ccd-lesson-plan-body-shell] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+[data-ccd-lesson-plan-panel] [data-ccd-lesson-plan-body] {
+  flex: 1 1 auto;
+  /* min-height:0 so the flex item can shrink below content and scroll */
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Short windows: tighten lesson-plan chrome so body + footer stay on screen */
+@media (max-height: 700px) {
+  [data-ccd-lesson-plan-panel] {
+    max-height: min(100%, calc(100dvh - var(--ss-topbar) - 4.25rem));
+  }
+
+  [data-ccd-lesson-plan-panel] [data-ccd-lesson-plan-header] {
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+  }
+
+  [data-ccd-lesson-plan-panel] [data-ccd-lesson-plan-footer] {
+    padding-top: 0.4rem;
+    padding-bottom: 0.4rem;
+  }
+
+  [data-testid="lessons-planner"][data-lessons-plan-open='true'] > .shrink-0.space-y-3 {
+    gap: 0.35rem;
+  }
+
+  [data-testid="lessons-planner"][data-lessons-plan-open='true'] .ccd-studio-eyebrow {
+    margin-bottom: 0;
+  }
+}
+
+/*
  * Dialog discipline — oversized Tailwind max-w-5xl/6xl panels look stretched
  * on wide screens. Cap common dialog shells inside the Studio Score app.
  */

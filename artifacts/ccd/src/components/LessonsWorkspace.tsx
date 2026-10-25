@@ -510,9 +510,14 @@ export function LessonsWorkspace({
 
   return (
     <div
-      className="flex w-full min-h-0 flex-col gap-3"
+      className={cn(
+        'flex w-full min-h-0 flex-col gap-3',
+        /* Fill studio column when lesson plan is open so the panel body can scroll. */
+        lessonPlanOpen && 'h-full min-h-0 flex-1 overflow-hidden',
+      )}
       style={{ fontFamily: UI_FONT }}
       data-testid="lessons-planner"
+      data-lessons-plan-open={lessonPlanOpen ? 'true' : undefined}
     >
       <YearGroupsAccessNotice />
       <div className="shrink-0 space-y-3">
@@ -722,12 +727,17 @@ export function LessonsWorkspace({
       </div>
 
       {/* Full-width lesson area: canvas OR inline lesson plan (Your lessons is a toolbar menu).
-          Lesson plan grows with content so .ccd-studio-workspace-inner scrolls; canvas keeps a bounded shell. */}
+          When the lesson plan is open, keep a bounded flex height so Plan/Preview/Print
+          scroll inside [data-ccd-lesson-plan-body]; header/footer stay visible.
+          Drop min-h-[28rem] while open — it overflows short windows and clips the body. */}
       <div
         className={cn(
-          'planner-shell-surface flex min-h-[28rem] min-w-0 flex-col rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3',
-          lessonPlanOpen ? 'overflow-visible' : 'flex-1 overflow-hidden',
+          'planner-shell-surface flex min-w-0 flex-1 flex-col rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3',
+          lessonPlanOpen
+            ? 'min-h-0 overflow-hidden'
+            : 'min-h-[28rem] overflow-hidden',
         )}
+        data-lessons-plan-shell={lessonPlanOpen ? 'open' : 'canvas'}
       >
         {lessonPlanOpen ? (
           <LessonPlanPanel
