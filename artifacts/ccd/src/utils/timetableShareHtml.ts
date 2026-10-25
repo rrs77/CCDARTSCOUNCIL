@@ -1,5 +1,9 @@
 import { planLogoHtml } from './planLogo.ts';
 import { escapeHtmlText as esc } from './escapeHtml.ts';
+import { safeColour } from './safeColour.ts';
+
+/** Fallback when a class colour is missing or not a plain colour value. */
+const DEFAULT_CLASS_COLOUR = '#14b8a6';
 
 export interface TimetableClass {
   id: string;
@@ -130,7 +134,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
       
       sortedClasses.forEach((tClass) => {
         htmlContent += `
-          <div class="class-item" style="border-left-color: ${esc(tClass.color)};">
+          <div class="class-item" style="border-left-color: ${safeColour(tClass.color, DEFAULT_CLASS_COLOUR)};">
             <div class="flex items-center justify-between">
               <div>
                 <div class="font-semibold text-gray-900">${esc(tClass.className)}</div>
@@ -141,7 +145,7 @@ export const buildTimetableShareHtml = (timetableClasses: TimetableClass[], clas
               </div>
               <div 
                 class="w-4 h-4 rounded-full"
-                style="background-color: ${esc(tClass.color)};"
+                style="background-color: ${safeColour(tClass.color, DEFAULT_CLASS_COLOUR)};"
               ></div>
             </div>
           </div>

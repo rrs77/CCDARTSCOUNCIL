@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { planLogoHtml } from '../utils/planLogo';
 import { escapeHtmlText, sanitizeHtml, sanitizeUrl } from '../utils/sanitize';
+import { safeColour } from '../utils/safeColour';
 
 // One shared escape (utils/escapeHtml.ts); rich text goes through sanitizeHtml, links through sanitizeUrl.
 const escapeShareText = escapeHtmlText;
@@ -306,11 +307,11 @@ export function useShareLesson() {
       categoriesInOrder.forEach(category => {
         const activities = activitiesByCategory[category] || [];
         if (activities.length === 0) return;
-        const categoryColor = getCategoryColor(category);
-        htmlContent += `<div class="category-group"><div class="activity-category" style="color: ${escapeShareText(categoryColor)}; border-bottom-color: ${escapeShareText(categoryColor)};">${escapeShareText(category)}</div>`;
+        const categoryColor = safeColour(getCategoryColor(category), '#6B7280');
+        htmlContent += `<div class="category-group"><div class="activity-category" style="color: ${categoryColor}; border-bottom-color: ${categoryColor};">${escapeShareText(category)}</div>`;
         activities.forEach(activity => {
           htmlContent += `
-          <div class="activity-card" style="border-left-color: ${escapeShareText(categoryColor)};">
+          <div class="activity-card" style="border-left-color: ${categoryColor};">
             <div class="activity-header">
               <span class="activity-title">${escapeShareText(activity.activity)}</span>
               ${activity.time > 0 ? `<span class="activity-time">${escapeShareText(activity.time)} min</span>` : ''}

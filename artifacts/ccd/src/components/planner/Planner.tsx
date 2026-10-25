@@ -1,5 +1,6 @@
 import { PLAN_LOGO_ALT, PLAN_LOGO_PATH, planLogoUrl } from '../../utils/planLogo';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { safeColour } from '../../utils/safeColour';
 import { toast } from 'react-hot-toast';
 import {
   ChevronLeft,
@@ -612,7 +613,7 @@ function lessonBlockHtml(
 ): string {
   if (!entry.plan) return '';
   const c = data.classById.get(entry.classId);
-  const color = c?.color || '#475569';
+  const color = safeColour(c?.color, '#475569');
   const end = entry.endTime ? `–${esc(entry.endTime)}` : '';
   const acts = planActivityLines(data, entry);
   const actHtml = acts.length

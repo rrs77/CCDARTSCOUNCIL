@@ -1,5 +1,6 @@
 import { planLogoHtml } from '../utils/planLogo';
 import React, { useState, useEffect, useRef, memo } from 'react';
+import { safeColour } from '../utils/safeColour';
 import { createPortal } from 'react-dom';
 import { 
   Calendar as CalendarIcon, 
@@ -943,11 +944,11 @@ export function LessonPlannerCalendar({
             if (isHolidayDate) content += '<div class="badge" style="background:#fecaca;color:#b91c1c;">Holiday</div>';
             if (isInsetDayDate) content += '<div class="badge" style="background:#ddd6fe;color:#6d28d9;">Inset</div>';
             events.slice(0, 2).forEach(e => {
-              content += `<div class="event" style="background:${escape(e.color)}20;color:${escape(e.color)}">${escape(e.title)}</div>`;
+              content += `<div class="event" style="background:${safeColour(e.color, '#64748b')}20;color:${safeColour(e.color, '#64748b')}">${escape(e.title)}</div>`;
             });
             plans.slice(0, 2).forEach(p => {
               const unitColor = p.unitId ? units.find(u => u.id === p.unitId)?.color || theme.primary : theme.primary;
-              content += `<div class="plan" style="background:${escape(unitColor)}20;color:${escape(unitColor)}">${escape(p.title || `Lesson ${p.lessonNumber || ''}`)}${renderResourceLinksHtml(p, true)}</div>`;
+              content += `<div class="plan" style="background:${safeColour(unitColor, '#64748b')}20;color:${safeColour(unitColor, '#64748b')}">${escape(p.title || `Lesson ${p.lessonNumber || ''}`)}${renderResourceLinksHtml(p, true)}</div>`;
             });
             if (plans.length > 2) content += `<div style="font-size:13px;color:#64748b">+${plans.length - 2} more</div>`;
             return `<div class="${classes}"><div class="print-day-num">${format(date, 'd')}</div><div class="print-day-content">${content}</div></div>`;
@@ -983,7 +984,7 @@ export function LessonPlannerCalendar({
                 const color = item.data.color;
                 const time = `${item.data.startTime}-${item.data.endTime}`;
                 const title = item.data.className;
-                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div></div>`;
+                colContent += `<div class="print-lesson-block" style="border-left-color:${safeColour(color, '#64748b')};background:${safeColour(color, '#64748b')}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div></div>`;
               } else {
                 const plan = item.data as LessonPlan;
                 const color = plan.unitId ? '#8B5CF6' : '#EC4899';
@@ -998,7 +999,7 @@ export function LessonPlannerCalendar({
                 const actsHtml = acts.length
                   ? `<ul class="acts">${acts.map((n: string) => `<li>${escape(n)}</li>`).join('')}</ul>`
                   : '';
-                colContent += `<div class="print-lesson-block" style="border-left-color:${escape(color)};background:${escape(color)}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${actsHtml}${renderResourceLinksHtml(plan, false)}</div>`;
+                colContent += `<div class="print-lesson-block" style="border-left-color:${safeColour(color, '#64748b')};background:${safeColour(color, '#64748b')}15"><div class="time">${escape(time)}</div><div class="title">${escape(title)}</div>${actsHtml}${renderResourceLinksHtml(plan, false)}</div>`;
               }
             });
             return `<div class="print-day-col">${colContent}</div>`;
@@ -1039,7 +1040,7 @@ export function LessonPlannerCalendar({
             }).join('')}
           </tbody>
         </table>
-        ${events.length > 0 ? `<div style="margin-top:16px">${events.map(e => `<div style="padding:8px;margin:4px 0;background:${escape(e.color)}20;color:${escape(e.color)};border-radius:8px">${escape(e.title)}</div>`).join('')}</div>` : ''}
+        ${events.length > 0 ? `<div style="margin-top:16px">${events.map(e => `<div style="padding:8px;margin:4px 0;background:${safeColour(e.color, '#64748b')}20;color:${safeColour(e.color, '#64748b')};border-radius:8px">${escape(e.title)}</div>`).join('')}</div>` : ''}
       `;
     }
 

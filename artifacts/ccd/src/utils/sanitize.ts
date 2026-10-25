@@ -66,11 +66,4 @@ export function htmlToPlainText(html: string): string {
     .trim();
 }
 
-const SAFE_URL_PATTERN = /^(https?:\/\/|\/|\.\/|#)/i;
-
-export function sanitizeUrl(url: string): string {
-  if (!url) return '#';
-  const trimmed = url.trim();
-  if (SAFE_URL_PATTERN.test(trimmed)) return trimmed;
-  return '#';
-}
+export { sanitizeUrl } from './safeUrl';

@@ -8,6 +8,8 @@ import { readFileSync } from 'node:fs';
 import { describe, it } from 'node:test';
 import { fileURLToPath } from 'node:url';
 import { escapeHtmlText } from './escapeHtml.ts';
+import { safeColour } from './safeColour.ts';
+import { sanitizeUrl } from './safeUrl.ts';
 import { buildTimetableShareHtml } from './timetableShareHtml.ts';
 
 const PAYLOADS = ['<b>x</b>', '<img src=x onerror=alert(1)>', 'say "hi"'];
@@ -75,6 +77,47 @@ describe('share fallback (useShareLesson) escapes every user string', () => {
       if (/^\$\{(activity\.time > 0|activity\.activityText|resources\.length|onDismiss) \?/.test(s)) continue;
       raw.push(s);
     }
-    assert.deepEqual(raw.filter((s) => !/^\$\{(sectionName|areaName|termSpecificNumber|halfTermName \|\| 'Autumn 1'|currentSheetInfo\.display|footerCompany|footerYear)\}/.test(s)), []);
+    assert.deepEqual(raw.filter((s) => !/^\$\{(sectionName|areaName|termSpecificNumber|halfTermName \|\| 'Autumn 1'|currentSheetInfo\.display|footerCompany|footerYear|categoryColor)\}/.test(s)), []);
+  });
+});
+
+describe('safeColour (CSS injection in style attributes)', () => {
+  const BAD = ['red;background:url(https://x/..)', '#fff;background:url(//x)', 'url(https://x)', 'expression(alert(1))', 'red', '#12', '#1234567890', 'rgb(1,2,3);x:y', '', undefined, null, 42];
+  it('allows #hex and simple rgb()/hsl()', () => {
+    for (const ok of ['#fff', '#14b8a6', '#14B8A6CC', 'rgb(20, 184, 166)', 'rgba(20,184,166,0.5)', 'hsl(173 80% 40%)', 'hsla(173, 80%, 40%, .5)']) {
+      assert.equal(safeColour(ok, '#000000'), ok, ok);
+    }
+  });
+  it('falls back to the default for anything else', () => {
+    for (const bad of BAD) assert.equal(safeColour(bad, '#000000'), '#000000', String(bad));
+  });
+  it('timetable share: a malicious class colour falls back to the default', () => {
+    const [html] = buildTimetableShareHtml(
+      [{ id: '1', day: 1, startTime: '09:00', endTime: '10:00', className: 'Y3', location: '', color: 'red;background:url(https://x/..)' }],
+      'Y3',
+    );
+    assert.ok(!/url\(https:\/\/x/.test(html), 'no injected CSS');
+    assert.match(html, /border-left-color: #14b8a6;/);
+    assert.match(html, /background-color: #14b8a6;/);
+  });
+  it('share fallback, Planner print and calendar export route colours through safeColour', () => {
+    const read = (f: string) => readFileSync(fileURLToPath(new URL(f, import.meta.url)), 'utf8');
+    const share = read('../hooks/useShareLesson.ts');
+    assert.match(share, /const categoryColor = safeColour\(getCategoryColor\(category\), '#6B7280'\);/);
+    assert.match(read('../components/planner/Planner.tsx'), /const color = safeColour\(c\?\.color, '#475569'\);/);
+    const cal = read('../components/LessonPlannerCalendar.tsx');
+    assert.doesNotMatch(cal, /(background|color|border-left-color):\$\{escape\(/, 'calendar colours use safeColour');
+    assert.match(cal, /safeColour\(e\.color, '#64748b'\)/);
+  });
+});
+
+describe('sanitizeUrl', () => {
+  it('rejects protocol-relative and other unsafe URLs', () => {
+    for (const bad of ['//evil.com', '//evil.com/x', '/\\evil.com', 'javascript:alert(1)', 'data:text/html,x', ' //evil.com']) {
+      assert.equal(sanitizeUrl(bad), '#', bad);
+    }
+  });
+  it('keeps http(s), same-origin paths, ./ and #', () => {
+    for (const ok of ['https://a.example/x', 'http://a.example', '/lessons/1', './x', '#top']) assert.equal(sanitizeUrl(ok), ok, ok);
   });
 });
