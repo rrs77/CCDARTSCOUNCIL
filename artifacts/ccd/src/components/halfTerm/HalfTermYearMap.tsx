@@ -128,7 +128,7 @@ export function HalfTermYearMap({
   const { currentAcademicYear, setCurrentAcademicYear, getAvailableYears, currentSheetInfo, units, halfTerms } =
     useData();
   const { customYearGroups, yearGroupSections } = useSettings();
-  const { stacks } = useLessonStacks();
+  const { schemes: stacks } = useLessonStacks({ includeUnits: true });
   const [rows, setRows] = useState<RowData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

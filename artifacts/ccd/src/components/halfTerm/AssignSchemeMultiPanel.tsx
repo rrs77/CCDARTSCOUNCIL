@@ -136,7 +136,7 @@ export function AssignSchemeMultiPanel({
     halfTerms,
   } = useData();
   const { customYearGroups, yearGroupSections } = useSettings();
-  const { stacks, loading: stacksLoading } = useLessonStacks();
+  const { schemes: stacks, loading: stacksLoading } = useLessonStacks({ includeUnits: true });
   const [query, setQuery] = useState('');
   const [classQuery, setClassQuery] = useState('');
   const [schemeSubject, setSchemeSubject] = useState<ClassSubject | 'All'>('All');
@@ -823,6 +823,19 @@ export function AssignSchemeMultiPanel({
                                     <Clock className="h-3 w-3" />
                                     {formatDuration(stack.totalTime)}
                                   </span>
+                                  {stack.source === 'unit' ? (
+                                    <span className="rounded-full bg-[#EEF0FF] px-1.5 py-0.5 text-[#4338E8]">
+                                      My unit{stack.classSheet ? ` · ${stack.classSheet}` : ''}
+                                    </span>
+                                  ) : null}
+                                  {stack.localOnly ? (
+                                    <span
+                                      className="rounded-full bg-amber-50 px-1.5 py-0.5 text-amber-800"
+                                      title="Saved on this device only until it can sync to your account"
+                                    >
+                                      This device only
+                                    </span>
+                                  ) : null}
                                 </div>
                                 {!open && lessonPreview.length > 0 ? (
                                   <p className="mt-1.5 line-clamp-2 text-[13px] leading-snug text-[#9B97B0]">

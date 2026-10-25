@@ -45,7 +45,7 @@ export function ClassHalfTermBoard({
     copyTermToYear,
   } = useData();
   const { customYearGroups, yearGroupSections } = useSettings();
-  const { stacks } = useLessonStacks();
+  const { schemes: stacks } = useLessonStacks({ includeUnits: true });
   const [searchQuery, setSearchQuery] = useState('');
   const [showTermCopyModal, setShowTermCopyModal] = useState(false);
 

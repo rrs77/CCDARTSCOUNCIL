@@ -60,7 +60,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
     setCurrentSheetInfo,
     currentAcademicYear,
   } = useData();
-  const { stacks, loading: stacksLoading } = useLessonStacks();
+  const { schemes: stacks, loading: stacksLoading } = useLessonStacks({ includeUnits: true });
   const [query, setQuery] = useState('');
   const [previewId, setPreviewId] = useState<string | null>(null);
   const [busyId, setBusyId] = useState<string | null>(null);
@@ -118,6 +118,8 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
     const q = query.trim().toLowerCase();
     return stacks
       .filter((s) => !assignedIds.includes(s.id))
+      // My units belong to one class: only offer them for that class.
+      .filter((s) => s.source !== 'unit' || !s.classSheet || s.classSheet === target.classId)
       .filter((s) => {
         if (!q) return true;
         return (
@@ -125,7 +127,7 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
           (s.description || '').toLowerCase().includes(q)
         );
       });
-  }, [stacks, assignedIds, query]);
+  }, [stacks, assignedIds, query, target.classId]);
 
   const persistStacks = async (nextStackIds: string[]) => {
     if (!sheetReady) {
@@ -378,7 +380,18 @@ export function AssignSchemePanel({ target, onClose, onChanged }: AssignSchemePa
                             <span>
                               {stack.lessons.length} lesson{stack.lessons.length === 1 ? '' : 's'}
                             </span>
-                            <span>{formatDuration(stack.totalTime)}</span>
+                            {stack.totalTime > 0 ? <span>{formatDuration(stack.totalTime)}</span> : null}
+                            {stack.source === 'unit' ? (
+                              <span className="rounded-full bg-[#EEF0FF] px-2 py-0.5 text-[#4338E8]">My unit</span>
+                            ) : null}
+                            {stack.localOnly ? (
+                              <span
+                                className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-800"
+                                title="Saved on this device only until it can sync to your account"
+                              >
+                                This device only
+                              </span>
+                            ) : null}
                           </div>
                         </div>
                         <div className="flex shrink-0 flex-col items-stretch gap-1.5 sm:flex-row">

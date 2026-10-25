@@ -28,6 +28,12 @@ const isAuthUserId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a
 /** Whether user-scoped Supabase reads and writes can run (signed in, or demo). */
 export const hasScopedUser = () => isAuthUserId(getCurrentUserId());
 
+/** Signed-in (or demo) auth user id, or null when the session is not user-scoped. */
+export const getScopedUserId = (): string | null => {
+  const id = getCurrentUserId();
+  return isAuthUserId(id) ? id : null;
+};
+
 const ORG_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 /**

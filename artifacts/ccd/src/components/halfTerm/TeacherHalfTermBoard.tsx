@@ -84,7 +84,7 @@ export function TeacherHalfTermBoard({
   /** Half-term being exported (reuses the half-term print/PDF path from the old UnitViewer). */
   const [exportTerm, setExportTerm] = useState<{ id: string; name: string; lessons: string[] } | null>(null);
   const { customYearGroups, yearGroupSections } = useSettings();
-  const { stacks } = useLessonStacks();
+  const { schemes: stacks } = useLessonStacks({ includeUnits: true });
   const [searchQuery, setSearchQuery] = useState('');
   const [showTermCopyModal, setShowTermCopyModal] = useState(false);
   const [filter, setFilter] = useState<HalfTermBoardFilter>({ kind: 'all' });
