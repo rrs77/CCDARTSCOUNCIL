@@ -139,18 +139,7 @@ export function buildDemoInteractiveLesson(ownerId = 'system-demo'): Interactive
         },
         notes:
           'SAMPLE — timed lyrics for classroom lyric video demo (vocals / backing toggle).',
-        overlays: [
-          {
-            id: 'ov-kara-label',
-            text: 'Sample lyric video · vocals',
-            style: 'body',
-            x: 6,
-            y: 8,
-            width: 70,
-            color: '#FFC93C',
-            fontSize: 14,
-          },
-        ],
+        overlays: [],
         lyrics: [
           { id: 'ly1', text: 'Clap your hands and find the beat', startMs: 0, endMs: 4000 },
           { id: 'ly2', text: 'Stamp your feet and feel the heat', startMs: 4000, endMs: 8000 },
