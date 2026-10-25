@@ -92,7 +92,7 @@ export const SETTINGS_SECTIONS: SettingsSectionDef[] = [
     label: 'School systems',
     title: 'School Systems & Integrations',
     helper:
-      "Connect your school's existing systems to automatically configure year groups and securely share authorised information across Rhythmstix applications.",
+      "Connect your school's existing systems to automatically configure year groups and securely share authorised information across CCDesigner.",
     keywords: [
       'mis',
       'wonde',

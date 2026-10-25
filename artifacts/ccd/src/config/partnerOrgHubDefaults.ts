@@ -31,7 +31,7 @@ function jnWorksheetCards() {
       id: res.id,
       title: res.title,
       meta: `${collection.title} · ${res.type}`,
-      description: 'Download from Rhythmstix / DreamHost hosting.',
+      description: 'Download the classroom worksheet for this pack.',
       openUrl: res.publicUrl,
       downloadUrl: res.publicUrl,
       downloadFilename: res.dreamHostFilename,
@@ -53,7 +53,7 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
         type: 'about',
         title: 'Learning & Participation',
         body:
-          'Free improvisation pathways for curriculum teachers, instrumental tutors and lifetime learners. Classroom worksheets open from Rhythmstix hosting; programmes and forums link to jazznorth.org.',
+          'Free improvisation pathways for curriculum teachers, instrumental tutors and lifetime learners. Classroom worksheets open from this hub; programmes and forums link to jazznorth.org.',
         links: [
           { href: JN_LEARNING_RESOURCES, label: 'Learning Resources Area', icon: 'external' },
           { href: JN_SITE, label: 'jazznorth.org', icon: 'external' },
@@ -72,7 +72,7 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
             title: 'Mr Big scheme of work',
             meta: 'KS1 · Active listening · Optional PSHE',
             description:
-              'Add a full lesson plan inspired by Jazz North’s Mr Big scheme. Overview PDF from DreamHost when uploaded.',
+              'Add a full lesson plan inspired by Jazz North’s Mr Big scheme. Overview PDF available when uploaded.',
             siteUrl: JN_MR_BIG,
             openUrl: jnDreamHostUrl(JN_MR_BIG_OVERVIEW_FILE),
             downloadUrl: jnDreamHostUrl(JN_MR_BIG_OVERVIEW_FILE),
@@ -86,7 +86,7 @@ export function getJazzNorthDefaultLayout(): PartnerOrgHubLayout {
             title: 'Playlist Project — Milestones',
             meta: 'KS2 · Listening pathway · No jazz experience needed',
             description:
-              'Add a Milestones lesson plan. Overview PDF from DreamHost when uploaded.',
+              'Add a Milestones lesson plan. Overview PDF available when uploaded.',
             siteUrl: JN_PLAYLIST_PROJECT,
             openUrl: jnDreamHostUrl(JN_PLAYLIST_OVERVIEW_FILE),
             downloadUrl: jnDreamHostUrl(JN_PLAYLIST_OVERVIEW_FILE),

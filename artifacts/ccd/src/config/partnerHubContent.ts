@@ -362,7 +362,7 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
     ],
     resourcesHeading: 'Teacher & learning resources',
     resourcesIntro:
-      'Classroom worksheets download from Rhythmstix/DreamHost on the interactive hub, plus Learning Resources Area, Mr Big, Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
+      'Classroom worksheets download from the interactive hub, plus Learning Resources Area, Mr Big, Playlist Project, Jazz Camp for Girls and Educators’ Forums.',
     resources: [
       {
         title: 'Learning Resources Area',
@@ -374,25 +374,25 @@ export const PARTNER_HUB_CONTENT: Record<string, PartnerHubPageContent> = {
       {
         title: 'Can You Sing Your Song? — Activities',
         href: jnDreamHostFileUrl('canYouSingActivities'),
-        description: 'Classroom activities worksheet (DreamHost direct download).',
+        description: 'Classroom activities worksheet (direct download).',
         kind: 'PDF',
       },
       {
         title: 'Hello Song — Activities',
         href: jnDreamHostFileUrl('helloActivities'),
-        description: 'Hello Song activities worksheet (DreamHost direct download).',
+        description: 'Hello Song activities worksheet (direct download).',
         kind: 'PDF',
       },
       {
         title: '2 and 4 Chant — Activities',
         href: jnDreamHostFileUrl('chantActivities'),
-        description: '2 and 4 Chant activities worksheet (DreamHost direct download).',
+        description: '2 and 4 Chant activities worksheet (direct download).',
         kind: 'PDF',
       },
       {
         title: 'Ways into Improvisation',
         href: jnDreamHostFileUrl('waysIntoImprov'),
-        description: 'Improvisation guide for classroom use (DreamHost direct download).',
+        description: 'Improvisation guide for classroom use (direct download).',
         kind: 'PDF',
       },
       {
