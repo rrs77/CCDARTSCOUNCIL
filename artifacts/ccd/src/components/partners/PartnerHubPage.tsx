@@ -6,7 +6,6 @@ import { PartnerHubContactFooter } from './PartnerHubContactFooter';
 import { PARTNER_CONTACTS } from '../../config/partnerContacts';
 import { PaidBasketButton, PaidBasketDrawer } from './PaidBasketDrawer';
 import { useAuth } from '../../hooks/useAuth';
-import { isDemoModeActive } from '../../utils/demoMode';
 
 /** Partner hubs that have organisation rows for Settings → Hub admin editing. */
 const HUB_ADMIN_ORGS = new Set(['roh', 'rsc', 'jazznorth', 'ems', 'triborough']);
@@ -24,11 +23,7 @@ interface PartnerHubPageProps {
  */
 export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
   const { profile } = useAuth();
-  // Demo visitors are seeded with role "admin" for Settings access — do not show
-  // Hub admin chrome to them. Real hub admins (non-demo) still see the banner.
   const canManageHub =
-    !isDemoModeActive() &&
-    profile?.id !== 'demo-visitor' &&
     HUB_ADMIN_ORGS.has(hub.slug) &&
     (profile?.role === 'super_admin' ||
       profile?.role === 'superuser' ||
