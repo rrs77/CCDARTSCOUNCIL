@@ -31,7 +31,6 @@ describe('yearGroupTokensMatch — Reception / EYFS spellings', () => {
     ['Reception', 'Yr R'],
     ['Reception', 'Year R'],
     ['Reception', 'EYFS'],
-    ['Reception', 'Nursery'],
     ['Reception Music', 'Reception Drama'],
     ['EYFS Reception Music', 'Reception'],
     ['EYFS Reception Music', 'Reception Music'],
@@ -47,6 +46,35 @@ describe('yearGroupTokensMatch — Reception / EYFS spellings', () => {
 
   it('does not match Reception Music with Year 1 Music', () => {
     assert.equal(yearGroupTokensMatch('EYFS Reception Music', 'Year 1 Music'), false);
+  });
+
+  it('does not treat trailing or embedded R as Reception', () => {
+    assert.equal(yearGroupTokensMatch('Year 1 R', 'Reception'), false);
+    assert.equal(yearGroupTokensMatch('Mr R Smith', 'Reception'), false);
+    assert.equal(yearGroupTokensMatch('Year 1 R', 'Yr R'), false);
+  });
+});
+
+describe('yearGroupTokensMatch — Nursery is distinct from Reception', () => {
+  const nurseryPairs: [string, string][] = [
+    ['Nursery', 'Yr N'],
+    ['Nursery', 'Year N'],
+    ['Nursery', 'Y N'],
+    ['Nursery Music', 'Year N'],
+  ];
+
+  for (const [a, b] of nurseryPairs) {
+    it(`matches ${a} ↔ ${b}`, () => {
+      assert.equal(yearGroupTokensMatch(a, b), true);
+      assert.equal(yearGroupTokensMatch(b, a), true);
+    });
+  }
+
+  it('does not match Nursery with Reception or EYFS Reception Music', () => {
+    assert.equal(yearGroupTokensMatch('Nursery', 'Reception'), false);
+    assert.equal(yearGroupTokensMatch('Nursery', 'EYFS Reception Music'), false);
+    assert.equal(yearGroupTokensMatch('Yr N', 'Reception'), false);
+    assert.equal(yearGroupTokensMatch('Year N', 'EYFS'), false);
   });
 });
 

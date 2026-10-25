@@ -85,6 +85,42 @@ export function personalFromLegacySchoolState(
   };
 }
 
+function normStatementText(text: string | undefined | null): string {
+  return (text || '').trim().toLowerCase().replace(/\s+/g, ' ');
+}
+
+/**
+ * Drop personal statements/frameworks/strands that are identical to the school
+ * set (same id or same normalised text). Prevents school curriculum leaking
+ * into "Mine" after a mistaken import.
+ */
+export function stripSchoolDuplicatesFromPersonal(
+  personal: PersonalCurriculumData,
+  school: PlannerCurriculumState | null | undefined,
+): PersonalCurriculumData {
+  const s = school || EMPTY_SCHOOL;
+  const schoolStatementIds = new Set((s.statements || []).map((st) => st.id));
+  const schoolStatementTexts = new Set(
+    (s.statements || []).map((st) => normStatementText(st.text)).filter(Boolean),
+  );
+  const schoolFrameworkIds = new Set((s.frameworks || []).map((f) => f.id));
+  const schoolStrandIds = new Set((s.strands || []).map((st) => st.id));
+
+  return {
+    frameworks: (personal.frameworks || []).filter((f) => !schoolFrameworkIds.has(f.id)),
+    strands: (personal.strands || []).filter((st) => !schoolStrandIds.has(st.id)),
+    statements: (personal.statements || []).filter((st) => {
+      if (schoolStatementIds.has(st.id)) return false;
+      const text = normStatementText(st.text);
+      if (text && schoolStatementTexts.has(text)) return false;
+      return true;
+    }),
+    // Overrides / hides are personal choices about school rows — keep them.
+    overrides: { ...(personal.overrides || {}) },
+    hiddenIds: [...(personal.hiddenIds || [])],
+  };
+}
+
 /** Merge school + personal into one list for the panel / AI / Activity Library. */
 export function mergePlannerCurriculum(
   school: PlannerCurriculumState | null | undefined,

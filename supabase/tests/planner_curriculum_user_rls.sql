@@ -157,9 +157,9 @@ BEGIN
   INSERT INTO rls_results VALUES ('anon cannot write personal curriculum', NOT wrote);
 END $$;
 
--- Org admin can READ but cannot WRITE owner's personal row
+-- Org admin cannot READ or WRITE owner's personal row (fully private)
 DO $$
-DECLARE n int; hacked boolean := false; deleted boolean := false;
+DECLARE n int; still_there boolean := false; data_unchanged boolean := false;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a2', true);
   SET LOCAL ROLE authenticated;
@@ -169,34 +169,33 @@ BEGIN
     UPDATE public.planner_curriculum_user
     SET data = '{"admin_write":true}'::jsonb
     WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
-    hacked := EXISTS (
-      SELECT 1 FROM public.planner_curriculum_user
-      WHERE user_id = '00000000-0000-4000-8000-0000000000a1'
-        AND data = '{"admin_write":true}'::jsonb
-    );
-  EXCEPTION WHEN OTHERS THEN
-    hacked := false;
+  EXCEPTION WHEN OTHERS THEN NULL;
   END;
   BEGIN
     DELETE FROM public.planner_curriculum_user
     WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
-    deleted := NOT EXISTS (
-      SELECT 1 FROM public.planner_curriculum_user
-      WHERE user_id = '00000000-0000-4000-8000-0000000000a1'
-    );
-  EXCEPTION WHEN OTHERS THEN
-    deleted := false;
+  EXCEPTION WHEN OTHERS THEN NULL;
   END;
   RESET ROLE;
   PERFORM set_config('request.jwt.claim.sub', '', true);
-  INSERT INTO rls_results VALUES ('org admin can read personal curriculum', n = 1);
-  INSERT INTO rls_results VALUES ('org admin cannot update personal curriculum', NOT hacked);
-  INSERT INTO rls_results VALUES ('org admin cannot delete personal curriculum', NOT deleted);
+  -- Verify as table owner (bypasses RLS): row still present and unchanged.
+  SELECT EXISTS (
+    SELECT 1 FROM public.planner_curriculum_user
+    WHERE user_id = '00000000-0000-4000-8000-0000000000a1'
+  ) INTO still_there;
+  SELECT EXISTS (
+    SELECT 1 FROM public.planner_curriculum_user
+    WHERE user_id = '00000000-0000-4000-8000-0000000000a1'
+      AND data IS DISTINCT FROM '{"admin_write":true}'::jsonb
+  ) INTO data_unchanged;
+  INSERT INTO rls_results VALUES ('org admin cannot read personal curriculum', n = 0);
+  INSERT INTO rls_results VALUES ('org admin cannot update personal curriculum', data_unchanged);
+  INSERT INTO rls_results VALUES ('org admin cannot delete personal curriculum', still_there);
 END $$;
 
--- Super admin can READ but cannot WRITE another's personal row
+-- Super admin cannot READ or WRITE another's personal row (fully private)
 DO $$
-DECLARE n int; hacked boolean := false;
+DECLARE n int; data_unchanged boolean := false;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a5', true);
   SET LOCAL ROLE authenticated;
@@ -206,18 +205,17 @@ BEGIN
     UPDATE public.planner_curriculum_user
     SET data = '{"super_write":true}'::jsonb
     WHERE user_id = '00000000-0000-4000-8000-0000000000a1';
-    hacked := EXISTS (
-      SELECT 1 FROM public.planner_curriculum_user
-      WHERE user_id = '00000000-0000-4000-8000-0000000000a1'
-        AND data = '{"super_write":true}'::jsonb
-    );
-  EXCEPTION WHEN OTHERS THEN
-    hacked := false;
+  EXCEPTION WHEN OTHERS THEN NULL;
   END;
   RESET ROLE;
   PERFORM set_config('request.jwt.claim.sub', '', true);
-  INSERT INTO rls_results VALUES ('super admin can read personal curriculum', n = 1);
-  INSERT INTO rls_results VALUES ('super admin cannot update others personal curriculum', NOT hacked);
+  SELECT EXISTS (
+    SELECT 1 FROM public.planner_curriculum_user
+    WHERE user_id = '00000000-0000-4000-8000-0000000000a1'
+      AND data IS DISTINCT FROM '{"super_write":true}'::jsonb
+  ) INTO data_unchanged;
+  INSERT INTO rls_results VALUES ('super admin cannot read personal curriculum', n = 0);
+  INSERT INTO rls_results VALUES ('super admin cannot update others personal curriculum', data_unchanged);
 END $$;
 
 -- Owner can still delete own row

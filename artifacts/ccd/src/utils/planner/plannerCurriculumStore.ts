@@ -19,12 +19,15 @@ import {
   parsePersonalCurriculum,
   personalCurriculumIsEmpty,
   personalFromLegacySchoolState,
+  stripSchoolDuplicatesFromPersonal,
   selectMergedCurriculumStatements,
   type MergedPlannerCurriculum,
 } from './mergePlannerCurriculum';
 import {
   STORAGE_KEY,
   PERSONAL_STORAGE_KEY,
+  hasFullCurriculumScope,
+  readPersonalLegacyBlob,
   readScopedOrMigrateLegacy,
   writeScopedLocal,
 } from './plannerCurriculumLocalCache';
@@ -420,7 +423,7 @@ export async function loadMergedPlannerCurriculumAsync(): Promise<MergedPlannerC
     }
 
     personalCache = readLocalPersonalCurriculum(organisationId, userId);
-    if (userId) {
+    if (userId && hasFullCurriculumScope(organisationId, userId)) {
       const personalRes = await supabase
         .from(PLANNER_CURRICULUM_USER_TABLE)
         .select('data')
@@ -434,15 +437,18 @@ export async function loadMergedPlannerCurriculumAsync(): Promise<MergedPlannerC
         writeLocalPersonalCurriculum(personalCache, organisationId, userId);
       } else if (
         !personalRes.error &&
-        personalCurriculumIsEmpty(personalCache)
+        personalCurriculumIsEmpty(personalCache) &&
+        !hasImportedPersonal(organisationId, userId)
       ) {
-        // One-time import into empty personal only, scoped to this org+user.
-        const legacy = readLocalPlannerCurriculum(organisationId, userId);
-        if (
-          !curriculumIsEmpty(legacy) &&
-          !hasImportedPersonal(organisationId, userId)
-        ) {
-          const imported = personalFromLegacySchoolState(legacy);
+        // One-time import: ONLY the user's personal legacy blob — never school
+        // cache / server-loaded school data (would reappear as "Mine").
+        const legacyRaw = readPersonalLegacyBlob(organisationId, userId);
+        let imported = legacyRaw
+          ? parsePersonalCurriculum(JSON.parse(legacyRaw))
+          : { ...EMPTY_PERSONAL_CURRICULUM, overrides: {}, hiddenIds: [] };
+        // Safety: drop anything identical to the school set.
+        imported = stripSchoolDuplicatesFromPersonal(imported, schoolCache);
+        if (!personalCurriculumIsEmpty(imported)) {
           const { error: upsertError } = await supabase
             .from(PLANNER_CURRICULUM_USER_TABLE)
             .upsert(
@@ -461,6 +467,10 @@ export async function loadMergedPlannerCurriculumAsync(): Promise<MergedPlannerC
             writeLocalPersonalCurriculum(imported, organisationId, userId);
             markImportedPersonal(organisationId, userId);
           }
+        } else {
+          // Nothing personal to import — leave personal empty; do not create a row.
+          personalCache = { ...EMPTY_PERSONAL_CURRICULUM, overrides: {}, hiddenIds: [] };
+          markImportedPersonal(organisationId, userId);
         }
       }
     }

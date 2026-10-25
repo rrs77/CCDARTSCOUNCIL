@@ -28,6 +28,7 @@ export function normalizeYgKey(value: string | undefined | null): string {
 const ALIAS_GROUPS: string[][] = [
   ['lkg', 'lower kindergarten', 'lower kindergarten music', 'lower kindergarden'],
   ['ukg', 'upper kindergarten', 'upper kindergarten music', 'upper kindergarden'],
+  // Reception — bare "r" only via exact whole-token forms (R / Yr R / Year R), not trailing " r".
   [
     'reception',
     'reception music',
@@ -41,9 +42,9 @@ const ALIAS_GROUPS: string[][] = [
     'eyfs',
     'eyfs reception',
     'eyfs reception music',
-    'nursery',
-    'nursery reception',
   ],
+  // Nursery is a distinct class from Reception — own alias group (Yr N / Year N = Nursery).
+  ['nursery', 'nursery music', 'nursery class', 'yr n', 'year n', 'y n'],
   ['year6', 'year 6', 'year 6 music', 'year 6 drama', 'y6', 'yr 6', 'y 6'],
   ['year5', 'year 5', 'year 5 music', 'year 5 drama', 'y5', 'yr 5', 'y 5'],
   ['year4', 'year 4', 'year 4 music', 'year 4 drama', 'y4', 'yr 4', 'y 4'],
@@ -51,6 +52,11 @@ const ALIAS_GROUPS: string[][] = [
   ['year2', 'year 2', 'year 2 music', 'year 2 drama', 'y2', 'yr 2', 'y 2'],
   ['year1', 'year 1', 'year 1 music', 'year 1 drama', 'y1', 'yr 1', 'y 1'],
 ];
+
+/** Single-letter / very short aliases must only match as whole tokens (never "… r" / "… n"). */
+function isStrictWholeTokenAlias(alias: string): boolean {
+  return alias.length <= 1;
+}
 
 /** KS band → year numbers it covers (unambiguous English primary mapping). */
 const KS_YEARS: Record<string, string[]> = {
@@ -111,10 +117,27 @@ function stripStagePrefix(normalized: string): string {
 function hasReceptionToken(normalized: string): boolean {
   const n = normalizeYearGroupKey(normalized);
   if (/\breception\b/.test(n) || /\brec\b/.test(n)) return true;
-  if (/\beyfs\b/.test(n) && !extractYearNumber(n)) return true;
-  if (/\bnursery\b/.test(n) && !extractYearNumber(n)) return true;
-  // Bare R / Yr R / Year R (not Year 1…)
-  if (/^(yr|year|y)\s*r$/.test(n) || n === 'r') return true;
+  // Bare EYFS (no year number) is a Reception-stage label — not Nursery.
+  if (/\beyfs\b/.test(n) && !extractYearNumber(n) && !/\bnursery\b/.test(n)) return true;
+  // Bare R / Yr R / Year R / Y R only — never "Year 1 R" or "Mr R Smith".
+  if (n === 'r' || /^(yr|year|y)\s*r$/.test(n)) return true;
+  return false;
+}
+
+function hasNurseryToken(normalized: string): boolean {
+  const n = normalizeYearGroupKey(normalized);
+  if (/\bnursery\b/.test(n)) return true;
+  // Yr N / Year N / Y N (letter N, not a digit year).
+  if (/^(yr|year|y)\s*n$/.test(n)) return true;
+  return false;
+}
+
+function aliasHitsCandidate(alias: string, candidate: string): boolean {
+  if (alias === candidate) return true;
+  // Single-letter aliases (r): exact whole-token only — never trailing/embedded " r".
+  if (isStrictWholeTokenAlias(alias)) return false;
+  if (candidate.startsWith(`${alias} `) || candidate.endsWith(` ${alias}`)) return true;
+  if (candidate.includes(` ${alias} `)) return true;
   return false;
 }
 
@@ -135,17 +158,9 @@ function aliasTokensFor(normalized: string): string[] {
       continue;
     }
 
-    // Non-year aliases (LKG / Reception / …): exact or whole-phrase contains.
+    // Non-year aliases (LKG / Reception / Nursery / …).
     const candidates = [normalized, stripped].filter(Boolean);
-    const hit = group.some((g) =>
-      candidates.some((candidate) => {
-        if (g === candidate) return true;
-        if (candidate === g) return true;
-        if (candidate.startsWith(`${g} `) || candidate.endsWith(` ${g}`)) return true;
-        if (candidate.includes(` ${g} `)) return true;
-        return false;
-      }),
-    );
+    const hit = group.some((g) => candidates.some((candidate) => aliasHitsCandidate(g, candidate)));
     if (hit) group.forEach((g) => out.add(g));
   }
 
@@ -293,6 +308,12 @@ export function resolveYearGroupMatchKeys(
       keys.add('Reception Music');
       keys.add('EYFS Reception');
       keys.add('EYFS Reception Music');
+    }
+    if (hasNurseryToken(nameLower)) {
+      keys.add('Nursery');
+      keys.add('Nursery Music');
+      keys.add('Yr N');
+      keys.add('Year N');
     }
 
     const yearMatch = nameLower.match(/\byear\s*(\d+)\b/);

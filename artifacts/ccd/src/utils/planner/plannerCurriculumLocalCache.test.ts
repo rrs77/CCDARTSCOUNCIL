@@ -8,6 +8,8 @@ import {
   STORAGE_KEY,
   PERSONAL_STORAGE_KEY,
   cacheScopeToken,
+  hasFullCurriculumScope,
+  readPersonalLegacyBlob,
   readScopedOrMigrateLegacy,
   scopedCurriculumKey,
   writeScopedLocal,
@@ -18,6 +20,10 @@ import {
   getPlannerCurriculumCacheScope,
   resetPlannerCurriculumCacheScope,
 } from './plannerCurriculumCacheScope.ts';
+import {
+  personalCurriculumIsEmpty,
+  stripSchoolDuplicatesFromPersonal,
+} from './mergePlannerCurriculum.ts';
 
 const store = new Map<string, string>();
 
@@ -46,7 +52,7 @@ beforeEach(() => {
 });
 
 describe('readScopedOrMigrateLegacy', () => {
-  it('migrates legacy once for the first signed-in user and deletes the unscoped key', () => {
+  it('migrates legacy once for the first fully-scoped user and deletes the unscoped key', () => {
     store.set(STORAGE_KEY, JSON.stringify({ frameworks: [{ id: 'legacy' }] }));
 
     const rawA = readScopedOrMigrateLegacy(STORAGE_KEY, 'org_a', 'user_a');
@@ -57,6 +63,14 @@ describe('readScopedOrMigrateLegacy', () => {
     // Second user must not see the legacy blob (already removed).
     const rawB = readScopedOrMigrateLegacy(STORAGE_KEY, 'org_b', 'user_b');
     assert.equal(rawB, null);
+  });
+
+  it('does not claim legacy when only user is known (waits for org)', () => {
+    store.set(STORAGE_KEY, JSON.stringify({ frameworks: [{ id: 'legacy' }] }));
+    assert.equal(hasFullCurriculumScope(null, 'user_a'), false);
+    const raw = readScopedOrMigrateLegacy(STORAGE_KEY, null, 'user_a');
+    assert.equal(raw, null);
+    assert.equal(store.has(STORAGE_KEY), true, 'legacy must remain until full scope');
   });
 
   it('does not import another user/org scoped key', () => {
@@ -80,6 +94,66 @@ describe('readScopedOrMigrateLegacy', () => {
     const raw = readScopedOrMigrateLegacy(STORAGE_KEY, null, null);
     assert.ok(raw);
     assert.equal(store.has(STORAGE_KEY), true, 'unsigned path must not delete legacy');
+  });
+
+  it('readPersonalLegacyBlob never reads the school STORAGE_KEY', () => {
+    store.set(STORAGE_KEY, JSON.stringify({ statements: [{ id: 'school-only', text: 'School' }] }));
+    const personal = readPersonalLegacyBlob('org_a', 'user_a');
+    assert.equal(personal, null);
+    assert.equal(store.has(STORAGE_KEY), true, 'school legacy must not be claimed as personal');
+  });
+});
+
+describe('stripSchoolDuplicatesFromPersonal — school must not become Mine', () => {
+  it('drops statements identical to the school set (id or text)', () => {
+    const school = {
+      frameworks: [{ id: 'fw1', name: 'NC' }],
+      strands: [{ id: 's1', name: 'Singing', frameworkId: 'fw1' }],
+      statements: [
+        { id: 'st1', strandId: 's1', text: 'Sing in tune' },
+        { id: 'st2', strandId: 's1', text: 'Clap a pulse' },
+      ],
+      sectionTypes: [],
+      planTemplates: [],
+      terms: [],
+    };
+    const personal = {
+      frameworks: [{ id: 'fw1', name: 'NC' }, { id: 'fw-mine', name: 'Mine FW' }],
+      strands: [{ id: 's1', name: 'Singing', frameworkId: 'fw1' }],
+      statements: [
+        { id: 'st1', strandId: 's1', text: 'Sing in tune' },
+        { id: 'st2-copy', strandId: 's1', text: '  Clap a Pulse ' },
+        { id: 'st-mine', strandId: 's1', text: 'My own idea' },
+      ],
+      overrides: {},
+      hiddenIds: [],
+    };
+    const cleaned = stripSchoolDuplicatesFromPersonal(personal as never, school as never);
+    assert.equal(cleaned.statements.length, 1);
+    assert.equal(cleaned.statements[0].id, 'st-mine');
+    assert.equal(cleaned.frameworks.length, 1);
+    assert.equal(cleaned.frameworks[0].id, 'fw-mine');
+    assert.equal(cleaned.strands.length, 0);
+  });
+
+  it('leaves personal empty when only school duplicates were present', () => {
+    const school = {
+      frameworks: [],
+      strands: [],
+      statements: [{ id: 'st1', strandId: 's1', text: 'School only' }],
+      sectionTypes: [],
+      planTemplates: [],
+      terms: [],
+    };
+    const personal = {
+      frameworks: [],
+      strands: [],
+      statements: [{ id: 'st1', strandId: 's1', text: 'School only' }],
+      overrides: {},
+      hiddenIds: [],
+    };
+    const cleaned = stripSchoolDuplicatesFromPersonal(personal as never, school as never);
+    assert.equal(personalCurriculumIsEmpty(cleaned), true);
   });
 });
 
