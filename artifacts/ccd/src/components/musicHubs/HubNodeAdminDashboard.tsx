@@ -179,7 +179,7 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
             <ArrowLeft className="h-4 w-4" />
             CCDesigner
           </button>
-          <div className="flex flex-wrap gap-2">
+          <div className="flex min-w-0 flex-wrap gap-2">
             <a
               href={musicHubPublicHref(path)}
               className="rounded-lg border border-[#002D24]/20 bg-white px-3 py-1.5 text-sm font-semibold text-[#002D24]"
@@ -188,7 +188,7 @@ export function HubNodeAdminDashboard({ path }: { path: string }) {
             </a>
             <a
               href={musicHubAdminHref(path)}
-              className="rounded-lg bg-[#002D24]/5 px-3 py-1.5 text-xs text-[#002D24]/60"
+              className="max-w-full break-all rounded-lg bg-[#002D24]/5 px-3 py-1.5 text-xs text-[#002D24]/60"
             >
               {musicHubAdminHref(path)}
             </a>

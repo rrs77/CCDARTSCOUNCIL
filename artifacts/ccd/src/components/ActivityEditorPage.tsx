@@ -632,7 +632,7 @@ export function ActivityEditorPage({
                   <button
                     type="button"
                     onClick={() => setTextTab('introduction')}
-                    className={`rounded-lg px-3.5 py-1.5 text-[12.5px] font-bold transition-colors ${
+                    className={`rounded-lg px-3.5 py-1.5 text-[13px] font-bold transition-colors ${
                       textTab === 'introduction'
                         ? 'bg-white text-[#1F1B4D] shadow-sm'
                         : 'text-[#6b6990]'
@@ -643,7 +643,7 @@ export function ActivityEditorPage({
                   <button
                     type="button"
                     onClick={() => setTextTab('activity')}
-                    className={`rounded-lg px-3.5 py-1.5 text-[12.5px] font-bold transition-colors ${
+                    className={`rounded-lg px-3.5 py-1.5 text-[13px] font-bold transition-colors ${
                       textTab === 'activity'
                         ? 'bg-white text-[#1F1B4D] shadow-sm'
                         : 'text-[#6b6990]'
@@ -734,7 +734,7 @@ export function ActivityEditorPage({
                         )}
                       </div>
                       <div className="space-y-1.5 p-2.5">
-                        <div className="truncate text-[12.5px] font-bold text-[#1F1B4D]">
+                        <div className="truncate text-[13px] font-bold text-[#1F1B4D]">
                           {resourceDisplayName(url, visual.label)}
                         </div>
                         <div className="truncate text-[13px] font-medium text-[#9a98b8]">
@@ -791,7 +791,7 @@ export function ActivityEditorPage({
                   <button
                     type="button"
                     onClick={() => setAddMenuOpen((v) => !v)}
-                    className="flex h-full min-h-[160px] w-full flex-col items-center justify-center gap-2.5 rounded-[14px] border-2 border-dashed border-[#d6d9fb] bg-[#f8f8ff] text-[12.5px] font-bold text-[#4338E8] transition-colors hover:border-[#4338E8]"
+                    className="flex h-full min-h-[160px] w-full flex-col items-center justify-center gap-2.5 rounded-[14px] border-2 border-dashed border-[#d6d9fb] bg-[#f8f8ff] text-[13px] font-bold text-[#4338E8] transition-colors hover:border-[#4338E8]"
                   >
                     <Plus className="h-5 w-5" strokeWidth={2.5} />
                     Add resource
@@ -881,7 +881,7 @@ export function ActivityEditorPage({
             <div className="flex min-h-0 flex-1 flex-col gap-5 overflow-y-auto rounded-2xl border border-[#E2E0EF] bg-white p-5 shadow-[0_8px_30px_rgba(31,27,77,0.05)] max-[1100px]:overflow-visible">
               <h4 className="flex shrink-0 items-center text-[15px] font-extrabold text-[#1F1B4D]">
                 Details
-                <span className="ml-auto text-[11.5px] font-semibold text-[#9a98b8]">* required</span>
+                <span className="ml-auto text-[13px] font-semibold text-[#9a98b8]">* required</span>
               </h4>
 
               <div>
@@ -913,7 +913,7 @@ export function ActivityEditorPage({
               <div>
                 <div className={fieldLab}>
                   Duration
-                  <span className="ml-auto text-[11.5px] font-semibold text-[#9a98b8]">minutes</span>
+                  <span className="ml-auto text-[13px] font-semibold text-[#9a98b8]">minutes</span>
                 </div>
                 <div className="flex flex-nowrap items-center gap-2">
                   <div className="inline-flex h-10 w-[118px] shrink-0 overflow-hidden rounded-[10px] border border-[#e3e2ee]">
@@ -956,7 +956,7 @@ export function ActivityEditorPage({
                           key={mins}
                           type="button"
                           onClick={() => setForm((p) => ({ ...p, time: mins }))}
-                          className={`inline-flex h-[34px] min-w-0 flex-1 items-center justify-center rounded-[9px] text-[12.5px] font-bold tabular-nums ${
+                          className={`inline-flex h-[34px] min-w-0 flex-1 items-center justify-center rounded-[9px] text-[13px] font-bold tabular-nums ${
                             on
                               ? 'bg-[#4338E8] text-white shadow-[0_3px_10px_rgba(79,70,229,0.25)]'
                               : 'border border-[#e3e2ee] bg-white text-[#55537a]'
@@ -977,7 +977,7 @@ export function ActivityEditorPage({
                     <button
                       type="button"
                       onClick={() => setShowAllYearGroups((v) => !v)}
-                      className="ml-auto text-[11.5px] font-bold text-[#4338E8] hover:underline"
+                      className="ml-auto text-[13px] font-bold text-[#4338E8] hover:underline"
                     >
                       {showAllYearGroups
                         ? 'Show current stage'
@@ -1042,7 +1042,7 @@ export function ActivityEditorPage({
                   <button
                     type="button"
                     onClick={() => setShowObjectivesBrowser(true)}
-                    className="ml-auto text-[11.5px] font-bold text-[#4338E8] hover:underline"
+                    className="ml-auto text-[13px] font-bold text-[#4338E8] hover:underline"
                   >
                     + Choose
                   </button>
@@ -1052,12 +1052,12 @@ export function ActivityEditorPage({
                     {selectedObjectiveCards.map((obj) => (
                       <div
                         key={obj.id}
-                        className="flex items-start gap-2.5 rounded-[10px] border border-[#efeef6] bg-[#f8f8fc] px-3 py-2.5"
+                        className="flex min-w-0 items-start gap-2.5 rounded-[10px] border border-[#efeef6] bg-[#f8f8fc] px-3 py-2.5"
                       >
-                        <b className="mt-0.5 shrink-0 rounded-md bg-[#e0e7ff] px-1.5 py-0.5 text-[10.5px] font-extrabold text-[#4338E8]">
+                        <b className="mt-0.5 shrink-0 rounded-md bg-[#e0e7ff] px-1.5 py-0.5 text-[13px] font-extrabold text-[#4338E8]">
                           {obj.code}
                         </b>
-                        <div className="text-[13px] font-medium leading-snug text-[#4b4970]">
+                        <div className="min-w-0 text-[13px] font-medium leading-snug text-[#4b4970]">
                           {obj.text}
                         </div>
                       </div>

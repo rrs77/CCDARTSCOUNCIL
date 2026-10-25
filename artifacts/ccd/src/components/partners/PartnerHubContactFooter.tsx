@@ -50,22 +50,22 @@ export function PartnerHubContactFooter({
         {info.email && (
           <li className="flex items-center gap-2">
             <Mail className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
-            <a href={`mailto:${info.email}`} className="hover:underline">
+            <a href={`mailto:${info.email}`} className="min-w-0 break-all hover:underline">
               {info.email}
             </a>
           </li>
         )}
         {info.web && (
-          <li className="flex items-center gap-2">
+          <li className="flex min-w-0 items-center gap-2">
             <Globe className="h-3.5 w-3.5 shrink-0 text-gray-400" aria-hidden />
             <a
               href={info.web}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 hover:underline"
+              className="inline-flex min-w-0 items-center gap-1 break-all hover:underline"
             >
               {info.webLabel || info.web}
-              <ExternalLink className="h-3 w-3" aria-hidden />
+              <ExternalLink className="h-3 w-3 shrink-0" aria-hidden />
             </a>
           </li>
         )}

@@ -105,7 +105,7 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
         <div className="space-y-6">
           <section className="space-y-3 rounded-xl border border-pink-200 bg-pink-50/40 p-4">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-              <div>
+              <div className="min-w-0">
                 <h3 className="text-sm font-semibold uppercase tracking-wide text-pink-900">
                   Add all classroom worksheet packs
                 </h3>
@@ -115,7 +115,7 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
                   Hosted at{' '}
-                  <code className="rounded bg-white/80 px-1 text-[13px] text-gray-700">
+                  <code className="break-all rounded bg-white/80 px-1 text-[13px] text-gray-700">
                     {JAZZ_NORTH_DREAMHOST_BASE_USED}
                   </code>
                 </p>

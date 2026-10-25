@@ -129,9 +129,9 @@ export function PartnerHubPage({ hub, children }: PartnerHubPageProps) {
       <div className="mx-auto w-full max-w-none px-3 py-6 sm:px-4 sm:py-8 lg:px-6 xl:px-8">
         {canManageHub && (
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3 rounded-xl border border-[#002D24]/15 bg-white px-4 py-3 shadow-sm">
-            <p className="flex items-center gap-2 text-sm text-[#002D24]">
+            <p className="flex min-w-0 items-center gap-2 text-sm text-[#002D24]">
               <Shield className="h-4 w-4 shrink-0" aria-hidden />
-              <span>
+              <span className="min-w-0">
                 You can edit this hub’s public page, resources and members in{' '}
                 <strong>Settings → Hub admin</strong> (organisation <code>/{hub.slug}</code>).
               </span>

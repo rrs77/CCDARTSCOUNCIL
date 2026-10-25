@@ -1033,7 +1033,7 @@ export function UserManagement() {
           <p className="mx-auto mt-2 max-w-md text-[13px] leading-relaxed text-[#5C5878]">
             The Users admin needs the local API on port 8080 (Vite proxies{' '}
             <code className="rounded bg-white px-1">/api</code> there). Start it with{' '}
-            <code className="rounded bg-white px-1">PORT=8080 pnpm --filter @workspace/api-server run dev</code>
+            <code className="break-all rounded bg-white px-1">PORT=8080 pnpm --filter @workspace/api-server run dev</code>
             , then try again while signed in as an admin.
           </p>
         ) : null}

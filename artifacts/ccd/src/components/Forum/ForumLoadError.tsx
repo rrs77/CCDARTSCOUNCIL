@@ -69,7 +69,7 @@ export function ForumLoadError({
               {looksLikeMissingTable && (
                 <li>
                   Apply{' '}
-                  <code className="rounded bg-amber-100 px-1">
+                  <code className="break-all rounded bg-amber-100 px-1">
                     supabase/migrations/20260904_community_forum.sql
                   </code>{' '}
                   to your Supabase project if forum tables do not exist yet.
