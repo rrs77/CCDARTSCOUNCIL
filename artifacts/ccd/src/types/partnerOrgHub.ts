@@ -26,9 +26,9 @@ export const PARTNER_ORG_PLANNER_ACTION_OPTIONS: {
   value: PartnerOrgPlannerAction;
   label: string;
 }[] = [
-  { value: 'none', label: 'None (no Add to CCDesigner button)' },
-  { value: 'activities', label: 'Add to CCDesigner (activities)' },
-  { value: 'lesson', label: 'Add to CCDesigner (lesson)' },
+  { value: 'none', label: 'None (no planner button)' },
+  { value: 'activities', label: 'Add activities to your planner' },
+  { value: 'lesson', label: 'Add lesson to your planner' },
 ];
 
 export const PARTNER_ORG_PLANNER_LABELS: Record<
@@ -36,12 +36,12 @@ export const PARTNER_ORG_PLANNER_LABELS: Record<
   { label: string; doneLabel: string }
 > = {
   activities: {
-    label: 'Add to CCDesigner',
-    doneLabel: 'Added',
+    label: 'Add activities to your planner',
+    doneLabel: 'Activities added to your planner',
   },
   lesson: {
-    label: 'Add to CCDesigner',
-    doneLabel: 'Added',
+    label: 'Add lesson to your planner',
+    doneLabel: 'Lesson added to your planner',
   },
 };
 

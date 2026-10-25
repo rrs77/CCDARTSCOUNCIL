@@ -117,7 +117,9 @@ export function PartnerHubResourceCard({
             ) : (
               <PlusCircle className="h-3.5 w-3.5" aria-hidden />
             )}
-            {addedActivities ? 'Added' : 'Add to CCDesigner'}
+            {addedActivities
+              ? 'Activities added to your planner'
+              : 'Add activities to your planner'}
           </button>
         )}
         {onAddLessonPlan && (
@@ -134,7 +136,9 @@ export function PartnerHubResourceCard({
             ) : (
               <PlusCircle className="h-3.5 w-3.5" aria-hidden />
             )}
-            {addedLesson ? 'Added' : 'Add to CCDesigner'}
+            {addedLesson
+              ? 'Lesson added to your planner'
+              : 'Add lesson to your planner'}
           </button>
         )}
         {extraActions}
