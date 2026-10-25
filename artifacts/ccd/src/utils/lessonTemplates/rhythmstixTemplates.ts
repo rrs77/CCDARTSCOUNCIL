@@ -67,7 +67,7 @@ const SECONDARY = {
   toolkitSubtitle: '',
   sourceLabel: 'SOURCE, ATTRIBUTION AND LIVE RESOURCE LINKS',
   sourceDefault: 'Use permitted Activity Library resources and retain provider attribution.',
-  sequenceSubtitle: 'Teacher cues and timings follow the original Rhythmstix layout.',
+  sequenceSubtitle: 'Teacher cues and timings are shown for each activity.',
 };
 
 export const RHYTHMSTIX_TEMPLATES: readonly RhythmstixTemplate[] = [

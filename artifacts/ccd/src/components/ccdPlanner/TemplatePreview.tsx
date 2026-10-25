@@ -118,14 +118,20 @@ export function TemplatePreviewDialog({
 }) {
   const titleId = useId();
   const closeRef = useRef<HTMLButtonElement>(null);
+  const dialogRef = useRef<HTMLDivElement>(null);
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
   useEffect(() => {
     if (!open) return;
-    const prev = document.activeElement as HTMLElement | null;
+    // The opener ("Open full preview"): focus goes back here on Close or Esc.
+    const opener = document.activeElement as HTMLElement | null;
     closeRef.current?.focus();
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
+        // Close only this preview, never the modal underneath.
         e.stopPropagation();
-        onClose();
+        e.preventDefault();
+        onCloseRef.current();
       } else if (e.key === 'Tab') {
         // Keep focus on the dialog (only one control) and away from any modal's trap underneath.
         e.stopPropagation();
@@ -133,15 +139,28 @@ export function TemplatePreviewDialog({
         closeRef.current?.focus();
       }
     };
+    // Trap: if anything (e.g. a modal underneath) moves focus out of the preview, bring it back.
+    const onFocusIn = (e: FocusEvent) => {
+      const t = e.target as Node | null;
+      if (dialogRef.current && t && !dialogRef.current.contains(t)) closeRef.current?.focus();
+    };
     window.addEventListener('keydown', onKey, true);
+    document.addEventListener('focusin', onFocusIn, true);
     return () => {
       window.removeEventListener('keydown', onKey, true);
-      prev?.focus?.();
+      document.removeEventListener('focusin', onFocusIn, true);
+      if (opener && opener.isConnected) {
+        opener.focus();
+        // Again after paint, in case a modal underneath re-focuses its first control.
+        requestAnimationFrame(() => {
+          if (opener.isConnected && document.activeElement !== opener) opener.focus();
+        });
+      }
     };
-  }, [open, onClose]);
+  }, [open]);
   if (!open || typeof document === 'undefined') return null;
   return createPortal(
-    <div className="fixed inset-0 z-[400] flex items-stretch justify-center p-2 sm:p-4" data-testid="template-preview-full">
+    <div ref={dialogRef} className="fixed inset-0 z-[400] flex items-stretch justify-center p-2 sm:p-4" data-testid="template-preview-full">
       <button type="button" aria-label="Close preview" className="absolute inset-0 bg-slate-950/50" onClick={onClose} />
       <div
         role="dialog"

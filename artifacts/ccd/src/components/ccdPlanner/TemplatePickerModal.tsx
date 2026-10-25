@@ -1,4 +1,4 @@
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { LibraryKeyStageId } from '../../utils/libraryHierarchy';
 import type { PlanTemplate } from '../../types/lessonSections';
 import { loadPlannerCurriculum } from '../../utils/planner/plannerCurriculumStore';
@@ -53,6 +53,15 @@ export function TemplatePickerModal({
   const [hoverId, setHoverId] = useState<string | null>(null);
   const [previewShown, setPreviewShown] = useState(true);
   const [fullOpen, setFullOpen] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
+  /** Below lg the preview sits under the list (≈770px tall at 390px), so bring it into view on selection. */
+  const revealPreviewIfStacked = () => {
+    if (typeof window === 'undefined' || !window.matchMedia?.('(max-width: 1023.98px)').matches) return;
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    requestAnimationFrame(() =>
+      previewRef.current?.scrollIntoView({ block: 'nearest', behavior: reduce ? 'auto' : 'smooth' }),
+    );
+  };
 
   useEffect(() => {
     if (!open) return;
@@ -126,7 +135,7 @@ export function TemplatePickerModal({
     >
       <ModalHeader
         title="Choose lesson plan template"
-        subtitle={`Rhythmstix templates EYFS to KS5. Your year group's template is preselected; you can pick any.`}
+        subtitle={`CCDesigner plan templates, EYFS to KS5. Your year group's template is preselected; you can pick any.`}
         onClose={onClose}
         titleId={titleId}
       />
@@ -150,6 +159,7 @@ export function TemplatePickerModal({
                   onClick={() => {
                     setSelectedId(o.id);
                     setPreviewShown(true);
+                    revealPreviewIfStacked();
                   }}
                   onMouseEnter={() => setHoverId(o.id)}
                   onFocus={() => setHoverId(o.id)}
@@ -170,7 +180,7 @@ export function TemplatePickerModal({
             );
           })}
         </ul>
-        <div className="min-w-0 lg:sticky lg:top-0">
+        <div ref={previewRef} data-testid="template-picker-preview-wrap" className="min-w-0 scroll-mt-2 lg:sticky lg:top-0">
           {previewShown && previewHtml ? (
             <TemplatePreviewPanel
               html={previewHtml}

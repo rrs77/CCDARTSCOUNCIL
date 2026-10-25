@@ -12,6 +12,11 @@ export function useFocusTrap(
   onEscape?: () => void,
 ) {
   const previouslyFocused = useRef<HTMLElement | null>(null);
+  // Keep the latest Escape handler in a ref so a new onEscape (e.g. a parent that swaps its
+  // close handler while a nested dialog is open) doesn't re-run the trap. Re-running it
+  // restored focus and then re-focused the first control (the modal's own Close button).
+  const onEscapeRef = useRef(onEscape);
+  onEscapeRef.current = onEscape;
 
   useEffect(() => {
     if (!isActive) return;
@@ -34,7 +39,7 @@ export function useFocusTrap(
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         event.stopPropagation();
-        onEscape?.();
+        onEscapeRef.current?.();
         return;
       }
       if (event.key !== 'Tab') return;
@@ -60,5 +65,5 @@ export function useFocusTrap(
       document.removeEventListener('keydown', onKeyDown, true);
       previouslyFocused.current?.focus?.();
     };
-  }, [isActive, containerRef, onEscape]);
+  }, [isActive, containerRef]);
 }
