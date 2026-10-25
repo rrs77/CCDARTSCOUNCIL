@@ -110,20 +110,26 @@ describe('Lesson plan panel body scrolls in Plan / Preview / Print', () => {
   });
 });
 
-describe('Lessons workspace exposes drag lesson builder', () => {
+describe('Lessons workspace Design lesson from activities CTA', () => {
   const src = read('components/LessonsWorkspace.tsx');
+  const library = read('components/ccdPlanner/LibraryMenu.tsx');
+  const canvas = read('components/ccdPlanner/PlannerLessonCanvas.tsx');
   const app = read('App.tsx');
 
-  it('places Design lesson from activities left of Your lessons and mounts LessonPlanBuilder', () => {
-    assert.match(src, /import \{ LessonPlanBuilder \} from '\.\/LessonPlanBuilder'/);
+  it('places CTA left of Your lessons and opens Library (not LessonPlanBuilder)', () => {
+    assert.doesNotMatch(src, /import \{ LessonPlanBuilder \} from '\.\/LessonPlanBuilder'/);
+    assert.doesNotMatch(src, /designFromActivities/);
     assert.match(src, /data-testid="lessons-design-from-activities-btn"/);
     assert.match(src, /Design lesson from activities/);
+    assert.match(src, /designLessonFromActivities/);
+    assert.match(src, /ensureEmptyLessonOnCanvas/);
+    assert.match(src, /setLibraryOpen\(true\)/);
     const btnIdx = src.indexOf('data-testid="lessons-design-from-activities-btn"');
     const menuIdx = src.indexOf('<YourLessonsMenu');
     assert.ok(btnIdx > 0 && menuIdx > btnIdx, 'CTA must appear before YourLessonsMenu in the toolbar');
-    assert.match(src, /data-testid="lessons-design-from-activities"/);
-    assert.match(src, /data-testid="lessons-design-back"/);
-    assert.match(src, /<LessonPlanBuilder[\s\S]*?embedded/);
+    assert.match(library, /function DraggableLibraryRow/);
+    assert.match(library, /type:\s*'activity'/);
+    assert.match(canvas, /accept:\s*\['activity'\]/);
     assert.match(app, /<DndRoot>/);
   });
 });
