@@ -71,7 +71,11 @@ ALTER TABLE public.organisations
   ADD COLUMN IF NOT EXISTS ai_addon boolean NOT NULL DEFAULT false;
 
 GRANT USAGE ON SCHEMA public TO authenticated, anon, service_role;
+GRANT USAGE ON SCHEMA auth TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION auth.uid() TO authenticated, anon, service_role;
+GRANT EXECUTE ON FUNCTION auth.role() TO authenticated, anon, service_role;
 GRANT SELECT, INSERT, UPDATE ON public.organisations TO authenticated;
 GRANT SELECT ON public.organisations TO anon;
 GRANT ALL ON public.organisations TO service_role;
 GRANT SELECT ON public.profiles TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.is_super_admin(uuid) TO authenticated, anon, service_role;

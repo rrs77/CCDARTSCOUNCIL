@@ -28,8 +28,11 @@ BEGIN
     RETURN NEW;
   END IF;
 
-  -- service_role (and non-JWT SQL as postgres) may manage the flag.
-  IF COALESCE(auth.role(), '') = 'service_role' THEN
+  -- JWT service_role, or SQL-editor / migration roles where auth.role() is null.
+  -- Safe under SECURITY INVOKER: current_user is the session role.
+  IF COALESCE(auth.role(), '') = 'service_role'
+     OR current_user IN ('postgres', 'supabase_admin', 'service_role')
+  THEN
     RETURN NEW;
   END IF;
 
@@ -49,7 +52,7 @@ CREATE TRIGGER trg_protect_organisations_ai_addon
   EXECUTE FUNCTION public.protect_organisations_ai_addon();
 
 COMMENT ON FUNCTION public.protect_organisations_ai_addon() IS
-  'SECURITY INVOKER. Blocks INSERT/UPDATE that change organisations.ai_addon unless public.is_super_admin() or auth.role() = service_role. ai_addon remains readable on active org rows (not a secret).';
+  'SECURITY INVOKER. Blocks INSERT/UPDATE that change organisations.ai_addon unless public.is_super_admin(), auth.role() = service_role, or current_user IN (postgres, supabase_admin, service_role). ai_addon remains readable on active org rows (not a secret).';
 
 COMMENT ON COLUMN public.organisations.ai_addon IS
-  'When true, the organisation has purchased the CCDesigner AI add-on (Flesh out, Whisper, etc.). Independent of Free/Full plan and organisations.paid. Readable on active organisation rows (not a secret); writable only via is_super_admin() / service_role (see protect_organisations_ai_addon).';
+  'When true, the organisation has purchased the CCDesigner AI add-on (Flesh out, Whisper, etc.). Independent of Free/Full plan and organisations.paid. Readable on active organisation rows (not a secret); writable only via is_super_admin() / service_role / SQL-editor roles (see protect_organisations_ai_addon).';

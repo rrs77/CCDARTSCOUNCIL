@@ -447,13 +447,24 @@ export async function uploadAttachmentToDreamHost({ buffer, storagePath, maxByte
   return { path };
 }
 
-export async function fetchAttachmentFromDreamHost(storagePath) {
+/**
+ * Download an attachment from DreamHost.
+ * Rejects over-size while streaming (does not buffer the whole body first).
+ *
+ * @param {string} storagePath
+ * @param {{ maxBytes?: number }} [opts] default SIZE_LIMITS.video
+ * @returns {Promise<Buffer>}
+ */
+export async function fetchAttachmentFromDreamHost(storagePath, opts = {}) {
   const apiKey = pdfApiKey();
   const downloadBase = getFileDownloadUrl();
   const path = parseAttachmentStoragePath(storagePath);
   if (!apiKey || !downloadBase || !path) {
     throw Object.assign(new Error('File storage is not configured.'), { status: 503 });
   }
+  const maxBytes =
+    Number.isFinite(opts.maxBytes) && opts.maxBytes > 0 ? opts.maxBytes : SIZE_LIMITS.video;
+
   const url = new URL(downloadBase);
   url.searchParams.set('path', path);
   const upstream = await fetch(url.toString(), { method: 'GET', headers: { 'X-API-Key': apiKey } });
@@ -462,7 +473,43 @@ export async function fetchAttachmentFromDreamHost(storagePath) {
       status: upstream.status === 404 ? 404 : 502,
     });
   }
-  return Buffer.from(await upstream.arrayBuffer());
+
+  const declared = Number(upstream.headers.get('Content-Length') || 0);
+  if (Number.isFinite(declared) && declared > maxBytes) {
+    try {
+      if (upstream.body?.cancel) await upstream.body.cancel();
+    } catch {
+      /* ignore */
+    }
+    throw Object.assign(new Error('File too large.'), { status: 413, code: 'oversize' });
+  }
+
+  if (!upstream.body || typeof upstream.body.getReader !== 'function') {
+    const ab = await upstream.arrayBuffer();
+    if (ab.byteLength > maxBytes) {
+      throw Object.assign(new Error('File too large.'), { status: 413, code: 'oversize' });
+    }
+    return Buffer.from(ab);
+  }
+
+  const reader = upstream.body.getReader();
+  const chunks = [];
+  let total = 0;
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    total += value.byteLength;
+    if (total > maxBytes) {
+      try {
+        await reader.cancel();
+      } catch {
+        /* ignore */
+      }
+      throw Object.assign(new Error('File too large.'), { status: 413, code: 'oversize' });
+    }
+    chunks.push(Buffer.from(value));
+  }
+  return Buffer.concat(chunks, total);
 }
 
 export async function deleteAttachmentFromDreamHost(storagePath) {

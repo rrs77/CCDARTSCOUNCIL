@@ -24,11 +24,12 @@ describe('organisations.ai_addon protect migration', () => {
     assert.match(sql, /BEFORE INSERT OR UPDATE ON public\.organisations/);
     assert.match(sql, /is_super_admin\(\)/);
     assert.match(sql, /service_role/);
+    assert.match(sql, /current_user IN \('postgres', 'supabase_admin', 'service_role'\)/);
     assert.match(sql, /ERRCODE = '42501'/);
     assert.match(sql, /NEW\.ai_addon IS DISTINCT FROM OLD\.ai_addon/);
   });
 
-  it('keeps readable-flag note and scratch cases for ordinary / org admin / super', () => {
+  it('keeps readable-flag note and scratch cases for ordinary / org admin / super / postgres', () => {
     const base = readFileSync(
       join(root, 'supabase/migrations/20261025130000_organisations_ai_addon.sql'),
       'utf8',
@@ -38,6 +39,7 @@ describe('organisations.ai_addon protect migration', () => {
     assert.match(testSql, /ordinary user cannot set ai_addon/);
     assert.match(testSql, /org admin cannot set ai_addon/);
     assert.match(testSql, /super admin can set ai_addon/);
+    assert.match(testSql, /postgres current_user can set ai_addon/);
     assert.equal(existsSync(runner), true);
   });
 

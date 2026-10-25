@@ -4,8 +4,8 @@
  * Secret: OPENAI_API_KEY (server env only — never commit).
  *
  * Gating: assertRateLimit (IP) + requireAiAddon + claimAiUsage (DB per-user/org).
- * SSRF: fetchAllowlistedAudio — https + exact host allowlist, manual redirects,
- * private-IP reject, 25MB stream cap, audio/* only, 20s timeout.
+ * Audio: allowlisted https via fetchAllowlistedAudio, OR storagePath after
+ * mayAccessLessonAttachment (owner / share). Upload tickets are not read grants.
  */
 
 import {
@@ -19,116 +19,12 @@ import {
 } from '../../../api/_authShared.js';
 import { probeAiAddon, requireAiAddon } from '../../../api/_aiAddon.js';
 import { assertAiRequestBodySize, claimAiUsage } from '../../../api/_aiUsage.js';
-import {
-  AUDIO_MAX_BYTES,
-  fetchAllowlistedAudio,
-} from '../../../api/_safeAudioFetch.js';
-import {
-  EXT_ALLOWLIST,
-  fetchAttachmentFromDreamHost,
-  parseAttachmentStoragePath,
-  verifyDirectUploadTicket,
-} from '../../../api/_lessonAttachmentStorage.js';
+import { resolveAudioBuffer } from '../../../api/_transcribeAudio.js';
 
 const OPENAI_URL = 'https://api.openai.com/v1/audio/transcriptions';
 
 function getOpenAiKey() {
   return process.env.OPENAI_API_KEY || process.env.WHISPER_API_KEY || '';
-}
-
-function extFromContentType(contentType) {
-  const ct = String(contentType || '')
-    .split(';')[0]
-    .trim()
-    .toLowerCase();
-  if (ct.includes('wav')) return 'wav';
-  if (ct.includes('mp4') || ct.includes('m4a') || ct === 'audio/mp4') return 'm4a';
-  if (ct.includes('ogg')) return 'ogg';
-  if (ct.includes('aac')) return 'aac';
-  return 'mp3';
-}
-
-/**
- * Resolve audio bytes: prefer lesson-attachment storagePath / ticket (server-side
- * DreamHost read), else SSRF-safe allowlisted https URL.
- */
-async function resolveAudioBuffer(body) {
-  const ticket =
-    typeof body?.attachmentTicket === 'string' ? body.attachmentTicket.trim() : '';
-  if (ticket) {
-    const payload = verifyDirectUploadTicket(ticket);
-    if (!payload?.p) {
-      throw Object.assign(new Error('Invalid or expired attachment ticket.'), {
-        status: 400,
-        code: 'bad_ticket',
-      });
-    }
-    const path = parseAttachmentStoragePath(payload.p);
-    if (!path) {
-      throw Object.assign(new Error('Invalid attachment path in ticket.'), {
-        status: 400,
-        code: 'bad_path',
-      });
-    }
-    const ext = path.split('.').pop()?.toLowerCase();
-    if (!ext || EXT_ALLOWLIST[ext]?.kind !== 'audio') {
-      throw Object.assign(new Error('Attachment is not an audio file.'), {
-        status: 400,
-        code: 'non_audio_type',
-      });
-    }
-    const buffer = await fetchAttachmentFromDreamHost(path);
-    if (buffer.byteLength > AUDIO_MAX_BYTES) {
-      throw Object.assign(new Error('Audio file is too large (max 25MB).'), {
-        status: 413,
-        code: 'oversize',
-      });
-    }
-    return {
-      buffer,
-      contentType: EXT_ALLOWLIST[ext].mime,
-      ext,
-    };
-  }
-
-  const storagePath =
-    typeof body?.storagePath === 'string' ? body.storagePath.trim() : '';
-  if (storagePath) {
-    const path = parseAttachmentStoragePath(storagePath);
-    if (!path) {
-      throw Object.assign(new Error('Invalid storagePath.'), {
-        status: 400,
-        code: 'bad_path',
-      });
-    }
-    const ext = path.split('.').pop()?.toLowerCase();
-    if (!ext || EXT_ALLOWLIST[ext]?.kind !== 'audio') {
-      throw Object.assign(new Error('storagePath must be an audio attachment.'), {
-        status: 400,
-        code: 'non_audio_type',
-      });
-    }
-    const buffer = await fetchAttachmentFromDreamHost(path);
-    if (buffer.byteLength > AUDIO_MAX_BYTES) {
-      throw Object.assign(new Error('Audio file is too large (max 25MB).'), {
-        status: 413,
-        code: 'oversize',
-      });
-    }
-    return {
-      buffer,
-      contentType: EXT_ALLOWLIST[ext].mime,
-      ext,
-    };
-  }
-
-  const audioUrl = typeof body?.audioUrl === 'string' ? body.audioUrl : '';
-  const fetched = await fetchAllowlistedAudio(audioUrl);
-  return {
-    buffer: fetched.buffer,
-    contentType: fetched.contentType,
-    ext: extFromContentType(fetched.contentType),
-  };
 }
 
 export async function GET(request) {
@@ -212,7 +108,7 @@ export async function POST(request) {
   }
 
   try {
-    const { buffer, contentType, ext } = await resolveAudioBuffer(body);
+    const { buffer, contentType, ext } = await resolveAudioBuffer(body, auth.userId);
 
     const form = new FormData();
     form.append('file', new Blob([buffer], { type: contentType }), `lyrics.${ext}`);

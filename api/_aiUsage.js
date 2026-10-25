@@ -68,12 +68,17 @@ export function assertAiRequestBodySize(request, maxBytes = AI_REQUEST_BODY_MAX_
   return { ok: true };
 }
 
+/** True in production deploys — missing RPC must fail closed. */
+export function isProductionAiEnv(env = process.env) {
+  return env.VERCEL_ENV === 'production' || env.NODE_ENV === 'production';
+}
+
 /**
  * Claim one AI call against durable counters.
- * Prefer the claim_ai_usage RPC; fall back to a soft allow if the migration
- * is not applied yet (local/dev) so routes still function.
+ * Prefer the claim_ai_usage RPC. If the RPC is missing: soft-allow only in
+ * non-production; fail closed with 503 when VERCEL_ENV/NODE_ENV is production.
  *
- * @returns {Promise<{ ok: true } | { ok: false, response: Response, reason: string }>}
+ * @returns {Promise<{ ok: true, soft?: boolean } | { ok: false, response: Response, reason: string }>}
  */
 export async function claimAiUsage({ userId, organisationId = null, route }) {
   if (!userId || (route !== 'flesh-out' && route !== 'transcribe')) {
@@ -106,9 +111,27 @@ export async function claimAiUsage({ userId, organisationId = null, route }) {
     });
 
     if (error) {
-      // Migration not applied yet — soft-allow with a warning log.
-      if (/claim_ai_usage|Could not find the function|PGRST202/i.test(error.message || '')) {
-        console.warn('[aiUsage] claim_ai_usage RPC missing; soft-allowing', { route });
+      const missingRpc = /claim_ai_usage|Could not find the function|PGRST202/i.test(
+        error.message || '',
+      );
+      if (missingRpc) {
+        if (isProductionAiEnv()) {
+          console.error('[aiUsage] claim_ai_usage RPC missing in production — failing closed');
+          return {
+            ok: false,
+            reason: 'rpc_missing_production',
+            response: jsonResponse(
+              {
+                message: 'AI usage tracking unavailable.',
+                code: 'usage_unavailable',
+              },
+              503,
+            ),
+          };
+        }
+        console.warn('[aiUsage] claim_ai_usage RPC missing; soft-allowing (non-production)', {
+          route,
+        });
         return { ok: true, soft: true };
       }
       console.error('[aiUsage] claim failed', error.message);

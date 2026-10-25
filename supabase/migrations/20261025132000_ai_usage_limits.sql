@@ -25,6 +25,8 @@ DROP POLICY IF EXISTS ai_usage_events_service_all ON public.ai_usage_events;
 -- No authenticated policies: only service_role (bypass) / postgres manage rows.
 -- Routes claim via SECURITY DEFINER RPC below.
 
+REVOKE ALL ON TABLE public.ai_usage_events FROM anon, authenticated;
+
 COMMENT ON TABLE public.ai_usage_events IS
   'Append-only AI call events for per-user hourly and per-org daily caps. Written only via claim_ai_usage (service_role).';
 
@@ -46,6 +48,15 @@ DECLARE
 BEGIN
   IF p_user_id IS NULL OR p_route IS NULL OR p_route NOT IN ('flesh-out', 'transcribe') THEN
     RETURN jsonb_build_object('allowed', false, 'scope', 'invalid');
+  END IF;
+
+  -- Serialise per-user+route claims so concurrent callers cannot overshoot.
+  PERFORM pg_advisory_xact_lock(hashtext(p_user_id::text || p_route));
+
+  -- Occasional purge of stale rows (keep ~2 days for daily org windows).
+  IF random() < 0.01 THEN
+    DELETE FROM public.ai_usage_events
+    WHERE created_at < now() - interval '2 days';
   END IF;
 
   IF p_route = 'flesh-out' THEN
@@ -109,4 +120,4 @@ REVOKE ALL ON FUNCTION public.claim_ai_usage(uuid, text, text) FROM anon, authen
 GRANT EXECUTE ON FUNCTION public.claim_ai_usage(uuid, text, text) TO service_role;
 
 COMMENT ON FUNCTION public.claim_ai_usage(uuid, text, text) IS
-  'SECURITY DEFINER. Claims one AI call: flesh-out 30/user/hour + 200/org/day; transcribe 10/user/hour + 50/org/day. service_role EXECUTE only.';
+  'SECURITY DEFINER. Claims one AI call under pg_advisory_xact_lock(user||route): flesh-out 30/user/hour + 200/org/day; transcribe 10/user/hour + 50/org/day. Opportunistic 2-day purge. service_role EXECUTE only.';

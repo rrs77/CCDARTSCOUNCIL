@@ -16,6 +16,10 @@ export const AUDIO_MAX_REDIRECTS = 3;
 /**
  * Exact host allowlist from server env / config only — never from the request.
  * Supabase storage host, DreamHost download/upload hosts, and our own site.
+ *
+ * AI_AUDIO_FETCH_ALLOWLIST / AUDIO_FETCH_ALLOWLIST (comma-separated hosts) may
+ * extend this list for staging mirrors — NEVER add third-party or user-controlled
+ * hosts; anything listed here is fetchable by any entitled AI caller.
  */
 export function getAllowedAudioHosts() {
   const hosts = new Set();
@@ -41,6 +45,7 @@ export function getAllowedAudioHosts() {
   addUrl(process.env.VITE_APP_URL || process.env.APP_URL);
   if (process.env.VERCEL_URL) addUrl(process.env.VERCEL_URL);
 
+  // Extra hosts from env — must never include third-party / user-controlled hosts.
   const extra = process.env.AI_AUDIO_FETCH_ALLOWLIST || process.env.AUDIO_FETCH_ALLOWLIST || '';
   for (const part of extra.split(',')) addUrl(part);
 
@@ -65,7 +70,8 @@ export function getOwnSiteOrigin() {
 
 /**
  * True when the IP is not safe unicast public (private, loopback, link-local,
- * unspecified, or unparseable). Small helper — ipaddr.js is not a dependency.
+ * unspecified, multicast, benchmarking, or unparseable).
+ * Small helper — ipaddr.js is not a dependency (node:net BlockList alternative).
  */
 export function isBlockedIp(ip) {
   if (!ip || typeof ip !== 'string') return true;
@@ -81,18 +87,43 @@ export function isBlockedIp(ip) {
     if (parts[0] === 192 && parts[1] === 168) return true;
     if (parts[0] === 172 && parts[1] >= 16 && parts[1] <= 31) return true;
     if (parts[0] === 100 && parts[1] >= 64 && parts[1] <= 127) return true; // CGNAT
+    // 192.0.0.0/24 (IETF protocol assignments / "this network" extras)
+    if (parts[0] === 192 && parts[1] === 0 && parts[2] === 0) return true;
+    // 198.18.0.0/15 benchmarking
+    if (parts[0] === 198 && parts[1] >= 18 && parts[1] <= 19) return true;
+    // 224.0.0.0/4 multicast and above (including 255.255.255.255)
+    if (parts[0] >= 224) return true;
     return false;
   }
   if (v === 6) {
     const lower = ip.toLowerCase();
     if (lower === '::1' || lower === '::') return true;
-    const mapped = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
-    if (mapped) return isBlockedIp(mapped[1]);
-    const first = (lower.split(':')[0] || '').replace(/^0+/, '') || '0';
-    const n = Number.parseInt(first, 16);
-    if (!Number.isFinite(n)) return true;
-    if (n >= 0xfc00 && n <= 0xfdff) return true; // unique local
-    if (n >= 0xfe80 && n <= 0xfebf) return true; // link-local
+    // IPv4-mapped dotted ::ffff:a.b.c.d
+    const mappedDotted = lower.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+    if (mappedDotted) return isBlockedIp(mappedDotted[1]);
+    // IPv4-mapped hex ::ffff:7f00:1 → 127.0.0.1
+    const mappedHex = lower.match(/^::ffff:([0-9a-f]{1,4}):([0-9a-f]{1,4})$/i);
+    if (mappedHex) {
+      const hi = Number.parseInt(mappedHex[1], 16);
+      const lo = Number.parseInt(mappedHex[2], 16);
+      if (Number.isFinite(hi) && Number.isFinite(lo)) {
+        const a = (hi >> 8) & 0xff;
+        const b = hi & 0xff;
+        const c = (lo >> 8) & 0xff;
+        const d = lo & 0xff;
+        return isBlockedIp(`${a}.${b}.${c}.${d}`);
+      }
+    }
+    // Expand first hextet(s) for prefix checks
+    const hextets = lower.split(':').filter((h) => h.length > 0);
+    const first = Number.parseInt(hextets[0] || '0', 16);
+    const second = Number.parseInt(hextets[1] || '0', 16);
+    if (!Number.isFinite(first)) return true;
+    if (first >= 0xfc00 && first <= 0xfdff) return true; // unique local
+    if (first >= 0xfe80 && first <= 0xfebf) return true; // link-local
+    if (first >= 0xff00) return true; // ff00::/8 multicast
+    // 64:ff9b::/96 NAT64 well-known prefix
+    if (first === 0x64 && second === 0xff9b) return true;
     return false;
   }
   return true;

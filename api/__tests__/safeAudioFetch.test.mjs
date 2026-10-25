@@ -5,6 +5,7 @@
 
 import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import {
   AUDIO_MAX_BYTES,
   fetchAllowlistedAudio,
@@ -27,9 +28,29 @@ describe('isBlockedIp', () => {
     assert.equal(isBlockedIp('fe80::1'), true);
   });
 
+  it('blocks 198.18/15, 192.0.0/24, multicast 224/4+, broadcast, hex-mapped loopback, NAT64, ff00::/8', () => {
+    assert.equal(isBlockedIp('198.18.0.1'), true);
+    assert.equal(isBlockedIp('198.19.255.255'), true);
+    assert.equal(isBlockedIp('192.0.0.1'), true);
+    assert.equal(isBlockedIp('224.0.0.1'), true);
+    assert.equal(isBlockedIp('255.255.255.255'), true);
+    assert.equal(isBlockedIp('::ffff:7f00:1'), true); // 127.0.0.1
+    assert.equal(isBlockedIp('64:ff9b::1'), true);
+    assert.equal(isBlockedIp('ff02::1'), true);
+  });
+
   it('allows public unicast', () => {
     assert.equal(isBlockedIp('8.8.8.8'), false);
     assert.equal(isBlockedIp('1.1.1.1'), false);
+  });
+
+  it('documents that AI_AUDIO_FETCH_ALLOWLIST must never list third-party hosts', () => {
+    const src = readFileSync(
+      new URL('../_safeAudioFetch.js', import.meta.url),
+      'utf8',
+    );
+    assert.match(src, /third-party or user-controlled/i);
+    assert.match(src, /AI_AUDIO_FETCH_ALLOWLIST/);
   });
 });
 

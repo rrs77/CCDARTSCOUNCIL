@@ -14,6 +14,7 @@ import {
   FLESH_OUT_CAPS,
   assertAiRequestBodySize,
   evaluateUsageWindows,
+  isProductionAiEnv,
 } from '../_aiUsage.js';
 import {
   buildFleshOutUserPayload,
@@ -191,6 +192,21 @@ describe('sanitizeAiBodyHtml', () => {
   });
 });
 
+describe('claimAiUsage production fail-closed', () => {
+  it('isProductionAiEnv is true for VERCEL_ENV or NODE_ENV production', () => {
+    assert.equal(isProductionAiEnv({ VERCEL_ENV: 'production' }), true);
+    assert.equal(isProductionAiEnv({ NODE_ENV: 'production' }), true);
+    assert.equal(isProductionAiEnv({ VERCEL_ENV: 'preview', NODE_ENV: 'development' }), false);
+  });
+
+  it('claimAiUsage source fails closed when RPC missing in production', () => {
+    const src = readFileSync(join(root, 'api/_aiUsage.js'), 'utf8');
+    assert.match(src, /isProductionAiEnv/);
+    assert.match(src, /rpc_missing_production/);
+    assert.match(src, /soft-allowing \(non-production\)/);
+  });
+});
+
 describe('AI routes wire durable usage + body cap + max_tokens', () => {
   it('flesh-out and transcribe call claimAiUsage and assertAiRequestBodySize', () => {
     const flesh = readFileSync(join(root, 'server/api/interactive-lessons/flesh-out.js'), 'utf8');
@@ -203,10 +219,10 @@ describe('AI routes wire durable usage + body cap + max_tokens', () => {
     assert.match(flesh, /max_tokens:\s*FLESH_OUT_CAPS\.maxTokens/);
     assert.match(transcribe, /claimAiUsage/);
     assert.match(transcribe, /assertAiRequestBodySize/);
-    assert.match(transcribe, /fetchAllowlistedAudio|resolveAudioBuffer/);
+    assert.match(transcribe, /resolveAudioBuffer/);
   });
 
-  it('usage migration defines claim_ai_usage with expected caps', () => {
+  it('usage migration defines claim_ai_usage with lock, purge, revoke, caps', () => {
     const sql = readFileSync(
       join(root, 'supabase/migrations/20261025132000_ai_usage_limits.sql'),
       'utf8',
@@ -215,6 +231,10 @@ describe('AI routes wire durable usage + body cap + max_tokens', () => {
     assert.match(sql, /claim_ai_usage/);
     assert.match(sql, /v_user_limit := 30/);
     assert.match(sql, /v_user_limit := 10/);
+    assert.match(sql, /pg_advisory_xact_lock\(hashtext\(p_user_id::text \|\| p_route\)\)/);
+    assert.match(sql, /random\(\) < 0\.01/);
+    assert.match(sql, /interval '2 days'/);
+    assert.match(sql, /REVOKE ALL ON TABLE public\.ai_usage_events FROM anon, authenticated/);
     assert.match(sql, /GRANT EXECUTE ON FUNCTION public\.claim_ai_usage/);
   });
 });
