@@ -9,6 +9,7 @@ import {
   getDemoOriginSchool,
 } from '../utils/demoMode';
 import { titleCaseSlug } from '../utils/accountDisplay';
+import { resetPlannerCurriculumCaches } from '../utils/planner/plannerCurriculumStore';
 
 interface AuthContextType {
   user: AppUser | null;
@@ -96,16 +97,37 @@ interface AuthProviderProps {
 
 function syncUserIdToStorage(userId: string | null) {
   if (userId) {
+    try {
+      const prior = localStorage.getItem('rhythmstix_user_id');
+      if (prior && prior !== userId) {
+        resetPlannerCurriculumCaches();
+      }
+    } catch {
+      resetPlannerCurriculumCaches();
+    }
     localStorage.setItem('rhythmstix_user_id', userId);
   } else {
+    resetPlannerCurriculumCaches();
     localStorage.removeItem('rhythmstix_user_id');
     localStorage.removeItem('rhythmstix_organisation_id');
   }
 }
 
 function syncOrganisationIdToStorage(organisationId: string | null | undefined) {
-  if (typeof organisationId === 'string' && organisationId.trim()) {
-    localStorage.setItem('rhythmstix_organisation_id', organisationId.trim());
+  const next =
+    typeof organisationId === 'string' && organisationId.trim()
+      ? organisationId.trim()
+      : null;
+  try {
+    const prior = localStorage.getItem('rhythmstix_organisation_id');
+    if ((prior || null) !== next) {
+      resetPlannerCurriculumCaches();
+    }
+  } catch {
+    resetPlannerCurriculumCaches();
+  }
+  if (next) {
+    localStorage.setItem('rhythmstix_organisation_id', next);
   } else {
     localStorage.removeItem('rhythmstix_organisation_id');
   }

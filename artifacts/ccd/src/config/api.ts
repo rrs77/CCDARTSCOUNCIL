@@ -2,9 +2,11 @@ import { supabase, TABLES, isSupabaseConfigured } from './supabase';
 import { isDemoModeActive } from '../utils/demoMode';
 import { filterLessonEntries } from '../utils/lessonEntries';
 import { preferOrgScopedByName } from '../utils/preferOrgScopedByName';
+import { ORG_ID_RE, orgOrNullFilter } from '../utils/orgIdFilter';
 import type { Activity, LessonData, LessonPlan } from '../contexts/DataContext';
 
 export { preferOrgScopedByName } from '../utils/preferOrgScopedByName';
+export { orgOrNullFilter } from '../utils/orgIdFilter';
 
 // Synthetic, UUID-shaped user id for Preview/Demo sessions. It satisfies the
 // fail-closed `isAuthUserId` guards below, and every query it scopes runs
@@ -30,8 +32,6 @@ const isAuthUserId = (id: string) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a
 
 /** Whether user-scoped Supabase reads and writes can run (signed in, or demo). */
 export const hasScopedUser = () => isAuthUserId(getCurrentUserId());
-
-const ORG_ID_RE = /^[A-Za-z0-9_-]{1,64}$/;
 
 /**
  * Resolve the signed-in user's organisation_id for org-scoped upserts.
@@ -1197,10 +1197,14 @@ const _yearGroupsApiImpl = {
       console.log('🔍 Fetching year groups from Supabase table:', TABLES.YEAR_GROUPS);
       // Scope to the school being viewed (incl. super admins) so edits cannot
       // hit another school's row after name-merge. Still include NULL-org defaults.
+      // No org (e.g. super admin without school context): only shared defaults.
       const organisationId = await resolveOrganisationId();
+      const orgFilter = orgOrNullFilter(organisationId);
       let query = supabase.from(TABLES.YEAR_GROUPS).select('*').order('sort_order');
-      if (organisationId) {
-        query = query.or(`organisation_id.eq.${organisationId},organisation_id.is.null`);
+      if (orgFilter) {
+        query = query.or(orgFilter);
+      } else {
+        query = query.is('organisation_id', null);
       }
       const { data, error } = await query;
       
@@ -1561,9 +1565,12 @@ const _customCategoriesApiImpl = {
   getAll: async () => {
     try {
       const organisationId = await resolveOrganisationId();
+      const orgFilter = orgOrNullFilter(organisationId);
       let query = supabase.from(TABLES.CUSTOM_CATEGORIES).select('*').order('position');
-      if (organisationId) {
-        query = query.or(`organisation_id.eq.${organisationId},organisation_id.is.null`);
+      if (orgFilter) {
+        query = query.or(orgFilter);
+      } else {
+        query = query.is('organisation_id', null);
       }
       const { data, error } = await query;
       
@@ -1791,9 +1798,12 @@ const _categoryGroupsApiImpl = {
   getAll: async () => {
     try {
       const organisationId = await resolveOrganisationId();
+      const orgFilter = orgOrNullFilter(organisationId);
       let query = supabase.from(TABLES.CATEGORY_GROUPS).select('*').order('sort_order');
-      if (organisationId) {
-        query = query.or(`organisation_id.eq.${organisationId},organisation_id.is.null`);
+      if (orgFilter) {
+        query = query.or(orgFilter);
+      } else {
+        query = query.is('organisation_id', null);
       }
       const { data, error } = await query;
       
