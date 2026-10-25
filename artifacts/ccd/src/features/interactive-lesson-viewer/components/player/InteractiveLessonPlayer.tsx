@@ -31,6 +31,8 @@ interface InteractiveLessonPlayerProps {
   playerOnly?: boolean;
   canEdit?: boolean;
   onEdit?: () => void;
+  /** When set (e.g. from planner Present), show ← Back to planner. */
+  returnLabel?: string;
 }
 
 /** Lyric-video scenes that have timed lyric lines — only then show Lyrics on/off. */
@@ -74,6 +76,7 @@ export function InteractiveLessonPlayer({
   playerOnly = false,
   canEdit = false,
   onEdit,
+  returnLabel,
 }: InteractiveLessonPlayerProps) {
   const [sceneIndex, setSceneIndex] = useState(startSceneIndex);
   const [playing, setPlaying] = useState(true);
@@ -254,12 +257,25 @@ export function InteractiveLessonPlayer({
   return createPortal(
     <div id="ilv-player-root" className="ilv-root ilv-player" role="dialog" aria-modal="true" aria-label={lesson.title}>
       <div className="ilv-player-header">
-        <div>
+        <div className="flex min-w-0 items-start gap-2">
+          {returnLabel ? (
+            <button
+              type="button"
+              className="ilv-ctrl shrink-0"
+              onClick={onClose}
+              title={returnLabel}
+            >
+              <ChevronLeft className="h-4 w-4" />
+              <span className="hidden sm:inline text-[13px]">{returnLabel}</span>
+            </button>
+          ) : null}
+          <div className="min-w-0">
           <h2 className="text-base font-extrabold tracking-tight text-white">{lesson.title}</h2>
-          <p className="text-xs text-white/60">
+          <p className="text-[13px] text-white/60">
             Scene {sceneIndex + 1} of {lesson.scenes.length} · {scene.title}
             <span className="ml-2 text-white/40">· {advanceHint}</span>
           </p>
+          </div>
         </div>
         <div className="flex items-center gap-2">
           {playerOnly && canEdit && onEdit && (

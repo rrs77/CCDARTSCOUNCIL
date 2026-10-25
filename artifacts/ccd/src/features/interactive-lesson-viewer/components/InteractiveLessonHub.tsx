@@ -163,10 +163,11 @@ export function InteractiveLessonHub() {
   }, [refresh]);
 
   const [launchScene, setLaunchScene] = useState(0);
+  const [launchReturnTo, setLaunchReturnTo] = useState<string | null>(null);
 
-  // Deep-link: /?tab=lesson-viewer&play=<id>&mode=player&scene=N → classroom player only
+  // Deep-link: /?tab=lesson-viewer&play=<id>&mode=player&scene=N&return=… → classroom player
   useEffect(() => {
-    const { playId, playerOnly: only, sceneIndex } = readPlayerLaunchFromLocation();
+    const { playId, playerOnly: only, sceneIndex, returnTo } = readPlayerLaunchFromLocation();
     if (!playId) return;
     let cancelled = false;
     void (async () => {
@@ -175,6 +176,7 @@ export function InteractiveLessonHub() {
       if (lesson) {
         setPlayerOnly(only);
         setLaunchScene(Math.max(0, Math.min(sceneIndex, lesson.scenes.length - 1)));
+        setLaunchReturnTo(returnTo);
         setPlaying(lesson);
         setUnavailable('');
       } else if (reason === 'unpublished') {
@@ -184,6 +186,7 @@ export function InteractiveLessonHub() {
       }
       try {
         const params = new URLSearchParams(window.location.search);
+        // Keep return until player closes so Back can use it; drop play/mode/scene.
         params.delete('play');
         params.delete('mode');
         params.delete('scene');
@@ -491,20 +494,31 @@ export function InteractiveLessonHub() {
           playerOnly={playerOnly}
           canEdit={canEdit}
           startSceneIndex={launchScene}
+          returnLabel={launchReturnTo ? 'Back to planner' : undefined}
           onEdit={
             canEdit
               ? () => {
                   setPlaying(null);
                   setPlayerOnly(false);
                   setLaunchScene(0);
+                  setLaunchReturnTo(null);
                   void openEditor(playing.id);
                 }
               : undefined
           }
           onClose={() => {
+            const back = launchReturnTo;
             setPlaying(null);
             setPlayerOnly(false);
             setLaunchScene(0);
+            setLaunchReturnTo(null);
+            if (back) {
+              try {
+                window.location.assign(back);
+              } catch {
+                /* ignore */
+              }
+            }
           }}
         />
       )}

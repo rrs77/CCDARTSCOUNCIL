@@ -18,6 +18,7 @@ import { useData, type Activity, type LessonPlan } from '../../contexts/DataCont
 import type { PlannerData } from './usePlannerData';
 import {
   HALF_TERMS,
+  academicYearFor,
   isoWeek,
   normalizeTime,
   planStatusLabel,
@@ -40,14 +41,15 @@ import {
   lessonActivityCount,
   lessonBadgeLabel,
 } from '../../utils/lessonEntries';
+import { LessonSlidesSection } from '../../features/interactive-lesson-viewer/components/planner/LessonSlidesSection';
 
 const fieldClass =
   'w-full rounded-xl border border-[#E2E0EF] bg-white px-3 py-2 text-sm text-[#1F1B4D] focus:outline-none focus:ring-2 focus:ring-[#4338E8]/35 focus:border-[#4338E8]';
-const sectionTitle = 'text-xs font-bold uppercase tracking-[0.06em] text-[#77738F] mb-2';
+const sectionTitle = 'text-[13px] font-bold uppercase tracking-[0.06em] text-[#77738F] mb-2';
 const btn =
-  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl border border-[#E2E0EF] bg-white px-3.5 text-sm font-medium text-[#1F1B4D] hover:border-[#bcb7f4] hover:bg-[#F4F3FA] disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 min-h-[44px] rounded-xl border border-[#E2E0EF] bg-white px-3.5 text-[13px] font-medium text-[#1F1B4D] hover:border-[#bcb7f4] hover:bg-[#F4F3FA] disabled:opacity-50';
 const btnPrimary =
-  'inline-flex items-center justify-center gap-2 min-h-[40px] rounded-xl bg-[#4338E8] px-4 text-sm font-semibold text-white hover:bg-[#3529d1] disabled:opacity-50';
+  'inline-flex items-center justify-center gap-2 min-h-[44px] rounded-xl bg-[#4338E8] px-4 text-[13px] font-semibold text-white hover:bg-[#3529d1] disabled:opacity-50';
 
 /** Side panel on wide screens; bottom sheet with a scrim on tablets and phones. */
 export function PlannerSheet({ onClose, children, label }: { onClose: () => void; children: React.ReactNode; label: string }) {
@@ -106,11 +108,14 @@ export function LessonDetailsSheet({
   onEditInBuilder?: (plan: LessonPlan) => void;
 }) {
   const [polishOpen, setPolishOpen] = useState(false);
+  const { updateLessonData, currentAcademicYear } = useData();
   const plan = entry.plan;
   const cls = data.classById.get(plan.className);
   const cache = data.lessonCache[plan.className];
   const title = lessonTitle(plan, cache);
   const lesson = cache && cache !== 'loading' && plan.lessonNumber ? cache.lessons[plan.lessonNumber] : undefined;
+  const planDate = plan.date ? new Date(plan.date) : new Date();
+  const academicYear = currentAcademicYear || academicYearFor(planDate);
   const activities: Activity[] = plan.activities?.length
     ? plan.activities
     : lesson?.orderedActivities || Object.values(lesson?.grouped || {}).flat();
@@ -214,6 +219,28 @@ export function LessonDetailsSheet({
               </p>
             )}
           </section>
+
+          {plan.lessonNumber ? (
+            <LessonSlidesSection
+              year={academicYear}
+              sheet={plan.className}
+              lessonNumber={plan.lessonNumber}
+              legacyInteractiveLessonId={lesson?.interactiveLessonId || null}
+              onMirrorDefault={(viewerId) => {
+                if (!updateLessonData || !plan.lessonNumber || !lesson) return;
+                void updateLessonData(plan.lessonNumber, {
+                  ...lesson,
+                  interactiveLessonId: viewerId || undefined,
+                });
+              }}
+              returnContext={{
+                view: 'week',
+                date: ymd(planDate),
+                lessonPlanId: plan.id,
+                tab: 'unit-viewer',
+              }}
+            />
+          ) : null}
 
           <section className="mt-4 border-t border-[#E2E0EF] pt-4">
             <h3 className={sectionTitle}>Note for this class</h3>

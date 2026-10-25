@@ -438,11 +438,8 @@ export async function attachInteractiveLessonToCcdLesson(
     // Teachers can attach published lessons to their CCD lessons
     if (lesson.status !== 'published') return null;
   }
+  // Legacy keys (no user/year) — kept readable for migration; prefer lesson_viewer_links.
   const key = `${sheet}:${lessonNumber}`;
-  if (!lesson.attachedLessonKeys.includes(key)) {
-    lesson.attachedLessonKeys = [...lesson.attachedLessonKeys, key];
-  }
-  // Also stamp on CCD lesson JSON via localStorage helper key for fast lookup
   try {
     const mapRaw = localStorage.getItem('ccd-ilv-attachments-v1');
     const map = mapRaw ? (JSON.parse(mapRaw) as Record<string, string>) : {};
@@ -451,6 +448,8 @@ export async function attachInteractiveLessonToCcdLesson(
   } catch {
     /* ignore */
   }
+  // Stop growing attached_lesson_keys; links live in lesson_viewer_links going forward.
+  // Keep existing array intact for one release so older clients still resolve.
   // The built-in demo is never written back; the attachment map above is enough.
   if (isBuiltInDemo(lesson)) return lesson;
   return saveInteractiveLesson(lesson);

@@ -76,6 +76,14 @@
       "destination": "/api/router?__route=interactive-lessons/:path*"
     },
     {
+      "source": "/api/slides-links",
+      "destination": "/api/router?__route=slides-links"
+    },
+    {
+      "source": "/api/slides-links/:path*",
+      "destination": "/api/router?__route=slides-links/:path*"
+    },
+    {
       "source": "/api/planning-groups/members",
       "destination": "/api/router?__route=planning-groups/members"
     },
