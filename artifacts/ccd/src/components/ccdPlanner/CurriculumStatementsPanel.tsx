@@ -178,14 +178,14 @@ export function CurriculumStatementsPanel({
   return (
     <div
       className={cn(
-        'flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[1.25rem] border border-indigo-100 bg-white',
+        'flex w-full flex-col rounded-[1.25rem] border border-indigo-100 bg-white',
         className,
       )}
       data-testid="curriculum-statements-panel"
     >
       <div className="shrink-0 border-b border-indigo-50 px-4 py-3">
         <h4 className="text-sm font-extrabold text-slate-800">Curriculum statements</h4>
-        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">
+        <p className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">
           Edit here or in Settings · tick to apply to this lesson
         </p>
         <div className="mt-2 flex flex-wrap gap-1.5">
@@ -233,7 +233,7 @@ export function CurriculumStatementsPanel({
 
       {form ? (
         <div className="shrink-0 space-y-2 border-b border-violet-100 bg-violet-50/60 px-4 py-3">
-          <p className="text-xs font-extrabold uppercase tracking-wide text-violet-800">
+          <p className="text-[13px] font-extrabold uppercase tracking-wide text-violet-800">
             {form.id ? 'Edit' : 'Add'} {form.kind}
           </p>
           {form.kind === 'framework' ? (
@@ -322,7 +322,7 @@ export function CurriculumStatementsPanel({
         </div>
       ) : null}
 
-      <div className="soft-scroll min-h-0 flex-1 space-y-3 overflow-y-auto px-4 py-3">
+      <div className="space-y-3 px-4 py-3">
         {statements.length === 0 && frameworks.length === 0 ? (
           <div className="flex min-h-[12rem] flex-col justify-center rounded-2xl border border-dashed border-amber-200 bg-amber-50/80 px-4 py-6 text-sm text-amber-950">
             <p className="text-base font-extrabold">Nothing set up yet.</p>
@@ -345,7 +345,7 @@ export function CurriculumStatementsPanel({
               </Button>
               <a
                 href="/settings/curriculum"
-                className="inline-flex h-9 items-center rounded-full border border-amber-300 bg-white px-3 text-[12px] font-bold text-amber-950 hover:bg-amber-50"
+                className="inline-flex h-9 items-center rounded-full border border-amber-300 bg-white px-3 text-[13px] font-bold text-amber-950 hover:bg-amber-50"
               >
                 Open Settings
               </a>
@@ -358,7 +358,7 @@ export function CurriculumStatementsPanel({
               return (
                 <div key={fw.id} className="rounded-2xl border border-indigo-100 bg-indigo-50/30">
                   <div className="flex items-center gap-1 border-b border-indigo-100/80 px-2.5 py-1.5">
-                    <p className="min-w-0 flex-1 truncate text-[12px] font-extrabold text-indigo-800">
+                    <p className="min-w-0 flex-1 truncate text-[13px] font-extrabold text-indigo-800">
                       {fw.name}
                     </p>
                     <button
@@ -379,7 +379,7 @@ export function CurriculumStatementsPanel({
                     </button>
                   </div>
                   {fwStrands.length === 0 ? (
-                    <p className="px-3 py-2 text-xs text-slate-500">No strands yet.</p>
+                    <p className="px-3 py-2 text-[13px] text-slate-500">No strands yet.</p>
                   ) : (
                     fwStrands.map((strand) => {
                       const strandStmts = statements.filter((st) => st.strandId === strand.id);
@@ -387,10 +387,10 @@ export function CurriculumStatementsPanel({
                         <div key={strand.id} className="border-t border-indigo-50 px-2 py-2">
                           <div className="mb-1 flex items-center gap-1 px-1">
                             <div className="min-w-0 flex-1">
-                              <p className="truncate text-[11px] font-extrabold uppercase tracking-wide text-indigo-500">
+                              <p className="truncate text-[13px] font-extrabold uppercase tracking-wide text-indigo-500">
                                 {strand.name}
                               </p>
-                              <p className="truncate text-[10px] font-semibold text-slate-400">
+                              <p className="truncate text-[13px] font-semibold text-slate-400">
                                 {strand.subjectId} · {strand.keyStage.toUpperCase()}
                               </p>
                             </div>
@@ -428,7 +428,7 @@ export function CurriculumStatementsPanel({
                                   key={st.id}
                                   className="flex min-h-[44px] items-start gap-1 rounded-xl bg-white px-1.5 py-1"
                                 >
-                                  <label className="flex min-w-0 flex-1 cursor-pointer gap-2 px-1 py-1.5 text-xs text-slate-700">
+                                  <label className="flex min-w-0 flex-1 cursor-pointer gap-2 px-1 py-1.5 text-[13px] text-slate-700">
                                     <input
                                       type="checkbox"
                                       className="mt-0.5"
@@ -464,7 +464,7 @@ export function CurriculumStatementsPanel({
                               );
                             })}
                             {strandStmts.length === 0 ? (
-                              <li className="px-2 py-1 text-[11px] text-slate-400">
+                              <li className="px-2 py-1 text-[13px] text-slate-400">
                                 No statements — add one above.
                               </li>
                             ) : null}
@@ -479,7 +479,7 @@ export function CurriculumStatementsPanel({
 
             {linked.length > 0 ? (
               <div className="rounded-2xl border border-emerald-100 bg-emerald-50/40 p-3">
-                <p className="mb-2 text-[11px] font-extrabold uppercase tracking-wide text-emerald-800">
+                <p className="mb-2 text-[13px] font-extrabold uppercase tracking-wide text-emerald-800">
                   Applied to this lesson
                 </p>
                 <ul className="space-y-1.5">
@@ -490,7 +490,7 @@ export function CurriculumStatementsPanel({
                         <Check className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600" />
                         <span>
                           {strand ? (
-                            <span className="mb-0.5 block text-[10px] font-bold uppercase tracking-wide text-emerald-700">
+                            <span className="mb-0.5 block text-[13px] font-bold uppercase tracking-wide text-emerald-700">
                               {strand.name}
                             </span>
                           ) : null}
@@ -510,7 +510,7 @@ export function CurriculumStatementsPanel({
         )}
       </div>
 
-      <div className="shrink-0 border-t border-indigo-50 px-4 py-2 text-[11px] font-semibold text-slate-400">
+      <div className="shrink-0 border-t border-indigo-50 px-4 py-2 text-[13px] font-semibold text-slate-400">
         <a href="/settings/curriculum" className="text-indigo-600 underline">
           Open full Curriculum in Settings
         </a>

@@ -38,6 +38,7 @@ import {
   lessonEditorFromPath,
   syncLessonEditorUrl,
 } from './studio/plannerRoutes';
+import { cn } from '@/lib/utils';
 
 const UI_FONT = "var(--ss-font-ui, 'Plus Jakarta Sans', ui-sans-serif, system-ui, sans-serif)";
 
@@ -455,7 +456,7 @@ export function LessonsWorkspace({
 
   return (
     <div
-      className="flex min-h-[calc(100vh-7.5rem)] flex-col gap-3"
+      className="flex w-full min-h-0 flex-col gap-3"
       style={{ fontFamily: UI_FONT }}
       data-testid="lessons-planner"
     >
@@ -648,8 +649,14 @@ export function LessonsWorkspace({
         </div>
       </div>
 
-      {/* Full-width lesson area: canvas OR inline lesson plan (Your lessons is a toolbar menu) */}
-      <div className="planner-shell-surface flex min-h-[28rem] min-w-0 flex-1 flex-col overflow-hidden rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3">
+      {/* Full-width lesson area: canvas OR inline lesson plan (Your lessons is a toolbar menu).
+          Lesson plan grows with content so .ccd-studio-workspace-inner scrolls; canvas keeps a bounded shell. */}
+      <div
+        className={cn(
+          'planner-shell-surface flex min-h-[28rem] min-w-0 flex-col rounded-[1.75rem] p-2 shadow-[0_1px_3px_rgba(31,27,77,0.04)] sm:p-3',
+          lessonPlanOpen ? 'overflow-visible' : 'flex-1 overflow-hidden',
+        )}
+      >
         {lessonPlanOpen ? (
           <LessonPlanPanel
             open={lessonPlanOpen}

@@ -493,7 +493,7 @@ export function LessonPlanPanel({
 
   return (
     <section
-      className="flex h-full min-h-0 w-full flex-1 flex-col overflow-hidden rounded-[1.5rem] bg-white"
+      className="flex w-full min-h-[32rem] flex-col rounded-[1.5rem] bg-white"
       aria-labelledby={titleId}
       data-ccd-lesson-plan-panel
     >
@@ -566,12 +566,12 @@ export function LessonPlanPanel({
           />
         </div>
       ) : null}
-      {/* Body — Flesh out overlays; curriculum column fills height (not a small card) */}
-      <div className="relative flex min-h-0 flex-1 overflow-hidden">
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+      {/* Body — Flesh out overlays; columns grow so workspace-inner scrolls past Check understanding */}
+      <div className="relative flex flex-1 flex-col">
+        <div className="flex flex-1 flex-col">
           {tab === 'plan' ? (
-            <div className="grid min-h-0 flex-1 gap-4 overflow-hidden p-4 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:items-stretch">
-              <div className="soft-scroll min-h-0 overflow-y-auto pr-1">
+            <div className="grid gap-4 p-4 sm:p-5 lg:grid-cols-[1.1fr_1fr] lg:items-start">
+              <div className="pr-1">
                 <h3 className="mb-2 text-sm font-extrabold text-slate-800">Lesson sequence</h3>
                 <label className="mb-3 block space-y-1">
                   <span className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">
@@ -729,14 +729,14 @@ export function LessonPlanPanel({
                 </div>
               </div>
 
-              <div className="flex min-h-0 flex-col gap-3 overflow-hidden">
+              <div className="flex flex-col gap-3">
                 {aiPickedNote ? (
                   <p className="shrink-0 rounded-xl bg-violet-50 px-3 py-2 text-[13px] font-semibold text-violet-800">
                     Picked by AI, edit as needed
                   </p>
                 ) : null}
                 <CurriculumStatementsPanel
-                  className="min-h-0 w-full flex-1"
+                  className="w-full"
                   selectedIds={selectedIds}
                   onSelectedIdsChange={(next) => {
                     setAiPickedNote(false);
@@ -747,7 +747,7 @@ export function LessonPlanPanel({
                     });
                   }}
                 />
-                <div className="soft-scroll max-h-[28%] shrink-0 space-y-2 overflow-y-auto">
+                <div className="space-y-2">
                   <div className="rounded-2xl border border-slate-100 bg-white p-3 shadow-sm">
                     <h4 className="mb-1.5 text-xs font-extrabold uppercase tracking-wide text-slate-500">
                       Learning objective
