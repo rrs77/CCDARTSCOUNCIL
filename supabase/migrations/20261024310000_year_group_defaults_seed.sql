@@ -3,6 +3,10 @@
 -- new schools are seeded with org-scoped copies their org can edit.
 -- Additive + idempotent. Do not apply to live DB until review.
 -- Safe to re-run.
+--
+-- Security: seed helper lives in schema private (SECURITY DEFINER). It is NOT
+-- exposed via PostgREST — REVOKE from PUBLIC/anon/authenticated; GRANT EXECUTE
+-- to service_role only. Trigger + migration backfill call it as definer.
 
 -- ---------------------------------------------------------------------------
 -- Tighten catalog write policies: NULL-org writes require is_super_admin();
@@ -97,6 +101,7 @@ END;
 $$;
 
 REVOKE ALL ON FUNCTION private._ccd_apply_shared_defaults_rls(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._ccd_apply_shared_defaults_rls(text) FROM anon, authenticated;
 GRANT EXECUTE ON FUNCTION private._ccd_apply_shared_defaults_rls(text) TO service_role;
 
 SELECT private._ccd_apply_shared_defaults_rls('year_groups');
@@ -110,8 +115,12 @@ SELECT private._ccd_attach_org_fill_trigger('custom_categories');
 
 -- ---------------------------------------------------------------------------
 -- Seed org-scoped copies of NULL-org catalog defaults (idempotent by name).
+-- Private SECURITY DEFINER — not callable via PostgREST by anon/authenticated.
 -- ---------------------------------------------------------------------------
-CREATE OR REPLACE FUNCTION public.ccd_seed_org_catalog_defaults(p_org text)
+-- Drop any earlier public exposure of this helper (idempotent cleanup).
+DROP FUNCTION IF EXISTS public.ccd_seed_org_catalog_defaults(text);
+
+CREATE OR REPLACE FUNCTION private._ccd_seed_org_catalog_defaults(p_org text)
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -251,13 +260,15 @@ BEGIN
 END;
 $$;
 
-REVOKE ALL ON FUNCTION public.ccd_seed_org_catalog_defaults(text) FROM PUBLIC;
-GRANT EXECUTE ON FUNCTION public.ccd_seed_org_catalog_defaults(text) TO service_role;
+REVOKE ALL ON FUNCTION private._ccd_seed_org_catalog_defaults(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._ccd_seed_org_catalog_defaults(text) FROM anon, authenticated;
+GRANT EXECUTE ON FUNCTION private._ccd_seed_org_catalog_defaults(text) TO service_role;
 
-COMMENT ON FUNCTION public.ccd_seed_org_catalog_defaults(text) IS
-  'Copy NULL-org year_groups / category_groups / custom_categories into an organisation. Idempotent by (organisation_id, name). Super-admin defaults stay untouched.';
+COMMENT ON FUNCTION private._ccd_seed_org_catalog_defaults(text) IS
+  'Copy NULL-org year_groups / category_groups / custom_categories into an organisation. Idempotent by (organisation_id, name). Callable only by service_role / definer trigger — not via PostgREST.';
 
 -- Trigger: seed when a new school (organisation) is created.
+-- Seed failures must not block organisation INSERT.
 CREATE OR REPLACE FUNCTION private._ccd_seed_org_catalog_defaults_trg()
 RETURNS trigger
 LANGUAGE plpgsql
@@ -265,12 +276,18 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 BEGIN
-  PERFORM public.ccd_seed_org_catalog_defaults(NEW.id);
+  BEGIN
+    PERFORM private._ccd_seed_org_catalog_defaults(NEW.id::text);
+  EXCEPTION WHEN others THEN
+    RAISE WARNING 'seed failed: %', SQLERRM;
+  END;
   RETURN NEW;
 END;
 $$;
 
 REVOKE ALL ON FUNCTION private._ccd_seed_org_catalog_defaults_trg() FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._ccd_seed_org_catalog_defaults_trg() FROM anon, authenticated;
+-- Trigger functions need no EXECUTE grant to roles; owner/definer runs them.
 
 DO $$
 BEGIN
@@ -293,14 +310,14 @@ BEGIN
     RETURN;
   END IF;
   FOR r IN
-    SELECT o.id
+    SELECT o.id::text AS id
     FROM public.organisations o
     WHERE NOT EXISTS (
       SELECT 1 FROM public.year_groups yg
-      WHERE yg.organisation_id IS NOT DISTINCT FROM o.id
+      WHERE yg.organisation_id IS NOT DISTINCT FROM o.id::text
     )
   LOOP
-    PERFORM public.ccd_seed_org_catalog_defaults(r.id);
+    PERFORM private._ccd_seed_org_catalog_defaults(r.id);
   END LOOP;
 END $$;
 

@@ -11,6 +11,20 @@ CREATE TABLE IF NOT EXISTS public.planner_curriculum (
   updated_by UUID NULL
 );
 
+-- Payload size cap (~2 MiB of JSON text). Additive if table already existed.
+DO $$
+BEGIN
+  IF NOT EXISTS (
+    SELECT 1 FROM pg_constraint
+    WHERE conname = 'planner_curriculum_data_size'
+      AND conrelid = 'public.planner_curriculum'::regclass
+  ) THEN
+    ALTER TABLE public.planner_curriculum
+      ADD CONSTRAINT planner_curriculum_data_size
+      CHECK (octet_length(data::text) < 2000000);
+  END IF;
+END $$;
+
 DO $$
 BEGIN
   IF to_regclass('public.organisations') IS NOT NULL
@@ -33,6 +47,29 @@ END $$;
 
 CREATE INDEX IF NOT EXISTS planner_curriculum_updated_at_idx
   ON public.planner_curriculum (updated_at DESC);
+
+-- Stamp updated_by / updated_at from the calling session (auth.uid()).
+CREATE OR REPLACE FUNCTION private._ccd_stamp_planner_curriculum()
+RETURNS trigger
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  NEW.updated_at := now();
+  NEW.updated_by := auth.uid();
+  RETURN NEW;
+END;
+$$;
+
+REVOKE ALL ON FUNCTION private._ccd_stamp_planner_curriculum() FROM PUBLIC;
+REVOKE ALL ON FUNCTION private._ccd_stamp_planner_curriculum() FROM anon, authenticated;
+
+DROP TRIGGER IF EXISTS trg_ccd_stamp_planner_curriculum ON public.planner_curriculum;
+CREATE TRIGGER trg_ccd_stamp_planner_curriculum
+  BEFORE INSERT OR UPDATE ON public.planner_curriculum
+  FOR EACH ROW
+  EXECUTE FUNCTION private._ccd_stamp_planner_curriculum();
 
 ALTER TABLE public.planner_curriculum ENABLE ROW LEVEL SECURITY;
 

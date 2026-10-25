@@ -118,8 +118,8 @@ END $$;
 DO $$
 DECLARE wrote boolean := false; n int;
 BEGIN
-  -- ensure an org copy exists
-  PERFORM public.ccd_seed_org_catalog_defaults('org_a');
+  -- ensure an org copy exists (postgres / service_role only — not via PostgREST)
+  PERFORM private._ccd_seed_org_catalog_defaults('org_a');
 
   PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a2', true);
   SET LOCAL ROLE authenticated;
@@ -155,9 +155,100 @@ BEGIN
   INSERT INTO rls_results VALUES ('new org seeded with custom_categories copies', n_cc >= 1);
 
   -- Idempotent: second seed does not duplicate
-  PERFORM public.ccd_seed_org_catalog_defaults('org_seed');
+  PERFORM private._ccd_seed_org_catalog_defaults('org_seed');
   SELECT COUNT(*) INTO n_yg FROM public.year_groups WHERE organisation_id = 'org_seed';
   INSERT INTO rls_results VALUES ('seed is idempotent by name', n_yg >= 2 AND n_yg <= 10);
+END $$;
+
+-- ---------------------------------------------------------------------------
+-- HIGH security: seed helper must not be callable by anon / authenticated
+-- ---------------------------------------------------------------------------
+DO $$
+DECLARE
+  blocked_auth boolean := false;
+  blocked_anon boolean := false;
+  before_b int;
+  after_b int;
+  public_exists boolean;
+BEGIN
+  SELECT to_regprocedure('public.ccd_seed_org_catalog_defaults(text)') IS NOT NULL
+    INTO public_exists;
+
+  SELECT COUNT(*) INTO before_b
+  FROM public.year_groups WHERE organisation_id = 'org_b';
+
+  -- authenticated: public function gone, or EXECUTE denied (42501)
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    EXECUTE 'SELECT public.ccd_seed_org_catalog_defaults($1)' USING 'org_b';
+    blocked_auth := false;
+  EXCEPTION
+    WHEN undefined_function THEN blocked_auth := true;      -- 42883
+    WHEN insufficient_privilege THEN blocked_auth := true;  -- 42501
+    WHEN OTHERS THEN blocked_auth := true;                  -- must not succeed
+  END;
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+
+  -- anon: same
+  SET LOCAL ROLE anon;
+  BEGIN
+    EXECUTE 'SELECT public.ccd_seed_org_catalog_defaults($1)' USING 'org_b';
+    blocked_anon := false;
+  EXCEPTION
+    WHEN undefined_function THEN blocked_anon := true;
+    WHEN insufficient_privilege THEN blocked_anon := true;
+    WHEN OTHERS THEN
+      blocked_anon := true;
+  END;
+  RESET ROLE;
+
+  SELECT COUNT(*) INTO after_b
+  FROM public.year_groups WHERE organisation_id = 'org_b';
+
+  INSERT INTO rls_results VALUES (
+    'public.ccd_seed_org_catalog_defaults does not exist',
+    NOT public_exists
+  );
+  INSERT INTO rls_results VALUES (
+    'authenticated cannot call public seed helper',
+    blocked_auth
+  );
+  INSERT INTO rls_results VALUES (
+    'anon cannot call public seed helper',
+    blocked_anon
+  );
+  INSERT INTO rls_results VALUES (
+    'failed seed calls do not write into other org',
+    after_b = before_b
+  );
+
+  -- authenticated also cannot EXECUTE the private helper directly
+  blocked_auth := false;
+  PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a1', true);
+  SET LOCAL ROLE authenticated;
+  BEGIN
+    PERFORM private._ccd_seed_org_catalog_defaults('org_b');
+    blocked_auth := false;
+  EXCEPTION
+    WHEN insufficient_privilege THEN blocked_auth := true;
+    WHEN OTHERS THEN blocked_auth := true;
+  END;
+  RESET ROLE;
+  PERFORM set_config('request.jwt.claim.sub', '', true);
+
+  SELECT COUNT(*) INTO after_b
+  FROM public.year_groups WHERE organisation_id = 'org_b';
+
+  INSERT INTO rls_results VALUES (
+    'authenticated cannot call private._ccd_seed_org_catalog_defaults',
+    blocked_auth
+  );
+  INSERT INTO rls_results VALUES (
+    'private seed denial does not write into other org',
+    after_b = before_b
+  );
 END $$;
 
 -- Shared defaults still exist after seed
@@ -171,9 +262,9 @@ FROM public.year_groups WHERE organisation_id IS NULL;
 -- ---------------------------------------------------------------------------
 DELETE FROM public.planner_curriculum WHERE organisation_id IN ('org_a', 'org_b');
 
--- Org admin can write
+-- Org admin can write (stamp trigger sets updated_by = auth.uid())
 DO $$
-DECLARE wrote boolean := false; n int;
+DECLARE wrote boolean := false; n int; stamped boolean := false;
 BEGIN
   PERFORM set_config('request.jwt.claim.sub', '00000000-0000-4000-8000-0000000000a2', true);
   SET LOCAL ROLE authenticated;
@@ -185,9 +276,13 @@ BEGIN
     wrote := false;
   END;
   SELECT COUNT(*) INTO n FROM public.planner_curriculum WHERE organisation_id = 'org_a';
+  SELECT updated_by = '00000000-0000-4000-8000-0000000000a2'::uuid
+    INTO stamped
+  FROM public.planner_curriculum WHERE organisation_id = 'org_a';
   RESET ROLE;
   PERFORM set_config('request.jwt.claim.sub', '', true);
   INSERT INTO rls_results VALUES ('org admin can write planner_curriculum', wrote AND n = 1);
+  INSERT INTO rls_results VALUES ('planner_curriculum stamps updated_by', COALESCE(stamped, false));
 END $$;
 
 -- Teacher can read own org
