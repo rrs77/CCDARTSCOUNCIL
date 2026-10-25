@@ -24,7 +24,7 @@ import type { PlanTemplate } from '../types/lessonSections';
 import { LibraryMenu } from './ccdPlanner/LibraryMenu';
 import { MyUnitsMenu } from './ccdPlanner/MyUnitsMenu';
 import { YourLessonsMenu } from './ccdPlanner/YourLessonsMenu';
-import { ActivityStepsModal } from './ccdPlanner/ActivityStepsModal';
+import { ActivityDetails } from './ActivityDetails';
 import { LessonPlanPanel } from './ccdPlanner/LessonPlanModal';
 import { PlannerLessonCanvas } from './ccdPlanner/PlannerLessonCanvas';
 import { RunThroughModal } from './ccdPlanner/RunThroughModal';
@@ -65,6 +65,8 @@ export function LessonsWorkspace({
     currentAcademicYear,
     updateLessonData,
     deleteLesson,
+    updateActivity,
+    deleteActivity,
   } = useData();
 
   const derivedKs = useMemo((): LibraryKeyStageId => {
@@ -88,7 +90,8 @@ export function LessonsWorkspace({
     lessonNumber: string;
     lessonData: LessonData;
   } | null>(null);
-  const [activityForSteps, setActivityForSteps] = useState<Activity | null>(null);
+  /** Single-view activity popup (ActivityDetails) — same behaviour as Activity Library. */
+  const [activityForDetails, setActivityForDetails] = useState<Activity | null>(null);
   const [runThroughOpen, setRunThroughOpen] = useState(false);
   const [templateOpen, setTemplateOpen] = useState(false);
   const [liveMessage, setLiveMessage] = useState('');
@@ -290,7 +293,7 @@ export function LessonsWorkspace({
     }
     if (!editingLessonNumber || !allLessonsData[editingLessonNumber]) {
       toast('Open a lesson on the canvas first, then add from Library.');
-      setActivityForSteps(activity);
+      setActivityForDetails(activity);
       return;
     }
     const current = ensureLessonSections(allLessonsData[editingLessonNumber]);
@@ -531,7 +534,7 @@ export function LessonsWorkspace({
               }
             }}
             onOpenActivity={(a) => {
-              setActivityForSteps(a);
+              setActivityForDetails(a);
               setLibraryOpen(false);
             }}
             onAddToLesson={(a) => {
@@ -681,7 +684,7 @@ export function LessonsWorkspace({
             canEdit={!isViewOnly}
             onSave={saveCanvasLesson}
             onOpenLessonPlan={() => openLessonForm(editingLessonNumber)}
-            onOpenActivity={(a) => setActivityForSteps(a)}
+            onOpenActivity={(a) => setActivityForDetails(a)}
             onDuplicate={
               editingLessonNumber && !isViewOnly
                 ? () => void duplicateActiveLesson()
@@ -705,14 +708,26 @@ export function LessonsWorkspace({
         />
       )}
 
-      <ActivityStepsModal
-        open={!!activityForSteps}
-        activity={activityForSteps}
-        onClose={() => setActivityForSteps(null)}
-        onAddToLesson={(a) => {
-          void addActivityToActiveLesson(a);
-        }}
-      />
+      {activityForDetails ? (
+        <ActivityDetails
+          activity={activityForDetails}
+          onClose={() => setActivityForDetails(null)}
+          onAddToLesson={() => {
+            void addActivityToActiveLesson(activityForDetails);
+            setActivityForDetails(null);
+          }}
+          isEditing={false}
+          onUpdate={(updatedActivity) => {
+            void updateActivity(updatedActivity).then((saved) => {
+              setActivityForDetails(saved);
+            });
+          }}
+          onDelete={(activityId) => {
+            void deleteActivity(activityId);
+            setActivityForDetails(null);
+          }}
+        />
+      ) : null}
 
       <RunThroughModal
         open={runThroughOpen}
