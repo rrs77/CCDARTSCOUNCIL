@@ -111,7 +111,7 @@ export function AccountMenu({ compact = true, onNavigate }: AccountMenuProps) {
         aria-label={`Account menu for ${displayName}`}
       >
         <span
-          className="grid h-7 w-7 place-items-center rounded-full bg-[#4338E8] text-[11px] font-extrabold text-white lg:h-8 lg:w-8 lg:text-xs"
+          className="grid h-7 w-7 place-items-center rounded-full bg-[#4338E8] text-[13px] font-extrabold tracking-tight text-white lg:h-8 lg:w-8"
           aria-hidden
         >
           {initials}
