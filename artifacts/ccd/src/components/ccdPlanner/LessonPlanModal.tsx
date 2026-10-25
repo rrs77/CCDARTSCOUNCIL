@@ -7,7 +7,7 @@ import {
   Sparkles,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useId, useMemo, useState } from 'react';
+import { useEffect, useId, useMemo, useRef, useState } from 'react';
 import type { Activity, LessonData } from '../../contexts/DataContext';
 import {
   BUILTIN_SECTION_TYPES,
@@ -41,6 +41,7 @@ import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { printLessonPlanFromDom } from '../../utils/printLessonPlan';
 import { LessonTemplateSelect } from './LessonTemplateSelect';
+import { TemplatePreviewDialog, TemplatePreviewPanel } from './TemplatePreview';
 import { renderLessonTemplateHtml } from '../../utils/lessonTemplates/renderLessonTemplate';
 import {
   getRhythmstixTemplate,
@@ -91,6 +92,10 @@ export function LessonPlanPanel({
   const [insertAt, setInsertAt] = useState<number | null>(null);
   const [draft, setDraft] = useState<LessonData | null>(null);
   const [liveMessage, setLiveMessage] = useState('');
+  /** Which picker the page-1 preview belongs to (shown next to it), or null when hidden. */
+  const [previewAt, setPreviewAt] = useState<'header' | 'print' | null>(null);
+  const [fullPreviewOpen, setFullPreviewOpen] = useState(false);
+  const previewRef = useRef<HTMLDivElement>(null);
   const curriculum = useMemo(() => loadPlannerCurriculum(), [open]);
   const [lessonTemplates, setLessonTemplates] = useState<RhythmstixTemplate[]>(() => cachedLessonTemplates());
   useEffect(() => {
@@ -119,18 +124,31 @@ export function LessonPlanPanel({
     setDraft(ensureLessonSections(base));
     setTab('plan');
     setFleshOpen(false);
+    setPreviewAt(null);
+    setFullPreviewOpen(false);
   }, [open, lessonData]);
 
   const displayTitle = (draft?.title || '').trim() || DEFAULT_LESSON_TITLE;
   const templateId = resolveLessonTemplateId(draft, yearGroup, keyStage);
   const yearDefaultTemplateId = templateIdForYearGroup(yearGroup) || templateIdForKeyStage(keyStage);
-  const setTemplateId = (id: RhythmstixTemplateId) => {
+  const setTemplateId = (id: RhythmstixTemplateId, from: 'header' | 'print' = 'header') => {
     setDraft((d) => (d ? { ...d, lessonTemplateId: id } : d));
-    setLiveMessage(`Template set to ${getRhythmstixTemplate(id, lessonTemplates).name}`);
+    // Show the page-1 preview straight away, next to the picker that was used.
+    setPreviewAt(from);
+    setLiveMessage(`Template set to ${getRhythmstixTemplate(id, lessonTemplates).name}. Preview of page 1 shown.`);
   };
+  const templateName = getRhythmstixTemplate(templateId, lessonTemplates).name;
+  // Bring the preview into view next to the picker that was used (the Print picker sits at the bottom).
+  useEffect(() => {
+    if (!previewAt) return;
+    const el = previewRef.current;
+    // For the Print picker keep the picker row (just below the preview) on screen too.
+    const target = previewAt === 'print' ? ((el?.nextElementSibling as HTMLElement | null) ?? el) : el;
+    if (target && typeof target.scrollIntoView === 'function') target.scrollIntoView({ block: 'nearest' });
+  }, [previewAt, templateId]);
   const templateHtml = useMemo(
     () =>
-      draft && (tab === 'preview' || tab === 'print')
+      draft && (tab === 'preview' || tab === 'print' || previewAt || fullPreviewOpen)
         ? renderLessonTemplateHtml(
             { ...draft, title: displayTitle },
             {
@@ -141,7 +159,7 @@ export function LessonPlanPanel({
             },
           )
         : '',
-    [draft, tab, templateId, lessonTemplates, yearGroup, lessonNumber, displayTitle],
+    [draft, tab, templateId, lessonTemplates, yearGroup, lessonNumber, displayTitle, previewAt, fullPreviewOpen],
   );
 
   const sections = draft?.sections || [];
@@ -506,7 +524,7 @@ export function LessonPlanPanel({
               value={templateId}
               defaultId={yearDefaultTemplateId}
               templates={lessonTemplates}
-              onChange={setTemplateId}
+              onChange={(id) => setTemplateId(id, 'header')}
             />
           </div>
         </div>
@@ -536,6 +554,18 @@ export function LessonPlanPanel({
         </div>
       </div>
 
+      {previewAt === 'header' && tab === 'plan' && templateHtml ? (
+        <div ref={previewRef} className="shrink-0 border-b border-indigo-50 px-4 py-3 sm:px-5">
+          <TemplatePreviewPanel
+            html={templateHtml}
+            templateName={templateName}
+            onOpenFull={() => setFullPreviewOpen(true)}
+            onDismiss={() => setPreviewAt(null)}
+            frameClassName="h-[min(36vh,420px)]"
+            testId="template-preview-header"
+          />
+        </div>
+      ) : null}
       {/* Body — Flesh out overlays; curriculum column fills height (not a small card) */}
       <div className="relative flex min-h-0 flex-1 overflow-hidden">
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
@@ -789,6 +819,18 @@ export function LessonPlanPanel({
         ) : null}
       </div>
 
+      {previewAt === 'print' && tab === 'plan' && templateHtml ? (
+        <div ref={previewRef} className="shrink-0 border-t border-indigo-50 px-4 py-3 sm:px-5">
+          <TemplatePreviewPanel
+            html={templateHtml}
+            templateName={templateName}
+            onOpenFull={() => setFullPreviewOpen(true)}
+            onDismiss={() => setPreviewAt(null)}
+            frameClassName="h-[min(36vh,420px)]"
+            testId="template-preview-print"
+          />
+        </div>
+      ) : null}
       <div className="flex flex-wrap items-center justify-between gap-3 border-t border-indigo-50 px-5 py-3">
         <Button variant="ghost" size="sm" onClick={onClose}>
           Cancel
@@ -799,7 +841,7 @@ export function LessonPlanPanel({
             value={templateId}
             defaultId={yearDefaultTemplateId}
             templates={lessonTemplates}
-            onChange={setTemplateId}
+            onChange={(id) => setTemplateId(id, 'print')}
             compact
           />
           <Button variant="secondary" size="sm" onClick={() => setTab('preview')}>
@@ -825,6 +867,12 @@ export function LessonPlanPanel({
       <div className="sr-only" aria-live="polite">
         {liveMessage}
       </div>
+      <TemplatePreviewDialog
+        open={fullPreviewOpen && !!templateHtml}
+        html={templateHtml}
+        templateName={templateName}
+        onClose={() => setFullPreviewOpen(false)}
+      />
     </section>
   );
 }
