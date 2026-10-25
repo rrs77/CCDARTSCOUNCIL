@@ -30,6 +30,10 @@ import {
 } from '../utils/yearGroupSectionOrder';
 import { customObjectivesApi } from '../config/customObjectivesApi';
 import type { CustomObjective, CustomObjectiveArea } from '../types/customObjectives';
+import {
+  activityDraftHasContent,
+  activityDraftStorageKey,
+} from '../utils/activityDraftContent';
 
 const DURATION_CHIPS = [5, 10, 15, 25] as const;
 
@@ -256,7 +260,9 @@ export function ActivityEditorPage({
   const [showObjectivesBrowser, setShowObjectivesBrowser] = useState(false);
   const [addMenuOpen, setAddMenuOpen] = useState(false);
   const [editingResourceKey, setEditingResourceKey] = useState<string | null>(null);
-  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>('saved');
+  const [draftStatus, setDraftStatus] = useState<'idle' | 'saving' | 'saved'>(
+    mode === 'create' ? 'idle' : 'saved',
+  );
   const [objectiveMeta, setObjectiveMeta] = useState<{
     objectives: CustomObjective[];
     areas: CustomObjectiveArea[];
@@ -304,29 +310,37 @@ export function ActivityEditorPage({
     return () => document.removeEventListener('mousedown', onDoc);
   }, [addMenuOpen]);
 
-  // Autosave draft indicator — skip the mount tick so we don't flash "Saving…"
+  // Autosave draft — skip mount; create mode only persists once title or body content exists.
   useEffect(() => {
     if (draftSkipFirst.current) {
       draftSkipFirst.current = false;
+      if (mode === 'create') {
+        setDraftStatus('idle');
+        return;
+      }
       try {
-        sessionStorage.setItem(
-          `ccd-activity-draft-${mode}-${form.id || form._id || 'new'}`,
-          JSON.stringify(form),
-        );
+        sessionStorage.setItem(activityDraftStorageKey(mode, form), JSON.stringify(form));
       } catch {
         /* ignore */
       }
       setDraftStatus('saved');
       return;
     }
+    if (mode === 'create' && !activityDraftHasContent(form)) {
+      if (draftTimer.current) window.clearTimeout(draftTimer.current);
+      try {
+        sessionStorage.removeItem(activityDraftStorageKey(mode, form));
+      } catch {
+        /* ignore */
+      }
+      setDraftStatus('idle');
+      return;
+    }
     if (draftTimer.current) window.clearTimeout(draftTimer.current);
     setDraftStatus('saving');
     draftTimer.current = window.setTimeout(() => {
       try {
-        sessionStorage.setItem(
-          `ccd-activity-draft-${mode}-${form.id || form._id || 'new'}`,
-          JSON.stringify(form),
-        );
+        sessionStorage.setItem(activityDraftStorageKey(mode, form), JSON.stringify(form));
       } catch {
         /* ignore */
       }
@@ -494,14 +508,15 @@ export function ActivityEditorPage({
   };
 
   const handleDraftClick = async () => {
+    if (mode === 'create' && !activityDraftHasContent(form)) {
+      setDraftStatus('idle');
+      return;
+    }
     setDraftStatus('saving');
     const payload = buildPayload();
     if (onSaveDraft) await onSaveDraft(payload);
     try {
-      sessionStorage.setItem(
-        `ccd-activity-draft-${mode}-${form.id || form._id || 'new'}`,
-        JSON.stringify(form),
-      );
+      sessionStorage.setItem(activityDraftStorageKey(mode, form), JSON.stringify(form));
     } catch {
       /* ignore */
     }
@@ -567,7 +582,11 @@ export function ActivityEditorPage({
           aria-live="polite"
         >
           {draftStatus === 'saved' ? <Check className="h-3.5 w-3.5" strokeWidth={2.5} /> : null}
-          {draftStatus === 'saving' ? 'Saving…' : 'Draft saved'}
+          {draftStatus === 'saving'
+            ? 'Saving…'
+            : draftStatus === 'saved'
+              ? 'Draft saved'
+              : null}
         </div>
         <button
           type="button"
