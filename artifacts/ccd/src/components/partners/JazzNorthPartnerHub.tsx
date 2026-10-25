@@ -1,6 +1,7 @@
 import { ExternalLink } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { getJazzNorthDefaultLayout } from '../../config/partnerOrgHubDefaults';
+import { JAZZ_NORTH_DREAMHOST_BASE_USED } from '../../data/resourceRegistry';
 import {
   JN_CONTACT,
   JN_PINK,
@@ -110,7 +111,13 @@ export function JazzNorthPartnerHub({ onAddedToApp }: JazzNorthPartnerHubProps) 
                 </h3>
                 <p className="mt-1 text-sm text-gray-600">
                   Seed every Jazz North worksheet pack (Can You Sing, Hello Song, 2 and 4, Improvisation)
-                  into Lesson Library and Activity Library in CCDesigner.
+                  into Lesson Library and Activity Library with DreamHost file links.
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Hosted at{' '}
+                  <code className="rounded bg-white/80 px-1 text-[11px] text-gray-700">
+                    {JAZZ_NORTH_DREAMHOST_BASE_USED}
+                  </code>
                 </p>
               </div>
               <PartnerHubAddButton

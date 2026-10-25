@@ -219,7 +219,7 @@ export function SchoolSystemsIntegrationsPanel() {
     <div className="ss-mis-panel">
       <div className="ss-mis-banner" role="status">
         <strong>Nothing is connected yet.</strong> Every provider below is unverified. No data is
-        shared or synced until the provider, your school and CCDesigner have completed the six
+        shared or synced until the provider, your school and Rhythmstix have completed the six
         approval steps.
       </div>
 
