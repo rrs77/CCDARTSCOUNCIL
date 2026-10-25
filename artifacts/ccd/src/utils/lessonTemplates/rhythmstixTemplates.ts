@@ -1,3 +1,4 @@
+import { lessonDurationMinutes } from '../lessonDuration.ts';
 import { PLAN_FOOTER_SITE, PLAN_LOGO_PRINT_CSS, PLAN_LOGO_HEIGHT_PX, planFooterCopyright, planLogoImg } from '../planLogo.ts';
 /**
  * Rhythmstix age-phase lesson plan templates (EYFS → KS5).
@@ -729,10 +730,9 @@ export function buildRhythmstixDoc(
     if (lesson.mainActivity) addStep('Main activity', undefined, String(lesson.mainActivity));
     if (lesson.plenary) addStep('Plenary', undefined, String(lesson.plenary));
   }
-  // Meta: years • minutes • (subject, primary) • focus. Minutes: lesson total, else
-  // the sum of step timings, else the template's default length.
-  const stepMins = doc.steps.reduce((n, st) => n + (st.minutes || 0), 0);
-  const minutes = Number(lesson.totalTime) > 0 ? Number(lesson.totalTime) : stepMins > 0 ? stepMins : template.defaultMinutes;
+  // Meta: years • minutes • (subject, primary) • focus. Minutes: shared helper
+  // (stored totalTime → activity/section sum → 45), same as Your lessons / plan chrome.
+  const minutes = lessonDurationMinutes(lesson);
   const tail: string[] = [`${minutes} minutes`];
   if (template.stage === 'primary' && subject) tail.push(subject);
   const firstCategory = (sections.find((x) => x.activity?.category)?.activity?.category ||

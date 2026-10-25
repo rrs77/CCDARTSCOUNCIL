@@ -15,6 +15,7 @@ import {
 import { useState } from 'react';
 import type { LessonData } from '../../contexts/DataContext';
 import type { PlannerTermDates } from '../../types/plannerCurriculum';
+import { lessonDurationMinutes } from '../../utils/lessonDuration';
 import { PlannerPopover } from './PlannerPopover';
 import { ModalConfirm } from './ModalShell';
 import { cn } from '@/lib/utils';
@@ -200,7 +201,7 @@ export function YourLessonsMenu({
                             <p className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[13px] font-semibold text-[#5F5B7A]">
                               <span className="inline-flex items-center gap-0.5">
                                 <Clock className="h-3 w-3" />
-                                {data.totalTime || 0}m
+                                {lessonDurationMinutes(data)}m
                               </span>
                               <span className="inline-flex items-center gap-0.5">
                                 <Tag className="h-3 w-3" />

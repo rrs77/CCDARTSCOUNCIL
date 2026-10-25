@@ -40,6 +40,7 @@ import { CurriculumStatementsPanel } from './CurriculumStatementsPanel';
 import { cn } from '@/lib/utils';
 import toast from 'react-hot-toast';
 import { printLessonPlanFromDom } from '../../utils/printLessonPlan';
+import { lessonDurationMinutes } from '../../utils/lessonDuration';
 import { LessonTemplateSelect } from './LessonTemplateSelect';
 import { TemplatePreviewDialog, TemplatePreviewPanel } from './TemplatePreview';
 import { renderLessonTemplateHtml } from '../../utils/lessonTemplates/renderLessonTemplate';
@@ -180,14 +181,13 @@ export function LessonPlanPanel({
       }
       grouped[cat].push(a);
     }
-    const totalTime = activities.reduce((sum, a) => sum + (a.time || 0), 0);
+    // Keep stored totalTime (Lesson duration field); display falls back via lessonDurationMinutes.
     setDraft({
       ...draft,
       sections: next,
       orderedActivities: activities,
       grouped,
       categoryOrder,
-      totalTime,
     });
     if (announce) setLiveMessage(announce);
   };
@@ -519,9 +519,35 @@ export function LessonPlanPanel({
             ) : (
               <Pill className="bg-violet-50 text-violet-700">New lesson</Pill>
             )}
-            <Pill className="bg-slate-100 text-slate-600">{draft.totalTime || 0} min</Pill>
+            <Pill className="bg-slate-100 text-slate-600">
+              {lessonDurationMinutes(draft)} min
+            </Pill>
           </div>
-          <div className="mt-2">
+          <div className="mt-2 flex flex-wrap items-end gap-3">
+            <label className="block space-y-1">
+              <span className="text-[13px] font-semibold uppercase tracking-wide text-slate-400">
+                Lesson duration (minutes)
+              </span>
+              <input
+                type="number"
+                min={0}
+                step={5}
+                inputMode="numeric"
+                aria-label="Lesson duration (minutes)"
+                value={Number(draft.totalTime) > 0 ? draft.totalTime : ''}
+                placeholder={String(lessonDurationMinutes({ ...draft, totalTime: 0 }))}
+                onChange={(e) => {
+                  const raw = e.target.value.trim();
+                  if (raw === '') {
+                    setDraft({ ...draft, totalTime: 0 });
+                    return;
+                  }
+                  const n = Math.max(0, Math.round(Number(raw)));
+                  setDraft({ ...draft, totalTime: Number.isFinite(n) ? n : 0 });
+                }}
+                className="h-11 w-[7.5rem] rounded-2xl border border-indigo-100 px-3 text-sm font-bold text-slate-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-400"
+              />
+            </label>
             <LessonTemplateSelect
               id={`${titleId}-template`}
               value={templateId}

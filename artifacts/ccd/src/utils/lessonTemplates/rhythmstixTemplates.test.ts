@@ -185,7 +185,8 @@ describe('document mapping', () => {
     );
     assert.deepEqual(d.meta.slice(-2), ['42 minutes', 'Composition and musical storytelling']);
     const n = buildRhythmstixDoc({ grouped: {}, categoryOrder: [], totalTime: 0 }, { templateId: 'uks2' });
-    assert.ok(n.meta.includes('50 minutes'));
+    // Empty lesson: shared default 45 (not per-template defaultMinutes).
+    assert.ok(n.meta.includes('45 minutes'));
   });
   it('compacts runs of short lines, keeps lead-ins, reads minute ranges', () => {
     assert.equal(

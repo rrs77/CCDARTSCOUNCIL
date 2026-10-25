@@ -22,6 +22,7 @@ import type { Activity, LessonData } from '../../contexts/DataContext';
 import { useSettings } from '../../contexts/SettingsContextNew';
 import type { LessonSection } from '../../types/lessonSections';
 import { ensureLessonSections } from '../../utils/planner/legacyLessonToSections';
+import { lessonDurationMinutes } from '../../utils/lessonDuration';
 import { cn } from '@/lib/utils';
 import { Button, IconButton, Pill } from './ui';
 import { RichHtml } from './RichHtml';
@@ -260,7 +261,9 @@ export function PlannerLessonCanvas({
     [lessonData],
   );
   const sections = ensured?.sections || [];
-  const displayTarget = TARGET_FALLBACK_MIN;
+  const displayTarget = lessonData
+    ? lessonDurationMinutes(lessonData)
+    : TARGET_FALLBACK_MIN;
   const used = sections.reduce((sum, s) => sum + sectionDuration(s), 0);
   const over = used > displayTarget;
   const pct = Math.min(100, Math.round((used / displayTarget) * 100));

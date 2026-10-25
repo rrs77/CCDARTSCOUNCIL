@@ -20,6 +20,7 @@ import {
   lessonMatchesKeyStage,
 } from '../utils/libraryHierarchy';
 import { ensureLessonSections, legacyLessonToSections } from '../utils/planner/legacyLessonToSections';
+import { lessonDurationMinutes } from '../utils/lessonDuration';
 import type { PlanTemplate } from '../types/lessonSections';
 import { LibraryMenu } from './ccdPlanner/LibraryMenu';
 import { MyUnitsMenu } from './ccdPlanner/MyUnitsMenu';
@@ -415,7 +416,7 @@ export function LessonsWorkspace({
     const categoryOrder = current.categoryOrder?.includes(cat)
       ? current.categoryOrder
       : [...(current.categoryOrder || []), cat];
-    const totalTime = (current.totalTime || 0) + (activity.time || 0);
+    // Leave stored totalTime alone (Lesson duration field); list/header use lessonDurationMinutes.
     if (!updateLessonData) {
       toast.error('Save function not available');
       return;
@@ -426,7 +427,6 @@ export function LessonsWorkspace({
       orderedActivities,
       grouped,
       categoryOrder,
-      totalTime,
     });
     setBuilderKey((k) => k + 1);
     setLiveMessage(`Added ${activity.activity} to lesson`);
@@ -862,7 +862,7 @@ export function LessonsWorkspace({
               ? legacyLessonToSections(activeLessonData)
               : []
         }
-        durationMins={activeLessonData?.totalTime}
+        durationMins={lessonDurationMinutes(activeLessonData)}
       />
 
       <TemplatePickerModal
