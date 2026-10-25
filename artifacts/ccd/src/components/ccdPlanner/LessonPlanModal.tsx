@@ -60,6 +60,26 @@ function uid(prefix = 'sec') {
   return `${prefix}-${Math.random().toString(36).slice(2, 10)}`;
 }
 
+/** Pending AI draft shown as Accept / Edit / Discard — not persisted until Accept + Save. */
+type FleshProposal = {
+  id: string;
+  field:
+    | 'learningOutcome'
+    | 'successCriteria'
+    | 'assessment'
+    | 'teacherQuestions'
+    | 'differentiation'
+    | 'section'
+    | 'curriculum';
+  title: string;
+  draftText: string;
+  sectionId?: string;
+  sectionTitle?: string;
+  durationMins?: number;
+  statementIds?: string[];
+  status: 'pending' | 'accepted' | 'discarded';
+};
+
 /**
  * Inline lesson plan — fills the full-width lesson canvas (not ModalShell).
  * Plan / Preview / Print + sequence + curriculum; Flesh out is an overlay drawer
@@ -205,17 +225,13 @@ export function LessonPlanPanel({
 
   const [aiPickedNote, setAiPickedNote] = useState(false);
 
-  const applyFleshOut = async (
+  /** Generate AI drafts only — nothing is written into the lesson until Accept + Save. */
+  const generateFleshOut = async (
     instruction: string,
     scope: 'whole_plan' | { sectionId: string },
     options: FleshOutOptions,
-  ) => {
-    if (!draft) return;
-    const before = {
-      sections: structuredClone(sections),
-      learningOutcome: draft.learningOutcome,
-      successCriteria: draft.successCriteria,
-    };
+  ): Promise<FleshProposal[]> => {
+    if (!draft) return [];
 
     const curr = loadPlannerCurriculum();
     const ks = (
@@ -224,7 +240,6 @@ export function LessonPlanPanel({
       'ks2'
     ).toLowerCase();
 
-    // Only offer Settings statements for this lesson's key stage (and subject when known).
     const allStatements = curr.statements.map((st) => {
       const strand = curr.strands.find((s) => s.id === st.strandId);
       return {
@@ -266,12 +281,17 @@ export function LessonPlanPanel({
         subject: subjectHint,
         learningOutcome: draft.learningOutcome,
         successCriteria: draft.successCriteria,
+        assessment: draft.assessment,
+        differentiation: draft.differentiation,
+        vocabulary: draft.vocabulary,
+        keyQuestions: draft.keyQuestions,
         activities,
         sections,
       },
       curriculumStatements,
       options: {
         ...options,
+        includeAssessment: options.includeAssessment !== false,
         wholeLesson: scope === 'whole_plan' ? options.wholeLesson : false,
         sectionId: scope === 'whole_plan' ? undefined : scope.sectionId,
       },
@@ -284,12 +304,11 @@ export function LessonPlanPanel({
     }
 
     if (res.offlineDemo) {
-      toast('Offline demo applied — start the API server with OPENAI_API_KEY for live AI.', {
+      toast('Offline demo drafts ready — start the API server with OPENAI_API_KEY for live AI.', {
         icon: 'ℹ️',
       });
     }
 
-    // Defence in depth: never apply IDs that were not in the Settings list we sent.
     const allowedIds = new Set(curriculumStatements.map((s) => s.id));
     const result = {
       ...res.result,
@@ -297,111 +316,135 @@ export function LessonPlanPanel({
         allowedIds.has(id),
       ),
     };
-    const pickedByAi = res.pickedByAi && result.selectedStatementIds.length > 0;
-    let nextSections = sections.map((s) => ({ ...s }));
-    let learningOutcome = draft.learningOutcome || '';
-    let successCriteria = draft.successCriteria || '';
 
-    const fillOrReplace = (current: string | undefined, next: string, force: boolean) => {
-      if (!next) return current || '';
-      if (force || !(current || '').trim()) return next;
-      return current || '';
+    const proposals: FleshProposal[] = [];
+    const push = (p: Omit<FleshProposal, 'id' | 'status'>) => {
+      if (!String(p.draftText || '').trim() && !(p.statementIds && p.statementIds.length)) return;
+      proposals.push({ ...p, id: uid('prop'), status: 'pending' });
     };
 
     if (options.includeOutcomes && result.learningOutcome) {
-      learningOutcome = fillOrReplace(learningOutcome, result.learningOutcome, false);
+      push({ field: 'learningOutcome', title: 'Lesson intent / outcomes', draftText: result.learningOutcome });
     }
     if (options.includeSuccessCriteria && result.successCriteria) {
-      successCriteria = fillOrReplace(successCriteria, result.successCriteria, false);
+      push({ field: 'successCriteria', title: 'I CAN / success criteria', draftText: result.successCriteria });
     }
-
+    if (options.includeAssessment !== false && result.assessment) {
+      push({ field: 'assessment', title: 'Assessment — look for', draftText: result.assessment });
+    }
     if (options.includeTeacherQuestions) {
       const html = formatTeacherQuestionsHtml(result.teacherQuestions);
-      if (html) {
-        const existing = nextSections.find(
-          (s) => /question/i.test(s.title) || s.kind === 'afl',
-        );
-        if (existing) {
-          nextSections = nextSections.map((s) =>
-            s.id === existing.id
-              ? {
-                  ...s,
-                  bodyHtml: fillOrReplace(s.bodyHtml, html, false),
-                  lastWrittenBy: 'ai' as const,
-                }
-              : s,
-          );
-        } else {
-          nextSections = [
-            ...nextSections,
-            {
-              id: uid('sec'),
-              kind: 'afl' as const,
-              title: 'Teacher questions',
-              bodyHtml: html,
-              lastWrittenBy: 'ai' as const,
-              createdAt: new Date().toISOString(),
-            },
-          ];
-        }
-      }
+      if (html) push({ field: 'teacherQuestions', title: 'Teacher questions', draftText: html });
     }
-
     if (options.includeDifferentiation) {
       const html = formatDifferentiationHtml(result.differentiation);
-      if (html) {
-        const existing = nextSections.find((s) => s.kind === 'differentiation');
-        if (existing) {
-          nextSections = nextSections.map((s) =>
-            s.id === existing.id
-              ? {
-                  ...s,
-                  bodyHtml: fillOrReplace(s.bodyHtml, html, false),
-                  lastWrittenBy: 'ai' as const,
-                }
-              : s,
-          );
-        } else {
-          nextSections = [
-            ...nextSections,
-            {
-              id: uid('sec'),
-              kind: 'differentiation' as const,
-              title: 'Differentiation',
-              bodyHtml: html,
-              lastWrittenBy: 'ai' as const,
-              createdAt: new Date().toISOString(),
-            },
-          ];
-        }
+      if (html) push({ field: 'differentiation', title: 'Differentiation', draftText: html });
+    }
+    if (options.wholeLesson && result.wholeLessonSections.length) {
+      for (const s of result.wholeLessonSections) {
+        const existing = sections.find((x) => x.id === s.sectionId);
+        push({
+          field: 'section',
+          title: existing?.title || s.title || 'Section',
+          draftText: s.bodyHtml,
+          sectionId: s.sectionId,
+          durationMins: s.durationMins,
+          sectionTitle: s.title,
+        });
+      }
+    } else if (scope !== 'whole_plan' && result.sectionBodies.length) {
+      const body = result.sectionBodies[0];
+      const existing = sections.find((x) => x.id === body.sectionId);
+      push({
+        field: 'section',
+        title: existing?.title || 'Section',
+        draftText: body.bodyHtml,
+        sectionId: body.sectionId,
+      });
+    }
+    if (options.autoPickCurriculum && result.selectedStatementIds.length) {
+      const labels = result.selectedStatementIds
+        .map((id) => curriculumStatements.find((s) => s.id === id)?.text || id)
+        .join('\n• ');
+      push({
+        field: 'curriculum',
+        title: 'Curriculum statements',
+        draftText: `• ${labels}`,
+        statementIds: result.selectedStatementIds,
+      });
+    }
+
+    setLiveMessage(
+      proposals.length
+        ? `${proposals.length} AI draft${proposals.length === 1 ? '' : 's'} ready — Accept, Edit or Discard each. Nothing saves until you Accept and then Save the lesson.`
+        : 'AI returned no drafts to review',
+    );
+    if (!proposals.length) toast('No drafts to review — try a clearer instruction or tick more sections.');
+    else toast.success(`${proposals.length} draft${proposals.length === 1 ? '' : 's'} ready for review`);
+    return proposals;
+  };
+
+  const acceptFleshProposal = (proposal: FleshProposal) => {
+    if (!draft) return;
+    const before = {
+      sections: structuredClone(sections),
+      learningOutcome: draft.learningOutcome,
+      successCriteria: draft.successCriteria,
+    };
+    let nextSections = sections.map((s) => ({ ...s }));
+    let learningOutcome = draft.learningOutcome || '';
+    let successCriteria = draft.successCriteria || '';
+    let assessment = draft.assessment || '';
+    let customObjectives = draft.customObjectives || [];
+
+    if (proposal.field === 'learningOutcome') learningOutcome = proposal.draftText;
+    if (proposal.field === 'successCriteria') successCriteria = proposal.draftText;
+    if (proposal.field === 'assessment') assessment = proposal.draftText;
+
+    if (proposal.field === 'teacherQuestions' || proposal.field === 'differentiation') {
+      const kind = proposal.field === 'teacherQuestions' ? 'afl' : 'differentiation';
+      const title = proposal.field === 'teacherQuestions' ? 'Teacher questions' : 'Differentiation';
+      const existing =
+        proposal.field === 'teacherQuestions'
+          ? nextSections.find((s) => /question/i.test(s.title) || s.kind === 'afl')
+          : nextSections.find((s) => s.kind === 'differentiation');
+      if (existing) {
+        nextSections = nextSections.map((s) =>
+          s.id === existing.id
+            ? { ...s, bodyHtml: proposal.draftText, lastWrittenBy: 'ai' as const }
+            : s,
+        );
+      } else {
+        nextSections = [
+          ...nextSections,
+          {
+            id: uid('sec'),
+            kind: kind as LessonSectionKind,
+            title,
+            bodyHtml: proposal.draftText,
+            lastWrittenBy: 'ai' as const,
+            createdAt: new Date().toISOString(),
+          },
+        ];
       }
     }
 
-    if (options.wholeLesson && result.wholeLessonSections.length) {
-      const byId = new Map(result.wholeLessonSections.map((s) => [s.sectionId, s]));
-      nextSections = nextSections.map((s) => {
-        const hit = byId.get(s.id);
-        if (!hit) return s;
-        return {
-          ...s,
-          title: hit.title || s.title,
-          durationMins: hit.durationMins ?? s.durationMins,
-          bodyHtml: hit.bodyHtml,
-          lastWrittenBy: 'ai' as const,
-        };
-      });
-    } else if (scope !== 'whole_plan' && result.sectionBodies.length) {
-      const body = result.sectionBodies[0];
+    if (proposal.field === 'section' && proposal.sectionId) {
       nextSections = nextSections.map((s) =>
-        s.id === body.sectionId
-          ? { ...s, bodyHtml: body.bodyHtml, lastWrittenBy: 'ai' as const }
+        s.id === proposal.sectionId
+          ? {
+              ...s,
+              title: proposal.sectionTitle || s.title,
+              durationMins: proposal.durationMins ?? s.durationMins,
+              bodyHtml: proposal.draftText,
+              lastWrittenBy: 'ai' as const,
+            }
           : s,
       );
     }
 
-    let customObjectives = draft.customObjectives || [];
-    if (options.autoPickCurriculum && result.selectedStatementIds.length) {
-      customObjectives = [...new Set([...customObjectives, ...result.selectedStatementIds])];
+    if (proposal.field === 'curriculum' && proposal.statementIds?.length) {
+      customObjectives = [...new Set([...customObjectives, ...proposal.statementIds])];
       setAiPickedNote(true);
     }
 
@@ -414,12 +457,12 @@ export function LessonPlanPanel({
     const turn = {
       id: uid('ai'),
       createdAt: new Date().toISOString(),
-      scope,
-      instruction,
+      scope: 'whole_plan' as const,
+      instruction: `Accepted: ${proposal.title}`,
       snapshotBefore: before,
       snapshotAfter: after,
       teacherDirtySectionIds: [],
-      applyMode: 'fill_empty_only' as const,
+      applyMode: 'overwrite_selected' as const,
     };
     const history = [...prevAi.history.slice(0, prevAi.historyIndex + 1), turn].slice(-20);
     setDraft({
@@ -427,16 +470,13 @@ export function LessonPlanPanel({
       sections: nextSections,
       learningOutcome,
       successCriteria,
+      assessment,
       customObjectives,
-      curriculumType: options.autoPickCurriculum ? 'CUSTOM' : draft.curriculumType,
+      curriculumType: proposal.field === 'curriculum' ? 'CUSTOM' : draft.curriculumType,
       aiFleshOut: { history, historyIndex: history.length - 1 },
     });
-    setLiveMessage(
-      pickedByAi
-        ? 'Flesh out applied — curriculum statements picked by AI (edit as needed)'
-        : 'Flesh out applied — all fields remain editable',
-    );
-    toast.success('Flesh out applied');
+    setLiveMessage(`Accepted “${proposal.title}” into the draft — Save the lesson to persist.`);
+    toast.success(`Accepted — save the lesson to keep “${proposal.title}”`);
   };
 
   const undoAi = () => {
@@ -778,15 +818,18 @@ export function LessonPlanPanel({
         {/* Overlay drawer — does not shrink sequence / curriculum columns */}
         {fleshOpen ? (
           <aside
-            className="absolute inset-y-0 right-0 z-10 flex w-[min(100%,320px)] flex-col border-l border-violet-100 bg-violet-50/95 shadow-xl shadow-violet-900/10 backdrop-blur-sm"
+            className="absolute inset-y-0 right-0 z-10 flex w-[min(100%,380px)] flex-col border-l border-violet-100 bg-violet-50/95 shadow-xl shadow-violet-900/10 backdrop-blur-sm"
             aria-label="Flesh out with AI"
           >
             <div className="border-b border-violet-100 px-4 py-3">
               <p className="text-sm font-extrabold text-violet-900">Flesh out with AI</p>
-              <p className="text-[13px] text-violet-700">Results stay editable.</p>
+              <p className="text-[13px] text-violet-700">
+                Review each draft — nothing saves until you Accept and then Save the lesson.
+              </p>
             </div>
             <FleshOutPanel
-              onApply={applyFleshOut}
+              onGenerate={generateFleshOut}
+              onAccept={acceptFleshProposal}
               onUndo={undoAi}
               onRedo={redoAi}
               canUndo={(draft.aiFleshOut?.historyIndex ?? -1) >= 0}
@@ -896,7 +939,8 @@ function InsertButton({
 }
 
 function FleshOutPanel({
-  onApply,
+  onGenerate,
+  onAccept,
   onUndo,
   onRedo,
   canUndo,
@@ -904,11 +948,12 @@ function FleshOutPanel({
   sections,
   curriculumStatementCount,
 }: {
-  onApply: (
+  onGenerate: (
     instruction: string,
     scope: 'whole_plan' | { sectionId: string },
     options: FleshOutOptions,
-  ) => void | Promise<void>;
+  ) => Promise<FleshProposal[]>;
+  onAccept: (proposal: FleshProposal) => void;
   onUndo: () => void;
   onRedo: () => void;
   canUndo: boolean;
@@ -921,13 +966,17 @@ function FleshOutPanel({
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [available, setAvailable] = useState<boolean | null>(null);
+  const [aiAddon, setAiAddon] = useState(true);
   const [offlineDemo, setOfflineDemo] = useState(false);
   const [availabilityMessage, setAvailabilityMessage] = useState<string | null>(null);
+  const [proposals, setProposals] = useState<FleshProposal[]>([]);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [opts, setOpts] = useState<FleshOutOptions>({
     includeOutcomes: true,
     includeSuccessCriteria: true,
     includeTeacherQuestions: true,
     includeDifferentiation: true,
+    includeAssessment: true,
     autoPickCurriculum: false,
     wholeLesson: false,
   });
@@ -936,6 +985,7 @@ function FleshOutPanel({
     let cancelled = false;
     void checkFleshOutAvailable().then((r) => {
       if (cancelled) return;
+      setAiAddon(r.aiAddon !== false);
       setAvailable(r.available);
       setOfflineDemo(!!r.offlineDemo && !r.live);
       setAvailabilityMessage(r.message || null);
@@ -962,7 +1012,7 @@ function FleshOutPanel({
     }
     setBusy(true);
     try {
-      await onApply(
+      const next = await onGenerate(
         instruction.trim() || 'Flesh out this plan',
         scopeId === 'whole_plan' ? 'whole_plan' : { sectionId: scopeId },
         {
@@ -970,9 +1020,12 @@ function FleshOutPanel({
           wholeLesson: scopeId === 'whole_plan' ? opts.wholeLesson : false,
         },
       );
+      setProposals(next);
+      setEditingId(null);
     } catch (e: unknown) {
       const msg = e instanceof Error ? e.message : 'Flesh out failed';
       setError(msg);
+      if (/ai add-on required/i.test(msg)) setAiAddon(false);
       throw e;
     } finally {
       setBusy(false);
@@ -981,7 +1034,8 @@ function FleshOutPanel({
 
   const checks: { key: keyof FleshOutOptions; label: string; hint?: string }[] = [
     { key: 'includeOutcomes', label: 'Lesson outcomes' },
-    { key: 'includeSuccessCriteria', label: 'Success criteria' },
+    { key: 'includeSuccessCriteria', label: 'I CAN / success criteria' },
+    { key: 'includeAssessment', label: 'Assessment (look for)' },
     { key: 'includeTeacherQuestions', label: 'Teacher questions' },
     { key: 'includeDifferentiation', label: 'Differentiation' },
     {
@@ -992,9 +1046,32 @@ function FleshOutPanel({
     {
       key: 'wholeLesson',
       label: 'Flesh out whole lesson (sequenced plan)',
-      hint: 'Timings, teacher/pupil actions, transitions, resources, questions — still editable; re-run any section from Scope',
+      hint: 'Drafts per section — Accept each before Save',
     },
   ];
+
+  if (aiAddon === false) {
+    return (
+      <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
+        <div
+          role="status"
+          className="w-full rounded-2xl border border-violet-200 bg-white px-4 py-5 text-left shadow-sm"
+          data-testid="ai-addon-upsell"
+        >
+          <p className="text-[13px] font-extrabold uppercase tracking-wide text-violet-700">
+            AI add-on required
+          </p>
+          <p className="mt-2 text-[14px] leading-relaxed text-slate-700">
+            Flesh out and other AI tools are part of an optional school add-on. Ask your
+            organisation administrator if you need access. Planning, curriculum links and export
+            stay available without it.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
+  const pending = proposals.filter((p) => p.status === 'pending');
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-3 overflow-y-auto px-4 py-3">
@@ -1013,7 +1090,7 @@ function FleshOutPanel({
           className="rounded-2xl border border-amber-200 bg-amber-50 px-3 py-2 text-[13px] font-semibold text-amber-950"
         >
           {availabilityMessage ||
-            'AI needs the API server running or VITE_API_PROXY_TARGET set. Offline demo mode is active.'}
+            'AI needs the API server running. Offline demo mode is active.'}
         </div>
       ) : null}
       {error ? (
@@ -1035,9 +1112,82 @@ function FleshOutPanel({
           <a href="/settings/curriculum" className="underline">
             Settings → Curriculum
           </a>
-          . Add a framework, strand and statement for this key stage first.
+          .
         </div>
       ) : null}
+
+      {pending.length ? (
+        <div className="space-y-2" data-testid="flesh-out-review-cards">
+          <p className="text-[13px] font-bold uppercase tracking-wide text-violet-700">
+            Review drafts
+          </p>
+          {pending.map((p) => (
+            <div
+              key={p.id}
+              className="w-full rounded-2xl border border-violet-100 bg-white p-3 shadow-sm"
+            >
+              <p className="text-[13px] font-extrabold text-violet-900">{p.title}</p>
+              {editingId === p.id ? (
+                <textarea
+                  value={p.draftText}
+                  onChange={(e) =>
+                    setProposals((prev) =>
+                      prev.map((x) => (x.id === p.id ? { ...x, draftText: e.target.value } : x)),
+                    )
+                  }
+                  rows={5}
+                  className="mt-2 w-full rounded-xl border border-violet-200 px-2 py-1.5 text-[13px] leading-relaxed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
+                />
+              ) : (
+                <div
+                  className="mt-2 max-h-40 overflow-y-auto whitespace-pre-wrap text-[13px] leading-relaxed text-slate-700"
+                  dangerouslySetInnerHTML={
+                    p.draftText.includes('<')
+                      ? { __html: p.draftText }
+                      : undefined
+                  }
+                >
+                  {p.draftText.includes('<') ? null : p.draftText}
+                </div>
+              )}
+              <div className="mt-2 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  className="inline-flex h-10 items-center rounded-full bg-violet-600 px-3 text-[13px] font-semibold text-white hover:bg-violet-700"
+                  onClick={() => {
+                    onAccept(p);
+                    setProposals((prev) =>
+                      prev.map((x) => (x.id === p.id ? { ...x, status: 'accepted' } : x)),
+                    );
+                    setEditingId(null);
+                  }}
+                >
+                  Accept
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-10 items-center rounded-full border border-violet-200 px-3 text-[13px] font-semibold text-violet-800"
+                  onClick={() => setEditingId(editingId === p.id ? null : p.id)}
+                >
+                  {editingId === p.id ? 'Done editing' : 'Edit'}
+                </button>
+                <button
+                  type="button"
+                  className="inline-flex h-10 items-center rounded-full border border-slate-200 px-3 text-[13px] font-semibold text-slate-600"
+                  onClick={() =>
+                    setProposals((prev) =>
+                      prev.map((x) => (x.id === p.id ? { ...x, status: 'discarded' } : x)),
+                    )
+                  }
+                >
+                  Discard
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : null}
+
       <label className="block space-y-1">
         <span className="text-[13px] font-bold uppercase tracking-wide text-violet-700">
           Instruction
@@ -1103,7 +1253,7 @@ function FleshOutPanel({
         className="inline-flex h-11 items-center justify-center gap-1.5 rounded-full bg-violet-600 px-4 text-sm font-semibold text-white hover:bg-violet-700 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
       >
         <Sparkles className="h-4 w-4" />
-        {busy ? 'Generating…' : 'Apply'}
+        {busy ? 'Generating…' : 'Generate drafts'}
       </button>
       <div className="flex gap-2">
         <button
@@ -1112,7 +1262,7 @@ function FleshOutPanel({
           onClick={onUndo}
           className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-violet-200 text-sm font-semibold text-violet-800 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
         >
-          Undo AI
+          Undo accept
         </button>
         <button
           type="button"
@@ -1120,13 +1270,12 @@ function FleshOutPanel({
           onClick={onRedo}
           className="inline-flex h-11 flex-1 items-center justify-center rounded-full border border-violet-200 text-sm font-semibold text-violet-800 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400"
         >
-          Redo AI
+          Redo accept
         </button>
       </div>
       <p className="text-[13px] leading-relaxed text-violet-700">
-        {offlineDemo
-          ? 'Offline demo fills empty fields locally (no OpenAI key in the browser). Start the API server with OPENAI_API_KEY for live AI.'
-          : 'Uses the server OPENAI_API_KEY only (never in the browser). Only ticked sections are generated. Empty teacher fields are filled first; re-run a single section from Scope anytime.'}
+        Uses the server OPENAI_API_KEY only. Drafts appear as cards — Accept writes into this open
+        lesson draft; Save persists. Never invents curriculum IDs outside your Settings list.
       </p>
     </div>
   );

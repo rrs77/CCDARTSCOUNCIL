@@ -7,11 +7,14 @@ export interface TranscriptionResult {
   provider: TranscriptionProvider;
   lines: LyricLine[];
   message?: string;
+  code?: string;
+  aiAddon?: boolean;
 }
 
 /**
  * Pluggable speech-to-text. Calls the server proxy when OPENAI_API_KEY is configured.
  * Never sends keys from the client — the API route holds the secret.
+ * Server gates with requireAiAddon (super_admin via profiles.role OR organisations.ai_addon).
  */
 export async function transcribeAudioForLyrics(
   audioUrl: string,
@@ -27,8 +30,22 @@ export async function transcribeAudioForLyrics(
       body: JSON.stringify({ audioUrl, provider: 'openai-whisper' }),
     });
 
+    const body = await res.json().catch(() => ({}));
+
+    if (res.status === 403 || body?.code === 'ai_addon_required') {
+      return {
+        provider: 'none',
+        lines: [],
+        aiAddon: false,
+        code: 'ai_addon_required',
+        message:
+          (typeof body.message === 'string' && body.message) ||
+          (typeof body.error === 'string' && body.error) ||
+          'AI add-on required',
+      };
+    }
+
     if (res.status === 501 || res.status === 503) {
-      const body = await res.json().catch(() => ({}));
       return {
         provider: 'none',
         lines: [],
@@ -39,7 +56,6 @@ export async function transcribeAudioForLyrics(
     }
 
     if (!res.ok) {
-      const body = await res.json().catch(() => ({}));
       return {
         provider: 'none',
         lines: [],
@@ -47,7 +63,7 @@ export async function transcribeAudioForLyrics(
       };
     }
 
-    const data = (await res.json()) as {
+    const data = body as {
       lines?: { text: string; startMs: number; endMs: number }[];
       provider?: TranscriptionProvider;
     };
@@ -62,6 +78,7 @@ export async function transcribeAudioForLyrics(
     return {
       provider: data.provider || 'openai-whisper',
       lines,
+      aiAddon: true,
     };
   } catch {
     return {
@@ -74,26 +91,46 @@ export async function transcribeAudioForLyrics(
 }
 
 /** Probe endpoint to show UI status without uploading. */
-export async function getTranscriptionProviderStatus(): Promise<{
+export async function getTranscriptionProviderStatus(
+  authToken?: string | null,
+): Promise<{
   available: boolean;
   provider: TranscriptionProvider;
   message: string;
+  aiAddon: boolean;
+  code?: string;
 }> {
   try {
-    const res = await fetch('/api/interactive-lessons/transcribe', { method: 'GET' });
+    const res = await fetch('/api/interactive-lessons/transcribe', {
+      method: 'GET',
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {},
+    });
     const data = await res.json().catch(() => ({}));
+    const aiAddon = data?.aiAddon === true;
+    const keyAvailable = Boolean(data.available);
+    if (keyAvailable && !aiAddon) {
+      return {
+        available: false,
+        aiAddon: false,
+        provider: 'none',
+        code: 'ai_addon_required',
+        message: 'AI add-on required',
+      };
+    }
     return {
-      available: Boolean(data.available),
+      available: keyAvailable && aiAddon,
+      aiAddon,
       provider: data.provider || 'none',
       message:
         data.message ||
-        (data.available
+        (keyAvailable
           ? 'OpenAI Whisper is available for auto-timing.'
           : 'No OPENAI_API_KEY set — Tap to sync is always available.'),
     };
   } catch {
     return {
       available: false,
+      aiAddon: false,
       provider: 'none',
       message: 'Transcription status unknown — Tap to sync is always available.',
     };

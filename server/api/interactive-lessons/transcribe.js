@@ -2,14 +2,21 @@
  * Pluggable lyrics transcription (OpenAI Whisper).
  * Routed through /api/router so we stay within the Hobby serverless function limit.
  * Secret: OPENAI_API_KEY (server env only — never commit).
+ *
+ * Gating: assertRateLimit + requireAiAddon (super_admin via profiles.role OR
+ * organisations.ai_addon). Spoofed client role fields are ignored.
  */
 
 import {
+  assertRateLimit,
   corsHeaders,
+  getBearerToken,
+  getClientIp,
   jsonResponse,
   optionsResponse,
   requireAuth,
 } from '../../../api/_authShared.js';
+import { probeAiAddon, requireAiAddon } from '../../../api/_aiAddon.js';
 
 const OPENAI_URL = 'https://api.openai.com/v1/audio/transcriptions';
 
@@ -17,12 +24,26 @@ function getOpenAiKey() {
   return process.env.OPENAI_API_KEY || process.env.WHISPER_API_KEY || '';
 }
 
-export async function GET() {
+export async function GET(request) {
   const key = getOpenAiKey();
+  let aiAddon = false;
+  try {
+    if (getBearerToken(request)) {
+      const auth = await requireAuth(request);
+      if (auth.ok) {
+        const probe = await probeAiAddon(auth.userId);
+        aiAddon = probe.aiAddon;
+      }
+    }
+  } catch {
+    /* key status still returned */
+  }
+
   if (!key) {
     return jsonResponse(
       {
         available: false,
+        aiAddon,
         provider: 'none',
         message:
           'No OPENAI_API_KEY (or WHISPER_API_KEY) is set. Auto-transcribe is disabled; use Tap to sync or paste lyrics.',
@@ -32,16 +53,33 @@ export async function GET() {
   }
   return jsonResponse({
     available: true,
+    aiAddon,
     provider: 'openai-whisper',
-    message: 'OpenAI Whisper is configured for auto-timing lyrics.',
+    message: aiAddon
+      ? 'OpenAI Whisper is configured for auto-timing lyrics.'
+      : 'AI add-on required',
   });
 }
 
 export async function POST(request) {
   if (request.method === 'OPTIONS') return optionsResponse(request);
 
+  const ip = getClientIp(request) || 'unknown';
+  const limited = assertRateLimit(`ilv-transcribe:${ip}`, { limit: 20, windowMs: 60_000 });
+  if (!limited.ok) return limited.response;
+
   const auth = await requireAuth(request);
   if (!auth.ok) return auth.response;
+
+  let body;
+  try {
+    body = await request.json();
+  } catch {
+    return jsonResponse({ message: 'Invalid JSON body' }, 400);
+  }
+
+  const entitlement = await requireAiAddon(auth.userId, body);
+  if (!entitlement.ok) return entitlement.response;
 
   const key = getOpenAiKey();
   if (!key) {
@@ -54,13 +92,6 @@ export async function POST(request) {
       },
       501,
     );
-  }
-
-  let body;
-  try {
-    body = await request.json();
-  } catch {
-    return jsonResponse({ message: 'Invalid JSON body' }, 400);
   }
 
   const audioUrl = typeof body.audioUrl === 'string' ? body.audioUrl.trim() : '';

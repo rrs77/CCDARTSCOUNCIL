@@ -5,6 +5,7 @@ export type FleshOutOptions = {
   includeSuccessCriteria: boolean;
   includeTeacherQuestions: boolean;
   includeDifferentiation: boolean;
+  includeAssessment?: boolean;
   autoPickCurriculum: boolean;
   wholeLesson: boolean;
   sectionId?: string;
@@ -21,6 +22,7 @@ export type FleshOutCurriculumStatement = {
 export type FleshOutResult = {
   learningOutcome: string;
   successCriteria: string;
+  assessment?: string;
   teacherQuestions: { opening: string[]; during: string[]; plenary: string[] };
   differentiation: {
     support: string;
@@ -43,13 +45,16 @@ export type FleshOutResponse =
   | { ok: false; message: string; code?: string; status: number };
 
 export type FleshOutAvailability = {
-  /** True when Apply can run (live OpenAI or offline demo). */
+  /** True when generation can run (live OpenAI or offline demo) and AI add-on allows it. */
   available: boolean;
   /** Live OpenAI key is configured on the API server. */
   live: boolean;
   /** Local/offline deterministic stub (no key, no network). */
   offlineDemo: boolean;
+  /** Org has organisations.ai_addon (or caller is super admin). */
+  aiAddon: boolean;
   message?: string;
+  code?: string;
 };
 
 const LOCAL_API_HINT =
@@ -153,6 +158,9 @@ export function buildOfflineDemoFleshOut(input: {
   return {
     learningOutcome,
     successCriteria,
+    assessment: input.options.includeAssessment !== false
+      ? `Look for pupils taking part in ${named} with a clear role.`
+      : '',
     teacherQuestions,
     differentiation,
     selectedStatementIds: [],
@@ -174,27 +182,36 @@ export async function checkFleshOutAvailable(): Promise<FleshOutAvailability> {
         available: true,
         live: false,
         offlineDemo: true,
+        aiAddon: true,
         message: LOCAL_API_HINT,
       };
     }
 
+    const aiAddon = body?.aiAddon === true;
     if (body && typeof body === 'object' && 'available' in body) {
       if (body.available) {
         return {
-          available: true,
+          available: aiAddon,
           live: true,
           offlineDemo: false,
-          message: body.message,
+          aiAddon,
+          message: aiAddon
+            ? body.message
+            : 'AI add-on required',
+          code: aiAddon ? undefined : 'ai_addon_required',
         };
       }
-      // Server reached but OPENAI_API_KEY missing — still allow offline demo locally.
+      // Server reached but OPENAI_API_KEY missing — offline demo only when add-on allows.
       return {
-        available: true,
+        available: aiAddon,
         live: false,
-        offlineDemo: true,
-        message:
-          (typeof body.message === 'string' && body.message) ||
-          'OPENAI_API_KEY is not set on the API server. Offline demo mode is active. Start api-server with OPENAI_API_KEY for live AI.',
+        offlineDemo: aiAddon,
+        aiAddon,
+        message: aiAddon
+          ? (typeof body.message === 'string' && body.message) ||
+            'OPENAI_API_KEY is not set on the API server. Offline demo mode is active.'
+          : 'AI add-on required',
+        code: aiAddon ? undefined : 'ai_addon_required',
       };
     }
 
@@ -202,6 +219,7 @@ export async function checkFleshOutAvailable(): Promise<FleshOutAvailability> {
       available: true,
       live: false,
       offlineDemo: true,
+      aiAddon: true,
       message: LOCAL_API_HINT,
     };
   } catch {
@@ -209,6 +227,7 @@ export async function checkFleshOutAvailable(): Promise<FleshOutAvailability> {
       available: true,
       live: false,
       offlineDemo: true,
+      aiAddon: true,
       message: LOCAL_API_HINT,
     };
   }
@@ -223,6 +242,10 @@ export async function requestFleshOut(input: {
     subject?: string;
     learningOutcome?: string;
     successCriteria?: string;
+    assessment?: string;
+    differentiation?: string;
+    vocabulary?: string;
+    keyQuestions?: string;
     activities?: Array<{
       name?: string;
       activity?: string;
@@ -252,6 +275,19 @@ export async function requestFleshOut(input: {
       body: JSON.stringify(input),
     });
     const body = await res.json().catch(() => null);
+
+    // Paid AI add-on missing — never fall back to offline demo.
+    if (res.status === 403 || body?.code === 'ai_addon_required') {
+      return {
+        ok: false,
+        status: 403,
+        message:
+          (body && typeof body.message === 'string' && body.message) ||
+          (body && typeof body.error === 'string' && body.error) ||
+          'AI add-on required',
+        code: 'ai_addon_required',
+      };
+    }
 
     if (isUnreachableProxyResponse(res, body) || res.status === 0) {
       return {

@@ -88,6 +88,7 @@ export function LyricsStudio({
   const [statusMsg, setStatusMsg] = useState('');
   const [providerMsg, setProviderMsg] = useState('Checking transcription…');
   const [providerOk, setProviderOk] = useState(false);
+  const [aiAddon, setAiAddon] = useState(true);
   const [busy, setBusy] = useState(false);
   const [selectedLineId, setSelectedLineId] = useState<string | null>(focusLineId || null);
   const [vocalDraft, setVocalDraft] = useState(scene.karaokeTracks?.vocalUrl || scene.mediaUrl || '');
@@ -104,11 +105,12 @@ export function LyricsStudio({
   );
 
   useEffect(() => {
-    void getTranscriptionProviderStatus().then((s) => {
+    void getTranscriptionProviderStatus(authToken).then((s) => {
       setProviderOk(s.available);
       setProviderMsg(s.message);
+      setAiAddon(s.aiAddon !== false);
     });
-  }, []);
+  }, [authToken]);
 
   useEffect(() => {
     if (focusLineId) setSelectedLineId(focusLineId);
@@ -165,6 +167,13 @@ export function LyricsStudio({
     setStatusMsg('Transcribing vocal track…');
     const result = await transcribeAudioForLyrics(vocal, authToken);
     setBusy(false);
+    if (result.code === 'ai_addon_required' || result.aiAddon === false) {
+      setAiAddon(false);
+      setProviderOk(false);
+      setProviderMsg(result.message || 'AI add-on required');
+      setStatusMsg(result.message || 'AI add-on required');
+      return;
+    }
     if (result.lines.length) {
       onChange(result.lines);
       setStatusMsg(`Imported ${result.lines.length} timed lines via ${result.provider}.`);
@@ -525,7 +534,7 @@ export function LyricsStudio({
                   <button
                     type="button"
                     className="ilv-btn ilv-btn-primary text-xs"
-                    disabled={busy || !providerOk}
+                    disabled={busy || !providerOk || !aiAddon}
                     onClick={handleTranscribe}
                   >
                     <Sparkles className="h-3.5 w-3.5" />
@@ -538,12 +547,29 @@ export function LyricsStudio({
                     Tap now — line {Math.min(tapIndex + 1, lyrics.length || 1)} ({formatTimecode(sceneTimeMs)})
                   </button>
                 )}
-                <div
-                  className="rounded-[12px] border border-[var(--ss-line)] p-2 text-xs"
-                  style={{ background: providerOk ? 'var(--ss-mint)' : 'var(--ss-suntint)' }}
-                >
-                  {providerMsg}
-                </div>
+                {aiAddon === false ? (
+                  <div
+                    className="rounded-[12px] border border-[var(--ss-line)] bg-white p-3 text-xs"
+                    data-testid="ai-addon-upsell"
+                    role="status"
+                  >
+                    <p className="font-extrabold uppercase tracking-wide text-[var(--ss-ink)]">
+                      AI add-on required
+                    </p>
+                    <p className="mt-1.5 leading-relaxed text-[var(--ss-muted)]">
+                      Auto-sync (Whisper) is part of an optional school add-on. Ask your organisation
+                      administrator if you need access. Tap to sync and paste lyrics stay available
+                      without it.
+                    </p>
+                  </div>
+                ) : (
+                  <div
+                    className="rounded-[12px] border border-[var(--ss-line)] p-2 text-xs"
+                    style={{ background: providerOk ? 'var(--ss-mint)' : 'var(--ss-suntint)' }}
+                  >
+                    {providerMsg}
+                  </div>
+                )}
               </>
             )}
 
