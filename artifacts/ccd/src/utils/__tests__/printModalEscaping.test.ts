@@ -7,6 +7,7 @@ import { escapeHtmlText } from '../escapeHtml.ts';
 import { safeColour } from '../safeColour.ts';
 import {
   LESSON_PRINT_CSP_META,
+  LESSON_PRINT_WINDOW_CSP,
   buildLessonPrintModalEscapingSampleHtml,
   ensurePrintDocumentCsp,
 } from '../lessonPrintModalHtml.ts';
@@ -78,7 +79,33 @@ describe('LessonPrintModal print escaping', () => {
     const withCsp = ensurePrintDocumentCsp(raw);
     assert.match(withCsp, /http-equiv="Content-Security-Policy"/);
     assert.match(withCsp, /script-src 'none'/);
-    // Idempotent
-    assert.equal(ensurePrintDocumentCsp(withCsp), withCsp);
+    // Always injects as first head child; calling again may duplicate (harmless) but CSP remains.
+    const twice = ensurePrintDocumentCsp(withCsp);
+    assert.match(twice, /script-src 'none'/);
+    assert.match(twice, /fonts\.googleapis\.com/);
+  });
+
+  it('ensurePrintDocumentCsp still injects when CSP phrase appears only in body text', () => {
+    const raw =
+      '<!DOCTYPE html><html><head><meta charset="UTF-8"><title>t</title></head>' +
+      '<body>Note: http-equiv="Content-Security-Policy" mentioned in teacher notes</body></html>';
+    const withCsp = ensurePrintDocumentCsp(raw);
+    assert.match(withCsp, /<head[^>]*>\s*<meta http-equiv="Content-Security-Policy"/i);
+    assert.match(withCsp, /script-src 'none'/);
+    assert.ok(
+      (withCsp.match(/http-equiv="Content-Security-Policy"/gi) || []).length >= 1,
+      'meta must be injected even when the phrase is already in the body',
+    );
+  });
+
+  it('print CSP allows Google Fonts hosts and keeps script-src none', () => {
+    assert.match(LESSON_PRINT_WINDOW_CSP, /fonts\.googleapis\.com/);
+    assert.match(LESSON_PRINT_WINDOW_CSP, /fonts\.gstatic\.com/);
+    assert.match(LESSON_PRINT_WINDOW_CSP, /script-src 'none'/);
+    assert.match(LESSON_PRINT_WINDOW_CSP, /style-src 'unsafe-inline' https:\/\/fonts\.googleapis\.com/);
+    assert.match(LESSON_PRINT_WINDOW_CSP, /font-src data: https:\/\/fonts\.gstatic\.com/);
+    assert.match(LESSON_PRINT_WINDOW_CSP, /base-uri 'none'/);
+    assert.match(LESSON_PRINT_WINDOW_CSP, /form-action 'none'/);
+    assert.ok(LESSON_PRINT_CSP_META.includes(LESSON_PRINT_WINDOW_CSP));
   });
 });

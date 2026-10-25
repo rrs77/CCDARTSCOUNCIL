@@ -8,14 +8,17 @@ import { safeColour } from './safeColour.ts';
 
 /** CSP for about:blank print windows (no scripts; opener calls print()). */
 export const LESSON_PRINT_WINDOW_CSP =
-  "default-src 'none'; img-src data: https: blob:; style-src 'unsafe-inline'; font-src data: https:; script-src 'none'";
+  "default-src 'none'; img-src data: https: blob:; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src data: https://fonts.gstatic.com; script-src 'none'; base-uri 'none'; form-action 'none'";
 
 export const LESSON_PRINT_CSP_META = `<meta http-equiv="Content-Security-Policy" content="${LESSON_PRINT_WINDOW_CSP}">`;
 
-/** Ensure a full HTML document written into the print window carries the CSP meta. */
+/**
+ * Ensure a full HTML document written into the print window carries the CSP meta.
+ * Always injects as the first child of &lt;head&gt; (duplicate CSP metas are harmless).
+ * Do not skip based on the phrase appearing elsewhere in the document (e.g. body text).
+ */
 export function ensurePrintDocumentCsp(html: string): string {
   if (!html) return html;
-  if (/http-equiv\s*=\s*["']Content-Security-Policy["']/i.test(html)) return html;
   if (/<head[^>]*>/i.test(html)) {
     return html.replace(/<head([^>]*)>/i, `<head$1>${LESSON_PRINT_CSP_META}`);
   }
